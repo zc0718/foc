@@ -208,6 +208,24 @@ generate/modify each one according to the project design above.
      • If resource files are needed, read from "./resources/" (copied by the
        Conan test harness via RESOURCES_PATH).
 
+4.5.1  test_package/c_api_validation.c  (OPTIONAL pure-C consumer)
+       ---------------------------------
+       PURPOSE: Validate the C API from a *C translation unit*: compiled by the C
+       compiler, linked, and run. A C header that compiles but does not link
+       (undefined reference to __cxa_* or __gcov_*) is the one failure mode no
+       C++ test can catch.
+       WHEN TO ADD IT: only if your C API is implemented across a C++ core. Skip
+       it -- and leave test_package/CMakeLists.txt untouched -- when the library
+       is pure C++ or pure C; the CMake block simply does not fire.
+       AGENT INSTRUCTIONS:
+       * Plain C11: no C++ header, no template, no hand-written extern "C".
+       * main() returns 0 on all-pass, non-zero on any failure; call the public C
+         API only (include/<lib>/api/*.h).
+       * test_package/CMakeLists.txt builds and registers it automatically when the
+         file exists, with LINKER_LANGUAGE CXX -- the C ABI is stable but the
+         implementation is C++, so a C consumer still links the C++ runtime.
+       * Exercise the _Generic entry points if the headers provide them.
+
 4.6  test_package/test/unit/*.cpp  (GTest unit tests)
      ────────────────────────────
      PURPOSE: Fine-grained correctness tests. Each .cpp file maps to one or

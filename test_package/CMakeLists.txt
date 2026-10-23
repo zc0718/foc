@@ -124,17 +124,22 @@ if(TRIGGER_TESTS)
     include(GoogleTest)
     enable_testing()
 
-    # G6: a pure C11 consumer of the C API, built only when the package ships one. LINKER_LANGUAGE
-    # CXX is the honest part: the C ABI is stable but the implementation is C++, so the C consumer
-    # still links the C++ runtime (limitation U8, never to be papered over).
-    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/c_api_c11.c")
-        add_executable(c_api_c11 c_api_c11.c)
-        set_target_properties(c_api_c11 PROPERTIES LINKER_LANGUAGE CXX)
-        target_link_libraries(c_api_c11 PRIVATE ${MAIN_LIB_TARGET})
+    # OPTIONAL pure-C validation of the C API (gate G6). Add `c_api_validation.c` ONLY IF the
+    # library's C API is implemented across a C++ core -- that is the case where a C header
+    # compiles but fails to link. Pure C++ and pure C libraries need nothing here: the block below
+    # simply does not fire, and nothing else in this file has to change.
+    # LINKER_LANGUAGE CXX is the honest part: the C ABI is stable, the implementation is C++, so a
+    # C consumer still links the C++ runtime (limitation U8, never to be papered over).
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/c_api_validation.c")
+        message(STATUS "[test] pure-C consumer found: c_api_validation.c "
+                       "(linked with the CXX linker; see the U8 note in the repo docs)")
+        add_executable(c_api_validation c_api_validation.c)
+        set_target_properties(c_api_validation PROPERTIES LINKER_LANGUAGE CXX)
+        target_link_libraries(c_api_validation PRIVATE ${MAIN_LIB_TARGET})
         if(ENABLE_COVERAGE)
-            apply_coverage_flags(c_api_c11)
+            apply_coverage_flags(c_api_validation)
         endif()
-        add_test(NAME c_api_c11 COMMAND c_api_c11)
+        add_test(NAME c_api_validation COMMAND c_api_validation)
     endif()
     
     if(NOT ENABLE_COVERAGE)

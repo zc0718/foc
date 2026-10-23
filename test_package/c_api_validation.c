@@ -1,9 +1,13 @@
-/* G6 - a *pure C11* consumer of the C API. Nothing C++ is visible here: no C++ include, no
- * template, no extern "C" written by hand. If this file compiles and links, the C ABI firewall is
- * real; if the linker needs the C++ runtime to satisfy it, that is the documented boundary U8.
- * G6 - C API 的**纯 C11** 消费者。这里看不到任何 C++：没有 C++ 头、没有模板、没有手写
- * extern "C"。这个文件能编且能链，C ABI 防火墙才算真的存在；若链接需要 C++ 运行时，那正是
- * 文档化的 U8 边界。
+/* G6 - a *pure C11* consumer that validates the C API end to end: it compiles as C, links, and
+ * checks the behaviour at run time. A C header that compiles but fails to link (undefined reference
+ * to __cxa_* or to __gcov_*) is the one failure mode no C++ test can catch, which is why this file
+ * exists separately from test/unit/test_api_c_smoke.cpp.
+ * G6 - **纯 C11** 消费者，端到端校验 C API：按 C 编译、能链接、并在运行期断言行为。C 头"能编
+ * 但不能链"（`undefined reference to __cxa_*` / `__gcov_*`）是 C++ 测试永远抓不到的那类故障，
+ * 所以这个文件与 `test/unit/test_api_c_smoke.cpp` 分开存在。
+ *
+ * Nothing C++ is visible here: no C++ include, no template, no hand-written extern "C".
+ * 这里看不到任何 C++：没有 C++ 头、没有模板、没有手写 extern "C"。
  */
 
 #include <math.h>
@@ -59,6 +63,6 @@ int main(void) {
         (void)fprintf(stderr, "C11 consumer: %d failure(s)\n", failures);
         return 1;
     }
-    (void)printf("C11 consumer: the C API compiles, links and runs\n");
+    (void)printf("C11 consumer: the C API compiles, links and runs (validation passed)\n");
     return 0;
 }
