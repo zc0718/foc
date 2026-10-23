@@ -23,6 +23,11 @@ jobs:
   cross-compile:
     name: Cross Compile (${{ matrix.target }})
     runs-on: ubuntu-latest
+    # Backstop: the apt step below is the only network-dependent step here, and a single
+    # stalled mirror would otherwise hold the job -- and the push-triggered concurrency
+    # group -- for the default 360 minutes. Mirrors the 55-minute backstops in
+    # ci-build-test.yml / full-test-automation.yml.
+    timeout-minutes: 40
     strategy:
       # fail-fast off: each target must report its own result
       fail-fast: false
@@ -53,7 +58,13 @@ jobs:
 
       - name: Install the cross toolchain and the Conan default profile
         shell: bash
+        # apt is the flakiest part of a hosted runner: a stalled mirror turns into the
+        # default 360-minute step limit, so bound the step and let retries + timeouts do
+        # the work. The options go into apt.conf.d so they apply to update AND install.
+        timeout-minutes: 12
         run: |
+          printf '%s\n' 'Acquire::Retries "3";' 'Acquire::http::Timeout "20";' 'Acquire::https::Timeout "20";' \
+            | sudo tee /etc/apt/apt.conf.d/99-ci-retries >/dev/null
           sudo apt-get update
           sudo apt-get install -y ${{ matrix.packages }}
           conan profile detect --force
