@@ -19,6 +19,18 @@ repos:
         language: system
         files: '^(include|src)/.*\.(c|h|cpp|hpp)$'
 
+      - id: include-guard
+        name: include-guard (layering, rules in .github/misc/.include-guard.txt)
+        entry: python3 .github/misc/gates.py guard
+        language: system
+        files: '^(include|src)/.*\.(c|h|cpp|hpp)$'
+
+      - id: strict-header
+        name: strict headers (-fno-exceptions -fno-rtti)
+        entry: python3 .github/misc/gates.py strict
+        language: system
+        files: '^include/.*\.(h|hpp)$'
+
       - id: commitlint
         name: commitlint
         entry: npx commitlint --edit --config .github/misc/commitlint.config.js

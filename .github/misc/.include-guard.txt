@@ -1,0 +1,14 @@
+# Layering guard for `gates.py guard` (one rule per line):
+#   <scope glob> <forbidden include regex>
+# Scope is relative to include/ and src/, so it reads the same for both trees.
+# Rationale: the hardware-agnostic layers must not reach for vendor headers, the C API path,
+# or the HAL implementation -- that is the G3 contract of this project.
+
+# pure algorithms: no vendor SDK, no C API, and no HAL (they must stay portable)
+foc/core/**     stm32|esp_|nrf|cmsis|Arduino|foc/api/|foc/hal/
+
+# the motor assembly knows the HAL *contract* only through its policy parameter
+foc/motor/**    stm32|esp_|nrf|cmsis|Arduino|foc/api/
+
+# HAL contracts must stay vendor-free: the vendor names live in the platform implementations
+foc/hal/**      stm32|esp_|nrf|cmsis|Arduino

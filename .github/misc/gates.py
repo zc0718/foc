@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 """Native quality gates: one implementation behind CI, pre-commit and the editor task panel."""
 import argparse
+import fnmatch
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -21,6 +23,8 @@ from pathlib import Path
 # Usage:
 #   python3 .github/misc/gates.py format [FILE ...]   # clang-format --dry-run --Werror
 #   python3 .github/misc/gates.py tidy   [FILE ...]   # clang-tidy (WarningsAsErrors)
+#   python3 .github/misc/gates.py guard  [FILE ...]   # forbidden #include, rules in .include-guard.txt
+#   python3 .github/misc/gates.py strict [FILE ...]   # every public header under -fno-exceptions/-fno-rtti
 #   python3 .github/misc/gates.py all
 # format covers include/ + src/. tidy covers src/ translation units; when metadata says
 # is_header (or src/ holds no TU) it instead synthesizes one TU per public header, which
@@ -38,6 +42,7 @@ CPP_SUFFIXES = ('.cpp', '.hpp')
 FORMAT_C = '.github/misc/.clang-format-c'
 FORMAT_CPP = '.github/misc/.clang-format-cpp'
 TIDY_CONFIG = '.github/misc/.clang-tidy'
+GUARD_CONFIG = '.github/misc/.include-guard.txt'
 
 _META = None
 
@@ -243,13 +248,120 @@ def cmd_tidy(explicit, extra_include=(), extra_isystem=()):
     return 0
 
 
+def _guard_rules():
+    """(scope glob, compiled regex) pairs from .github/misc/.include-guard.txt."""
+    config = ROOT / GUARD_CONFIG
+    if not config.is_file():
+        _die(f'{GUARD_CONFIG} not found; it lists "<scope glob> <forbidden include regex>" per line')
+    rules = []
+    for lineno, raw in enumerate(config.read_text(encoding='utf-8').splitlines(), start=1):
+        line = raw.split('#', 1)[0].strip()
+        if not line:
+            continue
+        parts = line.split(None, 1)
+        if len(parts) != 2:
+            _die(f'{GUARD_CONFIG}:{lineno}: expected "<scope glob> <regex>", got {raw!r}')
+        scope, pattern = parts
+        try:
+            rules.append((scope, re.compile(pattern)))
+        except re.error as exc:
+            _die(f'{GUARD_CONFIG}:{lineno}: bad regex {pattern!r}: {exc}')
+    if not rules:
+        _die(f'{GUARD_CONFIG} defines no rule')
+    return rules
+
+
+def _scoped_name(path):
+    """Path relative to include/ or src/ -- what the guard scopes are written against."""
+    for name in GATE_DIRS:
+        try:
+            return path.resolve().relative_to(ROOT / name).as_posix()
+        except ValueError:
+            continue
+    return path.as_posix()
+
+
+def _include_directives(path):
+    """(line number, included path) for every #include directive in the file."""
+    pattern = re.compile(r'^\s*#\s*include\s*[<"]([^>"]+)[>"]')
+    found = []
+    with open(path, encoding='utf-8', errors='replace') as handle:
+        for lineno, line in enumerate(handle, start=1):
+            match = pattern.match(line)
+            if match:
+                found.append((lineno, match.group(1)))
+    return found
+
+
+def cmd_guard(explicit):
+    """Layering guard: a scope may not include something its rules forbid (e.g. core must stay
+    hardware-agnostic). Rules live in .github/misc/.include-guard.txt, one per line, so a derived
+    project states its own layering instead of editing this file."""
+    files = _gated_files(explicit, GATE_DIRS)
+    if not files:
+        return _empty(explicit, 'guard', GATE_DIRS)
+    rules = _guard_rules()
+    print(f'[gates] guard: {len(files)} file(s), {len(rules)} rule(s) from {GUARD_CONFIG}', flush=True)
+    violations = 0
+    for path in files:
+        scoped = _scoped_name(path)
+        active = [regex for scope, regex in rules if fnmatch.fnmatch(scoped, scope)]
+        for lineno, included in _include_directives(path) if active else []:
+            for regex in active:
+                if regex.search(included):
+                    violations += 1
+                    print(f'{_rel(path)}:{lineno}: forbidden include <{included}> ({regex.pattern})', flush=True)
+    if violations:
+        print(f'[gates] guard: FAIL ({violations} violation(s))', flush=True)
+        return 1
+    print(f'[gates] guard: OK ({len(files)} file(s))', flush=True)
+    return 0
+
+
+def cmd_strict(explicit):
+    """Every public header must compile standalone under the project's hard constraints
+    (-fno-exceptions -fno-rtti for C++, -pedantic for C). ADR-level promises become testable here."""
+    headers = _gated_files(explicit, ('include',))
+    if not headers:
+        return _empty(explicit, 'strict', ('include',))
+    cstd, cppstd = _standards()
+    compilers = {
+        '.h': (_require('gcc', 'install it with `apt-get install gcc`'), [f'-std=c{cstd}', '-pedantic']),
+        '.hpp': (_require('g++', 'install it with `apt-get install g++`'),
+                 [f'-std=c++{cppstd}', '-fno-exceptions', '-fno-rtti']),
+    }
+    print(f'[gates] strict: {len(headers)} header(s), -std=c{cstd} / -std=c++{cppstd} '
+          f'-fno-exceptions -fno-rtti', flush=True)
+    failed = []
+    with tempfile.TemporaryDirectory(prefix='gates-strict-') as workdir:
+        for header in headers:
+            exe, flags = compilers[header.suffix]
+            tu = Path(workdir) / (header.stem + ('.c' if header.suffix == '.h' else '.cpp'))
+            tu.write_text(f'#include "{header.relative_to(ROOT / "include").as_posix()}"\n'
+                          '\nint main(void) { return 0; }\n', encoding='utf-8')
+            cmd = [exe, *flags, '-Wall', '-Wextra', '-Werror', '-I', str(ROOT / 'include'),
+                   '-fsyntax-only', str(tu)]
+            done = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True)
+            if done.returncode != 0:
+                failed.append(header)
+                print(f'--- {_rel(header)}', flush=True)
+                print((done.stdout + done.stderr).strip(), flush=True)
+    if failed:
+        print(f'[gates] strict: FAIL ({len(failed)}/{len(headers)} header(s))', flush=True)
+        return 1
+    print(f'[gates] strict: OK ({len(headers)} header(s))', flush=True)
+    return 0
+
+
 def main():
     parser = argparse.ArgumentParser(description='Native quality gates (one implementation, three callers).')
     sub = parser.add_subparsers(dest='gate', required=True)
     helps = {
         'format': 'clang-format --dry-run --Werror over include/ + src/',
         'tidy': 'clang-tidy (WarningsAsErrors) over src/ TUs; header-only: one synthetic TU per header',
-        'all': 'format + tidy',
+        'guard': 'forbidden #include directives, scoped rules from .github/misc/.include-guard.txt',
+        'strict': 'every public header compiles standalone with -fno-exceptions -fno-rtti (C: -pedantic)',
+        'all': 'format + tidy + guard + strict',
     }
     for name, text in helps.items():
         leaf = sub.add_parser(name, help=text)
@@ -266,7 +378,11 @@ def main():
         return cmd_format(args.files, args.fix, args.jobs)
     if args.gate == 'tidy':
         return cmd_tidy(args.files, args.include, args.isystem)
-    return 1 if (cmd_format([]) or cmd_tidy([])) else 0
+    if args.gate == 'guard':
+        return cmd_guard(args.files)
+    if args.gate == 'strict':
+        return cmd_strict(args.files)
+    return 1 if (cmd_format([]) or cmd_tidy([]) or cmd_guard([]) or cmd_strict([])) else 0
 
 
 if __name__ == '__main__':

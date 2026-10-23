@@ -66,6 +66,15 @@ jobs:
       - name: clang-tidy gate
         run: python3 .github/misc/gates.py tidy
 
+      # required: layering guard -- a scope may not include what its rules forbid
+      # (e.g. the algorithm core must stay hardware- and C-API-agnostic)
+      - name: include-guard gate
+        run: python3 .github/misc/gates.py guard
+
+      # required: every public header must stand alone under -fno-exceptions -fno-rtti
+      - name: strict-header gate
+        run: python3 .github/misc/gates.py strict
+
       # Required gate: secrets scan with pinned binary version
       - name: gitleaks gate
         run: |

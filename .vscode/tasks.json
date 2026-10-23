@@ -18,6 +18,22 @@
       "problemMatcher": []
     },
     {
+      "label": "guard",
+      "type": "shell",
+      "command": "python3",
+      "args": [".github/misc/gates.py", "guard"],
+      "windows": { "command": "python" },
+      "problemMatcher": []
+    },
+    {
+      "label": "strict",
+      "type": "shell",
+      "command": "python3",
+      "args": [".github/misc/gates.py", "strict"],
+      "windows": { "command": "python" },
+      "problemMatcher": []
+    },
+    {
       "label": "schema-check",
       "type": "shell",
       "command": "npx ajv validate -s .github/misc/metadata.schema.json -d metadata.json --spec=draft7",
