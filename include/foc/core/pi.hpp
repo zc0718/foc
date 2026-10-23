@@ -15,6 +15,16 @@ namespace core {
  *        [zh] 带输出限幅与积分限幅（V1 抗饱和）的 PI 控制器。状态全部在对象内：无全局、不分配，
  *        每个轴各用一个实例即可。
  *
+ * @note [en] The integral clamp IS the anti-windup mechanism: there is no back-calculation, and
+ *       `step()` never sees the actuator's actual output. Size `integral_min`/`integral_max` to
+ *       the steady-state output range of the loop (for a speed loop: the current that holds the
+ *       top speed, not `i_max`), so a reference step that saturates the output cannot wind the
+ *       integral up. Sizing them to the full output range costs a slow, visible recovery after
+ *       saturation (measured in the SIL S2/S4 scenarios).
+ * @note [zh] 积分限幅**就是**抗饱和手段：本实现没有 back-calculation，`step()` 也拿不到执行器
+ *       实际施加的输出。请把 `integral_min`/`integral_max` 取成该环的**稳态输出量级**（速度环
+ *       即"维持最高转速所需电流"，而不是 `i_max`），这样给定阶跃打满输出时积分不会积起来；
+ *       若按满量程取，饱和后会出现明显的慢恢复（SIL 的 S2/S4 场景有实测数字）。
  * @context [en] Current-loop / speed-loop ISR: noexcept, no allocation.
  *           [zh] 电流环/速度环 ISR：noexcept、不分配。
  * @since 0.1.0
