@@ -34,9 +34,16 @@ def _inherit_root_metadata():
     return _meta
 
 
-_hit_com_tag = re.compile(r" \* @")
-_hit_lang_tag = re.compile(rf"( \* @[a-z]+).*\[({'|'.join(_inherit_root_metadata().get('doc_languages'))})] ")
-_hit_free_tag = re.compile(r" \* [^@]+")
+# Doc comments in this repo are written in three bilingual shapes, and the filters below must
+# accept all of them or a language silently leaks into (or vanishes from) the build:
+#   compact       ///< [en] gain. [zh] 增益。          member docs on one line
+#   indented          * @param x [en] gain.           doc blocks nested inside a class
+#   continuation      *        [zh] 增益。             the second language on its own line
+# Markers are normalized onto their own tag line by _normalize_bilingual() before filtering;
+# the matchers stay indentation-agnostic because doc blocks live at any nesting depth.
+_hit_com_tag = re.compile(r"\s*\* @")
+_hit_lang_tag = re.compile(rf"(\s*\* @[a-z]+).*\[({'|'.join(_inherit_root_metadata().get('doc_languages'))})] ")
+_hit_free_tag = re.compile(r"\s*\* [^@]+")
 _hit_file_start = re.compile(r"\n?/\*!")
 _hit_since_start = re.compile(r"\n?/\*\*")
 language_map = {'en': 'English', 'zh': 'Chinese', 'jp': 'Japanese'}
@@ -97,7 +104,148 @@ def _determine_sub_groups(x: list[list[int]], languages: list[str],
     return res, [_[0] for _ in x]
 
 
+_lang_marker_re = re.compile(r"\[(en|zh|jp)\]\s?")
+_tag_line_re = re.compile(r"^(\s*\*\s*)@([A-Za-z_][A-Za-z0-9_]*)(.*?)(\r?\n)?$")
+_inline_doc_re = re.compile(r"^(.*?(?:///<?|\*\*<)\s*)(.*?)(\r?\n)?$")
+_cjk_re = re.compile(r"[\u3000-\u303f\u4e00-\u9fff\uff01-\uff60]")
+
+
+def _split_lang_segments(text: str):
+    """Split 'a [en] b [zh] c' into its marked segments.
+
+    Returns (lead, [(lang, text), ...]); lead is whatever precedes the first marker.
+    """
+    marks = list(_lang_marker_re.finditer(text))
+    if not marks:
+        return text, []
+    _segs = []
+    for _i, _m in enumerate(marks):
+        _end = marks[_i + 1].start() if _i + 1 < len(marks) else len(text)
+        _segs.append((_m.group(1), text[_m.end():_end]))
+    return text[:marks[0].start()], _segs
+
+
+def _rewrite_chunk(ch: dict) -> list[str]:
+    """One tagged doc chunk -> one chunk per language, markers on the tag line."""
+    _lead, _segs = _split_lang_segments(ch['rest'])
+    _body_has_marker = any(_lang_marker_re.search(_l) for _l in ch['lines'])
+    if not _segs or (len(_segs) == 1 and not _body_has_marker):
+        return [ch['raw']]
+
+    _primary = _segs[0][0]
+    _order, _buckets = [], {}
+
+    def _push(_lang: str, _text: str) -> None:
+        if _lang not in _buckets:
+            _order.append(_lang)
+            _buckets[_lang] = []
+        _text = _text.strip()
+        if _text:
+            _buckets[_lang].append(_text)
+
+    for _lang, _text in _segs:
+        _push(_lang, _text)
+
+    for _line in ch['lines']:
+        _content = _line.strip().lstrip('*').strip()
+        if not _content:
+            continue
+        _c_lead, _c_segs = _split_lang_segments(_content)
+        if _c_segs:
+            for _lang, _text in _c_segs:
+                _push(_lang, _text)
+            continue
+        # Body paragraphs carry no marker: CJK belongs to the Chinese group, the rest to the
+        # language that opened the chunk.
+        _push('zh' if _cjk_re.search(_content) else _primary, _content)
+
+    _indent = ch['prefix']
+    _eol = ch['eol'] or '\n'
+    # Whatever sits between the tag and the first marker belongs to every language: it is the
+    # documented name for @param/@tparam, and dropping it makes Doxygen read the first word of the
+    # description as the parameter name.
+    _head = (ch['tag'] + _lead).rstrip() + ' '
+    _out = []
+    _written = [k for k in _order if _buckets[k]]
+    for _i, _lang in enumerate(_written):
+        _items = _buckets[_lang]
+        _out.append(f"{_indent}@{_head}[{_lang}] {_items[0]}{_eol}")
+        for _extra in _items[1:]:
+            _out.append(f"{_indent}       {_extra}\n")
+        if _i + 1 < len(_written):
+            _out.append(f"{_indent.rstrip()}\n")
+    return _out
+
+
+def _rewrite_block(block: list[str]) -> list[str]:
+    """Rewrite one /** ... */ block into marker groups; untouched lines keep their bytes."""
+    _chunks, _current = [], None
+    for _line in block[1:-1]:
+        _m = _tag_line_re.match(_line)
+        if _m:
+            _current = {'prefix': _m.group(1), 'tag': _m.group(2), 'rest': _m.group(3),
+                        'eol': _m.group(4) or '', 'lines': [], 'raw': _line}
+            _chunks.append(_current)
+        elif _current is not None:
+            _current['lines'].append(_line)
+        else:
+            _chunks.append({'prefix': None, 'tag': None, 'rest': None, 'eol': '',
+                            'lines': [_line], 'raw': _line})
+
+    _out = [block[0]]
+    for _ch in _chunks:
+        if _ch['tag'] is None:
+            _out.extend(_ch['lines'])
+        else:
+            _out.extend(_rewrite_chunk(_ch))
+    _out.append(block[-1])
+    return _out
+
+
+def _normalize_bilingual(lines: list[str]) -> list[str]:
+    """Move every bilingual marker onto its own tag line, one group per language.
+
+    Without this the filter downstream assigns a `[zh]` continuation line to the English group
+    (English docs show Chinese) and drops it from the Chinese group (Chinese docs lose the text).
+    """
+    _out, _block, _in_block = [], [], False
+    for _line in lines:
+        _stripped = _line.lstrip()
+        if not _in_block:
+            if _stripped.startswith(('/**', '/*!')) and not _stripped.startswith('/**<') \
+                    and '*/' not in _stripped[2:]:
+                _in_block, _block = True, [_line]
+                continue
+            _out.append(_line)
+            continue
+        _block.append(_line)
+        if '*/' in _line:
+            _in_block = False
+            _out.extend(_rewrite_block(_block) if any('[' in _b for _b in _block) else _block)
+            _block = []
+    if _block:
+        _out.extend(_block)
+    return _out
+
+
+def _inline_lang_pick(line: str, lang_tag: Language) -> str:
+    """Pick one language out of a compact one-line comment (`///`, `///<`, `/**<`)."""
+    _m = _inline_doc_re.match(line)
+    if _m is None:
+        return line
+    _lead, _segs = _split_lang_segments(_m.group(2))
+    if len(_segs) < 2:
+        return line
+    for _lang, _text in _segs:
+        if _lang == lang_tag:
+            return f"{_m.group(1)}{_text.strip()}{_m.group(3) or ''}"
+    return ''
+
+
 def _language_filter(lines: list[str], langs: list[str], lang_tag: Language) -> list[str]:
+
+    lines = _normalize_bilingual(lines)
+    lines = [_inline_lang_pick(_l, lang_tag) for _l in lines]
 
     container = []
     _refs = [[_hit_com_tag.match(l), _hit_lang_tag.match(l), _hit_free_tag.match(l)] for l in lines]

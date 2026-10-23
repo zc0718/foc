@@ -28,6 +28,9 @@ OUTPUT_LANGUAGE = %FULL_LAN%
 # customized configuration
 ALIASES += "exporter="
 ALIASES += "attacher="
+# @context is this library's runtime-context annotation (ISR safety, allocation rules). It is
+# aliased to \note so it renders as a localized note block instead of leaking as literal text.
+ALIASES += "context=@note"
 
 # Graphviz support
 HAVE_DOT = YES
@@ -42,6 +45,9 @@ IMAGE_PATH = ../../../images
 # customized configuration
 ALIASES += "exporter="
 ALIASES += "attacher="
+# @context is this library's runtime-context annotation (ISR safety, allocation rules). It is
+# aliased to \note so it renders as a localized note block instead of leaking as literal text.
+ALIASES += "context=@note"
 
 # support examples source
 EXAMPLE_PATH = %EXAMPLE_DIRS%
