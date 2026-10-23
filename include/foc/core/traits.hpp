@@ -4,6 +4,7 @@
 #include <type_traits>
 #include <utility>
 
+#include <foc/core/observer/observer_policy.hpp>
 #include <foc/core/types.hpp>
 // Conan::ImportEnd
 
@@ -108,7 +109,6 @@ template <typename T>
 struct is_clock<T, std::void_t<decltype(std::declval<T&>().now_us())>>
     : std::bool_constant<std::is_same_v<decltype(std::declval<T&>().now_us()), std::uint64_t> &&
                          noexcept(std::declval<T&>().now_us())> {};
-
 /**
  * @brief [en] Convenience variable templates, e.g.
  *        `static_assert(hal::concepts::is_pwm_v<MyPwm>, "MyPwm must satisfy foc::hal::Pwm");`.
@@ -129,5 +129,40 @@ template <typename T> inline constexpr bool is_clock_v = is_clock<T>::value;
 } // namespace concepts
 
 } // namespace hal
+
+namespace core {
+
+namespace concepts {
+
+/**
+ * @brief [en] `T` satisfies the observer policy contract (see observer_policy.hpp): it must expose
+ *        `update(Ab<float>, Ab<float>, float) noexcept -> ObsState`.
+ *        [zh] `T` 满足观测器策略契约（见 observer_policy.hpp）：必须提供
+ *        `update(Ab<float>, Ab<float>, float) noexcept -> ObsState`。
+ *
+ * @since 0.1.0
+ */
+template <typename T, typename = void> struct is_observer : std::false_type {};
+
+template <typename T>
+struct is_observer<T, std::void_t<decltype(std::declval<T&>().update(
+                          std::declval<Ab<float>>(), std::declval<Ab<float>>(), std::declval<float>()))>>
+    : std::bool_constant<
+          std::is_same_v<decltype(std::declval<T&>().update(std::declval<Ab<float>>(), std::declval<Ab<float>>(),
+                                                            std::declval<float>())),
+                         ObsState> &&
+          noexcept(std::declval<T&>().update(std::declval<Ab<float>>(), std::declval<Ab<float>>(),
+                                             std::declval<float>()))> {};
+
+/**
+ * @brief [en] Convenience variable template for the observer contract.
+ *        [zh] 观测器契约的便捷变量模板。
+ * @since 0.1.0
+ */
+template <typename T> inline constexpr bool is_observer_v = is_observer<T>::value;
+
+} // namespace concepts
+
+} // namespace core
 
 } // namespace foc

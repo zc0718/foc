@@ -1,0 +1,25 @@
+// Conan::ImportStart
+#include <foc/core/observer/ideal_observer.hpp>
+// Conan::ImportEnd
+
+namespace foc {
+
+namespace core {
+
+void IdealObserver::set_truth(float theta_e_rad, float omega_e_rad_s) noexcept {
+    truth_.theta_e = theta_e_rad;
+    truth_.omega_e = omega_e_rad_s;
+}
+
+auto IdealObserver::update(Ab<float> v_ab, Ab<float> i_ab, float dt_s) noexcept -> ObsState {
+    static_cast<void>(v_ab);
+    static_cast<void>(i_ab);
+    static_cast<void>(dt_s);
+    return truth_;
+}
+
+void IdealObserver::reset() noexcept { truth_ = ObsState{0.0F, 0.0F}; }
+
+} // namespace core
+
+} // namespace foc
