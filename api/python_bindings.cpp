@@ -1,3 +1,22 @@
+// V2 PLACEHOLDER — NOT PART OF V1.
+//
+// This file is still the fcpp template demo: it binds `cpptest.hpp` / `Color<int>` / `test_sum`,
+// and this project removed those demo headers in T0.1. `metadata.json` keeps
+// `enable_python_bindings = false`, so CMake never compiles it.
+//
+// Turning that switch on has to fail *here*, with one actionable sentence, instead of failing deep
+// inside pybind11 on a header that no longer exists.
+//
+// When V2 writes the real bindings, bind the **C API** (`foc/api/foc_api.h`) rather than the C++
+// templates: the C surface is a stable ABI, while binding `Motor<Policy...>` would mean one binding
+// per template instantiation and would leak the very C++ ABI that ADR-002 hides behind the bridge.
+//
+// 占位文件：本文件仍是模板 demo（绑 cpptest.hpp / Color<int> / test_sum，这些 demo 头在 T0.1 已删）。
+// enable_python_bindings = false 时 CMake 不编它；一旦打开，必须**在这里**以一句话失败，
+// 而不是在 pybind11 深处报一个已不存在的头文件。V2 做绑定时请走 C API，不要绑 C++ 模板。
+
+#error "python bindings are V2: api/python_bindings.cpp still targets the fcpp template demo"
+
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 #include <pybind11/eigen.h>
