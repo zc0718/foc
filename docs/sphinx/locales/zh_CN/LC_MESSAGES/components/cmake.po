@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: fcpp 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-09-05 18:05+0800\n"
+"POT-Creation-Date: 2026-10-23 17:40+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: zh_CN\n"
@@ -19,66 +19,61 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.17.0\n"
 
-#: ../../source/components/cmake.rst:2 0f2f88334d474438abcaea436309360e
+#: ../../source/components/cmake.rst:2 c8415ce97b0949bfa5a1edc3e1d5a33c
 msgid "_`CMakeLists Configuration`"
 msgstr "CMakeLists 配置"
 
-#: ../../source/components/cmake.rst:5 ceba46b86fcf4061832adae5fc47c058
+#: ../../source/components/cmake.rst:5 d42af440094e4c50b04759e183abcfbb
 msgid "_`Overview`"
 msgstr "概述"
 
-#: ../../source/components/cmake.rst:7 8030be2063544f3cb1073430fe6c4682
-msgid ""
-"The CMakeLists.txt file is the core build configuration file for the fcpp"
-" project, responsible for project building, dependency management, and "
-"module compilation."
-msgstr ""
-"CMakeLists.txt 文件是 fcpp 项目的核心构建配置文件，负责项目构建、依赖管理"
-"和模块编译。"
+#: ../../source/components/cmake.rst:7 d5560550a69a40ca865451f627e83094
+msgid "The CMakeLists.txt file is the core build configuration file for this project, responsible for project building, dependency management, and module compilation."
+msgstr "CMakeLists.txt 文件是本项目的核心构建配置文件，负责项目构建、依赖管理与模块编译。"
 
-#: ../../source/components/cmake.rst:11 6791213670d74d20a4728e2e3df4edb8
+#: ../../source/components/cmake.rst:11 7b0dbfefc6c64885b560d7a5d13a27a7
 msgid "_`Key Features`"
 msgstr "主要特性"
 
-#: ../../source/components/cmake.rst:13 45f6cead086b451c9fbf000ba0ab9de0
+#: ../../source/components/cmake.rst:13 8bca01fe3d714a51af65abcf8d7d64d9
 msgid "Project initialization and metadata parsing"
 msgstr "项目初始化与元数据解析"
 
-#: ../../source/components/cmake.rst:14 d9f7075aa55e44fa95ce702b811c539d
+#: ../../source/components/cmake.rst:14 a0daf6043eba489f9440b265140767a8
 msgid "Automatic source file collection and target creation"
 msgstr "自动源文件收集与目标创建"
 
-#: ../../source/components/cmake.rst:15 b491c35c9d8b42abada16c8f23ea4b7c
+#: ../../source/components/cmake.rst:15 717231c78f7f460490183e5d88626961
 msgid "Dependency management and linking"
 msgstr "依赖管理与链接"
 
-#: ../../source/components/cmake.rst:16 184ed263fae14d13b5f8ff4de328970d
+#: ../../source/components/cmake.rst:16 d9bb6e91112549b8bcb1120a39bde82e
 msgid "C++ module support configuration"
 msgstr "C++ 模块支持配置"
 
-#: ../../source/components/cmake.rst:17 625d47eeb177437ba9cd98c286bd2e47
+#: ../../source/components/cmake.rst:17 54c8a1793079473f8553b71b39c2cfae
 msgid "Installation rule definition"
 msgstr "安装规则定义"
 
-#: ../../source/components/cmake.rst:20 2e53ae7d99e24dbba13db1de83640ff2
+#: ../../source/components/cmake.rst:20 eff40eeb7dbe460bbc2944d90ebc17ef
 msgid "_`Main Configurations`"
 msgstr "主要配置项"
 
-#: ../../source/components/cmake.rst:22 c60ee7edd0fa42a4950c9727b40d9eac
+#: ../../source/components/cmake.rst:22 efc68d8ea24d4a1d9b1e515734117804
 msgid ""
 "The CMake configuration automatically reads project information from "
 "metadata.json, collects source files from include and src directories, "
 "creates separate static libraries for C and C++ components, and "
 "configures module support for C++23 and above."
 msgstr ""
-"CMake 配置会自动从 metadata.json 读取项目信息，从 include 和 src 目录收集"
-"源文件，为 C 和 C++ 组件分别创建静态库，并配置 C++23 及以上版本的模块支持。"
+"CMake 配置会自动从 metadata.json 读取项目信息，从 include 和 src 目录收集源文件，为 C 和 C++ "
+"组件分别创建静态库，并配置 C++23 及以上版本的模块支持。"
 
-#: ../../source/components/cmake.rst:26 71eee7e9c74e40b8a509648b9dbdf075
+#: ../../source/components/cmake.rst:26 b082c8b6450e48c0a29a549ef1f4517b
 msgid ""
 "Platform-specific module compilation is handled with appropriate settings"
 " for MSVC (.ixx files) and GCC/Clang (.cppm files). The configuration "
 "also includes installation rules for libraries and headers."
 msgstr ""
-"平台特定的模块编译通过针对 MSVC (.ixx 文件) 和 GCC/Clang (.cppm 文件) 的适"
-"当设置进行处理。该配置还包含库和头文件的安装规则。"
+"平台特定的模块编译通过针对 MSVC (.ixx 文件) 和 GCC/Clang (.cppm 文件) "
+"的适当设置进行处理。该配置还包含库和头文件的安装规则。"

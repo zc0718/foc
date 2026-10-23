@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: fcpp 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-09-05 18:05+0800\n"
+"POT-Creation-Date: 2026-10-23 17:40+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: zh_CN\n"
@@ -19,42 +19,37 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.17.0\n"
 
-#: ../../source/components/meta.rst:2 e038fd36b2844c2f837dc9332b04cfc8
+#: ../../source/components/meta.rst:2 c5c65a16c96a4d199f3dc92b10458b99
 msgid "_`Metadata Configuration`"
 msgstr "元数据配置"
 
-#: ../../source/components/meta.rst:5 8ffc98a6547145b083c06687b0fd93dd
+#: ../../source/components/meta.rst:5 b18c78e209bb4f30a580244209b77200
 msgid "_`Project-level Settings`"
 msgstr "项目级设置"
 
-#: ../../source/components/meta.rst:7 7cc351e81aa641889931f4d341b1294f
-msgid ""
-"The metadata.json file contains the metadata configuration for the fcpp "
-"project, including basic project information, build configuration, and "
-"dependency definitions."
-msgstr ""
-"metadata.json 文件包含 fcpp 项目的元数据配置，包括基本项目信息、构建配置和"
-"依赖定义。"
+#: ../../source/components/meta.rst:7 f761ecae533d4462927d9902ed3d00ab
+msgid "The metadata.json file contains the metadata configuration for this project, including basic project information, build configuration, and dependency definitions."
+msgstr "metadata.json 是本项目的元数据配置，包含基本信息、构建配置与依赖定义。"
 
-#: ../../source/components/meta.rst:11 2a63b984d8be4c0595f65d0af4bd364a
+#: ../../source/components/meta.rst:11 d1fc13bd30934c17993160d517cfd011
 msgid "_`File Structure`"
 msgstr "文件结构"
 
-#: ../../source/components/meta.rst:13 c129fc51da494d4f9b97452c658ce102
+#: ../../source/components/meta.rst:13 f46bf44249c94e26a6b702c49bbc83b4
 msgid ""
 "The JSON file includes sections for basic project information (name, "
 "version, license, description), authors and maintainers, build "
 "configuration (CMake version, C/C++ standards), module settings, "
 "dependency definitions, and documentation configuration."
 msgstr ""
-"该 JSON 文件包含基本项目信息（名称、版本、许可证、描述）、作者和维护者、"
-"构建配置（CMake 版本、C/C++ 标准）、模块设置、依赖定义以及文档配置等部分。"
+"该 JSON 文件包含基本项目信息（名称、版本、许可证、描述）、作者和维护者、构建配置（CMake 版本、C/C++ "
+"标准）、模块设置、依赖定义以及文档配置等部分。"
 
-#: ../../source/components/meta.rst:18 1642bd1c563b4f07864db733210c174f
+#: ../../source/components/meta.rst:18 9d4ae0dd8801449aa98999298294498a
 msgid "_`Key Settings`"
 msgstr "关键设置"
 
-#: ../../source/components/meta.rst:20 8f6171353602444d8058ca571a7c82c6
+#: ../../source/components/meta.rst:20 30d149d2302a43df8b0b718fe6ae0bb3
 msgid ""
 "Basic project information defines the package identity. Build "
 "configuration specifies tool versions and language standards. Module "
@@ -62,15 +57,12 @@ msgid ""
 "categorized into common, C-specific, and C++-specific requirements. "
 "Documentation settings configure Doxygen generation."
 msgstr ""
-"基本项目信息定义了包的身份标识。构建配置指定了工具版本和语言标准。模块"
-"设置控制标准和用户模块的使用。依赖项被归类为通用、C 专用和 C++ 专用需求。"
-"文档设置用于配置 Doxygen 生成。"
+"基本项目信息定义了包的身份标识。构建配置指定了工具版本和语言标准。模块设置控制标准和用户模块的使用。依赖项被归类为通用、C 专用和 C++ "
+"专用需求。文档设置用于配置 Doxygen 生成。"
 
-#: ../../source/components/meta.rst:24 a1dc0c323d4643299ad758742d74cdc4
+#: ../../source/components/meta.rst:24 2b3c3366e3654d74944be95f225d2048
 msgid ""
 "Example configuration demonstrates how to set up a project with C++20 "
 "support, module generation, and common dependencies like Boost and "
 "OpenCV."
-msgstr ""
-"示例配置展示了如何设置一个支持 C++20、模块生成以及包含 Boost 和 OpenCV "
-"等通用依赖的项目。"
+msgstr "示例配置展示了如何设置一个支持 C++20、模块生成以及包含 Boost 和 OpenCV 等通用依赖的项目。"

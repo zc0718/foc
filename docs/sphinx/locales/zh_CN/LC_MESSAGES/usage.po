@@ -1,0 +1,181 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2026, HeT-FTI
+# This file is distributed under the same license as the foc package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: foc 0.1.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-10-23 17:40+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: zh_CN\n"
+"Language-Team: zh_CN <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.17.0\n"
+
+#: ../../source/usage.rst:2 33c9e7ca8f124032b5a98c8cac4cf66c
+msgid "_`Usage and verification`"
+msgstr "_`用法与验证`"
+
+#: ../../source/usage.rst:4 ee5ca7616b474af18d22ca59ae92131a
+msgid "This page is the part a user actually needs: the three faces of the library, the model behind them, and the evidence that they work."
+msgstr "本页是使用者真正需要的部分：库的三个使用面、它们背后的模型，以及它们确实可用的证据。"
+
+#: ../../source/usage.rst:8 ec36e7d59c4a4b68a9dd732099b957a0
+msgid "_`C++ path (recommended for board-level work)`"
+msgstr "_`C++ 路径（上板首选）`"
+
+#: ../../source/usage.rst:10 c69780bb6cbb4f78a72a0cfe953adb7d
+msgid "Every policy is a template parameter: the observer, the modulator, the controllers and the HAL. Nothing is virtual, and swapping a policy costs nothing at run time."
+msgstr "所有策略都是模板参数：观测器、调制器、控制器与 HAL。没有虚函数，换策略不付运行时代价。"
+
+#: ../../source/usage.rst:13 d6f384ce69064f0181732248c476c7a2
+msgid "one motor, one control step"
+msgstr "一个电机，一个控制步"
+
+#: ../../source/usage.rst:42 f6adcc0f5bb9441eb5051a4a8c6a491e
+msgid ":code:`tick()` is noexcept, allocates nothing and does no I/O — it is the ISR entry point. The tuning helpers (:code:`current_pi_config`, :code:`speed_pi_config`) live in the library so the C path and the SIL bench use exactly the same numbers."
+msgstr ":code:`tick()` 是 noexcept、不分配、不做 I/O——它就是 ISR 入口。整定辅助函数（:code:`current_pi_config`、:code:`speed_pi_config`）放在库里，保证 C 路径与 SIL 台架用的是同一组数。"
+
+#: ../../source/usage.rst:47 e27a2f3015eb4636a67a198044a82c3d
+msgid "_`C path (non-C++ projects, glue code)`"
+msgstr "_`C 路径（非 C++ 工程、胶水层）`"
+
+#: ../../source/usage.rst:49 f81561b42b594ce5be7a003390f45eb6
+msgid "the same motor through the frozen ABI"
+msgstr "同一个电机，走冻结的 ABI"
+
+#: ../../source/usage.rst:68 684d915c8c8d498c89b1f9348d81f9ce
+msgid "Handles are opaque tokens carrying a generation counter: after :code:`foc_motor_destroy()` an old handle answers :code:`FOC_ERR_PARAM` instead of touching freed memory. The C path runs on the stub HAL with library defaults (20 kHz, 500 ns dead time, 5 A limit, 24 V bus); for real hardware use the C++ path."
+msgstr "句柄是带代际计数的不透明令牌：调用 :code:`foc_motor_destroy()` 之后，旧句柄返回 :code:`FOC_ERR_PARAM`，而不是去碰已释放的内存。C 路径跑在桩 HAL 与库内默认值上（20 kHz、500 ns 死区、5 A 限流、24 V 母线）；上真实硬件请走 C++ 路径。"
+
+#: ../../source/usage.rst:74 46ea2024720a4c82bfd90f6eeb2e2133
+msgid "_`Python path (host-side scripts)`"
+msgstr "_`Python 路径（上位机脚本）`"
+
+#: ../../source/usage.rst:76 8f9a1fd63c4f4635bd4e2d53579a61f4
+msgid "the same motor from Python"
+msgstr "同一个电机，从 Python 驱动"
+
+#: ../../source/usage.rst:89 79b09ee4716c458f85fae9b5b303d01e
+msgid "The module binds the **C API**. Failures raise :code:`foc_python.FocError` whose :code:`code` attribute is the very :code:`ErrorCode` the C function returned — Python gets exceptions, you keep the raw code."
+msgstr "模块绑定的是 **C API**。失败抛 :code:`foc_python.FocError`，其 :code:`code` 属性就是 C 函数返回的那个 :code:`ErrorCode`——Python 拿到异常，你仍保留原始错误码。"
+
+#: ../../source/usage.rst:94 22e2b2cd60ac48838981763c1f260168
+msgid "_`The model behind the loop`"
+msgstr "_`控制环背后的模型`"
+
+#: ../../source/usage.rst:96 96136e187fef47fba929172ddd4cbf4a
+msgid "The controller sees a dq-frame PMSM. The plant used by the SIL tests integrates exactly this, with fixed-step RK4 at 10 µs against a 100 µs control step:"
+msgstr "控制器看到的是 dq 轴 PMSM。SIL 测试用的 plant 就按下面这组方程积分：固定步长 RK4，10 µs 积分步长对 100 µs 控制步长："
+
+#: ../../source/usage.rst:99 ac77b07afd91496d95d3792ba1f7008d
+msgid ""
+"\\begin{aligned}\n"
+"\\frac{di_d}{dt} &= \\frac{v_d - R_s i_d + \\omega_e L_q i_q}{L_d} \\\\\n"
+"\\frac{di_q}{dt} &= \\frac{v_q - R_s i_q - \\omega_e L_d i_d - \\omega_e "
+"\\psi_f}{L_q} \\\\\n"
+"\\frac{d\\omega_m}{dt} &= \\frac{T_e - B \\omega_m - T_{load}}{J}, "
+"\\qquad\n"
+"T_e = \\tfrac{3}{2} p \\left(\\psi_f i_q + (L_d - L_q) i_d i_q\\right)\n"
+"\\end{aligned}"
+msgstr ""
+
+#: ../../source/usage.rst:109 cdaa72329c4348b5a3589088f1578872
+msgid "with :math:`\\psi_f = K_t / (1.5 p)` and :math:`\\omega_e = p\\,\\omega_m`. The torque constant is *knot* the back-EMF constant: conflating them is the classic way to be wrong by 1.5 p."
+msgstr "其中 :math:`\\psi_f = K_t / (1.5 p)`、:math:`\\omega_e = p\\,\\omega_m`。转矩常数**不是**反电动势常数：把两者混为一谈，正是差 1.5 p 的经典错法。"
+
+#: ../../source/usage.rst:113 761c76b03e6442c6a22ed0b775356754
+msgid "_`Verification: what is actually checked`"
+msgstr "_`验证：到底检查了什么`"
+
+#: ../../source/usage.rst:115 5294d264d8df4ae2b50177e6ade8a36e
+msgid "Every number below is produced by the commands in the same column, on the same commit."
+msgstr "下面每个数字都由同一行的命令、在同一 commit 上产出。"
+
+#: ../../source/usage.rst:117 b209a148924842a193c3c250ad8fbaa5
+msgid "evidence, not adjectives"
+msgstr "证据，不是形容词"
+
+#: ../../source/usage.rst:121 4efee64eee6445c29fb61d2b8cb10a79
+msgid "What"
+msgstr "项目"
+
+#: ../../source/usage.rst:122 e5dfcc43ab984f9984ecc8aef456eb60
+msgid "How"
+msgstr "怎么跑"
+
+#: ../../source/usage.rst:123 0a119066768d463c8c3b879670280fc2
+msgid "Result"
+msgstr "结果"
+
+#: ../../source/usage.rst:124 4c2772b930794be0a8878768615d4cfc
+msgid "Unit, SIL and stress cases"
+msgstr "单元、SIL 与 stress 用例"
+
+#: ../../source/usage.rst:125 b8758566c13c40229d5501a7aac39f79
+msgid ":code:`conan create . -s build_type=Debug --build=missing`"
+msgstr ""
+
+#: ../../source/usage.rst:126 0beedbf051f94d8f82a8ffafd2eae1c0
+msgid "131 cases, 0 failed"
+msgstr "131 个用例，0 失败"
+
+#: ../../source/usage.rst:127 98e8e1ed87044f0b89a44d9962ccf647
+msgid "Line coverage"
+msgstr "行覆盖率"
+
+#: ../../source/usage.rst:128 e26e3cfd8f8b4af7ad5c6f3a58d83185
+msgid ":code:`python3 .github/misc/coverage_gate.py`"
+msgstr ""
+
+#: ../../source/usage.rst:129 2f1528706bb64f70bad95978ec8bbe6a
+#, python-format
+msgid "96.23 % overall, 99.46 % in :code:`core/`"
+msgstr "整体 96.23 %，:code:`core/` 99.46 %"
+
+#: ../../source/usage.rst:130 aeb4c34af6cf4ce2a4d65b5728efd5c6
+msgid "Layering and standalone headers"
+msgstr "分层与头文件独立编译"
+
+#: ../../source/usage.rst:131 75452e4b81a4443e8bb88b9eb6454d38
+msgid ":code:`gates.py guard` / :code:`gates.py strict`"
+msgstr ""
+
+#: ../../source/usage.rst:132 0c0e22f4c6534d95b6f5d15be8499bc4
+msgid "0 violations"
+msgstr "0 违规"
+
+#: ../../source/usage.rst:133 75187462024d4727913f0aee32d84021
+msgid "Negative compilation (fake HAL must not compile)"
+msgstr "负向编译（伪 HAL 必须编译失败）"
+
+#: ../../source/usage.rst:134 3829948a82c747bdb23dca42e9d4ec51
+msgid ":code:`python3 .github/misc/negative_compile.py`"
+msgstr ""
+
+#: ../../source/usage.rst:135 37b56a8371f9421aa133b6f14c7da918
+msgid "10 / 10 cases behave as specified"
+msgstr "10 / 10 用例行为符合约定"
+
+#: ../../source/usage.rst:136 70458ca2952945d9bc61a002a157a6f8
+msgid "Three hosts and two cross targets"
+msgstr "三平台 + 两个交叉目标"
+
+#: ../../source/usage.rst:137 d20583c9f26d442bb66a8ed0cdbe6e32
+msgid "CI (ubuntu / macOS / Windows; arm-linux-a53, mcu-m4)"
+msgstr "CI（ubuntu / macOS / Windows；arm-linux-a53、mcu-m4）"
+
+#: ../../source/usage.rst:138 afdff8ac31124cc49d8d5857f80bf46a
+msgid "17 / 17 jobs green"
+msgstr "17 / 17 个 job 全绿"
+
+#: ../../source/usage.rst:140 9343639e74f44ec2b0d7b080a3b96488
+msgid "The SIL bench is layered on purpose: an analytic reference (L1), an independent offline arbiter (L2), and scenario tests S1–S5 (current step, speed step, sine tracking, saturation limit, parameter perturbation). The SguanFOC project is a *third* reference, not the judge."
+msgstr "SIL 台架是分层设计的：解析解参考（L1）、独立的离线仲裁器（L2）、以及场景测试 S1–S5（电流阶跃、速度阶跃、正弦跟踪、饱和限幅、参数摄动）。SguanFOC 只是**第三**参考，不是裁判。"

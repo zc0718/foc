@@ -533,6 +533,11 @@ class AutomationDoc:
                 subprocess.run(["make", "-C", _path, "-e", f"SPHINXOPTS=-D language={lang_tag_map[_]}", "html"])
         subprocess.run(["make", "-C", _path, "clean"])
         subprocess.run(["make", "-C", _path, "html"])
+        # The default target above renders whatever `language` conf.py configures (zh_CN), so the
+        # source language — English, i.e. the msgid text — had no output at all. Write it next to
+        # the translated tree instead of replacing it.
+        subprocess.run(["sphinx-build", "-q", "-b", "html", "-D", "language=en",
+                        _path + sep + "source", _path + sep + "build" + sep + "html_en"])
 
     def _copy_images_for_doxygen_and_sphinx(self):
         # prefix syntax: IN: doxygen; OUT: sphinx; ALL: both

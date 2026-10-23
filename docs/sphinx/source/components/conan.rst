@@ -4,7 +4,7 @@ _`Conanfile Configuration`
 _`Usage`
 --------
 
-The conanfile.py is the Conan package configuration file for the fcpp project, responsible for dependency management,
+The conanfile.py is the Conan package configuration file for this project, responsible for dependency management,
 package metadata processing, and module generation.
 
 _`Main Features`

@@ -4,7 +4,7 @@ _`Metadata Configuration`
 _`Project-level Settings`
 -------------------------
 
-The metadata.json file contains the metadata configuration for the fcpp project, including basic project
+The metadata.json file contains the metadata configuration for this project, including basic project
 information, build configuration, and dependency definitions.
 
 _`File Structure`

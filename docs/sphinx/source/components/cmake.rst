@@ -4,7 +4,7 @@ _`CMakeLists Configuration`
 _`Overview`
 -----------
 
-The CMakeLists.txt file is the core build configuration file for the fcpp project, responsible for project building,
+The CMakeLists.txt file is the core build configuration file for this project, responsible for project building,
 dependency management, and module compilation.
 
 _`Key Features`
