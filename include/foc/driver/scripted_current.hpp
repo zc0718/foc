@@ -1,10 +1,8 @@
 // Conan::ImportStart
 #pragma once
-
 #include <array>
 #include <cstddef>
 #include <cstdint>
-
 #include <foc/core/types.hpp>
 #include <foc/hal/current_sense.hpp>
 // Conan::ImportEnd

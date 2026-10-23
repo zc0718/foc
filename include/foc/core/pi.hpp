@@ -1,6 +1,5 @@
 // Conan::ImportStart
 #pragma once
-
 #include <foc/core/types.hpp>
 // Conan::ImportEnd
 

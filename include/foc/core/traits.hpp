@@ -1,9 +1,7 @@
 // Conan::ImportStart
 #pragma once
-
 #include <type_traits>
 #include <utility>
-
 #include <foc/core/observer/observer_policy.hpp>
 #include <foc/core/types.hpp>
 // Conan::ImportEnd

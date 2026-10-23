@@ -1,9 +1,7 @@
 // Conan::ImportStart
 #pragma once
-
 #include <cmath>
 #include <cstdint>
-
 #include <foc/core/limits.hpp>
 #include <foc/core/observer/observer_policy.hpp>
 #include <foc/core/sm.hpp>

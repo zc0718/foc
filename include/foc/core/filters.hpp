@@ -1,9 +1,7 @@
 // Conan::ImportStart
 #pragma once
-
 #include <array>
 #include <cstddef>
-
 #include <foc/core/types.hpp>
 // Conan::ImportEnd
 

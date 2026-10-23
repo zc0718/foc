@@ -1,8 +1,6 @@
 // Conan::ImportStart
 #pragma once
-
 #include <cstdint>
-
 #include <foc/core/pi.hpp>
 // Conan::ImportEnd
 

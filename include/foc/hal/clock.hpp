@@ -1,6 +1,5 @@
 // Conan::ImportStart
 #pragma once
-
 #include <cstdint>
 // Conan::ImportEnd
 

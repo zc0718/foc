@@ -1,8 +1,6 @@
 // Conan::ImportStart
 #pragma once
-
 #include <cmath>
-
 #include <foc/core/types.hpp>
 // Conan::ImportEnd
 

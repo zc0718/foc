@@ -1,6 +1,5 @@
 // Conan::ImportStart
 #pragma once
-
 #include <foc/driver/scripted_current.hpp>
 #include <foc/driver/sim_position.hpp>
 #include <foc/driver/stub_dc_link.hpp>

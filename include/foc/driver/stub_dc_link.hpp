@@ -1,6 +1,5 @@
 // Conan::ImportStart
 #pragma once
-
 #include <foc/hal/dc_link.hpp>
 // Conan::ImportEnd
 

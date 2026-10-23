@@ -1,6 +1,5 @@
 // Conan::ImportStart
 #pragma once
-
 #include <foc/api/foc_types.h>
 // Conan::ImportEnd
 

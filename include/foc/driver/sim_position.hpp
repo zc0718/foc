@@ -1,8 +1,6 @@
 // Conan::ImportStart
 #pragma once
-
 #include <limits>
-
 #include <foc/hal/position.hpp>
 // Conan::ImportEnd
 
