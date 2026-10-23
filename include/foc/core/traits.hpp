@@ -135,6 +135,27 @@ namespace core {
 namespace concepts {
 
 /**
+ * @brief [en] `T` exposes the optional `seed_flux(Ab<float>)` hook of a flux-linkage observer.
+ *        Motor uses it during start(): a sensorless setup seeds the flux from the nameplate.
+ *        [zh] `T` 是否提供磁链观测器可选的 `seed_flux(Ab<float>)` 钩子。
+ *        Motor 在 start() 中使用它：无感场景用铭牌参数播种磁链。
+ *
+ * @since 0.1.0
+ */
+template <typename T, typename = void> struct has_seed_flux : std::false_type {};
+
+template <typename T>
+struct has_seed_flux<T, std::void_t<decltype(std::declval<T&>().seed_flux(std::declval<Ab<float>>()))>>
+    : std::true_type {};
+
+/**
+ * @brief [en] Convenience variable template for the optional seed hook.
+ *        [zh] 可选播种钩子的便捷变量模板。
+ * @since 0.1.0
+ */
+template <typename T> inline constexpr bool has_seed_flux_v = has_seed_flux<T>::value;
+
+/**
  * @brief [en] `T` satisfies the observer policy contract (see observer_policy.hpp): it must expose
  *        `update(Ab<float>, Ab<float>, float) noexcept -> ObsState`.
  *        [zh] `T` 满足观测器策略契约（见 observer_policy.hpp）：必须提供
