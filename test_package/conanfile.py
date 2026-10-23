@@ -25,6 +25,16 @@ def _clear_test_build():
         os.remove(_presets)
 
 
+def _is_within(path: str, folder: str) -> bool:
+    """True when `path` lives inside `folder` (both resolved). Used to keep foreign executables
+    — interpreters, system tools — out of the coverage export."""
+    _p, _f = os.path.abspath(os.path.realpath(path)), os.path.abspath(os.path.realpath(folder))
+    try:
+        return os.path.commonpath([_p, _f]) == _f
+    except ValueError:  # different drives on Windows
+        return False
+
+
 def _recursive_find(root: str, obj_files: list[str]):
     for f in os.listdir(root):
         _f = root + sep + f
@@ -291,7 +301,12 @@ class PackageTestConan(ConanFile):
                 _names.add(_m.group(1))
             for _m in re.finditer(_add_test, _text):
                 _bin = _m.group(1) or _m.group(2)
-                if _bin and os.path.isfile(_bin):
+                # Only binaries WE built can carry our profiles. An `add_test` command may point
+                # at an interpreter or a system tool (a python script test is exactly that), and
+                # feeding such a file to `llvm-cov export` aborts the whole coverage step.
+                # 只有我们自己构建的可执行文件才带我们的 profile；`add_test` 也可能指向解释器或
+                # 系统工具（脚本型用例就是），把它喂给 `llvm-cov export` 会让整个覆盖率步骤失败。
+                if _bin and os.path.isfile(_bin) and _is_within(_bin, build_folder):
                     _paths.append(_bin)
 
         for _name in sorted(_names):
