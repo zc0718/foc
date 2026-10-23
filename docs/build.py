@@ -533,11 +533,39 @@ class AutomationDoc:
                 subprocess.run(["make", "-C", _path, "-e", f"SPHINXOPTS=-D language={lang_tag_map[_]}", "html"])
         subprocess.run(["make", "-C", _path, "clean"])
         subprocess.run(["make", "-C", _path, "html"])
-        # The default target above renders whatever `language` conf.py configures (zh_CN), so the
-        # source language — English, i.e. the msgid text — had no output at all. Write it next to
-        # the translated tree instead of replacing it.
-        subprocess.run(["sphinx-build", "-q", "-b", "html", "-D", "language=en",
-                        _path + sep + "source", _path + sep + "build" + sep + "html_en"])
+        # `make html` renders whatever `language` conf.py pins, so every other language — the
+        # source language (msgid text) included — had no output at all. Emit one tree per
+        # remaining language as `build/html_<code>`, and take both the language list and the
+        # directory names from metadata instead of naming one language here.
+        # 每个未“钉住”的语言各出一份 `build/html_<code>`；语言列表与目录名都来自 metadata，
+        # 不在本函数里写死某个语言。
+        _pinned = self._sphinx_pinned_language(_path)
+        _sphinx = shutil.which('sphinx-build')
+        if _sphinx is None:
+            print('warning: sphinx-build is not on PATH; only `make html` output will be published')
+            return
+        for _lang in self.meta.get('doc_languages') or []:
+            _tag = lang_tag_map.get(_lang, _lang)
+            if _tag == _pinned:
+                continue  # already emitted above as build/html
+            _result = subprocess.run([_sphinx, "-q", "-b", "html", "-D", f"language={_tag}",
+                                      _path + sep + "source",
+                                      _path + sep + "build" + sep + f"html_{_lang}"])
+            if _result.returncode != 0:
+                # never fatal: the site this file publishes is the pinned one, and a broken
+                # translated tree must not take the whole documentation job down
+                print(f'warning: sphinx build for language "{_tag}" failed '
+                      f'(exit {_result.returncode}); build/html_{_lang} is incomplete')
+
+    @staticmethod
+    def _sphinx_pinned_language(_path: str) -> str:
+        """The language `make html` renders, read from conf.py rather than assumed here."""
+        _conf = Path(_path) / "source" / "conf.py"
+        try:
+            _match = re.search(r"^language\s*=\s*'([^']+)'", _conf.read_text(encoding='utf-8'), re.M)
+        except OSError:
+            return ''
+        return _match.group(1) if _match else ''
 
     def _copy_images_for_doxygen_and_sphinx(self):
         # prefix syntax: IN: doxygen; OUT: sphinx; ALL: both

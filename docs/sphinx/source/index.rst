@@ -128,8 +128,15 @@ _`Detailed settings`
    :caption: Using the library
    :numbered:
 
+   Quick start <quickstart>
    Usage and verification <usage>
    Demos <demos/index>
+
+.. toctree::
+   :caption: Reference
+   :numbered:
+
+   Convention alignment <conventions>
 
 _`License`
 ----------

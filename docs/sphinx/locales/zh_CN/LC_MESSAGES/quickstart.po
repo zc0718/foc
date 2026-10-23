@@ -1,0 +1,123 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2026, HeT-FTI
+# This file is distributed under the same license as the foc package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: foc 0.1.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-10-23 18:28+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: zh_CN\n"
+"Language-Team: zh_CN <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.17.0\n"
+
+#: ../../source/quickstart.rst:2 6240bfb536b74b349fa6ee5211ea7c54
+msgid "_`Quick start`"
+msgstr "_`快速上手`"
+
+#: ../../source/quickstart.rst:4 f2da7f65a1744bf0b464b6f810ba5dd9
+msgid "From an empty directory to a running control loop, in four steps. The deep reference — all three faces, the model, the verification matrix — lives in :doc:`usage`."
+msgstr "从空目录到跑通一条控制环，四步。三条使用面的完整参考、模型与验证矩阵见 :doc:`用法与验证 <usage>` 。"
+
+#: ../../source/quickstart.rst:8 8dfae1d985394020bed4e8008e3bc33b
+msgid "_`1. What you need`"
+msgstr "_`1. 你需要什么`"
+
+#: ../../source/quickstart.rst:14 358827bfcaa94a539787fb19a6322a67
+msgid "Item"
+msgstr "项目"
+
+#: ../../source/quickstart.rst:15 0feb7b6c41b644eb9546293b277803a7
+msgid "Requirement"
+msgstr "要求"
+
+#: ../../source/quickstart.rst:16 37178860ba394a5e87be1ded8d4be436
+msgid "Dependency manager"
+msgstr "依赖管理"
+
+#: ../../source/quickstart.rst:17 9f3e9416434b47b79070a293385d45f2
+msgid "Conan 2.x (:code:`conan --version`)"
+msgstr "Conan 2.x（ :code:`conan --version` ）"
+
+#: ../../source/quickstart.rst:18 1a31c21fabef48f2ac4276156ef343de
+msgid "Build system"
+msgstr "构建系统"
+
+#: ../../source/quickstart.rst:19 c85eb2e020164723895a4768be3e9b3c
+msgid "CMake; the exact floor is :code:`metadata.json` → :code:`cmake_version`"
+msgstr "CMake；下限见 :code:`metadata.json` 的 :code:`cmake_version`"
+
+#: ../../source/quickstart.rst:20 c56231844221460b98d34bf57df0b4c7
+msgid "Compiler"
+msgstr "编译器"
+
+#: ../../source/quickstart.rst:21 580a3582730240d3b68d9779222c9bd8
+msgid "C++17 and C11 (GCC / Clang / MSVC)"
+msgstr "C++17 与 C11（GCC / Clang / MSVC）"
+
+#: ../../source/quickstart.rst:22 125dc78d8d2247b5a023599122211f7a
+msgid "Library dependencies"
+msgstr "依赖库"
+
+#: ../../source/quickstart.rst:23 79cffd7d19464d3087f740db5e18a738
+msgid ":code:`etl` (fixed-capacity containers, header-only); :code:`GTest` for tests (host only); :code:`pybind11` for the Python module (host only, skipped on cross builds)"
+msgstr ":code:`etl` （固定容量容器，header-only）；测试用 :code:`GTest` （仅 host）；Python 模块用 :code:`pybind11` （仅 host，交叉编译自动跳过）"
+
+#: ../../source/quickstart.rst:26 5b2dc29e38e1431989cb17e9531334a3
+msgid "A consumer of the package does **not** need Sphinx or Doxygen — those build this documentation."
+msgstr "消费方 **不需要** 安装 Sphinx 或 Doxygen——那是本仓库出文档用的。"
+
+#: ../../source/quickstart.rst:29 fd1a61a609214138965f01ee5cee77e6
+msgid "_`2. Consume the package`"
+msgstr "_`2. 引入`"
+
+#: ../../source/quickstart.rst:31 80f9413008904c7782d95df3d5302789
+msgid "conanfile.py"
+msgstr ""
+
+#: ../../source/quickstart.rst:37 6a1d8f86539a48238f3a9aaa464649f4
+msgid "CMakeLists.txt"
+msgstr ""
+
+#: ../../source/quickstart.rst:44 954d3e025b2a47d1bc14dfdcc8dc9b5d
+msgid "There is exactly one link rule: the aggregate target :code:`foc::foc`. It carries both :code:`foc::foc_c` and :code:`foc::foc_cpp`, and the package metadata guarantees the order."
+msgstr "只需要记一条链接规则：聚合目标 :code:`foc::foc` 。它同时带 :code:`foc::foc_c` 与 :code:`foc::foc_cpp` ，顺序由包元数据保证。"
+
+#: ../../source/quickstart.rst:49 cb598d6d114e4c4d9ef82e6c3096eb17
+msgid "A C consumer still links the C++ runtime. The ABI is stable, the implementation is C++: set :code:`LINKER_LANGUAGE CXX` (or add one empty :code:`.cpp`), otherwise the link fails on :code:`__cxa_*`. This is a documented boundary, not an accident."
+msgstr "C 使用者仍要链接 C++ 运行时。ABI 是稳定的，但实现是 C++：把 :code:`LINKER_LANGUAGE CXX` 设上（或加一个空 :code:`.cpp` ），否则会在 :code:`__cxa_*` 上链接失败。这是写明的边界，不是失误。"
+
+#: ../../source/quickstart.rst:54 9785833e0b864236a139ab1ab4697791
+msgid "_`3. Pick a face`"
+msgstr "_`3. 选择使用面`"
+
+#: ../../source/quickstart.rst:56 aab8e581a3ed4aaca6a65da284f7658b
+msgid "**C++17** — board-level work, your own :code:`HalPolicy`, your own gains: see :ref:`the C++ path <cpp-control-step>`."
+msgstr "**C++17** ——上板开发，用自己的 :code:`HalPolicy` 、自己的增益：见 :ref:`C++ 路径 <cpp-control-step>` 。"
+
+#: ../../source/quickstart.rst:58 141efa4b80314a218eeb81637eeebd99
+msgid "**C11** — non-C++ projects and glue code over the frozen ABI: see :ref:`the C path <c-control-step>`."
+msgstr "**C11** ——非 C++ 工程，走冻结 ABI 的胶水层：见 :ref:`C 路径 <c-control-step>` 。"
+
+#: ../../source/quickstart.rst:60 b9afe9aaaa254972a33a5b5d9aa58cdb
+msgid "**Python** — host-side scripts on top of the C API: see :ref:`the Python path <python-control-step>`."
+msgstr "**Python** ——建立在 C API 之上的上位机脚本：见 :ref:`Python 路径 <python-control-step>` 。"
+
+#: ../../source/quickstart.rst:63 d161c37201da475da2872a9b2a502811
+msgid "Each snippet on that page is complete enough to compile, and the C and Python faces run on the stub HAL with library defaults (20 kHz, 500 ns dead time, 5 A limit, 24 V bus)."
+msgstr "那一页的每段代码都足以编译；C 与 Python 面跑在桩 HAL 与库内默认值上（20 kHz、500 ns 死区、5 A 限流、24 V 母线）。"
+
+#: ../../source/quickstart.rst:67 eafdb1364c5d4a27b60dce8d025a593f
+msgid "_`4. Prove it yourself`"
+msgstr "_`4. 自己验证`"
+
+#: ../../source/quickstart.rst:89 f802a5d85d224cf68018fa97fba001e3
+msgid "What is deliberately **not** verified — dead-time compensation, ADC timing, EMI, ISR worst-case time, flash/RAM footprint — is listed item by item under :ref:`honest limits <honest-limits>`."
+msgstr "明确 **没有** 验证的内容——死区补偿、ADC 时序、EMI、ISR 最坏执行时间、Flash/RAM 占用——逐条列在 :ref:`诚实边界 <honest-limits>` 。"

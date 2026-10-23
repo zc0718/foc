@@ -6,8 +6,8 @@ exceptions, no virtual calls and no hidden allocation on the path that runs ever
 
 The same implementation is reachable three ways: the C++17 template core for board-level work, a
 frozen C11 ABI for non-C++ hosts, and an optional pybind11 module for host-side scripts. Start with
-`docs/quickstart.md`, or the generated site under `docs/sphinx/build/html` (Chinese) and
-`docs/sphinx/build/html_en` (English).
+`docs/sphinx/source/quickstart.rst`, or the generated site under `docs/sphinx/build/html` (Chinese)
+and `docs/sphinx/build/html_en` (English).
 
 ## Badges
 
@@ -154,9 +154,11 @@ as a **soft rule** the emoji also triggers from anywhere in the message:
 
 ### 0. Use the library (C++ path / C path)
 
-See [docs/quickstart.md](docs/quickstart.md): both entry points, the link rules
-(`foc::foc`, C users still link the C++ runtime), the isolation rules and the
-honest list of what this library does **not** verify yet.
+See [docs/sphinx/source/quickstart.rst](docs/sphinx/source/quickstart.rst) and
+[docs/sphinx/source/usage.rst](docs/sphinx/source/usage.rst): both entry points, the link rules
+(`foc::foc`, C users still link the C++ runtime), the isolation rules, and the honest list of what
+this library does **not** verify yet (conventions and alignment traps are in
+[docs/sphinx/source/conventions.rst](docs/sphinx/source/conventions.rst)).
 
 ### 1. Build then test your library
 

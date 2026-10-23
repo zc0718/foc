@@ -3,7 +3,6 @@
 # This file is distributed under the same license as the foc package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
 #
-#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: foc 0.1.0\n"
