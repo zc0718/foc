@@ -248,6 +248,15 @@ generate/modify each one according to the project design above.
      • Create stress test files for performance-critical functions.
      • Use std::chrono for timing, std::thread for concurrency tests.
      • DO NOT add a main() — same auto-generation as unit tests.
+     • NEVER LEAVE THIS DIRECTORY EMPTY — keep at least one trivial case.
+       Two reasons, both verified the hard way:
+         1. git does not track empty directories, so a fresh clone has no
+            test_package/test/stress/ at all; but conanfile.py writes its
+            generated gtest main.cpp into it during generate(), and that
+            open() raises FileNotFoundError before anything is built.
+         2. even with the directory present, an empty file(GLOB_RECURSE)
+            turns add_executable(stress_tests) into a source-less target —
+            only CMake >= 3.11 tolerates that, so it is a version trap.
 
 4.8  test_package/resources/  (test resource files)
      ───────────────────────
