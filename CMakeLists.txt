@@ -397,15 +397,25 @@ install(TARGETS ${INSTALL_TARGETS}
         RUNTIME DESTINATION bin
 )
 
-install(FILES ${C_HEADERS}
-        DESTINATION include
-        COMPONENT c_headers
-)
+# Public headers keep their tree. A flat include/ tree installs exactly as before
+# (include/x.hpp); a nested tree keeps its relative path (include/foc/core/x.hpp) instead of
+# being collapsed into include/x.hpp -- install(FILES) drops the relative directory, which
+# silently broke the "flat or nested" contract of this scaffold.
+function(install_header_tree headers component)
+    foreach(_header IN LISTS headers)
+        file(RELATIVE_PATH _rel "${CMAKE_CURRENT_SOURCE_DIR}/include" "${_header}")
+        get_filename_component(_rel_dir "${_rel}" DIRECTORY)
+        if(_rel_dir)
+            install(FILES "${_header}" DESTINATION "include/${_rel_dir}" COMPONENT ${component})
+        else()
+            install(FILES "${_header}" DESTINATION include COMPONENT ${component})
+        endif()
+    endforeach()
+endfunction()
 
-install(FILES ${CPP_HEADERS}
-        DESTINATION include
-        COMPONENT cpp_headers
-)
+install_header_tree("${C_HEADERS}" c_headers)
+
+install_header_tree("${CPP_HEADERS}" cpp_headers)
 
 install(EXPORT ${LIB_NAME}Targets
         FILE ${LIB_NAME}Config.cmake
