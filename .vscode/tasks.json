@@ -34,6 +34,14 @@
       "problemMatcher": []
     },
     {
+      "label": "negative",
+      "type": "shell",
+      "command": "python3",
+      "args": [".github/misc/negative_compile.py"],
+      "windows": { "command": "python" },
+      "problemMatcher": []
+    },
+    {
       "label": "schema-check",
       "type": "shell",
       "command": "npx ajv validate -s .github/misc/metadata.schema.json -d metadata.json --spec=draft7",

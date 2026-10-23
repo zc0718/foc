@@ -4,8 +4,16 @@
 
 #include <foc/api/foc_api.h>
 #include <foc/api/foc_types.h>
+#include <foc/core/observer/back_emf_observer.hpp>
+#include <foc/core/observer/ideal_observer.hpp>
+#include <foc/core/observer/observer_policy.hpp>
 #include <foc/core/traits.hpp>
 #include <foc/core/types.hpp>
+#include <foc/driver/scripted_current.hpp>
+#include <foc/driver/sim_position.hpp>
+#include <foc/driver/stub_dc_link.hpp>
+#include <foc/driver/stub_hal.hpp>
+#include <foc/driver/stub_pwm.hpp>
 #include <foc/hal/clock.hpp>
 #include <foc/hal/current_sense.hpp>
 #include <foc/hal/dc_link.hpp>
@@ -71,6 +79,19 @@ class BrokenPwm {
     auto configure(float, float) noexcept -> foc::ErrorCode { return foc::ErrorCode::Ok; }
 };
 
+/// Conforming observer, and one that returns the wrong type.
+class FakeObserver {
+  public:
+    auto update(foc::core::Ab<float>, foc::core::Ab<float>, float) noexcept -> foc::core::ObsState {
+        return foc::core::ObsState{};
+    }
+};
+
+class WrongReturnObserver {
+  public:
+    auto update(foc::core::Ab<float>, foc::core::Ab<float>, float) noexcept -> float { return 0.0F; }
+};
+
 } // namespace
 
 
@@ -85,6 +106,30 @@ static_assert(foc::hal::concepts::is_clock_v<FakeClock>, "FakeClock must satisfy
 
 static_assert(!foc::hal::concepts::is_pwm_v<BrokenPwm>, "an incomplete stub must fail the Pwm contract");
 static_assert(!foc::hal::concepts::is_clock_v<FakeDcLink>, "traits must not cross-match contracts");
+
+// Observer policy contract (motor side) and its optional seed hook.
+static_assert(foc::core::concepts::is_observer_v<FakeObserver>, "FakeObserver must satisfy the observer policy");
+static_assert(foc::core::concepts::is_observer_v<foc::core::BackEmfObserver>,
+              "BackEmfObserver must satisfy the observer policy");
+static_assert(foc::core::concepts::is_observer_v<foc::core::IdealObserver>,
+              "IdealObserver must satisfy the observer policy");
+static_assert(!foc::core::concepts::is_observer_v<WrongReturnObserver>,
+              "an observer returning the wrong type must be rejected");
+static_assert(!foc::core::concepts::is_observer_v<FakeDcLink>,
+              "a HAL stub is not an observer");
+static_assert(foc::core::concepts::has_seed_flux_v<foc::core::BackEmfObserver>,
+              "BackEmfObserver advertises seed_flux");
+static_assert(!foc::core::concepts::has_seed_flux_v<foc::core::IdealObserver>,
+              "IdealObserver takes the truth directly, so it must not advertise seed_flux");
+
+// The shipped driver stubs are the reference implementations: they must satisfy the contracts.
+static_assert(foc::hal::concepts::is_pwm_v<foc::driver::StubPwm>, "StubPwm must satisfy foc::hal::Pwm");
+static_assert(foc::hal::concepts::is_current_sense_v<foc::driver::ScriptedCurrent>,
+              "ScriptedCurrent must satisfy foc::hal::CurrentSense");
+static_assert(foc::hal::concepts::is_position_sensor_v<foc::driver::SimPosition>,
+              "SimPosition must satisfy foc::hal::PositionSensor");
+static_assert(foc::hal::concepts::is_dc_link_v<foc::driver::StubDcLink>,
+              "StubDcLink must satisfy foc::hal::DcLink");
 
 static_assert(static_cast<std::int32_t>(foc::ErrorCode::Ok) == static_cast<std::int32_t>(FOC_OK),
               "foc::ErrorCode must mirror foc_err_t (Ok)");

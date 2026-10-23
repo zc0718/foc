@@ -75,6 +75,11 @@ jobs:
       - name: strict-header gate
         run: python3 .github/misc/gates.py strict
 
+      # required: a stub that does not satisfy a HAL/observer contract must fail to compile, the
+      # diagnostic must name the contract header, and the conforming control must still compile
+      - name: contract negative-compile gate
+        run: python3 .github/misc/negative_compile.py
+
       # Required gate: secrets scan with pinned binary version
       - name: gitleaks gate
         run: |

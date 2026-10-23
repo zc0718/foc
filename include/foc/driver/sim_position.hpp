@@ -1,6 +1,8 @@
 // Conan::ImportStart
 #pragma once
 
+#include <limits>
+
 #include <foc/hal/position.hpp>
 // Conan::ImportEnd
 
@@ -33,6 +35,9 @@ class SimPosition final : public hal::PositionSensor {
     /**
      * @brief [en] Set the mechanical velocity.
      *        [zh] 设置机械速度。
+     *
+     * @param velocity_rad_s [en] velocity in rad/s; NaN keeps "not simulated".
+     *                       [zh] 速度，rad/s；NaN 表示"仍未模拟"。
      * @since 0.1.0
      */
     void set_velocity_rad_s(float velocity_rad_s) noexcept;
@@ -67,7 +72,7 @@ class SimPosition final : public hal::PositionSensor {
 
   private:
     float angle_rad_{0.0F};
-    float velocity_rad_s_{0.0F};
+    float velocity_rad_s_{std::numeric_limits<float>::quiet_NaN()};
     bool sensor_present_{true};
 };
 

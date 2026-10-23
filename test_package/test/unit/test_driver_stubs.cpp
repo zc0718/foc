@@ -1,4 +1,5 @@
 #include <array>
+#include <cmath>
 
 #include <gtest/gtest.h>
 
@@ -11,6 +12,65 @@
 #include <foc/driver/stub_pwm.hpp>
 #include <foc/motor/foc_loop.hpp>
 #include <foc/motor/motor_config.hpp>
+
+
+
+TEST(StubPwm, RecordsTheDutyHistoryNewestFirst) {
+    foc::driver::StubPwm pwm;
+    ASSERT_EQ(foc::ErrorCode::Ok, pwm.configure(10000.0F, 0.0F));
+    ASSERT_EQ(foc::ErrorCode::Ok, pwm.enable());
+
+    for (int i = 0; i < 3; ++i) {
+        const auto level = static_cast<float>(i) * 0.1F;
+        pwm.write_duty(foc::core::Uvw<float>{level, level + 0.01F, level + 0.02F});
+    }
+
+    EXPECT_EQ(3U, pwm.history_count());
+    EXPECT_FLOAT_EQ(0.2F, pwm.duty_history(0U).u); // newest
+    EXPECT_FLOAT_EQ(0.1F, pwm.duty_history(1U).u);
+    EXPECT_FLOAT_EQ(0.0F, pwm.duty_history(2U).u); // oldest of the three
+    EXPECT_FLOAT_EQ(0.2F, pwm.last_duty().u);
+
+    // Beyond the recorded range there is nothing to show.
+    EXPECT_FLOAT_EQ(0.0F, pwm.duty_history(3U).v);
+}
+
+
+
+TEST(StubPwm, HistoryRingDropsTheOldestWriteWhenFull) {
+    foc::driver::StubPwm pwm;
+    ASSERT_EQ(foc::ErrorCode::Ok, pwm.configure(10000.0F, 0.0F));
+    ASSERT_EQ(foc::ErrorCode::Ok, pwm.enable());
+
+    const std::size_t capacity = foc::driver::StubPwm::kHistoryCapacity;
+    const std::size_t writes = capacity + 5U;
+    for (std::size_t i = 1U; i <= writes; ++i) {
+        const auto level = static_cast<float>(i);
+        pwm.write_duty(foc::core::Uvw<float>{level, level, level});
+    }
+
+    EXPECT_EQ(capacity, pwm.history_count());
+    EXPECT_FLOAT_EQ(static_cast<float>(writes), pwm.duty_history(0U).u);
+    // The window keeps the newest `capacity` writes, so the oldest retained one is writes-cap+1.
+    EXPECT_FLOAT_EQ(static_cast<float>((writes - capacity) + 1U), pwm.duty_history(capacity - 1U).u);
+    EXPECT_EQ(static_cast<std::uint32_t>(writes), pwm.write_count());
+}
+
+
+
+TEST(StubPwm, ResetClearsTheHistory) {
+    foc::driver::StubPwm pwm;
+    ASSERT_EQ(foc::ErrorCode::Ok, pwm.configure(10000.0F, 0.0F));
+    ASSERT_EQ(foc::ErrorCode::Ok, pwm.enable());
+    pwm.write_duty(foc::core::Uvw<float>{0.7F, 0.2F, 0.1F});
+    ASSERT_EQ(1U, pwm.history_count());
+
+    pwm.reset();
+
+    EXPECT_EQ(0U, pwm.history_count());
+    EXPECT_FLOAT_EQ(0.0F, pwm.duty_history(0U).u);
+    EXPECT_EQ(0U, pwm.write_count());
+}
 
 
 
@@ -119,6 +179,29 @@ TEST(ScriptedCurrent, CalibrationAndRateAreRecorded) {
 
 
 
+TEST(ScriptedCurrent, ReloadingRewindsTheScriptAndTheCalibration) {
+    foc::driver::ScriptedCurrent sense;
+    const std::array<foc::core::Uvw<float>, 2> script{foc::core::Uvw<float>{1.0F, 0.0F, 0.0F},
+                                                      foc::core::Uvw<float>{2.0F, 0.0F, 0.0F}};
+
+    ASSERT_EQ(foc::ErrorCode::Ok, sense.load(script.data(), script.size()));
+    ASSERT_EQ(foc::ErrorCode::Ok, sense.calibrate_offset());
+    EXPECT_TRUE(sense.calibrated());
+    EXPECT_FALSE(sense.exhausted());
+
+    EXPECT_FLOAT_EQ(1.0F, sense.read_uvw().u);
+    EXPECT_FLOAT_EQ(2.0F, sense.read_uvw().u);
+    EXPECT_TRUE(sense.exhausted());
+
+    // A fresh script invalidates the old calibration and rewinds the index.
+    ASSERT_EQ(foc::ErrorCode::Ok, sense.load(script.data(), script.size()));
+    EXPECT_FALSE(sense.calibrated());
+    EXPECT_FALSE(sense.exhausted());
+    EXPECT_FLOAT_EQ(1.0F, sense.read_uvw().u);
+}
+
+
+
 TEST(SimPosition, WrapsTheAngleIntoZeroToTwoPi) {
     foc::driver::SimPosition position;
 
@@ -140,6 +223,19 @@ TEST(SimPosition, ReportsVelocityAndSensorPresence) {
 
     position.set_sensor_present(false);
     EXPECT_FALSE(position.has_sensor());
+}
+
+
+
+TEST(SimPosition, VelocityIsNaNUntilItIsSimulated) {
+    foc::driver::SimPosition position;
+
+    // NaN is the contract's "velocity not supported": Motor then takes the speed from the
+    // observer policy while still using the sensor angle.
+    EXPECT_TRUE(std::isnan(position.velocity_rad_s()));
+
+    position.set_velocity_rad_s(-12.5F);
+    EXPECT_FLOAT_EQ(-12.5F, position.velocity_rad_s());
 }
 
 

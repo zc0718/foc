@@ -1,6 +1,7 @@
 // Conan::ImportStart
 #pragma once
 
+#include <cmath>
 #include <cstdint>
 
 #include <foc/core/limits.hpp>
@@ -302,15 +303,22 @@ auto Motor<Observer, Modulator, Controller, HalPolicy>::tick(float dt_s) noexcep
     const Uvw<float> i_uvw = hal_->current_sense.read_uvw();
     const Ab<float> i_ab = core::clarke(i_uvw);
 
+    // A sensor may report the angle but not the speed (`NaN` = not supported, see the HAL
+    // contract): the angle then comes from the sensor and the speed from the observer policy.
+    const bool has_sensor = hal_->position.has_sensor();
+    const float sensor_speed = has_sensor ? hal_->position.velocity_rad_s() : 0.0F;
+    const bool speed_from_observer = !has_sensor || std::isnan(sensor_speed);
+
     float theta_e = 0.0F;
     float speed_mech = 0.0F;
-    if (hal_->position.has_sensor()) {
-        theta_e = hal_->position.angle_mech_rad() * static_cast<float>(config_.pole_pairs);
-        speed_mech = hal_->position.velocity_rad_s();
-    } else {
+    if (speed_from_observer) {
         const core::ObsState observed = policies_.observer.update(v_ab_prev_, i_ab, dt_s);
-        theta_e = observed.theta_e;
         speed_mech = observed.omega_e / static_cast<float>(config_.pole_pairs);
+        theta_e =
+            has_sensor ? (hal_->position.angle_mech_rad() * static_cast<float>(config_.pole_pairs)) : observed.theta_e;
+    } else {
+        theta_e = hal_->position.angle_mech_rad() * static_cast<float>(config_.pole_pairs);
+        speed_mech = sensor_speed;
     }
 
     if (mode_ == ReferenceMode::Speed) {

@@ -1,4 +1,6 @@
 #include <array>
+#include <cmath>
+#include <limits>
 
 #include <gtest/gtest.h>
 
@@ -192,4 +194,45 @@ TEST(Motor, SensorlessRunUsesTheObserverAndSeedsItOnStart) {
 
     ASSERT_EQ(foc::ErrorCode::Ok, motor.tick(kDt));
     EXPECT_EQ(1U, hal.pwm.write_count());
+}
+
+
+
+TEST(Motor, SensorVelocityIsUsedWhenItIsFinite) {
+    foc::driver::StubHal hal;
+    make_hal(hal);
+    hal.position.set_velocity_rad_s(3.0F);
+
+    Motor motor(make_config(), make_policies(), hal);
+    ASSERT_EQ(foc::ErrorCode::Ok, motor.init());
+    ASSERT_EQ(foc::ErrorCode::Ok, motor.start());
+    ASSERT_EQ(foc::ErrorCode::Ok, motor.tick(kDt));
+
+    EXPECT_FLOAT_EQ(3.0F, motor.telemetry().speed_mech_rad_s);
+}
+
+
+
+TEST(Motor, SensorWithoutVelocityFallsBackToTheObserverSpeed) {
+    foc::driver::StubHal hal;
+    make_hal(hal);
+    // The HAL contract defines NaN as "this sensor cannot measure velocity".
+    hal.position.set_velocity_rad_s(std::numeric_limits<float>::quiet_NaN());
+
+    Motor motor(make_config(), make_policies(), hal);
+    ASSERT_EQ(foc::ErrorCode::Ok, motor.init());
+    ASSERT_EQ(foc::ErrorCode::Ok, motor.start());
+    motor.set_torque(1.0F);
+
+    for (int i = 0; i < 3; ++i) {
+        ASSERT_EQ(foc::ErrorCode::Ok, motor.tick(kDt));
+    }
+
+    // The speed must come from the observer, not from the NaN the sensor reported. The exact
+    // value is whatever the flux observer estimates on this static rig (zero current, a voltage
+    // command and no plant), so only its finiteness and magnitude are asserted here.
+    const foc::motor::Telemetry telemetry = motor.telemetry();
+    EXPECT_TRUE(std::isfinite(telemetry.speed_mech_rad_s));
+    EXPECT_LT(std::fabs(telemetry.speed_mech_rad_s), 1e4F);
+    EXPECT_TRUE(std::isfinite(telemetry.iq_a));
 }

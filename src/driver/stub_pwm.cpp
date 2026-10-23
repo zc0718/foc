@@ -33,6 +33,11 @@ auto StubPwm::configure(float freq_hz, float deadtime_ns) noexcept -> ErrorCode 
  */
 void StubPwm::write_duty(core::Uvw<float> duty) noexcept {
     duty_ = duty;
+    history_[history_next_] = duty;
+    history_next_ = (history_next_ + 1U) % kHistoryCapacity;
+    if (history_count_ < kHistoryCapacity) {
+        ++history_count_;
+    }
     ++writes_;
 }
 
@@ -65,6 +70,9 @@ auto StubPwm::fault() const noexcept -> bool { return fault_; }
  */
 void StubPwm::reset() noexcept {
     duty_ = core::Uvw<float>{};
+    history_ = {};
+    history_count_ = 0U;
+    history_next_ = 0U;
     freq_hz_ = 0.0F;
     deadtime_ns_ = 0.0F;
     writes_ = 0;
@@ -76,6 +84,25 @@ void StubPwm::reset() noexcept {
 void StubPwm::set_fault(bool active) noexcept { fault_ = active; }
 
 auto StubPwm::last_duty() const noexcept -> core::Uvw<float> { return duty_; }
+
+
+/**
+ * @brief [en] Implements StubPwm::duty_history(); the contract is documented on its declaration.
+ *        [zh] 实现 StubPwm::duty_history()；契约文档在对应的声明处。
+ * @attacher
+ * @since 0.1.0
+ */
+auto StubPwm::duty_history(std::size_t back) const noexcept -> core::Uvw<float> {
+    if (back >= history_count_) {
+        return core::Uvw<float>{};
+    }
+    // history_next_ points at the slot the next write will use, so the newest one sits behind it.
+    const std::size_t index = (history_next_ + kHistoryCapacity - 1U - back) % kHistoryCapacity;
+    return history_[index];
+}
+
+
+auto StubPwm::history_count() const noexcept -> std::size_t { return history_count_; }
 
 auto StubPwm::write_count() const noexcept -> std::uint32_t { return writes_; }
 

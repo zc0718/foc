@@ -1,6 +1,8 @@
 // Conan::ImportStart
 #pragma once
 
+#include <array>
+#include <cstddef>
 #include <cstdint>
 
 #include <foc/core/types.hpp>
@@ -23,6 +25,9 @@ namespace driver {
  */
 class StubPwm final : public hal::Pwm {
   public:
+    /// [en] Depth of the duty history ring. [zh] 占空比历史环形缓冲的深度。
+    static constexpr std::size_t kHistoryCapacity = 32U;
+
     StubPwm() noexcept = default;
 
     /**
@@ -83,6 +88,30 @@ class StubPwm final : public hal::Pwm {
     [[nodiscard]] auto last_duty() const noexcept -> core::Uvw<float>;
 
     /**
+     * @brief [en] Duty written `back` calls ago (0 = newest), keeping the last
+     *        `kHistoryCapacity` writes in a fixed ring buffer.
+     *        [zh] `back` 次调用之前写入的占空比（0 = 最新），只保留最近
+     *        `kHistoryCapacity` 次写入（固定容量环形缓冲）。
+     *
+     * @param back [en] 0 is the newest write. [zh] 0 为最新一次写入。
+     * @return [en] the recorded duty, or an all-zero vector once `back` is outside the recorded
+     *         range (nothing to show).
+     *         [zh] 记录到的占空比；`back` 超出已记录范围时返回全零矢量（无内容可看）。
+     * @post [en] Once the ring is full the oldest entry is dropped, not an error: a control loop
+     *       must never be asked to handle a bookkeeping overflow.
+     *       [zh] 环形缓冲满后丢弃最旧的一条，**不报错**：控制环不该为“记账溢出”付出代价。
+     * @since 0.1.0
+     */
+    [[nodiscard]] auto duty_history(std::size_t back) const noexcept -> core::Uvw<float>;
+
+    /**
+     * @brief [en] How many duties are currently recorded, at most kHistoryCapacity.
+     *        [zh] 当前已记录的占空比数量，最大 kHistoryCapacity。
+     * @since 0.1.0
+     */
+    [[nodiscard]] auto history_count() const noexcept -> std::size_t;
+
+    /**
      * @brief [en] How many times write_duty() was called.
      *        [zh] write_duty() 被调用的次数。
      * @since 0.1.0
@@ -105,6 +134,9 @@ class StubPwm final : public hal::Pwm {
 
   private:
     core::Uvw<float> duty_;
+    std::array<core::Uvw<float>, kHistoryCapacity> history_{};
+    std::size_t history_count_{0};
+    std::size_t history_next_{0};
     float freq_hz_{0.0F};
     float deadtime_ns_{0.0F};
     std::uint32_t writes_{0};
