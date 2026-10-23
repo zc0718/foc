@@ -126,8 +126,10 @@ class PackageRecipe(ConanFile):
         metadata_path = Path(self.recipe_folder) / METADATA_FILENAME
         license_path = Path(self.recipe_folder) / "LICENSE"
 
-        self.conandata = yaml.safe_load(conandata_path.read_text())
-        self.meta = yaml.safe_load(metadata_path.read_text())
+        # explicit utf-8: the default is the locale encoding, which is cp1252/cp936 on Windows
+        # and cannot decode the Chinese comments these files carry
+        self.conandata = yaml.safe_load(conandata_path.read_text(encoding='utf-8'))
+        self.meta = yaml.safe_load(metadata_path.read_text(encoding='utf-8'))
 
         # Required attributes
         self.name, self.version = self.meta.get('name'), self.meta.get('version')

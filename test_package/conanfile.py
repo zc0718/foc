@@ -64,9 +64,10 @@ class PackageTestConan(ConanFile):
 
     def init(self):
         conandata_path = Path(self.recipe_folder).parent / "conandata.yml"
-        self.conandata = yaml.safe_load(conandata_path.read_text())
+        # explicit utf-8: read_text() defaults to the locale encoding (cp1252/cp936 on Windows)
+        self.conandata = yaml.safe_load(conandata_path.read_text(encoding='utf-8'))
         metadata_path = Path(self.recipe_folder).parent / "metadata.json"
-        self.metadata = yaml.safe_load(metadata_path.read_text())
+        self.metadata = yaml.safe_load(metadata_path.read_text(encoding='utf-8'))
 
     def build_requirements(self):
         # escape: HET_CMAKE_BUILD_REQUIRE=none also skips the test package's 45 MB cmake
@@ -490,7 +491,7 @@ class PackageTestConan(ConanFile):
                 _files = [str(_) for _ in Path(_f_unit).rglob('*.cpp') if not _.name.startswith('ucov_')]
                 _cache = [[_a := _.split(sep), (sep.join(_a[:-1]), _a[-1])][-1] for _ in _files]
                 for _test_src, _test_ucov in zip(_files, _cache):
-                    with open(_test_src, 'r') as f:
+                    with open(_test_src, 'r', encoding='utf-8') as f:
                         _tmp = f.readlines()
                     _tmp.extend(_entry_lists()[1:])
                     with open(_test_ucov[0] + sep + 'ucov_' + _test_ucov[1], 'w', encoding='utf-8') as f:
