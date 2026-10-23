@@ -10,7 +10,7 @@
 
 ```
 benchmark/
-├── bench_entry.c              ← 【算法工程师编辑】用例注册入口（MCU/Linux 共用）
+├── bench_entry.cpp              ← 【算法工程师编辑】用例注册入口（MCU/Linux 共用）
 ├── algo_module.ld.in          ← Linker Script 模板（仅裸机，自动填充地址）
 ├── CMakeLists.txt             ← 双目标编译脚本（baremetal / Linux 自动分支）
 ├── conanfile.py               ← Conan 包配方（不需要修改）
@@ -42,7 +42,7 @@ benchmark/
 | 输出协议 | `BENCHMARK_START / RESULT / BENCHMARK_END` | **完全相同** |
 | 部署 | JLink / OpenOCD / PyOCD 烧录 | `adb push` / `scp` 传输后执行 |
 | 新增端口文件 | 无（Base Firmware 已提供） | `port/linux/bench_main_linux.c` |
-| `bench_entry.c` | 共用，无需修改 | 共用，无需修改 |
+| `bench_entry.cpp` | 共用，无需修改 | 共用，无需修改 |
 | `het_bench_core.c` | 共用，无需修改 | 共用，无需修改 |
 
 ---
@@ -140,9 +140,52 @@ cp bench_config_linux.json bench_config.json
 
 ---
 
+---
+
+## 本仓库的 benchmark 测什么（foc）
+
+`bench_entry.cpp` 里注册了 6 个用例，一次调用 = 一个单位工作量，所以
+`报告微秒数 / repeat` 就是单次调用开销：
+
+| 用例 | 量的是什么 | repeat |
+|------|-----------|--------|
+| `tick_full_loop_dt100us` | **ISR 整环**（观测器 + 双电流 PI + SVPWM + 状态机），PRD U6 唯一有意义的量 | 100 000 |
+| `clarke_park` | 正变换（Clarke + Park） | 2 000 000 |
+| `inv_park_clarke` | 逆变换（inv Park + inv Clarke） | 2 000 000 |
+| `svpwm_modulate` | 空间矢量调制（含 min-max 中点注入） | 500 000 |
+| `pi_step` | 一个 PI 步（输出回灌作下一次反馈，走正常路径而非钳位） | 3 000 000 |
+| `observer_update` | 反电动势观测器一步 | 700 000 |
+
+### 先在宿主机上取一个相对基线（不需要板子）
+
+框架的 Linux 分支是**交叉**到 Cortex-A 的；要在本机取基线，直接用宿主工具链编同一份入口：
+
+```bash
+gcc -std=c11 -O2 -Ibenchmark -c benchmark/core/het_bench_core.c -o /tmp/core.o
+g++ -std=c++17 -O2 -Iinclude -Ibenchmark \
+    benchmark/bench_entry.cpp benchmark/port/linux/bench_main_linux.cpp /tmp/core.o \
+    $(find src -name '*.cpp' ! -name 'version.cpp') -o /tmp/bench_host
+/tmp/bench_host          # BENCHMARK_START ... RESULT|<case>|<微秒> ... BENCHMARK_END
+```
+
+x86_64 / g++ 13 / `-O2` 上的参考值（同一台机器复现，波动 ±10%）：
+
+| 用例 | 单次开销 |
+|------|---------|
+| tick 整环 | ≈ 43 ns |
+| clarke + park | ≈ 5.5 ns |
+| inv park + inv clarke | ≈ 5.2 ns |
+| svpwm modulate | ≈ 14 ns |
+| pi step | ≈ 9 ns |
+| observer update | ≈ 19 ns |
+
+> **诚实边界**：这是宿主机上的**相对**开销，**不是** MCU 的 WCET。目标板的数字（PRD U6/U7）
+> 必须用 `python benchmark/script/run_bench.py` 在真实板卡上采集——本仓库当前没有板子，
+> 因此 U6/U7 仍标记为"未验证"，不得把上表的 ns 当作硬件结论引用。
+
 ### Step 2：编写算法测试用例（MCU / Linux 完全一致）
 
-编辑 `bench_entry.c`，**只修改 USER ZONE 内的内容**：
+编辑 `bench_entry.cpp`，**只修改 USER ZONE 内的内容**：
 
 ```c
 /* ============================================================
@@ -508,7 +551,7 @@ adb devices                # 验证设备连接
 
 ```mermaid
 flowchart TD
-    E[算法工程师\n编辑 bench_entry.c\n注册用例表] --> CM
+    E[算法工程师\n编辑 bench_entry.cpp\n注册用例表] --> CM
     E --> LA
 
     subgraph CM["Cortex-M 路径（裸机）"]
@@ -547,7 +590,7 @@ typedef struct {
 } HostInterface;
 ```
 
-`bench_entry.c` / `het_bench_core.c` 只依赖 `HostInterface`，对平台完全透明。
+`bench_entry.cpp` / `het_bench_core.c` 只依赖 `HostInterface`，对平台完全透明。
 
 ---
 
@@ -566,7 +609,7 @@ A: 确认 `adb devices` 可以看到设备，且 `remote_path` 所在目录有�
 A: 正常现象——MCU 的 Tick 是 Base Firmware 定义的计数单位（如 CPU cycle）；Linux 的 Tick 是 µs。两者不能直接比较绝对值，但可以比较同平台不同版本的相对变化。
 
 **Q: `CASE_ERROR` 出现在输出中**  
-A: 用例 wrapper 函数返回了 `0`。检查 `bench_entry.c` 中对应函数的返回值（应返回 `1` 表示通过）。
+A: 用例 wrapper 函数返回了 `0`。检查 `bench_entry.cpp` 中对应函数的返回值（应返回 `1` 表示通过）。
 
 **Q: Cortex-M Flash / RAM 不够**  
 A: 修改 `algo_module.ld.in` 中的 `LENGTH`（默认 Flash 64K，RAM 32K），确保地址范围不与 Base Firmware 重叠。
