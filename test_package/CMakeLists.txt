@@ -55,13 +55,10 @@ function(link_to_resources EXECUTE_FILE)
 endfunction()
 
 
-function(apply_unit_coverage U_NAME U_FILE)
-    find_package(GTest REQUIRED)
-    add_executable(${U_NAME} ${U_FILE})
-    link_to_resources(${U_NAME})
-    target_link_libraries(${U_NAME} PRIVATE ${MAIN_LIB_TARGET} GTest::gtest)
-    gtest_discover_tests(${U_NAME})
-
+# One place decides what "--coverage" means for this compiler: the unit legs, the main executable
+# and any extra consumer (e.g. a pure C smoke test) must instrument and link identically, otherwise
+# the archives carry __gcov_* references a consumer cannot resolve.
+function(apply_coverage_flags TARGET_NAME)
     if(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
         set(COVERAGE_FLAGS "--coverage" "-O0" "-g")
         set(LINK_FLAGS "--coverage")
@@ -72,10 +69,21 @@ function(apply_unit_coverage U_NAME U_FILE)
         message(FATAL_ERROR "Code coverage not support for compiler: ${CMAKE_CXX_COMPILER_ID}")
     endif()
 
-    target_compile_options(${U_NAME} PRIVATE ${COVERAGE_FLAGS})
+    target_compile_options(${TARGET_NAME} PRIVATE ${COVERAGE_FLAGS})
     if(LINK_FLAGS)
-        target_link_options(${U_NAME} PRIVATE ${LINK_FLAGS})
+        target_link_options(${TARGET_NAME} PRIVATE ${LINK_FLAGS})
     endif()
+endfunction()
+
+
+function(apply_unit_coverage U_NAME U_FILE)
+    find_package(GTest REQUIRED)
+    add_executable(${U_NAME} ${U_FILE})
+    link_to_resources(${U_NAME})
+    target_link_libraries(${U_NAME} PRIVATE ${MAIN_LIB_TARGET} GTest::gtest)
+    gtest_discover_tests(${U_NAME})
+
+    apply_coverage_flags(${U_NAME})
 endfunction()
 
 
@@ -87,20 +95,7 @@ function(enable_main_coverage)
     enable_testing()
     gtest_discover_tests(main)
 
-    if(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
-        set(COVERAGE_FLAGS "--coverage" "-O0" "-g")
-        set(LINK_FLAGS "--coverage")
-    elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-        set(COVERAGE_FLAGS "-fprofile-instr-generate" "-fcoverage-mapping" "-O0" "-g")
-        set(LINK_FLAGS "-fprofile-instr-generate")
-    else()
-        message(FATAL_ERROR "Code coverage not support for compiler: ${CMAKE_CXX_COMPILER_ID}")
-    endif()
-
-    target_compile_options(main PRIVATE ${COVERAGE_FLAGS})
-    if(LINK_FLAGS)
-        target_link_options(main PRIVATE ${LINK_FLAGS})
-    endif()
+    apply_coverage_flags(main)
 endfunction()
 
 
@@ -128,6 +123,19 @@ if(TRIGGER_TESTS)
     find_package(GTest REQUIRED)
     include(GoogleTest)
     enable_testing()
+
+    # G6: a pure C11 consumer of the C API, built only when the package ships one. LINKER_LANGUAGE
+    # CXX is the honest part: the C ABI is stable but the implementation is C++, so the C consumer
+    # still links the C++ runtime (limitation U8, never to be papered over).
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/c_api_c11.c")
+        add_executable(c_api_c11 c_api_c11.c)
+        set_target_properties(c_api_c11 PROPERTIES LINKER_LANGUAGE CXX)
+        target_link_libraries(c_api_c11 PRIVATE ${MAIN_LIB_TARGET})
+        if(ENABLE_COVERAGE)
+            apply_coverage_flags(c_api_c11)
+        endif()
+        add_test(NAME c_api_c11 COMMAND c_api_c11)
+    endif()
     
     if(NOT ENABLE_COVERAGE)
       file(GLOB_RECURSE TEST_SOURCES_S "test/stress/*.cpp")

@@ -544,6 +544,11 @@ class PackageRecipe(ConanFile):
         self.cpp_info.components[f"{self.name}_c"].requires = [[_t := _.split('@')[1],
                                                                 conan_targets[_t] if _t in conan_targets
                                                                 else _t][-1] for _ in _c]
+        # The C component is not a standalone library here: foc_api.c validates and forwards to the
+        # bridge in the C++ component (the C-ABI-over-C++-core pattern, ADR-002). Declaring the
+        # requirement is what makes CMakeDeps put `_cpp` *before* `_c` on every consumer's link
+        # line; without it a single pass of the linker cannot resolve the bridge symbols.
+        self.cpp_info.components[f"{self.name}_c"].requires += [f"{self.name}_cpp"]
         self.cpp_info.components[f"{self.name}_cpp"].libs = [f"{self.name}_cpp"]
         self.cpp_info.components[f"{self.name}_cpp"].requires = [[_t := _.split('@')[1],
                                                                   conan_targets[_t] if _t in conan_targets
