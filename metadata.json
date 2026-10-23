@@ -26,7 +26,7 @@
     "cpp": {"etl": ["etl::etl"]},
     "infra": {"GTest": ["gtest::gtest"]}
   },
-  "baremetal_white_list": ["etl", "ArduinoJson"],
+  "baremetal_white_list": ["etl"],
   "doc_languages": ["en", "zh"],
   "doc_versions": ["0.1.0"],
   "doc_doxygen_folders": ["include", "src", "docs/doxygen/dox"],
