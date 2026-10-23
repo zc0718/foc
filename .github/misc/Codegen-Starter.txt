@@ -271,6 +271,13 @@ generate/modify each one according to the project design above.
        - Bind every public class, function, enum using PYBIND11_MODULE.
        - For template functions/classes, bind each concrete instantiation.
        - Name the module "<project_name>_python".
+       - If the library already exposes a C ABI (an `include/*/api/` header),
+         bind THAT instead of the C++ templates: a stable ABI, no
+         per-instantiation bindings, and no C++ ABI leaking through Python.
+       - Expect the module to be skipped on cross builds (it embeds the host
+         CPython ABI); the library itself must stay cross-compilable.
+       - Under coverage the module must link with the same coverage LINK_FLAGS
+         as the archives, or importing it fails on `__gcov_*`.
      • If disabled, leave this file as a placeholder or remove it.
 
 ────────────────────────────────────────────────────────────────────────────────

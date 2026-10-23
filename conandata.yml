@@ -1,8 +1,4 @@
-# This file is managed by Conan, contents will be overwritten.
-# To keep your changes, remove these comment lines, but the plugin won't be able to modify your requirements
-
 requirements:
   - "gtest/1.16.0"
   - "etl/20.47.1"
-  # - "pybind11/3.0.1"   # V1 不启用 Python 绑定（metadata.enable_python_bindings=false）
-  # - "dlib/19.24.2"
+  - "pybind11/3.0.1"

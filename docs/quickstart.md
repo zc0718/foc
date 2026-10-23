@@ -33,7 +33,7 @@
 | 依赖管理 | Conan 2.x（`conan --version`） |
 | 构建 | CMake（下限见 `metadata.json` 的 `cmake_version`） |
 | 编译器 | 支持 C++17 与 C11（GCC / Clang / MSVC） |
-| 依赖库 | `etl`（固定容量容器，header-only）；测试用 `GTest`（仅 host） |
+| 依赖库 | `etl`（固定容量容器，header-only）；测试用 `GTest`（仅 host）；Python 绑定用 `pybind11`（仅 host，交叉编译时自动跳过） |
 
 消费方**不需要**安装 Sphinx/Doxygen——那是本仓库自己出文档用的。
 
@@ -177,6 +177,40 @@ int main(void) {
 且整定与载波频率是库内默认值（20 kHz、500 ns 死区、`i_max = 5 A`、母线 24 V、电流环
 2000 rad/s、速度环 200 rad/s）。**上真实硬件请走 C++ 路径**——那里可以注入自己的
 `HalPolicy` 并自己决定全部增益（PRD D34）。
+
+---
+
+## 6.5 Python 路径（上位机脚本 / 数据分析）
+
+`metadata.enable_python_bindings = true` 时，包内会多一个 pybind11 模块 **`foc_python`**
+（装在 `lib/` 下）。它绑定的是** C API**，不是 C++ 模板——理由和 C 路径一样：稳定 ABI，
+不为每个模板实例化写一份绑定（PRD D38）。
+
+```python
+import foc_python as foc
+
+with foc.Motor.from_parts() as motor:      # with 退出即销毁 C 句柄
+    motor.enable()
+    motor.set_torque(1.0)                 # 或 motor.set_speed(50.0)
+    for _ in range(1000):
+        motor.tick(1e-4)
+    print(motor.telemetry())              # {'speed_mech_rad_s': ..., 'id_a': ..., 'iq_a': ...}
+```
+
+让 Python 找到模块：
+
+```bash
+python3 -c "import sysconfig; print(sysconfig.get_paths()['purelib'])"  # 或者直接用 PYTHONPATH
+PYTHONPATH="$(conan cache path foc/0.1.0)/lib" python3 your_script.py
+```
+
+| 行为 | 说明 |
+|------|------|
+| 错误处理 | C 侧返回码在 Python 侧变成异常：`FocError`，`e.code` 就是 `foc_python.ErrorCode.*` |
+| 生命周期 | `Motor` 是 RAII 包装：`close()` 幂等，`with` 退出时自动销毁；`alive` 可查询 |
+| 能力边界 | 与 C 路径**完全一致**：桩 HAL、库内默认整定、4 个实例的池 |
+| 交叉编译 | 自动跳过（模块绑的是宿主机 CPython ABI，交叉工具链既没解释器也没头文件），库本体不受影响 |
+| 本地自检 | `test_package/test/python/test_foc_python.py`，由 CTest 的 `python_bindings` 用例执行 |
 
 ---
 

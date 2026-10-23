@@ -141,6 +141,36 @@ if(TRIGGER_TESTS)
         endif()
         add_test(NAME c_api_validation COMMAND c_api_validation)
     endif()
+
+    # OPTIONAL Python consumer: only fires when the package actually ships a `foc_python*` module
+    # (metadata.enable_python_bindings = true). Compiling the module proves it links; importing it
+    # is the only way to prove the bound surface behaves like the C API, so the test is worth the
+    # twenty lines. A package without the module skips it -- pure C++/C projects need nothing here.
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/test/python/test_foc_python.py")
+      set(PY_CONSUMER_MODULE_DIR "")
+      if(foc_INCLUDE_DIRS)
+        list(GET foc_INCLUDE_DIRS 0 PY_CONSUMER_INCLUDE)
+        get_filename_component(PY_CONSUMER_PACKAGE "${PY_CONSUMER_INCLUDE}" DIRECTORY)
+        if(EXISTS "${PY_CONSUMER_PACKAGE}/lib")
+          set(PY_CONSUMER_MODULE_DIR "${PY_CONSUMER_PACKAGE}/lib")
+        endif()
+      endif()
+      file(GLOB PY_CONSUMER_MODULES "${PY_CONSUMER_MODULE_DIR}/foc_python*")
+      if(PY_CONSUMER_MODULES)
+        # reuse the interpreter pybind11 picked: a module built for 3.12 cannot be imported by 3.13
+        if(NOT DEFINED Python_EXECUTABLE)
+          find_package(Python3 COMPONENTS Interpreter REQUIRED)
+          set(Python_EXECUTABLE "${Python3_EXECUTABLE}")
+        endif()
+        message(STATUS "[test] pybind11 module found: running the python consumer")
+        add_test(NAME python_bindings
+                 COMMAND ${Python_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/test/python/test_foc_python.py")
+        set_tests_properties(python_bindings PROPERTIES
+                             ENVIRONMENT "PYTHONPATH=${PY_CONSUMER_MODULE_DIR}")
+      else()
+        message(STATUS "[test] no pybind11 module in the package: python consumer skipped")
+      endif()
+    endif()
     
     if(NOT ENABLE_COVERAGE)
       file(GLOB_RECURSE TEST_SOURCES_S "test/stress/*.cpp")

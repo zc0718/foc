@@ -24,7 +24,7 @@
     "common": {},
     "c": {},
     "cpp": {"etl": ["etl::etl"]},
-    "infra": {"GTest": ["gtest::gtest"]}
+    "infra": {"GTest": ["gtest::gtest"], "pybind11": ["pybind11::module"]}
   },
   "baremetal_white_list": ["etl"],
   "doc_languages": ["en", "zh"],
@@ -33,7 +33,7 @@
   "doc_doxygen_suffix": ["h", "c", "hpp", "cpp", "dox", "cxx"],
   "trigger_tests": true,
   "saving_tests_log": true,
-  "enable_python_bindings": false,
+  "enable_python_bindings": true,
   "workflow_triggers": {
     "build": true,
     "tests": true,
