@@ -337,15 +337,20 @@ class PackageTestConan(ConanFile):
 
     def _coverage_totals(self, info_file):
         """Sum the tracefile's own LF/LH/FNF/FNH/BRF/BRH records; each file record carries its totals, so a plain sum is the report's."""
-        _sums, _files = {}, set()
+        _sums, _files, _per_file = {}, set(), {}
+        _current = None
         with open(info_file, 'r', encoding='utf-8') as f:
             for _line in f:
                 if _line.startswith('SF:'):
-                    _files.add(_source_relpath(_line[3:].strip()))
+                    _current = _source_relpath(_line[3:].strip())
+                    _files.add(_current)
+                    _per_file.setdefault(_current, {})
                     continue
                 _key, _, _value = _line.strip().partition(':')
                 if _key in ('LF', 'LH', 'FNF', 'FNH', 'BRF', 'BRH') and _value.isdigit():
                     _sums[_key] = _sums.get(_key, 0) + int(_value)
+                    if _current is not None:
+                        _per_file[_current][_key] = int(_value)
         _rate = lambda hit, found: round(100.0 * hit / found, 2) if found else 0.0
         _totals = {_what: {'hit': _sums.get(_h, 0), 'found': _sums.get(_f, 0),
                            'percent': _rate(_sums.get(_h, 0), _sums.get(_f, 0))}
@@ -354,6 +359,11 @@ class PackageTestConan(ConanFile):
                                          ('branches', 'BRH', 'BRF')]}
         # the file set is what two platforms can compare; the rates cannot match (see _code_coverage_clang)
         _totals['files'] = sorted(_files)
+        # Per-file line counts: a scope threshold ("core >= 90 %, whole library >= 70 %") can only be
+        # computed from counts. Averaging per-file percentages would weight a 3-line header like a
+        # 300-line source, so the counts travel with the summary instead.
+        _totals['per_file'] = {_p: {'lines_hit': _v.get('LH', 0), 'lines_found': _v.get('LF', 0)}
+                               for _p, _v in sorted(_per_file.items()) if _v}
         return _totals
 
     def _render_html_report(self, coverage_folder, info_file, pkg_root):
