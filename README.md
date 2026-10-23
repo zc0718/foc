@@ -139,6 +139,12 @@ as a **soft rule** the emoji also triggers from anywhere in the message:
 
 ## Crash Course of Build
 
+### 0. Use the library (C++ path / C path)
+
+See [docs/quickstart.md](docs/quickstart.md): both entry points, the link rules
+(`foc::foc`, C users still link the C++ runtime), the isolation rules and the
+honest list of what this library does **not** verify yet.
+
 ### 1. Build then test your library
 
 inplace build and test
