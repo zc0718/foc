@@ -1,0 +1,85 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2026, HeT-FTI
+# This file is distributed under the same license as the foc package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: foc 0.1.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-10-23 17:59+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: zh_CN\n"
+"Language-Team: zh_CN <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.17.0\n"
+
+#: ../../source/demos/sine_tracking.rst:2 ba1c8fa9a5dc4ec58b6a69d314442489
+msgid "_`Sine tracking`"
+msgstr "_`正弦跟踪`"
+
+#: ../../source/demos/sine_tracking.rst:4 84e1dc2e2b7249d88dce3fd73e782c49
+msgid "The speed reference is a 1 Hz sine of 50 rad/s amplitude — the scenario that exposes phase lag and amplitude collapse, which a step test cannot see."
+msgstr "速度给定是 1 Hz、幅值 50 rad/s 的正弦——阶跃测不出的相位滞后与幅值塌陷，在这里会暴露。"
+
+#: ../../source/demos/sine_tracking.rst:12 7aaec3efe41e4a5fac8c48fbf266a719
+msgid "Measured speed against the reference (the first 0.25 s transient is trimmed off)"
+msgstr "实测速度与给定对比（前 0.25 s 的建立过程已裁掉）"
+
+#: ../../source/demos/sine_tracking.rst:14 e173f6db669e427ebec46d60e5d6c610
+msgid "measured over two cycles"
+msgstr "两个周期上的测量"
+
+#: ../../source/demos/metrics_sine_tracking.csv:1
+#: b5b80c192a3f4b828090bd95260eff8e
+msgid "metric"
+msgstr ""
+
+#: ../../source/demos/metrics_sine_tracking.csv:1
+#: ba3b09264485467d83fd57b0881033ce
+msgid "value"
+msgstr ""
+
+#: ../../source/demos/metrics_sine_tracking.csv:1
+#: bf492426be954eb8a6eaa7322230a033
+msgid "unit"
+msgstr ""
+
+#: ../../source/demos/metrics_sine_tracking.csv:1
+#: 56027b6f2cdc4b248592591e1ad40981
+msgid "worst_error_pct_of_amplitude"
+msgstr ""
+
+#: ../../source/demos/metrics_sine_tracking.csv:1
+#: 1c1042f80d9a4d28878035523eb584e2
+msgid "2.54"
+msgstr ""
+
+#: ../../source/demos/metrics_sine_tracking.csv:1
+#: 327fa4c17cda4d3fb767e6a5dd5cc76c
+msgid "%"
+msgstr ""
+
+#: ../../source/demos/metrics_sine_tracking.csv:1
+#: a54197ef50cd43ab92ca5c5d1896973b
+msgid "peak_to_peak_speed"
+msgstr ""
+
+#: ../../source/demos/metrics_sine_tracking.csv:1
+#: 1ed82797bab04c40811a470a8e5b5bd1
+msgid "99.98"
+msgstr ""
+
+#: ../../source/demos/metrics_sine_tracking.csv:1
+#: 879431140f4246f18691c38316707fe6
+msgid "rad/s"
+msgstr ""
+
+#: ../../source/demos/sine_tracking.rst:18 1cc9e079cccc4378be639ffce6f40296
+msgid "What to look for: the peak-to-peak swing stays at the reference amplitude (no collapse) and the worst error stays a few percent — the phase lag is visible but small, which is what a 250 rad/s speed loop buys you at 1 Hz."
+msgstr "看点：峰峰值仍等于给定幅值（没有塌陷）、最大误差只有几个百分点——1 Hz 下 250 rad/s 的速度环买到的就是这点相位滞后。"

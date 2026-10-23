@@ -1,0 +1,4 @@
+metric,value,unit
+settling_time_5pct,0.0009,s
+overshoot,0.00,%
+steady_state_error,0.0101,A

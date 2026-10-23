@@ -1,24 +1,25 @@
 /*!
- * @mainpage Introduction
+ * @mainpage foc — field-oriented control for three-phase PMSM
  *
- * Welcome to API documentation of this project!
+ * @section intro_sec [en] Introduction [zh] 简介
+ * @par [en] `foc` is a field-oriented-control library for three-phase PMSM drives. One constraint drives every design choice: the control loop must be predictable — no heap, no exceptions, no virtual calls, no hidden allocation on the path that runs every PWM period.
+ * @par [zh] `foc` 是面向三相 PMSM 的磁场定向控制库。所有设计取舍都服务于同一条约束：控制环必须可预测——跑在每个 PWM 周期的代码路径里没有堆、没有异常、没有虚函数调用、没有隐式内存分配。
  *
- * @section intro_sec [en] demonstration
- *     This is simple demo main page
- * @section intro_sec [zh] 演示
- *     这是一个简单的演示主页
+ * @section faces_sec [en] Three consumer faces [zh] 三个使用面
+ * @par [en] The same implementation is reachable three ways: the C++17 template core (`foc/motor/motor.hpp`) for board-level work, a frozen C11 ABI (`foc/api/foc_api.h`) for non-C++ hosts, and an optional pybind11 module (`foc_python`) built on that C ABI for host-side scripts.
+ * @par [zh] 同一份实现有三个使用面：面向板级开发的 C++17 模板内核（`foc/motor/motor.hpp`）、面向非 C++ 宿主的冻结 C11 ABI（`foc/api/foc_api.h`），以及建立在 C ABI 之上、可选的 pybind11 模块（`foc_python`）。
  *
- * @section features_sec features
- *     - cross-platform
- *     - modularization
- *     - integratable
+ * @section layout_sec [en] Where to look first [zh] 先看哪里
+ * @par [en] `foc/core` holds the hardware-agnostic algorithms (transforms, SVPWM, PI, state machine, observers); `foc/hal` and `foc/driver` are the injectable seams; `foc/motor` composes them into one policy-composed motor. The layering is enforced by a gate, not by convention.
+ * @par [zh] `foc/core` 是与硬件无关的算法（变换、SVPWM、PI、状态机、观测器）；`foc/hal` 与 `foc/driver` 是可注入的接缝；`foc/motor` 把它们组合成一个策略化的电机。分层由门禁强制，而不只是约定。
  *
- * @section usage_sec usage
- *     include headers in code:
- *     @code{.cpp}
- *     #include "mylib.h"
- *     @endcode
+ * @section verify_sec [en] What is verified [zh] 验证了什么
+ * @par [en] Everything here is verified in software only: the SIL bench closes the loop against a dq-frame PMSM plant, and the acceptance suite asserts settling time, overshoot and tracking error. Hardware behaviour — dead-time compensation, ADC timing, EMI, ISR worst-case time — is explicitly not verified; the honest-limits list in the user documentation states each item.
+ * @par [zh] 这里的一切只在软件层面验证：SIL 台架对着 dq 轴 PMSM plant 闭环，验收用例断言调节时间、超调与跟踪误差。硬件相关行为——死区补偿、ADC 时序、EMI、ISR 最坏执行时间——明确没有验证；用户文档里的诚实边界逐条列明。
  *
- * @author Chen Zhang <chen.zhang_06sept@foxmail.com>
- * @since 1.0
+ * @section start_sec [en] Getting started [zh] 上手
+ * @par [en] Read the demo.cxx example for a complete program, then follow the user documentation for the C and Python faces. Link the aggregate target `foc::foc`; C consumers still link the C++ runtime, which is a documented boundary rather than an accident.
+ * @par [zh] 先看 demo.cxx 的完整程序，再按用户文档使用 C 与 Python 面。链接聚合目标 `foc::foc`；C 使用者仍需链接 C++ 运行时，这是写明的边界，不是失误。
+ *
+ * @since 0.1.0
  */

@@ -1,0 +1,88 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2026, HeT-FTI
+# This file is distributed under the same license as the foc package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: foc 0.1.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-10-23 17:59+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: zh_CN\n"
+"Language-Team: zh_CN <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.17.0\n"
+
+#: ../../source/demos/speed_step.rst:2 96e18713cef9461698bdfb95a65aa9b3
+msgid "_`Speed step`"
+msgstr "_`速度阶跃`"
+
+#: ../../source/demos/speed_step.rst:4 e8ea9973db514f98ab74664450c6bbe9
+msgid "The speed reference steps 0 → 100 rad/s while the current loop stays at 20 kHz. The outer loop saturates iq, the plant accelerates, and the loop pulls back before the reference is reached — the classic cascade behaviour."
+msgstr "速度给定从 0 阶跃到 100 rad/s，电流环保持在 20 kHz。外环把 iq 顶到饱和，plant 加速，环在到达给定前收回——典型的级联行为。"
+
+#: ../../source/demos/speed_step.rst:13 bf53d2c6f2584e1b87d10d78483971c1
+msgid "Speed reaches the setpoint in about 70 ms; iq saturates during the ramp and collapses to the friction-compensating value once the speed settles"
+msgstr "速度在约 70 ms 内到达给定；iq 在爬升段饱和，速度稳定后跌落到抵消摩擦的值"
+
+#: ../../source/demos/speed_step.rst:16 83803a363de340ca8e5a8032de185595
+msgid "measured on the step"
+msgstr "阶跃段测得"
+
+#: ../../source/demos/metrics_speed_step.csv:1 d1e73c23da8043b5a30ee067ca3c85e9
+msgid "metric"
+msgstr ""
+
+#: ../../source/demos/metrics_speed_step.csv:1 54dd101237b1421b85da392cf51d3774
+msgid "value"
+msgstr ""
+
+#: ../../source/demos/metrics_speed_step.csv:1 43e9f390f45a4b7080c1b94bd0bc38df
+msgid "unit"
+msgstr ""
+
+#: ../../source/demos/metrics_speed_step.csv:1 6914d0ef6d9f46428ae2dff42e49d679
+msgid "settling_time_2pct"
+msgstr ""
+
+#: ../../source/demos/metrics_speed_step.csv:1 fe0e3f9eb078411788321bbceac0c91c
+msgid "0.0690"
+msgstr ""
+
+#: ../../source/demos/metrics_speed_step.csv:1 f5ecb2b6cd9c4bd89bca662a57891a1c
+msgid "s"
+msgstr ""
+
+#: ../../source/demos/metrics_speed_step.csv:1 d9d81ad1524d4a39896b93048f44402e
+msgid "overshoot"
+msgstr ""
+
+#: ../../source/demos/metrics_speed_step.csv:1 970cfed6e71f4648b906a68e00290c0c
+msgid "1.08"
+msgstr ""
+
+#: ../../source/demos/metrics_speed_step.csv:1 5041c15f76934b96a208c76d5bd57596
+msgid "%"
+msgstr ""
+
+#: ../../source/demos/metrics_speed_step.csv:1 ce94f41e63564b668e831de6e6a966c3
+msgid "steady_state_error"
+msgstr ""
+
+#: ../../source/demos/metrics_speed_step.csv:1 18dbbbdfb154479fa239063e626377e8
+msgid "-0.9068"
+msgstr ""
+
+#: ../../source/demos/metrics_speed_step.csv:1 85723c88afaa42b2a4279730ab7820f2
+msgid "rad/s"
+msgstr ""
+
+#: ../../source/demos/speed_step.rst:20 789d67836e194b7bb14f06840e5f52be
+msgid "What to look for: iq hits its limit during the ramp (the loop is doing the right thing, not fighting itself), a small overshoot, and a steady-state error well inside one percent."
+msgstr "看点：爬升时 iq 打到限幅（说明环在做对的事，而不是自己跟自己较劲）、超调很小、稳态误差远小于百分之一。"

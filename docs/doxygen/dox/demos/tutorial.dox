@@ -1,17 +1,23 @@
 /**
- * @example tutorial.dox
+ * @example demo.cxx
  *
- * A complete example of using MyLibrary.
+ * @brief [en] A complete program: one motor, one control loop, no hardware. [zh] 完整程序：一个电机、一条控制环、不需要硬件。
  *
- * This example demonstrates how to initialize MyLibrary, invoke its core functions,
- * and properly clean up resources.
+ * @section tutorial_shows [en] What the example shows [zh] 这个例子展示了什么
+ * @par [en] The nameplate as plain data, the four policies chosen once at compile time, the lifecycle init -> start -> tick -> stop, and reading the telemetry back without touching internals.
+ * @par [zh] 铭牌就是普通数据、四个策略在编译期一次性选定、生命周期 init -> start -> tick -> stop，以及只读遥测而不触碰内部状态。
+ *
+ * @section tutorial_why [en] Why the loop looks the way it does [zh] 控制环为什么长这样
+ * @par [en] tick() is the ISR entry: noexcept, no allocation, no I/O. Everything that can fail at run time returns an ErrorCode instead of throwing. The tuning helpers foc::current_pi_config and foc::speed_pi_config live in the library, so the C path, the SIL bench and your board all start from the same numbers.
+ * @par [zh] tick() 是 ISR 入口：noexcept、不分配、不做 I/O。运行期可能失败的地方一律返回 ErrorCode，不抛异常。整定辅助函数 foc::current_pi_config 与 foc::speed_pi_config 放在库里，保证 C 路径、SIL 台架与你的板子从同一组数出发。
+ *
+ * @section tutorial_hw [en] Taking it to hardware [zh] 上真实硬件
+ * @par [en] Replace foc::driver::StubHal with your own HalPolicy (the four members pwm, current_sense, position, dc_link); nothing else changes. Dead-time compensation, ADC timing and ISR worst-case time are not verified by this library.
+ * @par [zh] 把 foc::driver::StubHal 换成你自己的 HalPolicy（四个成员 pwm、current_sense、position、dc_link），其余不动。死区补偿、ADC 时序与 ISR 最坏执行时间没有被本库验证。
  *
  * @include demo.cxx
  *
- * @par Description:
- * - First, call init() to initialize the library.
- * - Then, use process() to handle data.
- * - Finally, call cleanup() to release allocated resources.
+ * @note [en] Link the aggregate target `foc::foc`; a C consumer additionally needs LINKER_LANGUAGE CXX. [zh] 链接聚合目标 `foc::foc`；C 使用者另外需要把 LINKER_LANGUAGE 设为 CXX。
  *
- * @note Make sure to link against the MyLibrary library when compiling.
+ * @since 0.1.0
  */

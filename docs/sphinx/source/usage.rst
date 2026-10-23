@@ -27,11 +27,11 @@ Nothing is virtual, and swapping a policy costs nothing at run time.
    foc::driver::StubHal hal;                       // or your board's HAL
    const foc::motor::MotorConfig cfg = foc::motor::MotorConfig{
        0.5F, 4e-4F, 4e-4F, 0.05F, 1e-5F, 1e-6F, 7U, 5.0F, 20000.0F, 500.0F};
-   const auto current = foc::motor::current_pi_config(cfg, 2000.0F, 24.0F);
+   const auto current = foc::current_pi_config(cfg, 2000.0F, 24.0F);
 
    Motor motor(cfg, Motor::Policies{foc::core::BackEmfObserver({0.5F, 4e-4F}), foc::core::Svpwm{},
                                     foc::core::Pi{current}, foc::core::Pi{current},
-                                    foc::core::Pi{foc::motor::speed_pi_config(cfg, 200.0F)}},
+                                    foc::core::Pi{foc::speed_pi_config(cfg, 200.0F)}},
                hal);
 
    motor.init();

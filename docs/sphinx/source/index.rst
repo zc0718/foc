@@ -125,12 +125,19 @@ _`Detailed settings`
 --------------------
 
 .. toctree::
+   :caption: Using the library
+   :numbered:
+
    Usage and verification <usage>
+   Demos <demos/index>
+
+.. toctree::
+   :caption: Build system
+   :maxdepth: 2
+
    CMakeList <components/cmake>
    Conanfile <components/conan>
    Metadata <components/meta>
-   :numbered:
-   :maxdepth: 2
 
 _`License`
 ----------
