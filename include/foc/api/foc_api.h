@@ -77,6 +77,25 @@ foc_err_t foc_set_speed(foc_motor_t motor, float rad_per_s);
 
 
 /**
+ * @brief [en] Double-precision twin of foc_set_speed(), used by the `_Generic` macro
+ *        `foc_set_speed_g()` when the argument is not a `float` literal.
+ *        [zh] foc_set_speed() 的双精度孪生版本，由 `_Generic` 宏 `foc_set_speed_g()` 在实参不是
+ *        `float` 字面量时选用。
+ *
+ * @param motor [en] valid handle. [zh] 有效句柄。
+ * @param rad_per_s [en] mechanical speed in rad/s; narrowed to float inside. [zh] 机械速度，rad/s；内部收窄为 float。
+ * @return [en] FOC_OK, or FOC_ERR_PARAM for a NULL handle or a non-finite value.
+ *         [zh] FOC_OK；句柄为 NULL 或数值非有限返回 FOC_ERR_PARAM。
+ * @note [en] The library computes in single precision: the double path avoids a lossy conversion
+ *       at the *call site*, it does not raise the internal precision.
+ *       [zh] 库内以单精度计算：double 通道避免的是**调用点**的隐式收窄，并不提高内部精度。
+ * @since 0.1.0
+ * @exporter
+ */
+foc_err_t foc_set_speed_f64(foc_motor_t motor, double rad_per_s);
+
+
+/**
  * @brief [en] Set the torque setpoint (q-axis current).
  *        [zh] 设置转矩给定（q 轴电流）。
  *
@@ -87,6 +106,20 @@ foc_err_t foc_set_speed(foc_motor_t motor, float rad_per_s);
  * @exporter
  */
 foc_err_t foc_set_torque(foc_motor_t motor, float iq_a);
+
+
+/**
+ * @brief [en] Double-precision twin of foc_set_torque(), see foc_set_speed_f64().
+ *        [zh] foc_set_torque() 的双精度孪生版本，说明见 foc_set_speed_f64()。
+ *
+ * @param motor [en] valid handle. [zh] 有效句柄。
+ * @param iq_a [en] q-axis current in A; narrowed to float inside. [zh] q 轴电流，A；内部收窄为 float。
+ * @return [en] FOC_OK, or FOC_ERR_PARAM for a NULL handle or a non-finite value.
+ *         [zh] FOC_OK；句柄为 NULL 或数值非有限返回 FOC_ERR_PARAM。
+ * @since 0.1.0
+ * @exporter
+ */
+foc_err_t foc_set_torque_f64(foc_motor_t motor, double iq_a);
 
 
 /**
@@ -116,3 +149,26 @@ foc_err_t foc_tick(foc_motor_t motor, float dt_s);
  * @exporter
  */
 foc_err_t foc_get_state(foc_motor_t motor, float *speed_rad_s, float *id, float *iq);
+
+
+/**
+ * @brief [en] `_Generic` dispatch for the setpoints, so `foc_set_speed_g(m, 50)` and
+ *        `foc_set_speed_g(m, 50.0f)` both work without an explicit cast. The `default:` branch
+ *        routes every other arithmetic type to the double entry point, which means passing a
+ *        pointer or a struct is a compile error instead of a silent conversion.
+ *        [zh] 给定值的 `_Generic` 分发：`foc_set_speed_g(m, 50)` 与 `foc_set_speed_g(m, 50.0f)`
+ *        都无需显式转换。`default:` 分支把其余算术类型送到 double 入口，因此传指针或结构体会
+ *        直接编译失败，而不是被静默转换。
+ *
+ * @note [en] Only defined for C11 and later; C++ callers pick the float or the _f64 function
+ *       themselves (there is no `_Generic` in C++).
+ *       [zh] 只在 C11 及以后定义；C++ 调用方自己选 float 或 _f64 版本（C++ 没有 `_Generic`）。
+ * @since 0.1.0
+ * @exporter
+ */
+#if !defined(__cplusplus) && defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201112L)
+#define foc_set_speed_g(motor, value)                                                                                  \
+    _Generic((value), float: foc_set_speed, default: foc_set_speed_f64)((motor), (value))
+#define foc_set_torque_g(motor, value)                                                                                 \
+    _Generic((value), float: foc_set_torque, default: foc_set_torque_f64)((motor), (value))
+#endif

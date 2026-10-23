@@ -116,10 +116,8 @@ inline auto nominal_motor_config() -> motor::MotorConfig { return motor_config_f
  * @since 0.1.0
  */
 inline auto current_pi_config(const motor::MotorConfig& mc, float omega_rad_s, float v_bus) -> core::Pi::Config {
-    const float kp = core::clamp((2.0F * omega_rad_s * mc.ld) - mc.rs, 0.0F, 1e6F);
-    const float ki = omega_rad_s * omega_rad_s * mc.ld;
-    const float v_lim = 0.5F * v_bus;
-    return core::Pi::Config{kp, ki, -v_lim, v_lim, -v_lim, v_lim};
+    // Delegates to the library helper: SIL and the C path must not drift apart on tuning.
+    return ::foc::current_pi_config(mc, omega_rad_s, v_bus);
 }
 
 
@@ -132,16 +130,7 @@ inline auto current_pi_config(const motor::MotorConfig& mc, float omega_rad_s, f
  * @since 0.1.0
  */
 inline auto speed_pi_config(const motor::MotorConfig& mc, float omega_rad_s) -> core::Pi::Config {
-    const float kp = omega_rad_s * mc.j / mc.kt;
-    const float ki = omega_rad_s * mc.b / mc.kt;
-    const float lim = mc.i_max_a;
-
-    // The PI of this library offers a static integral clamp only, so the integral is bounded to
-    // the steady-state current range instead of the full output range: a speed step saturates iq,
-    // and an unbounded integral would wind up during the ramp and cost seconds to unwind (S2/S4).
-    // The integral still carries the whole steady-state torque, which is a small fraction of i_max.
-    const float integral_lim = 0.25F * mc.i_max_a;
-    return core::Pi::Config{kp, ki, -lim, lim, -integral_lim, integral_lim};
+    return ::foc::speed_pi_config(mc, omega_rad_s);
 }
 
 

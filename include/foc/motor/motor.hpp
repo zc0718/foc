@@ -296,8 +296,10 @@ auto Motor<Observer, Modulator, Controller, HalPolicy>::tick(float dt_s) noexcep
     }
 
     if (sm_.state() != core::MotorState::Run) {
-        status_ = ErrorCode::State;
-        return status_;
+        // Not latched: "you have not started me" is a usage error the caller fixes by calling
+        // start(), not a fault. Latching it would leave a C-API instance dead forever, because the
+        // C surface has no clear_fault().
+        return ErrorCode::State;
     }
 
     const Uvw<float> i_uvw = hal_->current_sense.read_uvw();

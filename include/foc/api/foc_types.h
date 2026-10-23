@@ -26,6 +26,11 @@ typedef struct foc_motor_s *foc_motor_t;
  * @since 0.1.0
  * @exporter
  */
+// The base type stays `int`: C99 has no fixed underlying type for an enum, and the size of
+// foc_err_t is part of the frozen C ABI (foc::ErrorCode mirrors these values one to one).
+// 基类型保持 `int`：C99 的 enum 没有固定底层类型，且 foc_err_t 的大小属于已冻结的 C ABI
+// （foc::ErrorCode 与这些数值一一对应）。
+// NOLINTNEXTLINE(performance-enum-size)
 typedef enum foc_err {
     FOC_OK = 0,
     FOC_ERR_PARAM = -1,
