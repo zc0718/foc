@@ -171,6 +171,9 @@ class PmsmPlant final {
      */
     [[nodiscard]] auto psi_f_wb() const noexcept -> float;
 
+    /// [en] Nameplate parameters of this plant. [zh] 本 plant 的铭牌参数。
+    [[nodiscard]] auto params() const noexcept -> const PlantParams&;
+
   private:
     struct Derivative final {
         float did;
@@ -275,6 +278,8 @@ inline auto PmsmPlant::torque_nm() const noexcept -> float {
 }
 
 inline auto PmsmPlant::psi_f_wb() const noexcept -> float { return psi_f_; }
+
+inline auto PmsmPlant::params() const noexcept -> const PlantParams& { return params_; }
 
 } // namespace sil
 
