@@ -1,0 +1,249 @@
+name: Metadata Controller
+
+# Single source of truth for triggering: reads metadata.json and emits decision flags
+
+on:
+  workflow_call:
+    inputs:
+      event_name:
+        description: 'The GitHub event name (push, pull_request, etc.)'
+        required: true
+        type: string
+      commit_messages:
+        description: 'Combined commit messages for emoji-based triggers'
+        required: false
+        type: string
+        default: ''
+    outputs:
+      # Package metadata
+      pkg_name:
+        description: 'Package name from metadata.json'
+        value: ${{ jobs.analyze.outputs.pkg_name }}
+      version:
+        description: 'Package version from metadata.json'
+        value: ${{ jobs.analyze.outputs.version }}
+      build_type:
+        description: 'Build type (Debug/Release)'
+        value: ${{ jobs.analyze.outputs.build_type }}
+      
+      # Workflow trigger flags
+      trigger_build:
+        description: 'Whether to trigger build workflow'
+        value: ${{ jobs.analyze.outputs.trigger_build }}
+      trigger_tests:
+        description: 'Whether to trigger test workflow'
+        value: ${{ jobs.analyze.outputs.trigger_tests }}
+      trigger_release:
+        description: 'Whether to trigger release workflow'
+        value: ${{ jobs.analyze.outputs.trigger_release }}
+      trigger_docs:
+        description: 'Whether to trigger docs workflow'
+        value: ${{ jobs.analyze.outputs.trigger_docs }}
+      trigger_security:
+        description: 'Whether to trigger security scan workflow'
+        value: ${{ jobs.analyze.outputs.trigger_security }}
+      trigger_cross_compile:
+        description: 'Whether to trigger the online cross-compile workflow'
+        value: ${{ jobs.analyze.outputs.trigger_cross_compile }}
+      
+      # Test configuration
+      saving_tests_log:
+        description: 'Whether to save test logs'
+        value: ${{ jobs.analyze.outputs.saving_tests_log }}
+      activate_code_coverage:
+        description: 'Whether to activate code coverage'
+        value: ${{ jobs.analyze.outputs.activate_code_coverage }}
+
+jobs:
+  analyze:
+    name: Analyze Metadata
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      # Package metadata
+      pkg_name: ${{ steps.read_metadata.outputs.pkg_name }}
+      version: ${{ steps.read_metadata.outputs.version }}
+      build_type: ${{ steps.read_metadata.outputs.build_type }}
+      
+      # Workflow trigger flags
+      trigger_build: ${{ steps.compute_triggers.outputs.trigger_build }}
+      trigger_tests: ${{ steps.compute_triggers.outputs.trigger_tests }}
+      trigger_release: ${{ steps.compute_triggers.outputs.trigger_release }}
+      trigger_docs: ${{ steps.compute_triggers.outputs.trigger_docs }}
+      trigger_security: ${{ steps.compute_triggers.outputs.trigger_security }}
+      trigger_cross_compile: ${{ steps.compute_triggers.outputs.trigger_cross_compile }}
+      
+      # Test configuration
+      saving_tests_log: ${{ steps.read_metadata.outputs.saving_tests_log }}
+      activate_code_coverage: ${{ steps.read_metadata.outputs.activate_code_coverage }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Read metadata.json
+        id: read_metadata
+        run: |
+          # Read all relevant fields from metadata.json
+          pkg_name=$(jq -r '.name // "unknown"' metadata.json)
+          version=$(jq -r '.version // "0.0.0"' metadata.json)
+          build_type=$(jq -r '.build_type // "Debug"' metadata.json)
+          trigger_tests=$(jq -r '.trigger_tests // false | tostring | ascii_downcase' metadata.json)
+          saving_tests_log=$(jq -r '.saving_tests_log // false | tostring | ascii_downcase' metadata.json)
+          activate_code_coverage=$(jq -r '.activate_code_coverage // false | tostring | ascii_downcase' metadata.json)
+          
+          # fail-loud on a missing switch; jq `//` treats false as falsy, so use has()
+          declare -A wf
+          for pair in "build build" "tests tests" "release release" "docs docs" "security security_scan" "cross cross_compile"; do
+            set -- $pair
+            _var="$1"; _key="$2"
+            jq -e --arg k "$_key" '.workflow_triggers | has($k)' metadata.json >/dev/null \
+              || { echo "❌ metadata.json missing workflow_triggers.$_key"; exit 1; }
+            wf["$_var"]=$(jq -r --arg k "$_key" '.workflow_triggers[$k] | tostring | ascii_downcase' metadata.json)
+          done
+          wf_build=${wf[build]}; wf_tests=${wf[tests]}; wf_release=${wf[release]}
+          wf_docs=${wf[docs]}; wf_security=${wf[security]}; wf_cross=${wf[cross]}
+          
+          # Output all values
+          echo "pkg_name=$pkg_name" >> $GITHUB_OUTPUT
+          echo "version=$version" >> $GITHUB_OUTPUT
+          echo "build_type=$build_type" >> $GITHUB_OUTPUT
+          echo "trigger_tests=$trigger_tests" >> $GITHUB_OUTPUT
+          echo "saving_tests_log=$saving_tests_log" >> $GITHUB_OUTPUT
+          echo "activate_code_coverage=$activate_code_coverage" >> $GITHUB_OUTPUT
+          echo "wf_build=$wf_build" >> $GITHUB_OUTPUT
+          echo "wf_tests=$wf_tests" >> $GITHUB_OUTPUT
+          echo "wf_release=$wf_release" >> $GITHUB_OUTPUT
+          echo "wf_docs=$wf_docs" >> $GITHUB_OUTPUT
+          echo "wf_security=$wf_security" >> $GITHUB_OUTPUT
+          echo "wf_cross=$wf_cross" >> $GITHUB_OUTPUT
+          
+          # Log for debugging
+          echo "📦 Package: $pkg_name v$version"
+          echo "🔧 Build Type: $build_type"
+          echo "🧪 Trigger Tests: $trigger_tests"
+          echo "📝 Saving Test Logs: $saving_tests_log"
+          echo "📊 Code Coverage: $activate_code_coverage"
+          echo "🎛️  Workflow Toggles: build=$wf_build tests=$wf_tests release=$wf_release docs=$wf_docs security=$wf_security cross=$wf_cross"
+
+      - name: Compute workflow triggers
+        id: compute_triggers
+        env:
+          EVENT_NAME: ${{ inputs.event_name }}
+          COMMIT_MESSAGES: ${{ inputs.commit_messages }}
+          TRIGGER_TESTS_FLAG: ${{ steps.read_metadata.outputs.trigger_tests }}
+          WF_BUILD: ${{ steps.read_metadata.outputs.wf_build }}
+          WF_TESTS: ${{ steps.read_metadata.outputs.wf_tests }}
+          WF_RELEASE: ${{ steps.read_metadata.outputs.wf_release }}
+          WF_DOCS: ${{ steps.read_metadata.outputs.wf_docs }}
+          WF_SECURITY: ${{ steps.read_metadata.outputs.wf_security }}
+          WF_CROSS: ${{ steps.read_metadata.outputs.wf_cross }}
+        run: |
+          # Initialize trigger flags
+          trigger_build="false"
+          trigger_tests="false"
+          trigger_release="false"
+          trigger_docs="false"
+          trigger_security="false"
+          trigger_cross_compile="false"
+          
+          # Check commit messages for emoji triggers
+          has_build_emoji="false"
+          has_test_emoji="false"
+          has_release_emoji="false"
+          has_docs_emoji="false"
+          has_security_emoji="false"
+          has_cross_emoji="false"
+          
+          if echo "$COMMIT_MESSAGES" | grep -q ':building_construction:'; then
+            has_build_emoji="true"
+          fi
+          
+          if echo "$COMMIT_MESSAGES" | grep -q ':beer:'; then
+            has_test_emoji="true"
+          fi
+          
+          if echo "$COMMIT_MESSAGES" | grep -q '(:package:): '; then
+            has_release_emoji="true"
+          fi
+          
+          if echo "$COMMIT_MESSAGES" | grep -q ':book:'; then
+            has_docs_emoji="true"
+          fi
+          
+          if echo "$COMMIT_MESSAGES" | grep -q ':shield:'; then
+            has_security_emoji="true"
+          fi
+
+          if echo "$COMMIT_MESSAGES" | grep -q ':hammer_and_wrench:'; then
+            has_cross_emoji="true"
+          fi
+          
+          # build: :building_construction: on push + workflow_triggers.build
+          if [[ "$EVENT_NAME" == "push" && "$has_build_emoji" == "true" && "$WF_BUILD" == "true" ]]; then
+            trigger_build="true"
+          fi
+          
+          # tests: :beer: on push + trigger_tests + workflow_triggers.tests
+          # (deliberately NOT gated on build_type: a switch grants permission, a state must not)
+          if [[ "$EVENT_NAME" == "push" && "$has_test_emoji" == "true" && "$TRIGGER_TESTS_FLAG" == "true" && "$WF_TESTS" == "true" ]]; then
+            trigger_tests="true"
+          fi
+          
+          # release: (:package:): on push + workflow_triggers.release
+          if [[ "$EVENT_NAME" == "push" && "$has_release_emoji" == "true" && "$WF_RELEASE" == "true" ]]; then
+            trigger_release="true"
+          fi
+          
+          # docs: :book: on push + workflow_triggers.docs
+          if [[ "$EVENT_NAME" == "push" && "$has_docs_emoji" == "true" && "$WF_DOCS" == "true" ]]; then
+            trigger_docs="true"
+          fi
+          
+          # security: :shield: on push (or any PR, shift-left) + workflow_triggers.security_scan
+          if [[ "$WF_SECURITY" == "true" ]]; then
+            if [[ "$EVENT_NAME" == "push" && "$has_security_emoji" == "true" ]]; then
+              trigger_security="true"
+            fi
+            if [[ "$EVENT_NAME" == "pull_request" ]]; then
+              trigger_security="true"
+            fi
+          fi
+
+          # cross compile: :hammer_and_wrench: on push + workflow_triggers.cross_compile
+          # Deliberately absent from the shift-left block below -- this pipeline is
+          # decoupled, so only its own emoji starts it.
+          if [[ "$EVENT_NAME" == "push" && "$has_cross_emoji" == "true" && "$WF_CROSS" == "true" ]]; then
+            trigger_cross_compile="true"
+          fi
+          
+          # Shift-left on pull_request: build/tests are required gates, no emoji needed
+          if [[ "$EVENT_NAME" == "pull_request" ]]; then
+            if [[ "$WF_BUILD" == "true" ]]; then
+              trigger_build="true"
+            fi
+            if [[ "$WF_TESTS" == "true" && "$TRIGGER_TESTS_FLAG" == "true" ]]; then
+              trigger_tests="true"
+            fi
+          fi
+
+          # Output trigger flags
+          echo "trigger_build=$trigger_build" >> $GITHUB_OUTPUT
+          echo "trigger_tests=$trigger_tests" >> $GITHUB_OUTPUT
+          echo "trigger_release=$trigger_release" >> $GITHUB_OUTPUT
+          echo "trigger_docs=$trigger_docs" >> $GITHUB_OUTPUT
+          echo "trigger_security=$trigger_security" >> $GITHUB_OUTPUT
+          echo "trigger_cross_compile=$trigger_cross_compile" >> $GITHUB_OUTPUT
+          
+          # Log trigger decisions
+          echo "📋 Workflow Trigger Decisions:"
+          echo "  🏗️ Build: $trigger_build"
+          echo "  🧪 Tests: $trigger_tests"
+          echo "  📦 Release: $trigger_release"
+          echo "  📚 Docs: $trigger_docs"
+          echo "  🛡️ Security: $trigger_security"
+          echo "  🛠️ Cross compile: $trigger_cross_compile"
+

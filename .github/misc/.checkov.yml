@@ -1,0 +1,6 @@
+# Checkov skips for the MegaLinter layer (it blocks when it reports); the native gates are the baseline
+skip-check:
+  # Job-level permissions satisfy SonarCloud S8264 -- do not re-add workflow-level
+  - CKV2_GHA_1
+  # workflow_dispatch inputs select board targets; values are allow-listed in the workflow
+  - CKV_GHA_7

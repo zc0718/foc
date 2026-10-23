@@ -1,0 +1,26 @@
+# Local first-line gates (CI mirrors them); pip install pre-commit && pre-commit install
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-json
+      - id: check-added-large-files
+
+  - repo: local
+    hooks:
+      # one implementation for CI + pre-commit + the editor: .github/misc/gates.py
+      # (no `python3` alias on Windows: change the entry to `python .github/misc/gates.py format`)
+      - id: clang-format
+        name: clang-format (C/C++ dual configs)
+        entry: python3 .github/misc/gates.py format
+        language: system
+        files: '^(include|src)/.*\.(c|h|cpp|hpp)$'
+
+      - id: commitlint
+        name: commitlint
+        entry: npx commitlint --edit --config .github/misc/commitlint.config.js
+        language: system
+        stages: [commit-msg]

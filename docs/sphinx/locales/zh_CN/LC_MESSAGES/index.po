@@ -1,0 +1,116 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2025, fcpp-innovation
+# This file is distributed under the same license as the fcpp package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2025.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: fcpp 1.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-09-12 16:27+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: zh_CN\n"
+"Language-Team: zh_CN <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.17.0\n"
+
+#: ../../source/index.rst:52
+msgid "CMakeList"
+msgstr "CMake 构建列表"
+
+#: ../../source/index.rst:52
+msgid "Conanfile"
+msgstr "Conan 依赖配置"
+
+#: ../../source/index.rst:52
+msgid "Metadata"
+msgstr "元数据"
+
+#: ../../source/index.rst:52
+msgid "User concern contents"
+msgstr "用户关注内容"
+
+#: ../../source/index.rst:2 5098f9f288574b3bb79eff4f3478ffd1
+msgid "_`fcpp Project Documentation`"
+msgstr "fcpp 项目文档"
+
+#: ../../source/index.rst:5 d1788d27550c465b805f5235b8fe800c
+msgid "_`Introduction`"
+msgstr "简介"
+
+#: ../../source/index.rst:7 ff286ba22fc04d09b38e5e0dd49ba42f
+msgid ""
+"fcpp is a modern C/C++ library development framework that integrates "
+"advanced build systems, dependency management, and modular development "
+"support."
+msgstr "fcpp 是一个现代化的 C/C++ 库开发框架，集成了先进的构建系统、依赖管理以及模块化开发支持。"
+
+#: ../../source/index.rst:11 fb648b3d070d44f387ad1212ae44ce96
+msgid "_`Main Features`"
+msgstr "主要特性"
+
+#: ../../source/index.rst:13 44dbbcd80ee0475ebcf2d0aa4fe633ab
+msgid "Support for mixed C and C++ programming"
+msgstr "支持 C 与 C++ 混合编程"
+
+#: ../../source/index.rst:14 718b884e18a242bb8e9deff54c05032b
+msgid "Built-in C++20 module support"
+msgstr "内置 C++20 模块支持"
+
+#: ../../source/index.rst:15 c47b7df0cd6546d892a7633708e824c2
+msgid "Conan-based dependency management"
+msgstr "基于 Conan 的依赖管理"
+
+#: ../../source/index.rst:16 158b026b78d54a94b76770d407542d97
+msgid "Cross-platform build support (Windows/Linux/macOS)"
+msgstr "跨平台构建支持 (Windows/Linux/macOS)"
+
+#: ../../source/index.rst:17 c0da18bd94bb4bfbbed01a5bec6db5d6
+msgid "Automated code generation and processing"
+msgstr "自动化代码生成与处理"
+
+#: ../../source/index.rst:18 6c31cacd36c14ac3a6a0006e15cd1c20
+msgid "Intelligent header and module conversion"
+msgstr "头文件与模块的智能转换"
+
+#: ../../source/index.rst:21 8a45435a84b44178acbb157731f2c104
+msgid "_`Quick Start`"
+msgstr "快速开始"
+
+#: ../../source/index.rst:35 421c4d0d5f5746cf8e00178d785bb813
+msgid "_`Project Structure`"
+msgstr "项目结构"
+
+#: ../../source/index.rst:48 0da3719272724cb595f1151bf7d067f9
+msgid "_`Detailed Settings`"
+msgstr "详细设置"
+
+#: ../../source/index.rst:50 3503917099d2444ab0d4e1ecf59b5850
+msgid ""
+"For detailed settings in project-level meta, conan recipe, or cmake file,"
+" see:"
+msgstr "有关项目级元数据、Conan 配方或 CMake 文件中的详细设置，请参阅："
+
+#: ../../source/index.rst:61 c8161f3549674b578e80f454ed0c6925
+msgid "_`License`"
+msgstr "许可证"
+
+#: ../../source/index.rst:63 93c9db90afb54d6b88e45555d4b35815
+msgid ""
+"This project is licensed under the Apache-2.0 License. See the LICENSE "
+"file for details."
+msgstr "本项目采用 Apache-2.0 许可证授权。详情请参阅 LICENSE 文件。"
+
+#~ msgid "Export"
+#~ msgstr "导出"
+
+#~ msgid "_`The export`"
+#~ msgstr "导出说明"
+
+#~ msgid "Full demonstration of a specific library work."
+#~ msgstr "特定库工作的完整演示。"

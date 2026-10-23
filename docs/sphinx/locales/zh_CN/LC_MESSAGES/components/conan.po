@@ -1,0 +1,87 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2025, fcpp-innovation
+# This file is distributed under the same license as the fcpp package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2025.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: fcpp 1.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-09-05 18:05+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: zh_CN\n"
+"Language-Team: zh_CN <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.17.0\n"
+
+#: ../../source/components/conan.rst:2 95bd56b170d949f8a9d2adfc821c987d
+msgid "_`Conanfile Configuration`"
+msgstr "Conanfile 配置"
+
+#: ../../source/components/conan.rst:5 26a1d0188c184399b7f03cf5d70bce42
+msgid "_`Usage`"
+msgstr "用法"
+
+#: ../../source/components/conan.rst:7 b888d08efcc14ed2be84c1f75938b9de
+msgid ""
+"The conanfile.py is the Conan package configuration file for the fcpp "
+"project, responsible for dependency management, package metadata "
+"processing, and module generation."
+msgstr ""
+"conanfile.py 是 fcpp 项目的 Conan 包配置文件，负责依赖管理、包元数据处理"
+"以及模块生成。"
+
+#: ../../source/components/conan.rst:11 2b6c6ecff6994e6992fd385ef858da61
+msgid "_`Main Features`"
+msgstr "主要特性"
+
+#: ../../source/components/conan.rst:13 d974ce143fb84b988307e39f1ae66d33
+msgid "Project metadata initialization"
+msgstr "项目元数据初始化"
+
+#: ../../source/components/conan.rst:14 a3c183f926fe421397a7bd3cd5a53b70
+msgid "Dependency management"
+msgstr "依赖管理"
+
+#: ../../source/components/conan.rst:15 f2cb540c50a74e5dbd92517445439c33
+msgid "Module file generation and processing"
+msgstr "模块文件生成与处理"
+
+#: ../../source/components/conan.rst:16 8636afa3abc241bdafaae3606048d723
+msgid "Build configuration generation"
+msgstr "构建配置生成"
+
+#: ../../source/components/conan.rst:17 13c68cce09594bae8152324b33ab48a6
+msgid "Package information definition"
+msgstr "包信息定义"
+
+#: ../../source/components/conan.rst:20 04f30ccd2ec549e1b5bed23badf88062
+msgid "_`Core Functionality`"
+msgstr "核心功能"
+
+#: ../../source/components/conan.rst:22 01e9701ec15f4856b50e2b0a0bab75a2
+msgid ""
+"The PackageRecipe class handles project initialization by loading "
+"information from metadata.json. It processes module files by generating "
+"them from .hpp and .cpp files, handling export and attach markers. "
+"Dependency management is implemented by loading requirements from "
+"conandata.yml."
+msgstr ""
+"PackageRecipe 类通过从 metadata.json 加载信息来处理项目初始化。它通过从"
+".hpp 和 .cpp 文件生成模块文件来处理它们，并处理导出（export）和附加"
+"（attach）标记。依赖管理是通过从 conandata.yml 加载需求来实现的。"
+
+#: ../../source/components/conan.rst:26 613889e8e4154f0ea2d4ff39d9eafa86
+msgid ""
+"The configuration generates CMake toolchain and dependencies files, and "
+"defines package components with their dependencies. Special features "
+"include C header compatibility processing and comment marker handling for"
+" export/attach operations."
+msgstr ""
+"该配置会生成 CMake 工具链和依赖文件，并定义带有依赖关系的包组件。特殊功能包括"
+"C 头文件兼容性处理以及用于导出/附加操作的注释标记处理。"

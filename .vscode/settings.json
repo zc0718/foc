@@ -1,0 +1,13 @@
+{
+  "clangd.arguments": [
+    "--background-index",
+    "--header-insertion=never",
+    "--style=file:${workspaceFolder}/.github/misc/.clang-format-cpp"
+  ],
+  "C_Cpp.clang_format_style": "${workspaceFolder}/.github/misc/.clang-format-cpp",
+  "C_Cpp.formatting": "clangFormat",
+  "cmake.sourceDirectory": "${workspaceFolder}",
+  "files.associations": {
+    "*.dox": "doxygen"
+  }
+}

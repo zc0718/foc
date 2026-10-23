@@ -1,0 +1,62 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "format-check",
+      "type": "shell",
+      "command": "python3",
+      "args": [".github/misc/gates.py", "format"],
+      "windows": { "command": "python" },
+      "problemMatcher": []
+    },
+    {
+      "label": "tidy",
+      "type": "shell",
+      "command": "python3",
+      "args": [".github/misc/gates.py", "tidy"],
+      "windows": { "command": "python" },
+      "problemMatcher": []
+    },
+    {
+      "label": "schema-check",
+      "type": "shell",
+      "command": "npx ajv validate -s .github/misc/metadata.schema.json -d metadata.json --spec=draft7",
+      "problemMatcher": []
+    },
+    {
+      "label": "commit-lint",
+      "type": "shell",
+      "command": "npx commitlint --config .github/misc/commitlint.config.js --from HEAD~1 --to HEAD",
+      "problemMatcher": []
+    },
+    {
+      "label": "megalinter",
+      "type": "shell",
+      "command": "bash .github/misc/run-megalinter.sh",
+      "problemMatcher": []
+    },
+    {
+      "label": "skills:validate",
+      "type": "shell",
+      "command": "python3",
+      "args": [".github/skills/_shared/skillkit/cli.py", "validate", "--strict"],
+      "windows": { "command": "python" },
+      "problemMatcher": []
+    },
+    {
+      "label": "skills:sync",
+      "type": "shell",
+      "command": "python3",
+      "args": [".github/skills/_shared/skillkit/cli.py", "sync"],
+      "windows": { "command": "python" },
+      "problemMatcher": []
+    },
+    {
+      "label": "test",
+      "type": "shell",
+      "command": "conan create . -s build_type=$(python3 .github/misc/meta.py build_type) --build=missing",
+      "windows": { "command": "conan create . -s build_type=$(python .github/misc/meta.py build_type) --build=missing" },
+      "problemMatcher": []
+    }
+  ]
+}

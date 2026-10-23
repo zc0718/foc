@@ -1,0 +1,510 @@
+================================================================================
+  FCPP PROJECT GENERATION PROMPT — Copilot Agent Template
+  Based on: https://github.com/HeT-FTI/fcpp (A Modern System-level C/CPP Build)
+================================================================================
+
+Use this prompt with GitHub Copilot agent (or any code-gen agent) to scaffold a
+new Conan 2 C/C++ library project from the HeT-FTI/fcpp template. Fill in the
+[FILL] placeholders, then feed the entire file to the agent.
+
+────────────────────────────────────────────────────────────────────────────────
+SECTION 1 — PROJECT IDENTITY  (fill every [FILL] below)
+────────────────────────────────────────────────────────────────────────────────
+
+Project name        : [FILL e.g. mylib]
+Version             : [FILL e.g. 0.1.0]
+Team / Organization : HeT-FTI                          ← FIXED, do not change
+Author(s)           : [FILL e.g. Jane Doe <jane@example.com>]
+License             : Apache-2.0                       ← FIXED, do not change
+One-line description: [FILL e.g. A high-performance image codec library]
+Repository URL      : [FILL e.g. https://github.com/HeT-FTI/mylib.git]
+Homepage            : [FILL e.g. https://github.com/HeT-FTI]
+C++ standard        : 17                               ← FIXED team standard
+C standard          : 11                               ← FIXED team standard
+Build type          : [FILL Debug | Release]
+Library type        : [FILL static (is_shared=false) | shared (is_shared=true)
+                            | header-only (is_header=true)]
+Enable Python bindings (pybind11) : [FILL true | false]
+Enable code coverage              : [FILL true | false]
+
+────────────────────────────────────────────────────────────────────────────────
+SECTION 2 — LIBRARY DESIGN  (describe what your package does)
+────────────────────────────────────────────────────────────────────────────────
+
+Purpose & scope:
+[FILL — Describe in 3-10 sentences what this library is for. What problem does
+it solve? What domain does it serve (math, networking, image processing, etc.)?
+This description drives what headers, classes, and functions the agent creates.]
+
+Public C headers (include/*.h) to generate:
+[FILL — List every C header you need, with a brief note on what each exposes.
+Example:
+  - codec.h      → C-interface for encode/decode functions
+  - config.h     → Build-time configuration constants
+If your library is C++-only, write "None".]
+
+Public C++ headers (include/*.hpp) to generate:
+[FILL — List every C++ header you need.
+Example:
+  - encoder.hpp  → Encoder class with stream-based API
+  - decoder.hpp  → Decoder class, supports async decoding
+  - types.hpp    → Shared enum/struct definitions]
+
+Source files (src/*.c and src/*.cpp) to generate:
+[FILL — List implementation files that pair with headers above. The fcpp
+convention is one source per header (pairwise assumption).
+Example:
+  - codec.c      → implements codec.h
+  - encoder.cpp  → implements encoder.hpp
+  - decoder.cpp  → implements decoder.hpp]
+
+Key classes / functions / data structures:
+[FILL — Describe the main API surface the agent should create. Include:
+  - class names, key methods, constructor signatures
+  - free functions with parameter/return sketches
+  - important enums or structs
+Example:
+  class Encoder {
+    Encoder(Format fmt, int quality);
+    void feed(const uint8_t* data, size_t len);
+    std::vector<uint8_t> finish();
+  };
+  enum class Format { PNG, JPEG, WEBP };
+]
+
+────────────────────────────────────────────────────────────────────────────────
+SECTION 3 — DEPENDENCIES
+────────────────────────────────────────────────────────────────────────────────
+
+Conan requirements (conandata.yml):
+[FILL — List each dependency in "pkg/version" format.
+Example:
+  - "gtest/1.16.0"        (always keep for testing infra)
+  - "zlib/1.3.1"
+  - "opencv/4.9.0"
+If none beyond GTest, write "gtest/1.16.0" only.]
+
+Dependency → target mapping (metadata.json > dependencies):
+[FILL — For each dependency, state which sub-targets to link and whether it
+belongs to "common", "c", "cpp", or "infra".
+Example:
+  common : { "ZLIB": ["ZLIB::ZLIB"] }
+  c      : {}
+  cpp    : { "OpenCV": ["opencv::opencv_core", "opencv::opencv_imgproc"] }
+  infra  : { "GTest": ["gtest::gtest"] }
+]
+
+Quality-gate sync (IMPORTANT): the clang-tidy CI gate installs system header
+deps by mapping conandata.yml requirements (see .github/workflows/
+security-linters.yml: zlib→zlib1g-dev, pcre2→libpcre2-dev, eigen→libeigen3-dev;
+header-only ETL is downloaded at the version declared in conandata.yml). When
+adding a new C/C++ dependency whose headers appear in src/, extend that mapping
+(or add an ETL-style source download). Missing mapping = clang-tidy include
+errors in CI (fail-loud by design). See het-deps for full dependency governance.
+
+────────────────────────────────────────────────────────────────────────────────
+SECTION 4 — EDITABLE FILES & AGENT INSTRUCTIONS
+────────────────────────────────────────────────────────────────────────────────
+
+The following files in the fcpp template are user-editable. The agent MUST
+generate/modify each one according to the project design above.
+
+4.1  metadata.json  (project-level configuration hub)
+     ─────────────
+     • Set "name", "version", "description", "authors", "maintainers",
+       "topics", "url", "homepage" from Section 1.
+     • "team" is always "HeT-FTI".
+     • "license" is always "Apache-2.0".
+     • "build_cppstd" is always "17".  "build_cstd" is always "11".
+       These are team standards and MUST NOT be changed.
+     • "generate_modules_inplace" is always false.
+       C++23 module generation is experimental and not applicable under C++17.
+     • Set "is_shared", "is_header", "enable_python_bindings",
+       "activate_code_coverage" from Section 1.
+     • Populate "dependencies" → common/c/cpp/infra from Section 3.
+     • Set "cmake_version" to "4.2.3" (or newer). 4.2 is the floor for MSVC:
+       below it CMake cannot name the Visual Studio generator Conan derives.
+     • Set "trigger_tests" to true, "saving_tests_log" to true.
+     • Set "workflow_triggers" to the team default (all six true):
+         {"build": true, "tests": true, "release": true,
+          "docs": true, "security_scan": true, "cross_compile": true}
+       A switch grants PERMISSION, the gitmoji states INTENT. Handing every
+       permission out up front is what keeps one skill document literally true
+       in every derived project. build/test/docs/security gates are on by
+       default (PR shift-left); cross_compile is decoupled (only
+       :hammer_and_wrench: starts it, and it never runs on a PR); release needs
+       BOTH the switch and the release gitmoji in the pushed commits.
+     • Leave "build_type" at the project default ("Debug"). It is a declared
+       project state, NOT a gate: no pipeline reads it, so never flip it in
+       order to release.
+     • Configure "doc_languages", "doc_versions", "doc_doxygen_folders",
+       "doc_doxygen_suffix" as appropriate. Keep .dox/.cxx as documentation-only
+       suffixes: every .dox/.cxx file must live under docs/doxygen/dox/, never
+       under include/ or src/ (the suffix list applies to all folders, so it
+       does not enforce this by itself).
+
+4.2  conandata.yml  (dependency specs)
+     ─────────────
+     • List every requirement from Section 3 under `requirements:`.
+
+4.3  include/*.h and include/*.hpp  (public headers)
+     ──────────────────────────────
+     • Create all header files listed in Section 2.
+     • Every header MUST use the fcpp import-guard convention:
+         // Conan::ImportStart
+         #pragma once
+         #include <...>
+         // Conan::ImportEnd
+     • Add Doxygen docstrings to every public class, function, enum, struct.
+       Use @brief, @param, @return, @tparam.
+     • KEEP @exporter and @attacher annotations in docstrings.
+       Rationale: although C++17 does not use C++23 module generation, these
+       annotations are lightweight (no build impact under C++17) and preserve
+       forward-compatibility. When the team migrates to C++23 in the future,
+       the codebase will already be properly annotated for automatic module
+       export — avoiding a costly retrofit across every source file.
+       Convention:
+         - @exporter on standalone declarations in headers (free functions,
+           class declarations, template instantiations).
+         - @attacher on member-function definitions in source files.
+     • Support multi-language docstrings with [en]/[zh] tags if the user's
+       doc_languages includes both. Otherwise English-only is fine.
+
+4.4  src/*.c and src/*.cpp  (implementations)
+     ─────────────────────
+     • Create all source files listed in Section 2.
+     • Every source file MUST use the fcpp import-guard convention:
+         // Conan::ImportStart
+         #include "myheader.hpp"
+         #include <third_party.h>
+         // Conan::ImportEnd
+     • Add Doxygen @brief + @exporter / @attacher to every function definition.
+       (Same forward-compatibility rationale as 4.3.)
+
+4.5  test_package/main.cpp  (benchmark & validation program)
+     ─────────────────────
+     PURPOSE: This is a BENCHMARK program that validates the completeness of
+     the built package. It acts like a generic benchmark: run every kernel API,
+     measure wall-clock time cost, and print a summary table.
+
+     AGENT INSTRUCTIONS:
+     • #include all public headers from the library.
+     • For every public function / class / key API:
+       1. Call the API with representative inputs.
+       2. Wrap the call with std::chrono::high_resolution_clock to measure
+          elapsed time (microseconds or milliseconds).
+       3. Print a one-line result: API name, status (PASS/FAIL), time cost.
+     • At the end of main(), print a summary table like:
+
+         ======================== Benchmark Summary ========================
+         API                     Status    Time (ms)
+         ─────────────────────── ──────── ──────────
+         encode()                PASS      12.34
+         decode()                PASS       8.91
+         ...
+         ====================================================================
+
+     • Return 0 on all-pass, non-zero if any API fails.
+     • If resource files are needed, read from "./resources/" (copied by the
+       Conan test harness via RESOURCES_PATH).
+
+4.6  test_package/test/unit/*.cpp  (GTest unit tests)
+     ────────────────────────────
+     PURPOSE: Fine-grained correctness tests. Each .cpp file maps to one or
+     more logical test suites (TEST(Suite, Case) macros).
+     AGENT INSTRUCTIONS:
+     • Create one test file per public header/source pair. Name it after the
+       header, e.g. test_encoder.cpp for encoder.hpp.
+     • #include <gtest/gtest.h> and the header under test.
+     • Cover: constructor behavior, normal input/output, edge cases, error
+       handling, template instantiations.
+     • DO NOT add a main() — the framework auto-generates it at build time.
+     • If the function under test needs resource files, use the RESOURCES_PATH
+       macro (provided via CMake compile definition) to locate them.
+
+4.7  test_package/test/stress/*.cpp  (GTest stress / performance tests)
+     ──────────────────────────────
+     PURPOSE: Long-running or resource-intensive tests (large data, timing,
+     concurrency).
+     AGENT INSTRUCTIONS:
+     • Create stress test files for performance-critical functions.
+     • Use std::chrono for timing, std::thread for concurrency tests.
+     • DO NOT add a main() — same auto-generation as unit tests.
+
+4.8  test_package/resources/  (test resource files)
+     ───────────────────────
+     • Place any data files needed by test_package/main.cpp or test cases.
+     • Example: sample input files, golden-output reference files, configs.
+     • These are copied to the build folder at test time.
+
+4.9  api/python_bindings.cpp  (pybind11 bindings — if enabled)
+     ───────────────────────
+     • If enable_python_bindings is true:
+       - #include <pybind11/pybind11.h>, <pybind11/stl.h>, and project headers.
+       - Bind every public class, function, enum using PYBIND11_MODULE.
+       - For template functions/classes, bind each concrete instantiation.
+       - Name the module "<project_name>_python".
+     • If disabled, leave this file as a placeholder or remove it.
+
+────────────────────────────────────────────────────────────────────────────────
+SECTION 5 — DOCUMENTATION SYSTEM
+────────────────────────────────────────────────────────────────────────────────
+
+The fcpp template has a dual Doxygen + Sphinx documentation pipeline invoked
+via `python ./docs/build.py`. The agent must generate:
+
+5.1  Doxygen docstrings  (inline in headers + sources, see 4.3 / 4.4)
+     ────────────────────
+     Every public symbol must have a Doxygen comment block including:
+       @brief   — one-line summary (with optional [en]/[zh] variants)
+       @param   — for each parameter
+       @tparam  — for each template parameter
+       @return  — return value description
+       @note, @warning, @see, @since, @version — as appropriate
+       @exporter / @attacher — KEEP these annotations for forward-compatibility
+         with future C++23 module migration (see Section 4.3 rationale)
+       @ingroup — assign to a logical Doxygen group
+     Use the doctest.hpp example in the template as the style reference.
+
+5.2  docs/doxygen/dox/mainpage.dox  (Doxygen landing page)
+     ─────────────────────────────
+     • HARD REQUIREMENT: exactly one @mainpage must exist, or the docs cannot
+       be built at all (docs/build.py fails the build otherwise).
+     • Rewrite the mainpage to reflect the new project: name, purpose, quick
+       usage snippet, feature list.
+     • Support [en]/[zh] @section tags if multi-language.
+     • @since tag should match the initial version.
+
+5.3  docs/doxygen/dox/demos/*.dox + *.cxx  (Doxygen example pages)
+     ────────────────────────────────────
+     • HARD REQUIREMENT: demos/ must exist and hold at least one tutorial .dox
+       with @example -- that tutorial plus the mainpage is what makes the doc
+       set "complete".
+     • SOFT: the example code. For each major feature create a .dox with the
+       explanatory docstring and 0..N .cxx files it pulls in via @include.
+       Several .cxx per .dox is normal; no 1:1 pairing is required.
+     • Use @example, @code{.cpp} / @endcode, @ingroup as in the template.
+     • IMPORTANT: .dox and .cxx are documentation-only. They live exclusively
+       under docs/doxygen/dox/ and must never be created under include/ or
+       src/, which carry .h/.c/.hpp/.cpp only. A .dox/.cxx in those trees is a
+       layout violation (see docs/doxygen/dox/ for the canonical set).
+
+5.4  Sphinx documentation  (index.rst as a mini journal paper)
+     ─────────────────────
+
+     DESIGN PHILOSOPHY:
+     Think of index.rst as a SHORT JOURNAL PAPER for new users. It must be
+     concise and clear — a reader should understand what this library does,
+     why it matters, how to use it, and what results to expect, all within
+     a single focused page. The structure is:
+
+       1. BACKGROUND    — What problem does this library solve? Why does it
+                          exist? (2-4 sentences)
+       2. METHOD        — What approach / algorithm / technique is used?
+                          Keep it brief — just enough for users to understand
+                          the core idea. (a short paragraph or bullet list)
+       3. QUICK START   — How to install and run a minimal working example.
+                          (code block with conan create / #include / usage)
+       4. RESULTS       — What does the user get? Show expected output,
+                          screenshots, or performance numbers.
+                          (figures, tables, or sample stdout)
+       5. LICENSE        — One-line pointer to LICENSE file.
+
+     CONSTRAINT: index.rst must stay SHORT. If any section (especially Method
+     or Results) requires lengthy explanation, SPLIT it into a separate .rst
+     and link via toctree. For example:
+       - Method is complex → create method.rst, link from index.rst
+       - Multiple subsystems → create one .rst per subsystem
+     The goal: index.rst is always scannable in under 2 minutes of reading.
+
+     ADAPTIVE LAYOUT based on library complexity:
+
+     SIMPLE LIBRARY (few headers, single-purpose):
+       • A single index.rst following the mini-paper structure is sufficient.
+       • No additional .rst files needed.
+
+     COMPLEX LIBRARY (many headers, distinct submodules / subsystems):
+       • index.rst remains the concise mini-paper landing page.
+       • Add additional .rst files as needed and link via toctree:
+           - method.rst       → deep-dive into algorithms / theory
+           - <module>.rst     → per-submodule documentation
+           - cmake.rst        → CMake build options reference
+           - conan.rst        → Conan recipe options reference
+           - meta.rst         → metadata.json field reference
+           - benchmark.rst    → detailed benchmark tables & analysis
+       • Let the content decide the structure — don't create empty pages
+         just for the sake of structure.
+
+5.5  Sphinx internationalization  (CRITICAL — auto-translate .po files)
+     ───────────────────────────
+     The Sphinx system supports multi-language builds via sphinx-intl. If
+     metadata.json "doc_languages" includes any language besides English
+     (e.g. ["en", "zh"]), the agent MUST generate translation files.
+
+     LANGUAGE TAG MAP (used by conf.py and docs/build.py):
+       en → en
+       zh → zh_CN
+       jp → ja
+
+     FOR EACH NON-ENGLISH LANGUAGE in doc_languages:
+       1. Create locale directory structure:
+            docs/sphinx/locales/<lang_tag>/LC_MESSAGES/
+          Example for Chinese: docs/sphinx/locales/zh_CN/LC_MESSAGES/
+
+       2. For EVERY .rst file in docs/sphinx/source/ (including those in
+          subdirectories like components/), generate a corresponding .po file:
+            docs/sphinx/locales/<lang_tag>/LC_MESSAGES/<rst_name>.po
+          Example: index.rst → locales/zh_CN/LC_MESSAGES/index.po
+                   method.rst → locales/zh_CN/LC_MESSAGES/method.po
+
+       3. Each .po file MUST follow standard gettext format:
+            # SOME DESCRIPTIVE TITLE.
+            # Copyright (C) <year>, HeT-FTI
+            # This file is distributed under the same license as the <name> package.
+            #
+            #, fuzzy
+            msgid ""
+            msgstr ""
+            "Project-Id-Version: <project_name> <version>\n"
+            "Report-Msgid-Bugs-To: \n"
+            "POT-Creation-Date: <date>\n"
+            "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+            "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+            "Language: <lang_tag>\n"
+            "Language-Team: <lang_tag> <LL@li.org>\n"
+            "Plural-Forms: nplurals=1; plural=0;\n"
+            "MIME-Version: 1.0\n"
+            "Content-Type: text/plain; charset=utf-8\n"
+            "Content-Transfer-Encoding: 8bit\n"
+            "Generated-By: Babel 2.17.0\n"
+
+       4. For each translatable text block in the .rst, add a msgid/msgstr pair.
+          THE AGENT MUST FILL IN the msgstr with the ACTUAL TRANSLATION in the
+          target language. Do NOT leave msgstr empty — that defeats the purpose.
+          Example for zh_CN:
+            msgid "Introduction"
+            msgstr "简介"
+
+            msgid "This library provides high-performance image codecs."
+            msgstr "本库提供高性能图像编解码功能。"
+
+       5. After creating the .po files, also generate the compiled .mo files.
+          If the agent cannot generate binary .mo files, at minimum generate all
+          .po files with translations filled in, and note that `msgfmt` must be
+          run to compile them (or `python ./docs/build.py` will handle it).
+
+     IMPORTANT: The docs/build.py automation calls sphinx-intl to generate
+     locale scaffolding, but the TRANSLATIONS themselves must be human- or
+     agent-written in the .po files. The agent must auto-fill msgstr fields.
+
+5.6  docs/images/  (static images for documentation)
+     ────────────
+     Naming convention:
+       IN_*.jpg/png  → Doxygen-only figures
+       OUT_*.jpg/svg → Sphinx-only figures
+       ALL_*.jpg/png → shared by both systems
+
+     MANDATORY FILE:
+       docs/images/ALL_title_card.png
+       This image is REQUIRED. It serves as the project's cover card in the
+       HeT-FTI/HeT-AI-Gallery aggregation portal
+       (https://het-fti.github.io/HeT-AI-Gallery/).
+       The Gallery's index.html searches for ALL_title_card.png (or .jpg etc.)
+       in each project's Sphinx _images/ output to display as the card image.
+       If this file is missing, the Gallery falls back to a generic placeholder.
+
+       The agent should generate a placeholder ALL_title_card.png (or note that
+       the user must provide one). Recommended dimensions: ~600x400px, showing
+       the project name/logo and a brief visual hint of what the library does.
+
+     • Also place: logo, demo screenshots, architecture diagrams as needed.
+
+────────────────────────────────────────────────────────────────────────────────
+SECTION 6 — OTHER FILES FOR PROJECT COMPLETENESS
+────────────────────────────────────────────────────────────────────────────────
+
+6.1  README.md
+     • Rewrite with: project name, badges (CI, license, C++ std, docs),
+       overview, features, build requirements, crash course, project structure
+       tree, license section. Follow the existing template's README style.
+
+6.2  LICENSE and NOTICE
+     • DO NOT MODIFY. These files are inherited from the HeT-FTI/fcpp template
+       and are governed by the organization's legal terms.
+     • LICENSE: Apache License 2.0 — must remain as-is.
+     • NOTICE: Contains copyright and CC BY-NC 4.0 documentation license
+       attribution for Shenzhen HeT Intelligent Control Co., Ltd. — must
+       remain as-is.
+
+6.3  .gitignore
+     • Keep existing patterns. Add project-specific ignores if needed
+       (e.g., model weights, large data files).
+
+6.4  (retired)  the old `build` one-liner script
+     • Deleted from the template: README section 3 inlines the same commands, so
+       there is no longer a package-name or build-type literal to hand-edit.
+
+6.5  Doxyfile
+     • No manual edits needed — it uses %PLACEHOLDER% tokens filled by
+       docs/build.py at build time. Only touch if adding custom Doxygen config.
+
+6.6  conanfile.py / CMakeLists.txt / test_package/conanfile.py /
+     test_package/CMakeLists.txt
+     • These are FRAMEWORK FILES — do NOT modify them unless you have a
+       structural reason (e.g., adding a new build target type). The template's
+       automation reads metadata.json and conandata.yml to drive everything.
+
+6.7  .github/misc/.releaserc.json  (semantic-release config)
+     • NO manual edits needed: the repository URL is derived dynamically by
+       the release workflow (`-r "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY"`),
+       and branches are fixed to main. Only adjust parserOpts here if the
+       canonical commit form changes (keep in sync with
+       .github/misc/commitlint.config.js).
+
+6.8  .github/misc/.mega-linter.yml
+     • SAST config (MegaLinter also fails the build; devskim bans C functions under include/ and src/)
+       Optionally adjust linter settings for your coding style preferences.
+       Required quality gates (clang-format/clang-tidy/gitleaks) live in
+       .github/workflows/security-linters.yml and use the configs in
+       .github/misc/.
+
+6.9  .github/workflows/  (CI workflows)
+     • Review and update workflow files if you need different trigger branches,
+       additional CI matrix entries, or custom deployment steps.
+
+────────────────────────────────────────────────────────────────────────────────
+SECTION 7 — GENERATION CHECKLIST  (for the agent to self-verify)
+────────────────────────────────────────────────────────────────────────────────
+
+Before finishing, the agent MUST verify:
+
+  [ ] metadata.json "build_cppstd" is "17" and "build_cstd" is "11".
+  [ ] metadata.json "team" is "HeT-FTI" and "license" is "Apache-2.0".
+  [ ] metadata.json "generate_modules_inplace" is false.
+  [ ] metadata.json is consistent with all other Section 1 values.
+  [ ] conandata.yml lists every dependency from Section 3.
+  [ ] Every header in include/ has the Conan::ImportStart/End guard.
+  [ ] Every source in src/ has the Conan::ImportStart/End guard.
+  [ ] Every public symbol has Doxygen docstring with @exporter or @attacher.
+  [ ] test_package/main.cpp benchmarks ALL public APIs with timing output.
+  [ ] At least one unit test file exists per header in test_package/test/unit/.
+  [ ] Stress test files exist for performance-critical paths in test/stress/.
+  [ ] docs/doxygen/dox/mainpage.dox is rewritten for the new project.
+  [ ] docs/doxygen/dox/demos/ holds a tutorial .dox with @example, and every
+      file it @include-s exists.
+  [ ] index.rst is concise (mini-paper style: background → method → quick
+      start → results → license), readable in under 2 minutes.
+  [ ] Long content is split into separate .rst files, not crammed in index.rst.
+  [ ] For each non-English doc_language: .po files exist under
+      docs/sphinx/locales/<lang>/LC_MESSAGES/ with FILLED translations.
+  [ ] docs/images/ALL_title_card.png exists (placeholder or real artwork).
+  [ ] README.md is updated with new project information.
+  [ ] LICENSE and NOTICE are UNCHANGED from the template.
+  [ ] No package-name literal left outside metadata.json.
+  [ ] .github/misc/.releaserc.json needs no repositoryUrl edit (derived from git remote).
+  [ ] If pybind11 enabled: api/python_bindings.cpp binds all public APIs.
+  [ ] The whole project builds: conan create . -s build_type=Debug --build=missing
+
+================================================================================
+END OF PROMPT — paste this into Copilot agent with all [FILL] sections completed
+================================================================================

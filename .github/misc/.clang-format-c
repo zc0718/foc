@@ -1,0 +1,22 @@
+# C family (.c and .h) — project convention: .h/.c are C
+# (see .github/skills/_shared/code-conventions.md; conanfile.py syntax guide #9)
+# The native gate routes .c/.h files to this config explicitly (--style=file:).
+#
+# NOTE: no `Language: C` key here — clang-format only gained the `C` value in
+# LLVM 23; MegaLinter v8.8.0 ships clang-format 19.1.4 which rejects it
+# ("unknown enumerated scalar") and aborts. C is formatted identically in the
+# default Cpp mode for this repo's files, so the key is omitted for
+# version-agnostic compatibility (native gate = 23.1.0, MegaLinter = 19.1.4).
+BasedOnStyle: LLVM
+IndentWidth: 4
+TabWidth: 4
+UseTab: Never
+ColumnLimit: 120
+MaxEmptyLinesToKeep: 3
+
+# Keep the 2-blank-line module split rule intact (MaxEmptyLinesToKeep >= 2)
+# Close docstring re-format
+ReflowComments: false
+SortIncludes: false
+BreakBeforeBraces: Attach
+PointerAlignment: Right

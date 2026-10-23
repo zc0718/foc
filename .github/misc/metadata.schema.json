@@ -1,0 +1,75 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://example.com/schemas/metadata.json",
+  "title": "Template metadata contract",
+  "description": "Single source of truth for this project's build & CI. Consumers: CMake, conanfile.py, test_package, ci-orchestrator. See .github/skills/_shared/metadata-contract.md.",
+  "type": "object",
+  "required": ["name", "version", "build_type", "dependencies", "workflow_triggers"],
+  "additionalProperties": false,
+  "properties": {
+    "name": { "type": "string", "minLength": 1 },
+    "target": { "type": "string" },
+    "version": { "type": "string" },
+    "team": { "type": "string" },
+    "license": { "type": "string" },
+    "description": { "type": "string" },
+    "authors": { "type": "array", "items": { "type": "string" } },
+    "maintainers": { "type": "array", "items": { "type": "string" } },
+    "topics": { "type": "array", "items": { "type": "string" } },
+    "url": { "type": "string" },
+    "homepage": { "type": "string" },
+    "cmake_version": { "type": "string" },
+    "build_cppstd": {
+      "description": "C++ standard. Both recipes silently fall back to 17 for anything outside this set, so the enum is what stops that fallback from quietly hiding a typo.",
+      "type": "string",
+      "enum": ["17", "20", "23"]
+    },
+    "build_cstd": { "type": "string" },
+    "build_type": { "type": "string", "enum": ["Debug", "Release"] },
+    "activate_code_coverage": { "type": "boolean" },
+    "is_shared": { "type": "boolean" },
+    "is_header": { "type": "boolean" },
+    "generate_modules_inplace": { "type": "boolean" },
+    "std_modules": { "type": "string" },
+    "user_modules": { "type": "string" },
+    "dependencies": {
+      "type": "object",
+      "required": ["common", "c", "cpp", "infra"],
+      "additionalProperties": false,
+      "properties": {
+        "common": { "$ref": "#/definitions/depBucket" },
+        "c": { "$ref": "#/definitions/depBucket" },
+        "cpp": { "$ref": "#/definitions/depBucket" },
+        "infra": { "$ref": "#/definitions/depBucket" }
+      }
+    },
+    "baremetal_white_list": { "type": "array", "items": { "type": "string" } },
+    "graphviz_bin": { "type": "string" },
+    "doc_languages": { "type": "array", "items": { "type": "string" } },
+    "doc_versions": { "type": "array", "items": { "type": "string" } },
+    "doc_doxygen_folders": { "type": "array", "items": { "type": "string" } },
+    "doc_doxygen_suffix": { "type": "array", "items": { "type": "string" } },
+    "trigger_tests": { "type": "boolean" },
+    "saving_tests_log": { "type": "boolean" },
+    "enable_python_bindings": { "type": "boolean" },
+    "workflow_triggers": {
+      "type": "object",
+      "required": ["build", "tests", "release", "docs", "security_scan", "cross_compile"],
+      "additionalProperties": false,
+      "properties": {
+        "build": { "type": "boolean" },
+        "tests": { "type": "boolean" },
+        "release": { "type": "boolean" },
+        "docs": { "type": "boolean" },
+        "security_scan": { "type": "boolean" },
+        "cross_compile": { "type": "boolean" }
+      }
+    }
+  },
+  "definitions": {
+    "depBucket": {
+      "type": "object",
+      "additionalProperties": { "type": "array", "items": { "type": "string" } }
+    }
+  }
+}

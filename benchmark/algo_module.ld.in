@@ -1,0 +1,55 @@
+/* 自动生成 - 请勿手动修改 */
+/* Target: @TARGET_MCU@  Flash: @ALGO_FLASH_ORIGIN@  RAM: @ALGO_RAM_ORIGIN@ */
+
+MEMORY
+{
+    ALGO_FLASH (rx)  : ORIGIN = @ALGO_FLASH_ORIGIN@, LENGTH = 64K
+    ALGO_RAM   (rwx) : ORIGIN = @ALGO_RAM_ORIGIN@,   LENGTH = 32K
+}
+
+SECTIONS
+{
+    /* 模块描述符 - 必须在最前面 */
+    .algo_header : ALIGN(4) {
+        KEEP(*(.algo_header))
+    } > ALGO_FLASH
+
+    /* 模块元数据（bench 列表等） */
+    .algo_meta : ALIGN(4) {
+        KEEP(*(.algo_meta))
+    } > ALGO_FLASH
+
+    /* 代码段 */
+    .text : ALIGN(4) {
+        *(.text*)
+        *(.rodata*)
+        . = ALIGN(4);
+    } > ALGO_FLASH
+
+    /* 已初始化数据（从 Flash 拷贝到 RAM） */
+    .data : ALIGN(4) {
+        _sdata = .;
+        *(.data*)
+        . = ALIGN(4);
+        _edata = .;
+    } > ALGO_RAM AT > ALGO_FLASH
+
+    _sidata = LOADADDR(.data);
+
+    /* 未初始化数据 */
+    .bss : ALIGN(4) {
+        _sbss = .;
+        *(.bss*)
+        *(COMMON)
+        . = ALIGN(4);
+        _ebss = .;
+    } > ALGO_RAM
+
+    /* 丢弃不需要的段 */
+    /DISCARD/ : {
+        *(.ARM.exidx*)
+        *(.ARM.attributes*)
+        *(.comment)
+        *(.note*)
+    }
+}

@@ -1,0 +1,18 @@
+# C++ family (.hpp and .cpp) — project convention: .hpp/.cpp are C++
+# (see .github/skills/_shared/code-conventions.md; conanfile.py syntax guide #9)
+# The native gate routes .cpp/.hpp files to this config explicitly (--style=file:).
+Language: Cpp
+BasedOnStyle: LLVM
+IndentWidth: 4
+TabWidth: 4
+UseTab: Never
+ColumnLimit: 120
+MaxEmptyLinesToKeep: 3
+
+# Keep the 2-blank-line module split rule intact (MaxEmptyLinesToKeep >= 2)
+# Close docstring re-format
+ReflowComments: false
+SortIncludes: false
+BreakBeforeBraces: Attach
+PointerAlignment: Left
+Standard: c++17

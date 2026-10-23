@@ -1,0 +1,209 @@
+name: CI Orchestrator
+
+# Entry point: reads metadata.json once, then calls the downstream workflows
+# ubuntu-latest rolls 24.04 -> 26.04 (Oct-Nov 2026); a probe branch proved these workflows green on both.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      commit_messages:
+        description: 'Emoji trigger simulation (optional)'
+        required: false
+        type: string
+        default: ''
+
+concurrency:
+  group: orchestrator-${{ github.ref }}-${{ github.event_name }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+# least privilege: no workflow-level permissions block; each job scopes its own token
+
+jobs:
+  # Step 1: Call the metadata controller to analyze metadata.json
+  controller:
+    name: Analyze Metadata
+    # skip every pipeline on the template instantiation push ("Initial commit")
+    if: ${{ github.event_name != 'push' || github.event.commits[0].message != 'Initial commit' }}
+    uses: ./.github/workflows/metadata-controller.yml
+    with:
+      event_name: ${{ github.event_name }}
+      # push: join commit messages; PR: empty string; workflow_dispatch can simulate emojis
+      commit_messages: ${{ github.event_name == 'push' && join(github.event.commits.*.message, '\n') || (github.event_name == 'workflow_dispatch' && github.event.inputs.commit_messages) || '' }}
+
+  # Step 2: Log the decisions (for debugging)
+  log-decisions:
+    name: Log Decisions
+    needs: controller
+    runs-on: ubuntu-latest
+    steps:
+      - name: Display workflow decisions
+        run: |
+          echo "============================================"
+          echo "           📊 CI ORCHESTRATOR              "
+          echo "============================================"
+          echo ""
+          echo "📦 Package Information:"
+          echo "  Name: ${{ needs.controller.outputs.pkg_name }}"
+          echo "  Version: ${{ needs.controller.outputs.version }}"
+          echo "  Build Type: ${{ needs.controller.outputs.build_type }}"
+          echo ""
+          echo "🎯 Workflow Triggers:"
+          echo "  🏗️  Build:      ${{ needs.controller.outputs.trigger_build }}"
+          echo "  🧪 Tests:      ${{ needs.controller.outputs.trigger_tests }}"
+          echo "  📦 Release:    ${{ needs.controller.outputs.trigger_release }}"
+          echo "  📚 Docs:       ${{ needs.controller.outputs.trigger_docs }}"
+          echo "  🛡️  Security:  ${{ needs.controller.outputs.trigger_security }}"
+          echo "  🛠️  Cross compile: ${{ needs.controller.outputs.trigger_cross_compile }}"
+          echo ""
+          echo "⚙️  Test Configuration:"
+          echo "  Save Logs: ${{ needs.controller.outputs.saving_tests_log }}"
+          echo "  Coverage:  ${{ needs.controller.outputs.activate_code_coverage }}"
+          echo ""
+          echo "============================================"
+
+  # Step 2b: Enforce commit conventions (canonical form, see .github/misc/commitlint.config.js)
+  commit-lint:
+    name: Commit Lint
+    # Skip on the template instantiation push (see controller job above).
+    if: ${{ github.event_name != 'push' || github.event.commits[0].message != 'Initial commit' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 'lts/*'
+
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund --ignore-scripts
+
+      - name: Lint push commits
+        if: github.event_name == 'push'
+        env:
+          EVENT_BEFORE: ${{ github.event.before }}
+        run: |
+          FROM="$EVENT_BEFORE"
+          # A force push that rewinds history leaves `before` unreachable: the object may
+          # not exist in the clone at all ("Invalid revision range"). Fall back to the tip.
+          if [[ "$FROM" =~ ^0+$ ]] || ! git cat-file -e "${FROM}^{commit}" 2>/dev/null \
+             || ! git merge-base --is-ancestor "$FROM" HEAD; then
+            FROM="HEAD~1"
+          fi
+          ./node_modules/.bin/commitlint --config .github/misc/commitlint.config.js --from "$FROM" --to HEAD --verbose
+
+      - name: Lint PR title
+        if: github.event_name == 'pull_request'
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: printf '%s' "$PR_TITLE" | ./node_modules/.bin/commitlint --config .github/misc/commitlint.config.js
+
+  # Step 2c: Validate metadata.json against the machine-readable contract
+  schema-check:
+    name: Metadata Schema
+    # Skip on the template instantiation push (see controller job above).
+    if: ${{ github.event_name != 'push' || github.event.commits[0].message != 'Initial commit' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 'lts/*'
+
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund --ignore-scripts
+
+      - name: Validate metadata.json
+        run: ./node_modules/.bin/ajv validate -s .github/misc/metadata.schema.json -d metadata.json --spec=draft7
+
+  # Step 2d: Validate the canonical Agent Skills tree and materialize the harness views
+  skills-contract:
+    name: Skills Contract
+    # Skip on the template instantiation push (see controller job above).
+    if: ${{ github.event_name != 'push' || github.event.commits[0].message != 'Initial commit' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Validate skill bundles
+        run: python3 .github/skills/_shared/skillkit/cli.py validate --strict
+
+      - name: Materialize and verify every harness view
+        run: |
+          python3 .github/skills/_shared/skillkit/cli.py sync --harness all
+          python3 .github/skills/_shared/skillkit/cli.py sync --check --harness all
+          python3 .github/skills/_shared/skillkit/cli.py status
+
+      - name: Ensure generated views are git-ignored
+        run: |
+          changes="$(git status --porcelain --untracked-files=all)"
+          if [ -n "$changes" ]; then
+            printf '%s\n' "$changes"
+            echo '::error::Generated skill views must stay git-ignored and no duplicate SKILL.md may be committed.'
+            exit 1
+          fi
+
+  # Step 3: Trigger downstream workflows based on controller outputs
+  
+  build:
+    name: Build
+    needs: controller
+    if: needs.controller.outputs.trigger_build == 'true'
+    uses: ./.github/workflows/ci-build-test.yml
+    with:
+      pkg_name: ${{ needs.controller.outputs.pkg_name }}
+      build_type: ${{ needs.controller.outputs.build_type }}
+
+  tests:
+    name: Tests
+    needs: controller
+    if: needs.controller.outputs.trigger_tests == 'true'
+    uses: ./.github/workflows/full-test-automation.yml
+    with:
+      pkg_name: ${{ needs.controller.outputs.pkg_name }}
+      saving_tests_log: ${{ needs.controller.outputs.saving_tests_log }}
+      activate_code_coverage: ${{ needs.controller.outputs.activate_code_coverage }}
+      build_type: ${{ needs.controller.outputs.build_type }}
+
+  # Release is not called here: it is standalone so it can hold write permissions
+
+  docs:
+    name: Documentation
+    needs: controller
+    if: needs.controller.outputs.trigger_docs == 'true'
+    uses: ./.github/workflows/docs-build.yml
+
+  security:
+    name: Security Scan
+    needs: controller
+    if: needs.controller.outputs.trigger_security == 'true'
+    uses: ./.github/workflows/security-linters.yml
+    with:
+      validate_all_codebase: ${{ github.event_name == 'push' && 'true' || 'false' }}
+
+  cross-compile:
+    name: Cross Compile
+    needs: controller
+    if: needs.controller.outputs.trigger_cross_compile == 'true'
+    uses: ./.github/workflows/cross-compile.yml
+    with:
+      pkg_name: ${{ needs.controller.outputs.pkg_name }}
+

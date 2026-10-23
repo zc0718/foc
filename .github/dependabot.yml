@@ -1,0 +1,36 @@
+# Dependabot configuration — fresh template repos stay quiet by default.
+#
+# open-pull-requests-limit: 0 disables version-update PRs (security updates still arrive)
+#
+# This applies to the template repo too: maintainers bump pins by hand
+version: 2
+updates:
+  # One grouped PR for all GitHub Actions bumps, on the 3rd of each month.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: cron
+      timezone: Asia/Shanghai
+      cronjob: "0 0 3 * *"
+    groups:
+      github-actions:
+        patterns:
+          - "*"
+    open-pull-requests-limit: 0
+    labels:
+      - ":bricks: infrastructure"
+
+  # One grouped PR for all npm dev-tooling bumps (semantic-release, commitlint, ajv).
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: cron
+      timezone: Asia/Shanghai
+      cronjob: "0 0 3 * *"
+    groups:
+      dev-tooling:
+        patterns:
+          - "*"
+    open-pull-requests-limit: 0
+    labels:
+      - ":bricks: infrastructure"

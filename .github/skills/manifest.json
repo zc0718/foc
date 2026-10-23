@@ -1,0 +1,309 @@
+{
+  "schema_version": "1.1",
+  "project": "fcpp",
+  "spec": "agentskills.io",
+  "canonical_root": ".github/skills",
+  "routing_table": ".github/skills/_shared/routing.md",
+  "generated_views": {
+    ".agents/skills": ["dsh", "cursor", "gemini", "copilot-vs"],
+    ".claude/skills": ["claude-code"],
+    ".codex/skills": ["codex"]
+  },
+  "default_view": ".agents/skills",
+  "family": {
+    "iac_usage": "一期·IaC 使用族（面向 CI/CD 新手）",
+    "dev_automation": "二期·自动化开发族（面向开发者）",
+    "agent": "唯一路由主体（组合任务入口）"
+  },
+  "skills": [
+    {
+      "id": "S0",
+      "name": "het-guide",
+      "family": "iac_usage",
+      "path": ".github/skills/het-guide/SKILL.md",
+      "intents": [
+        "这个系统能自动干嘛",
+        "从哪开始",
+        "技能总览",
+        "怎么触发 CI",
+        "路由"
+      ],
+      "read_only": true,
+      "dependencies": []
+    },
+    {
+      "id": "S1",
+      "name": "het-build",
+      "family": "iac_usage",
+      "path": ".github/skills/het-build/SKILL.md",
+      "intents": [
+        "构建",
+        "编译",
+        "测试",
+        "跑测试",
+        "覆盖率",
+        "coverage"
+      ],
+      "read_only": false,
+      "dependencies": [
+        "het-guide"
+      ]
+    },
+    {
+      "id": "S2",
+      "name": "het-release",
+      "family": "iac_usage",
+      "path": ".github/skills/het-release/SKILL.md",
+      "intents": [
+        "发布",
+        "发版",
+        "release",
+        "新版本",
+        "版本号",
+        "changelog"
+      ],
+      "read_only": false,
+      "dependencies": [
+        "het-guide"
+      ]
+    },
+    {
+      "id": "S3",
+      "name": "het-docs",
+      "family": "iac_usage",
+      "path": ".github/skills/het-docs/SKILL.md",
+      "intents": [
+        "文档",
+        "doxygen",
+        "sphinx",
+        "中英文文档"
+      ],
+      "read_only": false,
+      "dependencies": [
+        "het-guide"
+      ]
+    },
+    {
+      "id": "S4",
+      "name": "het-quality",
+      "family": "iac_usage",
+      "path": ".github/skills/het-quality/SKILL.md",
+      "intents": [
+        "质量",
+        "安全检查",
+        "lint",
+        "clang-tidy",
+        "clang-format",
+        "megalinter",
+        "gitleaks"
+      ],
+      "read_only": false,
+      "dependencies": [
+        "het-guide"
+      ]
+    },
+    {
+      "id": "S5",
+      "name": "het-board",
+      "family": "iac_usage",
+      "path": ".github/skills/het-board/SKILL.md",
+      "intents": [
+        "上板",
+        "交叉编译",
+        "裸机",
+        "baremetal",
+        "cortex-m",
+        "烧录",
+        "benchmark 上板"
+      ],
+      "read_only": false,
+      "dependencies": [
+        "het-guide"
+      ]
+    },
+    {
+      "id": "S6",
+      "name": "het-fix-ci",
+      "family": "iac_usage",
+      "path": ".github/skills/het-fix-ci/SKILL.md",
+      "intents": [
+        "CI 红了",
+        "报错",
+        "失败",
+        "workflow 失败",
+        "actions 失败"
+      ],
+      "read_only": true,
+      "dependencies": [
+        "het-build",
+        "het-release",
+        "het-docs",
+        "het-quality",
+        "het-board"
+      ]
+    },
+    {
+      "id": "N1",
+      "name": "het-deps",
+      "family": "dev_automation",
+      "path": ".github/skills/het-deps/SKILL.md",
+      "intents": [
+        "加依赖",
+        "添加依赖",
+        "移除依赖",
+        "依赖治理",
+        "dependencies",
+        "依赖配置"
+      ],
+      "read_only": false,
+      "dependencies": [
+        "het-guide"
+      ]
+    },
+    {
+      "id": "N2",
+      "name": "het-module",
+      "family": "dev_automation",
+      "path": ".github/skills/het-module/SKILL.md",
+      "intents": [
+        "新增模块",
+        "新增 API",
+        "新功能开发",
+        "加个头文件",
+        "模块生成"
+      ],
+      "read_only": false,
+      "dependencies": [
+        "het-guide",
+        "het-testgen"
+      ]
+    },
+    {
+      "id": "N3",
+      "name": "het-setup",
+      "family": "dev_automation",
+      "path": ".github/skills/het-setup/SKILL.md",
+      "intents": [
+        "环境搭建",
+        "装 conan",
+        "首次构建",
+        "前提条件",
+        "环境配置",
+        "怎么开始"
+      ],
+      "read_only": false,
+      "dependencies": [
+        "het-guide"
+      ]
+    },
+    {
+      "id": "N4",
+      "name": "het-testgen",
+      "family": "dev_automation",
+      "path": ".github/skills/het-testgen/SKILL.md",
+      "intents": [
+        "生成测试",
+        "补测试",
+        "测试用例",
+        "测试先行",
+        "tdd",
+        "gtest 用例",
+        "prd 转测试",
+        "plantuml 测试",
+        "hpo",
+        "模型调参"
+      ],
+      "read_only": false,
+      "dependencies": [
+        "het-build",
+        "het-guide"
+      ]
+    },
+    {
+      "id": "N5",
+      "name": "het-commit",
+      "family": "dev_automation",
+      "path": ".github/skills/het-commit/SKILL.md",
+      "intents": [
+        "提交",
+        "commit",
+        "conventional commit",
+        "规范提交",
+        "拆分提交"
+      ],
+      "read_only": false,
+      "dependencies": [
+        "het-guide"
+      ]
+    },
+    {
+      "id": "N6",
+      "name": "het-audit",
+      "family": "dev_automation",
+      "path": ".github/skills/het-audit/SKILL.md",
+      "intents": [
+        "审计",
+        "audit",
+        "项目审计",
+        "仓库审计",
+        "检查是否符合规范",
+        "review"
+      ],
+      "read_only": true,
+      "dependencies": [
+        "het-testgen"
+      ]
+    },
+    {
+      "id": "N7",
+      "name": "het-preflight",
+      "family": "dev_automation",
+      "path": ".github/skills/het-preflight/SKILL.md",
+      "intents": [
+        "发版前检查",
+        "发布门禁",
+        "预检",
+        "能否发版",
+        "发布前跑一遍"
+      ],
+      "read_only": true,
+      "dependencies": [
+        "het-quality",
+        "het-build",
+        "het-docs",
+        "het-audit",
+        "het-release"
+      ]
+    },
+    {
+      "id": "N8",
+      "name": "het-patent",
+      "family": "dev_automation",
+      "path": ".github/skills/het-patent/SKILL.md",
+      "intents": [
+        "专利",
+        "专利挖掘",
+        "交底书",
+        "创新点",
+        "知识产权",
+        "patent",
+        "IP"
+      ],
+      "read_only": false,
+      "dependencies": [
+        "het-guide"
+      ]
+    }
+  ],
+  "agent": {
+    "id": "A1",
+    "name": "het-agent",
+    "path": ".github/skills/het-agent/SKILL.md",
+    "loads": "manifest.json",
+    "allows_public_skills": true,
+    "public_skill_whitelist": [
+      "project-setup-info-local"
+    ]
+  }
+}
+

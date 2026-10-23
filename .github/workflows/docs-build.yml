@@ -1,0 +1,45 @@
+name: Docs
+
+# Called by ci-orchestrator.yml, or run manually via workflow_dispatch.
+
+on:
+  workflow_call:
+    # No inputs needed - documentation build is self-contained
+  workflow_dispatch:
+
+env:
+  CONAN_HOME: ~/.conan2
+
+jobs:
+  docs:
+    name: Build Documentation
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+
+      - name: Install documentation dependencies
+        run: |
+          sudo apt install -y doxygen graphviz
+          pip install --only-binary :all: numpy==2.1.3 sphinx==7.4.7 sphinx-intl==2.2.0 sphinx-rtd-theme==2.0.0
+
+      - name: Build documentation
+        run: |
+          python ./docs/build.py
+
+      - name: Assert the documentation was produced
+        shell: bash
+        run: |
+          status=0
+          for f in docs/doxygen/build/docs.html docs/sphinx/build/html/index.html; do
+            if [ -f "$f" ]; then echo "ok: $f"; else echo "::error::missing documentation artifact: $f"; status=1; fi
+          done
+          # DOT_PATH is empty by design, so `dot` must be resolvable from PATH
+          if command -v dot >/dev/null 2>&1; then echo "ok: $(dot -V 2>&1)"; else echo "::error::graphviz 'dot' is not on PATH"; status=1; fi
+          exit $status

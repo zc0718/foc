@@ -1,0 +1,200 @@
+name: hetai-package-matrix
+
+on:
+  workflow_dispatch:
+    inputs:
+      build_mode:
+        description: Build target selection mode
+        required: true
+        default: default
+        type: choice
+        options:
+          - default
+          - all
+          - selected
+      selected_targets_json:
+        description: JSON array for selected mode, e.g. ["linux-armv7"] or [{"id":"linux-armv7"}]
+        required: false
+        default: "[]"
+        type: string
+  push:
+    branches: [main, fcpp-dev]
+    paths:
+      - ".github/workflows/hetai-package-matrix.yml"
+      - ".hetai/build-matrix.yml"
+      - "CMakeLists.txt"
+      - "LICENSE"
+      - "conanfile.py"
+      - "conandata.yml"
+      - "metadata.json"
+      - "src/**"
+      - "include/**"
+      - "test_package/**"
+      - "benchmark/**"
+
+env:
+  HETAI_PLAN_ROOT: /home/fcpp/WorkProject/Plan
+  BUILD_REGISTRY_API_URL: ${{ vars.BUILD_REGISTRY_API_URL }}
+  CONAN_REMOTE_URL: ${{ vars.CONAN_REMOTE_URL }}
+  HETAI_RUN_KEY: ${{ format('{0}-attempt-{1}', github.run_id, github.run_attempt) }}
+
+jobs:
+  prepare:
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'push' && (
+        contains(github.event.head_commit.message, ':fire:') ||
+        contains(github.event.head_commit.message, '🔥')
+      ))
+    runs-on: [self-hosted, Linux, X64, hetai, docker]
+    outputs:
+      matrix: ${{ steps.matrix.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Resolve build mode
+        id: mode
+        env:
+          INPUT_BUILD_MODE: ${{ github.event.inputs.build_mode }}
+          INPUT_SELECTED_TARGETS_JSON: ${{ github.event.inputs.selected_targets_json }}
+        run: |
+          set -euo pipefail
+          if [[ "${GITHUB_EVENT_NAME}" == "workflow_dispatch" ]]; then
+            {
+              echo "mode=${INPUT_BUILD_MODE}"
+              echo "selected_targets_json<<__JSON__"
+              echo "${INPUT_SELECTED_TARGETS_JSON:-[]}"
+              echo "__JSON__"
+            } >> "$GITHUB_OUTPUT"
+          else
+            echo "mode=default" >> "$GITHUB_OUTPUT"
+            echo 'selected_targets_json=[]' >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Expand matrix config
+        id: matrix
+        run: |
+          set -euo pipefail
+          python3 "$HETAI_PLAN_ROOT/templates/ci/expand_build_matrix.py" \
+            .hetai/build-matrix.yml \
+            --mode "${{ steps.mode.outputs.mode }}" \
+            --selected-targets-json '${{ steps.mode.outputs.selected_targets_json }}' \
+            --format github-output >> "$GITHUB_OUTPUT"
+
+  build:
+    needs: prepare
+    runs-on: [self-hosted, Linux, X64, hetai, docker]
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.prepare.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Build target in ephemeral container
+        env:
+          CONAN_USER: ${{ secrets.CONAN_USER }}
+          CONAN_PASS: ${{ secrets.CONAN_PASS }}
+          BUILD_REGISTRY_API_KEY: ${{ secrets.BUILD_REGISTRY_API_KEY }}
+        run: |
+          set -euo pipefail
+          export CONAN_CREATE_EXTRA_ARGS='${{ matrix.create_extra_args }}'
+          bash "$HETAI_PLAN_ROOT/ops/docker/run_ephemeral_package_build.sh" \
+            --source-dir "$GITHUB_WORKSPACE" \
+            --run-id "$GITHUB_RUN_ID" \
+            --run-key "$HETAI_RUN_KEY" \
+            --repo "$GITHUB_REPOSITORY" \
+            --package-ref '${{ matrix.package_ref }}' \
+            --build-kind '${{ matrix.build_kind }}' \
+            --os-name '${{ matrix.os_name }}' \
+            --arch '${{ matrix.arch }}' \
+            --toolchain-version '${{ matrix.toolchain_version }}' \
+            --recipe-subdir '${{ matrix.recipe_subdir }}'
+
+      - name: Build benchmark bundle
+        if: ${{ success() && matrix.target_key == 'linux-armv7' && matrix.toolchain_version == '11.3.rel1' }}
+        env:
+          BOARD_CI_CONFIG: ${{ vars.BOARD_CI_CONFIG }}
+          CONAN_USER: ${{ secrets.CONAN_USER }}
+          CONAN_PASS: ${{ secrets.CONAN_PASS }}
+          BENCHMARK_CI_TARGET_KEYS: ${{ vars.BENCHMARK_CI_TARGET_KEYS }}
+          BENCHMARK_CI_TOOLCHAIN_VERSIONS: ${{ vars.BENCHMARK_CI_TOOLCHAIN_VERSIONS }}
+          BENCHMARK_TARGET_CPU: ${{ vars.BENCHMARK_TARGET_CPU }}
+          BENCHMARK_FLOAT_ABI: ${{ vars.BENCHMARK_FLOAT_ABI }}
+          BENCHMARK_FPU: ${{ vars.BENCHMARK_FPU }}
+          BENCHMARK_EXTRA_CFLAGS: ${{ vars.BENCHMARK_EXTRA_CFLAGS }}
+          BENCHMARK_CONFIG_REL: ${{ vars.BENCHMARK_CONFIG_REL }}
+          BENCHMARK_REMOTE_PATH: ${{ vars.BENCHMARK_REMOTE_PATH }}
+          BENCHMARK_DEPLOY_TOOL: ${{ vars.BENCHMARK_DEPLOY_TOOL }}
+          BENCHMARK_SSH_HOST: ${{ vars.BENCHMARK_SSH_HOST }}
+        run: |
+          set -euo pipefail
+          bash "$HETAI_PLAN_ROOT/ops/board/build_benchmark_artifacts.sh" \
+            --source-dir "$GITHUB_WORKSPACE" \
+            --run-dir "/opt/hetai/build-runs/${HETAI_RUN_KEY}/${GITHUB_REPOSITORY}/${{ matrix.target_key }}-${{ matrix.toolchain_version }}" \
+            --target-key '${{ matrix.target_key }}' \
+            --toolchain-version '${{ matrix.toolchain_version }}'
+
+      - name: Prepare board transfer password helper
+        if: ${{ success() }}
+        env:
+          BOARD_TRANSFER_SSH_PASSWORD: ${{ secrets.BOARD_TRANSFER_SSH_PASSWORD }}
+        run: |
+          set -euo pipefail
+          if [[ -z "${BOARD_TRANSFER_SSH_PASSWORD}" || -x "$(command -v sshpass || true)" ]]; then
+            exit 0
+          fi
+
+          tmp_dir="${RUNNER_TEMP:-/tmp}/hetai-sshpass"
+          rm -rf "${tmp_dir}"
+          mkdir -p "${tmp_dir}"
+          cd "${tmp_dir}"
+          apt-get download sshpass
+          dpkg-deb -x sshpass_*.deb "${tmp_dir}/root"
+          test -x "${tmp_dir}/root/usr/bin/sshpass"
+          echo "${tmp_dir}/root/usr/bin" >> "$GITHUB_PATH"
+
+      - name: Transfer build bundle to benchmark debug server
+        if: ${{ success() }}
+        env:
+          BOARD_CI_CONFIG: ${{ vars.BOARD_CI_CONFIG }}
+          BOARD_TRANSFER_ENABLED: ${{ vars.BOARD_TRANSFER_ENABLED }}
+          BOARD_TRANSFER_HOST: ${{ vars.BOARD_TRANSFER_HOST }}
+          BOARD_TRANSFER_USER: ${{ vars.BOARD_TRANSFER_USER }}
+          BOARD_TRANSFER_BASE_DIR: ${{ vars.BOARD_TRANSFER_BASE_DIR }}
+          BOARD_TRANSFER_PORT: ${{ vars.BOARD_TRANSFER_PORT }}
+          BOARD_TRANSFER_STRICT_HOST_KEY_CHECKING: ${{ vars.BOARD_TRANSFER_STRICT_HOST_KEY_CHECKING }}
+          BOARD_TRANSFER_SSH_KEY: ${{ secrets.BOARD_TRANSFER_SSH_KEY }}
+          BOARD_TRANSFER_SSH_PASSWORD: ${{ secrets.BOARD_TRANSFER_SSH_PASSWORD }}
+          BOARD_TRANSFER_KNOWN_HOSTS: ${{ secrets.BOARD_TRANSFER_KNOWN_HOSTS }}
+        run: |
+          set -euo pipefail
+          bash "$HETAI_PLAN_ROOT/ops/board/transfer_build_artifacts.sh" \
+            --phase build \
+            --run-id "$GITHUB_RUN_ID" \
+            --repo "$GITHUB_REPOSITORY" \
+            --target-key '${{ matrix.target_key }}' \
+            --toolchain-version '${{ matrix.toolchain_version }}' \
+            --run-dir "/opt/hetai/build-runs/${HETAI_RUN_KEY}/${GITHUB_REPOSITORY}/${{ matrix.target_key }}-${{ matrix.toolchain_version }}" \
+            --console-log "/opt/hetai/build-logs/${HETAI_RUN_KEY}/${GITHUB_REPOSITORY}/${{ matrix.target_key }}-${{ matrix.toolchain_version }}/console.log"
+
+      - name: Upload logs and result bundle
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: build-${{ matrix.target_key }}-${{ matrix.toolchain_version }}
+          path: |
+            /opt/hetai/build-runs/${{ env.HETAI_RUN_KEY }}/${{ github.repository }}/${{ matrix.target_key }}-${{ matrix.toolchain_version }}/result.json
+            /opt/hetai/build-runs/${{ env.HETAI_RUN_KEY }}/${{ github.repository }}/${{ matrix.target_key }}-${{ matrix.toolchain_version }}/package_refs.json
+            /opt/hetai/build-runs/${{ env.HETAI_RUN_KEY }}/${{ github.repository }}/${{ matrix.target_key }}-${{ matrix.toolchain_version }}/summary.md
+            /opt/hetai/build-runs/${{ env.HETAI_RUN_KEY }}/${{ github.repository }}/${{ matrix.target_key }}-${{ matrix.toolchain_version }}/artifacts/cache-snapshot-info.json
+            /opt/hetai/build-runs/${{ env.HETAI_RUN_KEY }}/${{ github.repository }}/${{ matrix.target_key }}-${{ matrix.toolchain_version }}/artifacts/metadata-override.json
+            /opt/hetai/build-runs/${{ env.HETAI_RUN_KEY }}/${{ github.repository }}/${{ matrix.target_key }}-${{ matrix.toolchain_version }}/artifacts/benchmark-${{ matrix.target_key }}-${{ matrix.toolchain_version }}
+            /opt/hetai/build-runs/${{ env.HETAI_RUN_KEY }}/${{ github.repository }}/${{ matrix.target_key }}-${{ matrix.toolchain_version }}/artifacts/benchmark-${{ matrix.target_key }}-${{ matrix.toolchain_version }}.map
+            /opt/hetai/build-runs/${{ env.HETAI_RUN_KEY }}/${{ github.repository }}/${{ matrix.target_key }}-${{ matrix.toolchain_version }}/artifacts/benchmark-${{ matrix.target_key }}-${{ matrix.toolchain_version }}.dis
+            /opt/hetai/build-runs/${{ env.HETAI_RUN_KEY }}/${{ github.repository }}/${{ matrix.target_key }}-${{ matrix.toolchain_version }}/artifacts/benchmark-build.log
+            /opt/hetai/build-runs/${{ env.HETAI_RUN_KEY }}/${{ github.repository }}/${{ matrix.target_key }}-${{ matrix.toolchain_version }}/artifacts/benchmark-info.json
+            /opt/hetai/build-runs/${{ env.HETAI_RUN_KEY }}/${{ github.repository }}/${{ matrix.target_key }}-${{ matrix.toolchain_version }}/artifacts/benchmark-config.json
+            /opt/hetai/build-runs/${{ env.HETAI_RUN_KEY }}/${{ github.repository }}/${{ matrix.target_key }}-${{ matrix.toolchain_version }}/artifacts/benchmark-host.profile
+            /opt/hetai/build-runs/${{ env.HETAI_RUN_KEY }}/${{ github.repository }}/${{ matrix.target_key }}-${{ matrix.toolchain_version }}/artifacts/package-info.txt
+            /opt/hetai/build-runs/${{ env.HETAI_RUN_KEY }}/${{ github.repository }}/${{ matrix.target_key }}-${{ matrix.toolchain_version }}/artifacts/package-folder.tar.gz
+            /opt/hetai/build-logs/${{ env.HETAI_RUN_KEY }}/${{ github.repository }}/${{ matrix.target_key }}-${{ matrix.toolchain_version }}/console.log

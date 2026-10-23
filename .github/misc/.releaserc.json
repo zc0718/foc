@@ -1,0 +1,40 @@
+{
+  "branches": ["main"],
+  "plugins": [
+    [
+      "@semantic-release/commit-analyzer",
+      {
+        "preset": "conventionalcommits",
+        "parserOpts": {
+          "headerPattern": "^(\\w*)(?:\\(([^)]*)\\))?!?: (.*)$",
+          "headerCorrespondence": ["type", "emoji", "subject"]
+        }
+      }
+    ],
+    [
+      "@semantic-release/release-notes-generator",
+      {
+        "preset": "conventionalcommits",
+        "parserOpts": {
+          "headerPattern": "^(\\w*)(?:\\(([^)]*)\\))?!?: (.*)$",
+          "headerCorrespondence": ["type", "emoji", "subject"]
+        }
+      }
+    ],
+    "@semantic-release/changelog",
+    [
+      "@semantic-release/exec",
+      {
+        "prepareCmd": "node -e \"const fs = require('fs'); const content = fs.readFileSync('metadata.json', 'utf8'); const updated = content.replace(/\\\"version\\\"\\s*:\\s*\\\"[^\\\"]+\\\"/, '\\\"version\\\": \\\"${nextRelease.version}\\\"'); fs.writeFileSync('metadata.json', updated);\""
+      }
+    ],
+    [
+      "@semantic-release/git",
+      {
+        "assets": ["metadata.json", "CHANGELOG.md"],
+        "message": "chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}"
+      }
+    ],
+    "@semantic-release/github"
+  ]
+}

@@ -1,0 +1,86 @@
+name: Template Bootstrap
+
+# Runs on the single push that GitHub creates when a repository is instantiated
+# from this template.  Every other pipeline skips that push (see the
+# `commits[0].message != 'Initial commit'` guards in ci-orchestrator.yml and
+# semver-release.yml), which makes this workflow the one safe place to prepare a
+# fresh instance.
+#
+# Why it commits `.agents/skills` as a *copy*: DSH, Cursor, Gemini CLI and
+# Copilot (VS 2026) only discover skills under `.agents/skills`, and a plain
+# `git clone` of this template cannot contain one -- the canonical body lives in
+# `.github/skills`, and a committed symlink checks out as a plain text file on
+# Windows (``core.symlinks`` is off by default).  A byte-identical mirror makes a
+# fresh instance work with zero setup; `skillkit validate` rejects any mirror
+# that has drifted, so the body is still edited in exactly one place.
+on:
+  push:
+    branches:
+      - 'main'
+    paths:
+      - '.github/misc/labels.yml'
+  pull_request:
+    paths:
+      - '.github/misc/labels.yml'
+
+jobs:
+  skills-view:
+    # Positive guard: an ordinary edit of labels.yml must never create a commit.
+    if: >-
+      github.event_name == 'push' &&
+      (github.event.created == true || startsWith(github.event.before, '0000000000'))
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      -
+        name: Checkout
+        uses: actions/checkout@v7
+      -
+        name: Materialize the .agents view
+        run: python3 .github/skills/_shared/skillkit/cli.py sync --view-mode copy
+      -
+        name: Commit the view
+        run: |
+          git add -f .agents/skills
+          if git diff --cached --quiet; then
+            echo "::notice::.agents/skills is already materialized"
+            exit 0
+          fi
+          git -c user.name='github-actions[bot]' \
+              -c user.email='41898282+github-actions[bot]@users.noreply.github.com' \
+              commit -m 'chore(:wrench:): materialize the .agents skills view'
+          if ! git push; then
+            echo "::warning::could not push the view (is 'contents: write' allowed?); run"
+            echo "::warning::'python3 .github/skills/_shared/skillkit/cli.py sync --view-mode copy' once and commit the result"
+          fi
+
+  labeler:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      -
+        name: Instantiation signal
+        if: github.event_name == 'push'
+        env:
+          # Untrusted payload values stay out of the script text.
+          CREATED: ${{ github.event.created }}
+          BEFORE: ${{ github.event.before }}
+          FIRST_MESSAGE: ${{ github.event.commits[0].message }}
+        run: |
+          # Which signal identified the template push; keeps the guard above honest.
+          echo "created=$CREATED"
+          echo "before=$BEFORE"
+          echo "first=$FIRST_MESSAGE"
+      -
+        name: Checkout
+        uses: actions/checkout@v7
+      -
+        name: Run Labeler
+        uses: crazy-max/ghaction-github-labeler@548a7c3603594ec17c819e1239f281a3b801ab4d
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          yaml-file: .github/misc/labels.yml
+          dry-run: ${{ github.event_name == 'pull_request' }}

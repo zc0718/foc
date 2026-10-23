@@ -1,0 +1,21 @@
+---
+Checks: >
+  -*,
+  # Generic
+  bugprone-*,
+  performance-*,
+
+  # CPP specific
+  cppcoreguidelines-avoid-magic-numbers,
+  cppcoreguidelines-macro-usage
+
+CheckOptions:
+  - key: HeaderFileExtensions
+    value: ".h,.hpp"
+  - key: cppcoreguidelines-avoid-magic-numbers.CheckStrings
+    value: '0'
+WarningsAsErrors: '*'
+# Anchored to repo paths only: third-party headers must not be flagged.
+# Invoke clang-tidy with relative paths (e.g. `clang-tidy src/x.cpp`) so that
+# repo headers resolve as `include/...`; apt-installed deps are system headers.
+HeaderFilterRegex: "^(include|src)/"

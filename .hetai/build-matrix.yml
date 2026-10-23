@@ -1,0 +1,16 @@
+package_ref: fcpp/1.0.0
+
+defaults:
+  mode: default
+  toolchain_version: 11.3.rel1
+  create_extra_args: --build=missing --test-folder=
+
+targets:
+  - id: linux-armv7
+    default: true
+    enabled: true
+    build_kind: linux
+    os: Linux
+    arch: armv7
+    toolchain_versions:
+      - 11.3.rel1
