@@ -136,26 +136,33 @@ if(TRIGGER_TESTS)
         add_executable(c_api_validation c_api_validation.c)
         set_target_properties(c_api_validation PROPERTIES LINKER_LANGUAGE CXX)
         target_link_libraries(c_api_validation PRIVATE ${MAIN_LIB_TARGET})
+        # The C side of the contract: this consumer is compiled as strict ISO C, so a GNU
+        # extension leaking out of a public .h (statement expressions, void* arithmetic, ...)
+        # fails here rather than in a customer's `-std=c99 -pedantic` build. /permissive- is the
+        # MSVC spelling of the same intent and is C++ only, so the flags are GNU/Clang-only.
+        if(NOT MSVC)
+            target_compile_options(c_api_validation PRIVATE -pedantic -Wall -Wextra -Werror)
+        endif()
         if(ENABLE_COVERAGE)
             apply_coverage_flags(c_api_validation)
         endif()
         add_test(NAME c_api_validation COMMAND c_api_validation)
     endif()
 
-    # OPTIONAL Python consumer: only fires when the package actually ships a `foc_python*` module
+    # OPTIONAL Python consumer: only fires when the package actually ships a `<name>_python` module
     # (metadata.enable_python_bindings = true). Compiling the module proves it links; importing it
     # is the only way to prove the bound surface behaves like the C API, so the test is worth the
     # twenty lines. A package without the module skips it -- pure C++/C projects need nothing here.
-    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/test/python/test_foc_python.py")
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/test/python/test_python_bindings.py")
       set(PY_CONSUMER_MODULE_DIR "")
-      if(foc_INCLUDE_DIRS)
-        list(GET foc_INCLUDE_DIRS 0 PY_CONSUMER_INCLUDE)
+      if(${LIB_NAME}_INCLUDE_DIRS)
+        list(GET ${LIB_NAME}_INCLUDE_DIRS 0 PY_CONSUMER_INCLUDE)
         get_filename_component(PY_CONSUMER_PACKAGE "${PY_CONSUMER_INCLUDE}" DIRECTORY)
         if(EXISTS "${PY_CONSUMER_PACKAGE}/lib")
           set(PY_CONSUMER_MODULE_DIR "${PY_CONSUMER_PACKAGE}/lib")
         endif()
       endif()
-      file(GLOB PY_CONSUMER_MODULES "${PY_CONSUMER_MODULE_DIR}/foc_python*")
+      file(GLOB PY_CONSUMER_MODULES "${PY_CONSUMER_MODULE_DIR}/${LIB_NAME}_python*")
       if(PY_CONSUMER_MODULES)
         # reuse the interpreter pybind11 picked: a module built for 3.12 cannot be imported by 3.13
         if(NOT DEFINED Python_EXECUTABLE)
@@ -164,7 +171,7 @@ if(TRIGGER_TESTS)
         endif()
         message(STATUS "[test] pybind11 module found: running the python consumer")
         add_test(NAME python_bindings
-                 COMMAND ${Python_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/test/python/test_foc_python.py")
+                 COMMAND ${Python_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/test/python/test_python_bindings.py")
         set_tests_properties(python_bindings PROPERTIES
                              ENVIRONMENT "PYTHONPATH=${PY_CONSUMER_MODULE_DIR}")
       else()

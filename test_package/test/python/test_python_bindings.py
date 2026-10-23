@@ -4,9 +4,9 @@ Runs as a plain script (CTest checks the exit code), no pytest dependency: the m
 the same build that tests it, so the only thing worth proving here is that the bound surface
 behaves like the C API it wraps.
 
-`test_package/CMakeLists.txt` runs this only when the package actually ships `foc_python*`
-(metadata.enable_python_bindings = true); a package without the module skips the test instead of
-failing.
+`test_package/CMakeLists.txt` runs this only when the package actually ships a `<name>_python`
+module (metadata.enable_python_bindings = true); a package without the module skips the test
+instead of failing.
 """
 
 import math
