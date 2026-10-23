@@ -1,16 +1,22 @@
-# A Modern C/CPP Library Build System
+# foc — field-oriented control for three-phase PMSM
 
-This project is a C/C++ library built using Conan 2, featuring modern C and C++ standard support and module 
-capabilities.
+A field-oriented-control library for three-phase PMSM drives, built on the fcpp scaffold. One
+constraint drives every design choice: **the control loop must be predictable** — no heap, no
+exceptions, no virtual calls and no hidden allocation on the path that runs every PWM period.
+
+The same implementation is reachable three ways: the C++17 template core for board-level work, a
+frozen C11 ABI for non-C++ hosts, and an optional pybind11 module for host-side scripts. Start with
+`docs/quickstart.md`, or the generated site under `docs/sphinx/build/html` (Chinese) and
+`docs/sphinx/build/html_en` (English).
 
 ## Badges
 
-![License](https://img.shields.io/github/license/HeT-FTI/fcpp?color=blue&label=license)
-![C++](https://img.shields.io/badge/C%2B%2B-17%2F20%2F23-blue?logo=c%2B%2B&logoColor=white)
-![Modules](https://img.shields.io/badge/modules-C%2B%2B23%20experimental-purple?logo=c%2B%2B&logoColor=white)
-![CI](https://github.com/HeT-FTI/fcpp/actions/workflows/ci-orchestrator.yml/badge.svg)
-![Release](https://github.com/HeT-FTI/fcpp/actions/workflows/semver-release.yml/badge.svg)
-![CMake](https://img.shields.io/badge/cmake-3.28%2B-orange?logo=cmake)
+![License](https://img.shields.io/github/license/zc0718/foc?color=blue&label=license)
+![C++](https://img.shields.io/badge/C%2B%2B-17-blue?logo=c%2B%2B&logoColor=white)
+![C](https://img.shields.io/badge/C-11-blue?logo=c&logoColor=white)
+![CI](https://github.com/zc0718/foc/actions/workflows/ci-orchestrator.yml/badge.svg)
+![Release](https://github.com/zc0718/foc/actions/workflows/semver-release.yml/badge.svg)
+![CMake](https://img.shields.io/badge/cmake-4.2%2B-orange?logo=cmake)
 ![Python](https://img.shields.io/badge/python-3.10%2B-blue?logo=python)
 ![Doxygen](https://img.shields.io/badge/docs-Doxygen-green?logo=doxygen&logoColor=white)
 ![Sphinx](https://img.shields.io/badge/docs-Sphinx-blue?logo=readthedocs&logoColor=white)
@@ -32,6 +38,13 @@ capabilities.
 
 ## Features
 
+- Field-oriented control: Clarke/Park and inverses, SVPWM, PI controllers, state machine, back-EMF
+  observer — all hardware-agnostic in `foc/core`
+- **Policy-composed motor**: observer, modulator, controllers and HAL are template parameters, so the
+  current loop inlines into one translation unit (no virtual calls on the ISR path)
+- **Frozen C ABI** (`foc/api/foc_api.h`) over the same core, with generation-checked opaque handles
+- Optional **pybind11 module** (`foc_python`) bound to the C API, skipped automatically on cross builds
+- **SIL bench** with a dq-frame PMSM plant, used by both the test suite and the documentation figures
 - Conan-based modern dependency management
 - Supports C++ standards 17, 20, and 23
 - Automatic module file generation (`.ixx`/`.cppm`) from headers/sources

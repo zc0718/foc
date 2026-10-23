@@ -131,14 +131,6 @@ _`Detailed settings`
    Usage and verification <usage>
    Demos <demos/index>
 
-.. toctree::
-   :caption: Build system
-   :maxdepth: 2
-
-   CMakeList <components/cmake>
-   Conanfile <components/conan>
-   Metadata <components/meta>
-
 _`License`
 ----------
 
