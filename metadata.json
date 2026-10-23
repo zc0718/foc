@@ -1,14 +1,14 @@
 {
-  "name": "fcpp",
+  "name": "foc",
   "target": "auto",
-  "version": "0.2.0",
+  "version": "0.1.0",
   "team": "HeT-FTI",
   "license": "Apache-2.0",
-  "description": "The simple description in meta",
+  "description": "A hardware-agnostic FOC algorithm core: C++17 template policy kernel with a stable C11 ABI path",
   "authors": ["Chen Zhang <chen2.zhang@szhittech.com>"],
   "maintainers": ["Chen Zhang <chen2.zhang@szhittech.com>"],
-  "topics": ["build", "library", "documentation", "test"],
-  "url": "https://github.com/HeT-FTI/fcpp.git",
+  "topics": ["foc", "motor-control", "embedded", "library", "test"],
+  "url": "https://github.com/HeT-FTI/foc.git",
   "homepage": "https://github.com/HeT-FTI",
   "cmake_version": "4.2.3",
   "build_cppstd": "17",
@@ -21,13 +21,10 @@
   "std_modules": "iostream",
   "user_modules": "",
   "dependencies": {
-    "common": {"ZLIB": ["ZLIB::ZLIB"]},
-    "c": {"PCRE2": ["pcre2::pcre2"]},
-    "cpp": {
-      "Eigen3": ["Eigen3::Eigen"],
-      "etl": ["etl::etl"]
-    },
-    "infra": {"GTest": ["gtest::gtest"], "pybind11": ["pybind11::module"]}
+    "common": {},
+    "c": {},
+    "cpp": {"etl": ["etl::etl"]},
+    "infra": {"GTest": ["gtest::gtest"]}
   },
   "baremetal_white_list": ["etl", "ArduinoJson"],
   "doc_languages": ["en", "zh"],

@@ -1,4 +1,4 @@
-package_ref: fcpp/1.0.0
+package_ref: foc/0.1.0
 
 defaults:
   mode: default
