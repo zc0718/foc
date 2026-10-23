@@ -10,6 +10,7 @@ namespace foc {
 
 namespace core {
 
+
 /**
  * @brief [en] Transform constants, amplitude-invariant convention. Variable templates keep the
  *        literal at full precision for `double` users instead of truncating to `float`.
@@ -17,6 +18,7 @@ namespace core {
  *        而不是被截断成 `float`。
  *
  * @since 0.1.0
+ * @exporter
  */
 template <typename T> inline constexpr T kPi = static_cast<T>(3.141592653589793238462643383279502884L);
 
@@ -27,6 +29,7 @@ template <typename T> inline constexpr T kTwoThirds = static_cast<T>(2) / static
 template <typename T> inline constexpr T kInvSqrt3 = static_cast<T>(0.577350269189625764509148780501957456L);
 
 template <typename T> inline constexpr T kSqrt3Over2 = static_cast<T>(0.866025403784438646763723170752936183L);
+
 
 /**
  * @brief [en] Clarke transform: three-phase (abc) to stationary two-phase (alpha-beta).
@@ -39,6 +42,7 @@ template <typename T> inline constexpr T kSqrt3Over2 = static_cast<T>(0.86602540
  * @context [en] Current-loop ISR: noexcept, no allocation, no function pointer.
  *           [zh] 电流环 ISR：noexcept、不分配、无函数指针。
  * @since 0.1.0
+ * @exporter
  */
 template <typename T> auto clarke(Uvw<T> uvw) noexcept -> Ab<T> {
     const T half = static_cast<T>(1) / static_cast<T>(2);
@@ -46,6 +50,7 @@ template <typename T> auto clarke(Uvw<T> uvw) noexcept -> Ab<T> {
     return Ab<T>{static_cast<T>(kTwoThirds<T> * (uvw.u - half * (uvw.v + uvw.w))),
                  static_cast<T>(kInvSqrt3<T> * (uvw.v - uvw.w))};
 }
+
 
 /**
  * @brief [en] Inverse Clarke transform: stationary two-phase back to three-phase.
@@ -55,6 +60,7 @@ template <typename T> auto clarke(Uvw<T> uvw) noexcept -> Ab<T> {
  * @return [en] balanced three-phase quantities. [zh] 平衡三相量。
  * @context [en] Current-loop ISR: noexcept, no allocation. [zh] 电流环 ISR：noexcept、不分配。
  * @since 0.1.0
+ * @exporter
  */
 template <typename T> auto inv_clarke(Ab<T> ab) noexcept -> Uvw<T> {
     const T half = static_cast<T>(1) / static_cast<T>(2);
@@ -62,6 +68,7 @@ template <typename T> auto inv_clarke(Ab<T> ab) noexcept -> Uvw<T> {
     return Uvw<T>{ab.alpha, static_cast<T>(-half * ab.alpha + kSqrt3Over2<T> * ab.beta),
                   static_cast<T>(-half * ab.alpha - kSqrt3Over2<T> * ab.beta)};
 }
+
 
 /**
  * @brief [en] Park transform: stationary alpha-beta to rotating d-q (d = flux, q = torque).
@@ -72,6 +79,7 @@ template <typename T> auto inv_clarke(Ab<T> ab) noexcept -> Uvw<T> {
  * @return [en] d-q vector. [zh] d-q 矢量。
  * @context [en] Current-loop ISR: noexcept, no allocation. [zh] 电流环 ISR：noexcept、不分配。
  * @since 0.1.0
+ * @exporter
  */
 template <typename T> auto park(Ab<T> ab, T theta_rad) noexcept -> Dq<T> {
     const T c = std::cos(theta_rad);
@@ -79,6 +87,7 @@ template <typename T> auto park(Ab<T> ab, T theta_rad) noexcept -> Dq<T> {
 
     return Dq<T>{static_cast<T>(ab.alpha * c + ab.beta * s), static_cast<T>(-ab.alpha * s + ab.beta * c)};
 }
+
 
 /**
  * @brief [en] Inverse Park transform: rotating d-q back to stationary alpha-beta.
@@ -89,6 +98,7 @@ template <typename T> auto park(Ab<T> ab, T theta_rad) noexcept -> Dq<T> {
  * @return [en] alpha-beta vector. [zh] alpha-beta 矢量。
  * @context [en] Current-loop ISR: noexcept, no allocation. [zh] 电流环 ISR：noexcept、不分配。
  * @since 0.1.0
+ * @exporter
  */
 template <typename T> auto inv_park(Dq<T> dq, T theta_rad) noexcept -> Ab<T> {
     const T c = std::cos(theta_rad);

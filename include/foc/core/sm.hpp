@@ -10,11 +10,13 @@ namespace foc {
 
 namespace core {
 
+
 /**
  * @brief [en] Operating mode of a motor instance.
  *        [zh] 电机实例的运行模式。
  *
  * @since 0.1.0
+ * @exporter
  */
 enum class MotorState : std::uint8_t {
     Idle = 0,  ///< [en] outputs off. [zh] 输出关闭。
@@ -22,6 +24,7 @@ enum class MotorState : std::uint8_t {
     Run = 2,   ///< [en] closed loop. [zh] 闭环运行。
     Fault = 3, ///< [en] latched fault, only clear_fault() leaves it. [zh] 故障锁存，只能由 clear_fault() 退出。
 };
+
 
 /**
  * @brief [en] Mode state machine: Idle -> Align -> Run, any state -> Fault, Fault -> Idle on an
@@ -32,6 +35,7 @@ enum class MotorState : std::uint8_t {
  * @context [en] Called from the control loop or the command layer: noexcept, no allocation.
  *           [zh] 由控制环或命令层调用：noexcept、不分配。
  * @since 0.1.0
+ * @exporter
  */
 class StateMachine final {
   public:

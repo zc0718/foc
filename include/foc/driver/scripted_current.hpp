@@ -13,6 +13,7 @@ namespace foc {
 
 namespace driver {
 
+
 /**
  * @brief [en] Reference `foc::hal::CurrentSense` implementation: replays a scripted sequence of
  *        samples. Once the script is exhausted the last sample is held (documented, not undefined).
@@ -21,6 +22,7 @@ namespace driver {
  *
  * @context [en] Same context as the contract it implements. [zh] 与其实现的契约同上下文。
  * @since 0.1.0
+ * @exporter
  */
 class ScriptedCurrent final : public hal::CurrentSense {
   public:

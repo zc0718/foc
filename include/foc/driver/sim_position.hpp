@@ -8,6 +8,7 @@ namespace foc {
 
 namespace driver {
 
+
 /**
  * @brief [en] Reference `foc::hal::PositionSensor` implementation: the SIL plant (or a test) writes
  *        the angle and velocity, the control loop reads them.
@@ -16,6 +17,7 @@ namespace driver {
  *
  * @context [en] Same context as the contract it implements. [zh] 与其实现的契约同上下文。
  * @since 0.1.0
+ * @exporter
  */
 class SimPosition final : public hal::PositionSensor {
   public:

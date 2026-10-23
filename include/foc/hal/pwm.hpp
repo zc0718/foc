@@ -6,6 +6,7 @@
 
 namespace foc {
 
+
 /**
  * @brief [en] Hardware abstraction contracts. Every implementation obligation is documented on
  *        the interface; the contract itself carries no implementation.
@@ -17,6 +18,7 @@ namespace hal {
 
 using core::Uvw;
 
+
 /**
  * @brief [en] Three-phase inverter output stage (PWM).
  *        [zh] 三相逆变输出级（PWM）。
@@ -24,6 +26,7 @@ using core::Uvw;
  * @context [en] write_duty runs inside the current-loop ISR: no allocation, no blocking.
  *          [zh] write_duty 在电流环 ISR 内运行：不分配、不阻塞。
  * @since 0.1.0
+ * @exporter
  */
 class Pwm {
   public:

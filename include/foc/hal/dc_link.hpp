@@ -6,11 +6,13 @@ namespace foc {
 
 namespace hal {
 
+
 /**
  * @brief [en] DC link (bus) voltage source.
  *        [zh] 直流母线电压来源。
  *
  * @since 0.1.0
+ * @exporter
  */
 class DcLink {
   public:

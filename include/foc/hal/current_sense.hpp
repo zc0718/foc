@@ -10,11 +10,13 @@ namespace hal {
 
 using core::Uvw;
 
+
 /**
  * @brief [en] Three-phase current sensing.
  *        [zh] 三相电流采样。
  *
  * @since 0.1.0
+ * @exporter
  */
 class CurrentSense {
   public:

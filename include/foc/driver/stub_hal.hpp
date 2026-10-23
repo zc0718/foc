@@ -11,6 +11,7 @@ namespace foc {
 
 namespace driver {
 
+
 /**
  * @brief [en] A complete HalPolicy built from the reference stubs: the default for SIL and tests.
  *        Motor binds to it through the member names `pwm`, `current_sense`, `position`, `dc_link`.
@@ -18,6 +19,7 @@ namespace driver {
  *        `pwm`、`current_sense`、`position`、`dc_link` 绑定它。
  *
  * @since 0.1.0
+ * @exporter
  */
 struct StubHal final {
     using Pwm = StubPwm;

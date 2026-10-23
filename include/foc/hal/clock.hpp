@@ -8,11 +8,13 @@ namespace foc {
 
 namespace hal {
 
+
 /**
  * @brief [en] Monotonic microsecond clock used by the control loop.
  *        [zh] 控制环使用的单调微秒时钟。
  *
  * @since 0.1.0
+ * @exporter
  */
 class Clock {
   public:

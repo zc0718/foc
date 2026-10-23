@@ -8,6 +8,13 @@ namespace foc {
 
 namespace driver {
 
+
+/**
+ * @brief [en] Implements SimPosition::set_angle_mech_rad(); the contract is documented on its declaration.
+ *        [zh] 实现 SimPosition::set_angle_mech_rad()；契约文档在对应的声明处。
+ * @attacher
+ * @since 0.1.0
+ */
 void SimPosition::set_angle_mech_rad(float angle_rad) noexcept {
     const float two_pi = 6.28318530717958647692F;
     float wrapped = std::fmod(angle_rad, two_pi);

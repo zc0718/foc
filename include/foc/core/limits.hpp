@@ -8,6 +8,7 @@ namespace foc {
 
 namespace core {
 
+
 /**
  * @brief [en] Symmetric clamp. Returns `value` confined to [low, high].
  *        [zh] 对称/区间限幅：把 `value` 限制在 [low, high] 内返回。
@@ -15,10 +16,12 @@ namespace core {
  * @pre [en] low <= high. [zh] low <= high。
  * @context [en] Current-loop ISR: constexpr, noexcept, no allocation. [zh] 电流环 ISR：constexpr、noexcept、不分配。
  * @since 0.1.0
+ * @exporter
  */
 template <typename T> constexpr auto clamp(T value, T low, T high) noexcept -> T {
     return (value < low) ? low : ((value > high) ? high : value);
 }
+
 
 /**
  * @brief [en] Slew-rate limiter: moves the output towards the target no faster than a
@@ -27,6 +30,7 @@ template <typename T> constexpr auto clamp(T value, T low, T high) noexcept -> T
  *
  * @context [en] Current-loop ISR: noexcept, no allocation. [zh] 电流环 ISR：noexcept、不分配。
  * @since 0.1.0
+ * @exporter
  */
 class SlewLimiter final {
   public:

@@ -6,11 +6,13 @@ namespace foc {
 
 namespace hal {
 
+
 /**
  * @brief [en] Rotor position / velocity source.
  *        [zh] 转子位置/速度来源。
  *
  * @since 0.1.0
+ * @exporter
  */
 class PositionSensor {
   public:

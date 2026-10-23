@@ -10,17 +10,20 @@ namespace foc {
 
 namespace core {
 
+
 /**
  * @brief [en] Result of one SVPWM evaluation.
  *        [zh] 一次 SVPWM 计算的结果。
  *
  * @since 0.1.0
+ * @exporter
  */
 struct SvpwmResult final {
     Uvw<float> duty;  ///< [en] duty ratios in [0, 1]. [zh] 占空比，范围 [0, 1]。
     bool saturated;   ///< [en] true when over-modulation clamping was applied. [zh] 发生过调制钳位时为 true。
     ErrorCode status; ///< [en] Ok, or Param when the DC link voltage was not positive. [zh] Ok；母线电压非正时 Param。
 };
+
 
 /**
  * @brief [en] Space-vector modulator (symmetric seven-segment equivalent).
@@ -37,6 +40,7 @@ struct SvpwmResult final {
  * @context [en] Current-loop ISR: noexcept, no allocation, no division by zero.
  *           [zh] 电流环 ISR：noexcept、不分配、不会除零。
  * @since 0.1.0
+ * @exporter
  */
 class Svpwm final {
   public:
@@ -58,6 +62,7 @@ class Svpwm final {
     [[nodiscard]] static auto modulate(Ab<float> v_ab, float v_bus) noexcept -> SvpwmResult;
 };
 
+
 /**
  * @brief [en] Sector of a stationary voltage vector, 1..6, or 0 for (near) zero.
  *        Sector 1 starts at 0 rad and each sector spans 60 degrees counter-clockwise.
@@ -69,6 +74,7 @@ class Svpwm final {
  * @return [en] sector index, see above. [zh] 扇区编号，见上。
  * @context [en] Diagnostics only, not used by modulate(). [zh] 仅诊断用途，modulate() 不使用。
  * @since 0.1.0
+ * @exporter
  */
 [[nodiscard]] auto svpwm_sector(Ab<float> v_ab, float epsilon) noexcept -> std::uint8_t;
 

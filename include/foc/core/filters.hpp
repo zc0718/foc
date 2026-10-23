@@ -11,6 +11,7 @@ namespace foc {
 
 namespace core {
 
+
 /**
  * @brief [en] First-order low-pass filter, forward Euler discretisation.
  *        `alpha = 2*pi*fc*dt / (1 + 2*pi*fc*dt)`; one multiply-add per step.
@@ -20,6 +21,7 @@ namespace core {
  * @context [en] Current-loop ISR after configure(): noexcept, no allocation.
  *           [zh] configure() 之后的电流环 ISR：noexcept、不分配。
  * @since 0.1.0
+ * @exporter
  */
 class FirstOrderLowPass final {
   public:
@@ -71,6 +73,7 @@ class FirstOrderLowPass final {
     bool primed_{false};
 };
 
+
 /**
  * @brief [en] Fixed-capacity moving average. Capacity is part of the type: no allocation, no
  *        growth, deterministic cost. Uses `std::array` (ADR-001 allows fixed-capacity `std::array`).
@@ -81,6 +84,7 @@ class FirstOrderLowPass final {
  * @tparam N [en] window length, must be > 0. [zh] 窗口长度，必须 > 0。
  * @context [en] Current-loop ISR: noexcept, no allocation. [zh] 电流环 ISR：noexcept、不分配。
  * @since 0.1.0
+ * @exporter
  */
 template <typename T, std::size_t N> class MovingAverage final {
     static_assert(N > 0, "MovingAverage needs a non-empty window");

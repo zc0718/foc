@@ -14,6 +14,7 @@ namespace hal {
 
 namespace concepts {
 
+
 /**
  * @brief [en] Compile-time contract checks for the foc_hal interfaces (C++17 detection idiom;
  *        the project targets C++17, so `concept`/`requires` are not available).
@@ -26,13 +27,16 @@ namespace concepts {
  *        漏掉成员的桩会在编译期失败（报调用点的 static_assert 消息），不会拖到运行期。
  *
  * @since 0.1.0
+ * @exporter
  */
 template <typename T, typename = void> struct is_pwm : std::false_type {};
+
 
 /**
  * @brief [en] `T` satisfies the foc::hal::Pwm contract.
  *        [zh] `T` 满足 foc::hal::Pwm 契约。
  * @since 0.1.0
+ * @exporter
  */
 template <typename T>
 struct is_pwm<T, std::void_t<decltype(std::declval<T&>().configure(std::declval<float>(), std::declval<float>())),
@@ -50,10 +54,12 @@ struct is_pwm<T, std::void_t<decltype(std::declval<T&>().configure(std::declval<
           std::is_same_v<decltype(std::declval<const T&>().fault()), bool> &&
           noexcept(std::declval<const T&>().fault())> {};
 
+
 /**
  * @brief [en] `T` satisfies the foc::hal::CurrentSense contract.
  *        [zh] `T` 满足 foc::hal::CurrentSense 契约。
  * @since 0.1.0
+ * @exporter
  */
 template <typename T, typename = void> struct is_current_sense : std::false_type {};
 
@@ -68,10 +74,12 @@ struct is_current_sense<
                          std::is_same_v<decltype(std::declval<const T&>().sample_rate_hz()), float> &&
                          noexcept(std::declval<const T&>().sample_rate_hz())> {};
 
+
 /**
  * @brief [en] `T` satisfies the foc::hal::PositionSensor contract.
  *        [zh] `T` 满足 foc::hal::PositionSensor 契约。
  * @since 0.1.0
+ * @exporter
  */
 template <typename T, typename = void> struct is_position_sensor : std::false_type {};
 
@@ -86,10 +94,12 @@ struct is_position_sensor<
                          std::is_same_v<decltype(std::declval<const T&>().has_sensor()), bool> &&
                          noexcept(std::declval<const T&>().has_sensor())> {};
 
+
 /**
  * @brief [en] `T` satisfies the foc::hal::DcLink contract.
  *        [zh] `T` 满足 foc::hal::DcLink 契约。
  * @since 0.1.0
+ * @exporter
  */
 template <typename T, typename = void> struct is_dc_link : std::false_type {};
 
@@ -98,10 +108,12 @@ struct is_dc_link<T, std::void_t<decltype(std::declval<T&>().voltage_v())>>
     : std::bool_constant<std::is_same_v<decltype(std::declval<T&>().voltage_v()), float> &&
                          noexcept(std::declval<T&>().voltage_v())> {};
 
+
 /**
  * @brief [en] `T` satisfies the foc::hal::Clock contract.
  *        [zh] `T` 满足 foc::hal::Clock 契约。
  * @since 0.1.0
+ * @exporter
  */
 template <typename T, typename = void> struct is_clock : std::false_type {};
 
@@ -109,12 +121,15 @@ template <typename T>
 struct is_clock<T, std::void_t<decltype(std::declval<T&>().now_us())>>
     : std::bool_constant<std::is_same_v<decltype(std::declval<T&>().now_us()), std::uint64_t> &&
                          noexcept(std::declval<T&>().now_us())> {};
+
+
 /**
  * @brief [en] Convenience variable templates, e.g.
  *        `static_assert(hal::concepts::is_pwm_v<MyPwm>, "MyPwm must satisfy foc::hal::Pwm");`.
  *        [zh] 便捷变量模板，例如
  *        `static_assert(hal::concepts::is_pwm_v<MyPwm>, "MyPwm must satisfy foc::hal::Pwm");`。
  * @since 0.1.0
+ * @exporter
  */
 template <typename T> inline constexpr bool is_pwm_v = is_pwm<T>::value;
 
@@ -134,6 +149,7 @@ namespace core {
 
 namespace concepts {
 
+
 /**
  * @brief [en] `T` exposes the optional `seed_flux(Ab<float>)` hook of a flux-linkage observer.
  *        Motor uses it during start(): a sensorless setup seeds the flux from the nameplate.
@@ -141,6 +157,7 @@ namespace concepts {
  *        Motor 在 start() 中使用它：无感场景用铭牌参数播种磁链。
  *
  * @since 0.1.0
+ * @exporter
  */
 template <typename T, typename = void> struct has_seed_flux : std::false_type {};
 
@@ -148,12 +165,15 @@ template <typename T>
 struct has_seed_flux<T, std::void_t<decltype(std::declval<T&>().seed_flux(std::declval<Ab<float>>()))>>
     : std::true_type {};
 
+
 /**
  * @brief [en] Convenience variable template for the optional seed hook.
  *        [zh] 可选播种钩子的便捷变量模板。
  * @since 0.1.0
+ * @exporter
  */
 template <typename T> inline constexpr bool has_seed_flux_v = has_seed_flux<T>::value;
+
 
 /**
  * @brief [en] `T` satisfies the observer policy contract (see observer_policy.hpp): it must expose
@@ -162,6 +182,7 @@ template <typename T> inline constexpr bool has_seed_flux_v = has_seed_flux<T>::
  *        `update(Ab<float>, Ab<float>, float) noexcept -> ObsState`。
  *
  * @since 0.1.0
+ * @exporter
  */
 template <typename T, typename = void> struct is_observer : std::false_type {};
 
@@ -175,10 +196,12 @@ struct is_observer<T, std::void_t<decltype(std::declval<T&>().update(
           noexcept(std::declval<T&>().update(std::declval<Ab<float>>(), std::declval<Ab<float>>(),
                                              std::declval<float>()))> {};
 
+
 /**
  * @brief [en] Convenience variable template for the observer contract.
  *        [zh] 观测器契约的便捷变量模板。
  * @since 0.1.0
+ * @exporter
  */
 template <typename T> inline constexpr bool is_observer_v = is_observer<T>::value;
 

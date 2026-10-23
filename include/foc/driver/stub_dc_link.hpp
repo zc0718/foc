@@ -8,11 +8,13 @@ namespace foc {
 
 namespace driver {
 
+
 /**
  * @brief [en] Reference `foc::hal::DcLink` implementation with a settable bus voltage.
  *        [zh] `foc::hal::DcLink` 的参考实现，母线电压可设。
  *
  * @since 0.1.0
+ * @exporter
  */
 class StubDcLink final : public hal::DcLink {
   public:

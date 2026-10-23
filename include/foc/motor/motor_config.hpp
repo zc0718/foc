@@ -8,11 +8,13 @@ namespace foc {
 
 namespace motor {
 
+
 /**
  * @brief [en] Nameplate parameters of one motor, SI units. Populated once at construction.
  *        [zh] 单台电机的铭牌参数，SI 单位。构造时一次填好。
  *
  * @since 0.1.0
+ * @exporter
  */
 struct MotorConfig final {
     float rs;                ///< [en] stator resistance in ohm. [zh] 定子电阻，Ω。
@@ -29,6 +31,7 @@ struct MotorConfig final {
 
 } // namespace motor
 
+
 /**
  * @brief [en] Rotor flux linkage implied by the torque constant: `psi_f = Kt / (1.5 * pole_pairs)`.
  *        Needed to seed a flux-linkage observer during the align phase.
@@ -37,6 +40,7 @@ struct MotorConfig final {
  *
  * @return [en] flux linkage in Wb, or 0 when pole_pairs is 0. [zh] 磁链，Wb；极对数为 0 时返回 0。
  * @since 0.1.0
+ * @exporter
  */
 auto psi_f_wb(const motor::MotorConfig& config) noexcept -> float;
 

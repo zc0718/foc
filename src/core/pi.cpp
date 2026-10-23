@@ -10,6 +10,13 @@ namespace core {
 
 namespace {
 
+
+/**
+ * @brief [en] Implements valid_config(); the contract is documented on its declaration.
+ *        [zh] 实现 valid_config()；契约文档在对应的声明处。
+ * @attacher
+ * @since 0.1.0
+ */
 constexpr auto valid_config(const Pi::Config& config) noexcept -> bool {
     return (config.kp >= 0.0F) && (config.ki >= 0.0F) && (config.out_min <= config.out_max) &&
            (config.integral_min <= config.integral_max);

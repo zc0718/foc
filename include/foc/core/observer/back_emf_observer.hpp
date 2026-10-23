@@ -9,6 +9,7 @@ namespace foc {
 
 namespace core {
 
+
 /**
  * @brief [en] Back-EMF flux-linkage observer (open-loop integration), V1's "real" observer.
  *        [zh] 反电动势磁链观测器（开环积分），V1 的"真实可用"观测器。
@@ -30,6 +31,7 @@ namespace core {
  * @context [en] Current-loop ISR after construction: noexcept, no allocation.
  *           [zh] 构造之后的电流环 ISR：noexcept、不分配。
  * @since 0.1.0
+ * @exporter
  */
 class BackEmfObserver final {
   public:

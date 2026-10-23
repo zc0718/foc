@@ -21,11 +21,13 @@ using core::Ab;
 using core::Dq;
 using core::Uvw;
 
+
 /**
  * @brief [en] Read-back of the last control step.
  *        [zh] 最近一个控制步的读回值。
  *
  * @since 0.1.0
+ * @exporter
  */
 struct Telemetry final {
     float speed_mech_rad_s; ///< [en] mechanical speed in rad/s. [zh] 机械速度，rad/s。
@@ -33,16 +35,19 @@ struct Telemetry final {
     float iq_a;             ///< [en] measured q-axis current in A. [zh] 实测 q 轴电流，A。
 };
 
+
 /**
  * @brief [en] What the q-axis reference is driven by.
  *        [zh] q 轴给定由什么驱动。
  *
  * @since 0.1.0
+ * @exporter
  */
 enum class ReferenceMode : std::uint8_t {
     Torque = 0, ///< [en] iq is commanded directly. [zh] 直接给定 iq。
     Speed = 1,  ///< [en] the speed controller produces iq. [zh] 由速度环产生 iq。
 };
+
 
 /**
  * @brief [en] Policy-composed motor: no globals, no allocation, no virtual calls in the loop.
@@ -61,6 +66,7 @@ enum class ReferenceMode : std::uint8_t {
  * @context [en] tick() is the ISR entry: noexcept, no allocation, no I/O.
  *           [zh] tick() 是 ISR 入口：noexcept、不分配、无 I/O。
  * @since 0.1.0
+ * @exporter
  */
 template <typename Observer, typename Modulator, typename Controller, typename HalPolicy> class Motor final {
   public:

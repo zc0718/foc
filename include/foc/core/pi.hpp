@@ -8,6 +8,7 @@ namespace foc {
 
 namespace core {
 
+
 /**
  * @brief [en] PI controller with output clamping and integral clamping (V1 anti-windup).
  *        All state lives in the object: no globals, no allocation, safe to use per axis.
@@ -17,6 +18,7 @@ namespace core {
  * @context [en] Current-loop / speed-loop ISR: noexcept, no allocation.
  *           [zh] 电流环/速度环 ISR：noexcept、不分配。
  * @since 0.1.0
+ * @exporter
  */
 class Pi final {
   public:

@@ -9,6 +9,7 @@ namespace foc {
 
 namespace core {
 
+
 /**
  * @brief [en] Ideal observer for SIL only: it reports the plant's true angle and speed.
  *        [zh] 仅用于 SIL 的理想观测器：直接给出被控对象的真实角度与转速。
@@ -21,6 +22,7 @@ namespace core {
  *
  * @context [en] SIL / tests only. [zh] 仅 SIL / 测试。
  * @since 0.1.0
+ * @exporter
  */
 class IdealObserver final {
   public:

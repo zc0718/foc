@@ -11,6 +11,7 @@ namespace foc {
 
 namespace driver {
 
+
 /**
  * @brief [en] Reference `foc::hal::Pwm` implementation: records what was written instead of driving
  *        hardware. Used by SIL and by the unit tests as the default HalPolicy member.
@@ -18,6 +19,7 @@ namespace driver {
  *
  * @context [en] Same context as the contract it implements. [zh] 与其实现的契约同上下文。
  * @since 0.1.0
+ * @exporter
  */
 class StubPwm final : public hal::Pwm {
   public:

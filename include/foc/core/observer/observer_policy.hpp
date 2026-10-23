@@ -8,16 +8,19 @@ namespace foc {
 
 namespace core {
 
+
 /**
  * @brief [en] Observer output: electrical angle and angular speed.
  *        [zh] 观测器输出：电角度与电角速度。
  *
  * @since 0.1.0
+ * @exporter
  */
 struct ObsState final {
     float theta_e; ///< [en] electrical angle in rad, normalised to [0, 2*pi). [zh] 电角度，rad，归一化到 [0, 2π)。
     float omega_e; ///< [en] electrical angular speed in rad/s. [zh] 电角速度，rad/s。
 };
+
 
 /**
  * @brief [en] Observer policy contract. Every observer exposes
@@ -36,10 +39,12 @@ struct ObsState final {
  */
 namespace observer {
 
+
 /**
  * @brief [en] Compile-time tag of the policy contract above (documentation anchor only).
  *        [zh] 上述策略契约的编译期锚点（仅作文档锚点，无运行期实体）。
  * @since 0.1.0
+ * @exporter
  */
 struct Policy final {};
 

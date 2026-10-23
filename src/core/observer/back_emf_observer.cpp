@@ -12,11 +12,24 @@ namespace core {
 
 namespace {
 
+
+/**
+ * @brief [en] Implements valid_config(); the contract is documented on its declaration.
+ *        [zh] 实现 valid_config()；契约文档在对应的声明处。
+ * @attacher
+ * @since 0.1.0
+ */
 constexpr auto valid_config(const BackEmfObserver::Config& config) noexcept -> bool {
     return (config.rs >= 0.0F) && (config.l > 0.0F);
 }
 
-/// Wrap to [0, 2*pi).
+
+/**
+ * @brief [en] Implements wrap_two_pi(); the contract is documented on its declaration.
+ *        [zh] 实现 wrap_two_pi()；契约文档在对应的声明处。
+ * @attacher
+ * @since 0.1.0
+ */
 auto wrap_two_pi(float angle) noexcept -> float {
     while (angle < 0.0F) {
         angle += kTwoPi<float>;
@@ -27,7 +40,13 @@ auto wrap_two_pi(float angle) noexcept -> float {
     return angle;
 }
 
-/// Wrap to (-pi, pi].
+
+/**
+ * @brief [en] Implements wrap_pi(); the contract is documented on its declaration.
+ *        [zh] 实现 wrap_pi()；契约文档在对应的声明处。
+ * @attacher
+ * @since 0.1.0
+ */
 auto wrap_pi(float angle) noexcept -> float {
     while (angle <= -kPi<float>) {
         angle += kTwoPi<float>;

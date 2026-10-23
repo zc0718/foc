@@ -6,6 +6,13 @@ namespace foc {
 
 namespace driver {
 
+
+/**
+ * @brief [en] Implements StubHal::reset(); the contract is documented on its declaration.
+ *        [zh] 实现 StubHal::reset()；契约文档在对应的声明处。
+ * @attacher
+ * @since 0.1.0
+ */
 void StubHal::reset() noexcept {
     pwm.reset();
     current_sense.reset();

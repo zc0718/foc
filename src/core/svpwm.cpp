@@ -18,6 +18,13 @@ constexpr auto half() noexcept -> float { return static_cast<float>(1) / static_
 /// Sector per sign code N = a + 2b + 4c, index 0 unused (zero vector).
 constexpr std::uint8_t kSectorFromCode[8] = {0U, 2U, 6U, 1U, 4U, 3U, 5U, 4U};
 
+
+/**
+ * @brief [en] Implements next_duty(); the contract is documented on its declaration.
+ *        [zh] 实现 next_duty()；契约文档在对应的声明处。
+ * @attacher
+ * @since 0.1.0
+ */
 auto next_duty(float phase_v, float offset_v, float v_bus) noexcept -> float {
     return clamp(static_cast<float>(half() + ((phase_v - offset_v) / v_bus)), 0.0F, 1.0F);
 }
