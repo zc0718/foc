@@ -83,40 +83,34 @@ set(MODULE_PATTERNS "*.ixx" "*.cppm")
 
 
 # auto file collection
-file(GLOB_RECURSE C_HEADERS
-        LIST_DIRECTORIES false
-        CONFIGURE_DEPENDS
-        ${C_HEADER_PATTERNS}
-        PATHS "${CMAKE_CURRENT_SOURCE_DIR}/include"
-)
+# `file(GLOB_RECURSE)` has no `PATHS` keyword: the old `PATHS "<dir>"` spelling was silently
+# treated as two more globbing expressions, and because GLOB_RECURSE recurses from the current
+# source directory, `*.cpp` matched *every* .cpp under the recipe folder -- `api/python_bindings.cpp`
+# ended up inside the library target, and so did the `CompilerIdCXX.cpp` CMake writes into the
+# build folder. Scope the patterns to their directory instead: "<dir>/*.cpp" recurses within that
+# directory only.
+# `file(GLOB_RECURSE)` 没有 `PATHS` 关键字：旧写法里 `PATHS "<dir>"` 被当成两个额外的通配表达式，
+# 而 GLOB_RECURSE 是从当前源目录递归，于是 `*.cpp` 把 recipe 目录下**所有** .cpp 都收了进来——
+# `api/python_bindings.cpp` 因此被编进了库目标，CMake 自己写进 build 目录的
+# `CompilerIdCXX.cpp` 也一样。把通配限定到各自目录：`"<dir>/*.cpp"` 只在该目录内递归。
+function(collect_files out_var root)
+    set(_globs "")
+    foreach(_pattern IN LISTS ARGN)
+        list(APPEND _globs "${root}/${_pattern}")
+    endforeach()
+    file(GLOB_RECURSE _found
+            LIST_DIRECTORIES false
+            CONFIGURE_DEPENDS
+            ${_globs}
+    )
+    set(${out_var} "${_found}" PARENT_SCOPE)
+endfunction()
 
-file(GLOB_RECURSE CPP_HEADERS
-        LIST_DIRECTORIES false
-        CONFIGURE_DEPENDS
-        ${CPP_HEADER_PATTERNS}
-        PATHS "${CMAKE_CURRENT_SOURCE_DIR}/include"
-)
-
-file(GLOB_RECURSE C_SOURCES
-        LIST_DIRECTORIES false
-        CONFIGURE_DEPENDS
-        ${C_SOURCE_PATTERNS}
-        PATHS "${CMAKE_CURRENT_SOURCE_DIR}/src"
-)
-
-file(GLOB_RECURSE CPP_SOURCES
-        LIST_DIRECTORIES false
-        CONFIGURE_DEPENDS
-        ${CPP_SOURCE_PATTERNS}
-        PATHS "${CMAKE_CURRENT_SOURCE_DIR}/src"
-)
-
-file(GLOB_RECURSE MODULE_FILES
-        LIST_DIRECTORIES false
-        CONFIGURE_DEPENDS
-        ${MODULE_PATTERNS}
-        PATHS "${CMAKE_CURRENT_SOURCE_DIR}/src"
-)
+collect_files(C_HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/include" ${C_HEADER_PATTERNS})
+collect_files(CPP_HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/include" ${CPP_HEADER_PATTERNS})
+collect_files(C_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/src" ${C_SOURCE_PATTERNS})
+collect_files(CPP_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/src" ${CPP_SOURCE_PATTERNS})
+collect_files(MODULE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/src" ${MODULE_PATTERNS})
 
 
 if(IS_HEADER AND ENABLE_PYBIND)
@@ -347,7 +341,14 @@ else()  # general package
       message(STATUS "C++ standard ${BUILD_CPPSTD} < 23, disabling module support")
   endif()
 
-  if(ENABLE_PYBIND)
+  if(ENABLE_PYBIND AND CMAKE_CROSSCOMPILING)
+    # A pybind11 module embeds the *host* CPython ABI and needs that interpreter (and its headers)
+    # to be built and importable. A cross toolchain has neither, and the library itself does not
+    # depend on the module, so this is a skip with a reason -- not a failure.
+    # pybind11 模块绑定的是**宿主机**的 CPython ABI，构建与导入都需要宿主解释器和头文件；交叉
+    # 工具链两者都没有，而库本体并不依赖该模块，所以这里是"带原因跳过"，不是失败。
+    message(STATUS "Python bindings skipped: cross-compiling for ${CMAKE_SYSTEM_NAME}/${CMAKE_SYSTEM_PROCESSOR}")
+  elseif(ENABLE_PYBIND)
     set(PYTHON_MODULE_NAME "${LIB_NAME}_python")
 
     find_package(pybind11 CONFIG REQUIRED)
@@ -361,6 +362,14 @@ else()  # general package
     pybind11_add_module(${PY_TARGET_INTERNAL} ${PYTHON_BINDINGS_SOURCE})
     target_link_libraries(${PY_TARGET_INTERNAL} PRIVATE ${LIB_NAME})
 
+    # Under coverage the module links instrumented archives: a shared object without the coverage
+    # runtime imports with `undefined symbol: __gcov_*`, exactly like the pure-C consumer did.
+    # 覆盖率构建下模块链接的是插桩过的静态库：少了覆盖率运行时的 .so 会在 import 时报
+    # `undefined symbol: __gcov_*`，与当初纯 C 消费者遇到的完全一样。
+    if(ENABLE_COVERAGE AND NOT CMAKE_CROSSCOMPILING AND LINK_FLAGS)
+      target_link_options(${PY_TARGET_INTERNAL} PRIVATE ${LINK_FLAGS})
+    endif()
+
     set_target_properties(${PY_TARGET_INTERNAL} PROPERTIES
       OUTPUT_NAME "${PYTHON_MODULE_NAME}"
       LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}"
@@ -370,10 +379,10 @@ else()  # general package
       LIBRARY DESTINATION lib
       COMPONENT python_bindings
     )
-    
+
     message(STATUS "Python module '${PYTHON_MODULE_NAME}' will be built")
   else()
-    message(STATUS "Python bindings disabledPython bindings disabled")
+    message(STATUS "Python bindings disabled")
   endif()
 
   if(SHARED_MSG)
