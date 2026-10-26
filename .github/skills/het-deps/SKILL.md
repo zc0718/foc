@@ -29,6 +29,7 @@ user-invocable: true
 2. **GTest belongs to test_package only** (host GTest), never in the main package's component requires. GTest 只归 test_package。
 3. **pybind11 enters the main package only when `enable_python_bindings=true`**. pybind11 跟随开关。
 4. Key case differs from conandata package name (`Eigen3` vs `eigen`) — always compare lowercase. 大小写不同，统一小写归一。
+5. **Components are not dependencies**：`<name>_c` 与 `<name>_cpp` 之间的边写在 `metadata.json` 的 `component_requires`（`{from: [to]}`），不进四桶，也不改 `conanfile.py`。四桶只管**外部**包；组件图只管**包内**两块库。
 
 ## 3-Step Flow（增依赖三步流程）
 

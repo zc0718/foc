@@ -26,6 +26,7 @@
     "cpp": {"etl": ["etl::etl"]},
     "infra": {"GTest": ["gtest::gtest"], "pybind11": ["pybind11::module"]}
   },
+  "component_requires": {"foc_c": ["foc_cpp"]},
   "baremetal_white_list": ["etl"],
   "doc_languages": ["en", "zh"],
   "doc_versions": ["0.1.0"],

@@ -227,6 +227,7 @@ class PackageRecipe(ConanFile):
             self.settings.compiler.cppstd = _build_std
 
         self._make_c_compatible()
+        self._component_requires()  # fail fast on a bad component graph instead of at package_info time
 
     def _make_c_compatible(self):
         _c_hs = self._file_detector('include', ['h', ], retarget=Path(self.recipe_folder).parent / 'es')
@@ -302,6 +303,19 @@ class PackageRecipe(ConanFile):
         _c_deps = [f"{k}@{' '.join(v)}" for k, v in {**_common, **_c}.items()]
         _cpp_deps = [f"{k}@{' '.join(v)}" for k, v in {**_common, **_cpp}.items()]
         return _c_deps, list(set(_cpp_deps).union(set(_infra_deps)))
+
+    def _component_requires(self):
+        # Extra edges between the generated components, declared in metadata.json as {from: [to]}.
+        _known = {f"{self.name}_c", f"{self.name}_cpp"}
+        _edges = self.meta.get("component_requires") or {}
+        _normalized = {}
+        for _from, _to in _edges.items():
+            _targets = _to if isinstance(_to, list) else [_to]
+            if _from not in _known or not _targets or any(_t not in _known or _t == _from for _t in _targets):
+                raise ConanInvalidConfiguration(
+                    f"component_requires: invalid edge '{_from}' -> {_to}; known components are {sorted(_known)}")
+            _normalized[_from] = _targets
+        return _normalized
 
     def package_id(self):
         # Fold tools.build:cflags/cxxflags into package_id so each MCU ABI gets its own binary
@@ -548,15 +562,13 @@ class PackageRecipe(ConanFile):
         self.cpp_info.components[f"{self.name}_c"].requires = [[_t := _.split('@')[1],
                                                                 conan_targets[_t] if _t in conan_targets
                                                                 else _t][-1] for _ in _c]
-        # The C component is not a standalone library here: foc_api.c validates and forwards to the
-        # bridge in the C++ component (the C-ABI-over-C++-core pattern, ADR-002). Declaring the
-        # requirement is what makes CMakeDeps put `_cpp` *before* `_c` on every consumer's link
-        # line; without it a single pass of the linker cannot resolve the bridge symbols.
-        self.cpp_info.components[f"{self.name}_c"].requires += [f"{self.name}_cpp"]
         self.cpp_info.components[f"{self.name}_cpp"].libs = [f"{self.name}_cpp"]
         self.cpp_info.components[f"{self.name}_cpp"].requires = [[_t := _.split('@')[1],
                                                                   conan_targets[_t] if _t in conan_targets
                                                                   else _t][-1] for _ in _cpp]
+        # A component may need another component: the edge belongs to the project, not to the recipe.
+        for _from, _to in self._component_requires().items():
+            self.cpp_info.components[_from].requires += _to
 
     @staticmethod
     def _call_syntax_suggestion():

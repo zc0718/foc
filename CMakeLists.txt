@@ -187,6 +187,18 @@ else()  # general package
       set(BUILD_TYPE "STATIC")
   endif()
 
+  # CMake rejects a library target with no sources, so a single-language project gets a placeholder TU.
+  if(NOT C_SOURCES)
+      set(_c_placeholder "${CMAKE_CURRENT_BINARY_DIR}/generated/${LIB_NAME}_c_placeholder.c")
+      file(WRITE "${_c_placeholder}" "/* placeholder TU: this component has no sources */\ntypedef int library_component_placeholder;\n")
+      list(APPEND C_SOURCES "${_c_placeholder}")
+  endif()
+  if(NOT CPP_SOURCES AND NOT MODULE_FILES)
+      set(_cpp_placeholder "${CMAKE_CURRENT_BINARY_DIR}/generated/${LIB_NAME}_cpp_placeholder.cpp")
+      file(WRITE "${_cpp_placeholder}" "/* placeholder TU: this component has no sources */\nstruct library_component_placeholder {};\n")
+      list(APPEND CPP_SOURCES "${_cpp_placeholder}")
+  endif()
+
   # dynamically create lib targets
   add_library(${LIB_NAME}_c ${BUILD_TYPE} ${C_SOURCES})
   add_library(${LIB_NAME}_cpp ${BUILD_TYPE} ${CPP_SOURCES} ${MODULE_FILES})

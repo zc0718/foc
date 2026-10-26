@@ -122,6 +122,9 @@ generate/modify each one according to the project design above.
      • Set "is_shared", "is_header", "enable_python_bindings",
        "activate_code_coverage" from Section 1.
      • Populate "dependencies" → common/c/cpp/infra from Section 3.
+     • Leave "component_requires" empty unless one component calls into the
+       other: {"<name>_c": ["<name>_cpp"]} means the C component uses the C++
+       one (C ABI over a C++ core). Never express this by editing conanfile.py.
      • Set "cmake_version" to "4.2.3" (or newer). 4.2 is the floor for MSVC:
        below it CMake cannot name the Visual Studio generator Conan derives.
      • Set "trigger_tests" to true, "saving_tests_log" to true.

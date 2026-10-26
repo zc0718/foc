@@ -34,6 +34,26 @@
 3. **pybind11 enters the main package only when `enable_python_bindings=true`** (gated in both main recipe and test_package). pybind11 跟随开关。
 4. Keys differ in case from conandata package names (`Eigen3` vs `eigen`) — always compare lowercase. 键名与 conandata 包名大小写不同，统一小写归一。
 
+### Component Graph（组件图，可选）
+```json
+"component_requires": {"<name>_c": ["<name>_cpp"]}
+```
+**语义**：`from` 组件依赖 `to` 组件的符号；**方向 = 依赖方向**（谁引用谁，谁就写在左边）。
+
+| Consumer | Note |
+|------|------|
+| recipe `package_info()` | 把边并进 `cpp_info.components[from].requires`；CMakeDeps 据此让被依赖者排在后面 |
+
+**Rules（不可违背）**
+1. 只允许 `<name>_c` / `<name>_cpp`；未知名字、自依赖、空目标列表都会以 `ConanInvalidConfiguration` 失败。
+2. C 接口压 C++ 核心（本库）→ `{"<name>_c": ["<name>_cpp"]}`；C++ 封装压 C 核心 → 反过来。两者不能同时声明。
+3. **不要**为这件事改 `conanfile.py`：组件图是项目声明，不是模板代码。
+
+### Derived facts（派生事实，**禁止**写进 metadata）
+这些事实由目录结构推导，写进 metadata 只会制造互相矛盾的第二事实源：
+- **组件库是否存在**：`src/**/*.c` 为空 → C 组件无源码；`src/**/*.cpp|*.ixx|*.cppm` 为空 → C++ 组件无源码。空的一侧由 CMake 自动生成占位 TU（`build/generated/`），**不要**手写 dummy 源文件。
+- **header-only**（`is_header=true`）：没有组件，只有 INTERFACE 目标。
+
 ### Switches（开关）
 | Field（字段） | Purpose（作用） |
 |------|------|

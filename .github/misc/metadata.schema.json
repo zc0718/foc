@@ -44,6 +44,11 @@
       }
     },
     "baremetal_white_list": { "type": "array", "items": { "type": "string" } },
+    "component_requires": {
+      "type": "object",
+      "description": "Extra edges between the generated components, as {\"<name>_c\": [\"<name>_cpp\"]}; the recipe validates the names.",
+      "additionalProperties": { "type": "array", "items": { "type": "string", "minLength": 1 } }
+    },
     "graphviz_bin": { "type": "string" },
     "doc_languages": { "type": "array", "items": { "type": "string" } },
     "doc_versions": { "type": "array", "items": { "type": "string" } },
