@@ -540,13 +540,15 @@ auto spread(std::uint32_t &state) noexcept -> float {
 ///      用的准入测量，跑在任意机器上、用**标称**整定：磁链观测器被告知该机器的铭牌数
 ///      （`psi_f = Kt/(1.5·p)`），而 `Ks`、`Ki` 仍是 0.3
 ///      / 3.0。这就是"不重调"。
-auto gate_error(const sil::MachineSpec &spec, float omega_e) -> float {
+auto gate_error(const sil::MachineSpec &spec, float omega_e,
+                float min_gain_rad_s = 3.0F) -> float {
   sil::SwitchingRigConfig config{};
   config.spec = spec;
   config.omega_e = omega_e;
   const float psi = spec.kt / (1.5F * static_cast<float>(spec.pole_pairs));
   core::NonlinearFluxObserver observer(core::NonlinearFluxObserver::Config{
-      config.belief_rs * spec.rs, spec.lq, psi, 0.3F, 3.0F, 0.5F * psi});
+      config.belief_rs * spec.rs, spec.lq, psi, 0.3F, min_gain_rad_s,
+      0.5F * psi});
   observer.seed_flux(core::Ab<float>{psi, 0.0F});
   return sil::run_switched(config, [&observer](sil::SwitchingRig &rig) {
     return observer.update(rig.command(), rig.current(),
@@ -840,6 +842,77 @@ TEST(Commissioning, P5c_AStepTooShortToSpanIsNotAnIdentification) {
   EXPECT_FALSE(short_step.valid) << "one period is not enough to divide by";
   EXPECT_FALSE(never_begun.solve().valid)
       << "begin() is what makes it a measurement";
+}
+
+// ---------------------------------------------------------------------------
+// The gain-floor debt of P5-f, measured instead of assumed.
+// P5-f 的增益地板债，量而不是假设。
+// ---------------------------------------------------------------------------
+
+TEST(Commissioning, P5f_TheGainFloorIsASafetyBoundAndNotATuningKnob) {
+  // P5-f's conclusion was "the observer's gains are absolute, so they do not
+  // travel". Half of that is true and half of it is not, and this test
+  // separates them. P5-f
+  // 的结论是"观测器的增益是绝对量，所以带不走"。一半对一半不对，本测试把它们分开。
+  //
+  // `gain_ratio` (0.3) is a fraction of `omega_e`: dimensionless, travels by
+  // construction. The only absolute number is `min_gain_rad_s` (3.0), and the
+  // correction rate is `max(gain_ratio*|omega_e|, min_gain_rad_s)`, so the
+  // floor only binds below `3.0/0.3 = 10 rad/s`. `gain_ratio`（0.3）是 `ω_e`
+  // 的比例：无量纲，构造上就带得走。唯一的绝对量是
+  // `min_gain_rad_s`（3.0），而修正速率是 `max(gain_ratio·|ω_e|,
+  // min_gain_rad_s)`，所以地板 只在 `3.0/0.3 = 10 rad/s` 以下才起作用。
+  const sil::MachineSpec nominal = sil::nominal_spec();
+  std::printf("\n[P5-f/gains] rate = max(0.3*|w|, floor); the floor binds "
+              "below %.1f rad/s\n",
+              static_cast<double>(3.0F / 0.3F));
+  std::printf("        %8s | %10s %10s %10s\n", "w_e", "floor 0.3", "floor 3",
+              "floor 30");
+  const float speeds[5] = {5.0F, 20.0F, 50.0F, 200.0F, 800.0F};
+  float worst_smaller = 0.0F;
+  float worst_larger = 0.0F;
+  for (int k = 0; k < 5; ++k) {
+    const float small = gate_error(nominal, speeds[k], 0.3F);
+    const float base = gate_error(nominal, speeds[k], 3.0F);
+    const float large = gate_error(nominal, speeds[k], 30.0F);
+    worst_smaller = std::fmax(worst_smaller, std::fabs(small - base) / base);
+    worst_larger = std::fmax(worst_larger, std::fabs(large - base) / base);
+    std::printf("        %8.0f | %10.5f %10.5f %10.5f\n",
+                static_cast<double>(speeds[k]), static_cast<double>(small),
+                static_cast<double>(base), static_cast<double>(large));
+  }
+  std::printf(
+      "        shrinking the floor 10x moves the answer by at most %.2f %%; "
+      "growing it 10x moves it by up to %.1f %%\n",
+      static_cast<double>(100.0F * worst_smaller),
+      static_cast<double>(100.0F * worst_larger));
+
+  // The floor is **inert downward**: shrinking it tenfold changes nothing
+  // anywhere, which is what a safety bound looks like -- it is not holding a
+  // tuning trade-off in place.
+  // 地板向**下**是**惰性**的：缩小十倍在任何速域都不改变任何东西，这正是"安全边界"的样子——
+  // 它并没有托住某个整定折中。
+  EXPECT_LT(worst_smaller, 0.01F)
+      << "a floor that is not holding a trade-off must be free to be small";
+  // Upward it is not inert, so it is a real limit and the default has to be
+  // justified in that direction: 3 rad/s is 0.24 % of `Rs/L = 1250 rad/s`, i.e.
+  // small compared with the electrical dynamics, and that is the whole rule.
+  // 向**上**它不是惰性的，所以它是一个真实的约束，默认值必须在这个方向上被论证：3
+  // rad/s 是 `Rs/L = 1250 rad/s` 的 0.24
+  // %，即相对电气动态很小，这就是全部规则。
+  EXPECT_GT(worst_larger, 0.02F)
+      << "growing it must degrade something, or nothing is being measured";
+  const float electrical_bandwidth = nominal.rs / nominal.lq;
+  EXPECT_LT(3.0F, 0.01F * electrical_bandwidth)
+      << "the default floor has to be small against Rs/L to be "
+         "machine-independent";
+
+  // So the debt is not "make the gains dimensionless" -- `gain_ratio` already
+  // is -- but "the floor must stay well below `Rs/L`", which the default does
+  // by a factor of 400 and which is now asserted rather than assumed.
+  // 所以这笔债不是"把增益做成无量纲"——`gain_ratio`
+  // 本来就是——而是"地板必须远低于 `Rs/L`"， 默认值做到了 400
+  // 倍，而且这一点现在是被断言而不是被假设的。
 }
 
 } // namespace foc

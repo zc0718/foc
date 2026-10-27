@@ -5,6 +5,12 @@
 #include <cstdio>
 
 #include <foc/core/board_check.hpp>
+#include <foc/core/svpwm.hpp>
+#include <foc/core/transforms.hpp>
+
+#include "sil_bench.hpp"
+#include "sil_discrete_inverter.hpp"
+#include "sil_plant_hal.hpp"
 // Conan::ImportEnd
 
 namespace foc {
@@ -227,6 +233,197 @@ TEST(BoardCheck, P7a_FourWrongBoardsFourDifferentNames) {
   }
   EXPECT_EQ(5, correct_names)
       << "the names have to be exact, or an operator acts on the wrong part";
+}
+
+// ---------------------------------------------------------------------------
+// The measurement half: a runnable sequence on a board that can be wired wrong.
+// 测量半边：一个能跑的序列，对象是一块可以接错的板子。
+// ---------------------------------------------------------------------------
+
+namespace {
+
+namespace sil = foc::sil;
+
+/// [en] A standstill board that can be mis-wired the ways P7-a names. The
+/// faults live in the
+/// **sensor path** -- sign, offset -- because that is where they live on real
+/// hardware: the power stage is fine, the reading of it is not. `read_uvw()`
+/// returns the sample the ISR would see, taken at the trigger point, not "now".
+///      [zh] 一块可以按 P7-a
+///      点名的方式接错的堵转板子。故障在**传感器路径**——符号、零漂——因为真实
+///      硬件上它们就在那里：功率级是好的，读数不是。`read_uvw()` 返回 ISR
+///      会看到的那个采样，取自触发 点，而不是"现在"。
+class FaultyBoard final {
+public:
+  struct Fault final {
+    float sign[3] = {1.0F, 1.0F, 1.0F};
+    float offset[3] = {0.0F, 0.0F, 0.0F};
+  };
+
+  FaultyBoard(const sil::PlantParams &params, Fault fault)
+      : plant_(params),
+        inverter_(sil::InverterConfig{20000.0F, 1.0e-6F, 0.0F, 40}),
+        fault_(fault) {
+    plant_.reset(sil::PlantState{0.0F, 0.0F, 0.0F, 0.0F});
+  }
+
+  void set_dq(core::Dq<float> v) { command_ = v; }
+  auto switching_period_s() const noexcept -> float { return kPeriod; }
+  auto v_bus_v() const noexcept -> float { return kVBus; }
+
+  void advance(float seconds) {
+    const int periods = static_cast<int>((seconds / kPeriod) + 0.5F);
+    for (int k = 0; k < periods; ++k) {
+      run_period();
+    }
+  }
+
+  /// [en] Less than a period; unused by the standstill sequence but part of the
+  /// concept. [zh] 不足一个周期；堵转序列不用它，但概念里有。
+  void step_advance(float seconds) {
+    const float ratio = kPeriod / ((seconds > 0.0F) ? seconds : kPeriod);
+    const int steps = (ratio >= 1.0F) ? static_cast<int>(ratio + 0.5F) : 1;
+    run_period_steps(steps);
+  }
+
+  auto read_uvw() const noexcept -> core::Uvw<float> {
+    return core::Uvw<float>{
+        static_cast<float>((fault_.sign[0] * held_.u) + fault_.offset[0]),
+        static_cast<float>((fault_.sign[1] * held_.v) + fault_.offset[1]),
+        static_cast<float>((fault_.sign[2] * held_.w) + fault_.offset[2])};
+  }
+
+private:
+  static constexpr float kPeriod = 5.0e-5F;
+  static constexpr float kVBus = 24.0F;
+
+  void run_period() { run_period_steps(40); }
+
+  void run_period_steps(int steps_wanted) {
+    const float poles = static_cast<float>(plant_.params().pole_pairs);
+    const core::Ab<float> command =
+        core::inv_park(command_, poles * plant_.theta_mech_rad());
+    const core::SvpwmResult modulated = core::Svpwm::modulate(
+        core::ModulatorInput{command, kVBus, plant_.current_uvw()});
+    const int steps = inverter_.begin_period(modulated.duty, kVBus, kPeriod);
+    if (steps <= 0) {
+      return;
+    }
+    const float h = inverter_.step_length_s();
+    held_ = plant_.current_uvw(); // the sample the ISR reads, this period
+    for (int k = 0; k < steps; ++k) {
+      const core::Ab<float> applied = inverter_.step(plant_.current_uvw());
+      plant_.set_voltage_dq(
+          core::park(applied, poles * plant_.theta_mech_rad()));
+      plant_.advance(h);
+    }
+    static_cast<void>(steps_wanted);
+  }
+
+  sil::PmsmPlant plant_;
+  sil::DiscreteInverter inverter_;
+  Fault fault_{};
+  core::Dq<float> command_{0.0F, 0.0F};
+  core::Uvw<float> held_{0.0F, 0.0F, 0.0F};
+};
+
+auto self_test_config() -> core::BoardSelfTest::Config {
+  core::BoardSelfTest::Config config{};
+  config.probe_v[0] = 0.90F;
+  config.probe_v[1] = 1.05F;
+  config.probe_v[2] = 1.20F;
+  config.probe_v[3] = 1.40F;
+  config.probe_v[4] = 1.65F;
+  config.probe_v[5] = 1.95F;
+  config.settle_steps = 120;
+  config.average_steps = 20;
+  config.zero_steps = 20;
+  config.ripple_steps = 1;
+  config.l_h = sil::nominal_spec().lq;
+  config.i_min_a = 0.4F;
+  return config;
+}
+
+/// [en] The numbers that need the rotor to turn, supplied by the caller: the
+/// spin test and the aligner produce them, and this test is about the
+/// standstill half.
+///      [zh]
+///      需要转子转起来才能得到的数，由调用方提供：旋转测试与对齐器产出它们，而本测试的对象是堵转
+///      半边。
+auto spinning_truth() -> core::BoardMeasurements {
+  core::BoardMeasurements m{};
+  const float psi = sil::nominal_spec().kt /
+                    (1.5F * static_cast<float>(sil::nominal_spec().pole_pairs));
+  m.psi_f_wb = psi;
+  m.psi_f_nameplate_wb = psi;
+  m.rs_nameplate_ohm = sil::nominal_spec().rs;
+  // In the **axis** convention, because that is what the identification
+  // measures: a per-phase step of `dV` projects onto the d axis as `(4/3)*dV`.
+  // Comparing a per-phase number with an axis number is a 33 % error that looks
+  // exactly like a bad board -- finding 17 of the plan, met again here.
+  // 用**轴上**的约定，因为辨识量到的就是轴上的量：每相的 `dV` 投影到 d 轴是
+  // `(4/3)·dV`。拿每相数 和轴上数比，是一个 33 %
+  // 的误差，看起来和一块坏板子一模一样——plan 的发现 17 在这里又遇到一次。
+  m.deadtime_cmd_v = core::axis_deadtime_v(1.0e-6F * 20000.0F * 24.0F, 0.0F);
+  m.encoder_offset_rad = 0.005F;
+  m.observer_error_rad = 0.04F;
+  // The trigger sweep is a bench facility the four-call concept does not
+  // abstract, so the self-test does not measure it; the caller supplies the
+  // number a good board would produce.
+  // 触发点扫描是四调用概念没有抽象的台架能力，所以自检不测它；这个数由调用方给出，取好板子会产出的值。
+  m.ripple_measured_a = 0.30F;
+  m.ripple_expected_a = 0.375F;
+  return m;
+}
+
+} // namespace
+
+TEST(BoardCheck, P7a_TheSelfTestMeasuresAndTheChecklistNamesTheCause) {
+  // P7-a end to end: the sequence **measures**, `check_board` **judges**, and
+  // the answer names the thing the operator has to touch. Three boards, one
+  // `Fault` setting each. P7-a 端到端：序列**测量**，`check_board`
+  // **判定**，答案点名运维要动手的那个东西。三块板子，各一个 `Fault` 设置。
+  struct Case final {
+    const char *label;
+    FaultyBoard::Fault fault;
+    core::BoardCause expected;
+  };
+  const Case cases[] = {
+      {"good board", FaultyBoard::Fault{}, core::BoardCause::None},
+      {"phase u inverted",
+       FaultyBoard::Fault{{-1.0F, 1.0F, 1.0F}, {0.0F, 0.0F, 0.0F}},
+       core::BoardCause::PolarityReversed},
+      {"offset on u",
+       FaultyBoard::Fault{{1.0F, 1.0F, 1.0F}, {0.15F, 0.0F, 0.0F}},
+       core::BoardCause::OffsetBias},
+  };
+
+  std::printf("\n[P7-a/self-test] three boards, measured then judged\n");
+  int named = 0;
+  for (const Case &c : cases) {
+    FaultyBoard board(sil::plant_params_from(sil::nominal_spec()), c.fault);
+    core::BoardSelfTest self_test(self_test_config());
+    const core::BoardSelfTest::Result run =
+        self_test.run(board, spinning_truth());
+    const core::BoardReport report =
+        core::check_board(run.measurements, core::BoardLimits{});
+    const bool ok = (report.cause == c.expected) && run.complete;
+    named += ok ? 1 : 0;
+    std::printf(
+        "        %-17s sum %7.3f off %6.3f %6.3f %6.3f  rs %6.3f (n%d)  "
+        "dt %6.3f  -> %-18s %s\n",
+        c.label, static_cast<double>(run.measurements.sum_current_a),
+        static_cast<double>(run.measurements.offset_a[0]),
+        static_cast<double>(run.measurements.offset_a[1]),
+        static_cast<double>(run.measurements.offset_a[2]),
+        static_cast<double>(run.rs_ohm), static_cast<int>(run.points_used),
+        static_cast<double>(run.measurements.deadtime_v),
+        core::board_cause_name(report.cause), ok ? "ok" : "WRONG");
+    EXPECT_EQ(c.expected, report.cause) << c.label;
+    EXPECT_TRUE(run.complete) << c.label;
+    EXPECT_GE(report.count, 10) << c.label;
+  }
+  EXPECT_EQ(3, named) << "measurement plus judgement has to name every case";
 }
 
 } // namespace foc

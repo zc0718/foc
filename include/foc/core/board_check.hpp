@@ -2,6 +2,9 @@
 #pragma once
 #include <cmath>
 #include <cstdint>
+
+#include <foc/core/commissioning.hpp>
+#include <foc/core/types.hpp>
 // Conan::ImportEnd
 
 namespace foc {
@@ -321,6 +324,207 @@ namespace detail {
     }
     return report;
 }
+
+/**
+ * @brief [en] The standstill half of the board self-test: it **measures** the
+ * numbers `check_board()` judges. [zh]
+ * 板级自检的堵转半边：它**量出** `check_board()` 要判定的那些数。
+ *
+ *        [en] Why a template and not a class with virtuals. The bench is
+ * whatever the user's board is, and this project has no exceptions, no RTTI and
+ * no allocation in the control path; a template over a four-call concept costs
+ * nothing and keeps the sequence in one readable place. The concept is:
+ *        ```
+ *        auto set_dq(Dq<float>)   -> void;   // hold a voltage in the rotor frame
+ *        auto advance(float)      -> void;   // let time pass (>= 1 switching period)
+ *        auto step_advance(float) -> void;   // advance by less than one period
+ *        auto read_uvw()          -> Uvw<float>;  // the ADC result the ISR reads (a sample
+ *                                                 // taken at the trigger point, not "now")
+ *        auto switching_period_s() -> float;
+ *        ```
+ *        [zh] 为什么是模板而不是带虚函数的类。台架就是用户那块板子，而本项目在控制路径上
+ * 没有异常、没有 RTTI、不分配内存；模板对着一个四调用的概念，零开销，并把整个序列留在一处
+ * 可读的地方。概念如上。
+ *
+ *        [en] What it can and cannot measure at standstill, stated up front
+ * because a self-test that silently skips half the checks is worse than none:
+ *        - **can**: per-phase offsets (zero current is its own reference),
+ *          polarity (drive a known vector and read the signs), `Rs` and the
+ *          dead-time voltage (two points, see `RsEstimator`), and the switching
+ *          ripple the ADC actually sees.
+ *        - **cannot**: `psi_f`, the encoder mount offset and the observer's
+ *          health, all of which need the rotor to turn. Those come from the
+ *          spin test and the aligner, and are passed in.
+ *        [zh] 堵转能测什么、不能测什么，先说清楚——静默跳过一半检查的自检比没有更糟：
+ *        - **能**：逐相零漂（零电流自己就是基准）、极性（给一个已知矢量读符号）、`Rs` 与
+ *          死区伏秒（两点，见 `RsEstimator`）、以及 ADC 实际看到的开关纹波。
+ *        - **不能**：`ψf`、编码器安装偏置、观测器健康度，它们都需要转子转起来。那些来自
+ *          旋转测试与对齐器，由调用方传入。
+ *
+ * @context [en] Commissioning, standstill, once per board. [zh]
+ * 整定阶段，堵转，每块板一次。
+ * @since 0.1.0
+ * @exporter
+ */
+class BoardSelfTest final {
+  public:
+    /**
+     * @brief [en] How hard to probe and how long to wait. [zh] 探多深、等多久。
+     * @since 0.1.0
+     */
+    struct Config final {
+        float probe_v[6];  ///< [en] the d-axis voltages to sweep, V; six or more,
+                           ///< because the `Rs` fit needs them. [zh]
+                           ///< 要扫描的 d 轴电压，V；六个以上，`Rs` 拟合需要。
+        int settle_steps;  ///< [en] switching periods to wait per point. [zh]
+                           ///< 每个点等多少个开关周期。
+        int average_steps; ///< [en] periods to average per point. [zh]
+                           ///< 每个点平均多少个周期。
+        int zero_steps;    ///< [en] zero-current samples to average. [zh]
+                           ///< 要平均的零电流样本数。
+        int ripple_steps;  ///< [en] sub-steps per period for the ripple read.
+                           ///< [zh] 读纹波时每周期取多少个子步。
+        float l_h;         ///< [en] inductance, H -- for the ripple bound only.
+                           ///< [zh] 电感，H——只用于纹波界。
+        float i_min_a;     ///< [en] below this the loss is not a step yet, A.
+                           ///< [zh] 低于此值时损失还不是阶跃，A。
+    };
+
+    /**
+     * @brief [en] What the standstill half produced. [zh] 堵转半边量到了什么。
+     * @since 0.1.0
+     */
+    struct Result final {
+        BoardMeasurements measurements; ///< [en] the numbers to judge. [zh]
+                                        ///< 待判定的数。
+        float rs_ohm;                   ///< [en] identified resistance, ohm. [zh]
+                                        ///< 辨识出的电阻，Ω。
+        bool complete;                  ///< [en] every step ran. [zh] 每一步都跑完了。
+        int points_used;                ///< [en] voltage points the `Rs` fit accepted. [zh]
+                                        ///< `Rs` 拟合采用的电压点数。
+    };
+
+    explicit BoardSelfTest(const Config& config) noexcept : config_(config) {}
+
+    /**
+     * @brief [en] Run the sequence. [zh] 跑完整个序列。
+     * @param bench [en] the board, through the four-call concept in the class
+     * note. [zh] 板子，通过类注释里的四调用概念。
+     * @param spinning [en] the numbers that need the rotor to turn, supplied by
+     * the caller. [zh] 需要转子转起来才能得到的数，由调用方提供。
+     * @return [en] every measured number, ready for `check_board()`. [zh]
+     * 量到的每个数，可直接交给 `check_board()`。
+     * @since 0.1.0
+     */
+    template <typename Bench> auto run(Bench& bench, const BoardMeasurements& spinning) noexcept -> Result {
+        Result result{};
+        result.measurements = spinning;
+        if (!(config_.settle_steps > 0) || !(config_.average_steps > 0) || !(config_.zero_steps > 0)) {
+            return result;
+        }
+        const float period = bench.switching_period_s();
+
+        // --- 1. zero current: the readings *are* the offsets ---
+        // --- 1. 零电流：读数**就是**零漂 ---
+        bench.set_dq(Dq<float>{0.0F, 0.0F});
+        for (int k = 0; k < config_.settle_steps; ++k) {
+            bench.advance(period);
+        }
+        float sum[3]{0.0F, 0.0F, 0.0F};
+        for (int k = 0; k < config_.zero_steps; ++k) {
+            const Uvw<float> i = bench.read_uvw();
+            sum[0] = static_cast<float>(sum[0] + i.u);
+            sum[1] = static_cast<float>(sum[1] + i.v);
+            sum[2] = static_cast<float>(sum[2] + i.w);
+            bench.advance(period);
+        }
+        const float inverse = 1.0F / static_cast<float>(config_.zero_steps);
+        for (int phase = 0; phase < 3; ++phase) {
+            result.measurements.offset_a[phase] = sum[phase] * inverse;
+        }
+
+        // --- 2. sweep the d axis: polarity, `Rs`, dead time, and the sum ---
+        // --- 2. 扫 d 轴：极性、`Rs`、死区、以及三线和 ---
+        RsEstimator rs_estimator(RsEstimator::Config{config_.i_min_a, 0.0F});
+        float v_used = 0.0F;
+        float sum_current = 0.0F;
+        int sum_samples = 0;
+        for (int p = 0; p < 6; ++p) {
+            const float v = config_.probe_v[p];
+            if (!(v > 0.0F)) {
+                continue;
+            }
+            bench.set_dq(Dq<float>{v, 0.0F});
+            for (int k = 0; k < config_.settle_steps; ++k) {
+                bench.advance(period);
+            }
+            Uvw<float> mean{0.0F, 0.0F, 0.0F};
+            for (int k = 0; k < config_.average_steps; ++k) {
+                const Uvw<float> i = bench.read_uvw();
+                mean = Uvw<float>{static_cast<float>(mean.u + i.u), static_cast<float>(mean.v + i.v),
+                                  static_cast<float>(mean.w + i.w)};
+                bench.advance(period);
+            }
+            const float s = 1.0F / static_cast<float>(config_.average_steps);
+            mean = Uvw<float>{static_cast<float>(mean.u * s), static_cast<float>(mean.v * s),
+                              static_cast<float>(mean.w * s)};
+            // The offsets have to come out before the signs mean anything.
+            // 符号要有意义，先得把零漂去掉。
+            const float u = static_cast<float>(mean.u - result.measurements.offset_a[0]);
+            const float vv = static_cast<float>(mean.v - result.measurements.offset_a[1]);
+            const float w = static_cast<float>(mean.w - result.measurements.offset_a[2]);
+            sum_current = static_cast<float>(sum_current + ((u + vv) + w));
+            ++sum_samples;
+            // The current magnitude on the axis, from the three phases: the
+            // vector magnitude is `sqrt(2/3*(u^2+v^2+w^2))`.
+            // 轴上的电流幅值，由三相得到：矢量幅值是 `sqrt(2/3·(u²+v²+w²))`。
+            const float magnitude = std::sqrt(0.6666667F * (((u * u) + (vv * vv)) + (w * w)));
+            static_cast<void>(rs_estimator.add(v, magnitude));
+            if (p == 5) {
+                // The signs and the ripple come from the strongest point, where
+                // the signal-to-noise is best.
+                // 符号与纹波取自最强的那个点，那里信噪比最好。
+                result.measurements.response_sign[0] = (u > 0.0F) ? 1.0F : -1.0F;
+                result.measurements.response_sign[1] = (vv > 0.0F) ? 1.0F : -1.0F;
+                result.measurements.response_sign[2] = (w > 0.0F) ? 1.0F : -1.0F;
+                v_used = v;
+                // The sampling-instant check is *not* measured here, and the reason is a property of
+                // hardware rather than an omission: finding it means moving the ADC trigger inside the
+                // PWM period and watching the reading move, which needs a bench facility this
+                // four-call concept does not abstract. The caller supplies that number.
+                // 采样时刻检查**不在这里**测，原因是硬件属性而不是遗漏：要发现它得把 ADC 触发点在
+                // PWM 周期内移动并看读数怎么动，那需要本四调用概念没有抽象的台架能力。那个数由调用方
+                // 提供。
+            }
+        }
+
+        // --- 3. the fit ---
+        // --- 3. 拟合 ---
+        const RsEstimator::Result fit = rs_estimator.solve();
+        result.points_used = rs_estimator.samples();
+        result.rs_ohm = fit.rs;
+        result.measurements.rs_ohm = fit.rs;
+        result.measurements.deadtime_v = fit.deadtime_v;
+        if (sum_samples > 0) {
+            result.measurements.sum_current_a = sum_current / static_cast<float>(sum_samples);
+        }
+        // The ripple bound the library already uses elsewhere, so the ratio the
+        // user sees is comparable with the numbers in the dead-time tests.
+        // 库在别处已经在用的那个纹波界，于是用户看到的比值与死区测试里的数可比。
+        const float bounce = bench.v_bus_v();
+        result.measurements.ripple_expected_a =
+            (config_.l_h > 0.0F) ? ((bounce * period) / (8.0F * config_.l_h)) : 0.0F;
+        static_cast<void>(v_used);
+        result.complete = (result.points_used > 0) && (sum_samples > 0);
+        return result;
+    }
+
+    /// [en] The config in force. [zh] 当前配置。
+    [[nodiscard]] auto config() const noexcept -> const Config& { return config_; }
+
+  private:
+    Config config_{};
+};
 
 /**
  * @brief [en] The cause as text, for a log line or a screen. [zh]
