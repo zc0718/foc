@@ -5,11 +5,14 @@
 // S13 - 逆变器死区。本场景只为一件事存在：PRD 的 U1 说"死区畸变在 SIL 里无法验证"，而那是一句关于
 // **被控对象**的话。加上死区模型之后，畸变变成 CI 能打印出来的数字——这才把"已知缺口"变成"已测缺口"。
 
+#include <algorithm>
 #include <cmath>
 #include <cstddef>
 #include <vector>
 
 #include <gtest/gtest.h>
+
+#include <foc/core/deadtime.hpp>
 
 #include "sil_bench.hpp"
 #include "sil_metrics.hpp"
@@ -69,6 +72,55 @@ auto run_low_amplitude_sine(float v_dead) -> SineResult {
     return result;
 }
 
+using Compensated = foc::core::DeadTimeCompensator<foc::core::Svpwm>;
+using MotorWithCompensation =
+    foc::motor::Motor<foc::core::BackEmfObserver, Compensated, foc::core::Pi, foc::sil::PlantHal>;
+
+/// The same low-amplitude sine, with a dead-time compensator in front of the modulator.
+/// 同一个低幅值正弦，但调制器前面有死区补偿。
+auto run_compensated_sine(float v_dead) -> SineResult {
+    const foc::motor::MotorConfig mc = foc::sil::nominal_motor_config();
+    foc::sil::PmsmPlant plant(foc::sil::plant_params_from(foc::sil::nominal_spec()));
+    foc::sil::PlantHal hal(plant, 24.0F);
+    hal.set_deadtime_voltage(v_dead);
+
+    const foc::sil::BenchConfig cfg = foc::sil::standard_bench_config();
+    const typename MotorWithCompensation::Policies policies{
+        foc::core::BackEmfObserver({mc.rs, mc.ld}),
+        Compensated{foc::core::DeadTimeCompensator<foc::core::Svpwm>::Config{v_dead, 0.02F}},
+        foc::core::Pi{foc::current_pi_config(mc, cfg.omega_current_rad_s, cfg.v_bus_v)},
+        foc::core::Pi{foc::current_pi_config(mc, cfg.omega_current_rad_s, cfg.v_bus_v)},
+        foc::core::Pi{foc::sil::speed_pi_config(mc, cfg.omega_speed_rad_s)}};
+
+    MotorWithCompensation motor(mc, policies, hal);
+    static_cast<void>(motor.init());
+    static_cast<void>(motor.start());
+
+    const int steps = static_cast<int>((kRunSeconds / cfg.dt_ctrl_s) + 0.5F);
+    const int skip = static_cast<int>((kSettleSeconds / cfg.dt_ctrl_s) + 0.5F);
+
+    SineResult result{0.0F, 0.0F};
+    std::vector<float> speeds;
+    speeds.reserve(static_cast<std::size_t>(steps - skip));
+    for (int i = 0; i < steps; ++i) {
+        const float t = static_cast<float>(i) * cfg.dt_ctrl_s;
+        const float ref = kAmplitudeRadS * std::sin(kTwoPi * kSineHz * t);
+        motor.set_speed(ref);
+        static_cast<void>(motor.tick(cfg.dt_ctrl_s));
+        hal.advance(cfg.dt_ctrl_s, cfg.substeps);
+        if (i >= skip) {
+            const float speed = motor.telemetry().speed_mech_rad_s;
+            speeds.push_back(speed);
+            const float error = std::fabs(speed - ref);
+            result.worst_error_rad_s = (error > result.worst_error_rad_s) ? error : result.worst_error_rad_s;
+        }
+    }
+    const float high = *std::max_element(speeds.begin(), speeds.end());
+    const float low = *std::min_element(speeds.begin(), speeds.end());
+    result.measured_amplitude_rad_s = 0.5F * (high - low);
+    return result;
+}
+
 } // namespace
 
 
@@ -124,4 +176,37 @@ TEST(SilS13Deadtime, LowCurrentTrackingDegradesOnceDeadTimeIsModelled) {
     std::printf("[S13] worst error: ideal %.5f rad/s, with 1us dead time %.5f rad/s (x%.2f)\n",
                 static_cast<double>(ideal.worst_error_rad_s), static_cast<double>(with_deadtime.worst_error_rad_s),
                 static_cast<double>(with_deadtime.worst_error_rad_s / ideal.worst_error_rad_s));
+}
+
+
+
+
+TEST(SilS13Deadtime, CompensatingTheDeadTimeClosesTheGapItOpened) {
+    // The point of the previous test: it measured a gap. This one shows the gap is *closable* by a
+    // library stage rather than by hand-tuning, and by how much. Same scenario, same plant, same
+    // dead time -- only the modulator differs.
+    // 上一条用例的意义在于它量出了一个缺口。这一条证明缺口可以**被库里的一个环节**关掉而不是靠手调，
+    // 并量化关掉了多少。同样的场景、同样的 plant、同样的死区——只有调制器不同。
+    const float v_dead = deadtime_voltage(24.0F);
+    const SineResult ideal = run_low_amplitude_sine(0.0F);
+    const SineResult uncompensated = run_low_amplitude_sine(v_dead);
+    const SineResult compensated = run_compensated_sine(v_dead);
+
+    // The uncompensated build really is worse (same assertion as above, kept so this test fails for
+    // the same reason if the plant ever drifts).
+    // 未补偿的构建确实更差（同上一条用例的断言，保留它是为了让本用例在 plant 漂移时因同样理由失败）。
+    EXPECT_GT(uncompensated.worst_error_rad_s, 1.3F * ideal.worst_error_rad_s);
+
+    // And compensation brings it back within 15 % of the ideal -- i.e. the x1.48 gap is gone.
+    // 补偿把它带回理想值的 15% 以内——也就是那个 ×1.48 的缺口消失了。
+    EXPECT_LT(compensated.worst_error_rad_s, 1.15F * ideal.worst_error_rad_s)
+        << "ideal " << ideal.worst_error_rad_s << ", compensated " << compensated.worst_error_rad_s
+        << ", uncompensated " << uncompensated.worst_error_rad_s;
+    EXPECT_GE(compensated.measured_amplitude_rad_s, 0.95F * kAmplitudeRadS);
+
+    std::printf("[S13] worst error: ideal %.5f, uncompensated %.5f (x%.2f), compensated %.5f (x%.2f)\n",
+                static_cast<double>(ideal.worst_error_rad_s), static_cast<double>(uncompensated.worst_error_rad_s),
+                static_cast<double>(uncompensated.worst_error_rad_s / ideal.worst_error_rad_s),
+                static_cast<double>(compensated.worst_error_rad_s),
+                static_cast<double>(compensated.worst_error_rad_s / ideal.worst_error_rad_s));
 }

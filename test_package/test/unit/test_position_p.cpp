@@ -6,6 +6,7 @@
 
 #include <gtest/gtest.h>
 
+#include <foc/core/deadtime.hpp>
 #include <foc/core/motion_profile.hpp>
 #include <foc/core/position.hpp>
 #include <foc/core/traits.hpp>
@@ -26,7 +27,7 @@ auto make_controller(float gain, float velocity_limit, float accel_limit) -> foc
 
 TEST(PositionP, OnTargetItCommandsNothing) {
     foc::core::PositionP controller = make_controller(10.0F, 5.0F, 0.0F);
-    EXPECT_FLOAT_EQ(0.0F, controller.step(foc::core::PositionInput{0.3F, 0.0F, 0.0F}, 0.3F, kDt));
+    EXPECT_FLOAT_EQ(0.0F, controller.step(foc::core::PositionInput{0.3F, 0.0F, 0.0F, 0.0F}, 0.3F, kDt));
 }
 
 
@@ -34,25 +35,25 @@ TEST(PositionP, OnTargetItCommandsNothing) {
 TEST(PositionP, TheVelocityCommandIsClampedToItsLimit) {
     foc::core::PositionP controller = make_controller(10.0F, 5.0F, 0.0F);
     // 100 rad of error at gain 10 would ask for 1000 rad/s.
-    EXPECT_FLOAT_EQ(5.0F, controller.step(foc::core::PositionInput{100.0F, 0.0F, 0.0F}, 0.0F, kDt));
-    EXPECT_FLOAT_EQ(-5.0F, controller.step(foc::core::PositionInput{-100.0F, 0.0F, 0.0F}, 0.0F, kDt));
+    EXPECT_FLOAT_EQ(5.0F, controller.step(foc::core::PositionInput{100.0F, 0.0F, 0.0F, 0.0F}, 0.0F, kDt));
+    EXPECT_FLOAT_EQ(-5.0F, controller.step(foc::core::PositionInput{-100.0F, 0.0F, 0.0F, 0.0F}, 0.0F, kDt));
 }
 
 
 
 TEST(PositionP, APerMoveVelocityLimitReplacesTheConfiguredOne) {
     foc::core::PositionP controller = make_controller(10.0F, 5.0F, 0.0F);
-    EXPECT_FLOAT_EQ(0.2F, controller.step(foc::core::PositionInput{100.0F, 0.2F, 0.0F}, 0.0F, kDt));
+    EXPECT_FLOAT_EQ(0.2F, controller.step(foc::core::PositionInput{100.0F, 0.2F, 0.0F, 0.0F}, 0.0F, kDt));
     // and the configuration is untouched for the next move
     // 且配置对下一次运动没有变化
-    EXPECT_FLOAT_EQ(5.0F, controller.step(foc::core::PositionInput{100.0F, 0.0F, 0.0F}, 0.0F, kDt));
+    EXPECT_FLOAT_EQ(5.0F, controller.step(foc::core::PositionInput{100.0F, 0.0F, 0.0F, 0.0F}, 0.0F, kDt));
 }
 
 
 
 TEST(PositionP, APerMoveAccelLimitRateLimitsTheCommand) {
     foc::core::PositionP controller = make_controller(1000.0F, 50.0F, 0.0F);
-    const foc::core::PositionInput request{100.0F, 0.0F, 100.0F};
+    const foc::core::PositionInput request{100.0F, 0.0F, 100.0F, 0.0F};
 
     // One step at 100 rad/s^2 can only reach 0.01 rad/s, far below the 50 rad/s the P term wants.
     // 在 100 rad/s^2 下走一步只能到 0.01 rad/s，远低于比例项要的 50 rad/s。
@@ -67,19 +68,19 @@ TEST(PositionP, WithoutAnAccelLimitTheCommandFollowsTheProportionalTerm) {
     // fallback: a bare P loop is exactly what some position loops want.
     // 配置里的 `accel_limit_rad_s2 == 0` 是合法选择（"不限速率"），不是回退：有些位置环要的就是纯 P。
     foc::core::PositionP controller = make_controller(10.0F, 5.0F, 0.0F);
-    EXPECT_FLOAT_EQ(0.5F, controller.step(foc::core::PositionInput{0.05F, 0.0F, 0.0F}, 0.0F, kDt));
+    EXPECT_FLOAT_EQ(0.5F, controller.step(foc::core::PositionInput{0.05F, 0.0F, 0.0F, 0.0F}, 0.0F, kDt));
 }
 
 
 
 TEST(PositionP, AnUnusableStepHoldsThePreviousCommand) {
     foc::core::PositionP controller = make_controller(10.0F, 5.0F, 0.0F);
-    static_cast<void>(controller.step(foc::core::PositionInput{0.05F, 0.0F, 0.0F}, 0.0F, kDt));
+    static_cast<void>(controller.step(foc::core::PositionInput{0.05F, 0.0F, 0.0F, 0.0F}, 0.0F, kDt));
 
     // A non-positive step must not be read as "infinitely fast": hold, do not jump.
     // 非正步长不能被理解成"无限快"：保持，不要跳变。
-    EXPECT_FLOAT_EQ(0.5F, controller.step(foc::core::PositionInput{0.5F, 0.0F, 0.0F}, 0.0F, 0.0F));
-    EXPECT_FLOAT_EQ(0.5F, controller.step(foc::core::PositionInput{0.5F, 0.0F, 0.0F}, 0.0F, -kDt));
+    EXPECT_FLOAT_EQ(0.5F, controller.step(foc::core::PositionInput{0.5F, 0.0F, 0.0F, 0.0F}, 0.0F, 0.0F));
+    EXPECT_FLOAT_EQ(0.5F, controller.step(foc::core::PositionInput{0.5F, 0.0F, 0.0F, 0.0F}, 0.0F, -kDt));
 }
 
 
@@ -89,7 +90,7 @@ TEST(PositionP, ResetRestartsTheCommandFromRestNotFromWhereItWas) {
     // step starts from zero again instead of continuing from the previous command.
     // 限速率器有记忆；`reset()` 就是清掉它的动作，证据是下一步又从零开始，而不是接着上一条指令走。
     foc::core::PositionP controller = make_controller(1000.0F, 50.0F, 100.0F);
-    const foc::core::PositionInput request{100.0F, 0.0F, 100.0F};
+    const foc::core::PositionInput request{100.0F, 0.0F, 100.0F, 0.0F};
 
     for (int i = 0; i < 50; ++i) {
         static_cast<void>(controller.step(request, 0.0F, kDt)); // ~0.5 rad/s by now

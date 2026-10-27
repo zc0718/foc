@@ -271,6 +271,38 @@ class GoodFeedforward {
 """,
     },
     {
+        "name": "modulator_two_arg_only",
+        "header": "foc/core/svpwm.hpp",
+        "trait": "foc::core::concepts::is_modulator_v",
+        "type": "NarrowModulator",
+        "member": "modulate",
+        "must_fail": True,
+        "body": """
+class NarrowModulator {
+  public:
+    // The pre-widening shape: a voltage and a bus, and therefore no way to linearise the inverter.
+    // 加宽之前的形状：一个电压与一个母线，因此无法线性化逆变器。
+    [[nodiscard]] auto modulate(foc::core::Ab<float>, float) noexcept -> foc::core::SvpwmResult;
+};
+""",
+    },
+    {
+        "name": "control_modulator_conforms",
+        "header": "foc/core/svpwm.hpp",
+        "trait": "foc::core::concepts::is_modulator_v",
+        "type": "GoodModulator",
+        "member": "modulate",
+        "must_fail": False,
+        "body": """
+class GoodModulator {
+  public:
+    [[nodiscard]] auto modulate(const foc::core::ModulatorInput& request) noexcept -> foc::core::SvpwmResult {
+        return foc::core::Svpwm::modulate(request);
+    }
+};
+""",
+    },
+    {
         "name": "position_control_with_three_arg_step",
         "header": "foc/core/position.hpp",
         "trait": "foc::core::concepts::is_position_control_v",
@@ -392,6 +424,12 @@ PROBES = {
         "(void)r; }}",
     "control_feedforward_conforms":
         "void probe(GoodFeedforward& p) {{ foc::core::Dq<float> r = p.generate(foc::core::FeedforwardInput{{}}); "
+        "(void)r; }}",
+    "modulator_two_arg_only":
+        "void probe(NarrowModulator& p) {{ foc::core::SvpwmResult r = p.modulate(foc::core::ModulatorInput{{}}); "
+        "(void)r; }}",
+    "control_modulator_conforms":
+        "void probe(GoodModulator& p) {{ foc::core::SvpwmResult r = p.modulate(foc::core::ModulatorInput{{}}); "
         "(void)r; }}",
     "position_control_with_three_arg_step":
         "void probe(OldPositionController& p) {{ float v = p.step(foc::core::PositionInput{{}}, 0.0F, 0.0F); "
