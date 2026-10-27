@@ -73,6 +73,10 @@ auto make_config(float inject_hz, float inject_v, float pll_bandwidth_hz, float 
     core::HfiObserver::Config config{};
     config.inject_v = inject_v;
     config.inject_hz = inject_hz;
+    // Above any fundamental this case can produce and well below the carrier: the high-pass is what
+    // keeps a DC current from leaking through the multiplier as a standing bias.
+    // 高于本用例可能产生的任何基频、远低于载波：正是这个高通让直流电流不会经乘法器漏成固定偏置。
+    config.current_hp_hz = 300.0F;
     // Fixed at 200 Hz for every case: the demodulation filter is *not* what a case is allowed to
     // vary, otherwise a failure could always be blamed on the filter instead of on the physics.
     // 所有用例都固定 200 Hz：解调滤波器不是用例可以变的东西，否则任何失败都能怪到滤波器而不是物理上。

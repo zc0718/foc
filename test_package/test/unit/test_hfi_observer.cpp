@@ -30,6 +30,7 @@ auto valid_config() -> foc::core::HfiObserver::Config {
     foc::core::HfiObserver::Config config{};
     config.inject_v = 12.0F;
     config.inject_hz = 2000.0F;
+    config.current_hp_hz = 300.0F;
     config.demod_lpf_hz = 200.0F;
     config.pll_bandwidth_hz = 40.0F;
     config.pll_zeta = 0.9F;
