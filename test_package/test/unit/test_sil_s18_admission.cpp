@@ -38,6 +38,8 @@ constexpr float kBelief =
     1.10F; ///< Rs believed 10 % high, the standing nameplate error.
 constexpr float kPiF = 3.14159265358979F;
 constexpr float kTwoPiF = 6.28318530717959F;
+constexpr float kFSw =
+    20000.0F; ///< switching frequency for the model-driven variant of the gate.
 
 /// [en] The gate, written before anything was measured: mean absolute angle
 /// error in the second half of a
@@ -240,6 +242,104 @@ auto smo_error(bool noise, bool deadtime, float gain, float fc_hz, float layer)
   });
 }
 
+/**
+ * @brief [en] The gate scenario again, but the inverter switches: the
+ * controller commands a vector, the legs deliver switched voltage, and the
+ * current is sampled once per control period. [zh]
+ * 再一次的闸场景，只是逆变器会开关：控制器给矢量，桥臂交付开关电压，电流每个控制周期采一次。
+ *
+ * @note [en] This is what S19 exists for. The mean-value rig above adds the
+ * dead-time error as a formula; here it comes out of the switching process, and
+ * the current carries ripple the observers can see. Which of the two observers
+ * that favours was not obvious in advance. [zh] 这就是 S19
+ * 存在的理由。上面的平均值台架把死区误差当成公式加上去；这里它从开关过程里出来，
+ *       电流带着观测器看得见的纹波。这会偏向哪一个观测器，事先并不明显。
+ * @since 0.1.0
+ */
+class SwitchedGateRig final {
+public:
+  explicit SwitchedGateRig(float omega_e) noexcept
+      : plant_(sil::nominal_plant_params()),
+        inverter_(sil::InverterConfig{kFSw, 1.0e-6F, 0.0F, 40}),
+        omega_e_(omega_e) {
+    plant_.set_current_noise(kNoiseA);
+    plant_.reset(
+        sil::PlantState{0.0F, kIq, omega_e / static_cast<float>(kPoles), 0.0F});
+    vd_ = -omega_e * sil::nominal_spec().lq * kIq;
+    vq_ = (sil::nominal_spec().rs * kIq) + (omega_e * psi_f_value());
+  }
+
+  [[nodiscard]] auto true_angle_e() const noexcept -> float {
+    return static_cast<float>(kPoles) * plant_.theta_mech_rad();
+  }
+  [[nodiscard]] auto command() const noexcept -> core::Ab<float> {
+    return command_;
+  }
+  [[nodiscard]] auto current() const noexcept -> core::Ab<float> {
+    return current_;
+  }
+
+  void step() noexcept {
+    command_ = core::inv_park(core::Dq<float>{vd_, vq_}, true_angle_e());
+    const core::Uvw<float> i_uvw = plant_.current_uvw();
+    current_ = core::clarke(i_uvw);
+
+    const core::ModulatorInput request{command_, 24.0F, i_uvw};
+    const core::SvpwmResult modulated = core::Svpwm::modulate(request);
+    const int steps = inverter_.begin_period(modulated.duty, 24.0F, kDt);
+    const float h = inverter_.step_length_s();
+    const auto poles = static_cast<float>(kPoles);
+    for (int k = 0; k < steps; ++k) {
+      const core::Ab<float> v = inverter_.step(plant_.current_uvw());
+      plant_.set_voltage_dq(core::park(v, poles * plant_.theta_mech_rad()));
+      plant_.advance(h);
+    }
+  }
+
+private:
+  sil::PmsmPlant plant_;
+  sil::DiscreteInverter inverter_;
+  float omega_e_;
+  float vd_;
+  float vq_;
+  core::Ab<float> command_{0.0F, 0.0F};
+  core::Ab<float> current_{0.0F, 0.0F};
+};
+
+template <typename Update> auto run_switched_gate(Update &&update) -> float {
+  SwitchedGateRig rig(kOmega);
+  float sum = 0.0F;
+  int count = 0;
+  const int steps = static_cast<int>(0.4F / kDt);
+  for (int k = 0; k < steps; ++k) {
+    rig.step();
+    const core::ObsState observed = update(rig);
+    if (k >= (steps / 2)) {
+      sum += std::fabs(wrap_pi_local(observed.theta_e - rig.true_angle_e()));
+      ++count;
+    }
+  }
+  return sum / static_cast<float>(count);
+}
+
+auto incumbent_error_switched() -> float {
+  core::NonlinearFluxObserver observer(core::NonlinearFluxObserver::Config{
+      kBelief * sil::nominal_spec().rs, sil::nominal_spec().lq, psi_f_value(),
+      0.3F, 3.0F, 0.5F * psi_f_value()});
+  observer.seed_flux(core::Ab<float>{psi_f_value(), 0.0F});
+  return run_switched_gate([&observer](SwitchedGateRig &rig) {
+    return observer.update(rig.command(), rig.current(), kDt);
+  });
+}
+
+auto smo_error_switched(float gain, float fc_hz, float layer) -> float {
+  SmoControl observer(kBelief * sil::nominal_spec().rs, sil::nominal_spec().lq,
+                      gain, fc_hz, layer);
+  return run_switched_gate([&observer](SwitchedGateRig &rig) {
+    return observer.update(rig.command(), rig.current());
+  });
+}
+
 } // namespace
 
 TEST(SilS18Admission,
@@ -391,4 +491,68 @@ TEST(SilS18Admission, ItsTuningIsBoundToTheDisturbanceAndSoIsTheIncumbents) {
   // The incumbent is *not* a constant either. Saying so is part of the record.
   // 在位者**也**不是常数。把这句写下来是记录的一部分。
   EXPECT_GT(impaired, 3.0F * clean);
+}
+
+TEST(SilS18Admission, TheRankingSurvivesASwitchingInverterAndTheGapWidens) {
+  // V8 of the S19 plan, and the reason the model was built. §5's original
+  // reason for skipping SMO was that "chattering is a hardware effect, so SIL
+  // makes an SMO look too good". Measured on a model whose dead time and ripple
+  // are consequences of switching rather than formulas, the *opposite* happens:
+  // the incumbent gets worse (0.068 -> 0.104) while the SMO stays where it was
+  // (0.048 -> 0.046). The mean-value plant was flattering the flux integrator,
+  // not the sliding-mode observer. S19 计划的 V8，也是建这个模型的理由。§5
+  // 原本跳过 SMO 的理由是"抖振是硬件现象，SIL 里会把 SMO 显得
+  // 太好"。在一个死区与纹波都来自开关过程（而非公式）的模型上实测，结果**相反**：在位者变差
+  // （0.068 → 0.104），SMO 原地不动（0.048 →
+  // 0.046）。一直在美化磁链积分器的是平均值 plant。
+  const float mean_value_incumbent = incumbent_error(true, true);
+  const float switched_incumbent = incumbent_error_switched();
+
+  float best = 1.0e9F;
+  float best_gain = 0.0F;
+  float best_fc = 0.0F;
+  float best_layer = 0.0F;
+  for (const float layer : {0.2F, 0.5F, 1.0F}) {
+    for (const float gain : {1.5F, 2.0F, 5.0F}) {
+      for (const float fc : {500.0F, 1000.0F, 2000.0F}) {
+        const float error = smo_error_switched(gain, fc, layer);
+        if (error < best) {
+          best = error;
+          best_gain = gain;
+          best_fc = fc;
+          best_layer = layer;
+        }
+      }
+    }
+  }
+
+  std::printf("[S18] switching inverter: incumbent %.4f rad (mean-value %.4f), "
+              "SMO best %.4f rad "
+              "(K %.1f, fc %.0f, layer %.2f)\n",
+              static_cast<double>(switched_incumbent),
+              static_cast<double>(mean_value_incumbent),
+              static_cast<double>(best), static_cast<double>(best_gain),
+              static_cast<double>(best_fc), static_cast<double>(best_layer));
+  std::printf("[S18]   gate %.2f: incumbent %s it, SMO %s it; ranking %s\n",
+              static_cast<double>(kGateRad),
+              (switched_incumbent < kGateRad) ? "passes" : "FAILS",
+              (best < kGateRad) ? "passes" : "fails",
+              (best < switched_incumbent) ? "unchanged" : "REVERSED");
+
+  // The switching process is harder on an open-loop flux integrator: it
+  // integrates ripple it cannot tell from back-EMF, and there is no
+  // smooth-transition model left to soften it.
+  // 开关过程对开环磁链积分器更狠：它把分不清的纹波也积了进去，而且没有平滑过渡模型来缓和。
+  EXPECT_GT(switched_incumbent, 1.2F * mean_value_incumbent);
+
+  // The SMO is indifferent: what the switching adds is what its filter was
+  // already for. SMO 无所谓：开关新加的那些，正是它的滤波本来就在处理的。
+  EXPECT_LT(best, kGateRad);
+  EXPECT_LT(best, 0.05F);
+
+  // And the ranking -- the thing the admission discussion turns on -- is
+  // unchanged. If this ever flips, finding 7 has to be re-derived, not patched.
+  // 而排序——整个准入讨论所依赖的那件事——没有变。这条若翻转，发现 7
+  // 必须重新推导，而不是打补丁。
+  EXPECT_LT(best, switched_incumbent);
 }
