@@ -206,6 +206,17 @@ auto HfiObserver::error() const noexcept -> float { return error_; }
 
 auto HfiObserver::state() const noexcept -> ObsState { return state_; }
 
+void HfiObserver::apply_polarity(bool reversed) noexcept {
+    if (!reversed) {
+        return;
+    }
+    // Both the published estimate and the frame the next injection is oriented with, so the very next
+    // period already pulses along the corrected axis.
+    // 同时改已发布的估计与下一次注入所用的坐标系，于是紧接着的那个周期就沿修正后的轴注入。
+    state_.theta_e = wrap_two_pi(state_.theta_e + kPi<float>);
+    theta_applied_ = state_.theta_e;
+}
+
 auto HfiObserver::hf_current_a() const noexcept -> float { return hf_amp_; }
 
 } // namespace core

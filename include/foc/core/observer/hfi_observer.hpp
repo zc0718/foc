@@ -184,6 +184,22 @@ class HfiObserver final {
     [[nodiscard]] auto error() const noexcept -> float;
 
     /**
+     * @brief [en] Correct the half-turn ambiguity with the answer from `MagnetPolarityTest`.
+     *        [zh] 用 `MagnetPolarityTest` 的结论修正半圈歧义。
+     *
+     * @param reversed [en] true when the pulses showed the estimate is half a turn out; the estimate
+     *                 then rotates by pi and the same object is correct from here on.
+     *                 [zh] 脉冲显示估计差半圈时传 true；随后估计旋转 π，同一对象从此正确。
+     * @note [en] A separate call rather than an argument to update(): the correction is a one-off
+     *       commissioning fact, and threading it through the per-step contract would mean every step
+     *       carries a decision that was already made once.
+     *       [zh] 单独一次调用，而不是 update() 的参数：这个修正是调试期一次性的事实，把它穿进每步契约
+     *       等于让每一步都携带一个早已做过的决定。
+     * @since 0.1.0
+     */
+    void apply_polarity(bool reversed) noexcept;
+
+    /**
      * @brief [en] The estimate as last published (diagnostics; update() also returns it).
      *        [zh] 最近一次发布的估计值（诊断用；update() 也会返回它）。
      * @since 0.1.0
