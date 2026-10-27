@@ -100,8 +100,23 @@ class PlantPosition final : public hal::PositionSensor {
     auto velocity_rad_s() noexcept -> float override;
     [[nodiscard]] auto has_sensor() const noexcept -> bool override;
 
+    /// [en] Model an encoder mounting error the driver has to find. [zh] 模拟驱动需要找出的编码器安装误差。
+    void set_mount_error_rad(float error_rad) noexcept;
+
+    /// [en] The correction offset handed over by alignment. [zh] 由对齐交给传感器的校正偏置。
+    void set_offset_mech_rad(float offset_rad) noexcept;
+
+    /// [en] Offset currently subtracted from the readings, rad. [zh] 当前从读数中减去的偏置，rad。
+    [[nodiscard]] auto mech_offset_rad() const noexcept -> float;
+
+    /// [en] Rotor angle the plant is actually at, offset removed: the truth a test compares against.
+    /// [zh] plant 转子真实所在的角度（不含偏置）：供测试比对的真值。
+    [[nodiscard]] auto true_angle_mech_rad() const noexcept -> float;
+
   private:
     const PmsmPlant* plant_;
+    float mount_error_rad_{0.0F};
+    float offset_rad_{0.0F};
 };
 
 
@@ -217,15 +232,29 @@ inline auto PlantCurrentSense::sample_rate_hz() const noexcept -> float { return
 inline PlantPosition::PlantPosition(const PmsmPlant& plant) noexcept : plant_(&plant) {}
 
 inline auto PlantPosition::angle_mech_rad() noexcept -> float {
-    // Wrap into [0, 2*pi) as the contract requires.
+    // Two different quantities live here, and mixing them up is exactly the bug this model has to be
+    // able to detect: `mount_error_rad_` is how badly the encoder is installed (physics, set by the
+    // test), while `offset_rad_` is the correction the motor's alignment writes through the optional
+    // HAL hook. The reading is truth + mounting error - correction, wrapped into [0, 2*pi).
+    // 这里有两个不同的量，把它们混同正是本模型必须能检出的那个错误：`mount_error_rad_` 是编码器装错
+    // 了多少（物理量，由测试设定），`offset_rad_` 是电机对齐通过可选 HAL 钩子写入的校正量。读数为
+    // 真值 + 安装误差 - 校正量，并归一化到 [0, 2π)。
     const float two_pi = 6.28318530718F;
-    float angle = plant_->theta_mech_rad();
+    float angle = plant_->theta_mech_rad() + mount_error_rad_ - offset_rad_;
     angle = angle - (two_pi * static_cast<float>(static_cast<int>(angle / two_pi)));
     if (angle < 0.0F) {
         angle += two_pi;
     }
     return angle;
 }
+
+inline void PlantPosition::set_mount_error_rad(float error_rad) noexcept { mount_error_rad_ = error_rad; }
+
+inline void PlantPosition::set_offset_mech_rad(float offset_rad) noexcept { offset_rad_ = offset_rad; }
+
+inline auto PlantPosition::mech_offset_rad() const noexcept -> float { return offset_rad_; }
+
+inline auto PlantPosition::true_angle_mech_rad() const noexcept -> float { return plant_->theta_mech_rad(); }
 
 inline auto PlantPosition::velocity_rad_s() noexcept -> float { return plant_->omega_mech_rad_s(); }
 

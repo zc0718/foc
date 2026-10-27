@@ -5,6 +5,8 @@
 // C++ 编译单元；**纯 C** 消费者由 test_package/c_api_c11.c 覆盖，那里同时验证 _Generic 入口。
 
 #include <cmath>
+#include <cstddef>
+#include <cstdint>
 #include <string>
 
 #include <gtest/gtest.h>
@@ -35,6 +37,11 @@ class CHandle final {
     auto create() -> foc_err_t {
         const foc_motor_params_t params{0.5F, 4e-4F, 4e-4F, 0.05F, 1e-4F, 1e-4F, 7U};
         return foc_motor_create(&params, &handle_);
+    }
+
+    auto create_ex(const foc_motor_setup_t* setup) -> foc_err_t {
+        const foc_motor_params_t params{0.5F, 4e-4F, 4e-4F, 0.05F, 1e-4F, 1e-4F, 7U};
+        return foc_motor_create_ex(&params, setup, &handle_);
     }
 
     void reset() {
@@ -79,6 +86,133 @@ TEST(ApiC, LifecycleFromCreateToDestroy) {
     EXPECT_EQ(FOC_OK, foc_motor_disable(handle.get()));
     EXPECT_EQ(FOC_OK, foc_motor_destroy(handle.get()));
     handle.reset();
+}
+
+
+
+TEST(ApiC, ClearFaultValidatesTheHandleAndTheState) {
+    EXPECT_EQ(FOC_ERR_PARAM, foc_motor_clear_fault(nullptr));
+
+    CHandle handle;
+    ASSERT_EQ(FOC_OK, handle.create());
+
+    // A healthy motor is not in Fault: clearing is a state error, never a silent success.
+    EXPECT_EQ(FOC_ERR_STATE, foc_motor_clear_fault(handle.get()));
+    EXPECT_EQ(FOC_OK, foc_motor_enable(handle.get()));
+    EXPECT_EQ(FOC_ERR_STATE, foc_motor_clear_fault(handle.get()));
+}
+
+
+
+TEST(ApiC, CreateExWithNoSetupUsesTheDocumentedDefaults) {
+    CHandle handle;
+    ASSERT_EQ(FOC_OK, handle.create_ex(nullptr));
+
+    foc_motor_setup_t applied{};
+    ASSERT_EQ(FOC_OK, foc_motor_get_setup(handle.get(), &applied));
+    EXPECT_EQ(sizeof(foc_motor_setup_t), applied.struct_size);
+    EXPECT_FLOAT_EQ(5.0F, applied.i_max_a);
+    EXPECT_FLOAT_EQ(20'000.0F, applied.pwm_freq_hz);
+    EXPECT_FLOAT_EQ(500.0F, applied.deadtime_ns);
+    EXPECT_FLOAT_EQ(24.0F, applied.v_bus_v);
+    EXPECT_FLOAT_EQ(2'000.0F, applied.current_bandwidth_rad_s);
+    EXPECT_FLOAT_EQ(200.0F, applied.speed_bandwidth_rad_s);
+    EXPECT_FLOAT_EQ(0.0F, applied.speed_loop_period_s);
+}
+
+
+
+TEST(ApiC, CreateExAppliesEveryFieldItWasGiven) {
+    foc_motor_setup_t requested{};
+    requested.struct_size = sizeof(foc_motor_setup_t);
+    requested.i_max_a = 2.0F;
+    requested.pwm_freq_hz = 10'000.0F;
+    requested.deadtime_ns = 0.0F; // literal zero: an ideal inverter, not "use the default"
+    requested.v_bus_v = 48.0F;
+    requested.current_bandwidth_rad_s = 1'000.0F;
+    requested.speed_bandwidth_rad_s = 50.0F;
+    requested.speed_loop_period_s = 5e-4F;
+
+    CHandle handle;
+    ASSERT_EQ(FOC_OK, handle.create_ex(&requested));
+
+    foc_motor_setup_t applied{};
+    ASSERT_EQ(FOC_OK, foc_motor_get_setup(handle.get(), &applied));
+    EXPECT_FLOAT_EQ(2.0F, applied.i_max_a);
+    EXPECT_FLOAT_EQ(10'000.0F, applied.pwm_freq_hz);
+    EXPECT_FLOAT_EQ(0.0F, applied.deadtime_ns);
+    EXPECT_FLOAT_EQ(48.0F, applied.v_bus_v);
+    EXPECT_FLOAT_EQ(1'000.0F, applied.current_bandwidth_rad_s);
+    EXPECT_FLOAT_EQ(50.0F, applied.speed_bandwidth_rad_s);
+    EXPECT_FLOAT_EQ(5e-4F, applied.speed_loop_period_s);
+}
+
+
+
+TEST(ApiC, APartialSetupStructOnlyOverridesWhatItCovers) {
+    foc_motor_setup_t requested{};
+    // Covers exactly up to (and including) deadtime_ns; v_bus_v and later are outside it.
+    requested.struct_size = static_cast<std::uint32_t>(offsetof(foc_motor_setup_t, v_bus_v));
+    requested.i_max_a = 2.0F;
+    requested.pwm_freq_hz = 10'000.0F;
+    requested.deadtime_ns = 250.0F;
+    requested.v_bus_v = 48.0F; // must be ignored: outside struct_size
+    requested.speed_bandwidth_rad_s = 50.0F;
+
+    CHandle handle;
+    ASSERT_EQ(FOC_OK, handle.create_ex(&requested));
+
+    foc_motor_setup_t applied{};
+    ASSERT_EQ(FOC_OK, foc_motor_get_setup(handle.get(), &applied));
+    EXPECT_FLOAT_EQ(2.0F, applied.i_max_a);
+    EXPECT_FLOAT_EQ(10'000.0F, applied.pwm_freq_hz);
+    EXPECT_FLOAT_EQ(250.0F, applied.deadtime_ns);
+    EXPECT_FLOAT_EQ(24.0F, applied.v_bus_v);               // default kept
+    EXPECT_FLOAT_EQ(2'000.0F, applied.current_bandwidth_rad_s);
+    EXPECT_FLOAT_EQ(200.0F, applied.speed_bandwidth_rad_s);
+}
+
+
+
+TEST(ApiC, AZeroSizedSetupStructChangesNothing) {
+    foc_motor_setup_t requested{};
+    requested.struct_size = 0U;
+    requested.i_max_a = 2.0F; // not covered by struct_size, so not read
+
+    CHandle handle;
+    ASSERT_EQ(FOC_OK, handle.create_ex(&requested));
+
+    foc_motor_setup_t applied{};
+    ASSERT_EQ(FOC_OK, foc_motor_get_setup(handle.get(), &applied));
+    EXPECT_FLOAT_EQ(5.0F, applied.i_max_a);
+}
+
+
+
+TEST(ApiC, AnInvalidSetupFieldIsRejectedInsteadOfSilentlyDefaulted) {
+    foc_motor_setup_t requested{};
+    requested.struct_size = sizeof(foc_motor_setup_t);
+    requested.i_max_a = -1.0F;
+
+    CHandle handle;
+    EXPECT_EQ(FOC_ERR_PARAM, handle.create_ex(&requested));
+    EXPECT_EQ(nullptr, handle.get());
+
+    // Dead time is taken literally, so a negative one is a parameter error, not "use 500 ns".
+    requested.i_max_a = 1.0F;
+    requested.deadtime_ns = -1.0F;
+    EXPECT_EQ(FOC_ERR_PARAM, handle.create_ex(&requested));
+}
+
+
+
+TEST(ApiC, GetSetupValidatesItsArguments) {
+    foc_motor_setup_t applied{};
+    EXPECT_EQ(FOC_ERR_PARAM, foc_motor_get_setup(nullptr, &applied));
+
+    CHandle handle;
+    ASSERT_EQ(FOC_OK, handle.create());
+    EXPECT_EQ(FOC_ERR_PARAM, foc_motor_get_setup(handle.get(), nullptr));
 }
 
 
@@ -300,4 +434,153 @@ TEST(ApiC, PoolAndCxxPathDoNotShareState) {
     // the twenty C ticks that just ran.
     EXPECT_FLOAT_EQ(0.0F, cxx.telemetry().iq_a);
     EXPECT_EQ(0U, hal.pwm.write_count());
+}
+
+
+
+TEST(ApiC, ThePositionAndAlignmentFieldsAreResolvedAndReported) {
+    // The C path is the whole motor now: position loop and aligner included. Everything it runs
+    // with has to be readable back, because a C caller has no other way to find out which default
+    // it got.
+    // C 路径现在是完整电机：位置环与对齐器都在。它实际运行的每一项都必须能读回，因为 C 调用方没有
+    // 别的办法知道自己拿到了哪个默认值。
+    CHandle handle;
+    ASSERT_EQ(FOC_OK, handle.create());
+
+    foc_motor_setup_t applied{};
+    ASSERT_EQ(FOC_OK, foc_motor_get_setup(handle.get(), &applied));
+    EXPECT_EQ(static_cast<uint32_t>(sizeof(foc_motor_setup_t)), applied.struct_size);
+    EXPECT_GT(applied.position_bandwidth_rad_s, 0.0F);
+    EXPECT_GT(applied.velocity_limit_rad_s, 0.0F);
+    EXPECT_FLOAT_EQ(0.0F, applied.position_loop_period_s);
+    // Alignment is off unless asked for: 0 current is a real value, not "use the default".
+    // 除非明确要求，对齐是关闭的：0 电流是真实取值，不是"用默认值"。
+    EXPECT_FLOAT_EQ(0.0F, applied.align_current_a);
+
+    foc_motor_setup_t requested{};
+    requested.struct_size = sizeof(foc_motor_setup_t);
+    requested.position_bandwidth_rad_s = 35.0F;
+    requested.velocity_limit_rad_s = 12.0F;
+    requested.position_loop_period_s = 1e-3F;
+    requested.align_current_a = 0.4F;
+    requested.align_hold_s = 0.15F;
+    requested.align_tolerance_rad = 0.02F;
+    requested.align_verify_s = 0.05F;
+
+    CHandle tuned;
+    ASSERT_EQ(FOC_OK, tuned.create_ex(&requested));
+    foc_motor_setup_t got{};
+    ASSERT_EQ(FOC_OK, foc_motor_get_setup(tuned.get(), &got));
+    EXPECT_FLOAT_EQ(35.0F, got.position_bandwidth_rad_s);
+    EXPECT_FLOAT_EQ(12.0F, got.velocity_limit_rad_s);
+    EXPECT_FLOAT_EQ(1e-3F, got.position_loop_period_s);
+    EXPECT_FLOAT_EQ(0.4F, got.align_current_a);
+    EXPECT_FLOAT_EQ(0.15F, got.align_hold_s);
+    EXPECT_FLOAT_EQ(0.02F, got.align_tolerance_rad);
+    EXPECT_FLOAT_EQ(0.05F, got.align_verify_s);
+}
+
+
+
+TEST(ApiC, AHalfConfiguredAlignmentIsRejected) {
+    // "Do not align" has to be the whole recipe. A hold time without a current is almost certainly a
+    // typo, and silently aligning nothing would hide it until the first move on a real shaft.
+    // "不对齐"必须是整套配方。给了保持时间却没给电流几乎肯定是笔误，静默地什么都不对齐只会把这个
+    // 笔误藏到真机第一次运动的时候。
+    foc_motor_setup_t requested{};
+    requested.struct_size = sizeof(foc_motor_setup_t);
+    requested.align_hold_s = 0.2F; // but align_current_a stays 0
+
+    CHandle handle;
+    EXPECT_EQ(FOC_ERR_PARAM, handle.create_ex(&requested));
+
+    // And with a current, the hold window and tolerance become mandatory.
+    // 反过来，给了电流之后，保持窗口与容差变成必填。
+    requested.align_current_a = 0.5F;
+    requested.align_hold_s = 0.0F;
+    EXPECT_EQ(FOC_ERR_PARAM, handle.create_ex(&requested));
+
+    requested.align_hold_s = 0.2F; // tolerance still 0
+    EXPECT_EQ(FOC_ERR_PARAM, handle.create_ex(&requested));
+}
+
+
+
+TEST(ApiC, WithoutAlignmentTheMotorStartsStraightIntoRun) {
+    CHandle handle;
+    ASSERT_EQ(FOC_OK, handle.create());
+    ASSERT_EQ(FOC_OK, foc_motor_enable(handle.get()));
+
+    foc_motor_status_t status{};
+    ASSERT_EQ(FOC_OK, foc_motor_get_status(handle.get(), &status));
+    EXPECT_EQ(static_cast<int32_t>(FOC_MOTOR_RUN), status.mode_state);
+    EXPECT_EQ(static_cast<int32_t>(FOC_ALIGN_IDLE), status.align_state);
+    EXPECT_EQ(static_cast<int32_t>(FOC_ALIGN_NO_FAILURE), status.align_failure);
+    EXPECT_EQ(FOC_OK, status.error);
+    EXPECT_EQ(static_cast<uint32_t>(sizeof(foc_motor_status_t)), status.struct_size);
+}
+
+
+
+TEST(ApiC, WithARecordedAlignmentTheMotorParksInAlignAndThenRuns) {
+    foc_motor_setup_t requested{};
+    requested.struct_size = sizeof(foc_motor_setup_t);
+    requested.align_current_a = 0.5F;
+    requested.align_hold_s = 0.005F;
+    requested.align_tolerance_rad = 0.05F;
+
+    CHandle handle;
+    ASSERT_EQ(FOC_OK, handle.create_ex(&requested));
+    ASSERT_EQ(FOC_OK, foc_motor_enable(handle.get()));
+
+    foc_motor_status_t status{};
+    ASSERT_EQ(FOC_OK, foc_motor_get_status(handle.get(), &status));
+    EXPECT_EQ(static_cast<int32_t>(FOC_MOTOR_ALIGN), status.mode_state);
+
+    // The stub sensor reports a fixed angle, so the sequence completes as soon as the hold window
+    // elapses and the offset it captures is that angle.
+    // 桩传感器报固定角度，因此保持窗口一过流程即完成，捕获到的偏置就是那个角度。
+    for (int i = 0; i < 200 && status.mode_state == static_cast<int32_t>(FOC_MOTOR_ALIGN); ++i) {
+        ASSERT_EQ(FOC_OK, foc_tick(handle.get(), 1e-4F));
+        ASSERT_EQ(FOC_OK, foc_motor_get_status(handle.get(), &status));
+    }
+    EXPECT_EQ(static_cast<int32_t>(FOC_MOTOR_RUN), status.mode_state);
+    EXPECT_EQ(static_cast<int32_t>(FOC_ALIGN_DONE), status.align_state);
+    EXPECT_FLOAT_EQ(0.0F, status.align_offset_rad); // the stub sensor sits at zero
+}
+
+
+
+TEST(ApiC, PositionAndCommandAreValidatedBeforeTheyReachTheLoop) {
+    CHandle handle;
+    ASSERT_EQ(FOC_OK, handle.create());
+
+    EXPECT_EQ(FOC_ERR_PARAM, foc_set_position(nullptr, 0.1F));
+    EXPECT_EQ(FOC_ERR_PARAM, foc_set_position(handle.get(), std::nanf("")));
+    EXPECT_EQ(FOC_OK, foc_set_position(handle.get(), 0.1F));
+    EXPECT_EQ(FOC_OK, foc_set_position_f64(handle.get(), 0.2));
+
+    EXPECT_EQ(FOC_ERR_PARAM, foc_set_command(handle.get(), nullptr));
+    foc_motor_command_t command{0.5F, -1.0F, 0.0F};
+    // A negative ceiling would invert the clamp rather than bound it.
+    // 负的限幅会把钳位反号，而不是限住它。
+    EXPECT_EQ(FOC_ERR_PARAM, foc_set_command(handle.get(), &command));
+
+    command.max_current_a = 1.0F;
+    EXPECT_EQ(FOC_OK, foc_set_command(handle.get(), &command));
+
+    // The per-move speed and acceleration ceilings follow the same rule: 0 means "no override",
+    // and a negative value is a parameter error rather than a limit that runs backwards.
+    // 按次的速度与加速度上限遵循同一条规则：0 表示"不覆盖"，负值是参数错误而不是反向的限制。
+    command.max_velocity_rad_s = -1.0F;
+    EXPECT_EQ(FOC_ERR_PARAM, foc_set_command(handle.get(), &command));
+    command.max_velocity_rad_s = 2.0F;
+    command.max_accel_rad_s2 = -1.0F;
+    EXPECT_EQ(FOC_ERR_PARAM, foc_set_command(handle.get(), &command));
+
+    command.max_accel_rad_s2 = 5.0F;
+    EXPECT_EQ(FOC_OK, foc_set_command(handle.get(), &command));
+
+    EXPECT_EQ(FOC_ERR_PARAM, foc_motor_get_status(handle.get(), nullptr));
+    EXPECT_EQ(FOC_ERR_PARAM, foc_motor_get_status(nullptr, nullptr));
 }
