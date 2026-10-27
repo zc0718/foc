@@ -43,6 +43,7 @@ FORMAT_C = '.github/misc/.clang-format-c'
 FORMAT_CPP = '.github/misc/.clang-format-cpp'
 TIDY_CONFIG = '.github/misc/.clang-tidy'
 GUARD_CONFIG = '.github/misc/.include-guard.txt'
+LICENSE_CONFIG = '.github/misc/.license-guard.txt'
 
 _META = None
 
@@ -248,11 +249,13 @@ def cmd_tidy(explicit, extra_include=(), extra_isystem=()):
     return 0
 
 
-def _guard_rules():
-    """(scope glob, compiled regex) pairs from .github/misc/.include-guard.txt."""
-    config = ROOT / GUARD_CONFIG
+def _scoped_rules(config_name, flags=0):
+    """(scope glob, compiled regex) pairs from a rule file: "<scope glob> <regex>" per line,
+    `#` comments allowed. One loader for every scoped gate, so a new gate is a new rule file rather
+    than a new parser."""
+    config = ROOT / config_name
     if not config.is_file():
-        _die(f'{GUARD_CONFIG} not found; it lists "<scope glob> <forbidden include regex>" per line')
+        _die(f'{config_name} not found; it lists "<scope glob> <forbidden regex>" per line')
     rules = []
     for lineno, raw in enumerate(config.read_text(encoding='utf-8').splitlines(), start=1):
         line = raw.split('#', 1)[0].strip()
@@ -260,14 +263,20 @@ def _guard_rules():
             continue
         parts = line.split(None, 1)
         if len(parts) != 2:
-            _die(f'{GUARD_CONFIG}:{lineno}: expected "<scope glob> <regex>", got {raw!r}')
+            _die(f'{config_name}:{lineno}: expected "<scope glob> <regex>", got {raw!r}')
         scope, pattern = parts
         try:
-            rules.append((scope, re.compile(pattern)))
+            rules.append((scope, re.compile(pattern, flags)))
         except re.error as exc:
-            _die(f'{GUARD_CONFIG}:{lineno}: bad regex {pattern!r}: {exc}')
+            _die(f'{config_name}:{lineno}: bad regex {pattern!r}: {exc}')
     if not rules:
-        _die(f'{GUARD_CONFIG} defines no rule')
+        _die(f'{config_name} defines no rule')
+    return rules
+
+
+def _guard_rules():
+    """Include-layering rules (see .include-guard.txt)."""
+    return _scoped_rules(GUARD_CONFIG)
     return rules
 
 
@@ -318,6 +327,36 @@ def cmd_guard(explicit):
     return 0
 
 
+def cmd_license(explicit):
+    """Copyleft gate: shipped sources may not carry a copyleft or non-free licence marker.
+
+    Rules live in .github/misc/.license-guard.txt, one "<scope glob> <regex>" per line, because a
+    derived project may legitimately vendor a GPL subtree under its own scope while the library
+    itself stays permissive."""
+    files = _gated_files(explicit, GATE_DIRS)
+    if not files:
+        return _empty(explicit, 'license', GATE_DIRS)
+    rules = _scoped_rules(LICENSE_CONFIG, re.IGNORECASE)
+    print(f'[gates] license: {len(files)} file(s), {len(rules)} rule(s) from {LICENSE_CONFIG}', flush=True)
+    violations = 0
+    for path in files:
+        scoped = _scoped_name(path)
+        active = [regex for scope, regex in rules if fnmatch.fnmatch(scoped, scope)]
+        if not active:
+            continue
+        for lineno, line in enumerate(path.read_text(encoding='utf-8', errors='replace').splitlines(), start=1):
+            for regex in active:
+                if regex.search(line):
+                    violations += 1
+                    print(f'{_rel(path)}:{lineno}: forbidden licence marker ({regex.pattern})', flush=True)
+                    print(f'    {line.strip()[:100]}', flush=True)
+    if violations:
+        print(f'[gates] license: FAIL ({violations} violation(s))', flush=True)
+        return 1
+    print(f'[gates] license: OK ({len(files)} file(s))', flush=True)
+    return 0
+
+
 def cmd_strict(explicit):
     """Every public header must compile standalone under the project's hard constraints
     (-fno-exceptions -fno-rtti for C++, -pedantic for C). ADR-level promises become testable here."""
@@ -360,8 +399,9 @@ def main():
         'format': 'clang-format --dry-run --Werror over include/ + src/',
         'tidy': 'clang-tidy (WarningsAsErrors) over src/ TUs; header-only: one synthetic TU per header',
         'guard': 'forbidden #include directives, scoped rules from .github/misc/.include-guard.txt',
+        'license': 'copyleft / non-free licence markers, scoped rules from .github/misc/.license-guard.txt',
         'strict': 'every public header compiles standalone with -fno-exceptions -fno-rtti (C: -pedantic)',
-        'all': 'format + tidy + guard + strict',
+        'all': 'format + tidy + guard + license + strict',
     }
     for name, text in helps.items():
         leaf = sub.add_parser(name, help=text)
@@ -380,9 +420,11 @@ def main():
         return cmd_tidy(args.files, args.include, args.isystem)
     if args.gate == 'guard':
         return cmd_guard(args.files)
+    if args.gate == 'license':
+        return cmd_license(args.files)
     if args.gate == 'strict':
         return cmd_strict(args.files)
-    return 1 if (cmd_format([]) or cmd_tidy([]) or cmd_guard([]) or cmd_strict([])) else 0
+    return 1 if (cmd_format([]) or cmd_tidy([]) or cmd_guard([]) or cmd_license([]) or cmd_strict([])) else 0
 
 
 if __name__ == '__main__':

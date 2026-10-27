@@ -1,0 +1,21 @@
+# Copyleft / non-free gate for `gates.py license` (one rule per line):
+#   <scope glob> <forbidden regex, case-insensitive>
+# Scope is relative to include/ and src/ (same convention as .include-guard.txt), so a derived
+# project can allow a vendored subtree without editing gates.py.
+#
+# Rationale: this package is Apache-2.0 and is meant to be linked into products. A single copyleft
+# source file in include/ or src/ would change the licence of the whole library, so the gate is
+# deliberately blunt: shipped sources have no reason to spell a copyleft licence out. A comment that
+# merely *mentions* one ("VESC is GPLv3") fails too -- write "copyleft" instead, or put the prose in
+# docs/ where it is not gated.
+
+# the header phrasing of GPL/LGPL/AGPL files
+*   GNU (Lesser |Affero )?General Public License
+
+# SPDX identifiers: anything that is not on the permissive allowlist below
+*   SPDX-License-Identifier:[ \t]*(?!Apache-2\.0\b|MIT\b|BSD-2-Clause\b|BSD-3-Clause\b|ISC\b|CC0-1\.0\b|Unlicense\b)\S+
+
+# short forms and the non-free licences that are easy to paste by accident
+*   \b(A|L)?GPL-?(v)?[23](\.0)?\b
+*   \bAGPL\b
+*   \bSSPL\b|Commons Clause|Business Source License|Elastic License
