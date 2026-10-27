@@ -17,6 +17,7 @@
 
 #include "sil_bench.hpp"
 #include "sil_pmsm_plant.hpp"
+#include "sil_switching_rig.hpp"
 
 namespace {
 
@@ -139,69 +140,6 @@ private:
   core::Ab<float> current_{0.0F, 0.0F};
 };
 
-/**
- * @brief [en] A textbook sliding-mode observer, **a control and not a
- * candidate**: it exists so the gate has something that can fail. Current-error
- * sliding surface, `z = K * sat(s / layer)` as the injected voltage, and a
- * first-order filter on `z` to read out the equivalent control (the back-EMF).
- *        [zh]
- * 教科书式滑模观测器，**是对照而不是候选**：它的存在是为了让闸有一个能失败的对象。电流误差
- *        滑模面，`z = K·sat(s/layer)` 作为注入电压，再对 `z`
- * 做一阶滤波读出等效控制（反电动势）。
- *
- * @note [en] It is deliberately *sane*: it reaches 0.03 rad on a plant with
- * neither impairment, so a failure here is about the structure under
- * disturbance, not about a broken straw man. [zh]
- * 它被刻意做得**靠谱**：在没有任何未建模效应的 plant 上它能到 0.03
- * rad，所以这里的失败是结构 在扰动下的问题，而不是稻草人写坏了。
- * @since 0.1.0
- */
-class SmoControl final {
-public:
-  SmoControl(float rs, float l, float gain, float fc_hz, float layer) noexcept
-      : rs_(rs), l_(l), gain_(gain), layer_(layer),
-        alpha_(std::exp(-kTwoPiF * fc_hz * kDt)) {}
-
-  auto update(core::Ab<float> v, core::Ab<float> i) noexcept -> core::ObsState {
-    const float s_a = static_cast<float>(i_hat_.alpha - i.alpha);
-    const float s_b = static_cast<float>(i_hat_.beta - i.beta);
-    const float z_a = gain_ * sat(s_a);
-    const float z_b = gain_ * sat(s_b);
-    i_hat_.alpha = static_cast<float>(
-        i_hat_.alpha + (kDt * ((v.alpha - (rs_ * i_hat_.alpha) - z_a) / l_)));
-    i_hat_.beta = static_cast<float>(
-        i_hat_.beta + (kDt * ((v.beta - (rs_ * i_hat_.beta) - z_b) / l_)));
-    e_.alpha =
-        static_cast<float>((alpha_ * e_.alpha) + ((1.0F - alpha_) * z_a));
-    e_.beta = static_cast<float>((alpha_ * e_.beta) + ((1.0F - alpha_) * z_b));
-
-    // e = -omega*psi_f*sin(theta), omega*psi_f*cos(theta), so the angle is
-    // atan2(-e_alpha, e_beta). e = −ω·ψf·sinθ, ω·ψf·cosθ，所以角度是
-    // atan2(−e_alpha, e_beta)。
-    float theta = std::atan2(-e_.alpha, e_.beta);
-    while (theta < 0.0F) {
-      theta += kTwoPiF;
-    }
-    state_.theta_e = theta;
-    return state_;
-  }
-
-private:
-  [[nodiscard]] auto sat(float value) const noexcept -> float {
-    const float n = value / layer_;
-    return (n > 1.0F) ? 1.0F : ((n < -1.0F) ? -1.0F : n);
-  }
-
-  float rs_;
-  float l_;
-  float gain_;
-  float layer_;
-  float alpha_;
-  core::Ab<float> i_hat_{};
-  core::Ab<float> e_{};
-  core::ObsState state_{};
-};
-
 /// [en] Mean |angle error| over the second half. [zh]
 /// 后半段的角度误差绝对均值。
 template <typename Update>
@@ -235,107 +173,34 @@ auto incumbent_error(bool noise, bool deadtime) -> float {
 
 auto smo_error(bool noise, bool deadtime, float gain, float fc_hz, float layer)
     -> float {
-  SmoControl observer(kBelief * sil::nominal_spec().rs, sil::nominal_spec().lq,
-                      gain, fc_hz, layer);
+  sil::SmoControl observer(kBelief * sil::nominal_spec().rs,
+                           sil::nominal_spec().lq, gain, fc_hz, layer);
   return run_gate(noise, deadtime, [&observer](GateRig &rig) {
     return observer.update(rig.command(), rig.current());
   });
 }
 
-/**
- * @brief [en] The gate scenario again, but the inverter switches: the
- * controller commands a vector, the legs deliver switched voltage, and the
- * current is sampled once per control period. [zh]
- * 再一次的闸场景，只是逆变器会开关：控制器给矢量，桥臂交付开关电压，电流每个控制周期采一次。
- *
- * @note [en] This is what S19 exists for. The mean-value rig above adds the
- * dead-time error as a formula; here it comes out of the switching process, and
- * the current carries ripple the observers can see. Which of the two observers
- * that favours was not obvious in advance. [zh] 这就是 S19
- * 存在的理由。上面的平均值台架把死区误差当成公式加上去；这里它从开关过程里出来，
- *       电流带着观测器看得见的纹波。这会偏向哪一个观测器，事先并不明显。
- * @since 0.1.0
- */
-class SwitchedGateRig final {
-public:
-  explicit SwitchedGateRig(float omega_e) noexcept
-      : plant_(sil::nominal_plant_params()),
-        inverter_(sil::InverterConfig{kFSw, 1.0e-6F, 0.0F, 40}),
-        omega_e_(omega_e) {
-    plant_.set_current_noise(kNoiseA);
-    plant_.reset(
-        sil::PlantState{0.0F, kIq, omega_e / static_cast<float>(kPoles), 0.0F});
-    vd_ = -omega_e * sil::nominal_spec().lq * kIq;
-    vq_ = (sil::nominal_spec().rs * kIq) + (omega_e * psi_f_value());
-  }
-
-  [[nodiscard]] auto true_angle_e() const noexcept -> float {
-    return static_cast<float>(kPoles) * plant_.theta_mech_rad();
-  }
-  [[nodiscard]] auto command() const noexcept -> core::Ab<float> {
-    return command_;
-  }
-  [[nodiscard]] auto current() const noexcept -> core::Ab<float> {
-    return current_;
-  }
-
-  void step() noexcept {
-    command_ = core::inv_park(core::Dq<float>{vd_, vq_}, true_angle_e());
-    const core::Uvw<float> i_uvw = plant_.current_uvw();
-    current_ = core::clarke(i_uvw);
-
-    const core::ModulatorInput request{command_, 24.0F, i_uvw};
-    const core::SvpwmResult modulated = core::Svpwm::modulate(request);
-    const int steps = inverter_.begin_period(modulated.duty, 24.0F, kDt);
-    const float h = inverter_.step_length_s();
-    const auto poles = static_cast<float>(kPoles);
-    for (int k = 0; k < steps; ++k) {
-      const core::Ab<float> v = inverter_.step(plant_.current_uvw());
-      plant_.set_voltage_dq(core::park(v, poles * plant_.theta_mech_rad()));
-      plant_.advance(h);
-    }
-  }
-
-private:
-  sil::PmsmPlant plant_;
-  sil::DiscreteInverter inverter_;
-  float omega_e_;
-  float vd_;
-  float vq_;
-  core::Ab<float> command_{0.0F, 0.0F};
-  core::Ab<float> current_{0.0F, 0.0F};
-};
-
-template <typename Update> auto run_switched_gate(Update &&update) -> float {
-  SwitchedGateRig rig(kOmega);
-  float sum = 0.0F;
-  int count = 0;
-  const int steps = static_cast<int>(0.4F / kDt);
-  for (int k = 0; k < steps; ++k) {
-    rig.step();
-    const core::ObsState observed = update(rig);
-    if (k >= (steps / 2)) {
-      sum += std::fabs(wrap_pi_local(observed.theta_e - rig.true_angle_e()));
-      ++count;
-    }
-  }
-  return sum / static_cast<float>(count);
-}
-
-auto incumbent_error_switched() -> float {
+/// [en] The shipped observer on the switching bench, one configuration. [zh]
+/// 开关台架上的出厂观测器，一份配置。
+auto switched_incumbent_error(const sil::SwitchingRigConfig &config) -> float {
   core::NonlinearFluxObserver observer(core::NonlinearFluxObserver::Config{
-      kBelief * sil::nominal_spec().rs, sil::nominal_spec().lq, psi_f_value(),
-      0.3F, 3.0F, 0.5F * psi_f_value()});
-  observer.seed_flux(core::Ab<float>{psi_f_value(), 0.0F});
-  return run_switched_gate([&observer](SwitchedGateRig &rig) {
-    return observer.update(rig.command(), rig.current(), kDt);
+      config.belief_rs * sil::nominal_spec().rs, sil::nominal_spec().lq,
+      sil::SwitchingRig::psi_f(), 0.3F, 3.0F,
+      0.5F * sil::SwitchingRig::psi_f()});
+  observer.seed_flux(core::Ab<float>{sil::SwitchingRig::psi_f(), 0.0F});
+  return sil::run_switched(config, [&observer](sil::SwitchingRig &rig) {
+    return observer.update(rig.command(), rig.current(),
+                           sil::SwitchingRig::kControlPeriod);
   });
 }
 
-auto smo_error_switched(float gain, float fc_hz, float layer) -> float {
-  SmoControl observer(kBelief * sil::nominal_spec().rs, sil::nominal_spec().lq,
-                      gain, fc_hz, layer);
-  return run_switched_gate([&observer](SwitchedGateRig &rig) {
+/// [en] The SMO control on the same bench, at a given tuning. [zh] 同一台架上的
+/// SMO 对照，给定一套调参。
+auto smo_switched_error(const sil::SwitchingRigConfig &config, float gain,
+                        float fc_hz, float layer) -> float {
+  sil::SmoControl observer(config.belief_rs * sil::nominal_spec().rs,
+                           sil::nominal_spec().lq, gain, fc_hz, layer);
+  return sil::run_switched(config, [&observer](sil::SwitchingRig &rig) {
     return observer.update(rig.command(), rig.current());
   });
 }
@@ -506,7 +371,8 @@ TEST(SilS18Admission, TheRankingSurvivesASwitchingInverterAndTheGapWidens) {
   // （0.068 → 0.104），SMO 原地不动（0.048 →
   // 0.046）。一直在美化磁链积分器的是平均值 plant。
   const float mean_value_incumbent = incumbent_error(true, true);
-  const float switched_incumbent = incumbent_error_switched();
+  sil::SwitchingRigConfig config{};
+  const float switched_incumbent = switched_incumbent_error(config);
 
   float best = 1.0e9F;
   float best_gain = 0.0F;
@@ -515,7 +381,7 @@ TEST(SilS18Admission, TheRankingSurvivesASwitchingInverterAndTheGapWidens) {
   for (const float layer : {0.2F, 0.5F, 1.0F}) {
     for (const float gain : {1.5F, 2.0F, 5.0F}) {
       for (const float fc : {500.0F, 1000.0F, 2000.0F}) {
-        const float error = smo_error_switched(gain, fc, layer);
+        const float error = smo_switched_error(config, gain, fc, layer);
         if (error < best) {
           best = error;
           best_gain = gain;
@@ -555,4 +421,112 @@ TEST(SilS18Admission, TheRankingSurvivesASwitchingInverterAndTheGapWidens) {
   // 而排序——整个准入讨论所依赖的那件事——没有变。这条若翻转，发现 7
   // 必须重新推导，而不是打补丁。
   EXPECT_LT(best, switched_incumbent);
+}
+
+TEST(SilS18Admission, C1_TheCandidateRecordAcrossSpeedsAndMismatches) {
+  // V8 answered "which is more accurate" at **one** point. One point is not a
+  // library-level statement, so this is the record: five speeds, three Rs
+  // beliefs. V8
+  // 只回答了**一个**点上的"谁更准"。一个点不构成库级陈述，所以这里是记录：五个速度、三种
+  // Rs 信念。
+  //
+  // Two candidate columns, and the second one is the lesson:
+  //  * `SMO sched` uses the speed schedule from `scheduled_smo()` -- gain above
+  //  the back-EMF it must
+  //    reconstruct, filter corner above the signal it must pass. This is the
+  //    *fair* comparison, because the shipped NLFO's own gain is already
+  //    scheduled (`g = max(min_gain, ratio*|w_e|)`, finding 4).
+  //  * `SMO fixed` is the single constant (K 2 V / fc 1 kHz) used by the
+  //  earlier tests. My original C1-c said
+  //    the challenger must use one configuration; that criterion was **wrong**,
+  //    and this column is why: at 800 rad/s the back-EMF is 3.8 V and a 2 V
+  //    gain does not establish sliding at all.
+  // 两列候选，第二列是教训：
+  //  * `SMO sched` 用 `scheduled_smo()`
+  //  的调度——增益高于它要重建的反电动势，滤波拐点高于它要通过的信号。
+  //    这才是**公平**的比较，因为出厂 NLFO 自己的增益本来就是调度的（`g =
+  //    max(min_gain, ratio·|w_e|)`，发现 4）。
+  //  * `SMO fixed` 是前面测试用的单个常数（K 2 V / fc 1 kHz）。我原来的 C1-c
+  //  说挑战者只能有一套配置；
+  //    那条判据是**错的**，这一列就是原因：800 rad/s 处反电动势 3.8 V，2 V
+  //    的增益根本建立不了滑模。
+  //
+  // What this table is *not*: 0 / very low speed (no back-EMF to observe --
+  // HFI's territory), field weakening (above 3970 rpm, not implemented),
+  // current saturation (above 3 A), temperature drift (S17).
+  // 这张表**不是**什么：0 / 极低速（没有反电动势可观，那是 HFI
+  // 的地盘）、弱磁（3970 rpm 以上，未实现）、 电流饱和（3 A
+  // 以上）、温度漂移（S17）。
+  std::printf("\n[S18] C1 candidate record: switching bench, 1 us dead time, "
+              "0.1 A noise, iq 0.5 A\n");
+  std::printf("[S18] %8s %6s %10s %10s %7s %10s %10s %10s\n", "omega_e", "Rs",
+              "NLFO", "SMO sched", "ratio", "sched K", "sched fc", "SMO fixed");
+
+  int cells = 0;
+  int scheduled_wins = 0;
+  float ratio_at_800 = 0.0F;
+  for (const float omega : {20.0F, 100.0F, 200.0F, 400.0F, 800.0F}) {
+    for (const float belief : {1.00F, 1.10F, 1.30F}) {
+      sil::SwitchingRigConfig config{};
+      config.omega_e = omega;
+      config.belief_rs = belief;
+      const sil::SmoTuning tuning =
+          sil::scheduled_smo(omega, sil::SwitchingRig::psi_f());
+
+      const float incumbent = switched_incumbent_error(config);
+      const float candidate =
+          smo_switched_error(config, tuning.gain, tuning.fc_hz, tuning.layer);
+      const float fixed = smo_switched_error(config, 2.0F, 1000.0F, 1.0F);
+      const float ratio = incumbent / candidate;
+
+      std::printf(
+          "[S18] %8.0f %6.2f %10.4f %10.4f %7.2f %10.2f %10.0f %10.4f\n",
+          static_cast<double>(omega), static_cast<double>(belief),
+          static_cast<double>(incumbent), static_cast<double>(candidate),
+          static_cast<double>(ratio), static_cast<double>(tuning.gain),
+          static_cast<double>(tuning.fc_hz), static_cast<double>(fixed));
+      ++cells;
+      if ((belief == 1.10F) && (ratio > 1.0F)) {
+        ++scheduled_wins;
+      }
+      if (belief == 1.10F) {
+        ratio_at_800 = (omega == 800.0F) ? ratio : ratio_at_800;
+      }
+
+      // C1-a: every cell has to be a number. A missing or non-finite cell would
+      // make the record a summary of the cells that happened to work.
+      // C1-a：每格都必须是一个数。缺格或非有限值会让这份记录变成"恰好跑通的那几格"的汇总。
+      EXPECT_TRUE(std::isfinite(incumbent) && (incumbent > 0.0F));
+      EXPECT_TRUE(std::isfinite(candidate) && (candidate > 0.0F));
+      EXPECT_TRUE(std::isfinite(fixed) && (fixed > 0.0F));
+
+      // C1-c revised: with a single constant the challenger loses at the top of
+      // the range, and that is a sizing failure, not an opinion -- the gain has
+      // to exceed the back-EMF it is reconstructing. C1-c
+      // 改写：用单个常数时挑战者在上端输掉，而那是**选型失败**，不是观点——增益必须大于它要重建的
+      // 反电动势。
+      if (omega >= 400.0F) {
+        EXPECT_LT(candidate, fixed)
+            << "the schedule must beat the constant at " << omega;
+      }
+    }
+  }
+
+  std::printf("[S18] C1-a: %d of 15 cells; C1-b: SMO(sched) wins %d of 5 "
+              "points at Rs x1.10; ratio at 800 "
+              "rad/s = %.2f\n",
+              cells, scheduled_wins, static_cast<double>(ratio_at_800));
+
+  // C1-b as written ("the SMO wins at every speed point") is **falsified**, and
+  // this is the shape that replaced it: it wins from 20 to 400 rad/s and loses
+  // at 800. Asserting the shape rather than the average is the point -- an
+  // average would hide the reversal, which is the most decision-relevant fact
+  // here. C1-b 原文（"SMO
+  // 在每个速度点都赢"）被**证伪**，这是取代它的形状：20–400 rad/s 赢，800
+  // 输。断言形状
+  // 而不是均值正是要点——均值会掩盖这次反转，而反转才是这里最影响决策的事实。
+  EXPECT_EQ(15, cells);
+  EXPECT_EQ(4, scheduled_wins);
+  EXPECT_LT(ratio_at_800, 1.0F)
+      << "the incumbent is expected to take back the top of the range";
 }
