@@ -173,6 +173,32 @@ class PlantHal final {
     /// [en] Reset the plant and the inverter to the power-on state. [zh] 把 plant 与逆变器复位到上电态。
     void reset(PlantState initial) noexcept;
 
+    /**
+     * @brief [en] Model inverter dead time as a per-phase voltage loss: `v_applied = v_cmd -
+     *        v_dead * sign(i_phase)`.
+     *        [zh] 把逆变器死区建模为每相的电压损失：`v_applied = v_cmd - v_dead * sign(i_phase)`。
+     *
+     * @param v_dead [en] the magnitude, in V, of `(t_dead / T_pwm) * v_bus`; 0 disables the model.
+     *             [zh] `(t_dead / T_pwm) * v_bus` 的量值，V；0 表示关闭该模型。
+     *
+     * @note [en] What this model buys: without it, the PRD's U1 ("dead time cannot be verified in
+     *       SIL") was a statement about the *plant*, not the library. With it, dead-time distortion
+     *       becomes a measurable quantity in CI -- which is the difference between "we know we do not
+     *       compensate" and "we can say by how much".
+     *       [zh] 这个模型换来的是：没有它，PRD 的 U1（"死区在 SIL 里无法验证"）是一个关于**被控对象**
+     *       的陈述，而不是关于库的。有了它，死区畸变在 CI 里成为可测量的量——这正是"我们知道自己没
+     *       补偿"与"我们能说出差多少"之间的区别。
+     * @note [en] Honest limitation: `sign(0) = 0` here, so the zero-current neighbourhood is modelled as
+     *       *better* than real hardware, where the transition is a finite slope with ringing. Numbers
+     *       from this model are a lower bound on the real distortion.
+     *       [zh] 诚实的局限：这里 `sign(0) = 0`，因此零电流附近被建模得比真实硬件**更好**——真实的
+     *       过渡是一段有限斜率并伴随振荡。本模型给出的数字是真实畸变的**下界**。
+     * @since 0.1.0
+     */
+    void set_deadtime_voltage(float v_dead) noexcept;
+
+    [[nodiscard]] auto deadtime_voltage() const noexcept -> float;
+
     PlantPwm pwm;
     PlantCurrentSense current_sense;
     PlantPosition position;
@@ -180,6 +206,7 @@ class PlantHal final {
 
   private:
     PmsmPlant* plant_;
+    float v_dead_{0.0F};
 };
 
 
@@ -283,7 +310,18 @@ inline void PlantHal::advance(float dt_ctrl_s, int substeps) noexcept {
     // duty maps back to v_ab exactly.
     const float v_bus = dc_link.voltage_v();
     const Uvw<float> duty = pwm.duty();
-    const Uvw<float> v_uvw{duty.u * v_bus, duty.v * v_bus, duty.w * v_bus};
+    Uvw<float> v_uvw{duty.u * v_bus, duty.v * v_bus, duty.w * v_bus};
+
+    // Dead time makes the applied phase voltage depend on the sign of that phase's current: during
+    // the blanking interval the phase is clamped to the rail the current is coming from.
+    // 死区让施加的相电压取决于该相电流的方向：在死区时间内，该相被钳位在电流来自的那条母线上。
+    if (v_dead_ > 0.0F) {
+        const Uvw<float> i_uvw = plant_->current_uvw();
+        v_uvw.u -= v_dead_ * static_cast<float>((i_uvw.u > 0.0F) - (i_uvw.u < 0.0F));
+        v_uvw.v -= v_dead_ * static_cast<float>((i_uvw.v > 0.0F) - (i_uvw.v < 0.0F));
+        v_uvw.w -= v_dead_ * static_cast<float>((i_uvw.w > 0.0F) - (i_uvw.w < 0.0F));
+    }
+
     const Ab<float> v_ab = core::clarke(v_uvw);
 
     const float dt_sub = dt_ctrl_s / static_cast<float>(substeps);
@@ -294,6 +332,10 @@ inline void PlantHal::advance(float dt_ctrl_s, int substeps) noexcept {
         plant_->advance(dt_sub);
     }
 }
+
+inline void PlantHal::set_deadtime_voltage(float v_dead) noexcept { v_dead_ = (v_dead > 0.0F) ? v_dead : 0.0F; }
+
+inline auto PlantHal::deadtime_voltage() const noexcept -> float { return v_dead_; }
 
 inline void PlantHal::reset(PlantState initial) noexcept {
     plant_->reset(initial);
