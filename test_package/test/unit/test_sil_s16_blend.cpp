@@ -10,6 +10,7 @@
 #include <foc/core/observer/back_emf_observer.hpp>
 #include <foc/core/observer/blended_observer.hpp>
 #include <foc/core/observer/hfi_observer.hpp>
+#include <foc/core/observer/nonlinear_flux_observer.hpp>
 #include <foc/core/transforms.hpp>
 
 #include "sil_pmsm_plant.hpp"
@@ -414,4 +415,86 @@ TEST(SilS16Blend, TheCarrierBiasesTheFluxObserverAndTheBiasScalesWithIt) {
     // And it collapses when the carrier is smaller, which is what makes it the carrier's doing.
     // 载波变小时它迅速消失，这正是"这是载波干的"的证据。
     EXPECT_LT(excess_half, 0.5F * excess_2v);
+}
+
+/**
+ * @brief [en] The same band, with the magnitude-correcting observer as its high half.
+ *        [zh] 同一个带，只是高端换成带幅值修正的观测器。
+ * @since 0.1.0
+ */
+using CorrectedBlend = core::BlendedObserver<core::HfiObserver, core::NonlinearFluxObserver>;
+
+auto corrected_band() -> CorrectedBlend::Config {
+    // The same 60..120 rad/s as `blend_config()`, and for the same two reasons: the saliency loop mirrors
+    // above 160, and the high half's speed is a differentiated angle either way. `Config` is nested in the
+    // instantiation, so the numbers have to be written out again -- which is the point, since a band is a
+    // property of the pair, not of one observer.
+    // 与 `blend_config()` 相同的 60–120 rad/s，理由也一样：凸极环在 160 以上会锁镜像，而高端的速度
+    // 无论哪个观测器都是对角度的微分。`Config` 嵌在实例化里，所以这些数字得再写一遍——这正是重点，
+    // 带宽是这对观测器的性质，不是某一个观测器的。
+    return CorrectedBlend::Config{60.0F, 120.0F, 20.0F};
+}
+
+auto corrected_flux_config() -> core::NonlinearFluxObserver::Config {
+    // Exactly the machine the flux observer is told about above, plus the two gains. The magnitude target
+    // is the nameplate flux: this observer is the one that knows what the answer should be.
+    // 与上面告诉反电动势观测器的机器完全一致，再加两个增益。幅值目标是铭牌磁链：这个观测器知道答案
+    // 应该是多少。
+    constexpr float kPsi = kKt / (1.5F * static_cast<float>(kPoles));
+    return core::NonlinearFluxObserver::Config{kRsSeenByFluxObserver, kLq, kPsi, 0.3F, 3.0F, 0.5F * kPsi};
+}
+
+TEST(SilS16Blend, TheMagnitudeCorrectionRemovesTheCarrierBiasAndLowerstheWorstCase) {
+    // What the correction buys in the configuration that actually ships. The comparison is against the
+    // numbers this file already recorded for the open-loop high half -- blend 0.042 rad worst case and
+    // 0.031 rad of carrier bias at 400 rad/s -- not against a fresh run of it, so the table cannot drift
+    // in step with the thing it is judging.
+    // 修正它在真正要交付的配置里买到了什么。比较对象是本文件已经记录过的开环高端数字——最差 0.042 rad、
+    // 400 rad/s 处 0.031 rad 载波偏置——而不是当场再跑一遍，这样表格不会跟着被评判的对象一起漂。
+    constexpr float kRecordedWorstCase = 0.042F;
+    constexpr float kRecordedCarrierBias = 0.031F;
+
+    std::printf("\n[S16] %10s %12s\n", "omega_e", "corrected");
+    float worst = 0.0F;
+    for (const float omega_e : {0.0F, 20.0F, 50.0F, 80.0F, 100.0F, 120.0F, 140.0F, 160.0F, 200.0F, 400.0F,
+                                800.0F}) {
+        SpeedRig rig(omega_e);
+        CorrectedBlend blend(core::HfiObserver{hfi_config()},
+                             core::NonlinearFluxObserver{corrected_flux_config()}, corrected_band());
+        blend.seed_flux(core::Ab<float>{rig.psi_f(), 0.0F});
+        const float error = mean_angle_error(blend, rig, 0.4F);
+        std::printf("[S16] %10.1f %12.4f\n", static_cast<double>(omega_e), static_cast<double>(error));
+        worst = std::fmax(worst, error);
+        EXPECT_LT(error, kBlendTolerance) << "at omega_e " << omega_e;
+    }
+
+    // The whole reason the correction was worth writing: the carrier stops being integrated in.
+    // 写这个修正的全部理由：载波不再被积进去。
+    constexpr float kOmega = 400.0F;
+    auto corrected_excess = [](float inject_v) {
+        SpeedRig band_rig(kOmega);
+        CorrectedBlend band(core::HfiObserver{hfi_config(inject_v)},
+                            core::NonlinearFluxObserver{corrected_flux_config()}, corrected_band());
+        band.seed_flux(core::Ab<float>{band_rig.psi_f(), 0.0F});
+        const float with_carrier = mean_angle_error(band, band_rig, 0.4F);
+
+        SpeedRig base_rig(kOmega);
+        CorrectedBlend base(core::HfiObserver{hfi_config(inject_v)},
+                            core::NonlinearFluxObserver{corrected_flux_config()},
+                            CorrectedBlend::Config{0.0F, 1.0F, 20.0F});
+        base.seed_flux(core::Ab<float>{base_rig.psi_f(), 0.0F});
+        return with_carrier - mean_angle_error(base, base_rig, 0.4F);
+    };
+
+    const float excess_2v = corrected_excess(2.0F);
+    std::printf("[S16] corrected: worst %.4f rad (open loop recorded %.4f), carrier bias %.4f rad "
+                "(open loop recorded %.4f)\n",
+                static_cast<double>(worst), static_cast<double>(kRecordedWorstCase),
+                static_cast<double>(excess_2v), static_cast<double>(kRecordedCarrierBias));
+
+    EXPECT_LT(worst, kRecordedWorstCase) << "the correction has to lower the worst case, not match it";
+    // An order of magnitude down, not merely smaller: a residual that is a few percent of the old bias
+    // would mean the correction is fighting the carrier rather than replacing it.
+    // 要低一个量级，而不只是"更小"：如果残余还有旧偏置的百分之几，说明修正在和载波较劲而不是取代它。
+    EXPECT_LT(std::fabs(excess_2v), 0.1F * kRecordedCarrierBias);
 }

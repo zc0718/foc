@@ -9,6 +9,7 @@
 
 #include <foc/core/observer/back_emf_observer.hpp>
 #include <foc/core/observer/hfi_observer.hpp>
+#include <foc/core/observer/nonlinear_flux_observer.hpp>
 #include <foc/core/transforms.hpp>
 
 #include "sil_plant_hal.hpp"
@@ -91,10 +92,12 @@ class FluxRig final {
     }
 
     void step() noexcept {
+        // The observer's update is a backward-Euler step anchored at the sample instant -- it pairs
+        // `dt * (v - Rs*i)` with `L * (i_k - i_{k-1})` -- so it must be handed the voltage belonging to the
+        // current sample, not the one from the period that just ended. See the note on `update()`.
+        // 观测器的 update 是以采样时刻为锚点的后向欧拉步——它把 `dt*(v - Rs*i)` 与 `L*(i_k - i_{k-1})`
+        // 配对——因此必须拿到属于当前采样的电压，而不是刚刚结束那一周期的电压。见 `update()` 上的说明。
         last_current_ = core::clarke(plant_.current_uvw());
-        // The voltage the observer must see is the one the stator actually got, in the stationary frame
-        // -- the rotor-frame setpoint is the plant's input, not the observer's.
-        // 观测器必须看到定子实际得到的电压，而且是静止系的——转子系给定是 plant 的输入，不是观测器的输入。
         last_voltage_ = core::inv_park(core::Dq<float>{vd_, vq_}, true_angle_e());
         const core::Dq<float> v_dq = core::Dq<float>{vd_, vq_};
         for (int i = 0; i < kSubsteps; ++i) {
@@ -301,4 +304,51 @@ TEST(SilS17Realism, AnUpdateMidRunDoesNotUndoWhatTheIntegratorAlreadyAccumulated
     // 作为警示记下：因为"更新一下参数"是直觉上的修法，而对任何带积分的东西都是错的——应当从已知角度重新播种，
     // 或者加一个把磁链幅值拉回来的环（这正是本计划的下一步）。
     EXPECT_GT(after_update, 1.5F * without_update) << "a mid-run update is not a reset";
+}
+
+TEST(SilS17Realism, TheMagnitudeCorrectionBeatsTheOpenLoopObserverOnAverage) {
+    // The judgement the plan fixed in advance: NLFO's mean angle error over the speed set must be *strictly*
+    // lower than the open-loop observer's. Both run on the same fixture, at the same points, with Rs believed
+    // 10 % high. Recorded per point so a future regression shows where it happened, not just that a mean moved.
+    // 计划事先定死的判决：NLFO 在该速度集上的平均角度误差必须**严格**低于开环观测器。两者在同一台架、同一批
+    // 点、Rs 信念偏高 10% 下运行。逐点记录，这样将来回退时能看到是哪一点坏了，而不是只知道均值动了。
+    const float beliefs[] = {1.10F, 1.30F};
+    const float speeds[] = {20.0F, 50.0F, 100.0F, 200.0F, 400.0F, 800.0F};
+    std::printf("\n[S17] %8s %12s %12s %8s\n", "omega", "open-loop", "nonlinear", "ratio");
+    for (const float belief : beliefs) {
+        float sum_open = 0.0F;
+        float sum_nonlinear = 0.0F;
+        for (const float omega : speeds) {
+            FluxRig open_rig(omega);
+            const float open = flux_angle_error(open_rig, belief, 0.4F);
+
+            FluxRig nonlinear_rig(omega);
+            core::NonlinearFluxObserver observer(core::NonlinearFluxObserver::Config{
+                belief * kRs, kLq, nonlinear_rig.psi_f(), 0.3F, 3.0F, 0.5F * nonlinear_rig.psi_f()});
+            observer.seed_flux(core::Ab<float>{nonlinear_rig.psi_f(), 0.0F});
+            float sum = 0.0F;
+            int count = 0;
+            const int steps = static_cast<int>(0.4F / kDt);
+            for (int k = 0; k < steps; ++k) {
+                nonlinear_rig.step();
+                const core::ObsState observed =
+                    observer.update(nonlinear_rig.last_voltage(), nonlinear_rig.last_current(), kDt);
+                if (k >= (steps / 2)) {
+                    sum += std::fabs(wrap_pi_local(observed.theta_e - nonlinear_rig.true_angle_e()));
+                    ++count;
+                }
+            }
+            const float nonlinear = sum / static_cast<float>(count);
+            std::printf("[S17] %8.0f %12.4f %12.4f %8.2f\n", static_cast<double>(omega),
+                        static_cast<double>(open), static_cast<double>(nonlinear),
+                        static_cast<double>(open / nonlinear));
+            sum_open += open;
+            sum_nonlinear += nonlinear;
+        }
+        std::printf("[S17] belief x%.2f: mean open-loop %.4f, mean nonlinear %.4f\n", static_cast<double>(belief),
+                    static_cast<double>(sum_open / 6.0F), static_cast<double>(sum_nonlinear / 6.0F));
+        // The plan's P3-a, unchanged since it was written: strictly better on average.
+        // 计划的 P3-a，自写下起未改动：均值上严格更好。
+        EXPECT_LT(sum_nonlinear, sum_open) << "belief " << belief;
+    }
 }
