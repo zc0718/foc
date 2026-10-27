@@ -15,6 +15,9 @@
 #include <gtest/gtest.h>
 
 #include <foc/core/deadtime.hpp>
+#include <foc/motor/motor.hpp>
+
+#include "sil_discrete_inverter.hpp"
 
 #include "sil_bench.hpp"
 #include "sil_metrics.hpp"
@@ -340,4 +343,124 @@ TEST(SilS13Deadtime, TheRampFadesTheCorrectionWhereTheSignIsNotYetInformation) {
     }
     ++index;
   }
+}
+
+namespace {
+
+constexpr float kSwitchingTDead = 1.0e-6F;
+
+/// [en] Closed-loop current hold through a *switching* inverter, with the
+/// dead-time stage set to one of three
+///       states. [zh] 经**开关**逆变器的闭环电流保持，死区环节取三种状态之一。
+auto hold_current_switched(float iq_ref_a, float v_dead, float ripple_a)
+    -> float {
+  const foc::motor::MotorConfig mc = foc::sil::nominal_motor_config();
+  foc::sil::PmsmPlant plant(
+      foc::sil::plant_params_from(foc::sil::nominal_spec()));
+  foc::sil::PlantHal hal(plant, 24.0F);
+  foc::sil::DiscreteInverter inverter(
+      foc::sil::InverterConfig{kPwmHz, kSwitchingTDead, 0.0F, 40});
+  hal.set_inverter(&inverter);
+
+  const foc::sil::BenchConfig cfg = foc::sil::standard_bench_config();
+  MotorWithCompensation motor(
+      mc,
+      typename MotorWithCompensation::Policies{
+          foc::core::BackEmfObserver({mc.rs, mc.ld}),
+          Compensated{Compensated::Config{v_dead, 0.02F, ripple_a}},
+          foc::core::Pi{::foc::current_pi_config(mc, cfg.omega_current_rad_s,
+                                                 cfg.v_bus_v)},
+          foc::core::Pi{::foc::current_pi_config(mc, cfg.omega_current_rad_s,
+                                                 cfg.v_bus_v)},
+          foc::core::Pi{foc::sil::speed_pi_config(mc, cfg.omega_speed_rad_s)}},
+      hal);
+  static_cast<void>(motor.init());
+  static_cast<void>(motor.start());
+  motor.set_torque(iq_ref_a);
+
+  const int total = static_cast<int>(0.2F / cfg.dt_ctrl_s);
+  const int skip = static_cast<int>(0.1F / cfg.dt_ctrl_s);
+  float sum = 0.0F;
+  int count = 0;
+  for (int k = 0; k < total; ++k) {
+    static_cast<void>(motor.tick(cfg.dt_ctrl_s));
+    hal.advance(cfg.dt_ctrl_s, cfg.substeps);
+    if (k >= skip) {
+      sum += std::fabs(motor.telemetry().iq_a - iq_ref_a);
+      ++count;
+    }
+  }
+  return sum / static_cast<float>(count);
+}
+
+} // namespace
+
+TEST(SilS13Deadtime,
+     C3_TheFadeWasTunedOnTheWrongPlantAndTheSwitchingOneSaysSo) {
+  // C3 of the plan: re-check "fade by current" on the plant that actually
+  // switches, at both ends of the current range. The answer was not "it is
+  // fine". 计划的 C3：在真正会开关的 plant
+  // 上、在电流范围的两端重验"按电流淡出"。答案不是"没问题"。
+  //
+  // Three variants at three currents. `off` = no compensation, `step` = the
+  // `sign()` stage, `ramp` = the fade with `predicted_ripple_a()` (0.375 A for
+  // this machine). 三种变体、三个电流。`off` = 不补偿，`step` = `sign()`
+  // 环节，`ramp` = 用 `predicted_ripple_a()` （本机 0.375 A）的淡出。
+  const float v_dead = kSwitchingTDead * kPwmHz * 24.0F;
+  const float ripple =
+      foc::core::DeadTimeCompensator<foc::core::Svpwm>::predicted_ripple_a(
+          24.0F, 1.0F / kPwmHz, foc::sil::nominal_spec().ld);
+
+  struct Row final {
+    float iq_ref;
+    float off;
+    float step;
+    float ramp;
+  };
+  Row rows[3] = {{3.0F, 0.0F, 0.0F, 0.0F},
+                 {0.3F, 0.0F, 0.0F, 0.0F},
+                 {0.02F, 0.0F, 0.0F, 0.0F}};
+  std::printf("\n[S13] C3 on the switching plant, 1 us dead time, ripple scale "
+              "%.3f A\n",
+              static_cast<double>(ripple));
+  std::printf("[S13] %10s %12s %12s %12s\n", "iq_ref", "off", "step", "ramp");
+  for (Row &row : rows) {
+    row.off = hold_current_switched(row.iq_ref, 0.0F, 0.0F);
+    row.step = hold_current_switched(row.iq_ref, v_dead, 0.0F);
+    row.ramp = hold_current_switched(row.iq_ref, v_dead, ripple);
+    std::printf("[S13] %10.3f %12.5f %12.5f %12.5f\n",
+                static_cast<double>(row.iq_ref), static_cast<double>(row.off),
+                static_cast<double>(row.step), static_cast<double>(row.ramp));
+  }
+
+  // Rated current: the PI absorbs the dead-time error, so all three land within
+  // 1 % of each other. That is the *absence of a new over-correction* -- the
+  // thing C3-b asked for -- and it is also a warning that this metric cannot
+  // see dead time here. 额定电流：PI 把死区误差吸掉了，三者相差在 1%
+  // 以内。这正是 C3-b 要的"没有引入新的过修"，同时也提醒
+  // 这个指标在这里看不见死区。
+  EXPECT_LT(rows[0].ramp, 1.01F * rows[0].step);
+
+  // Intermediate current: the step is right and the ramp is 6.6x worse, because
+  // the fade is too wide -- it is still at 80 % of full correction where the
+  // hardware is already at 100 %. Recorded as a regression, not smoothed over:
+  // A2's fade *shape* is right (see S19 V6), its *scale* was taken from the
+  // wrong quantity (the switching ripple, rather than the width over which the
+  // loss actually fades). 中间电流：阶跃是对的，斜坡差 6.6
+  // 倍，因为淡出太宽——硬件已经 100% 的地方它才 80%。如实记为回归：A2
+  // 淡出的**形状**是对的（见 S19
+  // V6），**尺度**取错了量（取的是开关纹波，而不是损失真正淡出的宽度）。
+  EXPECT_LT(rows[1].step, rows[1].off) << "the step does help mid-range";
+  EXPECT_GT(rows[1].ramp, 2.0F * rows[1].step)
+      << "the ramp under-compensates mid-range";
+
+  // Near-zero current: the original A2 finding survives -- a `sign()` stage is
+  // *worse than nothing* -- and the ramp is the least bad, which is all a fade
+  // of the wrong width can be. 近零电流：A2 原来的结论仍然成立——`sign()`
+  // 环节**比不补更差**——而斜坡是三者中最不坏的，这正是"宽度
+  // 取错的淡出"能做到的全部。
+  EXPECT_GT(rows[2].step, 10.0F * rows[2].off)
+      << "sign() must remain worse than nothing near zero";
+  EXPECT_LT(rows[2].ramp, rows[2].step)
+      << "the fade must still be the gentler choice there";
 }
