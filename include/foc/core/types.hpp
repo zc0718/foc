@@ -8,9 +8,10 @@ namespace foc {
 
 /**
  * @brief [en] Error codes shared by the C++ and the C path. The numeric values are the contract
- *        mirrored by foc_err_t in <foc/api/foc_types.h>; never renumber them.
+ *        mirrored by foc_err_t in <foc/api/foc_types.h>; never renumber them. New codes are only
+ *        ever appended.
  *        [zh] C++ 与 C 路径共用的错误码。数值是与 <foc/api/foc_types.h> 中 foc_err_t 对齐的契约，
- *        不得重新编号。
+ *        不得重新编号；新增错误码只能追加。
  *
  * @since 0.1.0
  * @exporter
@@ -21,6 +22,7 @@ enum class ErrorCode : std::int8_t {
     NoResource = -2,
     State = -3,
     NotImpl = -4,
+    Fault = -5, ///< [en] latched inverter fault. [zh] 锁存的逆变故障。
 };
 
 

@@ -9,6 +9,33 @@ namespace core {
 
 
 /**
+ * @brief [en] A PI step with per-call gain scaling: the knob teleoperation needs.
+ *        [zh] 带按次增益缩放的 PI 一步：遥操作需要的就是这个旋钮。
+ *
+ *        [en] Pushing a joint by hand requires the drive to stop resisting, and the two knobs that
+ *        decide how much it resists are the proportional gain (`kp_scale`) and how much torque the
+ *        integrator is allowed to keep holding (`ilimit_scale`). Both are *per call*: a compliant
+ *        approach and a stiff hold are the same controller, not two configurations.
+ *        [zh] 用手推关节要求驱动不再抵抗，而决定"抵抗多少"的两个旋钮是比例增益（`kp_scale`）与
+ *        积分器被允许持续保持多少转矩（`ilimit_scale`）。两者都是**按次**的：柔顺接近与刚性保持
+ *        是同一个控制器，而不是两套配置。
+ *
+ * @note [en] `0` means "no override": the configured gain is used unchanged. That is the same rule
+ *       the rest of the project uses for per-call values, and here it also protects a defaulted
+ *       aggregate initialiser from silently asking for zero stiffness.
+ *       [zh] `0` 表示"不覆盖"：按配置的增益原样使用。这与项目其余部分对按次传值的规则一致；在这里
+ *       它还防止一个被值初始化的聚合体悄悄要求零刚度。
+ * @since 0.1.0
+ * @exporter
+ */
+struct SpeedInput final {
+    float target_rad_s; ///< [en] speed setpoint, rad/s. [zh] 速度给定，rad/s。
+    float kp_scale;     ///< [en] proportional scale, 0 = configured. [zh] 比例缩放，0 = 用配置值。
+    float ilimit_scale; ///< [en] integral-limit scale, 0 = configured. [zh] 积分限幅缩放，0 = 用配置值。
+};
+
+
+/**
  * @brief [en] PI controller with output clamping and integral clamping (V1 anti-windup).
  *        All state lives in the object: no globals, no allocation, safe to use per axis.
  *        [zh] 带输出限幅与积分限幅（V1 抗饱和）的 PI 控制器。状态全部在对象内：无全局、不分配，
@@ -71,6 +98,27 @@ class Pi final {
     auto step(float setpoint, float feedback, float dt_s) noexcept -> float;
 
     /**
+     * @brief [en] Advance one control step with per-call gain scaling.
+     *        [zh] 带按次增益缩放地推进一步控制。
+     *
+     * @param request [en] setpoint plus the two scales (0 = use the configuration).
+     *                [zh] 给定以及两个缩放（0 = 用配置值）。
+     * @param feedback [en] measured value. [zh] 反馈值。
+     * @param dt_s [en] step length in s; <= 0 is rejected (output holds). [zh] 步长，s；<= 0 被拒绝（输出保持）。
+     * @return [en] clamped controller output. [zh] 限幅后的控制输出。
+     *
+     * @note [en] The configuration is never mutated: the scales are applied to the gains for this
+     *       call only, so the next stiff call gets the configured gains back with no restore step.
+     *       The integral term is re-clamped into the scaled window, which is what makes
+     *       `ilimit_scale` release stored torque instead of holding it until it leaks away.
+     *       [zh] 配置从不被改动：缩放只在本次调用生效，下一次刚性调用直接拿回配置的增益，不需要恢复
+     *       步骤。积分项会被重新夹进缩放后的窗口——这正是 `ilimit_scale` 能**释放**已存转矩、而不是
+     *       等它慢慢漏掉的机制。
+     * @since 0.1.0
+     */
+    auto step(const SpeedInput& request, float feedback, float dt_s) noexcept -> float;
+
+    /**
      * @brief [en] Clear the integral term and any latched parameter error.
      *        [zh] 清零积分项与已锁存的参数错误。
      * @since 0.1.0
@@ -99,6 +147,9 @@ class Pi final {
     [[nodiscard]] auto status() const noexcept -> ErrorCode;
 
   private:
+    [[nodiscard]] auto run(float setpoint, float feedback, float dt_s, float kp, float integral_min,
+                           float integral_max) noexcept -> float;
+
     Config config_;
     float integral_;
     float output_;
