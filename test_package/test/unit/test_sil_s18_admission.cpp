@@ -530,3 +530,92 @@ TEST(SilS18Admission, C1_TheCandidateRecordAcrossSpeedsAndMismatches) {
   EXPECT_LT(ratio_at_800, 1.0F)
       << "the incumbent is expected to take back the top of the range";
 }
+
+TEST(SilS18Admission,
+     P4ab_DeadTimeCompensationBelongsToTheBandwidthLimitedObserver) {
+  // P4-a and P4-b of the plan, and the finding that came out of measuring them.
+  // plan 的 P4-a 与 P4-b，以及量它们时掉出来的那个结论。
+  //
+  // The modest-looking claim "the inverter nonlinearity is an unmodelled
+  // disturbance, so tell the observer about it" turns out to be
+  // **observer-specific**, and the sign of the effect flips:
+  //  "逆变器非线性是未建模扰动，所以告诉观测器"
+  //  这个看起来平淡的说法其实是**分观测器的**，而且效果会反号：
+  //   * the NLFO is bandwidth-limited, so the loss looks like a DC offset it
+  //   cannot reject: compensation
+  //     takes 800 rad/s from 0.0563 to 0.0111, a 5x win.
+  //   * the SMO's switching term *is* an unknown-input estimator, so it already
+  //   tracks the loss; feeding
+  //     it the same estimate again double-counts it, and 20 rad/s goes from
+  //     0.0673 to 0.1637 -- 2.4x worse. This is not a tuning artefact: it is
+  //     what a sliding-mode observer is *for*.
+  //   * NLFO 是带宽受限的，损失对它就象一个它压不掉的直流偏置：补偿把 800 rad/s
+  //   从 0.0563 打到 0.0111，
+  //     赢 5 倍。
+  //   * SMO
+  //   的切换项**本身**就是一个未知输入估计器，它已经在跟踪这个损失；再把同一个估计喂给它就是重复
+  //     计入，20 rad/s 从 0.0673 变成 0.1637，差 2.4
+  //     倍。这不是整定问题，这正是滑模观测器的**用途**。
+  const float v_dead =
+      1.0e-6F * 20000.0F * 24.0F; // 1 us at 24 V, the bench setting
+
+  struct Row final {
+    float omega_e;
+    float incumbent_off;
+    float incumbent_step;
+    float smo_off;
+    float smo_step;
+  };
+  Row rows[3]{};
+  const float speeds[3] = {20.0F, 200.0F, 800.0F};
+  for (int k = 0; k < 3; ++k) {
+    sil::SwitchingRigConfig config{};
+    config.omega_e = speeds[k];
+    const sil::SmoTuning tuning =
+        sil::scheduled_smo(speeds[k], sil::SwitchingRig::psi_f());
+    rows[k].omega_e = speeds[k];
+    rows[k].incumbent_off = switched_incumbent_error(config);
+    config.compensate_v = v_dead;
+    rows[k].incumbent_step = switched_incumbent_error(config);
+    sil::SwitchingRigConfig without{};
+    without.omega_e = speeds[k];
+    rows[k].smo_off =
+        smo_switched_error(without, tuning.gain, tuning.fc_hz, tuning.layer);
+    without.compensate_v = v_dead;
+    rows[k].smo_step =
+        smo_switched_error(without, tuning.gain, tuning.fc_hz, tuning.layer);
+  }
+
+  std::printf("\n[S18] P4-a/b, dV = %.2f V\n        omega_e | NLFO: off   step "
+              " | SMO: off   step\n",
+              static_cast<double>(v_dead));
+  for (int k = 0; k < 3; ++k) {
+    std::printf("        %7.0f | %.5f %.5f | %.5f %.5f\n",
+                static_cast<double>(rows[k].omega_e),
+                static_cast<double>(rows[k].incumbent_off),
+                static_cast<double>(rows[k].incumbent_step),
+                static_cast<double>(rows[k].smo_off),
+                static_cast<double>(rows[k].smo_step));
+  }
+
+  // P4-a: the two speeds where the incumbent was furthest out.
+  // P4-a：incumbent 最差的两个速域。
+  EXPECT_LE(rows[2].incumbent_step, 0.020F)
+      << "P4-a: 800 rad/s with the compensator in the loop";
+  EXPECT_LE(rows[1].incumbent_step, 0.075F)
+      << "P4-a: 200 rad/s with the compensator in the loop";
+  // P4-b: and the low end must not be made worse to get that.
+  // P4-b：为了拿到上面这些，低速端不能被弄坏。
+  EXPECT_LE(rows[0].incumbent_step, 1.1F * rows[0].incumbent_off)
+      << "P4-b: 20 rad/s must not regress";
+
+  // The other half, which is the part worth remembering: the same medicine
+  // poisons the sliding-mode observer. If a future change ever makes this
+  // assertion fail, it means the SMO stopped estimating the unknown input --
+  // that is a regression in the observer, not an improvement in the
+  // compensation.
+  // 另一半才是值得记住的：同一服药会毒到滑模观测器。将来若这条断言失败，说明
+  // SMO 不再估计未知输入了 ——那是观测器的回归，不是补偿的进步。
+  EXPECT_GT(rows[0].smo_step, rows[0].smo_off)
+      << "the SMO already tracks the loss; compensation double-counts";
+}

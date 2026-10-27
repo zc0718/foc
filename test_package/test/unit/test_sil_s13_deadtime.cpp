@@ -402,10 +402,11 @@ TEST(SilS13Deadtime,
   // fine". 计划的 C3：在真正会开关的 plant
   // 上、在电流范围的两端重验"按电流淡出"。答案不是"没问题"。
   //
-  // Three variants at three currents. `off` = no compensation, `step` = the
-  // `sign()` stage, `ramp` = the fade with `predicted_ripple_a()` (0.375 A for
-  // this machine). 三种变体、三个电流。`off` = 不补偿，`step` = `sign()`
-  // 环节，`ramp` = 用 `predicted_ripple_a()` （本机 0.375 A）的淡出。
+  // Three variants at three currents. `off` = no compensation, `step` =
+  // the `sign()` stage, `ramp` = the fade with `predicted_ripple_a()`
+  // (0.375 A for this machine). 三种变体、三个电流。`off` = 不补偿，`step`
+  // = `sign()` 环节，`ramp` = 用 `predicted_ripple_a()` （本机 0.375
+  // A）的淡出。
   const float v_dead = kSwitchingTDead * kPwmHz * 24.0F;
   const float ripple =
       foc::core::DeadTimeCompensator<foc::core::Svpwm>::predicted_ripple_a(
@@ -433,34 +434,224 @@ TEST(SilS13Deadtime,
                 static_cast<double>(row.step), static_cast<double>(row.ramp));
   }
 
-  // Rated current: the PI absorbs the dead-time error, so all three land within
-  // 1 % of each other. That is the *absence of a new over-correction* -- the
-  // thing C3-b asked for -- and it is also a warning that this metric cannot
-  // see dead time here. 额定电流：PI 把死区误差吸掉了，三者相差在 1%
-  // 以内。这正是 C3-b 要的"没有引入新的过修"，同时也提醒
-  // 这个指标在这里看不见死区。
+  // Rated current: the PI absorbs the dead-time error, so all three land
+  // within 1 % of each other. That is the *absence of a new
+  // over-correction* -- the thing C3-b asked for -- and it is also a
+  // warning that this metric cannot see dead time here. 额定电流：PI
+  // 把死区误差吸掉了，三者相差在 1% 以内。这正是 C3-b
+  // 要的"没有引入新的过修"，同时也提醒 这个指标在这里看不见死区。
   EXPECT_LT(rows[0].ramp, 1.01F * rows[0].step);
 
-  // Intermediate current: the step is right and the ramp is 6.6x worse, because
-  // the fade is too wide -- it is still at 80 % of full correction where the
-  // hardware is already at 100 %. Recorded as a regression, not smoothed over:
-  // A2's fade *shape* is right (see S19 V6), its *scale* was taken from the
-  // wrong quantity (the switching ripple, rather than the width over which the
-  // loss actually fades). 中间电流：阶跃是对的，斜坡差 6.6
-  // 倍，因为淡出太宽——硬件已经 100% 的地方它才 80%。如实记为回归：A2
-  // 淡出的**形状**是对的（见 S19
+  // Intermediate current: the step is right and the ramp is 6.6x worse,
+  // because the fade is too wide -- it is still at 80 % of full correction
+  // where the hardware is already at 100 %. Recorded as a regression, not
+  // smoothed over: A2's fade *shape* is right (see S19 V6), its *scale*
+  // was taken from the wrong quantity (the switching ripple, rather than
+  // the width over which the loss actually fades).
+  // 中间电流：阶跃是对的，斜坡差 6.6 倍，因为淡出太宽——硬件已经 100%
+  // 的地方它才 80%。如实记为回归：A2 淡出的**形状**是对的（见 S19
   // V6），**尺度**取错了量（取的是开关纹波，而不是损失真正淡出的宽度）。
   EXPECT_LT(rows[1].step, rows[1].off) << "the step does help mid-range";
   EXPECT_GT(rows[1].ramp, 2.0F * rows[1].step)
       << "the ramp under-compensates mid-range";
 
-  // Near-zero current: the original A2 finding survives -- a `sign()` stage is
-  // *worse than nothing* -- and the ramp is the least bad, which is all a fade
-  // of the wrong width can be. 近零电流：A2 原来的结论仍然成立——`sign()`
+  // Near-zero current: the original A2 finding survives -- a `sign()`
+  // stage is *worse than nothing* -- and the ramp is the least bad, which
+  // is all a fade of the wrong width can be. 近零电流：A2
+  // 原来的结论仍然成立——`sign()`
   // 环节**比不补更差**——而斜坡是三者中最不坏的，这正是"宽度
   // 取错的淡出"能做到的全部。
   EXPECT_GT(rows[2].step, 10.0F * rows[2].off)
       << "sign() must remain worse than nothing near zero";
   EXPECT_LT(rows[2].ramp, rows[2].step)
       << "the fade must still be the gentler choice there";
+}
+
+namespace {
+
+constexpr float kSweepHz = 50.0F;
+constexpr float kDt =
+    5.0e-5F; // 20 kHz control and switching, the bench default
+
+/// [en] One settled operating point of a *rotating* current: the plant is
+/// locked, the commanded vector spins
+///      at `kSweepHz`, and the fundamental is recovered by lock-in.
+///      Returns the current amplitude and the mean projection of the
+///      command along it. [zh]
+///      **旋转**电流下的一个稳定工作点：plant 锁住、指令矢量以 `kSweepHz`
+///      旋转，基波用锁相取回。
+///      返回电流幅值，以及指令在电流方向上的平均投影。
+auto rotate_point(float v_mag, float v_bus) -> std::pair<float, float> {
+  foc::sil::PlantParams plant_params =
+      foc::sil::plant_params_from(foc::sil::nominal_spec());
+  plant_params.j = 1.0e6F; // locked rotor
+  foc::sil::PmsmPlant plant(plant_params);
+  plant.reset(foc::sil::PlantState{0.0F, 0.0F, 0.0F, 0.0F});
+  foc::sil::DiscreteInverter inverter(
+      foc::sil::InverterConfig{kPwmHz, kSwitchingTDead, 0.0F, 40});
+
+  const float omega = foc::core::kTwoPi<float> * kSweepHz;
+  const int total = 2400; // 0.12 s at 50 Hz = 6 cycles
+  const int skip = 800;   // 40 ms to settle, then an integer number of cycles
+  float acc_re = 0.0F;
+  float acc_im = 0.0F;
+  for (int step = 0; step < total; ++step) {
+    const float t = static_cast<float>(step) * kDt;
+    const foc::core::Ab<float> command{v_mag * std::cos(omega * t),
+                                       v_mag * std::sin(omega * t)};
+    const foc::core::ModulatorInput request{command, v_bus,
+                                            plant.current_uvw()};
+    const foc::core::SvpwmResult modulated =
+        foc::core::Svpwm::modulate(request);
+    const int steps = inverter.begin_period(modulated.duty, v_bus, kDt);
+    const float h = inverter.step_length_s();
+    for (int k = 0; k < steps; ++k) {
+      plant.set_voltage_dq(
+          foc::core::park(inverter.step(plant.current_uvw()), 0.0F));
+      plant.advance(h);
+    }
+    if (step >= skip) {
+      // Lock-in at the sweep frequency: the switching ripple is not part
+      // of the fundamental. 在扫描频率上锁相：开关纹波不属于基波。
+      const foc::core::Dq<float> i_dq = plant.current_dq();
+      const float phase = omega * t;
+      acc_re += static_cast<float>((i_dq.d * std::cos(phase)) +
+                                   (i_dq.q * std::sin(phase)));
+      acc_im += static_cast<float>((i_dq.q * std::cos(phase)) -
+                                   (i_dq.d * std::sin(phase)));
+    }
+  }
+  const float norm = 2.0F / static_cast<float>(total - skip);
+  const float re = acc_re * norm;
+  const float im = acc_im * norm;
+  const float magnitude = std::sqrt((re * re) + (im * im));
+  const float parallel =
+      (magnitude > 1.0e-9F) ? (v_mag * re / magnitude) : 0.0F;
+  return {magnitude, parallel};
+}
+
+/// [en] Run the identification sweep at one bus voltage. [zh]
+/// 在一个母线电压下跑辨识扫描。
+auto identify_fade(float v_bus) -> foc::core::DeadTimeFadeEstimator::Result {
+  foc::core::DeadTimeFadeEstimator estimator(
+      foc::core::DeadTimeFadeEstimator::Config{
+          foc::sil::nominal_spec().rs, kSwitchingTDead * kPwmHz * v_bus, 0.5F});
+  const float v_max = 0.9F * (v_bus / 24.0F);
+  const float v_min = 0.05F * (v_bus / 24.0F);
+  for (int k = 1; k <= 16; ++k) {
+    const float fraction = static_cast<float>(k) / 16.0F;
+    const float v =
+        static_cast<float>(v_min * std::pow(v_max / v_min, fraction));
+    const std::pair<float, float> point = rotate_point(v, v_bus);
+    static_cast<void>(estimator.add(point.second, point.first));
+  }
+  return estimator.solve();
+}
+
+} // namespace
+
+TEST(SilS13Deadtime,
+     P4c_TheFadeIsIdentifiableFromARotatingCurrentAndScalesWithTheRipple) {
+  // P4 of the plan. The width is the number the compensation stage needs
+  // and the one nobody can compute from the nameplate, so it has to be
+  // *measured*. The experiment has to be a **rotating** current: a locked
+  // rotor with a DC command is a relay (the loss pins the current at zero
+  // until the command exceeds 1.33*dV), which is why the first attempt at
+  // this -- a DC d-axis sweep -- returned `valid = 0`.
+  // P4。这个宽度是补偿级唯一需要的数、也是唯一没人能从铭牌算出来的数，所以必须**测**。实验必须是
+  // **旋转**电流：锁转子加直流指令是一个继电器（指令不超过 1.33·dV
+  // 之前损失把电流钉在零），这就是 最初那个 d 轴直流扫描返回 `valid = 0`
+  // 的原因。
+  const float deadtime_v_at_24 = kSwitchingTDead * kPwmHz * 24.0F;
+  const foc::core::DeadTimeFadeEstimator::Result at_24 = identify_fade(24.0F);
+  const foc::core::DeadTimeFadeEstimator::Result at_12 = identify_fade(12.0F);
+  const float ratio = at_24.fade_a / at_12.fade_a;
+
+  std::printf(
+      "\n[S13] P4-c identified fade: 24 V -> %.5f A (residual "
+      "%.4f V), 12 V -> "
+      "%.5f A "
+      "(residual %.4f V), ratio %.2f\n",
+      static_cast<double>(at_24.fade_a), static_cast<double>(at_24.residual_v),
+      static_cast<double>(at_12.fade_a), static_cast<double>(at_12.residual_v),
+      static_cast<double>(ratio));
+
+  EXPECT_TRUE(at_24.valid);
+  EXPECT_TRUE(at_12.valid);
+  // It is a real width, not the grid floor and not the ripple bound
+  // `predicted_ripple_a` (0.375 A).
+  // 它是一个真实的宽度：不是网格底部，也不是 `predicted_ripple_a`
+  // 那个纹波上界（0.375 A）。
+  EXPECT_GT(at_24.fade_a, 0.005F);
+  EXPECT_LT(at_24.fade_a, 0.15F);
+  // And it scales with the switching ripple, which is what the physics
+  // says it must: same machine, same dead time, double the bus -> double
+  // the ripple -> double the width.
+  // 而且它随开关纹波缩放，这正是物理要求的：同一台机器、同一个死区，母线加倍
+  // → 纹波加倍 → 宽度加倍。
+  EXPECT_NEAR(2.0F, ratio, 0.4F)
+      << "the fade is set by the ripple, so it tracks the bus";
+  static_cast<void>(deadtime_v_at_24);
+}
+TEST(SilS13Deadtime, P4d_TheIdentifiedWidthIsNotBetterThanTheStep) {
+  // **The pre-written criterion failed, and the feature lost.** P4-d asked
+  // for `ramp <= 1.1x step` at 0.3 A; the measured width gives 1.16x. It
+  // also loses at 20 mA, where the step is *better* (0.01350 vs 0.02135).
+  // Both ends go the same way, so the rollback rule applies: `i_fade_a` is
+  // demoted and the `sign()` step stays the recommendation.
+  // **预先写下的判据失败了，而且输的是这个特性本身。** P4-d 要求 0.3 A 处
+  // `ramp ≤ 1.1×step`，实测宽度给 1.16×；20 mA 处它也输给阶跃（0.01350 对
+  // 0.02135）。两端同向，于是回退规则生效：`i_fade_a` 降级，`sign()`
+  // 仍是推荐值。
+  //
+  // Why the width could not have saved it: the loss curve measured on the
+  // plant jumps from 2.7 % to 97 % of `(4/pi)*dV` between |I| = 21 mA and
+  // 86 mA. A linear clamp spread over `If` cannot represent a transition
+  // that steep -- the shape is a **soft step**, not a ramp, and one
+  // parameter cannot fix a wrong shape. What a ramp is genuinely good at
+  // is a *broad* fade, which this plant does not have below its own
+  // saturation. 为什么换宽度也救不了：plant 上量到的损失曲线在 |I| 从 21
+  // mA 到 86 mA 之间 从 `(4/π)·dV` 的 2.7 % 跳到 97 %。铺在 `If`
+  // 上的线性斜坡表示不了这么陡的
+  // 过渡——形状是**软阶跃**，不是斜坡，一个参数救不了错的形状。斜坡真正擅长的是
+  // **宽**的淡出，而这台 plant 在自己的饱和点以下并没有。
+  const float v_dead = kSwitchingTDead * kPwmHz * 24.0F;
+  const float fade = identify_fade(24.0F).fade_a;
+
+  const float off_rated = hold_current_switched(0.3F, 0.0F, 0.0F);
+  const float step_rated = hold_current_switched(0.3F, v_dead, 0.0F);
+  const float ramp_rated = hold_current_switched(0.3F, v_dead, fade);
+  const float off_small = hold_current_switched(0.02F, 0.0F, 0.0F);
+  const float step_small = hold_current_switched(0.02F, v_dead, 0.0F);
+  const float ramp_small = hold_current_switched(0.02F, v_dead, fade);
+
+  std::printf("[S13] P4-d with the identified width %.4f A (dV = %.2f V):\n"
+              "        0.300 A: off %.5f, step %.5f, ramp %.5f (x%.2f of step, "
+              "pre-written limit 1.10)\n"
+              "        0.020 A: off %.5f, step %.5f, ramp %.5f\n",
+              static_cast<double>(fade), static_cast<double>(v_dead),
+              static_cast<double>(off_rated), static_cast<double>(step_rated),
+              static_cast<double>(ramp_rated),
+              static_cast<double>(ramp_rated / step_rated),
+              static_cast<double>(off_small), static_cast<double>(step_small),
+              static_cast<double>(ramp_small));
+
+  // Compensation itself helps at rated current -- that is not in question,
+  // and it is what keeps the stage in the library.
+  // 补偿本身在额定电流处是有用的——这一点没有疑问，也正是这一级留在库里的原因。
+  EXPECT_LT(step_rated, 0.5F * off_rated)
+      << "the step has to help at 0.3 A, or there is nothing to compare";
+
+  // What is now on record: the identified width is *worse* than the step
+  // at both ends. Written two-sided so the day someone finds a shape that
+  // fixes it, this test says so instead of silently agreeing.
+  // 现在记录在案的是：辨识出来的宽度在两端都**输给**阶跃。双侧写法，将来有人找到
+  // 能修好它的形状时，这个测试会说出来，而不是默默点头。
+  EXPECT_GT(ramp_rated, 1.1F * step_rated)
+      << "P4-d as written: the identified width does not match the step";
+  EXPECT_GT(ramp_small, step_small)
+      << "and it loses at 20 mA too, where the PI already holds the mean";
+  EXPECT_LT(off_small, step_small)
+      << "at 20 mA no compensation beats none, which is the other half of "
+         "it";
 }
