@@ -51,6 +51,12 @@ struct SwitchingRigConfig final {
   /// `compensate_v > 0`. [zh] 交给补偿器的淡出宽度，A；只在 `compensate_v > 0`
   /// 时使用。
   float i_fade_a{0.0F};
+  /// [en] The machine this rig is built around. Defaults to the nominal one, so
+  /// every existing test keeps its meaning; P5-f varies it to ask whether the
+  /// tuning survives a different motor. [zh]
+  /// 这个台架围绕的机器。默认标称机，所以既有测试的含义不变；P5-f
+  /// 改变它，用来问"换一台 电机，整定还活不活"。
+  MachineSpec spec = nominal_spec();
 };
 
 /**
@@ -69,7 +75,7 @@ struct SwitchingRigConfig final {
 class SwitchingRig final {
 public:
   explicit SwitchingRig(const SwitchingRigConfig &config) noexcept
-      : config_(config), plant_(nominal_plant_params()),
+      : config_(config), plant_(plant_params_from(config.spec)),
         inverter_(InverterConfig{20000.0F, config.t_dead_s, 0.0F,
                                  config.sub_per_switch}),
         compensator_(core::DeadTimeCompensator<core::Svpwm>::Config{
@@ -80,9 +86,10 @@ public:
     }
     plant_.reset(PlantState{
         0.0F, config.iq_a,
-        config.omega_e / static_cast<float>(nominal_spec().pole_pairs), 0.0F});
-    v_d_ = -config_.omega_e * nominal_spec().lq * config_.iq_a;
-    v_q_ = (nominal_spec().rs * config_.iq_a) + (config_.omega_e * psi_f());
+        config.omega_e / static_cast<float>(config.spec.pole_pairs), 0.0F});
+    v_d_ = -config_.omega_e * config_.spec.lq * config_.iq_a;
+    v_q_ =
+        (config_.spec.rs * config_.iq_a) + (config_.omega_e * machine_psi_f());
   }
 
   SwitchingRig(const SwitchingRig &) = delete;
@@ -93,13 +100,22 @@ public:
   /// [en] Control period of this rig, s. [zh] 本台架的控制周期，s。
   static constexpr float kControlPeriod = 5.0e-5F;
 
+  /// [en] The nominal machine's flux linkage. Kept static for the tests that
+  /// name it directly. [zh] 标称机的磁链。保留 static 给直接引用它的测试。
   [[nodiscard]] static auto psi_f() noexcept -> float {
     return nominal_spec().kt /
            (1.5F * static_cast<float>(nominal_spec().pole_pairs));
   }
 
+  /// [en] The flux linkage of the machine this rig was actually built with.
+  /// [zh] 本台架实际所用机器的磁链。
+  [[nodiscard]] auto machine_psi_f() const noexcept -> float {
+    return config_.spec.kt /
+           (1.5F * static_cast<float>(config_.spec.pole_pairs));
+  }
+
   [[nodiscard]] auto true_angle_e() const noexcept -> float {
-    return static_cast<float>(nominal_spec().pole_pairs) *
+    return static_cast<float>(config_.spec.pole_pairs) *
            plant_.theta_mech_rad();
   }
 
@@ -118,7 +134,7 @@ public:
   /// [en] What an observer should be told the stator resistance is. [zh]
   /// 应该告诉观测器的定子电阻。
   [[nodiscard]] auto believed_rs() const noexcept -> float {
-    return config_.belief_rs * nominal_spec().rs;
+    return config_.belief_rs * config_.spec.rs;
   }
 
   [[nodiscard]] auto steps() const noexcept -> int { return steps_; }
@@ -138,7 +154,7 @@ public:
     const int count =
         inverter_.begin_period(modulated.duty, config_.v_bus_v, kControlPeriod);
     const float h = inverter_.step_length_s();
-    const auto poles = static_cast<float>(nominal_spec().pole_pairs);
+    const auto poles = static_cast<float>(config_.spec.pole_pairs);
     for (int k = 0; k < count; ++k) {
       const core::Ab<float> v = inverter_.step(plant_.current_uvw());
       plant_.set_voltage_dq(core::park(v, poles * plant_.theta_mech_rad()));

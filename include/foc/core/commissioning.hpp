@@ -403,6 +403,204 @@ class FluxEstimator final {
 };
 
 /**
+ * @brief [en] Recovers one current channel's **offset** without a reference and
+ * its **gain** with one. [zh]
+ * 不需要基准就能得到一条电流通道的**零漂**，有基准才能得到它的**增益**。
+ *
+ *        [en] Why the two are not symmetric, and why that is the whole point.
+ * An offset has a free reference: command zero current, and whatever a channel
+ * reads *is* its offset, because the true value is known to be zero. A gain has
+ * none -- `reading = gain*truth + offset` with `truth` unknown is underdetermined
+ * at any current, so a gain needs an external truth (a clamp meter, a series
+ * shunt, or a second channel that has already been calibrated). The estimator
+ * therefore reports the two separately and refuses the one it cannot support,
+ * rather than fitting a slope to noise and calling it a gain. [zh]
+ * 为什么两者不对称，以及为什么这正是要点。零漂有一个免费的基准：命令零电流，通道读到的
+ * **就是**它的零漂，因为真值已知为零。增益没有：`reading = gain·truth + offset` 而
+ * `truth` 未知时，在**任何**电流上都是欠定的，所以增益需要一个外部真值（钳形表、串联
+ * 分流器，或另一条已经校正过的通道）。于是估计器把两者分开报，并且拒绝它支持不了的那个，
+ * 而不是拿噪声拟合一条斜率再叫它增益。
+ *
+ * @note [en] The three-wire constraint is a diagnostic, not a calibration. The
+ * true phase currents sum to zero, so the **readings** sum to the sum of the
+ * offsets: `sum(offset)` is measurable with no reference at all. But it is one
+ * equation for three unknowns -- it can tell you that something is wrong, and
+ * not which phase is wrong. Splitting it needs the per-channel `add_zero()`.
+ *       [zh] 三线约束是**诊断**，不是标定。真实相电流之和为零，所以**读数**之和就是
+ * 零漂之和：`Σoffset` 完全不需要基准就能测出来。但那是三个未知数的一个方程——它能告诉你
+ * "有问题"，不能告诉你"哪一相"。要拆开就得用逐通道的 `add_zero()`。
+ *
+ * @context [en] Commissioning, first, before any angle alignment: an offset
+ * corrupts the alignment ([zh] 整定阶段，**最先做**，在任何角度对齐之前：零漂会污染
+ * 对齐全过程).
+ * @since 0.1.0
+ * @exporter
+ */
+class CurrentSenseCalibrator final {
+  public:
+    /**
+     * @brief [en] What the fit has to refuse. [zh] 拟合必须拒绝什么。
+     * @since 0.1.0
+     */
+    struct Config final {
+        float span_min_a;        ///< [en] the reference must swing this far for a gain,
+                                 ///< A; 0 disables. [zh] 求增益时基准至少要摆动这么远，A；
+                                 ///< 0 关闭。
+        float zero_spread_max_a; ///< [en] the zero-current readings may differ by
+                                 ///< this much, A; 0 disables. [zh] 零电流读数之间
+                                 ///< 最多允许差这么多，A；0 关闭。
+    };
+
+    /**
+     * @brief [en] What was measured. [zh] 量到了什么。
+     * @since 0.1.0
+     */
+    struct Result final {
+        float gain;          ///< [en] reading = gain*truth + offset. [zh]
+                             ///< 读数 = gain·真值 + 零漂。
+        float offset_a;      ///< [en] the fitted intercept, A. [zh] 拟合截距，A。
+        float residual_a;    ///< [en] rms of what the line could not explain, A.
+                             ///< [zh] 直线解释不掉的部分的均方根，A。
+        float zero_offset_a; ///< [en] mean reading of the zero-current samples,
+                             ///< A. [zh] 零电流样本的平均读数，A。
+        float zero_spread_a; ///< [en] max minus min of those samples, A. [zh]
+                             ///< 那些样本的极差，A。
+        bool gain_valid;     ///< [en] enough pairs spread far enough. [zh]
+                             ///< 样本对够、跨度够。
+        bool offset_valid;   ///< [en] enough zero-current samples, tightly
+                             ///< clustered. [zh] 零电流样本够、够集中。
+    };
+
+    /// [en] Fewer pairs than this and the slope is noise. [zh]
+    /// 样本对少于这个时斜率就是噪声。
+    static constexpr int kMinPairs = 6;
+
+    /// [en] Fewer zero-current samples than this and the mean is noise. [zh]
+    /// 零电流样本少于这个时均值就是噪声。
+    static constexpr int kMinZeroSamples = 8;
+
+    /// [en] Reference span (max/min) the gain fit needs. [zh]
+    /// 求增益所需的基准跨度（最大/最小）。
+    static constexpr float kMinSpanRatio = 2.0F;
+
+    explicit CurrentSenseCalibrator(const Config& config) noexcept : config_(config) {}
+
+    /**
+     * @brief [en] Feed a reading whose true value is known to be zero.
+     *        [zh] 送入一个真值已知为零的读数。
+     * @param reading_a [en] what the channel reported, A. [zh] 通道报出的值，A。
+     * @return [en] true if the sample was used. [zh] 该采样是否被采用。
+     * @since 0.1.0
+     */
+    auto add_zero(float reading_a) noexcept -> bool {
+        if (!std::isfinite(reading_a)) {
+            return false;
+        }
+        sum_zero_ = static_cast<float>(sum_zero_ + reading_a);
+        lowest_zero_ = ((zero_samples_ == 0) || (reading_a < lowest_zero_)) ? reading_a : lowest_zero_;
+        highest_zero_ = ((zero_samples_ == 0) || (reading_a > highest_zero_)) ? reading_a : highest_zero_;
+        ++zero_samples_;
+        return true;
+    }
+
+    /**
+     * @brief [en] Feed a reading together with an external reference.
+     *        [zh] 送入一个读数以及一个外部基准。
+     * @param reading_a [en] what the channel reported, A. [zh] 通道报出的值，A。
+     * @param reference_a [en] the true current, A -- from a clamp meter, a
+     * series shunt or an already-calibrated channel. [zh] 真实电流，A——来自钳形
+     * 表、串联分流器或已校正的通道。
+     * @return [en] true if the sample was used. [zh] 该采样是否被采用。
+     * @since 0.1.0
+     */
+    auto add(float reading_a, float reference_a) noexcept -> bool {
+        if (!std::isfinite(reading_a) || !std::isfinite(reference_a)) {
+            return false;
+        }
+        const float magnitude = std::fabs(reference_a);
+        sum_r_ = static_cast<float>(sum_r_ + reference_a);
+        sum_y_ = static_cast<float>(sum_y_ + reading_a);
+        sum_rr_ = static_cast<float>(sum_rr_ + (reference_a * reference_a));
+        sum_ry_ = static_cast<float>(sum_ry_ + (reference_a * reading_a));
+        sum_yy_ = static_cast<float>(sum_yy_ + (reading_a * reading_a));
+        lowest_r_ = ((pairs_ == 0) || (magnitude < lowest_r_)) ? magnitude : lowest_r_;
+        highest_r_ = ((pairs_ == 0) || (magnitude > highest_r_)) ? magnitude : highest_r_;
+        ++pairs_;
+        return true;
+    }
+
+    /// [en] Pairs actually used. [zh] 实际采用的样本对数。
+    [[nodiscard]] auto pairs() const noexcept -> int { return pairs_; }
+
+    /// [en] Zero-current samples actually used. [zh] 实际采用的零电流样本数。
+    [[nodiscard]] auto zero_samples() const noexcept -> int { return zero_samples_; }
+
+    /**
+     * @brief [en] Offset and gain, each with its own validity. [zh]
+     * 零漂与增益，各自带自己的有效性。
+     * @since 0.1.0
+     */
+    [[nodiscard]] auto solve() const noexcept -> Result {
+        Result result{1.0F, 0.0F, 0.0F, 0.0F, 0.0F, false, false};
+
+        if (zero_samples_ >= kMinZeroSamples) {
+            result.zero_offset_a = sum_zero_ / static_cast<float>(zero_samples_);
+            result.zero_spread_a = static_cast<float>(highest_zero_ - lowest_zero_);
+            const bool tight =
+                !(config_.zero_spread_max_a > 0.0F) || (result.zero_spread_a <= config_.zero_spread_max_a);
+            result.offset_valid = tight;
+        }
+
+        if (pairs_ < kMinPairs) {
+            return result;
+        }
+        const float n = static_cast<float>(pairs_);
+        const float determinant = (n * sum_rr_) - (sum_r_ * sum_r_);
+        if (!(determinant > (kMinCondition * n * sum_rr_))) {
+            return result;
+        }
+        if ((lowest_r_ > 0.0F) && ((highest_r_ / lowest_r_) < kMinSpanRatio)) {
+            return result;
+        }
+        const float span = static_cast<float>(highest_r_ - lowest_r_);
+        if ((config_.span_min_a > 0.0F) && (span < config_.span_min_a)) {
+            return result;
+        }
+        const float slope = (((n * sum_ry_) - (sum_r_ * sum_y_)) / determinant);
+        const float intercept = (((sum_y_ * sum_rr_) - (sum_r_ * sum_ry_)) / determinant);
+        if (!(slope > 0.0F)) {
+            return result;
+        }
+        const float sse = (sum_yy_ - (2.0F * slope * sum_ry_)) - (2.0F * intercept * sum_y_) +
+                          (slope * slope * sum_rr_) + (2.0F * slope * intercept * sum_r_) + (n * intercept * intercept);
+        result.gain = slope;
+        result.offset_a = intercept;
+        result.residual_a = std::sqrt((sse > 0.0F) ? (sse / n) : 0.0F);
+        result.gain_valid = true;
+        return result;
+    }
+
+  private:
+    /// [en] Same conditioning floor as the other fits in this header. [zh]
+    /// 与本文件其它拟合相同的条件数下限。
+    static constexpr float kMinCondition = 1.0e-3F;
+
+    Config config_{};
+    int pairs_{0};
+    float sum_r_{0.0F};
+    float sum_y_{0.0F};
+    float sum_rr_{0.0F};
+    float sum_ry_{0.0F};
+    float sum_yy_{0.0F};
+    float lowest_r_{0.0F};
+    float highest_r_{0.0F};
+    int zero_samples_{0};
+    float sum_zero_{0.0F};
+    float lowest_zero_{0.0F};
+    float highest_zero_{0.0F};
+};
+
+/**
  * @brief [en] Recovers an incremental inductance from the **flux** a voltage
  * step delivers, `L = integral(v - rs*i)/delta_i`, instead of from a
  * differentiated current. [zh]
