@@ -180,6 +180,36 @@ template <typename T> inline constexpr bool has_seed_flux_v = has_seed_flux<T>::
 
 
 /**
+ * @brief [en] `T` (an observer) asks for a voltage of its own: a high-frequency injection that Motor
+ *        has to add to the command on its behalf.
+ *        [zh] `T`（观测器）要自己的一份电压：Motor 需代它把高频注入叠加到指令上。
+ *
+ * @note [en] Detection is capability, not configuration. An observer that needs no injection is
+ *       simply a type that does not have the method, so there is no flag to leave in the wrong
+ *       state -- the same rule the modulator slot follows for `is_modulator_v`.
+ *       [zh] 探测即能力，不是配置。不需要注入的观测器就是没有这个方法的类型，于是不存在会被设错的
+ *       开关——与调制器槽位对 `is_modulator_v` 遵循同一条规则。
+ * @since 0.1.0
+ * @exporter
+ */
+template <typename T, typename = void> struct has_injection : std::false_type {};
+
+template <typename T>
+struct has_injection<T, std::void_t<decltype(std::declval<const T&>().injection_ab())>>
+    : std::bool_constant<std::is_same_v<decltype(std::declval<const T&>().injection_ab()), Ab<float>> &&
+                         noexcept(std::declval<const T&>().injection_ab())> {};
+
+
+/**
+ * @brief [en] Convenience variable template for the injection hook.
+ *        [zh] 注入钩子的便捷变量模板。
+ * @since 0.1.0
+ * @exporter
+ */
+template <typename T> inline constexpr bool has_injection_v = has_injection<T>::value;
+
+
+/**
  * @brief [en] `T` satisfies the observer policy contract (see observer_policy.hpp): it must expose
  *        `update(Ab<float>, Ab<float>, float) noexcept -> ObsState`.
  *        [zh] `T` 满足观测器策略契约（见 observer_policy.hpp）：必须提供

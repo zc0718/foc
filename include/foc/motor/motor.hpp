@@ -730,7 +730,26 @@ auto Motor<Observer, Modulator, Controller, HalPolicy, RefGenerator, FeedForward
     const float v_d = policies_.current_d.step(i_ref.d, i_dq.d, dt_s) + v_ff.d;
     const float v_q = policies_.current_q.step(i_ref.q, i_dq.q, dt_s) + v_ff.q;
     const Dq<float> v_dq{v_d, v_q};
-    const Ab<float> v_ab = core::inv_park(v_dq, theta_e);
+    Ab<float> v_ab = core::inv_park(v_dq, theta_e);
+
+    // An observer that injects a carrier owns the voltage it injects: adding it here, as the last
+    // thing before modulation, is the only place where "what is applied this period" and "what the
+    // observer will demodulate next period" are guaranteed to be the same number.
+    // 注入载波的观测器拥有它注入的那份电压：在这里、调制前的最后一步叠加，是唯一能保证“本周期实际施加
+    // 的量”与“观测器下一周期要解调的量”是同一个数字的地方。
+    //
+    // Gated on the same condition that gates the observer itself. While aligning the angle is forced
+    // and update() is not called, so the injection phase would stop advancing and a frozen carrier
+    // would be a DC bias on the alignment current.
+    // 与观测器本身同一个门控条件。对齐期间角度被强制、不调用 update()，注入相位就不再推进，冻结的载波
+    // 会变成对齐电流上的直流偏置。
+    if constexpr (core::concepts::has_injection_v<Observer>) {
+        if (!aligning) {
+            const Ab<float> injected = policies_.observer.injection_ab();
+            v_ab = Ab<float>{static_cast<float>(v_ab.alpha + injected.alpha),
+                             static_cast<float>(v_ab.beta + injected.beta)};
+        }
+    }
     // The modulator is told what it is producing *and* what the phases are carrying: a dead-time
     // compensator in front of it needs the second half, and a plain SVPWM ignores it.
     // 调制器同时被告知"要产生什么"与"各相在流什么"：它前面的死区补偿器需要后半部分，而纯 SVPWM 会忽略。
