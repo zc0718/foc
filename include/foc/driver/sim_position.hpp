@@ -41,8 +41,8 @@ class SimPosition final : public hal::PositionSensor {
     void set_velocity_rad_s(float velocity_rad_s) noexcept;
 
     /**
-     * @brief [en] Mechanical angle in rad, normalised to [0, 2*pi).
-     *        [zh] 机械角度，rad，归一化到 [0, 2π)。
+     * @brief [en] Mechanical angle in rad, normalised to [0, 2*pi), mounting offset removed.
+     *        [zh] 机械角度，rad，归一化到 [0, 2π)，已消除安装偏置。
      * @since 0.1.0
      */
     auto angle_mech_rad() noexcept -> float override;
@@ -68,9 +68,31 @@ class SimPosition final : public hal::PositionSensor {
      */
     void set_sensor_present(bool present) noexcept;
 
+    /**
+     * @brief [en] Set the mounting offset the sensor subtracts from its readings.
+     *        [zh] 设置传感器从读数中减去的安装偏置。
+     *
+     * @param offset_rad [en] offset in rad; normalised to [0, 2*pi) on write.
+     *                   [zh] 偏置，rad；写入时归一化到 [0, 2π)。
+     * @note [en] This is the hook `Motor` writes when an alignment sequence finishes, so the SIL
+     *       leg can exercise the same code path a real encoder driver would.
+     *       [zh] 对齐流程结束时 `Motor` 写的就是这个钩子，于是 SIL 走的是真实编码器驱动会走的同一条
+     *       代码路径。
+     * @since 0.1.0
+     */
+    void set_offset_mech_rad(float offset_rad) noexcept;
+
+    /**
+     * @brief [en] The offset currently subtracted from angle_mech_rad().
+     *        [zh] 当前从 angle_mech_rad() 中减去的偏置。
+     * @since 0.1.0
+     */
+    [[nodiscard]] auto mech_offset_rad() const noexcept -> float;
+
   private:
     float angle_rad_{0.0F};
     float velocity_rad_s_{std::numeric_limits<float>::quiet_NaN()};
+    float offset_rad_{0.0F};
     bool sensor_present_{true};
 };
 

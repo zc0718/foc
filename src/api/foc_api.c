@@ -23,6 +23,20 @@ foc_err_t foc_motor_create(const foc_motor_params_t *params, foc_motor_t *out) {
     return foc_bridge_create(params, out);
 }
 
+foc_err_t foc_motor_create_ex(const foc_motor_params_t *params, const foc_motor_setup_t *setup, foc_motor_t *out) {
+    if ((params == NULL) || (out == NULL)) {
+        return FOC_ERR_PARAM;
+    }
+    return foc_bridge_create_ex(params, setup, out);
+}
+
+foc_err_t foc_motor_get_setup(foc_motor_t motor, foc_motor_setup_t *out) {
+    if ((motor == NULL) || (out == NULL)) {
+        return FOC_ERR_PARAM;
+    }
+    return foc_bridge_get_setup(motor, out);
+}
+
 foc_err_t foc_motor_destroy(foc_motor_t motor) {
     if (motor == NULL) {
         return FOC_ERR_PARAM;
@@ -42,6 +56,13 @@ foc_err_t foc_motor_disable(foc_motor_t motor) {
         return FOC_ERR_PARAM;
     }
     return foc_bridge_disable(motor);
+}
+
+foc_err_t foc_motor_clear_fault(foc_motor_t motor) {
+    if (motor == NULL) {
+        return FOC_ERR_PARAM;
+    }
+    return foc_bridge_clear_fault(motor);
 }
 
 foc_err_t foc_set_speed(foc_motor_t motor, float rad_per_s) {
@@ -70,6 +91,34 @@ foc_err_t foc_set_torque_f64(foc_motor_t motor, double iq_a) {
         return FOC_ERR_PARAM;
     }
     return foc_bridge_set_torque(motor, (float)iq_a);
+}
+
+foc_err_t foc_set_position(foc_motor_t motor, float position_rad) {
+    if ((motor == NULL) || !isfinite(position_rad)) {
+        return FOC_ERR_PARAM;
+    }
+    return foc_bridge_set_position(motor, position_rad);
+}
+
+foc_err_t foc_set_position_f64(foc_motor_t motor, double position_rad) {
+    if ((motor == NULL) || !isfinite(position_rad)) {
+        return FOC_ERR_PARAM;
+    }
+    return foc_bridge_set_position(motor, (float)position_rad);
+}
+
+foc_err_t foc_set_command(foc_motor_t motor, const foc_motor_command_t *command) {
+    if ((motor == NULL) || (command == NULL)) {
+        return FOC_ERR_PARAM;
+    }
+    return foc_bridge_set_command(motor, command);
+}
+
+foc_err_t foc_motor_get_status(foc_motor_t motor, foc_motor_status_t *out) {
+    if ((motor == NULL) || (out == NULL)) {
+        return FOC_ERR_PARAM;
+    }
+    return foc_bridge_get_status(motor, out);
 }
 
 foc_err_t foc_tick(foc_motor_t motor, float dt_s) {

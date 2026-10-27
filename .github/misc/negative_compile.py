@@ -160,6 +160,49 @@ class WrongObserver {
 };
 """,
     },
+    {
+        "name": "reference_generator_missing_generate",
+        "header": "foc/core/reference.hpp",
+        "trait": "foc::core::concepts::is_reference_generator_v",
+        "type": "FakeReference",
+        "member": "generate",
+        "must_fail": True,
+        "body": """
+class FakeReference {
+  public:
+    // generate() is missing on purpose
+};
+""",
+    },
+    {
+        "name": "feedforward_missing_generate",
+        "header": "foc/core/feedforward.hpp",
+        "trait": "foc::core::concepts::is_feedforward_v",
+        "type": "FakeFeedforward",
+        "member": "generate",
+        "must_fail": True,
+        "body": """
+class FakeFeedforward {
+  public:
+    // generate() is missing on purpose
+};
+""",
+    },
+    {
+        "name": "controller_missing_reset",
+        "header": "foc/core/position.hpp",
+        "trait": "foc::core::concepts::is_controller_v",
+        "type": "FakeController",
+        "member": "reset",
+        "must_fail": True,
+        "body": """
+class FakeController {
+  public:
+    auto step(float, float, float) noexcept -> float { return 0.0F; }
+    // reset() is missing on purpose
+};
+""",
+    },
     # Positive controls: the same fixtures, complete. They must compile.
     {
         "name": "control_pwm_conforms",
@@ -195,6 +238,127 @@ class GoodObserver {
 };
 """,
     },
+    {
+        "name": "control_reference_conforms",
+        "header": "foc/core/reference.hpp",
+        "trait": "foc::core::concepts::is_reference_generator_v",
+        "type": "GoodReference",
+        "member": "generate",
+        "must_fail": False,
+        "body": """
+class GoodReference {
+  public:
+    auto generate(const foc::core::ReferenceInput& in) noexcept -> foc::core::Dq<float> {
+        return foc::core::Dq<float>{0.0F, in.iq_command_a};
+    }
+};
+""",
+    },
+    {
+        "name": "control_feedforward_conforms",
+        "header": "foc/core/feedforward.hpp",
+        "trait": "foc::core::concepts::is_feedforward_v",
+        "type": "GoodFeedforward",
+        "member": "generate",
+        "must_fail": False,
+        "body": """
+class GoodFeedforward {
+  public:
+    auto generate(const foc::core::FeedforwardInput&) noexcept -> foc::core::Dq<float> {
+        return foc::core::Dq<float>{};
+    }
+};
+""",
+    },
+    {
+        "name": "position_control_with_three_arg_step",
+        "header": "foc/core/position.hpp",
+        "trait": "foc::core::concepts::is_position_control_v",
+        "type": "OldPositionController",
+        "member": "step",
+        "must_fail": True,
+        "body": """
+class OldPositionController {
+  public:
+    // The pre-widening shape: a setpoint, a measurement, a step -- and no room for the move's own
+    // limits. It must not be accepted silently, because a position slot that ignores per-move
+    // limits would look configured and behave unconstrained.
+    // 加宽之前的形状：给定、实测、步长——没有位置留给这次运动自己的限制。它不得被静默接受，
+    // 因为忽略按次限制的位置槽位会"看起来配置好了"，实际行为却毫无约束。
+    auto step(float, float, float) noexcept -> float { return 0.0F; }
+    void reset() noexcept {}
+};
+""",
+    },
+    {
+        "name": "control_position_control_conforms",
+        "header": "foc/core/position.hpp",
+        "trait": "foc::core::concepts::is_position_control_v",
+        "type": "GoodPositionController",
+        "member": "step",
+        "must_fail": False,
+        "body": """
+class GoodPositionController {
+  public:
+    auto step(const foc::core::PositionInput&, float, float) noexcept -> float { return 0.0F; }
+    void reset() noexcept {}
+};
+""",
+    },
+    {
+        "name": "aligner_missing_step",
+        "header": "foc/core/alignment.hpp",
+        "trait": "foc::core::concepts::is_aligner_v",
+        "type": "FakeAligner",
+        "member": "step",
+        "must_fail": True,
+        "body": """
+class FakeAligner {
+  public:
+    auto validate() const noexcept -> foc::ErrorCode { return foc::ErrorCode::Ok; }
+    auto begin(std::uint32_t) noexcept -> bool { return true; }
+    void reset() noexcept {}
+    // step() is missing on purpose
+};
+""",
+    },
+    {
+        "name": "aligner_wrong_step_return_type",
+        "header": "foc/core/alignment.hpp",
+        "trait": "foc::core::concepts::is_aligner_v",
+        "type": "WrongAligner",
+        "member": "step",
+        "must_fail": True,
+        "body": """
+class WrongAligner {
+  public:
+    auto validate() const noexcept -> foc::ErrorCode { return foc::ErrorCode::Ok; }
+    auto begin(std::uint32_t) noexcept -> bool { return true; }
+    // Returns the current only: no forced angle, so the rotor cannot be aligned.
+    auto step(float, float) noexcept -> float { return 0.0F; }
+    void reset() noexcept {}
+};
+""",
+    },
+    {
+        "name": "control_aligner_conforms",
+        "header": "foc/core/alignment.hpp",
+        "trait": "foc::core::concepts::is_aligner_v",
+        "type": "GoodAligner",
+        "member": "step",
+        "must_fail": False,
+        "body": """
+class GoodAligner {
+  public:
+    auto validate() const noexcept -> foc::ErrorCode { return foc::ErrorCode::Ok; }
+    auto begin(std::uint32_t) noexcept -> bool { return true; }
+    auto step(float, float) noexcept -> foc::core::AlignOutput {
+        return foc::core::AlignOutput{0.0F, 0.0F, false, false};
+    }
+    void reset() noexcept {}
+};
+""",
+    },
 ]
 
 # A probe is a direct use of the member under test. The trait detects the missing member
@@ -217,6 +381,30 @@ PROBES = {
     "control_observer_conforms":
         "void probe(GoodObserver& p) {{ foc::core::ObsState s = p.update(foc::core::Ab<float>{{}}, "
         "foc::core::Ab<float>{{}}, 0.0F); (void)s; }}",
+    "reference_generator_missing_generate":
+        "void probe(FakeReference& p) {{ foc::core::Dq<float> r = p.generate(foc::core::ReferenceInput{{}}); "
+        "(void)r; }}",
+    "control_reference_conforms":
+        "void probe(GoodReference& p) {{ foc::core::Dq<float> r = p.generate(foc::core::ReferenceInput{{}}); "
+        "(void)r; }}",
+    "feedforward_missing_generate":
+        "void probe(FakeFeedforward& p) {{ foc::core::Dq<float> r = p.generate(foc::core::FeedforwardInput{{}}); "
+        "(void)r; }}",
+    "control_feedforward_conforms":
+        "void probe(GoodFeedforward& p) {{ foc::core::Dq<float> r = p.generate(foc::core::FeedforwardInput{{}}); "
+        "(void)r; }}",
+    "position_control_with_three_arg_step":
+        "void probe(OldPositionController& p) {{ float v = p.step(foc::core::PositionInput{{}}, 0.0F, 0.0F); "
+        "(void)v; }}",
+    "control_position_control_conforms":
+        "void probe(GoodPositionController& p) {{ float v = p.step(foc::core::PositionInput{{}}, 0.0F, 0.0F); "
+        "(void)v; }}",
+    "aligner_missing_step": "void probe(FakeAligner& p) {{ (void)p.step(0.0F, 0.0F); }}",
+    "aligner_wrong_step_return_type":
+        "void probe(WrongAligner& p) {{ foc::core::AlignOutput s = p.step(0.0F, 0.0F); (void)s; }}",
+    "control_aligner_conforms":
+        "void probe(GoodAligner& p) {{ foc::core::AlignOutput s = p.step(0.0F, 0.0F); (void)s; }}",
+    "controller_missing_reset": "void probe(FakeController& p) {{ p.reset(); }}",
 }
 
 

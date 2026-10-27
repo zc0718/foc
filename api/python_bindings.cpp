@@ -62,6 +62,8 @@ auto error_name(foc_err_t code) -> const char * {
         return "FOC_ERR_STATE";
     case FOC_ERR_NOT_IMPL:
         return "FOC_ERR_NOT_IMPL";
+    case FOC_ERR_FAULT:
+        return "FOC_ERR_FAULT";
     }
     return "FOC_ERR_UNKNOWN";
 }
@@ -89,6 +91,18 @@ public:
         check(foc_motor_create(&params, &handle_), "foc_motor_create");
     }
 
+    Motor(const foc_motor_params_t &params, const foc_motor_setup_t &setup) {
+        check(foc_motor_create_ex(&params, &setup, &handle_), "foc_motor_create_ex");
+    }
+
+    /// [en] The setup the library actually runs with, defaults included.
+    /// [zh] 库实际生效的设置（含默认值）。
+    [[nodiscard]] auto setup() const -> foc_motor_setup_t {
+        foc_motor_setup_t applied{};
+        check(foc_motor_get_setup(handle_, &applied), "foc_motor_get_setup");
+        return applied;
+    }
+
     ~Motor() { close(); }
 
     Motor(const Motor &) = delete;
@@ -109,9 +123,34 @@ public:
 
     void disable() { check(foc_motor_disable(handle_), "foc_motor_disable"); }
 
+    void clear_fault() { check(foc_motor_clear_fault(handle_), "foc_motor_clear_fault"); }
+
     void set_speed(double rad_per_s) { check(foc_set_speed_f64(handle_, rad_per_s), "foc_set_speed"); }
 
     void set_torque(double iq_a) { check(foc_set_torque_f64(handle_, iq_a), "foc_set_torque"); }
+
+    void set_position(double position_rad) {
+        check(foc_set_position_f64(handle_, position_rad), "foc_set_position");
+    }
+
+    void set_command(const foc_motor_command_t &command) {
+        check(foc_set_command(handle_, &command), "foc_set_command");
+    }
+
+    [[nodiscard]] auto status() const -> py::dict {
+        foc_motor_status_t raw{};
+        raw.struct_size = sizeof(foc_motor_status_t);
+        check(foc_motor_get_status(handle_, &raw), "foc_motor_get_status");
+        py::dict out;
+        out["mode"] = py::cast(static_cast<foc_motor_state_t>(raw.mode_state));
+        out["error"] = py::cast(static_cast<foc_err_t>(raw.error));
+        out["align_state"] = py::cast(static_cast<foc_align_state_t>(raw.align_state));
+        out["align_failure"] = py::cast(static_cast<foc_align_failure_t>(raw.align_failure));
+        out["align_offset_rad"] = raw.align_offset_rad;
+        out["align_spread_rad"] = raw.align_spread_rad;
+        out["max_period_us"] = raw.max_period_us;
+        return out;
+    }
 
     void tick(double dt_s) { check(foc_tick(handle_, static_cast<float>(dt_s)), "foc_tick"); }
 
@@ -169,7 +208,34 @@ PYBIND11_MODULE(foc_python, m) {
         .value("PARAM", FOC_ERR_PARAM)
         .value("NO_RESOURCE", FOC_ERR_NO_RESOURCE)
         .value("STATE", FOC_ERR_STATE)
-        .value("NOT_IMPL", FOC_ERR_NOT_IMPL);
+        .value("NOT_IMPL", FOC_ERR_NOT_IMPL)
+        .value("FAULT", FOC_ERR_FAULT);
+
+    py::enum_<foc_motor_state_t>(m, "MotorState",
+                                 "[en] Mode state, mirrors foc::core::MotorState.\n"
+                                 "[zh] 运行模式状态，与 foc::core::MotorState 对应。")
+        .value("IDLE", FOC_MOTOR_IDLE)
+        .value("ALIGN", FOC_MOTOR_ALIGN)
+        .value("RUN", FOC_MOTOR_RUN)
+        .value("FAULT", FOC_MOTOR_FAULT);
+
+    py::enum_<foc_align_state_t>(m, "AlignState",
+                                 "[en] Alignment phase, mirrors foc::core::AlignState.\n"
+                                 "[zh] 对齐阶段，与 foc::core::AlignState 对应。")
+        .value("IDLE", FOC_ALIGN_IDLE)
+        .value("RAMP", FOC_ALIGN_RAMP)
+        .value("SETTLE", FOC_ALIGN_SETTLE)
+        .value("VERIFY", FOC_ALIGN_VERIFY)
+        .value("DONE", FOC_ALIGN_DONE)
+        .value("FAILED", FOC_ALIGN_FAILED);
+
+    py::enum_<foc_align_failure_t>(m, "AlignFailure",
+                                   "[en] Why an alignment was rejected, mirrors foc::core::AlignFailure.\n"
+                                   "[zh] 对齐被拒的原因，与 foc::core::AlignFailure 对应。")
+        .value("NONE", FOC_ALIGN_NO_FAILURE)
+        .value("NOT_CONFIGURED", FOC_ALIGN_NOT_CONFIGURED)
+        .value("NOT_SETTLED", FOC_ALIGN_NOT_SETTLED)
+        .value("DIRECTION_WRONG", FOC_ALIGN_DIRECTION_WRONG);
 
     const py::object foc_error = py::exception<FocError>(m, "FocError", PyExc_RuntimeError);
     g_foc_error_type = foc_error.ptr();
@@ -218,12 +284,113 @@ PYBIND11_MODULE(foc_python, m) {
                 .format(p.rs, p.ld, p.lq, p.kt, p.j, p.b, p.pole_pairs);
         });
 
+    py::class_<foc_motor_setup_t>(m, "MotorSetup",
+                                  "[en] Optional setup: every value the library would otherwise take from\n"
+                                  "its defaults. A field left at 0 keeps the default (except dead time and the\n"
+                                  "loop period, where 0 is a real value).\n"
+                                  "[zh] 可选设置：不填时库会自行取默认值的那些量。字段留 0 表示用默认值\n"
+                                  "（死区与环路周期除外，它们的 0 是真实取值）。")
+        .def(py::init([](float i_max_a, float pwm_freq_hz, float deadtime_ns, float v_bus_v,
+                         float current_bandwidth_rad_s, float speed_bandwidth_rad_s, float speed_loop_period_s,
+                         float position_bandwidth_rad_s, float velocity_limit_rad_s, float position_loop_period_s,
+                         float position_accel_limit_rad_s2,
+                         float align_current_a, float align_ramp_s, float align_hold_s, float align_tolerance_rad,
+                         float align_verify_s, float align_angle_e_rad) {
+                 foc_motor_setup_t setup{};
+                 setup.struct_size = sizeof(foc_motor_setup_t);
+                 setup.i_max_a = i_max_a;
+                 setup.pwm_freq_hz = pwm_freq_hz;
+                 setup.deadtime_ns = deadtime_ns;
+                 setup.v_bus_v = v_bus_v;
+                 setup.current_bandwidth_rad_s = current_bandwidth_rad_s;
+                 setup.speed_bandwidth_rad_s = speed_bandwidth_rad_s;
+                 setup.speed_loop_period_s = speed_loop_period_s;
+                 setup.position_bandwidth_rad_s = position_bandwidth_rad_s;
+                 setup.velocity_limit_rad_s = velocity_limit_rad_s;
+                 setup.position_loop_period_s = position_loop_period_s;
+                 setup.position_accel_limit_rad_s2 = position_accel_limit_rad_s2;
+                 setup.align_current_a = align_current_a;
+                 setup.align_ramp_s = align_ramp_s;
+                 setup.align_hold_s = align_hold_s;
+                 setup.align_tolerance_rad = align_tolerance_rad;
+                 setup.align_verify_s = align_verify_s;
+                 setup.align_angle_e_rad = align_angle_e_rad;
+                 return setup;
+             }),
+             py::arg("i_max_a") = 0.0F, py::arg("pwm_freq_hz") = 0.0F, py::arg("deadtime_ns") = 0.0F,
+             py::arg("v_bus_v") = 0.0F, py::arg("current_bandwidth_rad_s") = 0.0F,
+             py::arg("speed_bandwidth_rad_s") = 0.0F, py::arg("speed_loop_period_s") = 0.0F,
+             py::arg("position_bandwidth_rad_s") = 0.0F, py::arg("velocity_limit_rad_s") = 0.0F,
+             py::arg("position_loop_period_s") = 0.0F, py::arg("position_accel_limit_rad_s2") = 0.0F,
+             py::arg("align_current_a") = 0.0F,
+             py::arg("align_ramp_s") = 0.0F, py::arg("align_hold_s") = 0.0F,
+             py::arg("align_tolerance_rad") = 0.0F, py::arg("align_verify_s") = 0.0F,
+             py::arg("align_angle_e_rad") = 0.0F)
+        .def_readonly("struct_size", &foc_motor_setup_t::struct_size)
+        .def_readwrite("i_max_a", &foc_motor_setup_t::i_max_a)
+        .def_readwrite("pwm_freq_hz", &foc_motor_setup_t::pwm_freq_hz)
+        .def_readwrite("deadtime_ns", &foc_motor_setup_t::deadtime_ns)
+        .def_readwrite("v_bus_v", &foc_motor_setup_t::v_bus_v)
+        .def_readwrite("current_bandwidth_rad_s", &foc_motor_setup_t::current_bandwidth_rad_s)
+        .def_readwrite("speed_bandwidth_rad_s", &foc_motor_setup_t::speed_bandwidth_rad_s)
+        .def_readwrite("speed_loop_period_s", &foc_motor_setup_t::speed_loop_period_s)
+        .def_readwrite("position_bandwidth_rad_s", &foc_motor_setup_t::position_bandwidth_rad_s)
+        .def_readwrite("velocity_limit_rad_s", &foc_motor_setup_t::velocity_limit_rad_s)
+        .def_readwrite("position_loop_period_s", &foc_motor_setup_t::position_loop_period_s)
+        .def_readwrite("position_accel_limit_rad_s2", &foc_motor_setup_t::position_accel_limit_rad_s2)
+        .def_readwrite("align_current_a", &foc_motor_setup_t::align_current_a)
+        .def_readwrite("align_ramp_s", &foc_motor_setup_t::align_ramp_s)
+        .def_readwrite("align_hold_s", &foc_motor_setup_t::align_hold_s)
+        .def_readwrite("align_tolerance_rad", &foc_motor_setup_t::align_tolerance_rad)
+        .def_readwrite("align_verify_s", &foc_motor_setup_t::align_verify_s)
+        .def_readwrite("align_angle_e_rad", &foc_motor_setup_t::align_angle_e_rad)
+        .def("__repr__", [](const foc_motor_setup_t &s) {
+            return py::str("MotorSetup(i_max_a={}, pwm_freq_hz={}, deadtime_ns={}, v_bus_v={}, "
+                           "current_bandwidth_rad_s={}, speed_bandwidth_rad_s={}, speed_loop_period_s={}, "
+                           "position_bandwidth_rad_s={}, velocity_limit_rad_s={}, position_loop_period_s={}, "
+                           "align_current_a={}, align_hold_s={}, align_tolerance_rad={})")
+                .format(s.i_max_a, s.pwm_freq_hz, s.deadtime_ns, s.v_bus_v, s.current_bandwidth_rad_s,
+                        s.speed_bandwidth_rad_s, s.speed_loop_period_s, s.position_bandwidth_rad_s,
+                        s.velocity_limit_rad_s, s.position_loop_period_s, s.align_current_a, s.align_hold_s,
+                        s.align_tolerance_rad);
+        });
+
+    py::class_<foc_motor_command_t>(m, "MotorCommand",
+                                      "[en] One position move: target, per-move current ceiling, feedforward torque.\n"
+                                      "[zh] 一次位置运动：目标、本次运动的电流上限、前馈转矩。")
+        .def(py::init([](float position_rad, float max_current_a, float feedforward_current_a,
+                         float max_velocity_rad_s, float max_accel_rad_s2) {
+                 foc_motor_command_t command{};
+                 command.position_rad = position_rad;
+                 command.max_current_a = max_current_a;
+                 command.feedforward_current_a = feedforward_current_a;
+                 command.max_velocity_rad_s = max_velocity_rad_s;
+                 command.max_accel_rad_s2 = max_accel_rad_s2;
+                 return command;
+             }),
+             py::arg("position_rad") = 0.0F, py::arg("max_current_a") = 0.0F,
+             py::arg("feedforward_current_a") = 0.0F, py::arg("max_velocity_rad_s") = 0.0F,
+             py::arg("max_accel_rad_s2") = 0.0F)
+        .def_readwrite("position_rad", &foc_motor_command_t::position_rad)
+        .def_readwrite("max_current_a", &foc_motor_command_t::max_current_a)
+        .def_readwrite("feedforward_current_a", &foc_motor_command_t::feedforward_current_a)
+        .def_readwrite("max_velocity_rad_s", &foc_motor_command_t::max_velocity_rad_s)
+        .def_readwrite("max_accel_rad_s2", &foc_motor_command_t::max_accel_rad_s2)
+        .def("__repr__", [](const foc_motor_command_t &c) {
+            return py::str("MotorCommand(position_rad={}, max_current_a={}, feedforward_current_a={})")
+                .format(c.position_rad, c.max_current_a, c.feedforward_current_a);
+        });
+
     py::class_<Motor>(m, "Motor",
                        "[en] One motor instance. Use it as a context manager: the handle is destroyed on\n"
                        "exit. Every failure raises FocError instead of returning a code.\n"
                        "[zh] 一个电机实例。建议用 with 语句：退出时销毁句柄。任何失败都抛 FocError，\n"
                        "而不是返回错误码。")
         .def(py::init<const foc_motor_params_t &>(), py::arg("params"))
+        .def(py::init<const foc_motor_params_t &, const foc_motor_setup_t &>(), py::arg("params"),
+             py::arg("setup"))
+        .def("setup", &Motor::setup,
+             "[en] The setup actually in force (defaults included). [zh] 实际生效的设置（含默认值）。")
         .def_static("from_parts", &make_motor, py::arg("rs") = 0.5F, py::arg("ld") = 4e-4F, py::arg("lq") = 4e-4F,
                     py::arg("kt") = 0.05F, py::arg("j") = 1e-5F, py::arg("b") = 1e-6F,
                     py::arg("pole_pairs") = static_cast<std::uint8_t>(7),
@@ -231,10 +398,22 @@ PYBIND11_MODULE(foc_python, m) {
                     "[zh] 用数值构造参数并一次创建电机。")
         .def("enable", &Motor::enable, "[en] Enable the output stage. [zh] 使能输出级。")
         .def("disable", &Motor::disable, "[en] Disable the output stage. [zh] 关闭输出级。")
+        .def("clear_fault", &Motor::clear_fault,
+             "[en] Clear a latched fault (FOC_ERR_STATE if the motor was not faulted).\n"
+             "[zh] 清除锁存故障（不在故障态时抛 FOC_ERR_STATE）。")
         .def("set_speed", &Motor::set_speed, py::arg("rad_per_s"),
              "[en] Speed setpoint, mechanical rad/s. [zh] 速度给定，机械 rad/s。")
         .def("set_torque", &Motor::set_torque, py::arg("iq_a"),
              "[en] Torque setpoint as q-axis current, A. [zh] 转矩给定（q 轴电流），A。")
+        .def("set_position", &Motor::set_position, py::arg("position_rad"),
+             "[en] Position setpoint in the frame the sensor reports (i.e. after the alignment offset).\n"
+             "[zh] 位置给定，坐标系与传感器汇报的一致（即已扣除对齐偏置）。")
+        .def("set_command", &Motor::set_command, py::arg("command"),
+             "[en] A full move: target, per-move current ceiling, feedforward torque.\n"
+             "[zh] 一次完整运动：目标、本次电流上限、前馈转矩。")
+        .def("status", &Motor::status,
+             "[en] Mode, sticky error and the alignment result in one dict.\n"
+             "[zh] 一次读回模式、粘滞错误与对齐结果。")
         .def("tick", &Motor::tick, py::arg("dt_s"),
              "[en] Advance the control loop by one step. [zh] 推进一个控制步。")
         .def("telemetry", &Motor::telemetry,

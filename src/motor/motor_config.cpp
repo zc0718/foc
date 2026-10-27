@@ -55,4 +55,29 @@ auto speed_pi_config(const motor::MotorConfig& config, float bandwidth_rad_s) no
     return core::Pi::Config{kp, ki, -lim, lim, -integral_lim, integral_lim};
 }
 
+
+/**
+ * @brief [en] Implements feedforward_config(); the contract is documented on its declaration.
+ *        [zh] 实现 feedforward_config()；契约文档在对应的声明处。
+ * @attacher
+ * @since 0.1.0
+ */
+auto feedforward_config(const motor::MotorConfig& config) noexcept -> core::DecouplingFeedforward::Config {
+    return core::DecouplingFeedforward::Config{config.ld, config.lq, psi_f_wb(config),
+                                               core::DecouplingFeedforward::Terms::CrossAndBemf};
+}
+
+
+/**
+ * @brief [en] Implements position_p_config(); the contract is documented on its declaration.
+ *        [zh] 实现 position_p_config()；契约文档在对应的声明处。
+ * @attacher
+ * @since 0.1.0
+ */
+auto position_p_config(const motor::MotorConfig& config, float bandwidth_rad_s, float velocity_limit_rad_s,
+                       float accel_limit_rad_s2) noexcept -> core::PositionP::Config {
+    static_cast<void>(config); // the gains follow from the bandwidth alone; no nameplate term here
+    return core::PositionP::Config{bandwidth_rad_s, velocity_limit_rad_s, accel_limit_rad_s2};
+}
+
 } // namespace foc

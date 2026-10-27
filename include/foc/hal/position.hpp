@@ -22,8 +22,23 @@ class PositionSensor {
      * @brief [en] Mechanical rotor angle, already freed from mounting offset.
      *        [zh] 机械转子角度，已消除安装偏置。
      *
-     * @return [en] Angle in rad, normalised to [0, 2*pi). [zh] 角度，单位 rad，归一化到 [0, 2*pi)。
+     * @return [en] Angle in rad. A single-turn sensor may normalise to [0, 2*pi); a sensor that can
+     *         count turns must return a continuous angle instead, because position control cannot
+     *         recover turns it was never told about.
+     *         [zh] 角度，单位 rad。单圈传感器可以归一化到 [0, 2*pi)；能计圈数的传感器必须返回**连续**
+     *         角度，因为位置控制无法还原它没被告知的圈数。
      * @context [en] Current-loop ISR. [zh] 电流环 ISR。
+     * @note [en] An implementation may offer `set_offset_mech_rad(float)` and
+     *       `mech_offset_rad() const noexcept -> float` to own that correction itself; when both
+     *       exist, `Motor` writes the offset captured by the alignment routine into them. The pair
+     *       is optional on purpose -- a sensor whose offset is written elsewhere at boot simply
+     *       omits it, and the motor then leaves it untouched (detected by
+     *       `core::concepts::has_mech_offset_v`, never assumed).
+     *       [zh] 实现可以提供 `set_offset_mech_rad(float)` 与
+     *       `mech_offset_rad() const noexcept -> float` 来自己拥有这个校正；两者都存在时，
+     *       `Motor` 会把对齐流程捕获的偏置写进去。这一对故意做成可选——偏置在别处于启动时写入的
+     *       传感器直接不提供即可，电机也不会去动它（由 `core::concepts::has_mech_offset_v` 探测，
+     *       从不假设）。
      * @since 0.1.0
      */
     virtual auto angle_mech_rad() noexcept -> float = 0;
