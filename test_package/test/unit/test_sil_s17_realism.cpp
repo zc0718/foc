@@ -251,7 +251,12 @@ TEST(SilS17Realism, RightParametersFromTheStartAreEightTimesBetter) {
     std::printf("[S17] flux error at 140 C / 200 rad/s: %.4f rad believing Rs x%.2f, %.4f believing x%.2f\n",
                 static_cast<double>(with_wrong_belief), static_cast<double>(1.10F),
                 static_cast<double>(with_right_belief), static_cast<double>(belief));
-    EXPECT_LT(with_right_belief, 0.35F * with_wrong_belief) << "the parameters are the difference";
+    // A4: the assertion used to guard a factor of three while the prose claimed eight. Pinning a factor of
+    // five makes the recorded 7.8x a guarded claim instead of a sentence next to a weaker check.
+    // A4：这条断言原先只守住 3 倍，而正文说的是 8 倍。钉到 5 倍，记录里的 7.8 倍才是有守卫的断言，
+    // 而不是一句写在更弱检查旁边的话。
+    EXPECT_LT(with_right_belief, 0.20F * with_wrong_belief) << "the parameters are the difference";
+    EXPECT_LT(with_wrong_belief / with_right_belief, 12.0F) << "and not more than the recorded ~8x";
 }
 
 TEST(SilS17Realism, AnUpdateMidRunDoesNotUndoWhatTheIntegratorAlreadyAccumulated) {
