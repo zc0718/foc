@@ -3,6 +3,7 @@
 
 #include <cmath>
 
+#include <foc/core/deadtime.hpp>
 #include <foc/core/observer/nonlinear_flux_observer.hpp>
 #include <foc/core/svpwm.hpp>
 #include <foc/core/transforms.hpp>
@@ -43,6 +44,13 @@ struct SwitchingRigConfig final {
   float v_bus_v{24.0F}; ///< [en] DC link, V. [zh] 母线电压，V。
   float seconds{0.4F};  ///< [en] run length; the second half is measured. [zh]
                         ///< 运行时长；只量后半段。
+  /// [en] Dead-time volt-seconds to *compensate* for, V; 0 = no compensator in
+  /// the loop. [zh] 要**补偿**的死区伏秒，V；0 = 环内没有补偿器。
+  float compensate_v{0.0F};
+  /// [en] The fade width handed to the compensator, A; used only when
+  /// `compensate_v > 0`. [zh] 交给补偿器的淡出宽度，A；只在 `compensate_v > 0`
+  /// 时使用。
+  float i_fade_a{0.0F};
 };
 
 /**
@@ -64,6 +72,8 @@ public:
       : config_(config), plant_(nominal_plant_params()),
         inverter_(InverterConfig{20000.0F, config.t_dead_s, 0.0F,
                                  config.sub_per_switch}),
+        compensator_(core::DeadTimeCompensator<core::Svpwm>::Config{
+            config.compensate_v, 0.02F, config.i_fade_a}),
         steps_(static_cast<int>(config.seconds / kControlPeriod)) {
     if (config_.noise_a > 0.0F) {
       plant_.set_current_noise(config_.noise_a);
@@ -119,7 +129,12 @@ public:
     current_ = core::clarke(i_uvw);
 
     const core::ModulatorInput request{command_, config_.v_bus_v, i_uvw};
-    const core::SvpwmResult modulated = core::Svpwm::modulate(request);
+    // The compensator sits between the command and the legs when it is enabled;
+    // the observer is still handed `command()`, because with the loss
+    // compensated the delivered voltage *is* the command.
+    // 补偿器启用时坐在指令与桥臂之间；观测器拿到的仍是 `command()`，因为损失被
+    // 补掉后交付电压**就是**指令。
+    const core::SvpwmResult modulated = compensator_.modulate(request);
     const int count =
         inverter_.begin_period(modulated.duty, config_.v_bus_v, kControlPeriod);
     const float h = inverter_.step_length_s();
@@ -135,6 +150,7 @@ private:
   SwitchingRigConfig config_;
   PmsmPlant plant_;
   DiscreteInverter inverter_;
+  core::DeadTimeCompensator<core::Svpwm> compensator_;
   int steps_;
   float v_d_{0.0F};
   float v_q_{0.0F};
