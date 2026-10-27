@@ -85,6 +85,21 @@ inline auto wrap_full_turn(float angle) noexcept -> float {
  *       completes instead of being paid for forever. At full handover it is exactly zero.
  *       [zh] 注入按 `1 − 权重` 缩放，于是载波随交接完成而收掉，而不是永远付着这份代价。完全交接时恰为零。
  *
+ * @note [en] What the handover costs the high-speed half: while the carrier is being wound down it is
+ *       still being delivered, and a model-based observer cannot tell it from back-EMF. An open-loop flux
+ *       integrator keeps what it is given, so the crossing leaves it biased by roughly one carrier
+ *       period of volt-seconds -- measured 0.031 rad at 2 V / 2 kHz, against 0.033 predicted by
+ *       `inject_v / (2*pi*inject_hz*psi_f)`. Filtering the voltage handed to the high-speed observer
+ *       would remove it and cost far more: a pole low enough to matter at the carrier frequency lags the
+ *       fundamental by tens of degrees at speed. The usable answers are to size the carrier for the bias
+ *       you can afford, or to make the high-speed half a loop that tracks the flux instead of integrating
+ *       it open-loop.
+ *       [zh] 交接对高速那一半的代价：载波在收掉的过程中仍在送达，而基于模型的观测器分不清它与反电动势。
+ *       开环磁链积分器给什么留什么，因此穿越会给它留下约一个载波周期伏秒的偏差——实测 2 V / 2 kHz 下
+ *       0.031 rad，`inject_v / (2π·inject_hz·ψf)` 预测 0.033。给高速观测器的电压做滤波可以消掉它，代价
+ *       却更大：低到能在载波频率上起作用的极点，在高速时会把基频滞后几十度。可用的答案是按你能承受的
+ *       偏差去定容载波，或让高速那一半变成跟踪磁链的环而不是开环积分。
+ *
  * @context [en] Current-loop ISR after construction: noexcept, no allocation. [zh] 构造之后的电流环 ISR：
  *           noexcept、不分配。
  * @since 0.1.0

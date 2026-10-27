@@ -71,6 +71,20 @@ class HfiObserver final {
      *       [zh] 每个字段都是物理量。没有 `enabled` 开关：注入幅值 0 会被拒绝而不是当作“关闭”，
      *       因为一个静默无作为的观测器与一个坏掉的观测器无法区分。
      *
+     * @note [en] Sizing `inject_v`: an injected carrier is not free. Any *other* observer running
+     *       alongside this one -- a back-EMF flux integrator, say -- cannot tell the carrier from real
+     *       back-EMF, and whatever it leaves behind stays there because an integrator has no reset. The
+     *       residue is about one carrier period of volt-seconds, `inject_v / (2*pi*inject_hz)` in Wb,
+     *       which shows up as `inject_v / (2*pi*inject_hz*psi_f)` radians of angle bias. Measured on
+     *       S16: 2 V at 2 kHz on a 4.8 mWb rotor gave 0.031 rad against 0.033 predicted. So the
+     *       amplitude is a trade -- enough current to read the saliency, little enough that the bias it
+     *       leaves elsewhere is under what the application tolerates.
+     *       [zh] 定容 `inject_v`：注入载波不是免费的。与它并行的**任何其他**观测器——比如反电动势磁链
+     *       积分器——都分不清载波与真正的反电动势，而积分器没有复位，留下的东西就一直留着。残余量约为
+     *       一个载波周期的伏秒，即 `inject_v / (2π·inject_hz)`，单位 Wb；换算成角度偏差就是
+     *       `inject_v / (2π·inject_hz·ψf)` rad。S16 实测：4.8 mWb 转子上 2 V / 2 kHz 给出 0.031 rad，
+     *       预测 0.033。因此幅值是一笔交易——大到能读出凸极，小到它在别处留下的偏差在应用可接受范围内。
+     *
      * @note [en] Why `current_hp_hz` exists: the demodulator multiplies the measured current by the
      *       carrier, so *any* DC content in the current leaks through the follow-on filter at the
      *       carrier frequency and becomes a standing bias in the error signal. A load step at

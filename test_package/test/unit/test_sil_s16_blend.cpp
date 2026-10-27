@@ -70,9 +70,9 @@ auto wrap_pi_local(float angle) noexcept -> float {
     return angle;
 }
 
-auto hfi_config() -> core::HfiObserver::Config {
+auto hfi_config(float inject_v = 2.0F) -> core::HfiObserver::Config {
     core::HfiObserver::Config config{};
-    config.inject_v = 2.0F;
+    config.inject_v = inject_v;
     config.inject_hz = 2000.0F;
     config.current_hp_hz = 300.0F;
     config.demod_lpf_hz = 200.0F;
@@ -360,4 +360,58 @@ TEST(SilS16Blend, ARampThroughTheBandNeverLosesTheRotor) {
     static_cast<void>(mean_angle_error(blend, rig, 0.2F));
     EXPECT_TRUE(blend.locked());
     EXPECT_FLOAT_EQ(0.0F, blend.blend());
+}
+
+TEST(SilS16Blend, TheCarrierBiasesTheFluxObserverAndTheBiasScalesWithIt) {
+    // The number the previous commit could not explain, explained and pinned. At 400 rad/s in the band
+    // configuration the blend measured 0.042 rad where the flux observer alone measures 0.011 -- and
+    // forcing the weight to 1 gave 0.011, so the fusion was not the cause. It is the carrier: during the
+    // handover the injection is still being delivered, an open-loop flux integrator cannot tell it from
+    // back-EMF, and whatever it leaves behind stays there because the integrator has no reset.
+    //
+    // The expectation is one carrier period of volt-seconds: V_h / (2*pi*f_h*psi_f). For 2 V at 2 kHz on
+    // this machine that is 0.033 rad, and 0.031 was measured. It is linear in the injection amplitude and
+    // inversely proportional to its frequency -- which is the sizing rule, and the reason a smaller
+    // carrier comes out *better* than linear here: it also drops out of lock sooner, so less of it is
+    // ever delivered.
+    // 上一个提交里没能解释的数字，现在解释清楚并钉住。400 rad/s 带内融合实测 0.042，而单独反电动势是
+    // 0.011，且强制权重为 1 也是 0.011——所以原因不在融合，而在载波：交接期间注入仍在送达，开环磁链积分器
+    // 分不清它与反电动势，留下什么就会一直留着，因为积分器没有复位。
+    // 预期量级是一个载波周期的伏秒：V_h/(2π·f_h·ψf)。本机 2 V / 2 kHz 对应 0.033 rad，实测 0.031。
+    // 它与注入幅值成正比、与频率成反比——这就是定容规则；也解释了此处更小的载波之所以"好于线性"：
+    // 它也更快掉出锁定，实际送达的量更少。
+    constexpr float kPsi = kKt / (1.5F * static_cast<float>(kPoles));
+    constexpr float kOmega = 400.0F;
+
+    auto band_error = [](float inject_v) {
+        SpeedRig rig(kOmega);
+        Blend blend(core::HfiObserver{hfi_config(inject_v)}, core::BackEmfObserver{flux_config()}, blend_config());
+        blend.seed_flux(core::Ab<float>{rig.psi_f(), 0.0F});
+        return mean_angle_error(blend, rig, 0.4F);
+    };
+    // Weight 1 within a couple of steps, so almost no carrier is ever delivered: the baseline.
+    // 几步之内权重就到 1，几乎没有任何载波被送达：基线。
+    auto baseline_error = [](float inject_v) {
+        SpeedRig rig(kOmega);
+        Blend blend(core::HfiObserver{hfi_config(inject_v)}, core::BackEmfObserver{flux_config()},
+                    Blend::Config{0.0F, 1.0F, 20.0F});
+        blend.seed_flux(core::Ab<float>{rig.psi_f(), 0.0F});
+        return mean_angle_error(blend, rig, 0.4F);
+    };
+
+    const float excess_2v = band_error(2.0F) - baseline_error(2.0F);
+    const float excess_half = band_error(0.5F) - baseline_error(0.5F);
+    const float predicted = (2.0F / (2.0F * core::kPi<float> * 2000.0F)) / kPsi;
+
+    std::printf("[S16] carrier bias: excess %.4f rad at 2 V (one carrier period predicts %.4f), %.4f at 0.5 V\n",
+                static_cast<double>(excess_2v), static_cast<double>(predicted), static_cast<double>(excess_half));
+
+    // Within a factor of two of the volt-second estimate -- it is an order-of-magnitude model, not a
+    // calibrated formula, and the cancellation that leaves the residue depends on the parameter error.
+    // 在伏秒估计的两倍以内——它是量级模型而非标定公式，留下残余的抵消程度取决于参数误差。
+    EXPECT_GT(excess_2v, 0.5F * predicted);
+    EXPECT_LT(excess_2v, 2.0F * predicted);
+    // And it collapses when the carrier is smaller, which is what makes it the carrier's doing.
+    // 载波变小时它迅速消失，这正是"这是载波干的"的证据。
+    EXPECT_LT(excess_half, 0.5F * excess_2v);
 }
