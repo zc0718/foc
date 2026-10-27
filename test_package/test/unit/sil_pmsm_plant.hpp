@@ -112,6 +112,40 @@ class PmsmPlant final {
     void set_load_torque(float torque_nm) noexcept;
 
     /**
+     * @brief [en] Model d-axis magnetic saturation: `Ld(i_d) = Ld0 * (1 - depth * tanh(i_d / current_a))`.
+     *        Off by default (depth = 0), because a nameplate gives one `Ld` at rated current and
+     *        nothing about the shape of its collapse -- saturation is a modelling refinement, not a
+     *        datasheet number.
+     *        [zh] 模拟 d 轴磁饱和：`Ld(i_d) = Ld0·(1 - depth·tanh(i_d/current_a))`。默认关闭
+     *        （depth = 0），因为铭牌只给额定点的一个 `Ld`，不说它怎么塌——饱和是建模细化，不是铭牌数字。
+     *
+     * @param depth [en] fractional fall of the incremental inductance at `i_d >> current_a`, 0..1.
+     *              [zh] `i_d >> current_a` 时增量电感的下降比例，0..1。
+     * @param current_a [en] current at which saturation is substantially engaged, > 0.
+     *                  [zh] 饱和明显生效的电流，> 0。
+     * @note [en] Why this exists: the magnet polarity is invisible without it. `+i_d` reinforces the
+     *       rotor flux and `-i_d` opposes it, so the *same* volt-second pulse produces two different
+     *       current rises -- which is the only thing `MagnetPolarityTest` has to measure. The model is
+     *       a local fit near `+-current_a`, not a magnetics reference: the `dL/di` term in the voltage
+     *       equation is deliberately ignored.
+     *       [zh] 它存在的理由：没有它就看不出磁钢极性。`+i_d` 增强转子磁链、`-i_d` 削弱它，于是**相同**
+     *       的伏秒脉冲会产生两个不同的电流上升——这是 `MagnetPolarityTest` 唯一可测的现象。该模型是
+     *       `±current_a` 附近的局部拟合，不是磁学参考：电压方程里的 `dL/di` 项被故意忽略。
+     * @since 0.1.0
+     */
+    void set_d_axis_saturation(float depth, float current_a) noexcept;
+
+    /**
+     * @brief [en] Incremental d-axis inductance at a given d-axis current, H. Equals `params().ld`
+     *        when saturation is off.
+     *        [zh] 给定 d 轴电流下的增量 d 轴电感，H。饱和关闭时等于 `params().ld`。
+     *
+     * @param id_a [en] d-axis current in A to evaluate at. [zh] 求值点的 d 轴电流，A。
+     * @since 0.1.0
+     */
+    [[nodiscard]] auto effective_ld(float id_a) const noexcept -> float;
+
+    /**
      * @brief [en] Advance the plant by one fixed step with classical RK4.
      *        [zh] 用经典 RK4 推进一个固定步长。
      *
@@ -190,6 +224,8 @@ class PmsmPlant final {
     core::Dq<float> v_dq_;
     float load_nm_;
     float psi_f_;
+    float sat_depth_{0.0F};     ///< [en] fraction of Ld lost at heavy positive i_d; 0 = ideal. [zh] 强正 i_d 下 Ld 的损失比例；0 = 理想。
+    float sat_current_a_{1.0F}; ///< [en] current at which that loss is engaged. [zh] 该损失生效的电流。
 };
 
 
@@ -215,16 +251,31 @@ inline void PmsmPlant::set_voltage_dq(core::Dq<float> v_dq) noexcept { v_dq_ = v
 
 inline void PmsmPlant::set_load_torque(float torque_nm) noexcept { load_nm_ = torque_nm; }
 
+inline void PmsmPlant::set_d_axis_saturation(float depth, float current_a) noexcept {
+    sat_depth_ = (depth > 0.0F) ? ((depth < 1.0F) ? depth : 1.0F) : 0.0F;
+    sat_current_a_ = (current_a > 0.0F) ? current_a : 1.0F;
+}
+
+inline auto PmsmPlant::effective_ld(float id_a) const noexcept -> float {
+    if (!(sat_depth_ > 0.0F)) {
+        return params_.ld;
+    }
+    return static_cast<float>(params_.ld * (1.0F - (sat_depth_ * std::tanh(id_a / sat_current_a_))));
+}
+
 inline auto PmsmPlant::derivative(const PlantState& s) const noexcept -> Derivative {
     const float poles = static_cast<float>(params_.pole_pairs);
     const float omega_e = poles * s.omega_mech;
+    // The incremental inductance at the current operating point. Without saturation this is exactly
+    // `params_.ld`, so every scenario that predates this model is bit-for-bit unchanged.
+    // 工作点处的增量电感。没有饱和时它就是 `params_.ld`，于是本模型之前的所有场景逐位不变。
+    const float ld = effective_ld(s.id_a);
 
-    const float did =
-        static_cast<float>((v_dq_.d - (params_.rs * s.id_a) + (omega_e * params_.lq * s.iq_a)) / params_.ld);
+    const float did = static_cast<float>((v_dq_.d - (params_.rs * s.id_a) + (omega_e * params_.lq * s.iq_a)) / ld);
     const float diq = static_cast<float>(
-        (v_dq_.q - (params_.rs * s.iq_a) - (omega_e * params_.ld * s.id_a) - (omega_e * psi_f_)) / params_.lq);
+        (v_dq_.q - (params_.rs * s.iq_a) - (omega_e * ld * s.id_a) - (omega_e * psi_f_)) / params_.lq);
 
-    const float torque = kOneAndHalf * poles * ((psi_f_ * s.iq_a) + ((params_.ld - params_.lq) * s.id_a * s.iq_a));
+    const float torque = kOneAndHalf * poles * ((psi_f_ * s.iq_a) + ((ld - params_.lq) * s.id_a * s.iq_a));
     const float domega = static_cast<float>((torque - (params_.b * s.omega_mech) - load_nm_) / params_.j);
 
     return Derivative{did, diq, domega, s.omega_mech};
