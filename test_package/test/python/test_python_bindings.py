@@ -92,6 +92,95 @@ def test_pool_exhaustion_is_reported():
             motor.close()
 
 
+def test_setup_reaches_the_library():
+    setup = foc.MotorSetup(i_max_a=2.0, v_bus_v=48.0)
+    with foc.Motor(foc.MotorParams(), setup) as motor:
+        applied = motor.setup()
+        assert math.isclose(applied.i_max_a, 2.0, rel_tol=1e-6), applied.i_max_a
+        assert math.isclose(applied.v_bus_v, 48.0, rel_tol=1e-6), applied.v_bus_v
+        # a field the caller left alone keeps the library default
+        assert math.isclose(applied.pwm_freq_hz, 20000.0, rel_tol=1e-6), applied.pwm_freq_hz
+
+
+def test_default_setup_is_observable():
+    with foc.Motor(foc.MotorParams()) as motor:
+        applied = motor.setup()
+        assert math.isclose(applied.i_max_a, 5.0, rel_tol=1e-6), applied.i_max_a
+        assert applied.speed_loop_period_s == 0.0, applied.speed_loop_period_s
+        assert "MotorSetup(" in repr(applied)
+
+
+def test_position_and_alignment_are_reachable_from_python():
+    # The Python face must not be a smaller library than the C one: position moves, per-move
+    # ceilings and the alignment result are all here.
+    # Python 面不得是比 C 面更小的库：位置运动、本次电流上限与对齐结果都在这里。
+    setup = foc.MotorSetup(position_bandwidth_rad_s=30.0, velocity_limit_rad_s=10.0)
+    with foc.Motor(foc.MotorParams(), setup) as motor:
+        applied = motor.setup()
+        assert math.isclose(applied.position_bandwidth_rad_s, 30.0, rel_tol=1e-6)
+        assert math.isclose(applied.velocity_limit_rad_s, 10.0, rel_tol=1e-6)
+        assert applied.align_current_a == 0.0  # alignment off unless asked for
+
+        motor.set_position(0.1)
+        motor.set_command(foc.MotorCommand(position_rad=0.2, max_current_a=1.0))
+
+        status = motor.status()
+        assert status["mode"] == foc.MotorState.IDLE
+        assert status["align_state"] == foc.AlignState.IDLE
+        assert status["align_failure"] == foc.AlignFailure.NONE
+        assert status["error"] == foc.ErrorCode.OK
+
+
+def test_an_alignment_recipe_makes_enable_park_in_align():
+    setup = foc.MotorSetup(align_current_a=0.5, align_hold_s=0.005, align_tolerance_rad=0.05)
+    with foc.Motor(foc.MotorParams(), setup) as motor:
+        motor.enable()
+        assert motor.status()["mode"] == foc.MotorState.ALIGN
+        for _ in range(200):
+            if motor.status()["mode"] != foc.MotorState.ALIGN:
+                break
+            motor.tick(1e-4)
+        status = motor.status()
+        assert status["mode"] == foc.MotorState.RUN
+        assert status["align_state"] == foc.AlignState.DONE
+
+
+def expect_foc_error(code, action):
+    """The module raises FocError; there is no pytest here, so check it by hand."""
+    try:
+        action()
+    except foc.FocError as error:
+        assert error.code == code, f"expected {code}, got {error.code}"
+        return
+    raise AssertionError(f"expected FocError({code}), nothing was raised")
+
+
+def test_a_half_configured_alignment_is_rejected():
+    # "Do not align" has to be the whole recipe: a hold time without a current is a typo, not a
+    # request, and the library refuses rather than silently aligning nothing.
+    # "不对齐"必须是整套配方：给了保持时间却没给电流是笔误而非请求，库会拒绝而不是静默地什么都不做。
+    expect_foc_error(foc.ErrorCode.PARAM, lambda: foc.Motor(foc.MotorParams(), foc.MotorSetup(align_hold_s=0.2)))
+
+
+def test_a_move_can_carry_its_own_limits():
+    # The limits belong to the move, not only to the mechanism: Python can express that.
+    # 限制属于运动，而不只属于机构：Python 面能表达这一点。
+    with foc.Motor(foc.MotorParams()) as motor:
+        motor.set_command(foc.MotorCommand(position_rad=0.3, max_velocity_rad_s=0.5, max_accel_rad_s2=5.0))
+        expect_foc_error(
+            foc.ErrorCode.PARAM,
+            lambda: motor.set_command(foc.MotorCommand(position_rad=0.3, max_accel_rad_s2=-5.0)),
+        )
+
+
+def test_a_negative_current_ceiling_is_rejected():
+    with foc.Motor(foc.MotorParams()) as motor:
+        expect_foc_error(
+            foc.ErrorCode.PARAM,
+            lambda: motor.set_command(foc.MotorCommand(position_rad=0.0, max_current_a=-1.0)),
+        )
+
+
 def main():
     failures = 0
     for name, case in sorted(globals().items()):

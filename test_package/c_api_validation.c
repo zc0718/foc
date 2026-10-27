@@ -59,6 +59,63 @@ int main(void) {
     CHECK(foc_motor_destroy(motor) == FOC_OK);
     CHECK(foc_motor_destroy(motor) == FOC_ERR_PARAM); /* stale handle, not a crash */
 
+    /* The optional setup: a pure C caller sizes the struct, sets what it cares about, and can read
+     * back exactly what the library applied -- including the fields it left alone. */
+    foc_motor_setup_t requested = {0};
+    foc_motor_setup_t applied = {0};
+    foc_motor_t tuned = NULL;
+
+    requested.struct_size = (uint32_t)sizeof(foc_motor_setup_t);
+    requested.i_max_a = 2.0F;
+    requested.v_bus_v = 48.0F;
+
+    CHECK(foc_motor_create_ex(&params, &requested, &tuned) == FOC_OK);
+    CHECK(foc_motor_get_setup(tuned, &applied) == FOC_OK);
+    CHECK(applied.struct_size == (uint32_t)sizeof(foc_motor_setup_t));
+    CHECK(applied.i_max_a == 2.0F);
+    CHECK(applied.v_bus_v == 48.0F);
+    CHECK(applied.pwm_freq_hz == 20000.0F); /* untouched field keeps the library default */
+    CHECK(foc_motor_get_setup(NULL, &applied) == FOC_ERR_PARAM);
+    CHECK(foc_motor_destroy(tuned) == FOC_OK);
+
+    /* Position moves and status: the C face reaches the same kernel the C++ face does, and the
+     * `_Generic` macro keeps an integer literal from narrowing silently at the call site. */
+    foc_motor_status_t status = {0};
+    foc_motor_command_t command = {0};
+    foc_motor_t mover = NULL;
+
+    CHECK(foc_motor_create(&params, &mover) == FOC_OK);
+    CHECK(foc_set_position_g(mover, 0.1) == FOC_OK);       /* routed to the double entry point */
+    CHECK(foc_set_position_g(mover, 0.2F) == FOC_OK);      /* routed to the float one */
+    CHECK(foc_set_position(mover, 0.3F) == FOC_OK);
+
+    command.position_rad = 0.4F;
+    command.max_current_a = 1.0F;
+    command.feedforward_current_a = 0.05F;
+    command.max_velocity_rad_s = 2.0F; /* this move's own ceilings */
+    command.max_accel_rad_s2 = 10.0F;
+    CHECK(foc_set_command(mover, &command) == FOC_OK);
+    CHECK(foc_set_command(mover, NULL) == FOC_ERR_PARAM);
+
+    CHECK(foc_motor_get_status(mover, &status) == FOC_OK);
+    CHECK(status.struct_size == (uint32_t)sizeof(foc_motor_status_t));
+    CHECK(status.mode_state == (int32_t)FOC_MOTOR_IDLE); /* created but not enabled yet */
+    CHECK(status.align_state == (int32_t)FOC_ALIGN_IDLE); /* alignment was never requested */
+    CHECK(status.error == (int32_t)FOC_OK);
+
+    /* An alignment recipe is part of the setup; the sequence then runs from foc_tick(). */
+    requested.align_current_a = 0.5F;
+    requested.align_hold_s = 0.005F;
+    requested.align_tolerance_rad = 0.05F;
+    CHECK(foc_motor_create_ex(&params, &requested, &tuned) == FOC_OK);
+    CHECK(foc_motor_enable(tuned) == FOC_OK);
+    CHECK(foc_motor_get_status(tuned, &status) == FOC_OK);
+    CHECK(status.mode_state == (int32_t)FOC_MOTOR_ALIGN);
+    CHECK(foc_tick(tuned, 1.0e-4F) == FOC_OK);
+    CHECK(foc_motor_destroy(tuned) == FOC_OK);
+
+    CHECK(foc_motor_destroy(mover) == FOC_OK);
+
     if (failures != 0) {
         (void)fprintf(stderr, "C11 consumer: %d failure(s)\n", failures);
         return 1;
