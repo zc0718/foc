@@ -90,6 +90,15 @@ class BackEmfObserver final {
      * @param dt_s [en] step length in s; <= 0 is rejected (status Param, state holds).
      *              [zh] 步长，s；<= 0 被拒绝（状态置 Param，输出保持）。
      * @return [en] estimated electrical angle and speed. [zh] 估计的电角度与电角速度。
+     * @note [en] `v_ab` must come from the *same* sample instant as `i_ab`. The update is a
+     *       backward-Euler step anchored there: it pairs `dt * (v - Rs*i)` with
+     *       `L * (i_k - i_{k-1})`. Handing it the voltage of the period that just ended instead looks
+     *       like a harmless half-sample correction and is not one -- measured against the plant's own
+     *       flux it costs an extra `w_e * dt / 2` of angle, i.e. 0.042 rad at 800 rad/s electrical.
+     *       [zh] `v_ab` 必须与 `i_ab` 取自**同一采样时刻**。本步是以该时刻为锚点的后向欧拉步：它把
+     *       `dt*(v - Rs*i)` 与 `L*(i_k - i_{k-1})` 配对。换成交给它"刚刚结束那一周期"的电压，看起来
+     *       只是半个采样的修正，其实不是——以 plant 自己的磁链为基准实测，这会额外多出
+     *       `w_e*dt/2` 的角度，也就是 800 rad/s 电角速度下 0.042 rad。
      * @since 0.1.0
      */
     auto update(Ab<float> v_ab, Ab<float> i_ab, float dt_s) noexcept -> ObsState;
