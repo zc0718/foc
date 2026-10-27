@@ -4,7 +4,18 @@
 #include <cmath>
 #include <cstdio>
 
+#include <foc/core/alignment.hpp>
+#include <foc/core/feedforward.hpp>
+#include <foc/core/observer/back_emf_observer.hpp>
+#include <foc/core/pi.hpp>
+#include <foc/core/position.hpp>
 #include <foc/core/protection.hpp>
+#include <foc/core/reference.hpp>
+#include <foc/core/svpwm.hpp>
+#include <foc/motor/motor.hpp>
+
+#include "sil_bench.hpp"
+#include "sil_plant_hal.hpp"
 // Conan::ImportEnd
 
 namespace foc {
@@ -382,4 +393,166 @@ TEST(Protection, P6d_TheThermalBudgetCoolsAndTheStallNeedsItsDuration) {
          "time";
 }
 
+// ---------------------------------------------------------------------------
+// P6-b, on a plant rather than on a policy object.
+// P6-b，在 plant 上而不是在策略对象上。
+// ---------------------------------------------------------------------------
+
+namespace {
+
+using TripMotor =
+    foc::motor::Motor<core::BackEmfObserver, core::Svpwm, core::Pi,
+                      foc::sil::PlantHal, core::NullReferenceGenerator,
+                      core::NullFeedforward, core::PositionP,
+                      core::NullAlignment>;
+
+/// [en] A bench that can be tripped: the whole motor, a plant, and a handle on
+/// the PWM enable.
+///      [zh] 可以被跳闸的台架：完整电机、plant，以及一个 PWM 使能的把手。
+/// [en] The nominal machine with its shaft held, so a current decay can be
+/// attributed to `L/R` alone. Letting it spin adds the back-EMF to the braking
+/// and makes the decay faster than `L/R` -- which is true, and is the second
+/// half of what this test is about.
+///      [zh] 标称机 + 锁住的轴，于是电流衰减可以只归因于
+///      `L/R`。让它转起来会把反电动势加进制动， 衰减就比 `L/R`
+///      快——那是真的，也正是本测试后半段要说的事。
+auto held_spec() -> foc::sil::MachineSpec {
+  foc::sil::MachineSpec spec = foc::sil::nominal_spec();
+  spec.j = 1.0e6F;
+  spec.b = 0.0F;
+  return spec;
+}
+
+class TripRig final {
+public:
+  TripRig()
+      : cfg_(foc::sil::standard_bench_config()), spec_(held_spec()),
+        mc_(foc::sil::motor_config_from(spec_)),
+        plant_(foc::sil::plant_params_from(spec_)), hal_(plant_, cfg_.v_bus_v),
+        motor_(mc_,
+               typename TripMotor::Policies{
+                   core::BackEmfObserver{
+                       core::BackEmfObserver::Config{spec_.rs, spec_.ld}},
+                   core::Svpwm{},
+                   core::Pi{foc::sil::current_pi_config(
+                       mc_, cfg_.omega_current_rad_s, cfg_.v_bus_v)},
+                   core::Pi{foc::sil::current_pi_config(
+                       mc_, cfg_.omega_current_rad_s, cfg_.v_bus_v)},
+                   core::Pi{
+                       foc::sil::speed_pi_config(mc_, cfg_.omega_speed_rad_s)},
+                   core::NullReferenceGenerator{}, core::NullFeedforward{},
+                   core::PositionP{
+                       foc::position_p_config(mc_, 10.0F, 20.0F, 0.0F)},
+                   core::NullAlignment{}},
+               hal_) {
+    hal_.reset(foc::sil::PlantState{0.0F, 0.0F, 0.0F, 0.0F});
+  }
+
+  auto start() -> bool {
+    if (motor_.init() != foc::ErrorCode::Ok) {
+      return false;
+    }
+    return motor_.start() == foc::ErrorCode::Ok;
+  }
+
+  void step_for(float seconds) {
+    const int steps = static_cast<int>((seconds / cfg_.dt_ctrl_s) + 0.5F);
+    for (int i = 0; i < steps; ++i) {
+      static_cast<void>(motor_.tick(cfg_.dt_ctrl_s));
+      hal_.advance(cfg_.dt_ctrl_s, cfg_.substeps);
+    }
+  }
+
+  auto motor() noexcept -> TripMotor & { return motor_; }
+  auto hal() noexcept -> foc::sil::PlantHal & { return hal_; }
+  auto current_a() noexcept -> float {
+    return std::fabs(plant_.current_dq().q);
+  }
+  auto dt() const noexcept -> float { return cfg_.dt_ctrl_s; }
+
+private:
+  foc::sil::BenchConfig cfg_;
+  foc::sil::MachineSpec spec_;
+  foc::motor::MotorConfig mc_;
+  foc::sil::PmsmPlant plant_;
+  foc::sil::PlantHal hal_;
+  TripMotor motor_;
+};
+
+} // namespace
+
+TEST(Protection,
+     P6b_OnAPlantTheCommandDiesInOnePeriodAndTheCurrentTakesLOverR) {
+  // The policy-level test above says the *decision* is taken in the same step.
+  // This one asks what that means physically, and the answer is not what the
+  // plan assumed: **the current cannot be clamped to zero in one control
+  // period**, because it flows through an inductance. What can be clamped is
+  // the *command*: the PWM is disabled in the same step, and the current then
+  // decays with the plant's own `L/R`. At 0.4 mH and 0.5 ohm that is 0.8 ms,
+  // sixteen control periods.
+  // 上面那个策略层测试说的是**判定**发生在同一步。这一个问它在物理上意味着什么，而答案不是计划
+  // 假设的那样：**电流不可能在一个控制周期内被钳到零**，因为它流过一个电感。能被钳住的是**指令**：
+  // PWM 在同一步被关掉，然后电流按 plant 自己的 `L/R` 衰减。0.4 mH、0.5 Ω 下是
+  // 0.8 ms，十六个 控制周期。
+  TripRig rig;
+  ASSERT_TRUE(rig.start());
+  rig.motor().set_torque(2.0F);
+  rig.step_for(20.0e-3F); // 400 periods: the current loop settles
+
+  const float before = rig.current_a();
+  const bool enabled_before = rig.hal().pwm.enabled();
+  std::printf("\n[P6-b/plant] settled at %.4f A, pwm enabled %d\n",
+              static_cast<double>(before), enabled_before ? 1 : 0);
+  ASSERT_GT(before, 1.5F)
+      << "the operating point has to be real for a decay to mean anything";
+  ASSERT_TRUE(enabled_before);
+
+  // The protector sees the over-current and the caller obeys it in the same
+  // tick. 保护器看到过流，调用方在同一个 tick 里执行。
+  core::Protector protector(config());
+  core::ProtectionInput input = healthy();
+  input.i_magnitude_a = 4.5F;
+  const core::ProtectionOutput decision = protector.step(input, rig.dt());
+  ASSERT_FALSE(decision.output_allowed);
+  rig.motor().fault();
+
+  // The command is gone immediately: no delay, no next-period grace.
+  // 指令立即消失：不延迟，没有下一个周期的宽限。
+  EXPECT_FALSE(rig.hal().pwm.enabled())
+      << "the bridge is off in the same step the decision was made";
+  EXPECT_EQ(core::MotorState::Fault, rig.motor().state());
+
+  // And one control period later the current is *not* zero -- it cannot be.
+  // 一个控制周期之后电流**不是**零——不可能是。
+  rig.step_for(rig.dt());
+  const float after_one = rig.current_a();
+  // The decay: measure the time constant and compare it with `L/R` rather than
+  // with a remembered number. Two points give it in closed form.
+  // 衰减：量时间常数并与 `L/R` 比较，而不是与一个记下来的数比较。两点闭式即可。
+  rig.step_for(0.4e-3F);
+  const float after_half = rig.current_a();
+  rig.step_for(0.4e-3F);
+  const float after_full = rig.current_a();
+  const float tau_measured = 0.4e-3F / std::log(after_half / after_full);
+  const float tau_expected =
+      foc::sil::nominal_spec().lq / foc::sil::nominal_spec().rs;
+
+  std::printf("        after 1 period %.4f A (%.1f %% of the operating point), "
+              "after 0.4 ms %.4f A, after 0.8 ms %.4f A\n",
+              static_cast<double>(after_one),
+              static_cast<double>(100.0F * after_one / before),
+              static_cast<double>(after_half), static_cast<double>(after_full));
+  std::printf("        decay constant %.4f ms, L/R %.4f ms\n",
+              static_cast<double>(1.0e3F * tau_measured),
+              static_cast<double>(1.0e3F * tau_expected));
+
+  EXPECT_GT(after_one, 0.5F * before)
+      << "one period cannot remove an inductive current: the plan's criterion "
+         "is physically impossible";
+  EXPECT_LT(after_one, before) << "but it must already be falling";
+  EXPECT_NEAR(tau_expected, tau_measured, 0.25F * tau_expected)
+      << "the decay is the plant's L/R, not something the protection controls";
+  EXPECT_LT(after_full, 0.4F * before)
+      << "and it is gone in a couple of time constants";
+}
 } // namespace foc
