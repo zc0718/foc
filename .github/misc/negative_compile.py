@@ -303,6 +303,58 @@ class GoodModulator {
 """,
     },
     {
+        "name": "injection_wrong_return_type",
+        "header": "foc/core/observer/hfi_observer.hpp",
+        "trait": "foc::core::concepts::has_injection_v",
+        "type": "WrongInjectionObserver",
+        "member": "injection_ab",
+        "must_fail": True,
+        "body": """
+class WrongInjectionObserver {
+  public:
+    auto update(foc::core::Ab<float>, foc::core::Ab<float>, float) noexcept -> foc::core::ObsState {
+        return foc::core::ObsState{};
+    }
+    // A magnitude instead of a vector. Motor adds whatever this returns to the voltage command, so a
+    // scalar would silently be added to one component -- a capability probe that accepted this
+    // would let a carrier leak into the d axis only.
+    // 返回幅值而不是矢量。Motor 会把它的返回值叠到电压指令上，于是标量会被悄悄加到某一个分量上——若
+    // 能力探测接受这个签名，载波就只会渗进 d 轴。
+    [[nodiscard]] auto injection_ab() const noexcept -> float { return 0.0F; }
+};
+""",
+    },
+    {
+        "name": "control_injection_conforms",
+        "header": "foc/core/observer/hfi_observer.hpp",
+        "trait": "foc::core::concepts::has_injection_v",
+        "type": "HfiObserver",
+        "member": "injection_ab",
+        "must_fail": False,
+        "body": """
+// The shipped saliency observer is the reason the hook exists; a drift in either its signature or
+// the trait would take the sensorless path down without a compile error anywhere in the library.
+// 出厂凸极观测器就是这个钩子存在的理由；签名或探测任一方漂移，都会让无感路径静默失效而库内无编译
+// 错误。
+using HfiObserver = foc::core::HfiObserver;
+""",
+    },
+    {
+        "name": "plain_observer_does_not_inject",
+        "header": "foc/core/observer/back_emf_observer.hpp",
+        "trait": "!foc::core::concepts::has_injection_v",
+        "type": "foc::core::BackEmfObserver",
+        "member": "injection_ab",
+        "must_fail": False,
+        "body": """
+// The other half of the contract: an observer with no carrier to inject must NOT look like one.
+// Otherwise Motor would add an injection that does not exist, or (worse) an implementation would add
+// a stub returning zero and the capability would become a flag that is always on.
+// 契约的另一半：没有载波可注入的观测器**不能**看起来像有。否则 Motor 会叠一份并不存在的注入，
+// 或者（更糟）实现方补一个返回零的桩，这项能力就退化成永远开着的开关。
+""",
+    },
+    {
         "name": "position_control_with_three_arg_step",
         "header": "foc/core/position.hpp",
         "trait": "foc::core::concepts::is_position_control_v",
@@ -442,6 +494,12 @@ PROBES = {
         "void probe(WrongAligner& p) {{ foc::core::AlignOutput s = p.step(0.0F, 0.0F); (void)s; }}",
     "control_aligner_conforms":
         "void probe(GoodAligner& p) {{ foc::core::AlignOutput s = p.step(0.0F, 0.0F); (void)s; }}",
+    "injection_wrong_return_type":
+        "void probe(WrongInjectionObserver& p) { foc::core::Ab<float> v = p.injection_ab(); (void)v; }",
+    "control_injection_conforms":
+        "void probe(HfiObserver& p) { foc::core::Ab<float> v = p.injection_ab(); (void)v; }",
+    "plain_observer_does_not_inject":
+        "void probe(foc::core::BackEmfObserver& p) { (void)p; }",
     "controller_missing_reset": "void probe(FakeController& p) {{ p.reset(); }}",
 }
 

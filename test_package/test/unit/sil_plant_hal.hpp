@@ -103,6 +103,13 @@ class PlantPosition final : public hal::PositionSensor {
     /// [en] Model an encoder mounting error the driver has to find. [zh] 模拟驱动需要找出的编码器安装误差。
     void set_mount_error_rad(float error_rad) noexcept;
 
+    /// [en] Model a sensor-less setup: has_sensor() starts returning false, so the angle has to come
+    ///        from the observer. Same name as `driver::SimPosition` on purpose -- the scenarios read
+    ///        the same either way.
+    ///        [zh] 模拟无感场景：has_sensor() 开始返回 false，角度必须由观测器给出。故意与
+    ///        `driver::SimPosition` 同名——两种台架读起来一样。
+    void set_sensor_present(bool present) noexcept;
+
     /// [en] The correction offset handed over by alignment. [zh] 由对齐交给传感器的校正偏置。
     void set_offset_mech_rad(float offset_rad) noexcept;
 
@@ -117,6 +124,7 @@ class PlantPosition final : public hal::PositionSensor {
     const PmsmPlant* plant_;
     float mount_error_rad_{0.0F};
     float offset_rad_{0.0F};
+    bool sensor_present_{true};
 };
 
 
@@ -285,7 +293,9 @@ inline auto PlantPosition::true_angle_mech_rad() const noexcept -> float { retur
 
 inline auto PlantPosition::velocity_rad_s() noexcept -> float { return plant_->omega_mech_rad_s(); }
 
-inline auto PlantPosition::has_sensor() const noexcept -> bool { return true; }
+inline auto PlantPosition::has_sensor() const noexcept -> bool { return sensor_present_; }
+
+inline void PlantPosition::set_sensor_present(bool present) noexcept { sensor_present_ = present; }
 
 // PlantDcLink
 
