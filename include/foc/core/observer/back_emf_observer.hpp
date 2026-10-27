@@ -1,5 +1,6 @@
 // Conan::ImportStart
 #pragma once
+#include <foc/core/machine_params.hpp>
 #include <foc/core/observer/observer_policy.hpp>
 #include <foc/core/types.hpp>
 // Conan::ImportEnd
@@ -64,6 +65,21 @@ class BackEmfObserver final {
      * @since 0.1.0
      */
     void seed_flux(Ab<float> psi_ab) noexcept;
+
+    /**
+     * @brief [en] Take an updated machine description.
+     *        [zh] 接受更新后的机器描述。
+     *
+     * @param params [en] the machine as it actually is. [zh] 机器实际的样子。
+     * @note [en] `l` becomes `params.lq`, not the average: this observer is used with `id ~ 0`, where the
+     *       current sits on the q axis and the flux it produces is `Lq*i`. With field weakening that
+     *       assumption stops holding -- which is one more reason field weakening needs a different
+     *       observer rather than a parameter change.
+     *       [zh] `l` 取 `params.lq` 而不是平均值：本观测器用于 `id ≈ 0`，此时电流坐在 q 轴上，它产生的
+     *       磁链是 `Lq·i`。一旦进入弱磁这个假设就不成立——这也是弱磁需要换观测器而不是换参数的原因之一。
+     * @since 0.1.0
+     */
+    void apply_params(const MachineParams& params) noexcept;
 
     /**
      * @brief [en] Advance the observer by one current-loop step.

@@ -146,6 +146,44 @@ class PmsmPlant final {
     [[nodiscard]] auto effective_ld(float id_a) const noexcept -> float;
 
     /**
+     * @brief [en] Model winding heating: `Rs = Rs20 * (1 + alpha * (T - 20))`. Off by default.
+     *        [zh] 模拟绕组发热：`Rs = Rs20·(1 + alpha·(T − 20))`。默认关闭。
+     *
+     * @param temperature_c [en] winding temperature in degrees C. [zh] 绕组温度，摄氏度。
+     * @param alpha_per_k [en] temperature coefficient, copper is about 3.93e-3 per K. [zh] 温度系数，铜约为 3.93e-3 /K。
+     * @note [en] Why this exists: a parameter-dentification result that only works at 20 C is a
+     *       calculator, not an estimator. A drifting truth is how SIL can test the difference -- the
+     *       plant heats up while the observer keeps believing the nameplate.
+     *       [zh] 它存在的理由：只在 20 °C 成立的参数辨识是计算器，不是估计器。真值漂移是 SIL 能测出这个
+     *       区别的方式——plant 升温而观测器仍然相信铭牌。
+     * @since 0.1.0
+     */
+    void set_winding_temperature(float temperature_c, float alpha_per_k) noexcept;
+
+    /**
+     * @brief [en] Add sensor noise to the current readings: white, uniform in [-amplitude, +amplitude]
+     *        amps, from a deterministic integer generator so a run is reproducible on any ISA.
+     *        Off by default (amplitude 0).
+     *        [zh] 给电流读数加传感器噪声：均匀分布在 [−amplitude, +amplitude] 安培，由确定性整数生成器
+     *        产生，使同一次运行在任何 ISA 上都可复现。默认关闭（幅值 0）。
+     *
+     * @param amplitude_a [en] peak amplitude in A, >= 0. [zh] 峰值幅值，A，>= 0。
+     * @note [en] Determinism is not a nicety here: the PIL leg compares host against target, and an
+     *       entropy-based generator would make that comparison meaningless the moment noise is on.
+     *       [zh] 确定性不是细节：PIL 腿要比对 host 与 target，一旦打开噪声，基于熵的生成器会让这个比对
+     *       失去意义。
+     * @since 0.1.0
+     */
+    void set_current_noise(float amplitude_a) noexcept;
+
+    /**
+     * @brief [en] Stator resistance the plant is actually using, ohm (includes the temperature model).
+     *        [zh] plant 实际使用的定子电阻，Ω（含温度模型）。
+     * @since 0.1.0
+     */
+    [[nodiscard]] auto effective_rs() const noexcept -> float;
+
+    /**
      * @brief [en] Advance the plant by one fixed step with classical RK4.
      *        [zh] 用经典 RK4 推进一个固定步长。
      *
@@ -226,6 +264,10 @@ class PmsmPlant final {
     float psi_f_;
     float sat_depth_{0.0F};     ///< [en] fraction of Ld lost at heavy positive i_d; 0 = ideal. [zh] 强正 i_d 下 Ld 的损失比例；0 = 理想。
     float sat_current_a_{1.0F}; ///< [en] current at which that loss is engaged. [zh] 该损失生效的电流。
+    float temp_c_{20.0F};       ///< [en] winding temperature, C. [zh] 绕组温度，°C。
+    float temp_alpha_{0.0F};    ///< [en] Rs temperature coefficient, 1/K; 0 = no drift. [zh] Rs 温度系数，1/K；0 = 不漂。
+    float noise_a_{0.0F};       ///< [en] current-noise peak, A; 0 = ideal sensor. [zh] 电流噪声峰值，A；0 = 理想传感器。
+    mutable std::uint32_t noise_state_{0x9E3779B9U}; ///< [en] xorshift state; mutable because the noise belongs to the reading. [zh] xorshift 状态；mutable 因为噪声属于“读数”而非状态。
 };
 
 
@@ -263,6 +305,23 @@ inline auto PmsmPlant::effective_ld(float id_a) const noexcept -> float {
     return static_cast<float>(params_.ld * (1.0F - (sat_depth_ * std::tanh(id_a / sat_current_a_))));
 }
 
+inline void PmsmPlant::set_winding_temperature(float temperature_c, float alpha_per_k) noexcept {
+    temp_c_ = temperature_c;
+    temp_alpha_ = (alpha_per_k > 0.0F) ? alpha_per_k : 0.0F;
+}
+
+inline void PmsmPlant::set_current_noise(float amplitude_a) noexcept {
+    noise_a_ = (amplitude_a > 0.0F) ? amplitude_a : 0.0F;
+    noise_state_ = 0x9E3779B9U; // a fixed seed, so "same run" stays "same numbers"
+}
+
+auto PmsmPlant::effective_rs() const noexcept -> float {
+    if (!(temp_alpha_ > 0.0F)) {
+        return params_.rs;
+    }
+    return static_cast<float>(params_.rs * (1.0F + (temp_alpha_ * (temp_c_ - 20.0F))));
+}
+
 inline auto PmsmPlant::derivative(const PlantState& s) const noexcept -> Derivative {
     const float poles = static_cast<float>(params_.pole_pairs);
     const float omega_e = poles * s.omega_mech;
@@ -270,10 +329,13 @@ inline auto PmsmPlant::derivative(const PlantState& s) const noexcept -> Derivat
     // `params_.ld`, so every scenario that predates this model is bit-for-bit unchanged.
     // 工作点处的增量电感。没有饱和时它就是 `params_.ld`，于是本模型之前的所有场景逐位不变。
     const float ld = effective_ld(s.id_a);
+    // Same idea for the resistance: without a temperature model this is exactly `params_.rs`.
+    // 电阻同理：没有温度模型时它就是 `params_.rs`。
+    const float rs = effective_rs();
 
-    const float did = static_cast<float>((v_dq_.d - (params_.rs * s.id_a) + (omega_e * params_.lq * s.iq_a)) / ld);
+    const float did = static_cast<float>((v_dq_.d - (rs * s.id_a) + (omega_e * params_.lq * s.iq_a)) / ld);
     const float diq = static_cast<float>(
-        (v_dq_.q - (params_.rs * s.iq_a) - (omega_e * ld * s.id_a) - (omega_e * psi_f_)) / params_.lq);
+        (v_dq_.q - (rs * s.iq_a) - (omega_e * ld * s.id_a) - (omega_e * psi_f_)) / params_.lq);
 
     const float torque = kOneAndHalf * poles * ((psi_f_ * s.iq_a) + ((ld - params_.lq) * s.id_a * s.iq_a));
     const float domega = static_cast<float>((torque - (params_.b * s.omega_mech) - load_nm_) / params_.j);
@@ -320,7 +382,27 @@ inline auto PmsmPlant::current_dq() const noexcept -> core::Dq<float> {
 
 inline auto PmsmPlant::current_uvw() const noexcept -> core::Uvw<float> {
     const float theta_e = static_cast<float>(params_.pole_pairs) * state_.theta_mech;
-    return core::inv_clarke(core::inv_park(core::Dq<float>{state_.id_a, state_.iq_a}, theta_e));
+    const core::Uvw<float> true_current =
+        core::inv_clarke(core::inv_park(core::Dq<float>{state_.id_a, state_.iq_a}, theta_e));
+    if (!(noise_a_ > 0.0F)) {
+        return true_current;
+    }
+    // xorshift32 with integer arithmetic only: the same sequence on every ISA, which is what lets the
+    // PIL leg compare host against target with noise switched on. The noise belongs to the *reading*,
+    // not to the plant state, hence `mutable`.
+    // 只用整数运算的 xorshift32：在任何 ISA 上序列都相同，这正是 PIL 腿可以在打开噪声后比对 host 与
+    // target 的前提。噪声属于**读数**而非 plant 状态，故用 mutable。
+    const auto next_sample = [this]() noexcept -> float {
+        noise_state_ ^= noise_state_ << 13U;
+        noise_state_ ^= noise_state_ >> 17U;
+        noise_state_ ^= noise_state_ << 5U;
+        // Top 24 bits scaled by 2^-23 gives [-1, 1) exactly; both factors are powers of two.
+        // 取高 24 位再乘 2^-23 精确得到 [−1, 1)；两个因子都是 2 的幂。
+        return (static_cast<float>(noise_state_ >> 8U) * (1.0F / 8388608.0F)) - 1.0F;
+    };
+    return core::Uvw<float>{static_cast<float>(true_current.u + (noise_a_ * next_sample())),
+                            static_cast<float>(true_current.v + (noise_a_ * next_sample())),
+                            static_cast<float>(true_current.w + (noise_a_ * next_sample()))};
 }
 
 inline auto PmsmPlant::torque_nm() const noexcept -> float {

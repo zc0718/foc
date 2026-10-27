@@ -259,6 +259,10 @@ void HfiObserver::seed_angle(float theta_e, float omega_e) noexcept {
     theta_applied_ = state_.theta_e;
 }
 
+void HfiObserver::apply_params(const MachineParams& params) noexcept {
+    config_.demod_gain_a = predicted_gain_a(config_.inject_v, config_.inject_hz, params.ld, params.lq);
+}
+
 void HfiObserver::apply_polarity(bool reversed) noexcept {
     if (!reversed) {
         return;

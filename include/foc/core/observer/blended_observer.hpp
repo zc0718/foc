@@ -296,6 +296,21 @@ template <typename LowSpeed, typename HighSpeed> class BlendedObserver final {
     }
 
     /**
+     * @brief [en] Forward updated machine parameters to whichever halves can take them.
+     *        [zh] 把更新后的机器参数转发给能接受的那一半。
+     * @param params [en] the machine as it actually is. [zh] 机器实际的样子。
+     * @since 0.1.0
+     */
+    void apply_params(const MachineParams& params) noexcept {
+        if constexpr (concepts::has_apply_params_v<LowSpeed>) {
+            low_.apply_params(params);
+        }
+        if constexpr (concepts::has_apply_params_v<HighSpeed>) {
+            high_.apply_params(params);
+        }
+    }
+
+    /**
      * @brief [en] Clear both observers and the handover state.
      *        [zh] 清除两个观测器与交接状态。
      * @since 0.1.0

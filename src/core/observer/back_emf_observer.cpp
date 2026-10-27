@@ -65,6 +65,12 @@ BackEmfObserver::BackEmfObserver(Config config) noexcept
 
 void BackEmfObserver::seed_flux(Ab<float> psi_ab) noexcept { psi_ = psi_ab; }
 
+void BackEmfObserver::apply_params(const MachineParams& params) noexcept {
+    config_.rs = params.rs;
+    config_.l = params.lq;
+    status_ = valid_config(config_) ? ErrorCode::Ok : ErrorCode::Param;
+}
+
 auto BackEmfObserver::update(Ab<float> v_ab, Ab<float> i_ab, float dt_s) noexcept -> ObsState {
     if (!(dt_s > 0.0F)) {
         status_ = ErrorCode::Param;

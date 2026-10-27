@@ -340,6 +340,38 @@ using HfiObserver = foc::core::HfiObserver;
 """,
     },
     {
+        "name": "params_with_wrong_signature",
+        "header": "foc/core/machine_params.hpp",
+        "trait": "foc::core::concepts::has_apply_params_v",
+        "type": "WrongParamsPolicy",
+        "member": "apply_params",
+        "must_fail": True,
+        "body": """
+class WrongParamsPolicy {
+  public:
+    auto update(foc::core::Ab<float>, foc::core::Ab<float>, float) noexcept -> foc::core::ObsState {
+        return foc::core::ObsState{};
+    }
+    // A scalar instead of the parameter set: an update that carries one number cannot describe a machine,
+    // and a probe that accepted it would let a policy claim it can be re-tuned when it cannot.
+    // 用标量代替参数集：一个数描述不了机器，而接受它的探测会让策略谎称自己可以被重新整定。
+    void apply_params(float) noexcept {}
+};
+""",
+    },
+    {
+        "name": "control_params_conforms",
+        "header": "foc/core/observer/hfi_observer.hpp",
+        "trait": "foc::core::concepts::has_apply_params_v",
+        "type": "foc::core::HfiObserver",
+        "member": "apply_params",
+        "must_fail": False,
+        "body": """
+// The shipped observer that derives its sensitivity from the machine is the reason the hook exists.
+// 出厂观测器里，正是这一个从其机器推导灵敏度——这就是该钩子存在的理由。
+""",
+    },
+    {
         "name": "plain_observer_does_not_inject",
         "header": "foc/core/observer/back_emf_observer.hpp",
         "trait": "!foc::core::concepts::has_injection_v",
@@ -500,6 +532,8 @@ PROBES = {
         "void probe(HfiObserver& p) { foc::core::Ab<float> v = p.injection_ab(); (void)v; }",
     "plain_observer_does_not_inject":
         "void probe(foc::core::BackEmfObserver& p) { (void)p; }",
+    "params_with_wrong_signature": "void probe(WrongParamsPolicy& p) { p.apply_params(1.0F); }",
+    "control_params_conforms": "void probe(foc::core::HfiObserver& p) { (void)p; }",
     "controller_missing_reset": "void probe(FakeController& p) {{ p.reset(); }}",
 }
 

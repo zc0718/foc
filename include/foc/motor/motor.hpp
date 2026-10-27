@@ -283,6 +283,20 @@ class Motor final {
     [[nodiscard]] auto observer() noexcept -> Observer&;
 
     /**
+     * @brief [en] Hand updated machine parameters to the policies that can take them.
+     *        [zh] 把更新后的机器参数交给能接受的策略。
+     *
+     * @param params [en] the machine as it actually is (identified at commissioning, or re-read later). [zh] 机器实际的样子（调试时辨识得到，或之后重读）。
+     * @note [en] Forwarded, not stored: `Motor` does not model the machine itself, so keeping a copy would
+     *       create a second source of truth for numbers that belong to the policies. A slot without the
+     *       hook simply keeps what it was built with.
+     *       [zh] 只转发、不保存：`Motor` 自己不建模机器，存一份会给本该属于策略的数字制造第二个真值来源。
+     *       没有该钩子的槽位保持构造时的值。
+     * @since 0.1.0
+     */
+    void apply_params(const core::MachineParams& params) noexcept;
+
+    /**
      * @brief [en] Mutable access to the reference generator (tuning, diagnostics, tests).
      *        [zh] 参考生成器的可变访问（整定、诊断、测试）。
      * @since 0.1.0

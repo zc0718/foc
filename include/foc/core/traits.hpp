@@ -4,6 +4,7 @@
 #include <utility>
 #include <foc/core/alignment.hpp>
 #include <foc/core/feedforward.hpp>
+#include <foc/core/machine_params.hpp>
 #include <foc/core/observer/observer_policy.hpp>
 #include <foc/core/pi.hpp>
 #include <foc/core/position.hpp>
@@ -269,6 +270,35 @@ struct has_seed_angle<
  * @exporter
  */
 template <typename T> inline constexpr bool has_seed_angle_v = has_seed_angle<T>::value;
+
+
+/**
+ * @brief [en] `T` (a policy) can take an updated set of machine parameters at runtime.
+ *        [zh] `T`（策略）可以在运行期接受一组更新后的机器参数。
+ *
+ * @note [en] Needed because identification happens *after* the policies are built: an observer tuned for
+ *       the nameplate has to be told what the machine turned out to be, without the caller rebuilding the
+ *       whole motor. A policy without this hook simply keeps its construction-time numbers, which is the
+ *       right answer for anything that does not model the machine at all.
+ *       [zh] 因为辨识发生在策略**构建之后**：按铭牌整定的观测器需要被告知这台机器实际上是什么样，而调用方
+ *       不必重建整个电机。没有这个钩子的策略就保持构造时的数字——对任何不建模机器的组件来说，这就是正确答案。
+ * @since 0.1.0
+ * @exporter
+ */
+template <typename T, typename = void> struct has_apply_params : std::false_type {};
+
+template <typename T>
+struct has_apply_params<T, std::void_t<decltype(std::declval<T&>().apply_params(std::declval<const MachineParams&>()))>>
+    : std::bool_constant<noexcept(std::declval<T&>().apply_params(std::declval<const MachineParams&>()))> {};
+
+
+/**
+ * @brief [en] Convenience variable template for the parameter hook.
+ *        [zh] 参数钩子的便捷变量模板。
+ * @since 0.1.0
+ * @exporter
+ */
+template <typename T> inline constexpr bool has_apply_params_v = has_apply_params<T>::value;
 
 
 /**

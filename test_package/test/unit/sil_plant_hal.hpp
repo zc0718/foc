@@ -205,6 +205,10 @@ class PlantHal final {
      */
     void set_deadtime_voltage(float v_dead) noexcept;
 
+    /// [en] Width of the smooth dead-zone transition in A; 0 keeps the ideal `sign()` model.
+    ///      [zh] 平滑死区过渡宽度，A；0 保留理想的 `sign()` 模型。
+    void set_deadtime_transition(float width_a) noexcept;
+
     [[nodiscard]] auto deadtime_voltage() const noexcept -> float;
 
     PlantPwm pwm;
@@ -215,6 +219,7 @@ class PlantHal final {
   private:
     PmsmPlant* plant_;
     float v_dead_{0.0F};
+    float transition_a_{0.0F}; ///< [en] dead-zone transition width in A; 0 = ideal `sign()`. [zh] 死区过渡宽度，A；0 = 理想 `sign()`。
 };
 
 
@@ -327,9 +332,21 @@ inline void PlantHal::advance(float dt_ctrl_s, int substeps) noexcept {
     // 死区让施加的相电压取决于该相电流的方向：在死区时间内，该相被钳位在电流来自的那条母线上。
     if (v_dead_ > 0.0F) {
         const Uvw<float> i_uvw = plant_->current_uvw();
-        v_uvw.u -= v_dead_ * static_cast<float>((i_uvw.u > 0.0F) - (i_uvw.u < 0.0F));
-        v_uvw.v -= v_dead_ * static_cast<float>((i_uvw.v > 0.0F) - (i_uvw.v < 0.0F));
-        v_uvw.w -= v_dead_ * static_cast<float>((i_uvw.w > 0.0F) - (i_uvw.w < 0.0F));
+        const auto phase_loss = [this](float i) noexcept -> float {
+            // A real inverter does not switch polarity on a zero crossing; the clamp at the rails is
+            // approached smoothly. `transition_a_ > 0` models that as a linear ramp of width
+            // +-transition, which is the unmodelled effect S13's `sign()` version cannot see.
+            // 真实逆变器不会在过零处瞬间换极性；钳位到母线是平滑趋近的。`transition_a_ > 0` 把它建模为
+            // ±transition 宽的线性斜坡，这正是 S13 的 `sign()` 版本看不见的未建模效应。
+            if (transition_a_ > 0.0F) {
+                const float normalized = i / transition_a_;
+                return v_dead_ * ((normalized > 1.0F) ? 1.0F : ((normalized < -1.0F) ? -1.0F : normalized));
+            }
+            return v_dead_ * static_cast<float>((i > 0.0F) - (i < 0.0F));
+        };
+        v_uvw.u -= phase_loss(i_uvw.u);
+        v_uvw.v -= phase_loss(i_uvw.v);
+        v_uvw.w -= phase_loss(i_uvw.w);
     }
 
     const Ab<float> v_ab = core::clarke(v_uvw);
@@ -344,6 +361,10 @@ inline void PlantHal::advance(float dt_ctrl_s, int substeps) noexcept {
 }
 
 inline void PlantHal::set_deadtime_voltage(float v_dead) noexcept { v_dead_ = (v_dead > 0.0F) ? v_dead : 0.0F; }
+
+inline void PlantHal::set_deadtime_transition(float width_a) noexcept {
+    transition_a_ = (width_a > 0.0F) ? width_a : 0.0F;
+}
 
 inline auto PlantHal::deadtime_voltage() const noexcept -> float { return v_dead_; }
 

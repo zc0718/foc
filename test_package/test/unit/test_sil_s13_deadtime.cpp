@@ -78,11 +78,12 @@ using MotorWithCompensation =
 
 /// The same low-amplitude sine, with a dead-time compensator in front of the modulator.
 /// 同一个低幅值正弦，但调制器前面有死区补偿。
-auto run_compensated_sine(float v_dead) -> SineResult {
+auto run_compensated_sine(float v_dead, float transition_a = 0.0F) -> SineResult {
     const foc::motor::MotorConfig mc = foc::sil::nominal_motor_config();
     foc::sil::PmsmPlant plant(foc::sil::plant_params_from(foc::sil::nominal_spec()));
     foc::sil::PlantHal hal(plant, 24.0F);
     hal.set_deadtime_voltage(v_dead);
+    hal.set_deadtime_transition(transition_a);
 
     const foc::sil::BenchConfig cfg = foc::sil::standard_bench_config();
     const typename MotorWithCompensation::Policies policies{
@@ -209,4 +210,29 @@ TEST(SilS13Deadtime, CompensatingTheDeadTimeClosesTheGapItOpened) {
                 static_cast<double>(uncompensated.worst_error_rad_s / ideal.worst_error_rad_s),
                 static_cast<double>(compensated.worst_error_rad_s),
                 static_cast<double>(compensated.worst_error_rad_s / ideal.worst_error_rad_s));
+}
+
+
+TEST(SilS13Deadtime, ASmoothZeroCrossingIsNotWhatSignCompensationAssumes) {
+    // The compensator models the inverter as `v_dead * sign(i)`. A real inverter clamps to a rail and
+    // approaches it smoothly, so near a zero crossing the model over-corrects -- which is exactly the
+    // part of the remaining 14 % that this library cannot remove. Stated as a measurement: turn the
+    // smoothness on and the *compensated* result must get worse, because the compensation is not
+    // modelling what is happening.
+    // 补偿器把逆变器建模成 `v_dead·sign(i)`。真实逆变器钳位到母线并平滑趋近，因此在过零附近模型会**过修
+    // 正**——那正是本库消不掉的那 14% 里的成因。用测量说明：打开平滑性，**补偿后**的结果必须变差，因为
+    // 补偿没有在建模真实发生的事情。
+    const float v_dead = deadtime_voltage(24.0F);
+    std::printf("[S13] sweep of the dead-zone transition width (compensated):\n");
+    float previous = 0.0F;
+    for (const float width : {0.0F, 0.05F, 0.1F, 0.2F, 0.5F}) {
+        const SineResult result = run_compensated_sine(v_dead, width);
+        std::printf("[S13]   %4.2f A -> %.5f rad/s%s\n", static_cast<double>(width),
+                    static_cast<double>(result.worst_error_rad_s),
+                    (width == 0.0F) ? "  (the ideal step the model assumes)" : "");
+        if (width > 0.0F) {
+            EXPECT_GT(result.worst_error_rad_s, previous) << "smoother must be worse here, width " << width;
+        }
+        previous = result.worst_error_rad_s;
+    }
 }

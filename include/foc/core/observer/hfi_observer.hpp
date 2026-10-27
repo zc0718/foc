@@ -1,6 +1,7 @@
 // Conan::ImportStart
 #pragma once
 #include <foc/core/filters.hpp>
+#include <foc/core/machine_params.hpp>
 #include <foc/core/observer/observer_policy.hpp>
 #include <foc/core/types.hpp>
 // Conan::ImportEnd
@@ -259,6 +260,20 @@ class HfiObserver final {
      * @since 0.1.0
      */
     void seed_angle(float theta_e, float omega_e) noexcept;
+
+    /**
+     * @brief [en] Take an updated machine description, recomputing the modulation sensitivity from it.
+     *        [zh] 接受更新后的机器描述，并据此重算解调灵敏度。
+     *
+     * @param params [en] the machine as it actually is (identified, or re-read after heating). [zh] 机器实际的样子（辨识得到，或升温后重读）。
+     * @note [en] Only `demod_gain_a` depends on the machine -- the loop shape and the injection settings do
+     *       not -- so this is one recomputation, not a retune. Nothing is reset: the estimate carries on
+     *       from where it was, which is what makes it usable mid-run.
+     *       [zh] 只有 `demod_gain_a` 依赖机器——环路形状与注入设置不依赖——因此这是一次重算，不是重新整定。
+     *       不重置任何状态：估计从原处继续，这正是它能在运行中使用的原因。
+     * @since 0.1.0
+     */
+    void apply_params(const MachineParams& params) noexcept;
 
     /**
      * @brief [en] The estimate as last published (diagnostics; update() also returns it).
