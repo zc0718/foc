@@ -24,6 +24,29 @@ struct SvpwmResult final {
 
 
 /**
+ * @brief [en] What the modulator is asked for on one step: the voltage to produce, and the currents
+ *        it may need in order to produce it honestly.
+ *        [zh] 调制器在一步里被要求做什么：该产生的电压，以及为了如实产生这个电压它可能需要的电流。
+ *
+ *        [en] The currents are here because a real inverter does not deliver what it is told: dead
+ *        time costs `v_dead * sign(i_phase)` on every phase, so a modulator that cannot see the
+ *        current sign cannot compensate for it -- not "chooses not to", *cannot*. Widening this
+ *        contract is what makes dead-time compensation expressible at all.
+ *        [zh] 电流出现在这里，是因为真实逆变器并不交付它被要求的电压：死区在每一相上吃掉
+ *        `v_dead * sign(i_phase)`，因此看不到电流方向的调制器无法补偿它——不是"选择不补"，而是
+ *        **做不到**。加宽这条契约，才让死区补偿从"不可表达"变成"可表达"。
+ *
+ * @since 0.1.0
+ * @exporter
+ */
+struct ModulatorInput final {
+    Ab<float> v_ab;   ///< [en] commanded stator voltage, V. [zh] 指令定子电压，V。
+    float v_bus;      ///< [en] DC link voltage, V. [zh] 母线电压，V。
+    Uvw<float> i_uvw; ///< [en] measured phase currents, A. [zh] 实测相电流，A。
+};
+
+
+/**
  * @brief [en] Space-vector modulator (symmetric seven-segment equivalent).
  *        [zh] 空间矢量调制器（对称七段式的等价实现）。
  *
@@ -58,6 +81,17 @@ class Svpwm final {
      * @since 0.1.0
      */
     [[nodiscard]] static auto modulate(Ab<float> v_ab, float v_bus) noexcept -> SvpwmResult;
+
+    /**
+     * @brief [en] The same evaluation, taking the whole request. Pure SVPWM ignores the currents; a
+     *        compensating stage in front of it does not.
+     *        [zh] 同样的计算，但接收完整请求。纯 SVPWM 不关心电流；它前面的补偿级关心。
+     *
+     * @param request [en] voltage, bus and measured currents. [zh] 电压、母线与实测电流。
+     * @return [en] duties plus the saturation and status flags. [zh] 占空比以及饱和/状态标志。
+     * @since 0.1.0
+     */
+    [[nodiscard]] static auto modulate(const ModulatorInput& request) noexcept -> SvpwmResult;
 };
 
 

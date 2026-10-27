@@ -8,6 +8,7 @@
 #include <foc/core/pi.hpp>
 #include <foc/core/position.hpp>
 #include <foc/core/reference.hpp>
+#include <foc/core/svpwm.hpp>
 #include <foc/core/types.hpp>
 // Conan::ImportEnd
 
@@ -320,6 +321,39 @@ struct is_controller<
  * @exporter
  */
 template <typename T> inline constexpr bool is_controller_v = is_controller<T>::value;
+
+
+/**
+ * @brief [en] `T` satisfies the *widened* modulator contract: `modulate(const ModulatorInput&) noexcept
+ *        -> SvpwmResult`.
+ *        [zh] `T` 满足**加宽后的**调制器契约：`modulate(const ModulatorInput&) noexcept -> SvpwmResult`。
+ *
+ * @note [en] Separate from the two-argument form so every existing modulator keeps working: `Motor`
+ *       asks the widened one when it exists and the narrow one otherwise. The difference is a
+ *       capability, not a preference -- a modulator that never sees the phase currents cannot
+ *       linearise the inverter, and saying so in the type system is cheaper than documenting it.
+ *       [zh] 与两参数形式分开，好让所有既有调制器继续工作：存在加宽形式时 `Motor` 用它，否则用窄的。
+ *       这是**能力**差异而非偏好——从不接触相电流的调制器无法线性化逆变器，把它写在类型系统里比写在
+ *       文档里便宜。
+ * @since 0.1.0
+ * @exporter
+ */
+template <typename T, typename = void> struct is_modulator : std::false_type {};
+
+template <typename T>
+struct is_modulator<T, std::void_t<decltype(std::declval<T&>().modulate(std::declval<ModulatorInput>()))>>
+    : std::bool_constant<
+          std::is_same_v<decltype(std::declval<T&>().modulate(std::declval<ModulatorInput>())), SvpwmResult> &&
+          noexcept(std::declval<T&>().modulate(std::declval<ModulatorInput>()))> {};
+
+
+/**
+ * @brief [en] Convenience variable template for the widened modulator contract.
+ *        [zh] 加宽调制器契约的便捷变量模板。
+ * @since 0.1.0
+ * @exporter
+ */
+template <typename T> inline constexpr bool is_modulator_v = is_modulator<T>::value;
 
 
 /**

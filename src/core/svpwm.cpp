@@ -54,6 +54,21 @@ auto Svpwm::modulate(Ab<float> v_ab, float v_bus) noexcept -> SvpwmResult {
     return SvpwmResult{duty, saturated, ErrorCode::Ok};
 }
 
+/**
+ * @brief [en] Implements modulate(const ModulatorInput&); the contract is documented on its declaration.
+ *        [zh] 实现 modulate(const ModulatorInput&)；契约文档在对应的声明处。
+ * @attacher
+ * @since 0.1.0
+ */
+auto Svpwm::modulate(const ModulatorInput& request) noexcept -> SvpwmResult {
+    // SVPWM itself has no use for the currents: it is a pure map from a stator voltage to duties.
+    // The request carries them so that a stage in front of the modulator can compensate for what
+    // the inverter really applies, and so that the two cannot drift apart by being asked separately.
+    // SVPWM 本身用不到电流：它是"定子电压 → 占空比"的纯映射。请求带着电流，是为了让调制器前面的
+    // 一级能补偿逆变器真正施加的电压，也为了让这两者不会因为分别询问而走偏。
+    return modulate(request.v_ab, request.v_bus);
+}
+
 auto svpwm_sector(Ab<float> v_ab, float epsilon) noexcept -> std::uint8_t {
     if (!(std::fabs(v_ab.alpha) > epsilon) && !(std::fabs(v_ab.beta) > epsilon)) {
         return 0U;

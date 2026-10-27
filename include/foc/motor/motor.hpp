@@ -731,7 +731,15 @@ auto Motor<Observer, Modulator, Controller, HalPolicy, RefGenerator, FeedForward
     const float v_q = policies_.current_q.step(i_ref.q, i_dq.q, dt_s) + v_ff.q;
     const Dq<float> v_dq{v_d, v_q};
     const Ab<float> v_ab = core::inv_park(v_dq, theta_e);
-    const core::SvpwmResult modulated = policies_.modulator.modulate(v_ab, v_bus_v);
+    // The modulator is told what it is producing *and* what the phases are carrying: a dead-time
+    // compensator in front of it needs the second half, and a plain SVPWM ignores it.
+    // 调制器同时被告知"要产生什么"与"各相在流什么"：它前面的死区补偿器需要后半部分，而纯 SVPWM 会忽略。
+    core::SvpwmResult modulated{};
+    if constexpr (core::concepts::is_modulator_v<Modulator>) {
+        modulated = policies_.modulator.modulate(core::ModulatorInput{v_ab, v_bus_v, i_uvw});
+    } else {
+        modulated = policies_.modulator.modulate(v_ab, v_bus_v);
+    }
 
     hal_->pwm.write_duty(modulated.duty);
     v_ab_prev_ = v_ab;
