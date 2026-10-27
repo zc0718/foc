@@ -97,6 +97,19 @@ template <typename Modulator> class DeadTimeCompensator final {
    * quickly the correction fades in, not whether it does. [zh]
    * 这个估计只干一件事：给斜坡一个物理尺度，而不是一个手调的数字。差两倍只改变修正淡入的
    *       快慢，不改变它是否淡入。
+   *
+   * @warning [en] **Do not feed this straight into `i_ripple_a`.** Measured on the switching plant (SIL S13,
+   *          C3), the width over which the real loss actually fades is far narrower than this ripple figure:
+   *          with 0.375 A here the stage still corrects only 80 % at a 0.3 A operating point, and the
+   *          resulting current error is 6.6x the `sign()` stage's. Ripple is the wrong quantity to scale by --
+   *          the ramp needs the **width of the fade**, which this helper does not compute. It is kept because
+   *          that width is not derivable from the nameplate alone; a value beats a guess only when measured
+   *          (S19 V6 shows what the fade actually looks like).
+   *          [zh] **不要把它直接填进 `i_ripple_a`。** 在开关 plant 上实测（SIL S13 的 C3），真实损失真正
+   *          淡出的宽度比这个纹波数窄得多：按这里的 0.375 A 配，环节在 0.3 A 工作点只补到 80%，由此产生的
+   *          电流误差是 `sign()` 环节的 6.6 倍。**开关纹波不是该拿来做尺度的量**——斜坡需要的是淡出宽度，
+   *          而这个辅助函数算不出它。保留它是因为那个宽度无法只从铭牌推出来；只有量过的值才比猜测好
+   *          （淡出到底长什么样，见 S19 的 V6）。
    * @since 0.1.0
    */
     [[nodiscard]] static constexpr auto predicted_ripple_a(float v_bus, float dt_s, float l_h) noexcept -> float {
