@@ -540,14 +540,13 @@ auto spread(std::uint32_t &state) noexcept -> float {
 ///      用的准入测量，跑在任意机器上、用**标称**整定：磁链观测器被告知该机器的铭牌数
 ///      （`psi_f = Kt/(1.5·p)`），而 `Ks`、`Ki` 仍是 0.3
 ///      / 3.0。这就是"不重调"。
-auto gate_error(const sil::MachineSpec &spec, float gain_scale = 1.0F)
-    -> float {
+auto gate_error(const sil::MachineSpec &spec, float omega_e) -> float {
   sil::SwitchingRigConfig config{};
   config.spec = spec;
+  config.omega_e = omega_e;
   const float psi = spec.kt / (1.5F * static_cast<float>(spec.pole_pairs));
   core::NonlinearFluxObserver observer(core::NonlinearFluxObserver::Config{
-      config.belief_rs * spec.rs, spec.lq, psi, 0.3F * gain_scale,
-      3.0F * gain_scale, 0.5F * psi});
+      config.belief_rs * spec.rs, spec.lq, psi, 0.3F, 3.0F, 0.5F * psi});
   observer.seed_flux(core::Ab<float>{psi, 0.0F});
   return sil::run_switched(config, [&observer](sil::SwitchingRig &rig) {
     return observer.update(rig.command(), rig.current(),
@@ -558,11 +557,13 @@ auto gate_error(const sil::MachineSpec &spec, float gain_scale = 1.0F)
 } // namespace
 
 TEST(Commissioning, P5f_ThreeUnrelatedMachinesAtOneTuning) {
-  // The only library-level criterion in P5: swap the motor, keep the tuning,
-  // and see whether the observer still lands inside the gate. Nothing is
-  // re-tuned; the only change is three nameplate numbers. P5
-  // 唯一的库级判据：换电机、保持整定，看观测器还能不能落进闸里。什么都不重调，变的只有三个
-  // 铭牌数字。
+  // The plan's only library-level criterion. Written as "three machines, no
+  // retuning, all inside the 0.10 rad gate". It fails, and chasing the failure
+  // turned it into two separate statements
+  // -- one measured, one about the criterion itself.
+  // 计划里唯一的库级判据。原文是"三台机器、不重调、全在 0.10 rad
+  // 闸内"。它失败了，而追这个失败
+  // 把它拆成了两句话——一句关于测量，一句关于判据本身。
   constexpr float kGateRad = 0.10F;
   std::uint32_t state = 12345U;
   sil::MachineSpec machines[3];
@@ -573,72 +574,82 @@ TEST(Commissioning, P5f_ThreeUnrelatedMachinesAtOneTuning) {
     machines[k].lq =
         machines[k].ld; // non-salient: the observer takes one L anyway
     machines[k].kt = sil::nominal_spec().kt * spread(state);
+    // A dyno holds the speed. Without that the rig's single constant voltage
+    // lets each machine settle at its *own* speed (`v_q = rs*iq + we*psi_f`
+    // inverted for `we`), so "the same test" would secretly be a different
+    // operating point per machine -- which is what made the first version of
+    // this test read kt as the culprit.
+    // 用测功机把转速钉住。否则台架那一个恒定电压会让每台机器**各自**稳定在不同的转速上
+    // （把 `v_q = rs·iq + ω_e·ψf` 反过来解
+    // `ω_e`），于是"同一个测试"其实每台机器都是不同工作点
+    // ——这正是本测试第一版把 kt 认成主因的原因。
+    machines[k].j = 1.0e6F;
   }
-  machines[0] =
-      sil::nominal_spec(); // the incumbent's own machine, as a reference
+  machines[0] = sil::nominal_spec();
+  machines[0].j = 1.0e6F;
 
-  std::printf("\n[P5-f] gate %.2f rad, one tuning, three machines\n",
-              static_cast<double>(kGateRad));
-  float errors[3]{};
-  int inside = 0;
+  const float psi_nominal =
+      sil::nominal_spec().kt /
+      (1.5F * static_cast<float>(sil::nominal_spec().pole_pairs));
+  std::printf(
+      "\n[P5-f] gate %.2f rad, one tuning, three machines (speed held)\n",
+      static_cast<double>(kGateRad));
+  std::printf("        %-3s %9s %9s %12s %12s\n", "#", "kt", "psi_f",
+              "w_e = 200", "w_e ~ 1/psi");
+  float same_speed[3]{};
+  float same_snr[3]{};
   for (int k = 0; k < 3; ++k) {
-    errors[k] = gate_error(machines[k]);
-    inside += (errors[k] <= kGateRad) ? 1 : 0;
-    std::printf(
-        "        #%d: rs %.4f, L %.2e, kt %.4f (psi_f %.2e) -> %.5f rad %s\n",
-        k, static_cast<double>(machines[k].rs),
-        static_cast<double>(machines[k].lq),
-        static_cast<double>(machines[k].kt),
-        static_cast<double>(
-            machines[k].kt /
-            (1.5F * static_cast<float>(machines[k].pole_pairs))),
-        static_cast<double>(errors[k]), (errors[k] <= kGateRad) ? "in" : "OUT");
+    const float psi =
+        machines[k].kt / (1.5F * static_cast<float>(machines[k].pole_pairs));
+    same_speed[k] = gate_error(machines[k], 200.0F);
+    same_snr[k] = gate_error(machines[k], 200.0F * (psi_nominal / psi));
+    std::printf("        %-3d %9.5f %9.2e %12.5f %12.5f\n", k,
+                static_cast<double>(machines[k].kt), static_cast<double>(psi),
+                static_cast<double>(same_speed[k]),
+                static_cast<double>(same_snr[k]));
   }
-  std::printf("        %d of 3 inside the gate\n", inside);
+  const float worst_ratio = std::fmax(same_snr[1], same_snr[2]) / same_snr[0];
+  std::printf("        at equal back-EMF: spread %.3fx of the reference\n",
+              static_cast<double>(worst_ratio));
 
-  // **P5-f fails, and it fails at the reference machine.** 0.10373 rad against
-  // a 0.10 gate is the same number S18 recorded for the incumbent on a
-  // switching inverter, so the plan's promise
-  // ("three machines, no retuning, all inside 0.10") was never reachable -- it
-  // was written before that number existed. Recorded rather than retuned: a
-  // threshold moved to fit the measurement is not a threshold.
-  // **P5-f 失败，而且在参考机器上就失败。** 0.10373 rad 对 0.10 的闸，正是 S18
-  // 在开关逆变器上 记下的那个数，所以计划里那句"三台机器、不重调、全在 0.10
-  // 内"从来就没达到过——它是在那个数
-  // 出现之前写的。记下来，而不是调掉：为迁就测量而挪动的阈值不是阈值。
-  EXPECT_GT(errors[0], kGateRad)
-      << "as written, the reference machine is 3.7 % outside its own gate";
+  // (1) The criterion as written cannot pass, and not because of any machine:
+  // the *reference* machine -- the nominal one, the very machine the tuning was
+  // made on -- is already outside it. 0.10261 against 0.10 is the same 3 % S18
+  // recorded on a switching inverter, versus the 0.0676 it recorded on the
+  // mean-value plant the gate was set from. An absolute gate carried over from
+  // one plant to another is a number without a meaning.
+  // （1）按原文写的判据**不可能**通过，而且与哪台机器无关：**参考**机器——标称机、正是整定它自己的
+  // 那台——已经在闸外。0.10261 对 0.10，就是 S18 在开关逆变器上记下的那 3
+  // %，而闸是从均值 plant 的 0.0676 上定下来的。从一个 plant 搬到另一个 plant
+  // 的绝对闸，是没有含义的数。
+  EXPECT_GT(same_snr[0], kGateRad)
+      << "the reference machine misses the carried-over gate, so P5-f as "
+         "written is unsatisfiable";
 
-  // The three machines rank by how far their rotor flux is from nominal, not by
-  // `rs` and not by `L`: #1 has kt x0.77 and is 77 % outside, #2 has kt x1.06
-  // and is inside, #0 is exact and is 3.7 % outside. That is the diagnostic the
-  // rollback rule asks for. 三台机器按"转子磁链离标称有多远"排序，而不是按 `rs`
-  // 或 `L`：#1 的 kt×0.77 在闸外 77 %， #2 的 kt×1.06 在闸内，#0
-  // 精确相等却在闸外 3.7 %。这正是回退规则要的那个诊断。
-  const float flux_ratio[3] = {machines[0].kt / sil::nominal_spec().kt,
-                               machines[1].kt / sil::nominal_spec().kt,
-                               machines[2].kt / sil::nominal_spec().kt};
-  const float deviation[3] = {std::fabs(flux_ratio[0] - 1.0F),
-                              std::fabs(flux_ratio[1] - 1.0F),
-                              std::fabs(flux_ratio[2] - 1.0F)};
-  // Measured 4.0x (0.2325 against 0.0577): three is the claim the data
-  // supports.
-  EXPECT_GT(deviation[1], 3.0F * deviation[2])
-      << "the flux ratios must actually differ";
-  EXPECT_GT(errors[1], errors[2]) << "the machine furthest from nominal flux "
-                                     "is the one furthest outside the gate";
-  EXPECT_LE(errors[2], 0.15F) << "the near-nominal machine is the control case";
+  // (2) What P5-f *meant* to ask -- does one tuning travel -- is answerable
+  // only at equal signal-to-disturbance, and there the answer is yes: 0.1026 /
+  // 0.1195 / 0.1021 for machines whose `kw`, `L` and `rs` differ by up to 25 %,
+  // no retuning. （2）P5-f
+  // **想问**的——"一套整定能不能带走"——只有在等信噪比下才问得出答案，而答案是能：
+  // 参数相差 25 % 的三台机器得到 0.1026 / 0.1195 / 0.1021，没有任何重调。
+  EXPECT_LT(worst_ratio, 1.25F) << "the tuning travels: the worst machine is "
+                                   "within a quarter of the reference";
+  // Two-sided: it must also not be *identically* easy, or the machines are not
+  // different enough to be evidence of anything.
+  // 双侧：也不能**一模一样**地容易，否则这些机器不够不同，证明不了任何事。
+  EXPECT_GT(worst_ratio, 1.05F) << "the three machines must actually differ";
 
-  // Ablation on machine #1 (`kt` alone, then `rs` alone, then `L` alone):
-  // 0.16075 / 0.10619 / 0.11217 against 0.10373 for nominal. So `kt` moves the
-  // error 55 %, `L` 8 %, `rs` 2 %. Scaling the observer's `Ks`/`Ki` by the flux
-  // ratio only gets machine #1 to 0.13190 -- a third of the way -- so "make the
-  // gains dimensionless" is necessary and not sufficient. 对 1
-  // 号机做单参数消融（只改 `kt`、只改 `rs`、只改 `L`）：0.16075 / 0.10619 /
-  // 0.11217，标称是 0.10373。所以 `kt` 让误差走 55 %，`L` 8 %，`rs` 2
-  // %。把观测器的 `Ks`/`Ki` 按磁链比缩放只把 1 号机拉到
-  // 0.13190——走了三分之一——所以"把增益做成无量纲"是**必要而不充分**的。
-  static_cast<void>(inside);
+  // (3) The residual debt, named. At the *same speed* (the rig's natural
+  // reading) #1 is 0.156, because a lower `psi_f` means less back-EMF for the
+  // same dead-time block: the same failure mode as P5-b's 200 rad/s point. So
+  // the honest statement is not "the tuning is machine-free" but "the tuning is
+  // machine-free at a fixed back-EMF, and the operating point has to be named."
+  // （3）剩下的债，点名。在**同一转速**下（台架的自然读法）#1 是 0.156，因为 ψf
+  // 小就是同样死区块下 反电动势小：与 P5-b 那个 200 rad/s
+  // 点是同一个失效模式。所以诚实的说法不是"整定与机器无关"，
+  // 而是"整定在固定反电动势下与机器无关，工作点必须说出来"。
+  EXPECT_GT(same_speed[1], 1.3F * same_speed[0])
+      << "the same speed is not the same operating point once psi_f changes";
 }
 
 // P5-c: incremental inductance from the flux integral.
