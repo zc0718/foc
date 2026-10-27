@@ -98,7 +98,25 @@ inline auto wrap_full_turn(float angle) noexcept -> float {
  *       开环磁链积分器给什么留什么，因此穿越会给它留下约一个载波周期伏秒的偏差——实测 2 V / 2 kHz 下
  *       0.031 rad，`inject_v / (2π·inject_hz·ψf)` 预测 0.033。给高速观测器的电压做滤波可以消掉它，代价
  *       却更大：低到能在载波频率上起作用的极点，在高速时会把基频滞后几十度。可用的答案是按你能承受的
- *       偏差去定容载波，或让高速那一半变成跟踪磁链的环而不是开环积分。
+ *       偏差去定容载波。
+ *
+ * @note [en] Where the *speed* noise comes from, because it decides what the fix is: not the numerical
+ *       differentiation. A flux-plus-PLL observer was built and measured against the shipped one, on the
+ *       same signals, expecting the loop's smooth speed to make the handover reproducible. It does not:
+ *       both report the same speed ripple (+-3 rad/s at 20 rad/s electrical, +-12 at 100..200) and the
+ *       loop's *angle* is 2-3x worse at speed (0.030 vs 0.011 rad at 400, 0.060 vs 0.020 at 800). The
+ *       reason is that the ripple is in the flux estimate itself -- the integrator is fed `v - Rs*i` and
+ *       swallows the current's switching ripple -- so any estimator of the angle from that flux inherits
+ *       it, and the loop's proportional path turns it straight back into speed. A loop on the *same*
+ *       flux is therefore not the fix. What would be is an observer that closes a loop on the currents
+ *       (Luenberger / sliding mode), so the ripple is rejected before it ever reaches the flux.
+ *       [zh] **转速**噪声的来源，因为它决定了修法是什么：不是数值微分。本库试过并实测过一个
+ *       "磁链 + PLL" 观测器，期待环路的平滑转速能让交接可复现。结果是不行：两者的转速纹波完全相同
+ *       （电角速度 20 rad/s 处 ±3 rad/s，100–200 处 ±12），而环路的**角度**在高速反而差 2–3 倍
+ *       （400 处 0.030 对 0.011，800 处 0.060 对 0.020）。原因是纹波本来就在磁链估计里——积分器的输入是
+ *       `v − Rs·i`，它把电流的开关纹波一并吞了进去——于是任何从该磁链导出的角度都继承它，而环路的比例
+ *       通道又把它直接变回转速。所以"对同一条磁链加环"不是修法；修法是让观测器**对电流闭环**
+ *       （Luenberger / 滑模），在纹波到达磁链之前就把它压掉。
  *
  * @context [en] Current-loop ISR after construction: noexcept, no allocation. [zh] 构造之后的电流环 ISR：
  *           noexcept、不分配。
