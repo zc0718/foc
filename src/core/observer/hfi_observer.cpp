@@ -3,6 +3,7 @@
 
 #include <cmath>
 
+#include <foc/core/limits.hpp>
 #include <foc/core/transforms.hpp>
 // Conan::ImportEnd
 
@@ -45,9 +46,17 @@ auto wrap_two_pi(float angle) noexcept -> float {
 } // namespace
 
 HfiObserver::HfiObserver(Config config) noexcept
-    : config_(config), demod_lpf_a_(), demod_lpf_b_(), amplitude_lpf_(), state_{0.0F, 0.0F},
-      status_(valid_config(config) ? ErrorCode::Ok : ErrorCode::Param), phase_applied_(0.0F), theta_applied_(0.0F),
-      omega_int_(0.0F), error_(0.0F), hf_amp_(0.0F), dt_configured_(0.0F), primed_(false), locked_(false) {}
+    : config_(config), current_hp_alpha_(), current_hp_beta_(), demod_lpf_a_(), demod_lpf_b_(), amplitude_lpf_(),
+      state_{0.0F, 0.0F}, status_(valid_config(config) ? ErrorCode::Ok : ErrorCode::Param), phase_applied_(0.0F),
+      theta_applied_(0.0F), omega_int_(0.0F), error_(0.0F), hf_amp_(0.0F), dt_configured_(0.0F),
+      // Ten time constants of the demodulation filter: the residual of a step response is e^-10, about
+      // 5e-5. Integrating sooner reads the carrier switching on as signal, which at the designed loop
+      // gain throws the estimate across the whole speed range in a few hundred microseconds.
+      // 解调滤波器的十个时间常数：阶跃响应的残余是 e^-10，约 5e-5。更早积分就是把"载波刚加上"读成
+      // 信号，在设计的环路增益下几百微秒内就能把估计甩过整个速度范围。
+      blank_s_(10.0F / (kTwoPi<float> * config.demod_lpf_hz)),
+      blank_left_s_(10.0F / (kTwoPi<float> * config.demod_lpf_hz)), primed_(false), no_signal_s_(0.0F), locked_(false) {
+}
 
 auto HfiObserver::predicted_gain_a(float inject_v, float inject_hz, float ld, float lq) noexcept -> float {
     // Derived from the linearised HF model: a voltage V_h along an axis that is `dtheta` away from d
@@ -64,15 +73,19 @@ auto HfiObserver::predicted_gain_a(float inject_v, float inject_hz, float ld, fl
 }
 
 auto HfiObserver::configure_filters(float dt_s) noexcept -> ErrorCode {
-    // Three cascaded one-poles, two on the error signal and one on the amplitude used by the lock
-    // detector. Two stages on the error: the demodulated signal carries a ripple at twice the
-    // injection frequency, and one pole at fc puts only ~20 dB between that ripple and the loop.
-    // 三个一阶低通：误差信号两级、锁定判据的幅值一级。误差用两级的原因：解调信号带有两倍注入频率的
-    // 纹波，单极点在 fc 处只提供约 20 dB 抑制。
+    // Five one-poles: two high-pass the current (one per stationary axis), two on the error signal and
+    // one on the amplitude the lock detector uses. Two stages on the error because the demodulated
+    // signal carries a ripple at twice the injection frequency, and a single pole at fc leaves only
+    // ~20 dB between that ripple and the loop.
+    // 五个一阶：两个对电流做高通（静止系每轴一个）、两个在误差信号上、一个在锁定判据的幅值上。误差用
+    // 两级，因为解调信号带有两倍注入频率的纹波，单极点在 fc 处只有约 20 dB 抑制。
+    const ErrorCode alpha_hp = current_hp_alpha_.configure(config_.current_hp_hz, dt_s);
+    const ErrorCode beta_hp = current_hp_beta_.configure(config_.current_hp_hz, dt_s);
     const ErrorCode a = demod_lpf_a_.configure(config_.demod_lpf_hz, dt_s);
     const ErrorCode b = demod_lpf_b_.configure(config_.demod_lpf_hz, dt_s);
     const ErrorCode c = amplitude_lpf_.configure(config_.demod_lpf_hz, dt_s);
-    if ((a != ErrorCode::Ok) || (b != ErrorCode::Ok) || (c != ErrorCode::Ok)) {
+    if ((alpha_hp != ErrorCode::Ok) || (beta_hp != ErrorCode::Ok) || (a != ErrorCode::Ok) || (b != ErrorCode::Ok) ||
+        (c != ErrorCode::Ok)) {
         return ErrorCode::Param;
     }
     dt_configured_ = dt_s;
@@ -146,10 +159,39 @@ auto HfiObserver::update(Ab<float> v_ab, Ab<float> i_ab, float dt_s) noexcept ->
     // 锁定意味着“有高频电流可读”。没有它，环路会把噪声积成一个看起来像测量值的角度；保持上次角度并
     // 报零速，是一个没有有效性通道的观测器能做的最诚实的事。误差信号同样置零，理由相同：未锁定时的
     // 解调样本就是噪声，而一个看起来像测量值的数字会被当成测量值用。
-    locked_ = hf_amp_ > config_.min_hf_current_a;
+    // Blanking is re-armed every time the carrier *comes back*, not only at construction: a caller that
+    // winds the injection down (a blending observer does) brings it up again later, and that edge looks
+    // exactly like the first one -- a step of current into filters that have been sitting on nothing.
+    // 屏蔽在载波**回来**的每一次都重新武装，而不只在构造时：把注入收掉的调用方（混合观测器就是这样）
+    // 之后会再把它加回来，而那个边沿与第一次完全相同——一记电流阶跃打进一直没东西可看的滤波器里。
+    // Blanking is re-armed when the carrier comes back *after having been gone long enough for the
+    // filters to have lost their state* -- not on every threshold crossing. Both wrong versions were
+    // tried and both broke the loop: re-arming on the blanked verdict (false throughout blanking) never
+    // started it at all, and re-arming on the raw edge made it re-arm forever once a caller scaled the
+    // carrier down until it hovered around the threshold. The physical question is "was it really off",
+    // so the condition is how long it has been off.
+    // 屏蔽在载波"消失足够久、滤波器状态已丢"之后回来时重新武装——不是每次过阈值都武装。两个错误版本都试过
+    // 且都把环路弄坏了：按屏蔽后的结论武装（屏蔽期间恒为假）等于永不启动；按原始边沿武装，则在调用方把载波
+    // 缩到阈值附近来回时永远重新武装。物理上的问题是"它真的关过吗"，所以条件就是关掉多久。
+    const bool has_signal = hf_amp_ > config_.min_hf_current_a;
+    no_signal_s_ = has_signal ? 0.0F : static_cast<float>(no_signal_s_ + dt_s);
+    if (has_signal && (no_signal_s_ >= blank_s_)) {
+        blank_left_s_ = blank_s_;
+        no_signal_s_ = 0.0F;
+    }
+    blank_left_s_ = (blank_left_s_ > dt_s) ? static_cast<float>(blank_left_s_ - dt_s) : 0.0F;
+    locked_ = has_signal && (blank_left_s_ <= 0.0F);
 
     if (locked_) {
-        error_ = filtered / config_.demod_gain_a;
+        // Clamped to the range the normalisation itself defines: `demod_gain_a` is the amplitude at
+        // 90 degrees of error, so anything beyond +-1 is not a measurement of sin(2*dtheta) -- it is
+        // a transient (the carrier switching on, a load step) being read as signal. Without this the
+        // start-up transient alone produced errors around 4, which at the designed loop gain kicked
+        // the estimate straight over the pi/2 boundary and parked it on the mirror.
+        // 钳在归一化本身定义的范围内：`demod_gain_a` 就是误差 90 度时的幅值，因此超出 ±1 的值不是
+        // sin(2·dtheta) 的测量值，而是把暂态（载波刚加上、负载阶跃）当信号读。没有这一条，仅起动暂态
+        // 就会产生约 4 的误差，在设计的环路增益下把估计直接踢过 π/2 边界、停到镜像上。
+        error_ = core::clamp(filtered / config_.demod_gain_a, -1.0F, 1.0F);
         const float wn = kTwoPi<float> * config_.pll_bandwidth_hz;
         const float kp = 2.0F * config_.pll_zeta * wn;
         const float ki = wn * wn;
@@ -183,6 +225,8 @@ auto HfiObserver::injection_ab() const noexcept -> Ab<float> {
 }
 
 void HfiObserver::reset() noexcept {
+    current_hp_alpha_.reset();
+    current_hp_beta_.reset();
     demod_lpf_a_.reset();
     demod_lpf_b_.reset();
     amplitude_lpf_.reset();
@@ -193,7 +237,9 @@ void HfiObserver::reset() noexcept {
     error_ = 0.0F;
     hf_amp_ = 0.0F;
     dt_configured_ = 0.0F;
+    blank_left_s_ = blank_s_;
     primed_ = false;
+    no_signal_s_ = 0.0F;
     locked_ = false;
     status_ = valid_config(config_) ? ErrorCode::Ok : ErrorCode::Param;
 }
@@ -205,6 +251,13 @@ auto HfiObserver::locked() const noexcept -> bool { return locked_; }
 auto HfiObserver::error() const noexcept -> float { return error_; }
 
 auto HfiObserver::state() const noexcept -> ObsState { return state_; }
+
+void HfiObserver::seed_angle(float theta_e, float omega_e) noexcept {
+    state_.theta_e = wrap_two_pi(theta_e);
+    state_.omega_e = omega_e;
+    omega_int_ = omega_e;
+    theta_applied_ = state_.theta_e;
+}
 
 void HfiObserver::apply_polarity(bool reversed) noexcept {
     if (!reversed) {

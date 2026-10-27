@@ -210,6 +210,68 @@ template <typename T> inline constexpr bool has_injection_v = has_injection<T>::
 
 
 /**
+ * @brief [en] `T` (an observer) can report whether its estimate currently means anything.
+ *        [zh] `T`（观测器）能报告其估计当前是否有意义。
+ *
+ * @note [en] The observer contract has no validity channel, so an observer that can be temporarily
+ *       blind (a saliency loop with no carrier response) exposes `locked()` beside it. A blending
+ *       observer uses it to decide whether the low-speed half has anything to contribute; an
+ *       observer without it is assumed to always have an answer.
+ *       [zh] 观测器契约没有有效性通道，因此会暂时"看不见"的观测器（无载波响应的凸极环）在契约旁边提供
+ *       `locked()`。混合观测器用它判断低速那一半是否有东西可贡献；没有它的观测器视为永远有答案。
+ * @since 0.1.0
+ * @exporter
+ */
+template <typename T, typename = void> struct has_locked : std::false_type {};
+
+template <typename T>
+struct has_locked<T, std::void_t<decltype(std::declval<const T&>().locked())>>
+    : std::bool_constant<std::is_same_v<decltype(std::declval<const T&>().locked()), bool> &&
+                         noexcept(std::declval<const T&>().locked())> {};
+
+
+/**
+ * @brief [en] Convenience variable template for the lock hook.
+ *        [zh] 锁定钩子的便捷变量模板。
+ * @since 0.1.0
+ * @exporter
+ */
+template <typename T> inline constexpr bool has_locked_v = has_locked<T>::value;
+
+
+/**
+ * @brief [en] `T` (an observer) can be handed a starting angle and speed.
+ *        [zh] `T`（观测器）可以接受一个起始角度与转速。
+ *
+ * @note [en] Needed by anything that switches an observer off and on again: an observer that stops
+ *       tracking while it is not being used comes back with a stale estimate, and if its pull-in
+ *       window is narrower than a full turn (a saliency loop's is half of one) it cannot re-acquire
+ *       from there. Handing it the current best angle is the difference between "can resume" and
+ *       "must start over".
+ *       [zh] 任何会把观测器关掉再打开的机制都需要它：不被使用期间停止跟踪的观测器回来时带着过时的估计，
+ *       而若它的牵引窗口小于一整圈（凸极环只有半圈），就无法从中重新捕获。把当前最好的角度交给它，是
+ *       "可以继续"与"只能重来"之间的区别。
+ * @since 0.1.0
+ * @exporter
+ */
+template <typename T, typename = void> struct has_seed_angle : std::false_type {};
+
+template <typename T>
+struct has_seed_angle<
+    T, std::void_t<decltype(std::declval<T&>().seed_angle(std::declval<float>(), std::declval<float>()))>>
+    : std::bool_constant<noexcept(std::declval<T&>().seed_angle(std::declval<float>(), std::declval<float>()))> {};
+
+
+/**
+ * @brief [en] Convenience variable template for the seed-angle hook.
+ *        [zh] 播种角度钩子的便捷变量模板。
+ * @since 0.1.0
+ * @exporter
+ */
+template <typename T> inline constexpr bool has_seed_angle_v = has_seed_angle<T>::value;
+
+
+/**
  * @brief [en] `T` satisfies the observer policy contract (see observer_policy.hpp): it must expose
  *        `update(Ab<float>, Ab<float>, float) noexcept -> ObsState`.
  *        [zh] `T` 满足观测器策略契约（见 observer_policy.hpp）：必须提供
