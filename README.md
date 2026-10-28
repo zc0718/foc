@@ -345,6 +345,28 @@ periods per time constant, 0.5 % overshoot with the right parameters and 4.8 % w
 encodes is worth more than the number: pick the highest bandwidth that still meets the overshoot bound *with the plant
 50 % wrong*, and never accept a bandwidth the loop cannot deliver.
 
+### The commissioning chain, end to end (manual, not in CI)
+
+`benchmark/script/commission.py` runs identify -> tune -> verify with one rule: **the controller never sees the truth.**
+It identifies `Rs`, the constant loss and `psi_f` from the sweeps, tunes the loop from *those* numbers, and then steps
+the real loop against a plant that kept the truth. So whatever the identification got wrong shows up as a closed-loop
+number instead of staying in a table.
+
+| Rotor-angle error | Identified `Rs` | Error | Tuning floor | Bandwidth chosen | Overshoot | vs. truth-tuned |
+|---|---|---|---|---|---|---|
+| 0 deg | 0.50000 ohm | 0.00 % | 625 rad/s | 2000 rad/s | 0.5 % | +0.00 pp |
+| 5 deg | 0.50191 ohm | 0.38 % | 627 rad/s | 2008 rad/s | 0.5 % | +0.03 pp |
+| 10 deg | 0.50771 ohm | 1.54 % | 635 rad/s | 2031 rad/s | 0.6 % | +0.14 pp |
+
+A 1.54 % identification error costs 0.14 percentage points of overshoot and no settling time at all. That inverts the
+usual priority: the loop tolerates 50 % parameter error (`Rs` and `L` both wrong) and still overshoots under 5 %, so
+identification accuracy is **not** the binding constraint -- what matters is that the sweep is one the estimator will
+accept. Which is why the chain refuses rather than continues: a flat sweep comes back `valid == False` and the script
+stops instead of tuning from a number the estimator already called meaningless.
+
+The inductances are the honest gap: they cannot be separated at standstill (see the previous section), so the chain
+takes them from the nameplate and says so, rather than presenting a standstill-derived `Ld` as if it meant something.
+
 ### Claims deliberately not made
 
 These are the claims the evidence levels do not support, listed so nobody has to guess whether they
