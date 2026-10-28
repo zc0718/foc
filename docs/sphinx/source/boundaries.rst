@@ -1,5 +1,5 @@
 _`What this library does not do`
-===============================
+======================================
 
 Every row below is a limit that will cost somebody a day if they meet it in the field instead of here. The point of the
 page is not humility: a control library whose boundaries are unstated gets used outside them, and the failure then looks

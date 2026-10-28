@@ -14,6 +14,13 @@ import sys
 
 import foc_python as foc
 
+# The "from zero to a servo" example lives in its own file so that the quick-start page can include it verbatim, and it
+# carries its own assertion. Importing it here is what makes it run: the page cannot drift from a file the suite
+# executes, whatever else changes.
+# "从零到一个能跑的伺服"示例单独成文件，好让快速上手页原样包含它，并自带断言。在这里导入它就是让它被执行的机制：无论
+# 别的什么改变，页面都不可能从套件真正执行的文件上漂走。
+from from_zero_to_servo import test_the_example_settles_a_speed_step  # noqa: E402,F401
+
 
 def check_finite(telemetry):
     for key, value in telemetry.items():

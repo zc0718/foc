@@ -110,7 +110,7 @@ with :math:`\psi_f = K_t / (1.5 p)` and :math:`\omega_e = p\,\omega_m`. The torq
 *knot* the back-EMF constant: conflating them is the classic way to be wrong by 1.5 p.
 
 _`Sizing the injection (HFI)`
-----------------------------
+-----------------------------------
 
 The injection observer buys an angle where back-EMF has nothing to say, and it is not free. Every number below was
 measured on the SIL envelope fixture — a loaded machine held at a given speed on a dyno, the observer as a passenger, so
