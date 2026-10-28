@@ -35,6 +35,7 @@ __pycache__/
 
 # test framework
 /test_package/test/export/
+/build/
 /test_package/build/
 CMakeUserPresets.json
 

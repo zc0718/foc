@@ -440,6 +440,56 @@ def cmd_boundaries(_explicit):
     return 0
 
 
+def _fmpy_python():
+    """An interpreter that can `import fmpy`, or None.
+
+    Same optional-material convention as the FMI headers: an explicit environment variable first, then the materials
+    checkout this box happens to have, then the interpreter running the gate."""
+    candidates = []
+    explicit = os.environ.get('FOC_FMPY_PYTHON')
+    if explicit:
+        candidates.append(explicit)
+    candidates.append(str(ROOT / 'workspace' / 'materials' / '.venv' / 'bin' / 'python'))
+    candidates.append(sys.executable)
+    for exe in candidates:
+        if not Path(exe).is_file():
+            continue
+        try:
+            done = subprocess.run([exe, '-c', 'import fmpy'], capture_output=True, text=True, timeout=300)
+        except OSError:
+            continue
+        if done.returncode == 0:
+            return exe
+    return None
+
+
+def cmd_fmu(_explicit, tolerant=False):
+    """The FMU is a claim about a third-party master, so the check is that a third-party master loads it.
+
+    Build it with `api/fmu/build.py` (the FMI headers are the standard ones FMPy ships, unmodified), then drive it with
+    `api/fmu/smoke.py`, which instantiates the block, moves the rotor from the master side and asserts on what comes
+    back. Both halves need optional material -- a Python that can import fmpy, and the C archives a `conan create`
+    produced. When they are absent this prints one SKIPPED line and stops: loudly, because a silent skip would turn
+    "the FMU loads in a standard master" into a claim nobody has checked."""
+    python = _fmpy_python()
+    archives = sorted(Path.home().glob('.conan2/p/b/foc*/p/lib/libfoc_c.a'))
+    reason = None
+    if python is None:
+        reason = 'no interpreter that can import fmpy (set FOC_FMPY_PYTHON to one)'
+    elif not archives:
+        reason = 'no libfoc_c.a in the Conan cache (run `conan create .` first)'
+    if reason is not None:
+        if not tolerant:
+            _die(f'the FMU check cannot run: {reason}')
+        print(f'[fmu] SKIPPED: {reason}', flush=True)
+        return 0
+    built = subprocess.run([python, str(ROOT / 'api' / 'fmu' / 'build.py')], cwd=ROOT, text=True)
+    if built.returncode != 0:
+        return built.returncode
+    checked = subprocess.run([python, str(ROOT / 'api' / 'fmu' / 'smoke.py')], cwd=ROOT, text=True)
+    return checked.returncode
+
+
 def main():
     parser = argparse.ArgumentParser(description='Native quality gates (one implementation, three callers).')
     sub = parser.add_subparsers(dest='gate', required=True)
@@ -452,7 +502,8 @@ def main():
         'claims': 'every installed header has a README claim row with a level and existing evidence',
         'docs': 'Doxygen blocks: star alignment, continuation indent, 120 columns, no mid-CJK breaks',
         'boundaries': 'every statement on the boundaries page names a test case that exists',
-        'all': 'format + tidy + guard + license + strict + claims + docs + boundaries',
+        'fmu': 'build the FMU and load it in a standard FMI master (FMPy); SKIPPED when its material is absent',
+        'all': 'format + tidy + guard + license + strict + claims + docs + boundaries + fmu',
     }
     for name, text in helps.items():
         leaf = sub.add_parser(name, help=text)
@@ -481,8 +532,10 @@ def main():
         return cmd_docs(args.files)
     if args.gate == 'boundaries':
         return cmd_boundaries(args.files)
+    if args.gate == 'fmu':
+        return cmd_fmu(args.files)
     return 1 if (cmd_format([]) or cmd_tidy([]) or cmd_guard([]) or cmd_license([]) or cmd_strict([]) or
-                 cmd_claims([]) or cmd_docs([]) or cmd_boundaries([])) else 0
+                 cmd_claims([]) or cmd_docs([]) or cmd_boundaries([]) or cmd_fmu([], tolerant=True)) else 0
 
 
 if __name__ == '__main__':
