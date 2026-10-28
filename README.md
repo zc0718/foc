@@ -117,6 +117,7 @@ refused outright** because this project has no hardware to measure it on. Paths 
 | `foc/core/sm.hpp` | L1 | The state machine's reachable set and its refusals | `test_sm.cpp` |
 | `foc/core/machine_params.hpp` | L1 | Nameplate → derived `psi_f`, one definition | `test_machine_params.cpp` |
 | `foc/core/machine_map.hpp` | L1 | A current-dependent machine: rows reproduced exactly, linear between them, **clamped rather than extrapolated** outside the measured range, and an unsorted or degenerate map rejected. It says nothing about where the rows came from — that is the caller's claim | `test_machine_map.cpp` |
+| `foc/core/machine_map_text.hpp` | L1 | A machine document that survives a round trip bit for bit, an unknown key counted instead of rejected (a reader that refuses newer files stops the format growing), and a failed read that leaves the receiver untouched. It defines no vocabulary for where the numbers came from | `test_machine_map_text.cpp` |
 | `foc/core/deadtime.hpp` | L3 | The axis projection: 4/3 on d, 2/√3 on q, 4/π averaged over a rotation. Using the d number on q costs 15.7 % on `Lq` | `test_deadtime.cpp` |
 | `foc/core/feedforward.hpp` | L2 | Cross-coupling and back-EMF terms, on the SIL plant | `test_sil_feedforward.cpp` |
 | `foc/core/reference.hpp` | L3 | `d = 0` default plus `MtpaReference`: +29.2 % torque at `Lq/Ld = 2`, and exactly `i_d = 0` on a surface machine | `test_mtpa.cpp` |
