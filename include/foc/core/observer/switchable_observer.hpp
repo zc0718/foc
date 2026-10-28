@@ -4,6 +4,7 @@
 
 #include <foc/core/machine_params.hpp>
 #include <foc/core/observer/back_emf_observer.hpp>
+#include <foc/core/observer/hfi_observer.hpp>
 #include <foc/core/observer/nonlinear_flux_observer.hpp>
 #include <foc/core/observer/observer_policy.hpp>
 #include <foc/core/types.hpp>
@@ -23,6 +24,7 @@ namespace core {
 enum class ObserverKind : std::uint8_t {
     BackEmf = 0,       ///< [en] the back-EMF observer. [zh] 反电势观测器。
     NonlinearFlux = 1, ///< [en] the non-linear flux observer. [zh] 非线性磁链观测器。
+    Hfi = 2,           ///< [en] the injection observer; the only one that injects. [zh] 注入观测器；唯一会注入的那个。
 };
 
 
@@ -55,25 +57,66 @@ enum class ObserverKind : std::uint8_t {
 class SwitchableObserver final {
   public:
     /**
-     * @brief [en] Two configured observers and the one to start with.
-     * @brief [zh] 两个已配置的观测器，以及起始使用的那一个。
+     * @brief [en] Every observer's configuration in one place, plus which one to start with.
+     * @brief [zh] 所有观测器的配置集中在一处，外加起始使用的那一个。
+     * @note [en] One aggregate rather than a growing parameter list: adding a mode must not reshuffle a constructor
+     *            that call sites already write, and a named field is harder to pass in the wrong order than a
+     *            positional one.
+     * @note [zh] 用一个聚合而不是不断加长的参数表：增加一种模式不应打乱调用方已经在写的构造函数，而具名字段比位置参数更
+     *            难传错顺序。
+     * @since 0.1.5
      */
-    SwitchableObserver(BackEmfObserver::Config back_emf, NonlinearFluxObserver::Config nonlinear_flux,
-                       ObserverKind kind) noexcept
-        : back_emf_(back_emf), nonlinear_flux_(nonlinear_flux), kind_(kind) {}
+    struct Config final {
+        BackEmfObserver::Config back_emf{};
+        NonlinearFluxObserver::Config nonlinear_flux{};
+        HfiObserver::Config hfi{};
+        ObserverKind kind{ObserverKind::BackEmf};
+    };
+
+    /**
+     * @brief [en] Three configured observers and the one to start with.
+     * @brief [zh] 三个已配置的观测器，以及起始使用的那一个。
+     */
+    explicit SwitchableObserver(Config config) noexcept
+        : back_emf_(config.back_emf), nonlinear_flux_(config.nonlinear_flux), hfi_(config.hfi), kind_(config.kind) {}
 
     /**
      * @brief [en] Advance whichever observer is selected.
      * @brief [zh] 推进当前选中的观测器。
      */
     [[nodiscard]] auto update(Ab<float> v_ab, Ab<float> i_ab, float dt_s) noexcept -> ObsState {
-        return (kind_ == ObserverKind::BackEmf) ? back_emf_.update(v_ab, i_ab, dt_s)
-                                                : nonlinear_flux_.update(v_ab, i_ab, dt_s);
+        switch (kind_) {
+        case ObserverKind::NonlinearFlux:
+            return nonlinear_flux_.update(v_ab, i_ab, dt_s);
+        case ObserverKind::Hfi:
+            return hfi_.update(v_ab, i_ab, dt_s);
+        case ObserverKind::BackEmf:
+        default:
+            return back_emf_.update(v_ab, i_ab, dt_s);
+        }
     }
 
     /**
-     * @brief [en] Seed both observers.
-     * @brief [zh] 同时给两个观测器播种。
+     * @brief [en] The voltage the selected observer wants added this period, zero for the two that do not inject.
+     * @brief [zh] 被选中的观测器本周期希望叠加的电压；两个不注入的观测器返回零。
+     * @return [en] The carrier when `Hfi` is selected, `{0, 0}` otherwise.
+     * @return [zh] 选中 `Hfi` 时为载波，否则为 `{0, 0}`。
+     * @note [en] Only the selected observer's phase advances. Asking the idle one would be a second, invisible clock
+     *            running at a different rate from the one being demodulated -- the same "frozen, not stepped" rule as
+     *            `update()`, and the reason this is not simply `hfi_.injection_ab()`.
+     * @note [zh] 只有被选中的观测器的相位会推进。去问闲置的那个，等于让第二个看不见的时钟以与被解调的那个不同的速率走动
+     *            ——与 `update()` 同一条"冻结而不推进"的规则，也是这里不写成 `hfi_.injection_ab()` 的原因。
+     * @since 0.1.5
+     */
+    [[nodiscard]] auto injection_ab() const noexcept -> Ab<float> {
+        return (kind_ == ObserverKind::Hfi) ? hfi_.injection_ab() : Ab<float>{0.0F, 0.0F};
+    }
+
+    /**
+     * @brief [en] Seed every observer that takes a seed.
+     * @brief [zh] 给每个接受种子的观测器播种。
+     * @note [en] The injection observer is not seeded: it has no flux estimate to place, only a carrier phase.
+     * @note [zh] 注入观测器不播种：它没有磁链估计要安置，只有一个载波相位。
      */
     void seed_flux(Ab<float> psi_ab) noexcept {
         back_emf_.seed_flux(psi_ab);
@@ -81,8 +124,8 @@ class SwitchableObserver final {
     }
 
     /**
-     * @brief [en] Choose at run time. Neither observer is reset.
-     * @brief [zh] 在运行时切换。两个观测器都不会被复位。
+     * @brief [en] Choose at run time. No observer is reset and none is stepped.
+     * @brief [zh] 在运行时切换。没有观测器被复位，也没有被推进。
      */
     void set_kind(ObserverKind kind) noexcept { kind_ = kind; }
 
@@ -93,8 +136,8 @@ class SwitchableObserver final {
     [[nodiscard]] auto kind() const noexcept -> ObserverKind { return kind_; }
 
     /**
-     * @brief [en] Replace the machine description both observers use.
-     * @brief [zh] 替换两个观测器共用的机器描述。
+     * @brief [en] Replace the machine description every observer uses.
+     * @brief [zh] 替换所有观测器共用的机器描述。
      */
     void apply_params(const MachineParams& params) noexcept {
         back_emf_.apply_params(params);
@@ -104,6 +147,7 @@ class SwitchableObserver final {
   private:
     BackEmfObserver back_emf_;
     NonlinearFluxObserver nonlinear_flux_;
+    HfiObserver hfi_;
     ObserverKind kind_;
 };
 

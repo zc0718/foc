@@ -95,6 +95,8 @@ struct Setup final {
      * @brief [zh] 运行哪个观测器，取 `foc_observer_t`；0 是出厂默认。
      */
     int32_t observer;
+    float inject_v;  ///< [en] HFI carrier amplitude, peak V. [zh] HFI 载波幅值，峰值 V。
+    float inject_hz; ///< [en] HFI carrier frequency, Hz. [zh] HFI 载波频率，Hz。
 };
 
 
@@ -104,7 +106,23 @@ struct Setup final {
  */
 constexpr Setup kDefaultSetup{5.0F, 20000.0F, 500.0F, 24.0F, 2000.0F, 200.0F,
                               0.0F, 20.0F,    50.0F,  0.0F,  0.0F,    0.0F,
-                              0.0F, 0.0F,     0.0F,   0.0F,  0.0F,    static_cast<std::int32_t>(FOC_OBSERVER_BACK_EMF)};
+                              0.0F, 0.0F,     0.0F,   0.0F,  0.0F,    static_cast<std::int32_t>(FOC_OBSERVER_BACK_EMF),
+                              0.0F, 0.0F};
+
+/**
+ * @brief [en] The demodulation filter's cutoff in Hz: the value `test_sil_hfi.cpp` fixes for every case, so that a
+ *             failure can never be blamed on the filter instead of on the physics.
+ * @brief [zh] 解调滤波截止频率，Hz：`test_sil_hfi.cpp` 对所有用例都固定此值，于是失败永远不会被归咎于滤波器而非物理。
+ */
+constexpr float kHfiDemodLpfHz = 200.0F;
+
+/**
+ * @brief [en] The carrier must clear that cutoff by at least this factor, or the filter removes the very component
+ *             being demodulated.
+ * @brief [zh] 载波至少要高出该截止频率这么多倍，否则滤波器会把要解调的那个分量本身滤掉。
+ */
+constexpr float kHfiMinRatio = 2.0F;
+
 
 
 /**
@@ -227,6 +245,17 @@ auto resolve_setup(const foc_motor_setup_t* requested) noexcept -> Setup {
     if (covers(*requested, offsetof(foc_motor_setup_t, observer) + sizeof(requested->observer))) {
         out.observer = requested->observer;
     }
+    // The carrier's amplitude and frequency are the caller's decision -- the bus voltage and the current limit bound
+    // them -- and have no defensible default, so they are read literally like `observer`: zero means "not supplied",
+    // and a mode that needs them refuses rather than inventing a value.
+    // 载波幅值与频率由调用方决定（受母线电压与电流限幅约束），没有站得住的默认值，因此与 `observer` 一样按字面读取：
+    // 零表示"未提供"，需要它们的模式会拒绝，而不是编一个值。
+    if (covers(*requested, offsetof(foc_motor_setup_t, inject_v) + sizeof(requested->inject_v))) {
+        out.inject_v = requested->inject_v;
+    }
+    if (covers(*requested, offsetof(foc_motor_setup_t, inject_hz) + sizeof(requested->inject_hz))) {
+        out.inject_hz = requested->inject_hz;
+    }
     // Alignment deliberately breaks the "0 = library default" rule: 0 is a meaningful value here
     // ("do not align"), so every field is taken literally and any non-zero value is authoritative.
     // 对齐故意打破“0 = 库默认值”的规则：0 在这里是有意义的值（“不对齐”），所以每个字段按字面生效，
@@ -272,12 +301,34 @@ auto resolve_setup(const foc_motor_setup_t* requested) noexcept -> Setup {
  *            正确、只是尚未实现时告诉调用方它写错了。
  * @since 0.1.4
  */
-auto observer_status(const Setup& setup) noexcept -> foc_err_t {
+auto observer_status(const Setup& setup, const foc_motor_params_t& params) noexcept -> foc_err_t {
     switch (setup.observer) {
     case FOC_OBSERVER_BACK_EMF:
     case FOC_OBSERVER_NONLINEAR_FLUX:
         return FOC_OK;
     case FOC_OBSERVER_HFI:
+        // Three conditions, each a fact about the request or the machine rather than a preference:
+        //   - the carrier has to be stated, because there is no defensible default for it;
+        //   - the machine has to be salient. `predicted_gain_a()` is proportional to `(lq - ld)`, so on a surface
+        //     machine the demodulated signal is identically zero and no follower can lock. The observer's own
+        //     constructor rejects `demod_gain_a == 0`, so admitting the mode would only move the refusal later, into
+        //     a construction whose status nobody reads;
+        //   - the carrier has to clear the demodulation cutoff by `kHfiMinRatio`, which is what keeps the filter from
+        //     removing the component it is supposed to demodulate.
+        // 三个条件，每一个都是关于请求或机器的事实而非偏好：
+        //   - 载波必须给出，因为它没有站得住的默认值；
+        //   - 机器必须有凸极。`predicted_gain_a()` 正比于 `(lq - ld)`，表贴机上解调信号恒为零、任何跟随器都锁不住。
+        //     观测器自己的构造函数就拒绝 `demod_gain_a == 0`，放行只会把拒绝推后到一次没人读状态返回值的构造里；
+        //   - 载波必须比解调截止频率高出 `kHfiMinRatio` 倍，这正是让滤波器不会滤掉它本该解调的那个分量的条件。
+        if (!(std::isfinite(setup.inject_v) && (setup.inject_v > 0.0F) && std::isfinite(setup.inject_hz) &&
+              (setup.inject_hz > (kHfiMinRatio * kHfiDemodLpfHz)))) {
+            return FOC_ERR_PARAM;
+        }
+        if (!(std::isfinite(params.ld) && std::isfinite(params.lq) && (params.ld > 0.0F) && (params.lq > 0.0F) &&
+              (params.ld != params.lq))) {
+            return FOC_ERR_PARAM;
+        }
+        return FOC_OK;
     case FOC_OBSERVER_BLENDED:
         return FOC_ERR_NOT_IMPL;
     default:
@@ -628,12 +679,59 @@ auto machine_params(const foc_motor_params_t& p) noexcept -> core::MachineParams
  *            重新猜一遍。
  * @since 0.1.5
  */
-inline auto make_observer(const foc_motor_params_t& p, core::ObserverKind kind) noexcept -> core::SwitchableObserver {
+constexpr auto observer_mode(core::ObserverKind kind) noexcept -> std::int32_t {
+    switch (kind) {
+    case core::ObserverKind::NonlinearFlux:
+        return FOC_OBSERVER_NONLINEAR_FLUX;
+    case core::ObserverKind::Hfi:
+        return FOC_OBSERVER_HFI;
+    case core::ObserverKind::BackEmf:
+    default:
+        return FOC_OBSERVER_BACK_EMF;
+    }
+}
+
+constexpr auto observer_kind(std::int32_t observer) noexcept -> core::ObserverKind {
+    switch (observer) {
+    case FOC_OBSERVER_NONLINEAR_FLUX:
+        return core::ObserverKind::NonlinearFlux;
+    case FOC_OBSERVER_HFI:
+        return core::ObserverKind::Hfi;
+    case FOC_OBSERVER_BACK_EMF:
+    default:
+        return core::ObserverKind::BackEmf;
+    }
+}
+
+inline auto make_observer(const foc_motor_params_t& p, const Setup& setup) noexcept -> core::SwitchableObserver {
     const core::MachineParams machine = machine_params(p);
     const float psi_f = machine.psi_f;
-    return core::SwitchableObserver(
-        core::BackEmfObserver::Config{machine.rs, machine.ld},
-        core::NonlinearFluxObserver::Config{machine.rs, machine.lq, psi_f, 0.3F, 3.0F, 0.5F * psi_f}, kind);
+
+    core::SwitchableObserver::Config config{};
+    config.back_emf = core::BackEmfObserver::Config{machine.rs, machine.ld};
+    config.nonlinear_flux =
+        core::NonlinearFluxObserver::Config{machine.rs, machine.lq, psi_f, 0.3F, 3.0F, 0.5F * psi_f};
+    // The injection half is configured exactly the way `test_sil_hfi.cpp` does, because those are the numbers that were
+    // measured: the high-pass at 300 Hz (above any fundamental this machine can make, far below the 2 kHz carrier), the
+    // demodulation filter at 200 Hz, damping 0.9, and the sensitivity is the observer's own `predicted_gain_a()` at
+    // unit scale rather than a hand-tuned figure. The high-frequency current floor is 0.05 A. The amplitude and the
+    // frequency are the caller's to choose and are left at zero until the mode is admitted, so this half is
+    // constructed but unreachable -- the slot has to be able to hold it before it can be selected.
+    // 注入那一半的配置与 `test_sil_hfi.cpp` 完全一致，因为那些是实测过的数字：高通 300 Hz（高于本机能产生的任何基频、
+    // 远低于 2 kHz 载波），解调滤波 200 Hz，阻尼 0.9，灵敏度取观测器自己的 `predicted_gain_a()`、比例 1，而不是手调
+    // 出来的数。高频电流下限 0.05 A。幅值与频率由调用方决定，在该模式被放行之前保持为零，因此这一半是"构造了但不可达"
+    // ——槽位必须先能装得下它，然后才谈得上选中它。
+    config.hfi.inject_v = setup.inject_v;
+    config.hfi.inject_hz = setup.inject_hz;
+    config.hfi.current_hp_hz = 300.0F;
+    config.hfi.demod_lpf_hz = kHfiDemodLpfHz;
+    config.hfi.pll_bandwidth_hz = 40.0F;
+    config.hfi.pll_zeta = 0.9F;
+    config.hfi.demod_gain_a =
+        core::HfiObserver::predicted_gain_a(setup.inject_v, setup.inject_hz, machine.ld, machine.lq);
+    config.hfi.min_hf_current_a = 0.05F;
+    config.kind = observer_kind(setup.observer);
+    return core::SwitchableObserver(config);
 }
 
 /**
@@ -641,13 +739,7 @@ inline auto make_observer(const foc_motor_params_t& p, core::ObserverKind kind) 
  * @brief [zh] 把调用方的枚举映射到槽位的 kind；只有被放行的取值会到达这里。
  * @since 0.1.5
  */
-constexpr auto observer_mode(core::ObserverKind kind) noexcept -> std::int32_t {
-    return (kind == core::ObserverKind::NonlinearFlux) ? FOC_OBSERVER_NONLINEAR_FLUX : FOC_OBSERVER_BACK_EMF;
-}
 
-constexpr auto observer_kind(std::int32_t observer) noexcept -> core::ObserverKind {
-    return (observer == FOC_OBSERVER_NONLINEAR_FLUX) ? core::ObserverKind::NonlinearFlux : core::ObserverKind::BackEmf;
-}
 
 
 /**
@@ -760,7 +852,7 @@ foc_err_t foc_bridge_create_ex(const foc_motor_params_t* params, const foc_motor
     if (!foc::api::setup_ok(resolved)) {
         return FOC_ERR_PARAM;
     }
-    const foc_err_t observer = foc::api::observer_status(resolved);
+    const foc_err_t observer = foc::api::observer_status(resolved, *params);
     if (observer != FOC_OK) {
         return observer;
     }
@@ -789,16 +881,15 @@ foc_err_t foc_bridge_create_ex(const foc_motor_params_t* params, const foc_motor
         slot.hal.reset();
         slot.hal.dc_link.set_voltage_v(resolved.v_bus_v);
 
-        const foc::api::MotorT::Policies policies{
-            foc::api::make_observer(*params, foc::api::observer_kind(resolved.observer)),
-            foc::core::Svpwm{},
-            foc::core::Pi{current},
-            foc::core::Pi{current},
-            foc::core::Pi{speed},
-            foc::core::NullReferenceGenerator{},
-            foc::core::NullFeedforward{},
-            foc::core::PositionP{position},
-            foc::core::AlignRoutine{alignment}};
+        const foc::api::MotorT::Policies policies{foc::api::make_observer(*params, resolved),
+                                                  foc::core::Svpwm{},
+                                                  foc::core::Pi{current},
+                                                  foc::core::Pi{current},
+                                                  foc::core::Pi{speed},
+                                                  foc::core::NullReferenceGenerator{},
+                                                  foc::core::NullFeedforward{},
+                                                  foc::core::PositionP{position},
+                                                  foc::core::AlignRoutine{alignment}};
 
         slot.instance = new (static_cast<void*>(slot.storage)) foc::api::MotorT(config, policies, slot.hal);
 
@@ -832,7 +923,7 @@ foc_err_t foc_bridge_create_host(const foc_motor_params_t* params, const foc_mot
     if (!foc::api::setup_ok(resolved)) {
         return FOC_ERR_PARAM;
     }
-    const foc_err_t observer = foc::api::observer_status(resolved);
+    const foc_err_t observer = foc::api::observer_status(resolved, *params);
     if (observer != FOC_OK) {
         return observer;
     }
@@ -863,16 +954,15 @@ foc_err_t foc_bridge_create_host(const foc_motor_params_t* params, const foc_mot
         slot.hal = foc::driver::CallbackHal(hal_callbacks);
         slot.setup = resolved;
 
-        const foc::api::MotorT_Host::Policies policies{
-            foc::api::make_observer(*params, foc::api::observer_kind(resolved.observer)),
-            foc::core::Svpwm{},
-            foc::core::Pi{current},
-            foc::core::Pi{current},
-            foc::core::Pi{speed},
-            foc::core::NullReferenceGenerator{},
-            foc::core::NullFeedforward{},
-            foc::core::PositionP{position},
-            foc::core::AlignRoutine{alignment}};
+        const foc::api::MotorT_Host::Policies policies{foc::api::make_observer(*params, resolved),
+                                                       foc::core::Svpwm{},
+                                                       foc::core::Pi{current},
+                                                       foc::core::Pi{current},
+                                                       foc::core::Pi{speed},
+                                                       foc::core::NullReferenceGenerator{},
+                                                       foc::core::NullFeedforward{},
+                                                       foc::core::PositionP{position},
+                                                       foc::core::AlignRoutine{alignment}};
 
         slot.instance = new (static_cast<void*>(slot.storage)) foc::api::MotorT_Host(config, policies, slot.hal);
 

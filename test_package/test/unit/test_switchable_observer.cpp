@@ -31,6 +31,15 @@ auto nlfo_config() -> foc::core::NonlinearFluxObserver::Config {
     return {kRs, kLq, kPsiF, 0.3F, 3.0F, 0.5F * kPsiF};
 }
 
+/** @brief [en] A wrapper config with the given starting kind. [zh] 给定起始 kind 的包装器配置。 */
+auto wrapper_config(foc::core::ObserverKind kind) -> foc::core::SwitchableObserver::Config {
+    foc::core::SwitchableObserver::Config config{};
+    config.back_emf = back_emf_config();
+    config.nonlinear_flux = nlfo_config();
+    config.kind = kind;
+    return config;
+}
+
 /** @brief [en] A rotating voltage at a fixed step, so both observers see the same excitation. [zh] 固定步进的旋转电压。 */
 auto input_at(int step) -> foc::core::Ab<float> {
     const float angle = 0.01F * static_cast<float>(step);
@@ -49,7 +58,7 @@ TEST(SwitchableObserver, ForwardsToWhicheverObserverIsSelected) {
     // same inputs. Anything else would mean the wrapper is not a forwarder but a third algorithm.
     // 判据：包装器的输出与被选中的那种观测器单独驱动时**逐位相同**。否则它就成不了转发器，而是第三种算法。
     for (const foc::core::ObserverKind kind : {foc::core::ObserverKind::BackEmf, foc::core::ObserverKind::NonlinearFlux}) {
-        foc::core::SwitchableObserver wrapper(back_emf_config(), nlfo_config(), kind);
+        foc::core::SwitchableObserver wrapper(wrapper_config(kind));
         wrapper.seed_flux(foc::core::Ab<float>{kPsiF, 0.0F});
 
         foc::core::BackEmfObserver standalone_be(back_emf_config());
@@ -77,7 +86,7 @@ TEST(SwitchableObserver, TheSeedReachesBothObservers) {
     // The seed is the one thing a hand-over relies on. A seed given while one observer is running has to be there for the
     // other when it takes over, otherwise the hand-over starts from whatever that one last believed.
     // 种子是交接唯一依赖的东西。在其中一个观测器运行时给出的种子，必须在另一个接手时已经在位，否则交接就从它上次相信的东西开始。
-    foc::core::SwitchableObserver wrapper(back_emf_config(), nlfo_config(), foc::core::ObserverKind::BackEmf);
+    foc::core::SwitchableObserver wrapper(wrapper_config(foc::core::ObserverKind::BackEmf));
     // A quarter turn of flux, so a seed that silently did not arrive would be visible as the wrong angle.
     // 四分之一圈的磁链，于是"种子没到"会以角度不对的形式暴露出来。
     wrapper.seed_flux(foc::core::Ab<float>{0.0F, kPsiF});
@@ -118,7 +127,7 @@ TEST(SwitchableObserver, TheIdleObserverIsFrozenRatherThanReset) {
     constexpr int kDriveSteps = 100;
     constexpr int kParkSteps = 100;
 
-    foc::core::SwitchableObserver wrapper(back_emf_config(), nlfo_config(), foc::core::ObserverKind::NonlinearFlux);
+    foc::core::SwitchableObserver wrapper(wrapper_config(foc::core::ObserverKind::NonlinearFlux));
     wrapper.seed_flux(foc::core::Ab<float>{kPsiF, 0.0F});
     for (int step = 0; step < kDriveSteps; ++step) {
         static_cast<void>(wrapper.update(input_at(step), current_at(step), kDt));

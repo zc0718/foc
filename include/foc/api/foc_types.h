@@ -124,6 +124,8 @@ typedef struct foc_motor_setup {
     float align_verify_s;              /* direction-check hold, s; 0 = skip the check */
     float align_angle_e_rad;           /* forced electrical angle, rad; 0 = the usual zero */
     int32_t observer;                  /* foc_observer_t; 0 = FOC_OBSERVER_BACK_EMF, the shipped default */
+    float inject_v;                    /* HFI carrier amplitude, peak V; required for FOC_OBSERVER_HFI */
+    float inject_hz;                   /* HFI carrier frequency, Hz; required for FOC_OBSERVER_HFI */
 } foc_motor_setup_t;
 
 

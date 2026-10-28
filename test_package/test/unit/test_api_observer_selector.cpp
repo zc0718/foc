@@ -30,6 +30,13 @@ auto params_struct() -> foc_motor_params_t {
     return params;
 }
 
+/** @brief [en] The same nameplate with real saliency (lq twice ld). [zh] 同一台机器的铭牌，但有真实凸极（lq 为 ld 两倍）。 */
+auto salient_params() -> foc_motor_params_t {
+    foc_motor_params_t params = params_struct();
+    params.lq = 8.0e-4F;
+    return params;
+}
+
 auto setup_with_observer(std::int32_t observer) -> foc_motor_setup_t {
     foc_motor_setup_t setup{};
     setup.struct_size = sizeof(foc_motor_setup_t);
@@ -38,6 +45,13 @@ auto setup_with_observer(std::int32_t observer) -> foc_motor_setup_t {
     setup.deadtime_ns = 0.0F;
     setup.v_bus_v = 24.0F;
     setup.observer = observer;
+    return setup;
+}
+
+auto setup_with_carrier(std::int32_t observer, float inject_v, float inject_hz) -> foc_motor_setup_t {
+    foc_motor_setup_t setup = setup_with_observer(observer);
+    setup.inject_v = inject_v;
+    setup.inject_hz = inject_hz;
     return setup;
 }
 
@@ -93,15 +107,14 @@ TEST(ApiObserverSelector, TheDefaultIsTheBackEmfObserverAndItRuns) {
 
 TEST(ApiObserverSelector, AModeThatIsNotWiredSaysSoInsteadOfRunningTheDefault) {
     // Each named-but-unwired mode must answer NOT_IMPL from both constructors. Answering OK and running the back-EMF
-    // observer would hand the caller a capability the library does not have. `NONLINEAR_FLUX` has since been wired and
-    // moved to its own case below; leaving it in this loop would have kept asserting a fact that stopped being true,
-    // and the test would have had to be weakened rather than corrected.
+    // observer would hand the caller a capability the library does not have. `NONLINEAR_FLUX` and `HFI` have since been
+    // wired and moved to their own cases; leaving them in this loop would have kept asserting a fact that stopped being
+    // true, and the test would have had to be weakened rather than corrected.
     // 每个已命名但未接入的模式必须在两个构造函数上都答 NOT_IMPL。答 OK 却跑反电势观测器，等于把一个库并不具备的能力交给
     // 调用方。`NONLINEAR_FLUX` 后来接上了，已移到下面它自己的用例；把它留在这个循环里就是继续断言一个已经不成立的事实，
     // 那样测试只能被削弱而不能被修正。
     const foc_motor_params_t params = params_struct();
-    for (const std::int32_t observer :
-         {static_cast<std::int32_t>(FOC_OBSERVER_HFI), static_cast<std::int32_t>(FOC_OBSERVER_BLENDED)}) {
+    for (const std::int32_t observer : {static_cast<std::int32_t>(FOC_OBSERVER_BLENDED)}) {
         const foc_motor_setup_t setup = setup_with_observer(observer);
 
         foc_motor_t stub{};
@@ -209,4 +222,83 @@ TEST(ApiObserverSelector, AnOlderShorterStatusStructIsNotWrittenPastTheEnd) {
     // The fields the caller does own are still filled.
     EXPECT_EQ(status.mode_state, static_cast<std::int32_t>(FOC_MOTOR_IDLE));
     EXPECT_EQ(foc_motor_destroy(motor), FOC_OK);
+}
+
+TEST(ApiObserverSelector, TheHfiModeRefusesWithoutACarrierOrWithoutSaliency) {
+    // HFI is admitted on facts, not on a switch. Two of them are physical:
+    //   - no carrier stated means there is nothing to demodulate, and the library has no defensible default;
+    //   - a surface machine has `lq == ld`, and `predicted_gain_a()` is proportional to their difference, so the
+    //     demodulated signal is identically zero -- no follower can lock. Refusing here is not caution, it is the same
+    //     arithmetic the observer's constructor performs when it rejects `demod_gain_a == 0`.
+    // The answers stay distinct: a well-formed request for a mode that is not wired is NOT_IMPL, while a request this
+    // machine cannot honour is PARAM. Merging them would let a caller believe the feature exists.
+    // HFI 是按事实放行的，不是按开关。其中两条是物理事实：未给出载波就意味着没有东西可解调，而库没有站得住的默认值；
+    // 表贴机 `lq == ld`，而 `predicted_gain_a()` 正比于两者之差，于是解调信号恒为零——任何跟随器都锁不住。在这里拒绝不是
+    // 保守，而是观测器构造函数拒绝 `demod_gain_a == 0` 时所用的同一套算术。
+    // 两种回答保持区分：写法正确但模式未接入是 NOT_IMPL，而"这台机器满足不了"是 PARAM。合并二者会让调用方以为功能存在。
+    const std::int32_t hfi = static_cast<std::int32_t>(FOC_OBSERVER_HFI);
+    foc_motor_t motor{};
+
+    // Surface machine, carrier supplied: refused because there is no saliency to measure.
+    const foc_motor_params_t surface = params_struct();
+    const foc_motor_setup_t salient_setup = setup_with_carrier(hfi, 12.0F, 2000.0F);
+    EXPECT_EQ(foc_motor_create_ex(&surface, &salient_setup, &motor), FOC_ERR_PARAM) << "surface machine accepted HFI";
+    EXPECT_EQ(motor, nullptr);
+
+    // Salient machine, no carrier: refused because nothing would be injected.
+    const foc_motor_params_t salient = salient_params();
+    const foc_motor_setup_t no_carrier = setup_with_carrier(hfi, 0.0F, 0.0F);
+    EXPECT_EQ(foc_motor_create_ex(&salient, &no_carrier, &motor), FOC_ERR_PARAM) << "HFI accepted without a carrier";
+
+    // Salient machine, carrier below the demodulation filter: refused, the filter would remove what it demodulates.
+    const foc_motor_setup_t slow_carrier = setup_with_carrier(hfi, 12.0F, 300.0F);
+    EXPECT_EQ(foc_motor_create_ex(&salient, &slow_carrier, &motor), FOC_ERR_PARAM) << "carrier at the filter cutoff";
+
+    // The control: everything stated, so it must run and must report itself.
+    foc_motor_t hfi_motor{};
+    ASSERT_EQ(foc_motor_create_ex(&salient, &salient_setup, &hfi_motor), FOC_OK);
+    ASSERT_NE(hfi_motor, nullptr);
+    ASSERT_EQ(foc_motor_enable(hfi_motor), FOC_OK);
+    ASSERT_EQ(foc_set_torque(hfi_motor, 0.0F), FOC_OK);
+    for (int tick = 0; tick < 20; ++tick) {
+        ASSERT_EQ(foc_tick(hfi_motor, 1.0F / 20000.0F), FOC_OK);
+    }
+    foc_motor_status_t status{};
+    status.struct_size = sizeof(foc_motor_status_t);
+    ASSERT_EQ(foc_motor_get_status(hfi_motor, &status), FOC_OK);
+    EXPECT_EQ(status.observer, hfi) << "the mode that was asked for is not the mode that reports itself";
+    EXPECT_EQ(foc_motor_destroy(hfi_motor), FOC_OK);
+}
+
+TEST(ApiObserverSelector, FourModesHaveFourDistinctAnswersToday) {
+    // One row per mode, so that wiring the last one is a change to this table rather than a discovery made by a user.
+    // 每个模式一行，于是接入最后一个模式时改动的是这张表，而不是由用户发现。
+    const foc_motor_params_t surface = params_struct();
+    const foc_motor_params_t salient = salient_params();
+    struct Row final {
+        std::int32_t mode;
+        const foc_motor_params_t* params;
+        float inject_v;
+        float inject_hz;
+        foc_err_t expected;
+        const char* why;
+    };
+    const Row rows[] = {
+        {static_cast<std::int32_t>(FOC_OBSERVER_BACK_EMF), &surface, 0.0F, 0.0F, FOC_OK, "wired, the default"},
+        {static_cast<std::int32_t>(FOC_OBSERVER_NONLINEAR_FLUX), &surface, 0.0F, 0.0F, FOC_OK, "wired, no carrier"},
+        {static_cast<std::int32_t>(FOC_OBSERVER_HFI), &salient, 12.0F, 2000.0F, FOC_OK, "wired, carrier stated"},
+        {static_cast<std::int32_t>(FOC_OBSERVER_HFI), &surface, 12.0F, 2000.0F, FOC_ERR_PARAM, "no saliency"},
+        {static_cast<std::int32_t>(FOC_OBSERVER_HFI), &salient, 0.0F, 0.0F, FOC_ERR_PARAM, "no carrier"},
+        {static_cast<std::int32_t>(FOC_OBSERVER_BLENDED), &salient, 12.0F, 2000.0F, FOC_ERR_NOT_IMPL, "not wired"},
+        {99, &surface, 0.0F, 0.0F, FOC_ERR_PARAM, "outside the enumeration"},
+    };
+    for (const Row& row : rows) {
+        const foc_motor_setup_t setup = setup_with_carrier(row.mode, row.inject_v, row.inject_hz);
+        foc_motor_t motor{};
+        const foc_err_t got = foc_motor_create_ex(row.params, &setup, &motor);
+        EXPECT_EQ(got, row.expected) << "mode " << row.mode << ": " << row.why;
+        if (got == FOC_OK && motor != nullptr) {
+            EXPECT_EQ(foc_motor_destroy(motor), FOC_OK);
+        }
+    }
 }
