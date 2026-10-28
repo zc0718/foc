@@ -125,12 +125,48 @@ def _split_lang_segments(text: str):
     return text[:marks[0].start()], _segs
 
 
+def _chunk_characters(text: str) -> dict:
+    """The characters that carry meaning: no whitespace, no line-stars, no language tags."""
+    _clean = re.sub(r"\[(?:en|zh)\]", "", text)
+    _counts: dict = {}
+    for _c in _clean:
+        if _c.isspace() or _c == '*':
+            continue
+        _counts[_c] = _counts.get(_c, 0) + 1
+    return _counts
+
+
+def _assert_no_loss(ch: dict, out: list[str]) -> list[str]:
+    """A regrouping may move text between lines. It may not delete any of it.
+
+    This runs on every chunk of every doc build, because the failure it guards against is silent:
+    a block simply renders shorter, and nobody notices until a paragraph is missing from a
+    published page.
+    重新分组可以搬动文字，但不能删掉任何一个字符。这段检查在每次构建的每个块上运行，因为它
+    防的是一种静默失败：某页少了一段话，而没有人察觉。
+    """
+    _before = _chunk_characters(ch['raw'] + ''.join(ch['lines']))
+    _after = _chunk_characters(''.join(out))
+    _lost = {_c: _n - _after.get(_c, 0) for _c, _n in _before.items() if _n > _after.get(_c, 0)}
+    if _lost:
+        raise RuntimeError(
+            f"docs/build.py: regrouping dropped text from {ch['raw'].strip()!r}: {_lost}")
+    return out
+
+
 def _rewrite_chunk(ch: dict) -> list[str]:
     """One tagged doc chunk -> one chunk per language, markers on the tag line."""
     _lead, _segs = _split_lang_segments(ch['rest'])
     _body_has_marker = any(_lang_marker_re.search(_l) for _l in ch['lines'])
     if not _segs or (len(_segs) == 1 and not _body_has_marker):
-        return [ch['raw']]
+        # Nothing to split, but the chunk's own body lines still belong to it. Returning the tag
+        # line alone used to delete every untagged paragraph -- invisible while bilingual blocks
+        # kept both languages on one tag line, fatal once each language got its own line, which
+        # is the shape the source uses now.
+        # 不需要拆分，但这一块自己的正文行仍然属于它。只返回标签行会删掉所有无标记段落——
+        # 当两种语言挤在一行时看不出来；一旦每种语言各占一行（也就是现在源码的形状），
+        # 就是致命的内容丢失。
+        return _assert_no_loss(ch, [ch['raw'], *ch['lines']])
 
     _primary = _segs[0][0]
     _order, _buckets = [], {}
@@ -152,6 +188,13 @@ def _rewrite_chunk(ch: dict) -> list[str]:
             continue
         _c_lead, _c_segs = _split_lang_segments(_content)
         if _c_segs:
+            # Text in front of the first marker on a *body* line continues the language that is
+            # already open. A wrapped sentence carries its `[zh]` at the end of the second line,
+            # so skipping the lead erases half of every such sentence.
+            # 正文行里首个标记之前的文字，属于**已经打开**的那个语言组。一句话折行时 `[zh]`
+            # 落在第二行末尾，跳过这段前导文字就等于把每句这种话抹掉一半。
+            if _c_lead.strip():
+                _push(_primary, _c_lead)
             for _lang, _text in _c_segs:
                 _push(_lang, _text)
             continue
@@ -174,7 +217,7 @@ def _rewrite_chunk(ch: dict) -> list[str]:
             _out.append(f"{_indent}       {_extra}\n")
         if _i + 1 < len(_written):
             _out.append(f"{_indent.rstrip()}\n")
-    return _out
+    return _assert_no_loss(ch, _out)
 
 
 def _rewrite_block(block: list[str]) -> list[str]:
