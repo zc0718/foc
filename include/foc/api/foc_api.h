@@ -305,3 +305,156 @@ foc_err_t foc_get_state(foc_motor_t motor, float *speed_rad_s, float *id, float 
 #define foc_set_position_g(motor, value)                                                                               \
     _Generic((value), float: foc_set_position, default: foc_set_position_f64)((motor), (value))
 #endif
+
+
+/* ------------------------------------------------------------------------------------------------
+ * Commissioning, protection and the reference policies (ABI 0.1.1).
+ * 整定、保护与参考策略（ABI 0.1.1）。
+ * ---------------------------------------------------------------------------------------------- */
+
+/**
+ * @brief [en] The dead-time voltage projected onto an axis, in volts. [zh]
+ * 死区伏秒投影到某一轴上的电压，V。
+ *
+ * @param deadtime_s [en] the inverter's dead time, s. [zh] 逆变器死区，s。
+ * @param switching_hz [en] carrier frequency, Hz. [zh] 载波频率，Hz。
+ * @param v_bus_v [en] DC link, V. [zh] 母线电压，V。
+ * @param angle_rad [en] the current vector's angle; 0 = d axis, pi/2 = q axis.
+ *        [zh] 电流矢量角；0 = d 轴，π/2 = q 轴。
+ * @return [en] the axis-projected voltage, V; 0 on a non-finite argument. [zh]
+ *         轴上投影后的电压，V；参数非有限时返回 0。
+ *
+ * @note [en] Exists because the per-phase number and the axis number differ by
+ * 4/3 on the d axis and 2/sqrt(3) on q, and using one for the other is a 33 %
+ * error that reads exactly like a dead-time fault on a good board.
+ * [zh] 存在的原因是每相数与轴上数在 d 轴差 4/3、在 q 轴差 2/√3，混用是一个 33 % 的误差，
+ * 在好板子上读起来和死区故障一模一样。
+ * @since 0.1.1
+ * @exporter
+ */
+float foc_axis_deadtime_v(float deadtime_s, float switching_hz, float v_bus_v, float angle_rad);
+
+/**
+ * @brief [en] Is field weakening worth doing on this machine, from nameplate
+ * numbers alone? [zh] 只用铭牌数字判断：这台机器值不值得做弱磁？
+ *
+ * @param params [en] non-NULL machine parameters. [zh] 非 NULL 的电机参数。
+ * @param i_max_a [en] per-axis current limit, A. [zh] 每轴电流限幅，A。
+ * @param out [en] non-NULL receiver; `struct_size` must be set by the caller. [zh]
+ *            非 NULL 接收者；`struct_size` 须由调用方填好。
+ * @return [en] FOC_OK, or FOC_ERR_PARAM. [zh] FOC_OK，或 FOC_ERR_PARAM。
+ * @since 0.1.1
+ * @exporter
+ */
+foc_err_t foc_field_weakening_worthwhile(const foc_motor_params_t *params, float i_max_a, foc_fw_verdict_t *out);
+
+/**
+ * @brief [en] The MTPA dq current reference for a q-axis command. [zh]
+ * 给定 q 轴指令时的 MTPA dq 电流参考。
+ *
+ * @param params [en] non-NULL machine parameters. [zh] 非 NULL 的电机参数。
+ * @param i_max_a [en] per-axis current limit, A. [zh] 每轴电流限幅，A。
+ * @param iq_command_a [en] the q-axis command, A. [zh] q 轴给定，A。
+ * @param id_a [en] non-NULL receiver of the d-axis reference, A. [zh] 非 NULL 的 d 轴参考接收者，A。
+ * @param iq_a [en] non-NULL receiver of the q-axis reference, A. [zh] 非 NULL 的 q 轴参考接收者，A。
+ * @return [en] FOC_OK, or FOC_ERR_PARAM. [zh] FOC_OK，或 FOC_ERR_PARAM。
+ *
+ * @note [en] On a surface machine (`Ld == Lq`) `*id_a` is exactly 0, not an
+ * epsilon: an epsilon divides by nothing meaningful.
+ * [zh] 表贴机（`Ld == Lq`）上 `*id_a` **恰好**为 0，不是极小量：极小量除的是一个没有
+ * 意义的数。
+ * @since 0.1.1
+ * @exporter
+ */
+foc_err_t foc_mtpa_reference(const foc_motor_params_t *params, float i_max_a, float iq_command_a, float *id_a,
+                             float *iq_a);
+
+/**
+ * @brief [en] Judge a board from what was measured. [zh] 用测到的数判定一块板子。
+ *
+ * @param measurements [en] non-NULL, `struct_size` filled. [zh] 非 NULL，`struct_size` 已填。
+ * @param limits [en] non-NULL, `struct_size` filled. [zh] 非 NULL，`struct_size` 已填。
+ * @param out [en] non-NULL report; `struct_size` must be set by the caller. [zh]
+ *            非 NULL 报告；`struct_size` 须由调用方填好。
+ * @return [en] FOC_OK, or FOC_ERR_PARAM on a NULL or a wrong `struct_size`. [zh]
+ *         FOC_OK；NULL 或 `struct_size` 不对时返回 FOC_ERR_PARAM。
+ * @context [en] Commissioning, once per board. [zh] 整定阶段，每块板一次。
+ * @since 0.1.1
+ * @exporter
+ */
+foc_err_t foc_board_check(const foc_board_measurements_t *measurements, const foc_board_limits_t *limits,
+                          foc_board_report_t *out);
+
+/**
+ * @brief [en] A stable lowercase name for a `FOC_BOARD_ITEM_*` value. [zh]
+ * `FOC_BOARD_ITEM_*` 值的稳定小写名字。
+ * @param item [en] the value. [zh] 该值。
+ * @return [en] a static string, never NULL; `"?"` for an out-of-range value. [zh]
+ *         静态字符串，不会是 NULL；越界返回 `"?"`。
+ * @since 0.1.1
+ * @exporter
+ */
+const char *foc_board_item_name(int32_t item);
+
+/**
+ * @brief [en] A stable lowercase name for a `FOC_BOARD_CAUSE_*` value. [zh]
+ * `FOC_BOARD_CAUSE_*` 值的稳定小写名字。
+ * @param cause [en] the value. [zh] 该值。
+ * @return [en] a static string, never NULL; `"?"` for an out-of-range value. [zh]
+ *         静态字符串，不会是 NULL；越界返回 `"?"`。
+ * @since 0.1.1
+ * @exporter
+ */
+const char *foc_board_cause_name(int32_t cause);
+
+/**
+ * @brief [en] Create a protector. [zh] 创建一个保护器。
+ *
+ * @param config [en] optional; NULL means every library default. [zh] 可选；NULL 表示全用库默认值。
+ * @param out [en] non-NULL receiver of the new handle. [zh] 非 NULL 的新句柄接收者。
+ * @return [en] FOC_OK, FOC_ERR_PARAM, or FOC_ERR_NO_RESOURCE when the pool is exhausted.
+ *         [zh] FOC_OK、FOC_ERR_PARAM，或池耗尽时的 FOC_ERR_NO_RESOURCE。
+ * @post [en] `*out` is owned by the caller until `foc_protector_destroy()`. [zh]
+ *       `*out` 归调用方所有，直到 `foc_protector_destroy()`。
+ * @since 0.1.1
+ * @exporter
+ */
+foc_err_t foc_protector_create(const foc_protection_config_t *config, foc_protector_t *out);
+
+/**
+ * @brief [en] Advance one control period. [zh] 推进一个控制周期。
+ *
+ * @param protector [en] a live handle. [zh] 有效句柄。
+ * @param in [en] non-NULL measurements. [zh] 非 NULL 测量值。
+ * @param dt_s [en] the period, s; must be finite and positive. [zh] 周期，s；须有限且为正。
+ * @param out [en] non-NULL receiver; `struct_size` must be set by the caller. [zh]
+ *            非 NULL 接收者；`struct_size` 须由调用方填好。
+ * @return [en] FOC_OK, FOC_ERR_PARAM, or FOC_ERR_STATE on a stale handle. [zh]
+ *         FOC_OK、FOC_ERR_PARAM，或过期句柄时的 FOC_ERR_STATE。
+ * @context [en] Current-loop ISR. [zh] 电流环 ISR。
+ * @since 0.1.1
+ * @exporter
+ */
+foc_err_t foc_protector_step(foc_protector_t protector, const foc_protection_input_t *in, float dt_s,
+                             foc_protection_output_t *out);
+
+/**
+ * @brief [en] Clear the faults. [zh] 清除故障。
+ * @param protector [en] a live handle. [zh] 有效句柄。
+ * @param cold [en] non-zero also clears the I^2t thermal memory; zero keeps it,
+ *        because a machine that just tripped is still hot. [zh]
+ *        非零同时清除 I²t 热记忆；零则保留，因为刚跳闸的机器还热着。
+ * @return [en] FOC_OK or FOC_ERR_STATE. [zh] FOC_OK 或 FOC_ERR_STATE。
+ * @since 0.1.1
+ * @exporter
+ */
+foc_err_t foc_protector_reset(foc_protector_t protector, int32_t cold);
+
+/**
+ * @brief [en] Release a protector. [zh] 释放一个保护器。
+ * @param protector [en] the handle; NULL is a no-op. [zh] 句柄；NULL 视为无事。
+ * @return [en] FOC_OK or FOC_ERR_STATE on a stale handle. [zh] FOC_OK，或过期句柄时的 FOC_ERR_STATE。
+ * @since 0.1.1
+ * @exporter
+ */
+foc_err_t foc_protector_destroy(foc_protector_t protector);

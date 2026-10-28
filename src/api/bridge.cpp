@@ -7,7 +7,11 @@
 #include <new>
 
 #include <foc/core/alignment.hpp>
+#include <foc/core/board_check.hpp>
+#include <foc/core/field_weakening.hpp>
 #include <foc/core/observer/back_emf_observer.hpp>
+#include <foc/core/protection.hpp>
+#include <foc/core/reference.hpp>
 #include <foc/core/pi.hpp>
 #include <foc/core/svpwm.hpp>
 #include <foc/driver/stub_hal.hpp>
@@ -350,6 +354,146 @@ void destroy_motor(Slot& slot) noexcept {
 // C API 本体。`extern "C"` 来自 bridge.h：这些定义必须具备 C 链接，否则 C 侧链不上。这里的东西
 // 对 C++ 用户不可见，他们直接用 foc::motor::Motor。
 
+namespace foc {
+
+namespace api {
+
+// ---------------------------------------------------------------------------------------------
+// ABI 0.1.1: commissioning, protection and the reference policies.
+// ABI 0.1.1：整定、保护与参考策略。
+//
+// Why a second pool and a second magic. A `foc_protector_t` and a `foc_motor_t` are both opaque
+// pointers; if they shared a magic, passing one where the other belongs would resolve to a slot and
+// read a `Protector` out of a `Motor`'s bytes. Two magics make that a clean `FOC_ERR_STATE`, which
+// is the whole reason handles carry their kind.
+// 为什么要第二个池子和第二个 magic。`foc_protector_t` 与 `foc_motor_t` 都是不透明指针；若共用
+// 一个 magic，把一个当成另一个传进去会解析到一个槽位，并从 `Motor` 的字节里读出一个 `Protector`。
+// 两个 magic 把这件事变成一个干净的 `FOC_ERR_STATE`——这正是句柄携带"种类"的全部理由。
+// ---------------------------------------------------------------------------------------------
+
+/// [en] High word of every protector handle: "FOCP". [zh] 每个保护器句柄的高位字："FOCP"。
+constexpr std::uintptr_t kProtectorMagic = 0x464F4350U;
+
+/// [en] A protector pool smaller than the motor pool: a board has one, maybe two.
+/// [zh] 保护器池比电机池小：一块板子有一个，最多两个。
+constexpr std::size_t kMaxProtectors = 4U;
+
+/**
+ * @brief [en] One protector slot. [zh] 一个保护器槽位。
+ *
+ * @note [en] `Protector` has no default constructor and holds only floats and enums, so placement
+ * new into inline bytes is enough and no destructor call is needed. That is stated rather than
+ * assumed: if the type ever grows a member that needs releasing, this comment is the thing that
+ * makes the omission a bug instead of an oversight.
+ * [zh] `Protector` 没有默认构造函数，且只含浮点与枚举，所以内联字节上 placement new 就够，
+ * 不需要调析构。这一点是**写明的**而不是假定的：若该类型将来长了需要释放的成员，这段注释会让
+ * 那次遗漏成为 bug 而不是疏忽。
+ * @since 0.1.1
+ */
+struct ProtectorSlot final {
+    alignas(core::Protector) unsigned char storage[sizeof(core::Protector)]{};
+    core::Protector* instance{nullptr};
+    std::uint32_t generation{0U};
+    bool alive{false};
+};
+
+ProtectorSlot g_protectors[kMaxProtectors];
+
+/// [en] Mint a protector token; same encoding as the motor, different magic. [zh]
+/// 签发保护器令牌；编码与电机相同，magic 不同。
+auto mint_protector(std::uint32_t slot, std::uint32_t generation) noexcept -> foc_protector_t {
+    // The token is never dereferenced: it is a handle value, not an address.
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast, performance-no-int-to-ptr)
+    return reinterpret_cast<foc_protector_t>((kProtectorMagic << 32U) |
+                                             (static_cast<std::uintptr_t>(generation) << kSlotBits) |
+                                             static_cast<std::uintptr_t>(slot));
+}
+
+/// [en] Resolve a protector handle; nullptr for anything not minted here. [zh]
+/// 解析保护器句柄；不是本池签发的返回 nullptr。
+auto resolve_protector(foc_protector_t handle) noexcept -> ProtectorSlot* {
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast, performance-no-int-to-ptr)
+    const auto raw = reinterpret_cast<std::uintptr_t>(handle);
+    if ((raw >> 32U) != kProtectorMagic) {
+        return nullptr;
+    }
+    const auto slot_index = static_cast<std::uint32_t>(raw & 0xFFU);
+    const auto generation = static_cast<std::uint32_t>((raw >> kSlotBits) & 0xFFFFFFU);
+    if (slot_index >= kMaxProtectors) {
+        return nullptr;
+    }
+    ProtectorSlot& slot = g_protectors[slot_index];
+    if (!slot.alive || (slot.generation != generation)) {
+        return nullptr;
+    }
+    return &slot;
+}
+
+/// [en] `psi_f` is derived, never taken from the caller: `kt` already encodes it and
+/// `psi_f = kt/(1.5*p)` is the single definition. [zh]
+/// `psi_f` 由 `kt` 推导，绝不向调用方索取：`kt` 已经包含它，而 `psi_f = kt/(1.5·p)` 是唯一定义。
+auto machine_params(const foc_motor_params_t& p) noexcept -> core::MachineParams {
+    const float poles = static_cast<float>(p.pole_pairs);
+    return core::MachineParams{p.rs, p.ld, p.lq, p.kt / (1.5F * poles)};
+}
+
+/// [en] The SVPWM linear range, `1/sqrt(3)`; the modulator's property, not the machine's.
+/// [zh] SVPWM 线性区 `1/√3`；这是调制器的性质，不是电机的。
+constexpr float kSvpwmLinearRatio = 0.5773502691896257F;
+
+/// [en] The library's default protection config: the nominal 24 V / 3 A surface machine.
+/// [zh] 库默认保护配置：标称 24 V / 3 A 表贴机。
+auto default_protection_config() noexcept -> core::ProtectionConfig {
+    core::ProtectionConfig c{};
+    c.i_hard_a = 4.0F;
+    c.i_max_a = 3.0F;
+    c.i2t_a2s = 4.5F; // i_cont^2 * tau = 9 A^2 * 0.5 s
+    c.i2t_cooling_s = 0.5F;
+    c.v_max_v = 30.0F;
+    c.v_min_v = 18.0F;
+    c.t_trip_c = 100.0F;
+    c.t_derate_start_c = 60.0F;
+    c.t_derate_end_c = 110.0F;
+    c.stall_speed_rad_s = 5.0F;
+    c.stall_current_a = 1.0F;
+    c.stall_time_s = 0.5F;
+    c.sync_error_ratio = 0.25F;
+    c.hysteresis_ratio = 0.05F;
+    return c;
+}
+
+/// [en] Copy a C config into the core one, field for field, no interpretation.
+/// [zh] 把 C 配置逐字段拷进核心配置，不做任何解释。
+auto protection_config(const foc_protection_config_t& in) noexcept -> core::ProtectionConfig {
+    core::ProtectionConfig c{};
+    c.i_hard_a = in.i_hard_a;
+    c.i_max_a = in.i_max_a;
+    c.i2t_a2s = in.i2t_a2s;
+    c.i2t_cooling_s = in.i2t_cooling_s;
+    c.v_max_v = in.v_max_v;
+    c.v_min_v = in.v_min_v;
+    c.t_trip_c = in.t_trip_c;
+    c.t_derate_start_c = in.t_derate_start_c;
+    c.t_derate_end_c = in.t_derate_end_c;
+    c.stall_speed_rad_s = in.stall_speed_rad_s;
+    c.stall_current_a = in.stall_current_a;
+    c.stall_time_s = in.stall_time_s;
+    c.sync_error_ratio = in.sync_error_ratio;
+    c.hysteresis_ratio = in.hysteresis_ratio;
+    return c;
+}
+
+/// [en] Does the caller's `struct_size` cover the struct we are about to write?
+/// [zh] 调用方的 `struct_size` 覆盖得住我们要写的结构吗？
+template <typename T> auto size_ok(const T& value) noexcept -> bool {
+    return value.struct_size == static_cast<std::uint32_t>(sizeof(T));
+}
+
+
+} // namespace api
+
+} // namespace foc
+
 extern "C" {
 
 
@@ -638,6 +782,211 @@ foc_err_t foc_bridge_get_state(foc_motor_t motor, float* speed_rad_s, float* id,
     if (iq != nullptr) {
         *iq = telemetry.iq_a;
     }
+    return FOC_OK;
+}
+
+
+// ---------------------------------------------------------------------------------------------
+// ABI 0.1.1 entry points.
+// ABI 0.1.1 入口。
+// ---------------------------------------------------------------------------------------------
+
+float foc_bridge_axis_deadtime_v(float deadtime_s, float switching_hz, float v_bus_v, float angle_rad) {
+    if (!std::isfinite(deadtime_s) || !std::isfinite(switching_hz) || !std::isfinite(v_bus_v) ||
+        !std::isfinite(angle_rad)) {
+        return 0.0F;
+    }
+    // The volt-seconds the dead time costs, then its projection onto the axis. Two steps because
+    // they are two different conversions and conflating them is how a 33 % error gets made.
+    // 死区造成的伏秒，再投影到轴上。分两步是因为它们是两种不同的换算，混为一谈正是 33 % 误差的
+    // 来源。
+    const float deadtime_v = deadtime_s * switching_hz * v_bus_v;
+    return foc::core::axis_deadtime_v(deadtime_v, angle_rad);
+}
+
+foc_err_t foc_bridge_fw_worthwhile(const foc_motor_params_t* params, float i_max_a, foc_fw_verdict_t* out) {
+    if ((params == nullptr) || (out == nullptr) || !foc::api::size_ok(*out) || !std::isfinite(i_max_a)) {
+        return FOC_ERR_PARAM;
+    }
+    const foc::core::MachineParams m = foc::api::machine_params(*params);
+    const auto verdict = foc::core::is_field_weakening_worthwhile(m, i_max_a);
+    out->i_char_a = verdict.i_char_a;
+    out->ratio = verdict.ratio;
+    out->speed_gain = verdict.speed_gain;
+    out->worthwhile = verdict.worthwhile ? 1 : 0;
+    return FOC_OK;
+}
+
+foc_err_t foc_bridge_mtpa_reference(const foc_motor_params_t* params, float i_max_a, float iq_command_a, float* id_a,
+                                    float* iq_a) {
+    if ((params == nullptr) || (id_a == nullptr) || (iq_a == nullptr) || !std::isfinite(iq_command_a)) {
+        return FOC_ERR_PARAM;
+    }
+    const foc::core::MachineParams m = foc::api::machine_params(*params);
+    foc::core::MtpaReference reference(foc::core::MtpaReference::Config{m.ld, m.lq, m.psi_f, i_max_a});
+    foc::core::ReferenceInput in{};
+    in.iq_command_a = iq_command_a;
+    const foc::core::Dq<float> i = reference.generate(in);
+    *id_a = i.d;
+    *iq_a = i.q;
+    return FOC_OK;
+}
+
+foc_err_t foc_bridge_board_check(const foc_board_measurements_t* measurements, const foc_board_limits_t* limits,
+                                 foc_board_report_t* out) {
+    if ((measurements == nullptr) || (limits == nullptr) || (out == nullptr) || !foc::api::size_ok(*measurements) ||
+        !foc::api::size_ok(*limits) || !foc::api::size_ok(*out)) {
+        return FOC_ERR_PARAM;
+    }
+    foc::core::BoardMeasurements m{};
+    m.sum_current_a = measurements->sum_current_a;
+    for (int k = 0; k < 3; ++k) {
+        m.offset_a[k] = measurements->offset_a[k];
+        m.response_sign[k] = measurements->response_sign[k];
+    }
+    m.ripple_measured_a = measurements->ripple_measured_a;
+    m.ripple_expected_a = measurements->ripple_expected_a;
+    m.deadtime_v = measurements->deadtime_v;
+    m.deadtime_cmd_v = measurements->deadtime_cmd_v;
+    m.encoder_offset_rad = measurements->encoder_offset_rad;
+    m.rs_ohm = measurements->rs_ohm;
+    m.rs_nameplate_ohm = measurements->rs_nameplate_ohm;
+    m.psi_f_wb = measurements->psi_f_wb;
+    m.psi_f_nameplate_wb = measurements->psi_f_nameplate_wb;
+    m.observer_error_rad = measurements->observer_error_rad;
+
+    foc::core::BoardLimits l{};
+    l.sum_current_a = limits->sum_current_a;
+    l.offset_a = limits->offset_a;
+    l.ripple_ratio = limits->ripple_ratio;
+    l.deadtime_ratio = limits->deadtime_ratio;
+    l.encoder_offset_rad = limits->encoder_offset_rad;
+    l.parameter_ratio = limits->parameter_ratio;
+    l.observer_error_rad = limits->observer_error_rad;
+
+    const foc::core::BoardReport report = foc::core::check_board(m, l);
+    for (int k = 0; k < FOC_BOARD_MAX_ITEMS; ++k) {
+        out->items[k].item = 0;
+        out->items[k].value = 0.0F;
+        out->items[k].limit = 0.0F;
+        out->items[k].pass = 0;
+        out->items[k].phase = 3;
+    }
+    const int rows = (report.count < FOC_BOARD_MAX_ITEMS) ? report.count : FOC_BOARD_MAX_ITEMS;
+    for (int k = 0; k < rows; ++k) {
+        out->items[k].item = static_cast<std::int32_t>(report.items[k].item);
+        out->items[k].value = report.items[k].value;
+        out->items[k].limit = report.items[k].limit;
+        out->items[k].pass = report.items[k].pass ? 1 : 0;
+        out->items[k].phase = static_cast<std::int32_t>(report.items[k].phase);
+    }
+    out->count = rows;
+    out->failures = report.failures;
+    out->cause = static_cast<std::int32_t>(report.cause);
+    out->cause_phase = static_cast<std::int32_t>(report.cause_phase);
+    return FOC_OK;
+}
+
+const char* foc_bridge_board_item_name(std::int32_t item) {
+    // Range-checked before the cast: an out-of-range int32 is not a valid enumerator, and the cast
+    // would be undefined behaviour rather than a lookup miss.
+    // 先查范围再转型：越界的 int32 不是合法枚举值，转型会是未定义行为而不是"查不到"。
+    if ((item < static_cast<std::int32_t>(foc::core::BoardItem::CurrentSum)) ||
+        (item > static_cast<std::int32_t>(foc::core::BoardItem::ObserverHealth))) {
+        return "?";
+    }
+    return foc::core::board_item_name(static_cast<foc::core::BoardItem>(item));
+}
+
+const char* foc_bridge_board_cause_name(std::int32_t cause) {
+    if ((cause < static_cast<std::int32_t>(foc::core::BoardCause::None)) ||
+        (cause > static_cast<std::int32_t>(foc::core::BoardCause::ObserverUnhealthy))) {
+        return "?";
+    }
+    return foc::core::board_cause_name(static_cast<foc::core::BoardCause>(cause));
+}
+
+foc_err_t foc_bridge_protector_create(const foc_protection_config_t* config, foc_protector_t* out) {
+    if (out == nullptr) {
+        return FOC_ERR_PARAM;
+    }
+    if (config != nullptr && !foc::api::size_ok(*config)) {
+        return FOC_ERR_PARAM;
+    }
+    std::size_t index = foc::api::kMaxProtectors;
+    for (std::size_t k = 0; k < foc::api::kMaxProtectors; ++k) {
+        if (!foc::api::g_protectors[k].alive) {
+            index = k;
+            break;
+        }
+    }
+    if (index >= foc::api::kMaxProtectors) {
+        return FOC_ERR_NO_RESOURCE;
+    }
+    foc::api::ProtectorSlot& slot = foc::api::g_protectors[index];
+    const foc::core::ProtectionConfig cfg =
+        (config != nullptr) ? foc::api::protection_config(*config) : foc::api::default_protection_config();
+    slot.instance = new (slot.storage) foc::core::Protector(cfg);
+    slot.alive = true;
+    slot.generation = (slot.generation + 1U) & 0xFFFFFFU;
+    *out = foc::api::mint_protector(static_cast<std::uint32_t>(index), slot.generation);
+    return FOC_OK;
+}
+
+foc_err_t foc_bridge_protector_step(foc_protector_t protector, const foc_protection_input_t* in, float dt_s,
+                                    foc_protection_output_t* out) {
+    if ((in == nullptr) || (out == nullptr) || !foc::api::size_ok(*in) || !foc::api::size_ok(*out) ||
+        !std::isfinite(dt_s)) {
+        return FOC_ERR_PARAM;
+    }
+    foc::api::ProtectorSlot* slot = foc::api::resolve_protector(protector);
+    if (slot == nullptr) {
+        return FOC_ERR_STATE;
+    }
+    foc::core::ProtectionInput input{};
+    input.i_magnitude_a = in->i_magnitude_a;
+    input.v_bus_v = in->v_bus_v;
+    input.temperature_c = in->temperature_c;
+    input.omega_e_rad_s = in->omega_e_rad_s;
+    input.flux_error_ratio = in->flux_error_ratio;
+    input.flux_valid = (in->flux_valid != 0);
+
+    const foc::core::ProtectionOutput result = slot->instance->step(input, dt_s);
+    out->fault = static_cast<std::int32_t>(result.fault);
+    out->active_mask = static_cast<std::uint32_t>(result.active_mask);
+    out->latched_mask = static_cast<std::uint32_t>(result.latched_mask);
+    out->i_limit_a = result.i_limit_a;
+    out->output_allowed = result.output_allowed ? 1 : 0;
+    out->i2t_budget = slot->instance->thermal_budget();
+    return FOC_OK;
+}
+
+foc_err_t foc_bridge_protector_reset(foc_protector_t protector, std::int32_t cold) {
+    foc::api::ProtectorSlot* slot = foc::api::resolve_protector(protector);
+    if (slot == nullptr) {
+        return FOC_ERR_STATE;
+    }
+    if (cold != 0) {
+        slot->instance->reset_cold();
+    } else {
+        slot->instance->reset();
+    }
+    return FOC_OK;
+}
+
+foc_err_t foc_bridge_protector_destroy(foc_protector_t protector) {
+    if (protector == nullptr) {
+        return FOC_OK;
+    }
+    foc::api::ProtectorSlot* slot = foc::api::resolve_protector(protector);
+    if (slot == nullptr) {
+        return FOC_ERR_STATE;
+    }
+    // No destructor call: `Protector` holds only floats and enums. See foc::api::ProtectorSlot's note.
+    // 不调析构：`Protector` 只含浮点与枚举。见 foc::api::ProtectorSlot 的注释。
+    slot->instance = nullptr;
+    slot->alive = false;
+    slot->generation = (slot->generation + 1U) & 0xFFFFFFU; // invalidate outstanding handles
     return FOC_OK;
 }
 

@@ -209,3 +209,223 @@ typedef struct foc_motor_status {
     float align_spread_rad; /* spread of the accepted capture, rad */
     uint32_t max_period_us; /* worst control-tick interval seen, us; 0 without a clock */
 } foc_motor_status_t;
+
+
+/* ------------------------------------------------------------------------------------------------
+ * Commissioning, protection and the reference policies.
+ * 整定、保护与参考策略。
+ *
+ * [en] These exist because the C++ side grew five modules that a C consumer could
+ * not reach at all: `protection.hpp`, `commissioning.hpp`, `board_check.hpp`,
+ * `field_weakening.hpp` and `MtpaReference`. A "stable C11 ABI" that only covers
+ * the motor object is a promise about half the library.
+ * [zh] 这些之所以存在，是因为 C++ 侧长出了五个 C 消费方**根本够不到**的模块：
+ * `protection.hpp`、`commissioning.hpp`、`board_check.hpp`、`field_weakening.hpp` 与
+ * `MtpaReference`。只覆盖电机对象的"稳定 C11 ABI"是关于半个库的承诺。
+ *
+ * [en] Enum-like fields are `int32_t` storage with `FOC_*` constants as the
+ * contract, for the same reason the motor status does it: a C enum's underlying
+ * type is implementation-defined and these values are frozen.
+ * [zh] 类枚举字段用 `int32_t` 存储、以 `FOC_*` 常量为契约，理由与电机状态相同：C 枚举
+ * 的底层类型由实现决定，而这些数值是冻结的。
+ * ---------------------------------------------------------------------------------------------- */
+
+/**
+ * @brief [en] The checks `foc_board_check()` reports on. [zh] `foc_board_check()` 报告的检查项。
+ * @note [en] A C enum, like every other constant in this header: `#define` would be a constant
+ * declared by macro, which this project's tidy gate rejects, and the values are frozen either way.
+ * [zh] C 枚举，与本头文件里其它常量一致：`#define` 属于"用宏声明常量"，被本项目的 tidy 门拒
+ * 绝；两种写法下这些数值同样冻结。
+ * @since 0.1.1
+ * @exporter
+ */
+// NOLINTNEXTLINE(performance-enum-size) -- a C ABI enum cannot carry a C++ base type.
+typedef enum foc_board_item {
+    FOC_BOARD_ITEM_CURRENT_SUM = 0,
+    FOC_BOARD_ITEM_CURRENT_OFFSET = 1,
+    FOC_BOARD_ITEM_CURRENT_POLARITY = 2,
+    FOC_BOARD_ITEM_SAMPLING_INSTANT = 3,
+    FOC_BOARD_ITEM_DEAD_TIME = 4,
+    FOC_BOARD_ITEM_ENCODER_OFFSET = 5,
+    FOC_BOARD_ITEM_PARAMETERS = 6,
+    FOC_BOARD_ITEM_OBSERVER_HEALTH = 7
+} foc_board_item_t;
+
+/**
+ * @brief [en] The single cause `foc_board_check()` names. [zh] `foc_board_check()` 点名的单一成因。
+ * @since 0.1.1
+ * @exporter
+ */
+// NOLINTNEXTLINE(performance-enum-size) -- a C ABI enum cannot carry a C++ base type.
+typedef enum foc_board_cause {
+    FOC_BOARD_CAUSE_NONE = 0,
+    FOC_BOARD_CAUSE_OFFSET_BIAS = 1,
+    FOC_BOARD_CAUSE_POLARITY_REVERSED = 2,
+    FOC_BOARD_CAUSE_SAMPLING_INSTANT = 3,
+    FOC_BOARD_CAUSE_DEAD_TIME_MISMATCH = 4,
+    FOC_BOARD_CAUSE_ENCODER_OFFSET = 5,
+    FOC_BOARD_CAUSE_PARAMETERS_OFF = 6,
+    FOC_BOARD_CAUSE_OBSERVER_UNHEALTHY = 7
+} foc_board_cause_t;
+
+/**
+ * @brief [en] `foc_protection_output_t.fault` domain; the same ranking as `FaultCode`. [zh]
+ * `foc_protection_output_t.fault` 的取值域；排名与 `FaultCode` 一致。
+ * @since 0.1.1
+ * @exporter
+ */
+// NOLINTNEXTLINE(performance-enum-size) -- a C ABI enum cannot carry a C++ base type.
+typedef enum foc_fault {
+    FOC_FAULT_NONE = 0,
+    FOC_FAULT_OVER_CURRENT = 1,
+    FOC_FAULT_OVER_VOLTAGE = 2,
+    FOC_FAULT_UNDER_VOLTAGE = 3,
+    FOC_FAULT_OVER_TEMPERATURE = 4,
+    FOC_FAULT_I2T = 5,
+    FOC_FAULT_STALL = 6,
+    FOC_FAULT_LOST_SYNC = 7
+} foc_fault_t;
+
+/** [en] Rows in `foc_board_report_t`. Fixed so the report has no growth path to
+ * negotiate. [zh] `foc_board_report_t` 的行数。固定，于是这份报告不需要为增长再谈一次。 */
+// NOLINTNEXTLINE(performance-enum-size) -- same: C cannot specify the underlying type.
+typedef enum foc_board_report_capacity { FOC_BOARD_MAX_ITEMS = 12 } foc_board_report_capacity_t;
+
+/**
+ * @brief [en] Everything a board check measures, in one place. [zh]
+ * 板级检查量到的全部东西，放在一处。
+ *
+ * @note [en] `struct_size` first, like every other struct here: the library only
+ * writes the fields that value covers.
+ * [zh] 与这里其它结构一样 `struct_size` 在最前：库只写入该值覆盖到的字段。
+ * @since 0.1.1
+ * @exporter
+ */
+typedef struct foc_board_measurements {
+    uint32_t struct_size;
+    float sum_current_a;      /* mean i_u+i_v+i_w under a steady drive, A */
+    float offset_a[3];        /* zero-current reading per phase, A */
+    float response_sign[3];   /* +1 / -1 / +2 = unknown, per phase */
+    float ripple_measured_a;  /* ripple the ADC sees, A */
+    float ripple_expected_a;  /* what the switching period implies, A */
+    float deadtime_v;         /* identified dead-time volts (axis), V */
+    float deadtime_cmd_v;     /* what the board was configured with, V */
+    float encoder_offset_rad; /* residual mount offset, rad */
+    float rs_ohm;             /* identified resistance, ohm */
+    float rs_nameplate_ohm;   /* nameplate resistance, ohm */
+    float psi_f_wb;           /* identified flux linkage, Wb */
+    float psi_f_nameplate_wb; /* nameplate flux linkage, Wb */
+    float observer_error_rad; /* observer angle error on a known trajectory, rad */
+} foc_board_measurements_t;
+
+/**
+ * @brief [en] The tolerances, separate from the measurements. [zh]
+ * 容差，与测量值分开。
+ * @since 0.1.1
+ * @exporter
+ */
+typedef struct foc_board_limits {
+    uint32_t struct_size;
+    float sum_current_a;      /* |sum| allowed, A */
+    float offset_a;           /* |zero reading| allowed, A */
+    float ripple_ratio;       /* measured/expected ripple ceiling */
+    float deadtime_ratio;     /* dead-time relative error allowed */
+    float encoder_offset_rad; /* residual mount offset allowed, rad */
+    float parameter_ratio;    /* Rs / psi_f relative error allowed */
+    float observer_error_rad; /* observer error allowed, rad */
+} foc_board_limits_t;
+
+/** @brief [en] One row of the report. [zh] 报告的一行。 @since 0.1.1 @exporter */
+typedef struct foc_board_reading {
+    int32_t item;  /* FOC_BOARD_ITEM_* */
+    float value;   /* the measured number */
+    float limit;   /* the number it was compared with */
+    int32_t pass;  /* non-zero = pass */
+    int32_t phase; /* 0..2 for per-phase items, 3 otherwise */
+} foc_board_reading_t;
+
+/**
+ * @brief [en] Every number plus the one cause to fix first. [zh]
+ * 每个数，加上那个最先该修的成因。
+ * @since 0.1.1
+ * @exporter
+ */
+typedef struct foc_board_report {
+    uint32_t struct_size;
+    foc_board_reading_t items[FOC_BOARD_MAX_ITEMS];
+    int32_t count;       /* rows filled */
+    int32_t failures;    /* rows that failed */
+    int32_t cause;       /* FOC_BOARD_CAUSE_* */
+    int32_t cause_phase; /* 0..2, or 3 */
+} foc_board_report_t;
+
+/**
+ * @brief [en] The go/no-go answer from nameplate numbers alone. [zh]
+ * 只用铭牌数字得到的做/不做判定。
+ * @since 0.1.1
+ * @exporter
+ */
+typedef struct foc_fw_verdict {
+    uint32_t struct_size;
+    float i_char_a;   /* psi_f / Ld, A: where reluctance and magnet terms match */
+    float ratio;      /* i_char / i_max; below 0.6 the region is worth having */
+    float speed_gain; /* speed multiple the flux can buy */
+    int32_t worthwhile;
+} foc_fw_verdict_t;
+
+/**
+ * @brief [en] Protection thresholds. Every field is used exactly as given -- a
+ * zero is a zero and it will trip immediately. Pass NULL to
+ * `foc_protector_create()` to get the library defaults for the nominal 24 V /
+ * 3 A machine instead of guessing them.
+ * [zh] 保护阈值。每个字段**按原样**使用——零就是零，它会立刻跳闸。要标称 24 V / 3 A
+ * 机器上的库默认值，给 `foc_protector_create()` 传 NULL，而不是自己猜。
+ * @since 0.1.1
+ * @exporter
+ */
+typedef struct foc_protection_config {
+    uint32_t struct_size;
+    float i_hard_a;
+    float i_max_a;
+    float i2t_a2s;
+    float i2t_cooling_s;
+    float v_max_v;
+    float v_min_v;
+    float t_trip_c;
+    float t_derate_start_c;
+    float t_derate_end_c;
+    float stall_speed_rad_s;
+    float stall_current_a;
+    float stall_time_s;
+    float sync_error_ratio;
+    float hysteresis_ratio;
+} foc_protection_config_t;
+
+/** @brief [en] One step's measurements. [zh] 一步的测量值。 @since 0.1.1 @exporter */
+typedef struct foc_protection_input {
+    uint32_t struct_size;
+    float i_magnitude_a;    /* peak phase current, A */
+    float v_bus_v;          /* DC link, V */
+    float temperature_c;    /* hottest measured point, deg C */
+    float omega_e_rad_s;    /* electrical speed, rad/s */
+    float flux_error_ratio; /* |psi_est - psi_f| / psi_f, 0 = healthy */
+    int32_t flux_valid;     /* non-zero = the observer has an answer */
+} foc_protection_input_t;
+
+/**
+ * @brief [en] What to do this step. [zh] 本步的处置。
+ * @since 0.1.1
+ * @exporter
+ */
+typedef struct foc_protection_output {
+    uint32_t struct_size;
+    int32_t fault;          /* FOC_FAULT_* */
+    uint32_t active_mask;   /* bit 1<<code per active fault */
+    uint32_t latched_mask;  /* the same, faults that will not self-clear */
+    float i_limit_a;        /* derated current limit, 0 when tripped */
+    int32_t output_allowed; /* 0 = stop switching this step */
+    float i2t_budget;       /* the thermal budget in A^2*s */
+} foc_protection_output_t;
+
+/** @brief [en] Handle to a protector instance. [zh] 保护器实例的句柄。 @since 0.1.1 */
+typedef struct foc_protector_s *foc_protector_t;

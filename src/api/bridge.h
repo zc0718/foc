@@ -40,6 +40,23 @@ foc_err_t foc_bridge_get_status(foc_motor_t motor, foc_motor_status_t *out);
 foc_err_t foc_bridge_tick(foc_motor_t motor, float dt_s);
 foc_err_t foc_bridge_get_state(foc_motor_t motor, float *speed_rad_s, float *id, float *iq);
 
+/* --- ABI 0.1.1: commissioning, protection and the reference policies --- */
+/* --- ABI 0.1.1：整定、保护与参考策略 --- */
+
+float foc_bridge_axis_deadtime_v(float deadtime_s, float switching_hz, float v_bus_v, float angle_rad);
+foc_err_t foc_bridge_fw_worthwhile(const foc_motor_params_t *params, float i_max_a, foc_fw_verdict_t *out);
+foc_err_t foc_bridge_mtpa_reference(const foc_motor_params_t *params, float i_max_a, float iq_command_a, float *id_a,
+                                    float *iq_a);
+foc_err_t foc_bridge_board_check(const foc_board_measurements_t *measurements, const foc_board_limits_t *limits,
+                                 foc_board_report_t *out);
+const char *foc_bridge_board_item_name(int32_t item);
+const char *foc_bridge_board_cause_name(int32_t cause);
+foc_err_t foc_bridge_protector_create(const foc_protection_config_t *config, foc_protector_t *out);
+foc_err_t foc_bridge_protector_step(foc_protector_t protector, const foc_protection_input_t *in, float dt_s,
+                                    foc_protection_output_t *out);
+foc_err_t foc_bridge_protector_reset(foc_protector_t protector, int32_t cold);
+foc_err_t foc_bridge_protector_destroy(foc_protector_t protector);
+
 #ifdef __cplusplus
 }
 #endif

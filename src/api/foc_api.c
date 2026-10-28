@@ -137,3 +137,67 @@ foc_err_t foc_get_state(foc_motor_t motor, float *speed_rad_s, float *id, float 
     }
     return foc_bridge_get_state(motor, speed_rad_s, id, iq);
 }
+
+/* ------------------------------------------------------------------------------------------------
+ * ABI 0.1.1: commissioning, protection and the reference policies.
+ * ABI 0.1.1：整定、保护与参考策略。
+ *
+ * Same division of labour as the motor path: this file owns the raw-pointer and finiteness checks
+ * that a C caller can trip over, and the bridge owns everything that needs the C++ core.
+ * 与电机路径同样的分工：本文件负责 C 调用方会踩到的裸指针与有限性检查，桥负责一切需要 C++ 核心的东西。
+ * ---------------------------------------------------------------------------------------------- */
+
+float foc_axis_deadtime_v(float deadtime_s, float switching_hz, float v_bus_v, float angle_rad) {
+    return foc_bridge_axis_deadtime_v(deadtime_s, switching_hz, v_bus_v, angle_rad);
+}
+
+foc_err_t foc_field_weakening_worthwhile(const foc_motor_params_t *params, float i_max_a, foc_fw_verdict_t *out) {
+    if ((params == NULL) || (out == NULL) || !isfinite(i_max_a)) {
+        return FOC_ERR_PARAM;
+    }
+    return foc_bridge_fw_worthwhile(params, i_max_a, out);
+}
+
+foc_err_t foc_mtpa_reference(const foc_motor_params_t *params, float i_max_a, float iq_command_a, float *id_a,
+                             float *iq_a) {
+    if ((params == NULL) || (id_a == NULL) || (iq_a == NULL) || !isfinite(iq_command_a)) {
+        return FOC_ERR_PARAM;
+    }
+    return foc_bridge_mtpa_reference(params, i_max_a, iq_command_a, id_a, iq_a);
+}
+
+foc_err_t foc_board_check(const foc_board_measurements_t *measurements, const foc_board_limits_t *limits,
+                          foc_board_report_t *out) {
+    if ((measurements == NULL) || (limits == NULL) || (out == NULL)) {
+        return FOC_ERR_PARAM;
+    }
+    return foc_bridge_board_check(measurements, limits, out);
+}
+
+const char *foc_board_item_name(int32_t item) { return foc_bridge_board_item_name(item); }
+
+const char *foc_board_cause_name(int32_t cause) { return foc_bridge_board_cause_name(cause); }
+
+foc_err_t foc_protector_create(const foc_protection_config_t *config, foc_protector_t *out) {
+    if (out == NULL) {
+        return FOC_ERR_PARAM;
+    }
+    return foc_bridge_protector_create(config, out);
+}
+
+foc_err_t foc_protector_step(foc_protector_t protector, const foc_protection_input_t *in, float dt_s,
+                             foc_protection_output_t *out) {
+    if ((protector == NULL) || (in == NULL) || (out == NULL) || !isfinite(dt_s) || !(dt_s > 0.0F)) {
+        return FOC_ERR_PARAM;
+    }
+    return foc_bridge_protector_step(protector, in, dt_s, out);
+}
+
+foc_err_t foc_protector_reset(foc_protector_t protector, int32_t cold) {
+    if (protector == NULL) {
+        return FOC_ERR_PARAM;
+    }
+    return foc_bridge_protector_reset(protector, cold);
+}
+
+foc_err_t foc_protector_destroy(foc_protector_t protector) { return foc_bridge_protector_destroy(protector); }
