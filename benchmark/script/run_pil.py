@@ -57,7 +57,19 @@ SOURCES = [
     'src/motor/foc_loop.cpp',
 ]
 
-METRICS = ['overshoot', 'steady_error_fraction', 'tail_peak_to_peak', 'settling_s', 'speed_final', 'peak_iq']
+# The S2 scenario, then the modules added after it: field weakening, MTPA, the dead-time axis
+# projection, the protector's 2000-step I^2t integral, and the board checklist. Those modules are
+# header-only and reach thousands of integration steps or a square root, so they are exactly the
+# kind of code whose host and target answers can differ.
+# S2 场景，然后是它之后新增的模块：弱磁、MTPA、死区轴投影、保护器 2000 步的 I²t 积分、以及板级
+# 检查表。这些模块是 header-only，且要跑几千步积分或开方，正是"宿主与目标可能给出不同答案"的
+# 那类代码。
+METRICS = [
+    'overshoot', 'steady_error_fraction', 'tail_peak_to_peak', 'settling_s', 'speed_final',
+    'peak_iq',
+    'fw_i_char_a', 'fw_ratio', 'fw_speed_gain', 'mtpa_id_a', 'mtpa_iq_a', 'fw_id_a', 'fw_iq_a',
+    'deadtime_d', 'deadtime_q', 'protector_budget', 'board_failures', 'board_cause',
+]
 
 # PRD 8.4: S2 must not exceed 10 % overshoot and must settle within 1 % steady-state error.
 S2_LIMITS = {'overshoot': 0.10, 'steady_error_fraction': 0.01}
