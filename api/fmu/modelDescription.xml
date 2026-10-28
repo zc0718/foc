@@ -1,0 +1,92 @@
+<!--
+  The controller as an FMU: commands and measurements in, duties and state out.
+
+  FMI 2.0 Co-Simulation is the smallest standard that lets someone else's plant drive our loop. The
+  inputs are exactly the four measurements the host HAL requires plus two commands, so this file is
+  the external face of `foc_hal_callbacks_t`: not a second interface, a serialisation of the one
+  that already exists.
+-->
+<fmiModelDescription
+    fmiVersion="2.0"
+    modelName="foc_controller"
+    guid="6f2a9c41-3b58-4d7e-9a10-5c2d7e8f4b63"
+    description="FOC controller: one control loop, measurements from the master, duties back to it"
+    generationTool="hand-written"
+    variableNamingConvention="flat"
+    numberOfEventIndicators="0">
+
+  <CoSimulation
+      modelIdentifier="foc_controller"
+      canHandleVariableCommunicationStepSize="true"
+      canInterpolateInputs="false"
+      maxOutputDerivativeOrder="0"
+      canRunAsynchronuously="false"
+      canBeInstantiatedOnlyOncePerProcess="false"
+      canGetAndSetFMUstate="false"
+      canSerializeFMUstate="false"
+      providesDirectionalDerivative="false"/>
+
+  <LogCategories>
+    <Category name="logAll"/>
+  </LogCategories>
+
+  <DefaultExperiment startTime="0.0" stopTime="1.0" stepSize="5e-05"/>
+
+  <ModelVariables>
+    <!-- Commands. -->
+    <ScalarVariable name="iq_command_a" valueReference="1" causality="input" variability="continuous">
+      <Real start="0.0"/>
+    </ScalarVariable>
+    <ScalarVariable name="enable" valueReference="2" causality="input" variability="discrete">
+      <Boolean start="false"/>
+    </ScalarVariable>
+
+    <!-- Measurements, supplied by the master every step. -->
+    <ScalarVariable name="v_bus_v" valueReference="3" causality="input" variability="continuous">
+      <Real start="24.0"/>
+    </ScalarVariable>
+    <ScalarVariable name="i_u_a" valueReference="4" causality="input" variability="continuous">
+      <Real start="0.0"/>
+    </ScalarVariable>
+    <ScalarVariable name="i_v_a" valueReference="5" causality="input" variability="continuous">
+      <Real start="0.0"/>
+    </ScalarVariable>
+    <ScalarVariable name="i_w_a" valueReference="6" causality="input" variability="continuous">
+      <Real start="0.0"/>
+    </ScalarVariable>
+    <ScalarVariable name="angle_mech_rad" valueReference="7" causality="input" variability="continuous">
+      <Real start="0.0"/>
+    </ScalarVariable>
+    <ScalarVariable name="speed_mech_rad_s" valueReference="8" causality="input" variability="continuous">
+      <Real start="0.0"/>
+    </ScalarVariable>
+
+    <!-- What the controller decided. -->
+    <ScalarVariable name="duty_u" valueReference="9" causality="output" variability="continuous" initial="calculated">
+      <Real/>
+    </ScalarVariable>
+    <ScalarVariable name="duty_v" valueReference="10" causality="output" variability="continuous" initial="calculated">
+      <Real/>
+    </ScalarVariable>
+    <ScalarVariable name="duty_w" valueReference="11" causality="output" variability="continuous" initial="calculated">
+      <Real/>
+    </ScalarVariable>
+    <ScalarVariable name="state" valueReference="12" causality="output" variability="discrete" initial="calculated">
+      <Integer/>
+    </ScalarVariable>
+    <ScalarVariable name="error" valueReference="13" causality="output" variability="discrete" initial="calculated">
+      <Integer/>
+    </ScalarVariable>
+    <ScalarVariable name="id_a" valueReference="14" causality="output" variability="continuous" initial="calculated">
+      <Real/>
+    </ScalarVariable>
+    <ScalarVariable name="iq_a" valueReference="15" causality="output" variability="continuous" initial="calculated">
+      <Real/>
+    </ScalarVariable>
+    <ScalarVariable name="speed_est_rad_s" valueReference="16" causality="output" variability="continuous" initial="calculated">
+      <Real/>
+    </ScalarVariable>
+  </ModelVariables>
+
+  <ModelStructure/>
+</fmiModelDescription>
