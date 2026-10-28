@@ -57,13 +57,15 @@ typedef struct foc_motor_params {
 /**
  * @brief [en] Which observer the motor runs.
  * @brief [zh] 电机运行哪一个观测器。
- * @note [en] Only the default is wired today. The enumeration and the setup field exist so the *shape* of the choice is
- *            fixed before more than one mode is implemented: adding a mode must not change this header's meaning, only
- *            which values answer `FOC_ERR_NOT_IMPL`. A mode that is named but not wired answers that error rather than
- *            silently falling back to the default, because a silent fallback is indistinguishable from success.
- * @note [zh] 今天只接入默认值。枚举与设置字段存在的理由，是在真正实现多种模式之前先把选择的**形状**定下来：增加一种模式
- *            不应改变本头的含义，只改变哪些取值回答 `FOC_ERR_NOT_IMPL`。被命名却未接入的模式回答该错误，而不是静默退回
- *            默认值——因为静默退回与成功无法区分。
+ * @note [en] `BACK_EMF` (the shipped default) and `NONLINEAR_FLUX` are wired; `HFI` and `BLENDED` still answer
+ *            `FOC_ERR_NOT_IMPL`. Adding a mode must not change this header's meaning, only which values answer that
+ *            error. A mode that is named but not wired answers the error rather than silently falling back to the
+ *            default, because a silent fallback is indistinguishable from success. `foc_motor_status_t::observer`
+ *            reports the mode that is actually running, so a caller never has to infer it from what it asked for.
+ * @note [zh] `BACK_EMF`（出厂默认）与 `NONLINEAR_FLUX` 已接入；`HFI` 与 `BLENDED` 仍回答 `FOC_ERR_NOT_IMPL`。增加一种模
+ *            式不应改变本头的含义，只改变哪些取值回答该错误。被命名却未接入的模式回答该错误，而不是静默退回默认值 ——因
+ *            为静默退回与成功无法区分。`foc_motor_status_t::observer` 报出实际在跑的模式，调用方无需从自己请求了什么去
+ *            推断。
  * @since 0.1.4
  * @exporter
  */
@@ -217,6 +219,7 @@ typedef struct foc_motor_status {
     float align_offset_rad; /* captured mechanical offset, rad in [0, 2*pi); valid once DONE */
     float align_spread_rad; /* spread of the accepted capture, rad */
     uint32_t max_period_us; /* worst control-tick interval seen, us; 0 without a clock */
+    int32_t observer;       /* the observer actually running (a foc_observer_t); appended, gated by struct_size */
 } foc_motor_status_t;
 
 

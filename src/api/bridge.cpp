@@ -4,6 +4,8 @@
 #include <cmath>
 #include <limits>
 #include <cstddef>
+#include <algorithm>
+#include <cstring>
 #include <cstdint>
 #include <new>
 
@@ -36,33 +38,6 @@ namespace {
 // C 路径给的是**完整**电机：位置环与对齐器都在。C 调用方无法追加模板参数，因此这个选择必须在这里
 // 做定；用默认的空策略（`NullAlignment` 等）会把 C API 静默地封成 C++ API 的子集，而那正是本项目
 // 一直在拒绝的"只服务一种场景的库"陷阱。
-/**
- * @brief [en] The observer the C path builds, from the nameplate and one explicit kind.
- * @brief [zh] C 路径构造的观测器：铭牌加一个显式的 kind。
- * @param p [en] the caller's nameplate.
- * @param p [zh] 调用方的铭牌。
- * @param kind [en] which of the two the slot starts on.
- * @param kind [zh] 该槽位起始选哪个。
- * @note [en] The kind is a parameter rather than a constant so that enabling a mode is a change at the *call site*,
- *            where `observer_status()` has already decided the mode is allowed, not a second decision buried here. The
- *            NLFO half is built with a **zero** flux linkage, because this boundary has no such field to read
- *            (`foc_motor_params_t` carries `rs`, `ld`, `lq`, `kt`, `j`, `b` and nothing else). Zero is a visible
- *            sentinel for "not known here"; deriving something plausible from `kt` would look like a real number and be
- *            wrong for any machine whose pole pairs are not one. It is unreachable today -- `observer_status()` rejects
- *            `FOC_OBSERVER_NONLINEAR_FLUX` before this is ever called with it selected -- and supplying it for real is
- *            one of the things adding that mode has to solve.
- * @note [zh] kind 是参数而不是常量，于是"启用某个模式"的改动落在**调用点**——那里 `observer_status()` 已经判定该模式被允
- *            许，而不是在这里多出第二个决定。 NLFO 那一半的磁链是 **0**，因为该边界没有字段可读（`foc_motor_params_t`
- *            只有 `rs`、`ld`、`lq`、`kt`、`j`、 `b`）。 0 是"此处未知"的显式标记；从 `kt` 推一个看起来合理的值会像一个
- *            真数字，而对任何极对数不为 1 的电机都是错的。今天它不可达——`observer_status()` 在它被选中之前就拒绝
- *            `FOC_OBSERVER_NONLINEAR_FLUX`——而真正提供这个参数，正是启用该模式必须解决的问题之一。
- * @since 0.1.5
- */
-inline auto make_observer(const foc_motor_params_t& p, core::ObserverKind kind) noexcept -> core::SwitchableObserver {
-    return core::SwitchableObserver(core::BackEmfObserver::Config{p.rs, p.ld},
-                                    core::NonlinearFluxObserver::Config{p.rs, p.lq, 0.0F, 0.3F, 3.0F, 0.0F}, kind);
-}
-
 using MotorT = motor::Motor<core::SwitchableObserver, core::Svpwm, core::Pi, driver::StubHal,
                             core::NullReferenceGenerator, core::NullFeedforward, core::PositionP, core::AlignRoutine>;
 
@@ -286,12 +261,12 @@ auto resolve_setup(const foc_motor_setup_t* requested) noexcept -> Setup {
 /**
  * @brief [en] Whether the requested observer can actually be run.
  * @brief [zh] 所请求的观测器是否真的可以运行。
- * @return [en] `FOC_OK` for the wired mode, `FOC_ERR_NOT_IMPL` for a mode that is named but not wired, `FOC_ERR_PARAM`
- *              for a value outside the enumeration.
- * @return [zh] 已接入的模式返回 `FOC_OK`，已命名但未接入的模式返回 `FOC_ERR_NOT_IMPL`，枚举之外的取值返回
- *              `FOC_ERR_PARAM`。
+ * @return [en] `FOC_OK` for a wired mode (`BACK_EMF`, `NONLINEAR_FLUX`), `FOC_ERR_NOT_IMPL` for one that is named but
+ *              not wired (`HFI`, `BLENDED`), `FOC_ERR_PARAM` for a value outside the enumeration.
+ * @return [zh] 已接入的模式（`BACK_EMF`、`NONLINEAR_FLUX`）返回 `FOC_OK`，已命名但未接入的模式（`HFI`、`BLENDED`）返回
+ *              `FOC_ERR_NOT_IMPL`，枚举之外的取值返回 `FOC_ERR_PARAM`。
  * @note [en] The three answers are kept apart on purpose. Answering `FOC_OK` and running the default instead would be a
- *            silent substitution, and answering `PARAM` for `NONLINEAR_FLUX` would tell the caller their call was
+ *            silent substitution, and answering `PARAM` for an unimplemented mode would tell the caller their call was
  *            malformed when it was well formed and merely unimplemented.
  * @note [zh] 三种回答刻意分开。答 `FOC_OK` 却跑默认值，是一种静默替换；而对 `NONLINEAR_FLUX` 答 `PARAM`，则是在调用完全
  *            正确、只是尚未实现时告诉调用方它写错了。
@@ -300,8 +275,8 @@ auto resolve_setup(const foc_motor_setup_t* requested) noexcept -> Setup {
 auto observer_status(const Setup& setup) noexcept -> foc_err_t {
     switch (setup.observer) {
     case FOC_OBSERVER_BACK_EMF:
-        return FOC_OK;
     case FOC_OBSERVER_NONLINEAR_FLUX:
+        return FOC_OK;
     case FOC_OBSERVER_HFI:
     case FOC_OBSERVER_BLENDED:
         return FOC_ERR_NOT_IMPL;
@@ -626,6 +601,55 @@ auto machine_params(const foc_motor_params_t& p) noexcept -> core::MachineParams
     return core::MachineParams{p.rs, p.ld, p.lq, p.kt / (1.5F * poles)};
 }
 
+
+/**
+ * @brief [en] The observer the C path builds: the nameplate, one explicit kind, and nothing the caller has to repeat.
+ * @brief [zh] C 路径构造的观测器：铭牌、一个显式的 kind，不让调用方重复任何数字。
+ * @param p [en] the caller's nameplate.
+ * @param p [zh] 调用方的铭牌。
+ * @param kind [en] which of the two the slot starts on.
+ * @param kind [zh] 该槽位起始选哪个。
+ * @note [en] `psi_f` is **derived**, not requested: `machine_params()` already states the single definition `psi_f = kt
+ *            / (1.5 * pole_pairs)` and this function reuses it rather than opening a second one. An earlier version of
+ *            this comment claimed the boundary had no way to know the flux linkage and passed zero; that was wrong
+ *            twice over -- `pole_pairs` is in `foc_motor_params_t` (it is how the machine's `psi_f` is reached at all),
+ *            and the derivation is exact rather than an approximation. The NLFO's three tuning numbers are the ones
+ *            this repository already uses everywhere (`gain_ratio` 0.3 is a fraction of `omega_e` and therefore
+ *            dimensionless; the floor `min_gain_rad_s` 3.0 only binds below `3.0/0.3 = 10 rad/s`; `min_flux_wb` is half
+ *            the nameplate flux so that "no answer below this flux" sits at 50 % of nominal). They are stated here as
+ *            the library's defaults, to be made settable when the caller needs to differ -- not silently re-guessed per
+ *            call.
+ * @note [zh] `psi_f` 是**推导**来的，不向调用方索取：`machine_params()` 已经给出唯一定义 `psi_f = kt /
+ *            (1.5·pole_pairs)`，这里复用它而不是另开一个。这段注释的上一版声称该边界无从得知磁链、于是传了 0；那个说法
+ *            错了两处——`pole_pairs` 就在 `foc_motor_params_t` 里（电机的 `psi_f` 正是这样得到的），而这个推导是精确的，
+ *            不是近似。 NLFO 的三个整定量就是本仓库各处一直在用的那三个（`gain_ratio` 0.3 是 `ω_e` 的比例、因而无量纲；
+ *            地板 `min_gain_rad_s` 3.0 只在 `3.0/0.3 = 10 rad/s` 以下起作用；`min_flux_wb` 取铭牌磁链的一半，于是"低于
+ *            此磁链不报答案"落在额定的 50 %）。此处作为库默认值写明，等调用方确实需要不同值时再开放，而不是每次调用静默
+ *            重新猜一遍。
+ * @since 0.1.5
+ */
+inline auto make_observer(const foc_motor_params_t& p, core::ObserverKind kind) noexcept -> core::SwitchableObserver {
+    const core::MachineParams machine = machine_params(p);
+    const float psi_f = machine.psi_f;
+    return core::SwitchableObserver(
+        core::BackEmfObserver::Config{machine.rs, machine.ld},
+        core::NonlinearFluxObserver::Config{machine.rs, machine.lq, psi_f, 0.3F, 3.0F, 0.5F * psi_f}, kind);
+}
+
+/**
+ * @brief [en] Map the caller's enumeration onto the slot's kind; only the admitted values arrive here.
+ * @brief [zh] 把调用方的枚举映射到槽位的 kind；只有被放行的取值会到达这里。
+ * @since 0.1.5
+ */
+constexpr auto observer_mode(core::ObserverKind kind) noexcept -> std::int32_t {
+    return (kind == core::ObserverKind::NonlinearFlux) ? FOC_OBSERVER_NONLINEAR_FLUX : FOC_OBSERVER_BACK_EMF;
+}
+
+constexpr auto observer_kind(std::int32_t observer) noexcept -> core::ObserverKind {
+    return (observer == FOC_OBSERVER_NONLINEAR_FLUX) ? core::ObserverKind::NonlinearFlux : core::ObserverKind::BackEmf;
+}
+
+
 /**
  * @brief [en] The SVPWM linear range, `1/sqrt(3)`; the modulator's property, not the machine's.
  * @brief [zh] SVPWM 线性区 `1/√3`；这是调制器的性质，不是电机的。
@@ -765,15 +789,16 @@ foc_err_t foc_bridge_create_ex(const foc_motor_params_t* params, const foc_motor
         slot.hal.reset();
         slot.hal.dc_link.set_voltage_v(resolved.v_bus_v);
 
-        const foc::api::MotorT::Policies policies{foc::api::make_observer(*params, foc::core::ObserverKind::BackEmf),
-                                                  foc::core::Svpwm{},
-                                                  foc::core::Pi{current},
-                                                  foc::core::Pi{current},
-                                                  foc::core::Pi{speed},
-                                                  foc::core::NullReferenceGenerator{},
-                                                  foc::core::NullFeedforward{},
-                                                  foc::core::PositionP{position},
-                                                  foc::core::AlignRoutine{alignment}};
+        const foc::api::MotorT::Policies policies{
+            foc::api::make_observer(*params, foc::api::observer_kind(resolved.observer)),
+            foc::core::Svpwm{},
+            foc::core::Pi{current},
+            foc::core::Pi{current},
+            foc::core::Pi{speed},
+            foc::core::NullReferenceGenerator{},
+            foc::core::NullFeedforward{},
+            foc::core::PositionP{position},
+            foc::core::AlignRoutine{alignment}};
 
         slot.instance = new (static_cast<void*>(slot.storage)) foc::api::MotorT(config, policies, slot.hal);
 
@@ -839,7 +864,7 @@ foc_err_t foc_bridge_create_host(const foc_motor_params_t* params, const foc_mot
         slot.setup = resolved;
 
         const foc::api::MotorT_Host::Policies policies{
-            foc::api::make_observer(*params, foc::core::ObserverKind::BackEmf),
+            foc::api::make_observer(*params, foc::api::observer_kind(resolved.observer)),
             foc::core::Svpwm{},
             foc::core::Pi{current},
             foc::core::Pi{current},
@@ -1017,6 +1042,17 @@ foc_err_t foc_bridge_get_status(foc_motor_t motor, foc_motor_status_t* out) {
                           static_cast<std::int32_t>(FOC_ALIGN_DIRECTION_WRONG),
                       "foc_align_failure_t must mirror foc::core::AlignFailure");
 
+        // The caller declares how much of their struct they own, exactly as they do for the setup. On an *output*
+        // struct an undeclared size cannot mean "I want no fields" -- the call would be pointless -- so 0 keeps the
+        // historical meaning of "the version I have", while any declared size is respected as a ceiling. Without this
+        // the field below would be written past the end of a caller built against the previous header.
+        // 调用方声明自己拥有多大，与 setup 一致。在**输出**结构上，"未声明"不可能表示"我不要任何字段"——那样这次调用毫无
+        // 意义——因此 0 沿用"我手头的那个版本"的历史含义，而任何已声明的大小都被当作上限。没有这一步，下面新增的字段会被
+        // 写到按旧头编译的调用方结构体之外。
+        const std::uint32_t declared = out->struct_size;
+        const std::size_t limit =
+            (declared == 0U) ? sizeof(foc_motor_status_t) : std::min<std::size_t>(declared, sizeof(foc_motor_status_t));
+
         foc_motor_status_t result{};
         result.struct_size = sizeof(foc_motor_status_t);
         result.mode_state = static_cast<std::int32_t>(instance.state());
@@ -1026,7 +1062,8 @@ foc_err_t foc_bridge_get_status(foc_motor_t motor, foc_motor_status_t* out) {
         result.align_offset_rad = aligner.offset_mech_rad();
         result.align_spread_rad = aligner.spread_rad();
         result.max_period_us = telemetry.max_period_us;
-        *out = result;
+        result.observer = foc::api::observer_mode(instance.observer().kind());
+        std::memcpy(static_cast<void*>(out), &result, limit);
         return foc::ErrorCode::Ok;
     });
 }

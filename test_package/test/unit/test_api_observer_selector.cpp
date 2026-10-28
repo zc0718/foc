@@ -93,13 +93,15 @@ TEST(ApiObserverSelector, TheDefaultIsTheBackEmfObserverAndItRuns) {
 
 TEST(ApiObserverSelector, AModeThatIsNotWiredSaysSoInsteadOfRunningTheDefault) {
     // Each named-but-unwired mode must answer NOT_IMPL from both constructors. Answering OK and running the back-EMF
-    // observer would hand the caller a capability the library does not have.
+    // observer would hand the caller a capability the library does not have. `NONLINEAR_FLUX` has since been wired and
+    // moved to its own case below; leaving it in this loop would have kept asserting a fact that stopped being true,
+    // and the test would have had to be weakened rather than corrected.
     // 每个已命名但未接入的模式必须在两个构造函数上都答 NOT_IMPL。答 OK 却跑反电势观测器，等于把一个库并不具备的能力交给
-    // 调用方。
+    // 调用方。`NONLINEAR_FLUX` 后来接上了，已移到下面它自己的用例；把它留在这个循环里就是继续断言一个已经不成立的事实，
+    // 那样测试只能被削弱而不能被修正。
     const foc_motor_params_t params = params_struct();
     for (const std::int32_t observer :
-         {static_cast<std::int32_t>(FOC_OBSERVER_NONLINEAR_FLUX), static_cast<std::int32_t>(FOC_OBSERVER_HFI),
-          static_cast<std::int32_t>(FOC_OBSERVER_BLENDED)}) {
+         {static_cast<std::int32_t>(FOC_OBSERVER_HFI), static_cast<std::int32_t>(FOC_OBSERVER_BLENDED)}) {
         const foc_motor_setup_t setup = setup_with_observer(observer);
 
         foc_motor_t stub{};
@@ -145,4 +147,66 @@ TEST(ApiObserverSelector, AnOlderShorterSetupStillMeansTheDefault) {
     if (motor != nullptr) {
         EXPECT_EQ(foc_motor_destroy(motor), FOC_OK);
     }
+}
+
+TEST(ApiObserverSelector, TheNonlinearFluxModeIsWiredAndItIsWhatActuallyRuns) {
+    // "It was created" is not evidence that the selection took: a selector that admitted the mode and then built the
+    // default would pass that. The criterion here is the status field, which the bridge fills from the live observer
+    // (`instance.observer().kind()`), not from the request. So each mode has to report *itself*, and the two have to
+    // report differently -- identical answers would mean the field is echoing the enum back.
+    // "创建成功"不能证明选择生效：一个接受该模式却仍构造默认值的实现也能通过。这里的判据是状态字段，bridge 用活着的
+    // 观测器（`instance.observer().kind()`）填它，而不是用请求值。于是每种模式必须报出**它自己**，且两者必须不同——
+    // 若相同，说明这个字段只是把枚举原样回显。
+    const foc_motor_params_t params = params_struct();
+
+    std::int32_t reported[2] = {-1, -1};
+    const std::int32_t requested[2] = {static_cast<std::int32_t>(FOC_OBSERVER_BACK_EMF),
+                                       static_cast<std::int32_t>(FOC_OBSERVER_NONLINEAR_FLUX)};
+    for (int i = 0; i < 2; ++i) {
+        const foc_motor_setup_t setup = setup_with_observer(requested[i]);
+        foc_motor_t motor{};
+        ASSERT_EQ(foc_motor_create_ex(&params, &setup, &motor), FOC_OK) << "observer " << requested[i];
+        ASSERT_NE(motor, nullptr);
+        ASSERT_EQ(foc_motor_enable(motor), FOC_OK);
+        ASSERT_EQ(foc_set_torque(motor, 0.5F), FOC_OK);
+        for (int tick = 0; tick < 20; ++tick) {
+            ASSERT_EQ(foc_tick(motor, 1.0F / 20000.0F), FOC_OK);
+        }
+
+        foc_motor_status_t status{};
+        status.struct_size = sizeof(foc_motor_status_t);
+        ASSERT_EQ(foc_motor_get_status(motor, &status), FOC_OK);
+        reported[i] = status.observer;
+        EXPECT_EQ(status.observer, requested[i]) << "the mode that was asked for is not the mode that reports itself";
+        EXPECT_EQ(foc_motor_destroy(motor), FOC_OK);
+    }
+    EXPECT_NE(reported[0], reported[1]) << "the status field does not distinguish the two observers";
+}
+
+TEST(ApiObserverSelector, AnOlderShorterStatusStructIsNotWrittenPastTheEnd) {
+    // The observer field was appended to the status struct, so a caller built against the previous header owns a shorter
+    // object. The library must treat the declared size as a ceiling: filling the new field regardless would write past
+    // the end of that caller's memory, which is the one failure mode of an output struct that cannot be caught by a
+    // value check afterwards. Pre-filling the field with a sentinel and requiring it to survive is the cheapest way to
+    // see that the write stayed inside.
+    // 观测器字段是追加到状态结构尾部的，因此按旧头编译的调用方拥有更短的对象。库必须把声明的大小当作上限：无论如何都填
+    // 新字段就会写到调用方内存之外，而这是输出结构唯一一种事后无法靠取值检查发现的失效方式。先把该字段填成哨兵、再要求它
+    // 存活，是"写没有越界"最便宜的观测方式。
+    Host host{};
+    const foc_hal_callbacks_t callbacks = callbacks_for(host);
+    const foc_motor_params_t params = params_struct();
+    const foc_motor_setup_t setup = setup_with_observer(FOC_OBSERVER_NONLINEAR_FLUX);
+
+    foc_motor_t motor{};
+    ASSERT_EQ(foc_motor_create_host(&params, &setup, &callbacks, &motor), FOC_OK);
+    ASSERT_NE(motor, nullptr);
+
+    foc_motor_status_t status{};
+    status.struct_size = static_cast<std::uint32_t>(offsetof(foc_motor_status_t, observer));
+    status.observer = 12345; // the sentinel: anything the library writes here is a bug
+    EXPECT_EQ(foc_motor_get_status(motor, &status), FOC_OK);
+    EXPECT_EQ(status.observer, 12345) << "the library wrote past the size the caller declared";
+    // The fields the caller does own are still filled.
+    EXPECT_EQ(status.mode_state, static_cast<std::int32_t>(FOC_MOTOR_IDLE));
+    EXPECT_EQ(foc_motor_destroy(motor), FOC_OK);
 }
