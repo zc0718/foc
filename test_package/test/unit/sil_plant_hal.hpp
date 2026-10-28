@@ -135,11 +135,38 @@ public:
    */
   [[nodiscard]] auto true_angle_mech_rad() const noexcept -> float;
 
+  /**
+   * @brief [en] Give this sensor an index mark at a mechanical position, or take it away.
+   * @brief [zh] 给这个传感器一个位于某机械角度的索引标记，或把它拿掉。
+   * @param position_mech_rad [en] where the mark sits in plant-truth terms.
+   * @param position_mech_rad [zh] 标记在 plant 真值坐标里的位置。
+   * @note [en] Off by default: the mark is an optional capability, and a rig that had one without asking would be
+   *            modelling a different machine from the one most existing cases describe.
+   * @note [zh] 默认关闭：标记是可选能力，不打招呼就带上它的台架，描述的是另一台机器。
+   */
+  void set_index_position_mech_rad(float position_mech_rad) noexcept;
+
+  /** @brief [en] Whether this sensor has a mark at all. [zh] 这个传感器是否有标记。 */
+  [[nodiscard]] auto has_index() const noexcept -> bool;
+
+  /**
+   * @brief [en] True on the tick the true mechanical angle crossed the mark.
+   * @brief [zh] 真实机械角越过标记的那一个 tick 为真。
+   * @note [en] An edge, not a level, and computed from the *plant* angle rather than the reported one: the mark is a
+   *            property of the rotor and must not move when the offset correction does.
+   * @note [zh] 是边沿而不是电平，并且由**plant 角度**而非报出的角度计算：标记是转子的属性，不该随偏置校正一起移动。
+   */
+  auto index_pulse() noexcept -> bool;
+
 private:
   const PmsmPlant *plant_;
   float mount_error_rad_{0.0F};
   float offset_rad_{0.0F};
   bool sensor_present_{true};
+  bool has_index_{false};
+  float index_position_rad_{0.0F};
+  float previous_true_rad_{0.0F};
+  bool index_primed_{false};
 };
 
 /**
@@ -347,6 +374,35 @@ inline auto PlantPosition::mech_offset_rad() const noexcept -> float {
 inline auto PlantPosition::true_angle_mech_rad() const noexcept -> float {
   return plant_->theta_mech_rad();
 }
+inline void PlantPosition::set_index_position_mech_rad(float position_mech_rad) noexcept {
+  has_index_ = true;
+  index_position_rad_ = position_mech_rad;
+  index_primed_ = false;
+}
+
+inline auto PlantPosition::has_index() const noexcept -> bool { return has_index_; }
+
+inline auto PlantPosition::index_pulse() noexcept -> bool {
+  if (!has_index_) {
+    return false;
+  }
+  // Edge on the truth, wrapping to one turn: the mark is physical, so it recurs every revolution and does not care what
+  // the offset correction is doing.
+  // 在真值上取边沿并按一圈折返：标记是物理的，每圈都会再来一次，与偏置校正在做什么无关。
+  constexpr float kTurn = 6.28318530717959F;
+  const float now = plant_->theta_mech_rad();
+  if (!index_primed_) {
+    previous_true_rad_ = now;
+    index_primed_ = true;
+    return false;
+  }
+  const float mark = index_position_rad_;
+  const float before = std::fmod(previous_true_rad_ - mark + kTurn, kTurn);
+  const float after = std::fmod(now - mark + kTurn, kTurn);
+  previous_true_rad_ = now;
+  return after < before;
+}
+
 
 inline auto PlantPosition::velocity_rad_s() noexcept -> float {
   return plant_->omega_mech_rad_s();

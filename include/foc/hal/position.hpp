@@ -10,6 +10,16 @@ namespace hal {
 /**
  * @brief [en] Rotor position / velocity source.
  * @brief [zh] 转子位置/速度来源。
+ * @note [en] An implementation may additionally offer `has_index() const noexcept -> bool` and `index_pulse() noexcept
+ *            -> bool` to report an index mark. The pair is optional for the same reason the mechanical-offset pair is:
+ *            a sensor without a mark is an ordinary sensor, and it is the *caller's* problem that it cannot establish
+ *            an absolute position. `index_pulse()` must be true only on the tick the mark was crossed -- a level rather
+ *            than an edge would make a caller count one crossing many times. Detected through
+ *            `core::concepts::has_index_v`, never assumed.
+ * @note [zh] 实现可以额外提供 `has_index() const noexcept -> bool` 与 `index_pulse() noexcept -> bool` 来报告索引标记。
+ *            这一对可选的道理和机械偏置那一对相同：没有标记的传感器是正常传感器，"建立不了绝对位置"是**调用方**的问题。
+ *            `index_pulse()` 必须**只在**越过标记的那一个 tick 为真——若它是一个电平而不是边沿，调用方会把一次通过数很多
+ *            次。通过 `core::concepts::has_index_v` 探测，从不假设。
  * @since 0.1.0
  * @exporter
  */

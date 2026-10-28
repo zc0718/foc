@@ -8,6 +8,7 @@
 #include <foc/core/limits.hpp>
 #include <foc/core/feedforward.hpp>
 #include <foc/core/observer/observer_policy.hpp>
+#include <foc/core/position_reference.hpp>
 #include <foc/core/position.hpp>
 #include <foc/core/reference.hpp>
 #include <foc/core/sm.hpp>
@@ -316,6 +317,21 @@ class Motor final {
     [[nodiscard]] auto aligner() const noexcept -> const Aligner&;
 
     /**
+     * @brief [en] The turn counter and index origin behind a sensor-less position.
+     * @brief [zh] 无感位置背后的圈计数与索引原点。
+     * @return [en] The reference this motor keeps; `homed()` says whether a position command can be honoured and
+     *              `lost_count()` whether the reconstruction may be trusted.
+     * @return [zh] 该电机持有的参考；`homed()` 说明位置指令能否被兑现，`lost_count()` 说明重建是否可被信任。
+     * @note [en] Read-only on purpose. The origin is established by the index pulse arriving at `hal.position`, not by
+     *            a caller writing an angle: a settable origin would let a wrong number look exactly like a measured
+     *            one.
+     * @note [zh] 故意只读。原点由 `hal.position` 收到的索引脉冲建立，而不是由调用方写一个角度——可写的原点会让一个错误的
+     *            数字看起来和测量出来的完全一样。
+     * @since 0.1.6
+     */
+    [[nodiscard]] auto position_reference() const noexcept -> const core::PositionReference&;
+
+    /**
      * @brief [en] Mutable access to the position slot (retuning without rebuilding the motor).
      * @brief [zh] 位置槽位的可变访问（不重建电机即可重新整定）。
      * @since 0.1.0
@@ -379,6 +395,10 @@ class Motor final {
     float speed_ref_from_position_rad_s_;
     float position_elapsed_s_;
     bool position_step_due_;
+    /**
+     * @brief Kept always, not only in the sensor-less case: a position command may arrive at any time, and building the counter lazily would mean the turn count starts from wherever the first position command happened to land. 始终保留，而不只是无感时才建：位置指令随时可能到来，懒建会让圈计数从"第一条位置指令恰好落在哪里"开始。
+     */
+    core::PositionReference position_reference_;
     std::uint32_t max_period_us_;
     std::uint64_t last_clock_us_;
     bool clock_seeded_;
@@ -389,11 +409,12 @@ template <typename Observer, typename Modulator, typename Controller, typename H
           typename FeedForward, typename PositionControl, typename Aligner>
 Motor<Observer, Modulator, Controller, HalPolicy, RefGenerator, FeedForward, PositionControl, Aligner>::Motor(
     MotorConfig config, Policies policies, HalPolicy& hal) noexcept
-    : config_(config), policies_(policies), hal_(&hal), sm_(), telemetry_{0.0F, 0.0F, 0.0F, 0U}, status_(ErrorCode::Ok),
-      mode_(ReferenceMode::Torque), iq_ref_a_(0.0F), speed_ref_rad_s_(0.0F), speed_elapsed_s_(0.0F),
-      speed_step_due_(true), position_ref_rad_(0.0F), command_{}, speed_ref_from_position_rad_s_(0.0F),
-      position_elapsed_s_(0.0F), position_step_due_(true), max_period_us_(0U), last_clock_us_(0U), clock_seeded_(false),
-      v_ab_prev_{} {}
+    : config_(config), policies_(policies), hal_(&hal),
+      position_reference_(core::PositionReference::Config{config.pole_pairs, 0.0F}), sm_(),
+      telemetry_{0.0F, 0.0F, 0.0F, 0U}, status_(ErrorCode::Ok), mode_(ReferenceMode::Torque), iq_ref_a_(0.0F),
+      speed_ref_rad_s_(0.0F), speed_elapsed_s_(0.0F), speed_step_due_(true), position_ref_rad_(0.0F), command_{},
+      speed_ref_from_position_rad_s_(0.0F), position_elapsed_s_(0.0F), position_step_due_(true), max_period_us_(0U),
+      last_clock_us_(0U), clock_seeded_(false), v_ab_prev_{} {}
 
 template <typename Observer, typename Modulator, typename Controller, typename HalPolicy, typename RefGenerator,
           typename FeedForward, typename PositionControl, typename Aligner>
@@ -642,6 +663,17 @@ auto Motor<Observer, Modulator, Controller, HalPolicy, RefGenerator, FeedForward
             const core::ObsState observed = policies_.observer.update(v_ab_prev_, i_ab, dt_s);
             speed_mech = observed.omega_e / static_cast<float>(config_.pole_pairs);
             theta_e = has_sensor ? (angle_mech * static_cast<float>(config_.pole_pairs)) : observed.theta_e;
+            // The reference is fed from the observer's own angle, and the index pulse -- when the sensor offers one --
+            // is what fixes its origin. Without a mark the reference still counts turns, it simply has no absolute
+            // zero, which is exactly what `homed()` reports and why a position command must ask rather than assume.
+            // 参考角由观测器自己的角度推进，而索引脉冲（传感器提供时）负责把它的原点钉住。没有标记时参考仍然在数圈，
+            // 只是没有绝对零点——这正是 `homed()` 报告的，也是位置指令必须去问而不是假设的原因。
+            if constexpr (core::concepts::has_index_v<decltype(hal_->position)>) {
+                const bool pulse = hal_->position.has_index() && hal_->position.index_pulse();
+                static_cast<void>(position_reference_.update(observed.theta_e, pulse));
+            } else {
+                static_cast<void>(position_reference_.update(observed.theta_e, false));
+            }
         } else {
             theta_e = angle_mech * static_cast<float>(config_.pole_pairs);
             speed_mech = sensor_speed;
@@ -656,7 +688,17 @@ auto Motor<Observer, Modulator, Controller, HalPolicy, RefGenerator, FeedForward
             if constexpr (std::is_same_v<PositionControl, core::NullPositionControl>) {
                 return ErrorCode::NotImpl;
             } else {
-                if (!has_sensor) {
+                // A position command needs an *absolute* angle, which a sensor provides and a turn counter
+                // provides once its origin is fixed. Requiring `has_sensor` was a consequence of `angle_mech` being a
+                // constant zero without one, not a rule about what position control needs; with a reference the
+                // requirement becomes what it always meant. `lost_count()` refuses too: a count that was lost is not
+                // a count, and a loop closing on it would drive to a position one turn out.
+                // 位置指令需要**绝对**角度：传感器给得出，圈计数在原点被钉住之后也给得出。原先要求 `has_sensor` 是
+                // "无传感器时 `angle_mech` 恒为 0"的后果，而不是关于位置控制需要什么的规矩；有了参考，这条要求才回到
+                // 它本来的含义。`lost_count()` 同样拒绝：丢掉的计数不算计数，闭环在它上面会把轴开到一个差一整圈的位置。
+                const bool position_angle_available =
+                    has_sensor || (position_reference_.homed() && !position_reference_.lost_count());
+                if (!position_angle_available) {
                     return ErrorCode::NotImpl;
                 }
                 position_elapsed_s_ += dt_s;
@@ -667,7 +709,10 @@ auto Motor<Observer, Modulator, Controller, HalPolicy, RefGenerator, FeedForward
                     // 下一次记住任何东西。
                     const core::PositionInput request{position_ref_rad_, command_.max_velocity_rad_s,
                                                       command_.max_accel_rad_s2, command_.kp_scale};
-                    speed_ref_from_position_rad_s_ = policies_.position.step(request, angle_mech, position_elapsed_s_);
+                    const float position_angle_mech =
+                        has_sensor ? angle_mech : position_reference_.referenced_mech_rad();
+                    speed_ref_from_position_rad_s_ =
+                        policies_.position.step(request, position_angle_mech, position_elapsed_s_);
                     position_elapsed_s_ = 0.0F;
                     position_step_due_ = false;
                 }
@@ -828,6 +873,13 @@ auto Motor<Observer, Modulator, Controller, HalPolicy, RefGenerator, FeedForward
     return policies_.feed_forward;
 }
 
+
+template <typename Observer, typename Modulator, typename Controller, typename HalPolicy, typename RefGenerator,
+          typename FeedForward, typename PositionControl, typename Aligner>
+auto Motor<Observer, Modulator, Controller, HalPolicy, RefGenerator, FeedForward, PositionControl,
+           Aligner>::position_reference() const noexcept -> const core::PositionReference& {
+    return position_reference_;
+}
 
 template <typename Observer, typename Modulator, typename Controller, typename HalPolicy, typename RefGenerator,
           typename FeedForward, typename PositionControl, typename Aligner>

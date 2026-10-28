@@ -598,6 +598,39 @@ template <typename T> inline constexpr bool has_mech_offset_v = has_mech_offset<
 
 
 /**
+ * @brief [en] `T` (a position sensor) can report an index mark.
+ * @brief [zh] `T`（位置传感器）能报告索引标记。
+ * @note [en] Optional, and optional for a reason recorded in `hal/position.hpp`: a sensor without a mark is a perfectly
+ *            ordinary sensor, it simply cannot establish an absolute position, and a caller that needs one has to be
+ *            told rather than sold a number that means something else. Both members are required together, because a
+ *            mark that can be asked about but never pulses is not a mark.
+ * @note [zh] 可选，理由记在 `hal/position.hpp`：没有标记的传感器是完全正常的传感器，它只是无法建立绝对位置，而需要绝对
+ *            位置的调用方必须**被告知**这件事，而不是拿到一个含义不同的数字。两个成员必须成对存在——能问"有没有标记"却永
+ *            远不会给出脉冲的，不算标记。
+ * @since 0.1.6
+ * @exporter
+ */
+template <typename T, typename = void> struct has_index : std::false_type {};
+
+template <typename T>
+struct has_index<
+    T, std::void_t<decltype(std::declval<const T&>().has_index()), decltype(std::declval<T&>().index_pulse())>>
+    : std::bool_constant<std::is_same_v<decltype(std::declval<const T&>().has_index()), bool> &&
+                         noexcept(std::declval<const T&>().has_index()) &&
+                         std::is_same_v<decltype(std::declval<T&>().index_pulse()), bool> &&
+                         noexcept(std::declval<T&>().index_pulse())> {};
+
+
+/**
+ * @brief [en] Convenience variable template for the optional index hook.
+ * @brief [zh] 可选索引钩子的便捷变量模板。
+ * @since 0.1.6
+ * @exporter
+ */
+template <typename T> inline constexpr bool has_index_v = has_index<T>::value;
+
+
+/**
  * @brief [en] `T` (an aligner) reports the captured offset via `offset_mech_rad() noexcept -> float`.
  * @brief [zh] `T`（对齐器）通过 `offset_mech_rad() noexcept -> float` 报出捕获到的偏置。
  * @note [en] Separate from `is_aligner_v` because the offset is the aligner's *result*, not part of the contract the
