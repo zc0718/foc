@@ -40,6 +40,7 @@ from __future__ import annotations
 import argparse
 import re
 import sys
+from collections.abc import Iterable
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -86,6 +87,31 @@ def _columns(line: str) -> int:
 # Closing punctuation may not start a line: breaking there is the one Chinese line-break rule that
 # matters to a reader. 收尾标点不得出现在行首：那是中文断行里唯一真会影响阅读的规则。
 NO_LINE_START = "。，、；：！？）》」』】%"
+
+
+def _join_prose(parts: Iterable[str]) -> str:
+    """Join the lines of one paragraph without inserting a space inside Chinese.
+
+    A reflowed paragraph is stored as several lines. Joining them with a space is right between two
+    Latin words and wrong between two Chinese characters: the break was inside a word, and the space
+    then moves to a different place on the next pass, so the file never settles and the prose reads
+    `类 型`. The rule is therefore: a space only when the characters on either side are not both CJK.
+    一个被重排的段落存成多行。用空格连接，在两个拉丁词之间是对的，在两个汉字之间是错的：那个换行
+    本来就在词内，空格于是在下一遍跑到别处，文件永不收敛，而正文读起来像 `类 型`。所以规则是：
+    只有当两侧字符不都是中文时才加空格。
+    """
+    out = ""
+    for part in parts:
+        part = part.strip()
+        if not part:
+            continue
+        if not out:
+            out = part
+        elif ord(out[-1]) > 0x2E7F and ord(part[0]) > 0x2E7F:
+            out += part
+        else:
+            out += " " + part
+    return out
 
 
 def _units(text: str) -> list[tuple[str, bool]]:
@@ -229,7 +255,7 @@ def _fix_block(lines: list[str], start: int, end: int) -> list[str]:
             out.extend(_star_line(star_col, e[0], e[1]) for e in run)
         else:
             wrap_indent = run[0][0]
-            joined = " ".join(e[1].strip() for e in run)
+            joined = _join_prose(e[1] for e in run)
             for piece in _wrap(joined, wrap_indent):
                 out.append(_star_line(star_col, wrap_indent, piece))
         run = []
@@ -308,7 +334,7 @@ def _prose_drift(before: str, after: str) -> dict[str, int]:
 # bodies untagged.
 # ------------------------------------------------------------------------------------------------
 TAG = re.compile(r"^\[(?P<lang>en|zh)\]\s*(?P<rest>.*)$")
-FIELD = re.compile(r"^(?P<field>@\w+)(?:\s+(?P<args>[A-Za-z_]\w*))?(?P<tail>.*)$")
+FIELD = re.compile(r"^(?P<field>@\w+)(?P<rest>.*)$")
 # Only these fields own a name argument. Everything else (`@brief bench_entry.cpp`, `@par 修改日志:`)
 # keeps its whole tail as text, which is why the argument pattern cannot be applied to every field.
 # 只有这些字段带"名字"参数；其余字段（`@brief bench_entry.cpp`）整条尾巴都是文字。
@@ -329,7 +355,15 @@ RULE_LINE = re.compile(r"^[=\-_*~]{4,}$")
 # Markup the tool is allowed to add or remove: the language tags, the field names, and the inline
 # doc markers it may promote out of existence. Everything else is prose.
 # 工具允许增删的标记：语言标签、字段名、以及可能被提升掉的尾部注释标记。其余都是正文。
-FIELD_IN_PROSE = re.compile(r"///<|/\*\*<|\[(?:en|zh)\]|@\w+(?:\s+[A-Za-z_]\w*)?")
+# The tool rewrites comment *markers* as well as tags: `///` and `///<` become `/** ... */`.
+# Those characters are therefore not prose, or every promotion would look like a word loss.
+# 工具改写的还包括注释**标记**：`///`、`///<` 变成 `/** ... */`。这些字符因此不算正文，
+# 否则每一次提升都会看起来像丢了字。
+FIELD_IN_PROSE = re.compile(r"/\*+<?|\*+/|//+<|//+|\[(?:en|zh)\]|@\w+")
+# Only the field *name* is markup. Stripping the word after it -- as this pattern used to --
+# deletes exactly the word a bug would delete, so the guard could not see the loss it exists for.
+# 只有字段**名**算标记。把紧跟其后的词也剥掉，等于把 bug 会丢掉的那个词先替它删了，门禁就
+# 看不见它本该抓到的丢失。
 
 
 def _split_inline(body: str) -> list[tuple[str | None, str]]:
@@ -414,8 +448,14 @@ def _canonical_language(lines: list[str]) -> list[str]:
         field = FIELD.match(body)
         if field and field.group("field") not in {"@en", "@zh"}:
             name = field.group("field")
-            args = (field.group("args") or "") if name in FIELDS_WITH_ARGS else ""
-            tail = field.group("tail").strip()
+            # The argument is taken off the text here, not by the pattern: a pattern that captures
+            # an optional word captures it for *every* field, so `@brief Deliberately incomplete`
+            # lost its first word and read `@brief incomplete`.
+            # 参数在这里从文本上拿掉，而不是由正则捕获：一个"可选单词"的分组对**所有**字段都生效，
+            # 于是 `@brief Deliberately incomplete` 丢了首词，读成 `@brief incomplete`。
+            parts = field.group("rest").strip().split(None, 1)
+            args = parts[0] if (name in FIELDS_WITH_ARGS and parts) else ""
+            tail = (parts[1] if len(parts) > 1 else "") if args else field.group("rest").strip()
             pieces = _split_inline(tail)
             langs = [lang for lang, text in pieces if lang is not None and text]
             if not langs:
@@ -423,7 +463,7 @@ def _canonical_language(lines: list[str]) -> list[str]:
                 current = entry_for(name, args, None)
                 current.add(tail)
             else:
-                lead = " ".join(text for lang, text in pieces if lang is None).strip()
+                lead = _join_prose(text for lang, text in pieces if lang is None)
                 first = True
                 for lang, text in pieces:
                     if lang is None:
@@ -469,7 +509,7 @@ def _canonical_language(lines: list[str]) -> list[str]:
             # this script writing documentation on the author's behalf.
             # 没有字段引入的正文就还是正文。给它安一个字段名，等于这个脚本替作者写文档。
             current = entry_for("", "", None)
-        previous = " ".join(current.paragraphs[-1]) if current.paragraphs[-1] else ""
+        previous = _join_prose(current.paragraphs[-1])
         starts_item = bool(LIST_ITEM.match(body)) or (
             bool(BULLET_AFTER_COLON.match(body)) and previous.rstrip().endswith(":"))
         if (starts_item or RULE_LINE.match(body)) and current.paragraphs[-1]:
@@ -485,7 +525,7 @@ def _canonical_language(lines: list[str]) -> list[str]:
     for key in order:
         entry = entries[key]
         paragraphs = [p for p in entry.paragraphs if p]
-        joined = [(" ".join(p)).strip() for p in paragraphs]
+        joined = [_join_prose(p) for p in paragraphs]
         if entry.lang is None:
             # An untagged entry: `@since 0.1.0`, `@exporter`, or plain body text with no field.
             # Every paragraph is emitted -- emitting only the first one is how a whole block of
@@ -603,10 +643,10 @@ def _promote_inline_docs(lines: list[str]) -> list[str]:
 
 def _wrap_inline_text(pieces: list[str]) -> list[str]:
     """Rebuild the doc text as `<star> @brief [en] ...` style lines for the canonicaliser."""
-    joined = " ".join(piece.strip() for piece in pieces if piece.strip())
+    joined = _join_prose(pieces)
     segments = _split_inline(joined)
     tagged = [(lang, text) for lang, text in segments if lang is not None and text]
-    lead = " ".join(text for lang, text in segments if lang is None and text).strip()
+    lead = _join_prose(text for lang, text in segments if lang is None and text)
     lines: list[str] = []
     if lead and not tagged:
         lines.append(f" * @brief {lead}")
@@ -623,11 +663,51 @@ def _block_from_text(indent: str, body: list[str]) -> list[str]:
     return out
 
 
+# ------------------------------------------------------------------------------------------------
+# `///` doc comments.
+#
+# Same treatment as `///<`: a run of `///` lines is a doc block written one line at a time, so it
+# becomes a real block and is then shaped by the same code. Written in two forms, the language rules
+# have to be stated twice and drift; written in one, a tag means one thing in one place.
+# 与 `///<` 同样处理：一串 `///` 就是逐行写成的文档块，于是它变成真正的块，交给同一段代码整形。
+# 两种写法并存，语言规则就得说两遍并必然发散；只有一种写法，标签才只在一个地方、只有一个含义。
+# ------------------------------------------------------------------------------------------------
+TRIPLE_DOC = re.compile(r"^(?P<indent>\s*)///(?P<body>.*)$")
+
+
+def _promote_triple_docs(lines: list[str]) -> list[str]:
+    """Rewrite every run of `///` lines as a `/** ... */` block. `//!` is left alone: it marks
+    file-level blocks here, not member docs."""
+    out: list[str] = []
+    index = 0
+    while index < len(lines):
+        match = TRIPLE_DOC.match(lines[index])
+        if match is None or "///<" in lines[index]:
+            out.append(lines[index])
+            index += 1
+            continue
+        indent = match.group("indent")
+        bodies: list[str] = []
+        while index < len(lines):
+            following = TRIPLE_DOC.match(lines[index])
+            if following is None or "///<" in lines[index] or following.group("indent") != indent:
+                break
+            bodies.append(following.group("body"))
+            index += 1
+        # Emit the same shape as every other block: one `@brief` per language group. A bare `[en]`
+        # line is not a tag line to the docs pipeline, so it would neither be filtered by language
+        # nor grouped -- it would simply appear in both versions.
+        # 与其它块同样形状：每个语言组一个 `@brief`。裸 `[en]` 行在文档流水线眼里不是标签行，
+        # 于是既不会被语言过滤、也不会被分组——它只会两个版本都出现。
+        out.extend(_block_from_text(indent, _wrap_inline_text(bodies)))
+    return out
+
+
 def normalise(text: str) -> str:
-    # Promotions come first: a multi-line `///<` becomes a block, and then it is just another block
-    # for the loop below to align and wrap.
-    # 先做提升：多行 `///<` 变成块，于是它只是下面那个循环里的又一个块。
-    lines = _promote_inline_docs(text.split("\n"))
+    # Promotions come first: `///<` and `///` both become blocks, and then they are just blocks for
+    # the loop below to align, wrap and group by language.
+    # 先做提升：`///<` 与 `///` 都变成块，于是它们只是下面那个循环里要对其、折行、按语言分组的块。
+    lines = _promote_triple_docs(_promote_inline_docs(text.split("\n")))
     out: list[str] = []
     index = 0
     while index < len(lines):

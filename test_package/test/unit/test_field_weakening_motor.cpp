@@ -26,12 +26,16 @@ namespace {
 namespace core = foc::core;
 namespace sil = foc::sil;
 
-/// [en] `v_max/v_bus` for SVPWM's linear range. [zh] SVPWM 线性区的
-/// `v_max/v_bus`。
+/**
+ * @brief [en] `v_max/v_bus` for SVPWM's linear range.
+ * @brief [zh] SVPWM 线性区的 `v_max/v_bus`。
+ */
 constexpr float kOneOverSqrt3 = 0.5773502691896257F;
 
-/// [en] The target: 10 % past the 2910 rad/s base speed at a 24 V bus. [zh]
-/// 目标：24 V 母线、2910 rad/s 基速之外 10 %。
+/**
+ * @brief [en] The target: 10 % past the 2910 rad/s base speed at a 24 V bus.
+ * @brief [zh] 目标：24 V 母线、2910 rad/s 基速之外 10 %。
+ */
 constexpr float kTargetRad = 3200.0F;
 constexpr float kNormalisedTargetRad = 0.055F;
 constexpr float kAngleCeilingRad = 0.15F;
@@ -62,8 +66,10 @@ auto psi_f_of(const sil::MachineSpec &s) -> float {
   return s.kt / (1.5F * static_cast<float>(s.pole_pairs));
 }
 
-/// [en] The analytical base speed at 24 V: `omega*psi_f = v_max`. [zh]
-/// 24 V 下解析基速：`ω·ψf = v_max`。
+/**
+ * @brief [en] The analytical base speed at 24 V: `omega*psi_f = v_max`.
+ * @brief [zh] 24 V 下解析基速：`ω·ψf = v_max`。
+ */
 auto base_speed_rad(const sil::MachineSpec &s) -> float {
   return (kOneOverSqrt3 * 24.0F) / psi_f_of(s);
 }
@@ -99,8 +105,10 @@ public:
   FwRig(FwRig &&) = delete;
   FwRig &operator=(FwRig &&) = delete;
 
-  /// [en] The rotor is pinned: this is a speed test, not a mechanics test.
-  /// [zh] 转子被钉住：这是转速测试，不是力学测试。
+  /**
+   * @brief [en] The rotor is pinned: this is a speed test, not a mechanics test.
+   * @brief [zh] 转子被钉住：这是转速测试，不是力学测试。
+   */
   [[nodiscard]] static auto params() noexcept -> sil::PlantParams {
     sil::PlantParams p = sil::nominal_plant_params();
     p.j = 1.0e6F;
@@ -149,11 +157,11 @@ auto wrap_pi(float angle) noexcept -> float {
   return angle;
 }
 
-/// [en] Mean |angle error| for the observer at one correction gain. A
-/// non-finite answer is returned as-is, because "the estimate blew up" is a
-/// result and not something to be scrubbed out of the table. [zh]
-/// 一个修正增益下观测器的角误差绝对均值。非有限值原样返回，因为"估计炸了"是一个结果，
-/// 不该被从表里抹掉。
+/**
+ * @brief [en] Mean |angle error| for the observer at one correction gain. A non-finite answer is returned as-is,
+ *             because "the estimate blew up" is a result and not something to be scrubbed out of the table.
+ * @brief [zh] 一个修正增益下观测器的角误差绝对均值。非有限值原样返回，因为"估计炸了"是一个结果，不该被从表里抹掉。
+ */
 auto fw_angle_error(core::Dq<float> current, float gain_ratio) -> float {
   const sil::MachineSpec s = sil::nominal_spec();
   core::NonlinearFluxObserver observer(core::NonlinearFluxObserver::Config{

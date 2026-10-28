@@ -61,18 +61,25 @@ public:
 
     explicit AbcPlant(const Params& params) noexcept : params_(params) {}
 
-    /// [en] Set the frozen electrical speed and the rotor angle. [zh]
-    /// 设定冻结的电角速度与转子角。
+    /**
+     * @brief [en] Set the frozen electrical speed and the rotor angle.
+     * @brief [zh] 设定冻结的电角速度与转子角。
+     */
     void set_state(float theta_e_rad, float omega_e_rad_s) noexcept {
         theta_e_ = theta_e_rad;
         omega_e_ = omega_e_rad_s;
     }
 
-    /// [en] Line-to-neutral voltages, V. [zh] 相对中点电压，V。
+    /**
+     * @brief [en] Line-to-neutral voltages, V.
+     * @brief [zh] 相对中点电压，V。
+     */
     void set_voltage(const core::Uvw<float>& v) noexcept { v_ = v; }
 
-    /// [en] Advance with RK4 on the two independent phase currents. [zh]
-    /// 对两个独立相电流做 RK4 推进。
+    /**
+     * @brief [en] Advance with RK4 on the two independent phase currents.
+     * @brief [zh] 对两个独立相电流做 RK4 推进。
+     */
     void advance(float dt_s) noexcept {
         // `i_w = -i_u - i_v` from Kirchhoff, so two states are enough and the
         // constraint is satisfied by construction rather than by correction.
@@ -106,13 +113,18 @@ public:
         i_v_ = iv;
     }
 
-    /// [en] The three phase currents, A. [zh] 三相电流，A。
+    /**
+     * @brief [en] The three phase currents, A.
+     * @brief [zh] 三相电流，A。
+     */
     [[nodiscard]] auto current() const noexcept -> core::Uvw<float> {
         return core::Uvw<float>{i_u_, i_v_, static_cast<float>(-i_u_ - i_v_)};
     }
 
-    /// [en] Electromagnetic torque from magnetic co-energy, **without Park**: N*m.
-    /// [zh] 由磁共能给出的电磁转矩，**不经 Park**：N·m。
+    /**
+     * @brief [en] Electromagnetic torque from magnetic co-energy, **without Park**: N*m.
+     * @brief [zh] 由磁共能给出的电磁转矩，**不经 Park**：N·m。
+     */
     [[nodiscard]] auto torque() const noexcept -> float {
         const core::Uvw<float> i = current();
         float sum = 0.0F;
@@ -124,16 +136,20 @@ public:
         return -static_cast<float>(params_.pole_pairs) * params_.lambda_m * sum;
     }
 
-    /// [en] Mechanical power balance: `Te*omega_m = v.i - Rs*|i|^2` at steady
-    /// state. Reported so the test can check the lossless case too. [zh]
-    /// 机械功率平衡：稳态下 `Te·ω_m = v·i − Rs·|i|²`。一并给出，好让测试也能检查无损耗情形。
+    /**
+     * @brief [en] Mechanical power balance: `Te*omega_m = v.i - Rs*|i|^2` at steady state. Reported so the test can
+     *             check the lossless case too.
+     * @brief [zh] 机械功率平衡：稳态下 `Te·ω_m = v·i − Rs·|i|²`。一并给出，好让测试也能检查无损耗情形。
+     */
     [[nodiscard]] auto electrical_power() const noexcept -> float {
         const core::Uvw<float> i = current();
         return static_cast<float>((v_.u * i.u) + (v_.v * i.v) + (v_.w * i.w));
     }
 
-    /// [en] The electrical speed the model is frozen at, rad/s. [zh]
-    /// 模型冻结的电角速度，rad/s。
+    /**
+     * @brief [en] The electrical speed the model is frozen at, rad/s.
+     * @brief [zh] 模型冻结的电角速度，rad/s。
+     */
     [[nodiscard]] auto omega_e() const noexcept -> float { return omega_e_; }
 
 private:
@@ -156,10 +172,11 @@ private:
         }
     }
 
-    /// [en] `di/dt` per phase from `v = Rs*i + (Ls-M)*di/dt + d(lambda_m)/dt`,
-    /// with the magnet term differentiated by hand: `d/dt cos(theta) = -omega*sin(theta)`.
-    /// [zh] 每相的 `di/dt`，来自 `v = Rs·i + (Ls−M)·di/dt + dλm/dt`，磁钢项手写求导：
-    /// `d/dt cos θ = −ω·sin θ`。
+    /**
+     * @brief [en] `di/dt` per phase from `v = Rs*i + (Ls-M)*di/dt + d(lambda_m)/dt`, with the magnet term
+     *             differentiated by hand: `d/dt cos(theta) = -omega*sin(theta)`.
+     * @brief [zh] 每相的 `di/dt`，来自 `v = Rs·i + (Ls−M)·di/dt + dλm/dt`，磁钢项手写求导： `d/dt cos θ = −ω·sin θ`。
+     */
     [[nodiscard]] auto derivative(float iu, float iv, float theta) const noexcept
         -> Derivatives {
         const float back_u = params_.lambda_m * std::sin(theta);

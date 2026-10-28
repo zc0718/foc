@@ -46,9 +46,13 @@
 
 constexpr const char *MODULE_NAME = "foc-hot-paths";
 
-/// Control period used by the tick() case; the same 100 µs the SIL bench uses.
+/**
+ * @brief Control period used by the tick() case; the same 100 µs the SIL bench uses.
+ */
 constexpr float kDt = 1e-4F;
-/// DC link voltage for the SVPWM case.
+/**
+ * @brief DC link voltage for the SVPWM case.
+ */
 constexpr float kVBus = 24.0F;
 
 namespace {
@@ -61,7 +65,9 @@ auto make_config() -> foc::motor::MotorConfig {
     return foc::motor::MotorConfig{0.5F, 4e-4F, 4e-4F, 0.05F, 1e-5F, 1e-6F, 7U, 5.0F, 20000.0F, 500.0F};
 }
 
-/// Everything the cases share, plus the fixed inputs they chew on.
+/**
+ * @brief Everything the cases share, plus the fixed inputs they chew on.
+ */
 struct Bench final {
     Bench()
         : hal(),
@@ -85,11 +91,15 @@ struct Bench final {
     foc::core::Dq<float> dq{0.4F, 0.7F};
     float theta_rad = 0.7F;
 
-    /// Keeps the optimizer from deleting the work, and carries PI feedback between calls.
+    /**
+     * @brief Keeps the optimizer from deleting the work, and carries PI feedback between calls.
+     */
     volatile float sink = 0.0F;
 };
 
-/// Function-local static: no cross-translation-unit state pollution.
+/**
+ * @brief Function-local static: no cross-translation-unit state pollution.
+ */
 auto bench_state() -> Bench & {
     static Bench instance;
     return instance;
@@ -115,7 +125,9 @@ static void bench_prepare_input(void) {
 
 /* ---- cases: one unit of work each --------------------------------------------------------- */
 
-/// The ISR path: observer + both current PIs + SVPWM, exactly what runs per PWM period.
+/**
+ * @brief The ISR path: observer + both current PIs + SVPWM, exactly what runs per PWM period.
+ */
 static int bench_tick_case(const void * const ctx) // NOSONAR: opaque ctx required by the pFunCase C ABI.
 {
     (void)ctx;
@@ -123,7 +135,9 @@ static int bench_tick_case(const void * const ctx) // NOSONAR: opaque ctx requir
     return rc == foc::ErrorCode::Ok;
 }
 
-/// Forward transforms: Clarke then Park.
+/**
+ * @brief Forward transforms: Clarke then Park.
+ */
 static int bench_clarke_park_case(const void * const ctx) // NOSONAR: opaque ctx required by the C ABI.
 {
     (void)ctx;
@@ -134,7 +148,9 @@ static int bench_clarke_park_case(const void * const ctx) // NOSONAR: opaque ctx
     return std::isfinite(b.sink);
 }
 
-/// Inverse transforms: inverse Park then inverse Clarke.
+/**
+ * @brief Inverse transforms: inverse Park then inverse Clarke.
+ */
 static int bench_inv_park_clarke_case(const void * const ctx) // NOSONAR: opaque ctx required by the C ABI.
 {
     (void)ctx;
@@ -145,7 +161,9 @@ static int bench_inv_park_clarke_case(const void * const ctx) // NOSONAR: opaque
     return std::isfinite(b.sink);
 }
 
-/// Space-vector modulation including the mid-point (min-max) injection.
+/**
+ * @brief Space-vector modulation including the mid-point (min-max) injection.
+ */
 static int bench_svpwm_case(const void * const ctx) // NOSONAR: opaque ctx required by the C ABI.
 {
     (void)ctx;
@@ -155,8 +173,9 @@ static int bench_svpwm_case(const void * const ctx) // NOSONAR: opaque ctx requi
     return (result.status == foc::ErrorCode::Ok) && std::isfinite(b.sink);
 }
 
-/// One PI step in closed loop (the output feeds the next iteration's feedback), so the case
-/// exercises the normal path instead of sitting on a clamp.
+/**
+ * @brief One PI step in closed loop (the output feeds the next iteration's feedback), so the case exercises the normal path instead of sitting on a clamp.
+ */
 static int bench_pi_case(const void * const ctx) // NOSONAR: opaque ctx required by the C ABI.
 {
     (void)ctx;
@@ -165,7 +184,9 @@ static int bench_pi_case(const void * const ctx) // NOSONAR: opaque ctx required
     return std::isfinite(b.sink);
 }
 
-/// Back-EMF observer update (the slowest block of the ISR path, per the tick() case).
+/**
+ * @brief Back-EMF observer update (the slowest block of the ISR path, per the tick() case).
+ */
 static int bench_observer_case(const void * const ctx) // NOSONAR: opaque ctx required by the C ABI.
 {
     (void)ctx;

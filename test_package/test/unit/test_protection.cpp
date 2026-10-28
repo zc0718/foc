@@ -26,9 +26,10 @@ namespace core = foc::core;
 
 constexpr float kDt = 5.0e-5F; // 20 kHz
 
-/// [en] A machine that is healthy in every respect, so each test can move
-/// exactly one thing.
-///      [zh] 各方面都健康的机器，于是每个测试只动一样东西。
+/**
+ * @brief [en] A machine that is healthy in every respect, so each test can move exactly one thing.
+ * @brief [zh] 各方面都健康的机器，于是每个测试只动一样东西。
+ */
 auto healthy() -> core::ProtectionInput {
   return core::ProtectionInput{1.5F, 24.0F, 45.0F, 200.0F, 0.02F, true};
 }
@@ -62,8 +63,10 @@ auto config() -> core::ProtectionConfig {
   return config;
 }
 
-/// [en] How far the *input* has to move for a fault of this class to appear.
-///      [zh] 让某类故障出现，**输入**需要偏到哪里。
+/**
+ * @brief [en] How far the *input* has to move for a fault of this class to appear.
+ * @brief [zh] 让某类故障出现，**输入**需要偏到哪里。
+ */
 auto perturbed(core::FaultCode code) -> core::ProtectionInput {
   core::ProtectionInput input = healthy();
   switch (code) {
@@ -98,12 +101,11 @@ auto perturbed(core::FaultCode code) -> core::ProtectionInput {
   return input;
 }
 
-/// [en] Run one perturbation to steady state and report what the protector
-/// said. The thermal budget and the stall timer are durations, so "steady
-/// state" is `steps` steps of holding the input.
-///      [zh]
-///      把一次扰动跑到稳态，报告保护器说了什么。热预算与堵转计时是**时长**，所以"稳态"是
-///      保持该输入 `steps` 步。
+/**
+ * @brief [en] Run one perturbation to steady state and report what the protector said. The thermal budget and the stall
+ *             timer are durations, so "steady state" is `steps` steps of holding the input.
+ * @brief [zh] 把一次扰动跑到稳态，报告保护器说了什么。热预算与堵转计时是**时长**，所以"稳态"是保持该输入 `steps` 步。
+ */
 auto classify(core::FaultCode target, int steps = 1) -> core::FaultCode {
   core::Protector protector(config());
   const core::ProtectionInput input = perturbed(target);
@@ -114,8 +116,10 @@ auto classify(core::FaultCode target, int steps = 1) -> core::FaultCode {
   return out.fault;
 }
 
-/// [en] The code as text, so the printed matrix is readable. [zh]
-/// 码的文本形式，让打印出来的矩阵可读。
+/**
+ * @brief [en] The code as text, so the printed matrix is readable.
+ * @brief [zh] 码的文本形式，让打印出来的矩阵可读。
+ */
 auto fault_name(core::FaultCode code) -> const char * {
   switch (code) {
   case core::FaultCode::None:
@@ -140,18 +144,16 @@ auto fault_name(core::FaultCode code) -> const char * {
 
 constexpr float kStallSteps = 0.5F / kDt; // stall_time_s
 
-/// [en] How long `I2t` actually takes to trip at a steady current, with
-/// cooling. The naive answer `budget/i^2` is **too short**: the budget leaks
-/// while it fills, so the trip arrives later by
-/// `tau*ln(1/(1-limit/(i^2*tau)))`. At 3.5 A against a 4.5 A^2*s budget and a
-/// 0.5 s constant that is 0.663 s against the naive 0.367 s -- nearly twice --
-/// and a test written with the naive number would conclude the protection was
-/// broken.
-///      [zh] `I2t` 在恒定电流下实际要多久才跳，含冷却。朴素答案 `预算/i²`
-///      **偏短**：预算一边充 一边漏，所以跳闸来得更晚，晚
-///      `τ·ln(1/(1−limit/(i²τ)))`。3.5 A、4.5 A²·s 预算、0.5 s 时间常数下是
-///      0.663 s 对朴素的 0.367
-///      s——差了近一倍——用朴素数写的测试会得出"保护坏了"。
+/**
+ * @brief [en] How long `I2t` actually takes to trip at a steady current, with cooling. The naive answer `budget/i^2` is
+ *             **too short**: the budget leaks while it fills, so the trip arrives later by
+ *             `tau*ln(1/(1-limit/(i^2*tau)))`. At 3.5 A against a 4.5 A^2*s budget and a 0.5 s constant that is 0.663 s
+ *             against the naive 0.367 s -- nearly twice -- and a test written with the naive number would conclude the
+ *             protection was broken.
+ * @brief [zh] `I2t` 在恒定电流下实际要多久才跳，含冷却。朴素答案 `预算/i²` **偏短**：预算一边充 一边漏，所以跳闸来得更
+ *             晚，晚 `τ·ln(1/(1−limit/(i²τ)))`。3.5 A、4.5 A²·s 预算、0.5 s 时间常数下是 0.663 s 对朴素的 0.367 s——差了
+ *             近一倍——用朴素数写的测试会得出"保护坏了"。
+ */
 auto i2t_trip_seconds(float current_a) -> float {
   const float equilibrium = current_a * current_a * 0.5F;
   return 0.5F * std::log(1.0F / (1.0F - (4.5F / equilibrium)));
@@ -406,16 +408,14 @@ using TripMotor =
                       core::NullFeedforward, core::PositionP,
                       core::NullAlignment>;
 
-/// [en] A bench that can be tripped: the whole motor, a plant, and a handle on
-/// the PWM enable.
-///      [zh] 可以被跳闸的台架：完整电机、plant，以及一个 PWM 使能的把手。
-/// [en] The nominal machine with its shaft held, so a current decay can be
-/// attributed to `L/R` alone. Letting it spin adds the back-EMF to the braking
-/// and makes the decay faster than `L/R` -- which is true, and is the second
-/// half of what this test is about.
-///      [zh] 标称机 + 锁住的轴，于是电流衰减可以只归因于
-///      `L/R`。让它转起来会把反电动势加进制动， 衰减就比 `L/R`
-///      快——那是真的，也正是本测试后半段要说的事。
+/**
+ * @brief [en] A bench that can be tripped: the whole motor, a plant, and a handle on the PWM enable. The nominal
+ *             machine with its shaft held, so a current decay can be attributed to `L/R` alone. Letting it spin adds
+ *             the back-EMF to the braking and makes the decay faster than `L/R` -- which is true, and is the second
+ *             half of what this test is about.
+ * @brief [zh] 可以被跳闸的台架：完整电机、plant，以及一个 PWM 使能的把手。标称机 + 锁住的轴，于是电流衰减可以只归因于
+ *             `L/R`。让它转起来会把反电动势加进制动， 衰减就比 `L/R` 快——那是真的，也正是本测试后半段要说的事。
+ */
 auto held_spec() -> foc::sil::MachineSpec {
   foc::sil::MachineSpec spec = foc::sil::nominal_spec();
   spec.j = 1.0e6F;

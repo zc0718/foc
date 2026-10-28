@@ -34,8 +34,10 @@ constexpr float kTargetSpeed = 100.0F;
 constexpr float kRunSeconds = 0.30F;
 constexpr float kSettleSeconds = 5e-3F;
 
-/// [en] An interior-PM machine: Ld != Lq, so the cross-coupling terms are non-trivial.
-/// [zh] 内嵌式电机：Ld != Lq，于是交叉耦合项非平凡。
+/**
+ * @brief [en] An interior-PM machine: Ld != Lq, so the cross-coupling terms are non-trivial.
+ * @brief [zh] 内嵌式电机：Ld != Lq，于是交叉耦合项非平凡。
+ */
 auto machine() -> foc::motor::MotorConfig {
     return foc::motor::MotorConfig{0.5F, 2.0e-4F, 6.0e-4F, 0.05F, 1.0e-4F, 1.0e-4F, kPolePairs, 3.0F, 20000.0F, 0.0F};
 }
@@ -46,8 +48,10 @@ struct Outcome final {
     foc::ErrorCode status; ///< [en] sticky status of the last tick. [zh] 最后一次 tick 的粘滞状态。
 };
 
-/// [en] Run one fixed scenario with the given feedforward policy.
-/// [zh] 用给定前馈策略跑一次固定场景。
+/**
+ * @brief [en] Run one fixed scenario with the given feedforward policy.
+ * @brief [zh] 用给定前馈策略跑一次固定场景。
+ */
 template <typename FeedForward> auto run_with(FeedForward ff) -> Outcome {
     using MotorT = foc::motor::Motor<foc::core::BackEmfObserver, foc::core::Svpwm, foc::core::Pi, foc::sil::PlantHal,
                                      foc::core::NullReferenceGenerator, FeedForward>;

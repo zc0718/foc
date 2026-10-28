@@ -43,18 +43,20 @@ constexpr int kSubsteps = 8;
 
 auto plant_params() -> sil::PlantParams { return sil::PlantParams{kRs, kLd, kLq, kKt, kJ, kB, kPoles}; }
 
-/// [en] The same machine with the rotor held still. A standstill measurement has to keep the angle
-///      it measures fixed: the injected current carries a reluctance-torque ripple with a DC
-///      component, so on a free rotor the quantity under test moves while it is being measured --
-///      which is exactly the mistake that made an earlier ad-hoc probe of this feature look like a
-///      frequency limit that does not exist.
-///      [zh] 同一台电机，但转子固定。静止测量必须让被测角度真的不动：注入电流的磁阻转矩纹波含直流
-///      分量，自由转子会在测量过程中把被测的量本身改掉——这正是此前一次临时探测把“公式误差”误读成
-///      “频率限制”的原因。
+/**
+ * @brief [en] The same machine with the rotor held still. A standstill measurement has to keep the angle it measures
+ *             fixed: the injected current carries a reluctance-torque ripple with a DC component, so on a free rotor
+ *             the quantity under test moves while it is being measured -- which is exactly the mistake that made an
+ *             earlier ad-hoc probe of this feature look like a frequency limit that does not exist.
+ * @brief [zh] 同一台电机，但转子固定。静止测量必须让被测角度真的不动：注入电流的磁阻转矩纹波含直流分量，自由转子会在测
+ *             量过程中把被测的量本身改掉——这正是此前一次临时探测把“公式误差”误读成 “频率限制”的原因。
+ */
 auto frozen_plant_params() -> sil::PlantParams { return sil::PlantParams{kRs, kLd, kLq, kKt, 1.0e6F, 0.0F, kPoles}; }
 
-/// [en] Wraps to (-pi, pi], the interval an angle error lives in.
-/// [zh] 归一化到 (-π, π]，即角度误差所在的区间。
+/**
+ * @brief [en] Wraps to (-pi, pi], the interval an angle error lives in.
+ * @brief [zh] 归一化到 (-π, π]，即角度误差所在的区间。
+ */
 auto wrap_pi_local(float angle) noexcept -> float {
     while (angle <= -kPiFloat) {
         angle += kTwoPiFloat;
@@ -146,10 +148,12 @@ class StandstillRig final {
 
 } // namespace
 
-/// [en] Open-loop error signal at a given angle error: rotor held still and the loop pinned by a
-///      0.05 Hz bandwidth, so what is read is the signal and not the loop's response to itself.
-///      [zh] 给定角度误差下的开环误差信号：转子固定，环路被 0.05 Hz 带宽钉住，于是读到的是信号本身
-///      而不是环路对自身的响应。
+/**
+ * @brief [en] Open-loop error signal at a given angle error: rotor held still and the loop pinned by a 0.05 Hz
+ *             bandwidth, so what is read is the signal and not the loop's response to itself.
+ * @brief [zh] 给定角度误差下的开环误差信号：转子固定，环路被 0.05 Hz 带宽钉住，于是读到的是信号本身而不是环路对自身的响
+ *             应。
+ */
 auto open_loop_error(float hz, float dtheta) -> float {
     StandstillRig rig(-dtheta, make_config(hz, 12.0F, 0.05F, 1.0F), true);
     rig.run_for(0.10F);
@@ -250,9 +254,11 @@ TEST(SilHfi, WithoutHfCurrentItHoldsTheAngleInsteadOfGuessing) {
 
 namespace {
 
-/// [en] Sensorless standstill chain: the shipped `Motor`, the SIL plant pretending there is no
-///      encoder, and HFI as the only source of angle.
-///      [zh] 无感静止链路：出厂 `Motor` + 假装没有编码器的 SIL plant + 唯一角度来源 HFI。
+/**
+ * @brief [en] Sensorless standstill chain: the shipped `Motor`, the SIL plant pretending there is no encoder, and HFI
+ *             as the only source of angle.
+ * @brief [zh] 无感静止链路：出厂 `Motor` + 假装没有编码器的 SIL plant + 唯一角度来源 HFI。
+ */
 using HfiMotor = foc::motor::Motor<core::HfiObserver, core::Svpwm, core::Pi, sil::PlantHal>;
 
 auto hfi_motor_config() -> foc::motor::MotorConfig {

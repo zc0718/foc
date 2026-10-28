@@ -45,8 +45,9 @@ auto make_policies() -> Motor::Policies {
                            foc::core::Pi{current}, foc::core::Pi{speed}};
 }
 
-/// Sensored standstill rig: the sensor is the only angle source, so nothing depends on the observer
-/// converging before the loop can be exercised.
+/**
+ * @brief Sensored standstill rig: the sensor is the only angle source, so nothing depends on the observer converging before the loop can be exercised.
+ */
 auto make_hal(foc::driver::StubHal& hal) -> void {
     hal.dc_link.set_voltage_v(kVBus);
     hal.position.set_sensor_present(true);

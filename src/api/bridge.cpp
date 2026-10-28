@@ -36,8 +36,10 @@ namespace {
 using MotorT = motor::Motor<core::BackEmfObserver, core::Svpwm, core::Pi, driver::StubHal, core::NullReferenceGenerator,
                             core::NullFeedforward, core::PositionP, core::AlignRoutine>;
 
-/// [en] Object pool capacity: static storage, no heap, no fragmentation.
-/// [zh] 对象池容量：静态存储、无堆、无碎片。
+/**
+ * @brief [en] Object pool capacity: static storage, no heap, no fragmentation.
+ * @brief [zh] 对象池容量：静态存储、无堆、无碎片。
+ */
 constexpr std::size_t kMaxMotors = 4U;
 
 /**
@@ -74,7 +76,10 @@ struct Setup final {
 };
 
 
-/// [en] What `foc_motor_create()` has always used. [zh] `foc_motor_create()` 一直使用的取值。
+/**
+ * @brief [en] What `foc_motor_create()` has always used.
+ * @brief [zh] `foc_motor_create()` 一直使用的取值。
+ */
 constexpr Setup kDefaultSetup{5.0F, 20000.0F, 500.0F, 24.0F, 2000.0F, 200.0F, 0.0F, 20.0F, 50.0F,
                               0.0F, 0.0F,     0.0F,   0.0F,  0.0F,    0.0F,   0.0F, 0.0F};
 
@@ -236,11 +241,16 @@ struct Slot final {
     bool alive{false};
 };
 
-/// [en] High word of every handle token: "FOC\0". Anything else is not ours.
-/// [zh] 每个句柄令牌的高位字："FOC\0"。别的值都不是本池签发的。
+/**
+ * @brief [en] High word of every handle token: "FOC\0". Anything else is not ours.
+ * @brief [zh] 每个句柄令牌的高位字："FOC\0"。别的值都不是本池签发的。
+ */
 constexpr std::uintptr_t kHandleMagic = 0x464F4300U;
 
-/// [en] Bits reserved for the slot index in a handle token. [zh] 句柄令牌中槽位索引占用的位。
+/**
+ * @brief [en] Bits reserved for the slot index in a handle token.
+ * @brief [zh] 句柄令牌中槽位索引占用的位。
+ */
 constexpr std::uint32_t kSlotBits = 8U;
 
 
@@ -262,13 +272,17 @@ auto mint_handle(std::uint32_t slot, std::uint32_t generation) noexcept -> foc_m
                                          static_cast<std::uintptr_t>(slot));
 }
 
-/// [en] Static pool: constant-initialised, so there is no dynamic initialisation on start-up.
-/// [zh] 静态池：常量初始化，启动期没有动态初始化。
+/**
+ * @brief [en] Static pool: constant-initialised, so there is no dynamic initialisation on start-up.
+ * @brief [zh] 静态池：常量初始化，启动期没有动态初始化。
+ */
 Slot g_pool[kMaxMotors];
 
 
-/// [en] Map a core error code onto the frozen C enum (the values are identical, by contract).
-/// [zh] 把核心错误码映射为冻结的 C 枚举（按契约两者数值相同）。
+/**
+ * @brief [en] Map a core error code onto the frozen C enum (the values are identical, by contract).
+ * @brief [zh] 把核心错误码映射为冻结的 C 枚举（按契约两者数值相同）。
+ */
 auto to_c(foc::ErrorCode code) noexcept -> foc_err_t {
     static_assert(static_cast<std::int32_t>(foc::ErrorCode::Ok) == static_cast<std::int32_t>(FOC_OK),
                   "foc::ErrorCode must mirror foc_err_t");
@@ -276,8 +290,10 @@ auto to_c(foc::ErrorCode code) noexcept -> foc_err_t {
 }
 
 
-/// [en] Whether the parameters describe a machine the core would accept.
-/// [zh] 这些参数是否描述的是一台核心能接受的电机。
+/**
+ * @brief [en] Whether the parameters describe a machine the core would accept.
+ * @brief [zh] 这些参数是否描述的是一台核心能接受的电机。
+ */
 auto params_ok(const foc_motor_params_t& p) noexcept -> bool {
     if (!std::isfinite(p.rs) || !std::isfinite(p.ld) || !std::isfinite(p.lq) || !std::isfinite(p.kt) ||
         !std::isfinite(p.j) || !std::isfinite(p.b)) {
@@ -320,7 +336,10 @@ auto resolve(foc_motor_t handle) noexcept -> Slot* {
 }
 
 
-/// [en] The motor living in a slot. [zh] 槽位中存放的电机。
+/**
+ * @brief [en] The motor living in a slot.
+ * @brief [zh] 槽位中存放的电机。
+ */
 auto motor_of(Slot& slot) noexcept -> MotorT& { return *slot.instance; }
 
 
@@ -369,11 +388,16 @@ namespace api {
 // 两个 magic 把这件事变成一个干净的 `FOC_ERR_STATE`——这正是句柄携带"种类"的全部理由。
 // ---------------------------------------------------------------------------------------------
 
-/// [en] High word of every protector handle: "FOCP". [zh] 每个保护器句柄的高位字："FOCP"。
+/**
+ * @brief [en] High word of every protector handle: "FOCP".
+ * @brief [zh] 每个保护器句柄的高位字："FOCP"。
+ */
 constexpr std::uintptr_t kProtectorMagic = 0x464F4350U;
 
-/// [en] A protector pool smaller than the motor pool: a board has one, maybe two.
-/// [zh] 保护器池比电机池小：一块板子有一个，最多两个。
+/**
+ * @brief [en] A protector pool smaller than the motor pool: a board has one, maybe two.
+ * @brief [zh] 保护器池比电机池小：一块板子有一个，最多两个。
+ */
 constexpr std::size_t kMaxProtectors = 4U;
 
 /**
@@ -396,8 +420,10 @@ struct ProtectorSlot final {
 
 ProtectorSlot g_protectors[kMaxProtectors];
 
-/// [en] Mint a protector token; same encoding as the motor, different magic. [zh]
-/// 签发保护器令牌；编码与电机相同，magic 不同。
+/**
+ * @brief [en] Mint a protector token; same encoding as the motor, different magic.
+ * @brief [zh] 签发保护器令牌；编码与电机相同，magic 不同。
+ */
 auto mint_protector(std::uint32_t slot, std::uint32_t generation) noexcept -> foc_protector_t {
     // The token is never dereferenced: it is a handle value, not an address.
     // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast, performance-no-int-to-ptr)
@@ -406,8 +432,10 @@ auto mint_protector(std::uint32_t slot, std::uint32_t generation) noexcept -> fo
                                              static_cast<std::uintptr_t>(slot));
 }
 
-/// [en] Resolve a protector handle; nullptr for anything not minted here. [zh]
-/// 解析保护器句柄；不是本池签发的返回 nullptr。
+/**
+ * @brief [en] Resolve a protector handle; nullptr for anything not minted here.
+ * @brief [zh] 解析保护器句柄；不是本池签发的返回 nullptr。
+ */
 auto resolve_protector(foc_protector_t handle) noexcept -> ProtectorSlot* {
     // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast, performance-no-int-to-ptr)
     const auto raw = reinterpret_cast<std::uintptr_t>(handle);
@@ -426,20 +454,26 @@ auto resolve_protector(foc_protector_t handle) noexcept -> ProtectorSlot* {
     return &slot;
 }
 
-/// [en] `psi_f` is derived, never taken from the caller: `kt` already encodes it and
-/// `psi_f = kt/(1.5*p)` is the single definition. [zh]
-/// `psi_f` 由 `kt` 推导，绝不向调用方索取：`kt` 已经包含它，而 `psi_f = kt/(1.5·p)` 是唯一定义。
+/**
+ * @brief [en] `psi_f` is derived, never taken from the caller: `kt` already encodes it and `psi_f = kt/(1.5*p)` is the
+ *             single definition.
+ * @brief [zh] `psi_f` 由 `kt` 推导，绝不向调用方索取：`kt` 已经包含它，而 `psi_f = kt/(1.5·p)` 是唯一定义。
+ */
 auto machine_params(const foc_motor_params_t& p) noexcept -> core::MachineParams {
     const float poles = static_cast<float>(p.pole_pairs);
     return core::MachineParams{p.rs, p.ld, p.lq, p.kt / (1.5F * poles)};
 }
 
-/// [en] The SVPWM linear range, `1/sqrt(3)`; the modulator's property, not the machine's.
-/// [zh] SVPWM 线性区 `1/√3`；这是调制器的性质，不是电机的。
+/**
+ * @brief [en] The SVPWM linear range, `1/sqrt(3)`; the modulator's property, not the machine's.
+ * @brief [zh] SVPWM 线性区 `1/√3`；这是调制器的性质，不是电机的。
+ */
 constexpr float kSvpwmLinearRatio = 0.5773502691896257F;
 
-/// [en] The library's default protection config: the nominal 24 V / 3 A surface machine.
-/// [zh] 库默认保护配置：标称 24 V / 3 A 表贴机。
+/**
+ * @brief [en] The library's default protection config: the nominal 24 V / 3 A surface machine.
+ * @brief [zh] 库默认保护配置：标称 24 V / 3 A 表贴机。
+ */
 auto default_protection_config() noexcept -> core::ProtectionConfig {
     core::ProtectionConfig c{};
     c.i_hard_a = 4.0F;
@@ -459,8 +493,10 @@ auto default_protection_config() noexcept -> core::ProtectionConfig {
     return c;
 }
 
-/// [en] Copy a C config into the core one, field for field, no interpretation.
-/// [zh] 把 C 配置逐字段拷进核心配置，不做任何解释。
+/**
+ * @brief [en] Copy a C config into the core one, field for field, no interpretation.
+ * @brief [zh] 把 C 配置逐字段拷进核心配置，不做任何解释。
+ */
 auto protection_config(const foc_protection_config_t& in) noexcept -> core::ProtectionConfig {
     core::ProtectionConfig c{};
     c.i_hard_a = in.i_hard_a;
@@ -480,8 +516,10 @@ auto protection_config(const foc_protection_config_t& in) noexcept -> core::Prot
     return c;
 }
 
-/// [en] Does the caller's `struct_size` cover the struct we are about to write?
-/// [zh] 调用方的 `struct_size` 覆盖得住我们要写的结构吗？
+/**
+ * @brief [en] Does the caller's `struct_size` cover the struct we are about to write?
+ * @brief [zh] 调用方的 `struct_size` 覆盖得住我们要写的结构吗？
+ */
 template <typename T> auto size_ok(const T& value) noexcept -> bool {
     return value.struct_size == static_cast<std::uint32_t>(sizeof(T));
 }

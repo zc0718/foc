@@ -52,9 +52,11 @@ constexpr float kCeilingRad = 0.15F;
 constexpr float kMaterialRatio = 1.15F;
 constexpr float kNegligibleRatio = 1.02F;
 
-/// [en] Light-load high speed: the case where an uncompensated iron-loss branch
-/// stops being a perturbation and becomes the dominant current. [zh]
-/// 轻载高速：未补偿的铁损支路从"扰动"变成"主导电流"的那个情形。
+/**
+ * @brief [en] Light-load high speed: the case where an uncompensated iron-loss branch stops being a perturbation and
+ *             becomes the dominant current.
+ * @brief [zh] 轻载高速：未补偿的铁损支路从"扰动"变成"主导电流"的那个情形。
+ */
 constexpr float kHighSpeedRad = 2800.0F;
 constexpr float kHighSpeedIq = 0.1F;
 
@@ -120,11 +122,12 @@ public:
   SweepRig(SweepRig &&) = delete;
   SweepRig &operator=(SweepRig &&) = delete;
 
-  /// [en] Pin the rotor: with `j` nominal the plant accelerates at
-  /// `Te/j = 250 rad/s^2` and the run would measure a different speed than the
-  /// one in its label. Every row in this file therefore shares one speed gate.
-  /// [zh] 把转子钉住：用标称 `j` 时 plant 以 `Te/j = 250 rad/s²`
-  /// 加速，这一趟量的 就不是标签上那个转速。因此本文件每一行共用同一道转速闸。
+  /**
+   * @brief [en] Pin the rotor: with `j` nominal the plant accelerates at `Te/j = 250 rad/s^2` and the run would measure
+   *             a different speed than the one in its label. Every row in this file therefore shares one speed gate.
+   * @brief [zh] 把转子钉住：用标称 `j` 时 plant 以 `Te/j = 250 rad/s²` 加速，这一趟量的 就不是标签上那个转速。因此本文
+   *             件每一行共用同一道转速闸。
+   */
   [[nodiscard]] static auto pinned_plant_params() noexcept -> sil::PlantParams {
     sil::PlantParams p = sil::nominal_plant_params();
     p.j = 1.0e6F;
@@ -141,12 +144,17 @@ public:
   [[nodiscard]] auto current() const noexcept -> core::Ab<float> {
     return sensed_;
   }
-  /// [en] The current the plant actually settles at, for the report. [zh]
-  /// plant 实际稳定到的电流，用于报告。
+  /**
+   * @brief [en] The current the plant actually settles at, for the report.
+   * @brief [zh] plant 实际稳定到的电流，用于报告。
+   */
   [[nodiscard]] auto magnetizing_iq() const noexcept -> float {
     return plant_.magnetizing_current_dq().q;
   }
-  /// [en] The current the sensor reports, A. [zh] 传感器报告的电流，A。
+  /**
+   * @brief [en] The current the sensor reports, A.
+   * @brief [zh] 传感器报告的电流，A。
+   */
   [[nodiscard]] auto sensed_iq() const noexcept -> float {
     return plant_.current_dq().q;
   }
@@ -212,10 +220,11 @@ private:
   core::Ab<float> sensed_{0.0F, 0.0F};
 };
 
-/// [en] Mean |angle error| over the second half of the run, plus the current
-/// the plant settled at. One observer, one configuration, no per-scenario
-/// tuning. [zh] 后半段角度误差绝对均值，加上 plant
-/// 稳定到的电流。一份观测器配置，不针对场景调参。
+/**
+ * @brief [en] Mean |angle error| over the second half of the run, plus the current the plant settled at. One observer,
+ *             one configuration, no per-scenario tuning.
+ * @brief [zh] 后半段角度误差绝对均值，加上 plant 稳定到的电流。一份观测器配置，不针对场景调参。
+ */
 struct Outcome final {
   float angle_rad;
   float magnetizing_iq_a;

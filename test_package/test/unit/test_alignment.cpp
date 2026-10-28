@@ -23,7 +23,9 @@ auto make_config() -> foc::core::AlignConfig {
     return foc::core::AlignConfig{1.0F, 0.01F, 0.05F, 0.01F, 0.02F, 0.0F};
 }
 
-/// Drive a routine to completion against a scripted sensor, returning the last output.
+/**
+ * @brief Drive a routine to completion against a scripted sensor, returning the last output.
+ */
 struct ScriptedRun final {
     foc::core::AlignOutput last{};
     foc::core::AlignState state{foc::core::AlignState::Idle};
@@ -32,7 +34,9 @@ struct ScriptedRun final {
     bool failed{false};
 };
 
-/// `angle_at(t)` lets a test decide what the rotor does; the routine never sees time itself.
+/**
+ * @brief `angle_at(t)` lets a test decide what the rotor does; the routine never sees time itself.
+ */
 template <typename AngleAt>
 auto run_scripted(foc::core::AlignRoutine& routine, float limit_s, AngleAt angle_at) -> ScriptedRun {
     ScriptedRun run{};
@@ -51,7 +55,9 @@ auto run_scripted(foc::core::AlignRoutine& routine, float limit_s, AngleAt angle
     return run;
 }
 
-/// Wrap into [0, 2*pi), for comparing angles that live on a circle.
+/**
+ * @brief Wrap into [0, 2*pi), for comparing angles that live on a circle.
+ */
 auto wrap_two_pi(float angle_rad) -> float {
     float wrapped = std::fmod(angle_rad, kTwoPi);
     if (wrapped < 0.0F) {
@@ -60,7 +66,9 @@ auto wrap_two_pi(float angle_rad) -> float {
     return wrapped;
 }
 
-/// Shortest signed distance between two angles, rad.
+/**
+ * @brief Shortest signed distance between two angles, rad.
+ */
 auto angular_difference(float a, float b) -> float {
     const float d = wrap_two_pi(a - b);
     return (d > kPi) ? (d - kTwoPi) : d;

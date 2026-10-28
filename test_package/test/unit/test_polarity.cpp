@@ -36,7 +36,10 @@ class FakeDx final {
     float i_{0.0F};
 };
 
-/// [en] Runs the whole sequence and returns the verdict. [zh] 跑完整个序列并返回结论。
+/**
+ * @brief [en] Runs the whole sequence and returns the verdict.
+ * @brief [zh] 跑完整个序列并返回结论。
+ */
 auto run_sequence(const foc::core::MagnetPolarityTest::Config& config, float ld_positive, float ld_negative) -> foc::core::PolarityVerdict {
     foc::core::MagnetPolarityTest test(config);
     test.begin(0.0F); // pulses along alpha

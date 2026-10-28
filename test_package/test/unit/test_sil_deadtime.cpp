@@ -33,11 +33,9 @@ constexpr float kSettleSeconds = 0.25F;
 constexpr float kPwmHz = 20000.0F;
 constexpr float kDeadtimeS = 1.0e-6F;
 
-/// The voltage a dead time of `kDeadtimeS` injects per phase at the given bus
-/// voltage:
-/// `(t_dead / T_pwm) * v_bus`, i.e. the missing volt-seconds spread over the
-/// switching period. 给定母线电压下，`kDeadtimeS` 死区每相注入的电压：`(t_dead
-/// / T_pwm) * v_bus`。
+/**
+ * @brief The voltage a dead time of `kDeadtimeS` injects per phase at the given bus voltage: `(t_dead / T_pwm) * v_bus`, i.e. the missing volt-seconds spread over the switching period. 给定母线电压下，`kDeadtimeS` 死区每相注入的电压：`(t_dead / T_pwm) * v_bus`。
+ */
 auto deadtime_voltage(float v_bus) -> float {
   return (kDeadtimeS * kPwmHz) * v_bus;
 }
@@ -47,8 +45,9 @@ struct SineResult final {
   float measured_amplitude_rad_s;
 };
 
-/// S3's 1 Hz tracking scenario at a low amplitude, with the dead time switched
-/// on or off. S3 的 1 Hz 跟踪场景（低幅值），可开关死区模型。
+/**
+ * @brief S3's 1 Hz tracking scenario at a low amplitude, with the dead time switched on or off. S3 的 1 Hz 跟踪场景（低幅值），可开关死区模型。
+ */
 auto run_low_amplitude_sine(float v_dead) -> SineResult {
   foc::sil::Bench bench(foc::sil::standard_bench_config());
   bench.hal().set_deadtime_voltage(v_dead);
@@ -90,8 +89,9 @@ using MotorWithCompensation =
     foc::motor::Motor<foc::core::BackEmfObserver, Compensated, foc::core::Pi,
                       foc::sil::PlantHal>;
 
-/// The same low-amplitude sine, with a dead-time compensator in front of the
-/// modulator. 同一个低幅值正弦，但调制器前面有死区补偿。
+/**
+ * @brief The same low-amplitude sine, with a dead-time compensator in front of the modulator. 同一个低幅值正弦，但调制器前面有死区补偿。
+ */
 auto run_compensated_sine(float v_dead, float transition_a = 0.0F,
                           float ripple_a = 0.0F) -> SineResult {
   const foc::motor::MotorConfig mc = foc::sil::nominal_motor_config();
@@ -349,9 +349,11 @@ namespace {
 
 constexpr float kSwitchingTDead = 1.0e-6F;
 
-/// [en] Closed-loop current hold through a *switching* inverter, with the
-/// dead-time stage set to one of three
-///       states. [zh] 经**开关**逆变器的闭环电流保持，死区环节取三种状态之一。
+/**
+ * @brief [en] Closed-loop current hold through a *switching* inverter, with the dead-time stage set to one of three
+ *             states.
+ * @brief [zh] 经**开关**逆变器的闭环电流保持，死区环节取三种状态之一。
+ */
 auto hold_current_switched(float iq_ref_a, float v_dead, float ripple_a)
     -> float {
   const foc::motor::MotorConfig mc = foc::sil::nominal_motor_config();
@@ -473,14 +475,13 @@ constexpr float kSweepHz = 50.0F;
 constexpr float kDt =
     5.0e-5F; // 20 kHz control and switching, the bench default
 
-/// [en] One settled operating point of a *rotating* current: the plant is
-/// locked, the commanded vector spins
-///      at `kSweepHz`, and the fundamental is recovered by lock-in.
-///      Returns the current amplitude and the mean projection of the
-///      command along it. [zh]
-///      **旋转**电流下的一个稳定工作点：plant 锁住、指令矢量以 `kSweepHz`
-///      旋转，基波用锁相取回。
-///      返回电流幅值，以及指令在电流方向上的平均投影。
+/**
+ * @brief [en] One settled operating point of a *rotating* current: the plant is locked, the commanded vector spins at
+ *             `kSweepHz`, and the fundamental is recovered by lock-in. Returns the current amplitude and the mean
+ *             projection of the command along it.
+ * @brief [zh] **旋转**电流下的一个稳定工作点：plant 锁住、指令矢量以 `kSweepHz` 旋转，基波用锁相取回。返回电流幅值，以
+ *             及指令在电流方向上的平均投影。
+ */
 auto rotate_point(float v_mag, float v_bus) -> std::pair<float, float> {
   foc::sil::PlantParams plant_params =
       foc::sil::plant_params_from(foc::sil::nominal_spec());
@@ -530,8 +531,10 @@ auto rotate_point(float v_mag, float v_bus) -> std::pair<float, float> {
   return {magnitude, parallel};
 }
 
-/// [en] Run the identification sweep at one bus voltage. [zh]
-/// 在一个母线电压下跑辨识扫描。
+/**
+ * @brief [en] Run the identification sweep at one bus voltage.
+ * @brief [zh] 在一个母线电压下跑辨识扫描。
+ */
 auto identify_fade(float v_bus) -> foc::core::DeadTimeFadeEstimator::Result {
   foc::core::DeadTimeFadeEstimator estimator(
       foc::core::DeadTimeFadeEstimator::Config{

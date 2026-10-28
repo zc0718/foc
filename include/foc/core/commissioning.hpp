@@ -141,13 +141,16 @@ class RsEstimator final {
         bool valid;
     };
 
-    /// [en] Fewer settled points than this is not an identification. [zh]
-    /// 稳定点的数量少于这个就不算辨识。
+    /**
+     * @brief [en] Fewer settled points than this is not an identification.
+     * @brief [zh] 稳定点的数量少于这个就不算辨识。
+     */
     static constexpr int kMinSamples = 6;
 
-    /// [en] Highest / lowest current in the sweep must reach this ratio, or the
-    /// slope is buried in the noise. [zh]
-    /// 扫描里最高与最低电流之比必须达到这个值，否则斜率埋在噪声里。
+    /**
+     * @brief [en] Highest / lowest current in the sweep must reach this ratio, or the slope is buried in the noise.
+     * @brief [zh] 扫描里最高与最低电流之比必须达到这个值，否则斜率埋在噪声里。
+     */
     static constexpr float kMinSpanRatio = 1.6F;
 
     explicit RsEstimator(const Config& config) noexcept : config_(config) {}
@@ -190,7 +193,10 @@ class RsEstimator final {
         return true;
     }
 
-    /// [en] Samples that were actually used. [zh] 实际采用的样本数。
+    /**
+     * @brief [en] Samples that were actually used.
+     * @brief [zh] 实际采用的样本数。
+     */
     [[nodiscard]] auto samples() const noexcept -> int { return samples_; }
 
     /**
@@ -232,8 +238,10 @@ class RsEstimator final {
     }
 
   private:
-    /// [en] Sampling noise is unavoidable; a fit that cannot beat it is not a
-    /// fit. [zh] 采样噪声无法避免；连它都打不过的拟合不算拟合。
+    /**
+     * @brief [en] Sampling noise is unavoidable; a fit that cannot beat it is not a fit.
+     * @brief [zh] 采样噪声无法避免；连它都打不过的拟合不算拟合。
+     */
     static constexpr float kMinCondition = 1.0e-3F;
 
     Config config_{};
@@ -316,12 +324,16 @@ class FluxEstimator final {
         bool valid;
     };
 
-    /// [en] Two points define a line; four let the residual say something. [zh]
-    /// 两点定一条直线；四点才能让残差说出点什么。
+    /**
+     * @brief [en] Two points define a line; four let the residual say something.
+     * @brief [zh] 两点定一条直线；四点才能让残差说出点什么。
+     */
     static constexpr int kMinSamples = 4;
 
-    /// [en] Fastest / slowest speed must reach this ratio. [zh]
-    /// 最快与最慢转速之比必须达到这个值。
+    /**
+     * @brief [en] Fastest / slowest speed must reach this ratio.
+     * @brief [zh] 最快与最慢转速之比必须达到这个值。
+     */
     static constexpr float kMinSpanRatio = 1.6F;
 
     explicit FluxEstimator(const Config& config) noexcept : config_(config) {}
@@ -364,7 +376,10 @@ class FluxEstimator final {
         return true;
     }
 
-    /// [en] Samples that were actually used. [zh] 实际采用的样本数。
+    /**
+     * @brief [en] Samples that were actually used.
+     * @brief [zh] 实际采用的样本数。
+     */
     [[nodiscard]] auto samples() const noexcept -> int { return samples_; }
 
     /**
@@ -396,8 +411,10 @@ class FluxEstimator final {
     }
 
   private:
-    /// [en] Same conditioning floor as the resistance fit. [zh]
-    /// 与电阻拟合相同的条件数下限。
+    /**
+     * @brief [en] Same conditioning floor as the resistance fit.
+     * @brief [zh] 与电阻拟合相同的条件数下限。
+     */
     static constexpr float kMinCondition = 1.0e-3F;
 
     Config config_{};
@@ -499,16 +516,22 @@ class CurrentSenseCalibrator final {
         bool offset_valid;
     };
 
-    /// [en] Fewer pairs than this and the slope is noise. [zh]
-    /// 样本对少于这个时斜率就是噪声。
+    /**
+     * @brief [en] Fewer pairs than this and the slope is noise.
+     * @brief [zh] 样本对少于这个时斜率就是噪声。
+     */
     static constexpr int kMinPairs = 6;
 
-    /// [en] Fewer zero-current samples than this and the mean is noise. [zh]
-    /// 零电流样本少于这个时均值就是噪声。
+    /**
+     * @brief [en] Fewer zero-current samples than this and the mean is noise.
+     * @brief [zh] 零电流样本少于这个时均值就是噪声。
+     */
     static constexpr int kMinZeroSamples = 8;
 
-    /// [en] Reference span (max/min) the gain fit needs. [zh]
-    /// 求增益所需的基准跨度（最大/最小）。
+    /**
+     * @brief [en] Reference span (max/min) the gain fit needs.
+     * @brief [zh] 求增益所需的基准跨度（最大/最小）。
+     */
     static constexpr float kMinSpanRatio = 2.0F;
 
     explicit CurrentSenseCalibrator(const Config& config) noexcept : config_(config) {}
@@ -561,10 +584,16 @@ class CurrentSenseCalibrator final {
         return true;
     }
 
-    /// [en] Pairs actually used. [zh] 实际采用的样本对数。
+    /**
+     * @brief [en] Pairs actually used.
+     * @brief [zh] 实际采用的样本对数。
+     */
     [[nodiscard]] auto pairs() const noexcept -> int { return pairs_; }
 
-    /// [en] Zero-current samples actually used. [zh] 实际采用的零电流样本数。
+    /**
+     * @brief [en] Zero-current samples actually used.
+     * @brief [zh] 实际采用的零电流样本数。
+     */
     [[nodiscard]] auto zero_samples() const noexcept -> int { return zero_samples_; }
 
     /**
@@ -613,8 +642,10 @@ class CurrentSenseCalibrator final {
     }
 
   private:
-    /// [en] Same conditioning floor as the other fits in this header. [zh]
-    /// 与本文件其它拟合相同的条件数下限。
+    /**
+     * @brief [en] Same conditioning floor as the other fits in this header.
+     * @brief [zh] 与本文件其它拟合相同的条件数下限。
+     */
     static constexpr float kMinCondition = 1.0e-3F;
 
     Config config_{};
@@ -715,8 +746,10 @@ class IncrementalInductanceEstimator final {
         bool valid;
     };
 
-    /// [en] Fewer integration steps than this and `dt` dominates. [zh]
-    /// 积分步数少于这个时 `dt` 的误差占主导。
+    /**
+     * @brief [en] Fewer integration steps than this and `dt` dominates.
+     * @brief [zh] 积分步数少于这个时 `dt` 的误差占主导。
+     */
     static constexpr int kMinSamples = 3;
 
     explicit IncrementalInductanceEstimator(const Config& config) noexcept : config_(config) {}
@@ -772,7 +805,10 @@ class IncrementalInductanceEstimator final {
         return true;
     }
 
-    /// [en] Integration steps that were actually used. [zh] 实际采用的积分步数。
+    /**
+     * @brief [en] Integration steps that were actually used.
+     * @brief [zh] 实际采用的积分步数。
+     */
     [[nodiscard]] auto samples() const noexcept -> int { return samples_; }
 
     /**
@@ -793,8 +829,10 @@ class IncrementalInductanceEstimator final {
     }
 
   private:
-    /// [en] The loss the inverter takes from this leg at this current. [zh]
-    /// 逆变器在这条臂、这个电流下吃掉的电压。
+    /**
+     * @brief [en] The loss the inverter takes from this leg at this current.
+     * @brief [zh] 逆变器在这条臂、这个电流下吃掉的电压。
+     */
     [[nodiscard]] auto loss_of(float current_a) const noexcept -> float {
         if (!(config_.deadtime_v > 0.0F)) {
             return 0.0F;

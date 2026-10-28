@@ -36,8 +36,10 @@ auto sgn(float x) -> float {
   return static_cast<float>((x > 0.0F) - (x < 0.0F));
 }
 
-/// [en] Mean alpha-beta voltage over one control period, with a frozen current.
-/// [zh] 一个控制周期的平均 αβ 电压，电流冻结。
+/**
+ * @brief [en] Mean alpha-beta voltage over one control period, with a frozen current.
+ * @brief [zh] 一个控制周期的平均 αβ 电压，电流冻结。
+ */
 auto mean_voltage(sil::DiscreteInverter &inverter,
                   const core::ModulatorInput &request, float dt)
     -> core::Ab<float> {
@@ -62,9 +64,10 @@ struct RippleResult final {
   float mid_minus_mean;
 };
 
-/// [en] Locked rotor, fixed dq voltage, settled; then one period traced
-/// sub-step by sub-step.
-///      [zh] 锁转子、固定 dq 电压、先跑稳；再逐子步描一个周期。
+/**
+ * @brief [en] Locked rotor, fixed dq voltage, settled; then one period traced sub-step by sub-step.
+ * @brief [zh] 锁转子、固定 dq 电压、先跑稳；再逐子步描一个周期。
+ */
 auto ripple(float v_d, float t_dead, int sub_per_switch) -> RippleResult {
   sil::PmsmPlant plant(sil::nominal_plant_params());
   plant.reset(sil::PlantState{0.0F, 0.0F, 0.0F, 0.0F});
@@ -118,9 +121,10 @@ struct LowCurrentPoint final {
   float ripple;
 };
 
-/// [en] Locked rotor at a small dq voltage: settle, then measure the current
-/// and the mean voltage together.
-///      [zh] 小 dq 电压下的锁转子：跑稳，然后在同一周期内一起量电流与平均电压。
+/**
+ * @brief [en] Locked rotor at a small dq voltage: settle, then measure the current and the mean voltage together.
+ * @brief [zh] 小 dq 电压下的锁转子：跑稳，然后在同一周期内一起量电流与平均电压。
+ */
 auto low_current_point(float v_d) -> LowCurrentPoint {
   sil::PmsmPlant plant(sil::nominal_plant_params());
   plant.reset(sil::PlantState{0.0F, 0.0F, 0.0F, 0.0F});

@@ -53,7 +53,10 @@ auto psi_f_of(const sil::MachineSpec &s) -> float {
   return s.kt / (1.5F * static_cast<float>(s.pole_pairs));
 }
 
-/// [en] Angle error of the shipped observer on the nominal machine. [zh] 出厂观测器在标称机上的角度误差。
+/**
+ * @brief [en] Angle error of the shipped observer on the nominal machine.
+ * @brief [zh] 出厂观测器在标称机上的角度误差。
+ */
 auto error_at(float omega_e, float id_a) -> float {
   const sil::MachineSpec s = sil::nominal_spec();
   core::NonlinearFluxObserver observer(core::NonlinearFluxObserver::Config{

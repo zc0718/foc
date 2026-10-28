@@ -21,19 +21,25 @@ using core::Uvw;
  * @since 0.1.0
  */
 struct InverterConfig final {
-  /// [en] switching frequency in Hz. Must divide the control rate exactly (see
-  /// `set_control_period()`).
-  ///      [zh] 开关频率，Hz。必须整除控制频率（见 `set_control_period()`）。
+  /**
+   * @brief [en] switching frequency in Hz. Must divide the control rate exactly (see `set_control_period()`).
+   * @brief [zh] 开关频率，Hz。必须整除控制频率（见 `set_control_period()`）。
+   */
   float f_sw_hz;
-  /// [en] dead time per transition in s, applied to turn-on only. [zh]
-  /// 每次换向的死区，s，只延迟开通。
+  /**
+   * @brief [en] dead time per transition in s, applied to turn-on only.
+   * @brief [zh] 每次换向的死区，s，只延迟开通。
+   */
   float t_dead_s;
-  /// [en] conduction drop per device in V; 0 = ideal switches. [zh]
-  /// 每个器件的导通压降，V；0 = 理想开关。
+  /**
+   * @brief [en] conduction drop per device in V; 0 = ideal switches.
+   * @brief [zh] 每个器件的导通压降，V；0 = 理想开关。
+   */
   float v_fwd_v;
-  /// [en] integration sub-steps per switching period; only limits how finely
-  /// the ripple is drawn.
-  ///      [zh] 每个开关周期的积分子步数；只决定纹波画得多细。
+  /**
+   * @brief [en] integration sub-steps per switching period; only limits how finely the ripple is drawn.
+   * @brief [zh] 每个开关周期的积分子步数；只决定纹波画得多细。
+   */
   std::int32_t sub_per_switch;
 };
 
@@ -102,8 +108,10 @@ public:
   DiscreteInverter(DiscreteInverter &&) = delete;
   DiscreteInverter &operator=(DiscreteInverter &&) = delete;
 
-  /// [en] True when the configuration can produce a switching period at all.
-  /// [zh] 配置至少能产生一个开关周期。
+  /**
+   * @brief [en] True when the configuration can produce a switching period at all.
+   * @brief [zh] 配置至少能产生一个开关周期。
+   */
   [[nodiscard]] auto valid() const noexcept -> bool { return t_sw_ > 0.0F; }
 
   [[nodiscard]] auto switching_period_s() const noexcept -> float {
@@ -114,11 +122,11 @@ public:
     return config_.t_dead_s;
   }
 
-  /// [en] Rail-to-rail voltage loss the dead time injects per phase,
-  /// `(t_dead/T)*v_bus`, V. This is the
-  ///      number the *verification* predicts; the model never uses it.
-  ///      [zh]
-  ///      死区每相注入的电压损失，`(t_dead/T)·v_bus`，V。这是**验证**要预测的数；模型自己不用它。
+  /**
+   * @brief [en] Rail-to-rail voltage loss the dead time injects per phase, `(t_dead/T)*v_bus`, V. This is the number
+   *             the *verification* predicts; the model never uses it.
+   * @brief [zh] 死区每相注入的电压损失，`(t_dead/T)·v_bus`，V。这是**验证**要预测的数；模型自己不用它。
+   */
   [[nodiscard]] auto deadtime_voltage(float v_bus) const noexcept -> float {
     return (t_sw_ > 0.0F) ? ((config_.t_dead_s / t_sw_) * v_bus) : 0.0F;
   }
@@ -161,21 +169,30 @@ public:
     return steps_;
   }
 
-  /// [en] Number of sub-steps the latched period asked for. [zh]
-  /// 已锁存周期要求的子步数。
+  /**
+   * @brief [en] Number of sub-steps the latched period asked for.
+   * @brief [zh] 已锁存周期要求的子步数。
+   */
   [[nodiscard]] auto steps() const noexcept -> std::int32_t { return steps_; }
 
-  /// [en] Sub-step length in s. [zh] 子步长度，s。
+  /**
+   * @brief [en] Sub-step length in s.
+   * @brief [zh] 子步长度，s。
+   */
   [[nodiscard]] auto step_length_s() const noexcept -> float {
     return step_length_;
   }
 
-  /// [en] True if the request had to be clamped into [0, 1]. [zh]
-  /// 请求是否被钳进 [0, 1]。
+  /**
+   * @brief [en] True if the request had to be clamped into [0, 1].
+   * @brief [zh] 请求是否被钳进 [0, 1]。
+   */
   [[nodiscard]] auto clamped() const noexcept -> bool { return clamped_; }
 
-  /// [en] The duties actually used (after clamping). [zh]
-  /// 实际使用的占空比（钳位之后）。
+  /**
+   * @brief [en] The duties actually used (after clamping).
+   * @brief [zh] 实际使用的占空比（钳位之后）。
+   */
   [[nodiscard]] auto duty() const noexcept -> Uvw<float> { return duty_; }
 
   /**
@@ -208,7 +225,10 @@ public:
     return core::clarke(Uvw<float>{pole_u, pole_v, pole_w});
   }
 
-  /// [en] Back to the power-on state. [zh] 回到上电状态。
+  /**
+   * @brief [en] Back to the power-on state.
+   * @brief [zh] 回到上电状态。
+   */
   void reset() noexcept {
     duty_ = Uvw<float>{};
     time_in_period_ = 0.0F;
@@ -232,9 +252,10 @@ private:
     return Uvw<float>{one(duty.u), one(duty.v), one(duty.w)};
   }
 
-  /// [en] Length of the intersection of `[from, to)` with `[a, b)`, both taken
-  /// modulo T.
-  ///      [zh] `[from, to)` 与 `[a, b)` 的交集长度，两者都按 T 取模。
+  /**
+   * @brief [en] Length of the intersection of `[from, to)` with `[a, b)`, both taken modulo T.
+   * @brief [zh] `[from, to)` 与 `[a, b)` 的交集长度，两者都按 T 取模。
+   */
   [[nodiscard]] auto overlap(float a, float b, float from,
                              float to) const noexcept -> float {
     const float span = to - from;
@@ -273,8 +294,10 @@ private:
     return total;
   }
 
-  /// [en] Average pole voltage over one sub-step for one leg. [zh]
-  /// 一条桥臂在一个子步内的平均极电压。
+  /**
+   * @brief [en] Average pole voltage over one sub-step for one leg.
+   * @brief [zh] 一条桥臂在一个子步内的平均极电压。
+   */
   [[nodiscard]] auto pole_voltage(float duty, float current, float from,
                                   float to) const noexcept -> float {
     const float period = t_sw_;

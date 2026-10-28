@@ -29,8 +29,10 @@ auto hfi_config() -> foc::core::HfiObserver::Config {
     return config;
 }
 
-/// [en] A policy that does not model the machine at all, and therefore must not claim the hook.
-///      [zh] 完全不建模机器的策略，因此不应声称拥有该钩子。
+/**
+ * @brief [en] A policy that does not model the machine at all, and therefore must not claim the hook.
+ * @brief [zh] 完全不建模机器的策略，因此不应声称拥有该钩子。
+ */
 struct NoParams final {
     auto update(foc::core::Ab<float>, foc::core::Ab<float>, float) noexcept -> foc::core::ObsState {
         return foc::core::ObsState{};

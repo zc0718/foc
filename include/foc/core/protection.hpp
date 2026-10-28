@@ -360,11 +360,16 @@ class Protector final {
         return config_.i_max_a * (1.0F - used);
     }
 
-    /// [en] The thermal budget, A^2*s. [zh] 热预算，A²·s。
+    /**
+     * @brief [en] The thermal budget, A^2*s.
+     * @brief [zh] 热预算，A²·s。
+     */
     [[nodiscard]] auto thermal_budget() const noexcept -> float { return q_; }
 
-    /// [en] How long the axis has been pushing without moving, s. [zh]
-    /// 轴有劲没动的时间，s。
+    /**
+     * @brief [en] How long the axis has been pushing without moving, s.
+     * @brief [zh] 轴有劲没动的时间，s。
+     */
     [[nodiscard]] auto stall_duration() const noexcept -> float { return stall_s_; }
 
     /**
@@ -384,8 +389,10 @@ class Protector final {
         stall_s_ = 0.0F;
     }
 
-    /// [en] Clear everything including the thermal memory. [zh]
-    /// 清掉一切，包括热记忆。
+    /**
+     * @brief [en] Clear everything including the thermal memory.
+     * @brief [zh] 清掉一切，包括热记忆。
+     */
     void reset_cold() noexcept {
         reset();
         for (int k = 0; k < 8; ++k) {
@@ -396,8 +403,10 @@ class Protector final {
     }
 
   private:
-    /// [en] Set-and-hold with hysteresis, in one place so every fault behaves
-    /// the same way. [zh] 带迟滞的置位/保持，集中在一处，让每个故障行为一致。
+    /**
+     * @brief [en] Set-and-hold with hysteresis, in one place so every fault behaves the same way.
+     * @brief [zh] 带迟滞的置位/保持，集中在一处，让每个故障行为一致。
+     */
     auto keep(FaultCode code, bool (&state)[8], bool condition, bool clear_condition) noexcept -> bool {
         auto index = static_cast<std::uint8_t>(code);
         if (condition) {

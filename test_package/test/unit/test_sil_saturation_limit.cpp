@@ -28,8 +28,10 @@ auto make_config() -> foc::sil::BenchConfig {
     return cfg;
 }
 
-/// [en] Magnitude of the stationary voltage vector currently applied by the inverter.
-/// [zh] 逆变器当前施加的静止电压矢量幅值。
+/**
+ * @brief [en] Magnitude of the stationary voltage vector currently applied by the inverter.
+ * @brief [zh] 逆变器当前施加的静止电压矢量幅值。
+ */
 auto applied_v_ab(foc::sil::PlantHal& hal) -> float {
     const foc::core::Uvw<float> duty = hal.pwm.duty();
     const foc::core::Ab<float> v_ab =

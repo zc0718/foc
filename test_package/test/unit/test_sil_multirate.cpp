@@ -41,8 +41,10 @@ struct Outcome final {
     foc::ErrorCode status;
 };
 
-/// [en] One speed step with the outer loop running every `speed_loop_period_s` seconds (0 = every tick).
-/// [zh] 以 `speed_loop_period_s` 秒为周期（0 = 每 tick）跑一次速度阶跃。
+/**
+ * @brief [en] One speed step with the outer loop running every `speed_loop_period_s` seconds (0 = every tick).
+ * @brief [zh] 以 `speed_loop_period_s` 秒为周期（0 = 每 tick）跑一次速度阶跃。
+ */
 auto step_speed(float speed_loop_period_s) -> Outcome {
     using MotorT = foc::motor::Motor<foc::core::BackEmfObserver, foc::core::Svpwm, foc::core::Pi, foc::sil::PlantHal>;
     foc::motor::MotorConfig mc{0.5F, 4.0e-4F, 4.0e-4F, 0.05F, 1.0e-4F, 1.0e-4F, kPolePairs, 3.0F, 20000.0F, 0.0F};

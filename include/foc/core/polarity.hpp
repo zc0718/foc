@@ -136,7 +136,10 @@ class MagnetPolarityTest final {
     [[nodiscard]] auto verdict() const noexcept -> PolarityVerdict;
 
   private:
-    /// [en] Where the sequence is. [zh] 序列所处阶段。
+    /**
+     * @brief [en] Where the sequence is.
+     * @brief [zh] 序列所处阶段。
+     */
     enum class Stage : std::int8_t { SettlePositive, PulsePositive, SettleNegative, PulseNegative, Done };
 
     auto decide() noexcept -> void;

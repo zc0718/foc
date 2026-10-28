@@ -24,8 +24,10 @@
 
 namespace {
 
-/// [en] Owns a C handle so a failing assertion can never leak a pool slot.
-/// [zh] 持有 C 句柄，保证断言失败时也不会泄漏池槽。
+/**
+ * @brief [en] Owns a C handle so a failing assertion can never leak a pool slot.
+ * @brief [zh] 持有 C 句柄，保证断言失败时也不会泄漏池槽。
+ */
 class CHandle final {
 public:
   CHandle() = default;

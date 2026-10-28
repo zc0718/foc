@@ -17,17 +17,20 @@ namespace {
 namespace core = foc::core;
 namespace sil = foc::sil;
 
-/// [en] One operating point to check both plants at. [zh] 两台 plant
-/// 共用的一个工作点。
+/**
+ * @brief [en] One operating point to check both plants at.
+ * @brief [zh] 两台 plant 共用的一个工作点。
+ */
 struct Point final {
   float omega_e;
   float i_d;
   float i_q;
 };
 
-/// [en] The dq voltage the dq model says this point needs -- the *prediction
-/// under test*.
-///      [zh] dq 模型说这个点需要的 dq 电压——即**被测的预测**。
+/**
+ * @brief [en] The dq voltage the dq model says this point needs -- the *prediction under test*.
+ * @brief [zh] dq 模型说这个点需要的 dq 电压——即**被测的预测**。
+ */
 auto dq_voltage(const Point &p) -> core::Dq<float> {
   const sil::MachineSpec s = sil::nominal_spec();
   const float psi = s.kt / (1.5F * static_cast<float>(s.pole_pairs));

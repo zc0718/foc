@@ -36,7 +36,9 @@ auto wrap_pi(float angle) -> float {
     return angle;
 }
 
-/// Advances the synthetic drive one step and returns the true electrical angle.
+/**
+ * @brief Advances the synthetic drive one step and returns the true electrical angle.
+ */
 auto drive_step(float& t, foc::core::Ab<float>& v_ab, foc::core::Ab<float>& i_ab) -> float {
     const float theta = kOmegaE * t;
     const float cos_t = std::cos(theta + kPhi);

@@ -42,31 +42,28 @@ constexpr float kTwoPiF = 6.28318530717959F;
 constexpr float kFSw =
     20000.0F; ///< switching frequency for the model-driven variant of the gate.
 
-/// [en] The **absolute ceiling**: past this the answer is not usable at all,
-/// whatever else is true. 0.15 rad is 8.6 degrees of electrical angle, i.e.
-/// under 3 % of one pole pair on this machine, and it sits 45 % above the
-/// shipped observer's switching-plant figure (0.1037) so the thing that ships
-/// has margin rather than scraping by.
-///      [zh] **绝对天花板**：超过它答案就完全不可用，别的都无从谈起。0.15 rad
-///      是 8.6 电角度， 在本机上一个极距的 3 % 以内，并且比出厂观测器在开关
-///      plant 上的数（0.1037）高 45 %，所以
-///      出厂的东西有余量，而不是刚好擦着过。
+/**
+ * @brief [en] The **absolute ceiling**: past this the answer is not usable at all, whatever else is true. 0.15 rad is
+ *             8.6 degrees of electrical angle, i.e. under 3 % of one pole pair on this machine, and it sits 45 % above
+ *             the shipped observer's switching-plant figure (0.1037) so the thing that ships has margin rather than
+ *             scraping by.
+ * @brief [zh] **绝对天花板**：超过它答案就完全不可用，别的都无从谈起。0.15 rad 是 8.6 电角度， 在本机上一个极距的 3 %
+ *             以内，并且比出厂观测器在开关 plant 上的数（0.1037）高 45 %，所以出厂的东西有余量，而不是刚好擦着过。
+ */
 constexpr float kAbsoluteCeilingRad = 0.15F;
 
-/// [en] The **admission rule**, and the re-derivation this file needed: a
-/// candidate is admitted if it is no worse than the observer already shipped,
-/// measured **on the same plant at the same operating point**. An absolute
-/// number cannot do this job -- 0.10 was calibrated on the mean-value plant and
-/// the same observer reads 0.1037 on a switching one, so the gate failed its
-/// own incumbent the moment the bench changed (P5-f found this the hard way). A
-/// ratio does not go stale when the bench changes, because both sides move
-/// together.
-///      [zh]
-///      **准入规则**，也是本文件需要的重定：候选被准入，当且仅当它不差于**已经出厂**的那个
-///      观测器——**在同一台 plant、同一个工作点**上量。绝对数干不了这件事：0.10
-///      是在均值 plant 上 定的，而同一个观测器在开关 plant 上读
-///      0.1037，于是台架一换，闸就卡住了它自己的在位者 （P5-f
-///      就是撞在这上面）。比值不会因为台架变化而过期，因为两边一起动。
+/**
+ * @brief [en] The **admission rule**, and the re-derivation this file needed: a candidate is admitted if it is no worse
+ *             than the observer already shipped, measured **on the same plant at the same operating point**. An
+ *             absolute number cannot do this job -- 0.10 was calibrated on the mean-value plant and the same observer
+ *             reads 0.1037 on a switching one, so the gate failed its own incumbent the moment the bench changed (P5-f
+ *             found this the hard way). A ratio does not go stale when the bench changes, because both sides move
+ *             together.
+ * @brief [zh] **准入规则**，也是本文件需要的重定：候选被准入，当且仅当它不差于**已经出厂**的那个观测器——**在同一台
+ *             plant、同一个工作点**上量。绝对数干不了这件事：0.10 是在均值 plant 上 定的，而同一个观测器在开关 plant 上
+ *             读 0.1037，于是台架一换，闸就卡住了它自己的在位者 （P5-f 就是撞在这上面）。比值不会因为台架变化而过期，因
+ *             为两边一起动。
+ */
 constexpr float kNoWorseThanIncumbent = 1.0F;
 
 auto wrap_pi_local(float angle) noexcept -> float {
@@ -157,8 +154,10 @@ private:
   core::Ab<float> current_{0.0F, 0.0F};
 };
 
-/// [en] Mean |angle error| over the second half. [zh]
-/// 后半段的角度误差绝对均值。
+/**
+ * @brief [en] Mean |angle error| over the second half.
+ * @brief [zh] 后半段的角度误差绝对均值。
+ */
 template <typename Update>
 auto run_gate(bool noise, bool deadtime, Update &&update) -> float {
   GateRig rig(kOmega, noise, deadtime);
@@ -176,8 +175,10 @@ auto run_gate(bool noise, bool deadtime, Update &&update) -> float {
   return sum / static_cast<float>(count);
 }
 
-/// [en] The shipped observer, one configuration, no scenario-specific tuning.
-/// [zh] 出厂观测器，一份配置， 不针对场景调参。
+/**
+ * @brief [en] The shipped observer, one configuration, no scenario-specific tuning.
+ * @brief [zh] 出厂观测器，一份配置， 不针对场景调参。
+ */
 auto incumbent_error(bool noise, bool deadtime) -> float {
   core::NonlinearFluxObserver observer(core::NonlinearFluxObserver::Config{
       kBelief * sil::nominal_spec().rs, sil::nominal_spec().lq, psi_f_value(),
@@ -197,8 +198,10 @@ auto smo_error(bool noise, bool deadtime, float gain, float fc_hz, float layer)
   });
 }
 
-/// [en] The shipped observer on the switching bench, one configuration. [zh]
-/// 开关台架上的出厂观测器，一份配置。
+/**
+ * @brief [en] The shipped observer on the switching bench, one configuration.
+ * @brief [zh] 开关台架上的出厂观测器，一份配置。
+ */
 auto switched_incumbent_error(const sil::SwitchingRigConfig &config) -> float {
   core::NonlinearFluxObserver observer(core::NonlinearFluxObserver::Config{
       config.belief_rs * sil::nominal_spec().rs, sil::nominal_spec().lq,
@@ -211,8 +214,10 @@ auto switched_incumbent_error(const sil::SwitchingRigConfig &config) -> float {
   });
 }
 
-/// [en] The SMO control on the same bench, at a given tuning. [zh] 同一台架上的
-/// SMO 对照，给定一套调参。
+/**
+ * @brief [en] The SMO control on the same bench, at a given tuning.
+ * @brief [zh] 同一台架上的 SMO 对照，给定一套调参。
+ */
 auto smo_switched_error(const sil::SwitchingRigConfig &config, float gain,
                         float fc_hz, float layer) -> float {
   sil::SmoControl observer(config.belief_rs * sil::nominal_spec().rs,

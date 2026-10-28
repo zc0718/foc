@@ -32,12 +32,16 @@ auto current_loop_closed_form(float omega_n, float r_over_l, float t_s) -> float
     return 1.0F - (std::exp(-x) * (1.0F - ((omega_n - r_over_l) * t_s)));
 }
 
-/// [en] First-order step response: 1 - e^(-wn t).
-/// [zh] 一阶阶跃响应：1 - e^(-wn t)。
+/**
+ * @brief [en] First-order step response: 1 - e^(-wn t).
+ * @brief [zh] 一阶阶跃响应：1 - e^(-wn t)。
+ */
 auto first_order(float omega_n, float t_s) -> float { return 1.0F - std::exp(-omega_n * t_s); }
 
-/// [en] Sample of the trace closest to `t_s`, measured from the first sample.
-/// [zh] 轨迹中最接近 `t_s` 的采样（相对首个采样）。
+/**
+ * @brief [en] Sample of the trace closest to `t_s`, measured from the first sample.
+ * @brief [zh] 轨迹中最接近 `t_s` 的采样（相对首个采样）。
+ */
 auto at_time(const std::vector<foc::sil::Sample>& trace, float Sample::* field, float t_s) -> float {
     const float t0 = trace.front().t_s;
     std::size_t best = 0U;

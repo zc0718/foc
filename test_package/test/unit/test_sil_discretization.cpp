@@ -111,9 +111,10 @@ private:
   float psi_f_;
 };
 
-/// [en] The same observer with `(v - Rs*i)` integrated by the trapezoid instead
-/// of the endpoint value.
-///      [zh] 同一个观测器，`(v − Rs·i)` 用梯形而不是端点值积分。
+/**
+ * @brief [en] The same observer with `(v - Rs*i)` integrated by the trapezoid instead of the endpoint value.
+ * @brief [zh] 同一个观测器，`(v − Rs·i)` 用梯形而不是端点值积分。
+ */
 class TustinFlux final {
 public:
   TustinFlux(float rs, float l, float psi_f) noexcept

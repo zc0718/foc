@@ -19,10 +19,11 @@ namespace {
 
 namespace core = foc::core;
 
-/// [en] A board that is wired correctly. Every check has to be green on this
-/// one, or the suite cries wolf and the user learns to ignore it.
-///      [zh]
-///      接对的板子。所有检查在它上面必须全绿，否则整套检查会喊狼来了，用户就学会无视它了。
+/**
+ * @brief [en] A board that is wired correctly. Every check has to be green on this one, or the suite cries wolf and the
+ *             user learns to ignore it.
+ * @brief [zh] 接对的板子。所有检查在它上面必须全绿，否则整套检查会喊狼来了，用户就学会无视它了。
+ */
 auto good_board() -> core::BoardMeasurements {
   core::BoardMeasurements m{};
   m.sum_current_a = 0.002F;
@@ -67,8 +68,10 @@ auto item_name(core::BoardItem item) -> const char * {
   return "?";
 }
 
-/// [en] Print one report: every row with its number, which is criterion P7-c.
-///      [zh] 打印一份报告：每一行带它的数，这就是 P7-c 的判据。
+/**
+ * @brief [en] Print one report: every row with its number, which is criterion P7-c.
+ * @brief [zh] 打印一份报告：每一行带它的数，这就是 P7-c 的判据。
+ */
 void print_report(const char *label, const core::BoardReport &report) {
   std::printf("\n[P7] %s: %d row(s), %d failure(s), cause = %s", label,
               report.count, report.failures,
@@ -244,15 +247,13 @@ namespace {
 
 namespace sil = foc::sil;
 
-/// [en] A standstill board that can be mis-wired the ways P7-a names. The
-/// faults live in the
-/// **sensor path** -- sign, offset -- because that is where they live on real
-/// hardware: the power stage is fine, the reading of it is not. `read_uvw()`
-/// returns the sample the ISR would see, taken at the trigger point, not "now".
-///      [zh] 一块可以按 P7-a
-///      点名的方式接错的堵转板子。故障在**传感器路径**——符号、零漂——因为真实
-///      硬件上它们就在那里：功率级是好的，读数不是。`read_uvw()` 返回 ISR
-///      会看到的那个采样，取自触发 点，而不是"现在"。
+/**
+ * @brief [en] A standstill board that can be mis-wired the ways P7-a names. The faults live in the **sensor path** --
+ *             sign, offset -- because that is where they live on real hardware: the power stage is fine, the reading of
+ *             it is not. `read_uvw()` returns the sample the ISR would see, taken at the trigger point, not "now".
+ * @brief [zh] 一块可以按 P7-a 点名的方式接错的堵转板子。故障在**传感器路径**——符号、零漂——因为真实硬件上它们就在那里：
+ *             功率级是好的，读数不是。`read_uvw()` 返回 ISR 会看到的那个采样，取自触发 点，而不是"现在"。
+ */
 class FaultyBoard final {
 public:
   struct Fault final {
@@ -278,16 +279,20 @@ public:
     }
   }
 
-  /// [en] Less than a period; unused by the standstill sequence but part of the
-  /// concept. [zh] 不足一个周期；堵转序列不用它，但概念里有。
+  /**
+   * @brief [en] Less than a period; unused by the standstill sequence but part of the concept.
+   * @brief [zh] 不足一个周期；堵转序列不用它，但概念里有。
+   */
   void step_advance(float seconds) {
     const float ratio = kPeriod / ((seconds > 0.0F) ? seconds : kPeriod);
     const int steps = (ratio >= 1.0F) ? static_cast<int>(ratio + 0.5F) : 1;
     run_period_steps(steps);
   }
 
-  /// [en] Move the ADC trigger inside the switching period, 0..1. [zh]
-  /// 把 ADC 触发点在开关周期内移动，0..1。
+  /**
+   * @brief [en] Move the ADC trigger inside the switching period, 0..1.
+   * @brief [zh] 把 ADC 触发点在开关周期内移动，0..1。
+   */
   void set_sample_delay(float fraction) {
     sample_fraction_ = (fraction < 0.0F) ? 0.0F : ((fraction > 1.0F) ? 1.0F : fraction);
   }
@@ -367,12 +372,11 @@ auto self_test_config() -> core::BoardSelfTest::Config {
   return config;
 }
 
-/// [en] The numbers that need the rotor to turn, supplied by the caller: the
-/// spin test and the aligner produce them, and this test is about the
-/// standstill half.
-///      [zh]
-///      需要转子转起来才能得到的数，由调用方提供：旋转测试与对齐器产出它们，而本测试的对象是堵转
-///      半边。
+/**
+ * @brief [en] The numbers that need the rotor to turn, supplied by the caller: the spin test and the aligner produce
+ *             them, and this test is about the standstill half.
+ * @brief [zh] 需要转子转起来才能得到的数，由调用方提供：旋转测试与对齐器产出它们，而本测试的对象是堵转半边。
+ */
 auto spinning_truth() -> core::BoardMeasurements {
   core::BoardMeasurements m{};
   const float psi = sil::nominal_spec().kt /

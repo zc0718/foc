@@ -170,17 +170,23 @@ template <typename Modulator> class DeadTimeCompensator final {
         return Modulator::modulate(forwarded);
     }
 
-    /// [en] The configuration in force. [zh] 当前生效的配置。
+    /**
+     * @brief [en] The configuration in force.
+     * @brief [zh] 当前生效的配置。
+     */
     [[nodiscard]] auto config() const noexcept -> const Config& { return config_; }
 
-    /// [en] Change the configuration (dead time belongs to the board, so it is a
-    /// boot-time value).
-    ///      [zh] 修改配置（死区属于板子，因此是启动期取值）。
+    /**
+     * @brief [en] Change the configuration (dead time belongs to the board, so it is a boot-time value).
+     * @brief [zh] 修改配置（死区属于板子，因此是启动期取值）。
+     */
     void configure(const Config& config) noexcept { config_ = config; }
 
   private:
-    /// [en] +1 / -1 by sign, 0 inside the dead band. [zh] 按符号取 ±1，死区内取
-    /// 0。
+    /**
+     * @brief [en] +1 / -1 by sign, 0 inside the dead band.
+     * @brief [zh] 按符号取 ±1，死区内取 0。
+     */
     [[nodiscard]] static auto sign_of(float value, float deadband) noexcept -> float {
         if (!(value > deadband)) {
             if (!(value < -deadband)) {
@@ -191,8 +197,10 @@ template <typename Modulator> class DeadTimeCompensator final {
         return 1.0F;
     }
 
-    /// [en] The ramp when a fade width is known, the legacy step when it is not.
-    /// [zh] 知道淡出宽度时用斜坡， 不知道时用旧的阶跃。
+    /**
+     * @brief [en] The ramp when a fade width is known, the legacy step when it is not.
+     * @brief [zh] 知道淡出宽度时用斜坡， 不知道时用旧的阶跃。
+     */
     [[nodiscard]] static auto shape_of(float value, float scale, float fade) noexcept -> float {
         if (!(fade > 0.0F)) {
             return sign_of(value, scale);
@@ -302,12 +310,16 @@ class DeadTimeFadeEstimator final {
         bool valid;
     };
 
-    /// [en] Candidate widths, log-spaced over four decades. [zh]
-    /// 候选宽度，跨四个数量级对数分布。
+    /**
+     * @brief [en] Candidate widths, log-spaced over four decades.
+     * @brief [zh] 候选宽度，跨四个数量级对数分布。
+     */
     static constexpr int kCandidates = 25;
 
-    /// [en] Fewer usable samples than this is not an identification. [zh]
-    /// 可用样本少于这个数就不算辨识。
+    /**
+     * @brief [en] Fewer usable samples than this is not an identification.
+     * @brief [zh] 可用样本少于这个数就不算辨识。
+     */
     static constexpr int kMinSamples = 8;
 
     explicit DeadTimeFadeEstimator(const Config& config) noexcept : config_(config) {}
@@ -353,7 +365,10 @@ class DeadTimeFadeEstimator final {
         return true;
     }
 
-    /// [en] Samples that were actually used. [zh] 实际采用的样本数。
+    /**
+     * @brief [en] Samples that were actually used.
+     * @brief [zh] 实际采用的样本数。
+     */
     [[nodiscard]] auto samples() const noexcept -> int { return samples_; }
 
     /**
@@ -415,18 +430,21 @@ class DeadTimeFadeEstimator final {
         return (config_.deadtime_v > 0.0F) && (config_.rs > 0.0F) && std::isfinite(config_.rs);
     }
 
-    /// [en] Candidate `k`, log-spaced. [zh] 第 `k` 个候选，对数分布。
+    /**
+     * @brief [en] Candidate `k`, log-spaced.
+     * @brief [zh] 第 `k` 个候选，对数分布。
+     */
     [[nodiscard]] static auto candidate(int index) noexcept -> float {
         const float fraction = static_cast<float>(index) / static_cast<float>(kCandidates - 1);
         return static_cast<float>(kMinFadeA * std::pow(10.0F, fraction * kDecades));
     }
 
-    /// [en] The dead-time loss seen by a *rotating* current of amplitude `i_mag`:
-    /// the fundamental of
-    ///      `deadtime_v*sign(i)` is `(4/pi)*deadtime_v` along the current, faded
-    ///      by `clamp(i_mag/i_fade)`. [zh] **旋转**电流（幅值
-    ///      `i_mag`）看到的死区损失：`deadtime_v·sign(i)` 的基波是沿电流方向的
-    ///      `(4/π)·deadtime_v`，再乘上 `clamp(i_mag/i_fade)` 的淡出。
+    /**
+     * @brief [en] The dead-time loss seen by a *rotating* current of amplitude `i_mag`: the fundamental of
+     *             `deadtime_v*sign(i)` is `(4/pi)*deadtime_v` along the current, faded by `clamp(i_mag/i_fade)`.
+     * @brief [zh] **旋转**电流（幅值 `i_mag`）看到的死区损失：`deadtime_v·sign(i)` 的基波是沿电流方向的
+     *             `(4/π)·deadtime_v`，再乘上 `clamp(i_mag/i_fade)` 的淡出。
+     */
     [[nodiscard]] static auto loss_magnitude(float i_mag, float fade, float deadtime_v) noexcept -> float {
         if (!(fade > 0.0F)) {
             return 0.0F;
@@ -444,8 +462,10 @@ class DeadTimeFadeEstimator final {
         return value;
     }
 
-    /// [en] The grid: 0.5 mA to 5 A, four decades, 25 points. [zh] 网格：0.5 mA
-    /// 到 5 A，四个数量级，25 点。
+    /**
+     * @brief [en] The grid: 0.5 mA to 5 A, four decades, 25 points.
+     * @brief [zh] 网格：0.5 mA 到 5 A，四个数量级，25 点。
+     */
     static constexpr float kMinFadeA = 5.0e-4F;
     static constexpr float kDecades = 4.0F;
     static constexpr float kMaxResidualFraction = 0.25F;

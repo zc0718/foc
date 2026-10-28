@@ -138,8 +138,7 @@ class PmsmPlant final {
     /**
      * @brief [en] q-axis saturation: a fraction of `Lq` lost as `i_q` grows.
      * @brief [zh] q 轴饱和：随 `i_q` 增大损失的 `Lq` 比例。
-     * @param [en] [in] depth fraction lost at large `i_q`, 0 = ideal. [in] current_a current at which that loss is
-     *             engaged.
+     * @param [en] [in] depth fraction lost at large `i_q`, 0 = ideal. [in] current_a current at which that loss is engaged.
      * @param [zh] 大 `i_q` 下的损失比例，0 = 理想。 该损失生效的电流。
      * @note [en] Separate from the d-axis knob because the two are physically different: d-axis saturation bites the
      *            *uphill* direction of the magnet, q-axis saturation bites the flux produced by the stator. A model
@@ -150,7 +149,10 @@ class PmsmPlant final {
      */
     void set_q_axis_saturation(float depth, float current_a) noexcept;
 
-    /// [en] The incremental q-axis inductance at `i_q`: H. [zh] `i_q` 处的增量 q 轴电感：H。
+    /**
+     * @brief [en] The incremental q-axis inductance at `i_q`: H.
+     * @brief [zh] `i_q` 处的增量 q 轴电感：H。
+     */
     [[nodiscard]] auto effective_lq(float iq_a) const noexcept -> float;
 
     /**
@@ -167,10 +169,16 @@ class PmsmPlant final {
      */
     void set_iron_loss(float rm_ohm) noexcept;
 
-    /// [en] The current that actually produces torque, A. [zh] 真正产生转矩的电流，A。
+    /**
+     * @brief [en] The current that actually produces torque, A.
+     * @brief [zh] 真正产生转矩的电流，A。
+     */
     [[nodiscard]] auto magnetizing_current_dq() const noexcept -> core::Dq<float>;
 
-    /// [en] The current the shunt resistance diverts, A. [zh] 被并联电阻分走的电流，A。
+    /**
+     * @brief [en] The current the shunt resistance diverts, A.
+     * @brief [zh] 被并联电阻分走的电流，A。
+     */
     [[nodiscard]] auto core_loss_current_dq() const noexcept -> core::Dq<float>;
 
     /**
@@ -269,7 +277,10 @@ class PmsmPlant final {
      */
     [[nodiscard]] auto psi_f_wb() const noexcept -> float;
 
-    /// [en] Nameplate parameters of this plant. [zh] 本 plant 的铭牌参数。
+    /**
+     * @brief [en] Nameplate parameters of this plant.
+     * @brief [zh] 本 plant 的铭牌参数。
+     */
     [[nodiscard]] auto params() const noexcept -> const PlantParams&;
 
   private:

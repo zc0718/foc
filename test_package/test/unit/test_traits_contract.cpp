@@ -78,8 +78,10 @@ class FakeClock final : public foc::hal::Clock {
     std::uint64_t ticks{0};
 };
 
-/// [en] HalPolicy shapes for the optional-clock detection.
-/// [zh] 用于可选时钟检测的 HalPolicy 形状。
+/**
+ * @brief [en] HalPolicy shapes for the optional-clock detection.
+ * @brief [zh] 用于可选时钟检测的 HalPolicy 形状。
+ */
 struct ClockCarrier final {
     FakeClock clock;
 };
@@ -92,13 +94,17 @@ struct WrongClockCarrier final {
     int clock{0};
 };
 
-/// Deliberately incomplete: missing write_duty/enable/disable/fault.
+/**
+ * @brief Deliberately incomplete: missing write_duty/enable/disable/fault.
+ */
 class BrokenPwm {
   public:
     auto configure(float, float) noexcept -> foc::ErrorCode { return foc::ErrorCode::Ok; }
 };
 
-/// Conforming observer, and one that returns the wrong type.
+/**
+ * @brief Conforming observer, and one that returns the wrong type.
+ */
 class FakeObserver {
   public:
     auto update(foc::core::Ab<float>, foc::core::Ab<float>, float) noexcept -> foc::core::ObsState {
@@ -111,7 +117,9 @@ class WrongReturnObserver {
     auto update(foc::core::Ab<float>, foc::core::Ab<float>, float) noexcept -> float { return 0.0F; }
 };
 
-/// Conforming reference generator, and one that returns the wrong type.
+/**
+ * @brief Conforming reference generator, and one that returns the wrong type.
+ */
 class FakeReference {
   public:
     auto generate(const foc::core::ReferenceInput& in) noexcept -> foc::core::Dq<float> {
@@ -124,7 +132,9 @@ class WrongReference {
     auto generate(const foc::core::ReferenceInput&) noexcept -> float { return 0.0F; }
 };
 
-/// Conforming feedforward, and one that returns the wrong type.
+/**
+ * @brief Conforming feedforward, and one that returns the wrong type.
+ */
 class FakeFeedforward {
   public:
     auto generate(const foc::core::FeedforwardInput&) noexcept -> foc::core::Dq<float> {

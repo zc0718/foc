@@ -131,15 +131,18 @@ class MtpaReference final {
         float lq;      ///< [en] q-axis inductance, H. [zh] q 轴电感，H。
         float psi_f;   ///< [en] rotor flux linkage, Wb. [zh] 转子磁链，Wb。
         float i_max_a; ///< [en] per-axis current limit, A. [zh] 每轴电流限幅，A。
-        /// [en] How much d-axis current this machine may use per rad/s of electrical speed, A/(rad/s).
-        /// Defaults to 0, which refuses d-axis current outright: that is the only value that is safe with no
-        /// statement about how the angle is measured. Measured on the nominal machine, the published 0.15 rad ceiling
-        /// holds up to `|i_d| = 0.04 A` at 100 rad/s, 0.12 A at 200, 0.29 A at 400 and 0.92 A at 800, so 3.5e-4 is a
-        /// rate that is safe across that range; a machine with a position sensor can pass any large value.
-        /// [zh] 这台机器每 rad/s 电角速度允许用多少 d 轴电流，A/(rad/s)。默认 0，即完全不施加 d 轴电流：在对角度怎么
-        /// 测没有任何陈述时，零是唯一安全的值。标称机上实测，公开的 0.15 rad 天花板在 100 rad/s 时允许 `|i_d| =
-        /// 0.04 A`、200 时 0.12 A、400 时 0.29 A、800 时 0.92 A，所以 3.5e-4 是在这一段上都安全的比率；带位置
-        /// 传感器的机器可以传任意大值。
+        /**
+         * @brief [en] How much d-axis current this machine may use per rad/s of electrical speed, A/(rad/s). Defaults
+         *             to 0, which refuses d-axis current outright: that is the only value that is safe with no
+         *             statement about how the angle is measured. Measured on the nominal machine, the published 0.15
+         *             rad ceiling holds up to `|i_d| = 0.04 A` at 100 rad/s, 0.12 A at 200, 0.29 A at 400 and 0.92 A at
+         *             800, so 3.5e-4 is a rate that is safe across that range; a machine with a position sensor can
+         *             pass any large value.
+         * @brief [zh] 这台机器每 rad/s 电角速度允许用多少 d 轴电流，A/(rad/s)。默认 0，即完全不施加 d 轴电流：在对角度
+         *             怎么测没有任何陈述时，零是唯一安全的值。标称机上实测，公开的 0.15 rad 天花板在 100 rad/s 时允许
+         *             `|i_d| = 0.04 A`、200 时 0.12 A、400 时 0.29 A、800 时 0.92 A，所以 3.5e-4 是在这一段上都安全的比
+         *             率；带位置传感器的机器可以传任意大值。
+         */
         float i_d_per_speed_a_s_per_rad{0.0F};
     };
 
@@ -147,7 +150,10 @@ class MtpaReference final {
 
     explicit MtpaReference(const Config& config) noexcept : config_(config) {}
 
-    /// [en] Swap in a new machine without reconstructing. [zh] 不必重建就能换机器。
+    /**
+     * @brief [en] Swap in a new machine without reconstructing.
+     * @brief [zh] 不必重建就能换机器。
+     */
     void set_config(const Config& config) noexcept { config_ = config; }
 
     /**
@@ -220,16 +226,25 @@ class MtpaReference final {
         return rate * std::fabs(omega_e_rad_s);
     }
 
-    /// [en] The config in force. [zh] 当前配置。
+    /**
+     * @brief [en] The config in force.
+     * @brief [zh] 当前配置。
+     */
     [[nodiscard]] auto config() const noexcept -> const Config& { return config_; }
 
   private:
-    /// [en] `d` held inside `[-allowance, 0]`. [zh] 把 `d` 夹在 `[-allowance, 0]` 内。
+    /**
+     * @brief [en] `d` held inside `[-allowance, 0]`.
+     * @brief [zh] 把 `d` 夹在 `[-allowance, 0]` 内。
+     */
     [[nodiscard]] static auto clipped(float d, float allowance) noexcept -> float {
         return (d < -allowance) ? -allowance : d;
     }
 
-    /// [en] `i_d` on the MTPA curve at `|i_q|`, A. [zh] MTPA 曲线上 `|i_q|` 处的 `i_d`，A。
+    /**
+     * @brief [en] `i_d` on the MTPA curve at `|i_q|`, A.
+     * @brief [zh] MTPA 曲线上 `|i_q|` 处的 `i_d`，A。
+     */
     [[nodiscard]] auto d_axis(float iq_abs) const noexcept -> float {
         const float saliency = config_.lq - config_.ld;
         if (!(std::fabs(saliency) > 1.0e-9F)) {
@@ -243,7 +258,10 @@ class MtpaReference final {
         return (config_.psi_f - root) / (4.0F * saliency);
     }
 
-    /// [en] `|(i_d, i_q)|` on the curve, A. [zh] 曲线上 `|(i_d, i_q)|`，A。
+    /**
+     * @brief [en] `|(i_d, i_q)|` on the curve, A.
+     * @brief [zh] 曲线上 `|(i_d, i_q)|`，A。
+     */
     [[nodiscard]] auto magnitude(float iq_abs) const noexcept -> float {
         const float d = d_axis(iq_abs);
         return std::sqrt((d * d) + (iq_abs * iq_abs));

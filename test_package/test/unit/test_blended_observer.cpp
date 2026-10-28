@@ -39,7 +39,10 @@ struct FakeObserver final {
 
 using Blend = foc::core::BlendedObserver<FakeObserver, FakeObserver>;
 
-/// [en] Wraps to (-pi, pi]. [zh] 归一化到 (-π, π]。
+/**
+ * @brief [en] Wraps to (-pi, pi].
+ * @brief [zh] 归一化到 (-π, π]。
+ */
 auto wrap_to_pi(float angle) noexcept -> float {
     while (angle <= -foc::core::kPi<float>) {
         angle += foc::core::kTwoPi<float>;
@@ -54,8 +57,10 @@ auto make_blend(float start, float end, float lpf = 20.0F) -> Blend {
     return Blend(FakeObserver{}, FakeObserver{}, Blend::Config{start, end, lpf});
 }
 
-/// [en] Drives the blend for a while at a constant high-speed reading, leaving the angles the caller
-///      set alone. [zh] 以恒定高速读数驱动混合一段时间，不动调用方设定的角度。
+/**
+ * @brief [en] Drives the blend for a while at a constant high-speed reading, leaving the angles the caller set alone.
+ * @brief [zh] 以恒定高速读数驱动混合一段时间，不动调用方设定的角度。
+ */
 void settle(Blend& blend, float high_speed, int steps = 4000) {
     blend.high().answer.omega_e = high_speed;
     for (int i = 0; i < steps; ++i) {

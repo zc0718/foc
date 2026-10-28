@@ -30,7 +30,9 @@ constexpr float kLoadTorqueNm = 8e-3F;
 using MotorT = foc::motor::Motor<foc::core::BackEmfObserver, foc::core::Svpwm, foc::core::Pi, foc::sil::PlantHal,
                                  foc::core::NullReferenceGenerator, foc::core::NullFeedforward, foc::core::PositionP>;
 
-/// Settle on the target, then apply a load torque, and report how far the rotor gave way.
+/**
+ * @brief Settle on the target, then apply a load torque, and report how far the rotor gave way.
+ */
 auto sag_under_load(float kp_scale, float ilimit_scale) -> float {
     const foc::motor::MotorConfig mc = foc::sil::nominal_motor_config();
     foc::sil::PmsmPlant plant(foc::sil::plant_params_from(foc::sil::nominal_spec()));

@@ -14,7 +14,9 @@ constexpr std::uint8_t kAlign = 1U;
 constexpr std::uint8_t kRun = 2U;
 constexpr std::uint8_t kFault = 3U;
 
-/// kLegal[from][to]; Fault -> Idle is deliberately absent (clear_fault() owns that edge).
+/**
+ * @brief kLegal[from][to]; Fault -> Idle is deliberately absent (clear_fault() owns that edge).
+ */
 constexpr bool kLegal[kStateCount][kStateCount] = {
     /* Idle  -> */ {false, true, false, true},
     /* Align -> */ {true, false, true, true},

@@ -102,23 +102,35 @@ struct AlignOutput final {
  */
 class NullAlignment final {
   public:
-    /// [en] Nothing to configure. [zh] 无需配置。
+    /**
+     * @brief [en] Nothing to configure.
+     * @brief [zh] 无需配置。
+     */
     [[nodiscard]] auto validate() const noexcept -> ErrorCode { return ErrorCode::Ok; }
 
-    /// [en] No sequence: the caller goes straight to closed loop. [zh] 无流程：直接进闭环。
+    /**
+     * @brief [en] No sequence: the caller goes straight to closed loop.
+     * @brief [zh] 无流程：直接进闭环。
+     */
     auto begin(std::uint32_t pole_pairs) noexcept -> bool {
         static_cast<void>(pole_pairs);
         return false;
     }
 
-    /// [en] Zero current at electrical zero; never finished, never failed. [zh] 零电流、电角度 0；永不完成也永不失败。
+    /**
+     * @brief [en] Zero current at electrical zero; never finished, never failed.
+     * @brief [zh] 零电流、电角度 0；永不完成也永不失败。
+     */
     [[nodiscard]] auto step(float dt_s, float angle_mech_rad) noexcept -> AlignOutput {
         static_cast<void>(dt_s);
         static_cast<void>(angle_mech_rad);
         return AlignOutput{0.0F, 0.0F, false, false};
     }
 
-    /// [en] Nothing to reset. [zh] 无状态可复位。
+    /**
+     * @brief [en] Nothing to reset.
+     * @brief [zh] 无状态可复位。
+     */
     void reset() noexcept {}
 };
 
@@ -163,20 +175,34 @@ class NullAlignment final {
  */
 class AlignRoutine final {
   public:
-    /// [en] Idle, unconfigured: validate() answers Param until set_config() gives real numbers. [zh] 空闲未配置：在 set_config() 给出真实数字之前 validate() 返回 Param。
+    /**
+     * @brief [en] Idle, unconfigured: validate() answers Param until set_config() gives real numbers.
+     * @brief [zh] 空闲未配置：在 set_config() 给出真实数字之前 validate() 返回 Param。
+     */
     AlignRoutine() noexcept = default;
 
-    /// [en] Idle with a recipe. [zh] 带配方的空闲实例。
+    /**
+     * @brief [en] Idle with a recipe.
+     * @brief [zh] 带配方的空闲实例。
+     */
     explicit AlignRoutine(AlignConfig config) noexcept;
 
-    /// [en] Replace the recipe (only meaningful before begin()). [zh] 替换配方（只在 begin() 之前有意义）。
+    /**
+     * @brief [en] Replace the recipe (only meaningful before begin()).
+     * @brief [zh] 替换配方（只在 begin() 之前有意义）。
+     */
     void set_config(AlignConfig config) noexcept;
 
-    /// [en] The recipe in force. [zh] 当前生效的配方。
+    /**
+     * @brief [en] The recipe in force.
+     * @brief [zh] 当前生效的配方。
+     */
     [[nodiscard]] auto config() const noexcept -> const AlignConfig&;
 
-    /// [en] Ok when the recipe is usable, NotImpl when alignment was never requested, Param otherwise.
-    /// [zh] 配方可用返回 Ok，从未请求对齐返回 NotImpl，其余情况返回 Param。
+    /**
+     * @brief [en] Ok when the recipe is usable, NotImpl when alignment was never requested, Param otherwise.
+     * @brief [zh] 配方可用返回 Ok，从未请求对齐返回 NotImpl，其余情况返回 Param。
+     */
     [[nodiscard]] auto validate() const noexcept -> ErrorCode;
 
     /**
@@ -208,19 +234,34 @@ class AlignRoutine final {
      */
     [[nodiscard]] auto step(float dt_s, float angle_mech_rad) noexcept -> AlignOutput;
 
-    /// [en] Back to Idle, result cleared. [zh] 回到 Idle 并清空结果。
+    /**
+     * @brief [en] Back to Idle, result cleared.
+     * @brief [zh] 回到 Idle 并清空结果。
+     */
     void reset() noexcept;
 
-    /// [en] Current phase. [zh] 当前阶段。
+    /**
+     * @brief [en] Current phase.
+     * @brief [zh] 当前阶段。
+     */
     [[nodiscard]] auto state() const noexcept -> AlignState;
 
-    /// [en] Last failure reason. [zh] 最近一次失败原因。
+    /**
+     * @brief [en] Last failure reason.
+     * @brief [zh] 最近一次失败原因。
+     */
     [[nodiscard]] auto failure() const noexcept -> AlignFailure;
 
-    /// [en] Captured mechanical offset, rad in [0, 2*pi); valid once Done. [zh] 捕获到的机械偏置，rad，[0, 2π)；Done 后有效。
+    /**
+     * @brief [en] Captured mechanical offset, rad in [0, 2*pi); valid once Done.
+     * @brief [zh] 捕获到的机械偏置，rad，[0, 2π)；Done 后有效。
+     */
     [[nodiscard]] auto offset_mech_rad() const noexcept -> float;
 
-    /// [en] Spread of the accepted capture, rad. [zh] 被接受捕获的离散度，rad。
+    /**
+     * @brief [en] Spread of the accepted capture, rad.
+     * @brief [zh] 被接受捕获的离散度，rad。
+     */
     [[nodiscard]] auto spread_rad() const noexcept -> float;
 
   private:

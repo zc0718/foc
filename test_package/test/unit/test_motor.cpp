@@ -36,7 +36,9 @@ auto make_policies() -> Motor::Policies {
                            foc::core::Pi{current}, foc::core::Pi{speed}};
 }
 
-/// Sensored standstill rig: unknown angles never enter the picture, so the expected duties are exact.
+/**
+ * @brief Sensored standstill rig: unknown angles never enter the picture, so the expected duties are exact.
+ */
 auto make_hal(foc::driver::StubHal& hal) -> void {
     hal.dc_link.set_voltage_v(kVBus);
     hal.position.set_sensor_present(true);
@@ -202,8 +204,10 @@ TEST(Motor, SensorlessRunUsesTheObserverAndSeedsItOnStart) {
 
 namespace {
 
-/// [en] A reference generator that sets the d axis itself and records what the motor handed it.
-/// [zh] 自行给出 d 轴、并记录电机交给它的输入的参考生成器。
+/**
+ * @brief [en] A reference generator that sets the d axis itself and records what the motor handed it.
+ * @brief [zh] 自行给出 d 轴、并记录电机交给它的输入的参考生成器。
+ */
 class FixedIdReference final {
   public:
     auto generate(const foc::core::ReferenceInput& in) noexcept -> foc::core::Dq<float> {
@@ -391,8 +395,10 @@ using MotorWithFeedforward =
     foc::motor::Motor<foc::core::BackEmfObserver, foc::core::Svpwm, foc::core::Pi, foc::driver::StubHal,
                       foc::core::NullReferenceGenerator, foc::core::DecouplingFeedforward>;
 
-/// [en] Zero-gain PI, so whatever reaches the modulator is the feedforward alone.
-/// [zh] 零增益 PI，于是送到调制器的只有前馈项。
+/**
+ * @brief [en] Zero-gain PI, so whatever reaches the modulator is the feedforward alone.
+ * @brief [zh] 零增益 PI，于是送到调制器的只有前馈项。
+ */
 auto make_zero_gain_policies(const foc::motor::MotorConfig& config,
                              foc::core::DecouplingFeedforward::Terms terms) -> MotorWithFeedforward::Policies {
     const foc::core::Pi::Config zero{0.0F, 0.0F, -24.0F, 24.0F, -24.0F, 24.0F};
@@ -404,8 +410,10 @@ auto make_zero_gain_policies(const foc::motor::MotorConfig& config,
                                           foc::core::DecouplingFeedforward{ff}};
 }
 
-/// [en] Load a current vector whose dq image at theta = 0 is exactly (id, iq).
-/// [zh] 载入一个电流矢量：theta = 0 时它的 dq 像正好是 (id, iq)。
+/**
+ * @brief [en] Load a current vector whose dq image at theta = 0 is exactly (id, iq).
+ * @brief [zh] 载入一个电流矢量：theta = 0 时它的 dq 像正好是 (id, iq)。
+ */
 auto load_dq_current(foc::driver::StubHal& hal, float id_a, float iq_a) -> void {
     const foc::core::Uvw<float> i_uvw = foc::core::inv_clarke(foc::core::Ab<float>{id_a, iq_a});
     ASSERT_EQ(foc::ErrorCode::Ok, hal.current_sense.load(&i_uvw, 1U));
@@ -491,8 +499,10 @@ TEST(Motor, EachFeedforwardTermCanBeSelectedOnItsOwn) {
 
 namespace {
 
-/// [en] Run a constant speed error for `ticks` ticks and return the duty the speed loop produced.
-/// [zh] 用恒定速度误差跑 `ticks` 个 tick，返回速度环产生的占空比。
+/**
+ * @brief [en] Run a constant speed error for `ticks` ticks and return the duty the speed loop produced.
+ * @brief [zh] 用恒定速度误差跑 `ticks` 个 tick，返回速度环产生的占空比。
+ */
 auto duty_after_speed_error(float speed_loop_period_s, int ticks) -> foc::core::Uvw<float> {
     foc::driver::StubHal hal;
     make_hal(hal); // measured speed 0, so a 100 rad/s reference is a constant 100 rad/s error
@@ -555,8 +565,10 @@ TEST(Motor, SpeedLoopPeriodMustNotBeNegative) {
 
 namespace {
 
-/// [en] A HalPolicy that also answers "what time is it", which is what enables the overrun metric.
-/// [zh] 额外能回答“现在几点”的 HalPolicy；过载指标就是靠它才启用。
+/**
+ * @brief [en] A HalPolicy that also answers "what time is it", which is what enables the overrun metric.
+ * @brief [zh] 额外能回答“现在几点”的 HalPolicy；过载指标就是靠它才启用。
+ */
 class StepClock final {
   public:
     auto now_us() noexcept -> std::uint64_t { return now_us_; }
@@ -644,8 +656,10 @@ using MotorWithPosition =
     foc::motor::Motor<foc::core::BackEmfObserver, foc::core::Svpwm, foc::core::Pi, foc::driver::StubHal,
                       foc::core::NullReferenceGenerator, foc::core::NullFeedforward, foc::core::PositionP>;
 
-/// [en] Plain proportional current/speed loops, so the duties show the position loop's arithmetic.
-/// [zh] 纯比例的电流/速度环，于是占空比直接反映位置环的算术。
+/**
+ * @brief [en] Plain proportional current/speed loops, so the duties show the position loop's arithmetic.
+ * @brief [zh] 纯比例的电流/速度环，于是占空比直接反映位置环的算术。
+ */
 auto make_position_policies(float position_kp, float velocity_limit_rad_s) -> MotorWithPosition::Policies {
     const foc::core::Pi::Config current{1.0F, 0.0F, -24.0F, 24.0F, -24.0F, 24.0F};
     const foc::core::Pi::Config speed{1.0F, 0.0F, -5.0F, 5.0F, -5.0F, 5.0F};
@@ -922,8 +936,10 @@ TEST(Motor, AnInvalidRecipeIsRejectedBeforeTheInverterIsEnabled) {
 
 namespace {
 
-/// [en] A pre-scaling controller: three arguments, no notion of gain scaling.
-/// [zh] 缩放之前的控制器：三个参数，不认识增益缩放。
+/**
+ * @brief [en] A pre-scaling controller: three arguments, no notion of gain scaling.
+ * @brief [zh] 缩放之前的控制器：三个参数，不认识增益缩放。
+ */
 class PlainController final {
   public:
     [[nodiscard]] auto step(float setpoint, float feedback, float /*dt_s*/) noexcept -> float {

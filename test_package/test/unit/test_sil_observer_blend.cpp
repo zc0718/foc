@@ -147,8 +147,10 @@ public:
     return core::clarke(plant_.current_uvw());
   }
 
-  /// [en] The voltage the loop asks for, in the stationary frame. [zh]
-  /// 电流环请求的电压，静止系。
+  /**
+   * @brief [en] The voltage the loop asks for, in the stationary frame.
+   * @brief [zh] 电流环请求的电压，静止系。
+   */
   [[nodiscard]] auto loop_voltage_ab() const noexcept -> core::Ab<float> {
     return core::inv_park(core::Dq<float>{vd_, vq_}, true_angle_e());
   }
@@ -163,12 +165,12 @@ public:
 
   [[nodiscard]] auto omega_e() const noexcept -> float { return omega_e_; }
 
-  /// [en] Change speed without moving the rotor: the flux is continuous across
-  /// a speed step, so this
-  ///      is a legitimate (if abrupt) trajectory and not a teleport of the
-  ///      machine state. [zh]
-  ///      在不动转子的前提下改转速：磁链在转速阶跃处是连续的，因此这是一条合法（虽然突然）的轨迹，
-  ///      而不是把机器状态瞬移。
+  /**
+   * @brief [en] Change speed without moving the rotor: the flux is continuous across a speed step, so this is a
+   *             legitimate (if abrupt) trajectory and not a teleport of the machine state.
+   * @brief [zh] 在不动转子的前提下改转速：磁链在转速阶跃处是连续的，因此这是一条合法（虽然突然）的轨迹，而不是把机器状
+   *             态瞬移。
+   */
   void set_speed(float omega_e) noexcept {
     omega_e_ = omega_e;
     const sil::PlantState now = plant_.state();

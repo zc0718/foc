@@ -33,8 +33,11 @@ constexpr float kDt = 5e-5F;
 constexpr int kSubsteps = 8;
 constexpr float kIq = 0.5F;
 
-/// [en] Copper's temperature coefficient: 0.393 %/K, the value that makes a 120 K rise a 47 % change
-///      in resistance. [zh] 铜的温度系数：0.393 %/K，于是 120 K 升温带来 47% 的电阻变化。
+/**
+ * @brief [en] Copper's temperature coefficient: 0.393 %/K, the value that makes a 120 K rise a 47 % change in
+ *             resistance.
+ * @brief [zh] 铜的温度系数：0.393 %/K，于是 120 K 升温带来 47% 的电阻变化。
+ */
 constexpr float kCopperAlpha = 3.93e-3F;
 
 auto plant_params() -> sil::PlantParams {
@@ -73,10 +76,12 @@ class FluxRig final {
 
     [[nodiscard]] auto plant() noexcept -> sil::PmsmPlant& { return plant_; }
 
-    /// [en] Heat the winding AND re-solve the steady-state voltage for it. Without the second half, heating
-    ///      would quietly move the operating point (iq sags) and the test would be measuring the wrong thing.
-    ///      [zh] 加热绕组，并**为它重解**稳态电压。少了后半句，升温会悄悄把工作点挪走（iq 塌下去），
-    ///      测试量到的就是另一回事了。
+    /**
+     * @brief [en] Heat the winding AND re-solve the steady-state voltage for it. Without the second half, heating would
+     *             quietly move the operating point (iq sags) and the test would be measuring the wrong thing.
+     * @brief [zh] 加热绕组，并**为它重解**稳态电压。少了后半句，升温会悄悄把工作点挪走（iq 塌下去），测试量到的就是另一
+     *             回事了。
+     */
     void set_temperature(float temperature_c, float alpha_per_k) noexcept {
         plant_.set_winding_temperature(temperature_c, alpha_per_k);
         const float rs = plant_.effective_rs();
@@ -118,8 +123,10 @@ class FluxRig final {
     core::Ab<float> last_voltage_{0.0F, 0.0F};
 };
 
-/// [en] Mean absolute angle error of the flux observer over the second half of a run.
-///      [zh] 磁链观测器在后半段的角度误差绝对均值。
+/**
+ * @brief [en] Mean absolute angle error of the flux observer over the second half of a run.
+ * @brief [zh] 磁链观测器在后半段的角度误差绝对均值。
+ */
 auto flux_angle_error(FluxRig& rig, float belief_scale, float seconds) -> float {
     core::BackEmfObserver observer(core::BackEmfObserver::Config{belief_scale * kRs, kLq});
     observer.seed_flux(core::Ab<float>{rig.psi_f(), 0.0F});

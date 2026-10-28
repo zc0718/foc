@@ -68,7 +68,10 @@ auto load_csv(const std::string& path) -> std::vector<Row> {
 
 
 
-/// [en] Largest absolute value of a channel. [zh] 通道绝对值的最大值。
+/**
+ * @brief [en] Largest absolute value of a channel.
+ * @brief [zh] 通道绝对值的最大值。
+ */
 auto peak_of(const std::vector<float>& y) -> float {
     float peak = 0.0F;
     for (const float v : y) {
@@ -80,8 +83,10 @@ auto peak_of(const std::vector<float>& y) -> float {
 
 
 
-/// [en] Normalised root-mean-square deviation: RMS(error) / scale.
-/// [zh] 归一化均方根偏差：RMS(误差) / 归一化尺度。
+/**
+ * @brief [en] Normalised root-mean-square deviation: RMS(error) / scale.
+ * @brief [zh] 归一化均方根偏差：RMS(误差) / 归一化尺度。
+ */
 auto normalised_rmse(const std::vector<float>& actual, const std::vector<float>& reference, float scale) -> float {
     if (actual.size() != reference.size() || actual.empty() || !(scale > 0.0F)) {
         return 1e9F;

@@ -45,9 +45,11 @@ constexpr float kSatCurrentA = 0.6F;
 
 auto plant_params() -> sil::PlantParams { return sil::PlantParams{kRs, kLd, kLq, kKt, kJ, kB, kPoles}; }
 
-/// [en] The same machine with its d-axis inductance collapsing under positive current: the property
-///      that makes the magnet polarity observable at all.
-///      [zh] 同一台电机，但 d 轴电感在正电流下塌陷——正是这条性质让磁钢极性变得可观测。
+/**
+ * @brief [en] The same machine with its d-axis inductance collapsing under positive current: the property that makes
+ *             the magnet polarity observable at all.
+ * @brief [zh] 同一台电机，但 d 轴电感在正电流下塌陷——正是这条性质让磁钢极性变得可观测。
+ */
 auto saturating_plant(float theta_e_true) -> sil::PmsmPlant {
     sil::PmsmPlant plant(plant_params());
     plant.set_d_axis_saturation(kSatDepth, kSatCurrentA);
@@ -78,9 +80,11 @@ auto hfi_config() -> core::HfiObserver::Config {
     return config;
 }
 
-/// [en] 1 V for 0.4 ms is 4e-4 V*s, about 2 A of rise into 2e-4 H: big enough to engage saturation,
-///      short enough that the rotor does not notice.
-///      [zh] 1 V 持续 0.4 ms 是 4e-4 V·s，灌进 2e-4 H 约抬升 2 A：大到足以触发饱和，短到转子察觉不到。
+/**
+ * @brief [en] 1 V for 0.4 ms is 4e-4 V*s, about 2 A of rise into 2e-4 H: big enough to engage saturation, short enough
+ *             that the rotor does not notice.
+ * @brief [zh] 1 V 持续 0.4 ms 是 4e-4 V·s，灌进 2e-4 H 约抬升 2 A：大到足以触发饱和，短到转子察觉不到。
+ */
 auto polarity_config() -> core::MagnetPolarityTest::Config {
     return core::MagnetPolarityTest::Config{1.0F, 4e-4F, 5e-3F, 0.02F};
 }
@@ -120,7 +124,10 @@ struct Commissioning final {
 
     [[nodiscard]] auto error_rad() const noexcept -> float { return wrap_pi_local(estimate() - true_angle()); }
 
-    /// [en] Phase 1: let the saliency loop find the d-axis line. [zh] 第一阶段：让凸极环找到 d 轴线。
+    /**
+     * @brief [en] Phase 1: let the saliency loop find the d-axis line.
+     * @brief [zh] 第一阶段：让凸极环找到 d 轴线。
+     */
     void converge(float seconds) noexcept {
         const int steps = static_cast<int>((seconds / kDt) + 0.5F);
         for (int i = 0; i < steps; ++i) {
@@ -129,7 +136,10 @@ struct Commissioning final {
         }
     }
 
-    /// [en] Phase 2: pulse along the estimate and apply the verdict. [zh] 第二阶段：沿估计脉冲并应用结论。
+    /**
+     * @brief [en] Phase 2: pulse along the estimate and apply the verdict.
+     * @brief [zh] 第二阶段：沿估计脉冲并应用结论。
+     */
     void resolve_polarity() noexcept {
         core::MagnetPolarityTest test(polarity_config());
         test.begin(observer.state().theta_e);

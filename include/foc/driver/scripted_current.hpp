@@ -24,7 +24,10 @@ namespace driver {
  */
 class ScriptedCurrent final : public hal::CurrentSense {
   public:
-    /// [en] Maximum number of scripted samples. [zh] 脚本最大采样数。
+    /**
+     * @brief [en] Maximum number of scripted samples.
+     * @brief [zh] 脚本最大采样数。
+     */
     static constexpr std::size_t kCapacity = 64U;
 
     ScriptedCurrent() noexcept = default;

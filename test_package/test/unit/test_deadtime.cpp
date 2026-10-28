@@ -20,15 +20,13 @@ namespace core = foc::core;
 constexpr float kRs = 0.5F;
 constexpr float kDeadtimeV = 0.48F;
 
-/// [en] The identification model, written out here from the physics: a
-/// *rotating* current of amplitude `I`
-///      sees the fundamental of the phase losses `dV*clamp(i/If)`, i.e.
-///      `(4/pi)*dV` along the current, so the vector relation collapses to one
-///      scalar equation `|v| = rs*|i| + (4/pi)*dV*clamp(|i|/If)`. [zh]
-///      辨识模型，这里按物理独立写出：**旋转**电流（幅值 `I`）看到的是每相损失
-///      `dV·clamp(i/If)` 的 基波，即沿电流方向的
-///      `(4/π)·dV`，于是矢量关系退化成一个标量方程
-///      `|v| = rs·|i| + (4/π)·dV·clamp(|i|/If)`。
+/**
+ * @brief [en] The identification model, written out here from the physics: a *rotating* current of amplitude `I` sees
+ *             the fundamental of the phase losses `dV*clamp(i/If)`, i.e. `(4/pi)*dV` along the current, so the vector
+ *             relation collapses to one scalar equation `|v| = rs*|i| + (4/pi)*dV*clamp(|i|/If)`.
+ * @brief [zh] 辨识模型，这里按物理独立写出：**旋转**电流（幅值 `I`）看到的是每相损失 `dV·clamp(i/If)` 的 基波，即沿电流
+ *             方向的 `(4/π)·dV`，于是矢量关系退化成一个标量方程 `|v| = rs·|i| + (4/π)·dV·clamp(|i|/If)`。
+ */
 auto loss_magnitude(float i_mag, float fade, float v_dead) -> float {
   const auto clamp_unit = [](float value) -> float {
     if (value > 1.0F) {
@@ -39,8 +37,10 @@ auto loss_magnitude(float i_mag, float fade, float v_dead) -> float {
   return (4.0F / core::kPi<float>)*v_dead * clamp_unit(std::fabs(i_mag) / fade);
 }
 
-/// [en] A swept set of settled operating points for a given truth. [zh]
-/// 给定真值下的一组稳定工作点。
+/**
+ * @brief [en] A swept set of settled operating points for a given truth.
+ * @brief [zh] 给定真值下的一组稳定工作点。
+ */
 auto sweep(core::DeadTimeFadeEstimator &estimator, float true_fade, float rs,
            float gain = 1.0F, float noise = 0.0F) -> int {
   int used = 0;

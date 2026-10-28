@@ -14,7 +14,9 @@ constexpr float kPi = 3.14159265358979323846F;
 constexpr float kTwoPi = 6.28318530717958647692F;
 constexpr float kHalfPi = 1.57079632679489661923F;
 
-/// Wrap into [0, 2*pi).
+/**
+ * @brief Wrap into [0, 2*pi).
+ */
 auto wrap_two_pi(float angle_rad) noexcept -> float {
     float wrapped = std::fmod(angle_rad, kTwoPi);
     if (wrapped < 0.0F) {
@@ -23,7 +25,9 @@ auto wrap_two_pi(float angle_rad) noexcept -> float {
     return wrapped;
 }
 
-/// Wrap into (-pi, pi].
+/**
+ * @brief Wrap into (-pi, pi].
+ */
 auto wrap_pi(float angle_rad) noexcept -> float { return wrap_two_pi(angle_rad + kPi) - kPi; }
 
 } // namespace

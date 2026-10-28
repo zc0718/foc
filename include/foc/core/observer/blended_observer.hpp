@@ -357,16 +357,28 @@ template <typename LowSpeed, typename HighSpeed> class BlendedObserver final {
         return true;
     }
 
-    /// [en] The fused estimate as last published (diagnostics). [zh] 最近一次发布的融合估计（诊断用）。
+    /**
+     * @brief [en] The fused estimate as last published (diagnostics).
+     * @brief [zh] 最近一次发布的融合估计（诊断用）。
+     */
     [[nodiscard]] auto state() const noexcept -> ObsState { return state_; }
 
-    /// [en] Current weight of the high-speed observer, 0..1 (diagnostics). [zh] 高速观测器当前权重，0..1（诊断用）。
+    /**
+     * @brief [en] Current weight of the high-speed observer, 0..1 (diagnostics).
+     * @brief [zh] 高速观测器当前权重，0..1（诊断用）。
+     */
     [[nodiscard]] auto blend() const noexcept -> float { return weight_; }
 
-    /// [en] The low-speed observer (diagnostics and commissioning). [zh] 低速观测器（诊断与调试用）。
+    /**
+     * @brief [en] The low-speed observer (diagnostics and commissioning).
+     * @brief [zh] 低速观测器（诊断与调试用）。
+     */
     [[nodiscard]] auto low() noexcept -> LowSpeed& { return low_; }
 
-    /// [en] The high-speed observer (diagnostics). [zh] 高速观测器（诊断用）。
+    /**
+     * @brief [en] The high-speed observer (diagnostics).
+     * @brief [zh] 高速观测器（诊断用）。
+     */
     [[nodiscard]] auto high() noexcept -> HighSpeed& { return high_; }
 
   private:

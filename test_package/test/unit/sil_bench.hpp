@@ -71,7 +71,10 @@ struct Sample final {
 
 
 
-/// [en] The nominal machine used by every SIL scenario. [zh] 所有 SIL 场景共用的标称电机。
+/**
+ * @brief [en] The nominal machine used by every SIL scenario.
+ * @brief [zh] 所有 SIL 场景共用的标称电机。
+ */
 inline auto nominal_spec() -> MachineSpec {
     // rs     ld      lq      kt     j       b       poles i_max  pwm
     return MachineSpec{0.5F, 4e-4F, 4e-4F, 0.05F, 1e-4F, 1e-4F, 7U, 3.0F, 20000.0F};
@@ -79,14 +82,20 @@ inline auto nominal_spec() -> MachineSpec {
 
 
 
-/// [en] Plant parameters matching a spec. [zh] 与铭牌一致的 plant 参数。
+/**
+ * @brief [en] Plant parameters matching a spec.
+ * @brief [zh] 与铭牌一致的 plant 参数。
+ */
 inline auto plant_params_from(const MachineSpec& spec) -> PlantParams {
     return PlantParams{spec.rs, spec.ld, spec.lq, spec.kt, spec.j, spec.b, spec.pole_pairs};
 }
 
 
 
-/// [en] Controller nameplate matching a spec. [zh] 与铭牌一致的控制器视图。
+/**
+ * @brief [en] Controller nameplate matching a spec.
+ * @brief [zh] 与铭牌一致的控制器视图。
+ */
 inline auto motor_config_from(const MachineSpec& spec) -> motor::MotorConfig {
     return motor::MotorConfig{spec.rs, spec.ld,         spec.lq,      spec.kt,          spec.j,
                               spec.b,  spec.pole_pairs, spec.i_max_a, spec.pwm_freq_hz, 0.0F};
@@ -94,12 +103,18 @@ inline auto motor_config_from(const MachineSpec& spec) -> motor::MotorConfig {
 
 
 
-/// [en] Nominal plant parameters. [zh] 标称 plant 参数。
+/**
+ * @brief [en] Nominal plant parameters.
+ * @brief [zh] 标称 plant 参数。
+ */
 inline auto nominal_plant_params() -> PlantParams { return plant_params_from(nominal_spec()); }
 
 
 
-/// [en] Nominal controller nameplate. [zh] 标称控制器铭牌。
+/**
+ * @brief [en] Nominal controller nameplate.
+ * @brief [zh] 标称控制器铭牌。
+ */
 inline auto nominal_motor_config() -> motor::MotorConfig { return motor_config_from(nominal_spec()); }
 
 
@@ -158,7 +173,10 @@ class Bench final {
     Bench(Bench&&) = delete;
     Bench& operator=(Bench&&) = delete;
 
-    /// [en] init() + start(); returns the first error. [zh] init() + start()，返回首个错误。
+    /**
+     * @brief [en] init() + start(); returns the first error.
+     * @brief [zh] init() + start()，返回首个错误。
+     */
     auto init_and_start() noexcept -> ErrorCode {
         const ErrorCode rc = motor_.init();
         if (rc != ErrorCode::Ok) {
@@ -167,14 +185,20 @@ class Bench final {
         return motor_.start();
     }
 
-    /// [en] One control period: controller tick, then push the duty into the plant. [zh] 一个控制周期。
+    /**
+     * @brief [en] One control period: controller tick, then push the duty into the plant.
+     * @brief [zh] 一个控制周期。
+     */
     void tick_once() noexcept {
         static_cast<void>(motor_.tick(cfg_.dt_ctrl_s));
         hal_.advance(cfg_.dt_ctrl_s, cfg_.substeps);
         elapsed_s_ += cfg_.dt_ctrl_s;
     }
 
-    /// [en] Run for `seconds`, sampling after every tick. [zh] 运行 `seconds` 秒，每 tick 采样一次。
+    /**
+     * @brief [en] Run for `seconds`, sampling after every tick.
+     * @brief [zh] 运行 `seconds` 秒，每 tick 采样一次。
+     */
     template <typename OnTick> void run(float seconds, OnTick&& on_tick) {
         const int steps = static_cast<int>((seconds / cfg_.dt_ctrl_s) + 0.5F);
         for (int i = 0; i < steps; ++i) {
@@ -213,8 +237,10 @@ class Bench final {
 
 
 
-/// [en] Standard bench settings: 24 V bus, 20 kHz, 2 krad/s current loop, 250 rad/s speed loop.
-/// [zh] 标准台架设置：24 V 母线、20 kHz、电流环 2 krad/s、速度环 250 rad/s。
+/**
+ * @brief [en] Standard bench settings: 24 V bus, 20 kHz, 2 krad/s current loop, 250 rad/s speed loop.
+ * @brief [zh] 标准台架设置：24 V 母线、20 kHz、电流环 2 krad/s、速度环 250 rad/s。
+ */
 inline auto standard_bench_config() -> BenchConfig { return BenchConfig{24.0F, 5e-5F, 4, 2000.0F, 250.0F}; }
 
 } // namespace sil

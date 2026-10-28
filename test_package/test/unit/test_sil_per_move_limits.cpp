@@ -45,7 +45,9 @@ struct MoveResult final {
 
 auto nominal_config() -> foc::motor::MotorConfig { return foc::sil::nominal_motor_config(); }
 
-/// Run one move with the given per-move limits and report what the rotor did.
+/**
+ * @brief Run one move with the given per-move limits and report what the rotor did.
+ */
 auto run_move(float accel_limit_rad_s2, float duration_s) -> MoveResult {
     const foc::motor::MotorConfig mc = nominal_config();
     foc::sil::PmsmPlant plant(foc::sil::plant_params_from(foc::sil::nominal_spec()));

@@ -143,10 +143,16 @@ class PositionP final {
      */
     [[nodiscard]] auto step(const PositionInput& request, float feedback, float dt_s) noexcept -> float;
 
-    /// [en] Forget the command. [zh] 丢弃当前指令。
+    /**
+     * @brief [en] Forget the command.
+     * @brief [zh] 丢弃当前指令。
+     */
     void reset() noexcept;
 
-    /// [en] The configuration in force. [zh] 当前生效的配置。
+    /**
+     * @brief [en] The configuration in force.
+     * @brief [zh] 当前生效的配置。
+     */
     [[nodiscard]] auto config() const noexcept -> const Config&;
 
   private:

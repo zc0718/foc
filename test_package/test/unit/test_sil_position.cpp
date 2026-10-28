@@ -37,8 +37,10 @@ struct Outcome final {
     foc::ErrorCode status;
 };
 
-/// [en] One position step with the given position-loop bandwidth, velocity limit and run length.
-/// [zh] 用给定位置环带宽、速度上限与运行时长跑一次位置阶跃。
+/**
+ * @brief [en] One position step with the given position-loop bandwidth, velocity limit and run length.
+ * @brief [zh] 用给定位置环带宽、速度上限与运行时长跑一次位置阶跃。
+ */
 auto step_position(float position_bandwidth_rad_s, float velocity_limit_rad_s, float run_seconds = 1.0F) -> Outcome {
     using MotorT = foc::motor::Motor<foc::core::BackEmfObserver, foc::core::Svpwm, foc::core::Pi, foc::sil::PlantHal,
                                      foc::core::NullReferenceGenerator, foc::core::NullFeedforward,

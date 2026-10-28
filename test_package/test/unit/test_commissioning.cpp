@@ -28,29 +28,29 @@ constexpr float kSwitchingTDead = 1.0e-6F;
 constexpr float kVBus = 24.0F;
 constexpr int kSubSteps = 40;
 
-/// [en] The dead-time voltage at 24 V with a 1 us dead time: 0.48 V. [zh]
-/// 24 V、1 µs 死区对应的死区电压：0.48 V。
+/**
+ * @brief [en] The dead-time voltage at 24 V with a 1 us dead time: 0.48 V.
+ * @brief [zh] 24 V、1 µs 死区对应的死区电压：0.48 V。
+ */
 constexpr float kVDead = kSwitchingTDead * kPwmHz * kVBus;
-/// [en] What the same loss looks like **on the d axis**. Projecting the three
-/// per-phase steps
-/// `(+dV, -dV, -dV)` onto `d` gives `(2/3)*(dV + dV/2 + dV/2) = (4/3)*dV`: an
-/// axis sees **more** than a phase does, because the two opposing phases push
-/// the same way once projected. Every number measured on an axis is in this
-/// convention; the per-phase number the compensator uses is not, and the
-/// difference is exactly this factor.
-///      [zh] 同一个损失在 **d 轴上**是什么样。把三相的阶跃 `(+dV, -dV, -dV)`
-///      投影到 `d` 得
-///      `(2/3)·(dV + dV/2 + dV/2) =
-///      (4/3)·dV`：轴上的数**比**每相**大**，因为两相反向的阶跃投影
-///      之后同向相加。所有在轴上量到的数都是这个约定；补偿器用的每相数不是，两者差的正是这个系数。
+/**
+ * @brief [en] What the same loss looks like **on the d axis**. Projecting the three per-phase steps `(+dV, -dV, -dV)`
+ *             onto `d` gives `(2/3)*(dV + dV/2 + dV/2) = (4/3)*dV`: an axis sees **more** than a phase does, because
+ *             the two opposing phases push the same way once projected. Every number measured on an axis is in this
+ *             convention; the per-phase number the compensator uses is not, and the difference is exactly this factor.
+ * @brief [zh] 同一个损失在 **d 轴上**是什么样。把三相的阶跃 `(+dV, -dV, -dV)` 投影到 `d` 得 `(2/3)·(dV + dV/2 + dV/2) =
+ *             (4/3)·dV`：轴上的数**比**每相**大**，因为两相反向的阶跃投影之后同向相加。所有在轴上量到的数都是这个约定；
+ *             补偿器用的每相数不是，两者差的正是这个系数。
+ */
 constexpr float kVAxisDead = (4.0F / 3.0F) * kVDead;
 
-/// [en] A standstill bench: the plant plus the switching inverter, driven with
-/// a fixed d-q command. `period()` runs exactly one switching period and
-/// returns that period's **mean** current, which is the only quantity a
-/// commissioning sweep should ever look at.
-///      [zh] 堵转台架：plant 加开关逆变器，用固定的 d-q 指令驱动。`period()`
-///      正好跑一个开关周期并返回该周期的**均值**电流——整定扫描唯一该看的量。
+/**
+ * @brief [en] A standstill bench: the plant plus the switching inverter, driven with a fixed d-q command. `period()`
+ *             runs exactly one switching period and returns that period's **mean** current, which is the only quantity
+ *             a commissioning sweep should ever look at.
+ * @brief [zh] 堵转台架：plant 加开关逆变器，用固定的 d-q 指令驱动。`period()` 正好跑一个开关周期并返回该周期的**均值**
+ *             电流——整定扫描唯一该看的量。
+ */
 class StandstillRig final {
 public:
   explicit StandstillRig(const sil::PlantParams &params) noexcept
@@ -62,8 +62,10 @@ public:
 
   auto plant() noexcept -> sil::PmsmPlant & { return plant_; }
 
-  /// [en] The last d-q voltage the inverter actually delivered. [zh]
-  /// 逆变器最后一次真正交付的 d-q 电压。
+  /**
+   * @brief [en] The last d-q voltage the inverter actually delivered.
+   * @brief [zh] 逆变器最后一次真正交付的 d-q 电压。
+   */
   auto applied() const noexcept -> core::Dq<float> { return applied_; }
 
   auto period(float v_d, float v_q) noexcept -> core::Dq<float> {
@@ -88,8 +90,10 @@ public:
     return core::Dq<float>{sum_d * inverse, sum_q * inverse};
   }
 
-  /// [en] Hold a command for `periods` periods; return the last period's mean.
-  ///      [zh] 保持一个指令 `periods` 个周期；返回最后一个周期的均值。
+  /**
+   * @brief [en] Hold a command for `periods` periods; return the last period's mean.
+   * @brief [zh] 保持一个指令 `periods` 个周期；返回最后一个周期的均值。
+   */
   auto hold(float v_d, float v_q, int periods) noexcept -> core::Dq<float> {
     core::Dq<float> mean{0.0F, 0.0F};
     for (int k = 0; k < periods; ++k) {
@@ -105,15 +109,19 @@ private:
   core::Dq<float> applied_{0.0F, 0.0F};
 };
 
-/// [en] The nominal machine as the bench sees it. [zh] 台架眼中的标称机。
+/**
+ * @brief [en] The nominal machine as the bench sees it.
+ * @brief [zh] 台架眼中的标称机。
+ */
 auto nominal_params() -> sil::PlantParams {
   return sil::plant_params_from(sil::nominal_spec());
 }
 
-/// [en] A salient machine: `Lq = 2*Ld`. The nominal one has `Ld == Lq`, which
-/// makes a d/q mix-up invisible -- exactly the kind of bug this test is for.
-///      [zh] 一台凸极机：`Lq = 2·Ld`。标称机 `Ld == Lq`，会把 d/q 弄反这种错误
-///      藏得干干净净——而这正是本测试要找的东西。
+/**
+ * @brief [en] A salient machine: `Lq = 2*Ld`. The nominal one has `Ld == Lq`, which makes a d/q mix-up invisible --
+ *             exactly the kind of bug this test is for.
+ * @brief [zh] 一台凸极机：`Lq = 2·Ld`。标称机 `Ld == Lq`，会把 d/q 弄反这种错误藏得干干净净——而这正是本测试要找的东西。
+ */
 auto salient_params() -> sil::PlantParams {
   sil::PlantParams params = nominal_params();
   params.ld = 4.0e-4F;
@@ -254,15 +262,14 @@ TEST(Commissioning, OneCurrentCannotSeparateTheResistanceFromTheDeadTime) {
 
 namespace {
 
-/// [en] Spin the plant at a frozen electrical speed with a pure integrator
-/// closing the loop on `i_q = 0`, and return the settled voltage magnitude.
-/// Freezing the speed (`j = 1e6`) is the same trick the locked-rotor tests use
-/// in the other direction: the mechanical equation is taken out of the
-/// experiment so that the *electrical* one is all that is left.
-///      [zh] 把 plant 冻在一个电角速度上旋转，用一个纯积分器把 `i_q = 0`
-///      闭上，返回稳定后的电压 幅值。冻结转速（`j =
-///      1e6`）和堵转测试用的是同一个手法的反方向：把机械方程从实验里拿掉，
-///      只剩电气方程。
+/**
+ * @brief [en] Spin the plant at a frozen electrical speed with a pure integrator closing the loop on `i_q = 0`, and
+ *             return the settled voltage magnitude. Freezing the speed (`j = 1e6`) is the same trick the locked-rotor
+ *             tests use in the other direction: the mechanical equation is taken out of the experiment so that the
+ *             *electrical* one is all that is left.
+ * @brief [zh] 把 plant 冻在一个电角速度上旋转，用一个纯积分器把 `i_q = 0` 闭上，返回稳定后的电压 幅值。冻结转速（`j =
+ *             1e6`）和堵转测试用的是同一个手法的反方向：把机械方程从实验里拿掉，只剩电气方程。
+ */
 auto zero_current_voltage(float omega_e, const sil::PlantParams &params)
     -> float {
   sil::PlantParams frozen = params;
@@ -521,25 +528,23 @@ TEST(Commissioning, ASensorOffsetCorruptsTheAlignedAngleSoTheOrderMatters) {
 
 namespace {
 
-/// [en] Deterministic pseudo-random factor in `[0.7, 1.3]`, so "three random
-/// machines" means the same three every run. A flaky library-level gate would
-/// be worse than no gate.
-///      [zh] 确定性伪随机因子
-///      `[0.7, 1.3]`，于是"三台随机机器"每次都是同样三台。会飘的库级闸
-///      比没有闸更糟。
+/**
+ * @brief [en] Deterministic pseudo-random factor in `[0.7, 1.3]`, so "three random machines" means the same three every
+ *             run. A flaky library-level gate would be worse than no gate.
+ * @brief [zh] 确定性伪随机因子 `[0.7, 1.3]`，于是"三台随机机器"每次都是同样三台。会飘的库级闸比没有闸更糟。
+ */
 auto spread(std::uint32_t &state) noexcept -> float {
   state = (state * 1664525U) + 1013904223U;
   return 0.7F + (0.6F * (static_cast<float>(state >> 8) / 16777216.0F));
 }
 
-/// [en] The admission measurement S18 uses, on an arbitrary machine and at the
-/// **nominal** tuning: the flux observer is told that machine's nameplate
-/// numbers (`psi_f = Kt/(1.5*p)`) while `Ks` and `Ki` stay at 0.3 / 3.0. That
-/// is what "no retuning" means.
-///      [zh] S18
-///      用的准入测量，跑在任意机器上、用**标称**整定：磁链观测器被告知该机器的铭牌数
-///      （`psi_f = Kt/(1.5·p)`），而 `Ks`、`Ki` 仍是 0.3
-///      / 3.0。这就是"不重调"。
+/**
+ * @brief [en] The admission measurement S18 uses, on an arbitrary machine and at the **nominal** tuning: the flux
+ *             observer is told that machine's nameplate numbers (`psi_f = Kt/(1.5*p)`) while `Ks` and `Ki` stay at 0.3
+ *             / 3.0. That is what "no retuning" means.
+ * @brief [zh] S18 用的准入测量，跑在任意机器上、用**标称**整定：磁链观测器被告知该机器的铭牌数（`psi_f = Kt/(1.5·p)`
+ *             ），而 `Ks`、`Ki` 仍是 0.3 / 3.0。这就是"不重调"。
+ */
 auto gate_error(const sil::MachineSpec &spec, float omega_e,
                 float min_gain_rad_s = 3.0F) -> float {
   sil::SwitchingRigConfig config{};
@@ -660,13 +665,13 @@ TEST(Commissioning, ThreeUnrelatedMachinesAtOneTuning) {
 
 namespace {
 
-/// [en] Step one axis of a standstill rig from zero current and integrate
-/// exactly `periods` switching periods. `hold_shaft` freezes the mechanical
-/// equation -- a real commissioning locks the shaft, and P5-c's second test
-/// shows what happens without it.
-///      [zh] 在堵转台架上给一个轴加阶跃，从零电流出发，精确积分 `periods`
-///      个开关周期。`hold_shaft` 冻结机械方程——真实整定会把轴锁死；P5-c
-///      的第二个测试展示不锁会怎样。
+/**
+ * @brief [en] Step one axis of a standstill rig from zero current and integrate exactly `periods` switching periods.
+ *             `hold_shaft` freezes the mechanical equation -- a real commissioning locks the shaft, and P5-c's second
+ *             test shows what happens without it.
+ * @brief [zh] 在堵转台架上给一个轴加阶跃，从零电流出发，精确积分 `periods` 个开关周期。`hold_shaft` 冻结机械方程——真实
+ *             整定会把轴锁死；P5-c 的第二个测试展示不锁会怎样。
+ */
 auto step_axis(const sil::PlantParams &params, bool on_d_axis, int periods,
                bool hold_shaft)
     -> core::IncrementalInductanceEstimator::Result {

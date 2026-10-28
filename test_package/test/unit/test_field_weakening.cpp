@@ -46,10 +46,11 @@ auto policy_config(const core::MachineParams &params, float i_max_a)
       params.rs, params.ld, params.psi_f, i_max_a, kVMaxRatio};
 }
 
-/// [en] The exact steady-state voltage magnitude at `(i_d, i_q, omega)`, `Rs`
-/// included. This is what the `Rs`-free decision has to be checked against.
-///      [zh] `(i_d, i_q, ω)` 处精确的稳态电压幅值，含 `Rs`。`Rs`-free
-///      的判定必须对着它验。
+/**
+ * @brief [en] The exact steady-state voltage magnitude at `(i_d, i_q, omega)`, `Rs` included. This is what the
+ *             `Rs`-free decision has to be checked against.
+ * @brief [zh] `(i_d, i_q, ω)` 处精确的稳态电压幅值，含 `Rs`。`Rs`-free 的判定必须对着它验。
+ */
 auto exact_voltage(const core::MachineParams &p, float i_d, float i_q,
                    float omega) -> float {
   const float v_d = (p.rs * i_d) - (omega * p.lq * i_q);

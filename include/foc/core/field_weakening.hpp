@@ -286,12 +286,17 @@ class FieldWeakeningReference final {
         return Dq<float>{i_d_needed(low), low};
     }
 
-    /// [en] The config in force. [zh] 当前配置。
+    /**
+     * @brief [en] The config in force.
+     * @brief [zh] 当前配置。
+     */
     [[nodiscard]] auto config() const noexcept -> const Config& { return config_; }
 
   private:
-    /// [en] Symmetric clamp that also drops non-finite input. [zh]
-    /// 对称限幅，同时丢弃非有限输入。
+    /**
+     * @brief [en] Symmetric clamp that also drops non-finite input.
+     * @brief [zh] 对称限幅，同时丢弃非有限输入。
+     */
     [[nodiscard]] static auto clamp_axis(float value, float limit) noexcept -> float {
         if (!std::isfinite(value)) {
             return 0.0F;

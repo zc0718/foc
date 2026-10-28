@@ -46,14 +46,22 @@ public:
   void disable() noexcept override;
   [[nodiscard]] auto fault() const noexcept -> bool override;
 
-  /// [en] Last written duty (50% when disabled). [zh]
-  /// 最近写入的占空比（关闭时为 50%）。
+  /**
+   * @brief [en] Last written duty (50% when disabled).
+   * @brief [zh] 最近写入的占空比（关闭时为 50%）。
+   */
   [[nodiscard]] auto duty() const noexcept -> Uvw<float>;
 
-  /// [en] Carrier frequency in Hz. [zh] 载波频率，Hz。
+  /**
+   * @brief [en] Carrier frequency in Hz.
+   * @brief [zh] 载波频率，Hz。
+   */
   [[nodiscard]] auto freq_hz() const noexcept -> float;
 
-  /// [en] Whether the stage is enabled. [zh] 输出级是否使能。
+  /**
+   * @brief [en] Whether the stage is enabled.
+   * @brief [zh] 输出级是否使能。
+   */
   [[nodiscard]] auto enabled() const noexcept -> bool;
 
 private:
@@ -95,30 +103,36 @@ public:
   auto velocity_rad_s() noexcept -> float override;
   [[nodiscard]] auto has_sensor() const noexcept -> bool override;
 
-  /// [en] Model an encoder mounting error the driver has to find. [zh]
-  /// 模拟驱动需要找出的编码器安装误差。
+  /**
+   * @brief [en] Model an encoder mounting error the driver has to find.
+   * @brief [zh] 模拟驱动需要找出的编码器安装误差。
+   */
   void set_mount_error_rad(float error_rad) noexcept;
 
-  /// [en] Model a sensor-less setup: has_sensor() starts returning false, so
-  /// the angle has to come
-  ///        from the observer. Same name as `driver::SimPosition` on purpose --
-  ///        the scenarios read the same either way. [zh]
-  ///        模拟无感场景：has_sensor() 开始返回
-  ///        false，角度必须由观测器给出。故意与 `driver::SimPosition`
-  ///        同名——两种台架读起来一样。
+  /**
+   * @brief [en] Model a sensor-less setup: has_sensor() starts returning false, so the angle has to come from the
+   *             observer. Same name as `driver::SimPosition` on purpose -- the scenarios read the same either way.
+   * @brief [zh] 模拟无感场景：has_sensor() 开始返回 false，角度必须由观测器给出。故意与 `driver::SimPosition` 同名——两
+   *             种台架读起来一样。
+   */
   void set_sensor_present(bool present) noexcept;
 
-  /// [en] The correction offset handed over by alignment. [zh]
-  /// 由对齐交给传感器的校正偏置。
+  /**
+   * @brief [en] The correction offset handed over by alignment.
+   * @brief [zh] 由对齐交给传感器的校正偏置。
+   */
   void set_offset_mech_rad(float offset_rad) noexcept;
 
-  /// [en] Offset currently subtracted from the readings, rad. [zh]
-  /// 当前从读数中减去的偏置，rad。
+  /**
+   * @brief [en] Offset currently subtracted from the readings, rad.
+   * @brief [zh] 当前从读数中减去的偏置，rad。
+   */
   [[nodiscard]] auto mech_offset_rad() const noexcept -> float;
 
-  /// [en] Rotor angle the plant is actually at, offset removed: the truth a
-  /// test compares against. [zh] plant
-  /// 转子真实所在的角度（不含偏置）：供测试比对的真值。
+  /**
+   * @brief [en] Rotor angle the plant is actually at, offset removed: the truth a test compares against.
+   * @brief [zh] plant 转子真实所在的角度（不含偏置）：供测试比对的真值。
+   */
   [[nodiscard]] auto true_angle_mech_rad() const noexcept -> float;
 
 private:
@@ -174,8 +188,10 @@ public:
    */
   void advance(float dt_ctrl_s, int substeps) noexcept;
 
-  /// [en] Reset the plant and the inverter to the power-on state. [zh] 把 plant
-  /// 与逆变器复位到上电态。
+  /**
+   * @brief [en] Reset the plant and the inverter to the power-on state.
+   * @brief [zh] 把 plant 与逆变器复位到上电态。
+   */
   void reset(PlantState initial) noexcept;
 
   /**
@@ -197,9 +213,10 @@ public:
    */
   void set_deadtime_voltage(float v_dead) noexcept;
 
-  /// [en] Width of the smooth dead-zone transition in A; 0 keeps the ideal
-  /// `sign()` model.
-  ///      [zh] 平滑死区过渡宽度，A；0 保留理想的 `sign()` 模型。
+  /**
+   * @brief [en] Width of the smooth dead-zone transition in A; 0 keeps the ideal `sign()` model.
+   * @brief [zh] 平滑死区过渡宽度，A；0 保留理想的 `sign()` 模型。
+   */
   void set_deadtime_transition(float width_a) noexcept;
 
   [[nodiscard]] auto deadtime_voltage() const noexcept -> float;

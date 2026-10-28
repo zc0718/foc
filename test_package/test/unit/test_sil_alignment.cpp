@@ -28,12 +28,14 @@ constexpr float kVelocityLimit = 50.0F;     ///< [en] speed setpoint limit, rad/
 
 auto poles() -> float { return static_cast<float>(foc::sil::nominal_spec().pole_pairs); }
 
-/// One mechanical pole pitch: the periodic length of the electrical angle, and therefore the
-/// resolution limit of any alignment that starts from an unknown rotor angle.
-/// 一个机械极距：电角度的周期长度，也因此是从未知转子角出发的对齐所能达到的分辨极限。
+/**
+ * @brief One mechanical pole pitch: the periodic length of the electrical angle, and therefore the resolution limit of any alignment that starts from an unknown rotor angle. 一个机械极距：电角度的周期长度，也因此是从未知转子角出发的对齐所能达到的分辨极限。
+ */
 auto pitch_rad() -> float { return kTwoPi / poles(); }
 
-/// Wrap into (-pitch/2, pitch/2].
+/**
+ * @brief Wrap into (-pitch/2, pitch/2].
+ */
 auto wrap_pitch(float angle_rad) -> float {
     const float pitch = pitch_rad();
     float wrapped = std::fmod(angle_rad + (pitch / 2.0F), pitch);
@@ -43,7 +45,9 @@ auto wrap_pitch(float angle_rad) -> float {
     return wrapped - (pitch / 2.0F);
 }
 
-/// Wrap into (-pi, pi].
+/**
+ * @brief Wrap into (-pi, pi].
+ */
 auto wrap_pi(float angle_rad) -> float {
     float wrapped = std::fmod(angle_rad + 3.14159265358979323846F, kTwoPi);
     if (wrapped < 0.0F) {
@@ -52,11 +56,9 @@ auto wrap_pi(float angle_rad) -> float {
     return wrapped - 3.14159265358979323846F;
 }
 
-/// The nominal machine, but with the mechanical damping a geared joint actually has. Alignment needs
-/// the rotor to come to rest inside the hold window, and the nominal `b` is so small that the free
-/// oscillation would still be ringing after two seconds.
-/// 标称电机，但带上减速关节实际的机械阻尼。对齐需要转子在保持窗口内停下来，而标称的 `b` 太小，
-/// 自由振荡两秒后仍在响。
+/**
+ * @brief The nominal machine, but with the mechanical damping a geared joint actually has. Alignment needs the rotor to come to rest inside the hold window, and the nominal `b` is so small that the free oscillation would still be ringing after two seconds. 标称电机，但带上减速关节实际的机械阻尼。对齐需要转子在保持窗口内停下来，而标称的 `b` 太小，自由振荡两秒后仍在响。
+ */
 auto joint_spec() -> foc::sil::MachineSpec {
     foc::sil::MachineSpec spec = foc::sil::nominal_spec();
     spec.j = 1e-5F;
@@ -113,7 +115,10 @@ template <typename AlignerT> class Rig final {
         }
     }
 
-    /// [en] init + start, then tick until the machine leaves Align. Returns the elapsed time. [zh] init + start，然后 tick 到离开 Align，返回耗时。
+    /**
+     * @brief [en] init + start, then tick until the machine leaves Align. Returns the elapsed time.
+     * @brief [zh] init + start，然后 tick 到离开 Align，返回耗时。
+     */
     auto run_through_alignment(float limit_s) -> float {
         if (motor.init() != foc::ErrorCode::Ok) {
             return -1.0F;

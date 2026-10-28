@@ -107,19 +107,34 @@ class NonlinearFluxObserver final {
      */
     auto update(Ab<float> v_ab, Ab<float> i_ab, float dt_s) noexcept -> ObsState;
 
-    /// [en] Clear the integrator, the speed estimate and the prime flag. [zh] 清除积分器、转速估计与 priming 标志。
+    /**
+     * @brief [en] Clear the integrator, the speed estimate and the prime flag.
+     * @brief [zh] 清除积分器、转速估计与 priming 标志。
+     */
     void reset() noexcept;
 
-    /// [en] Ok, or Param after an invalid configuration or non-positive dt. [zh] Ok，或非法配置 / 非正 dt 后的 Param。
+    /**
+     * @brief [en] Ok, or Param after an invalid configuration or non-positive dt.
+     * @brief [zh] Ok，或非法配置 / 非正 dt 后的 Param。
+     */
     [[nodiscard]] auto status() const noexcept -> ErrorCode;
 
-    /// [en] Whether the estimated flux is large enough for the answer to mean anything. [zh] 估计磁链是否大到答案有意义。
+    /**
+     * @brief [en] Whether the estimated flux is large enough for the answer to mean anything.
+     * @brief [zh] 估计磁链是否大到答案有意义。
+     */
     [[nodiscard]] auto locked() const noexcept -> bool;
 
-    /// [en] Current flux estimate in Wb (diagnostics). [zh] 当前磁链估计，Wb（诊断用）。
+    /**
+     * @brief [en] Current flux estimate in Wb (diagnostics).
+     * @brief [zh] 当前磁链估计，Wb（诊断用）。
+     */
     [[nodiscard]] auto flux() const noexcept -> Ab<float>;
 
-    /// [en] The estimate as last published (diagnostics). [zh] 最近一次发布的估计（诊断用）。
+    /**
+     * @brief [en] The estimate as last published (diagnostics).
+     * @brief [zh] 最近一次发布的估计（诊断用）。
+     */
     [[nodiscard]] auto state() const noexcept -> ObsState;
 
   private:

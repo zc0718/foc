@@ -31,12 +31,13 @@ struct SwitchingRigConfig final {
   float omega_e{
       200.0F};      ///< [en] electrical speed, rad/s. [zh] 电角速度，rad/s。
   float iq_a{0.5F}; ///< [en] load current, A. [zh] 负载电流，A。
-  /// [en] d-axis current, A. Non-zero here is what makes a salient machine
-  /// behave saliently: the model error a single-`L` observer makes is
-  /// `(Ld - Lq)*i_d`, so with `i_d = 0` every saliency ratio looks identical.
-  /// Defaults to 0, so every existing test keeps its meaning.
-  /// [zh] d 轴电流，A。这里非零才是凸极机表现为凸极的条件：单 `L` 观测器的模型误差是
-  /// `(Ld − Lq)·id`，所以 `i_d = 0` 时任何凸极比看起来都一样。默认 0，既有测试含义不变。
+  /**
+   * @brief [en] d-axis current, A. Non-zero here is what makes a salient machine behave saliently: the model error a
+   *             single-`L` observer makes is `(Ld - Lq)*i_d`, so with `i_d = 0` every saliency ratio looks identical.
+   *             Defaults to 0, so every existing test keeps its meaning.
+   * @brief [zh] d 轴电流，A。这里非零才是凸极机表现为凸极的条件：单 `L` 观测器的模型误差是 `(Ld − Lq)·id`，所以 `i_d =
+   *             0` 时任何凸极比看起来都一样。默认 0，既有测试含义不变。
+   */
   float id_a{0.0F};
   /**
    * @brief [en] Rs multiplier the observers are told.
@@ -61,18 +62,22 @@ struct SwitchingRigConfig final {
    * @brief [zh] 运行时长；只量后半段。
    */
   float seconds{0.4F};
-  /// [en] Dead-time volt-seconds to *compensate* for, V; 0 = no compensator in
-  /// the loop. [zh] 要**补偿**的死区伏秒，V；0 = 环内没有补偿器。
+  /**
+   * @brief [en] Dead-time volt-seconds to *compensate* for, V; 0 = no compensator in the loop.
+   * @brief [zh] 要**补偿**的死区伏秒，V；0 = 环内没有补偿器。
+   */
   float compensate_v{0.0F};
-  /// [en] The fade width handed to the compensator, A; used only when
-  /// `compensate_v > 0`. [zh] 交给补偿器的淡出宽度，A；只在 `compensate_v > 0`
-  /// 时使用。
+  /**
+   * @brief [en] The fade width handed to the compensator, A; used only when `compensate_v > 0`.
+   * @brief [zh] 交给补偿器的淡出宽度，A；只在 `compensate_v > 0` 时使用。
+   */
   float i_fade_a{0.0F};
-  /// [en] The machine this rig is built around. Defaults to the nominal one, so
-  /// every existing test keeps its meaning; P5-f varies it to ask whether the
-  /// tuning survives a different motor. [zh]
-  /// 这个台架围绕的机器。默认标称机，所以既有测试的含义不变；P5-f
-  /// 改变它，用来问"换一台 电机，整定还活不活"。
+  /**
+   * @brief [en] The machine this rig is built around. Defaults to the nominal one, so every existing test keeps its
+   *             meaning; P5-f varies it to ask whether the tuning survives a different motor.
+   * @brief [zh] 这个台架围绕的机器。默认标称机，所以既有测试的含义不变；P5-f 改变它，用来问"换一台 电机，整定还活不活
+   *             "。
+   */
   MachineSpec spec = nominal_spec();
 };
 
@@ -116,18 +121,25 @@ public:
   SwitchingRig(SwitchingRig &&) = delete;
   SwitchingRig &operator=(SwitchingRig &&) = delete;
 
-  /// [en] Control period of this rig, s. [zh] 本台架的控制周期，s。
+  /**
+   * @brief [en] Control period of this rig, s.
+   * @brief [zh] 本台架的控制周期，s。
+   */
   static constexpr float kControlPeriod = 5.0e-5F;
 
-  /// [en] The nominal machine's flux linkage. Kept static for the tests that
-  /// name it directly. [zh] 标称机的磁链。保留 static 给直接引用它的测试。
+  /**
+   * @brief [en] The nominal machine's flux linkage. Kept static for the tests that name it directly.
+   * @brief [zh] 标称机的磁链。保留 static 给直接引用它的测试。
+   */
   [[nodiscard]] static auto psi_f() noexcept -> float {
     return nominal_spec().kt /
            (1.5F * static_cast<float>(nominal_spec().pole_pairs));
   }
 
-  /// [en] The flux linkage of the machine this rig was actually built with.
-  /// [zh] 本台架实际所用机器的磁链。
+  /**
+   * @brief [en] The flux linkage of the machine this rig was actually built with.
+   * @brief [zh] 本台架实际所用机器的磁链。
+   */
   [[nodiscard]] auto machine_psi_f() const noexcept -> float {
     return config_.spec.kt /
            (1.5F * static_cast<float>(config_.spec.pole_pairs));
@@ -138,20 +150,26 @@ public:
            plant_.theta_mech_rad();
   }
 
-  /// [en] The vector the controller asks for, in the stationary frame. [zh]
-  /// 控制器请求的矢量，静止系。
+  /**
+   * @brief [en] The vector the controller asks for, in the stationary frame.
+   * @brief [zh] 控制器请求的矢量，静止系。
+   */
   [[nodiscard]] auto command() const noexcept -> core::Ab<float> {
     return command_;
   }
 
-  /// [en] The current the controller *sees*: one sample per control period.
-  /// [zh] 控制器**看到**的电流：每 控制周期一个采样。
+  /**
+   * @brief [en] The current the controller *sees*: one sample per control period.
+   * @brief [zh] 控制器**看到**的电流：每 控制周期一个采样。
+   */
   [[nodiscard]] auto current() const noexcept -> core::Ab<float> {
     return current_;
   }
 
-  /// [en] What an observer should be told the stator resistance is. [zh]
-  /// 应该告诉观测器的定子电阻。
+  /**
+   * @brief [en] What an observer should be told the stator resistance is.
+   * @brief [zh] 应该告诉观测器的定子电阻。
+   */
   [[nodiscard]] auto believed_rs() const noexcept -> float {
     return config_.belief_rs * config_.spec.rs;
   }

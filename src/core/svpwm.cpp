@@ -15,7 +15,9 @@ namespace {
 
 constexpr auto half() noexcept -> float { return static_cast<float>(1) / static_cast<float>(2); }
 
-/// Sector per sign code N = a + 2b + 4c, index 0 unused (zero vector).
+/**
+ * @brief Sector per sign code N = a + 2b + 4c, index 0 unused (zero vector).
+ */
 constexpr std::uint8_t kSectorFromCode[8] = {0U, 2U, 6U, 1U, 4U, 3U, 5U, 4U};
 
 

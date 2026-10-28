@@ -23,7 +23,10 @@ namespace driver {
  */
 class StubPwm final : public hal::Pwm {
   public:
-    /// [en] Depth of the duty history ring. [zh] 占空比历史环形缓冲的深度。
+    /**
+     * @brief [en] Depth of the duty history ring.
+     * @brief [zh] 占空比历史环形缓冲的深度。
+     */
     static constexpr std::size_t kHistoryCapacity = 32U;
 
     StubPwm() noexcept = default;

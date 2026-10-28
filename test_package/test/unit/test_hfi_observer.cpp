@@ -24,8 +24,10 @@ constexpr float kDt = 5e-5F; // s, 20 kHz
 constexpr float kLd = 2e-4F;
 constexpr float kLq = 4e-4F;
 
-/// [en] A valid configuration; each case perturbs exactly one field.
-///      [zh] 一份合法配置；每个用例只扰动其中一个字段。
+/**
+ * @brief [en] A valid configuration; each case perturbs exactly one field.
+ * @brief [zh] 一份合法配置；每个用例只扰动其中一个字段。
+ */
 auto valid_config() -> foc::core::HfiObserver::Config {
     foc::core::HfiObserver::Config config{};
     config.inject_v = 12.0F;

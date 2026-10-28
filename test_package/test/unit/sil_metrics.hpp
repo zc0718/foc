@@ -13,7 +13,10 @@ namespace sil {
 
 
 
-/// [en] Extract one channel of a trace. [zh] 取出轨迹中的一个通道。
+/**
+ * @brief [en] Extract one channel of a trace.
+ * @brief [zh] 取出轨迹中的一个通道。
+ */
 inline auto series_of(const std::vector<Sample>& trace, float Sample::* field) -> std::vector<float> {
     std::vector<float> out;
     out.reserve(trace.size());
@@ -25,7 +28,10 @@ inline auto series_of(const std::vector<Sample>& trace, float Sample::* field) -
 
 
 
-/// [en] Largest value of a channel. [zh] 通道的最大值。
+/**
+ * @brief [en] Largest value of a channel.
+ * @brief [zh] 通道的最大值。
+ */
 inline auto max_of(const std::vector<float>& y) -> float {
     float v = y.empty() ? 0.0F : y.front();
     for (const float e : y) {
@@ -36,7 +42,10 @@ inline auto max_of(const std::vector<float>& y) -> float {
 
 
 
-/// [en] Smallest value of a channel. [zh] 通道的最小值。
+/**
+ * @brief [en] Smallest value of a channel.
+ * @brief [zh] 通道的最小值。
+ */
 inline auto min_of(const std::vector<float>& y) -> float {
     float v = y.empty() ? 0.0F : y.front();
     for (const float e : y) {
@@ -71,7 +80,10 @@ inline auto overshoot_fraction(const std::vector<float>& y, float target, float 
 
 
 
-/// [en] Highest absolute deviation from a value. [zh] 相对某值的最大绝对偏差。
+/**
+ * @brief [en] Highest absolute deviation from a value.
+ * @brief [zh] 相对某值的最大绝对偏差。
+ */
 inline auto max_abs_error(const std::vector<float>& y, float target) -> float {
     float v = 0.0F;
     for (const float e : y) {
@@ -83,7 +95,10 @@ inline auto max_abs_error(const std::vector<float>& y, float target) -> float {
 
 
 
-/// [en] Mean of the last `fraction` of a channel. [zh] 通道末尾 `fraction` 段的均值。
+/**
+ * @brief [en] Mean of the last `fraction` of a channel.
+ * @brief [zh] 通道末尾 `fraction` 段的均值。
+ */
 inline auto tail_mean(const std::vector<float>& y, float fraction) -> float {
     if (y.empty()) {
         return 0.0F;
@@ -103,7 +118,10 @@ inline auto tail_mean(const std::vector<float>& y, float fraction) -> float {
 
 
 
-/// [en] Peak-to-peak of the last `fraction` of a channel. [zh] 通道末尾 `fraction` 段的峰峰值。
+/**
+ * @brief [en] Peak-to-peak of the last `fraction` of a channel.
+ * @brief [zh] 通道末尾 `fraction` 段的峰峰值。
+ */
 inline auto tail_peak_to_peak(const std::vector<float>& y, float fraction) -> float {
     if (y.empty()) {
         return 0.0F;

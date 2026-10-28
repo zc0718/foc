@@ -277,12 +277,18 @@ struct BoardReport final {
      */
     std::uint8_t cause_phase{3};
 
-    /// [en] Everything passed. [zh] 全部通过。
+    /**
+     * @brief [en] Everything passed.
+     * @brief [zh] 全部通过。
+     */
     [[nodiscard]] auto all_green() const noexcept -> bool { return failures == 0; }
 };
 
 namespace detail {
-/// [en] Relative error, safe at zero. [zh] 相对误差，零处安全。
+/**
+ * @brief [en] Relative error, safe at zero.
+ * @brief [zh] 相对误差，零处安全。
+ */
 [[nodiscard]] inline auto rel_error(float measured, float nominal) noexcept -> float {
     const float scale = std::fabs(nominal);
     if (!(scale > 1.0e-9F)) {
@@ -291,7 +297,10 @@ namespace detail {
     return std::fabs(measured - nominal) / scale;
 }
 
-/// [en] Does the bench let the ADC trigger be moved? [zh] 台架能否移动 ADC 触发点？
+/**
+ * @brief [en] Does the bench let the ADC trigger be moved?
+ * @brief [zh] 台架能否移动 ADC 触发点？
+ */
 template <typename Bench, typename = void> struct movable_trigger : std::false_type {};
 
 template <typename Bench>
@@ -705,14 +714,19 @@ class BoardSelfTest final {
         return result;
     }
 
-    /// [en] The config in force. [zh] 当前配置。
+    /**
+     * @brief [en] The config in force.
+     * @brief [zh] 当前配置。
+     */
     [[nodiscard]] auto config() const noexcept -> const Config& { return config_; }
 
   private:
     static constexpr int kMaxDelayPoints = 32;
 
-    /// [en] Current magnitude from the three phases, offsets removed. [zh]
-    /// 由三相得到电流幅值，已去零漂。
+    /**
+     * @brief [en] Current magnitude from the three phases, offsets removed.
+     * @brief [zh] 由三相得到电流幅值，已去零漂。
+     */
     [[nodiscard]] auto magnitude(const Uvw<float>& raw, const Result& result) const noexcept -> float {
         const float u = static_cast<float>(raw.u - result.measurements.offset_a[0]);
         const float v = static_cast<float>(raw.v - result.measurements.offset_a[1]);

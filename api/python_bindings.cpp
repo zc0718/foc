@@ -31,8 +31,9 @@ namespace py = pybind11;
 
 namespace {
 
-/// The module-level `FocError` type, published to the translator once the module is initialised.
-/// 模块级的 `FocError` 类型；模块初始化时交给异常翻译器。
+/**
+ * @brief The module-level `FocError` type, published to the translator once the module is initialised. 模块级的 `FocError` 类型；模块初始化时交给异常翻译器。
+ */
 PyObject *g_foc_error_type = nullptr;
 
 /**
@@ -69,8 +70,9 @@ auto error_name(foc_err_t code) -> const char * {
 }
 
 
-/// Turn a return code into a Python-visible exception; the C call site stays one line.
-/// 把返回码变成 Python 可见的异常；C 调用点在源码里仍然只有一行。
+/**
+ * @brief Turn a return code into a Python-visible exception; the C call site stays one line. 把返回码变成 Python 可见的异常；C 调用点在源码里仍然只有一行。
+ */
 auto check(foc_err_t code, const char *call) -> void {
     if (code == FOC_OK) {
         return;
@@ -95,8 +97,10 @@ public:
         check(foc_motor_create_ex(&params, &setup, &handle_), "foc_motor_create_ex");
     }
 
-    /// [en] The setup the library actually runs with, defaults included.
-    /// [zh] 库实际生效的设置（含默认值）。
+    /**
+     * @brief [en] The setup the library actually runs with, defaults included.
+     * @brief [zh] 库实际生效的设置（含默认值）。
+     */
     [[nodiscard]] auto setup() const -> foc_motor_setup_t {
         foc_motor_setup_t applied{};
         check(foc_motor_get_setup(handle_, &applied), "foc_motor_get_setup");
@@ -201,10 +205,11 @@ public:
         return *this;
     }
 
-    /// [en] One control period. The return is a tuple rather than a dict because the six values
-    /// are positional in the C output struct and a dict would invite name drift.
-    /// [zh] 一个控制周期。返回元组而非 dict，因为这六个数在 C 输出结构里是有位置的，dict 会招来
-    /// 名字漂移。
+    /**
+     * @brief [en] One control period. The return is a tuple rather than a dict because the six values are positional in
+     *             the C output struct and a dict would invite name drift.
+     * @brief [zh] 一个控制周期。返回元组而非 dict，因为这六个数在 C 输出结构里是有位置的，dict 会招来名字漂移。
+     */
     [[nodiscard]] auto step(float i_magnitude_a, float v_bus_v, float temperature_c, float omega_e_rad_s,
                             float dt_s, float flux_error_ratio, bool flux_valid) const -> py::tuple {
         foc_protection_input_t in{};
