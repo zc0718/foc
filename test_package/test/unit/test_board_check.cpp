@@ -286,6 +286,15 @@ public:
     run_period_steps(steps);
   }
 
+  /// [en] Move the ADC trigger inside the switching period, 0..1. [zh]
+  /// 把 ADC 触发点在开关周期内移动，0..1。
+  void set_sample_delay(float fraction) {
+    sample_fraction_ = (fraction < 0.0F) ? 0.0F : ((fraction > 1.0F) ? 1.0F : fraction);
+  }
+  [[nodiscard]] auto sample_delay() const noexcept -> float {
+    return sample_fraction_;
+  }
+
   auto read_uvw() const noexcept -> core::Uvw<float> {
     return core::Uvw<float>{
         static_cast<float>((fault_.sign[0] * held_.u) + fault_.offset[0]),
@@ -310,12 +319,24 @@ private:
       return;
     }
     const float h = inverter_.step_length_s();
-    held_ = plant_.current_uvw(); // the sample the ISR reads, this period
+    // The trigger: the ISR latches the current at `sample_fraction_` through the
+    // period. That is what makes an off-centre trigger *measurable* -- moving it
+    // moves the reading, and the reading is what the loop consumes.
+    // 触发：ISR 在周期内 `sample_fraction_` 处锁存电流。这正是"偏心的触发点可以被量到"的原因
+    // ——移动它读数就动，而读数正是环消费的东西。
+    const int sample_index =
+        static_cast<int>((sample_fraction_ * static_cast<float>(steps)) + 0.5F);
     for (int k = 0; k < steps; ++k) {
+      if (k == sample_index) {
+        held_ = plant_.current_uvw();
+      }
       const core::Ab<float> applied = inverter_.step(plant_.current_uvw());
       plant_.set_voltage_dq(
           core::park(applied, poles * plant_.theta_mech_rad()));
       plant_.advance(h);
+    }
+    if (sample_index >= steps) {
+      held_ = plant_.current_uvw();
     }
     static_cast<void>(steps_wanted);
   }
@@ -323,6 +344,7 @@ private:
   sil::PmsmPlant plant_;
   sil::DiscreteInverter inverter_;
   Fault fault_{};
+  float sample_fraction_{0.5F};
   core::Dq<float> command_{0.0F, 0.0F};
   core::Uvw<float> held_{0.0F, 0.0F, 0.0F};
 };
@@ -339,6 +361,7 @@ auto self_test_config() -> core::BoardSelfTest::Config {
   config.average_steps = 20;
   config.zero_steps = 20;
   config.ripple_steps = 1;
+  config.delay_steps = 16;
   config.l_h = sil::nominal_spec().lq;
   config.i_min_a = 0.4F;
   return config;
@@ -424,6 +447,134 @@ TEST(BoardCheck, P7a_TheSelfTestMeasuresAndTheChecklistNamesTheCause) {
     EXPECT_GE(report.count, 10) << c.label;
   }
   EXPECT_EQ(3, named) << "measurement plus judgement has to name every case";
+}
+
+
+TEST(BoardCheck, T4_TheSelfTestFindsWhereTheAdcTriggerSits) {
+  // T4: the ripple check only has signal if the bench can move its trigger. With
+  // a movable trigger the standstill sequence reports **where** the trigger is,
+  // and what that position is worth in amps.
+  // T4：只有当台架能移动触发点时，纹波检查才有信号。触发点可动之后，堵转序列就能报出触发点
+  // **在哪**、以及那个位置值多少安培的误差。
+  auto config = self_test_config();
+  core::BoardSelfTest self_test(config);
+  const core::BoardMeasurements spinning = spinning_truth();
+
+  struct Case final {
+    const char *label;
+    float trigger;
+  };
+  const Case cases[] = {{"centre of period", 0.5F}, {"near the ripple peak", 0.75F}};
+  std::printf("\n[T4] trigger sweep, %d points per switching period\n", config.delay_steps);
+  std::printf("     %-22s %8s %8s %10s %10s\n", "trigger at", "reported", "best",
+              "ripple A", "error A");
+  float ripple[2] = {0.0F, 0.0F};
+  float best[2] = {0.0F, 0.0F};
+  float error[2] = {0.0F, 0.0F};
+  int k = 0;
+  for (const Case &c : cases) {
+    FaultyBoard board(sil::nominal_plant_params(), FaultyBoard::Fault{});
+    board.set_sample_delay(c.trigger);
+    const auto result = self_test.run(board, spinning);
+    ripple[k] = result.measurements.ripple_measured_a;
+    best[k] = result.sample_delay_best_fraction;
+    error[k] = result.sample_error_a;
+    std::printf("     %-22s %8.3f %8.3f %10.4f %10.4f\n", c.label,
+                static_cast<double>(result.sample_delay_fraction),
+                static_cast<double>(result.sample_delay_best_fraction),
+                static_cast<double>(ripple[k]), static_cast<double>(error[k]));
+
+    // 1. The sweep ran, and it put the trigger back where it found it.
+    // 1. 扫描跑了，并且把触发点放回了它原来在的地方。
+    ASSERT_TRUE(result.sample_delay_measured) << c.label;
+    EXPECT_NEAR(c.trigger, result.sample_delay_fraction, 1.0e-6F) << c.label;
+    EXPECT_NEAR(c.trigger, board.sample_delay(), 1.0e-6F) << c.label;
+    // 2. The ripple is a property of the drive, not of where the trigger happens
+    //    to be -- a sweep that reported the setting back would be measuring
+    //    nothing.
+    // 2. 纹波是驱动的性质，不是触发点碰巧在哪的性质——把设置原样报回来的扫描等于什么都没量。
+    EXPECT_GT(ripple[k], 0.0F) << c.label;
+    EXPECT_LT(ripple[k], result.measurements.ripple_expected_a) << c.label;
+    ++k;
+  }
+
+  // 3. Same ripple, different sampling error: that is the discrimination the
+  //    item exists for. The optimum is the same for both boards, because it is a
+  //    property of where the current crosses its period mean inside this drive --
+  //    which is *not* necessarily the centre of the period, and is exactly why
+  //    the self-test measures it instead of assuming 0.5.
+  // 3. 同一个纹波、不同的采样误差：这就是该项存在的判别力。最优点对两块板相同，因为它是"在这
+  //    个驱动下电流在哪里穿过周期均值"的性质——而那**不一定**是周期中心，这也正是自检要量它
+  //    而不是假设 0.5 的原因。
+  EXPECT_NEAR(ripple[0], ripple[1], 0.01F * ripple[0]);
+  EXPECT_NEAR(best[0], best[1], 1.0e-6F);
+  EXPECT_GT(error[1], 3.0F * error[0])
+      << "the trigger near the ripple peak must read worse than the one at the "
+         "period centre";
+}
+
+TEST(BoardCheck, T4_TheSamplingErrorIsZeroAtTheCentreAndMaximalAtTheEdge) {
+  // The number the position is worth, on the same board with nothing else
+  // changed: what the ADC reads minus what the current really is. A flat plant
+  // with a fine trigger grid is the only place this can be checked without
+  // arguing about PWM alignment.
+  // 位置值多少：在同一块板子上、别的都不动，就是"ADC 读到的减去电流真值"。只有在台架平直、
+  // 触发网格足够细的条件下这件事才能在不争论 PWM 对齐的前提下被检查。
+  auto config = self_test_config();
+  core::BoardSelfTest self_test(config);
+  const core::BoardMeasurements spinning = spinning_truth();
+
+  FaultyBoard centred(sil::nominal_plant_params(), FaultyBoard::Fault{});
+  centred.set_sample_delay(0.5F);
+  const auto at_centre = self_test.run(centred, spinning);
+
+  FaultyBoard peak(sil::nominal_plant_params(), FaultyBoard::Fault{});
+  peak.set_sample_delay(0.75F);
+  const auto at_peak = self_test.run(peak, spinning);
+
+  std::printf("[T4] sampling error: 0.5 -> %.4f A, 0.75 -> %.4f A (ripple p-p "
+              "%.4f A)\n",
+              static_cast<double>(at_centre.sample_error_a),
+              static_cast<double>(at_peak.sample_error_a),
+              static_cast<double>(at_centre.measurements.ripple_measured_a));
+  // Both errors are bounded by the ripple itself -- the bookkeeping has to stay
+  // inside physics even when the fault is at its worst.
+  // 两个误差都被纹波本身界住——即使故障最严重，账也不能超出物理。
+  EXPECT_LT(at_peak.sample_error_a,
+            0.5F * at_centre.measurements.ripple_measured_a);
+  EXPECT_GT(at_peak.sample_error_a, 4.0F * at_centre.sample_error_a);
+}
+
+TEST(BoardCheck, T4_EveryItemAndCauseHasADistinctName) {
+  // The 5-minute procedure dumps the report with these two functions, so a
+  // duplicated name would make two different faults look like one line of output.
+  // 5 分钟流程就是用这两个函数导出报告的，名字重复会让两个不同的故障看起来像同一行输出。
+  const core::BoardItem items[] = {
+      core::BoardItem::CurrentSum,       core::BoardItem::CurrentOffset,
+      core::BoardItem::CurrentPolarity,  core::BoardItem::SamplingInstant,
+      core::BoardItem::DeadTime,         core::BoardItem::EncoderOffset,
+      core::BoardItem::Parameters,       core::BoardItem::ObserverHealth};
+  const core::BoardCause causes[] = {
+      core::BoardCause::None,            core::BoardCause::OffsetBias,
+      core::BoardCause::PolarityReversed, core::BoardCause::SamplingInstant,
+      core::BoardCause::DeadTimeMismatch, core::BoardCause::EncoderOffset,
+      core::BoardCause::ParametersOff,   core::BoardCause::ObserverUnhealthy};
+  for (const auto item : items) {
+    ASSERT_NE(nullptr, core::board_item_name(item));
+    for (const auto other : items) {
+      if (item != other) {
+        EXPECT_STRNE(core::board_item_name(item), core::board_item_name(other));
+      }
+    }
+  }
+  for (const auto cause : causes) {
+    ASSERT_NE(nullptr, core::board_cause_name(cause));
+    for (const auto other : causes) {
+      if (cause != other) {
+        EXPECT_STRNE(core::board_cause_name(cause), core::board_cause_name(other));
+      }
+    }
+  }
 }
 
 } // namespace foc

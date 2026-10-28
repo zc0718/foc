@@ -2,6 +2,8 @@
 #pragma once
 #include <cmath>
 #include <cstdint>
+#include <type_traits>
+#include <utility>
 
 #include <foc/core/commissioning.hpp>
 #include <foc/core/types.hpp>
@@ -179,6 +181,13 @@ namespace detail {
     }
     return std::fabs(measured - nominal) / scale;
 }
+
+/// [en] Does the bench let the ADC trigger be moved? [zh] 台架能否移动 ADC 触发点？
+template <typename Bench, typename = void> struct movable_trigger : std::false_type {};
+
+template <typename Bench>
+struct movable_trigger<Bench, std::void_t<decltype(std::declval<Bench&>().set_sample_delay(0.0F)),
+                                          decltype(std::declval<const Bench&>().sample_delay())>> : std::true_type {};
 } // namespace detail
 
 /**
@@ -341,6 +350,9 @@ namespace detail {
  *        auto read_uvw()          -> Uvw<float>;  // the ADC result the ISR reads (a sample
  *                                                 // taken at the trigger point, not "now")
  *        auto switching_period_s() -> float;
+ *        // optional, detected by SFINAE -- see `sample_delay_measured`:
+ *        auto set_sample_delay(float fraction) -> void;  // move the ADC trigger
+ *        auto sample_delay() const -> float;             // where it is now, 0..1
  *        ```
  *        [zh] 为什么是模板而不是带虚函数的类。台架就是用户那块板子，而本项目在控制路径上
  * 没有异常、没有 RTTI、不分配内存；模板对着一个四调用的概念，零开销，并把整个序列留在一处
@@ -355,11 +367,25 @@ namespace detail {
  *        - **cannot**: `psi_f`, the encoder mount offset and the observer's
  *          health, all of which need the rotor to turn. Those come from the
  *          spin test and the aligner, and are passed in.
+ *        - **can measure the ADC trigger, if the bench lets it move the
+ *          trigger**: the ripple check compares what the ADC sees with what the
+ *          switching period implies, and the only way to know what the ADC sees
+ *          is to move the trigger across the period and watch the reading move.
+ *          That is why `set_sample_delay` / `sample_delay` are in the concept at
+ *          all. Because a bench that cannot move its trigger is a perfectly
+ *          reasonable thing for a user to have, they are **optional**: detected
+ *          by SFINAE, and when absent `ripple_measured_a` is whatever the caller
+ *          supplied.
  *        [zh] 堵转能测什么、不能测什么，先说清楚——静默跳过一半检查的自检比没有更糟：
  *        - **能**：逐相零漂（零电流自己就是基准）、极性（给一个已知矢量读符号）、`Rs` 与
  *          死区伏秒（两点，见 `RsEstimator`）、以及 ADC 实际看到的开关纹波。
  *        - **不能**：`ψf`、编码器安装偏置、观测器健康度，它们都需要转子转起来。那些来自
  *          旋转测试与对齐器，由调用方传入。
+ *        - **能测 ADC 触发点，前提是台架允许移动触发**：纹波检查拿 ADC 看到的与开关周期应有的比，
+ *          而要知道 ADC 到底看到什么，唯一办法是把触发点在整个周期里移动并看读数怎么动。这就是
+ *          `set_sample_delay` / `sample_delay` 在前面的概念里的原因。因为"台架不能移触发点"对用户
+ *          是完全合理的处境，它们是**可选**的：由 SFINAE 探测，缺省时 `ripple_measured_a` 用调用方
+ *          给的值。
  *
  * @context [en] Commissioning, standstill, once per board. [zh]
  * 整定阶段，堵转，每块板一次。
@@ -382,12 +408,15 @@ class BoardSelfTest final {
                            ///< 每个点平均多少个周期。
         int zero_steps;    ///< [en] zero-current samples to average. [zh]
                            ///< 要平均的零电流样本数。
-        int ripple_steps;  ///< [en] sub-steps per period for the ripple read.
-                           ///< [zh] 读纹波时每周期取多少个子步。
-        float l_h;         ///< [en] inductance, H -- for the ripple bound only.
-                           ///< [zh] 电感，H——只用于纹波界。
-        float i_min_a;     ///< [en] below this the loss is not a step yet, A.
-                           ///< [zh] 低于此值时损失还不是阶跃，A。
+        int ripple_steps;  ///< [en] sub-steps per period for the ripple read. [zh]
+                           ///< 读纹波时每周期取多少子步。
+        int delay_steps;   ///< [en] points of the switching period to sweep when locating the
+                           ///< ADC trigger; 0 = do not sweep. [zh]
+                           ///< 定位 ADC 触发点时在开关周期内扫多少点；0 = 不扫。
+        float l_h;         ///< [en] inductance, H -- for the ripple bound only. [zh]
+                           ///< 电感，H——只用于纹波界。
+        float i_min_a;     ///< [en] below this the loss is not a step yet, A. [zh]
+                           ///< 低于此值时损失还不是阶跃，A。
     };
 
     /**
@@ -395,13 +424,22 @@ class BoardSelfTest final {
      * @since 0.1.0
      */
     struct Result final {
-        BoardMeasurements measurements; ///< [en] the numbers to judge. [zh]
-                                        ///< 待判定的数。
-        float rs_ohm;                   ///< [en] identified resistance, ohm. [zh]
-                                        ///< 辨识出的电阻，Ω。
-        bool complete;                  ///< [en] every step ran. [zh] 每一步都跑完了。
-        int points_used;                ///< [en] voltage points the `Rs` fit accepted. [zh]
-                                        ///< `Rs` 拟合采用的电压点数。
+        BoardMeasurements measurements;   ///< [en] the numbers to judge. [zh]
+                                          ///< 待判定的数。
+        float rs_ohm;                     ///< [en] identified resistance, ohm. [zh]
+                                          ///< 辨识出的电阻，Ω。
+        bool complete;                    ///< [en] every step ran. [zh] 每一步都跑完了。
+        int points_used;                  ///< [en] voltage points the `Rs` fit accepted. [zh]
+                                          ///< `Rs` 拟合采用的电压点数。
+        bool sample_delay_measured;       ///< [en] the bench could move its trigger, and the
+                                          ///< sweep ran. [zh] 台架能移触发点且扫过了。
+        float sample_delay_fraction;      ///< [en] where the trigger actually sits, in switching
+                                          ///< periods. [zh] 触发点实际所在位置，以开关周期为单位。
+        float sample_delay_best_fraction; ///< [en] where it should sit -- the centre, in
+                                          ///< periods. [zh] 它该在的位置——中心，以周期为单位。
+        float sample_error_a;             ///< [en] how far the reading at the actual trigger sits
+                                          ///< from the period average, A. [zh]
+                                          ///< 实际触发点上的读数偏离周期均值多远，A。
     };
 
     explicit BoardSelfTest(const Config& config) noexcept : config_(config) {}
@@ -488,13 +526,12 @@ class BoardSelfTest final {
                 result.measurements.response_sign[1] = (vv > 0.0F) ? 1.0F : -1.0F;
                 result.measurements.response_sign[2] = (w > 0.0F) ? 1.0F : -1.0F;
                 v_used = v;
-                // The sampling-instant check is *not* measured here, and the reason is a property of
-                // hardware rather than an omission: finding it means moving the ADC trigger inside the
-                // PWM period and watching the reading move, which needs a bench facility this
-                // four-call concept does not abstract. The caller supplies that number.
-                // 采样时刻检查**不在这里**测，原因是硬件属性而不是遗漏：要发现它得把 ADC 触发点在
-                // PWM 周期内移动并看读数怎么动，那需要本四调用概念没有抽象的台架能力。那个数由调用方
-                // 提供。
+                // The sampling-instant check is not a by-product of the `Rs` sweep: finding the
+                // trigger means moving it across the period and watching the reading move, which
+                // section 2b does *if* the bench can move its trigger. Measuring the ripple by
+                // looking harder at one trigger point would only measure aliasing.
+                // 采样时刻这项不是 `Rs` 扫描的副产品：要找到触发点，得把它在整个周期里移动并看读数怎么动，
+                // 那由第 2b 节在**台架能移触发**时做。只在同一个触发点上看得更仔细，量到的只是混叠。
             }
         }
 
@@ -514,7 +551,9 @@ class BoardSelfTest final {
         const float bounce = bench.v_bus_v();
         result.measurements.ripple_expected_a =
             (config_.l_h > 0.0F) ? ((bounce * period) / (8.0F * config_.l_h)) : 0.0F;
-        static_cast<void>(v_used);
+        // --- 2b. the ADC trigger, when the bench can move it ---
+        // --- 2b. ADC 触发点，当台架能移它时 ---
+        sweep_sample_delay(bench, v_used, period, result);
         result.complete = (result.points_used > 0) && (sum_samples > 0);
         return result;
     }
@@ -523,8 +562,142 @@ class BoardSelfTest final {
     [[nodiscard]] auto config() const noexcept -> const Config& { return config_; }
 
   private:
+    static constexpr int kMaxDelayPoints = 32;
+
+    /// [en] Current magnitude from the three phases, offsets removed. [zh]
+    /// 由三相得到电流幅值，已去零漂。
+    [[nodiscard]] auto magnitude(const Uvw<float>& raw, const Result& result) const noexcept -> float {
+        const float u = static_cast<float>(raw.u - result.measurements.offset_a[0]);
+        const float v = static_cast<float>(raw.v - result.measurements.offset_a[1]);
+        const float w = static_cast<float>(raw.w - result.measurements.offset_a[2]);
+        return std::sqrt(0.6666667F * (((u * u) + (v * v)) + (w * w)));
+    }
+
+    /**
+     * @brief [en] Move the ADC trigger across the switching period and read what
+     * moves. [zh] 把 ADC 触发点在开关周期里挪一遍，看什么在动。
+     *
+     *        [en] Three numbers come out of the same sweep. The reading's
+     * **peak-to-peak across the period** is the ripple the ADC actually sees,
+     * which is what the `SamplingInstant` check compares against the switching
+     * period. The **deviation of the reading at the board's own trigger from the
+     * period average** (`sample_error_a`) is what that position costs the loop in
+     * amps. The **position of the minimum deviation** is where the trigger ought
+     * to be -- and it is reported rather than assumed, because it is *not*
+     * always the centre of the period: a centre-aligned PWM puts the mean at the
+     * centre, an edge-aligned one puts it wherever the current crosses its
+     * average, which depends on the duty. Assuming 0.5 would be a guess wearing
+     * a constant.
+     *        [zh] 同一次扫描给出三个数。读数在**整个周期里的峰峰值**就是 ADC 实际看到的纹波，即
+     * `SamplingInstant` 项与开关周期对比的那个量。**板子自己那个触发点上的读数相对周期均值的
+     * 偏离**（`sample_error_a`）就是那个位置在安培上让环付出多少。**偏离最小处的位置**才是触发点
+     * 该在的地方——而它是被**量出来并上报**的，不是被假设的，因为它**并不总是**周期中心：中心对齐的
+     * PWM 把均值放在中心，边沿对齐的把均值放在电流穿过自身平均值的时刻，那取决于占空比。假设 0.5
+     * 是一个披着常数外衣的猜测。
+     *
+     * @note [en] Skipped entirely when the bench has no trigger to move; that is
+     * detected at compile time, not at run time, so a bench without it costs
+     * nothing and does not need a stub.
+     * [zh] 台架没有可动的触发点时整段跳过；这在编译期探测，所以没有该能力的台架零开销、也不必写桩。
+     * @since 0.1.0
+     */
+    template <typename Bench>
+    auto sweep_sample_delay(Bench& bench, float v_drive, float period, Result& result) noexcept -> void {
+        if constexpr (detail::movable_trigger<Bench>::value) {
+            const int points = (config_.delay_steps < kMaxDelayPoints) ? config_.delay_steps : kMaxDelayPoints;
+            if ((points < 3) || !(v_drive > 0.0F) || !(config_.average_steps > 0)) {
+                return;
+            }
+            const float saved = bench.sample_delay();
+            bench.set_dq(Dq<float>{v_drive, 0.0F});
+            float readings[kMaxDelayPoints]{};
+            float sum = 0.0F;
+            for (int k = 0; k < points; ++k) {
+                bench.set_sample_delay(static_cast<float>(k) / static_cast<float>(points));
+                for (int s = 0; s < config_.settle_steps; ++s) {
+                    bench.advance(period);
+                }
+                float acc = 0.0F;
+                for (int s = 0; s < config_.average_steps; ++s) {
+                    acc = static_cast<float>(acc + magnitude(bench.read_uvw(), result));
+                    bench.advance(period);
+                }
+                readings[k] = acc / static_cast<float>(config_.average_steps);
+                sum = static_cast<float>(sum + readings[k]);
+            }
+            const float period_mean = sum / static_cast<float>(points);
+            float lo = readings[0];
+            float hi = readings[0];
+            float best_dev = std::fabs(readings[0] - period_mean);
+            int best = 0;
+            for (int k = 1; k < points; ++k) {
+                lo = (readings[k] < lo) ? readings[k] : lo;
+                hi = (readings[k] > hi) ? readings[k] : hi;
+                const float dev = std::fabs(readings[k] - period_mean);
+                if (dev < best_dev) {
+                    best_dev = dev;
+                    best = k;
+                }
+            }
+            result.measurements.ripple_measured_a = static_cast<float>(hi - lo);
+            result.sample_delay_best_fraction = static_cast<float>(best) / static_cast<float>(points);
+            // The error is read at the setting the board *actually* uses, not at
+            // the best one: the sweep is how we learn what the right setting is,
+            // the board's own setting is what it has to live with.
+            // 误差按板子**实际**用的那个设置读，不是按最好的那个：扫描用来弄清正确设置是什么，
+            // 而板子得过日子的是它自己的设置。
+            const int at = static_cast<int>((saved * static_cast<float>(points)) + 0.5F);
+            const int clamped = (at < 0) ? 0 : ((at >= points) ? (points - 1) : at);
+            result.sample_error_a = std::fabs(readings[clamped] - period_mean);
+            bench.set_sample_delay(saved);
+            result.sample_delay_fraction = saved;
+            result.sample_delay_measured = true;
+        } else {
+            static_cast<void>(bench);
+            static_cast<void>(v_drive);
+            static_cast<void>(period);
+            static_cast<void>(result);
+        }
+    }
+
     Config config_{};
 };
+
+/**
+ * @brief [en] The item as text, for a log line or a screen. [zh]
+ * 检查项的文本形式，给日志或界面用。
+ *
+ * @param item [en] which check. [zh] 哪一项。
+ * @return [en] a stable, lowercase name; never null. [zh] 稳定的小写名字；不会是空指针。
+ * @note [en] Paired with `board_cause_name` so a dump loop is two calls and no
+ * switch statement in the user's code -- the procedure document in the repo is
+ * meant to be copy-pasteable.
+ * [zh] 与 `board_cause_name` 配对，于是导出一段日志就是两次调用，用户代码里不需要 switch——
+ * 仓库里的流程文档是要能直接照抄的。
+ * @since 0.1.0
+ * @exporter
+ */
+[[nodiscard]] constexpr auto board_item_name(BoardItem item) noexcept -> const char* {
+    switch (item) {
+    case BoardItem::CurrentSum:
+        return "current sum";
+    case BoardItem::CurrentOffset:
+        return "current offset";
+    case BoardItem::CurrentPolarity:
+        return "current polarity";
+    case BoardItem::SamplingInstant:
+        return "sampling instant";
+    case BoardItem::DeadTime:
+        return "dead time";
+    case BoardItem::EncoderOffset:
+        return "encoder offset";
+    case BoardItem::Parameters:
+        return "machine parameters";
+    case BoardItem::ObserverHealth:
+        return "observer";
+    }
+    return "?";
+}
 
 /**
  * @brief [en] The cause as text, for a log line or a screen. [zh]
