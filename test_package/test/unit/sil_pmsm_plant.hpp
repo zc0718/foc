@@ -249,6 +249,20 @@ class PmsmPlant final {
     [[nodiscard]] auto omega_mech_rad_s() const noexcept -> float;
 
     /**
+     * @brief [en] Override the mechanical speed and leave the electrical state alone -- a dyno bench. The torque
+     *             equation keeps running and simply has nothing to say: with a large inertia the torque cannot move the
+     *             speed between two calls, so the speed is what the caller put there.
+     * @brief [zh] 覆盖机械转速、不动电学状态——测功机台架。转矩方程照常运行，只是无话可说：惯量取大之后转矩在两次调用之
+     *             间推不动转速，于是转速就是调用方放进去的那个值。
+     * @note [en] Not `reset()`: that rewrites the currents too, which throws away the intra-period high-frequency
+     *            content -- the carrier itself. A rig that called `reset()` every step measured an observer with no HF
+     *            current at all and reported it as "unlocked", which is how this member came to exist.
+     * @note [zh] 不是 `reset()`：那会把电流一并重写，从而丢掉周期内的高频内容——也就是载波本身。每一步都调 `reset()` 的
+     *            台架量到的是一个没有高频电流的观测器，并把它报成"未锁定"，这个成员就是这么来的。
+     */
+    void set_mechanical_speed(float omega_mech_rad_s) noexcept;
+
+    /**
      * @brief [en] Phase currents reconstructed through inverse Park + inverse Clarke, i.e. what a current sensor would
      *             see. This is the signal the SIL harness feeds to the HAL stub.
      * @brief [zh] 经逆 Park + 逆 Clarke 重构的相电流，即电流传感器"看到"的信号。SIL 夹具把它喂给 HAL 桩。
@@ -332,6 +346,8 @@ inline void PmsmPlant::reset(PlantState initial) noexcept {
 inline void PmsmPlant::set_voltage_dq(core::Dq<float> v_dq) noexcept { v_dq_ = v_dq; }
 
 inline void PmsmPlant::set_load_torque(float torque_nm) noexcept { load_nm_ = torque_nm; }
+
+inline void PmsmPlant::set_mechanical_speed(float omega_mech_rad_s) noexcept { state_.omega_mech = omega_mech_rad_s; }
 
 inline void PmsmPlant::set_d_axis_saturation(float depth, float current_a) noexcept {
     sat_depth_ = (depth > 0.0F) ? ((depth < 1.0F) ? depth : 1.0F) : 0.0F;
