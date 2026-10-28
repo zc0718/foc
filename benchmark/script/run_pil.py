@@ -53,6 +53,7 @@ SOURCES = [
     'src/core/observer/back_emf_observer.cpp',
     'src/core/feedforward.cpp',
     'src/core/motion_profile.cpp',
+    'src/core/position_reference.cpp',
     'src/motor/motor_config.cpp',
     'src/motor/foc_loop.cpp',
 ]

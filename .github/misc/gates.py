@@ -495,6 +495,29 @@ def cmd_fmu(_explicit, tolerant=False):
     return checked.returncode
 
 
+def cmd_pil(_explicit, tolerant=False):
+    """The target ISA must compute what the host computes, not merely compile for it.
+
+    `benchmark/script/run_pil.py` builds the same scenario twice -- once for the host, once for aarch64 -- runs both,
+    and compares the metrics. A cross-compile leg answers "does it build"; this answers "does it compute the same
+    thing", which is the question a different `float` implementation, a different FMA contraction or a different
+    `-ffast-math` can answer "no" to.
+
+    Optional material, same convention as the FMU: a cross compiler and qemu-user. Absent, this prints one SKIPPED line
+    and stops when it is one in a chain of gates, and fails when it was asked for by name -- a gate that skips quietly
+    is not a gate. The measurement this gate would produce has therefore *not* been made on a machine without qemu, and
+    the skip line says so rather than implying a pass."""
+    script = ROOT / 'benchmark' / 'script' / 'run_pil.py'
+    done = subprocess.run([sys.executable, str(script), '--require-target'], cwd=ROOT, text=True)
+    if done.returncode == 2:
+        reason = 'no aarch64 cross compiler or qemu-user on this machine'
+        if tolerant:
+            print(f'[pil] SKIPPED: {reason}; the target-ISA comparison was NOT run', flush=True)
+            return 0
+        _die(f'the PIL comparison cannot run: {reason}')
+    return done.returncode
+
+
 def main():
     parser = argparse.ArgumentParser(description='Native quality gates (one implementation, three callers).')
     sub = parser.add_subparsers(dest='gate', required=True)
@@ -509,7 +532,9 @@ def main():
         'docs': 'Doxygen blocks: star alignment, continuation indent, 120 columns, no mid-CJK breaks',
         'boundaries': 'every statement on the boundaries page names a test case that exists',
         'fmu': 'build the FMU and load it in a standard FMI master (FMPy); SKIPPED when its material is absent',
-        'all': 'format + tidy + guard + license + strict + claims + docs + boundaries + fmu',
+        'pil': 'run the speed-step scenario on the target ISA under qemu and compare with the host; SKIPPED when its '
+               'material is absent',
+        'all': 'format + tidy + guard + license + strict + claims + docs + boundaries + fmu + pil',
     }
     for name, text in helps.items():
         leaf = sub.add_parser(name, help=text)
@@ -543,8 +568,11 @@ def main():
         return cmd_boundaries(args.files)
     if args.gate == 'fmu':
         return cmd_fmu(args.files)
+    if args.gate == 'pil':
+        return cmd_pil(args.files)
     return 1 if (cmd_format([]) or cmd_tidy([]) or cmd_guard([]) or cmd_license([]) or cmd_strict([]) or
-                 cmd_claims([]) or cmd_docs([]) or cmd_boundaries([]) or cmd_fmu([], tolerant=True)) else 0
+                 cmd_claims([]) or cmd_docs([]) or cmd_boundaries([]) or cmd_fmu([], tolerant=True) or
+                 cmd_pil([], tolerant=True)) else 0
 
 
 if __name__ == '__main__':

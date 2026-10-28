@@ -178,6 +178,25 @@ The log
        comparison into the transient (periods 1, 5 and 25) and by letting the sweep cross the limit.
      - None. But the lesson is load-bearing: a control that is never exercised looks exactly like a control that passes.
      - ``pending``
+   * - F-5
+     - F
+     - `benchmark/script/run_pil.py` lists the library's non-template translation units by hand, and never gained
+       `src/core/position_reference.cpp` when W7-a turned `PositionReference` into a non-template. The PIL leg has not
+       linked since that commit.
+     - Wiring the `pil` gate and running it: two undefined references at link time. Nothing had executed the script since
+       W7-a, so "the PIL leg exists" was true of the file and false of the build -- a distinction no amount of reading
+       would have settled.
+     - The whole PIL leg. Rebuilt and re-run: 17 metrics compared, the target reproduces the host, worst relative
+       difference 5.96e-7 against a 1e-3 limit.
+     - ``pending``
+   * - A-7
+     - A
+     - The breadth plan said the PIL leg "exists, and compares host with qemu point by point", because the two files
+       (`run_pil.py`, `pil_main.cpp`) were present. It had not compiled for three waves.
+     - Running it instead of listing it. The plan's Phase 0 wording changed from "put PIL in a gate" to "fix PIL, then
+       put it in a gate", which is what the work actually was.
+     - One plan sentence, and the next row's whole reason for existing.
+     - ``pending``
 
 Two kinds of row that are currently empty
 -----------------------------------------
