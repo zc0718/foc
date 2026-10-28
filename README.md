@@ -178,6 +178,39 @@ stator voltage in stator coordinates while our model works in the rotor frame, s
 first. A harness that mixes frames produces a convincing wrong answer; that is worth knowing before trusting any
 three-way table.
 
+### Control reconciliation with a third party (manual, not in CI)
+
+The table above reconciles the *machine model*. This one reconciles the *control loop*: `foc.Motor` -- which is the C
+ABI, reached through the host HAL, not a Python re-implementation -- drives `motulator`'s synchronous machine, at four
+prescribed speeds and accelerations, on a 300 V bus with a 200 Hz current bandwidth. `benchmark/script/reconcile_controller.py`.
+
+| Phase | Acceleration | iq measured | Predicted | Error |
+|---|---|---|---|---|
+| standstill | 0 | 0.5000 A | 0.5000 A | 0.00 % |
+| ramp 0 -> 400 rad/s | 2800 rad/s^2 | 0.2890 A | 0.2879 A | 0.22 % |
+| hold 400 rad/s | 0 | 0.4999 A | 0.5000 A | 0.02 % |
+| ramp 400 -> 800 rad/s | 2800 rad/s^2 | 0.2889 A | 0.2879 A | 0.20 % |
+| hold 800 rad/s | 0 | 0.4996 A | 0.5000 A | 0.09 % |
+
+The command is 0.5 A. The ramp rows are not 0.5 A and should not be: a PI current loop has no steady-state error
+against a step disturbance but a finite one against a ramp, since the back-EMF changes at `psi_f * alpha` and the loop
+has finite gain below the break frequency,
+
+    delta_i = psi_f * alpha / k_i,    k_i = alpha_c * R_s
+
+which at 2800 rad/s^2 gives 0.212 A, i.e. 0.288 A. That number was written down before the run and the measurements
+land on it to 0.2 %. Both the held and the ramped rows are therefore checks against a closed-form expectation rather
+than against "close enough to the command".
+
+An earlier version of this script integrated the mechanical equations instead of prescribing the speed, and reported
+iq settling at 0.66 of the command. That looked like a defect in the loop and was not: with the machine free to
+accelerate, the ramp error above appears as an apparent gain error, which is why the speed schedule is prescribed and
+the inertia stays out of the comparison. A criterion of "must equal the command" would have failed a correct loop.
+
+`motulator`'s own `CurrentVectorControl` is also driven through the same plant. Its q-axis current agrees to 0.01 % on
+the ramps, but its d axis drifts in this harness while its own reference is zero, and the cause is in the adapter
+rather than established as its behaviour, so nothing about that axis is claimed here.
+
 ### Claims deliberately not made
 
 These are the claims the evidence levels do not support, listed so nobody has to guess whether they
