@@ -12,6 +12,7 @@
 #include <foc/core/commissioning.hpp>
 #include <foc/core/field_weakening.hpp>
 #include <foc/core/observer/back_emf_observer.hpp>
+#include <foc/core/observer/switchable_observer.hpp>
 #include <foc/core/protection.hpp>
 #include <foc/core/reference.hpp>
 #include <foc/core/pi.hpp>
@@ -35,8 +36,35 @@ namespace {
 // C 路径给的是**完整**电机：位置环与对齐器都在。C 调用方无法追加模板参数，因此这个选择必须在这里
 // 做定；用默认的空策略（`NullAlignment` 等）会把 C API 静默地封成 C++ API 的子集，而那正是本项目
 // 一直在拒绝的"只服务一种场景的库"陷阱。
-using MotorT = motor::Motor<core::BackEmfObserver, core::Svpwm, core::Pi, driver::StubHal, core::NullReferenceGenerator,
-                            core::NullFeedforward, core::PositionP, core::AlignRoutine>;
+/**
+ * @brief [en] The observer the C path builds, from the nameplate and one explicit kind.
+ * @brief [zh] C 路径构造的观测器：铭牌加一个显式的 kind。
+ * @param p [en] the caller's nameplate.
+ * @param p [zh] 调用方的铭牌。
+ * @param kind [en] which of the two the slot starts on.
+ * @param kind [zh] 该槽位起始选哪个。
+ * @note [en] The kind is a parameter rather than a constant so that enabling a mode is a change at the *call site*,
+ *            where `observer_status()` has already decided the mode is allowed, not a second decision buried here. The
+ *            NLFO half is built with a **zero** flux linkage, because this boundary has no such field to read
+ *            (`foc_motor_params_t` carries `rs`, `ld`, `lq`, `kt`, `j`, `b` and nothing else). Zero is a visible
+ *            sentinel for "not known here"; deriving something plausible from `kt` would look like a real number and be
+ *            wrong for any machine whose pole pairs are not one. It is unreachable today -- `observer_status()` rejects
+ *            `FOC_OBSERVER_NONLINEAR_FLUX` before this is ever called with it selected -- and supplying it for real is
+ *            one of the things adding that mode has to solve.
+ * @note [zh] kind 是参数而不是常量，于是"启用某个模式"的改动落在**调用点**——那里 `observer_status()` 已经判定该模式被允
+ *            许，而不是在这里多出第二个决定。 NLFO 那一半的磁链是 **0**，因为该边界没有字段可读（`foc_motor_params_t`
+ *            只有 `rs`、`ld`、`lq`、`kt`、`j`、 `b`）。 0 是"此处未知"的显式标记；从 `kt` 推一个看起来合理的值会像一个
+ *            真数字，而对任何极对数不为 1 的电机都是错的。今天它不可达——`observer_status()` 在它被选中之前就拒绝
+ *            `FOC_OBSERVER_NONLINEAR_FLUX`——而真正提供这个参数，正是启用该模式必须解决的问题之一。
+ * @since 0.1.5
+ */
+inline auto make_observer(const foc_motor_params_t& p, core::ObserverKind kind) noexcept -> core::SwitchableObserver {
+    return core::SwitchableObserver(core::BackEmfObserver::Config{p.rs, p.ld},
+                                    core::NonlinearFluxObserver::Config{p.rs, p.lq, 0.0F, 0.3F, 3.0F, 0.0F}, kind);
+}
+
+using MotorT = motor::Motor<core::SwitchableObserver, core::Svpwm, core::Pi, driver::StubHal,
+                            core::NullReferenceGenerator, core::NullFeedforward, core::PositionP, core::AlignRoutine>;
 
 /**
  * @brief [en] The same motor with a host-fed HAL: used only by `foc_motor_create_host()`.
@@ -47,7 +75,7 @@ using MotorT = motor::Motor<core::BackEmfObserver, core::Svpwm, core::Pi, driver
  * @since 0.1.2
  */
 using MotorT_Host =
-    motor::Motor<core::BackEmfObserver, core::Svpwm, core::Pi, driver::CallbackHal, core::NullReferenceGenerator,
+    motor::Motor<core::SwitchableObserver, core::Svpwm, core::Pi, driver::CallbackHal, core::NullReferenceGenerator,
                  core::NullFeedforward, core::PositionP, core::AlignRoutine>;
 
 /**
@@ -737,7 +765,7 @@ foc_err_t foc_bridge_create_ex(const foc_motor_params_t* params, const foc_motor
         slot.hal.reset();
         slot.hal.dc_link.set_voltage_v(resolved.v_bus_v);
 
-        const foc::api::MotorT::Policies policies{foc::core::BackEmfObserver({params->rs, params->ld}),
+        const foc::api::MotorT::Policies policies{foc::api::make_observer(*params, foc::core::ObserverKind::BackEmf),
                                                   foc::core::Svpwm{},
                                                   foc::core::Pi{current},
                                                   foc::core::Pi{current},
@@ -810,15 +838,16 @@ foc_err_t foc_bridge_create_host(const foc_motor_params_t* params, const foc_mot
         slot.hal = foc::driver::CallbackHal(hal_callbacks);
         slot.setup = resolved;
 
-        const foc::api::MotorT_Host::Policies policies{foc::core::BackEmfObserver({params->rs, params->ld}),
-                                                       foc::core::Svpwm{},
-                                                       foc::core::Pi{current},
-                                                       foc::core::Pi{current},
-                                                       foc::core::Pi{speed},
-                                                       foc::core::NullReferenceGenerator{},
-                                                       foc::core::NullFeedforward{},
-                                                       foc::core::PositionP{position},
-                                                       foc::core::AlignRoutine{alignment}};
+        const foc::api::MotorT_Host::Policies policies{
+            foc::api::make_observer(*params, foc::core::ObserverKind::BackEmf),
+            foc::core::Svpwm{},
+            foc::core::Pi{current},
+            foc::core::Pi{current},
+            foc::core::Pi{speed},
+            foc::core::NullReferenceGenerator{},
+            foc::core::NullFeedforward{},
+            foc::core::PositionP{position},
+            foc::core::AlignRoutine{alignment}};
 
         slot.instance = new (static_cast<void*>(slot.storage)) foc::api::MotorT_Host(config, policies, slot.hal);
 
