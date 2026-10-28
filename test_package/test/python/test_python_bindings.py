@@ -110,6 +110,31 @@ def test_default_setup_is_observable():
         assert "MotorSetup(" in repr(applied)
 
 
+def test_the_injection_can_be_sized_and_watched_from_python():
+    # The W7-c diagnostics, on the surface a host-side script actually uses. Two of them, and both are answers the
+    # author cannot compute from anything else they have: how high the carrier may go at this control rate, and whether
+    # the observer says it is producing a measurement at all.
+    # W7-c 的诊断，落在宿主机脚本真正使用的那个表面上。两条，而两者都是作者无法从手头别的信息算出来的答案：这个控制率
+    # 下载波最高能到多少，以及观测器是否表示自己在产出测量。
+    #
+    # The ceiling is the library's own rule, asked rather than re-derived: at 20 kHz it is 8000 Hz, and a rate of zero
+    # admits nothing.
+    # 天花板是库自己的规则，问出来而不是重新推导：20 kHz 下是 8000 Hz，而频率为零时什么都不准入。
+    assert math.isclose(foc.hfi_max_inject_hz(20000.0), 8000.0, rel_tol=1e-6)
+    assert math.isclose(foc.hfi_max_inject_hz(40000.0), 16000.0, rel_tol=1e-6)
+    assert foc.hfi_max_inject_hz(0.0) == 0.0
+
+    # And the status carries the observer's verdict, with the mode it is really running. A back-EMF observer has no lock
+    # detector, so it answers True -- there is no channel that could withhold a verdict -- and publishes no error signal.
+    # 而状态带着观测器的结论，连同它真正在跑的模式。反电势观测器没有锁定判据，因此答 True——不存在能扣住结论的通道——
+    # 也不发布误差信号。
+    with foc.Motor(foc.MotorParams()) as motor:
+        status = motor.status()
+        assert status["observer"] == foc.Observer.BACK_EMF, status["observer"]
+        assert status["observer_locked"] is True, status
+        assert status["observer_error"] == 0.0, status["observer_error"]
+
+
 def test_position_and_alignment_are_reachable_from_python():
     # The Python face must not be a smaller library than the C one: position moves, per-move
     # ceilings and the alignment result are all here.

@@ -109,6 +109,68 @@ with fixed-step RK4 at 10 µs against a 100 µs control step:
 with :math:`\psi_f = K_t / (1.5 p)` and :math:`\omega_e = p\,\omega_m`. The torque constant is
 *knot* the back-EMF constant: conflating them is the classic way to be wrong by 1.5 p.
 
+_`Sizing the injection (HFI)`
+----------------------------
+
+The injection observer buys an angle where back-EMF has nothing to say, and it is not free. Every number below was
+measured on the SIL envelope fixture — a loaded machine held at a given speed on a dyno, the observer as a passenger, so
+a cell is a property of the observer and not of a loop closing on it.
+
+**The carrier has a ceiling set by the control rate.** Ask for it rather than guess:
+
+.. code-block:: python
+
+   import foc_python as foc
+
+   ceiling_hz = foc.hfi_max_inject_hz(20000.0)   # 8000.0 Hz: 2.5 control periods per carrier period
+   assert setup.inject_hz <= ceiling_hz
+
+The same question from C is :code:`foc_hfi_max_inject_hz(pwm_freq_hz)`. Past the ceiling the observer does not get
+noisy, it stops: the demodulated amplitude collapses, the lock detector drops out, the angle freezes and the speed reads
+zero, which a loop cannot tell from a stalled rotor — measured as a -19.5 rad/s speed bias before the failure was
+understood. :code:`foc_motor_create_ex()` refuses such a request, and the cases it cannot catch are reported by
+:code:`observer_locked`.
+
+Within the ceiling, higher is better on both axes at once, because the angle bias falls faster than the injected current:
+
+.. list-table:: 20 rad/s mechanical, 200 Hz demodulation, 12 V
+   :header-rows: 1
+
+   * - carrier
+     - angle bias
+     - HF current
+   * - 2000 Hz
+     - 0.0060 rad
+     - 4.04 A
+   * - 4000 Hz
+     - 0.0012 rad
+     - 1.89 A
+   * - 8000 Hz
+     - 0.00018 rad
+     - 0.38 A
+
+**The demodulation window is a fixed choice, not a scheduled one.** Across standstill to 50 rad/s mechanical it changes
+the angle error by under 0.5 %, and at standstill the *narrowest* window is best by 14x. What looked like "a narrow
+window breaks at speed" is a start-up transient, which is what the blanking time is for.
+
+**What is left at low speed is the injection's own price.** In a closed servo at 20 rad/s the steady bias is
+0.0039 rad/s — 0.02 % — and the remainder is a ripple at the carrier frequency. It is not the estimator, the angle, the
+window, the rotor's inertia or the demodulator's clamp: it scales with the injected current (a third of the volts, 0.36
+of the tone) and with speed (4.0x the speed, 4.0x the tone), and it is indifferent to the saliency. It is the injected
+current cross-coupling into torque on a turning machine, and :code:`inject_v` is the knob that sizes it.
+
+**Watch it rather than assume it.** :code:`status()` carries the observer's own verdict:
+
+.. code-block:: python
+
+   status = motor.status()
+   if not status["observer_locked"]:
+       ...   # the angle is a hold, not a measurement; speed reads zero
+   carrier_ripple_a = status["observer_error"]   # ~ -sin(2*angle_error) for HFI, 0 for the others
+
+:code:`observer_error` is exactly zero for observers that publish no error signal, so read it together with
+:code:`observer_locked` and :code:`observer`.
+
 _`Verification: what is actually checked`
 -----------------------------------------
 

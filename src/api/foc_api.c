@@ -250,3 +250,5 @@ foc_err_t foc_protector_reset(foc_protector_t protector, int32_t cold) {
 }
 
 foc_err_t foc_protector_destroy(foc_protector_t protector) { return foc_bridge_protector_destroy(protector); }
+
+float foc_hfi_max_inject_hz(float pwm_freq_hz) { return foc_bridge_hfi_max_inject_hz(pwm_freq_hz); }

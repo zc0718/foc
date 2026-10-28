@@ -677,3 +677,27 @@ foc_err_t foc_protector_reset(foc_protector_t protector, int32_t cold);
  * @exporter
  */
 foc_err_t foc_protector_destroy(foc_protector_t protector);
+
+/**
+ * @brief [en] The highest HFI injection carrier a given control rate can resolve, in Hz.
+ * @brief [zh] 给定控制率能分辨的最高 HFI 注入载波，Hz。
+ * @param pwm_freq_hz [en] the control-loop rate in Hz; 0 or negative is answered with 0.
+ * @param pwm_freq_hz [zh] 控制环频率，Hz；0 或负数答 0。
+ * @return [en] `pwm_freq_hz / 2.5`, the measured ceiling; 0 for a non-positive rate, which admits nothing.
+ * @return [zh] `pwm_freq_hz / 2.5`，即实测天花板；非正频率返回 0，此时什么都不准入。
+ * @note [en] Ask this **before** choosing `foc_motor_setup_t::inject_hz`. Past the ceiling the injection observer stops
+ *            working silently -- the demodulated amplitude collapses, the lock detector drops out, the angle freezes
+ *            and the speed reads zero, which a loop cannot tell from a stalled rotor. `foc_motor_create_ex()` refuses
+ *            such a request outright, and `foc_motor_get_status()` reports `observer_locked` for the ones it cannot
+ *            catch. The 2.5 is measured: at 20 kHz, 8000 Hz (2.50 control periods per carrier period) held in every
+ *            cell of the envelope sweep, 8400 Hz (2.38) already failed at the widest demodulation cutoff, and 9200 Hz
+ *            (2.17) failed at all of them.
+ * @note [zh] 在选 `foc_motor_setup_t::inject_hz` **之前**问它。越过天花板后注入观测器会静默失效——解调幅值塌掉、锁定判据
+ *            脱落、角度冻结、转速读零，环无法把它与堵转区分开。`foc_motor_create_ex()` 会直接拒绝这样的请求，而它没能拦
+ *            下的情况由 `foc_motor_get_status()` 的 `observer_locked` 报出。 2.5 是实测的：20 kHz 下 8000 Hz（每载波周
+ *            期 2.50 个控制周期）在包线扫描的每一格都站住，8400 Hz（2.38）在最宽解调截止频率上已经失败，9200 Hz（2.17）
+ *            在三个上全部失败。
+ * @since 0.1.7
+ * @exporter
+ */
+float foc_hfi_max_inject_hz(float pwm_freq_hz);

@@ -72,6 +72,7 @@ foc_err_t foc_bridge_protector_step(foc_protector_t protector, const foc_protect
 foc_err_t foc_bridge_protector_reset(foc_protector_t protector, int32_t cold);
 foc_err_t foc_bridge_protector_destroy(foc_protector_t protector);
 
+float foc_bridge_hfi_max_inject_hz(float pwm_freq_hz);
 #ifdef __cplusplus
 }
 #endif

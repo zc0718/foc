@@ -1131,6 +1131,8 @@ foc_err_t foc_bridge_get_setup(foc_motor_t motor, foc_motor_setup_t* out) {
 }
 
 
+float foc_bridge_hfi_max_inject_hz(float pwm_freq_hz) { return foc::core::HfiObserver::max_inject_hz(pwm_freq_hz); }
+
 foc_err_t foc_bridge_set_observer(foc_motor_t motor, foc_observer_t observer) {
     return foc::api::on_slot(motor, [observer](auto& slot) { return foc::api::set_observer(slot, observer); });
 }

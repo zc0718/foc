@@ -324,6 +324,15 @@ public:
         out["align_offset_rad"] = raw.align_offset_rad;
         out["align_spread_rad"] = raw.align_spread_rad;
         out["max_period_us"] = raw.max_period_us;
+        // The observer's own answer, not a re-derivation: which mode is really running, whether it says it is producing
+        // a measurement, and the signal it is measuring. `observer_locked` is the only channel through which a holding
+        // observer differs from a stopped machine -- its angle and its speed look identical in both cases.
+        // 观测器自己的回答，而不是重新推导：真正在跑哪个模式、它是否表示自己在产出测量、以及它在测的那个信号。
+        // `observer_locked` 是一个正在保持的观测器与一台停住的机器之间唯一可区分的通道——两种情况下它的角度与转速看起来
+        // 一模一样。
+        out["observer"] = py::cast(static_cast<foc_observer_t>(raw.observer));
+        out["observer_locked"] = (raw.observer_locked != 0);
+        out["observer_error"] = raw.observer_error;
         return out;
     }
 
@@ -494,6 +503,18 @@ PYBIND11_MODULE(foc_python, m) {
         .value("NOT_CONFIGURED", FOC_ALIGN_NOT_CONFIGURED)
         .value("NOT_SETTLED", FOC_ALIGN_NOT_SETTLED)
         .value("DIRECTION_WRONG", FOC_ALIGN_DIRECTION_WRONG);
+
+    // The mode the motor is really running. `MotorSetup.observer` is the request; this is the answer, and the note on
+    // `foc_observer_t` says why the two are kept apart: a selector that accepts a mode and quietly runs the default
+    // makes the caller believe a capability it does not have.
+    // 电机真正在跑的模式。`MotorSetup.observer` 是请求，这个是回答；`foc_observer_t` 上的注释说明了为什么两者要分开：
+    // 一个接受某模式却悄悄跑默认值的选择器，会让调用方相信自己拥有一个并不存在的能力。
+    py::enum_<foc_observer_t>(m, "Observer", "[en] The observer actually running.\n"
+                                            "[zh] 真正在跑的观测器。")
+        .value("BACK_EMF", FOC_OBSERVER_BACK_EMF)
+        .value("NONLINEAR_FLUX", FOC_OBSERVER_NONLINEAR_FLUX)
+        .value("HFI", FOC_OBSERVER_HFI)
+        .value("BLENDED", FOC_OBSERVER_BLENDED);
 
     const py::object foc_error = py::exception<FocError>(m, "FocError", PyExc_RuntimeError);
     g_foc_error_type = foc_error.ptr();
@@ -703,6 +724,11 @@ PYBIND11_MODULE(foc_python, m) {
         py::arg("v_bus_v"), py::arg("angle_rad"),
         "[en] Dead-time volts projected onto an axis; 0 on a non-finite argument.\n"
         "[zh] 死区伏秒投影到某轴上的电压；参数非有限返回 0。");
+    m.def("hfi_max_inject_hz", &foc_hfi_max_inject_hz, py::arg("pwm_freq_hz"),
+          "[en] The highest injection carrier this control rate can resolve, in Hz. Ask it before choosing "
+          "`MotorSetup.inject_hz`: past the ceiling the injection observer stops working silently.\n"
+          "[zh] 该控制率能分辨的最高注入载波，Hz。在选 `MotorSetup.inject_hz` 之前问它：越过天花板后注入观测器会静默失效。");
+
     m.def("board_item_name", &foc_board_item_name, py::arg("item"),
           "[en] Stable lowercase name of a board item. [zh] 检查项的稳定小写名。");
     m.def("board_cause_name", &foc_board_cause_name, py::arg("cause"),
