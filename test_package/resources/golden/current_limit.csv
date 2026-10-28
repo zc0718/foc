@@ -1,6 +1,6 @@
 # golden: current_limit
 # what: 3.0 A demanded against a 2.0 A limit, held, 800 periods at 100 us
-# module_sha: 5f2970e83418
+# module_sha: a26815f5f93a
 # stride: 10
 # overshoot: 0.0939890146
 # steady_error: -0.00735915542

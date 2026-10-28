@@ -293,6 +293,23 @@ class SwitchableObserver final {
     [[nodiscard]] auto kind() const noexcept -> ObserverKind { return kind_; }
 
     /**
+     * @brief [en] Is the selected mode one that applies a carrier?
+     * @brief [zh] 当前选中的模式会施加载波吗？
+     * @note [en] Distinct from `has_injection_v<SwitchableObserver>`, which is true for the *type* whatever mode it
+     *            runs. The loop needs the run-time answer: an observer that is not injecting must not have its carrier
+     *            read, and an axis whose HAL supplies the angle never steps the observer at all, so the answer there is
+     *            "no carrier exists" rather than "a carrier of zero".
+     * @note [zh] 与 `has_injection_v<SwitchableObserver>` 不同：后者对**类型**恒为真，与它跑哪个模式无关。环路需要的是
+     *            运行时答案：没在注入的观测器不该被读取载波；而 HAL 提供角度的轴根本不推进观测器，那里的答案不是"零载波
+     *            " 而是"不存在载波"。
+     * @since 0.1.8
+     * @exporter
+     */
+    [[nodiscard]] auto injecting() const noexcept -> bool {
+        return (kind_ == ObserverKind::Hfi) || (kind_ == ObserverKind::Blended);
+    }
+
+    /**
      * @brief [en] Replace the machine description every observer uses.
      * @brief [zh] 替换所有观测器共用的机器描述。
      */

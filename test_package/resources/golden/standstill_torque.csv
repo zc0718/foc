@@ -1,6 +1,6 @@
 # golden: standstill_torque
 # what: 0.5 A held at standstill, 400 periods at 100 us
-# module_sha: 5f2970e83418
+# module_sha: a26815f5f93a
 # stride: 10
 # overshoot: 0.0939897299
 # steady_error: -0.0073723805

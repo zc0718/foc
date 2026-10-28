@@ -238,19 +238,55 @@ The log
      - ``pending``
    * - F-7
      - F
-     - **Open.** Selecting the injection observer through `Motor` applies no carrier at all. Measured: the duty swing
-       over 200 periods at standstill is exactly 0.00000 at 2, 4, 6 and 8 kHz on a 20 kHz loop, with `inject_v = 10.05 V`
-       against a 24 V bus -- identical to `BACK_EMF`, so the carrier is not small, it is absent. The observer stands
-       alone fine (a direct `HfiObserver` with the same configuration has `status == Ok` and `injection_ab() = 5.9 V`), so
-       the fault is in the composition or in the switchable slot's per-mode state, not in the demodulator.
-     - Trying to record a golden window for the injection path. The existing ABI cases all assert *admission* and the
-       reported mode -- that the request was accepted and the status says `HFI` -- and not one of them asserts that a
-       carrier reached the inverter. The W7-c SIL work drove `HfiObserver` directly, so the composed path was never
-       covered by anything.
-     - **Not fixed.** The next experiment is named: drive a `SwitchableObserver` the way the bridge builds it, step it,
-       and read `injection_ab()` and the inner observer's status, which separates "the slot does not forward" from "the
-       inner observer refuses". Until then no golden baseline is recorded around it, because a ledger that freezes
-       `locked = False` would teach the next person to explain a real change away.
+     - Selecting the injection observer through `Motor` applied **no carrier at all**, on any axis whose HAL supplies an
+       angle. `tick()` took the sensor branch, so the observer was never stepped; an observer that is never stepped never
+       advances its carrier phase, and a carrier frozen at phase 0 sits at a zero crossing, so `injection_ab()` returned
+       exactly 0.0 V. The mode was admitted, reported as ``HFI`` by `status()`, and inert -- every surface agreed with the
+       caller except the inverter. The C host path always supplies an angle (`read_angle_mech_rad` is required by the HAL
+       contract), so this was the whole Python face, not an edge case.
+     - Trying to record a golden window for the injection path: the duty swing over 3000 periods was 0.00000 while
+       `status()["observer"]` said `HFI`. Instrumentation, not inference, then narrowed it: the `SwitchableObserver`
+       standalone injects ±9.56 V (so the slot forwards), the composed `HfiObserver::update` **never printed** (so it was
+       never called), and `injection_ab()` read 0 because `phase_applied_` had never moved. No existing case caught it
+       because every ABI case asserted admission and the reported mode, and the W7-c SIL work drove `HfiObserver`
+       directly -- the composed path was covered by nothing.
+     - Two gates in `tick()`, plus one case that asserts the carrier reaches the inverter on a sensored axis and one that
+       keeps asserting it on a sensorless one. The observer is now stepped whenever it injects
+       (``speed_from_observer || injecting_now()``), and the carrier is added on the same condition. The sensor keeps the
+       commutation angle and the published speed, so an encoder rig gets a hybrid drive rather than losing its angle to a
+       carrier.
+     - ``pending``
+   * - F-7a
+     - A
+     - The first fix attempt widened the carrier gate alone (``speed_from_observer || injecting_now()``) and the case
+       passed -- which proved nothing, because the observer's phase starts at 0 and the injection was zero either way.
+       Reverting the fix left the case green: an unfalsifiable test standing in for a fixed defect.
+     - Reverting the fix and re-running it. The criterion has to be able to go red; the way to know is to make it.
+     - The second attempt. Then the two halves were shown to be independently load-bearing: reverting the *step* gate
+       alone (carrier gate left open) gives a swing of 0.0000, and reverting the *carrier* gate alone gives 0.0000 as
+       well. Both were needed, and neither was detectable from the diff.
+     - ``pending``
+   * - F-7b
+     - A
+     - The second fix attempt refused the mode at `init()` when the observer type could inject -- using
+       ``has_injection_v<Observer>``, which is a property of the **type**, not of the selected mode. Every motor whose
+       observer could switch modes was refused, and 38 cases went red. Narrowing the probe to ``injecting()`` (the mode)
+       brought it to 6, still the wrong answer: the refusal was treating an inert carrier as correct by refusing to run.
+     - The test suite itself, in the same run. The trait answered "can this type ever inject", the question was "is this
+       mode injecting now", and only the test count separated the two.
+     - The refusal, removed. A mode that is admitted must run; refusing admission is how a defect becomes a documented
+       limitation.
+     - ``pending``
+   * - A-9
+     - A
+     - The probe that first measured F-7 ran with `pwm_freq_hz = 0` in the setup, which drives the carrier phase
+       increment to zero on its own. The 0.00000 it reported was therefore guaranteed before the defect was consulted --
+       and the same rig, after the fix, still read 0.00000 at 6 kHz and would have looked like a failed fix.
+     - Sweeping the carrier rate against an explicit `pwm_freq_hz`: the same code, one knob changed, went from 0.00000
+       at 1/2/4/5 kHz to 0.60/0.65/0.66/0.67. A probe is only worth its reading once it has been shown able to produce a
+       non-zero one.
+     - The F-7 verdict, re-measured. Pre-fix 0.00000 at all four rates with `observer = HFI`; post-fix 0.45-0.67 across
+       eight rate/PWM combinations. Same window, one knob, both directions.
      - ``pending``
 
 Two kinds of row that are currently empty

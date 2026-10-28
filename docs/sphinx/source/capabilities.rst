@@ -136,8 +136,17 @@ point -- the alternative is a library that grows algorithms and forgets how they
      - ``SwitchableObserver.TheSelectedObserversLockVerdictIsReachableThroughTheSlot``
      - na -- a dispatcher; the invariants belong to the modes it dispatches to.
      - F-1
+   * - ``motor/motor.hpp``
+     - ``status()`` (mode, fault, observer, locked), ``error()``, ``trace()`` -- the composed loop answers "is it
+       running, what is it commutating on, what has it recorded", so a wrong angle is a named mode rather than a
+       symptom. ``trace()`` is what makes the loop's own decisions auditable after the fact.
+     - ``init()`` answers ``ErrorCode::Param`` on a contradictory configuration and ``set_observer()`` refuses a mode
+       the setup in force cannot support -- on facts (no carrier, no saliency), not on a switch.
+     - ``MotorInjection.ASensoredAxisInjectsWithoutSurrenderingTheAngle``
+     - ScalingImpedanceAndVoltageTogetherChangesNothing, TheClampIsContinuousAndAJumpWouldShow
+     - F-6, F-7
 
-Twenty-four headers under ``core/`` and ``motor/`` are not listed yet: alignment, board_check, commissioning, deadtime,
+Twenty-three headers under ``core/`` and ``motor/`` are not listed yet: alignment, board_check, commissioning, deadtime,
 feedforward, field_weakening, homing, machine_map, machine_map_text, machine_params, motion_profile, polarity, position,
-position_reference, reference, sm, startup, svpwm, traits, types, version, and the three ``motor/`` headers. They are
-named in ``capability-scope.json`` so the count is visible, and so that a *new* header cannot join them silently.
+position_reference, reference, sm, startup, svpwm, traits, types, version, and the two remaining ``motor/`` headers. They
+are named in ``capability-scope.json`` so the count is visible, and so that a *new* header cannot join them silently.

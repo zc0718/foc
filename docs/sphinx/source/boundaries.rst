@@ -62,6 +62,12 @@ only reason this page can be trusted after the person who wrote it has moved on.
        modulation. A trace that looks perfect is therefore entirely consistent with a miscalibrated current sensor -- the
        loop is faithful to a wrong measurement. Use it to explain the loop's decisions, not to measure the phases.
      - ``Trace.TheRecordAgreesWithTheScalarReadBitForBit``
+   * - **Improve a sensored axis's angle by adding the carrier.**
+     - The sensor owns the commutation angle, so the injection observer now runs for its own demodulation only: the
+       carrier does reach the inverter (measured swing 0.45--0.67 across eight rate/PWM combinations), but the sensor
+       keeps the angle and the published speed. `status()["observer"]` naming `HFI` therefore does *not* mean the loop
+       is commutating on the injected estimate -- compare the two explicitly if that is what you need.
+     - ``MotorInjection.ASensoredAxisInjectsWithoutSurrenderingTheAngle``
    * - **Get a quiet speed estimate out of the injection observer for free.**
      - `omega_e = omega_int + kp*error`, and `error` carries the carrier, so the published speed holds 0.4180 rad/s at
        2000 Hz in a 20 rad/s servo unless `speed_lpf_hz` is set. The library's own path sets it (200 Hz); a caller that

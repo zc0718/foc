@@ -1,6 +1,6 @@
 # golden: speed_step_100
 # what: 100 rad/s step from rest, 2000 periods at 100 us
-# module_sha: 5f2970e83418
+# module_sha: a26815f5f93a
 # stride: 10
 # overshoot: -0.0555744934
 # steady_error: -0.0599245926

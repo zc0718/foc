@@ -41,7 +41,6 @@
     "core/types.hpp",
     "core/version.hpp",
     "motor/foc_loop.hpp",
-    "motor/motor.hpp",
     "motor/motor_config.hpp"
   ]
 }

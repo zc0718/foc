@@ -1,7 +1,5 @@
 // Conan::ImportStart
 #pragma once
-#include <type_traits>
-#include <utility>
 #include <foc/core/alignment.hpp>
 #include <foc/core/feedforward.hpp>
 #include <foc/core/machine_params.hpp>
@@ -12,6 +10,8 @@
 #include <foc/core/svpwm.hpp>
 #include <foc/core/trace.hpp>
 #include <foc/core/types.hpp>
+#include <type_traits>
+#include <utility>
 // Conan::ImportEnd
 
 namespace foc {
@@ -19,7 +19,6 @@ namespace foc {
 namespace hal {
 
 namespace concepts {
-
 
 /**
  * @brief [en] Compile-time contract checks for the foc_hal interfaces (C++17 detection idiom; the project targets
@@ -35,7 +34,6 @@ namespace concepts {
  * @exporter
  */
 template <typename T, typename = void> struct is_pwm : std::false_type {};
-
 
 /**
  * @brief [en] `T` satisfies the foc::hal::Pwm contract.
@@ -59,7 +57,6 @@ struct is_pwm<T, std::void_t<decltype(std::declval<T&>().configure(std::declval<
           std::is_same_v<decltype(std::declval<const T&>().fault()), bool> &&
           noexcept(std::declval<const T&>().fault())> {};
 
-
 /**
  * @brief [en] `T` satisfies the foc::hal::CurrentSense contract.
  * @brief [zh] `T` 满足 foc::hal::CurrentSense 契约。
@@ -78,7 +75,6 @@ struct is_current_sense<
                          noexcept(std::declval<T&>().calibrate_offset()) &&
                          std::is_same_v<decltype(std::declval<const T&>().sample_rate_hz()), float> &&
                          noexcept(std::declval<const T&>().sample_rate_hz())> {};
-
 
 /**
  * @brief [en] `T` satisfies the foc::hal::PositionSensor contract.
@@ -99,7 +95,6 @@ struct is_position_sensor<
                          std::is_same_v<decltype(std::declval<const T&>().has_sensor()), bool> &&
                          noexcept(std::declval<const T&>().has_sensor())> {};
 
-
 /**
  * @brief [en] `T` satisfies the foc::hal::DcLink contract.
  * @brief [zh] `T` 满足 foc::hal::DcLink 契约。
@@ -113,7 +108,6 @@ struct is_dc_link<T, std::void_t<decltype(std::declval<T&>().voltage_v())>>
     : std::bool_constant<std::is_same_v<decltype(std::declval<T&>().voltage_v()), float> &&
                          noexcept(std::declval<T&>().voltage_v())> {};
 
-
 /**
  * @brief [en] `T` satisfies the foc::hal::Clock contract.
  * @brief [zh] `T` 满足 foc::hal::Clock 契约。
@@ -126,7 +120,6 @@ template <typename T>
 struct is_clock<T, std::void_t<decltype(std::declval<T&>().now_us())>>
     : std::bool_constant<std::is_same_v<decltype(std::declval<T&>().now_us()), std::uint64_t> &&
                          noexcept(std::declval<T&>().now_us())> {};
-
 
 /**
  * @brief [en] Convenience variable templates, e.g. `static_assert(hal::concepts::is_pwm_v<MyPwm>, "MyPwm must satisfy
@@ -153,7 +146,6 @@ namespace core {
 
 namespace concepts {
 
-
 /**
  * @brief [en] `T` exposes the optional `seed_flux(Ab<float>)` hook of a flux-linkage observer. Motor uses it during
  *             start(): a sensorless setup seeds the flux from the nameplate.
@@ -168,7 +160,6 @@ template <typename T>
 struct has_seed_flux<T, std::void_t<decltype(std::declval<T&>().seed_flux(std::declval<Ab<float>>()))>>
     : std::true_type {};
 
-
 /**
  * @brief [en] Convenience variable template for the optional seed hook.
  * @brief [zh] 可选播种钩子的便捷变量模板。
@@ -177,7 +168,6 @@ struct has_seed_flux<T, std::void_t<decltype(std::declval<T&>().seed_flux(std::d
  */
 template <typename T> inline constexpr bool has_seed_flux_v = has_seed_flux<T>::value;
 
-
 /**
  * @brief [en] `T` (an observer) asks for a voltage of its own: a high-frequency injection that Motor has to add to the
  *             command on its behalf.
@@ -185,7 +175,7 @@ template <typename T> inline constexpr bool has_seed_flux_v = has_seed_flux<T>::
  * @note [en] Detection is capability, not configuration. An observer that needs no injection is simply a type that does
  *            not have the method, so there is no flag to leave in the wrong state -- the same rule the modulator slot
  *            follows for `is_modulator_v`.
- * @note [zh] 探测即能力，不是配置。不需要注入的观测器就是没有这个方法的类型，于是不存在会被设错的 开关——与调制器槽位对
+ * @note [zh] 探测即能力，不是配置。不需要注入的观测器就是没有这个方法的类型，于是不存在会被设错的开关——与调制器槽位对
  *            `is_modulator_v` 遵循同一条规则。
  * @since 0.1.0
  * @exporter
@@ -197,7 +187,6 @@ struct has_injection<T, std::void_t<decltype(std::declval<const T&>().injection_
     : std::bool_constant<std::is_same_v<decltype(std::declval<const T&>().injection_ab()), Ab<float>> &&
                          noexcept(std::declval<const T&>().injection_ab())> {};
 
-
 /**
  * @brief [en] Convenience variable template for the injection hook.
  * @brief [zh] 注入钩子的便捷变量模板。
@@ -205,7 +194,6 @@ struct has_injection<T, std::void_t<decltype(std::declval<const T&>().injection_
  * @exporter
  */
 template <typename T> inline constexpr bool has_injection_v = has_injection<T>::value;
-
 
 /**
  * @brief [en] `T` (an observer) can report whether its estimate currently means anything.
@@ -225,7 +213,6 @@ struct has_locked<T, std::void_t<decltype(std::declval<const T&>().locked())>>
     : std::bool_constant<std::is_same_v<decltype(std::declval<const T&>().locked()), bool> &&
                          noexcept(std::declval<const T&>().locked())> {};
 
-
 /**
  * @brief [en] Convenience variable template for the lock hook.
  * @brief [zh] 锁定钩子的便捷变量模板。
@@ -234,7 +221,6 @@ struct has_locked<T, std::void_t<decltype(std::declval<const T&>().locked())>>
  */
 template <typename T> inline constexpr bool has_locked_v = has_locked<T>::value;
 
-
 /**
  * @brief [en] `T` (an observer) can be handed a starting angle and speed.
  * @brief [zh] `T`（观测器）可以接受一个起始角度与转速。
@@ -242,9 +228,9 @@ template <typename T> inline constexpr bool has_locked_v = has_locked<T>::value;
  *            not being used comes back with a stale estimate, and if its pull-in window is narrower than a full turn (a
  *            saliency loop's is half of one) it cannot re-acquire from there. Handing it the current best angle is the
  *            difference between "can resume" and "must start over".
- * @note [zh] 任何会把观测器关掉再打开的机制都需要它：不被使用期间停止跟踪的观测器回来时带着过时的估计， 而若它的牵引窗
- *            口小于一整圈（凸极环只有半圈），就无法从中重新捕获。把当前最好的角度交给它，是 "可以继续"与"只能重来"之间
- *            的区别。
+ * @note [zh] 任何会把观测器关掉再打开的机制都需要它：不被使用期间停止跟踪的观测器回来时带着过时的估计，而若它的牵引窗口
+ *            小于一整圈（凸极环只有半圈），就无法从中重新捕获。把当前最好的角度交给它，是 "可以继续"与"只能重来"之间 的
+ *            区别。
  * @since 0.1.0
  * @exporter
  */
@@ -255,7 +241,6 @@ struct has_seed_angle<
     T, std::void_t<decltype(std::declval<T&>().seed_angle(std::declval<float>(), std::declval<float>()))>>
     : std::bool_constant<noexcept(std::declval<T&>().seed_angle(std::declval<float>(), std::declval<float>()))> {};
 
-
 /**
  * @brief [en] Convenience variable template for the seed-angle hook.
  * @brief [zh] 播种角度钩子的便捷变量模板。
@@ -264,7 +249,6 @@ struct has_seed_angle<
  */
 template <typename T> inline constexpr bool has_seed_angle_v = has_seed_angle<T>::value;
 
-
 /**
  * @brief [en] `T` (a policy) can take an updated set of machine parameters at runtime.
  * @brief [zh] `T`（策略）可以在运行期接受一组更新后的机器参数。
@@ -272,8 +256,8 @@ template <typename T> inline constexpr bool has_seed_angle_v = has_seed_angle<T>
  *            has to be told what the machine turned out to be, without the caller rebuilding the whole motor. A policy
  *            without this hook simply keeps its construction-time numbers, which is the right answer for anything that
  *            does not model the machine at all.
- * @note [zh] 因为辨识发生在策略**构建之后**：按铭牌整定的观测器需要被告知这台机器实际上是什么样，而调用方 不必重建整个
- *            电机。没有这个钩子的策略就保持构造时的数字——对任何不建模机器的组件来说，这就是正确答案。
+ * @note [zh] 因为辨识发生在策略**构建之后**：按铭牌整定的观测器需要被告知这台机器实际上是什么样，而调用方不必重建整个电
+ *            机。没有这个钩子的策略就保持构造时的数字——对任何不建模机器的组件来说，这就是正确答案。
  * @since 0.1.0
  * @exporter
  */
@@ -283,7 +267,6 @@ template <typename T>
 struct has_apply_params<T, std::void_t<decltype(std::declval<T&>().apply_params(std::declval<const MachineParams&>()))>>
     : std::bool_constant<noexcept(std::declval<T&>().apply_params(std::declval<const MachineParams&>()))> {};
 
-
 /**
  * @brief [en] Convenience variable template for the parameter hook.
  * @brief [zh] 参数钩子的便捷变量模板。
@@ -291,7 +274,6 @@ struct has_apply_params<T, std::void_t<decltype(std::declval<T&>().apply_params(
  * @exporter
  */
 template <typename T> inline constexpr bool has_apply_params_v = has_apply_params<T>::value;
-
 
 /**
  * @brief [en] `T` satisfies the observer policy contract (see observer_policy.hpp): it must expose `update(Ab<float>,
@@ -313,7 +295,6 @@ struct is_observer<T, std::void_t<decltype(std::declval<T&>().update(
           noexcept(std::declval<T&>().update(std::declval<Ab<float>>(), std::declval<Ab<float>>(),
                                              std::declval<float>()))> {};
 
-
 /**
  * @brief [en] Convenience variable template for the observer contract.
  * @brief [zh] 观测器契约的便捷变量模板。
@@ -321,7 +302,6 @@ struct is_observer<T, std::void_t<decltype(std::declval<T&>().update(
  * @exporter
  */
 template <typename T> inline constexpr bool is_observer_v = is_observer<T>::value;
-
 
 /**
  * @brief [en] `T` satisfies the reference-generator policy contract (see reference.hpp): it must expose `generate(const
@@ -339,7 +319,6 @@ struct is_reference_generator<T, std::void_t<decltype(std::declval<T&>().generat
           std::is_same_v<decltype(std::declval<T&>().generate(std::declval<ReferenceInput>())), Dq<float>> &&
           noexcept(std::declval<T&>().generate(std::declval<ReferenceInput>()))> {};
 
-
 /**
  * @brief [en] Convenience variable template for the reference-generator contract.
  * @brief [zh] 参考生成器契约的便捷变量模板。
@@ -347,7 +326,6 @@ struct is_reference_generator<T, std::void_t<decltype(std::declval<T&>().generat
  * @exporter
  */
 template <typename T> inline constexpr bool is_reference_generator_v = is_reference_generator<T>::value;
-
 
 /**
  * @brief [en] `T` satisfies the feedforward policy contract (see feedforward.hpp): it must expose `generate(const
@@ -365,7 +343,6 @@ struct is_feedforward<T, std::void_t<decltype(std::declval<T&>().generate(std::d
           std::is_same_v<decltype(std::declval<T&>().generate(std::declval<FeedforwardInput>())), Dq<float>> &&
           noexcept(std::declval<T&>().generate(std::declval<FeedforwardInput>()))> {};
 
-
 /**
  * @brief [en] Convenience variable template for the feedforward contract.
  * @brief [zh] 前馈契约的便捷变量模板。
@@ -373,7 +350,6 @@ struct is_feedforward<T, std::void_t<decltype(std::declval<T&>().generate(std::d
  * @exporter
  */
 template <typename T> inline constexpr bool is_feedforward_v = is_feedforward<T>::value;
-
 
 /**
  * @brief [en] `T` (a HalPolicy) exposes an optional `clock` member satisfying `hal::Clock`.
@@ -395,7 +371,6 @@ template <typename T>
 struct has_clock<T, std::void_t<decltype(std::declval<T&>().clock)>>
     : std::bool_constant<hal::concepts::is_clock_v<decltype(std::declval<T&>().clock)>> {};
 
-
 /**
  * @brief [en] Convenience variable template for the optional clock member.
  * @brief [zh] 可选时钟成员的便捷变量模板。
@@ -403,7 +378,6 @@ struct has_clock<T, std::void_t<decltype(std::declval<T&>().clock)>>
  * @exporter
  */
 template <typename T> inline constexpr bool has_clock_v = has_clock<T>::value;
-
 
 /**
  * @brief [en] `T` satisfies the controller-slot contract: `step(setpoint, feedback, dt) noexcept -> float` plus
@@ -423,7 +397,6 @@ struct is_controller<
                          noexcept(std::declval<T&>().step(0.0F, 0.0F, 0.0F)) && noexcept(std::declval<T&>().reset())> {
 };
 
-
 /**
  * @brief [en] Convenience variable template for the controller-slot contract.
  * @brief [zh] 控制器槽位契约的便捷变量模板。
@@ -431,7 +404,6 @@ struct is_controller<
  * @exporter
  */
 template <typename T> inline constexpr bool is_controller_v = is_controller<T>::value;
-
 
 /**
  * @brief [en] `T` satisfies the *widened* modulator contract: `modulate(const ModulatorInput&) noexcept ->
@@ -442,7 +414,7 @@ template <typename T> inline constexpr bool is_controller_v = is_controller<T>::
  *            modulator that never sees the phase currents cannot linearise the inverter, and saying so in the type
  *            system is cheaper than documenting it.
  * @note [zh] 与两参数形式分开，好让所有既有调制器继续工作：存在加宽形式时 `Motor` 用它，否则用窄的。 这是**能力**差异而
- *            非偏好——从不接触相电流的调制器无法线性化逆变器，把它写在类型系统里比写在 文档里便宜。
+ *            非偏好——从不接触相电流的调制器无法线性化逆变器，把它写在类型系统里比写在文档里便宜。
  * @since 0.1.0
  * @exporter
  */
@@ -454,7 +426,6 @@ struct is_modulator<T, std::void_t<decltype(std::declval<T&>().modulate(std::dec
           std::is_same_v<decltype(std::declval<T&>().modulate(std::declval<ModulatorInput>())), SvpwmResult> &&
           noexcept(std::declval<T&>().modulate(std::declval<ModulatorInput>()))> {};
 
-
 /**
  * @brief [en] Convenience variable template for the widened modulator contract.
  * @brief [zh] 加宽调制器契约的便捷变量模板。
@@ -463,14 +434,13 @@ struct is_modulator<T, std::void_t<decltype(std::declval<T&>().modulate(std::dec
  */
 template <typename T> inline constexpr bool is_modulator_v = is_modulator<T>::value;
 
-
 /**
  * @brief [en] `T` (used in the speed slot) accepts a `SpeedInput`, i.e. it can scale its own gains for one call.
  * @brief [zh] `T`（用作速度槽位）能接收 `SpeedInput`，即可以按次缩放自身增益。
  * @note [en] Separate from `is_controller_v` so a plain three-argument controller still fills the speed slot -- it
  *            simply cannot do compliance. `Motor` reports `NotImpl` when a move asks for scaling that the slot cannot
  *            deliver, instead of ignoring the request.
- * @note [zh] 与 `is_controller_v` 分开，这样一个普通的三参数控制器仍能占速度槽位——只是做不到柔顺。 当运动要求了槽位交付
+ * @note [zh] 与 `is_controller_v` 分开，这样一个普通的三参数控制器仍能占速度槽位——只是做不到柔顺。当运动要求了槽位交付
  *            不了的缩放时，`Motor` 报 `NotImpl`，而不是把请求忽略掉。
  * @since 0.1.0
  * @exporter
@@ -485,7 +455,6 @@ struct is_speed_control<T, std::void_t<decltype(std::declval<T&>().step(std::dec
           noexcept(std::declval<T&>().step(std::declval<SpeedInput>(), 0.0F, 0.0F)) &&
           noexcept(std::declval<T&>().reset())> {};
 
-
 /**
  * @brief [en] Convenience variable template for the scaled speed-slot contract.
  * @brief [zh] 可缩放速度槽位契约的便捷变量模板。
@@ -493,7 +462,6 @@ struct is_speed_control<T, std::void_t<decltype(std::declval<T&>().step(std::dec
  * @exporter
  */
 template <typename T> inline constexpr bool is_speed_control_v = is_speed_control<T>::value;
-
 
 /**
  * @brief [en] `T` satisfies the *position* slot contract: `step(const PositionInput&, float, float) noexcept -> float`
@@ -503,9 +471,8 @@ template <typename T> inline constexpr bool is_speed_control_v = is_speed_contro
  *            a measurement, a step. The position slot is a trajectory shaper too, and a move has a velocity and an
  *            acceleration, not just an endpoint. Widening this one slot is what makes per-move limits possible without
  *            teaching every `Pi` about acceleration.
- * @note [zh] 与电流、速度槽位的形状**故意不同**。那三个是调节器：给定、实测、步长。位置槽位同时还 是轨迹塑造器，而一次
- *            运动有速度和加速度，不只有一个终点。把这个槽位加宽，才能在不让每个 `Pi` 都去理解加速度的前提下支持按次限
- *            制。
+ * @note [zh] 与电流、速度槽位的形状**故意不同**。那三个是调节器：给定、实测、步长。位置槽位同时还是轨迹塑造器，而一次运
+ *            动有速度和加速度，不只有一个终点。把这个槽位加宽，才能在不让每个 `Pi` 都去理解加速度的前提下支持按次限制。
  * @since 0.1.0
  * @exporter
  */
@@ -519,7 +486,6 @@ struct is_position_control<T, std::void_t<decltype(std::declval<T&>().step(std::
           noexcept(std::declval<T&>().step(std::declval<PositionInput>(), 0.0F, 0.0F)) &&
           noexcept(std::declval<T&>().reset())> {};
 
-
 /**
  * @brief [en] Convenience variable template for the position-slot contract.
  * @brief [zh] 位置槽位契约的便捷变量模板。
@@ -527,7 +493,6 @@ struct is_position_control<T, std::void_t<decltype(std::declval<T&>().step(std::
  * @exporter
  */
 template <typename T> inline constexpr bool is_position_control_v = is_position_control<T>::value;
-
 
 /**
  * @brief [en] `T` satisfies the aligner-slot contract (see alignment.hpp): `validate()`, `begin(pole_pairs) -> bool`,
@@ -539,8 +504,8 @@ template <typename T> inline constexpr bool is_position_control_v = is_position_
  *            before the sequence starts. Folding both into one return value would let a typo in the recipe look like a
  *            machine that needs no alignment.
  * @note [zh] `begin()` 返回 `bool` 而非 `ErrorCode` 是故意的：“无事可做”是正常回答（偏置已存的 构建），而“配方非法”是配
- *            置错误，由 `validate()` 在流程开始前报出。把两者合成一个返回值， 会让配方里的笔误看起来像一台不需要对齐的
- *            电机。
+ *            置错误，由 `validate()` 在流程开始前报出。把两者合成一个返回值，会让配方里的笔误看起来像一台不需要对齐的电
+ *            机。
  * @since 0.1.0
  * @exporter
  */
@@ -556,7 +521,6 @@ struct is_aligner<T, std::void_t<decltype(std::declval<T&>().validate()), declty
                          std::is_same_v<decltype(std::declval<T&>().step(0.0F, 0.0F)), AlignOutput> &&
                          noexcept(std::declval<T&>().step(0.0F, 0.0F)) && noexcept(std::declval<T&>().reset())> {};
 
-
 /**
  * @brief [en] Convenience variable template for the aligner contract.
  * @brief [zh] 对齐器契约的便捷变量模板。
@@ -564,7 +528,6 @@ struct is_aligner<T, std::void_t<decltype(std::declval<T&>().validate()), declty
  * @exporter
  */
 template <typename T> inline constexpr bool is_aligner_v = is_aligner<T>::value;
-
 
 /**
  * @brief [en] `T` (a position sensor) accepts a mechanical offset and reports the one in force.
@@ -588,7 +551,6 @@ struct has_mech_offset<T, std::void_t<decltype(std::declval<T&>().set_offset_mec
                          std::is_same_v<decltype(std::declval<const T&>().mech_offset_rad()), float> &&
                          noexcept(std::declval<const T&>().mech_offset_rad())> {};
 
-
 /**
  * @brief [en] Convenience variable template for the optional mechanical-offset hook.
  * @brief [zh] 可选机械偏置钩子的便捷变量模板。
@@ -596,7 +558,6 @@ struct has_mech_offset<T, std::void_t<decltype(std::declval<T&>().set_offset_mec
  * @exporter
  */
 template <typename T> inline constexpr bool has_mech_offset_v = has_mech_offset<T>::value;
-
 
 /**
  * @brief [en] `T` (a position sensor) can report an index mark.
@@ -621,7 +582,6 @@ struct has_index<
                          std::is_same_v<decltype(std::declval<T&>().index_pulse()), bool> &&
                          noexcept(std::declval<T&>().index_pulse())> {};
 
-
 /**
  * @brief [en] Convenience variable template for the optional index hook.
  * @brief [zh] 可选索引钩子的便捷变量模板。
@@ -630,15 +590,14 @@ struct has_index<
  */
 template <typename T> inline constexpr bool has_index_v = has_index<T>::value;
 
-
 /**
  * @brief [en] `T` (an aligner) reports the captured offset via `offset_mech_rad() noexcept -> float`.
  * @brief [zh] `T`（对齐器）通过 `offset_mech_rad() noexcept -> float` 报出捕获到的偏置。
  * @note [en] Separate from `is_aligner_v` because the offset is the aligner's *result*, not part of the contract the
  *            motor needs to drive the sequence. An aligner that only diagnoses (or one that writes the offset itself)
  *            has nothing to hand back.
- * @note [zh] 与 `is_aligner_v` 分开：偏置是对齐器的**结果**，不是电机驱动流程所必需的契约。只做 诊断、或自己写回偏置的
- *            对齐器没有东西要交回来。
+ * @note [zh] 与 `is_aligner_v` 分开：偏置是对齐器的**结果**，不是电机驱动流程所必需的契约。只做诊断、或自己写回偏置的对
+ *            齐器没有东西要交回来。
  * @since 0.1.0
  * @exporter
  */
@@ -649,7 +608,6 @@ struct has_align_offset<T, std::void_t<decltype(std::declval<const T&>().offset_
     : std::bool_constant<std::is_same_v<decltype(std::declval<const T&>().offset_mech_rad()), float> &&
                          noexcept(std::declval<const T&>().offset_mech_rad())> {};
 
-
 /**
  * @brief [en] Convenience variable template for the aligner offset result.
  * @brief [zh] 对齐器偏置结果的便捷变量模板。
@@ -657,7 +615,6 @@ struct has_align_offset<T, std::void_t<decltype(std::declval<const T&>().offset_
  * @exporter
  */
 template <typename T> inline constexpr bool has_align_offset_v = has_align_offset<T>::value;
-
 
 /**
  * @brief [en] `T` is a trace sink: something the control loop can hand one `TraceSample` per period.
@@ -678,7 +635,6 @@ struct is_trace_sink<
                    decltype(std::declval<const T&>().size()), decltype(std::declval<const T&>().dropped())>>
     : std::true_type {};
 
-
 /**
  * @brief [en] Convenience variable template for the trace sink contract.
  * @brief [zh] 轨迹接收端契约的便捷变量模板。
@@ -686,6 +642,49 @@ struct is_trace_sink<
  * @exporter
  */
 template <typename T> inline constexpr bool is_trace_sink_v = is_trace_sink<T>::value;
+
+/**
+ * @brief [en] `T` can say which observer mode it is currently running.
+ * @brief [zh] `T` 能说出它当前在跑哪个观测器模式。
+ * @note [en] `has_injection_v` answers a question about a *type*; a policy that can switch modes answers a different
+ *            one at run time, and the two are not the same question. A slot holding an injector but running back-EMF
+ *            injects nothing, so anything that has to decide "will this inject?" needs this trait to ask.
+ * @note [zh] `has_injection_v` 回答的是关于**类型**的问题；能切换模式的策略在运行时回答的是另一个问题，两者并不相同。一
+ *            个装着注入器却在跑反电势的槽位不注入任何东西，因此任何要判断"它会不会注入"的地方都需要这个特型来提问。
+ * @since 0.1.8
+ * @exporter
+ */
+template <typename T, typename = void> struct has_kind : std::false_type {};
+
+template <typename T> struct has_kind<T, std::void_t<decltype(std::declval<const T&>().kind())>> : std::true_type {};
+
+/**
+ * @brief [en] Convenience variable template for "can report its mode".
+ * @brief [zh] "能上报自身模式"的便捷变量模板。
+ * @since 0.1.8
+ * @exporter
+ */
+template <typename T> inline constexpr bool has_kind_v = has_kind<T>::value;
+
+/**
+ * @brief [en] `T` can say whether it is injecting *right now*, as opposed to whether it could.
+ * @brief [zh] `T` 能说出它**此刻**是否在注入，而不是它是否具备注入能力。
+ * @since 0.1.8
+ * @exporter
+ */
+template <typename T, typename = void> struct has_injecting : std::false_type {};
+
+template <typename T>
+struct has_injecting<T, std::void_t<decltype(std::declval<const T&>().injecting())>>
+    : std::bool_constant<std::is_same_v<decltype(std::declval<const T&>().injecting()), bool>> {};
+
+/**
+ * @brief [en] Convenience variable template for the run-time injection query.
+ * @brief [zh] 运行时注入查询的便捷变量模板。
+ * @since 0.1.8
+ * @exporter
+ */
+template <typename T> inline constexpr bool has_injecting_v = has_injecting<T>::value;
 
 } // namespace concepts
 

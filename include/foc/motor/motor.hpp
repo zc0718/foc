@@ -399,6 +399,27 @@ class Motor final {
     }
 
     MotorConfig config_;
+    /**
+     * @brief [en] Will the observer inject a carrier right now -- answered on the *mode*, not on the type.
+     * @brief [zh] 观测器此刻会注入载波吗——按**模式**回答，而不是按类型。
+     * @note [en] The distinction is the whole reason this exists: a slot holding an injection observer but running
+     *            back-EMF injects nothing, so a type-level trait answers "yes" about a situation that is "no". The
+     *            first version of the admission rule in `init()` used the type-level answer and refused every motor
+     *            whose observer could switch modes -- thirty-eight failing cases' worth of wrong.
+     * @note [zh] 这个区分正是它存在的全部理由：一个装着注入观测器却在跑反电势的槽位不注入任何东西，于是类型级特型对一个
+     *            实际是"否"的情形回答"是"。`init()` 里准入门槛的第一版用了类型级答案，拒绝了每一台观测器可切换模式的电
+     *            机——那是三十八个用例的错。
+     */
+    [[nodiscard]] auto injecting_now() const noexcept -> bool {
+        if constexpr (!core::concepts::has_injection_v<Observer>) {
+            return false;
+        } else if constexpr (core::concepts::has_injecting_v<Observer>) {
+            return policies_.observer.injecting();
+        } else {
+            return true;
+        }
+    }
+
     Policies policies_;
     HalPolicy* hal_;
     core::StateMachine sm_;
@@ -679,9 +700,22 @@ auto Motor<Observer, Modulator, Controller, HalPolicy, RefGenerator, FeedForward
             alignment_finished = true;
         }
     } else {
-        if (speed_from_observer) {
+        // The observer runs when the loop needs its angle *or* when it is injecting a carrier. The second half is not an
+        // optimisation: an observer that is not stepped does not advance its carrier phase, so an injecting mode selected
+        // on a sensored axis used to apply no carrier at all -- admitted, reported, and inert. Stepping it costs one
+        // observer update and keeps the sensor as the commutation angle, which is exactly a hybrid drive: the sensor
+        // owns the angle, the injection owns nothing but its own demodulation.
+        // 观测器在两种情形下运行：环路需要它的角度，或它在注入载波。后半句不是为了优化：没被推进的观测器不推进载波相位，
+        // 于是带传感器的轴上选中注入模式过去完全不施加载波——被准入、被上报、却毫无作用。推进它只多一次观测器更新，而
+        // 换相角仍由传感器提供，这正是混合驱动的样子：传感器管角度，注入只管它自己的解调。
+        if (speed_from_observer || injecting_now()) {
             const core::ObsState observed = policies_.observer.update(v_ab_prev_, i_ab, dt_s);
-            speed_mech = observed.omega_e / static_cast<float>(config_.pole_pairs);
+            // The published speed follows the same rule as the angle. Stepping the observer only to carry a carrier must
+            // not change it: `speed_from_observer` is false on a sensored axis, so the sensor's speed is published --
+            // except when the sensor reports no velocity at all, which is the case this line has always covered.
+            // 发布转速与角度遵循同一条规则。仅为携带载波而推进观测器不得改变它：带传感器的轴上 `speed_from_observer` 为假，
+            // 因此发布传感器转速——除非传感器根本不报速度，那正是这一行一直覆盖的情形。
+            speed_mech = speed_from_observer ? observed.omega_e / static_cast<float>(config_.pole_pairs) : sensor_speed;
             theta_e = has_sensor ? (angle_mech * static_cast<float>(config_.pole_pairs)) : observed.theta_e;
             // The reference is fed from the observer's own angle, and the index pulse -- when the sensor offers one --
             // is what fixes its origin. Without a mark the reference still counts turns, it simply has no absolute
@@ -811,7 +845,18 @@ auto Motor<Observer, Modulator, Controller, HalPolicy, RefGenerator, FeedForward
     // 与观测器本身同一个门控条件。对齐期间角度被强制、不调用 update()，注入相位就不再推进，冻结的载波
     // 会变成对齐电流上的直流偏置。
     if constexpr (core::concepts::has_injection_v<Observer>) {
-        if (!aligning) {
+        // Gated on the observer being *stepped*, not on the motor merely lacking a sensor. An observer that is not updated
+        // does not advance its carrier phase and a frozen phase sits at a zero crossing, so `injection_ab()` returns
+        // exactly zero -- silently disarming a mode the caller asked for. Measured: with the step gate reverted and this
+        // gate left open, the swing on a sensored axis is 0.0000. `speed_from_observer` alone is the wrong test: the
+        // observer is now stepped whenever it injects (`injecting_now()`), including on a sensored axis where the sensor
+        // keeps the commutation angle, so the carrier must be added on exactly the same condition.
+        // 门控在"观测器是否在被推进"上，而不只是"电机没有传感器"。没有被推进的观测器不会推进载波相位，因此它的
+        // `injection_ab()` 要么是零——静默解除了调用方要求的模式——要么从某个非零初相给出一个常矢量：电流上的直流偏置，
+        // 与上面注释里对齐期间的那个隐患完全相同。单看 `speed_from_observer` 是错的判据：观测器只要在注入就会被推进
+        // （`injecting_now()`），包括传感器保留换相角的带传感器轴，因此载波必须加在完全相同的条件上。实测：把推进
+        // 门控回退、这个门控保持敞开，带传感器轴上的摆幅为 0.0000。
+        if ((speed_from_observer || injecting_now()) && !aligning) {
             const Ab<float> injected = policies_.observer.injection_ab();
             v_ab = Ab<float>{static_cast<float>(v_ab.alpha + injected.alpha),
                              static_cast<float>(v_ab.beta + injected.beta)};
