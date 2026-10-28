@@ -212,10 +212,27 @@ about *their* controller:
   average included. Feeding a reconstruction of the duty instead left a steady d-axis error of 0.39 A that looked
   exactly like a defect on their side.
 
-What is still not claimed: their **d** axis carries an offset that appears only during the ramp phases and grows with
-speed (0.010 A when the speed is held at 400 rad/s, 0.127 A while ramping to 800 rad/s, i.e. 0.39 rad of
-misalignment). Ours stays inside 0.04 rad in every phase. Whether that offset is their controller's cross-coupling or
-one more artefact of this adapter has not been separated, so it is printed and left alone.
+### The residual d-axis question, answered by their own examples (manual, not in CI)
+
+Their **d** axis carries an offset that appears while the speed is changing (0.010 A when the speed is held at
+400 rad/s, 0.127 A while ramping to 800 rad/s, i.e. 0.39 rad of misalignment), while ours stays inside 0.04 rad. The
+hand-built adapter could not say whether that was their control law or another artefact of the plumbing, so the question
+was put to *their* code: motulator publishes ready-to-run examples -- 29 scripts and notebooks, in `examples/` in the
+repository and as a zip on the documentation site -- and `benchmark/script/official_cvc_check.py` runs our operating
+point through `model.Drive` + `model.Simulation`, torque mode, free acceleration, with none of this project's code in
+the loop.
+
+| Quantity | Their machinery | Closed form |
+|---|---|---|
+| q-axis current, mean over the second half | 0.3228 A | 0.3245 A |
+| d-axis current, mean / at 450 rad/s | -0.0412 A / -0.0537 A | -- |
+| misalignment | -0.127 rad | -- |
+
+Two things follow. The q axis lands on the same PI ramp law through a completely different code path, which is the
+reconciliation the table above was after. And the d offset is theirs: it appears with no adapter in the path. What the
+adapter does *not* reproduce is its magnitude -- smaller under free acceleration, larger under the prescribed ramp --
+so the table's d column stays indicative rather than asserted. motulator 0.19 reproduces the same numbers (0.3227 A /
+-0.0533 A), so this is not an artefact of the 0.5.0 that these scripts pin.
 
 ### The two paths into the loop agree exactly (in CI)
 

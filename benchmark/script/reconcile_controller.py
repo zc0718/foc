@@ -37,9 +37,11 @@ motulator's own `CurrentVectorControl` is driven through the same plant. Getting
 this harness, neither of them a claim about their controller: the feedback voltage has to be what their PWM reports as
 *realized* (delay compensation and the two-step average included) rather than a reconstruction of the duty, and a cold
 start at full speed winds their field-weakening integrator down to the current limit. With those fixed its q axis lands
-on the same predictions as ours. Its **d** axis still carries an offset that grows with speed and only during the ramp
-phases (-0.010 A when the speed is held, -0.127 A while ramping to 800 rad/s), so the misalignment criterion is
-asserted for our leg only; their offset is printed and deliberately not claimed either way.
+on the same predictions as ours. Its **d** axis carries an offset that appears while the speed is changing (-0.010 A
+when the speed is held, -0.127 A while ramping to 800 rad/s), so the misalignment criterion is asserted for our leg
+only. That offset was later confirmed in their own simulation machinery and is theirs, not this adapter's --
+`official_cvc_check.py` -- but this adapter does not reproduce its *magnitude* in either direction, so treat the d
+column here as indicative only.
 """
 
 import math
