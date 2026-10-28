@@ -1,0 +1,134 @@
+_`What each capability offers, and what it costs`
+=================================================
+
+The :ref:`boundaries page <What this library does not do>` says what this library cannot do. The README's claim table says
+what is measured and how it is checked. Neither answers the question the person adding an algorithm actually has: *what
+does a capability have to come with?*
+
+This page is that answer, one row per capability. Six columns: the four things a new capability owes, plus the two links
+that let the row be audited.
+
+1. **Diagnostic channel** -- how the capability says "I am not measuring", "I have not converged", "I am holding". A
+   capability whose only output is a number cannot be debugged in the field, because zero and "no idea" look the same.
+2. **Admission** -- where a contradictory configuration is refused: at construction or at the first step, never by
+   silently falling back to a default.
+3. **Boundary** -- the limit, pinned by a case. The cell grammar is fixed and the gate enforces it:
+   a case name in double backticks; or ``none -- <reason>`` for "no limit is known", which therefore requires an **L3**
+   claim behind it; or ``na -- <reason>`` for "this dimension does not apply"; or ``todo -- <reason>`` for a hole that is
+   written down instead of papered over. The gate counts the `todo` rows on every run.
+4. **Invariant participation** -- which case in `test_invariants.cpp` this capability must obey. ``na -- <reason>`` is
+   allowed and the reason is required.
+5. **Ledger row** -- when a capability forced a foundation correction, `foundation-log.rst` says which and what it cost.
+
+The `capabilities` gate checks every cell: a header under `core/` or `motor/` must be listed here or named in
+`capability-scope.json` as deliberately unlisted; every case name must exist as a `TEST()`; every ``none`` must have an
+L3 claim; every reason must actually be a reason. A row that cannot be filled honestly fails the build, which is the
+point -- the alternative is a library that grows algorithms and forgets how they fail.
+
+.. list-table:: capability matrix
+   :header-rows: 1
+   :widths: 20 22 20 24 8 6
+
+   * - Capability
+     - Diagnostic channel
+     - Admission
+     - Boundary
+     - Invariant
+     - Ledger
+   * - ``core/transforms.hpp``
+     - na -- stateless: there is no state that could hold a stale angle, and the caller owns the angle.
+     - na -- no configuration; a wrong argument is a wrong answer, which the invariance case catches.
+     - none -- Clarke is blind to the zero sequence, which is stated and asserted rather than corrected; nothing
+       else is known to break.
+     - TheAmplitudeConventionHoldsAndTheZeroSequenceIsLost, ARotationAndItsFrameComposeExactly
+     - --
+   * - ``core/limits.hpp``
+     - na -- stateless: a clamp with no memory has nothing to report about itself.
+     - na -- no configuration; a limit wider than the signal is a caller decision, not a contradiction.
+     - ``Invariants.TheClampIsContinuousAndAJumpWouldShow``
+     - TheClampIsContinuousAndAJumpWouldShow
+     - --
+   * - ``core/pi.hpp``
+     - ``status()``, ``integral()``, ``output()`` -- the integrator state is readable because a wound-up integrator is
+       the failure mode that looks like a tuning problem.
+     - ``status() == ErrorCode::Param`` on a negative gain, an inverted clamp or a non-positive ``dt_s``; the output
+       holds instead of moving.
+     - na -- the loop is linear and every limit on it is a clamp or a gain; the limits that matter are the plant's.
+     - ElapsedTimeDecidesTheIntegralNotTheCallCount, TheClampIsContinuousAndAJumpWouldShow
+     - --
+   * - ``core/filters.hpp``
+     - ``configured()``, ``size()`` -- an unconfigured filter says so instead of passing its input through untouched.
+     - ``configure()`` refuses a non-positive cutoff or step.
+     - na -- a first-order filter is exact for its stated cutoff; the limit that matters belongs to the loop
+       around it, not to the filter.
+     - na -- linear and time-invariant; the invariants that bite are on the loop around it, not on it.
+     - --
+   * - ``core/protection.hpp``
+     - ``thermal_budget()``, ``derated_limit()``, ``fault_is_latched()`` -- "fine", "derating" and "stopped" are three
+       readable numbers rather than one code.
+     - na -- the configuration is a set of numbers; a nonsensical one is refused by the constructor that consumes it.
+     - todo -- the fault ranking is the contract and is asserted case by case, but the derating curve is a
+       thermal model and no case measures it against a temperature rise.
+     - na -- a supervisor over other capabilities, not an equation of its own.
+     - --
+   * - ``core/speed_from_angle.hpp``
+     - ``ready()``, ``lost_count()`` -- differentiates an angle and says when the angle stopped arriving.
+     - ``reset()`` is mandatory after a gap: the module will not publish a speed across one.
+     - ``SilSpeedFromAngleClosedLoop.AWindowShortEnoughToBeOnTimeIsTheOnlyWayThisRouteWins``
+     - ElapsedTimeDecidesTheIntegralNotTheCallCount
+     - A-3
+   * - ``core/observer/observer_policy.hpp``
+     - na -- concepts: it names what an observer must provide and provides nothing itself.
+     - na -- a type either satisfies the concept or fails to compile, which is the strongest admission there is.
+     - na -- there is no runtime behaviour to bound.
+     - na -- there is no arithmetic here to be invariant about.
+     - --
+   * - ``core/observer/ideal_observer.hpp``
+     - ``reset()``, ``set_truth()`` -- a test double told the answer; it has no failure mode to report.
+     - na -- it accepts whatever truth it is given, which is the whole point of it.
+     - na -- only the SIL harness uses it; the harness is not part of the shipped library.
+     - na -- no arithmetic beyond assigning the truth it was handed.
+     - --
+   * - ``core/observer/back_emf_observer.hpp``
+     - ``state()``, ``flux()`` -- and deliberately no ``locked()``: there is no channel that could withhold a verdict,
+       so reporting one would be a fiction.
+     - na -- parameters arrive through ``apply_params()``; there is no configuration to contradict.
+     - todo -- standstill is the obvious limit: there is no signal there. No case pins it yet, and writing the row
+       without the case is the folklore the boundaries gate exists to prevent.
+     - na -- a flux integration, not an algebraic identity.
+     - --
+   * - ``core/observer/nonlinear_flux_observer.hpp``
+     - ``locked()``, ``state()``, ``flux()``
+     - na -- parameters arrive through ``apply_params()``; saliency enters the flux law, not a switch.
+     - none -- the mode is admitted on facts about the machine, and its estimate's sensitivity to those facts is
+       measured rather than assumed.
+     - na -- a flux law with a saturation term, evaluated pointwise.
+     - --
+   * - ``core/observer/hfi_observer.hpp``
+     - ``locked()``, ``error()``, ``hf_current_a()``, ``status()`` -- the error signal is the demodulated quantity, so
+       "no measurement" and "zero error" are distinguishable numbers.
+     - ``status() == ErrorCode::Param`` for a surface machine, an absent carrier, or a carrier the control rate cannot
+       resolve; ``update()`` refuses the last one too, on the path that bypasses the bridge.
+     - ``HfiObserver.ACarrierThisControlRateCannotResolveIsRefusedNotFrozen``
+     - na -- a demodulation with a carrier; its algebra is the PLL's, which is stateful and nonlinear.
+     - F-2
+   * - ``core/observer/blended_observer.hpp``
+     - ``locked()``, ``blend()`` -- the mix is readable, so "which observer is carrying the estimate right now" is a
+       number rather than an inference.
+     - ``ErrorCode::Param`` when the hand-over band is inverted or empty.
+     - ``SilHfiEnvelope.AcquiringARotorAlreadyRunningNeedsASeed``
+     - na -- a schedule over two stateful observers.
+     - --
+   * - ``core/observer/switchable_observer.hpp``
+     - ``kind()``, ``locked()``, ``error()``, ``injection_ab()`` -- the slot reports which mode is really running and
+       what that mode is measuring, so a refused request cannot masquerade as a switch.
+     - ``hand_over_to()`` answers ``ErrorCode::State`` outside ``Run``, and ``ErrorCode::Param`` when the setup in force
+       cannot support the requested mode; ``set_kind()`` is the compile-time-only path.
+     - ``SwitchableObserver.TheSelectedObserversLockVerdictIsReachableThroughTheSlot``
+     - na -- a dispatcher; the invariants belong to the modes it dispatches to.
+     - F-1
+
+Twenty-four headers under ``core/`` and ``motor/`` are not listed yet: alignment, board_check, commissioning, deadtime,
+feedforward, field_weakening, homing, machine_map, machine_map_text, machine_params, motion_profile, polarity, position,
+position_reference, reference, sm, startup, svpwm, traits, types, version, and the three ``motor/`` headers. They are
+named in ``capability-scope.json`` so the count is visible, and so that a *new* header cannot join them silently.

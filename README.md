@@ -570,8 +570,14 @@ built ones. If the later one, at least you need a locale Conan server for managi
 MegaLinter mirrors the CI `megalinter` job (`.github/workflows/security-linters.yml`): same config
 (`.github/misc/.mega-linter.yml`), same full image, and the same version (`v8.8.0`, pinned to match the
 CI action). It runs the SAST layer — gitleaks / semgrep / checkov / devskim, plus clang-format
-& cppcheck. The **required** gates (clang-format / clang-tidy / gitleaks with pinned tool versions) are the
-native `quality-gates` job of the same workflow.
+& cppcheck. The **required** gates are the native `quality-gates` job of the same workflow: format, tidy,
+guard (layering + CI policy), strict, license, claims (including the `--impact` dependency query), docs,
+boundaries and capabilities — all with pinned tool versions, all runnable locally through
+`python3 .github/misc/gates.py <gate>`. Two more are real but not in this job: `fmu` runs on the Ubuntu
+leg of the test matrix because it needs the archive that build produced, and `pil` is a **local** gate —
+it rebuilds the library for aarch64 and runs the target binary under qemu, which is minutes per push for
+evidence that only changes when the control loop does. `gates.py all` runs everything, and `guard` fails
+the build if a workflow ever calls a local-only gate.
 
 Prerequisites: Docker (or Podman) + Node.js ≥ 20.
 

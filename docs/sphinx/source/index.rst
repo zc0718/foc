@@ -131,6 +131,7 @@ _`Detailed settings`
 
    Quick start <quickstart>
    What this library does not do <boundaries>
+   What each capability offers <capabilities>
    Usage and verification <usage>
    Foundation corrections <foundation-log>
    Demos <demos/index>

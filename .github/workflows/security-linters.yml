@@ -97,6 +97,12 @@ jobs:
       - name: boundaries gate
         run: python3 .github/misc/gates.py boundaries
 
+      # required: every capability under core/ or motor/ states its diagnostic channel, its admission
+      # path, its boundary and the invariants it obeys -- or is named as deliberately unlisted. This is
+      # the gate that stops a new algorithm from arriving with no way to tell "zero" from "no idea".
+      - name: capability-matrix gate
+        run: python3 .github/misc/gates.py capabilities
+
       # NOT here, on purpose: `gates.py pil`. It builds the library twice (host and aarch64) and runs
       # the target binary under qemu, which is minutes of emulator time per push for evidence that
       # changes only when the control loop changes. It stays a local gate -- run it before a release

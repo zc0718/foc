@@ -442,6 +442,14 @@ def cmd_claims(explicit):
     return done.returncode
 
 
+def cmd_capabilities(_explicit):
+    """Every capability states its diagnostic channel, admission, boundary and invariant participation.
+    Delegates to capability_gate.py so the rule has one implementation."""
+    done = subprocess.run([sys.executable, str(ROOT / '.github' / 'misc' / 'capability_gate.py')],
+                          cwd=ROOT, text=True)
+    return done.returncode
+
+
 def cmd_docs(_explicit):
     """Doxygen block comments: aligned star column, consistent continuation indent, 120 columns,
     no mid-CJK breaks, one tag line per language group, no multi-line `///<`. Delegates to docfmt.py
@@ -571,10 +579,11 @@ def main():
                   '`claims --impact <path|name>` lists what rests on it',
         'docs': 'Doxygen blocks: star alignment, continuation indent, 120 columns, no mid-CJK breaks',
         'boundaries': 'every statement on the boundaries page names a test case that exists',
+        'capabilities': 'every capability states its diagnostic channel, admission, boundary and invariant participation',
         'fmu': 'build the FMU and load it in a standard FMI master (FMPy); SKIPPED when its material is absent',
         'pil': 'run the speed-step scenario on the target ISA under qemu and compare with the host; SKIPPED when its '
                'material is absent',
-        'all': 'format + tidy + guard + license + strict + claims + docs + boundaries + fmu + pil',
+        'all': 'format + tidy + guard + license + strict + claims + docs + boundaries + capabilities + fmu + pil',
     }
     for name, text in helps.items():
         leaf = sub.add_parser(name, help=text)
@@ -606,13 +615,15 @@ def main():
         return cmd_docs(args.files)
     if args.gate == 'boundaries':
         return cmd_boundaries(args.files)
+    if args.gate == 'capabilities':
+        return cmd_capabilities(args.files)
     if args.gate == 'fmu':
         return cmd_fmu(args.files)
     if args.gate == 'pil':
         return cmd_pil(args.files)
     return 1 if (cmd_format([]) or cmd_tidy([]) or cmd_guard([]) or cmd_license([]) or cmd_strict([]) or
-                 cmd_claims([]) or cmd_docs([]) or cmd_boundaries([]) or cmd_fmu([], tolerant=True) or
-                 cmd_pil([], tolerant=True)) else 0
+                 cmd_claims([]) or cmd_docs([]) or cmd_boundaries([]) or cmd_capabilities([]) or
+                 cmd_fmu([], tolerant=True) or cmd_pil([], tolerant=True)) else 0
 
 
 if __name__ == '__main__':

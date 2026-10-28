@@ -1,0 +1,47 @@
+{
+  "_comment": [
+    "The scope of the capability matrix: which headers must be listed on capabilities.rst, and which are",
+    "deliberately not listed yet.",
+    "能力矩阵的覆盖范围：哪些 header 必须出现在 capabilities.rst 里，哪些是刻意还没列的。",
+    "",
+    "`covered_roots` is the families the matrix is about -- control, estimation and motion. `hal/` and",
+    "`driver/` are excluded on purpose: they are contracts and host stubs, not capabilities, and they are",
+    "already covered by claim rows and the strict-header gate.",
+    "",
+    "`unlisted` is a ratchet, not permission. Every header under a covered root must be either listed on",
+    "the page or named here, and the count is printed on every gate run. A new header must be one or the",
+    "other, so a capability cannot arrive with no diagnostic channel, no admission path and no boundary",
+    "row -- which is what the matrix exists to prevent. Reducing this list is the work; adding to it",
+    "requires a reason in the same commit."
+  ],
+  "covered_roots": [
+    "core",
+    "motor"
+  ],
+  "unlisted": [
+    "core/alignment.hpp",
+    "core/board_check.hpp",
+    "core/commissioning.hpp",
+    "core/deadtime.hpp",
+    "core/feedforward.hpp",
+    "core/field_weakening.hpp",
+    "core/homing.hpp",
+    "core/machine_map.hpp",
+    "core/machine_map_text.hpp",
+    "core/machine_params.hpp",
+    "core/motion_profile.hpp",
+    "core/polarity.hpp",
+    "core/position.hpp",
+    "core/position_reference.hpp",
+    "core/reference.hpp",
+    "core/sm.hpp",
+    "core/startup.hpp",
+    "core/svpwm.hpp",
+    "core/traits.hpp",
+    "core/types.hpp",
+    "core/version.hpp",
+    "motor/foc_loop.hpp",
+    "motor/motor.hpp",
+    "motor/motor_config.hpp"
+  ]
+}
