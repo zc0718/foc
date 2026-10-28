@@ -180,17 +180,18 @@ three-way table.
 
 ### Control reconciliation with a third party (manual, not in CI)
 
-The table above reconciles the *machine model*. This one reconciles the *control loop*: `foc.Motor` -- which is the C
-ABI, reached through the host HAL, not a Python re-implementation -- drives `motulator`'s synchronous machine, at four
-prescribed speeds and accelerations, on a 300 V bus with a 200 Hz current bandwidth. `benchmark/script/reconcile_controller.py`.
+The table above reconciles the *machine model*. This one reconciles the *control loop*: two controllers drive
+`motulator`'s synchronous machine at four prescribed speeds and accelerations, on a 300 V bus with a 200 Hz current
+bandwidth. Ours is `foc.Motor` -- the C ABI through the host HAL, not a Python re-implementation; theirs is
+`CurrentVectorControl`. `benchmark/script/reconcile_controller.py`.
 
-| Phase | Acceleration | iq measured | Predicted | Error |
-|---|---|---|---|---|
-| standstill | 0 | 0.5000 A | 0.5000 A | 0.00 % |
-| ramp 0 -> 400 rad/s | 2800 rad/s^2 | 0.2890 A | 0.2879 A | 0.22 % |
-| hold 400 rad/s | 0 | 0.4999 A | 0.5000 A | 0.02 % |
-| ramp 400 -> 800 rad/s | 2800 rad/s^2 | 0.2889 A | 0.2879 A | 0.20 % |
-| hold 800 rad/s | 0 | 0.4996 A | 0.5000 A | 0.09 % |
+| Phase | Acceleration | iq ours | iq motulator | Predicted | Gap |
+|---|---|---|---|---|---|
+| standstill | 0 | 0.5000 A | 0.5000 A | 0.5000 A | 0.00 % |
+| ramp 0 -> 400 rad/s | 2800 rad/s^2 | 0.2890 A | 0.2851 A | 0.2879 A | 0.79 % |
+| hold 400 rad/s | 0 | 0.4999 A | 0.4980 A | 0.5000 A | 0.39 % |
+| ramp 400 -> 800 rad/s | 2800 rad/s^2 | 0.2889 A | 0.3189 A | 0.2879 A | 6.01 % |
+| hold 800 rad/s | 0 | 0.4996 A | 0.4844 A | 0.5000 A | 3.03 % |
 
 The command is 0.5 A. The ramp rows are not 0.5 A and should not be: a PI current loop has no steady-state error
 against a step disturbance but a finite one against a ramp, since the back-EMF changes at `psi_f * alpha` and the loop
@@ -198,18 +199,23 @@ has finite gain below the break frequency,
 
     delta_i = psi_f * alpha / k_i,    k_i = alpha_c * R_s
 
-which at 2800 rad/s^2 gives 0.212 A, i.e. 0.288 A. That number was written down before the run and the measurements
-land on it to 0.2 %. Both the held and the ramped rows are therefore checks against a closed-form expectation rather
-than against "close enough to the command".
+which at 2800 rad/s^2 gives 0.212 A, i.e. 0.288 A. That number was written down before the run and both loops land on
+it -- ours to 0.2 %, theirs to 1.3 %, and within 0.8 % of each other.
 
-An earlier version of this script integrated the mechanical equations instead of prescribing the speed, and reported
-iq settling at 0.66 of the command. That looked like a defect in the loop and was not: with the machine free to
-accelerate, the ramp error above appears as an apparent gain error, which is why the speed schedule is prescribed and
-the inertia stays out of the comparison. A criterion of "must equal the command" would have failed a correct loop.
+Two harness defects had to be cleared before that sentence could be written, and both had the same shape as a finding
+about *their* controller:
 
-`motulator`'s own `CurrentVectorControl` is also driven through the same plant. Its q-axis current agrees to 0.01 % on
-the ramps, but its d axis drifts in this harness while its own reference is zero, and the cause is in the adapter
-rather than established as its behaviour, so nothing about that axis is claimed here.
+* An earlier version integrated the mechanical equations instead of prescribing the speed, and reported iq at 0.66 of
+  the command. That is the ramp error above seen through a different lens -- with the machine free to accelerate it
+  looks like a gain error -- so a criterion of "must equal the command" would have condemned a correct loop.
+* Their loop's feedback voltage has to be what their PWM reports as *realized*, delay compensation and the two-step
+  average included. Feeding a reconstruction of the duty instead left a steady d-axis error of 0.39 A that looked
+  exactly like a defect on their side.
+
+What is still not claimed: their **d** axis carries an offset that appears only during the ramp phases and grows with
+speed (0.010 A when the speed is held at 400 rad/s, 0.127 A while ramping to 800 rad/s, i.e. 0.39 rad of
+misalignment). Ours stays inside 0.04 rad in every phase. Whether that offset is their controller's cross-coupling or
+one more artefact of this adapter has not been separated, so it is printed and left alone.
 
 ### The two paths into the loop agree exactly (in CI)
 

@@ -25,21 +25,21 @@ answer in the ramp phases, not the command. Encountering it as an unexpected num
 phases exist at all.
 
 Criterion, written before the run:
-  * held phases: q-axis current within 10 % of the 0.5 A command
-  * ramp phases:  q-axis current within 10 % of the PI ramp prediction
-  * current-vector misalignment (atan2 of the true d over q current) within 0.15 rad
-  * the mechanical speed is prescribed, so it is an input rather than a result; what the speed schedule buys is the
-    claim that the command is reached at every speed *and* under a known acceleration
+  * held phases: q-axis current within 10 % of the 0.5 A command, in both legs
+  * ramp phases:  q-axis current within 10 % of the PI ramp prediction, in both legs
+  * the two legs within 10 % of each other on the q axis at every phase
+  * current-vector misalignment (atan2 of the true d over q current) within 0.15 rad for **our** leg in every phase
 
 Dead time is 0 on our side: motulator's PWM does not model it, and a dead-time model on one side only would measure
 the harness rather than the control law.
 
-motulator's own `CurrentVectorControl` is also driven through the same plant and printed as a reference trace, but
-its q-axis numbers only are meaningful: in this harness its d axis drifts (down to -1.5 A at 800 rad/s) while its own
-reference is 0, and the cause is inside the plumbing here rather than established as their behaviour -- the loop's
-integral term is fed a realized voltage whose delay compensation this harness does not reproduce. Presenting that
-drift as their result would be the same class of convenient wrong answer the first table ran into, so nothing about
-their d axis is claimed.
+motulator's own `CurrentVectorControl` is driven through the same plant. Getting it to run at all took two fixes in
+this harness, neither of them a claim about their controller: the feedback voltage has to be what their PWM reports as
+*realized* (delay compensation and the two-step average included) rather than a reconstruction of the duty, and a cold
+start at full speed winds their field-weakening integrator down to the current limit. With those fixed its q axis lands
+on the same predictions as ours. Its **d** axis still carries an offset that grows with speed and only during the ramp
+phases (-0.010 A when the speed is held, -0.127 A while ramping to 800 rad/s), so the misalignment criterion is
+asserted for our leg only; their offset is printed and deliberately not claimed either way.
 """
 
 import math
@@ -218,7 +218,10 @@ def run_theirs(par):
     ctrl.ref.tau_M = lambda _t: TAU_COMMAND
 
     rows = [[] for _ in PHASES]
-    u_ss = 0j
+    # Their framework feeds back the voltage the PWM says it realized -- delay compensation and the two-step average
+    # included -- not a reconstruction of the duty. Using a reconstruction instead left a steady d-axis error of 0.39 A
+    # at 400 rad/s, which was a defect of this harness and looked exactly like one of theirs.
+    u_ss_fb = ctrl.pwm.get_realized_voltage()
     for k in range(sum(p[3] for p in PHASES)):
         phase = schedule(machine, k + 1)
         theta_m = machine.theta_elec_rad
@@ -226,15 +229,16 @@ def run_theirs(par):
         fbk = SimpleNamespace(
             u_dc=V_BUS,
             i_ss=machine.i_ss,
-            u_ss=u_ss,
+            u_ss=u_ss_fb,
             theta_m=theta_m,
             w_m=machine.w_m,
             i_s=np.exp(-1j * theta_m) * machine.i_ss,
-            u_s=np.exp(-1j * theta_m) * u_ss,
+            u_s=np.exp(-1j * theta_m) * u_ss_fb,
             w_s=machine.w_m,
         )
         ref = ctrl.output(fbk)
         u_ss = complex(*duty_to_stator_voltage(*ref.d_abc))
+        u_ss_fb = ctrl.pwm.get_realized_voltage()
         machine.advance(u_ss.real, u_ss.imag)
         ctrl.update(fbk, ref)
         i = machine.i_s
@@ -249,35 +253,38 @@ def main() -> int:
 
     print(f"iq command {IQ_COMMAND:+.3f} A, current bandwidth {ALPHA_C:.0f} rad/s, ramp-error coefficient "
           f"{PSI_F / (ALPHA_C * RS) * 1e6:.1f} uA per rad/s^2")
-    header = (f"{'phase':>12}  {'accel':>7}  {'speed':>6}  {'iq':>8} {'target':>7} {'err %':>6}  "
-              f"{'id':>8}  {'misalign':>8}")
+    header = (f"{'phase':>12}  {'accel':>7}  {'speed':>6}  {'iq ours':>8} {'iq theirs':>9} {'target':>7} "
+              f"{'gap %':>6}  {'id ours':>8} {'id theirs':>9}  {'misalign ours':>13}")
     print(header)
     print("-" * len(header))
     ok = True
-    for (name, w0, accel, _), row in zip(PHASES, ours):
+    for (name, w0, accel, _), a, b in zip(PHASES, ours, theirs):
         target = IQ_COMMAND - ramp_error_a(accel)
-        err = abs(row[2] - target) / IQ_COMMAND * 100.0
-        print(f"{name:>12}  {accel:7.0f}  {w0:6.0f}  {row[2]:8.4f} {target:7.4f} {err:5.2f}%  "
-              f"{row[3]:8.4f}  {row[4]:8.4f}")
-        if err > 10.0:
-            print(f"  FAIL: iq {row[2]:+.4f} A is more than 10 % of the command away from the predicted "
-                  f"{target:+.4f} A in phase '{name}'")
-            ok = False
-        if row[4] > 0.15:
-            print(f"  FAIL: current-vector misalignment {row[4]:.4f} rad in phase '{name}'")
-            ok = False
-
-    print()
-    print("reference trace -- motulator's CurrentVectorControl through the same plant (q axis only, see the module "
-          "docstring):")
-    for (name, _, _, _), a, b in zip(PHASES, ours, theirs):
         gap = abs(a[2] - b[2]) / IQ_COMMAND * 100.0
-        print(f"  {name:>12}  iq ours {a[2]:+.4f}  iq theirs {b[2]:+.4f}  gap {gap:5.2f}%  "
-              f"id theirs {b[3]:+.4f} (not claimed)")
+        print(f"{name:>12}  {accel:7.0f}  {w0:6.0f}  {a[2]:8.4f} {b[2]:9.4f} {target:7.4f} {gap:5.2f}%  "
+              f"{a[3]:8.4f} {b[3]:9.4f}  {a[4]:13.4f}")
+        for tag, row in (("ours", a), ("theirs", b)):
+            error = abs(row[2] - target) / IQ_COMMAND * 100.0
+            if error > 10.0:
+                print(f"  FAIL: {tag} iq {row[2]:+.4f} A is {error:.2f} % of the command away from the predicted "
+                      f"{target:+.4f} A in phase '{name}'")
+                ok = False
+        if gap > 10.0:
+            print(f"  FAIL: the legs differ by {gap:.2f} % on iq in phase '{name}'")
+            ok = False
+        if a[4] > 0.15:
+            print(f"  FAIL: our current-vector misalignment {a[4]:.4f} rad in phase '{name}'")
+            ok = False
 
     print()
-    print("OK: our control loop reaches the commanded operating point, and follows the PI ramp law, on motulator's "
-          "machine at every prescribed speed" if ok else "NOT OK")
+    print("their misalignment is reported, not asserted: it is smallest where the speed is held and largest during the "
+          "ramp, which this harness cannot separate from its own plumbing.")
+    for (name, _, _, _), b in zip(PHASES, theirs):
+        print(f"  {name:>12}  id theirs {b[3]:+.4f} A  misalignment {b[4]:+.4f} rad")
+
+    print()
+    print("OK: both control loops reach the commanded operating point, and follow the PI ramp law, on the same machine "
+          "at every prescribed speed" if ok else "NOT OK")
     return 0 if ok else 1
 
 
