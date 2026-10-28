@@ -367,6 +367,33 @@ stops instead of tuning from a number the estimator already called meaningless.
 The inductances are the honest gap: they cannot be separated at standstill (see the previous section), so the chain
 takes them from the nameplate and says so, rather than presenting a standstill-derived `Ld` as if it meant something.
 
+### Which observer, and where its ceiling is (in CI)
+
+`test_observer_screening.cpp` measures both single-`L` observers on the same plant, on the two axes that decide the
+answer. The criterion written before that run ("the shipping observer stays inside 0.15 rad at every speed with
+`i_d = 0`") was wrong, and the way it was wrong is the finding: it described `NonlinearFluxObserver`, while the
+observer that actually ships -- in `sil::Bench` and in the C ABI -- is `BackEmfObserver`. Surface machine, `iq = 0.5 A`,
+angle error in rad, ceiling 0.15:
+
+| Speed | `BackEmfObserver` | `NonlinearFluxObserver` | `BackEmfObserver`, `i_d = -1 A` | `NLFO`, `i_d = -1 A` |
+|---|---|---|---|---|
+| 20 rad/s | 0.9668 | 0.2874 | 1.5142 | 1.5317 |
+| 50 rad/s | 0.4569 | 0.1813 | 1.1075 | 1.1382 |
+| 200 rad/s | 0.1224 | 0.1044 | 0.4186 | **0.5079** |
+| 800 rad/s | 0.0306 | 0.0568 | 0.1178 | 0.1531 |
+| 3200 rad/s | 0.0968 | 0.0128 | 0.0291 | 0.0058 |
+
+What the table settles:
+
+* **The screening rule is one sentence.** D-axis current is admissible only above a speed: for the shipping observer,
+  200 rad/s unloaded but 800 rad/s with `i_d = -1 A`. The same current at 3200 rad/s costs 0.0291 rad. Saliency is not
+  a screening axis at all -- at `i_d = 0` a 2.5x change in `Lq/Ld` moves the shipping observer by 16 % and `NLFO` not at
+  all, because the model error is `(Ld - Lq)*i_d`.
+* **The two observers are not ranked.** `NLFO` is far better at 20 rad/s (0.2874 against 0.9668) and at 3200 rad/s
+  (0.0128 against 0.0968), and worse at 800 rad/s unloaded (0.0568 against 0.0306). Neither dominates.
+* **The recorded 0.5079 rad is `NLFO`'s**, reproduced here to four digits, which is also what confirms this rig matches
+  the one those records came from. The plan notes that quote observer limits were describing the non-shipping observer.
+
 ### Claims deliberately not made
 
 These are the claims the evidence levels do not support, listed so nobody has to guess whether they
