@@ -180,6 +180,58 @@ def test_the_injection_can_be_sized_and_the_result_runs():
         raise AssertionError("a surface machine was sized for injection")
 
 
+def test_the_running_observer_can_be_switched_from_python():
+    # The hand-over was the last capability that C could reach and Python could not. Its refusals are the contract, so
+    # the case checks them alongside the happy path -- a binding that turned a refusal into a no-op would leave
+    # `status()["observer"]` unchanged and the author believing the switch had happened.
+    # 交接是 C 能达到、而 Python 达不到的最后一项能力。它的拒绝本身就是契约，因此本用例与正常路径一并检查——一个把拒绝
+    # 变成空操作的绑定会让 `status()["observer"]` 保持不变，而作者相信自己切换成功了。
+    params = foc.MotorParams()
+    params.rs, params.ld, params.lq = 0.5, 4e-4, 8e-4  # salient, so HFI is admissible at all
+    sized = foc.hfi_size(params, pwm_freq_hz=20000.0, hf_current_a=0.5)
+
+    # Before Run it answers STATE: a hand-over carries an estimate, and an observer that has not been stepped has none.
+    # 在 Run 之前答 STATE：交接携带一个估计，而没被推进过的观测器没有估计。
+    with foc.Motor(params) as motor:
+        expect_foc_error(foc.ErrorCode.STATE, lambda: motor.set_observer(foc.Observer.BACK_EMF))
+
+    # Same motor, now running, but built without a carrier: HFI is refused on a fact rather than on a switch, and the
+    # refusal leaves the observer as it was.
+    # 同一台电机，现在在跑，但建的时候没有载波：HFI 凭事实而非开关拒绝，且拒绝之后观测器保持原样。
+    with foc.Motor(params) as motor:
+        motor.enable()
+        for _ in range(20):
+            motor.tick(1.0 / 20000.0)
+        assert motor.status()["mode"] == foc.MotorState.RUN, motor.status()
+        expect_foc_error(foc.ErrorCode.PARAM, lambda: motor.set_observer(foc.Observer.HFI))
+        assert motor.status()["observer"] == foc.Observer.BACK_EMF, motor.status()
+
+    # With the carrier in the setup the switch lands, and it is not a one-way door: `status()["observer"]` is filled
+    # from the live observer, so it reports where the estimate actually is, in both directions.
+    # 载波在设置里时切换落地，而且不是单向门：`status()["observer"]` 由活着的观测器填入，因此它报告估计真正在的位置，
+    # 两个方向都是。
+    setup = foc.MotorSetup()
+    setup.observer = foc.Observer.BACK_EMF
+    setup.inject_v = sized["inject_v"]
+    setup.inject_hz = sized["inject_hz"]
+    with foc.Motor(params, setup) as motor:
+        motor.enable()
+        for _ in range(20):
+            motor.tick(1.0 / 20000.0)
+        assert motor.status()["observer"] == foc.Observer.BACK_EMF, motor.status()
+
+        motor.set_observer(foc.Observer.HFI)
+        assert motor.status()["observer"] == foc.Observer.HFI, motor.status()
+        # and the axis keeps running after the hand-over rather than restarting
+        # 交接之后轴继续跑，而不是重启
+        for _ in range(20):
+            motor.tick(1.0 / 20000.0)
+        assert motor.status()["observer"] == foc.Observer.HFI, motor.status()
+
+        motor.set_observer(foc.Observer.BACK_EMF)
+        assert motor.status()["observer"] == foc.Observer.BACK_EMF, motor.status()
+
+
 def test_position_and_alignment_are_reachable_from_python():
     # The Python face must not be a smaller library than the C one: position moves, per-move
     # ceilings and the alignment result are all here.
@@ -335,6 +387,35 @@ def test_abi_011_protector():
         )
         assert name == "none", name
         assert allowed
+
+
+def test_a_fault_code_can_be_named_without_stepping_a_protector():
+    # `Protector.step()` already returns a name, but only for the fault it just produced. An author holding a code from
+    # elsewhere -- a bit in `active_mask`, a line in a log -- could not ask what it is called. The table is the one C
+    # reads, so the check is against exact strings: renaming a fault is changing a promise, and that has to cost a red
+    # case rather than slip through a "non-empty" assertion.
+    # `Protector.step()` 已经返回名字，但只对它刚产出的那一个故障。作者从别处拿到一个码——`active_mask` 里的一个比特、
+    # 日志里的一行——此前没办法问它叫什么。表就是 C 读的那一张，因此逐字比对：给故障改名就是改承诺，这要付出一次红用例
+    # 的代价，而不是从"非空"断言里溜过去。
+    assert foc.fault_name(0) == "none", foc.fault_name(0)
+    assert foc.fault_name(1) == "over current", foc.fault_name(1)
+    assert foc.fault_name(7) == "lost sync", foc.fault_name(7)
+    assert foc.fault_name(99) == "?", foc.fault_name(99)
+
+    # Every value in the table is named and no two share a name, so a mask can be decoded without a lookup table of
+    # its own.
+    # 表内每个取值都有名字，且没有两个同名，于是一个掩码不需要自带一张查找表就能解码。
+    names = [foc.fault_name(code) for code in range(8)]
+    assert all(name != "?" for name in names), names
+    assert len(set(names)) == 8, names
+
+    # And the name the protector reports is this table's, not a second copy of it.
+    # 而保护层报告的名字出自这张表，不是它的第二份拷贝。
+    with foc.Protector() as protector:
+        reported, _, _, _, _, _ = protector.step(
+            i_magnitude_a=5.0, v_bus_v=24.0, temperature_c=25.0, omega_e_rad_s=0.0, dt_s=5e-5
+        )
+        assert reported == foc.fault_name(1), reported
 
 
 def test_a_python_plant_closes_the_loop():

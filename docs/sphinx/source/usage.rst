@@ -131,6 +131,12 @@ zero, which a loop cannot tell from a stalled rotor — measured as a -19.5 rad/
 understood. :code:`foc_motor_create_ex()` refuses such a request, and the cases it cannot catch are reported by
 :code:`observer_locked`.
 
+The same admission test runs when the observer is changed on a running motor: :code:`Motor.set_observer()` --
+:code:`foc_motor_set_observer()` from C -- validates the request against the setup already in force, so a motor built
+without a carrier can run on back-EMF but cannot be handed over to HFI later. Outside the Run state it answers
+:code:`STATE` instead, because a hand-over carries an estimate and an observer that has not been stepped has none to
+carry. Both refusals arrive as :code:`FocError`, never as a silently unchanged :code:`status()["observer"]`.
+
 Within the ceiling, higher is better on both axes at once, because the angle bias falls faster than the injected current:
 
 .. list-table:: 20 rad/s mechanical, 200 Hz demodulation, 12 V

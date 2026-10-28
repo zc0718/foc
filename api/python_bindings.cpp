@@ -300,6 +300,14 @@ public:
 
     void clear_fault() { check(foc_motor_clear_fault(handle_), "foc_motor_clear_fault"); }
 
+    /**
+     * @brief [en] Hand the running estimate over to another observer mode, without rebuilding the motor.
+     * @brief [zh] 把正在运行的估计交接给另一种观测器模式，不必重建电机。
+     */
+    void set_observer(foc_observer_t observer) {
+        check(foc_motor_set_observer(handle_, observer), "foc_motor_set_observer");
+    }
+
     void set_speed(double rad_per_s) { check(foc_set_speed_f64(handle_, rad_per_s), "foc_set_speed"); }
 
     void set_torque(double iq_a) { check(foc_set_torque_f64(handle_, iq_a), "foc_set_torque"); }
@@ -705,6 +713,16 @@ PYBIND11_MODULE(foc_python, m) {
         .def("clear_fault", &Motor::clear_fault,
              "[en] Clear a latched fault (FOC_ERR_STATE if the motor was not faulted).\n"
              "[zh] 清除锁存故障（不在故障态时抛 FOC_ERR_STATE）。")
+        // The runtime hand-over, which was reachable from C and not from Python. Its refusals are part of the
+        // contract, not accidents: outside Run it answers STATE (a hand-over carries an estimate, and an unstepped
+        // observer has none to carry), and it answers PARAM when the setup in force cannot support the requested
+        // mode. Both arrive here as FocError rather than as a silently unchanged `status()["observer"]`.
+        // 运行时交接，本来从 C 可达、从 Python 不可达。它的拒绝是契约的一部分而非意外：不在 Run 状态时答 STATE（交接
+        // 携带一个估计，而未被推进的观测器没有估计可交），当生效的设置支撑不了所请求的模式时答 PARAM。这两者在这里都
+        // 以 FocError 到达，而不是"`status()["observer"]` 静默不变"。
+        .def("set_observer", &Motor::set_observer, py::arg("observer"),
+             "[en] Switch the observer while the motor runs (STATE outside Run, PARAM if the setup cannot support it).\n"
+             "[zh] 在电机运行时切换观测器（不在 Run 状态抛 STATE，设置支撑不了时抛 PARAM）。")
         .def("set_speed", &Motor::set_speed, py::arg("rad_per_s"),
              "[en] Speed setpoint, mechanical rad/s. [zh] 速度给定，机械 rad/s。")
         .def("set_torque", &Motor::set_torque, py::arg("iq_a"),
@@ -775,8 +793,20 @@ PYBIND11_MODULE(foc_python, m) {
     m.def("board_item_name", &foc_board_item_name, py::arg("item"),
           "[en] Stable lowercase name of a board item. [zh] 检查项的稳定小写名。");
     m.def("board_cause_name", &foc_board_cause_name, py::arg("cause"),
-          "[en] Stable lowercase name of a board cause. [zh] 成因的稳定小写名。");
-
+          "[en] Stable lowercase name of a board cause. [zh] 成因的稳定小写名。");    // The fault table, standalone. `Protector.step()` already returns a name, but only for the fault it just produced;
+    // an author who holds a code -- a bit position in `active_mask`, a line in a log, a number from another surface --
+    // had no way to ask what it is called. It takes a plain `int` for the same reason `board_item_name` above does:
+    // the argument an author has is a bit index or a raw code, and refusing that would make the binding usable only by
+    // callers who had already decoded the thing they are trying to decode.
+    // 故障表，独立可调。`Protector.step()` 已经返回名字，但只对它刚产出的那一个故障；作者若手上有一个码——`active_mask`
+    // 里的一个比特位、日志里的一行、别的表面给出的一个数——此前没办法问它叫什么。它取裸 `int`，理由与上面的
+    // `board_item_name` 相同：作者手上的参数是一个比特下标或一个裸码，拒绝它会让这个绑定只能被"已经解码过目标"的调用方
+    // 使用，而那正是他们想要的答案。
+    m.def(
+        "fault_name", [](std::int32_t fault) { return std::string(::foc_fault_name(fault)); }, py::arg("fault"),
+        "[en] Stable lowercase name of an FOC_FAULT_* value; \"?\" outside the table. Takes the raw code, so a bit\n"
+        "index from `active_mask` decodes directly.\n"
+        "[zh] FOC_FAULT_* 取值的稳定小写名；表外取值返回 \"?\"。取裸码，因此 `active_mask` 的比特下标可直接解码。");
     m.def(
         "field_weakening_worthwhile",
         [](const foc_motor_params_t &params, float i_max_a) {
