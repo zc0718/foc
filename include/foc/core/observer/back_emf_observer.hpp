@@ -100,6 +100,21 @@ class BackEmfObserver final {
     auto update(Ab<float> v_ab, Ab<float> i_ab, float dt_s) noexcept -> ObsState;
 
     /**
+     * @brief [en] What the last `update()` reported, without stepping again.
+     * @brief [zh] 上一次 `update()` 报出的状态，不推进。
+     * @return [en] The last `ObsState`; the initial one before any update.
+     * @return [zh] 上一次的 `ObsState`；未推进过时是初始值。
+     * @note [en] The other three observers already had this accessor and this one did not, which made a wrapper that
+     *            holds all four unable to report an angle for the default mode. Filling the gap here rather than
+     *            special-casing the default in the wrapper: a caller reading an estimate should not have to know which
+     *            kind it is talking to.
+     * @note [zh] 另外三个观测器早已有这个访问器而它没有，于是一个持有全部四个的包装器反而无法为默认模式报出角度。在源头
+     *            补齐而不是在包装器里给默认值做特例：读估计值的人不该需要知道自己在跟哪一种打交道。
+     * @since 0.1.6
+     */
+    [[nodiscard]] auto state() const noexcept -> ObsState { return state_; }
+
+    /**
      * @brief [en] Clear the integrator and the speed estimate.
      * @brief [zh] 清除积分器与速度估计。
      * @since 0.1.0

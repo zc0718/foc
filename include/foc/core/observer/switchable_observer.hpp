@@ -140,6 +140,28 @@ class SwitchableObserver final {
     }
 
     /**
+     * @brief [en] What the selected observer last reported.
+     * @brief [zh] 被选中的观测器上一次报出的状态。
+     * @note [en] Read from the selection, not from a cached copy: the wrapper keeps no state of its own, so this cannot
+     *            disagree with what `update()` returned.
+     * @note [zh] 从被选中的那个读，而不是从缓存的副本读：包装器自身不存状态，因此这里不可能与 `update()` 的返回不一致。
+     * @since 0.1.6
+     */
+    [[nodiscard]] auto state() const noexcept -> ObsState {
+        switch (kind_) {
+        case ObserverKind::NonlinearFlux:
+            return nonlinear_flux_.state();
+        case ObserverKind::Hfi:
+            return hfi_.state();
+        case ObserverKind::Blended:
+            return blended_.state();
+        case ObserverKind::BackEmf:
+        default:
+            return back_emf_.state();
+        }
+    }
+
+    /**
      * @brief [en] Choose at run time. No observer is reset and none is stepped.
      * @brief [zh] 在运行时切换。没有观测器被复位，也没有被推进。
      */
