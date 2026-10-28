@@ -414,5 +414,41 @@ typedef struct foc_protection_output {
     float i2t_budget;       /* the thermal budget in A^2*s */
 } foc_protection_output_t;
 
+/**
+ * @brief [en] The HAL operations a host supplies, as plain C function pointers.
+ * @brief [zh] 主控方提供的 HAL 操作，以普通 C 函数指针给出。
+ * @details [en] Four are required and are checked by the library: duties out, phase currents in, mechanical angle in,
+ *               DC link voltage in. The rest are optional, and NULL means "this host has no such facility" rather than
+ *               "assume a convenient value" -- no clock reports 0 instead of inventing a timebase.
+ * @details [zh] 四个是必需的，由库检查：占空比送出、相电流读入、机械角读入、母线电压读入。其余是可选的， NULL 的含义是"
+ *               这个主控方没有这个能力"，而不是"假定一个方便的值"——没有时钟就报 0，不编一个时基。
+ * @since 0.1.2
+ * @exporter
+ */
+typedef struct foc_hal_callbacks {
+    uint32_t struct_size; /* sizeof(foc_hal_callbacks_t) */
+    void *user;           /* handed back to every callback unchanged */
+
+    /* Required: receive the three phase duties, each in [0, 1]. */
+    void (*pwm_write_duty)(void *user, const float duty_uvw[3]);
+    /* Required: phase currents in A, U/V/W. */
+    void (*read_current)(void *user, float uvw_a[3]);
+    /* Required: mechanical angle in rad. */
+    float (*read_angle_mech_rad)(void *user);
+    /* Required: DC link voltage in V. */
+    float (*read_voltage_v)(void *user);
+
+    /* Optional: mechanical speed in rad/s; NULL = this host cannot measure it. */
+    float (*read_velocity_rad_s)(void *user);
+    /* Optional: non-zero when the inverter reports a fault; NULL = no fault path. */
+    int32_t (*pwm_fault)(void *user);
+    /* Optional: enable the output stage, 0 = ok; NULL = nothing to enable. */
+    int32_t (*pwm_enable)(void *user);
+    /* Optional: disable the output stage; NULL = nothing to disable. */
+    void (*pwm_disable)(void *user);
+    /* Optional: monotonic microseconds; NULL = trust the dt given to each tick. */
+    uint64_t (*now_us)(void *user);
+} foc_hal_callbacks_t;
+
 /** @brief [en] Handle to a protector instance. [zh] 保护器实例的句柄。 @since 0.1.1 */
 typedef struct foc_protector_s *foc_protector_t;

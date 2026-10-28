@@ -15,6 +15,7 @@
 #include <foc/core/reference.hpp>
 #include <foc/core/pi.hpp>
 #include <foc/core/svpwm.hpp>
+#include <foc/driver/callback_hal.hpp>
 #include <foc/driver/stub_hal.hpp>
 #include <foc/motor/motor.hpp>
 #include <foc/motor/motor_config.hpp>
@@ -35,6 +36,18 @@ namespace {
 // 一直在拒绝的"只服务一种场景的库"陷阱。
 using MotorT = motor::Motor<core::BackEmfObserver, core::Svpwm, core::Pi, driver::StubHal, core::NullReferenceGenerator,
                             core::NullFeedforward, core::PositionP, core::AlignRoutine>;
+
+/**
+ * @brief [en] The same motor with a host-fed HAL: used only by `foc_motor_create_host()`.
+ * @brief [zh] 同一个电机，HAL 由主控方喂数据：只被 `foc_motor_create_host()` 使用。
+ * @note [en] Identical policy list on purpose. A second policy composition would be a second control path, and the
+ *            point of the two pools is that the loop under test is one object.
+ * @note [zh] 策略列表刻意完全一致。换一套策略组合就是第二条控制路径，而两个池的意义恰恰在于被测的环是同一个。
+ * @since 0.1.2
+ */
+using MotorT_Host =
+    motor::Motor<core::BackEmfObserver, core::Svpwm, core::Pi, driver::CallbackHal, core::NullReferenceGenerator,
+                 core::NullFeedforward, core::PositionP, core::AlignRoutine>;
 
 /**
  * @brief [en] Object pool capacity: static storage, no heap, no fragmentation.
@@ -232,20 +245,35 @@ auto setup_ok(const Setup& setup) noexcept -> bool {
  * @brief [zh] 一个池槽：电机内联存储 + 句柄指向的控制块。`storage` 是 C 路径上 `Motor<>` 唯一 存在的地方。
  * @since 0.1.0
  */
-struct Slot final {
-    alignas(MotorT) unsigned char storage[sizeof(MotorT)]{};
-    MotorT* instance{nullptr};
-    driver::StubHal hal{};
+template <typename MotorType, typename HalType> struct SlotT final {
+    alignas(MotorType) unsigned char storage[sizeof(MotorType)]{};
+    MotorType* instance{nullptr};
+    HalType hal{};
     Setup setup{};
     std::uint32_t generation{0U};
     bool alive{false};
 };
+
+using Slot = SlotT<MotorT, driver::StubHal>;
+using HostSlot = SlotT<MotorT_Host, driver::CallbackHal>;
 
 /**
  * @brief [en] High word of every handle token: "FOC\0". Anything else is not ours.
  * @brief [zh] 每个句柄令牌的高位字："FOC\0"。别的值都不是本池签发的。
  */
 constexpr std::uintptr_t kHandleMagic = 0x464F4300U;
+
+/**
+ * @brief [en] High word of a host-motor handle: "FOCH", distinct from "FOC".
+ * @brief [zh] 主控电机句柄的高位字："FOCH"，与 "FOC" 区分。
+ */
+constexpr std::uintptr_t kHostHandleMagic = 0x464F4348U;
+
+/**
+ * @brief [en] Host motors are per-process experiments, not a fleet.
+ * @brief [zh] 主控电机是进程内实验，不是车队。
+ */
+constexpr std::size_t kMaxHostMotors = 2U;
 
 /**
  * @brief [en] Bits reserved for the slot index in a handle token.
@@ -264,11 +292,11 @@ constexpr std::uint32_t kSlotBits = 8U;
  *            代际必须放在句柄值本身里。
  * @since 0.1.0
  */
-auto mint_handle(std::uint32_t slot, std::uint32_t generation) noexcept -> foc_motor_t {
+auto mint_handle(std::uint32_t slot, std::uint32_t generation, std::uintptr_t magic = kHandleMagic) noexcept
+    -> foc_motor_t {
     // The token is never dereferenced: it is a handle value, not an address.
     // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast, performance-no-int-to-ptr)
-    return reinterpret_cast<foc_motor_t>((kHandleMagic << 32U) |
-                                         (static_cast<std::uintptr_t>(generation) << kSlotBits) |
+    return reinterpret_cast<foc_motor_t>((magic << 32U) | (static_cast<std::uintptr_t>(generation) << kSlotBits) |
                                          static_cast<std::uintptr_t>(slot));
 }
 
@@ -277,6 +305,7 @@ auto mint_handle(std::uint32_t slot, std::uint32_t generation) noexcept -> foc_m
  * @brief [zh] 静态池：常量初始化，启动期没有动态初始化。
  */
 Slot g_pool[kMaxMotors];
+HostSlot g_host_pool[kMaxHostMotors];
 
 
 /**
@@ -314,25 +343,31 @@ auto params_ok(const foc_motor_params_t& p) noexcept -> bool {
  * @post [zh] 成员判定之前不解引用任何指针，因此野句柄不会触发访问异常——这就是把未定义行为变成 `FOC_ERR_PARAM` 的地方。
  * @since 0.1.0
  */
-auto resolve(foc_motor_t handle) noexcept -> Slot* {
+template <typename SlotType, std::size_t N>
+auto resolve_in(foc_motor_t handle, SlotType (&pool)[N], std::uintptr_t magic) noexcept -> SlotType* {
     // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast, performance-no-int-to-ptr)
-    // Decoding the opaque token: the value is never dereferenced.
     const auto raw = reinterpret_cast<std::uintptr_t>(handle);
-    if ((raw >> 32U) != kHandleMagic) {
-        return nullptr; // not minted here (or a garbage pointer): no dereference, no fault
+    if ((raw >> 32U) != magic) {
+        return nullptr; // not minted by this pool (or a garbage pointer): no dereference, no fault
     }
 
     const auto slot_index = static_cast<std::uint32_t>(raw & 0xFFU);
     const auto generation = static_cast<std::uint32_t>((raw >> kSlotBits) & 0xFFFFFFU);
-    if (slot_index >= kMaxMotors) {
+    if (slot_index >= N) {
         return nullptr;
     }
 
-    Slot& slot = g_pool[slot_index];
+    SlotType& slot = pool[slot_index];
     if (!slot.alive || (slot.generation != generation)) {
         return nullptr; // destroyed, or the slot has been occupied again since (ABA)
     }
     return &slot;
+}
+
+auto resolve(foc_motor_t handle) noexcept -> Slot* { return resolve_in(handle, g_pool, kHandleMagic); }
+
+auto resolve_host(foc_motor_t handle) noexcept -> HostSlot* {
+    return resolve_in(handle, g_host_pool, kHostHandleMagic);
 }
 
 
@@ -340,7 +375,26 @@ auto resolve(foc_motor_t handle) noexcept -> Slot* {
  * @brief [en] The motor living in a slot.
  * @brief [zh] 槽位中存放的电机。
  */
-auto motor_of(Slot& slot) noexcept -> MotorT& { return *slot.instance; }
+template <typename SlotType> auto motor_of(SlotType& slot) noexcept -> auto& { return *slot.instance; }
+
+/**
+ * @brief [en] Run one behaviour against whichever pool the handle belongs to.
+ * @brief [zh] 对着句柄所属的那个池执行同一个行为。
+ * @note [en] This is the single dispatch point: the entry points keep one body each, and the compiler makes the two
+ *            instantiations. Writing a second copy of `tick` for the host pool is exactly the confusion this avoids.
+ * @note [zh] 唯一的派发点：各入口各自只有一个实现，两次实例化由编译器完成。给主控池再抄一份 `tick`，正是这里要避免的混
+ *            淆。
+ * @since 0.1.2
+ */
+template <typename Fn> auto on_slot(foc_motor_t handle, Fn&& fn) -> foc_err_t {
+    if (Slot* slot = resolve(handle)) {
+        return to_c(fn(*slot));
+    }
+    if (HostSlot* slot = resolve_host(handle)) {
+        return to_c(fn(*slot));
+    }
+    return FOC_ERR_PARAM;
+}
 
 
 /**
@@ -351,9 +405,10 @@ auto motor_of(Slot& slot) noexcept -> MotorT& { return *slot.instance; }
  * @note [zh] 析构名必须写在该别名可见的作用域里，所以这个函数在这里而不在下面的 C 块里。
  * @since 0.1.0
  */
-void destroy_motor(Slot& slot) noexcept {
+template <typename SlotType> void destroy_motor(SlotType& slot) noexcept {
     if (slot.instance != nullptr) {
-        slot.instance->~MotorT();
+        using MotorType = std::remove_pointer_t<decltype(slot.instance)>;
+        slot.instance->~MotorType();
         slot.instance = nullptr;
     }
 }
@@ -524,6 +579,31 @@ template <typename T> auto size_ok(const T& value) noexcept -> bool {
     return value.struct_size == static_cast<std::uint32_t>(sizeof(T));
 }
 
+/**
+ * @brief [en] Copy the C callback set into the policy struct the driver uses.
+ * @brief [zh] 把 C 回调集拷进驱动使用的策略结构。
+ * @return [en] the policy struct; `valid()` on it reports whether the required callbacks were present.
+ * @return [zh] 策略结构；其 `valid()` 报告必需回调是否齐全。
+ * @note [en] Field by field rather than a byte copy: the two layouts differ by the `struct_size` header, and an
+ *            accidental match today would be a silent misread tomorrow.
+ * @note [zh] 逐字段而不是整块拷贝：两个布局差一个 `struct_size` 头，今天的偶然对齐就是明天的静默误读。
+ * @since 0.1.2
+ */
+auto to_hal_callbacks(const foc_hal_callbacks_t& c) noexcept -> driver::HalCallbacks {
+    driver::HalCallbacks callbacks{};
+    callbacks.user = c.user;
+    callbacks.pwm_write_duty = c.pwm_write_duty;
+    callbacks.read_current = c.read_current;
+    callbacks.read_angle_mech_rad = c.read_angle_mech_rad;
+    callbacks.read_voltage_v = c.read_voltage_v;
+    callbacks.read_velocity_rad_s = c.read_velocity_rad_s;
+    callbacks.pwm_fault = c.pwm_fault;
+    callbacks.pwm_enable = c.pwm_enable;
+    callbacks.pwm_disable = c.pwm_disable;
+    callbacks.now_us = c.now_us;
+    return callbacks;
+}
+
 
 } // namespace api
 
@@ -613,114 +693,175 @@ foc_err_t foc_bridge_create_ex(const foc_motor_params_t* params, const foc_motor
 }
 
 
+foc_err_t foc_bridge_create_host(const foc_motor_params_t* params, const foc_motor_setup_t* setup,
+                                 const foc_hal_callbacks_t* callbacks, foc_motor_t* out) {
+    if ((params == nullptr) || (out == nullptr) || (callbacks == nullptr)) {
+        return FOC_ERR_PARAM;
+    }
+    if (!foc::api::params_ok(*params)) {
+        return FOC_ERR_PARAM;
+    }
+
+    const foc::api::Setup resolved = foc::api::resolve_setup(setup);
+    if (!foc::api::setup_ok(resolved)) {
+        return FOC_ERR_PARAM;
+    }
+
+    const foc::driver::HalCallbacks hal_callbacks = foc::api::to_hal_callbacks(*callbacks);
+    if (!hal_callbacks.valid()) {
+        return FOC_ERR_PARAM;
+    }
+
+    for (std::size_t i = 0U; i < foc::api::kMaxHostMotors; ++i) {
+        foc::api::HostSlot& slot = foc::api::g_host_pool[i];
+        if (slot.alive) {
+            continue;
+        }
+
+        const foc::motor::MotorConfig config{params->rs,
+                                             params->ld,
+                                             params->lq,
+                                             params->kt,
+                                             params->j,
+                                             params->b,
+                                             params->pole_pairs,
+                                             resolved.i_max_a,
+                                             resolved.pwm_freq_hz,
+                                             resolved.deadtime_ns,
+                                             resolved.speed_loop_period_s,
+                                             resolved.position_loop_period_s};
+        const foc::core::Pi::Config current =
+            foc::current_pi_config(config, resolved.current_bandwidth_rad_s, resolved.v_bus_v);
+        const foc::core::Pi::Config speed = foc::speed_pi_config(config, resolved.speed_bandwidth_rad_s);
+        const foc::core::PositionP::Config position =
+            foc::position_p_config(config, resolved.position_bandwidth_rad_s, resolved.velocity_limit_rad_s,
+                                   resolved.position_accel_limit_rad_s2);
+        const foc::core::AlignConfig alignment{resolved.align_current_a, resolved.align_ramp_s,
+                                               resolved.align_hold_s,    resolved.align_tolerance_rad,
+                                               resolved.align_verify_s,  resolved.align_angle_e_rad};
+
+        slot.hal = foc::driver::CallbackHal(hal_callbacks);
+        slot.setup = resolved;
+
+        const foc::api::MotorT_Host::Policies policies{foc::core::BackEmfObserver({params->rs, params->ld}),
+                                                       foc::core::Svpwm{},
+                                                       foc::core::Pi{current},
+                                                       foc::core::Pi{current},
+                                                       foc::core::Pi{speed},
+                                                       foc::core::NullReferenceGenerator{},
+                                                       foc::core::NullFeedforward{},
+                                                       foc::core::PositionP{position},
+                                                       foc::core::AlignRoutine{alignment}};
+
+        slot.instance = new (static_cast<void*>(slot.storage)) foc::api::MotorT_Host(config, policies, slot.hal);
+
+        const foc::ErrorCode rc = slot.instance->init();
+        if (rc != foc::ErrorCode::Ok) {
+            foc::api::destroy_motor(slot);
+            return foc::api::to_c(rc);
+        }
+
+        ++slot.generation;
+        slot.alive = true;
+        *out = foc::api::mint_handle(static_cast<std::uint32_t>(i), slot.generation, foc::api::kHostHandleMagic);
+        return FOC_OK;
+    }
+
+    return FOC_ERR_NO_RESOURCE;
+}
+
+
 foc_err_t foc_bridge_get_setup(foc_motor_t motor, foc_motor_setup_t* out) {
     if (out == nullptr) {
         return FOC_ERR_PARAM;
     }
-
-    foc::api::Slot* slot = foc::api::resolve(motor);
-    if (slot == nullptr) {
-        return FOC_ERR_PARAM;
-    }
-
-    const foc::api::Setup& applied = slot->setup;
-    foc_motor_setup_t result{};
-    result.struct_size = sizeof(foc_motor_setup_t);
-    result.i_max_a = applied.i_max_a;
-    result.pwm_freq_hz = applied.pwm_freq_hz;
-    result.deadtime_ns = applied.deadtime_ns;
-    result.v_bus_v = applied.v_bus_v;
-    result.current_bandwidth_rad_s = applied.current_bandwidth_rad_s;
-    result.speed_bandwidth_rad_s = applied.speed_bandwidth_rad_s;
-    result.speed_loop_period_s = applied.speed_loop_period_s;
-    result.position_bandwidth_rad_s = applied.position_bandwidth_rad_s;
-    result.velocity_limit_rad_s = applied.velocity_limit_rad_s;
-    result.position_loop_period_s = applied.position_loop_period_s;
-    result.position_accel_limit_rad_s2 = applied.position_accel_limit_rad_s2;
-    result.align_current_a = applied.align_current_a;
-    result.align_ramp_s = applied.align_ramp_s;
-    result.align_hold_s = applied.align_hold_s;
-    result.align_tolerance_rad = applied.align_tolerance_rad;
-    result.align_verify_s = applied.align_verify_s;
-    result.align_angle_e_rad = applied.align_angle_e_rad;
-    *out = result;
-    return FOC_OK;
+    return foc::api::on_slot(motor, [out](auto& slot) {
+        const foc::api::Setup& applied = slot.setup;
+        foc_motor_setup_t result{};
+        result.struct_size = sizeof(foc_motor_setup_t);
+        result.i_max_a = applied.i_max_a;
+        result.pwm_freq_hz = applied.pwm_freq_hz;
+        result.deadtime_ns = applied.deadtime_ns;
+        result.v_bus_v = applied.v_bus_v;
+        result.current_bandwidth_rad_s = applied.current_bandwidth_rad_s;
+        result.speed_bandwidth_rad_s = applied.speed_bandwidth_rad_s;
+        result.speed_loop_period_s = applied.speed_loop_period_s;
+        result.position_bandwidth_rad_s = applied.position_bandwidth_rad_s;
+        result.velocity_limit_rad_s = applied.velocity_limit_rad_s;
+        result.position_loop_period_s = applied.position_loop_period_s;
+        result.position_accel_limit_rad_s2 = applied.position_accel_limit_rad_s2;
+        result.align_current_a = applied.align_current_a;
+        result.align_ramp_s = applied.align_ramp_s;
+        result.align_hold_s = applied.align_hold_s;
+        result.align_tolerance_rad = applied.align_tolerance_rad;
+        result.align_verify_s = applied.align_verify_s;
+        result.align_angle_e_rad = applied.align_angle_e_rad;
+        *out = result;
+        return foc::ErrorCode::Ok;
+    });
 }
 
 
 foc_err_t foc_bridge_destroy(foc_motor_t motor) {
-    foc::api::Slot* slot = foc::api::resolve(motor);
-    if (slot == nullptr) {
-        return FOC_ERR_PARAM;
-    }
-
-    foc::api::destroy_motor(*slot);
-    slot->alive = false;
-    ++slot->generation; // invalidates every handle taken from this occupation of the slot
-    return FOC_OK;
+    return foc::api::on_slot(motor, [](auto& slot) {
+        foc::api::destroy_motor(slot);
+        slot.alive = false;
+        ++slot.generation; // invalidates every handle taken from this occupation of the slot
+        return foc::ErrorCode::Ok;
+    });
 }
 
 
 foc_err_t foc_bridge_enable(foc_motor_t motor) {
-    foc::api::Slot* slot = foc::api::resolve(motor);
-    if (slot == nullptr) {
-        return FOC_ERR_PARAM;
-    }
-    return foc::api::to_c(foc::api::motor_of(*slot).start());
+    return foc::api::on_slot(motor, [](auto& slot) { return slot.instance->start(); });
 }
 
 
 foc_err_t foc_bridge_disable(foc_motor_t motor) {
-    foc::api::Slot* slot = foc::api::resolve(motor);
-    if (slot == nullptr) {
-        return FOC_ERR_PARAM;
-    }
-    return foc::api::to_c(foc::api::motor_of(*slot).stop());
+    return foc::api::on_slot(motor, [](auto& slot) { return slot.instance->stop(); });
 }
 
 
 foc_err_t foc_bridge_clear_fault(foc_motor_t motor) {
-    foc::api::Slot* slot = foc::api::resolve(motor);
-    if (slot == nullptr) {
-        return FOC_ERR_PARAM;
-    }
-    return foc::api::to_c(foc::api::motor_of(*slot).clear_fault());
+    return foc::api::on_slot(motor, [](auto& slot) { return slot.instance->clear_fault(); });
 }
 
 
 foc_err_t foc_bridge_set_speed(foc_motor_t motor, float rad_per_s) {
-    foc::api::Slot* slot = foc::api::resolve(motor);
-    if ((slot == nullptr) || !std::isfinite(rad_per_s)) {
+    if (!std::isfinite(rad_per_s)) {
         return FOC_ERR_PARAM;
     }
-    foc::api::motor_of(*slot).set_speed(rad_per_s);
-    return FOC_OK;
+    return foc::api::on_slot(motor, [rad_per_s](auto& slot) {
+        slot.instance->set_speed(rad_per_s);
+        return foc::ErrorCode::Ok;
+    });
 }
 
 
 foc_err_t foc_bridge_set_torque(foc_motor_t motor, float iq_a) {
-    foc::api::Slot* slot = foc::api::resolve(motor);
-    if ((slot == nullptr) || !std::isfinite(iq_a)) {
+    if (!std::isfinite(iq_a)) {
         return FOC_ERR_PARAM;
     }
-    foc::api::motor_of(*slot).set_torque(iq_a);
-    return FOC_OK;
+    return foc::api::on_slot(motor, [iq_a](auto& slot) {
+        slot.instance->set_torque(iq_a);
+        return foc::ErrorCode::Ok;
+    });
 }
 
 
 foc_err_t foc_bridge_set_position(foc_motor_t motor, float position_rad) {
-    foc::api::Slot* slot = foc::api::resolve(motor);
-    if ((slot == nullptr) || !std::isfinite(position_rad)) {
+    if (!std::isfinite(position_rad)) {
         return FOC_ERR_PARAM;
     }
-    foc::api::motor_of(*slot).set_position(position_rad);
-    return FOC_OK;
+    return foc::api::on_slot(motor, [position_rad](auto& slot) {
+        slot.instance->set_position(position_rad);
+        return foc::ErrorCode::Ok;
+    });
 }
 
 
 foc_err_t foc_bridge_set_command(foc_motor_t motor, const foc_motor_command_t* command) {
-    foc::api::Slot* slot = foc::api::resolve(motor);
-    if ((slot == nullptr) || (command == nullptr)) {
+    if (command == nullptr) {
         return FOC_ERR_PARAM;
     }
     // Every field is validated, including `max_current_a`: a negative ceiling would clamp *away*
@@ -734,10 +875,12 @@ foc_err_t foc_bridge_set_command(foc_motor_t motor, const foc_motor_command_t* c
         (command->kd_scale < 0.0F) || !std::isfinite(command->ilimit_scale) || (command->ilimit_scale < 0.0F)) {
         return FOC_ERR_PARAM;
     }
-    foc::api::motor_of(*slot).set_command(foc::motor::Command{
-        command->position_rad, command->max_current_a, command->feedforward_current_a, command->max_velocity_rad_s,
-        command->max_accel_rad_s2, command->kp_scale, command->kd_scale, command->ilimit_scale});
-    return FOC_OK;
+    return foc::api::on_slot(motor, [command](auto& slot) {
+        slot.instance->set_command(foc::motor::Command{
+            command->position_rad, command->max_current_a, command->feedforward_current_a, command->max_velocity_rad_s,
+            command->max_accel_rad_s2, command->kp_scale, command->kd_scale, command->ilimit_scale});
+        return foc::ErrorCode::Ok;
+    });
 }
 
 
@@ -745,79 +888,73 @@ foc_err_t foc_bridge_get_status(foc_motor_t motor, foc_motor_status_t* out) {
     if (out == nullptr) {
         return FOC_ERR_PARAM;
     }
-    foc::api::Slot* slot = foc::api::resolve(motor);
-    if (slot == nullptr) {
-        return FOC_ERR_PARAM;
-    }
+    return foc::api::on_slot(motor, [out](auto& slot) {
+        auto& instance = *slot.instance;
+        const foc::motor::Telemetry telemetry = instance.telemetry();
+        // The aligner is always an `AlignRoutine` on this path, so the offset is always readable; the
+        // C view simply reports it rather than hiding the field behind a capability check.
+        // 本路径上的对齐器固定是 `AlignRoutine`，因此偏置总可读；C 视图直接报出来，而不是把这个字段
+        // 藏进能力检查后面。
+        const foc::core::AlignRoutine& aligner = instance.aligner();
 
-    foc::api::MotorT& instance = foc::api::motor_of(*slot);
-    const foc::motor::Telemetry telemetry = instance.telemetry();
-    // The aligner is always an `AlignRoutine` on this path, so the offset is always readable; the
-    // C view simply reports it rather than hiding the field behind a capability check.
-    // 本路径上的对齐器固定是 `AlignRoutine`，因此偏置总可读；C 视图直接报出来，而不是把这个字段
-    // 藏进能力检查后面。
-    const foc::core::AlignRoutine& aligner = instance.aligner();
+        static_assert(static_cast<std::int32_t>(foc::core::MotorState::Idle) ==
+                          static_cast<std::int32_t>(FOC_MOTOR_IDLE),
+                      "foc_motor_state_t must mirror foc::core::MotorState");
+        static_assert(static_cast<std::int32_t>(foc::core::MotorState::Align) ==
+                          static_cast<std::int32_t>(FOC_MOTOR_ALIGN),
+                      "foc_motor_state_t must mirror foc::core::MotorState");
+        static_assert(static_cast<std::int32_t>(foc::core::MotorState::Run) == static_cast<std::int32_t>(FOC_MOTOR_RUN),
+                      "foc_motor_state_t must mirror foc::core::MotorState");
+        static_assert(static_cast<std::int32_t>(foc::core::MotorState::Fault) ==
+                          static_cast<std::int32_t>(FOC_MOTOR_FAULT),
+                      "foc_motor_state_t must mirror foc::core::MotorState");
+        static_assert(static_cast<std::int32_t>(foc::core::AlignState::Done) ==
+                          static_cast<std::int32_t>(FOC_ALIGN_DONE),
+                      "foc_align_state_t must mirror foc::core::AlignState");
+        static_assert(static_cast<std::int32_t>(foc::core::AlignState::Failed) ==
+                          static_cast<std::int32_t>(FOC_ALIGN_FAILED),
+                      "foc_align_state_t must mirror foc::core::AlignState");
+        static_assert(static_cast<std::int32_t>(foc::core::AlignFailure::NotSettled) ==
+                          static_cast<std::int32_t>(FOC_ALIGN_NOT_SETTLED),
+                      "foc_align_failure_t must mirror foc::core::AlignFailure");
+        static_assert(static_cast<std::int32_t>(foc::core::AlignFailure::DirectionWrong) ==
+                          static_cast<std::int32_t>(FOC_ALIGN_DIRECTION_WRONG),
+                      "foc_align_failure_t must mirror foc::core::AlignFailure");
 
-    static_assert(static_cast<std::int32_t>(foc::core::MotorState::Idle) == static_cast<std::int32_t>(FOC_MOTOR_IDLE),
-                  "foc_motor_state_t must mirror foc::core::MotorState");
-    static_assert(static_cast<std::int32_t>(foc::core::MotorState::Align) == static_cast<std::int32_t>(FOC_MOTOR_ALIGN),
-                  "foc_motor_state_t must mirror foc::core::MotorState");
-    static_assert(static_cast<std::int32_t>(foc::core::MotorState::Run) == static_cast<std::int32_t>(FOC_MOTOR_RUN),
-                  "foc_motor_state_t must mirror foc::core::MotorState");
-    static_assert(static_cast<std::int32_t>(foc::core::MotorState::Fault) == static_cast<std::int32_t>(FOC_MOTOR_FAULT),
-                  "foc_motor_state_t must mirror foc::core::MotorState");
-    static_assert(static_cast<std::int32_t>(foc::core::AlignState::Done) == static_cast<std::int32_t>(FOC_ALIGN_DONE),
-                  "foc_align_state_t must mirror foc::core::AlignState");
-    static_assert(static_cast<std::int32_t>(foc::core::AlignState::Failed) ==
-                      static_cast<std::int32_t>(FOC_ALIGN_FAILED),
-                  "foc_align_state_t must mirror foc::core::AlignState");
-    static_assert(static_cast<std::int32_t>(foc::core::AlignFailure::NotSettled) ==
-                      static_cast<std::int32_t>(FOC_ALIGN_NOT_SETTLED),
-                  "foc_align_failure_t must mirror foc::core::AlignFailure");
-    static_assert(static_cast<std::int32_t>(foc::core::AlignFailure::DirectionWrong) ==
-                      static_cast<std::int32_t>(FOC_ALIGN_DIRECTION_WRONG),
-                  "foc_align_failure_t must mirror foc::core::AlignFailure");
-
-    foc_motor_status_t result{};
-    result.struct_size = sizeof(foc_motor_status_t);
-    result.mode_state = static_cast<std::int32_t>(instance.state());
-    result.error = static_cast<std::int32_t>(foc::api::to_c(instance.status()));
-    result.align_state = static_cast<std::int32_t>(aligner.state());
-    result.align_failure = static_cast<std::int32_t>(aligner.failure());
-    result.align_offset_rad = aligner.offset_mech_rad();
-    result.align_spread_rad = aligner.spread_rad();
-    result.max_period_us = telemetry.max_period_us;
-    *out = result;
-    return FOC_OK;
+        foc_motor_status_t result{};
+        result.struct_size = sizeof(foc_motor_status_t);
+        result.mode_state = static_cast<std::int32_t>(instance.state());
+        result.error = static_cast<std::int32_t>(foc::api::to_c(instance.status()));
+        result.align_state = static_cast<std::int32_t>(aligner.state());
+        result.align_failure = static_cast<std::int32_t>(aligner.failure());
+        result.align_offset_rad = aligner.offset_mech_rad();
+        result.align_spread_rad = aligner.spread_rad();
+        result.max_period_us = telemetry.max_period_us;
+        *out = result;
+        return foc::ErrorCode::Ok;
+    });
 }
 
 
 foc_err_t foc_bridge_tick(foc_motor_t motor, float dt_s) {
-    foc::api::Slot* slot = foc::api::resolve(motor);
-    if (slot == nullptr) {
-        return FOC_ERR_PARAM;
-    }
-    return foc::api::to_c(foc::api::motor_of(*slot).tick(dt_s));
+    return foc::api::on_slot(motor, [dt_s](auto& slot) { return slot.instance->tick(dt_s); });
 }
 
 
 foc_err_t foc_bridge_get_state(foc_motor_t motor, float* speed_rad_s, float* id, float* iq) {
-    foc::api::Slot* slot = foc::api::resolve(motor);
-    if (slot == nullptr) {
-        return FOC_ERR_PARAM;
-    }
-
-    const foc::motor::Telemetry telemetry = foc::api::motor_of(*slot).telemetry();
-    if (speed_rad_s != nullptr) {
-        *speed_rad_s = telemetry.speed_mech_rad_s;
-    }
-    if (id != nullptr) {
-        *id = telemetry.id_a;
-    }
-    if (iq != nullptr) {
-        *iq = telemetry.iq_a;
-    }
-    return FOC_OK;
+    return foc::api::on_slot(motor, [speed_rad_s, id, iq](auto& slot) {
+        const foc::motor::Telemetry telemetry = slot.instance->telemetry();
+        if (speed_rad_s != nullptr) {
+            *speed_rad_s = telemetry.speed_mech_rad_s;
+        }
+        if (id != nullptr) {
+            *id = telemetry.id_a;
+        }
+        if (iq != nullptr) {
+            *iq = telemetry.iq_a;
+        }
+        return foc::ErrorCode::Ok;
+    });
 }
 
 

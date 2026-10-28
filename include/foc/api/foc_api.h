@@ -45,6 +45,30 @@ foc_err_t foc_motor_create(const foc_motor_params_t *params, foc_motor_t *out);
  */
 foc_err_t foc_motor_create_ex(const foc_motor_params_t *params, const foc_motor_setup_t *setup, foc_motor_t *out);
 
+/**
+ * @brief [en] Create a motor whose measurements come from the caller and whose duties go back to it.
+ * @brief [zh] 创建一个电机：测量值来自调用方，占空比送回调用方。
+ * @param params [en] non-NULL machine parameters.
+ * @param params [zh] 非 NULL 的电机参数。
+ * @param setup [en] optional; NULL means the documented defaults.
+ * @param setup [zh] 可选；NULL 表示使用文档化的默认值。
+ * @param callbacks [en] non-NULL, `struct_size` filled, the four required callbacks present.
+ * @param callbacks [zh] 非 NULL，`struct_size` 已填，四个必需回调齐全。
+ * @param out [en] non-NULL receiver of the handle.
+ * @param out [zh] 非 NULL 的句柄接收者。
+ * @return [en] FOC_OK, FOC_ERR_PARAM for a bad argument or an incomplete callback set, or FOC_ERR_NO_RESOURCE when the
+ *              host pool is exhausted.
+ * @return [zh] FOC_OK；参数不合法或回调集不完整返回 FOC_ERR_PARAM；主控池用尽返回 FOC_ERR_NO_RESOURCE。
+ * @note [en] The handle from this call is accepted by every other `foc_*` function exactly like the one from
+ *            `foc_motor_create()`: one control path, two ways of feeding it measurements.
+ * @note [zh] 本函数签发的句柄被所有其它 `foc_*` 函数原样接受，与 `foc_motor_create()` 的句柄无差别：一条控制路径，两种
+ *            喂测量值的方式。
+ * @since 0.1.2
+ * @exporter
+ */
+foc_err_t foc_motor_create_host(const foc_motor_params_t *params, const foc_motor_setup_t *setup,
+                                const foc_hal_callbacks_t *callbacks, foc_motor_t *out);
+
 
 /**
  * @brief [en] Read back the setup a motor actually runs with, defaults included.

@@ -29,6 +29,17 @@ foc_err_t foc_motor_create_ex(const foc_motor_params_t *params, const foc_motor_
     return foc_bridge_create_ex(params, setup, out);
 }
 
+foc_err_t foc_motor_create_host(const foc_motor_params_t *params, const foc_motor_setup_t *setup,
+                                const foc_hal_callbacks_t *callbacks, foc_motor_t *out) {
+    if ((params == NULL) || (out == NULL) || (callbacks == NULL)) {
+        return FOC_ERR_PARAM;
+    }
+    if (callbacks->struct_size != (uint32_t)sizeof(foc_hal_callbacks_t)) {
+        return FOC_ERR_PARAM;
+    }
+    return foc_bridge_create_host(params, setup, callbacks, out);
+}
+
 foc_err_t foc_motor_get_setup(foc_motor_t motor, foc_motor_setup_t *out) {
     if ((motor == NULL) || (out == NULL)) {
         return FOC_ERR_PARAM;
