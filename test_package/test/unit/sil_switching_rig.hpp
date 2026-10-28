@@ -33,6 +33,13 @@ struct SwitchingRigConfig final {
   float omega_e{
       200.0F};      ///< [en] electrical speed, rad/s. [zh] 电角速度，rad/s。
   float iq_a{0.5F}; ///< [en] load current, A. [zh] 负载电流，A。
+  /// [en] d-axis current, A. Non-zero here is what makes a salient machine
+  /// behave saliently: the model error a single-`L` observer makes is
+  /// `(Ld - Lq)*i_d`, so with `i_d = 0` every saliency ratio looks identical.
+  /// Defaults to 0, so every existing test keeps its meaning.
+  /// [zh] d 轴电流，A。这里非零才是凸极机表现为凸极的条件：单 `L` 观测器的模型误差是
+  /// `(Ld − Lq)·id`，所以 `i_d = 0` 时任何凸极比看起来都一样。默认 0，既有测试含义不变。
+  float id_a{0.0F};
   float belief_rs{1.10F}; ///< [en] Rs multiplier the observers are told. [zh]
                           ///< 告诉观测器的 Rs 倍数。
   float noise_a{0.1F};    ///< [en] phase-current noise amplitude, A; 0 = clean.
@@ -85,11 +92,15 @@ public:
       plant_.set_current_noise(config_.noise_a);
     }
     plant_.reset(PlantState{
-        0.0F, config.iq_a,
+        config.id_a, config.iq_a,
         config.omega_e / static_cast<float>(config.spec.pole_pairs), 0.0F});
-    v_d_ = -config_.omega_e * config_.spec.lq * config_.iq_a;
-    v_q_ =
-        (config_.spec.rs * config_.iq_a) + (config_.omega_e * machine_psi_f());
+    // Steady-state command for both axes, saliency included: the d-axis
+    // voltage carries the `Lq*iq` cross-coupling and the q-axis voltage carries
+    // `Ld*id`.
+    // 两个轴的稳态指令，含凸极：d 轴电压带 `Lq·iq` 交叉耦合，q 轴电压带 `Ld·id`。
+    v_d_ = (config_.spec.rs * config.id_a) - (config_.omega_e * config_.spec.lq * config_.iq_a);
+    v_q_ = (config_.spec.rs * config_.iq_a) +
+           (config_.omega_e * config_.spec.ld * config.id_a) + (config_.omega_e * machine_psi_f());
   }
 
   SwitchingRig(const SwitchingRig &) = delete;
