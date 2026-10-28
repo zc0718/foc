@@ -46,6 +46,18 @@ foc_err_t foc_bridge_get_state(foc_motor_t motor, float *speed_rad_s, float *id,
 
 float foc_bridge_axis_deadtime_v(float deadtime_s, float switching_hz, float v_bus_v, float angle_rad);
 foc_err_t foc_bridge_fw_worthwhile(const foc_motor_params_t *params, float i_max_a, foc_fw_verdict_t *out);
+foc_err_t foc_bridge_current_pi_gains(const foc_motor_params_t *params, const foc_motor_setup_t *setup,
+                                      foc_pi_gains_t *out);
+
+foc_err_t foc_bridge_speed_pi_gains(const foc_motor_params_t *params, const foc_motor_setup_t *setup,
+                                    foc_pi_gains_t *out);
+
+foc_err_t foc_bridge_rs_estimate(const foc_motor_params_t *params, const float *v_command, const float *i_current,
+                                 uint32_t count, foc_identify_result_t *out);
+
+foc_err_t foc_bridge_flux_estimate(const foc_motor_params_t *params, const float *omega_e, const float *v_magnitude,
+                                   const float *i_magnitude, uint32_t count, foc_identify_result_t *out);
+
 foc_err_t foc_bridge_mtpa_reference(const foc_motor_params_t *params, float i_max_a, float iq_command_a, float *id_a,
                                     float *iq_a);
 foc_err_t foc_bridge_board_check(const foc_board_measurements_t *measurements, const foc_board_limits_t *limits,

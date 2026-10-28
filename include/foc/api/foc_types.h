@@ -361,6 +361,47 @@ typedef struct foc_fw_verdict {
 } foc_fw_verdict_t;
 
 /**
+ * @brief [en] A PI loop's gains and clamps, as the library itself would set them.
+ * @brief [zh] 一个 PI 环的增益与限幅，按库自己会设的值给出。
+ * @note [en] All six numbers, not just `kp`/`ki`: a caller reproducing the loop outside the library needs the clamps
+ *            too, and the clamps are where a reproduction usually diverges. The values come from the same helper the
+ *            motor constructor calls, so a tuning tool cannot drift from the shipped loop.
+ * @note [zh] 六个值全给，不只 `kp`/`ki`：在库外复现这个环的调用方还需要限幅，而差别通常就出在限幅上。取值来自电机构造函
+ *            数调用的同一个辅助函数，因此整定工具无法与出厂环路漂移。
+ * @since 0.1.3
+ * @exporter
+ */
+typedef struct foc_pi_gains {
+    uint32_t struct_size;
+    float kp;           /* proportional gain */
+    float ki;           /* integral gain */
+    float out_min;      /* clamp on the controller output */
+    float out_max;      /* clamp on the controller output */
+    float integral_min; /* clamp on the integrator state */
+    float integral_max; /* clamp on the integrator state */
+} foc_pi_gains_t;
+
+/**
+ * @brief [en] What one identification produced, and how much it is worth.
+ * @brief [zh] 一次辨识得到了什么，以及它值多少。
+ * @note [en] `residual` is the part the model could not explain, in the same unit as the samples (V). `valid` is the
+ *            honest gate: it is false when there are too few samples or the sweep is too narrow for a slope, and then
+ *            `value` means nothing. A caller that ignores `valid` gets a number that looks like a measurement.
+ * @note [zh] `residual` 是模型解释不掉的部分，单位与样本一致（V）。`valid` 是那道诚实的门：样本太少或扫描跨度不足以定出
+ *            斜率时为 false，此时 `value` 没有意义。忽略 `valid` 的调用方会得到一个看起来像测量值的数字。
+ * @since 0.1.3
+ * @exporter
+ */
+typedef struct foc_identify_result {
+    uint32_t struct_size;
+    float value;    /* Rs in ohm, or psi_f in Wb, depending on the call */
+    float offset;   /* the constant term the fit found, V */
+    float residual; /* rms of what the model could not explain, V */
+    int32_t valid;  /* non-zero only when the samples could support a slope */
+    int32_t samples;
+} foc_identify_result_t;
+
+/**
  * @brief [en] Protection thresholds. Every field is used exactly as given -- a zero is a zero and it will trip
  *             immediately. Pass NULL to `foc_protector_create()` to get the library defaults for the nominal 24 V / 3 A
  *             machine instead of guessing them.

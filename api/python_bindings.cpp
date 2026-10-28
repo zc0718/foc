@@ -25,6 +25,7 @@
 #include <stdexcept>
 #include <string>
 #include <utility>
+#include <vector>
 
 namespace py = pybind11;
 
@@ -735,6 +736,82 @@ PYBIND11_MODULE(foc_python, m) {
         },
         py::arg("params"), py::arg("i_max_a"), py::arg("iq_command_a"),
         "[en] (id_a, iq_a) for maximum torque per amp. [zh] 每安培转矩最大的 (id_a, iq_a)。");
+
+    // ABI 0.1.3: the gains and the identification primitives. Bound one for one, because the whole point of a tuning
+    // tool is that it reproduces the shipped loop rather than re-deriving it.
+    // ABI 0.1.3：增益与辨识原语。一对一绑定，因为整定工具的意义就在于复现出厂环路，而不是另推一遍。
+    const auto gains_to_tuple = [](const foc_pi_gains_t &g) {
+        return py::make_tuple(g.kp, g.ki, g.out_min, g.out_max, g.integral_min, g.integral_max);
+    };
+    const auto call_gains = [](const foc_motor_params_t &params, const py::object &setup,
+                               foc_err_t (*query)(const foc_motor_params_t *, const foc_motor_setup_t *,
+                                                  foc_pi_gains_t *)) {
+        foc_pi_gains_t out{};
+        out.struct_size = sizeof(out);
+        foc_motor_setup_t requested{};
+        const foc_motor_setup_t *raw = nullptr;
+        if (!setup.is_none()) {
+            requested = py::cast<foc_motor_setup_t>(setup);
+            raw = &requested;
+        }
+        if (query(&params, raw, &out) != FOC_OK) {
+            throw std::runtime_error("the gain query rejected its arguments");
+        }
+        return out;
+    };
+
+    m.def(
+        "current_pi_gains",
+        [call_gains, gains_to_tuple](const foc_motor_params_t &params, const py::object &setup) {
+            return gains_to_tuple(call_gains(params, setup, &foc_current_pi_gains));
+        },
+        py::arg("params"), py::arg("setup") = py::none(),
+        "[en] (kp, ki, out_min, out_max, integral_min, integral_max) of the current loop the library would run.\n"
+        "[zh] 库会运行的电流环的 (kp, ki, out_min, out_max, integral_min, integral_max)。");
+    m.def(
+        "speed_pi_gains",
+        [call_gains, gains_to_tuple](const foc_motor_params_t &params, const py::object &setup) {
+            return gains_to_tuple(call_gains(params, setup, &foc_speed_pi_gains));
+        },
+        py::arg("params"), py::arg("setup") = py::none(),
+        "[en] The same six numbers for the speed loop. [zh] 速度环的同样六个数值。");
+
+    m.def(
+        "rs_estimate",
+        [](const foc_motor_params_t &params, const std::vector<float> &v_command,
+           const std::vector<float> &i_current) {
+            if (v_command.size() != i_current.size()) {
+                throw py::value_error("v_command and i_current must have the same length");
+            }
+            foc_identify_result_t out{};
+            out.struct_size = sizeof(out);
+            if (foc_rs_estimate(&params, v_command.data(), i_current.data(), static_cast<std::uint32_t>(v_command.size()),
+                                &out) != FOC_OK) {
+                throw std::runtime_error("foc_rs_estimate failed");
+            }
+            return py::make_tuple(out.value, out.offset, out.residual, out.valid != 0, out.samples);
+        },
+        py::arg("params"), py::arg("v_command"), py::arg("i_current"),
+        "[en] (rs, loss_v, residual_v, valid, samples) from a standstill sweep. Check `valid` before using `rs`.\n"
+        "[zh] 堵转扫描得到的 (rs, loss_v, residual_v, valid, samples)。用 `rs` 之前先看 `valid`。");
+    m.def(
+        "flux_estimate",
+        [](const foc_motor_params_t &params, const std::vector<float> &omega_e, const std::vector<float> &v_magnitude,
+           const std::vector<float> &i_magnitude) {
+            if ((omega_e.size() != v_magnitude.size()) || (omega_e.size() != i_magnitude.size())) {
+                throw py::value_error("the three arrays must have the same length");
+            }
+            foc_identify_result_t out{};
+            out.struct_size = sizeof(out);
+            if (foc_flux_estimate(&params, omega_e.data(), v_magnitude.data(), i_magnitude.data(),
+                                  static_cast<std::uint32_t>(omega_e.size()), &out) != FOC_OK) {
+                throw std::runtime_error("foc_flux_estimate failed");
+            }
+            return py::make_tuple(out.value, out.offset, out.residual, out.valid != 0, out.samples);
+        },
+        py::arg("params"), py::arg("omega_e"), py::arg("v_magnitude"), py::arg("i_magnitude"),
+        "[en] (psi_f, offset_v, residual_v, valid, samples) from a zero-current speed sweep.\n"
+        "[zh] 零电流转速扫描得到的 (psi_f, offset_v, residual_v, valid, samples)。");
 
     py::class_<foc_board_measurements_t>(m, "BoardMeasurements",
                                          "[en] What a standstill self-test measures.\n"

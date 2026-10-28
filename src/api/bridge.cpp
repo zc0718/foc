@@ -9,6 +9,7 @@
 
 #include <foc/core/alignment.hpp>
 #include <foc/core/board_check.hpp>
+#include <foc/core/commissioning.hpp>
 #include <foc/core/field_weakening.hpp>
 #include <foc/core/observer/back_emf_observer.hpp>
 #include <foc/core/protection.hpp>
@@ -104,6 +105,44 @@ constexpr Setup kDefaultSetup{5.0F, 20000.0F, 500.0F, 24.0F, 2000.0F, 200.0F, 0.
  */
 auto covers(const foc_motor_setup_t& setup, std::size_t end_offset) noexcept -> bool {
     return static_cast<std::size_t>(setup.struct_size) >= end_offset;
+}
+
+
+/**
+ * @brief [en] The nameplate and the loop configurations every C-path motor is built from.
+ * @brief [zh] 每个 C 路径电机都由它构造出的铭牌与环路配置。
+ * @note [en] One resolver, three callers: both constructors and the gain queries. The gain query therefore cannot
+ *            answer something the shipped loop does not use -- which is the only way a tuning tool outside the library
+ *            can be trusted to reproduce it.
+ * @note [zh] 一个解析函数，三个调用方：两个构造函数与增益查询。于是增益查询不可能答出出厂环路没有使用的值——这也是库外整
+ *            定工具能够被信任为复现它的唯一理由。
+ * @since 0.1.3
+ */
+struct Resolved final {
+    foc::motor::MotorConfig config;
+    foc::core::Pi::Config current;
+    foc::core::Pi::Config speed;
+    foc::core::PositionP::Config position;
+};
+
+
+auto resolve_config(const foc_motor_params_t& params, const Setup& resolved) noexcept -> Resolved {
+    const foc::motor::MotorConfig config{params.rs,
+                                         params.ld,
+                                         params.lq,
+                                         params.kt,
+                                         params.j,
+                                         params.b,
+                                         params.pole_pairs,
+                                         resolved.i_max_a,
+                                         resolved.pwm_freq_hz,
+                                         resolved.deadtime_ns,
+                                         resolved.speed_loop_period_s,
+                                         resolved.position_loop_period_s};
+    return Resolved{config, foc::current_pi_config(config, resolved.current_bandwidth_rad_s, resolved.v_bus_v),
+                    foc::speed_pi_config(config, resolved.speed_bandwidth_rad_s),
+                    foc::position_p_config(config, resolved.position_bandwidth_rad_s, resolved.velocity_limit_rad_s,
+                                           resolved.position_accel_limit_rad_s2)};
 }
 
 
@@ -636,24 +675,14 @@ foc_err_t foc_bridge_create_ex(const foc_motor_params_t* params, const foc_motor
             continue;
         }
 
-        const foc::motor::MotorConfig config{params->rs,
-                                             params->ld,
-                                             params->lq,
-                                             params->kt,
-                                             params->j,
-                                             params->b,
-                                             params->pole_pairs,
-                                             resolved.i_max_a,
-                                             resolved.pwm_freq_hz,
-                                             resolved.deadtime_ns,
-                                             resolved.speed_loop_period_s,
-                                             resolved.position_loop_period_s};
-        const foc::core::Pi::Config current =
-            foc::current_pi_config(config, resolved.current_bandwidth_rad_s, resolved.v_bus_v);
-        const foc::core::Pi::Config speed = foc::speed_pi_config(config, resolved.speed_bandwidth_rad_s);
-        const foc::core::PositionP::Config position =
-            foc::position_p_config(config, resolved.position_bandwidth_rad_s, resolved.velocity_limit_rad_s,
-                                   resolved.position_accel_limit_rad_s2);
+        // One resolver builds the nameplate and every loop configuration, so the gain query and the motor
+        // constructor cannot disagree about what the shipped loop runs with.
+        // 一个解析函数构造铭牌与全部环路配置，于是增益查询与电机构造函数不会对出厂环路用的是什么产生分歧。
+        const foc::api::Resolved r = foc::api::resolve_config(*params, resolved);
+        const foc::motor::MotorConfig& config = r.config;
+        const foc::core::Pi::Config& current = r.current;
+        const foc::core::Pi::Config& speed = r.speed;
+        const foc::core::PositionP::Config& position = r.position;
         // An all-zero recipe is the documented "no alignment" state: the aligner then answers
         // `NotImpl` from validate() and start() goes straight to Run.
         // 全零配方就是文档化的“不对齐”状态：此时对齐器在 validate() 答 `NotImpl`，start() 直接进 Run。
@@ -718,24 +747,14 @@ foc_err_t foc_bridge_create_host(const foc_motor_params_t* params, const foc_mot
             continue;
         }
 
-        const foc::motor::MotorConfig config{params->rs,
-                                             params->ld,
-                                             params->lq,
-                                             params->kt,
-                                             params->j,
-                                             params->b,
-                                             params->pole_pairs,
-                                             resolved.i_max_a,
-                                             resolved.pwm_freq_hz,
-                                             resolved.deadtime_ns,
-                                             resolved.speed_loop_period_s,
-                                             resolved.position_loop_period_s};
-        const foc::core::Pi::Config current =
-            foc::current_pi_config(config, resolved.current_bandwidth_rad_s, resolved.v_bus_v);
-        const foc::core::Pi::Config speed = foc::speed_pi_config(config, resolved.speed_bandwidth_rad_s);
-        const foc::core::PositionP::Config position =
-            foc::position_p_config(config, resolved.position_bandwidth_rad_s, resolved.velocity_limit_rad_s,
-                                   resolved.position_accel_limit_rad_s2);
+        // One resolver builds the nameplate and every loop configuration, so the gain query and the motor
+        // constructor cannot disagree about what the shipped loop runs with.
+        // 一个解析函数构造铭牌与全部环路配置，于是增益查询与电机构造函数不会对出厂环路用的是什么产生分歧。
+        const foc::api::Resolved r = foc::api::resolve_config(*params, resolved);
+        const foc::motor::MotorConfig& config = r.config;
+        const foc::core::Pi::Config& current = r.current;
+        const foc::core::Pi::Config& speed = r.speed;
+        const foc::core::PositionP::Config& position = r.position;
         const foc::core::AlignConfig alignment{resolved.align_current_a, resolved.align_ramp_s,
                                                resolved.align_hold_s,    resolved.align_tolerance_rad,
                                                resolved.align_verify_s,  resolved.align_angle_e_rad};
@@ -1009,6 +1028,100 @@ foc_err_t foc_bridge_mtpa_reference(const foc_motor_params_t* params, float i_ma
     const foc::core::Dq<float> i = reference.generate(in);
     *id_a = i.d;
     *iq_a = i.q;
+    return FOC_OK;
+}
+
+
+foc_err_t foc_bridge_current_pi_gains(const foc_motor_params_t* params, const foc_motor_setup_t* setup,
+                                      foc_pi_gains_t* out) {
+    if ((params == nullptr) || (out == nullptr) ||
+        (static_cast<std::size_t>(out->struct_size) < sizeof(foc_pi_gains_t))) {
+        return FOC_ERR_PARAM;
+    }
+    const foc::api::Setup resolved = foc::api::resolve_setup(setup);
+    if (!foc::api::setup_ok(resolved)) {
+        return FOC_ERR_PARAM;
+    }
+    const foc::api::Resolved r = foc::api::resolve_config(*params, resolved);
+    out->kp = r.current.kp;
+    out->ki = r.current.ki;
+    out->out_min = r.current.out_min;
+    out->out_max = r.current.out_max;
+    out->integral_min = r.current.integral_min;
+    out->integral_max = r.current.integral_max;
+    return FOC_OK;
+}
+
+
+foc_err_t foc_bridge_speed_pi_gains(const foc_motor_params_t* params, const foc_motor_setup_t* setup,
+                                    foc_pi_gains_t* out) {
+    if ((params == nullptr) || (out == nullptr) ||
+        (static_cast<std::size_t>(out->struct_size) < sizeof(foc_pi_gains_t))) {
+        return FOC_ERR_PARAM;
+    }
+    const foc::api::Setup resolved = foc::api::resolve_setup(setup);
+    if (!foc::api::setup_ok(resolved)) {
+        return FOC_ERR_PARAM;
+    }
+    const foc::api::Resolved r = foc::api::resolve_config(*params, resolved);
+    out->kp = r.speed.kp;
+    out->ki = r.speed.ki;
+    out->out_min = r.speed.out_min;
+    out->out_max = r.speed.out_max;
+    out->integral_min = r.speed.integral_min;
+    out->integral_max = r.speed.integral_max;
+    return FOC_OK;
+}
+
+
+foc_err_t foc_bridge_rs_estimate(const foc_motor_params_t* params, const float* v_command, const float* i_current,
+                                 std::uint32_t count, foc_identify_result_t* out) {
+    if ((params == nullptr) || (v_command == nullptr) || (i_current == nullptr) || (count == 0U) || (out == nullptr) ||
+        (static_cast<std::size_t>(out->struct_size) < sizeof(foc_identify_result_t))) {
+        return FOC_ERR_PARAM;
+    }
+    const foc::api::Setup resolved = foc::api::resolve_setup(nullptr);
+    // No invented floor: which currents are informative depends on the board's dead zone, which this entry point has no
+    // way to know. The caller decides what to feed, and `valid` is where the estimator answers whether it was enough.
+    // 不凭空设下限：哪些电流有信息量取决于板子的死区，这个入口无从知道。由调用方决定喂什么，而估计器是否够用，
+    // 由 `valid` 回答。
+    foc::core::RsEstimator estimator(foc::core::RsEstimator::Config{0.0F, resolved.i_max_a});
+    std::uint32_t used = 0U;
+    for (std::uint32_t i = 0U; i < count; ++i) {
+        used += estimator.add(v_command[i], i_current[i]) ? 1U : 0U;
+    }
+    const foc::core::RsEstimator::Result r = estimator.solve();
+    out->value = r.rs;
+    out->offset = r.deadtime_v;
+    out->residual = r.residual_v;
+    out->valid = r.valid ? 1 : 0;
+    out->samples = static_cast<std::int32_t>(used);
+    return FOC_OK;
+}
+
+
+foc_err_t foc_bridge_flux_estimate(const foc_motor_params_t* params, const float* omega_e, const float* v_magnitude,
+                                   const float* i_magnitude, std::uint32_t count, foc_identify_result_t* out) {
+    if ((params == nullptr) || (omega_e == nullptr) || (v_magnitude == nullptr) || (i_magnitude == nullptr) ||
+        (count == 0U) || (out == nullptr) ||
+        (static_cast<std::size_t>(out->struct_size) < sizeof(foc_identify_result_t))) {
+        return FOC_ERR_PARAM;
+    }
+    const foc::api::Setup resolved = foc::api::resolve_setup(nullptr);
+    // The zero-current ceiling and the speed floor are both left open for the same reason as above: the intercept of
+    // the fit absorbs whatever constant the board adds, and a floor would be a policy the caller did not ask for.
+    // 零电流上限与转速下限都留空，理由同上：拟合的截距会吸收板子加上的常量，而设一个下限等于替调用方做决定。
+    foc::core::FluxEstimator estimator(foc::core::FluxEstimator::Config{0.1F * resolved.i_max_a, 0.0F});
+    std::uint32_t used = 0U;
+    for (std::uint32_t i = 0U; i < count; ++i) {
+        used += estimator.add(omega_e[i], v_magnitude[i], i_magnitude[i]) ? 1U : 0U;
+    }
+    const foc::core::FluxEstimator::Result r = estimator.solve();
+    out->value = r.psi_f;
+    out->offset = r.offset_v;
+    out->residual = r.residual_v;
+    out->valid = r.valid ? 1 : 0;
+    out->samples = static_cast<std::int32_t>(used);
     return FOC_OK;
 }
 

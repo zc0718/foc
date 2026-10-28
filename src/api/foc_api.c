@@ -176,6 +176,36 @@ foc_err_t foc_mtpa_reference(const foc_motor_params_t *params, float i_max_a, fl
     return foc_bridge_mtpa_reference(params, i_max_a, iq_command_a, id_a, iq_a);
 }
 
+foc_err_t foc_current_pi_gains(const foc_motor_params_t *params, const foc_motor_setup_t *setup, foc_pi_gains_t *out) {
+    if ((params == NULL) || (out == NULL)) {
+        return FOC_ERR_PARAM;
+    }
+    return foc_bridge_current_pi_gains(params, setup, out);
+}
+
+foc_err_t foc_speed_pi_gains(const foc_motor_params_t *params, const foc_motor_setup_t *setup, foc_pi_gains_t *out) {
+    if ((params == NULL) || (out == NULL)) {
+        return FOC_ERR_PARAM;
+    }
+    return foc_bridge_speed_pi_gains(params, setup, out);
+}
+
+foc_err_t foc_rs_estimate(const foc_motor_params_t *params, const float *v_command, const float *i_current,
+                          uint32_t count, foc_identify_result_t *out) {
+    if ((params == NULL) || (v_command == NULL) || (i_current == NULL) || (out == NULL)) {
+        return FOC_ERR_PARAM;
+    }
+    return foc_bridge_rs_estimate(params, v_command, i_current, count, out);
+}
+
+foc_err_t foc_flux_estimate(const foc_motor_params_t *params, const float *omega_e, const float *v_magnitude,
+                            const float *i_magnitude, uint32_t count, foc_identify_result_t *out) {
+    if ((params == NULL) || (omega_e == NULL) || (v_magnitude == NULL) || (i_magnitude == NULL) || (out == NULL)) {
+        return FOC_ERR_PARAM;
+    }
+    return foc_bridge_flux_estimate(params, omega_e, v_magnitude, i_magnitude, count, out);
+}
+
 foc_err_t foc_board_check(const foc_board_measurements_t *measurements, const foc_board_limits_t *limits,
                           foc_board_report_t *out) {
     if ((measurements == NULL) || (limits == NULL) || (out == NULL)) {

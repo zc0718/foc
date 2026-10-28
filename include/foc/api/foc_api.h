@@ -418,6 +418,113 @@ foc_err_t foc_mtpa_reference(const foc_motor_params_t *params, float i_max_a, fl
                              float *iq_a);
 
 /**
+ * @brief [en] The current-loop PI the library would run for this setup, clamps included.
+ * @brief [zh] 这个设置下库会使用的电流环 PI，含限幅。
+ * @param params [en] non-NULL machine parameters.
+ * @param params [zh] 非 NULL 的电机参数。
+ * @param setup [en] NULL for the library defaults, otherwise `struct_size` filled.
+ * @param setup [zh] NULL 表示用库默认值，否则 `struct_size` 已填。
+ * @param out [en] non-NULL receiver; `struct_size` must be set by the caller.
+ * @param out [zh] 非 NULL 接收者；`struct_size` 须由调用方填好。
+ * @return [en] FOC_OK, or FOC_ERR_PARAM on a NULL, a wrong `struct_size`, or a non-positive parameter.
+ * @return [zh] FOC_OK；NULL、`struct_size` 不对或参数非正时返回 FOC_ERR_PARAM。
+ * @note [en] Same numbers the motor constructor uses, because it is the same helper. A tuning tool outside the library
+ *            therefore reproduces the shipped loop instead of re-deriving it -- and a caller that finds these gains
+ *            unsuitable can change the bandwidth in the setup rather than post-processing the result.
+ * @note [zh] 与电机构造函数用的是同一个辅助函数，因此数字相同。库外的整定工具于是复现出厂环路，而不是另推一遍；调用方若
+ *            觉得这些增益不合适，应当改设置里的带宽，而不是对结果做二次加工。
+ * @warning [en] The requested bandwidth is only meaningful above `Rs / (2*Ld)`, where the proportional gain `2*w*Ld -
+ *               Rs` goes to zero and is floored there. Below that floor the loop is integral-only and delivers far less
+ *               than it was asked for: measured on the nominal machine (`Rs = 0.5`, `Ld = 4e-4`), 200 rad/s takes 31 ms
+ *               to reach 63 % where `1/w` is 5 ms. A tuner that trusts the request blindly ships a loop six times
+ *               slower than its own documentation says.
+ * @warning [zh] 只有在 `Rs / (2·Ld)` 以上，所请求的带宽才有意义：那里比例增益 `2·w·Ld − Rs` 归零并被钳在下限。门槛以下
+ *               环路退化为纯积分，交付的远少于所请求的：在标称电机（`Rs = 0.5`、`Ld = 4e-4`）上实测，200 rad/s 到达
+ *               63 % 要 31 ms，而 `1/w` 是 5 ms。盲信请求的整定工具会交付一个比自己文档所说的慢六倍的环。
+ * @since 0.1.3
+ * @exporter
+ */
+foc_err_t foc_current_pi_gains(const foc_motor_params_t *params, const foc_motor_setup_t *setup, foc_pi_gains_t *out);
+
+/**
+ * @brief [en] The speed-loop PI the library would run for this setup, clamps included.
+ * @brief [zh] 这个设置下库会使用的速度环 PI，含限幅。
+ * @param params [en] non-NULL machine parameters.
+ * @param params [zh] 非 NULL 的电机参数。
+ * @param setup [en] NULL for the library defaults, otherwise `struct_size` filled.
+ * @param setup [zh] NULL 表示用库默认值，否则 `struct_size` 已填。
+ * @param out [en] non-NULL receiver; `struct_size` must be set by the caller.
+ * @param out [zh] 非 NULL 接收者；`struct_size` 须由调用方填好。
+ * @return [en] FOC_OK, or FOC_ERR_PARAM on a NULL, a wrong `struct_size`, or a non-positive parameter.
+ * @return [zh] FOC_OK；NULL、`struct_size` 不对或参数非正时返回 FOC_ERR_PARAM。
+ * @note [en] The speed loop cancels the mechanical pole `B/J`, so its gains depend on the inertia and on `kt` as well
+ *            as on the requested bandwidth. Reading them here keeps a tuning tool from assuming a different convention.
+ * @note [zh] 速度环抵消机械极点 `B/J`，因此其增益除了带宽还取决于惯量与 `kt`。从这里读数，整定工具就不会自作主张换一套
+ *            约定。
+ * @since 0.1.3
+ * @exporter
+ */
+foc_err_t foc_speed_pi_gains(const foc_motor_params_t *params, const foc_motor_setup_t *setup, foc_pi_gains_t *out);
+
+/**
+ * @brief [en] Stator resistance and the constant voltage loss, fitted to a standstill sweep.
+ * @brief [zh] 用堵转扫描拟合出的定子电阻与恒定电压损失。
+ * @param params [en] non-NULL machine parameters; its current limit bounds the sweep.
+ * @param params [zh] 非 NULL 的电机参数；其电流限幅约束扫描范围。
+ * @param v_command [en] non-NULL array of settled voltage magnitudes, V.
+ * @param v_command [zh] 非 NULL 的稳定电压幅值数组，V。
+ * @param i_current [en] non-NULL array of settled current magnitudes, A, one per voltage.
+ * @param i_current [zh] 非 NULL 的稳定电流幅值数组，A，与电压一一对应。
+ * @param count [en] number of samples in both arrays.
+ * @param count [zh] 两个数组的样本数。
+ * @param out [en] non-NULL receiver; `struct_size` must be set by the caller.
+ * @param out [zh] 非 NULL 接收者；`struct_size` 须由调用方填好。
+ * @return [en] FOC_OK, or FOC_ERR_PARAM on a NULL, a wrong `struct_size`, or a non-positive parameter.
+ * @return [zh] FOC_OK；NULL、`struct_size` 不对或参数非正时返回 FOC_ERR_PARAM。
+ * @note [en] FOC_OK says the call ran, not that the fit means anything: read `valid` in the result. A sweep whose
+ *            currents are all alike has no slope to find, and answering an unaudited number would be worse than
+ *            answering none.
+ * @note [zh] FOC_OK 只表示调用跑完了，不表示拟合有意义：请看结果里的 `valid`。电流全都相近的扫描里没有斜率可找，此时给
+ *            出一个未经审查的数字比不给更糟。
+ * @context [en] Commissioning stage, rotor at standstill.
+ * @context [zh] 整定阶段，转子静止。
+ * @since 0.1.3
+ * @exporter
+ */
+foc_err_t foc_rs_estimate(const foc_motor_params_t *params, const float *v_command, const float *i_current,
+                          uint32_t count, foc_identify_result_t *out);
+
+/**
+ * @brief [en] Rotor flux linkage and the constant measurement offset, fitted to a zero-current sweep.
+ * @brief [zh] 用零电流扫描拟合出的转子磁链与恒定测量偏置。
+ * @param params [en] non-NULL machine parameters.
+ * @param params [zh] 非 NULL 的电机参数。
+ * @param omega_e [en] non-NULL array of electrical speeds, rad/s.
+ * @param omega_e [zh] 非 NULL 的电角速度数组，rad/s。
+ * @param v_magnitude [en] non-NULL array of commanded voltage magnitudes, V.
+ * @param v_magnitude [zh] 非 NULL 的命令电压幅值数组，V。
+ * @param i_magnitude [en] non-NULL array of current magnitudes, A; samples near zero current are the informative ones.
+ * @param i_magnitude [zh] 非 NULL 的电流幅值数组，A；接近零电流的样本才是有效样本。
+ * @param count [en] number of samples in all three arrays.
+ * @param count [zh] 三个数组的样本数。
+ * @param out [en] non-NULL receiver; `struct_size` must be set by the caller.
+ * @param out [zh] 非 NULL 接收者；`struct_size` 须由调用方填好。
+ * @return [en] FOC_OK, or FOC_ERR_PARAM on a NULL, a wrong `struct_size`, or a non-positive parameter.
+ * @return [zh] FOC_OK；NULL、`struct_size` 不对或参数非正时返回 FOC_ERR_PARAM。
+ * @note [en] The fit is a straight line through voltage against speed: the slope is the flux linkage and the intercept
+ *            is everything the model does not describe (inverter loss, sensor offset). Read `valid` before believing
+ *            it.
+ * @note [zh] 拟合是电压对转速的一条直线：斜率即磁链，截距是模型不描述的一切（逆变器损耗、传感器偏置）。相信它之前先看
+ *            `valid`。
+ * @context [en] Commissioning stage, machine spinning, zero current command.
+ * @context [zh] 整定阶段，电机旋转，电流给定为零。
+ * @since 0.1.3
+ * @exporter
+ */
+foc_err_t foc_flux_estimate(const foc_motor_params_t *params, const float *omega_e, const float *v_magnitude,
+                            const float *i_magnitude, uint32_t count, foc_identify_result_t *out);
+
+/**
  * @brief [en] Judge a board from what was measured.
  * @brief [zh] 用测到的数判定一块板子。
  * @param measurements [en] non-NULL, `struct_size` filled.

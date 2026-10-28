@@ -351,6 +351,64 @@ def test_a_plant_missing_a_required_method_is_rejected_at_construction():
         raise AssertionError("a plant without the required methods must not be accepted")
 
 
+def test_the_gains_a_tuning_tool_gets_are_the_ones_the_loop_runs_with():
+    """The gain query exists so an outside tool reproduces the shipped loop instead of re-deriving it."""
+    params = foc.MotorParams()
+    params.rs, params.ld, params.lq = 0.5, 4.0e-4, 4.0e-4
+    params.kt, params.j, params.b = 0.05, 1.0e-5, 1.0e-6
+    params.pole_pairs = 7
+
+    setup = foc.MotorSetup()
+    setup.i_max_a, setup.pwm_freq_hz = 3.0, 20000.0
+    setup.deadtime_ns, setup.v_bus_v = 0.0, 24.0
+    setup.current_bandwidth_rad_s = 1000.0
+
+    kp, ki, out_min, out_max, int_min, int_max = foc.current_pi_gains(params, setup)
+    assert kp > 0.0 and ki > 0.0, (kp, ki)
+    # The design rule, written out here rather than taken from the library: kp = 2*w*L - R, ki = w^2*L.
+    w = setup.current_bandwidth_rad_s
+    assert abs(kp - max(2.0 * w * params.ld - params.rs, 0.0)) < 1e-4, kp
+    assert abs(ki - w * w * params.ld) < 1e-2, ki
+    # The clamps come from the bus, not from nowhere.
+    assert abs(out_max - 0.5 * setup.v_bus_v) < 1e-3, out_max
+    assert int_min < int_max
+
+    # None means "the library defaults", and it has to be accepted as such.
+    default_kp = foc.current_pi_gains(params)[0]
+    assert default_kp > 0.0, default_kp
+
+
+def test_a_standstill_sweep_returns_the_resistance_it_was_given():
+    params = foc.MotorParams()
+    params.rs, params.ld, params.lq = 0.5, 4.0e-4, 4.0e-4
+    params.kt, params.j, params.b = 0.05, 1.0e-5, 1.0e-6
+    params.pole_pairs = 7
+
+    currents = [0.2, 0.32, 0.5, 0.8, 1.25, 2.0]
+    voltages = [0.5 * i + 0.64 for i in currents]
+    rs, loss_v, residual_v, valid, samples = foc.rs_estimate(params, voltages, currents)
+    assert valid, "six settled points spanning 10x must be accepted"
+    assert abs(rs - 0.5) < 0.005, rs
+    assert abs(loss_v - 0.64) < 0.032, loss_v
+    assert residual_v < 1e-3, residual_v
+    assert samples == len(currents), samples
+
+    # A flat sweep is refused through `valid` rather than through an exception: the call answered, the answer is not a
+    # measurement.
+    _, _, _, flat_valid, _ = foc.rs_estimate(params, [0.89] * 6, [0.5] * 6)
+    assert not flat_valid, "a sweep with one current has no slope to find"
+
+
+def test_mismatched_arrays_are_a_python_error_not_a_silent_truncation():
+    params = foc.MotorParams()
+    try:
+        foc.rs_estimate(params, [1.0, 2.0], [0.5])
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("mismatched lengths must raise ValueError")
+
+
 def main():
     failures = 0
     for name, case in sorted(globals().items()):

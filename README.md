@@ -255,6 +255,30 @@ worth knowing before writing another host:
 * `pwm_enable` answers an `int32_t` (0 = ok) while `pwm_disable` answers `void`: the library can be told that a gate
   refused, but not that it failed to open.
 
+### Tuning and identification from outside the library (in CI)
+
+Four C entry points exist so a tool that is not written in C++ can still reproduce, rather than re-derive, what the
+library does: `foc_current_pi_gains()`, `foc_speed_pi_gains()`, `foc_rs_estimate()` and `foc_flux_estimate()`. The gain
+queries answer all six numbers a PI loop needs -- `kp`, `ki` and the four clamps -- from the same resolver the motor
+constructor uses, so a tuning tool and the shipped loop cannot drift apart. Both are bound to Python and covered by
+`test_api_identification.cpp` and the binding cases.
+
+Writing those tests produced a general fact about the tuning rule that is worth more than the entry points themselves.
+`current_pi_config` cancels the electrical pole with `kp = 2*w*Ld - Rs`, which goes to zero at `w = Rs/(2*Ld)` and is
+floored there. Below that floor the loop is integral-only and does **not** deliver the bandwidth it was asked for:
+
+| Requested bandwidth | kp | ki | Measured 63 % rise | 1/bandwidth |
+|---|---|---|---|---|
+| 200 rad/s | 0.0000 | 16.00 | 31.30 ms | 5.00 ms |
+| 625 rad/s | 0.0000 | 156.25 | 3.50 ms | 1.60 ms |
+| 1000 rad/s | 0.3000 | 400.00 | 1.30 ms | 1.00 ms |
+| 2000 rad/s | 1.1000 | 1600.00 | 0.40 ms | 0.50 ms |
+
+On the nominal machine `Rs/(2*Ld)` is 625 rad/s, and asking for 200 rad/s buys a loop six times slower than the request.
+The test therefore asserts the design rule exactly, asserts that the request is honoured in the middle of the range, and
+asserts that it is *not* honoured below the floor -- so the next reader finds the boundary instead of a surprise. The
+warning is also in the Doxygen for `foc_current_pi_gains()`.
+
 ### Claims deliberately not made
 
 These are the claims the evidence levels do not support, listed so nobody has to guess whether they
