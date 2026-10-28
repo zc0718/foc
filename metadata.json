@@ -38,7 +38,7 @@
   "workflow_triggers": {
     "build": true,
     "tests": true,
-    "release": true,
+    "release": false,
     "docs": true,
     "security_scan": true,
     "cross_compile": true
