@@ -378,6 +378,15 @@ foc_err_t foc_field_weakening_worthwhile(const foc_motor_params_t *params, float
  * @note [en] On a surface machine (`Ld == Lq`) `*id_a` is exactly 0, not an epsilon: an epsilon divides by nothing
  *            meaningful.
  * @note [zh] 表贴机（`Ld == Lq`）上 `*id_a` **恰好**为 0，不是极小量：极小量除的是一个没有 意义的数。
+ * @warning [en] This answers the MTPA *curve*. It takes no speed, so it cannot know what the sensorless observer can
+ *               see: with `i_d = -1 A` that observer reads 0.5079 rad at 200 rad/s against its 0.15 rad ceiling, while
+ *               the same current is harmless at 3200 rad/s. A control loop that will actually apply the result must go
+ *               through `MtpaReference`, whose `i_d_per_speed_a_s_per_rad` refuses d-axis current below the speed where
+ *               the back-EMF carries the observer.
+ * @warning [zh] 这个函数回答的是 MTPA **曲线**。它没有转速入参，因此无从知道无感观测器看得见什么：`i_d = −1 A` 时 该观
+ *               测器在 200 rad/s 读到 0.5079 rad，而它公开的天花板是 0.15 rad；同一个电流在 3200 rad/s 却无害。 要真正
+ *               施加这个结果的闭环必须走 `MtpaReference`，它的 `i_d_per_speed_a_s_per_rad` 会在反电势撑起观测器 的转速
+ *               以下拒绝 d 轴电流。
  * @since 0.1.1
  * @exporter
  */

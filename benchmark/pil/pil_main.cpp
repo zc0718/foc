@@ -53,10 +53,15 @@ int main() {
     std::printf("fw_speed_gain=%.9g\n", static_cast<double>(verdict.speed_gain));
 
     // MTPA on a salient machine: the sqrt is what could differ between libms.
-    // 凸极机上的 MTPA：可能因 libm 不同而不同的就是那个开方。
-    foc::core::MtpaReference mtpa(foc::core::MtpaReference::Config{2.0e-4F, 4.0e-4F, 4.7619048e-3F, 7.0F});
+    // The allowance is stated here rather than defaulted: this case is about the arithmetic of the
+    // curve, not about whether a sensorless observer could see the result.
+    // 凸极机上的 MTPA：可能因 libm 不同而不同的就是那个开方。许可量在这里写明而不用默认值：这个
+    // 用例考的是曲线的算术，不是无感观测器是否看得见结果。
+    foc::core::MtpaReference mtpa(
+        foc::core::MtpaReference::Config{2.0e-4F, 4.0e-4F, 4.7619048e-3F, 7.0F, 1.0F});
     foc::core::ReferenceInput ref{};
     ref.iq_command_a = 5.0F;
+    ref.omega_e_rad_s = 3200.0F;
     const foc::core::Dq<float> mtpa_i = mtpa.generate(ref);
     std::printf("mtpa_id_a=%.9g\n", static_cast<double>(mtpa_i.d));
     std::printf("mtpa_iq_a=%.9g\n", static_cast<double>(mtpa_i.q));

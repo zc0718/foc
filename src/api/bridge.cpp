@@ -2,6 +2,7 @@
 #include "bridge.h"
 
 #include <cmath>
+#include <limits>
 #include <cstddef>
 #include <cstdint>
 #include <new>
@@ -54,10 +55,16 @@ struct Setup final {
     float speed_loop_period_s;      ///< [en] speed-loop period, s (0 = every tick). [zh] 速度环周期，s（0 = 每 tick）。
     float position_bandwidth_rad_s; ///< [en] position-loop bandwidth, rad/s. [zh] 位置环带宽，rad/s。
     float velocity_limit_rad_s;     ///< [en] speed ceiling for position moves, rad/s. [zh] 位置运动的速度上限，rad/s。
-    float position_loop_period_s;   ///< [en] position-loop period, s (0 = every tick).
-                                    ///< [zh] 位置环周期，s（0 = 每 tick）。
-    float position_accel_limit_rad_s2; ///< [en] position velocity rate limit (0 = none).
-                                       ///< [zh] 位置速度指令的加速度上限（0 = 不限）。
+    /**
+     * @brief [en] position-loop period, s (0 = every tick).
+     * @brief [zh] 位置环周期，s（0 = 每 tick）。
+     */
+    float position_loop_period_s;
+    /**
+     * @brief [en] position velocity rate limit (0 = none).
+     * @brief [zh] 位置速度指令的加速度上限（0 = 不限）。
+     */
+    float position_accel_limit_rad_s2;
     float align_current_a;     ///< [en] alignment current, A (0 = do not align). [zh] 对齐电流，A（0 = 不对齐）。
     float align_ramp_s;        ///< [en] alignment ramp, s. [zh] 对齐爬升，s。
     float align_hold_s;        ///< [en] alignment hold window, s. [zh] 对齐保持窗口，s。
@@ -813,7 +820,15 @@ foc_err_t foc_bridge_mtpa_reference(const foc_motor_params_t* params, float i_ma
         return FOC_ERR_PARAM;
     }
     const foc::core::MachineParams m = foc::api::machine_params(*params);
-    foc::core::MtpaReference reference(foc::core::MtpaReference::Config{m.ld, m.lq, m.psi_f, i_max_a});
+    // This entry point has no speed argument, so it cannot apply the d-axis allowance that
+    // `MtpaReference` enforces with one -- it answers the MTPA *curve*, which is what its name and its
+    // stable-ABI documentation promise. An infinite rate is how the curve is asked for without a limit;
+    // a caller that wants the guard asks the C++ policy, which knows the speed.
+    // 这个入口没有转速参数，所以施加不了 `MtpaReference` 用转速施加的那道 d 轴许可——它回答的是 MTPA
+    // **曲线**，这正是它的名字与稳定 ABI 文档所承诺的。无限比率就是“不带上限地问曲线”的写法；想要那道
+    // 门的调用方去问知道转速的 C++ 策略。
+    foc::core::MtpaReference reference(
+        foc::core::MtpaReference::Config{m.ld, m.lq, m.psi_f, i_max_a, std::numeric_limits<float>::infinity()});
     foc::core::ReferenceInput in{};
     in.iq_command_a = iq_command_a;
     const foc::core::Dq<float> i = reference.generate(in);

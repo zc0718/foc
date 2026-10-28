@@ -72,15 +72,25 @@ auto torque_of(const sil::MachineSpec &s, core::Dq<float> i) -> float {
          ((psi_f_of(s) * i.q) + ((s.ld - s.lq) * i.d * i.q));
 }
 
+/// [en] The speed the curve tests run at: high enough that the d-axis allowance is not the subject.
+/// [zh] 曲线测试所用的转速：高到让 d 轴许可量不成为考题。
+constexpr float kCurveSpeedRad = 3200.0F;
+/// [en] The allowance these tests declare. These cases are about the *curve*, so the guard is opened
+/// far wider than any operating point here could reach; the guard itself is tested on its own.
+/// [zh] 这些测试声明的许可量。这些用例考的是**曲线**，所以把门开到远超此处任何工作点的程度；门本身
+/// 另有测试。
+constexpr float kCurveAllowance = 1.0F;
+
 auto make_reference(const sil::MachineSpec &s, float i_max)
     -> core::MtpaReference {
-  return core::MtpaReference(
-      core::MtpaReference::Config{s.ld, s.lq, psi_f_of(s), i_max});
+  return core::MtpaReference(core::MtpaReference::Config{s.ld, s.lq, psi_f_of(s),
+                                                         i_max, kCurveAllowance});
 }
 
 auto request(core::MtpaReference &ref, float iq) -> core::Dq<float> {
   core::ReferenceInput in{};
   in.iq_command_a = iq;
+  in.omega_e_rad_s = kCurveSpeedRad;
   return ref.generate(in);
 }
 
