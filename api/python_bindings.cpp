@@ -21,6 +21,7 @@
 
 #include <cstdint>
 #include <exception>
+#include <memory>
 #include <stdexcept>
 #include <string>
 #include <utility>
@@ -87,6 +88,158 @@ auto check(foc_err_t code, const char *call) -> void {
  *  [zh] 一个 `foc_motor_t` 的 RAII 持有者。句柄只销毁一次：`close()` 清空它，析构函数调用 `close()`，已销毁的实例不能再
  *       用。
  */
+/**
+ * @brief [en] A Python object standing in for the plant: it receives the duties and supplies the measurements.
+ * @brief [zh] 顶替被控对象的 Python 对象：接收占空比，提供测量值。
+ * @details [en] Every trampoline catches what Python raises and latches it, because the control loop is `noexcept` and
+ *               an exception crossing it would terminate the process. A latched failure stops further calls and is
+ *               re-raised on the Python side by `tick()`, so the first place the author looks is the line that called
+ *               it.
+ * @details [zh] 每个 trampoline 都把 Python 抛出的东西捕获并锁存，因为控制环是 `noexcept`，异常穿过它会让进程终止。锁存
+ *               的失败会停止后续调用，并由 `tick()` 在 Python 侧重抛，于是作者第一眼看到的就是调用它的那一行。
+ * @since 0.1.2
+ */
+struct PyHal final {
+    py::object write_duty;
+    py::object read_current;
+    py::object angle;
+    py::object voltage;
+    py::object velocity;
+    py::object now_us;
+    bool failed{false};
+    std::string error;
+
+    explicit PyHal(py::object plant) {
+        for (const char *name : {"write_duty", "read_current", "angle_mech_rad", "voltage_v"}) {
+            if (!py::hasattr(plant, name)) {
+                throw py::attribute_error(std::string("the plant must provide ") + name + "()");
+            }
+        }
+        write_duty = plant.attr("write_duty");
+        read_current = plant.attr("read_current");
+        angle = plant.attr("angle_mech_rad");
+        voltage = plant.attr("voltage_v");
+        velocity = py::getattr(plant, "velocity_rad_s", py::none());
+        now_us = py::getattr(plant, "now_us", py::none());
+    }
+
+    void fail(const char *what) noexcept {
+        if (!failed) {
+            failed = true;
+            error = what;
+        }
+    }
+
+    [[nodiscard]] auto callbacks() -> foc_hal_callbacks_t {
+        foc_hal_callbacks_t out{};
+        out.struct_size = sizeof(foc_hal_callbacks_t);
+        out.user = this;
+        out.pwm_write_duty = &PyHal::on_write_duty;
+        out.read_current = &PyHal::on_read_current;
+        out.read_angle_mech_rad = &PyHal::on_read_angle;
+        out.read_voltage_v = &PyHal::on_read_voltage;
+        out.read_velocity_rad_s = velocity.is_none() ? nullptr : &PyHal::on_read_velocity;
+        out.now_us = now_us.is_none() ? nullptr : &PyHal::on_now_us;
+        return out;
+    }
+
+  private:
+    static void on_write_duty(void *user, const float duty_uvw[3]) {
+        auto *self = static_cast<PyHal *>(user);
+        if (self->failed) {
+            return;
+        }
+        try {
+            self->write_duty(duty_uvw[0], duty_uvw[1], duty_uvw[2]);
+        } catch (const py::error_already_set &e) {
+            self->fail(e.what());
+        } catch (const std::exception &e) {
+            self->fail(e.what());
+        }
+    }
+
+    static void on_read_current(void *user, float uvw_a[3]) {
+        auto *self = static_cast<PyHal *>(user);
+        if (self->failed) {
+            uvw_a[0] = 0.0F;
+            uvw_a[1] = 0.0F;
+            uvw_a[2] = 0.0F;
+            return;
+        }
+        try {
+            const py::sequence values = self->read_current();
+            uvw_a[0] = py::cast<float>(values[0]);
+            uvw_a[1] = py::cast<float>(values[1]);
+            uvw_a[2] = py::cast<float>(values[2]);
+        } catch (const py::error_already_set &e) {
+            self->fail(e.what());
+        } catch (const std::exception &e) {
+            self->fail(e.what());
+        }
+    }
+
+    static auto on_read_angle(void *user) -> float {
+        auto *self = static_cast<PyHal *>(user);
+        if (self->failed) {
+            return 0.0F;
+        }
+        try {
+            return py::cast<float>(self->angle());
+        } catch (const py::error_already_set &e) {
+            self->fail(e.what());
+        } catch (const std::exception &e) {
+            self->fail(e.what());
+        }
+        return 0.0F;
+    }
+
+    static auto on_read_voltage(void *user) -> float {
+        auto *self = static_cast<PyHal *>(user);
+        if (self->failed) {
+            return 0.0F;
+        }
+        try {
+            return py::cast<float>(self->voltage());
+        } catch (const py::error_already_set &e) {
+            self->fail(e.what());
+        } catch (const std::exception &e) {
+            self->fail(e.what());
+        }
+        return 0.0F;
+    }
+
+    static auto on_read_velocity(void *user) -> float {
+        auto *self = static_cast<PyHal *>(user);
+        if (self->failed) {
+            return 0.0F;
+        }
+        try {
+            return py::cast<float>(self->velocity());
+        } catch (const py::error_already_set &e) {
+            self->fail(e.what());
+        } catch (const std::exception &e) {
+            self->fail(e.what());
+        }
+        return 0.0F;
+    }
+
+    static auto on_now_us(void *user) -> std::uint64_t {
+        auto *self = static_cast<PyHal *>(user);
+        if (self->failed) {
+            return 0U;
+        }
+        try {
+            return py::cast<std::uint64_t>(self->now_us());
+        } catch (const py::error_already_set &e) {
+            self->fail(e.what());
+        } catch (const std::exception &e) {
+            self->fail(e.what());
+        }
+        return 0U;
+    }
+};
+
+
 class Motor final {
 public:
     explicit Motor(const foc_motor_params_t &params) {
@@ -95,6 +248,20 @@ public:
 
     Motor(const foc_motor_params_t &params, const foc_motor_setup_t &setup) {
         check(foc_motor_create_ex(&params, &setup, &handle_), "foc_motor_create_ex");
+    }
+
+    /**
+     * @brief [en] A motor whose plant is this Python object.
+     * @brief [zh] 被控对象为这个 Python 对象的电机。
+     */
+    Motor(const foc_motor_params_t &params, py::object plant) { create_host(params, nullptr, std::move(plant)); }
+
+    /**
+     * @brief [en] The same, with an explicit setup.
+     * @brief [zh] 同上，但显式给出设置。
+     */
+    Motor(const foc_motor_params_t &params, const foc_motor_setup_t &setup, py::object plant) {
+        create_host(params, &setup, std::move(plant));
     }
 
     /**
@@ -112,12 +279,15 @@ public:
     Motor(const Motor &) = delete;
     auto operator=(const Motor &) -> Motor & = delete;
 
-    Motor(Motor &&other) noexcept : handle_(other.handle_) { other.handle_ = nullptr; }
+    Motor(Motor &&other) noexcept : handle_(other.handle_), plant_(std::move(other.plant_)) {
+        other.handle_ = nullptr;
+    }
 
     auto operator=(Motor &&other) noexcept -> Motor & {
         if (this != &other) {
             close();
             handle_ = other.handle_;
+            plant_ = std::move(other.plant_);
             other.handle_ = nullptr;
         }
         return *this;
@@ -156,7 +326,15 @@ public:
         return out;
     }
 
-    void tick(double dt_s) { check(foc_tick(handle_, static_cast<float>(dt_s)), "foc_tick"); }
+    void tick(double dt_s) {
+        check(foc_tick(handle_, static_cast<float>(dt_s)), "foc_tick");
+        if ((plant_ != nullptr) && plant_->failed) {
+            // The loop is `noexcept`: the exception was caught at the C++ boundary and is re-raised here, where the
+            // author can still see which call caused it.
+            // 控制环是 `noexcept`：异常在 C++ 边界被捕获，在这里重抛，作者仍能看到是哪一次调用引起的。
+            throw std::runtime_error(std::string("the plant raised: ") + plant_->error);
+        }
+    }
 
     [[nodiscard]] auto telemetry() const -> py::dict {
         float speed = 0.0F;
@@ -180,7 +358,18 @@ public:
     [[nodiscard]] auto alive() const noexcept -> bool { return handle_ != nullptr; }
 
 private:
+    /**
+     * @brief [en] Present only for a host-fed motor: it owns the Python object the callbacks point at.
+     * @brief [zh] 仅主控电机有：它拥有回调所指向的那个 Python 对象。
+     */
+    std::unique_ptr<PyHal> plant_{};
     foc_motor_t handle_{nullptr};
+
+    void create_host(const foc_motor_params_t &params, const foc_motor_setup_t *setup, py::object plant) {
+        plant_ = std::make_unique<PyHal>(std::move(plant));
+        const foc_hal_callbacks_t callbacks = plant_->callbacks();
+        check(foc_motor_create_host(&params, setup, &callbacks, &handle_), "foc_motor_create_host");
+    }
 };
 
 
@@ -457,6 +646,13 @@ PYBIND11_MODULE(foc_python, m) {
         .def(py::init<const foc_motor_params_t &>(), py::arg("params"))
         .def(py::init<const foc_motor_params_t &, const foc_motor_setup_t &>(), py::arg("params"),
              py::arg("setup"))
+        .def(py::init<const foc_motor_params_t &, py::object>(), py::arg("params"), py::arg("plant"),
+             "[en] Drive this Python object as the plant: it supplies currents, angle and bus voltage, and receives the\n"
+             "duties. Same control loop, measurements from outside the library.\n"
+             "[zh] 把这个 Python 对象当作被控对象来驱动：它提供电流、角度与母线电压，接收占空比。同一个控制环，\n"
+             "测量值来自库外。")
+        .def(py::init<const foc_motor_params_t &, const foc_motor_setup_t &, py::object>(), py::arg("params"),
+             py::arg("setup"), py::arg("plant"))
         .def("setup", &Motor::setup,
              "[en] The setup actually in force (defaults included). [zh] 实际生效的设置（含默认值）。")
         .def_static("from_parts", &make_motor, py::arg("rs") = 0.5F, py::arg("ld") = 4e-4F, py::arg("lq") = 4e-4F,

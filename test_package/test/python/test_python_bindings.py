@@ -267,6 +267,90 @@ def test_abi_011_protector():
         assert allowed
 
 
+def test_a_python_plant_closes_the_loop():
+    """The plant lives in Python: it supplies the measurements and receives the duties.
+
+    The claim is not that the numbers are good -- this plant is a constant current -- but that the loop runs through
+    the Python object once per control step and the motor reaches Run with no sensor compiled in.
+    """
+    calls = {"duty": 0, "current": 0}
+
+    class Plant:
+        def write_duty(self, du, dv, dw):
+            calls["duty"] += 1
+
+        def read_current(self):
+            calls["current"] += 1
+            return (0.0, 0.0, 0.0)
+
+        def angle_mech_rad(self):
+            return 0.0
+
+        def voltage_v(self):
+            return 24.0
+
+    params = foc.MotorParams()
+    params.rs, params.ld, params.lq = 0.5, 4e-4, 4e-4
+    params.kt, params.j, params.b, params.pole_pairs = 0.05, 1e-5, 1e-6, 7
+    with foc.Motor(params, Plant()) as motor:
+        motor.enable()
+        motor.set_torque(0.2)
+        for _ in range(100):
+            motor.tick(1.0 / 20000.0)
+        status = motor.status()
+    assert status["mode"] == foc.MotorState.RUN, status
+    assert calls["duty"] == 100, calls
+    assert calls["current"] == 100, calls
+
+
+def test_a_raising_plant_is_reported_rather_than_swallowed():
+    """The control loop is noexcept, so an exception from the plant is latched and re-raised by `tick`.
+
+    A silently ignored plant error would leave the loop running on stale measurements, which is worse than stopping.
+    """
+
+    class Angry:
+        def write_duty(self, du, dv, dw):
+            raise RuntimeError("plant exploded")
+
+        def read_current(self):
+            return (0.0, 0.0, 0.0)
+
+        def angle_mech_rad(self):
+            return 0.0
+
+        def voltage_v(self):
+            return 24.0
+
+    params = foc.MotorParams()
+    params.rs, params.ld, params.lq = 0.5, 4e-4, 4e-4
+    params.kt, params.j, params.b, params.pole_pairs = 0.05, 1e-5, 1e-6, 7
+    with foc.Motor(params, Angry()) as motor:
+        motor.enable()
+        motor.set_torque(0.2)
+        try:
+            for _ in range(5):
+                motor.tick(1.0 / 20000.0)
+        except RuntimeError as error:
+            assert "plant raised" in str(error), error
+        else:
+            raise AssertionError("the plant's exception was swallowed by the loop")
+
+
+def test_a_plant_missing_a_required_method_is_rejected_at_construction():
+    class Half:
+        def write_duty(self, du, dv, dw):
+            pass
+
+    params = foc.MotorParams()
+    try:
+        foc.Motor(params, Half())
+    except AttributeError as error:
+        assert "read_current" in str(error), error
+    else:
+        raise AssertionError("a plant without the required methods must not be accepted")
+
+
 def main():
     failures = 0
     for name, case in sorted(globals().items()):
