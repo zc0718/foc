@@ -53,34 +53,40 @@ namespace {
 constexpr float kDt = 5e-5F;
 constexpr int kSubsteps = 4;
 constexpr float kVBus = 24.0F;
-constexpr int kTimeoutTicks = 40000; // 2 s: far longer than the sequence should need
+constexpr int kTimeoutTicks = 80000; // 4 s: the slowest ramp on the list needs 2 s
 
 using MotorT = foc::motor::Motor<foc::core::BackEmfObserver, foc::core::Svpwm, foc::core::Pi, foc::sil::PlantHal,
                                  foc::core::NullReferenceGenerator, foc::core::NullFeedforward,
                                  foc::core::PositionP, foc::core::StartupRoutine>;
 
-auto startup_config() -> foc::core::StartupConfig {
+auto startup_config(float pull_accel_rad_s2 = 3000.0F, float hold_s = 0.15F) -> foc::core::StartupConfig {
     foc::core::StartupConfig config{};
     config.align_current_a = 1.5F;
-    config.align_hold_s = 0.15F;
+    config.align_hold_s = hold_s;
     config.pull_current_a = 1.2F;
-    config.pull_accel_rad_s2 = 3000.0F;
+    config.pull_accel_rad_s2 = pull_accel_rad_s2;
     config.handover_speed_rad_s = 400.0F; // electrical
     return config;
 }
 
-auto psi_f_of(const foc::sil::MachineSpec &spec) -> float {
-    return spec.kt / (1.5F * static_cast<float>(spec.pole_pairs));
-}
+/**
+ * @brief [en] One open-loop start from a rotor parked at an unknown angle.
+ * @brief [zh] 从任意停放角度跑一次开环起动。
+ */
+struct StartupRun final {
+    float worst_slip_rad{0.0F};
+    float steady_slip_rad{0.0F}; ///< [en] mean over the last quarter of the pull. [zh] 拖动末四分之一的均值。
+    float peak_iq_after_a{0.0F};
+    float speed_after_rad_s{0.0F};
+    int handover_tick{-1};
+    int pull_ticks{0};
+};
 
-} // namespace
-
-TEST(SilStartup, CharacterisesTheTwoGapsThatHandoverHasToClose) {
+auto run_startup(float pull_accel_rad_s2, float hold_s = 0.15F) -> StartupRun {
     const foc::sil::MachineSpec spec = foc::sil::nominal_spec();
     foc::sil::PmsmPlant plant(foc::sil::nominal_plant_params());
-    // A rotor parked somewhere unknown: this is the condition the sequence exists for.
     foc::sil::PlantState initial{};
-    initial.theta_mech = 1.7F;
+    initial.theta_mech = 1.7F; // somewhere unknown: the condition the sequence exists for
     plant.reset(initial);
 
     foc::sil::PlantHal hal(plant, kVBus);
@@ -89,85 +95,141 @@ TEST(SilStartup, CharacterisesTheTwoGapsThatHandoverHasToClose) {
         foc::current_pi_config(config, foc::sil::standard_bench_config().omega_current_rad_s, kVBus);
     const foc::core::Pi::Config speed =
         foc::speed_pi_config(config, foc::sil::standard_bench_config().omega_speed_rad_s);
-    const foc::core::PositionP::Config position = foc::position_p_config(
-        config, 20.0F, 50.0F, 0.0F);
+    const foc::core::PositionP::Config position = foc::position_p_config(config, 20.0F, 50.0F, 0.0F);
+    const foc::core::StartupConfig startup = startup_config(pull_accel_rad_s2, hold_s);
 
     MotorT motor(config,
                  MotorT::Policies{foc::core::BackEmfObserver(foc::core::BackEmfObserver::Config{spec.rs, spec.ld}),
                                   foc::core::Svpwm{}, foc::core::Pi{current}, foc::core::Pi{current},
                                   foc::core::Pi{speed}, foc::core::NullReferenceGenerator{},
                                   foc::core::NullFeedforward{}, foc::core::PositionP{position},
-                                  foc::core::StartupRoutine{startup_config()}},
+                                  foc::core::StartupRoutine{startup}},
                  hal);
+    if ((motor.init() != foc::ErrorCode::Ok) || (motor.start() != foc::ErrorCode::Ok)) {
+        return StartupRun{};
+    }
 
-    ASSERT_EQ(motor.init(), foc::ErrorCode::Ok);
-    ASSERT_EQ(motor.start(), foc::ErrorCode::Ok);
+    // The pull is expected to last this long; the last quarter of it is where the load angle has settled and where a
+    // law about steady slip is comparable.
+    // 拖动的预期时长；末四分之一是负载角已经稳定的部分，关于稳态滑差的规律只在那里可比。
+    const int expected_pull_ticks =
+        static_cast<int>((startup.handover_speed_rad_s / startup.pull_accel_rad_s2) / kDt);
+    float slip_sum = 0.0F;
+    int slip_count = 0;
 
-    const float handover_speed = startup_config().handover_speed_rad_s;
-    float worst_slip = 0.0F;
-    float peak_iq_after = 0.0F;
-    int pull_ticks = 0;
-    int handover_tick = -1;
-
+    StartupRun run{};
     for (int tick = 0; tick < kTimeoutTicks; ++tick) {
         static_cast<void>(motor.tick(kDt));
         hal.advance(kDt, kSubsteps);
 
         const foc::core::StartupRoutine &routine = motor.aligner();
         const foc::core::StartupState state = routine.state();
-        const float truth_e = plant.theta_mech_rad() * static_cast<float>(spec.pole_pairs);
-        const float forced = routine.forced_angle_rad();
-        const float telemetry_iq = motor.telemetry().iq_a;
-
         if (state == foc::core::StartupState::Pull) {
-            ++pull_ticks;
-            // Only the second half: the first half is where the rotor is still being caught up with.
-            if ((pull_ticks * 2) > 1) {
-                float error = truth_e - forced;
+            ++run.pull_ticks;
+            if (run.pull_ticks > 10) { // skip the first 0.5 ms while the rotor is still being caught
+                float error = (plant.theta_mech_rad() * static_cast<float>(spec.pole_pairs)) -
+                              routine.forced_angle_rad();
                 while (error > 3.14159265F) {
                     error -= 6.28318531F;
                 }
                 while (error < -3.14159265F) {
                     error += 6.28318531F;
                 }
-                worst_slip = std::fmax(worst_slip, std::fabs(error));
+                run.worst_slip_rad = std::fmax(run.worst_slip_rad, std::fabs(error));
+                if (run.pull_ticks > ((expected_pull_ticks * 3) / 4)) {
+                    slip_sum += std::fabs(error);
+                    ++slip_count;
+                }
             }
         }
-        if (state == foc::core::StartupState::Done) {
-            if (handover_tick < 0) {
-                handover_tick = tick;
+        if ((state == foc::core::StartupState::Done) || (state == foc::core::StartupState::Failed)) {
+            if (state == foc::core::StartupState::Failed) {
+                break;
             }
-            peak_iq_after = std::fmax(peak_iq_after, std::fabs(telemetry_iq));
-            if ((tick - handover_tick) > 400) { // 20 ms after the hand-over
+            if (run.handover_tick < 0) {
+                run.handover_tick = tick;
+            }
+            run.peak_iq_after_a = std::fmax(run.peak_iq_after_a, std::fabs(motor.telemetry().iq_a));
+            if ((tick - run.handover_tick) > 400) { // 20 ms after the hand-over
                 break;
             }
         }
-        if (state == foc::core::StartupState::Failed) {
-            break;
+    }
+    run.speed_after_rad_s = motor.telemetry().speed_mech_rad_s * static_cast<float>(spec.pole_pairs);
+    run.steady_slip_rad = (slip_count > 0) ? (slip_sum / static_cast<float>(slip_count)) : 0.0F;
+    return run;
+}
+
+auto psi_f_of(const foc::sil::MachineSpec &spec) -> float {
+    return spec.kt / (1.5F * static_cast<float>(spec.pole_pairs));
+}
+
+} // namespace
+
+TEST(SilStartup, ThePullSlipIsTheLoadAngleTheAccelerationNeeds) {
+    // The first run blamed the undamped hold for a slip near half a turn. The sweep below shows the pull was the other
+    // half, and it is arithmetic rather than tuning: to accelerate the inertia at `alpha` the rotor must hang back by the
+    // angle whose sine supplies that torque,
+    //
+    //     sin(delta) = J * alpha / (Kt * i_pull),      Kt = 1.5 * pole_pairs * psi_f
+    //
+    // so the acceleration -- not the hold -- sets the slip. The criterion, written before the run: the measured slip stays
+    // within 25 % of that expression across the sweep, and at 200 rad/s^2 it is inside the 0.35 rad requirement.
+    //
+    // The second half held and the first did not. The expression over-predicts by 1.7x to 2x (0.73 against 0.29 at
+    // 400 rad/s^2) and clamps to a full turn at 1200 rad/s^2 where the pull in fact catches the rotor and holds it. So the
+    // law is printed for the next attempt and **not asserted**: the actionable statement is the measured one, that a slow
+    // enough ramp keeps the steady slip inside 0.35 rad and the hand-over inside 5 % of its speed.
+    // 首次运行把半圈滑差归咎于无阻尼的保持。下面的扫描表明拖动是另一半，而且是算术而非调参：要让惯量以 `alpha` 加速，转子
+    // 必须滞后一个角度，使其正弦恰好提供那份转矩，
+    //
+    //     sin(delta) = J * alpha / (Kt * i_pull),      Kt = 1.5 * pole_pairs * psi_f
+    //
+    // 因此决定滑差的是加速度，不是保持。判据在跑之前写下：整个扫描中实测滑差与上式相差 25 % 以内，且 200 rad/s^2 时进入
+    // 0.35 rad 的要求之内。
+    const foc::sil::MachineSpec spec = foc::sil::nominal_spec();
+    const float inertia = foc::sil::nominal_plant_params().j;
+    const float kt_peak = 1.5F * static_cast<float>(spec.pole_pairs) * psi_f_of(spec);
+    const float pull_current = startup_config().pull_current_a;
+
+    std::printf("\n[startup] rotor parked at 1.7 rad mech, hold 0.15 s, hand-over 400 rad/s electrical\n");
+    std::printf("%12s %11s %11s %11s %9s %12s\n", "pull accel", "slip worst", "slip steady", "slip law", "pull ms",
+                "speed after");
+    bool inside_at_200 = false;
+    for (const float accel : {3000.0F, 1200.0F, 400.0F, 200.0F}) {
+        const StartupRun run = run_startup(accel);
+        const float predicted = std::asin(std::fmin(1.0F, (inertia * accel) / (kt_peak * pull_current)));
+        std::printf("%12.0f %11.4f %11.4f %11.4f %9.1f %12.1f\n", static_cast<double>(accel),
+                    static_cast<double>(run.worst_slip_rad), static_cast<double>(run.steady_slip_rad),
+                    static_cast<double>(predicted), static_cast<double>(run.pull_ticks) * kDt * 1e3,
+                    static_cast<double>(run.speed_after_rad_s));
+        // The requirement, measured: a slow ramp holds the steady slip inside the ceiling and keeps the machine's speed.
+        // The acceleration law above is reported alongside, and rejected as a predictor.
+        // 要求是实测的那条：慢斜坡把稳态滑差压在要求内并守住转速。上面的加速度规律一并报出，但作为预测器已被否决。
+        if (accel <= 400.0F) {
+            EXPECT_LE(run.steady_slip_rad, 0.35F) << "steady slip at " << accel << " rad/s^2";
+            EXPECT_GE(run.speed_after_rad_s, 0.75F * startup_config().handover_speed_rad_s)
+                << "the machine must keep turning at " << accel << " rad/s^2";
+        }
+        if (accel <= 200.0F) {
+            inside_at_200 = run.steady_slip_rad <= 0.35F;
         }
     }
+    EXPECT_TRUE(inside_at_200) << "the closed form says 200 rad/s^2 fits inside 0.35 rad; the run disagrees";
+}
 
-    const float speed_after = motor.telemetry().speed_mech_rad_s * static_cast<float>(spec.pole_pairs);
-    std::printf("\n[startup] hand-over at tick %d (%.1f ms), pull %d ticks\n", handover_tick,
-                (handover_tick < 0) ? -1.0 : static_cast<double>(handover_tick) * kDt * 1e3, pull_ticks);
-    std::printf("[startup] worst slip during the pull : %.4f rad\n", static_cast<double>(worst_slip));
-    std::printf("[startup] peak |iq| after hand-over  : %.4f A (pull current %.2f A)\n",
-                static_cast<double>(peak_iq_after), static_cast<double>(startup_config().pull_current_a));
-    std::printf("[startup] electrical speed after     : %.1f rad/s (hand-over %.0f)\n", static_cast<double>(speed_after),
-                static_cast<double>(handover_speed));
-
-    ASSERT_GE(handover_tick, 0) << "the sequence never reached the hand-over speed";
-
-    // Gap 1: an undamped hold leaves the rotor swinging, so the pull starts from an arbitrary angle and the slip stays
-    // near half a turn. Asserting "greater than 2 rad" is asserting the gap, not the requirement.
-    // 缺口一：无阻尼的保持让转子一直摆动，于是拖动从任意角度开始，滑差停在半圈附近。断言"大于 2 rad"是在断言缺口，
-    // 而不是要求。
-    EXPECT_GT(worst_slip, 2.0F) << "the hold now settles the rotor: replace this with the 0.35 rad requirement";
-
-    // Gap 2: the hand-over hands control to an observer that has not been stepped, so it loses the machine. The absence
-    // of a current spike is what identifies this as a lost lock rather than a disturbance.
-    // 缺口二：交接把一个从未被推进过的观测器接上来，于是丢掉转子。没有电流尖峰这一事实，说明这是失锁而不是扰动。
-    EXPECT_LT(speed_after, 0.75F * handover_speed) << "the hand-over now holds the machine: replace this with the "
-                                                     "no-lost-lock requirement";
-    EXPECT_LT(peak_iq_after, 2.0F * startup_config().pull_current_a) << "a current spike would be a different defect";
+TEST(SilStartup, TheHandoverHoldsTheMachineOnceTheRotorIsActuallyTurning) {
+    // Gap 2 of the first run was diagnosed as "the observer is never seeded at hand-over". That was wrong, and the sweep
+    // is what showed it: with the rotor genuinely turning at the hand-over instant, the back-EMF observer converges on its
+    // own within the 20 ms window, while at 3000 rad/s^2 the rotor had never been caught and there was nothing to lock on
+    // to. The requirement therefore belongs here, where it can be asserted rather than characterised.
+    // 首次运行的缺口二被诊断为"交接时从未给观测器播种"。那是错的，而纠正是扫描给出的：交接那一刻转子确实在转时，反电势
+    // 观测器在 20 ms 窗口内自行收敛；而 3000 rad/s^2 下转子从未被抓住，也就无从锁定。因此这条要求属于这里——它可以被
+    // 断言，而不是被特征化。
+    const StartupRun run = run_startup(400.0F);
+    std::printf("\n[startup] hand-over at tick %d, peak |iq| %.4f A, speed after %.1f rad/s\n", run.handover_tick,
+                static_cast<double>(run.peak_iq_after_a), static_cast<double>(run.speed_after_rad_s));
+    ASSERT_GT(run.handover_tick, 0) << "the sequence never reached the hand-over speed";
+    EXPECT_GE(run.speed_after_rad_s, 0.75F * startup_config().handover_speed_rad_s) << "the machine lost speed";
+    EXPECT_LT(run.peak_iq_after_a, 2.0F * startup_config().pull_current_a) << "the hand-over disturbed the current loop";
 }
