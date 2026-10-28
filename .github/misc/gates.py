@@ -414,6 +414,32 @@ def cmd_docs(_explicit):
     return numbers.returncode
 
 
+def cmd_boundaries(_explicit):
+    """Every statement on the boundaries page names the case that pins it, and that case exists.
+
+    The page is only worth having if it cannot rot: a limit documented next to a case that was renamed, deleted or never
+    written is worse than no page, because it reads as a guarantee. So each row carries `Suite.Case`, and this gate
+    refuses a reference for which no `TEST(Suite, Case)` exists in the test tree. It also refuses a page that has lost its
+    rows -- an emptied table would satisfy a per-row check trivially."""
+    page = ROOT / 'docs' / 'sphinx' / 'source' / 'boundaries.rst'
+    if not page.is_file():
+        _die(f'missing {_rel(page)}')
+    text = page.read_text(encoding='utf-8')
+    refs = re.findall(r'``([A-Z][A-Za-z0-9_]*)\.([A-Za-z0-9_]+)``', text)
+    sources = '\n'.join(path.read_text(encoding='utf-8', errors='replace')
+                         for path in (ROOT / 'test_package' / 'test').rglob('*.cpp'))
+    missing = [f'{suite}.{case}' for suite, case in refs if f'TEST({suite}, {case})' not in sources]
+    minimum = 8
+    if len(refs) < minimum:
+        _die(f'{_rel(page)}: {len(refs)} pinned statement(s), expected at least {minimum}')
+    if missing:
+        for name in missing:
+            print(f'[boundaries] no TEST() pins {name}', file=sys.stderr, flush=True)
+        _die(f'{_rel(page)}: {len(missing)} of {len(refs)} statement(s) point at a case that does not exist')
+    print(f'[boundaries] OK ({len(refs)} statement(s), each pinned by a case that exists)')
+    return 0
+
+
 def main():
     parser = argparse.ArgumentParser(description='Native quality gates (one implementation, three callers).')
     sub = parser.add_subparsers(dest='gate', required=True)
@@ -425,7 +451,8 @@ def main():
         'strict': 'every public header compiles standalone with -fno-exceptions -fno-rtti (C: -pedantic)',
         'claims': 'every installed header has a README claim row with a level and existing evidence',
         'docs': 'Doxygen blocks: star alignment, continuation indent, 120 columns, no mid-CJK breaks',
-        'all': 'format + tidy + guard + license + strict + claims + docs',
+        'boundaries': 'every statement on the boundaries page names a test case that exists',
+        'all': 'format + tidy + guard + license + strict + claims + docs + boundaries',
     }
     for name, text in helps.items():
         leaf = sub.add_parser(name, help=text)
@@ -452,8 +479,10 @@ def main():
         return cmd_claims(args.files)
     if args.gate == 'docs':
         return cmd_docs(args.files)
+    if args.gate == 'boundaries':
+        return cmd_boundaries(args.files)
     return 1 if (cmd_format([]) or cmd_tidy([]) or cmd_guard([]) or cmd_license([]) or cmd_strict([]) or
-                 cmd_claims([]) or cmd_docs([])) else 0
+                 cmd_claims([]) or cmd_docs([]) or cmd_boundaries([])) else 0
 
 
 if __name__ == '__main__':

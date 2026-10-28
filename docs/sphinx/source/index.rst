@@ -86,7 +86,8 @@ _`Honest limits`
 ----------------
 
 V1 does **not** claim, and does not pretend to verify, the following. They are deferred to the
-hardware stage:
+hardware stage. (For the limits that are *not* deferred -- the ones that are properties of the method and are pinned by
+test cases -- see :doc:`what this library does not do <boundaries>`.)
 
 .. list-table::
    :header-rows: 1
@@ -129,6 +130,7 @@ _`Detailed settings`
    :numbered:
 
    Quick start <quickstart>
+   What this library does not do <boundaries>
    Usage and verification <usage>
    Demos <demos/index>
 
