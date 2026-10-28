@@ -253,6 +253,75 @@ auto run_speed_loop(bool with_policy, float iq_command, float start_rad,
                   end.d, end.q};
 }
 
+TEST(FieldWeakeningMotor, P11d_ThePolicyEngagesEndToEndThroughMotor) {
+  // P11-d exists because P11-a's first version was wrong and said the opposite.
+  // It ran 1.5 s and read the *final* state, by which time the bench's P-only
+  // speed loop had let the machine decay to a speed where no weakening is
+  // needed, so `i_d` read ~0 and the test concluded "the policy never engages
+  // inside Motor". It does: 2 ms after being parked at 3200 rad/s with the
+  // setpoint above it, `i_d` is already -2 A. P11-d pins the moment instead of
+  // the aftermath, which is the only window in which the claim is even
+  // meaningful. P11-d 存在，是因为 P11-a
+  // 的第一版是错的、而且结论反过来。它跑了 1.5 s 去读**终态**， 那时台架的纯 P
+  // 速度环已经让电机衰减到不需要弱磁的转速，`i_d` 读到 ~0，测试于是断言 "策略在
+  // `Motor` 里从未生效"。它生效了：停在 3200 rad/s、给定在上方，2 ms 后 `i_d`
+  // 已经是 −2 A。P11-d
+  // 钉住**那一刻**而不是事后——只有那个窗口里这个主张才有意义。
+  using MotorT =
+      foc::motor::Motor<core::NonlinearFluxObserver, core::Svpwm, core::Pi,
+                        sil::PlantHal, core::FieldWeakeningReference,
+                        core::NullFeedforward, core::PositionP,
+                        core::NullAlignment>;
+  const sil::BenchConfig cfg = sil::standard_bench_config();
+  const sil::MachineSpec spec = sil::nominal_spec();
+  const foc::motor::MotorConfig mc = sil::motor_config_from(spec);
+  const float poles = static_cast<float>(spec.pole_pairs);
+
+  sil::PmsmPlant plant(sil::plant_params_from(spec));
+  sil::PlantHal hal(plant, cfg.v_bus_v);
+  hal.reset(sil::PlantState{0.0F, 0.0F, kTargetRad / poles, 0.0F});
+  core::FieldWeakeningReference policy(fw_config(spec));
+  core::NonlinearFluxObserver observer(core::NonlinearFluxObserver::Config{
+      1.05F * spec.rs, spec.lq, psi_f_of(spec), 0.3F, 3.0F,
+      0.5F * psi_f_of(spec)});
+  MotorT motor(
+      mc,
+      typename MotorT::Policies{
+          observer, core::Svpwm{},
+          core::Pi{
+              sil::current_pi_config(mc, cfg.omega_current_rad_s, cfg.v_bus_v)},
+          core::Pi{
+              sil::current_pi_config(mc, cfg.omega_current_rad_s, cfg.v_bus_v)},
+          core::Pi{sil::speed_pi_config(mc, cfg.omega_speed_rad_s)}, policy,
+          core::NullFeedforward{},
+          core::PositionP{foc::position_p_config(mc, 10.0F, 20.0F, 0.0F)},
+          core::NullAlignment{}},
+      hal);
+  ASSERT_EQ(foc::ErrorCode::Ok, motor.init());
+  ASSERT_EQ(foc::ErrorCode::Ok, motor.start());
+  motor.set_speed(1.15F * kTargetRad / poles);
+
+  const int steps = static_cast<int>((2.0e-3F / cfg.dt_ctrl_s) + 0.5F);
+  for (int k = 0; k < steps; ++k) {
+    static_cast<void>(motor.tick(cfg.dt_ctrl_s));
+    hal.advance(cfg.dt_ctrl_s, cfg.substeps);
+  }
+  const core::Dq<float> i = plant.current_dq();
+  const float speed = poles * plant.omega_mech_rad_s();
+  std::printf(
+      "\n[P11-d] through Motor, 2 ms after parking at %.0f rad/s: speed %.0f, "
+      "i_d %.4f, i_q %.4f\n",
+      static_cast<double>(kTargetRad), static_cast<double>(speed),
+      static_cast<double>(i.d), static_cast<double>(i.q));
+
+  // The whole point: the d-axis current exists, it is large, it is negative,
+  // and the drive is still above base speed while it flows. 要点全在这里：d
+  // 轴电流存在、量不小、是负的，而且它流动时驱动器仍在基速以上。
+  EXPECT_LT(i.d, -1.5F) << "the policy must engage inside Motor";
+  EXPECT_GT(speed, base_speed_rad(spec))
+      << "and it must be engaging above base speed";
+}
+
 TEST(FieldWeakeningMotor, P11a_TheVoltageBudgetIsWhatUnlocksTheSpeed) {
   // The product claim, measured through the only thing that can stop it. Park
   // two identical motors at 3000 rad/s with a 1 A torque command and let them
