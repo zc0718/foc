@@ -146,6 +146,51 @@ class PmsmPlant final {
     [[nodiscard]] auto effective_ld(float id_a) const noexcept -> float;
 
     /**
+     * @brief [en] q-axis saturation: a fraction of `Lq` lost as `i_q` grows.
+     *        [zh] q 轴饱和：随 `i_q` 增大损失的 `Lq` 比例。
+     *
+     * @param [in] depth      [en] fraction lost at large `i_q`, 0 = ideal. [zh]
+     *                        大 `i_q` 下的损失比例，0 = 理想。
+     * @param [in] current_a  [en] current at which that loss is engaged. [zh]
+     *                        该损失生效的电流。
+     *
+     * @note [en] Separate from the d-axis knob because the two are physically
+     * different: d-axis saturation bites the *uphill* direction of the magnet,
+     * q-axis saturation bites the flux produced by the stator. A model with only
+     * the first can look complete while being blind to the second.
+     * [zh] 与 d 轴旋钮分开，因为两者物理上不同：d 轴饱和咬的是磁钢的**上坡**方向，q 轴饱和
+     * 咬的是定子自己产生的磁通。只有前者的模型看起来完整，却对后者完全盲。
+     * @since 0.1.0
+     */
+    void set_q_axis_saturation(float depth, float current_a) noexcept;
+
+    /// [en] The incremental q-axis inductance at `i_q`: H. [zh] `i_q` 处的增量 q 轴电感：H。
+    [[nodiscard]] auto effective_lq(float iq_a) const noexcept -> float;
+
+    /**
+     * @brief [en] Iron loss as a shunt resistance across the air-gap voltage.
+     *        [zh] 铁损建模为跨气隙电压的并联电阻。
+     *
+     * @param [in] rm_ohm  [en] shunt resistance, ohm; 0 = ideal (no iron loss). [zh]
+     *                     并联电阻，Ω；0 = 理想（无铁损）。
+     *
+     * @note [en] This is not a torque loss term bolted onto the shaft -- it is
+     * the reason the *sensed* current is not the current that makes torque. That
+     * distinction is the whole point: a torque-loss term cannot perturb an
+     * observer, and this can.
+     * [zh] 这不是往轴上贴一项转矩损失——它说明**被传感的**电流不是产生转矩的电流。这个区别
+     * 才是重点：转矩损失项扰动不了观测器，而这一项可以。
+     * @since 0.1.0
+     */
+    void set_iron_loss(float rm_ohm) noexcept;
+
+    /// [en] The current that actually produces torque, A. [zh] 真正产生转矩的电流，A。
+    [[nodiscard]] auto magnetizing_current_dq() const noexcept -> core::Dq<float>;
+
+    /// [en] The current the shunt resistance diverts, A. [zh] 被并联电阻分走的电流，A。
+    [[nodiscard]] auto core_loss_current_dq() const noexcept -> core::Dq<float>;
+
+    /**
      * @brief [en] Model winding heating: `Rs = Rs20 * (1 + alpha * (T - 20))`. Off by default.
      *        [zh] 模拟绕组发热：`Rs = Rs20·(1 + alpha·(T − 20))`。默认关闭。
      *
@@ -267,6 +312,9 @@ class PmsmPlant final {
     float temp_c_{20.0F};       ///< [en] winding temperature, C. [zh] 绕组温度，°C。
     float temp_alpha_{0.0F};    ///< [en] Rs temperature coefficient, 1/K; 0 = no drift. [zh] Rs 温度系数，1/K；0 = 不漂。
     float noise_a_{0.0F};       ///< [en] current-noise peak, A; 0 = ideal sensor. [zh] 电流噪声峰值，A；0 = 理想传感器。
+    float qsat_depth_{0.0F};    ///< [en] fraction of Lq lost at heavy positive i_q; 0 = ideal. [zh] 强正 i_q 下 Lq 的损失比例；0 = 理想。
+    float qsat_current_a_{1.0F}; ///< [en] current at which that loss is engaged. [zh] 该损失生效的电流。
+    float rm_ohm_{0.0F};        ///< [en] iron-loss shunt, ohm; 0 = no iron loss. [zh] 铁损并联电阻，Ω；0 = 无铁损。
     mutable std::uint32_t noise_state_{0x9E3779B9U}; ///< [en] xorshift state; mutable because the noise belongs to the reading. [zh] xorshift 状态；mutable 因为噪声属于“读数”而非状态。
 };
 
@@ -305,6 +353,22 @@ inline auto PmsmPlant::effective_ld(float id_a) const noexcept -> float {
     return static_cast<float>(params_.ld * (1.0F - (sat_depth_ * std::tanh(id_a / sat_current_a_))));
 }
 
+inline void PmsmPlant::set_q_axis_saturation(float depth, float current_a) noexcept {
+    qsat_depth_ = (depth > 0.0F) ? ((depth < 1.0F) ? depth : 1.0F) : 0.0F;
+    qsat_current_a_ = (current_a > 0.0F) ? current_a : 1.0F;
+}
+
+inline auto PmsmPlant::effective_lq(float iq_a) const noexcept -> float {
+    if (!(qsat_depth_ > 0.0F)) {
+        return params_.lq;
+    }
+    return static_cast<float>(params_.lq * (1.0F - (qsat_depth_ * std::tanh(iq_a / qsat_current_a_))));
+}
+
+inline void PmsmPlant::set_iron_loss(float rm_ohm) noexcept {
+    rm_ohm_ = (rm_ohm > 0.0F) ? rm_ohm : 0.0F;
+}
+
 inline void PmsmPlant::set_winding_temperature(float temperature_c, float alpha_per_k) noexcept {
     temp_c_ = temperature_c;
     temp_alpha_ = (alpha_per_k > 0.0F) ? alpha_per_k : 0.0F;
@@ -333,11 +397,33 @@ inline auto PmsmPlant::derivative(const PlantState& s) const noexcept -> Derivat
     // 电阻同理：没有温度模型时它就是 `params_.rs`。
     const float rs = effective_rs();
 
-    const float did = static_cast<float>((v_dq_.d - (rs * s.id_a) + (omega_e * params_.lq * s.iq_a)) / ld);
-    const float diq = static_cast<float>(
-        (v_dq_.q - (rs * s.iq_a) - (omega_e * ld * s.id_a) - (omega_e * psi_f_)) / params_.lq);
+    const float lq = effective_lq(s.iq_a);
+    // The shunt diverts current from the air-gap voltage. It is evaluated on the magnetizing current
+    // (not the terminal one) so the flux equation stays acyclic; the dropped term is of order
+    // `Rs/Rm` times the core current, i.e. 1e-5 here.
+    // 并联支路从气隙电压取电流。用励磁电流（而非端电流）求值，好让磁链方程保持无环；丢掉的项是
+    // `Rs/Rm` 乘铁损电流的量级，在这里是 1e-5。
+    // The shunt sits across the magnetizing branch, i.e. across the *internal*
+    // voltage `v - Rs*i`, which at steady state is the cross-coupling plus the
+    // back-EMF: `-omega*lq*iq` on d and `omega*(ld*id + psi_f)` on q. Driving it
+    // from `v - Rs*i` instead would give a numerator that is identically zero at
+    // steady state -- the resistor would draw nothing and the model would be
+    // silently inert. That mistake was made and caught by this test.
+    // 并联支路跨在励磁支路上，即跨在**内部**电压 `v − Rs·i` 上，稳态时它就是交叉耦合加反电势：
+    // d 上是 `−ω·lq·iq`，q 上是 `ω·(ld·id + ψf)`。若改成用 `v − Rs·i` 驱动，分子在稳态恒为零
+    // ——电阻什么都不抽，模型静默失效。这个错犯过，并被本测试抓到。
+    const float icd = (rm_ohm_ > 0.0F) ? ((-omega_e * lq * s.iq_a) / rm_ohm_) : 0.0F;
+    const float icq = (rm_ohm_ > 0.0F)
+                          ? (((omega_e * ld * s.id_a) + (omega_e * psi_f_)) / rm_ohm_)
+                          : 0.0F;
+    const float itd = s.id_a + icd;
+    const float itq = s.iq_a + icq;
 
-    const float torque = kOneAndHalf * poles * ((psi_f_ * s.iq_a) + ((ld - params_.lq) * s.id_a * s.iq_a));
+    const float did = static_cast<float>((v_dq_.d - (rs * itd) + (omega_e * lq * s.iq_a)) / ld);
+    const float diq = static_cast<float>(
+        (v_dq_.q - (rs * itq) - (omega_e * ld * s.id_a) - (omega_e * psi_f_)) / lq);
+
+    const float torque = kOneAndHalf * poles * ((psi_f_ * s.iq_a) + ((ld - lq) * s.id_a * s.iq_a));
     const float domega = static_cast<float>((torque - (params_.b * s.omega_mech) - load_nm_) / params_.j);
 
     return Derivative{did, diq, domega, s.omega_mech};
@@ -376,14 +462,31 @@ inline auto PmsmPlant::theta_mech_rad() const noexcept -> float { return state_.
 
 inline auto PmsmPlant::omega_mech_rad_s() const noexcept -> float { return state_.omega_mech; }
 
-inline auto PmsmPlant::current_dq() const noexcept -> core::Dq<float> {
+inline auto PmsmPlant::magnetizing_current_dq() const noexcept -> core::Dq<float> {
     return core::Dq<float>{state_.id_a, state_.iq_a};
+}
+
+inline auto PmsmPlant::core_loss_current_dq() const noexcept -> core::Dq<float> {
+    if (!(rm_ohm_ > 0.0F)) {
+        return core::Dq<float>{0.0F, 0.0F};
+    }
+    const float poles = static_cast<float>(params_.pole_pairs);
+    const float omega_e = poles * state_.omega_mech;
+    const float ld = effective_ld(state_.id_a);
+    const float lq = effective_lq(state_.iq_a);
+    return core::Dq<float>{(-omega_e * lq * state_.iq_a) / rm_ohm_,
+                           ((omega_e * ld * state_.id_a) + (omega_e * psi_f_)) / rm_ohm_};
+}
+
+inline auto PmsmPlant::current_dq() const noexcept -> core::Dq<float> {
+    const core::Dq<float> core = core_loss_current_dq();
+    return core::Dq<float>{state_.id_a + core.d, state_.iq_a + core.q};
 }
 
 inline auto PmsmPlant::current_uvw() const noexcept -> core::Uvw<float> {
     const float theta_e = static_cast<float>(params_.pole_pairs) * state_.theta_mech;
-    const core::Uvw<float> true_current =
-        core::inv_clarke(core::inv_park(core::Dq<float>{state_.id_a, state_.iq_a}, theta_e));
+    const core::Dq<float> sensed = current_dq();
+    const core::Uvw<float> true_current = core::inv_clarke(core::inv_park(sensed, theta_e));
     if (!(noise_a_ > 0.0F)) {
         return true_current;
     }
@@ -407,7 +510,9 @@ inline auto PmsmPlant::current_uvw() const noexcept -> core::Uvw<float> {
 
 inline auto PmsmPlant::torque_nm() const noexcept -> float {
     const float poles = static_cast<float>(params_.pole_pairs);
-    return kOneAndHalf * poles * ((psi_f_ * state_.iq_a) + ((params_.ld - params_.lq) * state_.id_a * state_.iq_a));
+    const float ld = effective_ld(state_.id_a);
+    const float lq = effective_lq(state_.iq_a);
+    return kOneAndHalf * poles * ((psi_f_ * state_.iq_a) + ((ld - lq) * state_.id_a * state_.iq_a));
 }
 
 inline auto PmsmPlant::psi_f_wb() const noexcept -> float { return psi_f_; }
