@@ -216,6 +216,28 @@ typedef struct foc_motor_command {
  * @since 0.1.0
  * @exporter
  */
+/**
+ * @brief [en] An injection configuration sized from the machine and the control rate, rather than guessed.
+ * @brief [zh] 由机器与控制率定容出来的注入配置，而不是猜出来的。
+ * @note [en] Every field forwards a measured rule, not a preference: the carrier is the highest the rate can resolve
+ *            (which is the best angle bias measured, 33x better than 2000 Hz at 8000), the amplitude is the volts that
+ *            draw the HF current *you* budget (`I_hf * w_h * Ld`, so the amplitude becomes a decision about injected
+ *            current instead of a magic voltage), and the two cutoffs are the fixed values the envelope sweep measured
+ *            -- 200 Hz for demodulation, 200 Hz for the published speed.
+ * @note [zh] 每个字段都转达一条实测规则而不是偏好：载波取该控制率能分辨的最高值（也就是实测最好的角度偏差——8000 Hz 比
+ *            2000 Hz 好 33 倍），幅值取能拉出**你**预算的高频电流所需的那份伏特（`I_hf·ω_h·Ld`，于是幅值变成一个关于注
+ *            入电流的决定，而不是一个魔法电压），两个截止频率是包线扫描量到的固定值——解调 200 Hz、已发布转速 200 Hz。
+ * @since 0.1.7
+ */
+typedef struct foc_hfi_sizing {
+    uint32_t struct_size; /* sizeof(foc_hfi_sizing_t) */
+    float inject_hz;      /* the carrier this control rate can resolve, Hz */
+    float inject_v;       /* peak volts that draw `hf_current_a` on this machine's d axis, V */
+    float demod_lpf_hz;   /* demodulation cutoff, Hz */
+    float speed_lpf_hz;   /* cutoff on the published speed, Hz */
+    float hf_current_a;   /* the peak HF current `inject_v` draws, A */
+} foc_hfi_sizing_t;
+
 typedef struct foc_motor_status {
     uint32_t struct_size;   /* sizeof(foc_motor_status_t) */
     int32_t mode_state;     /* foc_motor_state_t: Idle / Align / Run / Fault */

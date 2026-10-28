@@ -149,6 +149,19 @@ Within the ceiling, higher is better on both axes at once, because the angle bia
      - 0.00018 rad
      - 0.38 A
 
+**Ask for the whole configuration, rather than assembling it.** :code:`foc.hfi_size()` -- :code:`foc_hfi_size()` from C --
+takes the machine and the control rate and returns the carrier, the amplitude, and both cutoffs:
+
+.. code-block:: python
+
+   sized = foc.hfi_size(params, pwm_freq_hz=20000.0, hf_current_a=0.5)
+   setup.observer, setup.inject_v, setup.inject_hz = foc.Observer.HFI, sized["inject_v"], sized["inject_hz"]
+
+The amplitude is the volts that draw the HF current *you* budget ($V = I_{hf}\,\omega_h L_d$), so the injection becomes a
+decision about current -- which is what sizes the torque ripple and the extra losses -- instead of a voltage copied from an
+example. And the result is a configuration the library accepts: that is what the tests assert, because a sizing tool that
+recommends something the library then refuses would be worse than no tool.
+
 **The demodulation window is a fixed choice, not a scheduled one.** Across standstill to 50 rad/s mechanical it changes
 the angle error by under 0.5 %, and at standstill the *narrowest* window is best by 14x. What looked like "a narrow
 window breaks at speed" is a start-up transient, which is what the blanking time is for.
@@ -193,7 +206,7 @@ whether your hardware matches that model.
      - Level
    * - Unit, SIL and stress cases
      - :code:`conan create . -s build_type=Debug --build=missing`
-     - 454 cases, 0 failed
+     - 455 cases, 0 failed
      - L1/L2
    * - Line coverage
      - :code:`python3 .github/misc/coverage_gate.py`

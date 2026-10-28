@@ -142,6 +142,44 @@ def test_the_injection_can_be_sized_and_watched_from_python():
         assert status["observer_error"] == 0.0, status["observer_error"]
 
 
+def test_the_injection_can_be_sized_and_the_result_runs():
+    # `hfi_size` answers the question the boundaries page raises: given this machine and this control rate, what carrier,
+    # what amplitude, what cutoffs? And the answer has to be a configuration the library accepts -- so the case builds a
+    # motor from it rather than comparing numbers with numbers.
+    # `hfi_size` 回答边界页提出的那个问题：给定这台机器与这个控制率，用什么载波、什么幅值、什么截止频率？而答案必须是库
+    # 会接受的配置——因此本用例用它建一台电机，而不是拿数字比数字。
+    params = foc.MotorParams()
+    params.rs, params.ld, params.lq = 0.5, 4e-4, 8e-4  # salient: ld != lq
+    params.kt, params.j, params.b, params.pole_pairs = 0.05, 1e-5, 1e-6, 7
+
+    sized = foc.hfi_size(params, pwm_freq_hz=20000.0, hf_current_a=0.5)
+    assert math.isclose(sized["inject_hz"], 8000.0, rel_tol=1e-6), sized
+    assert math.isclose(sized["inject_v"], 0.5 * 2.0 * math.pi * 8000.0 * 4e-4, rel_tol=1e-4), sized
+    assert math.isclose(sized["hf_current_a"], 0.5, rel_tol=1e-6), sized
+    assert 0.0 < sized["demod_lpf_hz"] < sized["inject_hz"], sized
+
+    setup = foc.MotorSetup()
+    setup.observer = foc.Observer.HFI
+    setup.inject_v = sized["inject_v"]
+    setup.inject_hz = sized["inject_hz"]
+    with foc.Motor(params, setup) as motor:
+        motor.enable()
+        for _ in range(20):
+            motor.tick(1.0 / 20000.0)
+        assert motor.status()["observer"] == foc.Observer.HFI, motor.status()
+
+    # A surface machine is refused, exactly as the injection observer itself would be.
+    # 表贴机被拒绝，与注入观测器本身会受到的处理一致。
+    flat = foc.MotorParams()
+    flat.rs, flat.ld, flat.lq = 0.5, 4e-4, 4e-4
+    try:
+        foc.hfi_size(flat, pwm_freq_hz=20000.0, hf_current_a=0.5)
+    except RuntimeError:
+        pass
+    else:
+        raise AssertionError("a surface machine was sized for injection")
+
+
 def test_position_and_alignment_are_reachable_from_python():
     # The Python face must not be a smaller library than the C one: position moves, per-move
     # ceilings and the alignment result are all here.

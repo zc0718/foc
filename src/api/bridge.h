@@ -73,6 +73,8 @@ foc_err_t foc_bridge_protector_reset(foc_protector_t protector, int32_t cold);
 foc_err_t foc_bridge_protector_destroy(foc_protector_t protector);
 
 float foc_bridge_hfi_max_inject_hz(float pwm_freq_hz);
+foc_err_t foc_bridge_hfi_size(const foc_motor_params_t *params, float pwm_freq_hz, float hf_current_a,
+                              foc_hfi_sizing_t *out);
 #ifdef __cplusplus
 }
 #endif

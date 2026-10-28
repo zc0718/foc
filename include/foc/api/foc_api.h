@@ -701,3 +701,34 @@ foc_err_t foc_protector_destroy(foc_protector_t protector);
  * @exporter
  */
 float foc_hfi_max_inject_hz(float pwm_freq_hz);
+
+/**
+ * @brief [en] Size an injection configuration from the machine and the control rate.
+ * @brief [zh] 由机器与控制率定容一份注入配置。
+ * @param params [en] the machine; it must be salient, because HFI has nothing to measure otherwise.
+ * @param params [zh] 机器；必须有凸极，否则 HFI 没有可测的东西。
+ * @param pwm_freq_hz [en] the control-loop rate in Hz, > 0.
+ * @param pwm_freq_hz [zh] 控制环频率，Hz，> 0。
+ * @param hf_current_a [en] the HF current you are willing to inject, peak A, > 0. This is the knob that decides how
+ *                          large the torque ripple and the extra losses are, so it is an argument rather than a
+ *                          default.
+ * @param hf_current_a [zh] 你愿意注入的高频电流，峰值 A，> 0。它是决定转矩纹波与附加损耗大小的旋钮，因此作为参数给出，
+ *                          而不是藏一个默认值。
+ * @param out [en] filled on success.
+ * @param out [zh] 成功时填入。
+ * @return [en] FOC_OK; FOC_ERR_PARAM for a NULL pointer, a non-positive rate or budget, or a surface machine.
+ * @return [zh] FOC_OK；空指针、非正的频率或预算、或表贴机时返回 FOC_ERR_PARAM。
+ * @note [en] The result is **admissible**: feeding it into `foc_motor_setup_t` yields a setup `foc_motor_create_ex()`
+ *            accepts. That is the property the C case asserts, because a sizing tool that suggests a configuration the
+ *            library then refuses would be worse than no tool. The numbers it returns are the measured ones, each
+ *            documented where it is derived: the carrier is `foc_hfi_max_inject_hz(pwm_freq_hz)`, the amplitude is
+ *            `hf_current_a * 2*pi*inject_hz * ld`, and the two cutoffs are 200 Hz each -- the values the SIL envelope
+ *            sweep measured as good across standstill to 50 rad/s mechanical.
+ * @note [zh] 结果是**可准入的**：填进 `foc_motor_setup_t` 会得到一个 `foc_motor_create_ex()` 接受的配置。这正是 C 侧用
+ *            例断言的性质，因为一个建议出库随后会拒绝的配置的定容工具，比没有工具更糟。它返回的数字都是实测的，每一个都
+ *            在其推导处有文档：载波是 `foc_hfi_max_inject_hz(pwm_freq_hz)`，幅值是 `hf_current_a · 2π·inject_hz · ld`，
+ *            两个截止频率各 200 Hz——即 SIL 包线扫描在静止到 50 rad/s 机械范围内实测良好的那些值。
+ * @since 0.1.7
+ * @exporter
+ */
+foc_err_t foc_hfi_size(const foc_motor_params_t *params, float pwm_freq_hz, float hf_current_a, foc_hfi_sizing_t *out);

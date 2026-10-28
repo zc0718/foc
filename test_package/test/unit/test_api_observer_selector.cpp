@@ -434,3 +434,52 @@ TEST(ApiObserverSelector, ARunTimeHandOverIsRefusedWhenThisMachineCannotRunTheMo
     EXPECT_EQ(foc_motor_set_observer(nullptr, FOC_OBSERVER_BACK_EMF), FOC_ERR_PARAM);
     EXPECT_EQ(foc_motor_destroy(motor), FOC_OK);
 }
+
+TEST(ApiObserverSelector, TheSizingItSuggestsIsAConfigurationItAccepts) {
+    // A sizing tool that recommends a configuration the library then refuses would be worse than no tool, so the
+    // property under test is not "the numbers look reasonable" but "the library takes them". Everything else here is the
+    // arithmetic being pinned: the carrier is the rate's ceiling, and the amplitude is the volts that draw the HF current
+    // the caller budgets, `I_hf * w_h * Ld`.
+    // 一个建议出库随后会拒绝的配置的定容工具，比没有工具更糟，因此被测的性质不是"数字看起来合理"，而是"库接受它们"。
+    // 其余都是钉住算术：载波是该频率的天花板，幅值是拉出调用方预算的高频电流所需的伏特 `I_hf·ω_h·Ld`。
+    const foc_motor_params_t salient = salient_params(); // ld 4e-4, lq 8e-4
+    foc_hfi_sizing_t sizing{};
+    sizing.struct_size = sizeof(foc_hfi_sizing_t);
+
+    ASSERT_EQ(foc_hfi_size(&salient, 20000.0F, 0.5F, &sizing), FOC_OK);
+    EXPECT_FLOAT_EQ(8000.0F, sizing.inject_hz) << "the carrier is not the ceiling the rate admits";
+    // 0.5 A at 8 kHz through 0.4 mH: 0.5 * 2*pi*8000 * 4e-4 = 10.05 V.
+    // 8 kHz 下 0.5 A 穿过 0.4 mH：0.5 × 2π×8000 × 4e-4 = 10.05 V。
+    EXPECT_NEAR(0.5F * 2.0F * 3.14159265F * 8000.0F * 4.0e-4F, sizing.inject_v, 0.05F);
+    EXPECT_FLOAT_EQ(0.5F, sizing.hf_current_a);
+    EXPECT_GT(sizing.demod_lpf_hz, 0.0F);
+    EXPECT_LT(sizing.demod_lpf_hz, sizing.inject_hz);
+    EXPECT_GT(sizing.speed_lpf_hz, 0.0F);
+
+    // The property that matters: what it describes, the library runs.
+    // 要紧的性质：它描述的配置，库会跑。
+    foc_motor_setup_t setup = setup_with_observer(static_cast<std::int32_t>(FOC_OBSERVER_HFI));
+    setup.inject_v = sizing.inject_v;
+    setup.inject_hz = sizing.inject_hz;
+    foc_motor_t motor{};
+    ASSERT_EQ(foc_motor_create_ex(&salient, &setup, &motor), FOC_OK)
+        << "the sizing tool recommended a configuration the library refuses";
+    ASSERT_NE(motor, nullptr);
+    ASSERT_EQ(foc_motor_enable(motor), FOC_OK);
+    for (int tick = 0; tick < 20; ++tick) {
+        ASSERT_EQ(foc_tick(motor, 1.0F / 20000.0F), FOC_OK);
+    }
+    foc_motor_status_t status{};
+    status.struct_size = sizeof(foc_motor_status_t);
+    ASSERT_EQ(foc_motor_get_status(motor, &status), FOC_OK);
+    EXPECT_EQ(status.observer, static_cast<std::int32_t>(FOC_OBSERVER_HFI));
+    EXPECT_EQ(foc_motor_destroy(motor), FOC_OK);
+
+    // And the three refusals, each a fact about the request rather than a preference.
+    // 以及三种拒绝，每一条都是关于请求的事实而不是偏好。
+    const foc_motor_params_t surface = params_struct(); // ld == lq
+    EXPECT_EQ(foc_hfi_size(&surface, 20000.0F, 0.5F, &sizing), FOC_ERR_PARAM) << "a surface machine was sized";
+    EXPECT_EQ(foc_hfi_size(&salient, 0.0F, 0.5F, &sizing), FOC_ERR_PARAM) << "a zero control rate was sized";
+    EXPECT_EQ(foc_hfi_size(&salient, 20000.0F, 0.0F, &sizing), FOC_ERR_PARAM) << "a zero current budget was sized";
+}
+

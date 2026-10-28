@@ -252,3 +252,11 @@ foc_err_t foc_protector_reset(foc_protector_t protector, int32_t cold) {
 foc_err_t foc_protector_destroy(foc_protector_t protector) { return foc_bridge_protector_destroy(protector); }
 
 float foc_hfi_max_inject_hz(float pwm_freq_hz) { return foc_bridge_hfi_max_inject_hz(pwm_freq_hz); }
+
+foc_err_t foc_hfi_size(const foc_motor_params_t *params, float pwm_freq_hz, float hf_current_a, foc_hfi_sizing_t *out) {
+    if ((params == NULL) || (out == NULL) || !isfinite(pwm_freq_hz) || !(pwm_freq_hz > 0.0F) ||
+        !isfinite(hf_current_a) || !(hf_current_a > 0.0F)) {
+        return FOC_ERR_PARAM;
+    }
+    return foc_bridge_hfi_size(params, pwm_freq_hz, hf_current_a, out);
+}

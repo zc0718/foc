@@ -606,7 +606,25 @@ PYBIND11_MODULE(foc_python, m) {
              py::arg("align_tolerance_rad") = 0.0F, py::arg("align_verify_s") = 0.0F,
              py::arg("align_angle_e_rad") = 0.0F)
         .def_readonly("struct_size", &foc_motor_setup_t::struct_size)
-        .def_readwrite("i_max_a", &foc_motor_setup_t::i_max_a)
+                // The requested observer mode, as the enum rather than the raw integer it is stored in: an author sets
+        // `setup.observer = foc.Observer.HFI`, and the library answers with the mode it actually runs. Before this the
+        // field was reachable from C and not from Python, which is the same gap as the status report had.
+        // 请求的观测器模式，以枚举而不是它所存储的裸整数给出：作者写 `setup.observer = foc.Observer.HFI`，而库用它真正
+        // 在跑的模式回答。在此之前这个字段从 C 可达、从 Python 不可达，与状态报告曾经的缺口是同一个。
+        .def_property(
+            "observer",
+            [](const foc_motor_setup_t &setup) { return static_cast<foc_observer_t>(setup.observer); },
+            [](foc_motor_setup_t &setup, foc_observer_t observer) { setup.observer = static_cast<std::int32_t>(observer); })
+        // The injection half of the setup, which was in the C struct and unreachable from Python: without these an author
+        // could select `Observer.HFI` and then have no way to give it a carrier. `hfi_size()` answers what to put here.
+        // 设置的注入那一半，本来在 C 结构里、从 Python 不可达：没有它们，作者能选 `Observer.HFI` 却没办法给它一个载波。
+        // `hfi_size()` 回答这里该填什么。
+        .def_readwrite("inject_v", &foc_motor_setup_t::inject_v)
+        .def_readwrite("inject_hz", &foc_motor_setup_t::inject_hz)
+        .def_readwrite("blend_start_rad_s", &foc_motor_setup_t::blend_start_rad_s)
+        .def_readwrite("blend_end_rad_s", &foc_motor_setup_t::blend_end_rad_s)
+        .def_readwrite("handover_lpf_hz", &foc_motor_setup_t::handover_lpf_hz)
+.def_readwrite("i_max_a", &foc_motor_setup_t::i_max_a)
         .def_readwrite("pwm_freq_hz", &foc_motor_setup_t::pwm_freq_hz)
         .def_readwrite("deadtime_ns", &foc_motor_setup_t::deadtime_ns)
         .def_readwrite("v_bus_v", &foc_motor_setup_t::v_bus_v)
@@ -728,6 +746,31 @@ PYBIND11_MODULE(foc_python, m) {
           "[en] The highest injection carrier this control rate can resolve, in Hz. Ask it before choosing "
           "`MotorSetup.inject_hz`: past the ceiling the injection observer stops working silently.\n"
           "[zh] 该控制率能分辨的最高注入载波，Hz。在选 `MotorSetup.inject_hz` 之前问它：越过天花板后注入观测器会静默失效。");
+
+    m.def(
+        "hfi_size",
+        [](const foc_motor_params_t &params, double pwm_freq_hz, double hf_current_a) {
+            foc_hfi_sizing_t out{};
+            out.struct_size = sizeof(out);
+            if (foc_hfi_size(&params, static_cast<float>(pwm_freq_hz), static_cast<float>(hf_current_a), &out) !=
+                FOC_OK) {
+                throw std::runtime_error("foc_hfi_size rejected its arguments: the machine is not salient, or the rate "
+                                         "or the current budget is not positive");
+            }
+            py::dict sized;
+            sized["inject_hz"] = out.inject_hz;
+            sized["inject_v"] = out.inject_v;
+            sized["demod_lpf_hz"] = out.demod_lpf_hz;
+            sized["speed_lpf_hz"] = out.speed_lpf_hz;
+            sized["hf_current_a"] = out.hf_current_a;
+            return sized;
+        },
+        py::arg("params"), py::arg("pwm_freq_hz") = 20000.0, py::arg("hf_current_a") = 0.5,
+        "[en] Size an injection configuration from the machine and the control rate: the carrier the rate can resolve, "
+        "the volts that draw the HF current you budget, and the two measured cutoffs. The result is a configuration the "
+        "library accepts.\n"
+        "[zh] 由机器与控制率定容一份注入配置：该控制率能分辨的载波、拉出你预算的高频电流所需的伏特、以及两个实测"
+        "截止频率。结果是库会接受的配置。");
 
     m.def("board_item_name", &foc_board_item_name, py::arg("item"),
           "[en] Stable lowercase name of a board item. [zh] 检查项的稳定小写名。");

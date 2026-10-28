@@ -1133,6 +1133,38 @@ foc_err_t foc_bridge_get_setup(foc_motor_t motor, foc_motor_setup_t* out) {
 
 float foc_bridge_hfi_max_inject_hz(float pwm_freq_hz) { return foc::core::HfiObserver::max_inject_hz(pwm_freq_hz); }
 
+foc_err_t foc_bridge_hfi_size(const foc_motor_params_t* params, float pwm_freq_hz, float hf_current_a,
+                              foc_hfi_sizing_t* out) {
+    if ((params == nullptr) || (out == nullptr) || !std::isfinite(pwm_freq_hz) || !(pwm_freq_hz > 0.0F) ||
+        !std::isfinite(hf_current_a) || !(hf_current_a > 0.0F)) {
+        return FOC_ERR_PARAM;
+    }
+    // A surface machine has nothing for the injection to measure: `predicted_gain_a()` is proportional to `(lq - ld)`.
+    // Answering with a configuration for it would be the same silent substitution the selector refuses.
+    // 表贴机没有可让注入测量的东西：`predicted_gain_a()` 正比于 `(lq - ld)`。给它一个配置就是选择器拒绝过的那种静默替换。
+    if (!(std::isfinite(params->ld) && std::isfinite(params->lq) && (params->ld > 0.0F) && (params->lq > 0.0F) &&
+          (params->ld != params->lq))) {
+        return FOC_ERR_PARAM;
+    }
+    const float carrier_hz = foc::core::HfiObserver::max_inject_hz(pwm_freq_hz);
+    if (!(carrier_hz > 0.0F)) {
+        return FOC_ERR_PARAM;
+    }
+    out->struct_size = sizeof(foc_hfi_sizing_t);
+    out->inject_hz = carrier_hz;
+    // The injected current flows on the d axis, so the reactance that sets it is `w_h * Ld`: `V = I_hf * w_h * Ld`. That
+    // is the measured relation (`test_sil_hfi.cpp`: 2 V at 2 kHz on 0.2 mH drew 0.8 A), used here in the direction a
+    // caller needs it -- from the current they are willing to inject to the volts that draw it.
+    // 注入电流走 d 轴，因此决定它的是 `ω_h·Ld` 的电抗：`V = I_hf·ω_h·Ld`。这是实测关系（`test_sil_hfi.cpp`：2 kHz 下
+    // 2 V 打在 0.2 mH 上拉出 0.8 A），这里按调用方需要的方向使用——从他愿意注入的电流反推拉出它所需的伏特。
+    const float omega_h = 2.0F * 3.14159265358979F * carrier_hz;
+    out->inject_v = hf_current_a * omega_h * params->ld;
+    out->demod_lpf_hz = foc::api::kHfiDemodLpfHz;
+    out->speed_lpf_hz = foc::api::kHfiSpeedLpfHz;
+    out->hf_current_a = hf_current_a;
+    return FOC_OK;
+}
+
 foc_err_t foc_bridge_set_observer(foc_motor_t motor, foc_observer_t observer) {
     return foc::api::on_slot(motor, [observer](auto& slot) { return foc::api::set_observer(slot, observer); });
 }
