@@ -279,6 +279,40 @@ The test therefore asserts the design rule exactly, asserts that the request is 
 asserts that it is *not* honoured below the floor -- so the next reader finds the boundary instead of a surprise. The
 warning is also in the Doxygen for `foc_current_pi_gains()`.
 
+### What a commissioning sweep can actually see (manual, not in CI)
+
+`benchmark/script/identify_parameters.py` runs the identification chain end to end: it produces the settled sweeps a
+commissioning routine would record, identifies the machine two independent ways -- `foc.rs_estimate()` /
+`foc.flux_estimate()` from the C ABI, and a `scipy.optimize.least_squares` fit of the same samples -- and reports where
+the two must agree and where neither can help.
+
+| Experiment | Injected | Library | scipy |
+|---|---|---|---|
+| standstill sweep, `Rs` | 0.500000 ohm | 0.500000 | 0.500000 |
+| standstill sweep, constant loss | 0.6400 V | 0.6400 | 0.6400 |
+| zero-current sweep, `psi_f` | 0.004762 Wb | 0.004762 | 0.004762 |
+| zero-current sweep, offset | 0.3000 V | 0.3000 | 0.3000 |
+
+The more useful half is what the sweep cannot see.
+
+**A rotor-angle error scales both parameters.** At standstill, an unmodelled rotor offset of 10 degrees biases `Rs` by
++1.54 % and `L` by +1.61 % -- `1/cos(10 deg) = 1.0154` on both, because the fit only sees a smaller excitation and
+cannot tell that from a larger resistance. It does **not** mix `Ld` with `Lq`: a salient machine (`Lq = 2*Ld`) gives
+exactly the same numbers, since the axes are decoupled at zero speed. Separating the two inductances needs speed or a
+second excitation axis, not a better standstill fit.
+
+**A short capture separates `Rs` from `L` only weakly, and noiseless data hides it.** Over ten milliseconds the
+`Rs`/`L` correlation is -0.32; over one time constant the condition number rises from 210 to 4620, yet the noiseless fit
+still lands 0.3 % from the truth. With 20 mA rms of the noise a shunt and an ADC actually have, eight repeats give:
+
+| Capture | `Rs` spread | `Ld` spread |
+|---|---|---|
+| one time constant | 1.35 % | 0.76 % |
+| ten time constants | 0.12 % | 0.30 % |
+
+So the practical rule the numbers support: record at least ten electrical time constants, and treat any estimate from a
+shorter capture as a statement about `Rs/L` rather than about either one.
+
 ### Claims deliberately not made
 
 These are the claims the evidence levels do not support, listed so nobody has to guess whether they
