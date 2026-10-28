@@ -178,7 +178,7 @@ def main() -> int:
             print(f"{angle:9.0f}d {floor:8.0f} {'--':>10}  no candidate held 10 % overshoot under 50 % parameter error")
             ok = False
             continue
-        bandwidth, worst_error = chosen
+        bandwidth = chosen[0]
         kp, ki, *_ = foc.current_pi_gains(params, motor_setup(bandwidth))
         overshoot, settle = step_response(params, bandwidth)
         cost = (overshoot - baseline_overshoot) * 100.0
