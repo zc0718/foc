@@ -306,3 +306,81 @@ TEST(ApiObserverSelector, EveryModeInTheEnumerationIsWiredAndEachIsAdmittedOnFac
         }
     }
 }
+
+TEST(ApiObserverSelector, AModeCanBeChangedOnAMotorThatIsAlreadyRunning) {
+    // The run-time hand-over had to exist as a function rather than a field because the incoming observer has to be
+    // seeded from the outgoing estimate first. This case only pins the C contract -- which answers, and what the status
+    // then reports. The numerical property (that the estimate does not jump) is `SwitchableObserver.
+    // AHandOverCarriesTheEstimateAndASwitchDoesNot` at the C++ level and `SilFusionChain` at the plant level; asserting
+    // it here would need an angle the C API does not expose, and inventing one accessor just for this would be worse
+    // than naming where the claim is tested.
+    // 运行时交接必须是一个函数而不是一个字段，因为接手的观测器要先被交出者的估计播种。本用例只钉 C 契约——哪些回答、
+    // 之后状态报出什么。数值性质（估计不跳）由 C++ 层的 `SwitchableObserver.AHandOverCarriesTheEstimateAndASwitchDoesNot`
+    // 与 plant 层的 `SilFusionChain` 负责；在这里断言它需要一个 C API 并未暴露的角度，为此外加一个访问器比指明这项
+    // 承诺在哪里被测试更糟。
+    const foc_motor_params_t params = salient_params();
+    const foc_motor_setup_t setup = setup_with_carrier(static_cast<std::int32_t>(FOC_OBSERVER_BACK_EMF), 12.0F, 2000.0F);
+
+    foc_motor_t motor{};
+    ASSERT_EQ(foc_motor_create_ex(&params, &setup, &motor), FOC_OK);
+    ASSERT_NE(motor, nullptr);
+
+    // Idle: a hand-over would carry an estimate no observer has produced yet.
+    EXPECT_EQ(foc_motor_set_observer(motor, FOC_OBSERVER_HFI), FOC_ERR_STATE) << "a motor that never ran has nothing to carry";
+
+    ASSERT_EQ(foc_motor_enable(motor), FOC_OK);
+    ASSERT_EQ(foc_set_torque(motor, 0.0F), FOC_OK);
+    for (int tick = 0; tick < 20; ++tick) {
+        ASSERT_EQ(foc_tick(motor, 1.0F / 20000.0F), FOC_OK);
+    }
+
+    EXPECT_EQ(foc_motor_set_observer(motor, FOC_OBSERVER_HFI), FOC_OK);
+    foc_motor_status_t status{};
+    status.struct_size = sizeof(foc_motor_status_t);
+    ASSERT_EQ(foc_motor_get_status(motor, &status), FOC_OK);
+    EXPECT_EQ(status.observer, static_cast<std::int32_t>(FOC_OBSERVER_HFI));
+
+    // Handing over to the mode that is already running is not an error, and changes nothing.
+    // 交接给正在运行的模式不是错误，也不改变任何东西。
+    EXPECT_EQ(foc_motor_set_observer(motor, FOC_OBSERVER_HFI), FOC_OK);
+    EXPECT_EQ(foc_motor_get_status(motor, &status), FOC_OK);
+    EXPECT_EQ(status.observer, static_cast<std::int32_t>(FOC_OBSERVER_HFI));
+
+    // And back the other way, which is the direction that carries a seed.
+    // 再换回来，才是需要携带种子的那个方向。
+    EXPECT_EQ(foc_motor_set_observer(motor, FOC_OBSERVER_BACK_EMF), FOC_OK);
+    EXPECT_EQ(foc_motor_get_status(motor, &status), FOC_OK);
+    EXPECT_EQ(status.observer, static_cast<std::int32_t>(FOC_OBSERVER_BACK_EMF));
+
+    EXPECT_EQ(foc_motor_destroy(motor), FOC_OK);
+}
+
+TEST(ApiObserverSelector, ARunTimeHandOverIsRefusedWhenThisMachineCannotRunTheMode) {
+    // The same admission predicate as construction, applied to the machine that is actually running: switching to HFI on
+    // a surface machine must be refused rather than accepted and then quietly doing nothing usable.
+    // 与构造时相同的准入判据，作用在实际运行的那台机器上：在表贴机上切到 HFI 必须被拒绝，而不是先接受、之后又悄悄做不到。
+    const foc_motor_params_t surface = params_struct();
+    const foc_motor_setup_t setup =
+        setup_with_carrier(static_cast<std::int32_t>(FOC_OBSERVER_BACK_EMF), 12.0F, 2000.0F);
+
+    foc_motor_t motor{};
+    ASSERT_EQ(foc_motor_create_ex(&surface, &setup, &motor), FOC_OK);
+    ASSERT_NE(motor, nullptr);
+    ASSERT_EQ(foc_motor_enable(motor), FOC_OK);
+    ASSERT_EQ(foc_set_torque(motor, 0.0F), FOC_OK);
+    for (int tick = 0; tick < 10; ++tick) {
+        ASSERT_EQ(foc_tick(motor, 1.0F / 20000.0F), FOC_OK);
+    }
+
+    EXPECT_EQ(foc_motor_set_observer(motor, FOC_OBSERVER_HFI), FOC_ERR_PARAM) << "no saliency, no injection observer";
+    foc_motor_status_t status{};
+    status.struct_size = sizeof(foc_motor_status_t);
+    ASSERT_EQ(foc_motor_get_status(motor, &status), FOC_OK);
+    EXPECT_EQ(status.observer, static_cast<std::int32_t>(FOC_OBSERVER_BACK_EMF)) << "a refused hand-over changed the mode anyway";
+
+    // A value outside the enumeration is a caller error, checked before anything is touched.
+    // 枚举之外的取值是调用方错误，在触碰任何东西之前就被挡下。
+    EXPECT_EQ(foc_motor_set_observer(motor, static_cast<foc_observer_t>(99)), FOC_ERR_PARAM);
+    EXPECT_EQ(foc_motor_set_observer(nullptr, FOC_OBSERVER_BACK_EMF), FOC_ERR_PARAM);
+    EXPECT_EQ(foc_motor_destroy(motor), FOC_OK);
+}

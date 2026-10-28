@@ -163,3 +163,68 @@ TEST(SwitchableObserver, TheIdleObserverIsFrozenRatherThanReset) {
     EXPECT_NEAR(after_return.theta_e, frozen_out.theta_e, 1e-5F) << "the NLFO's state did not survive being parked";
     EXPECT_GT(std::fabs(after_return.theta_e - reset_out.theta_e), 1e-3F) << "the NLFO was reset when it was re-selected";
 }
+
+TEST(SwitchableObserver, AHandOverCarriesTheEstimateAndASwitchDoesNot) {
+    // The distinction that a start-up chain got wrong, pinned as an A/B so it cannot come back quietly. Two wrappers are
+    // driven identically with the back-EMF observer selected; at the same instant one switches with `set_kind()` and the
+    // other hands over with `hand_over_to()`. The incoming observer has been idle the whole time, so:
+    //   - `set_kind()` lands on whatever that idle observer last believed -- here its construction-time seed, ~0.4 rad
+    //     away from where the rotor actually is by then;
+    //   - `hand_over_to()` lands on the outgoing estimate, which is what a hand-over means.
+    // Measured separation rather than a claim: the gap between the two outcomes is the size of the defect when the
+    // obligation is skipped, and it is what a real chain showed as a 3.6 rad step at the switch.
+    // 起动链路搞错的那个区别，用 A/B 钉住，免得它悄悄回来。两个包装器在选中反电势观测器的状态下被完全相同地驱动；
+    // 在同一时刻一个用 `set_kind()` 切换、另一个用 `hand_over_to()` 交接。接手的观测器全程闲置，于是：
+    //   - `set_kind()` 落在那个闲置观测器上次相信的地方——这里是它构造时的种子，此时离转子真实位置约 0.4 rad；
+    //   - `hand_over_to()` 落在交出者的估计上，这才是交接的含义。
+    // 测出来的是分离度而不是断言：跳过义务时两个结果之间的差距就是缺陷的大小，而一条真实的链把它显示为切换处 3.6 rad 的阶跃。
+    constexpr int kSteps = 200;
+    constexpr int kSwitch = 150;
+
+    auto drive_until_switch = [](foc::core::SwitchableObserver& w) {
+        w.seed_flux(foc::core::Ab<float>{kPsiF, 0.0F});
+        for (int step = 0; step < kSwitch; ++step) {
+            static_cast<void>(w.update(input_at(step), current_at(step), kDt));
+        }
+        return w.state().theta_e;
+    };
+
+    foc::core::SwitchableObserver switched(wrapper_config(foc::core::ObserverKind::BackEmf));
+    const float before_switch = drive_until_switch(switched);
+    switched.set_kind(foc::core::ObserverKind::NonlinearFlux);
+    const float after_switch = switched.update(input_at(kSwitch), current_at(kSwitch), kDt).theta_e;
+
+    foc::core::SwitchableObserver handed(wrapper_config(foc::core::ObserverKind::BackEmf));
+    const float before_handover = drive_until_switch(handed);
+    const bool seeded = handed.hand_over_to(foc::core::ObserverKind::NonlinearFlux);
+    const float after_handover = handed.update(input_at(kSwitch), current_at(kSwitch), kDt).theta_e;
+
+    const auto step_of = [](float a, float b) {
+        float d = a - b;
+        while (d <= -3.14159265F) {
+            d += 6.28318531F;
+        }
+        while (d > 3.14159265F) {
+            d -= 6.28318531F;
+        }
+        return std::fabs(d);
+    };
+    const float switch_step = step_of(after_switch, before_switch);
+    const float handover_step = step_of(after_handover, before_handover);
+
+    std::printf("\n[handover] set_kind step %.4f rad | hand_over_to step %.4f rad (seeded=%d)\n",
+                static_cast<double>(switch_step), static_cast<double>(handover_step), static_cast<int>(seeded));
+    EXPECT_FLOAT_EQ(before_switch, before_handover) << "the two runs must be identical up to the decision";
+    EXPECT_TRUE(seeded) << "the incoming observer has a flux estimate, so it must have been seeded";
+    EXPECT_LT(handover_step, 0.02F) << "the hand-over did not carry the estimate across";
+    EXPECT_GT(switch_step, 0.20F) << "an unseeded switch happened to land close by; the A/B proves nothing this run";
+
+    // A hand-over *to* the injection observer cannot be seeded: it has a carrier phase, not a flux vector. The switch
+    // still happens, and the answer says so rather than pretending.
+    // 交接**给**注入观测器无法播种：它有的是载波相位，不是磁链矢量。切换仍然发生，而返回值如实说明这一点。
+    EXPECT_FALSE(handed.hand_over_to(foc::core::ObserverKind::Hfi));
+    EXPECT_EQ(foc::core::ObserverKind::Hfi, handed.kind());
+    // And handing over to what is already selected is not a hand-over.
+    // 而交接给已经选中的那个不算交接。
+    EXPECT_FALSE(handed.hand_over_to(foc::core::ObserverKind::Hfi));
+}

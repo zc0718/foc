@@ -743,6 +743,50 @@ constexpr auto observer_kind(std::int32_t observer) noexcept -> core::ObserverKi
     }
 }
 
+
+/**
+ * @brief [en] A `foc_motor_params_t` view of a running motor, so run-time admission uses the same predicate as
+ *             construction instead of a second copy of it.
+ * @brief [zh] 对一个运行中电机的 `foc_motor_params_t` 视图，于是运行时准入用的是与构造时**同一个**判据，而不是它的副
+ *             本。
+ */
+inline auto params_of(const motor::MotorConfig& cfg) noexcept -> foc_motor_params_t {
+    foc_motor_params_t p{};
+    p.rs = cfg.rs;
+    p.ld = cfg.ld;
+    p.lq = cfg.lq;
+    p.kt = cfg.kt;
+    p.j = cfg.j;
+    p.b = cfg.b;
+    p.pole_pairs = cfg.pole_pairs;
+    return p;
+}
+
+/**
+ * @brief [en] The hand-over itself, inside the namespace so it can name the types it needs.
+ * @brief [zh] 交接本体，放在命名空间内以便引用所需的类型。
+ */
+template <typename Slot> auto set_observer(Slot& slot, foc_observer_t observer) noexcept -> ErrorCode {
+    auto& instance = *slot.instance;
+    // Refused outside Run rather than silently ignored: the estimate a hand-over carries is only meaningful once the
+    // observer is actually being stepped, and during Align it is not stepped at all.
+    // 不在 Run 状态就拒绝，而不是静默忽略：交接所要携带的估计，只有在观测器确实在被推进时才有意义，而 Align 期间它
+    // 根本不被推进。
+    if (instance.state() != core::MotorState::Run) {
+        return ErrorCode::State;
+    }
+    Setup requested = slot.setup;
+    requested.observer = static_cast<std::int32_t>(observer);
+    if (observer_status(requested, params_of(instance.config())) != FOC_OK) {
+        return ErrorCode::Param;
+    }
+    static_cast<void>(instance.observer().hand_over_to(observer_kind(requested.observer)));
+    slot.setup.observer = requested.observer;
+    return ErrorCode::Ok;
+}
+
+
+
 inline auto make_observer(const foc_motor_params_t& p, const Setup& setup) noexcept -> core::SwitchableObserver {
     const core::MachineParams machine = machine_params(p);
     const float psi_f = machine.psi_f;
@@ -1053,6 +1097,11 @@ foc_err_t foc_bridge_get_setup(foc_motor_t motor, foc_motor_setup_t* out) {
         *out = result;
         return foc::ErrorCode::Ok;
     });
+}
+
+
+foc_err_t foc_bridge_set_observer(foc_motor_t motor, foc_observer_t observer) {
+    return foc::api::on_slot(motor, [observer](auto& slot) { return foc::api::set_observer(slot, observer); });
 }
 
 

@@ -1,5 +1,6 @@
 // Conan::ImportStart
 #pragma once
+#include <cmath>
 #include <cstdint>
 
 #include <foc/core/machine_params.hpp>
@@ -82,7 +83,8 @@ class SwitchableObserver final {
      */
     explicit SwitchableObserver(Config config) noexcept
         : back_emf_(config.back_emf), nonlinear_flux_(config.nonlinear_flux), hfi_(config.hfi),
-          blended_(HfiObserver{config.hfi}, BackEmfObserver{config.back_emf}, config.blended), kind_(config.kind) {}
+          blended_(HfiObserver{config.hfi}, BackEmfObserver{config.back_emf}, config.blended), kind_(config.kind),
+          psi_f_wb_(config.nonlinear_flux.psi_f) {}
 
     /**
      * @brief [en] Advance whichever observer is selected.
@@ -162,8 +164,64 @@ class SwitchableObserver final {
     }
 
     /**
-     * @brief [en] Choose at run time. No observer is reset and none is stepped.
-     * @brief [zh] 在运行时切换。没有观测器被复位，也没有被推进。
+     * @brief [en] Switch, carrying the current estimate into the incoming observer first.
+     * @brief [zh] 切换，先把当前估计带进接手的那个观测器。
+     * @param next [en] the observer to hand over to.
+     * @param next [zh] 要交接过去的观测器。
+     * @return [en] `false` if `next` was already selected, or if the incoming observer has no flux estimate to place
+     *              (the injection observer has a carrier phase, not a flux vector). `true` means the incoming
+     *              observer's state was written from the outgoing one's angle.
+     * @return [zh] 若 `next` 已是当前选择，或接手的观测器没有磁链估计可安置（注入观测器有的是载波相位，不是磁链矢量），
+     *              返回 `false`。`true` 表示接手者的状态已按交出者的角度写入。
+     * @note [en] **This is the switching call a hand-over should use.** `set_kind()` exists for the case where the
+     *            caller genuinely wants the incoming observer to resume from whatever it last believed; because the
+     *            idle observer is frozen rather than tracking, that belief can be arbitrarily stale, and using
+     *            `set_kind()` for a hand-over is how a chain ends up stepping by pi or pi/2 for no visible reason. The
+     *            ordering matters and is why this is one call rather than two: seeding after the switch would write
+     *            into an observer that is already being stepped, and seeding before it is a rule someone has to
+     *            remember. The magnitude comes from `Config::nonlinear_flux.psi_f`, which is the machine's flux linkage
+     *            -- there is no second copy of it here. A hand-over *to* the injection observer returns `false`: that
+     *            observer acquires the angle itself from the current response and cannot be given one.
+     * @note [zh] **交接应当使用这个调用。** `set_kind()` 保留给"调用方确实希望接手者从它上次相信的状态继续"的情形；由于
+     *            闲置的观测器是**冻结**的而非在跟踪，那个"相信"可能任意陈旧，而拿 `set_kind()` 去做交接，正是一条链会毫
+     *            无可见理由地跳出 π 或 π/2 的原因。顺序很关键，这也是它被做成**一个**调用而不是两个的原因：先切换再播种
+     *            会写进一个已经在被推进的观测器，而先播种再切换则是一条需要有人记住的规矩。幅值取自
+     *            `Config::nonlinear_flux.psi_f`，也就是这台机器的磁链——这里不存第二份。交接**给**注入观测器时返回
+     *            `false`：那个观测器自己从电流响应里获取角度，无法被给予。
+     * @since 0.1.6
+     */
+    auto hand_over_to(ObserverKind next) noexcept -> bool {
+        if (next == kind_) {
+            return false;
+        }
+        const float theta = state().theta_e;
+        const Ab<float> seed{static_cast<float>(psi_f_wb_ * std::cos(theta)),
+                             static_cast<float>(psi_f_wb_ * std::sin(theta))};
+        switch (next) {
+        case ObserverKind::NonlinearFlux:
+            nonlinear_flux_.seed_flux(seed);
+            break;
+        case ObserverKind::BackEmf:
+            back_emf_.seed_flux(seed);
+            break;
+        case ObserverKind::Blended:
+            blended_.seed_flux(seed);
+            break;
+        case ObserverKind::Hfi:
+        default:
+            kind_ = next;
+            return false; // nothing to seed: the carrier phase is not a flux estimate
+        }
+        kind_ = next;
+        return true;
+    }
+
+    /**
+     * @brief [en] Choose at run time **without** carrying the estimate across. No observer is reset and none is
+     *             stepped.
+     * @brief [zh] 在运行时切换，**不**把估计带过去。没有观测器被复位，也没有被推进。
+     * @note [en] For a hand-over use `hand_over_to()` instead -- see the note there for why this one is a trap.
+     * @note [zh] 交接请用 `hand_over_to()`——原因见那里：这一个是个陷阱。
      */
     void set_kind(ObserverKind kind) noexcept { kind_ = kind; }
 
@@ -191,6 +249,10 @@ class SwitchableObserver final {
      */
     BlendedObserver<HfiObserver, BackEmfObserver> blended_;
     ObserverKind kind_;
+    /**
+     * @brief The machine's flux linkage, taken from the one field that already states it (`nonlinear_flux.psi_f`) so a hand-over has a magnitude to place the incoming observer's vector at. Not a second definition of the machine. 这台机器的磁链，取自已经写明它的那**一个**字段（`nonlinear_flux.psi_f`），于是交接有幅值可用来安置接手者的矢量。这不是对这台机器的第二个定义。
+     */
+    float psi_f_wb_;
 };
 
 

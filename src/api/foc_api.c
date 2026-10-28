@@ -47,6 +47,13 @@ foc_err_t foc_motor_get_setup(foc_motor_t motor, foc_motor_setup_t *out) {
     return foc_bridge_get_setup(motor, out);
 }
 
+foc_err_t foc_motor_set_observer(foc_motor_t motor, foc_observer_t observer) {
+    if ((motor == NULL) || (observer < FOC_OBSERVER_BACK_EMF) || (observer > FOC_OBSERVER_BLENDED)) {
+        return FOC_ERR_PARAM;
+    }
+    return foc_bridge_set_observer(motor, observer);
+}
+
 foc_err_t foc_motor_destroy(foc_motor_t motor) {
     if (motor == NULL) {
         return FOC_ERR_PARAM;

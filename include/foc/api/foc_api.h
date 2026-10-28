@@ -88,6 +88,38 @@ foc_err_t foc_motor_get_setup(foc_motor_t motor, foc_motor_setup_t *out);
 
 
 /**
+ * @brief [en] Hand an enabled motor over to a different observer while it is running.
+ * @brief [zh] 在运行中把已使能的电机交接给另一个观测器。
+ * @param motor [en] handle from foc_motor_create(); a motor in the Run state.
+ * @param motor [zh] 由 foc_motor_create() 得到的句柄；须处于 Run 状态。
+ * @param observer [en] the mode to hand over to, a `foc_observer_t` value.
+ * @param observer [zh] 要交接过去的模式，取 `foc_observer_t` 的值。
+ * @return [en] `FOC_OK` once the hand-over is done (including when the mode was already running), `FOC_ERR_STATE` when
+ *              the motor is not in Run, `FOC_ERR_PARAM` when the mode is outside the enumeration or this machine cannot
+ *              run it (see the admission notes on `foc_motor_setup_t`).
+ * @return [zh] 交接完成（含该模式本来就在运行）返回 `FOC_OK`；电机不在 Run 状态返回 `FOC_ERR_STATE`；模式在枚举之外或这
+ *              台机器跑不了该模式返回 `FOC_ERR_PARAM`（准入条件见 `foc_motor_setup_t` 的说明）。
+ * @note [en] The incoming observer is seeded from the outgoing one's current estimate before the selection changes, and
+ *            that is the whole reason this exists as a function. Every observer in the library except the injection one
+ *            is an integrator: an observer that has not been stepped since the motor started holds whatever it was
+ *            seeded with at start-up, which is not where the rotor is. Switching without that seed is how a chain steps
+ *            by a quarter or half turn and looks like a convention bug. The injection observer cannot be seeded and
+ *            acquires the angle itself, so handing over *to* it starts from no information -- legitimate at standstill,
+ *            and reported by `foc_motor_get_status()` like any other mode.
+ * @note [zh] 在改变选择之前，接手的观测器会用交出者当前的估计播种，这正是它必须是一个函数而不是一个字段的全部理由。库中
+ *            除注入观测器以外都是积分器：自电机起动以来没被推进过的观测器，保留的是起动时播下的东西，而那不是转子所在的
+ *            位置。少了这份种子就切换，正是一条链会跳四分之一圈或半圈、看起来像约定错误的原因。注入观测器无法被播种、自
+ *            己获取角度，因此交接**给**它会从零信息开始——在静止时可以接受，并且与其他模式一样由
+ *            `foc_motor_get_status()` 报出。
+ * @context [en] Control context or a task that is not ticking at the same time; not ISR-safe against `foc_tick()`.
+ * @context [zh] 控制上下文，或一个不与 `foc_tick()` 同时运行的任务；不可与 `foc_tick()` 并发。
+ * @since 0.1.6
+ * @exporter
+ */
+foc_err_t foc_motor_set_observer(foc_motor_t motor, foc_observer_t observer);
+
+
+/**
  * @brief [en] Destroy a motor instance and invalidate its handle.
  * @brief [zh] 销毁电机实例并使句柄失效。
  * @param motor [en] handle from foc_motor_create(); NULL is accepted and returns FOC_ERR_PARAM.

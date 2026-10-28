@@ -171,6 +171,7 @@ struct ChainResult final {
     float converged_s{-1.0F};
     float speed_at_switch_rad_s{0.0F};
     float observed_speed_at_switch_rad_s{0.0F};
+    bool seeded_at_switch{false};
     bool switched{false};
     bool aligned{false};
     int ticks_before_switch{0};
@@ -357,20 +358,15 @@ auto run_chain(float switch_at_rad_s, core::ObserverKind kind_after, int freeze_
             // 在静止附近并不声称给出可用的转速。用真值触发把"切换发生在何时"固定下来，于是被测量的是交接本身；观测器
             // 在那一刻自己的读数会一并打印，两者的差距是可见的，而不是被假设掉。
             if (std::fabs(plant.omega_mech_rad_s()) >= switch_at_rad_s) {
-                // Seed the incoming observer with the outgoing estimate before handing over. This is the obligation
-                // `switchable_observer.hpp` states and `test_switchable_observer.cpp` pins: the idle observer is frozen,
-                // not tracking, so it carries whatever it last believed -- here a flux vector seeded at `start()` long
-                // before the rotor had moved. Without this line the hand-over is not a hand-over, it is a jump to a
-                // stale estimate.
-                // 交接之前用交出者的估计给接手的那个播种。这是 `switchable_observer.hpp` 写明的义务、也是
-                // `test_switchable_observer.cpp` 钉住的性质：闲置的观测器是**冻结**的而非在跟踪，于是它带着自己上次
-                // 相信的东西——这里是一个在 `start()` 时、转子还没动之前播下的磁链矢量。没有这一行，所谓交接就不是交接，
-                // 而是跳到一个陈旧的估计上。
-                const float handover_angle = static_cast<float>(motor.observer().state().theta_e);
-                const float psi_f = foc::psi_f_wb(motor_config());
-                motor.observer().seed_flux(
-                    core::Ab<float>{psi_f * std::cos(handover_angle), psi_f * std::sin(handover_angle)});
-                motor.observer().set_kind(kind_after);
+                // One library call, not two lines of local recipe. This rig found the defect and measured the fix
+                // with hand-written seeding; the fix is now `SwitchableObserver::hand_over_to()`, so the rig has to
+                // prove that the library primitive reproduces the same numbers -- otherwise the repair lives in a test
+                // and every real caller still steps by a quarter turn.
+                // 一个库调用，而不是两行本地配方。本台架用**手写**的播种发现了缺陷、量出了修复；而修复现在在
+                // `SwitchableObserver::hand_over_to()` 里，因此台架必须证明库原语能重现同样的数字——否则这个修复
+                // 只活在测试里，每一个真实调用方仍然会跳四分之一圈。
+                const bool seeded = motor.observer().hand_over_to(kind_after);
+                result.seeded_at_switch = seeded;
                 changed = true;
                 result.switched = true;
                 result.speed_at_switch_rad_s = plant.omega_mech_rad_s();
@@ -424,6 +420,7 @@ TEST(SilFusionChain, TheWholeChainStaysInsideItsCeilingAndNothingJumpsAtTheSwitc
                 static_cast<int>(r.aligned), r.align_state, r.align_failure,
                 static_cast<double>(r.align_spread_rad), r.align_ticks, r.align_states_seen,
                 static_cast<int>(r.switched), static_cast<double>(r.speed_at_switch_rad_s));
+    std::printf("[chain] hand-over seeded the incoming observer: %d\n", static_cast<int>(r.seeded_at_switch));
     std::printf("[chain] acquired the angle at t=%.3f s | max |error| after that %.4f rad | before switch %+.4f\n",
                 static_cast<double>(r.converged_s), static_cast<double>(r.max_error_after_align_rad),
                 static_cast<double>(r.error_before_switch_rad));
