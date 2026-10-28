@@ -51,6 +51,7 @@ foc_err_t foc_bridge_board_check(const foc_board_measurements_t *measurements, c
                                  foc_board_report_t *out);
 const char *foc_bridge_board_item_name(int32_t item);
 const char *foc_bridge_board_cause_name(int32_t cause);
+const char *foc_bridge_fault_name(int32_t fault);
 foc_err_t foc_bridge_protector_create(const foc_protection_config_t *config, foc_protector_t *out);
 foc_err_t foc_bridge_protector_step(foc_protector_t protector, const foc_protection_input_t *in, float dt_s,
                                     foc_protection_output_t *out);

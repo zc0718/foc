@@ -181,6 +181,92 @@ def test_a_negative_current_ceiling_is_rejected():
         )
 
 
+def test_abi_011_pure_functions():
+    # The dead-time convention: 4/3 on the d axis, 2/sqrt(3) on q. Same numbers as the C test.
+    assert abs(foc.axis_deadtime_v(1e-6, 20000.0, 24.0, 0.0) - 0.64) < 0.01
+    assert abs(foc.axis_deadtime_v(1e-6, 20000.0, 24.0, math.pi / 2) - 0.554) < 0.01
+    assert foc.axis_deadtime_v(math.nan, 20000.0, 24.0, 0.0) == 0.0
+
+    params = foc.MotorParams(rs=0.5, ld=4e-4, lq=4e-4, kt=0.05, pole_pairs=7)
+    i_char, ratio, speed_gain, worthwhile = foc.field_weakening_worthwhile(params, 3.0)
+    # psi_f = kt/(1.5*p) = 4.762e-3 Wb, so i_char = psi_f/Ld = 11.9 A: 3.97x i_max.
+    assert abs(i_char - 11.9) < 0.05, i_char
+    assert ratio > 3.0
+    assert not worthwhile, "a surface machine with i_char = 4 i_max is not worth weakening"
+
+    # MTPA on a surface machine is exactly d = 0.
+    id_a, iq_a = foc.mtpa_reference(params, 3.0, 1.0)
+    assert id_a == 0.0
+    assert abs(iq_a - 1.0) < 1e-6
+
+
+def test_abi_011_board_check():
+    measured = foc.BoardMeasurements()
+    a = measured  # readability
+    a.sum_current_a = 0.0
+    # A +d drive puts i_u positive and i_v, i_w negative.
+    a.set_response_sign(0, 1.0)
+    a.set_response_sign(1, -1.0)
+    a.set_response_sign(2, -1.0)
+    a.ripple_measured_a = 0.30
+    a.ripple_expected_a = 0.375
+    a.deadtime_v = 0.640
+    a.deadtime_cmd_v = 0.640
+    a.rs_ohm = 0.500
+    a.rs_nameplate_ohm = 0.500
+    a.psi_f_wb = 4.762e-3
+    a.psi_f_nameplate_wb = 4.762e-3
+    a.observer_error_rad = 0.04
+    a.encoder_offset_rad = 0.005
+
+    rows, failures, cause, phase = foc.board_check(measured, foc.BoardLimits())
+    assert failures == 0, f"{failures} failed: {rows}"
+    assert cause == "none", cause
+    assert len(rows) > 0
+    assert rows[0][0] and isinstance(rows[0][0], str)
+
+    # Invert one phase: the cause must name polarity, not "several things".
+    a.set_response_sign(0, -1.0)
+    a.sum_current_a = 0.4
+    _, failures, cause, _ = foc.board_check(measured, foc.BoardLimits())
+    assert failures > 0
+    assert cause == "current polarity", cause
+
+    assert foc.board_item_name(99) == "?"
+    assert foc.board_cause_name(-1) == "?"
+
+
+def test_abi_011_protector():
+    with foc.Protector() as protector:
+        name, i_limit, allowed, budget, latched, _active = protector.step(
+            i_magnitude_a=0.5, v_bus_v=24.0, temperature_c=25.0, omega_e_rad_s=0.0, dt_s=5e-5
+        )
+        assert name == "none", name
+        assert allowed
+        assert i_limit > 0.0
+
+        name, i_limit, allowed, _, latched, _ = protector.step(
+            i_magnitude_a=5.0, v_bus_v=24.0, temperature_c=25.0, omega_e_rad_s=0.0, dt_s=5e-5
+        )
+        assert name == "over current", name
+        assert not allowed
+        assert i_limit == 0.0
+        assert latched, "an over-current must latch"
+
+        # Taking the current away does not clear a latched fault.
+        name, _, _, _, _, _ = protector.step(
+            i_magnitude_a=0.1, v_bus_v=24.0, temperature_c=25.0, omega_e_rad_s=0.0, dt_s=5e-5
+        )
+        assert name == "over current", name
+
+        protector.reset(cold=True)
+        name, _, allowed, _, _, _ = protector.step(
+            i_magnitude_a=0.1, v_bus_v=24.0, temperature_c=25.0, omega_e_rad_s=0.0, dt_s=5e-5
+        )
+        assert name == "none", name
+        assert allowed
+
+
 def main():
     failures = 0
     for name, case in sorted(globals().items()):

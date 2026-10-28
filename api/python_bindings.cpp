@@ -180,6 +180,69 @@ private:
 };
 
 
+/**
+ * [en] RAII owner of one `foc_protector_t`, same discipline as `Motor`: destroyed exactly once.
+ * [zh] 一个 `foc_protector_t` 的 RAII 持有者，纪律与 `Motor` 相同：只销毁一次。
+ */
+class Protector final {
+public:
+    explicit Protector(foc_protector_t handle) noexcept : handle_(handle) {}
+    ~Protector() { close(); }
+
+    Protector(const Protector &) = delete;
+    auto operator=(const Protector &) -> Protector & = delete;
+    Protector(Protector &&other) noexcept : handle_(other.handle_) { other.handle_ = nullptr; }
+    auto operator=(Protector &&other) noexcept -> Protector & {
+        if (this != &other) {
+            close();
+            handle_ = other.handle_;
+            other.handle_ = nullptr;
+        }
+        return *this;
+    }
+
+    /// [en] One control period. The return is a tuple rather than a dict because the six values
+    /// are positional in the C output struct and a dict would invite name drift.
+    /// [zh] 一个控制周期。返回元组而非 dict，因为这六个数在 C 输出结构里是有位置的，dict 会招来
+    /// 名字漂移。
+    [[nodiscard]] auto step(float i_magnitude_a, float v_bus_v, float temperature_c, float omega_e_rad_s,
+                            float dt_s, float flux_error_ratio, bool flux_valid) const -> py::tuple {
+        foc_protection_input_t in{};
+        in.struct_size = static_cast<std::uint32_t>(sizeof(in));
+        in.i_magnitude_a = i_magnitude_a;
+        in.v_bus_v = v_bus_v;
+        in.temperature_c = temperature_c;
+        in.omega_e_rad_s = omega_e_rad_s;
+        in.flux_error_ratio = flux_error_ratio;
+        in.flux_valid = flux_valid ? 1 : 0;
+
+        foc_protection_output_t out{};
+        out.struct_size = static_cast<std::uint32_t>(sizeof(out));
+        check(foc_protector_step(handle_, &in, dt_s, &out), "foc_protector_step");
+
+        // The fault name comes from the same table the C users read, so the two Faces cannot
+        // disagree about what fault 3 is called.
+        // 故障名取自 C 用户读的同一张表，于是两个"面"不会对"3 号故障叫什么"产生分歧。
+        const char *name = foc_fault_name(out.fault);
+        return py::make_tuple(name, out.i_limit_a, out.output_allowed != 0, out.i2t_budget,
+                              out.latched_mask != 0U, out.active_mask);
+    }
+
+    void reset(bool cold) const { check(foc_protector_reset(handle_, cold ? 1 : 0), "foc_protector_reset"); }
+
+    void close() noexcept {
+        if (handle_ != nullptr) {
+            (void)foc_protector_destroy(handle_);
+            handle_ = nullptr;
+        }
+    }
+
+    [[nodiscard]] auto alive() const noexcept -> bool { return handle_ != nullptr; }
+
+private:
+    foc_protector_t handle_{nullptr};
+};
+
 auto make_motor(float rs, float ld, float lq, float kt, float j, float b, std::uint8_t pole_pairs) -> Motor {
     foc_motor_params_t params{};
     params.rs = rs;
@@ -425,4 +488,151 @@ PYBIND11_MODULE(foc_python, m) {
         .def("__exit__",
              [](Motor &self, const py::object &, const py::object &, const py::object &) { self.close(); })
         .def("__repr__", [](const Motor &self) { return py::str("Motor(alive={})").format(self.alive()); });
+
+    // ------------------------------------------------------------------------------------------
+    // ABI 0.1.1: the modules the C surface could not reach. Bound one for one, with no extra
+    // Python-side logic -- a thin binding is the only kind that cannot drift from the C contract.
+    // ABI 0.1.1：C 表面此前够不到的那些模块。一对一绑定，Python 侧不加任何额外逻辑——只有薄的
+    // 绑定才不会与 C 契约漂移。
+    // ------------------------------------------------------------------------------------------
+
+    m.def(
+        "axis_deadtime_v", &foc_axis_deadtime_v, py::arg("deadtime_s"), py::arg("switching_hz"),
+        py::arg("v_bus_v"), py::arg("angle_rad"),
+        "[en] Dead-time volts projected onto an axis; 0 on a non-finite argument.\n"
+        "[zh] 死区伏秒投影到某轴上的电压；参数非有限返回 0。");
+    m.def("board_item_name", &foc_board_item_name, py::arg("item"),
+          "[en] Stable lowercase name of a board item. [zh] 检查项的稳定小写名。");
+    m.def("board_cause_name", &foc_board_cause_name, py::arg("cause"),
+          "[en] Stable lowercase name of a board cause. [zh] 成因的稳定小写名。");
+
+    m.def(
+        "field_weakening_worthwhile",
+        [](const foc_motor_params_t &params, float i_max_a) {
+            foc_fw_verdict_t out{};
+            out.struct_size = static_cast<std::uint32_t>(sizeof(out));
+            const foc_err_t rc = foc_field_weakening_worthwhile(&params, i_max_a, &out);
+            if (rc != FOC_OK) {
+                throw std::runtime_error("foc_field_weakening_worthwhile failed");
+            }
+            return py::make_tuple(out.i_char_a, out.ratio, out.speed_gain, out.worthwhile != 0);
+        },
+        py::arg("params"), py::arg("i_max_a"),
+        "[en] (i_char_a, ratio, speed_gain, worthwhile) from nameplate numbers alone.\n"
+        "[zh] 只用铭牌数字得到 (i_char_a, ratio, speed_gain, worthwhile)。");
+
+    m.def(
+        "mtpa_reference",
+        [](const foc_motor_params_t &params, float i_max_a, float iq_command_a) {
+            float id_a = 0.0F;
+            float iq_a = 0.0F;
+            const foc_err_t rc = foc_mtpa_reference(&params, i_max_a, iq_command_a, &id_a, &iq_a);
+            if (rc != FOC_OK) {
+                throw std::runtime_error("foc_mtpa_reference failed");
+            }
+            return py::make_tuple(id_a, iq_a);
+        },
+        py::arg("params"), py::arg("i_max_a"), py::arg("iq_command_a"),
+        "[en] (id_a, iq_a) for maximum torque per amp. [zh] 每安培转矩最大的 (id_a, iq_a)。");
+
+    py::class_<foc_board_measurements_t>(m, "BoardMeasurements",
+                                         "[en] What a standstill self-test measures.\n"
+                                         "[zh] 堵转自检测到的量。")
+        .def(py::init([]() {
+            foc_board_measurements_t out{};
+            out.struct_size = static_cast<std::uint32_t>(sizeof(out));
+            return out;
+        }))
+        .def_readwrite("sum_current_a", &foc_board_measurements_t::sum_current_a)
+        .def_readwrite("ripple_measured_a", &foc_board_measurements_t::ripple_measured_a)
+        .def_readwrite("ripple_expected_a", &foc_board_measurements_t::ripple_expected_a)
+        .def_readwrite("deadtime_v", &foc_board_measurements_t::deadtime_v)
+        .def_readwrite("deadtime_cmd_v", &foc_board_measurements_t::deadtime_cmd_v)
+        .def_readwrite("encoder_offset_rad", &foc_board_measurements_t::encoder_offset_rad)
+        .def_readwrite("rs_ohm", &foc_board_measurements_t::rs_ohm)
+        .def_readwrite("rs_nameplate_ohm", &foc_board_measurements_t::rs_nameplate_ohm)
+        .def_readwrite("psi_f_wb", &foc_board_measurements_t::psi_f_wb)
+        .def_readwrite("psi_f_nameplate_wb", &foc_board_measurements_t::psi_f_nameplate_wb)
+        .def_readwrite("observer_error_rad", &foc_board_measurements_t::observer_error_rad)
+        .def("set_offset", [](foc_board_measurements_t &self, int phase, float value) {
+            self.offset_a[phase] = value;
+        })
+        .def("set_response_sign", [](foc_board_measurements_t &self, int phase, float value) {
+            self.response_sign[phase] = value;
+        });
+
+    py::class_<foc_board_limits_t>(m, "BoardLimits", "[en] The board-check tolerances.\n"
+                                                     "[zh] 板级检查的容差。")
+        .def(py::init([]() {
+            foc_board_limits_t out{};
+            out.struct_size = static_cast<std::uint32_t>(sizeof(out));
+            out.sum_current_a = 0.05F;
+            out.offset_a = 0.02F;
+            out.ripple_ratio = 1.5F;
+            out.deadtime_ratio = 0.25F;
+            out.encoder_offset_rad = 0.02F;
+            out.parameter_ratio = 0.10F;
+            out.observer_error_rad = 0.10F;
+            return out;
+        }))
+        .def_readwrite("sum_current_a", &foc_board_limits_t::sum_current_a)
+        .def_readwrite("offset_a", &foc_board_limits_t::offset_a)
+        .def_readwrite("ripple_ratio", &foc_board_limits_t::ripple_ratio)
+        .def_readwrite("deadtime_ratio", &foc_board_limits_t::deadtime_ratio)
+        .def_readwrite("encoder_offset_rad", &foc_board_limits_t::encoder_offset_rad)
+        .def_readwrite("parameter_ratio", &foc_board_limits_t::parameter_ratio)
+        .def_readwrite("observer_error_rad", &foc_board_limits_t::observer_error_rad);
+
+    m.def(
+        "board_check",
+        [](const foc_board_measurements_t &m_in, const foc_board_limits_t &l_in) {
+            foc_board_report_t report{};
+            report.struct_size = static_cast<std::uint32_t>(sizeof(report));
+            const foc_err_t rc = foc_board_check(&m_in, &l_in, &report);
+            if (rc != FOC_OK) {
+                throw std::runtime_error("foc_board_check failed");
+            }
+            py::list rows;
+            for (int k = 0; k < report.count; ++k) {
+                const foc_board_reading_t &r = report.items[k];
+                rows.append(py::make_tuple(foc_board_item_name(r.item), r.value, r.limit,
+                                           r.pass != 0, r.phase));
+            }
+            return py::make_tuple(rows, report.failures, foc_board_cause_name(report.cause),
+                                  report.cause_phase);
+        },
+        py::arg("measurements"), py::arg("limits"),
+        "[en] (rows, failures, cause_name, cause_phase); each row is (name, value, limit, pass, "
+        "phase).\n"
+        "[zh] (rows, failures, cause_name, cause_phase)；每行是 (名称, 值, 限值, 通过, 相)。");
+
+    py::class_<Protector>(m, "Protector",
+                          "[en] The supervisory protection layer, stepped once per control period.\n"
+                          "[zh] 监督式保护层，每个控制周期推一步。")
+        .def(py::init([]() {
+            foc_protector_t handle = nullptr;
+            const foc_err_t rc = foc_protector_create(nullptr, &handle);
+            if (rc != FOC_OK) {
+                throw std::runtime_error("foc_protector_create failed");
+            }
+            return Protector{handle};
+        }))
+        .def("step", &Protector::step, py::arg("i_magnitude_a"), py::arg("v_bus_v"),
+             py::arg("temperature_c"), py::arg("omega_e_rad_s"), py::arg("dt_s"),
+             py::arg("flux_error_ratio") = 0.0F, py::arg("flux_valid") = true,
+             "[en] One period: returns (fault_name, i_limit_a, output_allowed, i2t_budget, "
+             "latched).\n"
+             "[zh] 一个周期：返回 (故障名, 电流限幅, 是否允许输出, I²t 预算, 是否锁存)。")
+        .def("reset", &Protector::reset, py::arg("cold") = false,
+             "[en] Clear the faults; cold also clears the I^2t memory.\n"
+             "[zh] 清故障；cold 同时清 I²t 记忆。")
+        .def("close", &Protector::close, "[en] Destroy the handle (idempotent). [zh] 销毁句柄（幂等）。")
+        .def_property_readonly("alive", &Protector::alive,
+                               "[en] False once destroyed. [zh] 销毁后为 False。")
+        .def("__enter__", [](Protector &self) -> Protector & { return self; },
+             py::return_value_policy::reference_internal)
+        .def("__exit__",
+             [](Protector &self, const py::object &, const py::object &, const py::object &) {
+                 self.close();
+             });
 }

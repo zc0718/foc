@@ -408,6 +408,21 @@ const char *foc_board_item_name(int32_t item);
 const char *foc_board_cause_name(int32_t cause);
 
 /**
+ * @brief [en] A stable lowercase name for a `FOC_FAULT_*` value. [zh]
+ * `FOC_FAULT_*` 值的稳定小写名字。
+ *
+ * @param fault [en] the value. [zh] 该值。
+ * @return [en] a static string, never NULL; `"?"` for an out-of-range value. [zh]
+ *         静态字符串，不会是 NULL；越界返回 `"?"`。
+ * @note [en] Paired with `foc_board_*_name()` so a log line is three calls and no switch statement
+ * in the caller's code.
+ * [zh] 与 `foc_board_*_name()` 配对，于是一条日志就是三次调用，调用方代码里不需要 switch。
+ * @since 0.1.1
+ * @exporter
+ */
+const char *foc_fault_name(int32_t fault);
+
+/**
  * @brief [en] Create a protector. [zh] 创建一个保护器。
  *
  * @param config [en] optional; NULL means every library default. [zh] 可选；NULL 表示全用库默认值。

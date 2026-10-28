@@ -178,6 +178,8 @@ const char *foc_board_item_name(int32_t item) { return foc_bridge_board_item_nam
 
 const char *foc_board_cause_name(int32_t cause) { return foc_bridge_board_cause_name(cause); }
 
+const char *foc_fault_name(int32_t fault) { return foc_bridge_fault_name(fault); }
+
 foc_err_t foc_protector_create(const foc_protection_config_t *config, foc_protector_t *out) {
     if (out == NULL) {
         return FOC_ERR_PARAM;

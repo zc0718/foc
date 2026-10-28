@@ -906,6 +906,34 @@ const char* foc_bridge_board_cause_name(std::int32_t cause) {
     return foc::core::board_cause_name(static_cast<foc::core::BoardCause>(cause));
 }
 
+const char* foc_bridge_fault_name(std::int32_t fault) {
+    // Range-checked before the cast: an out-of-range int32 is not a valid enumerator.
+    // 先查范围再转型：越界的 int32 不是合法枚举值。
+    if ((fault < static_cast<std::int32_t>(foc::core::FaultCode::None)) ||
+        (fault > static_cast<std::int32_t>(foc::core::FaultCode::LostSync))) {
+        return "?";
+    }
+    switch (static_cast<foc::core::FaultCode>(fault)) {
+    case foc::core::FaultCode::None:
+        return "none";
+    case foc::core::FaultCode::OverCurrent:
+        return "over current";
+    case foc::core::FaultCode::OverVoltage:
+        return "over voltage";
+    case foc::core::FaultCode::UnderVoltage:
+        return "under voltage";
+    case foc::core::FaultCode::OverTemperature:
+        return "over temperature";
+    case foc::core::FaultCode::I2t:
+        return "i2t";
+    case foc::core::FaultCode::Stall:
+        return "stall";
+    case foc::core::FaultCode::LostSync:
+        return "lost sync";
+    }
+    return "?";
+}
+
 foc_err_t foc_bridge_protector_create(const foc_protection_config_t* config, foc_protector_t* out) {
     if (out == nullptr) {
         return FOC_ERR_PARAM;
