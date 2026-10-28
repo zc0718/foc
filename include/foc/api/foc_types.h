@@ -560,3 +560,29 @@ typedef struct foc_hal_callbacks {
 
 /** @brief [en] Handle to a protector instance. [zh] 保护器实例的句柄。 @since 0.1.1 */
 typedef struct foc_protector_s *foc_protector_t;
+
+
+/**
+ * @brief [en] One period of the control loop, copied out of the C++ trace channel.
+ * @brief [zh] 控制环的一个周期，从 C++ 轨迹通道拷出。
+ * @note [en] The layout is the C++ `core::TraceSample` field for field, and `bridge.cpp` asserts that at compile time
+ *            rather than trusting this comment. Seven numbers, two states, and the platform timestamp truncated to 32
+ *            bits; `t_us == 0` on every sample means the HAL has no clock.
+ * @note [zh] 布局与 C++ 的 `core::TraceSample` 逐字段一致，`bridge.cpp` 在编译期断言这一点而不靠这条注释。七个数、两个
+ *            状态，以及截断到 32 位的平台时间戳；每条 `t_us == 0` 表示 HAL 没有时钟。
+ * @since 0.1.8
+ * @exporter
+ */
+typedef struct foc_trace_sample {
+    uint32_t t_us;    /* platform clock, low 32 bits; 0 = this HAL has no clock */
+    float i_d;        /* measured d-axis current, A */
+    float i_q;        /* measured q-axis current, A */
+    float i_ref_d;    /* demanded d-axis current, A */
+    float i_ref_q;    /* demanded q-axis current, A */
+    float v_d;        /* applied d-axis voltage, V */
+    float v_q;        /* applied q-axis voltage, V */
+    float speed_mech; /* mechanical speed, rad/s */
+    uint8_t mode;     /* foc_motor_state_t at the end of the period */
+    uint8_t status;   /* foc_err_t at the end of the period, as its unsigned byte */
+    uint16_t pad;     /* keeps the record a fixed size; written as 0 */
+} foc_trace_sample_t;

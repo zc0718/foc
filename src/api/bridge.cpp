@@ -31,6 +31,39 @@ namespace api {
 
 namespace {
 
+/**
+ * @brief [en] The C path's trace policy: a run-time ring over caller storage.
+ * @brief [zh] C 路径的轨迹策略：指向调用方存储的运行时环。
+ * @note [en] Why this exists at all, when C++ users get `core::RingTrace<N>` and pay nothing. Capacity is a template
+ *            argument there, and the ABI is one type for every caller, so the C path cannot have a compile-time
+ *            capacity without a second motor implementation -- which would be a second control path, and the whole
+ *            point of the bridge is that there is exactly one. The price is one null check per period, and the check is
+ *            predictable, so it costs a fraction of a nanosecond when nothing is attached.
+ * @note [zh] 为什么在 C++ 用户能拿到零代价的 `core::RingTrace<N>` 时还要有这个。那里的容量是模板参数，而 ABI 对所有调用
+ *            方都是一个类型，所以 C 路径不可能在不引入第二个电机实现的前提下拥有编译期容量——而第二个实现就是第二条控制
+ *            路径，桥的全部意义恰恰在于只有一条。代价是每周期一次空指针检查，而它是可预测的，未挂载时不到一纳秒。
+ * @since 0.1.8
+ */
+struct AbiTrace final {
+    core::SpanTrace ring{};
+
+    auto push(const core::TraceSample& sample) noexcept -> bool { return ring.push(sample); }
+    [[nodiscard]] auto size() const noexcept -> std::uint32_t { return ring.size(); }
+    [[nodiscard]] auto dropped() const noexcept -> std::uint32_t { return ring.dropped(); }
+};
+
+static_assert(core::concepts::is_trace_sink_v<AbiTrace>, "the C path's trace must satisfy the sink contract");
+
+// The C struct and the C++ record must be the same bytes, and a comment saying so is not a check. These four assertions
+// are what lets `foc_trace_sample_t` be filled by a copy rather than by six field assignments that could drift.
+// C 结构与 C++ 记录必须是同样的字节，而一句"是同样的"注释不是检查。这四条断言才是让 `foc_trace_sample_t` 可以整块拷贝
+// 而不是逐字段赋值的东西——逐字段赋值会漂。
+static_assert(sizeof(foc_trace_sample_t) == sizeof(core::TraceSample), "the C sample must match the C++ record");
+static_assert(alignof(foc_trace_sample_t) == alignof(core::TraceSample),
+              "alignment must match for a whole-record copy");
+static_assert(offsetof(foc_trace_sample_t, speed_mech) == offsetof(core::TraceSample, speed_mech),
+              "the last numeric field must sit at the same offset");
+
 // The C path is the *whole* motor: position loop and aligner included. A C caller cannot add
 // template parameters, so the choice has to be made here; the defaults (`NullAlignment` etc.) would
 // silently cap the C API at a subset of the C++ one, which is the "library that only serves one
@@ -38,8 +71,9 @@ namespace {
 // C 路径给的是**完整**电机：位置环与对齐器都在。C 调用方无法追加模板参数，因此这个选择必须在这里
 // 做定；用默认的空策略（`NullAlignment` 等）会把 C API 静默地封成 C++ API 的子集，而那正是本项目
 // 一直在拒绝的"只服务一种场景的库"陷阱。
-using MotorT = motor::Motor<core::SwitchableObserver, core::Svpwm, core::Pi, driver::StubHal,
-                            core::NullReferenceGenerator, core::NullFeedforward, core::PositionP, core::AlignRoutine>;
+using MotorT =
+    motor::Motor<core::SwitchableObserver, core::Svpwm, core::Pi, driver::StubHal, core::NullReferenceGenerator,
+                 core::NullFeedforward, core::PositionP, core::AlignRoutine, AbiTrace>;
 
 /**
  * @brief [en] The same motor with a host-fed HAL: used only by `foc_motor_create_host()`.
@@ -51,7 +85,7 @@ using MotorT = motor::Motor<core::SwitchableObserver, core::Svpwm, core::Pi, dri
  */
 using MotorT_Host =
     motor::Motor<core::SwitchableObserver, core::Svpwm, core::Pi, driver::CallbackHal, core::NullReferenceGenerator,
-                 core::NullFeedforward, core::PositionP, core::AlignRoutine>;
+                 core::NullFeedforward, core::PositionP, core::AlignRoutine, AbiTrace>;
 
 /**
  * @brief [en] Object pool capacity: static storage, no heap, no fragmentation.
@@ -1167,6 +1201,64 @@ foc_err_t foc_bridge_hfi_size(const foc_motor_params_t* params, float pwm_freq_h
 
 foc_err_t foc_bridge_set_observer(foc_motor_t motor, foc_observer_t observer) {
     return foc::api::on_slot(motor, [observer](auto& slot) { return foc::api::set_observer(slot, observer); });
+}
+
+
+foc_err_t foc_bridge_set_trace(foc_motor_t motor, foc_trace_sample_t* samples, uint32_t capacity) {
+    // A buffer with no capacity, or a capacity with no buffer, is a caller mistake: one of the two was forgotten. Doing
+    // something reasonable with it would hide that until the trace came back empty.
+    // 有缓冲无容量、或有容量无缓冲，都是调用方漏了一件事。替它猜一个合理行为，只会把这件事藏到轨迹取回来是空的那一刻。
+    if (((samples == nullptr) && (capacity != 0U)) || ((samples != nullptr) && (capacity == 0U))) {
+        return FOC_ERR_PARAM;
+    }
+    return foc::api::on_slot(motor, [samples, capacity](auto& slot) {
+        // The C array and the C++ record are the same bytes -- asserted at compile time above -- so this is a cast, not
+        // a translation.
+        // C 数组与 C++ 记录是同样的字节——上面编译期已断言——所以这里是一次转型，不是一次翻译。
+        slot.instance->trace().ring.attach(reinterpret_cast<foc::core::TraceSample*>(samples), capacity);
+        return foc::ErrorCode::Ok;
+    });
+}
+
+
+std::uint32_t foc_bridge_trace_size(foc_motor_t motor) {
+    std::uint32_t out = 0U;
+    static_cast<void>(foc::api::on_slot(motor, [&out](auto& slot) {
+        out = slot.instance->trace().size();
+        return foc::ErrorCode::Ok;
+    }));
+    return out;
+}
+
+
+std::uint32_t foc_bridge_trace_dropped(foc_motor_t motor) {
+    std::uint32_t out = 0U;
+    static_cast<void>(foc::api::on_slot(motor, [&out](auto& slot) {
+        out = slot.instance->trace().dropped();
+        return foc::ErrorCode::Ok;
+    }));
+    return out;
+}
+
+
+foc_err_t foc_bridge_trace_read(foc_motor_t motor, uint32_t index, foc_trace_sample_t* out) {
+    if (out == nullptr) {
+        return FOC_ERR_PARAM;
+    }
+    return foc::api::on_slot(motor, [index, out](auto& slot) {
+        // Same bytes, asserted at compile time, so the copy is the translation.
+        // 同样的字节，编译期已断言，所以这次拷贝就是翻译本身。
+        *reinterpret_cast<foc::core::TraceSample*>(out) = slot.instance->trace().ring.at(index);
+        return foc::ErrorCode::Ok;
+    });
+}
+
+
+foc_err_t foc_bridge_trace_reset(foc_motor_t motor) {
+    return foc::api::on_slot(motor, [](auto& slot) {
+        slot.instance->trace().ring.reset();
+        return foc::ErrorCode::Ok;
+    });
 }
 
 

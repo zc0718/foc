@@ -143,6 +143,98 @@ template <std::uint16_t Capacity> class RingTrace final {
 };
 
 
+/**
+ * @brief [en] The same ring over storage somebody else owns, with the capacity known at run time.
+ * @brief [zh] 同一个环，但存储由别人持有，容量在运行时给定。
+ * @note [en] Two users, and both are shaped by a constraint rather than a preference. The C ABI cannot carry a capacity
+ *            as a template argument, because the ABI is one type for every caller; and a firmware author who wants to
+ *            put the trace in a linker section or in a memory pool should not have to give the library a `static` array
+ *            it cannot see. So the samples live where the caller put them. Detached (`attach(nullptr, 0)`, or the
+ *            default-constructed object) every call is a no-op and nothing is counted: there is no window to have lost.
+ *            Attached, the cost is one null check per period -- which is why the compiled-in path uses `RingTrace`
+ *            instead, where the check cannot exist.
+ * @note [zh] 两个使用方，都是被约束而不是被偏好塑造的。C ABI 无法把容量当模板参数携带，因为 ABI 对所有调用方都是一个类
+ *            型；而想把轨迹放进链接段或内存池的固件作者，不该被迫让库持有一块它看不见的 `static` 数组。因此样本住在调用
+ *            方放置它们的地方。未挂载时（`attach(nullptr, 0)` 或默认构造）每个调用都是空操作，什么也不计数：没有窗口可
+ *            谈丢失。挂载后每周期一个空指针检查——这也正是编译期路径用 `RingTrace` 的原因：那里连这个检查都不存在。
+ * @since 0.1.8
+ * @exporter
+ */
+class SpanTrace final {
+  public:
+    SpanTrace() noexcept = default;
+
+    SpanTrace(TraceSample* samples, std::uint32_t capacity) noexcept : samples_(samples), capacity_(capacity) {}
+
+    /**
+     * @brief [en] Point the ring at caller storage. `(nullptr, 0)` detaches; the counters start over.
+     * @brief [zh] 把环指向调用方存储。`(nullptr, 0)` 即卸载；计数器从头开始。
+     */
+    void attach(TraceSample* samples, std::uint32_t capacity) noexcept {
+        samples_ = ((samples != nullptr) && (capacity > 0U)) ? samples : nullptr;
+        capacity_ = (samples_ != nullptr) ? capacity : 0U;
+        head_ = 0U;
+        count_ = 0U;
+        dropped_ = 0U;
+    }
+
+    void detach() noexcept { attach(nullptr, 0U); }
+
+    [[nodiscard]] explicit operator bool() const noexcept { return samples_ != nullptr; }
+
+    [[nodiscard]] auto capacity() const noexcept -> std::uint32_t { return capacity_; }
+    [[nodiscard]] auto size() const noexcept -> std::uint32_t { return count_; }
+    [[nodiscard]] auto dropped() const noexcept -> std::uint32_t { return dropped_; }
+
+    /**
+     * @brief [en] Record one period. Returns `true` when an unread sample was overwritten, `false` when detached.
+     * @brief [zh] 记录一个周期。覆盖了未读样本返回 `true`；未挂载时返回 `false`。
+     */
+    auto push(const TraceSample& sample) noexcept -> bool {
+        if (samples_ == nullptr) {
+            return false;
+        }
+        const bool overwrote = (count_ == capacity_);
+        samples_[head_] = sample;
+        head_ = (head_ + 1U) % capacity_;
+        if (overwrote) {
+            ++dropped_;
+        } else {
+            ++count_;
+        }
+        return overwrote;
+    }
+
+    [[nodiscard]] auto at(std::uint32_t index) const noexcept -> TraceSample {
+        if ((samples_ == nullptr) || (index >= count_)) {
+            return TraceSample{};
+        }
+        const std::uint32_t oldest = (head_ + capacity_ - count_) % capacity_;
+        return samples_[(oldest + index) % capacity_];
+    }
+
+    [[nodiscard]] auto latest() const noexcept -> TraceSample {
+        return (count_ == 0U) ? TraceSample{} : at(count_ - 1U);
+    }
+
+    /**
+     * @brief [en] Forget the samples; the drop counter is kept, as in `RingTrace`.
+     * @brief [zh] 丢弃样本；与 `RingTrace` 一样保留丢帧计数。
+     */
+    void reset() noexcept {
+        head_ = 0U;
+        count_ = 0U;
+    }
+
+  private:
+    TraceSample* samples_{nullptr};
+    std::uint32_t capacity_{0U};
+    std::uint32_t head_{0U};
+    std::uint32_t count_{0U};
+    std::uint32_t dropped_{0U};
+};
+
+
 } // namespace core
 
 } // namespace foc

@@ -216,6 +216,34 @@ not: a trace that freezes when it fills loses exactly the window a fault is inte
 platform clock, truncated to 32 bits (71.6 minutes); with no clock every :code:`t_us` is zero, which means "no timestamp"
 rather than "everything happened at once".
 
+From C the same window is caller-owned storage and a run-time capacity, because the ABI is one type for every caller:
+
+.. code-block:: c
+
+   static foc_trace_sample_t window[1024];
+   foc_motor_set_trace(motor, window, 1024U);   /* NULL, 0 detaches */
+   ...
+   uint32_t size = foc_motor_trace_size(motor);
+   uint32_t lost = foc_motor_trace_dropped(motor);   /* 0 unless the ring wrapped */
+   foc_trace_sample_t sample;
+   foc_motor_trace_read(motor, size - 1U, &sample);
+
+and from Python the storage belongs to the object, so there is nothing to keep alive by hand:
+
+.. code-block:: python
+
+   trace = foc.Trace(1024)
+   motor.set_trace(trace)                 # or set_trace(None) to detach
+   ...
+   rows = trace.samples(motor)            # oldest first, a list of dicts
+   rows[-1]["i_q"] == motor.telemetry()["iq_a"]   # exactly, not approximately
+
+The C path pays one null check per period for that run-time capacity -- predictable, and nothing when detached. The
+compiled-in C++ path pays nothing because the capacity is the type. Measured cost of the whole feature where it lands: the
+Debug archive grew 8.6 KB (56.9 to 65.6 KB), of which the code is 1.5 KB and the ten new functions themselves about
+0.65 KB; the rest is DWARF for two new types, which a Release artifact does not carry. A Release ROM figure has **not**
+been measured, and is not claimed.
+
 Three things this channel is measured to do, and one it cannot. Measured: a sample agrees with
 :code:`telemetry()`/:code:`state()`/:code:`status()` **bit for bit** in the same period; the null channel adds no storage
 and no branch (host, best of three rounds: 158.0 ns/period off against 161.9 on over 20 000 periods -- the +3.9 ns difference is at the resolution of that measurement, and one round of it reported recording as *faster*, which is how a noise figure announces itself); and a sample survives a :code:`%.9g` text

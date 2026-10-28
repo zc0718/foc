@@ -206,7 +206,9 @@
     "core/trace.hpp": [
       "core/trace.hpp",
       "motor/motor.hpp",
-      "test_package/test/unit/test_trace.cpp"
+      "test_package/test/unit/test_trace.cpp",
+      "src/api/bridge.cpp",
+      "api/python_bindings.cpp"
     ],
     "core/transforms.hpp": [
       "src/core/transforms.cpp",

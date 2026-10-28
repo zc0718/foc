@@ -389,6 +389,64 @@ def test_abi_011_protector():
         assert allowed
 
 
+def test_the_window_the_loop_wrote_can_be_read_from_python():
+    # The trace channel, end to end: Python owns the storage, the loop writes into it, Python reads it back. The
+    # criterion is not "it returns something" -- it is that a sample agrees with the scalar reads from the same period,
+    # exactly. A recorder that agrees to six digits can manufacture a regression, so this compares with ==, and a
+    # float32 that crosses the C ABI lands in a Python float without loss.
+    # 轨迹通道端到端：Python 持有存储、控制环往里写、Python 读回。判据不是"它能返回东西"——而是一条样本与同一拍标量读
+    # 完全一致。六位对得上的记录器能凭空造出回归，所以这里用 == 比较；跨 C ABI 的 float32 无损落进 Python float。
+    trace = foc.Trace(32)
+    assert len(trace) == 32
+
+    with foc.Motor.from_parts() as motor:
+        assert motor.trace_size() == 0, "nothing attached yet"
+        motor.set_trace(trace)
+        motor.enable()
+        motor.set_torque(0.5)
+        for _ in range(20):
+            motor.tick(1e-4)
+
+        assert motor.trace_size() == 20, motor.trace_size()
+        assert motor.trace_dropped() == 0, motor.trace_dropped()
+
+        rows = trace.samples(motor)
+        assert len(rows) == 20, len(rows)
+        newest = rows[-1]
+        scalar = motor.telemetry()
+        status = motor.status()
+        assert newest["i_q"] == scalar["iq_a"], (newest["i_q"], scalar["iq_a"])
+        assert newest["i_d"] == scalar["id_a"], (newest["i_d"], scalar["id_a"])
+        assert newest["speed_mech"] == scalar["speed_mech_rad_s"]
+        assert newest["mode"] == status["mode"], (newest["mode"], status["mode"])
+        # no clock on this HAL, so the timestamp is honestly absent rather than invented
+        assert all(row["t_us"] == 0 for row in rows)
+
+        # keep running past the capacity: the window slides instead of freezing, and says how much it lost
+        for _ in range(20):
+            motor.tick(1e-4)
+        assert motor.trace_size() == 32
+        assert motor.trace_dropped() == 8, motor.trace_dropped()
+        assert len(trace.samples(motor)) == 32
+
+        # detaching leaves the motor running and the window readable, and says there is nothing attached
+        motor.set_trace(None)
+        assert motor.trace_size() == 0
+        assert motor.trace_dropped() == 0, "a fresh attachment starts its own counts"
+
+
+def test_a_trace_buffer_that_was_never_attached_reads_empty():
+    # Attaching nothing and reading anyway must be dull rather than clever: no exception, no stale data, and the counts
+    # say zero because nothing was ever recorded instead of guessing.
+    # 什么都不挂却去读，必须是"平淡"的而不是"机灵"的：不抛异常、不给旧数据，计数说 0 是因为从未记录，而不是靠猜。
+    trace = foc.Trace(4)
+    with foc.Motor.from_parts() as motor:
+        assert trace.samples(motor) == []
+        assert motor.trace_dropped() == 0
+        motor.set_trace(trace)
+        assert trace.samples(motor) == [], "attached but never ticked"
+
+
 def test_a_fault_code_can_be_named_without_stepping_a_protector():
     # `Protector.step()` already returns a name, but only for the fault it just produced. An author holding a code from
     # elsewhere -- a bit in `active_mask`, a line in a log -- could not ask what it is called. The table is the one C

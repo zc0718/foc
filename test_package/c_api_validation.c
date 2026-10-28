@@ -56,6 +56,37 @@ int main(void) {
     CHECK(foc_get_state(motor, NULL, NULL, NULL) == FOC_ERR_PARAM);
     CHECK(foc_set_torque_f64(motor, (double)NAN) == FOC_ERR_PARAM);
 
+    /* The trace channel from a pure C caller: caller-owned storage, no allocation, and the two
+     * half-attached shapes refused instead of guessed at. */
+    static foc_trace_sample_t window[16];
+    CHECK(foc_motor_trace_size(motor) == 0U);      /* nothing attached yet */
+    CHECK(foc_motor_set_trace(motor, NULL, 4U) == FOC_ERR_PARAM);
+    CHECK(foc_motor_set_trace(motor, window, 0U) == FOC_ERR_PARAM);
+    CHECK(foc_motor_set_trace(motor, window, 16U) == FOC_OK);
+    for (int i = 0; i < 20; ++i) {
+        CHECK(foc_tick(motor, 1e-4F) == FOC_OK);
+    }
+    CHECK(foc_motor_trace_size(motor) == 16U);
+    CHECK(foc_motor_trace_dropped(motor) == 4U);   /* 20 periods into a 16-deep ring */
+
+    foc_trace_sample_t first = {0};
+    foc_trace_sample_t last = {0};
+    CHECK(foc_motor_trace_read(motor, 0U, &first) == FOC_OK);
+    CHECK(foc_motor_trace_read(motor, 15U, &last) == FOC_OK);
+    CHECK(isfinite(first.i_q) && isfinite(last.speed_mech));
+
+    /* Out of range writes zeros over whatever was there: it does not read past the caller's array, and it does not
+     * leave the previous contents behind for the caller to mistake for a sample. */
+    foc_trace_sample_t beyond = {-1U, -1.0F, -1.0F, -1.0F, -1.0F, -1.0F, -1.0F, -1.0F, 9U, 9U, 9U};
+    CHECK(foc_motor_trace_read(motor, 16U, &beyond) == FOC_OK);
+    CHECK((beyond.t_us == 0U) && (beyond.i_q == 0.0F) && (beyond.mode == 0U));
+    CHECK(foc_motor_trace_read(motor, 0U, NULL) == FOC_ERR_PARAM);
+    CHECK(foc_motor_trace_reset(motor) == FOC_OK);
+    CHECK(foc_motor_trace_size(motor) == 0U);
+    CHECK(foc_motor_trace_dropped(motor) == 4U);   /* already lost is still on the record */
+    CHECK(foc_motor_set_trace(motor, NULL, 0U) == FOC_OK); /* detach */
+    CHECK(foc_motor_trace_size(motor) == 0U);
+
     CHECK(foc_motor_disable(motor) == FOC_OK);
     CHECK(foc_motor_destroy(motor) == FOC_OK);
     CHECK(foc_motor_destroy(motor) == FOC_ERR_PARAM); /* stale handle, not a crash */

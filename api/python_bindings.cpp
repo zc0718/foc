@@ -241,6 +241,10 @@ struct PyHal final {
 };
 
 
+/** [en] Forward: `Motor::set_trace` needs it, and `Trace` needs `Motor`'s handle. [zh] 前置声明：`Motor::set_trace` 需要它，
+ * 而 `Trace` 需要 `Motor` 的句柄。 */
+class Trace;
+
 class Motor final {
 public:
     explicit Motor(const foc_motor_params_t &params) {
@@ -344,6 +348,12 @@ public:
         return out;
     }
 
+    /**
+     * @brief [en] Attach a trace window (or detach with None). Defined after `Trace`, whose layout it needs.
+     * @brief [zh] 挂上轨迹窗口（或用 None 拆除）。定义放在 `Trace` 之后，因为它需要后者的布局。
+     */
+    void set_trace(const py::object &trace);
+
     void tick(double dt_s) {
         check(foc_tick(handle_, static_cast<float>(dt_s)), "foc_tick");
         if ((plant_ != nullptr) && plant_->failed) {
@@ -375,11 +385,23 @@ public:
 
     [[nodiscard]] auto alive() const noexcept -> bool { return handle_ != nullptr; }
 
+    /**
+     * @brief [en] The raw handle, for the module's own compound objects. Not bound to Python: the module's promise is
+     *             that nobody outside it ever touches a `foc_motor_t`.
+     * @brief [zh] 裸句柄，供模块自己的复合对象使用。不绑到 Python：模块的承诺就是外部任何东西都不碰 `foc_motor_t`。
+     */
+    [[nodiscard]] auto handle() const noexcept -> foc_motor_t { return handle_; }
+
 private:
     /**
      * @brief [en] Present only for a host-fed motor: it owns the Python object the callbacks point at.
      * @brief [zh] 仅主控电机有：它拥有回调所指向的那个 Python 对象。
      */
+    /**
+     * @brief [en] The Python object holding the attached trace buffer, kept alive while attached.
+     * @brief [zh] 持有已挂载轨迹缓冲区的 Python 对象；挂载期间保活。
+     */
+    py::object attached_trace_{};
     std::unique_ptr<PyHal> plant_{};
     foc_motor_t handle_{nullptr};
 
@@ -391,12 +413,75 @@ private:
 };
 
 
+
+/**
+ * @brief [en] A window of recorded periods, owned by Python and handed to the motor.
+ * @brief [zh] 一段被记录下来的周期窗口，由 Python 持有、交给电机。
+ * @note [en] The storage is Python's on purpose: the C ABI takes a caller-owned array because a firmware author may
+ *            want the trace in a linker section, and the natural Python equivalent is a buffer this object owns. It is
+ *            attached by reference, so it must outlive the attachment -- `Motor.set_trace(None)` or letting the motor
+ *            die first are both fine, and `attach` re-checks that the motor is alive.
+ * @note [zh] 存储刻意归 Python：C ABI 之所以取调用方持有的数组，是因为固件作者可能想把轨迹放进链接段，而 Python 这边的
+ *            自然对应就是本对象持有的缓冲区。它是按引用挂载的，因此必须活得比挂载更久——`Motor.set_trace(None)` 或先让电
+ *            机销毁都可以；`attach` 会重新检查电机是否还活着。
+ * @since 0.1.8
+ */
+class Trace final {
+public:
+    explicit Trace(std::size_t capacity) : samples_(capacity) {}
+
+    [[nodiscard]] auto capacity() const -> std::size_t { return samples_.size(); }
+    [[nodiscard]] auto data() -> foc_trace_sample_t * { return samples_.data(); }
+
+    /**
+     * @brief [en] The retained window as a list of dicts, oldest first.
+     * @brief [zh] 保留窗口，以 dict 列表给出，最旧的在前面。
+     */
+    [[nodiscard]] auto samples(const Motor &motor) const -> py::list {
+        py::list out;
+        const std::uint32_t size = foc_motor_trace_size(motor.handle());
+        for (std::uint32_t index = 0; index < size; ++index) {
+            foc_trace_sample_t sample{};
+            if (foc_motor_trace_read(motor.handle(), index, &sample) != FOC_OK) {
+                throw std::runtime_error("foc_motor_trace_read failed");
+            }
+            py::dict row;
+            row["t_us"] = sample.t_us;
+            row["i_d"] = sample.i_d;
+            row["i_q"] = sample.i_q;
+            row["i_ref_d"] = sample.i_ref_d;
+            row["i_ref_q"] = sample.i_ref_q;
+            row["v_d"] = sample.v_d;
+            row["v_q"] = sample.v_q;
+            row["speed_mech"] = sample.speed_mech;
+            row["mode"] = py::cast(static_cast<foc_motor_state_t>(sample.mode));
+            row["status_byte"] = sample.status;
+            out.append(row);
+        }
+        return out;
+    }
+
+private:
+    std::vector<foc_trace_sample_t> samples_;
+};
+
+void Motor::set_trace(const py::object &trace) {
+    if (trace.is_none()) {
+        check(foc_motor_set_trace(handle_, nullptr, 0U), "foc_motor_set_trace");
+        attached_trace_ = py::object();
+        return;
+    }
+    Trace &owned = trace.cast<Trace &>();
+    check(foc_motor_set_trace(handle_, owned.data(), static_cast<std::uint32_t>(owned.capacity())),
+          "foc_motor_set_trace");
+    attached_trace_ = trace;
+}
+
 /**
  *  [en] RAII owner of one `foc_protector_t`, same discipline as `Motor`: destroyed exactly once.
  *  [zh] 一个 `foc_protector_t` 的 RAII 持有者，纪律与 `Motor` 相同：只销毁一次。
  */
-class Protector final {
-public:
+class Protector final {public:
     explicit Protector(foc_protector_t handle) noexcept : handle_(handle) {}
     ~Protector() { close(); }
 
@@ -740,6 +825,19 @@ PYBIND11_MODULE(foc_python, m) {
              "[en] Advance the control loop by one step. [zh] 推进一个控制步。")
         .def("telemetry", &Motor::telemetry,
              "[en] Last step: {speed_mech_rad_s, id_a, iq_a}. [zh] 最近一步：{speed_mech_rad_s, id_a, iq_a}。")
+        // The trace is attached by reference to a buffer Python owns, because that is the shape the C ABI takes.
+        // `None` detaches. The refcount is kept so the buffer cannot be collected while the loop is writing into it --
+        // which would be a use-after-free that the C side has no way to notice.
+        // 轨迹按引用挂到 Python 持有的缓冲区上，因为 C ABI 就是这个形状。`None` 拆挂。这里保住了引用计数，使缓冲区不会在
+        // 控制环往里写的时候被回收——那是 C 侧根本无法察觉的 use-after-free。
+        .def("set_trace", &Motor::set_trace, py::arg("trace"),
+             "[en] Attach a Trace (or None to detach). The window is written by the loop itself, so it records what the\n"
+             "controller believed, one sample per period.\n"
+             "[zh] 挂上一个 Trace（或 None 拆除）。窗口由控制环自己写入，因此它记录的是控制器相信的东西，每周期一条。")
+        .def("trace_size", [](const Motor &self) { return foc_motor_trace_size(self.handle()); },
+             "[en] Samples currently retained. [zh] 当前保留的样本数。")
+        .def("trace_dropped", [](const Motor &self) { return foc_motor_trace_dropped(self.handle()); },
+             "[en] Samples overwritten because the window was full. [zh] 因窗口写满而被覆盖的样本数。")
         .def("close", &Motor::close, "[en] Destroy the handle now (idempotent). [zh] 立即销毁句柄（幂等）。")
         .def_property_readonly("alive", &Motor::alive,
                                "[en] False once the handle has been destroyed. [zh] 句柄销毁后为 False。")
@@ -982,6 +1080,21 @@ PYBIND11_MODULE(foc_python, m) {
         "[en] (rows, failures, cause_name, cause_phase); each row is (name, value, limit, pass, "
         "phase).\n"
         "[zh] (rows, failures, cause_name, cause_phase)；每行是 (名称, 值, 限值, 通过, 相)。");
+
+    py::class_<Trace>(m, "Trace",
+                      "[en] A window of recorded control periods. Create it with a capacity, hand it to a motor, read it\n"
+                      "back as a list of dicts.\n"
+                      "[zh] 一段被记录下来的控制周期窗口。给定容量创建、交给电机、再以 dict 列表读回。")
+        .def(py::init<std::size_t>(), py::arg("capacity"),
+             "[en] Samples to retain; the storage is allocated once, here, and never grows.\n"
+             "[zh] 保留的样本数；存储在此时一次分配，之后不再增长。")
+        .def_property_readonly("capacity", &Trace::capacity,
+                               "[en] Samples this window can hold. [zh] 这个窗口能装多少条样本。")
+        .def("samples", &Trace::samples, py::arg("motor"),
+             "[en] The retained window, oldest first: t_us, i_d, i_q, i_ref_d, i_ref_q, v_d, v_q, speed_mech, mode,\n"
+             "status_byte.\n"
+             "[zh] 保留窗口，最旧在前的 t_us、i_d、i_q、i_ref_d、i_ref_q、v_d、v_q、speed_mech、mode、status_byte。")
+        .def("__len__", [](const Trace &self) { return self.capacity(); });
 
     py::class_<Protector>(m, "Protector",
                           "[en] The supervisory protection layer, stepped once per control period.\n"

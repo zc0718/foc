@@ -732,3 +732,85 @@ float foc_hfi_max_inject_hz(float pwm_freq_hz);
  * @exporter
  */
 foc_err_t foc_hfi_size(const foc_motor_params_t *params, float pwm_freq_hz, float hf_current_a, foc_hfi_sizing_t *out);
+
+
+/**
+ * @brief [en] Attach a trace buffer to a motor, or detach the current one with `NULL`.
+ * @brief [zh] 给电机挂上一个轨迹缓冲区；`NULL` 拆除当前那一个。
+ * @param motor [en] handle from foc_motor_create(); NULL is FOC_ERR_PARAM.
+ * @param motor [zh] 由 foc_motor_create() 得到的句柄；NULL 返回 FOC_ERR_PARAM。
+ * @param samples [en] caller-owned array of at least `capacity` samples; NULL detaches. Its lifetime must outlast the
+ *                     attachment, because the loop writes into it and nothing copies.
+ * @param samples [zh] 调用方持有的数组，至少 `capacity` 条；NULL 表示卸载。它的生命周期必须长于挂载期，因为控制环直接写
+ *                     进它里面，没有任何拷贝。
+ * @param capacity [en] samples to retain; 0 detaches.
+ * @param capacity [zh] 保留的样本数；0 表示卸载。
+ * @return [en] FOC_OK, or FOC_ERR_PARAM on a NULL motor or a detached buffer with a non-zero capacity.
+ * @return [zh] FOC_OK；电机为 NULL、或未挂载却给了非零容量时返回 FOC_ERR_PARAM。
+ * @note [en] The C path uses a run-time capacity because the ABI is one type for every caller, so it costs one null
+ *            check per period; a C++ user who can choose at compile time gets `core::RingTrace<N>` and pays nothing.
+ *            Neither path allocates: the samples live where the caller put them.
+ * @note [zh] C 路径用运行时容量，因为 ABI 对所有调用方都是一个类型，代价是每周期一次空指针检查；能在编译期选择的 C++ 用
+ *            户用 `core::RingTrace<N>`，一分不付。两条路径都不分配：样本住在调用方放置它的地方。
+ * @context [en] Call while the motor is stopped, or accept that the window starts mid-step.
+ * @context [zh] 建议在电机停止时调用，否则接受窗口从半步中间开始。
+ * @since 0.1.8
+ * @exporter
+ */
+foc_err_t foc_motor_set_trace(foc_motor_t motor, foc_trace_sample_t *samples, uint32_t capacity);
+
+
+/**
+ * @brief [en] Number of samples currently retained.
+ * @brief [zh] 当前保留的样本数。
+ * @param motor [en] motor handle; NULL yields 0.
+ * @param motor [zh] 电机句柄；NULL 返回 0。
+ * @return [en] retained samples, at most the attached capacity; 0 when no trace is attached.
+ * @return [zh] 保留的样本数，不超过挂载的容量；未挂载时为 0。
+ * @since 0.1.8
+ * @exporter
+ */
+uint32_t foc_motor_trace_size(foc_motor_t motor);
+
+
+/**
+ * @brief [en] How many samples were overwritten because the ring was full.
+ * @brief [zh] 因环形缓冲写满而被覆盖的样本数。
+ * @param motor [en] motor handle; NULL yields 0.
+ * @param motor [zh] 电机句柄；NULL 返回 0。
+ * @return [en] the drop count, which survives a reset: it records what was already lost.
+ * @return [zh] 丢帧计数，且不随复位清零：它记录的是**已经**丢掉的东西。
+ * @since 0.1.8
+ * @exporter
+ */
+uint32_t foc_motor_trace_dropped(foc_motor_t motor);
+
+
+/**
+ * @brief [en] Copy one sample out, counted from the oldest retained.
+ * @brief [zh] 拷贝出一条样本，下标从最旧保留样本起算。
+ * @param motor [en] motor handle.
+ * @param motor [zh] 电机句柄。
+ * @param index [en] 0-based index into the retained window.
+ * @param index [zh] 保留窗口内的 0 基下标。
+ * @param out [en] non-NULL receiver. Out-of-range leaves it zeroed rather than reading past the caller's array.
+ * @param out [zh] 非 NULL 接收者。越界时写零，而不是越过调用方的数组去读。
+ * @return [en] FOC_OK, or FOC_ERR_PARAM on a NULL motor or receiver.
+ * @return [zh] FOC_OK；电机或接收者为 NULL 时返回 FOC_ERR_PARAM。
+ * @since 0.1.8
+ * @exporter
+ */
+foc_err_t foc_motor_trace_read(foc_motor_t motor, uint32_t index, foc_trace_sample_t *out);
+
+
+/**
+ * @brief [en] Forget the retained samples, keeping the drop count.
+ * @brief [zh] 丢弃保留的样本，保留丢帧计数。
+ * @param motor [en] motor handle.
+ * @param motor [zh] 电机句柄。
+ * @return [en] FOC_OK, or FOC_ERR_PARAM on a NULL motor.
+ * @return [zh] FOC_OK；电机为 NULL 时返回 FOC_ERR_PARAM。
+ * @since 0.1.8
+ * @exporter
+ */
+foc_err_t foc_motor_trace_reset(foc_motor_t motor);

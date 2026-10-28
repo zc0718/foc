@@ -30,6 +30,11 @@ foc_err_t foc_bridge_create_host(const foc_motor_params_t *params, const foc_mot
                                  const foc_hal_callbacks_t *callbacks, foc_motor_t *out);
 foc_err_t foc_bridge_get_setup(foc_motor_t motor, foc_motor_setup_t *out);
 foc_err_t foc_bridge_set_observer(foc_motor_t motor, foc_observer_t observer);
+foc_err_t foc_bridge_set_trace(foc_motor_t motor, foc_trace_sample_t *samples, uint32_t capacity);
+uint32_t foc_bridge_trace_size(foc_motor_t motor);
+uint32_t foc_bridge_trace_dropped(foc_motor_t motor);
+foc_err_t foc_bridge_trace_read(foc_motor_t motor, uint32_t index, foc_trace_sample_t *out);
+foc_err_t foc_bridge_trace_reset(foc_motor_t motor);
 foc_err_t foc_bridge_destroy(foc_motor_t motor);
 foc_err_t foc_bridge_enable(foc_motor_t motor);
 foc_err_t foc_bridge_disable(foc_motor_t motor);
