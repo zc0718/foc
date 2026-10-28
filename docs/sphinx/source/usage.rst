@@ -114,28 +114,55 @@ _`Verification: what is actually checked`
 
 Every number below is produced by the commands in the same column, on the same commit.
 
+The rightmost column is the **evidence level** (defined in the project README): L1 is enforced by
+construction, L2 is measured against the model in this repository with the criterion written first,
+L3 adds a measured sensitivity to the model being wrong, L4 would be measured on real hardware.
+**There are no L4 claims** -- no motor has been attached to any of this. Read every number below as
+"true of the documented model", and use :code:`BoardSelfTest` / :code:`check_board()` to find out
+whether your hardware matches that model.
+
 .. list-table:: evidence, not adjectives
    :header-rows: 1
-   :widths: 30 42 28
+   :widths: 26 34 26 14
 
    * - What
      - How
      - Result
+     - Level
    * - Unit, SIL and stress cases
      - :code:`conan create . -s build_type=Debug --build=missing`
-     - 131 cases, 0 failed
+     - 351 cases, 0 failed
+     - L1/L2
    * - Line coverage
      - :code:`python3 .github/misc/coverage_gate.py`
-     - 96.23 % overall, 99.46 % in :code:`core/`
+     - 94.40 % overall, 97.53 % in :code:`core/`
+     - L1
    * - Layering and standalone headers
      - :code:`gates.py guard` / :code:`gates.py strict`
      - 0 violations
+     - L1
    * - Negative compilation (fake HAL must not compile)
      - :code:`python3 .github/misc/negative_compile.py`
-     - 10 / 10 cases behave as specified
+     - 27 / 27 cases behave as specified
+     - L1
+   * - The dq model itself
+     - :code:`test_abc_plant.cpp` -- an independently derived phase-variable plant
+     - 6 operating points agree on :math:`(i_d, i_q)` within 0.02 A, torque within 0.3 %
+     - L3
+   * - Unmodelled effects (q-axis saturation, iron loss, sensor gain/offset)
+     - :code:`test_sil_sensitivity.cpp`
+     - 8 rows; the worst single effect doubles the angle error, all stay inside the ceiling
+     - L3
    * - Three hosts and two cross targets
      - CI (ubuntu / macOS / Windows; arm-linux-a53, mcu-m4)
      - 17 / 17 jobs green
+     - L1
+
+Two things this table deliberately does *not* say. First, "0 failed" is a statement about the
+scenarios someone wrote, not a proof of correctness. Second, the SIL bench's own validity rests on
+the phase-variable cross-check above -- which is why that cross-check exists: with no motor expert
+to review the derivation, a second derivation is the only thing that can disagree.
+
 
 The SIL bench is layered on purpose: an analytic reference (L1), an independent offline
 arbiter (L2), and scenario tests S1–S5 (current step, speed step, sine tracking, saturation

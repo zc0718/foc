@@ -45,6 +45,16 @@ and `docs/sphinx/build/html_en` (English).
 - **Frozen C ABI** (`foc/api/foc_api.h`) over the same core, with generation-checked opaque handles
 - Optional **pybind11 module** (`foc_python`) bound to the C API, skipped automatically on cross builds
 - **SIL bench** with a dq-frame PMSM plant, used by both the test suite and the documentation figures
+- **Commissioning** (`foc/core/commissioning.hpp`): `Rs` from a two-point locked-rotor fit that
+  separates the dead-time offset from the resistance, flux linkage from a no-load ramp, current-channel
+  gain/offset, and incremental inductance from a flux integral
+- **Protection** (`foc/core/protection.hpp`): over-current, I²t, over/under-voltage, over-temperature
+  with derating, stall and lost-sync, with latching and hysteresis
+- **Board self-test** (`foc/core/board_check.hpp`): a five-call bench concept that measures offsets,
+  polarity, current sum, `Rs` and dead time, and a checklist that names the single cause which explains
+  the most failures
+- **Field weakening** (`foc/core/field_weakening.hpp`): exact quadratic operating-point solve with `Rs`
+  retained, plus a "is this motor worth field weakening at all" test
 - Conan-based modern dependency management
 - Supports C++ standards 17, 20, and 23
 - Automatic module file generation (`.ixx`/`.cppm`) from headers/sources
@@ -59,6 +69,61 @@ and `docs/sphinx/build/html_en` (English).
 - Metadata + gitmoji driven CI/CD orchestration (GitHub Actions)
 - Cross-compilation & on-board benchmark framework (`benchmark/`)
 - Agentic Coding workspace (`/workspace/`, git-ignored)
+
+## Evidence Levels
+
+Every quantitative claim here carries one of four levels. The level is part of the claim, not a
+footnote: an L2 number is not a weaker L4 number, it is a **different kind of statement**.
+
+| Level | What it means | How it is checked | Example |
+| --- | --- | --- | --- |
+| **L1** | Asserted by construction | A compiler flag, a type, or a gate that fails the build | "no exceptions" — `-fno-exceptions` plus `gates.py strict`, 27 negative-compile probes |
+| **L2** | Measured against the model in this repository, with a criterion written before the measurement and the number recorded | A unit test that prints the number and asserts the criterion | "angle error 0.0124 rad at 200 rad/s" — true of `sil_pmsm_plant.hpp`, not of your motor |
+| **L3** | L2 plus a **measured sensitivity**: how far the number moves when the model is wrong in the ways it is known to be wrong | `test_sil_sensitivity.cpp`, plus a phase-variable cross-check of the model itself | "…and 2.0× worse with a 10 % current-sense gain error" |
+| **L4** | Measured on physical hardware, with the condition recorded | Not available here | — |
+
+**This project currently makes no L4 claims.** There is no hardware in the loop at the time of
+writing: no motor, no inverter, no current probe. Everything below the L1 line is a statement about a
+model, and the model's own validity is exactly what L3 tries to bound.
+
+The honest reading of an L2/L3 number is therefore: *the code is correct with respect to a documented
+model, and that model has been checked for self-consistency (against a second, independently derived
+phase-variable model) and for sensitivity (against the effects it omits)*. Whether **your** motor
+matches the model is a separate question, and the library gives you the instruments to answer it —
+`BoardSelfTest`, `RsEstimator`, `FluxEstimator`, `check_board()` — which are themselves only L3.
+
+### What each module claims
+
+| Module | Level | The claim, in one line |
+| --- | --- | --- |
+| `foc/core/transforms.hpp`, `svpwm`, `pi`, `filters`, `sm`, `limits` | L1 + L3 | Algebra and discrete-time structure; numerics cross-checked against a phase-variable model |
+| `foc/core/observer/nonlinear_flux_observer.hpp` | L3 | 0.0124 rad at 200 rad/s on the SIL plant, 2.0× worse at 10 % current-gain error, **floor near 50 rad/s** |
+| `foc/core/observer/smo.hpp` | L3 | Admitted as an alternative, *not* shipped as the default — it beats the incumbent on the mean-value plant and loses on a switching one |
+| `foc/core/commissioning.hpp` | L3 | `Rs` +0.01 %, `ψf` +0.51 %, `Ld` +0.14 %, `Lq` +0.23 % on the SIL plant, with the conditions each one needs stated |
+| `foc/core/protection.hpp` | L2 + L3 | I²t budget `i_cont²·τ`; a trip removes the *command* in one period, and the current then decays with `L/R` (0.80 ms) — it cannot be clamped in one period |
+| `foc/core/board_check.hpp` | L3 | Names the correct cause on 3 seeded faults; measures what can be measured at standstill and says what it does not |
+| `foc/core/field_weakening.hpp` | L3 | Matches the analytic voltage/current envelope to four digits; the "is it worth it" rule is a gate, not a suggestion |
+| `benchmark/` | L1 | Builds and runs; its numbers are timing, not control performance |
+
+### Operating range, not a single number
+
+Because the low-speed floor is structural, claims are stated as a range:
+
+| Speed | What is claimed |
+| --- | --- |
+| < 50 rad/s (≈ 480 rpm) | **No angle claim.** The nonlinear-flux observer reads 0.16 rad and above on an ideal plant; use the aligner plus open-loop start |
+| 50–800 rad/s | L3 numbers above, with the sensitivity table attached |
+| 800 rad/s – base speed (2910 rad/s) | L2/L3, sensitivity growing: iron loss stops being negligible at light load |
+| Above base speed | Only with `FieldWeakeningReference`; L3 on a plant whose `Ld/Lq` is 1.0 |
+
+### Not a safety component
+
+This library is not certified, not redundant, and not fail-safe. `protection.hpp` is a *supervisory*
+layer that assumes the MCU, the gate driver and the sensing are already working; it cannot protect
+against a failed current sensor, a shorted bridge, or a lost PWM. Do not use it in any application
+where a wrong torque command can injure someone. The `latching` behaviour is there to make a fault
+inspectable, not to make it safe.
+
 
 ## Agentic Coding Workspace
 
