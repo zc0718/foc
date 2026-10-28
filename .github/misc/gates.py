@@ -302,10 +302,41 @@ def _include_directives(path):
     return found
 
 
+# Gates that rebuild or emulate something expensive and are deliberately kept off the cloud runners.
+# The reason is runtime, not principle: `pil` builds the library twice and runs the target binary under
+# qemu, which is minutes per push for evidence that only changes when the control loop does. It runs on
+# a developer machine and before a release. `cmd_guard` fails the build if a workflow calls one of these,
+# so the constraint is enforced rather than remembered -- the failure message names the reason and where
+# the gate is supposed to run.
+LOCAL_ONLY = {'pil'}
+
+
+def _ci_policy_violations():
+    """Workflows must not call a LOCAL_ONLY gate. Comments are ignored: they are where the rule is explained."""
+    problems = []
+    workflows = ROOT / '.github' / 'workflows'
+    if not workflows.is_dir():
+        return problems
+    for path in sorted(workflows.glob('*.y*ml')):
+        for lineno, line in enumerate(path.read_text(encoding='utf-8').splitlines(), start=1):
+            stripped = line.strip()
+            if not stripped or stripped.startswith('#'):
+                continue
+            for gate in LOCAL_ONLY:
+                if re.search(rf'gates\.py\s+{gate}\b', stripped):
+                    problems.append(f'{path.name}:{lineno}: calls `gates.py {gate}`, which is local-only -- '
+                                    f'it rebuilds and emulates for minutes per push; run it locally and '
+                                    f'before a release instead')
+    return problems
+
+
 def cmd_guard(explicit):
     """Layering guard: a scope may not include something its rules forbid (e.g. core must stay
     hardware-agnostic). Rules live in .github/misc/.include-guard.txt, one per line, so a derived
-    project states its own layering instead of editing this file."""
+    project states its own layering instead of editing this file.
+
+    Also the CI-policy check, because both are "a structural rule that a well-meant edit would break":
+    a workflow may not call a LOCAL_ONLY gate."""
     files = _gated_files(explicit, GATE_DIRS)
     if not files:
         return _empty(explicit, 'guard', GATE_DIRS)
@@ -323,7 +354,13 @@ def cmd_guard(explicit):
     if violations:
         print(f'[gates] guard: FAIL ({violations} violation(s))', flush=True)
         return 1
-    print(f'[gates] guard: OK ({len(files)} file(s))', flush=True)
+    policy = _ci_policy_violations()
+    if policy:
+        for problem in policy:
+            print(f'[gates] guard: {problem}', file=sys.stderr, flush=True)
+        print(f'[gates] guard: FAIL ({len(policy)} CI-policy violation(s))', flush=True)
+        return 1
+    print(f'[gates] guard: OK ({len(files)} file(s), no local-only gate in CI)', flush=True)
     return 0
 
 
@@ -477,12 +514,15 @@ def cmd_fmu(_explicit, tolerant=False):
     produced. When they are absent this prints one SKIPPED line and stops: loudly, because a silent skip would turn
     "the FMU loads in a standard master" into a claim nobody has checked."""
     python = _fmpy_python()
-    archives = sorted(Path.home().glob('.conan2/p/b/foc*/p/lib/libfoc_c.a'))
+    # CONAN_HOME first: CI sets it explicitly, and assuming `~/.conan2` there would work by accident until
+    # somebody moves the cache and the gate reports "no archive" instead of a real answer.
+    conan_home = Path(os.environ.get('CONAN_HOME') or (Path.home() / '.conan2')).expanduser()
+    archives = sorted(conan_home.glob('p/b/foc*/p/lib/libfoc_c.a'))
     reason = None
     if python is None:
         reason = 'no interpreter that can import fmpy (set FOC_FMPY_PYTHON to one)'
     elif not archives:
-        reason = 'no libfoc_c.a in the Conan cache (run `conan create .` first)'
+        reason = f'no libfoc_c.a in the Conan cache at {conan_home} (run `conan create .` first)'
     if reason is not None:
         if not tolerant:
             _die(f'the FMU check cannot run: {reason}')

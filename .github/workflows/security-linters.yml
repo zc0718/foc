@@ -86,6 +86,23 @@ jobs:
       - name: contract negative-compile gate
         run: python3 .github/misc/negative_compile.py
 
+      # required: doxygen blocks are aligned and wrapped, and every number the documentation quotes
+      # still matches the artefact that produced it (docfmt.py + number_sheet.py --check; no doxygen
+      # or sphinx needed, which is why this gate can run here)
+      - name: documentation-consistency gate
+        run: python3 .github/misc/gates.py docs
+
+      # required: every limit stated on the boundaries page still names a case that exists, and the
+      # page has not been emptied into a table that satisfies the per-row check trivially
+      - name: boundaries gate
+        run: python3 .github/misc/gates.py boundaries
+
+      # NOT here, on purpose: `gates.py pil`. It builds the library twice (host and aarch64) and runs
+      # the target binary under qemu, which is minutes of emulator time per push for evidence that
+      # changes only when the control loop changes. It stays a local gate -- run it before a release
+      # or after touching a non-template translation unit. The same list is enforced in `gates.py`:
+      # `LOCAL_ONLY` names the gates a workflow must not call.
+
       # Required gate: secrets scan with pinned binary version
       - name: gitleaks gate
         run: |

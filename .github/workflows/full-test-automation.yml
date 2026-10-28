@@ -95,6 +95,20 @@ jobs:
           -c tools.system.package_manager:mode=install -c tools.system.package_manager:sudo=True
         timeout-minutes: 55
 
+      # required, Ubuntu only: the FMU claim is "a third-party master with no knowledge of this repository can
+      # load the block and read the duties back", and the only way to keep it true is to load it in one. It
+      # needs the archive the step above just built, so it cannot live with the lint gates, and it needs
+      # FMPy, which is why it is one leg rather than every OS.
+      #
+      # NOT here, on purpose: `gates.py pil`. It rebuilds the library for aarch64 and runs the target binary
+      # under qemu, minutes per push for evidence that only changes when the control loop does. Local gate;
+      # `gates.py guard` fails the build if a workflow calls it (LOCAL_ONLY).
+      - name: FMU gate (a standard master loads it)
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+        run: |
+          python3 -m pip install --only-binary :all: fmpy==0.3.32
+          python3 .github/misc/gates.py fmu
+
       - name: Set timestamp
         id: timestamp
         run: |
