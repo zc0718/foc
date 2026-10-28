@@ -3,120 +3,300 @@
     "What each claim rests on -- the dependency graph the foundation log's blast-radius column is queried from.",
     "每条 claim 所依赖的东西——地基台账里\"爆炸半径\"那一列的查询来源。",
     "",
-    "A basis entry is one of:",
-    "  * a path to a file in this repository (relative to the root, or to include/foc/), meaning 'the claim's",
-    "    number came out of this, and if it is wrong the claim is wrong';",
-    "  * an identifier (a constant, a function, a table) that appears in include/ or src/, meaning 'the claim",
-    "    quotes this value, and if it changes the claim must be re-measured'.",
+    "Two kinds of edge, and both are generated from the code rather than from memory:",
+    "  * a compile edge -- a `foc/` header the module (or its own .cpp) includes directly. A change there",
+    "    is a change to what the claim was measured against;",
+    "  * a semantic edge -- another module whose value the claim quotes without including it. The gain law",
+    "    is the example: `core/pi.hpp`'s claim quotes numbers that `motor/motor_config.hpp` computes, and",
+    "    if that formula moves the claim is stale while every test still passes.",
+    "A self-edge (`core/commissioning.hpp` -> itself) means nothing else in the tree feeds it.",
+    "",
     "Every entry is checked by `claim_gate.py`: a path that does not exist, or an identifier that appears",
-    "nowhere, fails the build. That is the point -- a basis that has rotted is worse than no basis, because",
-    "the query below would return a confident and wrong blast radius.",
+    "nowhere in include/ or src/, fails the build. That is the point -- a basis that has rotted is worse",
+    "than no basis, because the query below would return a confident and wrong blast radius.",
     "",
     "Why this file and not a fifth column in the README. `evidence` answers 'what checks this claim';",
     "`basis` answers 'what would invalidate it'. The two are different: a claim can have evidence that",
     "passes while resting on a plant model that is wrong, which is exactly the W7-c failure.",
     "",
-    "QUERY:  python3 .github/misc/claim_gate.py --impact <path or identifier>",
+    "QUERY:  python3 .github/misc/gates.py claims --impact <path or identifier>",
     "It prints every claim whose basis names that thing, with the evidence to re-run. Use it before",
-    "changing a shared file, and use its output -- never an estimate -- to fill the blast-radius column of",
-    "foundation-log.rst.",
+    "changing a shared file, and use its output -- never an estimate -- to fill the blast-radius column",
+    "of foundation-log.rst.",
     "",
-    "Coverage is partial on purpose. `unmapped` lists the rows whose basis has not been written yet; a row",
-    "in neither list fails the build, so a new module cannot arrive silently. The unmapped count is printed",
-    "on every run because a number that is reported is a number that gets reduced."
+    "Coverage is now complete: every installed header is mapped. `unmapped` stays in the schema (the gate",
+    "still enforces that a row is in one list or the other) but is empty, and must stay empty -- a new",
+    "header arrives with either a basis or a stated reason it has none."
   ],
   "claims": {
-    "core/transforms.hpp": [
-      "src/core/transforms.cpp",
-      "test_package/test/unit/test_invariants.cpp"
+    "api/foc_api.h": [
+      "src/api/foc_api.c",
+      "api/foc_types.h"
+    ],
+    "api/foc_types.h": [
+      "src/api/bridge.cpp",
+      "api/foc_types.h"
+    ],
+    "core/alignment.hpp": [
+      "src/core/alignment.cpp",
+      "core/types.hpp"
+    ],
+    "core/board_check.hpp": [
+      "core/commissioning.hpp",
+      "core/types.hpp"
+    ],
+    "core/commissioning.hpp": [
+      "core/commissioning.hpp"
+    ],
+    "core/deadtime.hpp": [
+      "core/svpwm.hpp",
+      "core/transforms.hpp",
+      "core/types.hpp",
+      "foc_axis_deadtime_v",
+      "test_package/test/unit/test_deadtime.cpp"
+    ],
+    "core/feedforward.hpp": [
+      "src/core/feedforward.cpp",
+      "core/types.hpp"
+    ],
+    "core/field_weakening.hpp": [
+      "core/machine_params.hpp",
+      "core/reference.hpp",
+      "core/types.hpp",
+      "foc_field_weakening_worthwhile"
+    ],
+    "core/filters.hpp": [
+      "src/core/filters.cpp",
+      "core/types.hpp",
+      "core/transforms.hpp"
+    ],
+    "core/homing.hpp": [
+      "src/core/homing.cpp",
+      "core/position_reference.hpp",
+      "core/types.hpp"
     ],
     "core/limits.hpp": [
       "src/core/limits.cpp",
+      "core/types.hpp",
       "test_package/test/unit/test_invariants.cpp"
     ],
-    "core/pi.hpp": [
-      "src/core/pi.cpp",
-      "motor/motor_config.hpp",
-      "test_package/test/unit/test_invariants.cpp"
+    "core/machine_map.hpp": [
+      "core/machine_params.hpp"
     ],
-    "motor/motor_config.hpp": [
-      "src/motor/motor_config.cpp",
-      "core/pi.hpp"
+    "core/machine_map_text.hpp": [
+      "core/machine_map.hpp"
     ],
-    "core/observer/hfi_observer.hpp": [
-      "src/core/observer/hfi_observer.cpp",
-      "kMinSamplesPerCarrier",
-      "test_package/test/unit/sil_pmsm_plant.hpp"
+    "core/machine_params.hpp": [
+      "core/machine_params.hpp"
+    ],
+    "core/motion_profile.hpp": [
+      "src/core/motion_profile.cpp",
+      "core/position.hpp"
     ],
     "core/observer/back_emf_observer.hpp": [
       "src/core/observer/back_emf_observer.cpp",
-      "test_package/test/unit/sil_pmsm_plant.hpp"
-    ],
-    "core/observer/nonlinear_flux_observer.hpp": [
-      "src/core/observer/nonlinear_flux_observer.cpp",
+      "core/machine_params.hpp",
+      "core/observer/observer_policy.hpp",
+      "core/types.hpp",
+      "core/transforms.hpp",
       "test_package/test/unit/sil_pmsm_plant.hpp"
     ],
     "core/observer/blended_observer.hpp": [
+      "core/filters.hpp",
+      "core/observer/observer_policy.hpp",
+      "core/traits.hpp",
+      "core/transforms.hpp",
+      "core/types.hpp",
       "core/observer/hfi_observer.hpp",
       "core/observer/back_emf_observer.hpp",
       "core/observer/nonlinear_flux_observer.hpp"
     ],
-    "core/deadtime.hpp": [
-      "foc_axis_deadtime_v",
-      "test_package/test/unit/test_deadtime.cpp"
+    "core/observer/hfi_observer.hpp": [
+      "src/core/observer/hfi_observer.cpp",
+      "core/filters.hpp",
+      "core/machine_params.hpp",
+      "core/observer/observer_policy.hpp",
+      "core/types.hpp",
+      "core/limits.hpp",
+      "core/transforms.hpp",
+      "kMinSamplesPerCarrier",
+      "test_package/test/unit/sil_pmsm_plant.hpp"
+    ],
+    "core/observer/ideal_observer.hpp": [
+      "src/core/observer/ideal_observer.cpp",
+      "core/observer/observer_policy.hpp",
+      "core/types.hpp"
+    ],
+    "core/observer/nonlinear_flux_observer.hpp": [
+      "src/core/observer/nonlinear_flux_observer.cpp",
+      "core/machine_params.hpp",
+      "core/observer/observer_policy.hpp",
+      "core/types.hpp",
+      "core/transforms.hpp",
+      "test_package/test/unit/sil_pmsm_plant.hpp"
+    ],
+    "core/observer/observer_policy.hpp": [
+      "core/types.hpp"
+    ],
+    "core/observer/switchable_observer.hpp": [
+      "core/machine_params.hpp",
+      "core/observer/back_emf_observer.hpp",
+      "core/observer/blended_observer.hpp",
+      "core/observer/hfi_observer.hpp",
+      "core/observer/nonlinear_flux_observer.hpp",
+      "core/observer/observer_policy.hpp",
+      "core/types.hpp"
+    ],
+    "core/pi.hpp": [
+      "src/core/pi.cpp",
+      "core/types.hpp",
+      "core/limits.hpp",
+      "motor/motor_config.hpp",
+      "test_package/test/unit/test_invariants.cpp"
+    ],
+    "core/polarity.hpp": [
+      "src/core/polarity.cpp",
+      "core/types.hpp",
+      "core/transforms.hpp"
+    ],
+    "core/position.hpp": [
+      "src/core/position.cpp"
+    ],
+    "core/position_reference.hpp": [
+      "src/core/position_reference.cpp",
+      "core/types.hpp"
     ],
     "core/protection.hpp": [
       "foc_bridge_fault_name",
       "core/protection.hpp"
     ],
-    "core/field_weakening.hpp": [
-      "foc_field_weakening_worthwhile"
+    "core/reference.hpp": [
+      "core/types.hpp"
+    ],
+    "core/sm.hpp": [
+      "src/core/sm.cpp",
+      "core/types.hpp"
+    ],
+    "core/speed_from_angle.hpp": [
+      "src/core/speed_from_angle.cpp",
+      "core/types.hpp"
+    ],
+    "core/startup.hpp": [
+      "src/core/startup.cpp",
+      "core/alignment.hpp",
+      "core/types.hpp"
+    ],
+    "core/svpwm.hpp": [
+      "src/core/svpwm.cpp",
+      "core/types.hpp",
+      "core/limits.hpp",
+      "core/transforms.hpp"
+    ],
+    "core/traits.hpp": [
+      "core/alignment.hpp",
+      "core/feedforward.hpp",
+      "core/machine_params.hpp",
+      "core/observer/observer_policy.hpp",
+      "core/pi.hpp",
+      "core/position.hpp",
+      "core/reference.hpp",
+      "core/svpwm.hpp",
+      "core/types.hpp"
+    ],
+    "core/transforms.hpp": [
+      "src/core/transforms.cpp",
+      "core/types.hpp",
+      "test_package/test/unit/test_invariants.cpp"
+    ],
+    "core/types.hpp": [
+      "core/types.hpp"
+    ],
+    "core/version.hpp": [
+      "src/core/version.cpp",
+      "version.h"
+    ],
+    "driver/callback_hal.hpp": [
+      "core/types.hpp",
+      "hal/clock.hpp",
+      "hal/current_sense.hpp",
+      "hal/dc_link.hpp",
+      "hal/position.hpp",
+      "hal/pwm.hpp"
+    ],
+    "driver/scripted_current.hpp": [
+      "src/driver/scripted_current.cpp",
+      "core/types.hpp",
+      "hal/current_sense.hpp"
+    ],
+    "driver/sim_position.hpp": [
+      "src/driver/sim_position.cpp",
+      "hal/position.hpp"
+    ],
+    "driver/stub_dc_link.hpp": [
+      "src/driver/stub_dc_link.cpp",
+      "hal/dc_link.hpp"
+    ],
+    "driver/stub_hal.hpp": [
+      "src/driver/stub_hal.cpp",
+      "driver/scripted_current.hpp",
+      "driver/sim_position.hpp",
+      "driver/stub_dc_link.hpp",
+      "driver/stub_pwm.hpp"
+    ],
+    "driver/stub_pwm.hpp": [
+      "src/driver/stub_pwm.cpp",
+      "core/types.hpp",
+      "hal/pwm.hpp"
+    ],
+    "hal/clock.hpp": [
+      "hal/clock.hpp"
+    ],
+    "hal/current_sense.hpp": [
+      "core/types.hpp"
+    ],
+    "hal/dc_link.hpp": [
+      "hal/dc_link.hpp"
+    ],
+    "hal/position.hpp": [
+      "hal/position.hpp"
+    ],
+    "hal/pwm.hpp": [
+      "core/types.hpp"
+    ],
+    "motor/foc_loop.hpp": [
+      "src/motor/foc_loop.cpp",
+      "core/svpwm.hpp",
+      "core/types.hpp",
+      "core/transforms.hpp"
     ],
     "motor/motor.hpp": [
+      "core/alignment.hpp",
+      "core/limits.hpp",
+      "core/feedforward.hpp",
+      "core/observer/observer_policy.hpp",
+      "core/position_reference.hpp",
+      "core/position.hpp",
+      "core/reference.hpp",
+      "core/sm.hpp",
+      "core/traits.hpp",
+      "core/transforms.hpp",
+      "core/types.hpp",
+      "motor/foc_loop.hpp",
+      "motor/motor_config.hpp",
       "src/motor/motor_inst.cpp",
       "src/motor/foc_loop.cpp",
       "test_package/test/unit/sil_pmsm_plant.hpp"
+    ],
+    "motor/motor_config.hpp": [
+      "src/motor/motor_config.cpp",
+      "core/feedforward.hpp",
+      "core/pi.hpp",
+      "core/position.hpp",
+      "core/limits.hpp"
+    ],
+    "version.h": [
+      "src/version.c"
     ]
   },
-  "unmapped": [
-    "api/foc_api.h",
-    "api/foc_types.h",
-    "core/types.hpp",
-    "core/version.hpp",
-    "version.h",
-    "core/traits.hpp",
-    "core/svpwm.hpp",
-    "core/filters.hpp",
-    "core/sm.hpp",
-    "core/machine_params.hpp",
-    "core/machine_map.hpp",
-    "core/startup.hpp",
-    "core/position_reference.hpp",
-    "core/homing.hpp",
-    "core/speed_from_angle.hpp",
-    "core/machine_map_text.hpp",
-    "core/feedforward.hpp",
-    "core/reference.hpp",
-    "core/commissioning.hpp",
-    "core/board_check.hpp",
-    "core/alignment.hpp",
-    "core/polarity.hpp",
-    "core/position.hpp",
-    "core/motion_profile.hpp",
-    "core/observer/observer_policy.hpp",
-    "core/observer/ideal_observer.hpp",
-    "core/observer/switchable_observer.hpp",
-    "hal/clock.hpp",
-    "hal/current_sense.hpp",
-    "hal/dc_link.hpp",
-    "hal/position.hpp",
-    "hal/pwm.hpp",
-    "driver/stub_hal.hpp",
-    "driver/stub_pwm.hpp",
-    "driver/stub_dc_link.hpp",
-    "driver/sim_position.hpp",
-    "driver/scripted_current.hpp",
-    "driver/callback_hal.hpp",
-    "motor/foc_loop.hpp"
-  ]
+  "unmapped": []
 }

@@ -50,11 +50,24 @@ with the cases to re-run. `evidence` in the README answers "what checks this cla
 invalidate it", and the two are different -- a claim can have evidence that passes while resting on a plant model that is
 wrong, which is the W7-c failure exactly.
 
-Twelve of the forty-one claim rows have a basis so far. The other twenty-nine are listed explicitly as unmapped, the gate
-prints that count on every run, and a row that is in neither list fails the build -- so the graph cannot fall behind the
-table in silence. The graph is also checked for rot: a basis entry naming a file that no longer exists, or an identifier
-that appears nowhere in `include/` or `src/`, fails the build, because a decayed graph returns a confident and wrong
-blast radius and that is worse than returning nothing.
+Twelve of the forty-one claim rows had a basis when the graph was first built; the other twenty-nine were listed
+explicitly as unmapped and the gate printed that count on every run. It is now complete -- 51 of 51 installed headers are
+mapped -- and the count is still printed, because the mechanism that filled it is the same one that has to keep it full:
+a row in neither list fails the build, and a new header arrives with either a basis or a stated reason it has none.
+
+The graph is generated from the code rather than from recollection. An edge is either a compile edge (a `foc/` header
+the module or its own `.cpp` includes directly) or a semantic one (another module whose value the claim quotes without
+including it -- `core/pi.hpp`'s claim quotes numbers that `motor/motor_config.hpp` computes, and if that formula moves
+the claim is stale while every test still passes). Six headers are roots with no incoming edge and carry a self-edge; the
+asymmetry is stated rather than smoothed over.
+
+The graph is also checked for rot: a basis entry naming a file that no longer exists, or an identifier that appears
+nowhere in `include/` or `src/`, fails the build, because a decayed graph returns a confident and wrong blast radius and
+that is worse than returning nothing. It caught two while being filled -- `src/core/protection.hpp`, which is a header,
+and three entries that resolved to nothing.
+
+One answer worth knowing before the next wave: **33 of the 41 claims rest on `core/types.hpp`**. That is not a surprise,
+and it is the reason a change to the value layer is not a small change no matter how mechanical it looks.
 
 The log
 -------
