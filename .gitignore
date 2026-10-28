@@ -33,6 +33,12 @@ __pycache__/
 /docs/sphinx/source/_static
 /docs/sphinx/source/_templates
 
+# /examples/ is NOT a home for this repo: the FMU lives in /api/fmu/ (wrapper, build,
+# smoke, modelDescription) and docs demos live in /docs/demos/. A duplicate wrapper was
+# generated here once and survived a delete because it was untracked -- ignoring the path
+# makes that mistake impossible. If a real examples tree is ever wanted, put it under
+# /docs/examples/ instead: this pattern would hide it silently.
+/examples/
 # test framework
 /test_package/test/export/
 /build/
