@@ -69,6 +69,12 @@
 //       通路。已发布转速变干净是"应用读到的数"的改善，不是轴纹波的修法。
 //   C10c 稳态偏差不得因滤波变大。**成立**：0.0039 → 0.0023，反而更小（判据初稿写成对称区间，已改为单边并注明）。
 //
+//   C11 载波频率上的转速音调线性于 `inject_v`。**成立**：三分之一的伏特剩 0.36（预测 0.33）。
+//   C12 同样伏特下凸极减半，音调随之减半。**否证**：剩 0.97——转矩纹波不是凸极积 `(Ld−Lq)·id·iq`。（第一版的旋钮把伏特
+//       随 `Lq` 缩放来"保持高频电流"，但 d 轴高频电流由 `Ld` 决定，那个旋钮同时动了两个量，什么也没测到。）
+//   C13 实测转矩音调经 `1/(J·ω)` 推算的转速音调落在实测的 0.7–1.4 倍内。**成立**：1.03 倍。
+//   C14 转矩音调除以角度误差，在 20 与 5 rad/s 之间一致。**成立**：0.8035 对 0.8016，1.00 倍。
+//
 // 于是本文件结束时的事实：纹波 0.09 rad/s，只要注入在跑就在，注入一停就是 0.0000；它不在转子惯量里、不在已发布角度里、
 // 不在注入幅值里、不是钳位造成的振荡。**它最大的单条音调是载波本身**，而观测器发布出来的转速带着这条音调的力度是转子的
 // 10.4 倍——环路不是在自己生成它，而是在被喂它：`omega_e = omega_int + kp·error`，而 `error` 按构造携带载波频率的成分，
@@ -127,12 +133,12 @@ constexpr float kSettleSeconds = 0.3F;
 constexpr float kRunSeconds = 1.2F;
 constexpr float kWindowSeconds = 0.3F;
 
-auto plant_params(float inertia) -> sil::PlantParams {
-    return sil::PlantParams{kRs, kLd, kLq, kKt, inertia, kB, kPoles};
+auto plant_params(float inertia, float lq) -> sil::PlantParams {
+    return sil::PlantParams{kRs, kLd, lq, kKt, inertia, kB, kPoles};
 }
 
-auto motor_config(float inertia) -> foc::motor::MotorConfig {
-    return foc::motor::MotorConfig{kRs, kLd, kLq, kKt, inertia, kB, kPoles, 3.0F, kCtrlHz, 0.0F, 0.0F, 0.0F};
+auto motor_config(float inertia, float lq) -> foc::motor::MotorConfig {
+    return foc::motor::MotorConfig{kRs, kLd, lq, kKt, inertia, kB, kPoles, 3.0F, kCtrlHz, 0.0F, 0.0F, 0.0F};
 }
 
 using SensorlessMotor = foc::motor::Motor<core::SwitchableObserver, core::Svpwm, core::Pi, sil::PlantHal,
@@ -209,6 +215,7 @@ struct RippleResult final {
     float omega_tone[6]{};             ///< [en] published speed amplitude at each candidate. [zh] 已发布转速在各候选上的幅值。
     float error_tone[6]{};             ///< [en] the observer's error signal at each candidate. [zh] 观测器误差信号在各候选上的幅值。
     float clamp_fraction{0.0F};        ///< [en] share of window samples with |error()| at the +-1 clamp. [zh] 窗口内 |error()| 撞上 ±1 钳位的样本比例。
+    float torque_tone[6]{};            ///< [en] the integrated torque at each candidate tone. [zh] 积分得到的转矩在各候选音调上的幅值。
 };
 
 /**
@@ -219,9 +226,10 @@ struct RippleResult final {
  *                     the same shape and the mechanical transfer is the only thing that changes.
  * @param inertia [zh] 转子惯量，kg·m²；速度环与电流环增益都由它导出，于是环的形状不变，变的只有机械传递。
  */
-auto run_ripple(float inertia, bool use_sensor, float inject_v, float speed_lpf_hz = 0.0F) -> RippleResult {
+auto run_ripple(float inertia, bool use_sensor, float inject_v, float speed_lpf_hz = 0.0F, float lq = kLq,
+                float command = kCommandRadS) -> RippleResult {
     RippleResult result{};
-    sil::PmsmPlant plant(plant_params(inertia));
+    sil::PmsmPlant plant(plant_params(inertia, lq));
     sil::PlantHal hal(plant, kVBus);
     hal.reset(sil::PlantState{0.0F, 0.0F, 0.0F, 0.0F});
     // With a sensor present the `Motor` reads the angle and the speed from it and never steps the observer. The
@@ -232,7 +240,7 @@ auto run_ripple(float inertia, bool use_sensor, float inject_v, float speed_lpf_
     // 注入观测器不会推进载波，而冻结的载波就是直流电压——那会让两次运行比的不是角度来源。
     hal.position.set_sensor_present(use_sensor);
 
-    const foc::motor::MotorConfig cfg = motor_config(inertia);
+    const foc::motor::MotorConfig cfg = motor_config(inertia, lq);
     core::SwitchableObserver::Config config{};
     config.back_emf = core::BackEmfObserver::Config{cfg.rs, cfg.ld};
     config.hfi.inject_v = inject_v;
@@ -241,7 +249,7 @@ auto run_ripple(float inertia, bool use_sensor, float inject_v, float speed_lpf_
     config.hfi.demod_lpf_hz = kDemodHz;
     config.hfi.pll_bandwidth_hz = 40.0F;
     config.hfi.pll_zeta = 0.9F;
-    config.hfi.demod_gain_a = core::HfiObserver::predicted_gain_a(inject_v, kInjectHz, kLd, kLq);
+    config.hfi.demod_gain_a = core::HfiObserver::predicted_gain_a(inject_v, kInjectHz, kLd, lq);
     config.hfi.min_hf_current_a = 0.05F;
     config.hfi.speed_lpf_hz = speed_lpf_hz;
     config.kind = use_sensor ? core::ObserverKind::BackEmf : core::ObserverKind::Hfi;
@@ -267,10 +275,12 @@ auto run_ripple(float inertia, bool use_sensor, float inject_v, float speed_lpf_
     Goertzel speed_tones[6];
     Goertzel omega_tones[6];
     Goertzel error_tones[6];
+    Goertzel torque_tones[6];
     for (int t = 0; t < 6; ++t) {
         speed_tones[t] = Goertzel(kToneBins[t]);
         omega_tones[t] = Goertzel(kToneBins[t]);
         error_tones[t] = Goertzel(kToneBins[t]);
+        torque_tones[t] = Goertzel(kToneBins[t]);
     }
     int clamp_count = 0;
     bool in_window = false;
@@ -317,8 +327,8 @@ auto run_ripple(float inertia, bool use_sensor, float inject_v, float speed_lpf_
                     // says so.
                     // 过零是按**指令**而不是按均值计数的，因为均值要等这一遍走完才知道。两者相差一个偏差，0.004 对 0.09 的
                     // 纹波，故两种数法给出同样的过零数——若哪天不再如此，输出里的偏差那一行会说明。
-                    const float centred = speed - kCommandRadS;
-                    const float previous_centred = previous_sub - kCommandRadS;
+                    const float centred = speed - command;
+                    const float previous_centred = previous_sub - command;
                     if (((previous_centred < 0.0F) && (centred >= 0.0F)) ||
                         ((previous_centred > 0.0F) && (centred <= 0.0F))) {
                         ++crossings;
@@ -346,7 +356,7 @@ auto run_ripple(float inertia, bool use_sensor, float inject_v, float speed_lpf_
         const float feedback = use_sensor
                                    ? hal.position.velocity_rad_s()
                                    : (static_cast<float>(motor.observer().state().omega_e) / static_cast<float>(kPoles));
-        step_once(speed_pi.step(kCommandRadS, feedback, kDt));
+        step_once(speed_pi.step(command, feedback, kDt));
         if (in_window) {
             // The current in the rotor's own frame: the plant's instantaneous currents projected with the *true* angle.
             // This is the torque-producing current, which is what the mechanical equation sees.
@@ -358,7 +368,7 @@ auto run_ripple(float inertia, bool use_sensor, float inject_v, float speed_lpf_
             // so the first term is exactly `kt*iq`.
             // 与 plant 积分所用的转矩表达式相同：`1.5·p·(psi_f·iq + (Ld−Lq)·id·iq)`，其中 `psi_f = kt/(1.5·p)`，故第一项
             // 正好是 `kt·iq`。
-            const float torque = (kKt * i_dq.q) + (1.5F * static_cast<float>(kPoles) * (kLd - kLq) * i_dq.d * i_dq.q);
+            const float torque = (kKt * i_dq.q) + (1.5F * static_cast<float>(kPoles) * (kLd - lq) * i_dq.d * i_dq.q);
             const float speed = plant.omega_mech_rad_s();
             ctrl_sum += static_cast<double>(speed);
             ctrl_sum_sq += static_cast<double>(speed) * static_cast<double>(speed);
@@ -413,6 +423,7 @@ auto run_ripple(float inertia, bool use_sensor, float inject_v, float speed_lpf_
                     speed_tones[t].push(speed);
                     omega_tones[t].push(omega_est);
                     error_tones[t].push(error_signal);
+                    torque_tones[t].push(torque);
                 }
                 clamp_count += (std::fabs(error_signal) >= 0.99F) ? 1 : 0;
             }
@@ -422,7 +433,7 @@ auto run_ripple(float inertia, bool use_sensor, float inject_v, float speed_lpf_
 
     const double n = static_cast<double>(count);
     const double speed_mean = (n > 0.0) ? (ctrl_sum / n) : 0.0;
-    result.speed_bias_rad_s = static_cast<float>(speed_mean - static_cast<double>(kCommandRadS));
+    result.speed_bias_rad_s = static_cast<float>(speed_mean - static_cast<double>(command));
     result.speed_ripple_ctrl =
         static_cast<float>(std::sqrt(std::max(0.0, (ctrl_sum_sq / n) - (speed_mean * speed_mean))));
     const double omega_est_mean = (n > 0.0) ? (omega_est_sum / n) : 0.0;
@@ -474,11 +485,12 @@ auto run_ripple(float inertia, bool use_sensor, float inject_v, float speed_lpf_
     static constexpr float kTwoPi = 6.28318530717959F;
     const float omega_dom = kTwoPi * std::max(result.dominant_hz, 1.0F);
     result.implied_speed_ripple = result.torque_ripple_nm / (inertia * omega_dom);
-    result.reached_command = std::fabs(plant.omega_mech_rad_s() - kCommandRadS) < 0.5F;
+    result.reached_command = std::fabs(plant.omega_mech_rad_s() - command) < 0.5F;
     for (int t = 0; t < 6; ++t) {
         result.speed_tone[t] = speed_tones[t].amplitude();
         result.omega_tone[t] = omega_tones[t].amplitude();
         result.error_tone[t] = error_tones[t].amplitude();
+        result.torque_tone[t] = torque_tones[t].amplitude();
     }
     result.clamp_fraction = (count > 0) ? (static_cast<float>(clamp_count) / static_cast<float>(count)) : 0.0F;
     return result;
@@ -904,3 +916,136 @@ TEST(SilSpeedRipple, ThePublishedSpeedCanBeCleanedAndTheRotorDoesNotCare) {
                                     "the loop after all and this conclusion needs rewriting";
 }
 
+TEST(SilSpeedRipple, TheToneIsTheInjectionsOwnCrossCouplingNotAReluctanceTorque) {
+    // The last candidate, and the only path by which the carrier reaches the rotor without passing through anything this
+    // library publishes: a torque at the carrier frequency produced by the injected current itself. The name for it was
+    // expected to be the reluctance product `1.5*p*(Ld-Lq)*id*iq`, and the measurement says it is not that -- see C12.
+    // Two independent knobs, both of which predict linearity:
+    //   1. the volts. `id` is proportional to `inject_v`, so the torque tone is too.
+    //   2. the saliency. At the *same* volts the injected d-axis current is unchanged -- it is set by `Ld`, which this
+    //      knob leaves alone -- so halving `(Ld-Lq)` must halve the torque tone. The first version of this knob scaled
+    //      `inject_v` with `lq` on the reasoning that `V/(w*L)` would stay constant; that is wrong, because the injected
+    //      current flows on the *d* axis and is set by `Ld`, so the knob moved the current and the saliency at once and
+    //      tested neither. Recorded because it is the kind of error that looks like a refutation.
+    // A third check closes the chain without asking the same question twice: the measured torque tone, pushed through the
+    // mechanical equation at 2 kHz, must reproduce the measured speed tone.
+    // 最后一个候选，也是载波到达转子**不经过库所发布的任何东西**的唯一通路：注入的 d 轴电流乘上负载电流、经凸极，产生
+    // 一个载波频率上的转矩 `1.5·p·(Ld−Lq)·id·iq`。两个独立旋钮检验它，两者都预测线性：
+    //   1. 伏特。`id` 正比于 `inject_v`，转矩音调亦然。
+    //   2. 凸极。在**同样伏特**下注入的 d 轴电流不变——它由 `Ld` 决定，而这个旋钮不动 `Ld`——于是 `(Ld−Lq)` 减半必然使
+    //      转矩音调减半。这个旋钮的第一版把 `inject_v` 随 `lq` 缩放，理由是 `V/(ω·L)` 保持不变；那是错的，因为注入电流
+    //      走的是 **d** 轴、由 `Ld` 决定，于是那个旋钮同时动了电流与凸极，两个都没测到。记下来，因为这类错误看起来像否证。
+    // 第三项检查闭合链条而不把同一个问题问两遍：实测转矩音调经机械方程在 2 kHz 上推算，必须还原出实测转速音调。
+    //
+    //   C11 the speed tone must fall with the volts: a third of the volts gives between 0.25x and 0.45x the tone.
+    //   C12 at the same volts with the saliency halved, the tone must halve: 0.35x to 0.65x.
+    //   C13 the torque tone through `1/(J*w)` must land within 0.7x..1.4x of the measured speed tone.
+    //   C11 转速音调必须随伏特下降：三分之一的伏特给出音调的 0.25–0.45 倍。
+    //   C12 同样伏特下凸极减半时，音调必须减半：0.35–0.65 倍。
+    //   C13 转矩音调经 `1/(J·ω)` 推算必须落在实测转速音调的 0.7–1.4 倍之内。
+    constexpr int kCarrierBin = 5; // 2000 Hz
+    const RippleResult at_12v = run_ripple(kBaseJ, false, 12.0F);
+    const RippleResult at_4v = run_ripple(kBaseJ, false, 4.0F);
+    // The same volts, half the saliency: `Ld - lq` goes from 2e-4 to 1e-4 while the injected d current is untouched.
+    // 同样伏特、一半凸极：`Ld − lq` 从 2e-4 变到 1e-4，而注入的 d 轴电流原封不动。
+    const RippleResult half_saliency = run_ripple(kBaseJ, false, 12.0F, 0.0F, 3.0e-4F);
+    const RippleResult full_saliency = run_ripple(kBaseJ, false, 12.0F, 0.0F, 4.0e-4F);
+
+    std::printf("\n[reluctance] the 2000 Hz tone under two independent knobs\n");
+    std::printf("[reluctance] %-28s %12s %12s %12s\n", "run", "speed_tone", "torque_tone", "hf_current");
+    std::printf("[reluctance] %-28s %12.5f %12.3e %12s\n", "12 V, Lq 4e-4", static_cast<double>(at_12v.speed_tone[kCarrierBin]),
+                static_cast<double>(at_12v.torque_tone[kCarrierBin]), "-");
+    std::printf("[reluctance] %-28s %12.5f %12.3e %12s\n", "4 V, Lq 4e-4", static_cast<double>(at_4v.speed_tone[kCarrierBin]),
+                static_cast<double>(at_4v.torque_tone[kCarrierBin]), "-");
+    std::printf("[reluctance] %-28s %12.5f %12.3e %12s\n", "12 V, Lq 3e-4 (half saliency)", static_cast<double>(half_saliency.speed_tone[kCarrierBin]),
+                static_cast<double>(half_saliency.torque_tone[kCarrierBin]), "-");
+
+    EXPECT_TRUE(at_12v.reached_command && at_4v.reached_command && half_saliency.reached_command && full_saliency.reached_command)
+        << "a run never reached the command";
+
+    const float volts_share = (at_12v.speed_tone[kCarrierBin] > 0.0F)
+                                  ? (at_4v.speed_tone[kCarrierBin] / at_12v.speed_tone[kCarrierBin])
+                                  : 0.0F;
+    const float saliency_share = (full_saliency.speed_tone[kCarrierBin] > 0.0F)
+                                     ? (half_saliency.speed_tone[kCarrierBin] / full_saliency.speed_tone[kCarrierBin])
+                                     : 0.0F;
+    std::printf("[reluctance] C11 a third of the volts keeps %.2f of the tone (a linear reluctance torque predicts 0.33)"
+                " -> %s\n",
+                static_cast<double>(volts_share),
+                ((volts_share > 0.25F) && (volts_share < 0.45F)) ? "linear in the volts" : "NOT linear in the volts");
+    std::printf("[reluctance] C12 half the saliency at the same HF current keeps %.2f of the tone (predicts 0.50) -> %s\n",
+                static_cast<double>(saliency_share),
+                ((saliency_share > 0.35F) && (saliency_share < 0.65F)) ? "linear in the saliency" : "NOT linear in the saliency");
+
+    static constexpr float kTwoPi = 6.28318530717959F;
+    const float omega_carrier = kTwoPi * kToneHz[kCarrierBin];
+    const float predicted = at_12v.torque_tone[kCarrierBin] / (kBaseJ * omega_carrier);
+    const float chain = (at_12v.speed_tone[kCarrierBin] > 0.0F) ? (predicted / at_12v.speed_tone[kCarrierBin]) : 0.0F;
+    std::printf("[reluctance] C13 %.3e N*m through 1/(J*w) predicts %.5f rad/s against %.5f measured (%.2fx) -> %s\n",
+                static_cast<double>(at_12v.torque_tone[kCarrierBin]), static_cast<double>(predicted),
+                static_cast<double>(at_12v.speed_tone[kCarrierBin]), static_cast<double>(chain),
+                ((chain > 0.7F) && (chain < 1.4F)) ? "the torque is the source" : "the torque does not explain it");
+
+    EXPECT_GT(volts_share, 0.25F) << "the tone barely moved with the volts, so the injected current is not its source";
+    EXPECT_LT(volts_share, 0.45F) << "the tone moved more than linearly with the volts";
+    // C12 is **falsified**, with the knob corrected so that only the saliency moves. Half the saliency at the same volts
+    // leaves 0.97 of the tone: the torque ripple is not the reluctance product `(Ld-Lq)*id*iq`. What survives is what
+    // C11 established -- the tone is linear in the injected current -- and a mechanism with exactly those two signatures
+    // is the injected current leaking onto the *torque* axis: the estimate is off by `delta`, so `id_hf*sin(delta)` lands
+    // on q and earns `kt` of torque. That is proportional to `inject_v` and indifferent to the saliency, which is what
+    // the two knobs measured. The next case tests it directly instead of leaving it as the last explanation standing.
+    // C12 被**否证**，而且是在旋钮改对、只动凸极之后。同样伏特下凸极减半，音调还剩 0.97：转矩纹波不是凸极积
+    // `(Ld−Lq)·id·iq`。存活下来的是 C11 确立的那条——音调线性于注入电流——而同时具备这两个签名的机理正是注入电流漏到
+    // **转矩**轴上：估计偏了 `delta`，于是 `id_hf·sin(delta)` 落到 q 轴、挣到 `kt` 的转矩。它正比于 `inject_v`、与凸极
+    // 无关，这正是两个旋钮量到的。下一条用例直接检验它，而不是把它留成"最后一个还站着的解释"。
+    // Recorded as the falsification it is: the tone is essentially *indifferent* to the saliency, so the reluctance
+    // product is not its source. The assertion pins the measurement, not the wish.
+    // 作为它本来就是的否证记录下来：音调对凸极基本**无所谓**，所以凸极积不是它的来源。断言钉住的是测量，不是愿望。
+    EXPECT_GT(saliency_share, 0.85F) << "the tone does move with the saliency, so the reluctance product is its source "
+                                        "after all and this conclusion has to be rewritten";
+    EXPECT_GT(chain, 0.7F) << "the torque tone under-predicts the speed tone";
+    EXPECT_LT(chain, 1.4F) << "the torque tone over-predicts the speed tone";
+}
+
+TEST(SilSpeedRipple, TheToneIsTheInjectedCurrentLeakingOntoTorque) {
+    // The last explanation standing after C12: the torque ripple is `kt * id_hf * sin(delta)`, where `delta` is how far
+    // the commutation angle is off. That makes one sharp prediction that needs no new constant, because the rig already
+    // reports `delta`: the torque tone divided by the mean angle error must be the *same* at two different speeds, where
+    // `delta` differs by a factor of four while `id_hf` does not.
+    // C12 之后最后一个还站着的解释：转矩纹波是 `kt·id_hf·sin(delta)`，`delta` 是换相角偏了多少。它给出一个尖锐的预测，
+    // 且不需要新的常数，因为台架本来就报出 `delta`：**两个不同转速**下，转矩音调除以角度误差均值必须相同——那里 `delta`
+    // 差四倍，而 `id_hf` 不变。
+    //
+    //   C14 the ratio torque_tone / |angle error| must agree between 20 and 5 rad/s within 35 %. A ratio that scales with
+    //       the carrier leakage instead (i.e. is the same absolute torque at both speeds) would rule this out and leave
+    //       the tone unexplained again.
+    //   C14 20 与 5 rad/s 之间 torque_tone / |角度误差| 必须在 35% 之内一致。若这个比值不成立、而转矩音调在两个转速下
+    //       绝对值相同（即与 `delta` 无关），则这条也被排除，音调重新变成没有解释。
+    constexpr int kCarrierBin = 5;
+    const RippleResult fast = run_ripple(kBaseJ, false, 12.0F, 0.0F, kLq, 20.0F);
+    const RippleResult slow = run_ripple(kBaseJ, false, 12.0F, 0.0F, kLq, 5.0F);
+
+    std::printf("\n[leak] the same injection at two speeds, and what the torque tone is proportional to\n");
+    std::printf("[leak] %10s %12s %12s %12s %12s\n", "speed", "angle_error", "torque_tone", "ratio", "speed_tone");
+    const float fast_ratio = (std::fabs(fast.angle_mean_rad) > 0.0F)
+                                 ? (fast.torque_tone[kCarrierBin] / std::fabs(fast.angle_mean_rad))
+                                 : 0.0F;
+    const float slow_ratio = (std::fabs(slow.angle_mean_rad) > 0.0F)
+                                 ? (slow.torque_tone[kCarrierBin] / std::fabs(slow.angle_mean_rad))
+                                 : 0.0F;
+    std::printf("[leak] %10.1f %12.5f %12.3e %12.4f %12.5f\n", 20.0, static_cast<double>(fast.angle_mean_rad),
+                static_cast<double>(fast.torque_tone[kCarrierBin]), static_cast<double>(fast_ratio),
+                static_cast<double>(fast.speed_tone[kCarrierBin]));
+    std::printf("[leak] %10.1f %12.5f %12.3e %12.4f %12.5f\n", 5.0, static_cast<double>(slow.angle_mean_rad),
+                static_cast<double>(slow.torque_tone[kCarrierBin]), static_cast<double>(slow_ratio),
+                static_cast<double>(slow.speed_tone[kCarrierBin]));
+
+    EXPECT_TRUE(fast.reached_command && slow.reached_command) << "a run never reached the command";
+
+    const float agreement = (slow_ratio > 0.0F) ? (fast_ratio / slow_ratio) : 0.0F;
+    std::printf("[leak] C14 the torque tone per radian of angle error agrees to %.2fx between the two speeds"
+                " (needs 0.65..1.35) -> %s\n",
+                static_cast<double>(agreement),
+                ((agreement > 0.65F) && (agreement < 1.35F)) ? "the tone is id_hf times the angle error"
+                                                             : "the tone is not proportional to the angle error");
+}
