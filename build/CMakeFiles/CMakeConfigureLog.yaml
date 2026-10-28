@@ -1625,3 +1625,363 @@ events:
         
       exitCode: 1
 ...
+
+---
+events:
+  -
+    kind: "message-v1"
+    backtrace:
+      - "/usr/share/cmake-3.28/Modules/CMakeDetermineCompilerId.cmake:17 (message)"
+      - "/usr/share/cmake-3.28/Modules/CMakeDetermineCompilerId.cmake:64 (__determine_compiler_id_test)"
+      - "/usr/share/cmake-3.28/Modules/CMakeDetermineCCompiler.cmake:123 (CMAKE_DETERMINE_COMPILER_ID)"
+      - "CMakeLists.txt:25 (project)"
+    message: |
+      Compiling the C compiler identification source file "CMakeCCompilerId.c" failed.
+      Compiler: /usr/bin/hppa64-linux-gnu-gcc-12 
+      Build flags: 
+      Id flags:  
+      
+      The output was:
+      1
+      /usr/bin/hppa64-linux-gnu-ld: 找不到 crt1.o: 没有那个文件或目录
+      /usr/bin/hppa64-linux-gnu-ld: 找不到 crti.o: 没有那个文件或目录
+      /usr/bin/hppa64-linux-gnu-ld: 找不到 -lc: 没有那个文件或目录
+      /usr/bin/hppa64-linux-gnu-ld: 找不到 crtn.o: 没有那个文件或目录
+      collect2: error: ld returned 1 exit status
+      
+      
+  -
+    kind: "message-v1"
+    backtrace:
+      - "/usr/share/cmake-3.28/Modules/CMakeDetermineCompilerId.cmake:17 (message)"
+      - "/usr/share/cmake-3.28/Modules/CMakeDetermineCompilerId.cmake:64 (__determine_compiler_id_test)"
+      - "/usr/share/cmake-3.28/Modules/CMakeDetermineCCompiler.cmake:123 (CMAKE_DETERMINE_COMPILER_ID)"
+      - "CMakeLists.txt:25 (project)"
+    message: |
+      Compiling the C compiler identification source file "CMakeCCompilerId.c" succeeded.
+      Compiler: /usr/bin/hppa64-linux-gnu-gcc-12 
+      Build flags: 
+      Id flags: -c 
+      
+      The output was:
+      0
+      
+      
+      Compilation of the C compiler identification source "CMakeCCompilerId.c" produced "CMakeCCompilerId.o"
+      
+      The C compiler identification is GNU, found in:
+        /home/zc/Projects/zc0718/foc/build/CMakeFiles/3.28.3/CompilerIdC/CMakeCCompilerId.o
+      
+  -
+    kind: "message-v1"
+    backtrace:
+      - "/usr/share/cmake-3.28/Modules/CMakeDetermineCompilerId.cmake:17 (message)"
+      - "/usr/share/cmake-3.28/Modules/CMakeDetermineCompilerId.cmake:64 (__determine_compiler_id_test)"
+      - "/usr/share/cmake-3.28/Modules/CMakeDetermineCXXCompiler.cmake:126 (CMAKE_DETERMINE_COMPILER_ID)"
+      - "CMakeLists.txt:25 (project)"
+    message: |
+      Compiling the CXX compiler identification source file "CMakeCXXCompilerId.cpp" succeeded.
+      Compiler: /usr/bin/c++ 
+      Build flags: 
+      Id flags:  
+      
+      The output was:
+      0
+      
+      
+      Compilation of the CXX compiler identification source "CMakeCXXCompilerId.cpp" produced "a.out"
+      
+      The CXX compiler identification is GNU, found in:
+        /home/zc/Projects/zc0718/foc/build/CMakeFiles/3.28.3/CompilerIdCXX/a.out
+      
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "/usr/share/cmake-3.28/Modules/CMakeDetermineCompilerABI.cmake:57 (try_compile)"
+      - "/usr/share/cmake-3.28/Modules/CMakeTestCCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
+      - "CMakeLists.txt:25 (project)"
+    checks:
+      - "Detecting C compiler ABI info"
+    directories:
+      source: "/home/zc/Projects/zc0718/foc/build/CMakeFiles/CMakeScratch/TryCompile-JbvnCj"
+      binary: "/home/zc/Projects/zc0718/foc/build/CMakeFiles/CMakeScratch/TryCompile-JbvnCj"
+    cmakeVariables:
+      CMAKE_C_FLAGS: ""
+      CMAKE_C_FLAGS_DEBUG: "-g"
+      CMAKE_EXE_LINKER_FLAGS: ""
+    buildResult:
+      variable: "CMAKE_C_ABI_COMPILED"
+      cached: true
+      stdout: |
+        Change Dir: '/home/zc/Projects/zc0718/foc/build/CMakeFiles/CMakeScratch/TryCompile-JbvnCj'
+        
+        Run Build Command(s): /usr/bin/ninja -v cmTC_b921e
+        [1/2] /usr/bin/hppa64-linux-gnu-gcc-12   -v -o CMakeFiles/cmTC_b921e.dir/CMakeCCompilerABI.c.o -c /usr/share/cmake-3.28/Modules/CMakeCCompilerABI.c
+        Using built-in specs.
+        COLLECT_GCC=/usr/bin/hppa64-linux-gnu-gcc-12
+        Target: hppa64-linux-gnu
+        Configured with: ../src/configure --enable-languages=c --prefix=/usr --libexecdir=/usr/lib --with-gcc-major-version-only --disable-shared --disable-nls --disable-threads --disable-libatomic --disable-libgomp --disable-libitm --disable-libssp --disable-libquadmath --enable-plugin --with-system-zlib --with-as=/usr/bin/hppa64-linux-gnu-as --with-ld=/usr/bin/hppa64-linux-gnu-ld --includedir=/usr/hppa64-linux-gnu/include --build=x86_64-linux-gnu --host=x86_64-linux-gnu --target=hppa64-linux-gnu
+        Thread model: single
+        Supported LTO compression algorithms: zlib zstd
+        gcc version 12.4.0 (GCC) 
+        COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_b921e.dir/CMakeCCompilerABI.c.o' '-c' '-dumpdir' 'CMakeFiles/cmTC_b921e.dir/'
+         /usr/lib/gcc/hppa64-linux-gnu/12/cc1 -quiet -v /usr/share/cmake-3.28/Modules/CMakeCCompilerABI.c -quiet -dumpdir CMakeFiles/cmTC_b921e.dir/ -dumpbase CMakeCCompilerABI.c.c -dumpbase-ext .c -version -o /tmp/ccfK8Wxl.s
+        GNU C17 (GCC) version 12.4.0 (hppa64-linux-gnu)
+        	compiled by GNU C version 12.4.0, GMP version 6.3.0, MPFR version 4.2.1, MPC version 1.3.1, isl version isl-0.26-GMP
+        
+        GGC heuristics: --param ggc-min-expand=100 --param ggc-min-heapsize=131072
+        ignoring nonexistent directory "/usr/lib/gcc/hppa64-linux-gnu/12/include-fixed"
+        ignoring nonexistent directory "/usr/lib/gcc/hppa64-linux-gnu/12/../../../../hppa64-linux-gnu/sys-include"
+        #include "..." search starts here:
+        #include <...> search starts here:
+         /usr/lib/gcc/hppa64-linux-gnu/12/include
+         /usr/hppa-linux-gnu/include
+        End of search list.
+        GNU C17 (GCC) version 12.4.0 (hppa64-linux-gnu)
+        	compiled by GNU C version 12.4.0, GMP version 6.3.0, MPFR version 4.2.1, MPC version 1.3.1, isl version isl-0.26-GMP
+        
+        GGC heuristics: --param ggc-min-expand=100 --param ggc-min-heapsize=131072
+        Compiler executable checksum: 818d0a80207665bfa7f073e2ff3d013e
+        COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_b921e.dir/CMakeCCompilerABI.c.o' '-c' '-dumpdir' 'CMakeFiles/cmTC_b921e.dir/'
+         /usr/bin/hppa64-linux-gnu-as -v -o CMakeFiles/cmTC_b921e.dir/CMakeCCompilerABI.c.o /tmp/ccfK8Wxl.s
+        GNU assembler version 2.42 (hppa64-linux-gnu) using BFD version (GNU Binutils for Ubuntu) 2.42
+        COMPILER_PATH=/usr/lib/gcc/hppa64-linux-gnu/12/:/usr/lib/gcc/hppa64-linux-gnu/12/:/usr/lib/gcc/hppa64-linux-gnu/:/usr/lib/gcc/hppa64-linux-gnu/12/:/usr/lib/gcc/hppa64-linux-gnu/:/usr/lib/gcc/hppa64-linux-gnu/12/../../../../hppa64-linux-gnu/bin/
+        LIBRARY_PATH=/usr/lib/gcc/hppa64-linux-gnu/12/
+        COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_b921e.dir/CMakeCCompilerABI.c.o' '-c' '-dumpdir' 'CMakeFiles/cmTC_b921e.dir/CMakeCCompilerABI.c.'
+        [2/2] : && /usr/bin/hppa64-linux-gnu-gcc-12  -v CMakeFiles/cmTC_b921e.dir/CMakeCCompilerABI.c.o -o cmTC_b921e   && :
+        FAILED: cmTC_b921e 
+        : && /usr/bin/hppa64-linux-gnu-gcc-12  -v CMakeFiles/cmTC_b921e.dir/CMakeCCompilerABI.c.o -o cmTC_b921e   && :
+        Using built-in specs.
+        COLLECT_GCC=/usr/bin/hppa64-linux-gnu-gcc-12
+        COLLECT_LTO_WRAPPER=/usr/lib/gcc/hppa64-linux-gnu/12/lto-wrapper
+        Target: hppa64-linux-gnu
+        Configured with: ../src/configure --enable-languages=c --prefix=/usr --libexecdir=/usr/lib --with-gcc-major-version-only --disable-shared --disable-nls --disable-threads --disable-libatomic --disable-libgomp --disable-libitm --disable-libssp --disable-libquadmath --enable-plugin --with-system-zlib --with-as=/usr/bin/hppa64-linux-gnu-as --with-ld=/usr/bin/hppa64-linux-gnu-ld --includedir=/usr/hppa64-linux-gnu/include --build=x86_64-linux-gnu --host=x86_64-linux-gnu --target=hppa64-linux-gnu
+        Thread model: single
+        Supported LTO compression algorithms: zlib zstd
+        gcc version 12.4.0 (GCC) 
+        COMPILER_PATH=/usr/lib/gcc/hppa64-linux-gnu/12/:/usr/lib/gcc/hppa64-linux-gnu/12/:/usr/lib/gcc/hppa64-linux-gnu/:/usr/lib/gcc/hppa64-linux-gnu/12/:/usr/lib/gcc/hppa64-linux-gnu/:/usr/lib/gcc/hppa64-linux-gnu/12/../../../../hppa64-linux-gnu/bin/
+        LIBRARY_PATH=/usr/lib/gcc/hppa64-linux-gnu/12/
+        COLLECT_GCC_OPTIONS='-v' '-o' 'cmTC_b921e' '-dumpdir' 'cmTC_b921e.'
+         /usr/lib/gcc/hppa64-linux-gnu/12/collect2 -plugin /usr/lib/gcc/hppa64-linux-gnu/12/liblto_plugin.so -plugin-opt=/usr/lib/gcc/hppa64-linux-gnu/12/lto-wrapper -plugin-opt=-fresolution=/tmp/ccmb92d8.res -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc --eh-frame-hdr --as-needed -dynamic-linker /lib/ld.so.1 -o cmTC_b921e crt1.o crti.o /usr/lib/gcc/hppa64-linux-gnu/12/crtbegin.o -L/usr/lib/gcc/hppa64-linux-gnu/12 CMakeFiles/cmTC_b921e.dir/CMakeCCompilerABI.c.o -lgcc -lc -lgcc /usr/lib/gcc/hppa64-linux-gnu/12/crtend.o crtn.o
+        /usr/bin/hppa64-linux-gnu-ld: cannot find crt1.o: No such file or directory
+        /usr/bin/hppa64-linux-gnu-ld: cannot find crti.o: No such file or directory
+        /usr/bin/hppa64-linux-gnu-ld: cannot find -lc: No such file or directory
+        /usr/bin/hppa64-linux-gnu-ld: cannot find crtn.o: No such file or directory
+        collect2: error: ld returned 1 exit status
+        ninja: build stopped: subcommand failed.
+        
+      exitCode: 1
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "/usr/share/cmake-3.28/Modules/CMakeTestCCompiler.cmake:56 (try_compile)"
+      - "CMakeLists.txt:25 (project)"
+    checks:
+      - "Check for working C compiler: /usr/bin/hppa64-linux-gnu-gcc-12"
+    directories:
+      source: "/home/zc/Projects/zc0718/foc/build/CMakeFiles/CMakeScratch/TryCompile-FqXpOh"
+      binary: "/home/zc/Projects/zc0718/foc/build/CMakeFiles/CMakeScratch/TryCompile-FqXpOh"
+    cmakeVariables:
+      CMAKE_C_FLAGS: ""
+      CMAKE_C_FLAGS_DEBUG: "-g"
+      CMAKE_EXE_LINKER_FLAGS: ""
+    buildResult:
+      variable: "CMAKE_C_COMPILER_WORKS"
+      cached: true
+      stdout: |
+        Change Dir: '/home/zc/Projects/zc0718/foc/build/CMakeFiles/CMakeScratch/TryCompile-FqXpOh'
+        
+        Run Build Command(s): /usr/bin/ninja -v cmTC_14496
+        [1/2] /usr/bin/hppa64-linux-gnu-gcc-12    -o CMakeFiles/cmTC_14496.dir/testCCompiler.c.o -c /home/zc/Projects/zc0718/foc/build/CMakeFiles/CMakeScratch/TryCompile-FqXpOh/testCCompiler.c
+        [2/2] : && /usr/bin/hppa64-linux-gnu-gcc-12   CMakeFiles/cmTC_14496.dir/testCCompiler.c.o -o cmTC_14496   && :
+        FAILED: cmTC_14496 
+        : && /usr/bin/hppa64-linux-gnu-gcc-12   CMakeFiles/cmTC_14496.dir/testCCompiler.c.o -o cmTC_14496   && :
+        /usr/bin/hppa64-linux-gnu-ld: 找不到 crt1.o: 没有那个文件或目录
+        /usr/bin/hppa64-linux-gnu-ld: 找不到 crti.o: 没有那个文件或目录
+        /usr/bin/hppa64-linux-gnu-ld: 找不到 -lc: 没有那个文件或目录
+        /usr/bin/hppa64-linux-gnu-ld: 找不到 crtn.o: 没有那个文件或目录
+        collect2: error: ld returned 1 exit status
+        ninja: build stopped: subcommand failed.
+        
+      exitCode: 1
+...
+
+---
+events:
+  -
+    kind: "message-v1"
+    backtrace:
+      - "/usr/share/cmake-3.28/Modules/CMakeDetermineCompilerId.cmake:17 (message)"
+      - "/usr/share/cmake-3.28/Modules/CMakeDetermineCompilerId.cmake:64 (__determine_compiler_id_test)"
+      - "/usr/share/cmake-3.28/Modules/CMakeDetermineCCompiler.cmake:123 (CMAKE_DETERMINE_COMPILER_ID)"
+      - "CMakeLists.txt:25 (project)"
+    message: |
+      Compiling the C compiler identification source file "CMakeCCompilerId.c" failed.
+      Compiler: /usr/bin/hppa64-linux-gnu-gcc-12 
+      Build flags: 
+      Id flags:  
+      
+      The output was:
+      1
+      /usr/bin/hppa64-linux-gnu-ld: 找不到 crt1.o: 没有那个文件或目录
+      /usr/bin/hppa64-linux-gnu-ld: 找不到 crti.o: 没有那个文件或目录
+      /usr/bin/hppa64-linux-gnu-ld: 找不到 -lc: 没有那个文件或目录
+      /usr/bin/hppa64-linux-gnu-ld: 找不到 crtn.o: 没有那个文件或目录
+      collect2: error: ld returned 1 exit status
+      
+      
+  -
+    kind: "message-v1"
+    backtrace:
+      - "/usr/share/cmake-3.28/Modules/CMakeDetermineCompilerId.cmake:17 (message)"
+      - "/usr/share/cmake-3.28/Modules/CMakeDetermineCompilerId.cmake:64 (__determine_compiler_id_test)"
+      - "/usr/share/cmake-3.28/Modules/CMakeDetermineCCompiler.cmake:123 (CMAKE_DETERMINE_COMPILER_ID)"
+      - "CMakeLists.txt:25 (project)"
+    message: |
+      Compiling the C compiler identification source file "CMakeCCompilerId.c" succeeded.
+      Compiler: /usr/bin/hppa64-linux-gnu-gcc-12 
+      Build flags: 
+      Id flags: -c 
+      
+      The output was:
+      0
+      
+      
+      Compilation of the C compiler identification source "CMakeCCompilerId.c" produced "CMakeCCompilerId.o"
+      
+      The C compiler identification is GNU, found in:
+        /home/zc/Projects/zc0718/foc/build/CMakeFiles/3.28.3/CompilerIdC/CMakeCCompilerId.o
+      
+  -
+    kind: "message-v1"
+    backtrace:
+      - "/usr/share/cmake-3.28/Modules/CMakeDetermineCompilerId.cmake:17 (message)"
+      - "/usr/share/cmake-3.28/Modules/CMakeDetermineCompilerId.cmake:64 (__determine_compiler_id_test)"
+      - "/usr/share/cmake-3.28/Modules/CMakeDetermineCXXCompiler.cmake:126 (CMAKE_DETERMINE_COMPILER_ID)"
+      - "CMakeLists.txt:25 (project)"
+    message: |
+      Compiling the CXX compiler identification source file "CMakeCXXCompilerId.cpp" succeeded.
+      Compiler: /usr/bin/c++ 
+      Build flags: 
+      Id flags:  
+      
+      The output was:
+      0
+      
+      
+      Compilation of the CXX compiler identification source "CMakeCXXCompilerId.cpp" produced "a.out"
+      
+      The CXX compiler identification is GNU, found in:
+        /home/zc/Projects/zc0718/foc/build/CMakeFiles/3.28.3/CompilerIdCXX/a.out
+      
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "/usr/share/cmake-3.28/Modules/CMakeDetermineCompilerABI.cmake:57 (try_compile)"
+      - "/usr/share/cmake-3.28/Modules/CMakeTestCCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
+      - "CMakeLists.txt:25 (project)"
+    checks:
+      - "Detecting C compiler ABI info"
+    directories:
+      source: "/home/zc/Projects/zc0718/foc/build/CMakeFiles/CMakeScratch/TryCompile-uLkbuq"
+      binary: "/home/zc/Projects/zc0718/foc/build/CMakeFiles/CMakeScratch/TryCompile-uLkbuq"
+    cmakeVariables:
+      CMAKE_C_FLAGS: ""
+      CMAKE_C_FLAGS_DEBUG: "-g"
+      CMAKE_EXE_LINKER_FLAGS: ""
+    buildResult:
+      variable: "CMAKE_C_ABI_COMPILED"
+      cached: true
+      stdout: |
+        Change Dir: '/home/zc/Projects/zc0718/foc/build/CMakeFiles/CMakeScratch/TryCompile-uLkbuq'
+        
+        Run Build Command(s): /usr/bin/ninja -v cmTC_73cf1
+        [1/2] /usr/bin/hppa64-linux-gnu-gcc-12   -v -o CMakeFiles/cmTC_73cf1.dir/CMakeCCompilerABI.c.o -c /usr/share/cmake-3.28/Modules/CMakeCCompilerABI.c
+        Using built-in specs.
+        COLLECT_GCC=/usr/bin/hppa64-linux-gnu-gcc-12
+        Target: hppa64-linux-gnu
+        Configured with: ../src/configure --enable-languages=c --prefix=/usr --libexecdir=/usr/lib --with-gcc-major-version-only --disable-shared --disable-nls --disable-threads --disable-libatomic --disable-libgomp --disable-libitm --disable-libssp --disable-libquadmath --enable-plugin --with-system-zlib --with-as=/usr/bin/hppa64-linux-gnu-as --with-ld=/usr/bin/hppa64-linux-gnu-ld --includedir=/usr/hppa64-linux-gnu/include --build=x86_64-linux-gnu --host=x86_64-linux-gnu --target=hppa64-linux-gnu
+        Thread model: single
+        Supported LTO compression algorithms: zlib zstd
+        gcc version 12.4.0 (GCC) 
+        COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_73cf1.dir/CMakeCCompilerABI.c.o' '-c' '-dumpdir' 'CMakeFiles/cmTC_73cf1.dir/'
+         /usr/lib/gcc/hppa64-linux-gnu/12/cc1 -quiet -v /usr/share/cmake-3.28/Modules/CMakeCCompilerABI.c -quiet -dumpdir CMakeFiles/cmTC_73cf1.dir/ -dumpbase CMakeCCompilerABI.c.c -dumpbase-ext .c -version -o /tmp/ccDfC7Ih.s
+        GNU C17 (GCC) version 12.4.0 (hppa64-linux-gnu)
+        	compiled by GNU C version 12.4.0, GMP version 6.3.0, MPFR version 4.2.1, MPC version 1.3.1, isl version isl-0.26-GMP
+        
+        GGC heuristics: --param ggc-min-expand=100 --param ggc-min-heapsize=131072
+        ignoring nonexistent directory "/usr/lib/gcc/hppa64-linux-gnu/12/include-fixed"
+        ignoring nonexistent directory "/usr/lib/gcc/hppa64-linux-gnu/12/../../../../hppa64-linux-gnu/sys-include"
+        #include "..." search starts here:
+        #include <...> search starts here:
+         /usr/lib/gcc/hppa64-linux-gnu/12/include
+         /usr/hppa-linux-gnu/include
+        End of search list.
+        GNU C17 (GCC) version 12.4.0 (hppa64-linux-gnu)
+        	compiled by GNU C version 12.4.0, GMP version 6.3.0, MPFR version 4.2.1, MPC version 1.3.1, isl version isl-0.26-GMP
+        
+        GGC heuristics: --param ggc-min-expand=100 --param ggc-min-heapsize=131072
+        Compiler executable checksum: 818d0a80207665bfa7f073e2ff3d013e
+        COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_73cf1.dir/CMakeCCompilerABI.c.o' '-c' '-dumpdir' 'CMakeFiles/cmTC_73cf1.dir/'
+         /usr/bin/hppa64-linux-gnu-as -v -o CMakeFiles/cmTC_73cf1.dir/CMakeCCompilerABI.c.o /tmp/ccDfC7Ih.s
+        GNU assembler version 2.42 (hppa64-linux-gnu) using BFD version (GNU Binutils for Ubuntu) 2.42
+        COMPILER_PATH=/usr/lib/gcc/hppa64-linux-gnu/12/:/usr/lib/gcc/hppa64-linux-gnu/12/:/usr/lib/gcc/hppa64-linux-gnu/:/usr/lib/gcc/hppa64-linux-gnu/12/:/usr/lib/gcc/hppa64-linux-gnu/:/usr/lib/gcc/hppa64-linux-gnu/12/../../../../hppa64-linux-gnu/bin/
+        LIBRARY_PATH=/usr/lib/gcc/hppa64-linux-gnu/12/
+        COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_73cf1.dir/CMakeCCompilerABI.c.o' '-c' '-dumpdir' 'CMakeFiles/cmTC_73cf1.dir/CMakeCCompilerABI.c.'
+        [2/2] : && /usr/bin/hppa64-linux-gnu-gcc-12  -v CMakeFiles/cmTC_73cf1.dir/CMakeCCompilerABI.c.o -o cmTC_73cf1   && :
+        FAILED: cmTC_73cf1 
+        : && /usr/bin/hppa64-linux-gnu-gcc-12  -v CMakeFiles/cmTC_73cf1.dir/CMakeCCompilerABI.c.o -o cmTC_73cf1   && :
+        Using built-in specs.
+        COLLECT_GCC=/usr/bin/hppa64-linux-gnu-gcc-12
+        COLLECT_LTO_WRAPPER=/usr/lib/gcc/hppa64-linux-gnu/12/lto-wrapper
+        Target: hppa64-linux-gnu
+        Configured with: ../src/configure --enable-languages=c --prefix=/usr --libexecdir=/usr/lib --with-gcc-major-version-only --disable-shared --disable-nls --disable-threads --disable-libatomic --disable-libgomp --disable-libitm --disable-libssp --disable-libquadmath --enable-plugin --with-system-zlib --with-as=/usr/bin/hppa64-linux-gnu-as --with-ld=/usr/bin/hppa64-linux-gnu-ld --includedir=/usr/hppa64-linux-gnu/include --build=x86_64-linux-gnu --host=x86_64-linux-gnu --target=hppa64-linux-gnu
+        Thread model: single
+        Supported LTO compression algorithms: zlib zstd
+        gcc version 12.4.0 (GCC) 
+        COMPILER_PATH=/usr/lib/gcc/hppa64-linux-gnu/12/:/usr/lib/gcc/hppa64-linux-gnu/12/:/usr/lib/gcc/hppa64-linux-gnu/:/usr/lib/gcc/hppa64-linux-gnu/12/:/usr/lib/gcc/hppa64-linux-gnu/:/usr/lib/gcc/hppa64-linux-gnu/12/../../../../hppa64-linux-gnu/bin/
+        LIBRARY_PATH=/usr/lib/gcc/hppa64-linux-gnu/12/
+        COLLECT_GCC_OPTIONS='-v' '-o' 'cmTC_73cf1' '-dumpdir' 'cmTC_73cf1.'
+         /usr/lib/gcc/hppa64-linux-gnu/12/collect2 -plugin /usr/lib/gcc/hppa64-linux-gnu/12/liblto_plugin.so -plugin-opt=/usr/lib/gcc/hppa64-linux-gnu/12/lto-wrapper -plugin-opt=-fresolution=/tmp/ccoVlGPn.res -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc --eh-frame-hdr --as-needed -dynamic-linker /lib/ld.so.1 -o cmTC_73cf1 crt1.o crti.o /usr/lib/gcc/hppa64-linux-gnu/12/crtbegin.o -L/usr/lib/gcc/hppa64-linux-gnu/12 CMakeFiles/cmTC_73cf1.dir/CMakeCCompilerABI.c.o -lgcc -lc -lgcc /usr/lib/gcc/hppa64-linux-gnu/12/crtend.o crtn.o
+        /usr/bin/hppa64-linux-gnu-ld: cannot find crt1.o: No such file or directory
+        /usr/bin/hppa64-linux-gnu-ld: cannot find crti.o: No such file or directory
+        /usr/bin/hppa64-linux-gnu-ld: cannot find -lc: No such file or directory
+        /usr/bin/hppa64-linux-gnu-ld: cannot find crtn.o: No such file or directory
+        collect2: error: ld returned 1 exit status
+        ninja: build stopped: subcommand failed.
+        
+      exitCode: 1
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "/usr/share/cmake-3.28/Modules/CMakeTestCCompiler.cmake:56 (try_compile)"
+      - "CMakeLists.txt:25 (project)"
+    checks:
+      - "Check for working C compiler: /usr/bin/hppa64-linux-gnu-gcc-12"
+    directories:
+      source: "/home/zc/Projects/zc0718/foc/build/CMakeFiles/CMakeScratch/TryCompile-Pnhce8"
+      binary: "/home/zc/Projects/zc0718/foc/build/CMakeFiles/CMakeScratch/TryCompile-Pnhce8"
+    cmakeVariables:
+      CMAKE_C_FLAGS: ""
+      CMAKE_C_FLAGS_DEBUG: "-g"
+      CMAKE_EXE_LINKER_FLAGS: ""
+    buildResult:
+      variable: "CMAKE_C_COMPILER_WORKS"
+      cached: true
+      stdout: |
+        Change Dir: '/home/zc/Projects/zc0718/foc/build/CMakeFiles/CMakeScratch/TryCompile-Pnhce8'
+        
+        Run Build Command(s): /usr/bin/ninja -v cmTC_17c56
+        [1/2] /usr/bin/hppa64-linux-gnu-gcc-12    -o CMakeFiles/cmTC_17c56.dir/testCCompiler.c.o -c /home/zc/Projects/zc0718/foc/build/CMakeFiles/CMakeScratch/TryCompile-Pnhce8/testCCompiler.c
+        [2/2] : && /usr/bin/hppa64-linux-gnu-gcc-12   CMakeFiles/cmTC_17c56.dir/testCCompiler.c.o -o cmTC_17c56   && :
+        FAILED: cmTC_17c56 
+        : && /usr/bin/hppa64-linux-gnu-gcc-12   CMakeFiles/cmTC_17c56.dir/testCCompiler.c.o -o cmTC_17c56   && :
+        /usr/bin/hppa64-linux-gnu-ld: 找不到 crt1.o: 没有那个文件或目录
+        /usr/bin/hppa64-linux-gnu-ld: 找不到 crti.o: 没有那个文件或目录
+        /usr/bin/hppa64-linux-gnu-ld: 找不到 -lc: 没有那个文件或目录
+        /usr/bin/hppa64-linux-gnu-ld: 找不到 crtn.o: 没有那个文件或目录
+        collect2: error: ld returned 1 exit status
+        ninja: build stopped: subcommand failed.
+        
+      exitCode: 1
+...

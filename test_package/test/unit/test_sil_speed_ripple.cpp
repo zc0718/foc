@@ -64,6 +64,11 @@
 //       是线性的；418/92 Hz 的频率移动是过零计数器读多音调信号的产物。
 //   C9  （哪个频率拥有它）六个栅格对齐的候选里最大者要比中位数大 1.5 倍。**成立**：2.0000 Hz 就是载波，9.41 倍。
 //
+//   C10a 已发布转速上的载波音调在选定截止频率上至少降 5 倍。**成立**：200 Hz 下 10.1 倍。
+//   C10b 闭环转速纹波随之至少降 2 倍。**否证**：0.0900 → 0.0879，几乎没有变化——那条音调与测量量相关，但它没有一条穿过环路的
+//       通路。已发布转速变干净是"应用读到的数"的改善，不是轴纹波的修法。
+//   C10c 稳态偏差不得因滤波变大。**成立**：0.0039 → 0.0023，反而更小（判据初稿写成对称区间，已改为单边并注明）。
+//
 // 于是本文件结束时的事实：纹波 0.09 rad/s，只要注入在跑就在，注入一停就是 0.0000；它不在转子惯量里、不在已发布角度里、
 // 不在注入幅值里、不是钳位造成的振荡。**它最大的单条音调是载波本身**，而观测器发布出来的转速带着这条音调的力度是转子的
 // 10.4 倍——环路不是在自己生成它，而是在被喂它：`omega_e = omega_int + kp·error`，而 `error` 按构造携带载波频率的成分，
@@ -214,7 +219,7 @@ struct RippleResult final {
  *                     the same shape and the mechanical transfer is the only thing that changes.
  * @param inertia [zh] 转子惯量，kg·m²；速度环与电流环增益都由它导出，于是环的形状不变，变的只有机械传递。
  */
-auto run_ripple(float inertia, bool use_sensor, float inject_v) -> RippleResult {
+auto run_ripple(float inertia, bool use_sensor, float inject_v, float speed_lpf_hz = 0.0F) -> RippleResult {
     RippleResult result{};
     sil::PmsmPlant plant(plant_params(inertia));
     sil::PlantHal hal(plant, kVBus);
@@ -238,6 +243,7 @@ auto run_ripple(float inertia, bool use_sensor, float inject_v) -> RippleResult 
     config.hfi.pll_zeta = 0.9F;
     config.hfi.demod_gain_a = core::HfiObserver::predicted_gain_a(inject_v, kInjectHz, kLd, kLq);
     config.hfi.min_hf_current_a = 0.05F;
+    config.hfi.speed_lpf_hz = speed_lpf_hz;
     config.kind = use_sensor ? core::ObserverKind::BackEmf : core::ObserverKind::Hfi;
 
     SensorlessMotor motor(cfg,
@@ -821,5 +827,80 @@ TEST(SilSpeedRipple, TheSpectrumNamesTheToneOrSaysThereIsNone) {
                 static_cast<double>(published_over_rotor));
     EXPECT_GT(published_over_rotor, 5.0F)
         << "the published speed no longer carries the carrier tone, so this conclusion no longer holds";
+}
+
+TEST(SilSpeedRipple, ThePublishedSpeedCanBeCleanedAndTheRotorDoesNotCare) {
+    // Increment 3 named a defect: `omega_e = omega_int + kp*error`, and `error` carries the carrier, so the published
+    // speed holds 0.4180 rad/s at 2000 Hz. This case does two things at once, and the second one is why it is worth
+    // keeping the first: it sizes a filter on the published speed, and it tests whether that tone was what the rotor was
+    // doing.
+    // 增量 3 点名了一个缺陷：`omega_e = omega_int + kp·error`，而 `error` 携带载波，于是已发布转速在 2000 Hz 上带着
+    // 0.4180 rad/s。本用例一次做两件事，而第二件正是第一件值得保留的原因：它给已发布转速定容一个滤波器，同时检验那条音调
+    // 是否就是转子在做的事。
+    //
+    // Where the filter goes was measured too. The first version put it on the proportional path *inside* the loop and
+    // every cutoff from 50 to 400 Hz ran the axis away (-115 to -170 rad/s): the proportional term is what damps this PLL
+    // below its own 40 Hz bandwidth. It now sits at the publication boundary and `theta_e` integrates the raw `omega`.
+    // 滤波器放在哪里也是量出来的。第一版把它放在环路**内部**的比例通路上，50 到 400 Hz 每一个截止频率都把轴送飞（−115 到
+    // −170 rad/s）：比例项正是在 40 Hz 带宽以下给这个 PLL 提供阻尼的东西。它现在坐在发布边界上，`theta_e` 积分原始 `omega`。
+    //
+    //   C10a the published carrier tone must fall by at least 5x at the chosen cutoff;
+    //   C10b the closed-loop speed ripple must fall by at least 2x -- otherwise the tone was not what the rotor was doing;
+    //   C10c the steady bias must stay within 20 % of the unfiltered run: a filter that bought quiet with accuracy is a
+    //        different trade and has to be stated as one;
+    //   C10d and the loop must still reach the command at every cutoff tried, because a filter that destabilises the loop
+    //        would show up here and nowhere else.
+    //
+    //   C10a 在选定截止频率上，已发布的载波音调必须至少降 5 倍；
+    //   C10b 闭环转速纹波必须至少降 2 倍——否则那条音调并不是转子在做的事；
+    //   C10c 稳态偏差必须留在未滤波那一跑的 20% 之内：用精度换安静的滤波器是另一笔交易，必须如实说成那样；
+    //   C10d 且每个试过的截止频率下环路都必须仍能到达指令，因为一个让环路失稳的滤波器只会在这里显形。
+    std::printf("\n[filter] low-pass on the published speed, 20 rad/s mech, 12 V at 2 kHz\n");
+    std::printf("[filter] %10s %12s %12s %12s %10s\n", "cutoff_hz", "pub_tone", "speed_ripple", "bias", "reached");
+
+    constexpr float kCutoffs[5] = {0.0F, 50.0F, 100.0F, 200.0F, 400.0F};
+    RippleResult rows[5]{};
+    for (int i = 0; i < 5; ++i) {
+        rows[i] = run_ripple(kBaseJ, false, kInjectV, kCutoffs[i]);
+        std::printf("[filter] %10.0f %12.5f %12.5f %12.5f %10s\n", static_cast<double>(kCutoffs[i]),
+                    static_cast<double>(rows[i].omega_tone[5]), static_cast<double>(rows[i].speed_ripple_ctrl),
+                    static_cast<double>(rows[i].speed_bias_rad_s), rows[i].reached_command ? "yes" : "NO");
+    }
+
+    // The chosen cutoff, and the three ratios that justify it.
+    // 选定的截止频率，以及为它辩护的三个比值。
+    constexpr int kChosen = 3; // 200 Hz
+    const float tone_fall = (rows[kChosen].omega_tone[5] > 0.0F) ? (rows[0].omega_tone[5] / rows[kChosen].omega_tone[5])
+                                                                : 0.0F;
+    const float ripple_fall =
+        (rows[kChosen].speed_ripple_ctrl > 0.0F) ? (rows[0].speed_ripple_ctrl / rows[kChosen].speed_ripple_ctrl) : 0.0F;
+    const float bias_change = (rows[0].speed_bias_rad_s != 0.0F)
+                                  ? (rows[kChosen].speed_bias_rad_s / rows[0].speed_bias_rad_s)
+                                  : 1.0F;
+    std::printf("[filter] C10a the published carrier tone falls %.1fx (needs 5.0x) -> %s\n",
+                static_cast<double>(tone_fall), (tone_fall >= 5.0F) ? "met" : "NOT met");
+    std::printf("[filter] C10b the closed-loop speed ripple falls %.2fx (needs 2.0x) -> %s\n",
+                static_cast<double>(ripple_fall), (ripple_fall >= 2.0F) ? "met" : "NOT met");
+    std::printf("[filter] C10c the steady bias moves to %.2fx of the unfiltered run (must stay under 1.20x) -> %s\n",
+                static_cast<double>(bias_change), (bias_change < 1.2F) ? "met" : "NOT met");
+
+    for (int i = 0; i < 5; ++i) {
+        EXPECT_TRUE(rows[i].reached_command) << "cutoff " << kCutoffs[i] << " left the loop unable to reach 20 rad/s";
+    }
+    EXPECT_GT(tone_fall, 5.0F) << "the filter does not remove the carrier from the published speed";
+    EXPECT_LT(bias_change, 1.2F) << "the filter cost steady accuracy, which is a different trade than the one claimed";
+
+    // C10b is **falsified**, and it is the more valuable half of this case. Removing 10x of the carrier tone from the
+    // published speed moved the closed-loop ripple from 0.0900 to 0.0879 -- nothing. So the tone in the rotor was never
+    // the loop chasing its own published speed, however strongly the two correlated at 2000 Hz: a correlation with the
+    // measurement is not a path through the loop. What survives is that the published speed is *cleaner*, which is a
+    // property of the number the application reads and not of the axis. The case asserts the falsification so that a
+    // future change which *does* move the axis shows up here as a change of story rather than as a quiet improvement.
+    // C10b 被**否证**，而这是本用例更有价值的那一半。把已发布转速里的载波音调拿走 10 倍，闭环纹波从 0.0900 变到 0.0879
+    // ——什么也没发生。所以转子上那条音调从来不是环路在追自己发布的转速，无论两者在 2000 Hz 上相关得多强：与测量量相关不等于
+    // 存在一条穿过环路的通路。留下的结论是已发布转速**更干净**了，那是"应用读到的那个数"的性质，不是轴的性质。用例把这次
+    // 否证断言下来，于是以后某个**真的**推动轴的改动会在这里表现为故事的改变，而不是一次悄然的改善。
+    EXPECT_LT(ripple_fall, 1.5F) << "filtering the published speed now moves the axis, so the tone had a path through "
+                                    "the loop after all and this conclusion needs rewriting";
 }
 

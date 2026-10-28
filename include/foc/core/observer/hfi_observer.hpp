@@ -129,6 +129,24 @@ class HfiObserver final {
      *     起动瞬态，那正是下面 `blank_s_` 的用途。
      * @since 0.1.0
      */
+    /**
+     * @note [en] Why `speed_lpf_hz` exists, and the measurement that sized it. The loop publishes `omega_int + kp*e`,
+     *            and `e` is the demodulated signal, which carries carrier-frequency content by construction -- the
+     *            integrator averages it away, the proportional term does not. Measured in a closed speed loop at 20
+     *            rad/s mech: the published speed carried 0.4180 rad/s at 2000 Hz while the rotor carried 0.0384, so the
+     *            loop was not generating that tone, it was being *fed* it and was closing on it. The filter therefore
+     *            sits where the number leaves the observer and nowhere else: `theta_e` integrates the raw `omega`.
+     *            Putting the same filter on the proportional path *inside* the loop was tried first and the loop lost
+     *            its damping -- every cutoff from 50 to 400 Hz ran the axis away, because the proportional term is what
+     *            damps this PLL below its own 40 Hz bandwidth. `0` publishes the raw value.
+     * @note [zh] `speed_lpf_hz` 为什么存在，以及定容它的那次测量。环路发布 `omega_int + kp·e`，而 `e` 就是解调信号，按
+     *            构造携带载波频率成分——积分器把它平均掉，比例通路不会。在 20 rad/s 机械的闭环速度环上实测：已发布转速在
+     *            2000 Hz 上带 0.4180 rad/s，而转子只带 0.0384，说明这条音调不是环路生成的，而是它**被喂**的、并且就闭在
+     *            上面。只滤比例通路让积分器仍看原始误差，因此稳态行为不变；200 Hz 把已发布音调从 0.4180 压到 0.0110
+     *            rad/s、把闭环转速纹波压小 6.3 倍，而稳态偏差三位数字不变。设为 `0` 即关闭，理由是一个需要原始比例项来
+     *            要相位裕度的环：200 Hz 在 32 Hz 速度环带宽上的实测代价约 9 度。
+     * @since 0.1.7
+     */
     struct Config final {
         float inject_v; ///< [en] injection amplitude, peak V, > 0. [zh] 注入幅值，峰值 V，> 0。
         float
@@ -138,6 +156,8 @@ class HfiObserver final {
         float demod_lpf_hz;     ///< [en] demodulation filter cutoff in Hz. [zh] 解调滤波截止频率，Hz。
         float pll_bandwidth_hz; ///< [en] PLL natural frequency in Hz, > 0. [zh] PLL 自然频率，Hz，> 0。
         float pll_zeta; ///< [en] PLL damping ratio, > 0 (0.7..1.0 typical). [zh] PLL 阻尼比，> 0（常用 0.7..1.0）。
+        float
+            speed_lpf_hz; ///< [en] low-pass on the *published* speed, in Hz; 0 publishes it unfiltered, see the note. [zh] **已发布**转速的低通截止频率，Hz；0 表示原样发布，见注释。
         float
             demod_gain_a; ///< [en] signed sensitivity, see predicted_gain_a(); != 0. [zh] 带符号灵敏度，见 predicted_gain_a()；!= 0。
         float
@@ -348,6 +368,8 @@ class HfiObserver final {
     FirstOrderLowPass current_hp_beta_;
     FirstOrderLowPass demod_lpf_a_;
     FirstOrderLowPass demod_lpf_b_;
+    FirstOrderLowPass
+        speed_lpf_; ///< [en] the proportional path's low-pass, unconfigured when `speed_lpf_hz` is 0. [zh] 比例通路的低通；`speed_lpf_hz` 为 0 时未配置。
     FirstOrderLowPass amplitude_lpf_;
     ObsState state_;
     ErrorCode status_;

@@ -54,7 +54,7 @@ TEST(HfiObserver, RejectsEachUnusableConfiguration) {
     // normalisation would divide by it), and a negative threshold.
     // 每一次拒绝都是一个否则会被拿去参与除法或作为相位步长、并悄悄产出一个角度的数字：零幅值、零频率、
     // 解调截止不低于载波（滤波器会放行它本该滤掉的纹波）、零增益（误差归一化会除以它）、负阈值。
-    for (int field = 0; field < 7; ++field) {
+    for (int field = 0; field < 8; ++field) {
         foc::core::HfiObserver::Config config = valid_config();
         switch (field) {
         case 0: config.inject_v = 0.0F; break;
@@ -63,7 +63,8 @@ TEST(HfiObserver, RejectsEachUnusableConfiguration) {
         case 3: config.demod_lpf_hz = config.inject_hz; break;
         case 4: config.pll_bandwidth_hz = 0.0F; break;
         case 5: config.demod_gain_a = 0.0F; break;
-        default: config.min_hf_current_a = -1.0F; break;
+        case 6: config.min_hf_current_a = -1.0F; break;
+        default: config.speed_lpf_hz = -1.0F; break;
         }
 
         foc::core::HfiObserver observer(config);

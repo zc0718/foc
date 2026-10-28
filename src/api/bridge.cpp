@@ -126,6 +126,20 @@ constexpr float kHfiDemodLpfHz = 200.0F;
  */
 constexpr float kHfiMinRatio = 2.0F;
 
+/**
+ * @brief [en] The low-pass on the injection observer's published speed, in Hz. Measured on the ripple rig: 200 Hz takes
+ *             the carrier tone in the published speed from 0.4180 to 0.0412 rad/s (10.1x) with the steady bias not
+ *             worse (0.0039 -> 0.0023 rad/s), and leaves every cutoff from 50 to 400 Hz stable, so the choice is not a
+ *             stability edge. 50 Hz measured quieter still but sits 1.6x above the 32 Hz speed loop's own bandwidth,
+ *             where the phase cost has not been measured; 200 Hz sits 6.25x above it and costs about 9 degrees.
+ * @brief [zh] 注入观测器已发布转速上的低通截止频率，Hz。在纹波台架上实测：200 Hz 把已发布转速里的载波音调从 0.4180 压到
+ *             0.0412 rad/s（10.1 倍），稳态偏差没有变差（0.0039 → 0.0023 rad/s），而 50 到 400 Hz 的每个截止频率都稳
+ *             定，因此这个选择不是稳定性边缘上的取舍。50 Hz 实测更安静，但它高于 32 Hz 速度环自身带宽只有 1.6 倍，那里
+ *             的相位代价没有量过；200 Hz 高出 6.25 倍，代价约 9 度。
+ * @since 0.1.7
+ */
+constexpr float kHfiSpeedLpfHz = 200.0F;
+
 
 
 /**
@@ -827,6 +841,10 @@ inline auto make_observer(const foc_motor_params_t& p, const Setup& setup) noexc
     config.hfi.demod_gain_a =
         core::HfiObserver::predicted_gain_a(setup.inject_v, setup.inject_hz, machine.ld, machine.lq);
     config.hfi.min_hf_current_a = 0.05F;
+    // The published speed is what the application reads, and an unfiltered `omega_int + kp*error` carries the carrier in
+    // it. Measured value; see `kHfiSpeedLpfHz`.
+    // 已发布转速是应用读到的那个数，而未滤的 `omega_int + kp·error` 把载波带在里面。取值来自实测；见 `kHfiSpeedLpfHz`。
+    config.hfi.speed_lpf_hz = kHfiSpeedLpfHz;
     config.blended.blend_start_rad_s = setup.blend_start_rad_s;
     config.blended.blend_end_rad_s = setup.blend_end_rad_s;
     config.blended.handover_lpf_hz = setup.handover_lpf_hz;

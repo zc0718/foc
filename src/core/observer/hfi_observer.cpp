@@ -23,7 +23,7 @@ namespace {
 constexpr auto valid_config(const HfiObserver::Config& config) noexcept -> bool {
     return (config.inject_v > 0.0F) && (config.inject_hz > 0.0F) && (config.demod_lpf_hz > 0.0F) &&
            (config.demod_lpf_hz < config.inject_hz) && (config.pll_bandwidth_hz > 0.0F) && (config.pll_zeta > 0.0F) &&
-           (config.demod_gain_a != 0.0F) && (config.min_hf_current_a >= 0.0F);
+           (config.demod_gain_a != 0.0F) && (config.min_hf_current_a >= 0.0F) && (config.speed_lpf_hz >= 0.0F);
 }
 
 
@@ -46,9 +46,9 @@ auto wrap_two_pi(float angle) noexcept -> float {
 } // namespace
 
 HfiObserver::HfiObserver(Config config) noexcept
-    : config_(config), current_hp_alpha_(), current_hp_beta_(), demod_lpf_a_(), demod_lpf_b_(), amplitude_lpf_(),
-      state_{0.0F, 0.0F}, status_(valid_config(config) ? ErrorCode::Ok : ErrorCode::Param), phase_applied_(0.0F),
-      theta_applied_(0.0F), omega_int_(0.0F), error_(0.0F), hf_amp_(0.0F), dt_configured_(0.0F),
+    : config_(config), current_hp_alpha_(), current_hp_beta_(), demod_lpf_a_(), demod_lpf_b_(), speed_lpf_(),
+      amplitude_lpf_(), state_{0.0F, 0.0F}, status_(valid_config(config) ? ErrorCode::Ok : ErrorCode::Param),
+      phase_applied_(0.0F), theta_applied_(0.0F), omega_int_(0.0F), error_(0.0F), hf_amp_(0.0F), dt_configured_(0.0F),
       // Ten time constants of the demodulation filter: the residual of a step response is e^-10, about
       // 5e-5. Integrating sooner reads the carrier switching on as signal, which at the designed loop
       // gain throws the estimate across the whole speed range in a few hundred microseconds.
@@ -91,8 +91,14 @@ auto HfiObserver::configure_filters(float dt_s) noexcept -> ErrorCode {
     const ErrorCode a = demod_lpf_a_.configure(config_.demod_lpf_hz, dt_s);
     const ErrorCode b = demod_lpf_b_.configure(config_.demod_lpf_hz, dt_s);
     const ErrorCode c = amplitude_lpf_.configure(config_.demod_lpf_hz, dt_s);
+    // The proportional path's filter is optional: zero means "publish the raw proportional term", and `step()` passes
+    // its input through while unconfigured, so the zero case needs no branch in the hot loop.
+    // 比例通路的滤波是可选的：零意味着"发布原始比例项"，而 `step()` 未配置时原样返回输入，于是零的情况在热路径里不需要
+    // 分支。
+    const ErrorCode d =
+        (config_.speed_lpf_hz > 0.0F) ? speed_lpf_.configure(config_.speed_lpf_hz, dt_s) : ErrorCode::Ok;
     if ((alpha_hp != ErrorCode::Ok) || (beta_hp != ErrorCode::Ok) || (a != ErrorCode::Ok) || (b != ErrorCode::Ok) ||
-        (c != ErrorCode::Ok)) {
+        (c != ErrorCode::Ok) || (d != ErrorCode::Ok)) {
         return ErrorCode::Param;
     }
     dt_configured_ = dt_s;
@@ -215,11 +221,25 @@ auto HfiObserver::update(Ab<float> v_ab, Ab<float> i_ab, float dt_s) noexcept ->
         const float ki = wn * wn;
         omega_int_ = static_cast<float>(omega_int_ + (ki * error_ * dt_s));
         const float omega = omega_int_ + (kp * error_);
-        state_.omega_e = omega;
+        // The filter sits at the *publication* boundary, not inside the loop. The first attempt put it on the
+        // proportional path and every cutoff from 50 to 400 Hz ran the axis away (-115 to -170 rad/s): the proportional
+        // term is this loop's damping, and removing it below the loop's own 40 Hz bandwidth removes the damping -- the
+        // estimate then walks past the +-pi/2 window and locks to the mirror. What the caller needs is a published speed
+        // without the carrier in it; what the loop needs is its own dynamics untouched. So `theta_e` integrates the raw
+        // `omega` and only what is published is smoothed. See `speed_lpf_hz` for the measurement.
+        // 滤波器坐在**发布**边界上，而不是环路内部。第一次尝试把它放在比例通路上，50 到 400 Hz 每一个截止频率都把轴送飞
+        // （−115 到 −170 rad/s）：比例项就是本环路的阻尼，把它在环路自身 40 Hz 带宽以下拿掉就是拿走阻尼——估计随后走出
+        // ±π/2 窗口、锁到镜像上。调用方要的是一条不含载波的已发布转速；环路要的是它自己的动态原封不动。因此 `theta_e`
+        // 积分的是原始 `omega`，只有发布出去的那个被平滑。测量见 `speed_lpf_hz`。
+        state_.omega_e = speed_lpf_.step(omega);
         state_.theta_e = wrap_two_pi(state_.theta_e + (omega * dt_s));
     } else {
         error_ = 0.0F;
         omega_int_ = 0.0F;
+        // The filter is cleared with the rest: one that kept its state across a loss of lock would publish a decaying
+        // memory of a signal that no longer exists.
+        // 滤波器与其余的一起清掉：跨过一次失锁还保留状态的滤波器，会发布一段已经不存在信号的衰减记忆。
+        speed_lpf_.reset();
         state_.omega_e = 0.0F;
     }
 
@@ -247,6 +267,7 @@ void HfiObserver::reset() noexcept {
     current_hp_beta_.reset();
     demod_lpf_a_.reset();
     demod_lpf_b_.reset();
+    speed_lpf_.reset();
     amplitude_lpf_.reset();
     state_ = ObsState{0.0F, 0.0F};
     phase_applied_ = 0.0F;
