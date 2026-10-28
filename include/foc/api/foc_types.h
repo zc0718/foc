@@ -57,11 +57,12 @@ typedef struct foc_motor_params {
 /**
  * @brief [en] Which observer the motor runs.
  * @brief [zh] 电机运行哪一个观测器。
- * @note [en] `BACK_EMF` (the shipped default) and `NONLINEAR_FLUX` are wired; `HFI` and `BLENDED` still answer
- *            `FOC_ERR_NOT_IMPL`. Adding a mode must not change this header's meaning, only which values answer that
- *            error. A mode that is named but not wired answers the error rather than silently falling back to the
- *            default, because a silent fallback is indistinguishable from success. `foc_motor_status_t::observer`
- *            reports the mode that is actually running, so a caller never has to infer it from what it asked for.
+ * @note [en] all four modes are wired, and each one is admitted on facts rather than on a switch: `NONLINEAR_FLUX`
+ *            needs only the nameplate, `HFI` needs a stated carrier and a salient machine, `BLENDED` needs those plus
+ *            an ordered handover band. A request that this machine cannot honour answers `FOC_ERR_PARAM`. A mode that
+ *            is named but not wired answers the error rather than silently falling back to the default, because a
+ *            silent fallback is indistinguishable from success. `foc_motor_status_t::observer` reports the mode that is
+ *            actually running, so a caller never has to infer it from what it asked for.
  * @note [zh] `BACK_EMF`（出厂默认）与 `NONLINEAR_FLUX` 已接入；`HFI` 与 `BLENDED` 仍回答 `FOC_ERR_NOT_IMPL`。增加一种模
  *            式不应改变本头的含义，只改变哪些取值回答该错误。被命名却未接入的模式回答该错误，而不是静默退回默认值 ——因
  *            为静默退回与成功无法区分。`foc_motor_status_t::observer` 报出实际在跑的模式，调用方无需从自己请求了什么去
@@ -126,6 +127,9 @@ typedef struct foc_motor_setup {
     int32_t observer;                  /* foc_observer_t; 0 = FOC_OBSERVER_BACK_EMF, the shipped default */
     float inject_v;                    /* HFI carrier amplitude, peak V; required for FOC_OBSERVER_HFI */
     float inject_hz;                   /* HFI carrier frequency, Hz; required for FOC_OBSERVER_HFI */
+    float blend_start_rad_s;           /* below this speed only the injection observer runs; required for BLENDED */
+    float blend_end_rad_s;             /* above this speed only the back-EMF observer runs; required for BLENDED */
+    float handover_lpf_hz;             /* smoothing of the speed the handover is decided on, Hz; required for BLENDED */
 } foc_motor_setup_t;
 
 

@@ -95,8 +95,11 @@ struct Setup final {
      * @brief [zh] 运行哪个观测器，取 `foc_observer_t`；0 是出厂默认。
      */
     int32_t observer;
-    float inject_v;  ///< [en] HFI carrier amplitude, peak V. [zh] HFI 载波幅值，峰值 V。
-    float inject_hz; ///< [en] HFI carrier frequency, Hz. [zh] HFI 载波频率，Hz。
+    float inject_v;          ///< [en] HFI carrier amplitude, peak V. [zh] HFI 载波幅值，峰值 V。
+    float inject_hz;         ///< [en] HFI carrier frequency, Hz. [zh] HFI 载波频率，Hz。
+    float blend_start_rad_s; ///< [en] below this only the injection observer runs. [zh] 低于此值只用注入观测器。
+    float blend_end_rad_s;   ///< [en] above this only the back-EMF observer runs. [zh] 高于此值只用反电势观测器。
+    float handover_lpf_hz;   ///< [en] smoothing of the handover speed, Hz. [zh] 交接判据转速的平滑，Hz。
 };
 
 
@@ -107,7 +110,7 @@ struct Setup final {
 constexpr Setup kDefaultSetup{5.0F, 20000.0F, 500.0F, 24.0F, 2000.0F, 200.0F,
                               0.0F, 20.0F,    50.0F,  0.0F,  0.0F,    0.0F,
                               0.0F, 0.0F,     0.0F,   0.0F,  0.0F,    static_cast<std::int32_t>(FOC_OBSERVER_BACK_EMF),
-                              0.0F, 0.0F};
+                              0.0F, 0.0F,     0.0F,   0.0F,  0.0F};
 
 /**
  * @brief [en] The demodulation filter's cutoff in Hz: the value `test_sil_hfi.cpp` fixes for every case, so that a
@@ -256,6 +259,18 @@ auto resolve_setup(const foc_motor_setup_t* requested) noexcept -> Setup {
     if (covers(*requested, offsetof(foc_motor_setup_t, inject_hz) + sizeof(requested->inject_hz))) {
         out.inject_hz = requested->inject_hz;
     }
+    // Same rule again: the band belongs to the machine's speed range, so there is nothing sensible to default it to,
+    // and a request for a blend without one is refused rather than handed a guess.
+    // 规则相同：交接带属于机器的转速范围，没有合理的默认值可填，因此没有交接带的混合请求会被拒绝，而不是被猜一个。
+    if (covers(*requested, offsetof(foc_motor_setup_t, blend_start_rad_s) + sizeof(requested->blend_start_rad_s))) {
+        out.blend_start_rad_s = requested->blend_start_rad_s;
+    }
+    if (covers(*requested, offsetof(foc_motor_setup_t, blend_end_rad_s) + sizeof(requested->blend_end_rad_s))) {
+        out.blend_end_rad_s = requested->blend_end_rad_s;
+    }
+    if (covers(*requested, offsetof(foc_motor_setup_t, handover_lpf_hz) + sizeof(requested->handover_lpf_hz))) {
+        out.handover_lpf_hz = requested->handover_lpf_hz;
+    }
     // Alignment deliberately breaks the "0 = library default" rule: 0 is a meaningful value here
     // ("do not align"), so every field is taken literally and any non-zero value is authoritative.
     // 对齐故意打破“0 = 库默认值”的规则：0 在这里是有意义的值（“不对齐”），所以每个字段按字面生效，
@@ -290,15 +305,17 @@ auto resolve_setup(const foc_motor_setup_t* requested) noexcept -> Setup {
 /**
  * @brief [en] Whether the requested observer can actually be run.
  * @brief [zh] 所请求的观测器是否真的可以运行。
- * @return [en] `FOC_OK` for a wired mode (`BACK_EMF`, `NONLINEAR_FLUX`), `FOC_ERR_NOT_IMPL` for one that is named but
- *              not wired (`HFI`, `BLENDED`), `FOC_ERR_PARAM` for a value outside the enumeration.
- * @return [zh] 已接入的模式（`BACK_EMF`、`NONLINEAR_FLUX`）返回 `FOC_OK`，已命名但未接入的模式（`HFI`、`BLENDED`）返回
- *              `FOC_ERR_NOT_IMPL`，枚举之外的取值返回 `FOC_ERR_PARAM`。
- * @note [en] The three answers are kept apart on purpose. Answering `FOC_OK` and running the default instead would be a
- *            silent substitution, and answering `PARAM` for an unimplemented mode would tell the caller their call was
- *            malformed when it was well formed and merely unimplemented.
- * @note [zh] 三种回答刻意分开。答 `FOC_OK` 却跑默认值，是一种静默替换；而对 `NONLINEAR_FLUX` 答 `PARAM`，则是在调用完全
- *            正确、只是尚未实现时告诉调用方它写错了。
+ * @return [en] `FOC_OK` for a mode this machine can run, `FOC_ERR_PARAM` for a request it cannot honour -- a value
+ *              outside the enumeration, or a mode whose parameters are missing or contradicted by the machine.
+ * @return [zh] 这台机器能跑的模式返回 `FOC_OK`；满足不了的请求返回 `FOC_ERR_PARAM`——枚举之外的取值，或参数缺失、或与机
+ *              器相矛盾的请求。
+ * @note [en] The answers are kept apart on purpose. Answering `FOC_OK` and running the default instead would be a
+ *            silent substitution. Every mode in the enumeration is wired today, so nothing here answers
+ *            `FOC_ERR_NOT_IMPL`; that answer stays in the contract for a mode added later, and a branch that could
+ *            never be reached was removed rather than left in place looking like coverage.
+ * @note [zh] 几种回答刻意分开。答 `FOC_OK` 却跑默认值，是一种静默替换。今天枚举里的每个模式都已接入，因此这里不再回答
+ *            `FOC_ERR_NOT_IMPL`；该回答留在契约里供以后新增的模式使用，而一个永远走不到的分支被删掉，而不是留下来充作覆
+ *            盖。
  * @since 0.1.4
  */
 auto observer_status(const Setup& setup, const foc_motor_params_t& params) noexcept -> foc_err_t {
@@ -330,7 +347,26 @@ auto observer_status(const Setup& setup, const foc_motor_params_t& params) noexc
         }
         return FOC_OK;
     case FOC_OBSERVER_BLENDED:
-        return FOC_ERR_NOT_IMPL;
+        // A blend is the injection observer below the band and the back-EMF observer above it, so it inherits both
+        // requirements and adds one of its own: an ordered band with a settled handover filter. Refusing a backwards or
+        // empty band is the same kind of answer as refusing a surface machine for HFI -- the request is well formed and
+        // this machine cannot honour it.
+        // 混合就是"带下用注入观测器、带上用反电势观测器"，因此继承两者的要求，并多一条自己的：一个有序的带与一个已定
+        // 的交接滤波器。拒绝一个反向或空心的带，与为 HFI 拒绝表贴机是同一类回答——请求写法正确，而这台机器满足不了。
+        if (!(std::isfinite(setup.inject_v) && (setup.inject_v > 0.0F) && std::isfinite(setup.inject_hz) &&
+              (setup.inject_hz > (kHfiMinRatio * kHfiDemodLpfHz)))) {
+            return FOC_ERR_PARAM;
+        }
+        if (!(std::isfinite(params.ld) && std::isfinite(params.lq) && (params.ld > 0.0F) && (params.lq > 0.0F) &&
+              (params.ld != params.lq))) {
+            return FOC_ERR_PARAM;
+        }
+        if (!(std::isfinite(setup.blend_start_rad_s) && (setup.blend_start_rad_s >= 0.0F) &&
+              std::isfinite(setup.blend_end_rad_s) && (setup.blend_end_rad_s > setup.blend_start_rad_s) &&
+              std::isfinite(setup.handover_lpf_hz) && (setup.handover_lpf_hz > 0.0F))) {
+            return FOC_ERR_PARAM;
+        }
+        return FOC_OK;
     default:
         return FOC_ERR_PARAM;
     }
@@ -685,6 +721,8 @@ constexpr auto observer_mode(core::ObserverKind kind) noexcept -> std::int32_t {
         return FOC_OBSERVER_NONLINEAR_FLUX;
     case core::ObserverKind::Hfi:
         return FOC_OBSERVER_HFI;
+    case core::ObserverKind::Blended:
+        return FOC_OBSERVER_BLENDED;
     case core::ObserverKind::BackEmf:
     default:
         return FOC_OBSERVER_BACK_EMF;
@@ -697,6 +735,8 @@ constexpr auto observer_kind(std::int32_t observer) noexcept -> core::ObserverKi
         return core::ObserverKind::NonlinearFlux;
     case FOC_OBSERVER_HFI:
         return core::ObserverKind::Hfi;
+    case FOC_OBSERVER_BLENDED:
+        return core::ObserverKind::Blended;
     case FOC_OBSERVER_BACK_EMF:
     default:
         return core::ObserverKind::BackEmf;
@@ -730,6 +770,9 @@ inline auto make_observer(const foc_motor_params_t& p, const Setup& setup) noexc
     config.hfi.demod_gain_a =
         core::HfiObserver::predicted_gain_a(setup.inject_v, setup.inject_hz, machine.ld, machine.lq);
     config.hfi.min_hf_current_a = 0.05F;
+    config.blended.blend_start_rad_s = setup.blend_start_rad_s;
+    config.blended.blend_end_rad_s = setup.blend_end_rad_s;
+    config.blended.handover_lpf_hz = setup.handover_lpf_hz;
     config.kind = observer_kind(setup.observer);
     return core::SwitchableObserver(config);
 }

@@ -52,6 +52,14 @@ auto setup_with_carrier(std::int32_t observer, float inject_v, float inject_hz) 
     foc_motor_setup_t setup = setup_with_observer(observer);
     setup.inject_v = inject_v;
     setup.inject_hz = inject_hz;
+    // The band the repository's own blend rig uses (`test_sil_observer_blend.cpp`): 60 to 120 rad/s with a 20 Hz
+    // handover filter. Stated here rather than defaulted in the library, because a band is a property of the machine's
+    // speed range and there is nothing sensible to guess.
+    // 仓库自己的混合台架（`test_sil_observer_blend.cpp`）用的交接带：60 到 120 rad/s，交接滤波 20 Hz。此处在测试里
+    // 写明而不是在库里给默认值，因为交接带属于机器的转速范围，没有什么可以合理猜测的。
+    setup.blend_start_rad_s = 60.0F;
+    setup.blend_end_rad_s = 120.0F;
+    setup.handover_lpf_hz = 20.0F;
     return setup;
 }
 
@@ -103,31 +111,6 @@ TEST(ApiObserverSelector, TheDefaultIsTheBackEmfObserverAndItRuns) {
     }
     EXPECT_EQ(host.ticks, 10);
     EXPECT_EQ(foc_motor_destroy(motor), FOC_OK);
-}
-
-TEST(ApiObserverSelector, AModeThatIsNotWiredSaysSoInsteadOfRunningTheDefault) {
-    // Each named-but-unwired mode must answer NOT_IMPL from both constructors. Answering OK and running the back-EMF
-    // observer would hand the caller a capability the library does not have. `NONLINEAR_FLUX` and `HFI` have since been
-    // wired and moved to their own cases; leaving them in this loop would have kept asserting a fact that stopped being
-    // true, and the test would have had to be weakened rather than corrected.
-    // 每个已命名但未接入的模式必须在两个构造函数上都答 NOT_IMPL。答 OK 却跑反电势观测器，等于把一个库并不具备的能力交给
-    // 调用方。`NONLINEAR_FLUX` 后来接上了，已移到下面它自己的用例；把它留在这个循环里就是继续断言一个已经不成立的事实，
-    // 那样测试只能被削弱而不能被修正。
-    const foc_motor_params_t params = params_struct();
-    for (const std::int32_t observer : {static_cast<std::int32_t>(FOC_OBSERVER_BLENDED)}) {
-        const foc_motor_setup_t setup = setup_with_observer(observer);
-
-        foc_motor_t stub{};
-        EXPECT_EQ(foc_motor_create_ex(&params, &setup, &stub), FOC_ERR_NOT_IMPL) << "observer " << observer;
-        EXPECT_EQ(stub, nullptr);
-
-        Host host{};
-        const foc_hal_callbacks_t callbacks = callbacks_for(host);
-        foc_motor_t host_motor{};
-        EXPECT_EQ(foc_motor_create_host(&params, &setup, &callbacks, &host_motor), FOC_ERR_NOT_IMPL)
-            << "observer " << observer;
-        EXPECT_EQ(host_motor, nullptr);
-    }
 }
 
 TEST(ApiObserverSelector, AValueOutsideTheEnumerationIsACallerError) {
@@ -270,34 +253,55 @@ TEST(ApiObserverSelector, TheHfiModeRefusesWithoutACarrierOrWithoutSaliency) {
     EXPECT_EQ(foc_motor_destroy(hfi_motor), FOC_OK);
 }
 
-TEST(ApiObserverSelector, FourModesHaveFourDistinctAnswersToday) {
-    // One row per mode, so that wiring the last one is a change to this table rather than a discovery made by a user.
-    // 每个模式一行，于是接入最后一个模式时改动的是这张表，而不是由用户发现。
+TEST(ApiObserverSelector, EveryModeInTheEnumerationIsWiredAndEachIsAdmittedOnFacts) {
+    // One row per way a request can be accepted or refused, so that a change in what the library promises is a change to
+    // this table rather than a discovery made by a user. The refusals are the interesting rows: each names a fact about
+    // the machine or the request, and none of them falls back to the default mode.
+    // 请求被接受或被拒绝的每一种情形各占一行，于是"库承诺了什么"的变化是这张表的改动，而不是由用户发现。拒绝的那几行才是
+    // 重点：每一行都指向一个关于机器或请求的事实，且没有任何一行退回默认模式。
     const foc_motor_params_t surface = params_struct();
     const foc_motor_params_t salient = salient_params();
+
     struct Row final {
         std::int32_t mode;
         const foc_motor_params_t* params;
         float inject_v;
         float inject_hz;
+        float band_end; // 0 means "leave the helper's order; a negative value makes the band backwards"
         foc_err_t expected;
         const char* why;
     };
     const Row rows[] = {
-        {static_cast<std::int32_t>(FOC_OBSERVER_BACK_EMF), &surface, 0.0F, 0.0F, FOC_OK, "wired, the default"},
-        {static_cast<std::int32_t>(FOC_OBSERVER_NONLINEAR_FLUX), &surface, 0.0F, 0.0F, FOC_OK, "wired, no carrier"},
-        {static_cast<std::int32_t>(FOC_OBSERVER_HFI), &salient, 12.0F, 2000.0F, FOC_OK, "wired, carrier stated"},
-        {static_cast<std::int32_t>(FOC_OBSERVER_HFI), &surface, 12.0F, 2000.0F, FOC_ERR_PARAM, "no saliency"},
-        {static_cast<std::int32_t>(FOC_OBSERVER_HFI), &salient, 0.0F, 0.0F, FOC_ERR_PARAM, "no carrier"},
-        {static_cast<std::int32_t>(FOC_OBSERVER_BLENDED), &salient, 12.0F, 2000.0F, FOC_ERR_NOT_IMPL, "not wired"},
-        {99, &surface, 0.0F, 0.0F, FOC_ERR_PARAM, "outside the enumeration"},
+        {static_cast<std::int32_t>(FOC_OBSERVER_BACK_EMF), &surface, 0.0F, 0.0F, 120.0F, FOC_OK, "the default"},
+        {static_cast<std::int32_t>(FOC_OBSERVER_NONLINEAR_FLUX), &surface, 0.0F, 0.0F, 120.0F, FOC_OK,
+         "wired, nameplate is enough"},
+        {static_cast<std::int32_t>(FOC_OBSERVER_HFI), &salient, 12.0F, 2000.0F, 120.0F, FOC_OK, "wired on saliency"},
+        {static_cast<std::int32_t>(FOC_OBSERVER_HFI), &surface, 12.0F, 2000.0F, 120.0F, FOC_ERR_PARAM,
+         "surface machine has no saliency to measure"},
+        {static_cast<std::int32_t>(FOC_OBSERVER_HFI), &salient, 0.0F, 0.0F, 120.0F, FOC_ERR_PARAM, "no carrier"},
+        {static_cast<std::int32_t>(FOC_OBSERVER_HFI), &salient, 12.0F, 300.0F, 120.0F, FOC_ERR_PARAM,
+         "carrier at the demodulation cutoff"},
+        {static_cast<std::int32_t>(FOC_OBSERVER_BLENDED), &salient, 12.0F, 2000.0F, 120.0F, FOC_OK,
+         "wired; needs what HFI needs plus a band"},
+        {static_cast<std::int32_t>(FOC_OBSERVER_BLENDED), &salient, 12.0F, 2000.0F, 0.0F, FOC_ERR_PARAM,
+         "band backwards: end below start"},
+        {static_cast<std::int32_t>(FOC_OBSERVER_BLENDED), &surface, 12.0F, 2000.0F, 120.0F, FOC_ERR_PARAM,
+         "a blend whose low half cannot work"},
+        {static_cast<std::int32_t>(FOC_OBSERVER_BLENDED), &salient, 0.0F, 0.0F, 120.0F, FOC_ERR_PARAM, "no carrier"},
+        {99, &surface, 0.0F, 0.0F, 120.0F, FOC_ERR_PARAM, "outside the enumeration"},
     };
     for (const Row& row : rows) {
-        const foc_motor_setup_t setup = setup_with_carrier(row.mode, row.inject_v, row.inject_hz);
+        foc_motor_setup_t setup = setup_with_carrier(row.mode, row.inject_v, row.inject_hz);
+        setup.blend_end_rad_s = row.band_end;
         foc_motor_t motor{};
         const foc_err_t got = foc_motor_create_ex(row.params, &setup, &motor);
         EXPECT_EQ(got, row.expected) << "mode " << row.mode << ": " << row.why;
-        if (got == FOC_OK && motor != nullptr) {
+        if (got == FOC_OK) {
+            ASSERT_NE(motor, nullptr);
+            foc_motor_status_t status{};
+            status.struct_size = sizeof(foc_motor_status_t);
+            EXPECT_EQ(foc_motor_get_status(motor, &status), FOC_OK);
+            EXPECT_EQ(status.observer, row.mode) << "mode " << row.mode << " does not report itself";
             EXPECT_EQ(foc_motor_destroy(motor), FOC_OK);
         }
     }

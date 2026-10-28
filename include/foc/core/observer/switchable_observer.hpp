@@ -4,6 +4,7 @@
 
 #include <foc/core/machine_params.hpp>
 #include <foc/core/observer/back_emf_observer.hpp>
+#include <foc/core/observer/blended_observer.hpp>
 #include <foc/core/observer/hfi_observer.hpp>
 #include <foc/core/observer/nonlinear_flux_observer.hpp>
 #include <foc/core/observer/observer_policy.hpp>
@@ -25,6 +26,7 @@ enum class ObserverKind : std::uint8_t {
     BackEmf = 0,       ///< [en] the back-EMF observer. [zh] 反电势观测器。
     NonlinearFlux = 1, ///< [en] the non-linear flux observer. [zh] 非线性磁链观测器。
     Hfi = 2,           ///< [en] the injection observer; the only one that injects. [zh] 注入观测器；唯一会注入的那个。
+    Blended = 3,       ///< [en] injection below the band, back-EMF above it. [zh] 带下用注入，带上用反电势。
 };
 
 
@@ -70,6 +72,7 @@ class SwitchableObserver final {
         BackEmfObserver::Config back_emf{};
         NonlinearFluxObserver::Config nonlinear_flux{};
         HfiObserver::Config hfi{};
+        BlendedObserver<HfiObserver, BackEmfObserver>::Config blended{};
         ObserverKind kind{ObserverKind::BackEmf};
     };
 
@@ -78,7 +81,8 @@ class SwitchableObserver final {
      * @brief [zh] 三个已配置的观测器，以及起始使用的那一个。
      */
     explicit SwitchableObserver(Config config) noexcept
-        : back_emf_(config.back_emf), nonlinear_flux_(config.nonlinear_flux), hfi_(config.hfi), kind_(config.kind) {}
+        : back_emf_(config.back_emf), nonlinear_flux_(config.nonlinear_flux), hfi_(config.hfi),
+          blended_(HfiObserver{config.hfi}, BackEmfObserver{config.back_emf}, config.blended), kind_(config.kind) {}
 
     /**
      * @brief [en] Advance whichever observer is selected.
@@ -90,6 +94,8 @@ class SwitchableObserver final {
             return nonlinear_flux_.update(v_ab, i_ab, dt_s);
         case ObserverKind::Hfi:
             return hfi_.update(v_ab, i_ab, dt_s);
+        case ObserverKind::Blended:
+            return blended_.update(v_ab, i_ab, dt_s);
         case ObserverKind::BackEmf:
         default:
             return back_emf_.update(v_ab, i_ab, dt_s);
@@ -109,7 +115,16 @@ class SwitchableObserver final {
      * @since 0.1.5
      */
     [[nodiscard]] auto injection_ab() const noexcept -> Ab<float> {
-        return (kind_ == ObserverKind::Hfi) ? hfi_.injection_ab() : Ab<float>{0.0F, 0.0F};
+        switch (kind_) {
+        case ObserverKind::Hfi:
+            return hfi_.injection_ab();
+        case ObserverKind::Blended:
+            return blended_.injection_ab();
+        case ObserverKind::BackEmf:
+        case ObserverKind::NonlinearFlux:
+        default:
+            return Ab<float>{0.0F, 0.0F};
+        }
     }
 
     /**
@@ -121,6 +136,7 @@ class SwitchableObserver final {
     void seed_flux(Ab<float> psi_ab) noexcept {
         back_emf_.seed_flux(psi_ab);
         nonlinear_flux_.seed_flux(psi_ab);
+        blended_.seed_flux(psi_ab);
     }
 
     /**
@@ -148,6 +164,10 @@ class SwitchableObserver final {
     BackEmfObserver back_emf_;
     NonlinearFluxObserver nonlinear_flux_;
     HfiObserver hfi_;
+    /**
+     * @brief The blend owns its own two observers rather than borrowing the members above. Borrowing would tie the band's behaviour to whatever the standalone members last believed, and the wrapper's whole rule is that only the selected observer is stepped -- so a borrowed copy would be either frozen (and useless) or stealthily advanced (and a second carrier phase). The cost is a second copy of two small objects in a statically sized slot. 交接带持有**自己**的两个观测器，而不是借用上面的成员。借用会让交接带的行为取决于那两个成员上次相信了什么，而包装器的全部规则就是"只推进被选中的那个"——借来的副本要么被冻结（因而无用），要么被偷偷推进（于是多出一个载波相位）。代价是在一个静态定容的槽位里多存两个小对象。
+     */
+    BlendedObserver<HfiObserver, BackEmfObserver> blended_;
     ObserverKind kind_;
 };
 
