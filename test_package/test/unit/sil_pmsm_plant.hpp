@@ -195,7 +195,7 @@ class PmsmPlant final {
      *        [zh] 模拟绕组发热：`Rs = Rs20·(1 + alpha·(T − 20))`。默认关闭。
      *
      * @param temperature_c [en] winding temperature in degrees C. [zh] 绕组温度，摄氏度。
-     * @param alpha_per_k [en] temperature coefficient, copper is about 3.93e-3 per K. [zh] 温度系数，铜约为 3.93e-3 /K。
+     * @param alpha_per_k [en] temperature coefficient, copper is about 3.93e-3 per K. [zh]温度系数，铜约为3.93e-3 /K。
      * @note [en] Why this exists: a parameter-dentification result that only works at 20 C is a
      *       calculator, not an estimator. A drifting truth is how SIL can test the difference -- the
      *       plant heats up while the observer keeps believing the nameplate.

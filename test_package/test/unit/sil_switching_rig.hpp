@@ -76,7 +76,7 @@ struct SwitchingRigConfig final {
  * ripple, dead-time volt-seconds, the fact that the current is not the average
  * -- is what they have to cope with. [zh]
  * 观测器拿到的是**指令**矢量和**采样**电流，也就是真实控制器知道的全部。其余的一切——纹波、
- *       死区伏秒、电流不等于平均值——都是它们必须自己应付的。
+ * 死区伏秒、电流不等于平均值——都是它们必须自己应付的。
  * @since 0.1.0
  */
 class SwitchingRig final {
@@ -221,9 +221,8 @@ auto run_switched(const SwitchingRigConfig &config, Update &&update) -> float {
  * sliding surface, `z = K * sat(s / layer)` injected as a voltage, and a
  * first-order filter on `z` to read out the equivalent control (the back-EMF).
  *        [zh]
- * 教科书式滑模观测器，**是对照而不是候选**：它的存在是为了让闸有一个能失败的对象。电流误差
- *        滑模面，`z = K·sat(s/layer)` 作为注入电压，再对 `z`
- * 做一阶滤波读出等效控制（反电动势）。
+ * 教科书式滑模观测器，**是对照而不是候选**：它的存在是为了让闸有一个能失败的对象。电流误差 滑模面，`z = K·sat(s/layer)`
+ * 作为注入电压，再对 `z` 做一阶滤波读出等效控制（反电动势）。
  *
  * @note [en] It is deliberately *sane*: it reaches ~0.03 rad on a plant with
  * neither impairment, so a failure here is about the structure under
@@ -291,23 +290,19 @@ private:
  * @return [en] gain in V, filter corner in Hz, boundary layer in A. [zh]
  * 增益（V）、滤波拐点（Hz）、 边界层（A）。
  *
- * @note [en] Both numbers come from one fact: the sliding-mode gain must exceed
- * the back-EMF it is trying to reconstruct, `K > |omega_e| * psi_f`, and it
- * must not be much larger than that or the chattering it injects grows with it.
- * So `K` is proportional to speed with a floor. The equivalent-control filter
- *       has the mirror problem: its corner must be well above the signal it
- * must pass (lag) but low enough to reject the switching (chatter), so it
+ * @note [en] Both numbers come from one fact: the sliding-mode gain must exceed the back-EMF it is trying to
+ * reconstruct, `K > |omega_e| * psi_f`, and it must not be much larger than that or the chattering it injects grows
+ * with it. So `K` is proportional to speed with a floor. The equivalent-control filter has the mirror problem: its
+ * corner must be well above the signal it must pass (lag) but low enough to reject the switching (chatter), so it
  * tracks speed too. [zh]
- * 两个数来自同一个事实：滑模增益必须大于它要重建的反电动势，`K >
- * |omega_e|·psi_f`；又不能比它大 太多，否则注入的抖振跟着涨。所以 `K`
- * 有下限且正比于转速。等效控制滤波器是镜像的问题：拐点要明显
- *       高于必须通过的信号（否则滞后），又要低到能压住开关（否则抖振），所以它也跟随转速。
+ * 两个数来自同一个事实：滑模增益必须大于它要重建的反电动势，`K > |omega_e|·psi_f`；又不能比它大
+ * 太多，否则注入的抖振跟着涨。所以 `K` 有下限且正比于转速。等效控制滤波器是镜像的问题：拐点要明显
+ * 高于必须通过的信号（否则滞后），又要低到能压住开关（否则抖振），所以它也跟随转速。
  * @note [en] These constants are fitted to the S18 record, not derived: the
  * point of the bookkeeping is that a *single constant* provably cannot serve
  * the envelope, not that these particular numbers are optimal. [zh]
- * 这些常数是对着 S18
- * 的记录**拟合**的，不是推导出来的：这份记账要说明的是"单个常数**不可能**
- *       覆盖整个包络"，而不是这几个数字最优。
+ * 这些常数是对着 S18 的记录**拟合**的，不是推导出来的：这份记账要说明的是"单个常数**不可能**
+ * 覆盖整个包络"，而不是这几个数字最优。
  * @since 0.1.0
  */
 struct SmoTuning final {

@@ -15,30 +15,25 @@ namespace core {
  * the request to a real modulator. [zh]
  * 把逆变器死区吃掉的电压加回去，再把请求交给真正的调制器。
  *
- *        [en] Dead time clamps each phase to the rail its current is coming
- * from for `t_dead`, so the inverter delivers `v_cmd - v_dead * sign(i_phase)`
- * per phase *when the current is large*. Commanding `v_desired + v_dead *
- * sign(i_phase)` therefore lands on `v_desired`, provided the stage can see the
- * phase currents -- which is exactly why `ModulatorInput` carries them. [zh]
+ *        [en] Dead time clamps each phase to the rail its current is coming from for `t_dead`, so the inverter delivers
+ *        `v_cmd - v_dead * sign(i_phase)` per phase *when the current is large*. Commanding `v_desired + v_dead *
+ *        sign(i_phase)` therefore lands on `v_desired`, provided the stage can see the phase currents -- which is
+ *        exactly why `ModulatorInput` carries them. [zh]
  * 死区在每个 `t_dead`
- * 内把该相钳位到电流来自的那条母线，因此在电流**较大**时逆变器每相交付 `v_cmd −
- * v_dead·sign(i_phase)`。于是命令 `v_desired + v_dead·sign(i_phase)` 就能落到
- *        `v_desired`——前提是这一级看得到相电流，这正是 `ModulatorInput`
+ * 内把该相钳位到电流来自的那条母线，因此在电流**较大**时逆变器每相交付 `v_cmd − v_dead·sign(i_phase)`。于是命令
+ * `v_desired + v_dead·sign(i_phase)` 就能落到 `v_desired`——前提是这一级看得到相电流，这正是 `ModulatorInput`
  * 带着它们的原因。
  *
- *        [en] It is a *decorator*, not a flag on `Svpwm`: space-vector
- * modulation and inverter linearisation are two different jobs, and any
- * modulator can be compensated this way. [zh] 它是**装饰器**而不是 `Svpwm`
- * 上的一个开关：空间矢量调制与逆变器线性化是两件事，而且任何
- *        调制器都能用这种方式被补偿。
+ *        [en] It is a *decorator*, not a flag on `Svpwm`: space-vector modulation and inverter linearisation are two
+ *        different jobs, and any modulator can be compensated this way. [zh] 它是**装饰器**而不是 `Svpwm`
+ * 上的一个开关：空间矢量调制与逆变器线性化是两件事，而且任何 调制器都能用这种方式被补偿。
  *
  * @note [en] The correction is applied in the **phase** domain (inverse Clarke,
  * per-phase shape, Clarke back), because that is where the physical mechanism
  * lives: the loss belongs to each phase, not to the vector. Applying it to the
  * vector magnitude would compensate a different machine. [zh]
- * 修正在**相域**进行（逆 Clarke、按相整形、再 Clarke
- * 回去），因为物理机制就在那里：损失属于
- *       每一相，而不属于矢量。按矢量幅值补偿等于在补偿另一台电机。
+ * 修正在**相域**进行（逆 Clarke、按相整形、再 Clarke 回去），因为物理机制就在那里：损失属于
+ * 每一相，而不属于矢量。按矢量幅值补偿等于在补偿另一台电机。
  *
  * @note [en] What it cannot do: the loss does not switch polarity at a zero
  * crossing the way `sign()` says. It fades over a current range, and inside
@@ -228,32 +223,26 @@ template <typename Modulator> class DeadTimeCompensator final {
  * rotating-current sweep, by fitting one parameter. [zh]
  * 从锁定转子的旋转电流扫描里拟合一个参数，把死区的**淡出宽度**辨识出来。
  *
- *        [en] Why this exists: the width is the one number the compensation
- * stage needs and the one number nobody can compute from the nameplate
- * (`predicted_ripple_a()` is an upper bound that is wrong by an order of
- * magnitude). It is, however, *measurable*, and cheaply: hold the rotor, sweep
- * the amplitude of a slow rotating current, and watch how the current responds.
- * If the loss were the ideal step, `|v|` would be exactly
- * `rs*|i| + deadtime_v`; whatever departs from that is the fade. [zh]
- * 存在的理由：这个宽度是补偿级唯一需要的数，也是唯一没人能从铭牌算出来的数
- *        （`predicted_ripple_a()`
+ *        [en] Why this exists: the width is the one number the compensation stage needs and the one number nobody can
+ *        compute from the nameplate (`predicted_ripple_a()` is an upper bound that is wrong by an order of magnitude).
+ *        It is, however, *measurable*, and cheaply: hold the rotor, sweep the amplitude of a slow rotating current, and
+ *        watch how the current responds. If the loss were the ideal step, `|v|` would be exactly `rs*|i| + deadtime_v`;
+ *        whatever departs from that is the fade. [zh]
+ * 存在的理由：这个宽度是补偿级唯一需要的数，也是唯一没人能从铭牌算出来的数 （`predicted_ripple_a()`
  * 是差一个数量级的上界）。但它**可测**，而且很便宜：
- *        定住转子、扫一个缓慢旋转电流的幅值、看电流怎么响应。若损失是理想阶跃，
- *        `|v|` 就该正好是 `rs·|i| + deadtime_v`；偏离它的那部分就是淡出。
+ * 定住转子、扫一个缓慢旋转电流的幅值、看电流怎么响应。若损失是理想阶跃， `|v|` 就该正好是 `rs·|i| +
+ * deadtime_v`；偏离它的那部分就是淡出。
  *
- *        [en] Why **rotating**, not a DC d-axis sweep. With a DC command the
- * loss is a relay: the dead time pins the current at zero until the command
- * exceeds `(4/pi)*deadtime_v`, so the sweep never enters the region where a
- * fade is visible -- the first version of this estimator did exactly that and
- * came back `valid == false` on a switching plant, correctly. A rotating
- * current has an *amplitude* rather than a sign, and its loss is the
- * fundamental `(4/pi)*deadtime_v*clamp(|I|/If)`: again one equation per sample
- * and one unknown, but in the region the machine actually operates in. [zh]
+ *        [en] Why **rotating**, not a DC d-axis sweep. With a DC command the loss is a relay: the dead time pins the
+ *        current at zero until the command exceeds `(4/pi)*deadtime_v`, so the sweep never enters the region where a
+ *        fade is visible -- the first version of this estimator did exactly that and came back `valid == false` on a
+ *        switching plant, correctly. A rotating current has an *amplitude* rather than a sign, and its loss is the
+ *        fundamental `(4/pi)*deadtime_v*clamp(|I|/If)`: again one equation per sample and one unknown, but in the
+ *        region the machine actually operates in. [zh]
  * 为什么是**旋转**而不是 d 轴直流扫描。直流指令下损失是一个继电器：死区把电流
- *        钉在零，直到指令超过
- * `(4/π)·deadtime_v`，所以扫描根本没进到能看见淡出的
- *        区域——本估计器的第一版正是这么做的，在开关 plant 上返回 `valid ==
- * false`， 而且是对的。旋转电流有的是**幅值**而不是符号，它的损失是基波
+ *        钉在零，直到指令超过 `(4/π)·deadtime_v`，所以扫描根本没进到能看见淡出的
+ *        区域——本估计器的第一版正是这么做的，在开关 plant 上返回 `valid == false`，
+ *        而且是对的。旋转电流有的是**幅值**而不是符号，它的损失是基波
  *        `(4/π)·deadtime_v·clamp(|I|/If)`：仍然每样本一个方程、一个未知数，但落在
  *        机器真正工作的区域里。
  *
@@ -263,18 +252,16 @@ template <typename Modulator> class DeadTimeCompensator final {
  * through its two neighbours in log space. Deterministic: the same samples give
  * bit-identical results. [zh]
  * 实现：一组固定的候选宽度，各自累加残差平方和，因此估计器是**流式**的——不存样本、不分配。
- *       胜出者用对数空间里相邻三点做抛物线细化。确定性：同样的样本给出逐位相同的结果。
+ * 胜出者用对数空间里相邻三点做抛物线细化。确定性：同样的样本给出逐位相同的结果。
  *
  * @note [en] What it needs and what it cannot do. It needs `rs`; a wrong `rs`
  * is absorbed into `If` (a bias that `residual_v` reports). It needs currents
  * *above* the noise floor, so it cannot resolve a fade narrower than the
  * current sensor's noise -- in that case `valid` stays false rather than
  * inventing a number, which is the honest outcome: use the `sign()` step there.
- *       [zh] 它需要什么、做不到什么。它需要 `rs`；错的 `rs` 会被吸收进
- * `If`（这个偏差由 `residual_v` 报告）。
- *       它需要高于噪声地板的电流，所以分辨不出比电流传感器噪声更窄的淡出——那种情况下
- * `valid` 保持 false， 而不是编一个数出来，这才是诚实的结果：那里就用 `sign()`
- * 阶跃。
+ *       [zh] 它需要什么、做不到什么。它需要 `rs`；错的 `rs` 会被吸收进 `If`（这个偏差由 `residual_v` 报告）。
+ *       它需要高于噪声地板的电流，所以分辨不出比电流传感器噪声更窄的淡出——那种情况下 `valid` 保持 false，
+ *       而不是编一个数出来，这才是诚实的结果：那里就用 `sign()` 阶跃。
  * @context [en] Commissioning, host- or target-side, once per board. [zh]
  * 整定阶段，主/目标侧，每块板一次。
  * @since 0.1.0
@@ -323,10 +310,9 @@ class DeadTimeFadeEstimator final {
    * @brief [en] Feed one settled operating point.
    *        [zh] 送入一个已稳定的工作点。
    *
-   * @param v_magnitude [en] the *amplitude* of the rotating voltage vector, V;
-   *   this is the projection of the command onto the current, `v . i/|i|`,
-   * which is the component the loss acts on (the `wL` term is perpendicular to
-   * it and cancels exactly). [zh]
+   * @param v_magnitude [en] the *amplitude* of the rotating voltage vector, V; this is the projection of the command
+   * onto the current, `v . i/|i|`, which is the component the loss acts on (the `wL` term is perpendicular to it and
+   * cancels exactly). [zh]
    * 旋转电压矢量的**幅值**，V；这里是命令在电流方向 上的投影
    * `v·i/|i|`，即损失作用的那个分量（`ωL` 项垂直于它，正好抵消）。
    * @param i_magnitude [en] the *fundamental* amplitude of the current, A, with

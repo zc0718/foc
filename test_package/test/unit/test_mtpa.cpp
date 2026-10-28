@@ -40,20 +40,18 @@ namespace sil = foc::sil;
  * **该**值钱的那个点上，并用标称机说明它在哪儿不值钱。
  *
  * 1. [en] `Lq/Ld = 2`, `i_char = i_max` -> torque at full current at least
- *    **+20 %** over `i_d = 0` (the closed-form answer is 30.2 %; 20 % leaves
- * room for the bisection and for the fact that the two are compared at equal
+ *    **+20 %** over `i_d = 0` (the closed-form answer is 30.2 %; 20 % leaves room for the bisection and for the fact
+ *    that the two are compared at equal
  *    *current*, not equal *voltage*).
- *    [zh] `Lq/Ld = 2`、`i_char = i_max` → 满电流下转矩比 `i_d = 0` 至少 **+20
- * %** （闭式解是 30.2 %；留 20 %
+ *    [zh] `Lq/Ld = 2`、`i_char = i_max` → 满电流下转矩比 `i_d = 0` 至少 **+20 %** （闭式解是 30.2 %；留 20 %
  * 是给二分和"两者是在等**电流**而不是等**电压**下比较的" 这件事留余量）。
  * 2. [en] `|i|` never exceeds `i_max`, at any request, including absurd ones.
  *    [zh] 任何给定下 `|i|` 都不超过 `i_max`，包括荒谬的给定。
  * 3. [en] `Lq = Ld` gives `i_d = 0` **exactly**, not "close to zero".
  *    [zh] `Lq = Ld` 下 `i_d` **恰好**为 0，不是"接近 0"。
- * 4. [en] Turning MTPA on must not push the observer past its ceiling on the
- *    salient machine: angle error <= 0.15 rad with the single-`L` observer that
- *    ships. If it does, MTPA does not ship -- a torque gain bought with a
- * broken angle estimate is not a gain. [zh] 打开 MTPA
+ * 4. [en] Turning MTPA on must not push the observer past its ceiling on the salient machine: angle error <= 0.15 rad
+ * with the single-`L` observer that ships. If it does, MTPA does not ship -- a torque gain bought with a broken angle
+ * estimate is not a gain. [zh] 打开 MTPA
  * 不得把观测器推过天花板：在凸极机上，出厂的单 `L` 观测器角度误差 ≤ 0.15
  * rad。若超了，MTPA 不出厂——用坏掉的角度估计换来的转矩增益不是增益。
  */

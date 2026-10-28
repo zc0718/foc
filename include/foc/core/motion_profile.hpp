@@ -33,7 +33,8 @@ namespace core {
  *        再对结果做速率限制。这样既得到加速度受限的运动，制动距离又与允许的减速度相匹配；中途改
  *        目标天然支持，限幅生效时也不会冲过头。它对移动目标不是时间最优的，也没有假装是。
  *
- * @context [en] Called once per position-loop step: noexcept, no allocation. [zh] 每个位置环周期调用一次：noexcept、不分配。
+ * @context [en] Called once per position-loop step: noexcept, no allocation. [zh]每个位置环周期调用一次：noexcept、不分
+ * 配。
  * @since 0.1.0
  * @exporter
  */

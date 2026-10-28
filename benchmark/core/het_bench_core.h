@@ -1,12 +1,12 @@
 /**
  * @file het_bench_core.h
- * @brief 
+ * @brief
  * @author 唐光峰 (2321568810@qq.com)
  * @version 1.0
  * @date 2026-05-26
- * 
+ *
  * @copyright Copyright (c) 2026 Inference Engine Team
- * 
+ *
  * @par 修改日志:
  * <table>
  * <tr><th>Date       <th>Version <th>Author  <th>Description

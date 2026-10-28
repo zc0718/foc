@@ -40,22 +40,18 @@ constexpr float kAngleCeilingRad = 0.15F;
  * @brief [en] The criterion, written before it was measured. [zh]
  * 判据，写在测量之前。
  *
- * 1. [en] Parked **at** the target speed and told to stay there, a drive with
- *    `FieldWeakeningReference` holds it (>= 0.97 of target) and spends `i_d <
+ * 1. [en] Parked **at** the target speed and told to stay there, a drive with `FieldWeakeningReference` holds it (>=
+ * 0.97 of target) and spends `i_d <
  * -2 A` doing so; the same drive with a `d = 0` reference falls back below 0.95
  * of the target. The contrast is the result: "it held 3200" alone could mean
  * the target was not past the base speed. [zh]
  * **停在**目标转速上并被告知保持，装 `FieldWeakeningReference` 的驱动器守得住
- *    （≥ 目标的 0.97）并为此花掉 `i_d < −2 A`；同样的驱动器换成 `d = 0`
- * 参考会掉到目标的 0.95 以下。对比才是结论：只说"它守住了
- * 3200"也可能意味着目标没超过基速。
- * 2. [en] The normalisation hypothesis: if the magnitude correction is
- * normalised
- *    (`k*(1 - |psi_hat|/psi_target)` instead of `k*(psi_target - |psi_hat|)`),
- * the field-weakened angle error drops to <= 0.055 rad. Otherwise the status
+ *    （≥ 目标的 0.97）并为此花掉 `i_d < −2 A`；同样的驱动器换成 `d = 0` 参考会掉到目标的 0.95
+ *    以下。对比才是结论：只说"它守住了 3200"也可能意味着目标没超过基速。
+ * 2. [en] The normalisation hypothesis: if the magnitude correction is normalised (`k*(1 - |psi_hat|/psi_target)`
+ * instead of `k*(psi_target - |psi_hat|)`), the field-weakened angle error drops to <= 0.055 rad. Otherwise the status
  * quo stands and the number that refuted it is recorded. [zh]
- * 归一化假设：若把幅值修正归一化，弱磁区角误差降到 ≤ 0.055 rad；否则维持现状，
- *    并记录下反驳它的那个数。
+ * 归一化假设：若把幅值修正归一化，弱磁区角误差降到 ≤ 0.055 rad；否则维持现状， 并记录下反驳它的那个数。
  *
  * @note [en] What hypothesis 2 actually is. Normalising by `psi_target` is the
  * *same* law with the gain divided by `psi_target` -- a factor of 210 on this

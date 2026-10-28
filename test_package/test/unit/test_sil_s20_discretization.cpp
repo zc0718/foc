@@ -46,8 +46,7 @@ auto wrap_local(float from, float to) noexcept -> float {
  * @note [en] C2-a checks this against the shipped class. If the copy ever
  * drifts, the comparison below is between two different observers and means
  * nothing -- exactly the failure mode this batch exists to avoid. [zh] C2-a
- * 把它对着出厂类检查。副本一旦漂移，下面的对照就是在比较两个不同的观测器，什么也不说明——
- *       而这正是本批要避免的那类失败。
+ * 把它对着出厂类检查。副本一旦漂移，下面的对照就是在比较两个不同的观测器，什么也不说明—— 而这正是本批要避免的那类失败。
  * @since 0.1.0
  */
 class EulerFlux final {

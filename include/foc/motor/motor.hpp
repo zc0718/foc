@@ -103,14 +103,14 @@ struct Command final {
  *        因此多实例天然相互独立。
  *
  *        Binding contract:
- *        - `Observer` provides `update(Ab<float>, Ab<float>, float) noexcept -> ObsState`
- *          (and optionally `seed_flux(Ab<float>)`, used at start()).
+ *        - `Observer` provides `update(Ab<float>, Ab<float>, float) noexcept -> ObsState` (and optionally
+ *        `seed_flux(Ab<float>)`, used at start()).
  *        - `Modulator` provides `modulate(Ab<float>, float) noexcept -> SvpwmResult`.
  *        - `Controller` provides `step(float, float, float) noexcept -> float` and `reset()`.
- *        - `RefGenerator` provides `generate(const ReferenceInput&) noexcept -> Dq<float>`
- *          (default `core::NullReferenceGenerator` = d axis at zero).
- *        - `FeedForward` provides `generate(const FeedforwardInput&) noexcept -> Dq<float>`
- *          (default `core::NullFeedforward` = no term).
+ *        - `RefGenerator` provides `generate(const ReferenceInput&) noexcept -> Dq<float>` (default
+ *        `core::NullReferenceGenerator` = d axis at zero).
+ *        - `FeedForward` provides `generate(const FeedforwardInput&) noexcept -> Dq<float>` (default
+ *        `core::NullFeedforward` = no term).
  *        - `PositionControl` provides `step(setpoint, feedback, dt) noexcept -> float` + `reset()`
  *          and commands a *velocity*; the default `core::NullPositionControl` makes position mode
  *          answer `ErrorCode::NotImpl` instead of pretending.
@@ -286,7 +286,8 @@ class Motor final {
      * @brief [en] Hand updated machine parameters to the policies that can take them.
      *        [zh] 把更新后的机器参数交给能接受的策略。
      *
-     * @param params [en] the machine as it actually is (identified at commissioning, or re-read later). [zh] 机器实际的样子（调试时辨识得到，或之后重读）。
+     * @param params [en] the machine as it actually is (identified at commissioning, or re-read later). [zh]机器实际的
+     * 样子（调试时辨识得到，或之后重读）。
      * @note [en] Forwarded, not stored: `Motor` does not model the machine itself, so keeping a copy would
      *       create a second source of truth for numbers that belong to the policies. A slot without the
      *       hook simply keeps what it was built with.

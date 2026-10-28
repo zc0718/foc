@@ -25,30 +25,25 @@ namespace sil = foc::sil;
  * @brief [en] The question, the criterion written for it, and the verdict.
  *        [zh] 问题、为它写下的判据、以及裁决。
  *
- *        [en] The recorded claim, from the gap-closing plan, was: "the
- * single-`L` observer survives to `Lq/Ld = 2` (0.1433) and fails at 2.5
- * (0.1678)". A two-inductance observer was then built to move that boundary,
- * against the criterion: strictly better at `Lq/Ld = 2`, inside 0.15 rad
- * at 2.5, and no worse on a surface machine. [zh] 记录在缺口计划里的主张是："单
- * `L` 观测器撑到 `Lq/Ld = 2`（0.1433）， 2.5
- * 时不行（0.1678）"。随后为挪开这条边界造了一个双电感观测器，判据是：`Lq/Ld =
- * 2` 时严格更好、2.5 时进到 0.15 rad 以内、表贴机不变差。
+ *        [en] The recorded claim, from the gap-closing plan, was: "the single-`L` observer survives to `Lq/Ld = 2`
+ *        (0.1433) and fails at 2.5 (0.1678)". A two-inductance observer was then built to move that boundary, against
+ *        the criterion: strictly better at `Lq/Ld = 2`, inside 0.15 rad at 2.5, and no worse on a surface machine. [zh]
+ *        记录在缺口计划里的主张是："单 `L` 观测器撑到 `Lq/Ld = 2`（0.1433）， 2.5
+ *        时不行（0.1678）"。随后为挪开这条边界造了一个双电感观测器，判据是：`Lq/Ld = 2` 时严格更好、2.5 时进到 0.15 rad
+ *        以内、表贴机不变差。
  *
- *        [en] What the rig says. **With `i_d = 0` the error does not depend on
- * the saliency ratio at all** (0.1044 / 0.1048 / 0.1035 for ratios 1.0 / 2.0
- * / 2.5). That is arithmetic, not coincidence: a single-`L` observer's model
- * error is
- * `(Ld - Lq)*i_d`, so with `i_d = 0` a salient machine *is* a surface machine
- * to it. **The boundary therefore does not exist where it was claimed to**, and
- * the plan's entry is corrected rather than trusted. [zh] 台架给出的。**`i_d =
- * 0` 时误差与凸极比完全无关**（比值 1.0 / 2.0 / 2.5 分别是 0.1044 / 0.1048 /
+ *        [en] What the rig says. **With `i_d = 0` the error does not depend on the saliency ratio at all** (0.1044 /
+ *        0.1048 / 0.1035 for ratios 1.0 / 2.0 / 2.5). That is arithmetic, not coincidence: a single-`L` observer's
+ *        model error is `(Ld - Lq)*i_d`, so with `i_d = 0` a salient machine *is* a surface machine to it. **The
+ *        boundary therefore does not exist where it was claimed to**, and the plan's entry is corrected rather than
+ *        trusted. [zh] 台架给出的。**`i_d = 0` 时误差与凸极比完全无关**（比值 1.0 / 2.0 / 2.5 分别是 0.1044 / 0.1048 /
  * 0.1035）。这是算术而不是巧合：单 `L` 观测器的模型误差就是
  * `(Ld − Lq)·id`，所以 `i_d = 0`
  * 时凸极机**对它而言就是**表贴机。**因此那条边界并不在
  * 被声称的位置**，计划里的那一条被更正，而不是被沿用。
  *
- *        [en] The real limitation is `i_d != 0`, and it is worse than any
- * saliency ratio: at 200 rad/s with `i_d = -1 A` the single-`L` observer reads
+ *        [en] The real limitation is `i_d != 0`, and it is worse than any saliency ratio: at 200 rad/s with `i_d = -1
+ *        A` the single-`L` observer reads
  * **0.5079 rad even on a surface machine**, three times the ceiling. Same
  * mechanism as P8: the flux target is a constant `psi_f`, so any d-axis current
  * changes the flux it is supposed to track, and at low speed the back-EMF is
@@ -62,8 +57,8 @@ namespace sil = foc::sil;
  * rad/s 下同样的 d 轴电流无害（P8 量到 0.0705 rad），所以 这是对"能不能用
  * `i_d`"的**低速**限制，不是普遍限制。
  *
- *        [en] And the observer that was supposed to fix it: built, run, **worse
- * than nothing**, withdrawn. Half the error of the incumbent (0.2517 against
+ *        [en] And the observer that was supposed to fix it: built, run, **worse than nothing**, withdrawn. Half the
+ *        error of the incumbent (0.2517 against
  * 0.4942 at `Lq/Ld = 2`) but nowhere near the 0.15 ceiling, and its residual
  * error was flat in saliency too -- so it had not been observing the saliency,
  * it had accidentally improved the `i_d` handling. Raising its correction rate

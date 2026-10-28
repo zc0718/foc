@@ -1,8 +1,7 @@
 /**
  * bench_entry.cpp  –  Algorithm Benchmark Entry
  *
- * ============================================================
- *  HOW TO USE (algorithm engineer)
+ * ============================================================ HOW TO USE (algorithm engineer)
  * ============================================================
  *  1. Set MODULE_NAME to identify this build (e.g. "MyAlgo-v2.0").
  *  2. Include your algorithm header(s) below.
@@ -10,9 +9,8 @@
  *  4. Add entries to bench_table[].
  *  5. Build with:  conan build . -pr:h profiles/<target>.profile
  *
- *  Everything else (linker script, descriptor, RAM init, timing)
- *  is handled automatically – do NOT modify below the separator.
- * ============================================================
+ *  Everything else (linker script, descriptor, RAM init, timing) is handled automatically – do NOT modify below the
+ *  separator. ============================================================
  *
  * What is measured here: the hot paths of this library, one case each. Every case does exactly
  * ONE unit of work per iteration, so `reported microseconds / repeat` is the cost of one call.

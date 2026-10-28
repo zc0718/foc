@@ -28,10 +28,9 @@ using motor::MotorConfig;
  * @brief [en] Inverter adapter: records the duty and lets the bench push it
  * into the plant. [zh] 逆变器适配层：记录占空比，由台架把它送进 plant。
  *
- *        The duty is held in the **stationary** frame for a whole control
- * period (zero-order hold on the applied stator voltage vector), which is what
- * a real inverter does. Disabled or not-yet-enabled states hold 50% duty, i.e.
- * zero voltage.
+ *        The duty is held in the **stationary** frame for a whole control period (zero-order hold on the applied stator
+ *        voltage vector), which is what a real inverter does. Disabled or not-yet-enabled states hold 50% duty, i.e.
+ *        zero voltage.
  *        占空比在整个控制周期内保持于**静止**坐标系（作用到定子电压矢量上的零阶保持），这才是真实
  *        逆变器的行为。未使能/已关闭状态保持 50% 占空比，即零电压。
  *
@@ -199,10 +198,8 @@ public:
    * library. With it, dead-time distortion becomes a measurable quantity in CI
    * -- which is the difference between "we know we do not compensate" and "we
    * can say by how much". [zh] 这个模型换来的是：没有它，PRD 的 U1（"死区在 SIL
-   * 里无法验证"）是一个关于**被控对象**
-   *       的陈述，而不是关于库的。有了它，死区畸变在 CI
-   * 里成为可测量的量——这正是"我们知道自己没
-   *       补偿"与"我们能说出差多少"之间的区别。
+   * 里无法验证"）是一个关于**被控对象** 的陈述，而不是关于库的。有了它，死区畸变在 CI
+   * 里成为可测量的量——这正是"我们知道自己没 补偿"与"我们能说出差多少"之间的区别。
    * @note [en] Honest limitation: `sign(0) = 0` here, so the zero-current
    * neighbourhood is modelled as *better* than real hardware, where the
    * transition is a finite slope with ringing. Numbers from this model are a
@@ -230,10 +227,9 @@ public:
    *
    * @note [en] While a model is attached, `set_deadtime_voltage()` /
    * `set_deadtime_transition()` are
-   *       **not consulted**: the dead-time effect comes out of the switching
-   * process instead of being added to it, and having two sources would make the
-   * numbers unreadable. [zh] 挂上模型之后 `set_deadtime_voltage()` /
-   * `set_deadtime_transition()` **不再生效**：死区
+   *       **not consulted**: the dead-time effect comes out of the switching process instead of being added to it, and
+   *       having two sources would make the numbers unreadable. [zh] 挂上模型之后 `set_deadtime_voltage()` /
+   *       `set_deadtime_transition()` **不再生效**：死区
    *       效应从开关过程里出来，而不是加到它上面；两个来源会让数字无法解读。
    * @note [en] If the model refuses the request (control period not a whole
    * number of switching periods), `advance()` falls back to the mean-value path

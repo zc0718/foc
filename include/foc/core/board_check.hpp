@@ -43,10 +43,9 @@ enum class BoardItem : std::uint8_t {
  * @brief [en] The one thing that most likely needs fixing. [zh]
  * 最可能需要修的那一件事。
  *
- *        [en] The list is a *diagnosis*, not a list of failures: "two items
- * failed" is not actionable, "the sampling instant is wrong" is. The mapping
- * from failure pattern to cause is the whole value of this file -- see
- * `check_board()`. [zh]
+ *        [en] The list is a *diagnosis*, not a list of failures: "two items failed" is not actionable, "the sampling
+ *        instant is wrong" is. The mapping from failure pattern to cause is the whole value of this file -- see
+ *        `check_board()`. [zh]
  * 这份清单是**诊断**，不是失败列表："两项失败了"没法处理，"采样时刻错了"可以。从失败模式到
  * 成因的映射就是本文件的全部价值——见 `check_board()`。
  * @since 0.1.0
@@ -194,14 +193,12 @@ struct movable_trigger<Bench, std::void_t<decltype(std::declval<Bench&>().set_sa
  * @brief [en] Runs the checks and names the most likely single cause. [zh]
  * 跑完检查，并指出最可能的那个单一成因。
  *
- *        [en] Why a cause and not a list. A board that is mis-wired usually
- * fails **several** items at once, and the items are not independent: an
- * inverted current channel makes the three-wire sum non-zero *and* the
- * dead-time identification come out negative *and* the flux identification
- * reverse. Reporting three failures sends the user to three places; the
- * intended behaviour is to report the one thing that explains the most of them.
- * The scoring below is exactly that: each candidate cause counts how many of the
- * failed items it accounts for, and the winner is reported. [zh]
+ *        [en] Why a cause and not a list. A board that is mis-wired usually fails **several** items at once, and the
+ *        items are not independent: an inverted current channel makes the three-wire sum non-zero *and* the dead-time
+ *        identification come out negative *and* the flux identification reverse. Reporting three failures sends the
+ *        user to three places; the intended behaviour is to report the one thing that explains the most of them. The
+ *        scoring below is exactly that: each candidate cause counts how many of the failed items it accounts for, and
+ *        the winner is reported. [zh]
  * 为什么报一个成因而不是一张表。接错的板子通常**同时**弄坏好几项，而这些项并不独立：一条反
  * 相的电流通道会让三线之和不为零、让死区辨识出负值、让磁链辨识反号。报三条失败会把用户支到
  * 三个地方；该做的是报那个"解释得最多"的一件。下面的打分就是这个：每个候选成因数一数它解释
@@ -339,27 +336,19 @@ struct movable_trigger<Bench, std::void_t<decltype(std::declval<Bench&>().set_sa
  * numbers `check_board()` judges. [zh]
  * 板级自检的堵转半边：它**量出** `check_board()` 要判定的那些数。
  *
- *        [en] Why a template and not a class with virtuals. The bench is
- * whatever the user's board is, and this project has no exceptions, no RTTI and
- * no allocation in the control path; a template over a four-call concept costs
- * nothing and keeps the sequence in one readable place. The concept is:
- *        ```
- *        auto set_dq(Dq<float>)   -> void;   // hold a voltage in the rotor frame
- *        auto advance(float)      -> void;   // let time pass (>= 1 switching period)
- *        auto step_advance(float) -> void;   // advance by less than one period
- *        auto read_uvw()          -> Uvw<float>;  // the ADC result the ISR reads (a sample
- *                                                 // taken at the trigger point, not "now")
- *        auto switching_period_s() -> float;
- *        // optional, detected by SFINAE -- see `sample_delay_measured`:
- *        auto set_sample_delay(float fraction) -> void;  // move the ADC trigger
- *        auto sample_delay() const -> float;             // where it is now, 0..1
- *        ```
- *        [zh] 为什么是模板而不是带虚函数的类。台架就是用户那块板子，而本项目在控制路径上
- * 没有异常、没有 RTTI、不分配内存；模板对着一个四调用的概念，零开销，并把整个序列留在一处
- * 可读的地方。概念如上。
+ *        [en] Why a template and not a class with virtuals. The bench is whatever the user's board is, and this project
+ *        has no exceptions, no RTTI and no allocation in the control path; a template over a four-call concept costs
+ *        nothing and keeps the sequence in one readable place. The concept is: ``` auto set_dq(Dq<float>) -> void; //
+ *        hold a voltage in the rotor frame auto advance(float) -> void; // let time pass (>= 1 switching period) auto
+ *        step_advance(float) -> void; // advance by less than one period auto read_uvw() -> Uvw<float>; // the ADC
+ *        result the ISR reads (a sample // taken at the trigger point, not "now") auto switching_period_s() -> float;
+ *        // optional, detected by SFINAE -- see `sample_delay_measured`: auto set_sample_delay(float fraction) -> void;
+ *        // move the ADC trigger auto sample_delay() const -> float; // where it is now, 0..1 ```
+ *        [zh] 为什么是模板而不是带虚函数的类。台架就是用户那块板子，而本项目在控制路径上 没有异常、没有
+ *        RTTI、不分配内存；模板对着一个四调用的概念，零开销，并把整个序列留在一处 可读的地方。概念如上。
  *
- *        [en] What it can and cannot measure at standstill, stated up front
- * because a self-test that silently skips half the checks is worse than none:
+ *        [en] What it can and cannot measure at standstill, stated up front because a self-test that silently skips
+ *        half the checks is worse than none:
  *        - **can**: per-phase offsets (zero current is its own reference),
  *          polarity (drive a known vector and read the signs), `Rs` and the
  *          dead-time voltage (two points, see `RsEstimator`), and the switching
@@ -588,12 +577,12 @@ class BoardSelfTest final {
      * centre, an edge-aligned one puts it wherever the current crosses its
      * average, which depends on the duty. Assuming 0.5 would be a guess wearing
      * a constant.
-     *        [zh] 同一次扫描给出三个数。读数在**整个周期里的峰峰值**就是 ADC 实际看到的纹波，即
-     * `SamplingInstant` 项与开关周期对比的那个量。**板子自己那个触发点上的读数相对周期均值的
-     * 偏离**（`sample_error_a`）就是那个位置在安培上让环付出多少。**偏离最小处的位置**才是触发点
-     * 该在的地方——而它是被**量出来并上报**的，不是被假设的，因为它**并不总是**周期中心：中心对齐的
-     * PWM 把均值放在中心，边沿对齐的把均值放在电流穿过自身平均值的时刻，那取决于占空比。假设 0.5
-     * 是一个披着常数外衣的猜测。
+     *        [zh] 同一次扫描给出三个数。读数在**整个周期里的峰峰值**就是 ADC 实际看到的纹波，即 `SamplingInstant`
+     *        项与开关周期对比的那个量。**板子自己那个触发点上的读数相对周期均值的
+     *        偏离**（`sample_error_a`）就是那个位置在安培上让环付出多少。**偏离最小处的位置**才是触发点
+     *        该在的地方——而它是被**量出来并上报**的，不是被假设的，因为它**并不总是**周期中心：中心对齐的 PWM
+     *        把均值放在中心，边沿对齐的把均值放在电流穿过自身平均值的时刻，那取决于占空比。假设 0.5
+     *        是一个披着常数外衣的猜测。
      *
      * @note [en] Skipped entirely when the bench has no trigger to move; that is
      * detected at compile time, not at run time, so a bench without it costs

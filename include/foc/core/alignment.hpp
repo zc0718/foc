@@ -194,7 +194,8 @@ class AlignRoutine final {
      *
      * @param pole_pairs [en] machine pole pairs, used to convert the forced electrical angle to
      *                    mechanical. [zh] 电机极对数，用于把强制电角度换算成机械角。
-     * @return [en] true when a sequence started, false when there is nothing to do. [zh] 流程已启动返回 true，无事可做返回 false。
+     * @return [en] true when a sequence started, false when there is nothing to do. [zh]流程已启动返回true，无事可做返
+     * 回false。
      * @note [en] Call `validate()` first: an invalid recipe is a configuration error the caller
      *       must see, not a silent skip.
      *       [zh] 先调 `validate()`：配方非法是调用方必须看到的配置错误，不能被静默跳过。

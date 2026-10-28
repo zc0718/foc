@@ -400,6 +400,14 @@ def cmd_claims(_explicit):
     return done.returncode
 
 
+def cmd_docs(_explicit):
+    """Doxygen block comments: aligned star column, consistent continuation indent, 120 columns,
+    no mid-CJK breaks. Delegates to docfmt.py so the rule has one implementation."""
+    done = subprocess.run([sys.executable, str(ROOT / '.github' / 'misc' / 'docfmt.py'), '--check'],
+                          cwd=ROOT, text=True)
+    return done.returncode
+
+
 def main():
     parser = argparse.ArgumentParser(description='Native quality gates (one implementation, three callers).')
     sub = parser.add_subparsers(dest='gate', required=True)
@@ -410,7 +418,8 @@ def main():
         'license': 'copyleft / non-free licence markers, scoped rules from .github/misc/.license-guard.txt',
         'strict': 'every public header compiles standalone with -fno-exceptions -fno-rtti (C: -pedantic)',
         'claims': 'every installed header has a README claim row with a level and existing evidence',
-        'all': 'format + tidy + guard + license + strict + claims',
+        'docs': 'Doxygen blocks: star alignment, continuation indent, 120 columns, no mid-CJK breaks',
+        'all': 'format + tidy + guard + license + strict + claims + docs',
     }
     for name, text in helps.items():
         leaf = sub.add_parser(name, help=text)
@@ -435,8 +444,10 @@ def main():
         return cmd_strict(args.files)
     if args.gate == 'claims':
         return cmd_claims(args.files)
+    if args.gate == 'docs':
+        return cmd_docs(args.files)
     return 1 if (cmd_format([]) or cmd_tidy([]) or cmd_guard([]) or cmd_license([]) or cmd_strict([]) or
-                 cmd_claims([])) else 0
+                 cmd_claims([]) or cmd_docs([])) else 0
 
 
 if __name__ == '__main__':

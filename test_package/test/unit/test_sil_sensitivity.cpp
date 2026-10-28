@@ -40,12 +40,10 @@ constexpr int kSubsteps = 8;
  *    described as "negligible" anywhere in the docs.
  *    [zh] 任何单一效应在**合理最坏**取值下，角度误差必须 ≤ `kCeilingRad`。
  *    破坏这一条的效应，文档里任何地方都不得写成"可忽略"。
- * 2. [en] An effect that raises the error by more than `kMaterialRatio` over
- * the clean baseline goes on the "the user must measure this" list -- it is not
- *    a modelling nicety, it is the difference between a valid and an invalid
- *    benchmark on their hardware.
- *    [zh] 相对干净基线抬高超过 `kMaterialRatio`
- * 的效应进入"必须由用户实测"清单——它不是建模
+ * 2. [en] An effect that raises the error by more than `kMaterialRatio` over the clean baseline goes on the "the user
+ * must measure this" list -- it is not a modelling nicety, it is the difference between a valid and an invalid
+ * benchmark on their hardware.
+ *    [zh] 相对干净基线抬高超过 `kMaterialRatio` 的效应进入"必须由用户实测"清单——它不是建模
  *    上的讲究，而是"在用户的硬件上基准有效还是无效"的区别。
  * 3. [en] An effect may only be called "negligible" if it moves the error by
  * less than `kNegligibleRatio` **and** that was measured here. "Obviously

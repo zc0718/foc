@@ -1,21 +1,14 @@
 /**
  * bench_main_linux.c  —  A-core / Linux host port
  *
- * ============================================================
- *  This is the only file added for A-core Linux builds.
- *  It plays the same role as bench_host.c in MCU-side Base Firmware:
- *    • provide the main() entry
- *    • implement HostInterface (timing + output)
- *    • call bench_module_entry()
+ * ============================================================ This is the only file added for A-core Linux builds. It
+ * plays the same role as bench_host.c in MCU-side Base Firmware: • provide the main() entry • implement HostInterface
+ * (timing + output) • call bench_module_entry()
  *
  *  bench_entry.c / het_bench_core.c are shared with MCU builds as-is.
  *
- *  Output format matches the MCU UART protocol, so the same CI parsers work:
- *    BENCHMARK_START
- *    MODULE|<name>|cases=N
- *    RESULT|<case>|<microseconds>
- *    BENCHMARK_END
- * ============================================================
+ *  Output format matches the MCU UART protocol, so the same CI parsers work: BENCHMARK_START MODULE|<name>|cases=N
+ *  RESULT|<case>|<microseconds> BENCHMARK_END ============================================================
  */
 
 #include <stdio.h>

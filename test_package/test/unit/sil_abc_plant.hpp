@@ -14,9 +14,8 @@ namespace sil {
  * used only to cross-check the dq plant. [zh]
  * 第二台**独立推导**的相变量 PMSM 被控对象，只用于与 dq plant 对拍。
  *
- *        [en] Why this exists, and what it substitutes for. With no motor expert
- * to review the dq derivation, a sign or factor error in `sil_pmsm_plant.hpp`
- * would make every SIL conclusion wrong in the same direction while staying
+ *        [en] Why this exists, and what it substitutes for. With no motor expert to review the dq derivation, a sign or
+ *        factor error in `sil_pmsm_plant.hpp` would make every SIL conclusion wrong in the same direction while staying
  * *internally* consistent -- nothing inside the project could see it. This model
  * never forms a dq quantity: it integrates the three phase fluxes directly from
  * `v = Rs*i + d(lambda)/dt` with
@@ -24,12 +23,12 @@ namespace sil {
  * co-energy as `Te = -p*lambda_m*sum(i_p*sin(theta_p))`. If the two models agree
  * at six operating points, both derivations are almost certainly right; if they
  * disagree, one is wrong and the disagreement points at which.
- *        [zh] 为什么要有它、它替代什么。没有电机专家来评审 dq 推导时，
- * `sil_pmsm_plant.hpp` 里一个符号或系数错误会让**所有** SIL 结论朝同一个方向错，而内部
- * 完全自洽——项目内部没有任何东西能看见它。本模型**从不构造 dq 量**：它直接按
- * `v = Rs·i + dλ/dt` 积分三相磁链，`λ_p = (Ls − M)·i_p + λm·cos(θ_p)`，
- * 并由磁共能给出转矩 `Te = −p·λm·Σ(i_p·sin θ_p)`。两个模型在六个工作点上一致，
- * 则两个推导几乎必然都对；若不一致，其中一个错了，而不一致的位置会指出是哪一个。
+ *        [zh] 为什么要有它、它替代什么。没有电机专家来评审 dq 推导时， `sil_pmsm_plant.hpp`
+ *        里一个符号或系数错误会让**所有** SIL 结论朝同一个方向错，而内部
+ *        完全自洽——项目内部没有任何东西能看见它。本模型**从不构造 dq 量**：它直接按 `v = Rs·i + dλ/dt`
+ *        积分三相磁链，`λ_p = (Ls − M)·i_p + λm·cos(θ_p)`， 并由磁共能给出转矩 `Te = −p·λm·Σ(i_p·sin
+ *        θ_p)`。两个模型在六个工作点上一致，
+ *        则两个推导几乎必然都对；若不一致，其中一个错了，而不一致的位置会指出是哪一个。
  *
  * @note [en] Scope, stated so nobody over-reads it. This is a **non-salient**
  * machine (`Ld = Lq`), because that is the case where the phase-variable form is

@@ -12,13 +12,11 @@ namespace core {
  * @brief [en] What went wrong, one code per physical mechanism. [zh]
  * 出了什么事，每种物理机理一个码。
  *
- *        [en] Why an enum and not `ErrorCode::Fault`. A single latched fault
- * code is enough to stop a bench test and useless in a robot: "the drive
- * tripped" tells an operator to send the unit back, while "the DC link went
- * under 18 V" tells them the supply sagged. The codes are listed in the order
- * the protector ranks them, so a step that trips two things reports the outer
- * one -- `OverCurrent` before `I2t` before `Stall`, because the current is what
- * breaks hardware first. [zh]
+ *        [en] Why an enum and not `ErrorCode::Fault`. A single latched fault code is enough to stop a bench test and
+ *        useless in a robot: "the drive tripped" tells an operator to send the unit back, while "the DC link went under
+ *        18 V" tells them the supply sagged. The codes are listed in the order the protector ranks them, so a step that
+ *        trips two things reports the outer one -- `OverCurrent` before `I2t` before `Stall`, because the current is
+ *        what breaks hardware first. [zh]
  * 为什么要枚举而不是只用 `ErrorCode::Fault`。一个锁存故障码够停下一次台架测试，在机器人里
  * 没用："驱动器跳了"只能让运维把机器寄回厂；"母线掉到 18 V 以下"告诉他供电塌了。
  * 这些码按保护器的排序列出，所以一步里同时触发两件事时报最外层那个——`OverCurrent` 先于
@@ -44,13 +42,11 @@ enum class FaultCode : std::uint8_t {
  * @brief [en] Whether a fault clears by itself once its cause goes away. [zh]
  * 故障在成因消失后是否自行消失。
  *
- *        [en] The split is physical, not a matter of taste. A bus that sagged
- * lifts again, a winding that overheated cools, and an `I2t` budget refills
- * when the current stops -- those clear themselves, and latching them would
- * turn a transient into a service call. A hard over-current, a stall and a lost
- * angle mean something is **wrong** (a shorted winding, a jammed axis, a
- * mis-set offset): retrying those automatically is how a drive destroys itself
- * in a loop. They stay latched until somebody calls `reset()`. [zh]
+ *        [en] The split is physical, not a matter of taste. A bus that sagged lifts again, a winding that overheated
+ *        cools, and an `I2t` budget refills when the current stops -- those clear themselves, and latching them would
+ *        turn a transient into a service call. A hard over-current, a stall and a lost angle mean something is
+ *        **wrong** (a shorted winding, a jammed axis, a mis-set offset): retrying those automatically is how a drive
+ *        destroys itself in a loop. They stay latched until somebody calls `reset()`. [zh]
  * 这个分法是物理的，不是口味问题。塌下去的母线会自己回来、过热的绕组会凉、`I2t` 预算在电流
  * 停下后自己回填——它们自己会清，锁存它们等于把一次暂态变成一次报修。硬过流、堵转、失步意味着
  * 有东西**坏了**（绕组短路、轴卡死、偏置设错）：自动重试正是驱动器把自己反复烧掉的方式。
@@ -169,19 +165,17 @@ struct ProtectionOutput final {
  *        的那些才加迟滞**：母线悬在阈值上时，否则输出使能会按控制频率反复抖，而抖动正是把一个
  *        保护变成故障源的方式。
  *
- *        [en] What it is **not**, said here because "thermal model" invites the
- * wrong reading. `q` is in A^2*s, not degrees: the block has no idea what the
- * winding temperature is, and its `t_derate_*` thresholds are a *number the
- * caller supplies*, not a measurement this code can make. It models one lumped
- * copper loss with one time constant. It does not model the magnet, the
- * bearings, the ambient, or a hot spot away from whatever sensor the caller has.
- * A real drive needs a thermistor or an estimator alongside this, and no amount
- * of tuning here replaces that.
+ *        [en] What it is **not**, said here because "thermal model" invites the wrong reading. `q` is in A^2*s, not
+ *        degrees: the block has no idea what the winding temperature is, and its `t_derate_*` thresholds are a *number
+ *        the caller supplies*, not a measurement this code can make. It models one lumped copper loss with one time
+ *        constant. It does not model the magnet, the bearings, the ambient, or a hot spot away from whatever sensor the
+ *        caller has. A real drive needs a thermistor or an estimator alongside this, and no amount of tuning here
+ *        replaces that.
  *        [zh] 它**不是**什么，写在这里因为"热模型"容易招来误读。`q` 的单位是 A²·s，不是度：
- * 这段代码不知道绕组温度是多少，它的 `t_derate_*` 阈值是**调用方给的数**，不是本代码能
- * 测出来的量。它用一个时间常数建模一个集总的铜损。它不建模磁钢、不建模轴承、不建模环境温度、
- * 也不建模远离调用方那个传感器的热点。真实的驱动器需要热敏电阻或温度估计器与它并存，这里
- * 怎么调都替代不了那件事。
+ *        这段代码不知道绕组温度是多少，它的 `t_derate_*` 阈值是**调用方给的数**，不是本代码能
+ *        测出来的量。它用一个时间常数建模一个集总的铜损。它不建模磁钢、不建模轴承、不建模环境温度、
+ *        也不建模远离调用方那个传感器的热点。真实的驱动器需要热敏电阻或温度估计器与它并存，这里
+ *        怎么调都替代不了那件事。
  *
  * @context [en] Current-loop ISR, every step. [zh] 电流环 ISR，每步。
  * @since 0.1.0

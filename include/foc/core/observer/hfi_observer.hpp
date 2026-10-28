@@ -24,17 +24,13 @@ namespace core {
  *        为什么它不可能是反电动势观测器的变体：反电动势与转速成正比，零速时为零，角度不可观测。凸极
  *        与转速完全无关——它是磁路的属性。两者互补，不是二选一。
  *
- *        Signal chain, one current-loop step:
- *          v_inj = V_h * sin(w_h t) along the estimated d axis
- *          eps   = LPF2{ 2 * (i_ab . q_est) * cos(w_h t) } / demod_gain
- *          eps  ~= -sin(2 * angle_error)
- *        The error drives a type-2 PLL whose gains come from a bandwidth and a damping ratio, so the
- *        numbers a caller tunes are physical instead of machine-specific.
- *        信号链，每个电流环步：
- *          v_inj = V_h·sin(w_h t)，方向为估计 d 轴
- *          eps   = LPF2{ 2·(i_ab·q_est)·cos(w_h t) } / demod_gain
- *          eps  ≈ -sin(2·角度误差)
- *        该误差驱动二阶 PLL，其增益由带宽与阻尼比导出，于是调用方调的是物理量而非机器特定的数字。
+ *        Signal chain, one current-loop step: v_inj = V_h * sin(w_h t) along the estimated d axis eps = LPF2{ 2 * (i_ab
+ *        . q_est) * cos(w_h t) } / demod_gain eps ~= -sin(2 * angle_error) The error drives a type-2 PLL whose gains
+ *        come from a bandwidth and a damping ratio, so the numbers a caller tunes are physical instead of
+ *        machine-specific.
+ *        信号链，每个电流环步： v_inj = V_h·sin(w_h t)，方向为估计 d 轴 eps = LPF2{ 2·(i_ab·q_est)·cos(w_h t) } /
+ *        demod_gain eps ≈ -sin(2·角度误差) 该误差驱动二阶
+ *        PLL，其增益由带宽与阻尼比导出，于是调用方调的是物理量而非机器特定的数字。
  *
  * @warning [en] Three limitations that are properties of the method, not bugs to be found later:
  *          1. **pi/2 envelope.** `sin(2*dtheta)` only pulls correctly for `|dtheta| < pi/2`. The loop
@@ -265,7 +261,8 @@ class HfiObserver final {
      * @brief [en] Take an updated machine description, recomputing the modulation sensitivity from it.
      *        [zh] 接受更新后的机器描述，并据此重算解调灵敏度。
      *
-     * @param params [en] the machine as it actually is (identified, or re-read after heating). [zh] 机器实际的样子（辨识得到，或升温后重读）。
+     * @param params [en] the machine as it actually is (identified, or re-read after heating). [zh]机器实际的样子（辨识
+     * 得到，或升温后重读）。
      * @note [en] Only `demod_gain_a` depends on the machine -- the loop shape and the injection settings do
      *       not -- so this is one recomputation, not a retune. Nothing is reset: the estimate carries on
      *       from where it was, which is what makes it usable mid-run.

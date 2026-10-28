@@ -73,28 +73,21 @@ class NullReferenceGenerator final {
  * @brief [en] MTPA: the d-axis current that gets the most torque per amp.
  *        [zh] MTPA：每安培转矩最大的那个 d 轴电流。
  *
- *        [en] Why a policy and not a constant. For a surface-mounted machine
- * `i_d = 0` *is* MTPA, so the whole saliency story looks like a detail. For an
- * interior-PM machine it is not a detail: the reluctance torque is worth a third
- * of the total, and every amp spent on the wrong `i_d` is an amp not making
- * torque. The gap between the two is the difference between needing a bigger
- * drive and not.
+ *        [en] Why a policy and not a constant. For a surface-mounted machine `i_d = 0` *is* MTPA, so the whole saliency
+ *        story looks like a detail. For an interior-PM machine it is not a detail: the reluctance torque is worth a
+ *        third of the total, and every amp spent on the wrong `i_d` is an amp not making torque. The gap between the
+ *        two is the difference between needing a bigger drive and not.
  *        [zh] 为什么是策略而不是常数。表贴机上 `i_d = 0` **就是** MTPA，于是整个凸极性
- * 故事看起来像个细节。内嵌机上它不是细节：磁阻转矩占总量的三分之一，花在错误 `i_d` 上的每
- * 一安培都是没在做转矩的安培。两者之差就是"需要换更大驱动器"与"不需要"之差。
+ *        故事看起来像个细节。内嵌机上它不是细节：磁阻转矩占总量的三分之一，花在错误 `i_d` 上的每
+ *        一安培都是没在做转矩的安培。两者之差就是"需要换更大驱动器"与"不需要"之差。
  *
- *        [en] The curve. Setting `dT/di_d = 0` on
- * `T = 1.5*p*(psi_f*i_q + (Ld-Lq)*i_d*i_q)` subject to `i_d^2+i_q^2 = |i|^2` gives
- *        ```
- *        i_d = (psi_f - sqrt(psi_f^2 + 8*(Lq-Ld)^2*i_q^2)) / (4*(Lq-Ld))
- *        ```
- * which is negative for `Lq > Ld` and degenerate at `Lq = Ld` -- the degenerate
- * case is handled as `i_d = 0` rather than by a tiny epsilon, because an epsilon
- * would produce an `i_d` of order `psi_f/eps` and destroy the loop.
- *        [zh] 曲线。在 `i_d²+i_q²=|i|²` 约束下对
- * `T = 1.5·p·(ψf·iq + (Ld−Lq)·id·iq)` 令 `dT/di_d = 0`，得上式；`Lq > Ld` 时为负，
- * `Lq = Ld` 时退化——退化情形按 `i_d = 0` 处理而不是用一个极小量，因为极小量会给出量级
- * `ψf/eps` 的 `i_d`，把环直接毁掉。
+ *        [en] The curve. Setting `dT/di_d = 0` on `T = 1.5*p*(psi_f*i_q + (Ld-Lq)*i_d*i_q)` subject to `i_d^2+i_q^2 =
+ *        |i|^2` gives ``` i_d = (psi_f - sqrt(psi_f^2 + 8*(Lq-Ld)^2*i_q^2)) / (4*(Lq-Ld)) ``` which is negative for `Lq
+ *        > Ld` and degenerate at `Lq = Ld` -- the degenerate case is handled as `i_d = 0` rather than by a tiny
+ *        epsilon, because an epsilon would produce an `i_d` of order `psi_f/eps` and destroy the loop.
+ *        [zh] 曲线。在 `i_d²+i_q²=|i|²` 约束下对 `T = 1.5·p·(ψf·iq + (Ld−Lq)·id·iq)` 令 `dT/di_d = 0`，得上式；`Lq >
+ *        Ld` 时为负， `Lq = Ld` 时退化——退化情形按 `i_d = 0` 处理而不是用一个极小量，因为极小量会给出量级 `ψf/eps` 的
+ *        `i_d`，把环直接毁掉。
  *
  * @context [en] Current-loop ISR, on the reference-generation path. [zh]
  * 电流环 ISR，位于参考生成路径上。
