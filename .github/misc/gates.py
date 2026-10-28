@@ -392,11 +392,16 @@ def cmd_strict(explicit):
     return 0
 
 
-def cmd_claims(_explicit):
+def cmd_claims(explicit):
     """Every installed header must carry a claim row with a level and evidence that exists.
-    Delegates to claim_gate.py so the rule has one implementation."""
-    done = subprocess.run([sys.executable, str(ROOT / '.github' / 'misc' / 'claim_gate.py')],
-                          cwd=ROOT, text=True)
+    Delegates to claim_gate.py so the rule has one implementation.
+
+    With `--impact <path|identifier>` it answers a different question -- which claims rest on this thing,
+    and which cases must be re-run -- by reading the basis graph in `claim-basis.json`. That is the
+    query the foundation log's blast-radius column is filled from.
+    """
+    args = [sys.executable, str(ROOT / '.github' / 'misc' / 'claim_gate.py'), *explicit]
+    done = subprocess.run(args, cwd=ROOT, text=True)
     return done.returncode
 
 
@@ -499,7 +504,8 @@ def main():
         'guard': 'forbidden #include directives, scoped rules from .github/misc/.include-guard.txt',
         'license': 'copyleft / non-free licence markers, scoped rules from .github/misc/.license-guard.txt',
         'strict': 'every public header compiles standalone with -fno-exceptions -fno-rtti (C: -pedantic)',
-        'claims': 'every installed header has a README claim row with a level and existing evidence',
+        'claims': 'every installed header has a README claim row with a level and existing evidence; '
+                  '`claims --impact <path|name>` lists what rests on it',
         'docs': 'Doxygen blocks: star alignment, continuation indent, 120 columns, no mid-CJK breaks',
         'boundaries': 'every statement on the boundaries page names a test case that exists',
         'fmu': 'build the FMU and load it in a standard FMI master (FMPy); SKIPPED when its material is absent',
@@ -514,6 +520,9 @@ def main():
         if name == 'tidy':
             leaf.add_argument('--include', action='append', default=[], metavar='DIR', help='extra -I (repeatable)')
             leaf.add_argument('--isystem', action='append', default=[], metavar='DIR', help='extra -isystem (repeatable)')
+        if name == 'claims':
+            leaf.add_argument('--impact', metavar='TERM',
+                              help='list the claims that rest on this path or identifier, with the cases to re-run')
     args = parser.parse_args()
 
     if args.gate == 'format':
@@ -527,7 +536,7 @@ def main():
     if args.gate == 'strict':
         return cmd_strict(args.files)
     if args.gate == 'claims':
-        return cmd_claims(args.files)
+        return cmd_claims([*args.files, *(['--impact', args.impact] if args.impact else [])])
     if args.gate == 'docs':
         return cmd_docs(args.files)
     if args.gate == 'boundaries':

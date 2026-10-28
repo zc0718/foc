@@ -36,6 +36,26 @@ Three classes, and they are deliberately not merged
 The distinction is the whole point. Treat an **A** as an **F** and the library collects defensive patches it does not
 need; treat an **F** as an **A** and a real defect is recorded as a personal slip and left in place.
 
+How the blast-radius column is produced
+---------------------------------------
+
+Not by memory, and not by reading the diff and guessing. The command is
+
+.. code-block:: console
+
+   python3 .github/misc/gates.py claims --impact <path or identifier>
+
+which reads the basis graph in `.github/misc/claim-basis.json` and prints every claim that rests on that thing, together
+with the cases to re-run. `evidence` in the README answers "what checks this claim"; `basis` answers "what would
+invalidate it", and the two are different -- a claim can have evidence that passes while resting on a plant model that is
+wrong, which is the W7-c failure exactly.
+
+Twelve of the forty-one claim rows have a basis so far. The other twenty-nine are listed explicitly as unmapped, the gate
+prints that count on every run, and a row that is in neither list fails the build -- so the graph cannot fall behind the
+table in silence. The graph is also checked for rot: a basis entry naming a file that no longer exists, or an identifier
+that appears nowhere in `include/` or `src/`, fails the build, because a decayed graph returns a confident and wrong
+blast radius and that is worse than returning nothing.
+
 The log
 -------
 
