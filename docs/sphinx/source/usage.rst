@@ -252,6 +252,42 @@ tell you what the *hardware* did -- it records what the loop believed, so a perf
 with a miscalibrated current sensor. Per-period cost on a target is also unmeasured here: the host figure above says
 nothing about a 100 MHz core, and a budget for that is a claim somebody would have to take with a scope.
 
+**Compare a window instead of remembering a number.** A status report answers "what is true now" and a trace answers "what
+the loop did"; neither answers "did this change". Three recorded windows do, and they are compared on demand:
+
+.. code-block:: console
+
+   python3 benchmark/script/golden.py --record   # (re)write the three baselines from this tree
+   python3 benchmark/script/golden.py --check    # compare now against them; prints, exits 0
+
+Each window is plain text: a header naming the scenario and the module hash it came from, then one line per sample. It is
+readable in a diff, which is the only reason a stored number can be reviewed instead of trusted. The report names the
+**trace**, the **quantity** and the **difference**, and classifies it:
+
+.. list-table:: what a difference means
+   :header-rows: 1
+   :widths: 22 78
+
+   * - band
+     - reading
+   * - ``<= 1e-5``
+     - same -- arithmetic noise between builds, not a behaviour change
+   * - ``<= 30 %``
+     - drift -- worth a look, not evidence of anything by itself
+   * - ``1.3x .. 2.0x``
+     - **attribute** -- the signature of a missing term rather than of noise; this is where the W7-c investigation
+       landed (0.1356 predicted against 0.0900 measured, 1.51x) and the term that explained it was real
+   * - ``> 2.0x`` or a sign flip
+     - changed -- expected after an algorithm change, a surprise otherwise
+
+The ledger **reports and does not block**, deliberately: a ledger that gates a build gets its tolerance widened the first
+time it is inconvenient, and then the reference value means nothing. ``--strict`` exists for a release gate, where a human
+has already decided that this build and this baseline are comparable.
+
+A golden is a recording from one machine and one build, not a specification: a different compiler produces different
+floats in the last digits. The header carries the module hash so the report can say when a baseline came from another
+build, and the bands above are what keep that honest -- a foreign baseline shows up as drift, not as a silent pass.
+
 _`Verification: what is actually checked`
 -----------------------------------------
 

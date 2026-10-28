@@ -1159,6 +1159,19 @@ foc_err_t foc_bridge_get_setup(foc_motor_t motor, foc_motor_setup_t* out) {
         result.align_tolerance_rad = applied.align_tolerance_rad;
         result.align_verify_s = applied.align_verify_s;
         result.align_angle_e_rad = applied.align_angle_e_rad;
+        // The appended half. These six were added to `foc_motor_setup_t` over three waves and this readback was never
+        // extended, so `Motor.setup()` reported the defaults for exactly the fields that choose the observer -- while
+        // `status()["observer"]` reported the truth from the live object. A readback that agrees with itself and not
+        // with the machine is worse than no readback: it is where a support engineer looks first.
+        // 追加的那一半。这六个字段分三波加入 `foc_motor_setup_t`，而这段回读一直没跟上，于是 `Motor.setup()` 对"选择
+        // 观测器"的那几个字段报告默认值——而 `status()["observer"]` 从活对象报告真相。一个与自己一致、与机器不一致的
+        // 回读比没有回读更糟：它正是支持工程师第一个去看的地方。
+        result.observer = applied.observer;
+        result.inject_v = applied.inject_v;
+        result.inject_hz = applied.inject_hz;
+        result.blend_start_rad_s = applied.blend_start_rad_s;
+        result.blend_end_rad_s = applied.blend_end_rad_s;
+        result.handover_lpf_hz = applied.handover_lpf_hz;
         *out = result;
         return foc::ErrorCode::Ok;
     });

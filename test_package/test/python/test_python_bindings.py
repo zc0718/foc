@@ -10,6 +10,7 @@ instead of failing.
 """
 
 import math
+import pathlib
 import sys
 
 import foc_python as foc
@@ -21,6 +22,13 @@ import foc_python as foc
 # 别的什么改变，页面都不可能从套件真正执行的文件上漂走。
 from from_zero_to_servo import test_the_example_settles_a_speed_step  # noqa: E402,F401
 
+
+# The golden ledger's comparator lives with the benchmark scripts; importing it here is what makes its rules falsifiable.
+# A ledger whose verdict bands are never tested is a ledger that decides "same" for anything it has not seen before.
+# 金标台账的比较器住在 benchmark 脚本里；在这里导入它，是让它的规则可被证伪的方式。一个判决带从未被测试的台账，就是一个
+# 对没见过的任何东西都判"相同"的台账。
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[3] / "benchmark" / "script"))
+import golden  # noqa: E402
 
 def check_finite(telemetry):
     for key, value in telemetry.items():
@@ -107,6 +115,58 @@ def test_setup_reaches_the_library():
         assert math.isclose(applied.v_bus_v, 48.0, rel_tol=1e-6), applied.v_bus_v
         # a field the caller left alone keeps the library default
         assert math.isclose(applied.pwm_freq_hz, 20000.0, rel_tol=1e-6), applied.pwm_freq_hz
+
+
+def test_the_setup_readback_returns_every_field_that_was_set():
+    # The readback is where somebody looks first when the machine does something they did not ask for. It used to copy
+    # seventeen fields and silently drop the six appended ones -- observer, inject_v, inject_hz, the blend band and the
+    # handover cutoff -- so `setup()` reported the defaults for exactly the fields that choose the observer, while
+    # `status()["observer"]` reported the truth. This case sets every field and demands all of them back.
+    # 回读是"机器做了我没要求的事"时第一个去看的地方。它过去只拷贝十七个字段、静默丢掉后来追加的六个——observer、
+    # inject_v、inject_hz、融合带与交接截止频率——于是 `setup()` 对"选择观测器"的那几个字段报默认值，而
+    # `status()["observer"]` 报的是真话。本用例把每个字段都设上，并要求全部原样取回。
+    setup = foc.MotorSetup()
+    setup.i_max_a = 3.5
+    setup.pwm_freq_hz = 16000.0
+    setup.deadtime_ns = 750.0
+    setup.v_bus_v = 36.0
+    setup.current_bandwidth_rad_s = 1500.0
+    setup.speed_bandwidth_rad_s = 90.0
+    setup.speed_loop_period_s = 2e-4
+    setup.position_bandwidth_rad_s = 25.0
+    setup.velocity_limit_rad_s = 12.0
+    setup.position_loop_period_s = 5e-4
+    setup.position_accel_limit_rad_s2 = 40.0
+    setup.align_current_a = 1.2
+    setup.align_ramp_s = 0.15
+    setup.align_hold_s = 0.25
+    setup.align_tolerance_rad = 0.04
+    setup.align_verify_s = 0.1
+    setup.align_angle_e_rad = 0.0
+    setup.observer = foc.Observer.BLENDED
+    setup.inject_v = 9.75
+    setup.inject_hz = 6000.0
+    setup.blend_start_rad_s = 8.0
+    setup.blend_end_rad_s = 40.0
+    setup.handover_lpf_hz = 35.0
+
+    params = foc.MotorParams()
+    params.rs, params.ld, params.lq = 0.5, 4e-4, 8e-4  # salient, so BLENDED is admissible
+    with foc.Motor(params, setup) as motor:
+        applied = motor.setup()
+
+    assert applied.observer == foc.Observer.BLENDED, applied.observer
+    assert applied.inject_v == 9.75, applied.inject_v
+    assert applied.inject_hz == 6000.0, applied.inject_hz
+    assert applied.blend_start_rad_s == 8.0, applied.blend_start_rad_s
+    assert applied.blend_end_rad_s == 40.0, applied.blend_end_rad_s
+    assert applied.handover_lpf_hz == 35.0, applied.handover_lpf_hz
+    # and the older half, so a future field is added in one place and read back in one place
+    # 以及旧的那一半，这样将来新增字段只在一个地方写、一个地方读
+    assert math.isclose(applied.i_max_a, 3.5, rel_tol=1e-6)
+    assert math.isclose(applied.pwm_freq_hz, 16000.0, rel_tol=1e-6)
+    assert math.isclose(applied.deadtime_ns, 750.0, rel_tol=1e-6)
+    assert math.isclose(applied.handover_lpf_hz, 35.0, rel_tol=1e-6)
 
 
 def test_default_setup_is_observable():
@@ -616,6 +676,50 @@ def test_mismatched_arrays_are_a_python_error_not_a_silent_truncation():
         pass
     else:
         raise AssertionError("mismatched lengths must raise ValueError")
+
+
+def test_the_ledger_bands_classify_the_way_they_are_documented():
+    # Each band has a job, and the interesting one is 1.3-2.0x: that is where the W7-c investigation landed (0.1356
+    # predicted against 0.0900 measured, 1.51x) and the term that explained it was real. A ledger that called that
+    # "drift" would invite somebody to widen a tolerance instead of finding the missing term, so the band is pinned here
+    # with the number that produced it.
+    # 每个判决带都有职责，最有意思的是 1.3–2.0×：W7-c 的调查就落在那（预测 0.1356 对实测 0.0900，1.51×），而解释它的那一项
+    # 是真实存在的。一个把这件事叫"漂移"的台账，会诱使别人去放宽容差而不是去找缺失的项，所以这个带就用产生它的那个数字钉住。
+    assert golden.verdict(1.0, 1.0)[0] == "same"
+    assert golden.verdict(1.0, 1.0 + 1e-9)[0] == "same", "an exact repeat must not be called drift"
+    assert golden.verdict(1.0, 1.05)[0] == "drift", "a 5 % change is drift, not noise"
+    tag, relative = golden.verdict(0.0900, 0.1356)
+    assert tag == "attribute", tag
+    assert abs(relative - 0.5067) < 1e-3, relative
+    assert golden.verdict(1.0, 3.0)[0] == "changed"
+    assert golden.verdict(-2.0, -2.0) [0] == "same"
+    # a sign flip has a magnitude ratio of 1.0, so the band test alone would file it as drift; it is not
+    # 符号翻转的幅值比是 1.0，所以单看比例带会把它归成漂移；它不是
+    assert golden.verdict(0.5, -0.5)[0] == "changed"
+
+
+def test_the_report_names_the_trace_the_quantity_and_the_difference():
+    # The criterion the plan states for this whole mechanism: the ledger has to say *which* trace, *which* quantity and
+    # *how much*. This drives the comparator with synthetic data so the format is checked without needing a drifted
+    # build -- and it fails if somebody reduces the output to a single "differs" line.
+    # 计划给这套机制定的判据：台账必须说出**哪条**轨迹、**哪个**量、**差多少**。本用例用合成数据驱动比较器，于是不必
+    # 真的造出一个漂移的构建就能检查格式——而谁要是把输出压成一句"有差异"，它会红。
+    meta = {"overshoot": "0.02", "peak_iq": "1.0"}
+    golden_rows = [{"t_us": 0, "i_d": 0.0, "i_q": 1.0, "i_ref_d": 0.0, "i_ref_q": 1.0, "v_d": 0.0, "v_q": 0.0,
+                    "speed_mech": 0.0, "mode": 2}]
+    current_rows = [{"t_us": 0, "i_d": 0.0, "i_q": 1.5, "i_ref_d": 0.0, "i_ref_q": 1.0, "v_d": 0.0, "v_q": 0.0,
+                     "speed_mech": 0.0, "mode": 2}]
+    summary = {"overshoot": 0.02, "steady_error": 0.0, "settle_s": 0.0, "peak_iq": 1.0, "peak_abs_vq": 1.0}
+    report = golden.compare("speed_step_100", meta, golden_rows, current_rows, summary)
+    text = "\n".join(report)
+    assert "speed_step_100" in text, "the report must name the trace"
+    assert "i_q@" in text, "the report must name the quantity and where in the window"
+    assert "1.5" in text and "1" in text, "the report must carry both values"
+    assert "quantit(ies) outside" in text
+    # and a clean run says so instead of printing nothing
+    # 而一次干净的运行会明说，而不是什么都不打
+    clean = "\n".join(golden.compare("speed_step_100", meta, golden_rows, golden_rows[:1], summary))
+    assert 'every summary quantity and every window slot is "same"' in clean
 
 
 def main():

@@ -223,6 +223,36 @@ The log
        periods" is now arithmetic nobody has to remember.
      - ``pending``
 
+   * - F-6
+     - F
+     - `foc_bridge_get_setup` copied seventeen fields of the setup and silently dropped the six that had been appended to
+       `foc_motor_setup_t` over three waves: `observer`, `inject_v`, `inject_hz`, `blend_start_rad_s`,
+       `blend_end_rad_s`, `handover_lpf_hz`. `Motor.setup()` -- the first place a support engineer looks -- therefore
+       reported the *defaults* for exactly the fields that choose the observer, while `status()["observer"]` reported the
+       truth from the live object.
+     - Building the first golden window: the readback said `observer=BACK_EMF, inject_v=0` while `status()` said `HFI`
+       for the same motor. No test caught it because every readback case asserted only pre-append fields -- the test
+       asked whether the fields it knew about came back, never whether the struct came back.
+     - One function, plus a case that sets every field and demands all of them back, so the next appended field is
+       caught in the same place it is added.
+     - ``pending``
+   * - F-7
+     - F
+     - **Open.** Selecting the injection observer through `Motor` applies no carrier at all. Measured: the duty swing
+       over 200 periods at standstill is exactly 0.00000 at 2, 4, 6 and 8 kHz on a 20 kHz loop, with `inject_v = 10.05 V`
+       against a 24 V bus -- identical to `BACK_EMF`, so the carrier is not small, it is absent. The observer stands
+       alone fine (a direct `HfiObserver` with the same configuration has `status == Ok` and `injection_ab() = 5.9 V`), so
+       the fault is in the composition or in the switchable slot's per-mode state, not in the demodulator.
+     - Trying to record a golden window for the injection path. The existing ABI cases all assert *admission* and the
+       reported mode -- that the request was accepted and the status says `HFI` -- and not one of them asserts that a
+       carrier reached the inverter. The W7-c SIL work drove `HfiObserver` directly, so the composed path was never
+       covered by anything.
+     - **Not fixed.** The next experiment is named: drive a `SwitchableObserver` the way the bridge builds it, step it,
+       and read `injection_ab()` and the inner observer's status, which separates "the slot does not forward" from "the
+       inner observer refuses". Until then no golden baseline is recorded around it, because a ledger that freezes
+       `locked = False` would teach the next person to explain a real change away.
+     - ``pending``
+
 Two kinds of row that are currently empty
 -----------------------------------------
 
