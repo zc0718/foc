@@ -169,6 +169,20 @@ struct ProtectionOutput final {
  *        的那些才加迟滞**：母线悬在阈值上时，否则输出使能会按控制频率反复抖，而抖动正是把一个
  *        保护变成故障源的方式。
  *
+ *        [en] What it is **not**, said here because "thermal model" invites the
+ * wrong reading. `q` is in A^2*s, not degrees: the block has no idea what the
+ * winding temperature is, and its `t_derate_*` thresholds are a *number the
+ * caller supplies*, not a measurement this code can make. It models one lumped
+ * copper loss with one time constant. It does not model the magnet, the
+ * bearings, the ambient, or a hot spot away from whatever sensor the caller has.
+ * A real drive needs a thermistor or an estimator alongside this, and no amount
+ * of tuning here replaces that.
+ *        [zh] 它**不是**什么，写在这里因为"热模型"容易招来误读。`q` 的单位是 A²·s，不是度：
+ * 这段代码不知道绕组温度是多少，它的 `t_derate_*` 阈值是**调用方给的数**，不是本代码能
+ * 测出来的量。它用一个时间常数建模一个集总的铜损。它不建模磁钢、不建模轴承、不建模环境温度、
+ * 也不建模远离调用方那个传感器的热点。真实的驱动器需要热敏电阻或温度估计器与它并存，这里
+ * 怎么调都替代不了那件事。
+ *
  * @context [en] Current-loop ISR, every step. [zh] 电流环 ISR，每步。
  * @since 0.1.0
  * @exporter

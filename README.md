@@ -120,6 +120,19 @@ Because the low-speed floor is structural, claims are stated as a range:
 | 800 rad/s – base speed (2910 rad/s) | L2/L3, sensitivity growing: iron loss stops being negligible at light load |
 | Above base speed | Only with `FieldWeakeningReference`; L3 on a plant whose `Ld/Lq` is 1.0 |
 
+### Claims deliberately not made
+
+These are the claims the evidence levels do not support, listed so nobody has to guess whether they
+were overlooked or rejected:
+
+| Claim | Why it is not made |
+| --- | --- |
+| "Efficient" / "high efficiency" | Nothing here measures input power against shaft power. A modulator and a control loop set the *shape* of the voltages, and efficiency lives in the switching devices, the winding and the modulation index, none of which this project models or measures. Even the SIL plant's loss model is copper plus an optional iron-loss shunt, and the loss numbers are L2 estimates on a plant that has never been current-probed. |
+| "Thermal protection" in the sense of knowing the winding temperature | `protection.hpp` integrates `i^2 - q/tau` in A^2*s. That is a lumped copper-loss budget with one time constant; it is not a temperature. `t_derate_*` thresholds are supplied by the caller. Without a thermistor or a thermal observer, this cannot tell you how hot the motor is. |
+| "Works down to a few milliamps" | The current-loop evidence is at 0.1 A and above. Below that the resolution of the *model* is the limit, not the ADC: 12-bit quantisation over a +/-10 A range was measured and found to have no effect, but that says nothing about a real sensor's noise, offset drift and amplifier settling. |
+| "Field weakening works end to end through `Motor`" | Not established. The policy works through the voltage budget in closed loop (P11-a), and it runs inside `Motor` without disturbing anything (P8-e), but driving it through `Motor`'s *speed mode* did not produce any d-axis current and the cause is not yet located. Until it is, use it as a reference generator you feed yourself. |
+| Anything about a specific motor | Every number is a property of `sil_pmsm_plant.hpp` with the nominal `MachineSpec`, or of a plant varied deliberately. `BoardSelfTest` and `check_board()` exist to tell you how far your hardware is from that model, and they are L3 -- themselves unproven on metal. |
+
 ### Not a safety component
 
 This library is not certified, not redundant, and not fail-safe. `protection.hpp` is a *supervisory*
