@@ -211,6 +211,27 @@ the inertia stays out of the comparison. A criterion of "must equal the command"
 the ramps, but its d axis drifts in this harness while its own reference is zero, and the cause is in the adapter
 rather than established as its behaviour, so nothing about that axis is claimed here.
 
+### The two paths into the loop agree exactly (in CI)
+
+`foc_motor_create_host()` and the compiled-in `sil::Bench` reach the same control loop two ways: the first through the
+C ABI with `foc_hal_callbacks_t`, the second through `PlantHal` as a compile-time policy. `test_sil_api_equivalence.cpp`
+runs both against the same plant, with the same command, and compares all 4000 samples:
+
+| Quantity | Worst gap over 4000 samples | Bound |
+|---|---|---|
+| q-axis current | **0.000e+00 A** | 1e-4 A |
+| d-axis current | **0.000e+00 A** | 1e-4 A |
+| speed | **0.000e+00 rad/s** | 1e-3 rad/s |
+
+Bit-identical, which is what "the seam is transparent" means. Two things that this test found while being written are
+worth knowing before writing another host:
+
+* `pwm_enable` / `pwm_disable` are **optional** callbacks, and a plant that models the inverter's gate enable needs
+  them. Omitting them leaves the gate disabled, `advance()` integrates zero voltage, and the loop reports `Run` with no
+  fault while producing no torque at all -- healthy-looking and completely dead.
+* `pwm_enable` answers an `int32_t` (0 = ok) while `pwm_disable` answers `void`: the library can be told that a gate
+  refused, but not that it failed to open.
+
 ### Claims deliberately not made
 
 These are the claims the evidence levels do not support, listed so nobody has to guess whether they
