@@ -55,6 +55,9 @@ and `docs/sphinx/build/html_en` (English).
   the most failures
 - **Field weakening** (`foc/core/field_weakening.hpp`): exact quadratic operating-point solve with `Rs`
   retained, plus a "is this motor worth field weakening at all" test
+- **MTPA** (`foc/core/reference.hpp`, `MtpaReference`): the d-axis current for maximum torque per
+  amp, walked down the curve when the request does not fit, +29 % torque at `Lq/Ld = 2` where
+  `i_char = i_max`
 - Conan-based modern dependency management
 - Supports C++ standards 17, 20, and 23
 - Automatic module file generation (`.ixx`/`.cppm`) from headers/sources
@@ -103,6 +106,7 @@ matches the model is a separate question, and the library gives you the instrume
 | `foc/core/protection.hpp` | L2 + L3 | I²t budget `i_cont²·τ`; a trip removes the *command* in one period, and the current then decays with `L/R` (0.80 ms) — it cannot be clamped in one period |
 | `foc/core/board_check.hpp` | L3 | Names the correct cause on 3 seeded faults; measures what can be measured at standstill and says what it does not |
 | `foc/core/field_weakening.hpp` | L3 | Matches the analytic voltage/current envelope to four digits; the "is it worth it" rule is a gate, not a suggestion |
+| `foc/core/reference.hpp` (`MtpaReference`) | L3 | +29.2 % torque at `Lq/Ld = 2`, `i_char = i_max` (closed form 30.2 %); the single-`L` observer reads 0.104 rad on that machine, still inside the 0.15 ceiling |
 | `benchmark/` | L1 | Builds and runs; its numbers are timing, not control performance |
 
 ### Operating range, not a single number
