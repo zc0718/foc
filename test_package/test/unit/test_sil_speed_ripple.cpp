@@ -60,9 +60,14 @@
 //   C7  （是不是在追自己的测量）已发布转速的纹波至少是真实转速的 3 倍、且在同一音调上。**一半成立**：倍数 4.48，但音调
 //       在 0 Hz——缓慢游走而非 418 Hz 振荡。
 //
-// 于是本文件结束时的事实：纹波是 0.09 rad/s，只要注入在跑就在，注入一停就是 0.0000；它不在转子惯量里、不在已发布角度里、
-// 不在注入幅值里、也不在已发布转速的音调里。它产生在注入驱动的这个环**内部**，而"418 Hz"这个数本身不可靠（同一幅值下另一
-// 配置给出 92 Hz）——下一步要用真频谱，而不是过零计数。
+//   C8  （是不是钳位造成的继电振荡）误差至少十分之一的窗口撞在 ±1 钳位上。**否证**：两种幅值下占用率都是 0.000，环路在这里
+//       是线性的；418/92 Hz 的频率移动是过零计数器读多音调信号的产物。
+//   C9  （哪个频率拥有它）六个栅格对齐的候选里最大者要比中位数大 1.5 倍。**成立**：2.0000 Hz 就是载波，9.41 倍。
+//
+// 于是本文件结束时的事实：纹波 0.09 rad/s，只要注入在跑就在，注入一停就是 0.0000；它不在转子惯量里、不在已发布角度里、
+// 不在注入幅值里、不是钳位造成的振荡。**它最大的单条音调是载波本身**，而观测器发布出来的转速带着这条音调的力度是转子的
+// 10.4 倍——环路不是在自己生成它，而是在被喂它：`omega_e = omega_int + kp·error`，而 `error` 按构造携带载波频率的成分，
+// 在速度环闭上去之前没有任何东西滤过它。
 
 #include <algorithm>
 #include <cmath>
@@ -110,6 +115,9 @@ constexpr float kPiLocal = 3.14159265358979F;
 constexpr float kTwoPiLocal = 6.28318530717959F;
 
 constexpr float kCommandRadS = 20.0F;
+// The measurement window in samples: the Goertzel grid is `control_hz / this`, so the two must be one number.
+// 测量窗口的样本数：Goertzel 的栅格是 `control_hz / 这个数`，两者必须是同一个数。
+constexpr int kWindowSamples = static_cast<int>(0.3F * kCtrlHz);
 constexpr float kSettleSeconds = 0.3F;
 constexpr float kRunSeconds = 1.2F;
 constexpr float kWindowSeconds = 0.3F;
@@ -125,6 +133,54 @@ auto motor_config(float inertia) -> foc::motor::MotorConfig {
 using SensorlessMotor = foc::motor::Motor<core::SwitchableObserver, core::Svpwm, core::Pi, sil::PlantHal,
                                          core::NullReferenceGenerator, core::NullFeedforward, core::PositionP,
                                          core::NullAlignment>;
+
+/**
+ * @brief [en] Six candidate tones, each of which names a mechanism, chosen on the window's own bin grid.
+ *
+ * @brief [zh] 六个候选音调，每一个都对应一个有名有姓的机理，且都落在窗口自己的频率栅格上。
+ *
+ *     The grid is `control_hz / window_samples` = 3.333 Hz, and every candidate is an exact multiple of it, so the
+ *     Goertzel below reads each one with no leakage from its neighbours. That is not pedantry: a candidate half a bin
+ *     off would report the *sum* of the leakage from whatever is near it, and the whole point of this table is to
+ *     decide which frequency owns the ripple. 栅格是 `control_hz / 窗口样本数` = 3.333 Hz，每个候选都是它的整数倍，于是
+ *     下面的 Goertzel 读每一个都不受邻居泄漏影响。这不是学究气：偏半个栅格的候选会把邻近内容的泄漏**加**进来，而这张表
+ *     要决定的恰恰是哪个频率拥有这个纹波。
+ */
+constexpr int kToneBins[6] = {10, 12, 28, 95, 125, 600};
+constexpr float kToneHz[6] = {33.33F, 40.0F, 93.33F, 316.67F, 416.67F, 2000.0F};
+constexpr const char* kToneOwner[6] = {"speed loop 200 rad/s", "PLL bandwidth 40 Hz",  "the tone seen at 4 V",
+                                       "current loop 2000 rad/s", "the tone seen at 12 V", "the injection carrier"};
+
+/**
+ * @brief [en] One Goertzel bin over a fixed-length window: amplitude at one frequency, no transform, no allocation.
+ * @brief [zh] 定长窗口上的一个 Goertzel 频点：单一频率的幅值，不做变换、不分配。
+ */
+class Goertzel final {
+  public:
+    Goertzel() noexcept = default;
+    explicit Goertzel(int bin) noexcept : coeff_(static_cast<float>(2.0 * std::cos((2.0 * 3.14159265358979 * static_cast<double>(bin)) / static_cast<double>(kWindowSamples)))) {}
+
+    void push(float x) noexcept {
+        const float s = x + (coeff_ * s_prev_) - s_prev2_;
+        s_prev2_ = s_prev_;
+        s_prev_ = s;
+        ++n_;
+    }
+
+    [[nodiscard]] auto amplitude() const noexcept -> float {
+        if (n_ == 0) {
+            return 0.0F;
+        }
+        const float power = (s_prev_ * s_prev_) + (s_prev2_ * s_prev2_) - (coeff_ * s_prev_ * s_prev2_);
+        return (2.0F * std::sqrt(std::max(power, 0.0F))) / static_cast<float>(n_);
+    }
+
+  private:
+    float coeff_{0.0F};
+    float s_prev_{0.0F};
+    float s_prev2_{0.0F};
+    int n_{0};
+};
 
 /** @brief [en] What one closed-loop run measured, bias and ripple kept apart. [zh] 一次闭环运行量到的结果，偏差与纹波分开。 */
 struct RippleResult final {
@@ -144,6 +200,10 @@ struct RippleResult final {
     float omega_est_ripple{0.0F};      ///< [en] its spread -- what the loop actually chases. [zh] 其离散——即环路真正追逐的量。
     float omega_est_hz{0.0F};          ///< [en] its dominant tone. [zh] 其主导音调。
     bool reached_command{false};       ///< [en] whether the loop got to the command at all. [zh] 环路到底有没有到达指令。
+    float speed_tone[6]{};             ///< [en] true speed amplitude at each candidate tone. [zh] 真实转速在各候选音调上的幅值。
+    float omega_tone[6]{};             ///< [en] published speed amplitude at each candidate. [zh] 已发布转速在各候选上的幅值。
+    float error_tone[6]{};             ///< [en] the observer's error signal at each candidate. [zh] 观测器误差信号在各候选上的幅值。
+    float clamp_fraction{0.0F};        ///< [en] share of window samples with |error()| at the +-1 clamp. [zh] 窗口内 |error()| 撞上 ±1 钳位的样本比例。
 };
 
 /**
@@ -198,6 +258,15 @@ auto run_ripple(float inertia, bool use_sensor, float inject_v) -> RippleResult 
     // Everything is accumulated in one pass: no history buffer, because the only thing the substep sampling is for is a
     // variance and a crossing count, and both fit in a few registers.
     // 一次通行全部累加：不留历史缓冲，因为子步采样唯一要的东西是方差与过零计数，两者都装得进几个寄存器。
+    Goertzel speed_tones[6];
+    Goertzel omega_tones[6];
+    Goertzel error_tones[6];
+    for (int t = 0; t < 6; ++t) {
+        speed_tones[t] = Goertzel(kToneBins[t]);
+        omega_tones[t] = Goertzel(kToneBins[t]);
+        error_tones[t] = Goertzel(kToneBins[t]);
+    }
+    int clamp_count = 0;
     bool in_window = false;
     double ctrl_sum = 0.0;
     double ctrl_sum_sq = 0.0;
@@ -330,6 +399,16 @@ auto run_ripple(float inertia, bool use_sensor, float inject_v) -> RippleResult 
                 }
                 omega_est_sum += static_cast<double>(omega_est);
                 omega_est_sum_sq += static_cast<double>(omega_est) * static_cast<double>(omega_est);
+
+                // The three series that could carry the tone, all sampled at the control rate on the same grid.
+                // 三条可能携带该音调的序列，全部按控制率、在同一栅格上采样。
+                const float error_signal = motor.observer().error();
+                for (int t = 0; t < 6; ++t) {
+                    speed_tones[t].push(speed);
+                    omega_tones[t].push(omega_est);
+                    error_tones[t].push(error_signal);
+                }
+                clamp_count += (std::fabs(error_signal) >= 0.99F) ? 1 : 0;
             }
             ++count;
         }
@@ -390,6 +469,12 @@ auto run_ripple(float inertia, bool use_sensor, float inject_v) -> RippleResult 
     const float omega_dom = kTwoPi * std::max(result.dominant_hz, 1.0F);
     result.implied_speed_ripple = result.torque_ripple_nm / (inertia * omega_dom);
     result.reached_command = std::fabs(plant.omega_mech_rad_s() - kCommandRadS) < 0.5F;
+    for (int t = 0; t < 6; ++t) {
+        result.speed_tone[t] = speed_tones[t].amplitude();
+        result.omega_tone[t] = omega_tones[t].amplitude();
+        result.error_tone[t] = error_tones[t].amplitude();
+    }
+    result.clamp_fraction = (count > 0) ? (static_cast<float>(clamp_count) / static_cast<float>(count)) : 0.0F;
     return result;
 }
 
@@ -635,5 +720,106 @@ TEST(SilSpeedRipple, TheLoopChasesARippledEstimate) {
                 ((amplification >= 3.0F) && (tone_ratio > 0.8F) && (tone_ratio < 1.25F))
                     ? "the loop is chasing its own measurement"
                     : "the estimate is honest, so the ripple is made downstream of it");
+}
+
+TEST(SilSpeedRipple, TheSpectrumNamesTheToneOrSaysThereIsNone) {
+    // Increment 2 ended without a mechanism and with one unreliable number: a crossing counter said 418 Hz at 12 V and
+    // 92 Hz at 4 V for the same 0.09 rad/s amplitude. A crossing count cannot tell one tone from three, so this case
+    // replaces it with an exact reading at six candidate frequencies, each of which owns a named mechanism, plus the one
+    // measurement the relay hypothesis is actually about: how much of the time the demodulated error sits in its +-1
+    // clamp.
+    // 增量 2 结束在一个没有机理、且有一个不可靠数字的地方：过零计数器在 12 V 说 418 Hz、在 4 V 说 92 Hz，而幅值都是
+    // 0.09 rad/s。过零计数分不出一条音调与三条音调，因此本用例用六个候选频率上的精确读数取代它——每个候选都有名有姓
+    // 地对应一个机理——并补上继电假设真正关心的那个测量：解调误差有多大比例的时间坐在它的 ±1 钳位里。
+    //
+    //   C8  the relay story predicts the PLL is driven into its clamp: at least a tenth of the window with `|error|` at
+    //       1.0, and much less of it at a third of the volts. If the clamp is never reached, the loop is not saturating
+    //       and that story is dead.
+    //   C9  one candidate must own the ripple: the largest amplitude among the six must exceed their median by 1.5x. If
+    //       none does, the ripple is broadband, and a broadband ripple is noise rather than a limit cycle -- a different
+    //       mechanism with a different fix.
+    //
+    //   C8  继电假设预测 PLL 被驱入钳位：至少十分之一的窗口里 `|error|` 在 1.0，而在三分之一的伏特下要少得多。若钳位从未
+    //       到达，环路就没有饱和，那个说法作废。
+    //   C9  必须有一个候选拥有这个纹波：六者中最大者要比它们的中位数大 1.5 倍。若没有，纹波是宽带的，而宽带纹波是噪声而不
+    //       是极限环——不同的机理、不同的修法。
+    const RippleResult full = run_ripple(kBaseJ, false, 12.0F);
+    const RippleResult third = run_ripple(kBaseJ, false, 4.0F);
+
+    std::printf("\n[spectrum] amplitudes at six bin-aligned candidates, 12 V injection\n");
+    std::printf("[spectrum] %9s %-24s %12s %12s %12s\n", "freq_hz", "who owns that frequency", "true_speed",
+                "published", "error_sig");
+    for (int t = 0; t < 6; ++t) {
+        std::printf("[spectrum] %9.2f %-24s %12.5f %12.5f %12.5f\n", static_cast<double>(kToneHz[t]),
+                    kToneOwner[t], static_cast<double>(full.speed_tone[t]), static_cast<double>(full.omega_tone[t]),
+                    static_cast<double>(full.error_tone[t]));
+    }
+
+    EXPECT_TRUE(full.reached_command && third.reached_command) << "a run never reached the command";
+
+    // C8: is the clamp engaged at all, and does it depend on the volts?
+    // C8：钳位到底有没有被用上，以及它是否依赖伏特数。
+    std::printf("[spectrum] C8 clamp occupancy: %.3f at 12 V, %.3f at 4 V (needs >= 0.100 and much lower at 4 V)\n",
+                static_cast<double>(full.clamp_fraction), static_cast<double>(third.clamp_fraction));
+    const bool saturating = full.clamp_fraction >= 0.10F;
+    std::printf("[spectrum]     -> %s\n",
+                saturating ? "the error spends real time in its clamp, so the PLL is a nonlinearity, not a filter"
+                           : "the clamp is never reached, so the loop is linear here and the relay story is dead");
+
+    // C8 is **falsified**: the clamp is never reached at either amplitude, so the loop is linear here and the relay
+    // story -- the one the 418/92 Hz frequency shift suggested -- is dead. The shift itself was an artefact of the
+    // crossing counter reading a multi-tone signal; the exact amplitudes below show three tones at once. Pinning the
+    // absence is worth as much as pinning a presence: if a future change ever drives the error into its clamp, this is
+    // the case that says so.
+    // C8 被**否证**：两种幅值下钳位都没有到达，因此这里环路是线性的，而 418/92 Hz 的频率移动所暗示的那个继电说法作废。
+    // 那个移动本身是过零计数器读一个多音调信号的产物；下面的精确幅值一次显示出三条音调。钉住"不存在"与钉住"存在"一样有
+    // 价值：若以后某个改动真的把误差驱入钳位，说出这件事的就是本用例。
+    EXPECT_LT(full.clamp_fraction, 0.10F) << "the error now reaches its clamp, so the loop is a nonlinearity and the "
+                                              "relay story has to be examined again instead of being closed here";
+
+    // C9: which candidate owns the ripple, if any?
+    // C9：若有的话，哪个候选拥有这个纹波？
+    int winner = 0;
+    float sorted[6]{};
+    for (int t = 0; t < 6; ++t) {
+        sorted[t] = full.speed_tone[t];
+        if (full.speed_tone[t] > full.speed_tone[winner]) {
+            winner = t;
+        }
+    }
+    // A six-element median without a library sort: three comparisons would do, six is clearer.
+    // 六元素中位数不借库排序：三次比较就够，写六个更清楚。
+    for (int i = 0; i < 6; ++i) {
+        for (int j = i + 1; j < 6; ++j) {
+            if (sorted[j] < sorted[i]) {
+                const float swap = sorted[i];
+                sorted[i] = sorted[j];
+                sorted[j] = swap;
+            }
+        }
+    }
+    const float median = 0.5F * (sorted[2] + sorted[3]);
+    const float dominance = (median > 0.0F) ? (full.speed_tone[winner] / median) : 0.0F;
+    std::printf("[spectrum] C9 the loudest candidate is %.2f Hz (%s) at %.5f rad/s, %.2fx the median (needs 1.50x)"
+                " -> %s\n",
+                static_cast<double>(kToneHz[winner]), kToneOwner[winner], static_cast<double>(full.speed_tone[winner]),
+                static_cast<double>(dominance),
+                (dominance >= 1.5F) ? "a tone owns the ripple" : "no tone dominates: the ripple is broadband");
+
+    EXPECT_GT(dominance, 1.5F) << "no candidate dominates the true speed's spectrum, so the ripple is broadband and "
+                                  "the limit-cycle story needs replacing rather than confirming";
+
+    // And the number that makes this actionable rather than merely named: the tone is the carrier, and the *published*
+    // speed carries it ten times harder than the rotor does. So the rotor is not generating it -- the loop is being fed
+    // it. `omega_e` is `omega_int + kp*error` and `error` is the demodulated signal, which carries carrier-frequency
+    // content by construction; nothing filters it before a speed loop closes on it.
+    // 而让这条从"有名"变成"可动手"的数字是：音调就是载波，而**已发布的**转速带着它的力度是转子的十倍。所以转子不是在生成
+    // 它——是环路在被喂它。`omega_e` 等于 `omega_int + kp·error`，而 `error` 就是解调信号，按构造携带载波频率的成分；在
+    // 一个速度环闭上去之前，没有任何东西滤过它。
+    const float published_over_rotor = (full.speed_tone[5] > 0.0F) ? (full.omega_tone[5] / full.speed_tone[5]) : 0.0F;
+    std::printf("[spectrum] the published speed carries the carrier tone %.1fx harder than the rotor does\n",
+                static_cast<double>(published_over_rotor));
+    EXPECT_GT(published_over_rotor, 5.0F)
+        << "the published speed no longer carries the carrier tone, so this conclusion no longer holds";
 }
 

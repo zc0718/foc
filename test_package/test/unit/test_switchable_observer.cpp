@@ -228,3 +228,44 @@ TEST(SwitchableObserver, AHandOverCarriesTheEstimateAndASwitchDoesNot) {
     // 而交接给已经选中的那个不算交接。
     EXPECT_FALSE(handed.hand_over_to(foc::core::ObserverKind::Hfi));
 }
+
+TEST(SwitchableObserver, TheSelectedObserversLockVerdictIsReachableThroughTheSlot) {
+    // The slot is what a caller actually holds. Without this, a caller cannot tell "the injection observer never locked"
+    // from "it locked and the machine is standing still" -- both are an angle that does not move, and the speed reads
+    // zero in both. That distinction is not academic: it is exactly the state a carrier past what the control rate can
+    // resolve leaves behind, and the only way it was found was by reading a speed that had frozen.
+    // 槽位是调用方真正持有的东西。没有它，调用方分不清"注入观测器从未锁定"与"它锁定了、而机器在静止"——两者都是一个不动的
+    // 角度，转速都报零。这个区分不是学术问题：它正是超出控制率分辨能力的载波所留下的状态，而发现它的唯一方式是读到一个冻结
+    // 的转速。
+    foc::core::SwitchableObserver::Config config = wrapper_config(foc::core::ObserverKind::BackEmf);
+    config.hfi.inject_v = 12.0F;
+    config.hfi.inject_hz = 2000.0F;
+    config.hfi.current_hp_hz = 300.0F;
+    config.hfi.demod_lpf_hz = 200.0F;
+    config.hfi.pll_bandwidth_hz = 40.0F;
+    config.hfi.pll_zeta = 0.9F;
+    config.hfi.demod_gain_a = foc::core::HfiObserver::predicted_gain_a(12.0F, 2000.0F, kLd, kLq + kLd);
+    config.hfi.min_hf_current_a = 0.05F;
+    foc::core::SwitchableObserver slot(config);
+
+    // Back-EMF selected: no lock detector exists, so nothing is being withheld and the honest answer is `true`. The
+    // error signal is `0` because that observer publishes none -- which the contract makes explicit rather than
+    // pretending a zero means a perfect lock.
+    // 选中反电势：不存在锁定判据，因此没有东西被扣住，诚实的答案是 `true`。误差信号为 `0`，因为那个观测器不发布误差信号
+    // ——契约把这件事写明，而不是假装零意味着完美锁定。
+    EXPECT_TRUE(slot.locked());
+    EXPECT_FLOAT_EQ(0.0F, slot.error());
+
+    // HFI selected, nothing but zero current fed: the modulator is off as far as this observer is concerned, so its lock
+    // detector must report a hold, not a measurement. Before this accessor the slot would have answered with an angle
+    // and no way to know it was a held one.
+    // 选中注入观测器、只喂零电流：就这个观测器而言调制器是关着的，因此它的锁定判据必须报"保持"而不是"测量"。在这个访问器
+    // 之前，槽位会给出一个角度，而没有办法知道它是保持来的。
+    slot.set_kind(foc::core::ObserverKind::Hfi);
+    for (int step = 0; step < 200; ++step) {
+        static_cast<void>(slot.update(foc::core::Ab<float>{0.0F, 0.0F}, foc::core::Ab<float>{0.0F, 0.0F}, kDt));
+    }
+    EXPECT_FALSE(slot.locked()) << "an injection observer fed no current reported a lock";
+    EXPECT_FLOAT_EQ(0.0F, slot.error()) << "an unlocked observer must not publish an error signal";
+}
+

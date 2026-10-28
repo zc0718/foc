@@ -1258,6 +1258,12 @@ foc_err_t foc_bridge_get_status(foc_motor_t motor, foc_motor_status_t* out) {
         result.align_spread_rad = aligner.spread_rad();
         result.max_period_us = telemetry.max_period_us;
         result.observer = foc::api::observer_mode(instance.observer().kind());
+        // The lock verdict is part of the answer, not a debug extra: an observer that is holding its last angle looks
+        // exactly like a machine that stopped, and a caller has no other channel to tell them apart.
+        // 锁定结论是这个答案的一部分，不是调试附加物：一个正保持上一个角度的观测器，看起来与一台停住的机器一模一样，而
+        // 调用方没有别的通道能区分它们。
+        result.observer_locked = instance.observer().locked() ? 1 : 0;
+        result.observer_error = instance.observer().error();
         std::memcpy(static_cast<void*>(out), &result, limit);
         return foc::ErrorCode::Ok;
     });

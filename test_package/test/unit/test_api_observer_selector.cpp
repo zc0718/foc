@@ -250,6 +250,13 @@ TEST(ApiObserverSelector, TheHfiModeRefusesWithoutACarrierOrWithoutSaliency) {
     status.struct_size = sizeof(foc_motor_status_t);
     ASSERT_EQ(foc_motor_get_status(hfi_motor, &status), FOC_OK);
     EXPECT_EQ(status.observer, hfi) << "the mode that was asked for is not the mode that reports itself";
+    // The lock verdict travels with the status, because an observer holding its last angle is indistinguishable from a
+    // stopped machine by its angle alone. This rig feeds zero current, so the injection observer has nothing to lock on
+    // and must say so; `observer_error` is then exactly zero, which is why the two are reported together.
+    // 锁定结论随状态一起返回，因为一个正保持上一个角度的观测器仅凭角度与一台停住的机器无法区分。本台架喂的是零电流，注入
+    // 观测器没有可锁的东西、必须说出来；`observer_error` 此时严格为零，这也是两者要一起报的原因。
+    EXPECT_EQ(status.observer_locked, 0) << "an injection observer with no current reported a lock";
+    EXPECT_FLOAT_EQ(0.0F, status.observer_error);
     EXPECT_EQ(foc_motor_destroy(hfi_motor), FOC_OK);
 }
 

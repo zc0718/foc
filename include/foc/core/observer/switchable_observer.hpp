@@ -164,6 +164,67 @@ class SwitchableObserver final {
     }
 
     /**
+     * @brief [en] Whether the *selected* observer is currently producing a measurement.
+     * @brief [zh] 被选中的那个观测器当前是否在产出测量。
+     * @return [en] The selected observer's own verdict where it has one: the injection observer's lock detector, the
+     *              non-linear flux observer's, the blend's. `true` for the back-EMF observer, which has no detector --
+     *              see the note.
+     * @return [zh] 被选中的观测器自己的结论（若有）：注入观测器的锁定判据、非线性磁链观测器的、混合观测器的。反电势观测
+     *              器没有判据，返回 `true`——见注释。
+     * @note [en] Why the wrapper has to forward this at all: a slot is what a caller holds, and without this accessor a
+     *            caller cannot tell "the injection observer never locked" from "it locked and the machine is standing
+     *            still" -- both look like an angle that does not move. That is not hypothetical: an injection carrier
+     *            past what the control rate can resolve leaves exactly that state, and it was found by reading a speed
+     *            that had frozen rather than by any error code. `true` for an observer without a detector is the honest
+     *            answer: there is no channel that could withhold a verdict, and answering `false` would make every
+     *            back-EMF caller check something that does not exist.
+     * @note [zh] 包装器为什么必须转发它：槽位是调用方实际持有的东西，没有这个访问器，调用方分不清"注入观测器从未锁定"与
+     *            "它锁定了、而机器在静止"——两者看起来都是一个不动的角度。这不是假设：一个超出控制率分辨能力的注入载波正
+     *            是留下那个状态的东西，而它是靠读到一个冻结的转速被发现的，不是靠任何错误码。没有判据的观测器返回
+     *            `true` 是诚实的答案：不存在能扣住一个结论的通道，而返回 `false` 会让每个反电势调用方去检查一件不存在的
+     *            事。
+     * @since 0.1.7
+     */
+    [[nodiscard]] auto locked() const noexcept -> bool {
+        switch (kind_) {
+        case ObserverKind::Hfi:
+            return hfi_.locked();
+        case ObserverKind::Blended:
+            return blended_.locked();
+        case ObserverKind::NonlinearFlux:
+            return nonlinear_flux_.locked();
+        case ObserverKind::BackEmf:
+        default:
+            return true; // no detector: nothing is being withheld
+        }
+    }
+
+    /**
+     * @brief [en] The selected observer's normalised error signal, or `0` where that observer publishes none.
+     * @brief [zh] 被选中的观测器归一化的误差信号；该观测器不发布误差信号时为 `0`。
+     * @return [en] About `-sin(2*angle_error)` for the injection observer, which is the only one that has such a signal
+     *              today. `0.0F` for the other three.
+     * @return [zh] 注入观测器约为 `-sin(2·角度误差)`——今天只有它有这样的信号。其余三个返回 `0.0F`。
+     * @warning [en] `0` is ambiguous by construction: a perfectly locked injection observer also sits near zero. A
+     *               caller that needs to know whether an error signal exists has to look at `kind()`; a caller that
+     *               needs to know whether it means anything has to look at `locked()`.
+     * @warning [zh] `0` 按其构造就是有歧义的：一个完全锁定的注入观测器同样停在零附近。需要知道"是否存在误差信号"的调用
+     *               方得去看 `kind()`；需要知道"它是否有意义"的得去看 `locked()`。
+     * @since 0.1.7
+     */
+    [[nodiscard]] auto error() const noexcept -> float {
+        switch (kind_) {
+        case ObserverKind::Hfi:
+            return hfi_.error();
+        case ObserverKind::Blended:
+        case ObserverKind::NonlinearFlux:
+        case ObserverKind::BackEmf:
+        default:
+            return 0.0F;
+        }
+    }
+
+    /**
      * @brief [en] Switch, carrying the current estimate into the incoming observer first.
      * @brief [zh] 切换，先把当前估计带进接手的那个观测器。
      * @param next [en] the observer to hand over to.

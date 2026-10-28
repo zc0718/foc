@@ -226,6 +226,20 @@ typedef struct foc_motor_status {
     float align_spread_rad; /* spread of the accepted capture, rad */
     uint32_t max_period_us; /* worst control-tick interval seen, us; 0 without a clock */
     int32_t observer;       /* the observer actually running (a foc_observer_t); appended, gated by struct_size */
+    /* 1 when the selected observer says it is producing a measurement, 0 when it is holding the last angle. Appended;
+       gated by struct_size. The distinction matters because a holding observer is indistinguishable from a stopped
+       machine by its angle alone -- the injection observer past what the control rate can resolve freezes exactly this
+       way. Observers without a lock detector (back-EMF) answer 1: they have no channel that could withhold a verdict. */
+    /* 选中的观测器表示自己正在产出测量时为 1，正在保持上一个角度时为 0。追加字段，由 struct_size 门控。这个区分重要，
+       因为一个正在保持的观测器仅凭它的角度与一台停住的机器无法区分——超出控制率分辨能力的注入观测器正是这样冻结的。
+       没有锁定判据的观测器（反电势）答 1：它们不存在能扣住结论的通道。 */
+    int32_t observer_locked;
+    /* the selected observer's normalised error signal, about -sin(2*angle_error) for the injection observer and 0.0
+       where that observer publishes none. Appended; gated by struct_size. Zero is ambiguous on purpose: a locked
+       injection observer also sits near zero, so read `observer_locked` alongside it. */
+    /* 选中观测器归一化的误差信号，注入观测器约为 -sin(2·角度误差)，不发布该信号的观测器为 0.0。追加字段，由
+       struct_size 门控。零是有意保留歧义的：锁定的注入观测器同样停在零附近，因此要与 `observer_locked` 一起读。 */
+    float observer_error;
 } foc_motor_status_t;
 
 
