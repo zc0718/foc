@@ -160,6 +160,24 @@ Because the low-speed floor is structural, claims are stated as a range:
 | Above base speed | Only with `FieldWeakeningReference`; L3 on a plant whose `Ld/Lq` is 1.0 |
 | **Any speed, with `i_d != 0`** | Below ~1000 rad/s, using d-axis current costs angle: 0.1044 rad becomes **0.5079 rad** with `i_d = -1 A` at 200 rad/s, on a *surface* machine with no saliency involved. Above ~3000 rad/s the back-EMF dominates and it is harmless (0.0705 rad at 3200 rad/s with `i_d = -2.98 A`). So MTPA and this observer are mutually exclusive **at low speed**, and the mechanism is the observer's constant `psi_f` target, not the saliency ratio |
 
+### Model reconciliation with a third party (manual, not in CI)
+
+The SIL plant is our own model, so "the plant and the controller agree" is a statement about one model. `motulator`
+(Aalto Electric Drives) provides an independent one, laboratory-validated, and `benchmark/script/reconcile_model.py`
+drives both with the same stator voltage and the same speed and compares the current vector step by step:
+
+| Quantity | Worst deviation over 400 steps | Limit |
+|---|---|---|
+| stator current magnitude | **0.0067 %** | 1 % |
+| stator current angle | **3.0e-5 rad** | 1e-2 rad |
+
+Both integrate forward Euler at 50 us, so with the same equations they should agree to rounding, and they do. This is
+not in CI: it needs `pip install motulator`, and a dependency that large does not belong in the gate path. It is
+recorded here because the first run **disagreed by 31 %**, and the cause was the harness — `motulator` takes the
+stator voltage in stator coordinates while our model works in the rotor frame, so the command had to be rotated out
+first. A harness that mixes frames produces a convincing wrong answer; that is worth knowing before trusting any
+three-way table.
+
 ### Claims deliberately not made
 
 These are the claims the evidence levels do not support, listed so nobody has to guess whether they
