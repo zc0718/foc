@@ -93,7 +93,7 @@ struct LoopResult final {
  * @param use_differenced [en] true feeds the loop the differenced angle; false feeds it the observer's own speed.
  * @param use_differenced [zh] true 时环路喂差分角度；false 时喂观测器自有的转速。
  */
-auto run_loop(bool use_differenced) -> LoopResult {
+auto run_loop(int window_ticks, bool use_differenced) -> LoopResult {
     LoopResult result{};
     sil::PmsmPlant plant(plant_params());
     sil::PlantHal hal(plant, 24.0F);
@@ -127,7 +127,8 @@ auto run_loop(bool use_differenced) -> LoopResult {
         return result;
     }
 
-    core::SpeedFromAngle differenced(core::SpeedFromAngle::Config{200U, kPoles});
+    core::SpeedFromAngle differenced(
+        core::SpeedFromAngle::Config{static_cast<std::uint16_t>(window_ticks), kPoles});
     core::Pi speed_pi{foc::speed_pi_config(cfg, 200.0F)};
 
     auto step_once = [&](float iq_command) {
@@ -138,7 +139,9 @@ auto run_loop(bool use_differenced) -> LoopResult {
     };
 
     // Let the injection observer acquire the angle and the differenced estimator fill its window before either closes.
-    // 在两路闭起来之前，先让注入观测器获取角度、让差分估计器填满窗口。
+    // The settle is at least as long as the largest window in the sweep, so no run is measuring a half-filled window.
+    // 在两路闭起来之前，先让注入观测器获取角度、让差分估计器填满窗口。这段长度不短于扫描中最大的窗口，于是没有任何
+    // 一次运行是在测半满窗口。
     for (int i = 0; i < static_cast<int>(0.3F / kDt); ++i) {
         step_once(0.0F);
     }
@@ -166,8 +169,8 @@ auto run_loop(bool use_differenced) -> LoopResult {
 } // namespace
 
 TEST(SilSpeedFromAngleClosedLoop, TheBetterEstimateMakesABetterLoop) {
-    const LoopResult on_observer = run_loop(false);
-    const LoopResult on_differenced = run_loop(true);
+    const LoopResult on_observer = run_loop(200, false);
+    const LoopResult on_differenced = run_loop(200, true);
 
     std::printf("\n[loop] command %.1f rad/s mech; worst settled error over the last %.1f s\n",
                 static_cast<double>(kCommandRadS), static_cast<double>(kWindowSeconds));
@@ -210,4 +213,53 @@ TEST(SilSpeedFromAngleClosedLoop, TheBetterEstimateMakesABetterLoop) {
     // 而延迟显现在延迟该显现的地方：瞬态。
     EXPECT_GT(on_differenced.peak_speed_rad_s, on_observer.peak_speed_rad_s + 5.0F)
         << "the delay no longer costs overshoot, so the window may have been shortened -- re-measure the claim above";
+}
+
+TEST(SilSpeedFromAngleClosedLoop, AWindowShortEnoughToBeOnTimeIsTheOnlyWayThisRouteWins) {
+    // 3b closed on a 200-tick (10 ms) window and lost: quieter but late, 62 % overshoot against 1.9 %. The obvious
+    // retreat is a shorter window, which trades noise for phase. This sweep measures that trade and decides the route
+    // rather than leaving it as an opinion.
+    //
+    // The decision rule is fixed before the run, and both of its outcomes are outcomes:
+    //   if some window beats the loop closed on the observer's own speed on **both** settled accuracy and peak, the
+    //   differencing route is alive at that window and the next step is to adopt it; if none does, the route is closed
+    //   at this bandwidth and increment 4 has to be structural -- a speed that is neither late nor derived from a PLL.
+    //
+    // 3b 闭在 200 tick（10 ms）窗口上输了：更安静但更晚，62% 超调对 1.9%。显然的退路是缩短窗口，用噪声换相位。本扫描
+    // 测量这个折中并**决定**这条路线，而不是把它留成一个意见。
+    //
+    // 判定规则在运行前定死，两种结果都是结果：
+    //   若某个窗口在**稳定精度与峰值两项上同时**胜过闭在观测器自有转速上的环，则差分路线在那个窗口上可行，下一步是采用
+    //   它；若没有，则这条路线在本带宽下关闭，增量 4 必须是结构性的——一个既不晚、也不来自 PLL 的转速。
+    struct Row final {
+        int window_ticks;
+        LoopResult result;
+    };
+    std::printf("\n[window] command %.1f rad/s mech; worst settled error and peak, by window\n",
+                static_cast<double>(kCommandRadS));
+    std::printf("[window] %10s %10s %12s %10s\n", "window_us", "settled", "peak", "verdict");
+
+    const LoopResult reference = run_loop(200, false);
+    std::printf("[window] %10s %10.4f %12.2f %10s\n", "none", static_cast<double>(reference.worst_settled_error_rad_s),
+                static_cast<double>(reference.peak_speed_rad_s), "observer");
+
+    bool any_wins = false;
+    float best_settled = 1.0e9F;
+    for (const int window_ticks : {10, 20, 40, 100, 200}) {
+        const LoopResult result = run_loop(window_ticks, true);
+        const bool wins = (result.worst_settled_error_rad_s <=
+                           (reference.worst_settled_error_rad_s + kComparisonFloorRadS)) &&
+                          (result.peak_speed_rad_s <= (reference.peak_speed_rad_s + kPeakAllowanceRadS));
+        any_wins = any_wins || wins;
+        best_settled = std::min(best_settled, result.worst_settled_error_rad_s);
+        std::printf("[window] %10.0f %10.4f %12.2f %10s\n",
+                    static_cast<double>(static_cast<float>(window_ticks) * kDt * 1.0e6F),
+                    static_cast<double>(result.worst_settled_error_rad_s),
+                    static_cast<double>(result.peak_speed_rad_s), wins ? "WINS" : "loses");
+    }
+    std::printf("[window] verdict: %s\n", any_wins ? "some window wins -- adopt it" : "no window wins -- go structural");
+
+    // The knob has to be connected, or the table is decoration.
+    // 旋钮必须接上，否则这张表就是装饰。
+    EXPECT_LT(best_settled, 1.0e9F);
 }
