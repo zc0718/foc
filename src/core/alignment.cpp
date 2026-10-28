@@ -31,7 +31,7 @@ auto wrap_pi(float angle_rad) noexcept -> float { return wrap_two_pi(angle_rad +
 
 /**
  * @brief [en] Implements AlignRoutine(AlignConfig); the contract is documented on its declaration.
- *        [zh] 实现 AlignRoutine(AlignConfig)；契约文档在对应的声明处。
+ * @brief [zh] 实现 AlignRoutine(AlignConfig)；契约文档在对应的声明处。
  * @attacher
  * @since 0.1.0
  */
@@ -40,7 +40,7 @@ AlignRoutine::AlignRoutine(AlignConfig config) noexcept : config_(config) {}
 
 /**
  * @brief [en] Implements AlignRoutine::set_config(); the contract is documented on its declaration.
- *        [zh] 实现 AlignRoutine::set_config()；契约文档在对应的声明处。
+ * @brief [zh] 实现 AlignRoutine::set_config()；契约文档在对应的声明处。
  * @attacher
  * @since 0.1.0
  */
@@ -49,7 +49,7 @@ void AlignRoutine::set_config(AlignConfig config) noexcept { config_ = config; }
 
 /**
  * @brief [en] Implements AlignRoutine::config(); the contract is documented on its declaration.
- *        [zh] 实现 AlignRoutine::config()；契约文档在对应的声明处。
+ * @brief [zh] 实现 AlignRoutine::config()；契约文档在对应的声明处。
  * @attacher
  * @since 0.1.0
  */
@@ -58,7 +58,7 @@ auto AlignRoutine::config() const noexcept -> const AlignConfig& { return config
 
 /**
  * @brief [en] Implements AlignRoutine::validate(); the contract is documented on its declaration.
- *        [zh] 实现 AlignRoutine::validate()；契约文档在对应的声明处。
+ * @brief [zh] 实现 AlignRoutine::validate()；契约文档在对应的声明处。
  * @attacher
  * @since 0.1.0
  */
@@ -105,7 +105,7 @@ auto AlignRoutine::validate() const noexcept -> ErrorCode {
 
 /**
  * @brief [en] Implements AlignRoutine::begin(); the contract is documented on its declaration.
- *        [zh] 实现 AlignRoutine::begin()；契约文档在对应的声明处。
+ * @brief [zh] 实现 AlignRoutine::begin()；契约文档在对应的声明处。
  * @attacher
  * @since 0.1.0
  */
@@ -138,7 +138,7 @@ auto AlignRoutine::begin(std::uint32_t pole_pairs) noexcept -> bool {
 
 /**
  * @brief [en] Implements AlignRoutine::step(); the contract is documented on its declaration.
- *        [zh] 实现 AlignRoutine::step()；契约文档在对应的声明处。
+ * @brief [zh] 实现 AlignRoutine::step()；契约文档在对应的声明处。
  * @attacher
  * @since 0.1.0
  */
@@ -245,7 +245,7 @@ auto AlignRoutine::step(float dt_s, float angle_mech_rad) noexcept -> AlignOutpu
 
 /**
  * @brief [en] Implements AlignRoutine::reset(); the contract is documented on its declaration.
- *        [zh] 实现 AlignRoutine::reset()；契约文档在对应的声明处。
+ * @brief [zh] 实现 AlignRoutine::reset()；契约文档在对应的声明处。
  * @attacher
  * @since 0.1.0
  */
@@ -267,7 +267,7 @@ void AlignRoutine::reset() noexcept {
 
 /**
  * @brief [en] Implements AlignRoutine::state(); the contract is documented on its declaration.
- *        [zh] 实现 AlignRoutine::state()；契约文档在对应的声明处。
+ * @brief [zh] 实现 AlignRoutine::state()；契约文档在对应的声明处。
  * @attacher
  * @since 0.1.0
  */
@@ -276,7 +276,7 @@ auto AlignRoutine::state() const noexcept -> AlignState { return state_; }
 
 /**
  * @brief [en] Implements AlignRoutine::failure(); the contract is documented on its declaration.
- *        [zh] 实现 AlignRoutine::failure()；契约文档在对应的声明处。
+ * @brief [zh] 实现 AlignRoutine::failure()；契约文档在对应的声明处。
  * @attacher
  * @since 0.1.0
  */
@@ -285,7 +285,7 @@ auto AlignRoutine::failure() const noexcept -> AlignFailure { return failure_; }
 
 /**
  * @brief [en] Implements AlignRoutine::offset_mech_rad(); the contract is documented on its declaration.
- *        [zh] 实现 AlignRoutine::offset_mech_rad()；契约文档在对应的声明处。
+ * @brief [zh] 实现 AlignRoutine::offset_mech_rad()；契约文档在对应的声明处。
  * @attacher
  * @since 0.1.0
  */
@@ -294,7 +294,7 @@ auto AlignRoutine::offset_mech_rad() const noexcept -> float { return offset_mec
 
 /**
  * @brief [en] Implements AlignRoutine::spread_rad(); the contract is documented on its declaration.
- *        [zh] 实现 AlignRoutine::spread_rad()；契约文档在对应的声明处。
+ * @brief [zh] 实现 AlignRoutine::spread_rad()；契约文档在对应的声明处。
  * @attacher
  * @since 0.1.0
  */
@@ -303,7 +303,7 @@ auto AlignRoutine::spread_rad() const noexcept -> float { return spread_rad_; }
 
 /**
  * @brief [en] Reject the capture and stop: zero current from this tick on.
- *        [zh] 拒绝捕获并停止：从本 tick 起电流归零。
+ * @brief [zh] 拒绝捕获并停止：从本 tick 起电流归零。
  */
 auto AlignRoutine::fail(AlignFailure reason) noexcept -> AlignOutput {
     state_ = AlignState::Failed;
@@ -315,7 +315,7 @@ auto AlignRoutine::fail(AlignFailure reason) noexcept -> AlignOutput {
 
 /**
  * @brief [en] Accept the capture and derive the mechanical offset from it.
- *        [zh] 接受捕获并由它导出机械偏置。
+ * @brief [zh] 接受捕获并由它导出机械偏置。
  */
 void AlignRoutine::finish() noexcept {
     const float forced_mech_rad = config_.align_angle_e_rad / static_cast<float>(pole_pairs_);
@@ -327,7 +327,7 @@ void AlignRoutine::finish() noexcept {
 
 /**
  * @brief [en] Switch phase and restart the phase timer plus the capture accumulator.
- *        [zh] 切换阶段，同时重启阶段计时与捕获累加器。
+ * @brief [zh] 切换阶段，同时重启阶段计时与捕获累加器。
  */
 void AlignRoutine::enter(AlignState next) noexcept {
     state_ = next;
@@ -340,13 +340,12 @@ void AlignRoutine::enter(AlignState next) noexcept {
 
 /**
  * @brief [en] Fold one sensor reading into the circular accumulator.
- *        [zh] 把一个传感器读数并入圆统计累加器。
- *
- * @note [en] Circular, not arithmetic: a sensor sitting at 6.28 rad and another at 0.01 rad are
- *       0.01 rad apart, but their arithmetic mean is 3.14 -- a half turn of pure fiction. The
- *       sine/cosine sums give the correct mean and make the spread meaningful across the wrap.
- *       [zh] 用圆统计而非算术平均：读数 6.28 rad 与 0.01 rad 相距 0.01 rad，但算术均值是 3.14——
- *       凭空多出半圈。正弦/余弦累加给出正确的均值，并让离散度跨越 2π 仍然有意义。
+ * @brief [zh] 把一个传感器读数并入圆统计累加器。
+ * @note [en] Circular, not arithmetic: a sensor sitting at 6.28 rad and another at 0.01 rad are 0.01 rad apart, but
+ *            their arithmetic mean is 3.14 -- a half turn of pure fiction. The sine/cosine sums give the correct mean
+ *            and make the spread meaningful across the wrap.
+ * @note [zh] 用圆统计而非算术平均：读数 6.28 rad 与 0.01 rad 相距 0.01 rad，但算术均值是 3.14—— 凭空多出半圈。正弦/余弦
+ *            累加给出正确的均值，并让离散度跨越 2π 仍然有意义。
  */
 void AlignRoutine::accumulate(float angle_mech_rad) noexcept {
     sum_sin_ += static_cast<double>(std::sin(angle_mech_rad));
@@ -357,7 +356,7 @@ void AlignRoutine::accumulate(float angle_mech_rad) noexcept {
 
 /**
  * @brief [en] Mean of the accumulated readings, plus the spread statistics in spread_rad_.
- *        [zh] 累加读数的均值，并把离散度写入 spread_rad_。
+ * @brief [zh] 累加读数的均值，并把离散度写入 spread_rad_。
  */
 auto AlignRoutine::capture_mean() noexcept -> float {
     if (samples_ == 0U) {

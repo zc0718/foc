@@ -84,13 +84,11 @@ auto psi_f_value() noexcept -> float {
 }
 
 /**
- * @brief [en] Constant-speed rig with the two impairments S17 and S13 measured,
- * applied together. [zh] 恒速台架，把 S17 与 S13 量过的两种未建模效应同时打开。
- *
- * @note [en] The observer is handed the *commanded* voltage, because that is
- * all a real controller knows; the inverter keeps the dead-time volt-seconds
- * for itself. [zh]
- * 观测器拿到的是**指令**电压，因为真实控制器只知道这个；死区的伏秒被逆变器留下了。
+ * @brief [en] Constant-speed rig with the two impairments S17 and S13 measured, applied together.
+ * @brief [zh] 恒速台架，把 S17 与 S13 量过的两种未建模效应同时打开。
+ * @note [en] The observer is handed the *commanded* voltage, because that is all a real controller knows; the inverter
+ *            keeps the dead-time volt-seconds for itself.
+ * @note [zh] 观测器拿到的是**指令**电压，因为真实控制器只知道这个；死区的伏秒被逆变器留下了。
  * @since 0.1.0
  */
 class GateRig final {

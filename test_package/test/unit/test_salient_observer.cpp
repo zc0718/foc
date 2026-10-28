@@ -23,55 +23,47 @@ namespace sil = foc::sil;
 
 /**
  * @brief [en] The question, the criterion written for it, and the verdict.
- *        [zh] 问题、为它写下的判据、以及裁决。
  *
- *        [en] The recorded claim, from the gap-closing plan, was: "the single-`L` observer survives to `Lq/Ld = 2`
- *        (0.1433) and fails at 2.5 (0.1678)". A two-inductance observer was then built to move that boundary, against
- *        the criterion: strictly better at `Lq/Ld = 2`, inside 0.15 rad at 2.5, and no worse on a surface machine. [zh]
- *        记录在缺口计划里的主张是："单 `L` 观测器撑到 `Lq/Ld = 2`（0.1433）， 2.5
- *        时不行（0.1678）"。随后为挪开这条边界造了一个双电感观测器，判据是：`Lq/Ld = 2` 时严格更好、2.5 时进到 0.15 rad
- *        以内、表贴机不变差。
+ *     The recorded claim, from the gap-closing plan, was: "the single-`L` observer survives to `Lq/Ld = 2` (0.1433) and
+ *     fails at 2.5 (0.1678)". A two-inductance observer was then built to move that boundary, against the criterion:
+ *     strictly better at `Lq/Ld = 2`, inside 0.15 rad at 2.5, and no worse on a surface machine.
  *
- *        [en] What the rig says. **With `i_d = 0` the error does not depend on the saliency ratio at all** (0.1044 /
- *        0.1048 / 0.1035 for ratios 1.0 / 2.0 / 2.5). That is arithmetic, not coincidence: a single-`L` observer's
- *        model error is `(Ld - Lq)*i_d`, so with `i_d = 0` a salient machine *is* a surface machine to it. **The
- *        boundary therefore does not exist where it was claimed to**, and the plan's entry is corrected rather than
- *        trusted. [zh] 台架给出的。**`i_d = 0` 时误差与凸极比完全无关**（比值 1.0 / 2.0 / 2.5 分别是 0.1044 / 0.1048 /
- * 0.1035）。这是算术而不是巧合：单 `L` 观测器的模型误差就是
- * `(Ld − Lq)·id`，所以 `i_d = 0`
- * 时凸极机**对它而言就是**表贴机。**因此那条边界并不在
- * 被声称的位置**，计划里的那一条被更正，而不是被沿用。
+ *     What the rig says. **With `i_d = 0` the error does not depend on the saliency ratio at all** (0.1044 / 0.1048 /
+ *     0.1035 for ratios 1.0 / 2.0 / 2.5). That is arithmetic, not coincidence: a single-`L` observer's model error is
+ *     `(Ld - Lq)*i_d`, so with `i_d = 0` a salient machine *is* a surface machine to it. **The boundary therefore does
+ *     not exist where it was claimed to**, and the plan's entry is corrected rather than trusted.
  *
- *        [en] The real limitation is `i_d != 0`, and it is worse than any saliency ratio: at 200 rad/s with `i_d = -1
- *        A` the single-`L` observer reads
- * **0.5079 rad even on a surface machine**, three times the ceiling. Same
- * mechanism as P8: the flux target is a constant `psi_f`, so any d-axis current
- * changes the flux it is supposed to track, and at low speed the back-EMF is
- * too small to outvote the error. At 3200 rad/s the same d-axis current is
- * harmless (0.0705 rad in P8), so this is a **low-speed** constraint on using
- * `i_d` rather than a general one. [zh] 真正的限制是 `i_d ≠
- * 0`，而且它比任何凸极比都严重：200 rad/s、 `i_d = −1 A` 下，单 `L`
- * 观测器**即使在表贴机上也读 0.5079 rad**，是天花板的三倍。机理 与 P8
- * 相同：磁链目标是常数 `ψf`，所以任何 d
- * 轴电流都会改变它本该跟踪的那个磁链，而低速下 反电势太小，压不住这个误差。3200
- * rad/s 下同样的 d 轴电流无害（P8 量到 0.0705 rad），所以 这是对"能不能用
- * `i_d`"的**低速**限制，不是普遍限制。
+ *     The real limitation is `i_d != 0`, and it is worse than any saliency ratio: at 200 rad/s with `i_d = -1 A` the
+ *     single-`L` observer reads **0.5079 rad even on a surface machine**, three times the ceiling. Same mechanism as
+ *     P8: the flux target is a constant `psi_f`, so any d-axis current changes the flux it is supposed to track, and at
+ *     low speed the back-EMF is too small to outvote the error. At 3200 rad/s the same d-axis current is harmless
+ *     (0.0705 rad in P8), so this is a **low-speed** constraint on using `i_d` rather than a general one.
  *
- *        [en] And the observer that was supposed to fix it: built, run, **worse than nothing**, withdrawn. Half the
- *        error of the incumbent (0.2517 against
- * 0.4942 at `Lq/Ld = 2`) but nowhere near the 0.15 ceiling, and its residual
- * error was flat in saliency too -- so it had not been observing the saliency,
- * it had accidentally improved the `i_d` handling. Raising its correction rate
- * made it worse (1.02 rad), the signature of a wrong *structure* rather than a
- * wrong *gain*, so the header was deleted instead of tuned. The next attempt
- * has to start from the magnitude target, not from a second inductance. [zh]
- * 以及那个本该修好它的观测器：造了、跑了、**比没有更糟**、撤回。误差是位者的一半
- * （`Lq/Ld = 2` 时 0.2517 对 0.4942），但离 0.15
- * 天花板很远，而且它的残余误差同样与凸极比
- * 无关——所以它并没有在观测凸极，它只是碰巧改善了 `i_d`
- * 的处理。把修正速率调高反而更糟 （1.02
- * rad），这是**结构**错了而不是**增益**错了的特征，所以那个头文件被删掉而不是被调参。
- * 下一次尝试必须从幅值目标出发，而不是从第二个电感出发。
+ *     And the observer that was supposed to fix it: built, run, **worse than nothing**, withdrawn. Half the error of
+ *     the incumbent (0.2517 against 0.4942 at `Lq/Ld = 2`) but nowhere near the 0.15 ceiling, and its residual error
+ *     was flat in saliency too -- so it had not been observing the saliency, it had accidentally improved the `i_d`
+ *     handling. Raising its correction rate made it worse (1.02 rad), the signature of a wrong *structure* rather than
+ *     a wrong *gain*, so the header was deleted instead of tuned. The next attempt has to start from the magnitude
+ *     target, not from a second inductance.
+ *
+ * @brief [zh] 问题、为它写下的判据、以及裁决。
+ *
+ *     记录在缺口计划里的主张是："单 `L` 观测器撑到 `Lq/Ld = 2`（0.1433）， 2.5 时不行（0.1678）"。随后为挪开这条边界造
+ *     了一个双电感观测器，判据是：`Lq/Ld = 2` 时严格更好、2.5 时进到 0.15 rad 以内、表贴机不变差。
+ *
+ *     台架给出的。**`i_d = 0` 时误差与凸极比完全无关**（比值 1.0 / 2.0 / 2.5 分别是 0.1044 / 0.1048 / 0.1035）。这是算
+ *     术而不是巧合：单 `L` 观测器的模型误差就是 `(Ld − Lq)·id`，所以 `i_d = 0` 时凸极机**对它而言就是**表贴机。**因此那
+ *     条边界并不在 被声称的位置**，计划里的那一条被更正，而不是被沿用。
+ *
+ *     真正的限制是 `i_d ≠ 0`，而且它比任何凸极比都严重：200 rad/s、 `i_d = −1 A` 下，单 `L` 观测器**即使在表贴机上也读
+ *     0.5079 rad**，是天花板的三倍。机理 与 P8 相同：磁链目标是常数 `ψf`，所以任何 d 轴电流都会改变它本该跟踪的那个磁
+ *     链，而低速下 反电势太小，压不住这个误差。3200 rad/s 下同样的 d 轴电流无害（P8 量到 0.0705 rad），所以 这是对"能不
+ *     能用 `i_d`"的**低速**限制，不是普遍限制。
+ *
+ *     以及那个本该修好它的观测器：造了、跑了、**比没有更糟**、撤回。误差是位者的一半 （`Lq/Ld = 2` 时 0.2517 对
+ *     0.4942），但离 0.15 天花板很远，而且它的残余误差同样与凸极比 无关——所以它并没有在观测凸极，它只是碰巧改善了 `i_d`
+ *     的处理。把修正速率调高反而更糟 （1.02 rad），这是**结构**错了而不是**增益**错了的特征，所以那个头文件被删掉而不是
+ *     被调参。 下一次尝试必须从幅值目标出发，而不是从第二个电感出发。
  */
 constexpr float kCeilingRad = 0.15F;
 constexpr float kSpeedRad = 200.0F;

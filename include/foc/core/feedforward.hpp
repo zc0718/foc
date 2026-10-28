@@ -11,9 +11,9 @@ namespace core {
 
 /**
  * @brief [en] Everything a feedforward stage may look at, filled once per current-loop step.
- *        [zh] 前馈阶段可以看的全部输入，每个电流环周期填一次。
- *
- * @context [en] Current-loop ISR, read-only for the policy. [zh] 电流环 ISR；对策略只读。
+ * @brief [zh] 前馈阶段可以看的全部输入，每个电流环周期填一次。
+ * @context [en] Current-loop ISR, read-only for the policy.
+ * @context [zh] 电流环 ISR；对策略只读。
  * @since 0.1.0
  * @exporter
  */
@@ -25,8 +25,7 @@ struct FeedforwardInput final {
 
 /**
  * @brief [en] The default feedforward: contributes nothing, so the current loop is exactly the PI.
- *        [zh] 默认前馈：不贡献任何电压，电流环就是纯 PI。
- *
+ * @brief [zh] 默认前馈：不贡献任何电压，电流环就是纯 PI。
  * @since 0.1.0
  * @exporter
  */
@@ -34,7 +33,7 @@ class NullFeedforward final {
   public:
     /**
      * @brief [en] No feedforward term.
-     *        [zh] 无前馈项。
+     * @brief [zh] 无前馈项。
      * @since 0.1.0
      */
     [[nodiscard]] auto generate(const FeedforwardInput&) noexcept -> Dq<float> { return Dq<float>{0.0F, 0.0F}; }
@@ -43,30 +42,30 @@ class NullFeedforward final {
 
 /**
  * @brief [en] The two classical voltage feedforwards of a PMSM: axis cross-coupling and back-EMF.
- *        [zh] PMSM 的两项经典电压前馈：轴间交叉耦合与反电动势。
  *
- *        [en] It is applied *after* the current PI, as a summation node. The PI keeps its own-axis
- *        job (resistance and inductance); the feedforward removes what couples the two axes.
- *        Putting the terms inside the PI would force the `step(ref, fb, dt)` contract to carry the
- *        other axis, the speed and the flux -- three inputs it deliberately does not have.
- *        [zh] 它加在电流 PI **之后**的求和节点上。PI 继续负责本轴的电阻与电感，前馈负责剥掉两轴
- *        之间的耦合。若把这几项塞进 PI，`step(ref, fb, dt)` 契约就必须携带另一轴电流、转速与
- *        磁链——这三个输入是它特意没有的。
+ *     It is applied *after* the current PI, as a summation node. The PI keeps its own-axis job (resistance and
+ *     inductance); the feedforward removes what couples the two axes. Putting the terms inside the PI would force the
+ *     `step(ref, fb, dt)` contract to carry the other axis, the speed and the flux -- three inputs it deliberately does
+ *     not have.
  *
- *        [en] The measured current is used rather than the reference: what has to be cancelled is
- *        the coupling that actually exists in the machine this step.
- *        [zh] 使用实测电流而非给定：需要抵消的是本步电机里**真实存在**的耦合。
+ *     The measured current is used rather than the reference: what has to be cancelled is the coupling that actually
+ *     exists in the machine this step.
  *
+ * @brief [zh] PMSM 的两项经典电压前馈：轴间交叉耦合与反电动势。
+ *
+ *     它加在电流 PI **之后**的求和节点上。PI 继续负责本轴的电阻与电感，前馈负责剥掉两轴 之间的耦合。若把这几项塞进 PI，
+ *     `step(ref, fb, dt)` 契约就必须携带另一轴电流、转速与 磁链——这三个输入是它特意没有的。
+ *
+ *     使用实测电流而非给定：需要抵消的是本步电机里**真实存在**的耦合。
  * @since 0.1.0
  * @exporter
  */
 class DecouplingFeedforward final {
   public:
     /**
-     * @brief [en] Which terms to include. Kept as a value, not as `#ifdef`s, so one build can
-     *        compare the terms against each other in the same SIL run.
-     *        [zh] 包含哪些项。它是取值而不是 `#ifdef`，因此同一次 SIL 运行里就能互相比较。
-     *
+     * @brief [en] Which terms to include. Kept as a value, not as `#ifdef`s, so one build can compare the terms against
+     *             each other in the same SIL run.
+     * @brief [zh] 包含哪些项。它是取值而不是 `#ifdef`，因此同一次 SIL 运行里就能互相比较。
      * @since 0.1.0
      */
     enum class Terms : std::uint8_t {
@@ -77,13 +76,12 @@ class DecouplingFeedforward final {
 
     /**
      * @brief [en] The machine parameters the terms are derived from.
-     *        [zh] 前馈项所依赖的电机参数。
-     *
-     * @note [en] A zeroed configuration yields zero feedforward, which is the physically
-     *       consistent answer for a machine with no inductance and no flux. Build it with
-     *       `foc::feedforward_config(MotorConfig)` so the nameplate is read once instead of retyped.
-     *       [zh] 全零配置产生零前馈——对一台没有电感、没有磁链的电机，这正是物理上正确的答案。
-     *       请用 `foc::feedforward_config(MotorConfig)` 构造，让铭牌只被读一次而不是被重抄一遍。
+     * @brief [zh] 前馈项所依赖的电机参数。
+     * @note [en] A zeroed configuration yields zero feedforward, which is the physically consistent answer for a
+     *            machine with no inductance and no flux. Build it with `foc::feedforward_config(MotorConfig)` so the
+     *            nameplate is read once instead of retyped.
+     * @note [zh] 全零配置产生零前馈——对一台没有电感、没有磁链的电机，这正是物理上正确的答案。 请用
+     *            `foc::feedforward_config(MotorConfig)` 构造，让铭牌只被读一次而不是被重抄一遍。
      * @since 0.1.0
      * @exporter
      */
@@ -100,17 +98,18 @@ class DecouplingFeedforward final {
 
     /**
      * @brief [en] Voltage to add to the PI output, in V.
-     *        [zh] 需要加到 PI 输出上的电压，V。
-     *
-     * @param in [en] this step's electrical speed and measured current. [zh] 本步的电角速度与实测电流。
-     * @return [en] the feedforward voltage in the dq frame. [zh] dq 坐标系下的前馈电压。
+     * @brief [zh] 需要加到 PI 输出上的电压，V。
+     * @param in [en] this step's electrical speed and measured current.
+     * @param in [zh] 本步的电角速度与实测电流。
+     * @return [en] the feedforward voltage in the dq frame.
+     * @return [zh] dq 坐标系下的前馈电压。
      * @since 0.1.0
      */
     [[nodiscard]] auto generate(const FeedforwardInput& in) noexcept -> Dq<float>;
 
     /**
      * @brief [en] The configuration in force.
-     *        [zh] 当前生效的配置。
+     * @brief [zh] 当前生效的配置。
      * @since 0.1.0
      */
     [[nodiscard]] auto config() const noexcept -> const Config&;

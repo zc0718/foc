@@ -70,13 +70,11 @@ auto angular_difference(float a, float b) -> float {
 
 /**
  * @brief [en] Rotor that follows the field with a first-order lag, driven by the routine's phase.
- *        [zh] 以流程阶段驱动、以一阶滞后跟随磁场的转子。
- *
- * @note [en] Phase-driven rather than time-driven on purpose: a test must not break when a phase
- *       boundary moves by one control period. `follow_sign` of -1 models an inverted encoder, which
- *       is the failure worth detecting.
- *       [zh] 故意用阶段而非时间驱动：阶段边界移动一个控制周期不应让测试失效。`follow_sign` 取 -1
- *       即模拟编码器符号接反，那正是值得检出的失败。
+ * @brief [zh] 以流程阶段驱动、以一阶滞后跟随磁场的转子。
+ * @note [en] Phase-driven rather than time-driven on purpose: a test must not break when a phase boundary moves by one
+ *            control period. `follow_sign` of -1 models an inverted encoder, which is the failure worth detecting.
+ * @note [zh] 故意用阶段而非时间驱动：阶段边界移动一个控制周期不应让测试失效。`follow_sign` 取 -1 即模拟编码器符号接反，
+ *            那正是值得检出的失败。
  */
 class ScriptedRotor final {
   public:

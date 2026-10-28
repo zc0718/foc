@@ -37,29 +37,26 @@ constexpr float kNormalisedTargetRad = 0.055F;
 constexpr float kAngleCeilingRad = 0.15F;
 
 /**
- * @brief [en] The criterion, written before it was measured. [zh]
- * 判据，写在测量之前。
+ * @brief [en] The criterion, written before it was measured.
  *
- * 1. [en] Parked **at** the target speed and told to stay there, a drive with `FieldWeakeningReference` holds it (>=
- * 0.97 of target) and spends `i_d <
- * -2 A` doing so; the same drive with a `d = 0` reference falls back below 0.95
- * of the target. The contrast is the result: "it held 3200" alone could mean
- * the target was not past the base speed. [zh]
- * **停在**目标转速上并被告知保持，装 `FieldWeakeningReference` 的驱动器守得住
- *    （≥ 目标的 0.97）并为此花掉 `i_d < −2 A`；同样的驱动器换成 `d = 0` 参考会掉到目标的 0.95
- *    以下。对比才是结论：只说"它守住了 3200"也可能意味着目标没超过基速。
- * 2. [en] The normalisation hypothesis: if the magnitude correction is normalised (`k*(1 - |psi_hat|/psi_target)`
- * instead of `k*(psi_target - |psi_hat|)`), the field-weakened angle error drops to <= 0.055 rad. Otherwise the status
- * quo stands and the number that refuted it is recorded. [zh]
- * 归一化假设：若把幅值修正归一化，弱磁区角误差降到 ≤ 0.055 rad；否则维持现状， 并记录下反驳它的那个数。
+ *     Parked **at** the target speed and told to stay there, a drive with `FieldWeakeningReference` holds it (>= 0.97
+ *     of target) and spends `i_d < -2 A` doing so; the same drive with a `d = 0` reference falls back below 0.95 of the
+ *     target. The contrast is the result: "it held 3200" alone could mean the target was not past the base speed. The
+ *     normalisation hypothesis: if the magnitude correction is normalised (`k*(1 - |psi_hat|/psi_target)` instead of
+ *     `k*(psi_target - |psi_hat|)`), the field-weakened angle error drops to <= 0.055 rad. Otherwise the status quo
+ *     stands and the number that refuted it is recorded.
  *
- * @note [en] What hypothesis 2 actually is. Normalising by `psi_target` is the
- * *same* law with the gain divided by `psi_target` -- a factor of 210 on this
- * machine. It is not a new law; it is a 210x gain increase wearing a
- * dimensionless hat, and it is testable with the knob that already exists. [zh]
- * 假设 2 到底是什么。按 `psi_target` 归一化就是**同一个律**把增益除以
- * `psi_target` ——在本机上是 210 倍。它不是新律，是一个戴了无量纲帽子的 210
- * 倍增益，用现成的旋钮就能测。
+ * @brief [zh] 判据，写在测量之前。
+ *
+ *     1. **停在**目标转速上并被告知保持，装 `FieldWeakeningReference` 的驱动器守得住 （≥ 目标的 0.97）并为此花掉 `i_d <
+ *     −2 A`；同样的驱动器换成 `d = 0` 参考会掉到目标的 0.95 以下。对比才是结论：只说"它守住了 3200"也可能意味着目标没超
+ *     过基速。 2. 归一化假设：若把幅值修正归一化，弱磁区角误差降到 ≤ 0.055 rad；否则维持现状， 并记录下反驳它的那个数。
+ *
+ * @note [en] What hypothesis 2 actually is. Normalising by `psi_target` is the *same* law with the gain divided by
+ *            `psi_target` -- a factor of 210 on this machine. It is not a new law; it is a 210x gain increase wearing a
+ *            dimensionless hat, and it is testable with the knob that already exists.
+ * @note [zh] 假设 2 到底是什么。按 `psi_target` 归一化就是**同一个律**把增益除以 `psi_target` ——在本机上是 210 倍。它不
+ *            是新律，是一个戴了无量纲帽子的 210 倍增益，用现成的旋钮就能测。
  */
 auto psi_f_of(const sil::MachineSpec &s) -> float {
   return s.kt / (1.5F * static_cast<float>(s.pole_pairs));
@@ -78,10 +75,9 @@ auto fw_config(const sil::MachineSpec &s)
 }
 
 /**
- * @brief [en] Rig at one field-weakened operating point, held there by an exact
- * feedforward, so the only thing that varies across a sweep is the observer.
- *        [zh]
- * 某一个弱磁工作点上的台架，用精确前馈握在那里，所以扫描中唯一在变的是观测器。
+ * @brief [en] Rig at one field-weakened operating point, held there by an exact feedforward, so the only thing that
+ *             varies across a sweep is the observer.
+ * @brief [zh] 某一个弱磁工作点上的台架，用精确前馈握在那里，所以扫描中唯一在变的是观测器。
  * @since 0.1.0
  */
 class FwRig final {
@@ -186,18 +182,14 @@ auto fw_angle_error(core::Dq<float> current, float gain_ratio) -> float {
 } // namespace
 
 /**
- * @brief [en] Closed-loop speed test through the real voltage limit. [zh]
- * 穿过真实电压上限的闭环转速测试。
- *
- * @note [en] The current loop is *perfect* on purpose: it is given the exact
- * steady-state voltage for the reference it is asked for, and then the **vector
- * is clamped to what SVPWM can deliver**. So the only thing that can stop the
- * drive is the voltage budget, which is exactly the quantity field weakening
- * exists to manage. Modelling a PI here would measure the PI's tuning instead.
- * [zh] 电流环故意做成**完美**的：它按给定算出精确稳态电压，然后把**矢量夹到
- * SVPWM 能
- * 交付的上限**。于是能拦住驱动器的只剩电压预算，而那正是弱磁存在的理由。在这里建一个
- * PI， 量到的会是 PI 的整定。
+ * @brief [en] Closed-loop speed test through the real voltage limit.
+ * @brief [zh] 穿过真实电压上限的闭环转速测试。
+ * @note [en] The current loop is *perfect* on purpose: it is given the exact steady-state voltage for the reference it
+ *            is asked for, and then the **vector is clamped to what SVPWM can deliver**. So the only thing that can
+ *            stop the drive is the voltage budget, which is exactly the quantity field weakening exists to manage.
+ *            Modelling a PI here would measure the PI's tuning instead.
+ * @note [zh] 电流环故意做成**完美**的：它按给定算出精确稳态电压，然后把**矢量夹到 SVPWM 能 交付的上限**。于是能拦住驱动
+ *            器的只剩电压预算，而那正是弱磁存在的理由。在这里建一个 PI， 量到的会是 PI 的整定。
  * @since 0.1.0
  */
 struct SpeedRun final {

@@ -10,12 +10,11 @@ namespace driver {
 
 
 /**
- * @brief [en] Reference `foc::hal::PositionSensor` implementation: the SIL plant (or a test) writes
- *        the angle and velocity, the control loop reads them.
- *        [zh] `foc::hal::PositionSensor` 的参考实现：SIL 被控对象（或测试）写角度与速度，
- *        控制环读它们。
- *
- * @context [en] Same context as the contract it implements. [zh] 与其实现的契约同上下文。
+ * @brief [en] Reference `foc::hal::PositionSensor` implementation: the SIL plant (or a test) writes the angle and
+ *             velocity, the control loop reads them.
+ * @brief [zh] `foc::hal::PositionSensor` 的参考实现：SIL 被控对象（或测试）写角度与速度， 控制环读它们。
+ * @context [en] Same context as the contract it implements.
+ * @context [zh] 与其实现的契约同上下文。
  * @since 0.1.0
  * @exporter
  */
@@ -25,66 +24,63 @@ class SimPosition final : public hal::PositionSensor {
 
     /**
      * @brief [en] Set the mechanical angle (normalised to [0, 2*pi) on write).
-     *        [zh] 设置机械角度（写入时归一化到 [0, 2π)）。
+     * @brief [zh] 设置机械角度（写入时归一化到 [0, 2π)）。
      * @since 0.1.0
      */
     void set_angle_mech_rad(float angle_rad) noexcept;
 
     /**
      * @brief [en] Set the mechanical velocity.
-     *        [zh] 设置机械速度。
-     *
+     * @brief [zh] 设置机械速度。
      * @param velocity_rad_s [en] velocity in rad/s; NaN keeps "not simulated".
-     *                       [zh] 速度，rad/s；NaN 表示"仍未模拟"。
+     * @param velocity_rad_s [zh] 速度，rad/s；NaN 表示"仍未模拟"。
      * @since 0.1.0
      */
     void set_velocity_rad_s(float velocity_rad_s) noexcept;
 
     /**
      * @brief [en] Mechanical angle in rad, normalised to [0, 2*pi), mounting offset removed.
-     *        [zh] 机械角度，rad，归一化到 [0, 2π)，已消除安装偏置。
+     * @brief [zh] 机械角度，rad，归一化到 [0, 2π)，已消除安装偏置。
      * @since 0.1.0
      */
     auto angle_mech_rad() noexcept -> float override;
 
     /**
      * @brief [en] Mechanical velocity in rad/s (NaN when not simulated: use set_velocity_rad_s()).
-     *        [zh] 机械速度，rad/s（未设置时为 NaN，请用 set_velocity_rad_s()）。
+     * @brief [zh] 机械速度，rad/s（未设置时为 NaN，请用 set_velocity_rad_s()）。
      * @since 0.1.0
      */
     auto velocity_rad_s() noexcept -> float override;
 
     /**
      * @brief [en] Always true: this stub stands for a physical sensor.
-     *        [zh] 恒为 true：本桩代表一个物理传感器。
+     * @brief [zh] 恒为 true：本桩代表一个物理传感器。
      * @since 0.1.0
      */
     [[nodiscard]] auto has_sensor() const noexcept -> bool override;
 
     /**
      * @brief [en] Model a sensor-less setup: has_sensor() starts returning false.
-     *        [zh] 模拟无感场景：has_sensor() 开始返回 false。
+     * @brief [zh] 模拟无感场景：has_sensor() 开始返回 false。
      * @since 0.1.0
      */
     void set_sensor_present(bool present) noexcept;
 
     /**
      * @brief [en] Set the mounting offset the sensor subtracts from its readings.
-     *        [zh] 设置传感器从读数中减去的安装偏置。
-     *
+     * @brief [zh] 设置传感器从读数中减去的安装偏置。
      * @param offset_rad [en] offset in rad; normalised to [0, 2*pi) on write.
-     *                   [zh] 偏置，rad；写入时归一化到 [0, 2π)。
-     * @note [en] This is the hook `Motor` writes when an alignment sequence finishes, so the SIL
-     *       leg can exercise the same code path a real encoder driver would.
-     *       [zh] 对齐流程结束时 `Motor` 写的就是这个钩子，于是 SIL 走的是真实编码器驱动会走的同一条
-     *       代码路径。
+     * @param offset_rad [zh] 偏置，rad；写入时归一化到 [0, 2π)。
+     * @note [en] This is the hook `Motor` writes when an alignment sequence finishes, so the SIL leg can exercise the
+     *            same code path a real encoder driver would.
+     * @note [zh] 对齐流程结束时 `Motor` 写的就是这个钩子，于是 SIL 走的是真实编码器驱动会走的同一条 代码路径。
      * @since 0.1.0
      */
     void set_offset_mech_rad(float offset_rad) noexcept;
 
     /**
      * @brief [en] The offset currently subtracted from angle_mech_rad().
-     *        [zh] 当前从 angle_mech_rad() 中减去的偏置。
+     * @brief [zh] 当前从 angle_mech_rad() 中减去的偏置。
      * @since 0.1.0
      */
     [[nodiscard]] auto mech_offset_rad() const noexcept -> float;

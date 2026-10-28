@@ -31,7 +31,7 @@ namespace {
 
 /**
  * @brief [en] Minimal HAL stubs: they exist only to prove the traits accept a conforming type.
- *        [zh] 最小 HAL 桩：只为证明 trait 接受符合契约的类型。
+ * @brief [zh] 最小 HAL 桩：只为证明 trait 接受符合契约的类型。
  */
 class FakePwm final : public foc::hal::Pwm {
   public:

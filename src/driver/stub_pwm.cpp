@@ -9,7 +9,7 @@ namespace driver {
 
 /**
  * @brief [en] Implements StubPwm::configure(); the contract is documented on its declaration.
- *        [zh] 实现 StubPwm::configure()；契约文档在对应的声明处。
+ * @brief [zh] 实现 StubPwm::configure()；契约文档在对应的声明处。
  * @attacher
  * @since 0.1.0
  */
@@ -27,7 +27,7 @@ auto StubPwm::configure(float freq_hz, float deadtime_ns) noexcept -> ErrorCode 
 
 /**
  * @brief [en] Implements StubPwm::write_duty(); the contract is documented on its declaration.
- *        [zh] 实现 StubPwm::write_duty()；契约文档在对应的声明处。
+ * @brief [zh] 实现 StubPwm::write_duty()；契约文档在对应的声明处。
  * @attacher
  * @since 0.1.0
  */
@@ -44,7 +44,7 @@ void StubPwm::write_duty(core::Uvw<float> duty) noexcept {
 
 /**
  * @brief [en] Implements StubPwm::enable(); the contract is documented on its declaration.
- *        [zh] 实现 StubPwm::enable()；契约文档在对应的声明处。
+ * @brief [zh] 实现 StubPwm::enable()；契约文档在对应的声明处。
  * @attacher
  * @since 0.1.0
  */
@@ -64,7 +64,7 @@ auto StubPwm::fault() const noexcept -> bool { return fault_; }
 
 /**
  * @brief [en] Implements StubPwm::reset(); the contract is documented on its declaration.
- *        [zh] 实现 StubPwm::reset()；契约文档在对应的声明处。
+ * @brief [zh] 实现 StubPwm::reset()；契约文档在对应的声明处。
  * @attacher
  * @since 0.1.0
  */
@@ -88,7 +88,7 @@ auto StubPwm::last_duty() const noexcept -> core::Uvw<float> { return duty_; }
 
 /**
  * @brief [en] Implements StubPwm::duty_history(); the contract is documented on its declaration.
- *        [zh] 实现 StubPwm::duty_history()；契约文档在对应的声明处。
+ * @brief [zh] 实现 StubPwm::duty_history()；契约文档在对应的声明处。
  * @attacher
  * @since 0.1.0
  */

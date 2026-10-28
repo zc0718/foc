@@ -49,13 +49,15 @@ inline auto min_of(const std::vector<float>& y) -> float {
 
 /**
  * @brief [en] Overshoot of a step response as a fraction of the commanded step.
- *        [zh] 阶跃响应的超调，按给定阶跃的百分比表示。
- *
- * @param y [en] response channel. [zh] 响应通道。
- * @param target [en] final value. [zh] 终值。
- * @param y0 [en] starting value. [zh] 起始值。
+ * @brief [zh] 阶跃响应的超调，按给定阶跃的百分比表示。
+ * @param y [en] response channel.
+ * @param y [zh] 响应通道。
+ * @param target [en] final value.
+ * @param target [zh] 终值。
+ * @param y0 [en] starting value.
+ * @param y0 [zh] 起始值。
  * @return [en] (max - target) / (target - y0), 0 when there is no overshoot.
- *         [zh] (max - target) / (target - y0)；无超调时为 0。
+ * @return [zh] (max - target) / (target - y0)；无超调时为 0。
  * @since 0.1.0
  */
 inline auto overshoot_fraction(const std::vector<float>& y, float target, float y0) -> float {
@@ -125,10 +127,9 @@ inline auto tail_peak_to_peak(const std::vector<float>& y, float fraction) -> fl
 
 /**
  * @brief [en] Time after which the response stays inside `band` of the target for good.
- *        [zh] 响应此后一直落在目标 ± `band` 之内的时刻。
- *
+ * @brief [zh] 响应此后一直落在目标 ± `band` 之内的时刻。
  * @return [en] seconds relative to the first sample, or -1 when it never settles.
- *         [zh] 相对首个样本的时间，秒；始终未进入带内返回 -1。
+ * @return [zh] 相对首个样本的时间，秒；始终未进入带内返回 -1。
  * @since 0.1.0
  */
 inline auto settling_time_s(const std::vector<Sample>& trace, float Sample::* field, float target, float band)

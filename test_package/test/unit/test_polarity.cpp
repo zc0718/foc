@@ -18,11 +18,9 @@ auto valid_config() -> foc::core::MagnetPolarityTest::Config {
 }
 
 /**
- * @brief [en] A machine reduced to the one phenomenon the test is supposed to read: the d-axis
- *        inductance depends on the direction of the current, so the same volt-second pulse rises
- *        further one way than the other.
- *        [zh] 把电机简化成测试唯一要读的那个现象：d 轴电感与电流方向有关，于是相同伏秒的脉冲在一个方向上
- *        升得更多。
+ * @brief [en] A machine reduced to the one phenomenon the test is supposed to read: the d-axis inductance depends on
+ *             the direction of the current, so the same volt-second pulse rises further one way than the other.
+ * @brief [zh] 把电机简化成测试唯一要读的那个现象：d 轴电感与电流方向有关，于是相同伏秒的脉冲在一个方向上 升得更多。
  */
 class FakeDx final {
   public:

@@ -12,11 +12,10 @@ namespace driver {
 
 
 /**
- * @brief [en] A complete HalPolicy built from the reference stubs: the default for SIL and tests.
- *        Motor binds to it through the member names `pwm`, `current_sense`, `position`, `dc_link`.
- *        [zh] 由参考桩拼成的完整 HalPolicy：SIL 与测试的默认实现。Motor 通过成员名
- *        `pwm`、`current_sense`、`position`、`dc_link` 绑定它。
- *
+ * @brief [en] A complete HalPolicy built from the reference stubs: the default for SIL and tests. Motor binds to it
+ *             through the member names `pwm`, `current_sense`, `position`, `dc_link`.
+ * @brief [zh] 由参考桩拼成的完整 HalPolicy：SIL 与测试的默认实现。Motor 通过成员名 `pwm`、`current_sense`、`position`、
+ *             `dc_link` 绑定它。
  * @since 0.1.0
  * @exporter
  */
@@ -33,7 +32,7 @@ struct StubHal final {
 
     /**
      * @brief [en] Reset every member to its power-on state.
-     *        [zh] 把所有成员复位到上电状态。
+     * @brief [zh] 把所有成员复位到上电状态。
      * @since 0.1.0
      */
     void reset() noexcept;

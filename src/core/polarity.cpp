@@ -15,7 +15,7 @@ namespace {
 
 /**
  * @brief [en] Implements valid_config(); the contract is documented on its declaration.
- *        [zh] 实现 valid_config()；契约文档在对应的声明处。
+ * @brief [zh] 实现 valid_config()；契约文档在对应的声明处。
  * @attacher
  * @since 0.1.0
  */

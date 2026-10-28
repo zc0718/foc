@@ -38,15 +38,13 @@ auto wrap_local(float from, float to) noexcept -> float {
 }
 
 /**
- * @brief [en] A faithful copy of `NonlinearFluxObserver`'s arithmetic, written
- * out so the integration scheme can be swapped without touching the library.
- *        [zh] `NonlinearFluxObserver`
- * 运算的忠实副本，写出来是为了能在不动库的前提下替换积分格式。
- *
- * @note [en] C2-a checks this against the shipped class. If the copy ever
- * drifts, the comparison below is between two different observers and means
- * nothing -- exactly the failure mode this batch exists to avoid. [zh] C2-a
- * 把它对着出厂类检查。副本一旦漂移，下面的对照就是在比较两个不同的观测器，什么也不说明—— 而这正是本批要避免的那类失败。
+ * @brief [en] A faithful copy of `NonlinearFluxObserver`'s arithmetic, written out so the integration scheme can be
+ *             swapped without touching the library.
+ * @brief [zh] `NonlinearFluxObserver` 运算的忠实副本，写出来是为了能在不动库的前提下替换积分格式。
+ * @note [en] C2-a checks this against the shipped class. If the copy ever drifts, the comparison below is between two
+ *            different observers and means nothing -- exactly the failure mode this batch exists to avoid.
+ * @note [zh] C2-a 把它对着出厂类检查。副本一旦漂移，下面的对照就是在比较两个不同的观测器，什么也不说明—— 而这正是本批要
+ *            避免的那类失败。
  * @since 0.1.0
  */
 class EulerFlux final {
@@ -187,15 +185,13 @@ private:
 };
 
 /**
- * @brief [en] The SMO with Heun (explicit trapezoid) integration of the current
- * equation. [zh] 电流方程用 Heun（显式梯形）积分的 SMO。
- *
- * @note [en] Deliberately identical to `sil::SmoControl` apart from the
- * integrator: same sliding surface, same saturation, same filter, and the
- * filter is fed the **same** `z` (the one at the start of the step), so the
- * only difference measured is the integration. [zh] 除积分器之外刻意与
- * `sil::SmoControl` 完全一致：同滑模面、同饱和、同滤波器，且滤波器拿到的是
- *       **同一个** `z`（步首那个），所以量到的差别只有积分。
+ * @brief [en] The SMO with Heun (explicit trapezoid) integration of the current equation.
+ * @brief [zh] 电流方程用 Heun（显式梯形）积分的 SMO。
+ * @note [en] Deliberately identical to `sil::SmoControl` apart from the integrator: same sliding surface, same
+ *            saturation, same filter, and the filter is fed the **same** `z` (the one at the start of the step), so the
+ *            only difference measured is the integration.
+ * @note [zh] 除积分器之外刻意与 `sil::SmoControl` 完全一致：同滑模面、同饱和、同滤波器，且滤波器拿到的是 **同一个** `z`
+ *            （步首那个），所以量到的差别只有积分。
  * @since 0.1.0
  */
 class HeunSmo final {

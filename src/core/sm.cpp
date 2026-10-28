@@ -33,7 +33,7 @@ auto StateMachine::illegal_transitions() const noexcept -> std::uint32_t { retur
 
 /**
  * @brief [en] Implements StateMachine::request(); the contract is documented on its declaration.
- *        [zh] 实现 StateMachine::request()；契约文档在对应的声明处。
+ * @brief [zh] 实现 StateMachine::request()；契约文档在对应的声明处。
  * @attacher
  * @since 0.1.0
  */
@@ -52,7 +52,7 @@ auto StateMachine::request(MotorState target) noexcept -> ErrorCode {
 
 /**
  * @brief [en] Implements StateMachine::clear_fault(); the contract is documented on its declaration.
- *        [zh] 实现 StateMachine::clear_fault()；契约文档在对应的声明处。
+ * @brief [zh] 实现 StateMachine::clear_fault()；契约文档在对应的声明处。
  * @attacher
  * @since 0.1.0
  */

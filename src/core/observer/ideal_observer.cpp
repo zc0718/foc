@@ -9,7 +9,7 @@ namespace core {
 
 /**
  * @brief [en] Implements IdealObserver::set_truth(); the contract is documented on its declaration.
- *        [zh] 实现 IdealObserver::set_truth()；契约文档在对应的声明处。
+ * @brief [zh] 实现 IdealObserver::set_truth()；契约文档在对应的声明处。
  * @attacher
  * @since 0.1.0
  */
@@ -21,7 +21,7 @@ void IdealObserver::set_truth(float theta_e_rad, float omega_e_rad_s) noexcept {
 
 /**
  * @brief [en] Implements IdealObserver::update(); the contract is documented on its declaration.
- *        [zh] 实现 IdealObserver::update()；契约文档在对应的声明处。
+ * @brief [zh] 实现 IdealObserver::update()；契约文档在对应的声明处。
  * @attacher
  * @since 0.1.0
  */

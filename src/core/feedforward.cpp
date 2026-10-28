@@ -9,7 +9,7 @@ namespace core {
 
 /**
  * @brief [en] Implements the constructor; the contract is documented on its declaration.
- *        [zh] 实现构造函数；契约文档在对应的声明处。
+ * @brief [zh] 实现构造函数；契约文档在对应的声明处。
  * @attacher
  * @since 0.1.0
  */
@@ -18,7 +18,7 @@ DecouplingFeedforward::DecouplingFeedforward(const Config& config) noexcept : co
 
 /**
  * @brief [en] Implements generate(); the contract is documented on its declaration.
- *        [zh] 实现 generate()；契约文档在对应的声明处。
+ * @brief [zh] 实现 generate()；契约文档在对应的声明处。
  * @attacher
  * @since 0.1.0
  */
@@ -44,7 +44,7 @@ auto DecouplingFeedforward::generate(const FeedforwardInput& in) noexcept -> Dq<
 
 /**
  * @brief [en] Implements config(); the contract is documented on its declaration.
- *        [zh] 实现 config()；契约文档在对应的声明处。
+ * @brief [zh] 实现 config()；契约文档在对应的声明处。
  * @attacher
  * @since 0.1.0
  */

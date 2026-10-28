@@ -112,12 +112,11 @@ auto blend_config() -> Blend::Config {
 }
 
 /**
- * @brief [en] Constant-speed rig. The rotor is held at a fixed speed with a
- * huge inertia and fed the steady-state voltage for `id = 0, iq = kIq`; what
- * the observers see is then a real operating point rather than a spinning flux
- * with no current in it. [zh] 恒速台架。转子以极大惯量固定在给定转速，并施加
- * `id = 0, iq = kIq` 的稳态电压；于是观测器
- *        看到的是真实工作点，而不是一个没有电流的空转磁链。
+ * @brief [en] Constant-speed rig. The rotor is held at a fixed speed with a huge inertia and fed the steady-state
+ *             voltage for `id = 0, iq = kIq`; what the observers see is then a real operating point rather than a
+ *             spinning flux with no current in it.
+ * @brief [zh] 恒速台架。转子以极大惯量固定在给定转速，并施加 `id = 0, iq = kIq` 的稳态电压；于是观测器 看到的是真实工作
+ *             点，而不是一个没有电流的空转磁链。
  * @since 0.1.0
  */
 class SpeedRig final {
@@ -190,10 +189,9 @@ private:
 };
 
 /**
- * @brief [en] Runs one observer (or the blend) for `seconds` and returns the
- * mean absolute angle error over the second half, so the float transient at the
- * start does not count. [zh] 让一个观测器（或融合）跑
- * `seconds`，返回后半段的角度误差绝对均值，使开头的暂态不计入。
+ * @brief [en] Runs one observer (or the blend) for `seconds` and returns the mean absolute angle error over the second
+ *             half, so the float transient at the start does not count.
+ * @brief [zh] 让一个观测器（或融合）跑 `seconds`，返回后半段的角度误差绝对均值，使开头的暂态不计入。
  * @since 0.1.0
  */
 template <typename Observer>
@@ -484,8 +482,8 @@ TEST(SilObserverBlend, TheCarrierBiasesTheFluxObserverAndTheBiasScalesWithIt) {
 }
 
 /**
- * @brief [en] The same band, with the magnitude-correcting observer as its high
- * half. [zh] 同一个带，只是高端换成带幅值修正的观测器。
+ * @brief [en] The same band, with the magnitude-correcting observer as its high half.
+ * @brief [zh] 同一个带，只是高端换成带幅值修正的观测器。
  * @since 0.1.0
  */
 using CorrectedBlend =

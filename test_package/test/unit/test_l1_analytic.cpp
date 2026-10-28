@@ -20,14 +20,12 @@ using Sample = foc::sil::Sample;
 constexpr float kTolerance = 0.03F; // absolute error against the closed form
 
 /**
- * [en] Closed form of the PI + R-L current loop for the critically damped tuning.
- *      With `ki = wn^2 L` and `kp = 2 wn L - R` the loop is
- *      `(kp s + ki) / (L (s + wn)^2)`, whose step response is
- *      `1 - e^(-wn t) * (1 - (wn - R/L) t)`; the numerator zero is what makes it faster than the
- *      textbook `1 - e^(-x)(1 + x)`.
- *      [zh] 临界阻尼整定下 PI + R-L 电流环的闭式解：`ki = wn^2 L`、`kp = 2 wn L - R` 时环路为
- *      `(kp s + ki) / (L (s + wn)^2)`，阶跃响应为 `1 - e^(-wn t) * (1 - (wn - R/L) t)`；
- *      分子上的零点正是它比教科书式 `1 - e^(-x)(1 + x)` 更快的原因。
+ *  [en] Closed form of the PI + R-L current loop for the critically damped tuning. With `ki = wn^2 L` and `kp = 2 wn L
+ *       - R` the loop is `(kp s + ki) / (L (s + wn)^2)`, whose step response is `1 - e^(-wn t) * (1 - (wn - R/L) t)`;
+ *       the numerator zero is what makes it faster than the textbook `1 - e^(-x)(1 + x)`.
+ *  [zh] 临界阻尼整定下 PI + R-L 电流环的闭式解：`ki = wn^2 L`、`kp = 2 wn L - R` 时环路为 `(kp s + ki) / (L (s +
+ *       wn)^2)`，阶跃响应为 `1 - e^(-wn t) * (1 - (wn - R/L) t)`； 分子上的零点正是它比教科书式 `1 - e^(-x)(1 + x)` 更
+ *       快的原因。
  */
 auto current_loop_closed_form(float omega_n, float r_over_l, float t_s) -> float {
     const float x = omega_n * t_s;

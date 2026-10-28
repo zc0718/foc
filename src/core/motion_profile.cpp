@@ -14,7 +14,7 @@ namespace {
 
 /**
  * @brief [en] Whether the configuration describes limits the controller can honour.
- *        [zh] 该配置是否描述了控制器能遵守的限值。
+ * @brief [zh] 该配置是否描述了控制器能遵守的限值。
  * @attacher
  * @since 0.1.0
  */
@@ -30,7 +30,7 @@ MotionProfile::MotionProfile(const Config& config) noexcept : config_(config) {}
 
 /**
  * @brief [en] Implements step(); the contract is documented on its declaration.
- *        [zh] 实现 step()；契约文档在对应的声明处。
+ * @brief [zh] 实现 step()；契约文档在对应的声明处。
  * @attacher
  * @since 0.1.0
  */
@@ -42,7 +42,7 @@ auto MotionProfile::step(float setpoint, float feedback, float dt_s) noexcept ->
 
 /**
  * @brief [en] Implements step(const PositionInput&); the contract is documented on its declaration.
- *        [zh] 实现 step(const PositionInput&)；契约文档在对应的声明处。
+ * @brief [zh] 实现 step(const PositionInput&)；契约文档在对应的声明处。
  * @attacher
  * @since 0.1.0
  */
@@ -63,7 +63,7 @@ auto MotionProfile::step(const PositionInput& request, float feedback, float dt_
 
 /**
  * @brief [en] The shaping law itself, parameterised by the limits in force for this call.
- *        [zh] 塑造律本体，其参数是本次调用生效的限值。
+ * @brief [zh] 塑造律本体，其参数是本次调用生效的限值。
  * @since 0.1.0
  */
 auto MotionProfile::shape(float setpoint, float feedback, float dt_s, float velocity_limit_rad_s,
@@ -108,7 +108,7 @@ auto MotionProfile::shape(float setpoint, float feedback, float dt_s, float velo
 
 /**
  * @brief [en] Implements reset(); the contract is documented on its declaration.
- *        [zh] 实现 reset()；契约文档在对应的声明处。
+ * @brief [zh] 实现 reset()；契约文档在对应的声明处。
  * @attacher
  * @since 0.1.0
  */
@@ -117,7 +117,7 @@ void MotionProfile::reset() noexcept { velocity_rad_s_ = 0.0F; }
 
 /**
  * @brief [en] Implements config(); the contract is documented on its declaration.
- *        [zh] 实现 config()；契约文档在对应的声明处。
+ * @brief [zh] 实现 config()；契约文档在对应的声明处。
  * @attacher
  * @since 0.1.0
  */
@@ -126,7 +126,7 @@ auto MotionProfile::config() const noexcept -> const Config& { return config_; }
 
 /**
  * @brief [en] Implements velocity_command_rad_s(); the contract is documented on its declaration.
- *        [zh] 实现 velocity_command_rad_s()；契约文档在对应的声明处。
+ * @brief [zh] 实现 velocity_command_rad_s()；契约文档在对应的声明处。
  * @attacher
  * @since 0.1.0
  */

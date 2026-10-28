@@ -12,7 +12,7 @@ namespace core {
 
 /**
  * @brief [en] Implements PositionP(const Config&); the contract is documented on its declaration.
- *        [zh] 实现 PositionP(const Config&)；契约文档在对应的声明处。
+ * @brief [zh] 实现 PositionP(const Config&)；契约文档在对应的声明处。
  * @attacher
  * @since 0.1.0
  */
@@ -21,7 +21,7 @@ PositionP::PositionP(const Config& config) noexcept : config_(config) {}
 
 /**
  * @brief [en] Implements PositionP::step(); the contract is documented on its declaration.
- *        [zh] 实现 PositionP::step()；契约文档在对应的声明处。
+ * @brief [zh] 实现 PositionP::step()；契约文档在对应的声明处。
  * @attacher
  * @since 0.1.0
  */
@@ -65,7 +65,7 @@ auto PositionP::step(const PositionInput& request, float feedback, float dt_s) n
 
 /**
  * @brief [en] Implements PositionP::reset(); the contract is documented on its declaration.
- *        [zh] 实现 PositionP::reset()；契约文档在对应的声明处。
+ * @brief [zh] 实现 PositionP::reset()；契约文档在对应的声明处。
  * @attacher
  * @since 0.1.0
  */
@@ -74,7 +74,7 @@ void PositionP::reset() noexcept { velocity_rad_s_ = 0.0F; }
 
 /**
  * @brief [en] Implements PositionP::config(); the contract is documented on its declaration.
- *        [zh] 实现 PositionP::config()；契约文档在对应的声明处。
+ * @brief [zh] 实现 PositionP::config()；契约文档在对应的声明处。
  * @attacher
  * @since 0.1.0
  */

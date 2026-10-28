@@ -88,11 +88,11 @@ template <typename FeedForward> auto run_with(FeedForward ff) -> Outcome {
 
 
 /**
- * @brief [en] The d axis is commanded to zero, so every |id| that appears is a disturbance the
- *        current loop had to fight. Decoupling removes most of it; the test asserts an order of
- *        magnitude, not the exact figure, so normal tuning changes do not break it.
- *        [zh] d 轴给定为零，因此出现的每一个 |id| 都是电流环必须对抗的扰动。解耦把其中大部分消掉；
- *        用例断言的只是数量级而不是具体数值，正常的整定变更不会把它弄红。
+ * @brief [en] The d axis is commanded to zero, so every |id| that appears is a disturbance the current loop had to
+ *             fight. Decoupling removes most of it; the test asserts an order of magnitude, not the exact figure, so
+ *             normal tuning changes do not break it.
+ * @brief [zh] d 轴给定为零，因此出现的每一个 |id| 都是电流环必须对抗的扰动。解耦把其中大部分消掉； 用例断言的只是数量级
+ *             而不是具体数值，正常的整定变更不会把它弄红。
  */
 TEST(SilFeedforward, CrossDecouplingCutsTheDaxisDisturbanceByAnOrderOfMagnitude) {
     const Outcome without = run_with(foc::core::NullFeedforward{});
@@ -115,10 +115,10 @@ TEST(SilFeedforward, CrossDecouplingCutsTheDaxisDisturbanceByAnOrderOfMagnitude)
 
 
 /**
- * @brief [en] A zeroed configuration must behave exactly like no feedforward: a machine with no
- *        inductance and no flux has nothing to cancel. This pins the "unset means off" rule.
- *        [zh] 全零配置必须与「无前馈」完全等价：没有电感、没有磁链的电机没有可抵消的东西。这条
- *        用例钉住「未配置即关闭」的规则。
+ * @brief [en] A zeroed configuration must behave exactly like no feedforward: a machine with no inductance and no flux
+ *             has nothing to cancel. This pins the "unset means off" rule.
+ * @brief [zh] 全零配置必须与「无前馈」完全等价：没有电感、没有磁链的电机没有可抵消的东西。这条 用例钉住「未配置即关闭」
+ *             的规则。
  */
 TEST(SilFeedforward, AZeroedConfigurationIsIndistinguishableFromNoFeedforward) {
     const Outcome none = run_with(foc::core::NullFeedforward{});

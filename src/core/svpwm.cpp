@@ -21,7 +21,7 @@ constexpr std::uint8_t kSectorFromCode[8] = {0U, 2U, 6U, 1U, 4U, 3U, 5U, 4U};
 
 /**
  * @brief [en] Implements next_duty(); the contract is documented on its declaration.
- *        [zh] 实现 next_duty()；契约文档在对应的声明处。
+ * @brief [zh] 实现 next_duty()；契约文档在对应的声明处。
  * @attacher
  * @since 0.1.0
  */
@@ -56,7 +56,7 @@ auto Svpwm::modulate(Ab<float> v_ab, float v_bus) noexcept -> SvpwmResult {
 
 /**
  * @brief [en] Implements modulate(const ModulatorInput&); the contract is documented on its declaration.
- *        [zh] 实现 modulate(const ModulatorInput&)；契约文档在对应的声明处。
+ * @brief [zh] 实现 modulate(const ModulatorInput&)；契约文档在对应的声明处。
  * @attacher
  * @since 0.1.0
  */

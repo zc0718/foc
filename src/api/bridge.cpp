@@ -41,8 +41,7 @@ constexpr std::size_t kMaxMotors = 4U;
 
 /**
  * @brief [en] The values the C path runs with. Defaults live here; the caller overrides them.
- *        [zh] C 路径实际使用的取值。默认值放在这里，由调用方覆盖。
- *
+ * @brief [zh] C 路径实际使用的取值。默认值放在这里，由调用方覆盖。
  * @since 0.1.0
  */
 struct Setup final {
@@ -74,9 +73,8 @@ constexpr Setup kDefaultSetup{5.0F, 20000.0F, 500.0F, 24.0F, 2000.0F, 200.0F, 0.
 
 
 /**
- * @brief [en] Whether the caller's struct is large enough to contain the field ending at
- *        `end_offset`.
- *        [zh] 调用方的结构是否足够大，能包含以 `end_offset` 结尾的那个字段。
+ * @brief [en] Whether the caller's struct is large enough to contain the field ending at `end_offset`.
+ * @brief [zh] 调用方的结构是否足够大，能包含以 `end_offset` 结尾的那个字段。
  * @since 0.1.0
  */
 auto covers(const foc_motor_setup_t& setup, std::size_t end_offset) noexcept -> bool {
@@ -85,10 +83,10 @@ auto covers(const foc_motor_setup_t& setup, std::size_t end_offset) noexcept -> 
 
 
 /**
- * @brief [en] Merge the caller's setup over the defaults, reading only what their `struct_size`
- *        covers, so an older and shorter struct is safe by construction rather than by convention.
- *        [zh] 把调用方的设置叠在默认值上，只读取其 `struct_size` 覆盖到的字段；于是更短的旧结构是
- *        “结构上安全”而不是“约定安全”。
+ * @brief [en] Merge the caller's setup over the defaults, reading only what their `struct_size` covers, so an older and
+ *             shorter struct is safe by construction rather than by convention.
+ * @brief [zh] 把调用方的设置叠在默认值上，只读取其 `struct_size` 覆盖到的字段；于是更短的旧结构是 “结构上安全”而不是“约
+ *             定安全”。
  * @since 0.1.0
  */
 auto resolve_setup(const foc_motor_setup_t* requested) noexcept -> Setup {
@@ -178,7 +176,7 @@ auto resolve_setup(const foc_motor_setup_t* requested) noexcept -> Setup {
 
 /**
  * @brief [en] Whether a resolved setup describes a machine the core would accept.
- *        [zh] 合并后的设置是否描述了一台核心能接受的电机。
+ * @brief [zh] 合并后的设置是否描述了一台核心能接受的电机。
  * @since 0.1.0
  */
 auto setup_ok(const Setup& setup) noexcept -> bool {
@@ -217,11 +215,9 @@ auto setup_ok(const Setup& setup) noexcept -> bool {
 
 
 /**
- * @brief [en] One pool slot: inline storage for the motor plus the control block the handle points
- *        at. `storage` is the only place a `Motor<>` ever lives on the C path.
- *        [zh] 一个池槽：电机内联存储 + 句柄指向的控制块。`storage` 是 C 路径上 `Motor<>` 唯一
- *        存在的地方。
- *
+ * @brief [en] One pool slot: inline storage for the motor plus the control block the handle points at. `storage` is the
+ *             only place a `Motor<>` ever lives on the C path.
+ * @brief [zh] 一个池槽：电机内联存储 + 句柄指向的控制块。`storage` 是 C 路径上 `Motor<>` 唯一 存在的地方。
  * @since 0.1.0
  */
 struct Slot final {
@@ -242,15 +238,13 @@ constexpr std::uint32_t kSlotBits = 8U;
 
 
 /**
- * @brief [en] Mint a handle token: magic | generation | slot, as a pointer that is *never*
- *        dereferenced.
- *        [zh] 签发句柄令牌：magic | 代际 | 槽位，形式上是**永不解引用**的指针。
- *
- * @note [en] An earlier version pointed the handle at a per-slot control block; because the block
- *       is reused by the next occupation, a stale handle then read the *new* generation and passed
- *       validation. The generation has to live in the handle value itself.
- *       [zh] 早先的版本让句柄指向每个槽位的控制块；由于控制块会被下一次占用复用，旧句柄会读到
- *       **新**代际从而通过校验。代际必须放在句柄值本身里。
+ * @brief [en] Mint a handle token: magic | generation | slot, as a pointer that is *never* dereferenced.
+ * @brief [zh] 签发句柄令牌：magic | 代际 | 槽位，形式上是**永不解引用**的指针。
+ * @note [en] An earlier version pointed the handle at a per-slot control block; because the block is reused by the next
+ *            occupation, a stale handle then read the *new* generation and passed validation. The generation has to
+ *            live in the handle value itself.
+ * @note [zh] 早先的版本让句柄指向每个槽位的控制块；由于控制块会被下一次占用复用，旧句柄会读到 **新**代际从而通过校验。
+ *            代际必须放在句柄值本身里。
  * @since 0.1.0
  */
 auto mint_handle(std::uint32_t slot, std::uint32_t generation) noexcept -> foc_motor_t {
@@ -289,14 +283,12 @@ auto params_ok(const foc_motor_params_t& p) noexcept -> bool {
 
 /**
  * @brief [en] Resolve a handle to its slot, rejecting anything that is not a live handle.
- *        [zh] 把句柄解析为槽位，拒绝任何不是"活句柄"的东西。
- *
+ * @brief [zh] 把句柄解析为槽位，拒绝任何不是"活句柄"的东西。
  * @return [en] the slot, or nullptr when the handle is foreign, destroyed or stale.
- *         [zh] 槽位；句柄不属于本池、已销毁或已失效时返回 nullptr。
- * @post [en] No pointer is dereferenced before the membership check, so a garbage handle cannot
- *       fault: this is what turns undefined behaviour into `FOC_ERR_PARAM`.
- *       [zh] 成员判定之前不解引用任何指针，因此野句柄不会触发访问异常——这就是把未定义行为变成
- *       `FOC_ERR_PARAM` 的地方。
+ * @return [zh] 槽位；句柄不属于本池、已销毁或已失效时返回 nullptr。
+ * @post [en] No pointer is dereferenced before the membership check, so a garbage handle cannot fault: this is what
+ *            turns undefined behaviour into `FOC_ERR_PARAM`.
+ * @post [zh] 成员判定之前不解引用任何指针，因此野句柄不会触发访问异常——这就是把未定义行为变成 `FOC_ERR_PARAM` 的地方。
  * @since 0.1.0
  */
 auto resolve(foc_motor_t handle) noexcept -> Slot* {
@@ -327,11 +319,10 @@ auto motor_of(Slot& slot) noexcept -> MotorT& { return *slot.instance; }
 
 /**
  * @brief [en] Run the destructor and drop the pointer.
- *        [zh] 调用析构并清掉指针。
- *
- * @note [en] The destructor name has to be written where the alias is visible, which is why this
- *       lives here and not in the C block below.
- *       [zh] 析构名必须写在该别名可见的作用域里，所以这个函数在这里而不在下面的 C 块里。
+ * @brief [zh] 调用析构并清掉指针。
+ * @note [en] The destructor name has to be written where the alias is visible, which is why this lives here and not in
+ *            the C block below.
+ * @note [zh] 析构名必须写在该别名可见的作用域里，所以这个函数在这里而不在下面的 C 块里。
  * @since 0.1.0
  */
 void destroy_motor(Slot& slot) noexcept {
@@ -379,15 +370,14 @@ constexpr std::uintptr_t kProtectorMagic = 0x464F4350U;
 constexpr std::size_t kMaxProtectors = 4U;
 
 /**
- * @brief [en] One protector slot. [zh] 一个保护器槽位。
- *
- * @note [en] `Protector` has no default constructor and holds only floats and enums, so placement
- * new into inline bytes is enough and no destructor call is needed. That is stated rather than
- * assumed: if the type ever grows a member that needs releasing, this comment is the thing that
- * makes the omission a bug instead of an oversight.
- * [zh] `Protector` 没有默认构造函数，且只含浮点与枚举，所以内联字节上 placement new 就够，
- * 不需要调析构。这一点是**写明的**而不是假定的：若该类型将来长了需要释放的成员，这段注释会让
- * 那次遗漏成为 bug 而不是疏忽。
+ * @brief [en] One protector slot.
+ * @brief [zh] 一个保护器槽位。
+ * @note [en] `Protector` has no default constructor and holds only floats and enums, so placement new into inline bytes
+ *            is enough and no destructor call is needed. That is stated rather than assumed: if the type ever grows a
+ *            member that needs releasing, this comment is the thing that makes the omission a bug instead of an
+ *            oversight.
+ * @note [zh] `Protector` 没有默认构造函数，且只含浮点与枚举，所以内联字节上 placement new 就够， 不需要调析构。这一点是
+ *            **写明的**而不是假定的：若该类型将来长了需要释放的成员，这段注释会让 那次遗漏成为 bug 而不是疏忽。
  * @since 0.1.1
  */
 struct ProtectorSlot final {

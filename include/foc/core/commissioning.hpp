@@ -8,31 +8,32 @@ namespace foc {
 namespace core {
 
 /**
- * @brief [en] The dead-time voltage an **axis** sees, from the per-phase step
- * and the angle of the current in the rotor frame. [zh]
- * 由每相阶跃和电流在转子系里的角度，算出**一个轴**看到的死区电压。
+ * @brief [en] The dead-time voltage an **axis** sees, from the per-phase step and the angle of the current in the rotor
+ *             frame.
  *
- *        [en] Why this is not the per-phase number. The inverter takes `deadtime_v * sign(i_phase)` from each phase,
- *        and projecting three of those onto an axis depends on where the current is: with the current on the d axis the
- *        phases carry `(+i, -i/2, -i/2)`, and the projection is `(2/3)*(1 + 1/2 + 1/2)*deadtime_v = (4/3)*deadtime_v`.
- *        With the current on the q axis they carry `(0, +i*sqrt(3)/2, -i*sqrt(3)/2)`: one phase carries nothing, and
- *        the projection is `(2/3)*(sqrt(3)/2 + sqrt(3)/2) = 2/sqrt(3)` times -- 0.554 V instead of 0.64 V at 24 V. That
- *        13 % difference is not cosmetic: using the d-axis number on a q-axis step leaves `Lq` reading 16 % low (SIL
- *        the two-point sweep).
- *        [zh] 为什么这不是每相的数值。逆变器从每相拿走 `deadtime_v·sign(i_phase)`，
- *        三个这样的量投影到一个轴上，取决于电流在哪里：电流在 d 轴上时相电流是 `(+i, −i/2, −i/2)`，投影是 `(2/3)·(1 +
- *        1/2 + 1/2)·deadtime_v = (4/3)·deadtime_v`； 电流在 q 轴上时是 `(0, +i·√3/2,
- *        −i·√3/2)`：有一相根本不带电流，投影是 `(2/3)·(√3/2 + √3/2) = 2/√3` 倍——24 V 下是 0.554 V 而不是 0.64 V。这 13
- *        % 不是 无关紧要：在 q 轴阶跃上用 d 轴的数，会让 `Lq` 读低 16 %（两点扫描实测）。
+ *     Why this is not the per-phase number. The inverter takes `deadtime_v * sign(i_phase)` from each phase, and
+ *     projecting three of those onto an axis depends on where the current is: with the current on the d axis the phases
+ *     carry `(+i, -i/2, -i/2)`, and the projection is `(2/3)*(1 + 1/2 + 1/2)*deadtime_v = (4/3)*deadtime_v`. With the
+ *     current on the q axis they carry `(0, +i*sqrt(3)/2, -i*sqrt(3)/2)`: one phase carries nothing, and the projection
+ *     is `(2/3)*(sqrt(3)/2 + sqrt(3)/2) = 2/sqrt(3)` times -- 0.554 V instead of 0.64 V at 24 V. That 13 % difference
+ *     is not cosmetic: using the d-axis number on a q-axis step leaves `Lq` reading 16 % low (SIL the two-point sweep).
  *
- * @param deadtime_v [en] (t_dead/T_pwm)*v_bus per phase, V. [zh]
- * (t_dead/T_pwm)*v_bus，每相，V。
+ * @brief [zh] 由每相阶跃和电流在转子系里的角度，算出**一个轴**看到的死区电压。
+ *
+ *     为什么这不是每相的数值。逆变器从每相拿走 `deadtime_v·sign(i_phase)`， 三个这样的量投影到一个轴上，取决于电流在哪
+ *     里：电流在 d 轴上时相电流是 `(+i, −i/2, −i/2)`，投影是 `(2/3)·(1 + 1/2 + 1/2)·deadtime_v = (4/3)·deadtime_v`； 电
+ *     流在 q 轴上时是 `(0, +i·√3/2, −i·√3/2)`：有一相根本不带电流，投影是 `(2/3)·(√3/2 + √3/2) = 2/√3` 倍——24 V 下是
+ *     0.554 V 而不是 0.64 V。这 13 % 不是 无关紧要：在 q 轴阶跃上用 d 轴的数，会让 `Lq` 读低 16 %（两点扫描实测）。
+ *
+ * @param deadtime_v [en] (t_dead/T_pwm)*v_bus per phase, V.
+ * @param deadtime_v [zh] (t_dead/T_pwm)*v_bus，每相，V。
  * @param angle_rad [en] the current's angle from the d axis, rad; 0 = d, pi/2 = q.
- * [zh] 电流相对 d 轴的角度，rad；0 = d，π/2 = q。
- * @return [en] the axis-projected loss, V. [zh] 投影到轴上的损失，V。
- * @note [en] A phase whose current is exactly zero contributes nothing --
- * `sign(0) == 0` is the physical choice, not a convenience. [zh]
- * 电流正好为零的那一相不贡献任何东西——`sign(0) == 0` 是物理选择，不是图方便。
+ * @param angle_rad [zh] 电流相对 d 轴的角度，rad；0 = d，π/2 = q。
+ * @return [en] the axis-projected loss, V.
+ * @return [zh] 投影到轴上的损失，V。
+ * @note [en] A phase whose current is exactly zero contributes nothing -- `sign(0) == 0` is the physical choice, not a
+ *            convenience.
+ * @note [zh] 电流正好为零的那一相不贡献任何东西——`sign(0) == 0` 是物理选择，不是图方便。
  * @since 0.1.0
  * @exporter
  */
@@ -61,51 +62,46 @@ namespace core {
 }
 
 /**
- * @brief [en] Recovers stator resistance **and** the inverter's dead-time
- * voltage from a settled DC current sweep, by separating the two terms the
- * voltage equation contains. [zh]
- * 从一个稳定的直流电流扫描里同时把定子电阻**和**逆变器死区电压辨识出来——办法是把
- * 电压方程里那两项分开。
+ * @brief [en] Recovers stator resistance **and** the inverter's dead-time voltage from a settled DC current sweep, by
+ *             separating the two terms the voltage equation contains.
  *
- *        [en] Why two unknowns and not one. At standstill with a settled current, the command obeys `v = rs*i +
- *        deadtime_v`: the winding drops `rs*i` and the inverter eats `deadtime_v` regardless of current. Measuring at a
- *        single current cannot tell them apart -- a 10 % error in the dead-time voltage looks exactly like a 10 % error
- *        in `rs` at that one point. Two currents can: the slope in `i` is `rs`, the intercept is `deadtime_v`. [zh]
- * 为什么是两个未知数而不是一个。堵转、电流稳定时，指令满足 `v = rs·i +
- * deadtime_v`：绕组吃掉 `rs·i`，逆变器不管电流大小都吃掉 `deadtime_v`。
- * 在**一个**电流上测是分不开这两项的——死区电压差 10 % 和在那个点上 `rs` 差 10 %
- * 完全等价。两个电流就能分开：随 `i` 的斜率是 `rs`，截距是 `deadtime_v`。
+ *     Why two unknowns and not one. At standstill with a settled current, the command obeys `v = rs*i + deadtime_v`:
+ *     the winding drops `rs*i` and the inverter eats `deadtime_v` regardless of current. Measuring at a single current
+ *     cannot tell them apart -- a 10 % error in the dead-time voltage looks exactly like a 10 % error in `rs` at that
+ *     one point. Two currents can: the slope in `i` is `rs`, the intercept is `deadtime_v`.
  *
- *        [en] Two conditions it cannot work without, both physical rather than numerical. (1) **Currents above the fade
- *        band**: below a few tens of milliamps the loss is not yet a step (measured: it goes from 2.7 % to 97 %
- *        of `(4/pi)*deadtime_v` between 21 mA and 86 mA), so a low-current sample measures the fade, not the step, and
- *        biases `rs` downwards. (2)
- * **One polarity**: `sign(i)` has to be constant across the sweep, or the
- * intercept flips sign half way through and the fit means nothing. [zh]
- * 两个它离不开的条件，都是物理的而不是数值的。（1）**电流要在淡出带以上**：
- * 几十毫安以下损失还不是阶跃（实测它在 21 mA 到 86 mA 之间从
- * `(4/π)·deadtime_v` 的 2.7 % 走到 97 %），所以小电流样本量的是淡出、不是阶跃，
- * 会把 `rs` 往下带。（2）**单极性**：`sign(i)` 在整个扫描里必须不变，否则截距中途
- * 变号，拟合没有意义。
+ *     Two conditions it cannot work without, both physical rather than numerical. (1) **Currents above the fade band**:
+ *     below a few tens of milliamps the loss is not yet a step (measured: it goes from 2.7 % to 97 % of
+ *     `(4/pi)*deadtime_v` between 21 mA and 86 mA), so a low-current sample measures the fade, not the step, and biases
+ *     `rs` downwards. (2) **One polarity**: `sign(i)` has to be constant across the sweep, or the intercept flips sign
+ *     half way through and the fit means nothing.
  *
- * @note [en] `rs` is measured at **whatever temperature the winding is at**; the
- * plant does not report it. That is the point of measuring instead of reading a
- * nameplate: copper moves about 0.4 %/K, so a 20 K error in the assumed
- * temperature is an 8 % error in `rs`, which is larger than the whole tolerance
- * of the observers built on it. [zh]
- * `rs` 是在**绕组当时的温度**下测出来的；plant 不会告诉你温度。这正是"测"而不是
- * "抄铭牌"的理由：铜的温度系数约 0.4 %/K，假设温度差 20 K 就是 `rs` 差 8 %，比建立
- * 在它上面的观测器的整个容差还大。
+ * @brief [zh] 从一个稳定的直流电流扫描里同时把定子电阻**和**逆变器死区电压辨识出来——办法是把 电压方程里那两项分开。
  *
- * @context [en] Commissioning, standstill, once per board. [zh]
- * 整定阶段，堵转，每块板一次。
+ *     为什么是两个未知数而不是一个。堵转、电流稳定时，指令满足 `v = rs·i + deadtime_v`：绕组吃掉 `rs·i`，逆变器不管电流
+ *     大小都吃掉 `deadtime_v`。 在**一个**电流上测是分不开这两项的——死区电压差 10 % 和在那个点上 `rs` 差 10 % 完全等
+ *     价。两个电流就能分开：随 `i` 的斜率是 `rs`，截距是 `deadtime_v`。
+ *
+ *     两个它离不开的条件，都是物理的而不是数值的。（1）**电流要在淡出带以上**： 几十毫安以下损失还不是阶跃（实测它在 21
+ *     mA 到 86 mA 之间从 `(4/π)·deadtime_v` 的 2.7 % 走到 97 %），所以小电流样本量的是淡出、不是阶跃， 会把 `rs` 往下
+ *     带。（2）**单极性**：`sign(i)` 在整个扫描里必须不变，否则截距中途 变号，拟合没有意义。
+ *
+ * @note [en] `rs` is measured at **whatever temperature the winding is at**; the plant does not report it. That is the
+ *            point of measuring instead of reading a nameplate: copper moves about 0.4 %/K, so a 20 K error in the
+ *            assumed temperature is an 8 % error in `rs`, which is larger than the whole tolerance of the observers
+ *            built on it.
+ * @note [zh] `rs` 是在**绕组当时的温度**下测出来的；plant 不会告诉你温度。这正是"测"而不是 "抄铭牌"的理由：铜的温度系数
+ *            约 0.4 %/K，假设温度差 20 K 就是 `rs` 差 8 %，比建立 在它上面的观测器的整个容差还大。
+ * @context [en] Commissioning, standstill, once per board.
+ * @context [zh] 整定阶段，堵转，每块板一次。
  * @since 0.1.0
  * @exporter
  */
 class RsEstimator final {
   public:
     /**
-     * @brief [en] Which samples are allowed in. [zh] 允许哪些样本进来。
+     * @brief [en] Which samples are allowed in.
+     * @brief [zh] 允许哪些样本进来。
      * @since 0.1.0
      */
     struct Config final {
@@ -118,7 +114,8 @@ class RsEstimator final {
     };
 
     /**
-     * @brief [en] What the two-point separation produced. [zh] 两点分离的结果。
+     * @brief [en] What the two-point separation produced.
+     * @brief [zh] 两点分离的结果。
      * @since 0.1.0
      */
     struct Result final {
@@ -146,16 +143,15 @@ class RsEstimator final {
 
     /**
      * @brief [en] Feed one settled (command, current) pair.
-     *        [zh] 送入一个已稳定的（指令，电流）对。
-     *
-     * @param v_command [en] the voltage magnitude that was commanded, V. [zh]
-     * 当时命令的电压幅值，V。
-     * @param i_current [en] the settled current **magnitude** in A; it must be
-     * the same component `v_command` refers to (the projection along the
-     * current), because that is the pair the voltage equation joins. [zh]
-     * 稳定后的电流**幅值**，A；它必须与 `v_command` 指的是同一个分量（沿电流方向的
-     * 投影），因为电压方程连接的是这一对。
-     * @return [en] true if the sample was used. [zh] 该采样是否被采用。
+     * @brief [zh] 送入一个已稳定的（指令，电流）对。
+     * @param v_command [en] the voltage magnitude that was commanded, V.
+     * @param v_command [zh] 当时命令的电压幅值，V。
+     * @param i_current [en] the settled current **magnitude** in A; it must be the same component `v_command` refers to
+     *                       (the projection along the current), because that is the pair the voltage equation joins.
+     * @param i_current [zh] 稳定后的电流**幅值**，A；它必须与 `v_command` 指的是同一个分量（沿电流方向的 投影），因为电
+     *                       压方程连接的是这一对。
+     * @return [en] true if the sample was used.
+     * @return [zh] 该采样是否被采用。
      * @since 0.1.0
      */
     auto add(float v_command, float i_current) noexcept -> bool {
@@ -187,8 +183,8 @@ class RsEstimator final {
     [[nodiscard]] auto samples() const noexcept -> int { return samples_; }
 
     /**
-     * @brief [en] `rs` and `deadtime_v`, or `valid == false` with no number
-     * invented. [zh] `rs` 与 `deadtime_v`；给不出来时 `valid == false`，不编数。
+     * @brief [en] `rs` and `deadtime_v`, or `valid == false` with no number invented.
+     * @brief [zh] `rs` 与 `deadtime_v`；给不出来时 `valid == false`，不编数。
      * @since 0.1.0
      */
     [[nodiscard]] auto solve() const noexcept -> Result {
@@ -241,40 +237,35 @@ class RsEstimator final {
 };
 
 /**
- * @brief [en] Recovers the rotor flux linkage from the voltage a **zero-current**
- * spin needs, at two or more speeds. [zh]
- * 从**零电流**旋转所需电压在两个以上转速下的值，把转子磁链辨识出来。
+ * @brief [en] Recovers the rotor flux linkage from the voltage a **zero-current** spin needs, at two or more speeds.
  *
- *        [en] Why zero current, and why two speeds. With the current held at zero the voltage equation collapses to `v
- *        = we*psi_f` -- there is no `rs*i` term and no dead-time term, because a leg carrying no current has no loss to
- *        hide. One speed would give `psi_f` if `v` were exact; two give it as a
- * *slope*, which absorbs whatever constant offset the measurement chain has
- * (sensor gain, a residual current, an inverter drop that survives at zero
- * current). The offset is reported rather than assumed away. [zh]
- * 为什么零电流、为什么两个转速。电流保持为零时电压方程塌成 `v = ω_e·ψf`——
- * 没有 `rs·i` 项、也没有死区项，因为不过电流的桥臂没有损失可藏。如果 `v` 是准的，
- * 一个转速就够；两个转速给的是**斜率**，它把测量链上任何固定偏置都吸收掉（传感器
- * 增益、残余电流、零电流下依然存在的逆变器压降）。偏置是**报出来**的，不是假设掉
- * 的。
+ *     Why zero current, and why two speeds. With the current held at zero the voltage equation collapses to `v =
+ *     we*psi_f` -- there is no `rs*i` term and no dead-time term, because a leg carrying no current has no loss to
+ *     hide. One speed would give `psi_f` if `v` were exact; two give it as a *slope*, which absorbs whatever constant
+ *     offset the measurement chain has (sensor gain, a residual current, an inverter drop that survives at zero
+ *     current). The offset is reported rather than assumed away.
  *
- * @note [en] The caller must actually hold the current at zero; that is not
- * something this estimator can check, and it is the whole assumption. What it
- * *can* check is that the samples it is handed are within `i_zero_max_a` of
- * zero, which catches the common failure of sweeping speed before the current
- * loop has settled. [zh]
- * 调用方必须真的把电流保持为零——这不是本估计器能检查的事，却是整个假设。它能检查
- * 的是交给它的样本都在 `i_zero_max_a` 以内，这能抓住常见的失误：电流环还没稳就开始
- * 扫转速。
+ * @brief [zh] 从**零电流**旋转所需电压在两个以上转速下的值，把转子磁链辨识出来。
  *
- * @context [en] Commissioning, spinning, once per board. [zh]
- * 整定阶段，旋转，每块板一次。
+ *     为什么零电流、为什么两个转速。电流保持为零时电压方程塌成 `v = ω_e·ψf`—— 没有 `rs·i` 项、也没有死区项，因为不过电
+ *     流的桥臂没有损失可藏。如果 `v` 是准的， 一个转速就够；两个转速给的是**斜率**，它把测量链上任何固定偏置都吸收掉（
+ *     传感器 增益、残余电流、零电流下依然存在的逆变器压降）。偏置是**报出来**的，不是假设掉 的。
+ *
+ * @note [en] The caller must actually hold the current at zero; that is not something this estimator can check, and it
+ *            is the whole assumption. What it *can* check is that the samples it is handed are within `i_zero_max_a` of
+ *            zero, which catches the common failure of sweeping speed before the current loop has settled.
+ * @note [zh] 调用方必须真的把电流保持为零——这不是本估计器能检查的事，却是整个假设。它能检查 的是交给它的样本都在
+ *            `i_zero_max_a` 以内，这能抓住常见的失误：电流环还没稳就开始 扫转速。
+ * @context [en] Commissioning, spinning, once per board.
+ * @context [zh] 整定阶段，旋转，每块板一次。
  * @since 0.1.0
  * @exporter
  */
 class FluxEstimator final {
   public:
     /**
-     * @brief [en] What the fit needs to know. [zh] 拟合需要知道的东西。
+     * @brief [en] What the fit needs to know.
+     * @brief [zh] 拟合需要知道的东西。
      * @since 0.1.0
      */
     struct Config final {
@@ -286,7 +277,8 @@ class FluxEstimator final {
     };
 
     /**
-     * @brief [en] What the fit produced. [zh] 拟合结果。
+     * @brief [en] What the fit produced.
+     * @brief [zh] 拟合结果。
      * @since 0.1.0
      */
     struct Result final {
@@ -311,15 +303,15 @@ class FluxEstimator final {
 
     /**
      * @brief [en] Feed one settled zero-current operating point.
-     *        [zh] 送入一个已稳定的零电流工作点。
-     *
-     * @param omega_e [en] electrical speed in rad/s. [zh] 电角速度，rad/s。
-     * @param v_magnitude [en] the voltage the inverter delivered, V. [zh]
-     * 逆变器交付的电压幅值，V。
-     * @param i_magnitude [en] the current that was flowing, A; used only to
-     * police the zero-current assumption. [zh] 当时流过的电流，A；只用来守住
-     * "零电流" 这个假设。
-     * @return [en] true if the sample was used. [zh] 该采样是否被采用。
+     * @brief [zh] 送入一个已稳定的零电流工作点。
+     * @param omega_e [en] electrical speed in rad/s.
+     * @param omega_e [zh] 电角速度，rad/s。
+     * @param v_magnitude [en] the voltage the inverter delivered, V.
+     * @param v_magnitude [zh] 逆变器交付的电压幅值，V。
+     * @param i_magnitude [en] the current that was flowing, A; used only to police the zero-current assumption.
+     * @param i_magnitude [zh] 当时流过的电流，A；只用来守住 "零电流" 这个假设。
+     * @return [en] true if the sample was used.
+     * @return [zh] 该采样是否被采用。
      * @since 0.1.0
      */
     auto add(float omega_e, float v_magnitude, float i_magnitude) noexcept -> bool {
@@ -351,8 +343,8 @@ class FluxEstimator final {
     [[nodiscard]] auto samples() const noexcept -> int { return samples_; }
 
     /**
-     * @brief [en] The flux linkage, or `valid == false`. [zh] 磁链；给不出来时
-     * `valid == false`。
+     * @brief [en] The flux linkage, or `valid == false`.
+     * @brief [zh] 磁链；给不出来时 `valid == false`。
      * @since 0.1.0
      */
     [[nodiscard]] auto solve() const noexcept -> Result {
@@ -395,41 +387,39 @@ class FluxEstimator final {
 };
 
 /**
- * @brief [en] Recovers one current channel's **offset** without a reference and
- * its **gain** with one. [zh]
- * 不需要基准就能得到一条电流通道的**零漂**，有基准才能得到它的**增益**。
+ * @brief [en] Recovers one current channel's **offset** without a reference and its **gain** with one.
  *
- *        [en] Why the two are not symmetric, and why that is the whole point. An offset has a free reference: command
- *        zero current, and whatever a channel reads *is* its offset, because the true value is known to be zero. A gain
- *        has none -- `reading = gain*truth + offset` with `truth` unknown is underdetermined at any current, so a gain
- *        needs an external truth (a clamp meter, a series shunt, or a second channel that has already been calibrated).
- *        The estimator therefore reports the two separately and refuses the one it cannot support, rather than fitting
- *        a slope to noise and calling it a gain. [zh]
- * 为什么两者不对称，以及为什么这正是要点。零漂有一个免费的基准：命令零电流，通道读到的
- * **就是**它的零漂，因为真值已知为零。增益没有：`reading = gain·truth + offset` 而
- * `truth` 未知时，在**任何**电流上都是欠定的，所以增益需要一个外部真值（钳形表、串联
- * 分流器，或另一条已经校正过的通道）。于是估计器把两者分开报，并且拒绝它支持不了的那个，
- * 而不是拿噪声拟合一条斜率再叫它增益。
+ *     Why the two are not symmetric, and why that is the whole point. An offset has a free reference: command zero
+ *     current, and whatever a channel reads *is* its offset, because the true value is known to be zero. A gain has
+ *     none -- `reading = gain*truth + offset` with `truth` unknown is underdetermined at any current, so a gain needs
+ *     an external truth (a clamp meter, a series shunt, or a second channel that has already been calibrated). The
+ *     estimator therefore reports the two separately and refuses the one it cannot support, rather than fitting a slope
+ *     to noise and calling it a gain.
  *
- * @note [en] The three-wire constraint is a diagnostic, not a calibration. The
- * true phase currents sum to zero, so the **readings** sum to the sum of the
- * offsets: `sum(offset)` is measurable with no reference at all. But it is one
- * equation for three unknowns -- it can tell you that something is wrong, and
- * not which phase is wrong. Splitting it needs the per-channel `add_zero()`.
- *       [zh] 三线约束是**诊断**，不是标定。真实相电流之和为零，所以**读数**之和就是 零漂之和：`Σoffset`
- *       完全不需要基准就能测出来。但那是三个未知数的一个方程——它能告诉你
- *       "有问题"，不能告诉你"哪一相"。要拆开就得用逐通道的 `add_zero()`。
+ * @brief [zh] 不需要基准就能得到一条电流通道的**零漂**，有基准才能得到它的**增益**。
  *
- * @context [en] Commissioning, first, before any angle alignment: an offset
- * corrupts the alignment ([zh] 整定阶段，**最先做**，在任何角度对齐之前：零漂会污染
- * 对齐全过程).
+ *     为什么两者不对称，以及为什么这正是要点。零漂有一个免费的基准：命令零电流，通道读到的 **就是**它的零漂，因为真值已
+ *     知为零。增益没有：`reading = gain·truth + offset` 而 `truth` 未知时，在**任何**电流上都是欠定的，所以增益需要一个
+ *     外部真值（钳形表、串联 分流器，或另一条已经校正过的通道）。于是估计器把两者分开报，并且拒绝它支持不了的那个， 而
+ *     不是拿噪声拟合一条斜率再叫它增益。
+ *
+ * @note [en] The three-wire constraint is a diagnostic, not a calibration. The true phase currents sum to zero, so the
+ *            **readings** sum to the sum of the offsets: `sum(offset)` is measurable with no reference at all. But it
+ *            is one equation for three unknowns -- it can tell you that something is wrong, and not which phase is
+ *            wrong. Splitting it needs the per-channel `add_zero()`.
+ * @note [zh] 三线约束是**诊断**，不是标定。真实相电流之和为零，所以**读数**之和就是 零漂之和：`Σoffset` 完全不需要基准
+ *            就能测出来。但那是三个未知数的一个方程——它能告诉你 "有问题"，不能告诉你"哪一相"。要拆开就得用逐通道的
+ *            `add_zero()`。
+ * @context [en] Commissioning, first, before any angle alignment: an offset corrupts the alignment (
+ * @context [zh] 整定阶段，**最先做**，在任何角度对齐之前：零漂会污染 对齐全过程).
  * @since 0.1.0
  * @exporter
  */
 class CurrentSenseCalibrator final {
   public:
     /**
-     * @brief [en] What the fit has to refuse. [zh] 拟合必须拒绝什么。
+     * @brief [en] What the fit has to refuse.
+     * @brief [zh] 拟合必须拒绝什么。
      * @since 0.1.0
      */
     struct Config final {
@@ -442,7 +432,8 @@ class CurrentSenseCalibrator final {
     };
 
     /**
-     * @brief [en] What was measured. [zh] 量到了什么。
+     * @brief [en] What was measured.
+     * @brief [zh] 量到了什么。
      * @since 0.1.0
      */
     struct Result final {
@@ -477,9 +468,11 @@ class CurrentSenseCalibrator final {
 
     /**
      * @brief [en] Feed a reading whose true value is known to be zero.
-     *        [zh] 送入一个真值已知为零的读数。
-     * @param reading_a [en] what the channel reported, A. [zh] 通道报出的值，A。
-     * @return [en] true if the sample was used. [zh] 该采样是否被采用。
+     * @brief [zh] 送入一个真值已知为零的读数。
+     * @param reading_a [en] what the channel reported, A.
+     * @param reading_a [zh] 通道报出的值，A。
+     * @return [en] true if the sample was used.
+     * @return [zh] 该采样是否被采用。
      * @since 0.1.0
      */
     auto add_zero(float reading_a) noexcept -> bool {
@@ -495,12 +488,14 @@ class CurrentSenseCalibrator final {
 
     /**
      * @brief [en] Feed a reading together with an external reference.
-     *        [zh] 送入一个读数以及一个外部基准。
-     * @param reading_a [en] what the channel reported, A. [zh] 通道报出的值，A。
-     * @param reference_a [en] the true current, A -- from a clamp meter, a
-     * series shunt or an already-calibrated channel. [zh] 真实电流，A——来自钳形
-     * 表、串联分流器或已校正的通道。
-     * @return [en] true if the sample was used. [zh] 该采样是否被采用。
+     * @brief [zh] 送入一个读数以及一个外部基准。
+     * @param reading_a [en] what the channel reported, A.
+     * @param reading_a [zh] 通道报出的值，A。
+     * @param reference_a [en] the true current, A -- from a clamp meter, a series shunt or an already-calibrated
+     *                         channel.
+     * @param reference_a [zh] 真实电流，A——来自钳形 表、串联分流器或已校正的通道。
+     * @return [en] true if the sample was used.
+     * @return [zh] 该采样是否被采用。
      * @since 0.1.0
      */
     auto add(float reading_a, float reference_a) noexcept -> bool {
@@ -526,8 +521,8 @@ class CurrentSenseCalibrator final {
     [[nodiscard]] auto zero_samples() const noexcept -> int { return zero_samples_; }
 
     /**
-     * @brief [en] Offset and gain, each with its own validity. [zh]
-     * 零漂与增益，各自带自己的有效性。
+     * @brief [en] Offset and gain, each with its own validity.
+     * @brief [zh] 零漂与增益，各自带自己的有效性。
      * @since 0.1.0
      */
     [[nodiscard]] auto solve() const noexcept -> Result {
@@ -591,42 +586,40 @@ class CurrentSenseCalibrator final {
 };
 
 /**
- * @brief [en] Recovers an incremental inductance from the **flux** a voltage
- * step delivers, `L = integral(v - rs*i)/delta_i`, instead of from a
- * differentiated current. [zh]
- * 从电压阶跃交付的**磁链**求增量电感，`L = ∫(v − rs·i)/Δi`，而不是靠微分电流。
+ * @brief [en] Recovers an incremental inductance from the **flux** a voltage step delivers, `L = integral(v -
+ *             rs*i)/delta_i`, instead of from a differentiated current.
  *
- *        [en] Why integrate. `di/dt` from a 20 kHz current sensor is a difference of two nearly equal noisy numbers
- *        scaled by 1/dt: it amplifies the noise by `1/dt` and needs a filter whose group delay then biases the result.
- *        The integral form uses every sample once, weights nothing, and needs no filter: `integral(v_delivered - rs*i)
- *        dt = L * delta_i` exactly, because the `L*di/dt` term is the derivative of `L*i`. [zh]
- * 为什么用积分。20 kHz 电流传感器的 `di/dt` 是两个几乎相等的带噪数之差再乘 `1/dt`：
- * 噪声被放大 `1/dt` 倍，要有滤波器，而滤波器的群延迟又会带来偏差。积分形式每个样本
- * 用一次、不加权、不用滤波：`∫(v_delivered − rs·i)dt = L·Δi` 是**精确**的，因为
- * `L·di/dt` 这一项就是 `L·i` 的导数。
+ *     Why integrate. `di/dt` from a 20 kHz current sensor is a difference of two nearly equal noisy numbers scaled by
+ *     1/dt: it amplifies the noise by `1/dt` and needs a filter whose group delay then biases the result. The integral
+ *     form uses every sample once, weights nothing, and needs no filter: `integral(v_delivered - rs*i) dt = L *
+ *     delta_i` exactly, because the `L*di/dt` term is the derivative of `L*i`.
  *
- *        [en] What `v_delivered` is, and the error that follows. The inverter delivers `v_command -
- *        deadtime_v*sign(i)`, which is what this integrator subtracts using the `deadtime_v` measured by `RsEstimator`.
- *        While the current crosses zero the true loss is *less* than `deadtime_v` (that is the fade band), so
- *        the integrator over-subtracts for the crossing time `t_cross` and the flux comes out low by about `deadtime_v
- *        * t_cross`. At 0.48 V and 20 us against `L*delta_i = 4e-4 V*s` for a 1 A step, that is 2.4 % -- inside the
- *        tolerance, but it is a *known direction*, so it is documented rather than hoped away. [zh] `v_delivered`
- *        是什么，以及随之而来的误差。逆变器交付 `v_cmd − deadtime_v·sign(i)`， 本积分器用 `RsEstimator` 量到的
- *        `deadtime_v` 把它减掉。电流过零期间真实损失**小** 于 `deadtime_v`（那就是淡出带），所以积分在穿越时间
- *        `t_cross` 内减多了， 磁链偏低约 `deadtime_v·t_cross`。0.48 V、20 µs，对 1 A 阶跃的 `L·Δi = 4e-4 V·s` 是 2.4
- *        %——在容差内，但**方向是已知的**，所以要写下来而不是 指望它不存在。
+ *     What `v_delivered` is, and the error that follows. The inverter delivers `v_command - deadtime_v*sign(i)`, which
+ *     is what this integrator subtracts using the `deadtime_v` measured by `RsEstimator`. While the current crosses
+ *     zero the true loss is *less* than `deadtime_v` (that is the fade band), so the integrator over-subtracts for the
+ *     crossing time `t_cross` and the flux comes out low by about `deadtime_v * t_cross`. At 0.48 V and 20 us against
+ *     `L*delta_i = 4e-4 V*s` for a 1 A step, that is 2.4 % -- inside the tolerance, but it is a *known direction*, so
+ *     it is documented rather than hoped away.
  *
- * @note [en] `begin()` is what makes this a measurement rather than a running
- * average: the rotor frame has to be aligned, the axis has to be named (d or q
- * is chosen by which voltage component the caller steps), and the current has to
- * be at a known starting value. Calling `add()` without `begin()` is a
- * programming error and simply produces `valid == false`. [zh]
- * `begin()` 是它成为一次测量而不是滑动平均的原因：转子系要对准、轴要指明（d 还是 q
- * 由调用方在哪一个电压分量上加阶跃决定）、电流要从已知值出发。没调 `begin()` 就
- * `add()` 是编程错误，结果只是 `valid == false`。
+ * @brief [zh] 从电压阶跃交付的**磁链**求增量电感，`L = ∫(v − rs·i)/Δi`，而不是靠微分电流。
  *
- * @context [en] Commissioning, standstill, once per board and per axis. [zh]
- * 整定阶段，堵转，每块板、每个轴一次。
+ *     为什么用积分。20 kHz 电流传感器的 `di/dt` 是两个几乎相等的带噪数之差再乘 `1/dt`： 噪声被放大 `1/dt` 倍，要有滤波
+ *     器，而滤波器的群延迟又会带来偏差。积分形式每个样本 用一次、不加权、不用滤波：`∫(v_delivered − rs·i)dt = L·Δi` 是
+ *     **精确**的，因为 `L·di/dt` 这一项就是 `L·i` 的导数。
+ *
+ *     `v_delivered` 是什么，以及随之而来的误差。逆变器交付 `v_cmd − deadtime_v·sign(i)`， 本积分器用 `RsEstimator` 量到
+ *     的 `deadtime_v` 把它减掉。电流过零期间真实损失**小** 于 `deadtime_v`（那就是淡出带），所以积分在穿越时间
+ *     `t_cross` 内减多了， 磁链偏低约 `deadtime_v·t_cross`。0.48 V、20 µs，对 1 A 阶跃的 `L·Δi = 4e-4 V·s` 是 2.4 %——在
+ *     容差内，但**方向是已知的**，所以要写下来而不是 指望它不存在。
+ *
+ * @note [en] `begin()` is what makes this a measurement rather than a running average: the rotor frame has to be
+ *            aligned, the axis has to be named (d or q is chosen by which voltage component the caller steps), and the
+ *            current has to be at a known starting value. Calling `add()` without `begin()` is a programming error and
+ *            simply produces `valid == false`.
+ * @note [zh] `begin()` 是它成为一次测量而不是滑动平均的原因：转子系要对准、轴要指明（d 还是 q 由调用方在哪一个电压分量
+ *            上加阶跃决定）、电流要从已知值出发。没调 `begin()` 就 `add()` 是编程错误，结果只是 `valid == false`。
+ * @context [en] Commissioning, standstill, once per board and per axis.
+ * @context [zh] 整定阶段，堵转，每块板、每个轴一次。
  * @since 0.1.0
  * @exporter
  */
@@ -634,7 +627,7 @@ class IncrementalInductanceEstimator final {
   public:
     /**
      * @brief [en] What the integrator has to subtract, and what it must refuse.
-     *        [zh] 积分器要减掉什么，以及它必须拒绝什么。
+     * @brief [zh] 积分器要减掉什么，以及它必须拒绝什么。
      * @since 0.1.0
      */
     struct Config final {
@@ -646,7 +639,8 @@ class IncrementalInductanceEstimator final {
     };
 
     /**
-     * @brief [en] What the integral produced. [zh] 积分结果。
+     * @brief [en] What the integral produced.
+     * @brief [zh] 积分结果。
      * @since 0.1.0
      */
     struct Result final {
@@ -668,8 +662,9 @@ class IncrementalInductanceEstimator final {
 
     /**
      * @brief [en] Start a step from a known current.
-     *        [zh] 从一个已知电流开始一次阶跃。
-     * @param i_start_a [en] the current before the step, A. [zh] 阶跃前的电流，A。
+     * @brief [zh] 从一个已知电流开始一次阶跃。
+     * @param i_start_a [en] the current before the step, A.
+     * @param i_start_a [zh] 阶跃前的电流，A。
      * @since 0.1.0
      */
     void begin(float i_start_a) noexcept {
@@ -682,27 +677,23 @@ class IncrementalInductanceEstimator final {
 
     /**
      * @brief [en] Integrate one complete switching period.
-     *        [zh] 积分一个完整的开关周期。
-     *
+     * @brief [zh] 积分一个完整的开关周期。
      * @param v_command [en] the voltage commanded on the axis being stepped, V.
-     * [zh] 被阶跃的那个轴上的电压指令，V。
-     * @param i_mean [en] the current on that axis **averaged over the period**,
-     * A -- not an instantaneous sample. [zh] 该轴上的电流在该周期上的**平均值**，
-     * A——不是瞬时采样。
-     * @param dt_s [en] the length of that period, s. [zh] 该周期的长度，s。
-     * @return [en] true if the sample was used. [zh] 该采样是否被采用。
-     *
-     * @note [en] Why the mean and not the sample. Over one switching period the
-     * current swings by `v_bus/(4*L*f_sw)` -- 0.75 A peak-to-peak here, against
-     * a step of 1 A. Integrating instantaneous samples would measure the ripple
-     * and call it the transient, and reading `delta_i` from two instantaneous
-     * values would be wrong by up to a full ripple. Averaging over a whole
-     * period cancels the ripple exactly, because its mean over a period is what
-     * `L*di/dt` integrates to. [zh]
-     * 为什么要均值而不是采样点。一个开关周期内电流摆动
-     * `v_bus/(4·L·f_sw)`——本机 0.75 A 峰峰，而阶跃才 1 A。积分瞬时采样等于在量纹波
-     * 并把它当成暂态，而用两个瞬时值算 `Δi` 会错整整一个纹波。对整周期取均值能把纹波
-     * 精确消掉，因为 `L·di/dt` 积分出来正是它在一个周期上的均值。
+     * @param v_command [zh] 被阶跃的那个轴上的电压指令，V。
+     * @param i_mean [en] the current on that axis **averaged over the period**, A -- not an instantaneous sample.
+     * @param i_mean [zh] 该轴上的电流在该周期上的**平均值**， A——不是瞬时采样。
+     * @param dt_s [en] the length of that period, s.
+     * @param dt_s [zh] 该周期的长度，s。
+     * @return [en] true if the sample was used.
+     * @return [zh] 该采样是否被采用。
+     * @note [en] Why the mean and not the sample. Over one switching period the current swings by `v_bus/(4*L*f_sw)` --
+     *            0.75 A peak-to-peak here, against a step of 1 A. Integrating instantaneous samples would measure the
+     *            ripple and call it the transient, and reading `delta_i` from two instantaneous values would be wrong
+     *            by up to a full ripple. Averaging over a whole period cancels the ripple exactly, because its mean
+     *            over a period is what `L*di/dt` integrates to.
+     * @note [zh] 为什么要均值而不是采样点。一个开关周期内电流摆动 `v_bus/(4·L·f_sw)`——本机 0.75 A 峰峰，而阶跃才 1 A。
+     *            积分瞬时采样等于在量纹波 并把它当成暂态，而用两个瞬时值算 `Δi` 会错整整一个纹波。对整周期取均值能把纹
+     *            波 精确消掉，因为 `L·di/dt` 积分出来正是它在一个周期上的均值。
      * @since 0.1.0
      */
     auto add(float v_command, float i_mean, float dt_s) noexcept -> bool {
@@ -724,8 +715,8 @@ class IncrementalInductanceEstimator final {
     [[nodiscard]] auto samples() const noexcept -> int { return samples_; }
 
     /**
-     * @brief [en] The inductance, or `valid == false`. [zh] 电感；给不出来时
-     * `valid == false`。
+     * @brief [en] The inductance, or `valid == false`.
+     * @brief [zh] 电感；给不出来时 `valid == false`。
      * @since 0.1.0
      */
     [[nodiscard]] auto solve() const noexcept -> Result {

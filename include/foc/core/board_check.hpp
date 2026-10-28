@@ -14,8 +14,8 @@ namespace foc {
 namespace core {
 
 /**
- * @brief [en] One thing on the board that can be wrong, independent of the
- * others. [zh] 板子上可能出错的一件事，与其它项独立。
+ * @brief [en] One thing on the board that can be wrong, independent of the others.
+ * @brief [zh] 板子上可能出错的一件事，与其它项独立。
  * @since 0.1.0
  * @exporter
  */
@@ -40,14 +40,15 @@ enum class BoardItem : std::uint8_t {
 };
 
 /**
- * @brief [en] The one thing that most likely needs fixing. [zh]
- * 最可能需要修的那一件事。
+ * @brief [en] The one thing that most likely needs fixing.
  *
- *        [en] The list is a *diagnosis*, not a list of failures: "two items failed" is not actionable, "the sampling
- *        instant is wrong" is. The mapping from failure pattern to cause is the whole value of this file -- see
- *        `check_board()`. [zh]
- * 这份清单是**诊断**，不是失败列表："两项失败了"没法处理，"采样时刻错了"可以。从失败模式到
- * 成因的映射就是本文件的全部价值——见 `check_board()`。
+ *     The list is a *diagnosis*, not a list of failures: "two items failed" is not actionable, "the sampling instant is
+ *     wrong" is. The mapping from failure pattern to cause is the whole value of this file -- see `check_board()`.
+ *
+ * @brief [zh] 最可能需要修的那一件事。
+ *
+ *     这份清单是**诊断**，不是失败列表："两项失败了"没法处理，"采样时刻错了"可以。从失败模式到 成因的映射就是本文件的全
+ *     部价值——见 `check_board()`。
  * @since 0.1.0
  * @exporter
  */
@@ -69,11 +70,9 @@ enum class BoardCause : std::uint8_t {
 };
 
 /**
- * @brief [en] Everything the checks measure, in one place. Every field is a
- * **number**, which is the point: the report has to say "0.041 A" and not
- * "fail". [zh]
- * 检查量到的全部东西，放在一处。每个字段都是一个**数**，这正是要点：报告要说"0.041 A"，
- * 不是"失败"。
+ * @brief [en] Everything the checks measure, in one place. Every field is a **number**, which is the point: the report
+ *             has to say "0.041 A" and not "fail".
+ * @brief [zh] 检查量到的全部东西，放在一处。每个字段都是一个**数**，这正是要点：报告要说"0.041 A"， 不是"失败"。
  * @since 0.1.0
  * @exporter
  */
@@ -110,9 +109,8 @@ struct BoardMeasurements final {
 };
 
 /**
- * @brief [en] The tolerances, separate from the measurements so a report can be
- * re-judged without re-measuring. [zh]
- * 容差与测量值分开，于是同一份测量可以在不重测的情况下重新判定。
+ * @brief [en] The tolerances, separate from the measurements so a report can be re-judged without re-measuring.
+ * @brief [zh] 容差与测量值分开，于是同一份测量可以在不重测的情况下重新判定。
  * @since 0.1.0
  * @exporter
  */
@@ -134,9 +132,8 @@ struct BoardLimits final {
 };
 
 /**
- * @brief [en] One check's outcome: what was measured, against what, and the
- * verdict. [zh]
- * 一项检查的结果：量到了什么、对着什么比、以及判定。
+ * @brief [en] One check's outcome: what was measured, against what, and the verdict.
+ * @brief [zh] 一项检查的结果：量到了什么、对着什么比、以及判定。
  * @since 0.1.0
  * @exporter
  */
@@ -150,8 +147,8 @@ struct BoardReading final {
 };
 
 /**
- * @brief [en] What the user gets: every number, and one cause to act on. [zh]
- * 用户拿到的东西：每个数，以及一个可以动手的成因。
+ * @brief [en] What the user gets: every number, and one cause to act on.
+ * @brief [zh] 用户拿到的东西：每个数，以及一个可以动手的成因。
  * @since 0.1.0
  * @exporter
  */
@@ -190,23 +187,26 @@ struct movable_trigger<Bench, std::void_t<decltype(std::declval<Bench&>().set_sa
 } // namespace detail
 
 /**
- * @brief [en] Runs the checks and names the most likely single cause. [zh]
- * 跑完检查，并指出最可能的那个单一成因。
+ * @brief [en] Runs the checks and names the most likely single cause.
  *
- *        [en] Why a cause and not a list. A board that is mis-wired usually fails **several** items at once, and the
- *        items are not independent: an inverted current channel makes the three-wire sum non-zero *and* the dead-time
- *        identification come out negative *and* the flux identification reverse. Reporting three failures sends the
- *        user to three places; the intended behaviour is to report the one thing that explains the most of them. The
- *        scoring below is exactly that: each candidate cause counts how many of the failed items it accounts for, and
- *        the winner is reported. [zh]
- * 为什么报一个成因而不是一张表。接错的板子通常**同时**弄坏好几项，而这些项并不独立：一条反
- * 相的电流通道会让三线之和不为零、让死区辨识出负值、让磁链辨识反号。报三条失败会把用户支到
- * 三个地方；该做的是报那个"解释得最多"的一件。下面的打分就是这个：每个候选成因数一数它解释
- * 了几条失败，胜者上报。
+ *     Why a cause and not a list. A board that is mis-wired usually fails **several** items at once, and the items are
+ *     not independent: an inverted current channel makes the three-wire sum non-zero *and* the dead-time identification
+ *     come out negative *and* the flux identification reverse. Reporting three failures sends the user to three places;
+ *     the intended behaviour is to report the one thing that explains the most of them. The scoring below is exactly
+ *     that: each candidate cause counts how many of the failed items it accounts for, and the winner is reported.
  *
- * @param m [en] what was measured. [zh] 量到了什么。
- * @param limits [en] the tolerances. [zh] 容差。
- * @return [en] every number plus the ranked cause. [zh] 每个数，加上排名后的成因。
+ * @brief [zh] 跑完检查，并指出最可能的那个单一成因。
+ *
+ *     为什么报一个成因而不是一张表。接错的板子通常**同时**弄坏好几项，而这些项并不独立：一条反 相的电流通道会让三线之和
+ *     不为零、让死区辨识出负值、让磁链辨识反号。报三条失败会把用户支到 三个地方；该做的是报那个"解释得最多"的一件。下面
+ *     的打分就是这个：每个候选成因数一数它解释 了几条失败，胜者上报。
+ *
+ * @param m [en] what was measured.
+ * @param m [zh] 量到了什么。
+ * @param limits [en] the tolerances.
+ * @param limits [zh] 容差。
+ * @return [en] every number plus the ranked cause.
+ * @return [zh] 每个数，加上排名后的成因。
  * @since 0.1.0
  * @exporter
  */
@@ -384,7 +384,8 @@ struct movable_trigger<Bench, std::void_t<decltype(std::declval<Bench&>().set_sa
 class BoardSelfTest final {
   public:
     /**
-     * @brief [en] How hard to probe and how long to wait. [zh] 探多深、等多久。
+     * @brief [en] How hard to probe and how long to wait.
+     * @brief [zh] 探多深、等多久。
      * @since 0.1.0
      */
     struct Config final {
@@ -409,7 +410,8 @@ class BoardSelfTest final {
     };
 
     /**
-     * @brief [en] What the standstill half produced. [zh] 堵转半边量到了什么。
+     * @brief [en] What the standstill half produced.
+     * @brief [zh] 堵转半边量到了什么。
      * @since 0.1.0
      */
     struct Result final {
@@ -434,13 +436,14 @@ class BoardSelfTest final {
     explicit BoardSelfTest(const Config& config) noexcept : config_(config) {}
 
     /**
-     * @brief [en] Run the sequence. [zh] 跑完整个序列。
-     * @param bench [en] the board, through the four-call concept in the class
-     * note. [zh] 板子，通过类注释里的四调用概念。
-     * @param spinning [en] the numbers that need the rotor to turn, supplied by
-     * the caller. [zh] 需要转子转起来才能得到的数，由调用方提供。
-     * @return [en] every measured number, ready for `check_board()`. [zh]
-     * 量到的每个数，可直接交给 `check_board()`。
+     * @brief [en] Run the sequence.
+     * @brief [zh] 跑完整个序列。
+     * @param bench [en] the board, through the four-call concept in the class note.
+     * @param bench [zh] 板子，通过类注释里的四调用概念。
+     * @param spinning [en] the numbers that need the rotor to turn, supplied by the caller.
+     * @param spinning [zh] 需要转子转起来才能得到的数，由调用方提供。
+     * @return [en] every measured number, ready for `check_board()`.
+     * @return [zh] 量到的每个数，可直接交给 `check_board()`。
      * @since 0.1.0
      */
     template <typename Bench> auto run(Bench& bench, const BoardMeasurements& spinning) noexcept -> Result {
@@ -563,31 +566,27 @@ class BoardSelfTest final {
     }
 
     /**
-     * @brief [en] Move the ADC trigger across the switching period and read what
-     * moves. [zh] 把 ADC 触发点在开关周期里挪一遍，看什么在动。
+     * @brief [en] Move the ADC trigger across the switching period and read what moves.
      *
-     *        [en] Three numbers come out of the same sweep. The reading's
-     * **peak-to-peak across the period** is the ripple the ADC actually sees,
-     * which is what the `SamplingInstant` check compares against the switching
-     * period. The **deviation of the reading at the board's own trigger from the
-     * period average** (`sample_error_a`) is what that position costs the loop in
-     * amps. The **position of the minimum deviation** is where the trigger ought
-     * to be -- and it is reported rather than assumed, because it is *not*
-     * always the centre of the period: a centre-aligned PWM puts the mean at the
-     * centre, an edge-aligned one puts it wherever the current crosses its
-     * average, which depends on the duty. Assuming 0.5 would be a guess wearing
-     * a constant.
-     *        [zh] 同一次扫描给出三个数。读数在**整个周期里的峰峰值**就是 ADC 实际看到的纹波，即 `SamplingInstant`
-     *        项与开关周期对比的那个量。**板子自己那个触发点上的读数相对周期均值的
-     *        偏离**（`sample_error_a`）就是那个位置在安培上让环付出多少。**偏离最小处的位置**才是触发点
-     *        该在的地方——而它是被**量出来并上报**的，不是被假设的，因为它**并不总是**周期中心：中心对齐的 PWM
-     *        把均值放在中心，边沿对齐的把均值放在电流穿过自身平均值的时刻，那取决于占空比。假设 0.5
-     *        是一个披着常数外衣的猜测。
+     *     Three numbers come out of the same sweep. The reading's **peak-to-peak across the period** is the ripple the
+     *     ADC actually sees, which is what the `SamplingInstant` check compares against the switching period. The
+     *     **deviation of the reading at the board's own trigger from the period average** (`sample_error_a`) is what
+     *     that position costs the loop in amps. The **position of the minimum deviation** is where the trigger ought to
+     *     be -- and it is reported rather than assumed, because it is *not* always the centre of the period: a
+     *     centre-aligned PWM puts the mean at the centre, an edge-aligned one puts it wherever the current crosses its
+     *     average, which depends on the duty. Assuming 0.5 would be a guess wearing a constant.
      *
-     * @note [en] Skipped entirely when the bench has no trigger to move; that is
-     * detected at compile time, not at run time, so a bench without it costs
-     * nothing and does not need a stub.
-     * [zh] 台架没有可动的触发点时整段跳过；这在编译期探测，所以没有该能力的台架零开销、也不必写桩。
+     * @brief [zh] 把 ADC 触发点在开关周期里挪一遍，看什么在动。
+     *
+     *     同一次扫描给出三个数。读数在**整个周期里的峰峰值**就是 ADC 实际看到的纹波，即 `SamplingInstant` 项与开关周期
+     *     对比的那个量。**板子自己那个触发点上的读数相对周期均值的 偏离**（`sample_error_a`）就是那个位置在安培上让环付
+     *     出多少。**偏离最小处的位置**才是触发点 该在的地方——而它是被**量出来并上报**的，不是被假设的，因为它**并不总是
+     *     **周期中心：中心对齐的 PWM 把均值放在中心，边沿对齐的把均值放在电流穿过自身平均值的时刻，那取决于占空比。假设
+     *     0.5 是一个披着常数外衣的猜测。
+     *
+     * @note [en] Skipped entirely when the bench has no trigger to move; that is detected at compile time, not at run
+     *            time, so a bench without it costs nothing and does not need a stub.
+     * @note [zh] 台架没有可动的触发点时整段跳过；这在编译期探测，所以没有该能力的台架零开销、也不必写桩。
      * @since 0.1.0
      */
     template <typename Bench>
@@ -653,16 +652,16 @@ class BoardSelfTest final {
 };
 
 /**
- * @brief [en] The item as text, for a log line or a screen. [zh]
- * 检查项的文本形式，给日志或界面用。
- *
- * @param item [en] which check. [zh] 哪一项。
- * @return [en] a stable, lowercase name; never null. [zh] 稳定的小写名字；不会是空指针。
- * @note [en] Paired with `board_cause_name` so a dump loop is two calls and no
- * switch statement in the user's code -- the procedure document in the repo is
- * meant to be copy-pasteable.
- * [zh] 与 `board_cause_name` 配对，于是导出一段日志就是两次调用，用户代码里不需要 switch——
- * 仓库里的流程文档是要能直接照抄的。
+ * @brief [en] The item as text, for a log line or a screen.
+ * @brief [zh] 检查项的文本形式，给日志或界面用。
+ * @param item [en] which check.
+ * @param item [zh] 哪一项。
+ * @return [en] a stable, lowercase name; never null.
+ * @return [zh] 稳定的小写名字；不会是空指针。
+ * @note [en] Paired with `board_cause_name` so a dump loop is two calls and no switch statement in the user's code --
+ *            the procedure document in the repo is meant to be copy-pasteable.
+ * @note [zh] 与 `board_cause_name` 配对，于是导出一段日志就是两次调用，用户代码里不需要 switch—— 仓库里的流程文档是要能
+ *            直接照抄的。
  * @since 0.1.0
  * @exporter
  */
@@ -689,8 +688,8 @@ class BoardSelfTest final {
 }
 
 /**
- * @brief [en] The cause as text, for a log line or a screen. [zh]
- * 成因的文本形式，给日志或界面用。
+ * @brief [en] The cause as text, for a log line or a screen.
+ * @brief [zh] 成因的文本形式，给日志或界面用。
  * @since 0.1.0
  * @exporter
  */

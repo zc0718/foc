@@ -11,29 +11,27 @@ namespace foc {
 namespace core {
 
 /**
- * @brief [en] Whether field weakening is worth building for *this* machine, as
- * numbers rather than an opinion. [zh]
- * 对**这台**机器来说弱磁值不值得做，用数说话，不用观点。
+ * @brief [en] Whether field weakening is worth building for *this* machine, as numbers rather than an opinion.
  *
- *        [en] The number that decides it is the **characteristic current** `i_char = psi_f/Ld`: the d-axis current that
- *        would null the rotor flux. If `i_char` is far above the current limit, the drive cannot null the flux, and
- *        field weakening buys only the sliver `i_max/i_char` of it -- measured on the SIL machine as 2910 -> 3850 rad/s
- *        (**+32 %**) with torque collapsing to zero at the top. If `i_char` is below the current limit the machine has
- *        a real constant-power region: the same machine with ten times the inductance holds 36 % of its base torque at
- *        8000 rad/s.
- *        [zh] 决定它的是**特征电流** `i_char = ψf/Ld`：把转子磁链削到零所需的 d 轴电流。 如果 `i_char`
- *        远高于电流限幅，驱动器根本削不动磁链，弱磁只买到 `i_max/i_char` 那一点点—— SIL 标称机上实测是 2910 → 3850
- *        rad/s（**+32 %**），顶端转矩塌到零。如果 `i_char` 低于电流
- *        限幅，这台机器就有真正的恒功率区：同一台机器把电感放大十倍，8000 rad/s 处仍有基速转矩的 36 %。
+ *     The number that decides it is the **characteristic current** `i_char = psi_f/Ld`: the d-axis current that would
+ *     null the rotor flux. If `i_char` is far above the current limit, the drive cannot null the flux, and field
+ *     weakening buys only the sliver `i_max/i_char` of it -- measured on the SIL machine as 2910 -> 3850 rad/s (**+32
+ *     %**) with torque collapsing to zero at the top. If `i_char` is below the current limit the machine has a real
+ *     constant-power region: the same machine with ten times the inductance holds 36 % of its base torque at 8000
+ *     rad/s.
  *
- * @note [en] The `speed_gain` here is the closed-form ceiling at `i_q = 0`:
- * `psi_f/(psi_f - Ld*i_max)`. It is an upper bound -- carrying torque needs
- * more voltage, so the measured envelope sits slightly below it -- which is
- * exactly why it is safe to use as a *go/no-go* number and not as a target.
- * [zh] 这里的 `speed_gain` 是 `i_q = 0` 处的闭式上限：
- * `ψf/(ψf − Ld·i_max)`。它是上界——带转矩要更多电压，所以实测包络略低于它——这正是它可以用来
- * 做"做/不做"的门槛而不能当目标值的原因。
+ * @brief [zh] 对**这台**机器来说弱磁值不值得做，用数说话，不用观点。
  *
+ *     决定它的是**特征电流** `i_char = ψf/Ld`：把转子磁链削到零所需的 d 轴电流。 如果 `i_char` 远高于电流限幅，驱动器根
+ *     本削不动磁链，弱磁只买到 `i_max/i_char` 那一点点—— SIL 标称机上实测是 2910 → 3850 rad/s（**+32 %**），顶端转矩塌
+ *     到零。如果 `i_char` 低于电流 限幅，这台机器就有真正的恒功率区：同一台机器把电感放大十倍，8000 rad/s 处仍有基速转
+ *     矩的 36 %。
+ *
+ * @note [en] The `speed_gain` here is the closed-form ceiling at `i_q = 0`: `psi_f/(psi_f - Ld*i_max)`. It is an upper
+ *            bound -- carrying torque needs more voltage, so the measured envelope sits slightly below it -- which is
+ *            exactly why it is safe to use as a *go/no-go* number and not as a target.
+ * @note [zh] 这里的 `speed_gain` 是 `i_q = 0` 处的闭式上限： `ψf/(ψf − Ld·i_max)`。它是上界——带转矩要更多电压，所以实测
+ *            包络略低于它——这正是它可以用来 做"做/不做"的门槛而不能当目标值的原因。
  * @since 0.1.0
  * @exporter
  */
@@ -51,26 +49,28 @@ struct FieldWeakeningAdvice final {
 };
 
 /**
- * @brief [en] The go/no-go test, from nameplate numbers alone. [zh]
- * 只用铭牌数字做的"做/不做"判定。
+ * @brief [en] The go/no-go test, from nameplate numbers alone.
  *
- *        [en] The rule, and why each half of it exists:
- *        - **`ratio < 0.6`**: the flux has to be substantially nullable inside the current limit, or the region is a
- *        sliver.
- *        - **`speed_gain >= 1.5`**: the product has to actually gain speed. A 32 % stretch is usually cheaper to buy
- *        with bus voltage, and raising the bus does not break `i_d ~ 0`, does not touch the observer, and does not
- *        spend current on heat. Either failing means "do not build it"; both passing means the machine was designed for
- *        it.
- *        [zh] 规则，以及每一半为什么存在：
- *        - **`ratio < 0.6`**：磁链要在电流限幅内被大幅削弱，否则那个区只是一条缝。
- *        - **`speed_gain >= 1.5`**：产品要真的因此提速。32 % 的延展通常用母线电压买更便宜，
- *          而升母线不破坏 `i_d ≈ 0`、不碰观测器、也不需要拿电流去发热。
- *          任一条不满足就是"不要做"；两条都满足说明这台机器本来就是为弱磁设计的。
+ *     The rule, and why each half of it exists:
  *
- * @param params [en] the machine, SI. [zh] 机器，SI。
- * @param i_max_a [en] the current limit the drive will actually use, A. [zh]
- * 驱动器实际会用的电流限幅，A。
- * @return [en] the three numbers and the verdict. [zh] 三个数与结论。
+ *     - **`ratio < 0.6`**: the flux has to be substantially nullable inside the current limit, or the region is a
+ *     sliver. - **`speed_gain >= 1.5`**: the product has to actually gain speed. A 32 % stretch is usually cheaper to
+ *     buy with bus voltage, and raising the bus does not break `i_d ~ 0`, does not touch the observer, and does not
+ *     spend current on heat. Either failing means "do not build it"; both passing means the machine was designed for
+ *     it.
+ *
+ * @brief [zh] 只用铭牌数字做的"做/不做"判定。
+ *
+ *     规则，以及每一半为什么存在： - **`ratio < 0.6`**：磁链要在电流限幅内被大幅削弱，否则那个区只是一条缝。 -
+ *     **`speed_gain >= 1.5`**：产品要真的因此提速。32 % 的延展通常用母线电压买更便宜， 而升母线不破坏 `i_d ≈ 0`、不碰观
+ *     测器、也不需要拿电流去发热。 任一条不满足就是"不要做"；两条都满足说明这台机器本来就是为弱磁设计的。
+ *
+ * @param params [en] the machine, SI.
+ * @param params [zh] 机器，SI。
+ * @param i_max_a [en] the current limit the drive will actually use, A.
+ * @param i_max_a [zh] 驱动器实际会用的电流限幅，A。
+ * @return [en] the three numbers and the verdict.
+ * @return [zh] 三个数与结论。
  * @since 0.1.0
  * @exporter
  */
@@ -99,19 +99,19 @@ struct FieldWeakeningAdvice final {
 }
 
 /**
- * @brief [en] The flux magnitude the observer should pull towards when the drive
- * is spending current on `i_d`. [zh]
- * 当驱动器把电流花在 `i_d` 上时，观测器该把幅值拉向多少。
+ * @brief [en] The flux magnitude the observer should pull towards when the drive is spending current on `i_d`.
  *
- *        [en] `psi_f` alone is the *rotor* linkage. As soon as `i_d != 0` the stator flux vector is `psi_f + Ld*i_d` on
- *        the d axis, and telling a magnitude correction to aim at `psi_f` is telling it to aim at the wrong number:
- *        measured in SIL, at `i_d = -2.95 A` the true magnitude is 75 % of `psi_f` and the resulting angle error goes
- *        from 0.0467 rd to 0.0709 rd. That is still inside the 0.10 rd gate, which is why this is a *refinement* and
- *        not a prerequisite -- but it is a refinement with a measurable size.
- *        [zh] 单独的 `psi_f` 是**转子**磁链。只要 `i_d != 0`，定子磁链矢量在 d 轴上就是 `ψf +
- *        Ld·i_d`，而让幅值修正去瞄准 `psi_f` 就是让它瞄错数：SIL 实测 `i_d = −2.95 A` 时 真实幅值是 `ψf` 的 75
- *        %，角度误差从 0.0467 rad 走到 0.0709 rad。那仍在 0.10 rad 闸内，
- *        所以这是**refinement**而不是前置条件——但它是一个大小可测的 refinement。
+ *     `psi_f` alone is the *rotor* linkage. As soon as `i_d != 0` the stator flux vector is `psi_f + Ld*i_d` on the d
+ *     axis, and telling a magnitude correction to aim at `psi_f` is telling it to aim at the wrong number: measured in
+ *     SIL, at `i_d = -2.95 A` the true magnitude is 75 % of `psi_f` and the resulting angle error goes from 0.0467 rd
+ *     to 0.0709 rd. That is still inside the 0.10 rd gate, which is why this is a *refinement* and not a prerequisite
+ *     -- but it is a refinement with a measurable size.
+ *
+ * @brief [zh] 当驱动器把电流花在 `i_d` 上时，观测器该把幅值拉向多少。
+ *
+ *     单独的 `psi_f` 是**转子**磁链。只要 `i_d != 0`，定子磁链矢量在 d 轴上就是 `ψf + Ld·i_d`，而让幅值修正去瞄准
+ *     `psi_f` 就是让它瞄错数：SIL 实测 `i_d = −2.95 A` 时 真实幅值是 `ψf` 的 75 %，角度误差从 0.0467 rad 走到 0.0709
+ *     rad。那仍在 0.10 rad 闸内， 所以这是**refinement**而不是前置条件——但它是一个大小可测的 refinement。
  * @since 0.1.0
  * @exporter
  */
@@ -124,36 +124,36 @@ struct FieldWeakeningAdvice final {
 }
 
 /**
- * @brief [en] The d-axis reference that keeps the drive inside its voltage
- * ceiling by spending current on flux instead of on torque. [zh]
- * 用电流去买磁链（而不是转矩），从而把驱动器留在电压上限以内的 d 轴参考。
+ * @brief [en] The d-axis reference that keeps the drive inside its voltage ceiling by spending current on flux instead
+ *             of on torque.
  *
- *        [en] Drop-in for `NullReferenceGenerator`: same shape, same call site, which is the point -- `ReferenceInput`
- *        already carries `omega_e`, `v_bus` and the measured current, so field weakening needs **no change to `Motor`,
- *        no new template parameter on the existing instantiations, and no state**. Measured (SIL): the nominal
- *        machine's `i_d` goes to `-1.55 A` at the base speed and `-2.70 A` at 3500 rad/s, holding `i_q = 1.24 A` where
- *        `i_d = 0` would give zero torque.
- *        [zh] `NullReferenceGenerator` 的直接替代：同样的形状、同样的调用点，这正是要点—— `ReferenceInput` 已经带着
- *        `omega_e`、`v_bus` 和实测电流，所以弱磁**不需要改 `Motor`、
- * 不需要给既有实例化加模板参数、也不需要状态**。实测（SIL）：标称机在基速处 `i_d` 到
- * `−1.55 A`，3500 rad/s 处到 `−2.70 A`，同时守住 `i_q = 1.24 A`，而 `i_d = 0` 在那里是零转矩。
+ *     Drop-in for `NullReferenceGenerator`: same shape, same call site, which is the point -- `ReferenceInput` already
+ *     carries `omega_e`, `v_bus` and the measured current, so field weakening needs **no change to `Motor`, no new
+ *     template parameter on the existing instantiations, and no state**. Measured (SIL): the nominal machine's `i_d`
+ *     goes to `-1.55 A` at the base speed and `-2.70 A` at 3500 rad/s, holding `i_q = 1.24 A` where `i_d = 0` would
+ *     give zero torque.
  *
- * @note [en] The decision is solved **without `Rs`**, and then verified against
- * the full voltage equation in the tests. That is deliberate: the resistor's
- * contribution to the ellipse is small compared with `omega*L` in the region
- * where this matters, the closed form is what makes the policy a dozen lines,
- * and the test that measures `|v|` against `v_max` is what keeps the
- * approximation honest instead of hidden.
- * [zh] 判定**不含 `Rs`**，然后在测试里对着完整电压方程验证。这是有意的：在真正需要它的区域，
- * 电阻对椭圆的贡献相对 `ωL` 很小，闭式解才让这个策略只有十几行，而"把 `|v|` 对着 `v_max` 量"
- * 的那条测试让近似保持诚实而不是隐藏起来。
+ * @brief [zh] 用电流去买磁链（而不是转矩），从而把驱动器留在电压上限以内的 d 轴参考。
+ *
+ *     `NullReferenceGenerator` 的直接替代：同样的形状、同样的调用点，这正是要点—— `ReferenceInput` 已经带着 `omega_e`、
+ *     `v_bus` 和实测电流，所以弱磁**不需要改 `Motor`、 不需要给既有实例化加模板参数、也不需要状态**。实测（SIL）：标称
+ *     机在基速处 `i_d` 到 `−1.55 A`，3500 rad/s 处到 `−2.70 A`，同时守住 `i_q = 1.24 A`，而 `i_d = 0` 在那里是零转矩。
+ *
+ * @note [en] The decision is solved **without `Rs`**, and then verified against the full voltage equation in the tests.
+ *            That is deliberate: the resistor's contribution to the ellipse is small compared with `omega*L` in the
+ *            region where this matters, the closed form is what makes the policy a dozen lines, and the test that
+ *            measures `|v|` against `v_max` is what keeps the approximation honest instead of hidden.
+ * @note [zh] 判定**不含 `Rs`**，然后在测试里对着完整电压方程验证。这是有意的：在真正需要它的区域， 电阻对椭圆的贡献相对
+ *            `ωL` 很小，闭式解才让这个策略只有十几行，而"把 `|v|` 对着 `v_max` 量" 的那条测试让近似保持诚实而不是隐藏起
+ *            来。
  * @since 0.1.0
  * @exporter
  */
 class FieldWeakeningReference final {
   public:
     /**
-     * @brief [en] The machine and the ceilings. [zh] 机器与上限。
+     * @brief [en] The machine and the ceilings.
+     * @brief [zh] 机器与上限。
      * @since 0.1.0
      */
     struct Config final {
@@ -173,22 +173,19 @@ class FieldWeakeningReference final {
 
     /**
      * @brief [en] The dq current reference for this step.
-     *        [zh] 本步的 dq 电流参考。
-     *
-     * @param in [en] q command, speed, bus, measured current. [zh] q 给定、转速、
-     * 母线、实测电流。
-     * @return [en] `{i_d, i_q}` in A, both inside the current limit. [zh]
-     * `{i_d, i_q}`，A，两者都在电流限幅内。
-     *
-     * @note [en] `i_d` is **continuous** in `omega_e` across the base speed: the
-     * ellipse solution grows away from zero as soon as the point no longer fits,
-     * so there is no step for an integrator to be shocked by. That continuity is
-     * what the continuity requirement is about -- a discontinuous reference would wind the current PI
-     * up and cost an overshoot on the way back down, which is the classic way a
-     * field-weakening implementation damages a machine it was supposed to help.
-     *       [zh] `i_d` 在基速处对 `omega_e` 是**连续**的：一旦工作点装不下，椭圆解就从零连续
-     * 长出来，所以积分器没有台阶可被震。这个连续性正是那条要求的来由——不连续的参考会把电流 PI
-     * 积分上去，回程时付出一个过冲，那正是弱磁实现伤到它本该帮助的机器时的经典方式。
+     * @brief [zh] 本步的 dq 电流参考。
+     * @param in [en] q command, speed, bus, measured current.
+     * @param in [zh] q 给定、转速、 母线、实测电流。
+     * @return [en] `{i_d, i_q}` in A, both inside the current limit.
+     * @return [zh] `{i_d, i_q}`，A，两者都在电流限幅内。
+     * @note [en] `i_d` is **continuous** in `omega_e` across the base speed: the ellipse solution grows away from zero
+     *            as soon as the point no longer fits, so there is no step for an integrator to be shocked by. That
+     *            continuity is what the continuity requirement is about -- a discontinuous reference would wind the
+     *            current PI up and cost an overshoot on the way back down, which is the classic way a field-weakening
+     *            implementation damages a machine it was supposed to help.
+     * @note [zh] `i_d` 在基速处对 `omega_e` 是**连续**的：一旦工作点装不下，椭圆解就从零连续 长出来，所以积分器没有台阶
+     *            可被震。这个连续性正是那条要求的来由——不连续的参考会把电流 PI 积分上去，回程时付出一个过冲，那正是弱磁
+     *            实现伤到它本该帮助的机器时的经典方式。
      * @since 0.1.0
      */
     [[nodiscard]] auto generate(const ReferenceInput& in) noexcept -> Dq<float> {

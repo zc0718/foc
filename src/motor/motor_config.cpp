@@ -9,7 +9,7 @@ namespace foc {
 
 /**
  * @brief [en] Implements psi_f_wb(); the contract is documented on its declaration.
- *        [zh] 实现 psi_f_wb()；契约文档在对应的声明处。
+ * @brief [zh] 实现 psi_f_wb()；契约文档在对应的声明处。
  * @attacher
  * @since 0.1.0
  */
@@ -25,7 +25,7 @@ auto psi_f_wb(const motor::MotorConfig& config) noexcept -> float {
 
 /**
  * @brief [en] Implements current_pi_config(); the contract is documented on its declaration.
- *        [zh] 实现 current_pi_config()；契约文档在对应的声明处。
+ * @brief [zh] 实现 current_pi_config()；契约文档在对应的声明处。
  * @attacher
  * @since 0.1.0
  */
@@ -42,7 +42,7 @@ auto current_pi_config(const motor::MotorConfig& config, float bandwidth_rad_s, 
 
 /**
  * @brief [en] Implements speed_pi_config(); the contract is documented on its declaration.
- *        [zh] 实现 speed_pi_config()；契约文档在对应的声明处。
+ * @brief [zh] 实现 speed_pi_config()；契约文档在对应的声明处。
  * @attacher
  * @since 0.1.0
  */
@@ -58,7 +58,7 @@ auto speed_pi_config(const motor::MotorConfig& config, float bandwidth_rad_s) no
 
 /**
  * @brief [en] Implements feedforward_config(); the contract is documented on its declaration.
- *        [zh] 实现 feedforward_config()；契约文档在对应的声明处。
+ * @brief [zh] 实现 feedforward_config()；契约文档在对应的声明处。
  * @attacher
  * @since 0.1.0
  */
@@ -70,7 +70,7 @@ auto feedforward_config(const motor::MotorConfig& config) noexcept -> core::Deco
 
 /**
  * @brief [en] Implements position_p_config(); the contract is documented on its declaration.
- *        [zh] 实现 position_p_config()；契约文档在对应的声明处。
+ * @brief [zh] 实现 position_p_config()；契约文档在对应的声明处。
  * @attacher
  * @since 0.1.0
  */

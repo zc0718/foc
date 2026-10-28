@@ -13,7 +13,7 @@ namespace {
 
 /**
  * @brief [en] Demo: print the packaged resource file, proving RESOURCES_PATH plumbing works.
- *        [zh] 演示：打印打包的资源文件，验证 RESOURCES_PATH 通路可用。
+ * @brief [zh] 演示：打印打包的资源文件，验证 RESOURCES_PATH 通路可用。
  */
 int print_example_text() {
     const std::string filepath = "./resources/example.txt";

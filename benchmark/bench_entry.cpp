@@ -1,24 +1,30 @@
 /**
  * bench_entry.cpp  –  Algorithm Benchmark Entry
  *
- * ============================================================ HOW TO USE (algorithm engineer)
- * ============================================================
- *  1. Set MODULE_NAME to identify this build (e.g. "MyAlgo-v2.0").
- *  2. Include your algorithm header(s) below.
- *  3. Add static wrapper functions (one per test item).
- *  4. Add entries to bench_table[].
- *  5. Build with:  conan build . -pr:h profiles/<target>.profile
+ *     ============================================================ HOW TO USE (algorithm engineer)
  *
- *  Everything else (linker script, descriptor, RAM init, timing) is handled automatically – do NOT modify below the
- *  separator. ============================================================
+ *     ============================================================
  *
- * What is measured here: the hot paths of this library, one case each. Every case does exactly
- * ONE unit of work per iteration, so `reported microseconds / repeat` is the cost of one call.
+ *     1. Set MODULE_NAME to identify this build (e.g. "MyAlgo-v2.0").
  *
- * HONEST BOUNDARY: a host (x86_64 Linux) run gives a *relative* cost per operation, not an MCU
- * worst-case execution time. The target numbers (PRD U6/U7) still require the board, a cycle
- * counter, and the real toolchain — see benchmark/docs/benchmark-usage.md.
- * 诚实边界：宿主机（x86_64 Linux）跑出来的是**相对**开销，不是 MCU 的 WCET；U6/U7 仍需上板。
+ *     2. Include your algorithm header(s) below.
+ *
+ *     3. Add static wrapper functions (one per test item).
+ *
+ *     4. Add entries to bench_table[].
+ *
+ *     5. Build with: conan build . -pr:h profiles/<target>.profile
+ *
+ *     Everything else (linker script, descriptor, RAM init, timing) is handled automatically – do NOT modify below the
+ *     separator. ============================================================
+ *
+ *     What is measured here: the hot paths of this library, one case each. Every case does exactly ONE unit of work per
+ *     iteration, so `reported microseconds / repeat` is the cost of one call.
+ *
+ *     HONEST BOUNDARY: a host (x86_64 Linux) run gives a *relative* cost per operation, not an MCU worst-case execution
+ *     time. The target numbers (PRD U6/U7) still require the board, a cycle counter, and the real toolchain — see
+ *     benchmark/docs/benchmark-usage.md. 诚实边界：宿主机（x86_64 Linux）跑出来的是**相对**开销，不是 MCU 的 WCET；
+ *     U6/U7 仍需上板。
  */
 #include <stdint.h>
 #include <cmath>

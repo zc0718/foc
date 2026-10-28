@@ -5,11 +5,10 @@
 
 
 /**
- * @brief [en] Opaque motor handle of the C path. Created by foc_motor_create(), invalidated by
- *        foc_motor_destroy(); a stale handle is detected through an internal generation counter.
- *        [zh] C 路径的不透明电机句柄。由 foc_motor_create() 创建、foc_motor_destroy() 失效；
- *        内部用代际计数识别失效句柄。
- *
+ * @brief [en] Opaque motor handle of the C path. Created by foc_motor_create(), invalidated by foc_motor_destroy(); a
+ *             stale handle is detected through an internal generation counter.
+ * @brief [zh] C 路径的不透明电机句柄。由 foc_motor_create() 创建、foc_motor_destroy() 失效； 内部用代际计数识别失效句
+ *             柄。
  * @since 0.1.0
  * @exporter
  */
@@ -17,11 +16,9 @@ typedef struct foc_motor_s *foc_motor_t;
 
 
 /**
- * @brief [en] Error codes of the C path. The numeric values are frozen: they mirror
- *        foc::ErrorCode one to one (see include/foc/core/types.hpp).
- *        [zh] C 路径的错误码。数值已冻结：与 foc::ErrorCode 一一对应
- *        （见 include/foc/core/types.hpp）。
- *
+ * @brief [en] Error codes of the C path. The numeric values are frozen: they mirror foc::ErrorCode one to one (see
+ *             include/foc/core/types.hpp).
+ * @brief [zh] C 路径的错误码。数值已冻结：与 foc::ErrorCode 一一对应 （见 include/foc/core/types.hpp）。
  * @since 0.1.0
  * @exporter
  */
@@ -42,8 +39,7 @@ typedef enum foc_err {
 
 /**
  * @brief [en] Motor parameters, SI units, as required by foc_motor_create().
- *        [zh] 电机参数，SI 单位，供 foc_motor_create() 使用。
- *
+ * @brief [zh] 电机参数，SI 单位，供 foc_motor_create() 使用。
  * @since 0.1.0
  * @exporter
  */
@@ -60,32 +56,28 @@ typedef struct foc_motor_params {
 
 /**
  * @brief [en] Optional setup for the C path: every value the library would otherwise have to guess.
- *        [zh] C 路径的可选设置：不提供时库只能自己猜的那些值。
+ * @brief [zh] C 路径的可选设置：不提供时库只能自己猜的那些值。
+ * @note [en] `struct_size` must be `sizeof(foc_motor_setup_t)`. A caller built against an older header passes a smaller
+ *            value and the library only reads the fields that value covers, so growing this struct never reads past the
+ *            caller's memory. Where 0 is not a legal value (current limit, carrier, bus voltage, bandwidths), 0 means
+ *            "library default"; any other value is authoritative and validated, so a negative limit is a parameter
+ *            error rather than a silent fallback. `deadtime_ns` and `speed_loop_period_s` take 0 literally, because 0
+ *            is a legal value for both. The `align_*` fields are the exception that proves the rule: they are taken
+ *            literally, and `align_current_a == 0` means "do not align" -- a legal, common choice for a machine whose
+ *            offset is already known. But a *half*-configured alignment is rejected: with `align_current_a == 0` every
+ *            other `align_*` field must be 0 as well, and with it non-zero `align_hold_s` and `align_tolerance_rad`
+ *            become mandatory.
  *
- * @note [en] `struct_size` must be `sizeof(foc_motor_setup_t)`. A caller built against an older
- *       header passes a smaller value and the library only reads the fields that value covers, so
- *       growing this struct never reads past the caller's memory.
- *       [zh] `struct_size` 必须是 `sizeof(foc_motor_setup_t)`。用旧头编译的调用方会传更小的值，
- *       库只读取该值覆盖到的字段，因此本结构以后增长也绝不会读到调用方内存之外。
+ * @note [zh] `struct_size` 必须是 `sizeof(foc_motor_setup_t)`。用旧头编译的调用方会传更小的值， 库只读取该值覆盖到的字
+ *            段，因此本结构以后增长也绝不会读到调用方内存之外。
  *
- * @note [en] Where 0 is not a legal value (current limit, carrier, bus voltage, bandwidths), 0
- *       means "library default"; any other value is authoritative and validated, so a negative
- *       limit is a parameter error rather than a silent fallback. `deadtime_ns` and
- *       `speed_loop_period_s` take 0 literally, because 0 is a legal value for both.
- *       [zh] 在 0 不是合法取值的字段上（限流、载波、母线电压、带宽），0 表示“使用库默认值”；
- *       其余取值一律采信并校验，因此负数限流是参数错误而不是静默回落。
- *       `deadtime_ns` 与 `speed_loop_period_s` 的 0 按字面生效，因为 0 对它们都是合法取值。
+ *     在 0 不是合法取值的字段上（限流、载波、母线电压、带宽），0 表示“使用库默认值”； 其余取值一律采信并校验，因此负数
+ *     限流是参数错误而不是静默回落。 `deadtime_ns` 与 `speed_loop_period_s` 的 0 按字面生效，因为 0 对它们都是合法取
+ *     值。
  *
- * @note [en] The `align_*` fields are the exception that proves the rule: they are taken literally,
- *       and `align_current_a == 0` means "do not align" -- a legal, common choice for a machine
- *       whose offset is already known. But a *half*-configured alignment is rejected: with
- *       `align_current_a == 0` every other `align_*` field must be 0 as well, and with it non-zero
- *       `align_hold_s` and `align_tolerance_rad` become mandatory.
- *       [zh] `align_*` 字段是那条规则的例外：它们按字面生效，`align_current_a == 0` 意为“不做对齐”
- *       ——对偏置已知的电机这是一个合法且常见的选择。但**半配置**的对齐会被拒绝：`align_current_a`
- *       为 0 时其余 `align_*` 字段也必须为 0；它非 0 时 `align_hold_s` 与 `align_tolerance_rad`
- *       变成必填。
- *
+ *     `align_*` 字段是那条规则的例外：它们按字面生效，`align_current_a == 0` 意为“不做对齐” ——对偏置已知的电机这是一个
+ *     合法且常见的选择。但**半配置**的对齐会被拒绝：`align_current_a` 为 0 时其余 `align_*` 字段也必须为 0；它非 0 时
+ *     `align_hold_s` 与 `align_tolerance_rad` 变成必填。
  * @since 0.1.0
  * @exporter
  */
@@ -113,8 +105,7 @@ typedef struct foc_motor_setup {
 
 /**
  * @brief [en] Operating mode state, mirroring foc::core::MotorState. Values are frozen.
- *        [zh] 运行模式状态，与 foc::core::MotorState 对应。数值已冻结。
- *
+ * @brief [zh] 运行模式状态，与 foc::core::MotorState 对应。数值已冻结。
  * @since 0.1.0
  * @exporter
  */
@@ -129,8 +120,7 @@ typedef enum foc_motor_state {
 
 /**
  * @brief [en] Alignment phase, mirroring foc::core::AlignState. Values are frozen.
- *        [zh] 对齐阶段，与 foc::core::AlignState 对应。数值已冻结。
- *
+ * @brief [zh] 对齐阶段，与 foc::core::AlignState 对应。数值已冻结。
  * @since 0.1.0
  * @exporter
  */
@@ -147,8 +137,7 @@ typedef enum foc_align_state {
 
 /**
  * @brief [en] Why an alignment sequence was rejected, mirroring foc::core::AlignFailure.
- *        [zh] 对齐流程被拒的原因，与 foc::core::AlignFailure 对应。
- *
+ * @brief [zh] 对齐流程被拒的原因，与 foc::core::AlignFailure 对应。
  * @since 0.1.0
  * @exporter
  */
@@ -163,9 +152,8 @@ typedef enum foc_align_failure {
 
 /**
  * @brief [en] One position move: where to go, how hard to push, how fast, and what to add on top.
- *        [zh] 一次位置运动：去哪里、允许多大推力、多快、以及额外叠加多少。
- *        [zh] 一次位置运动：去哪里、允许用多大力、额外叠加多少。
- *
+ * @brief [zh] 一次位置运动：去哪里、允许多大推力、多快、以及额外叠加多少。 一次位置运动：去哪里、允许用多大力、额外叠加
+ *             多少。
  * @since 0.1.0
  * @exporter
  */
@@ -183,19 +171,18 @@ typedef struct foc_motor_command {
 
 /**
  * @brief [en] Everything the motor can be asked about its own state, in one read.
- *        [zh] 一次读回电机的全部自述状态。
+ * @brief [zh] 一次读回电机的全部自述状态。
+ * @note [en] `struct_size` must be `sizeof(foc_motor_status_t)`; the library writes the fields that value covers, so
+ *            growing this struct never writes past the caller's object. The two state fields are `int32_t` rather than
+ *            the enum types on purpose: a C enum's underlying type is implementation-defined, and these values are part
+ *            of the frozen ABI. The `FOC_MOTOR_*`, `FOC_ALIGN_*` constants are the contract; the field is just its
+ *            storage.
  *
- * @note [en] `struct_size` must be `sizeof(foc_motor_status_t)`; the library writes the fields that
- *       value covers, so growing this struct never writes past the caller's object.
- *       [zh] `struct_size` 必须是 `sizeof(foc_motor_status_t)`；库只写入该值覆盖到的字段，因此本结构
- *       以后增长也绝不会写到调用方对象之外。
+ * @note [zh] `struct_size` 必须是 `sizeof(foc_motor_status_t)`；库只写入该值覆盖到的字段，因此本结构 以后增长也绝不会写
+ *            到调用方对象之外。
  *
- * @note [en] The two state fields are `int32_t` rather than the enum types on purpose: a C enum's
- *       underlying type is implementation-defined, and these values are part of the frozen ABI.
- *       The `FOC_MOTOR_*`, `FOC_ALIGN_*` constants are the contract; the field is just its storage.
- *       [zh] 两个状态字段故意用 `int32_t` 而不是枚举类型：C 枚举的底层类型由实现决定，而这些数值属于
- *       冻结的 ABI。契约是 `FOC_MOTOR_*`、`FOC_ALIGN_*` 这些常量，字段只是它的存储。
- *
+ *     两个状态字段故意用 `int32_t` 而不是枚举类型：C 枚举的底层类型由实现决定，而这些数值属于 冻结的 ABI。契约是
+ *     `FOC_MOTOR_*`、`FOC_ALIGN_*` 这些常量，字段只是它的存储。
  * @since 0.1.0
  * @exporter
  */
@@ -231,11 +218,12 @@ typedef struct foc_motor_status {
  * ---------------------------------------------------------------------------------------------- */
 
 /**
- * @brief [en] The checks `foc_board_check()` reports on. [zh] `foc_board_check()` 报告的检查项。
- * @note [en] A C enum, like every other constant in this header: `#define` would be a constant
- * declared by macro, which this project's tidy gate rejects, and the values are frozen either way.
- * [zh] C 枚举，与本头文件里其它常量一致：`#define` 属于"用宏声明常量"，被本项目的 tidy 门拒
- * 绝；两种写法下这些数值同样冻结。
+ * @brief [en] The checks `foc_board_check()` reports on.
+ * @brief [zh] `foc_board_check()` 报告的检查项。
+ * @note [en] A C enum, like every other constant in this header: `#define` would be a constant declared by macro, which
+ *            this project's tidy gate rejects, and the values are frozen either way.
+ * @note [zh] C 枚举，与本头文件里其它常量一致：`#define` 属于"用宏声明常量"，被本项目的 tidy 门拒 绝；两种写法下这些数
+ *            值同样冻结。
  * @since 0.1.1
  * @exporter
  */
@@ -252,7 +240,8 @@ typedef enum foc_board_item {
 } foc_board_item_t;
 
 /**
- * @brief [en] The single cause `foc_board_check()` names. [zh] `foc_board_check()` 点名的单一成因。
+ * @brief [en] The single cause `foc_board_check()` names.
+ * @brief [zh] `foc_board_check()` 点名的单一成因。
  * @since 0.1.1
  * @exporter
  */
@@ -269,8 +258,8 @@ typedef enum foc_board_cause {
 } foc_board_cause_t;
 
 /**
- * @brief [en] `foc_protection_output_t.fault` domain; the same ranking as `FaultCode`. [zh]
- * `foc_protection_output_t.fault` 的取值域；排名与 `FaultCode` 一致。
+ * @brief [en] `foc_protection_output_t.fault` domain; the same ranking as `FaultCode`.
+ * @brief [zh] `foc_protection_output_t.fault` 的取值域；排名与 `FaultCode` 一致。
  * @since 0.1.1
  * @exporter
  */
@@ -292,12 +281,10 @@ typedef enum foc_fault {
 typedef enum foc_board_report_capacity { FOC_BOARD_MAX_ITEMS = 12 } foc_board_report_capacity_t;
 
 /**
- * @brief [en] Everything a board check measures, in one place. [zh]
- * 板级检查量到的全部东西，放在一处。
- *
- * @note [en] `struct_size` first, like every other struct here: the library only
- * writes the fields that value covers.
- * [zh] 与这里其它结构一样 `struct_size` 在最前：库只写入该值覆盖到的字段。
+ * @brief [en] Everything a board check measures, in one place.
+ * @brief [zh] 板级检查量到的全部东西，放在一处。
+ * @note [en] `struct_size` first, like every other struct here: the library only writes the fields that value covers.
+ * @note [zh] 与这里其它结构一样 `struct_size` 在最前：库只写入该值覆盖到的字段。
  * @since 0.1.1
  * @exporter
  */
@@ -319,8 +306,8 @@ typedef struct foc_board_measurements {
 } foc_board_measurements_t;
 
 /**
- * @brief [en] The tolerances, separate from the measurements. [zh]
- * 容差，与测量值分开。
+ * @brief [en] The tolerances, separate from the measurements.
+ * @brief [zh] 容差，与测量值分开。
  * @since 0.1.1
  * @exporter
  */
@@ -345,8 +332,8 @@ typedef struct foc_board_reading {
 } foc_board_reading_t;
 
 /**
- * @brief [en] Every number plus the one cause to fix first. [zh]
- * 每个数，加上那个最先该修的成因。
+ * @brief [en] Every number plus the one cause to fix first.
+ * @brief [zh] 每个数，加上那个最先该修的成因。
  * @since 0.1.1
  * @exporter
  */
@@ -360,8 +347,8 @@ typedef struct foc_board_report {
 } foc_board_report_t;
 
 /**
- * @brief [en] The go/no-go answer from nameplate numbers alone. [zh]
- * 只用铭牌数字得到的做/不做判定。
+ * @brief [en] The go/no-go answer from nameplate numbers alone.
+ * @brief [zh] 只用铭牌数字得到的做/不做判定。
  * @since 0.1.1
  * @exporter
  */
@@ -374,12 +361,11 @@ typedef struct foc_fw_verdict {
 } foc_fw_verdict_t;
 
 /**
- * @brief [en] Protection thresholds. Every field is used exactly as given -- a
- * zero is a zero and it will trip immediately. Pass NULL to
- * `foc_protector_create()` to get the library defaults for the nominal 24 V /
- * 3 A machine instead of guessing them.
- * [zh] 保护阈值。每个字段**按原样**使用——零就是零，它会立刻跳闸。要标称 24 V / 3 A
- * 机器上的库默认值，给 `foc_protector_create()` 传 NULL，而不是自己猜。
+ * @brief [en] Protection thresholds. Every field is used exactly as given -- a zero is a zero and it will trip
+ *             immediately. Pass NULL to `foc_protector_create()` to get the library defaults for the nominal 24 V / 3 A
+ *             machine instead of guessing them.
+ * @brief [zh] 保护阈值。每个字段**按原样**使用——零就是零，它会立刻跳闸。要标称 24 V / 3 A 机器上的库默认值，给
+ *             `foc_protector_create()` 传 NULL，而不是自己猜。
  * @since 0.1.1
  * @exporter
  */
@@ -413,7 +399,8 @@ typedef struct foc_protection_input {
 } foc_protection_input_t;
 
 /**
- * @brief [en] What to do this step. [zh] 本步的处置。
+ * @brief [en] What to do this step.
+ * @brief [zh] 本步的处置。
  * @since 0.1.1
  * @exporter
  */

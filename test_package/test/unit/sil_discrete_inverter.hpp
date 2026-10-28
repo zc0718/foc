@@ -17,8 +17,7 @@ using core::Uvw;
 
 /**
  * @brief [en] What one inverter leg needs to be simulated.
- *        [zh] 一条逆变器桥臂要仿真所需要的全部参数。
- *
+ * @brief [zh] 一条逆变器桥臂要仿真所需要的全部参数。
  * @since 0.1.0
  */
 struct InverterConfig final {
@@ -39,52 +38,54 @@ struct InverterConfig final {
 };
 
 /**
- * @brief [en] A switching inverter, as the plant sees it: per-leg gate signals,
- * dead time, freewheeling diodes, and the three rail voltages that result. [zh]
- * 从被控对象看过去的开关逆变器：每条桥臂的门极信号、死区、续流二极管，以及由此得到的三相 极电压。
+ * @brief [en] A switching inverter, as the plant sees it: per-leg gate signals, dead time, freewheeling diodes, and the
+ *             three rail voltages that result.
  *
- *        [en] Why this exists: the average-value model in `PlantHal` holds one voltage vector for a whole control
- *        period, so the current it produces is smooth and the dead-time error is a formula that was handed to it. Any
- *        observer that reacts to ripple -- a sliding-mode observer above all -- is then being graded against the
- *        formula rather than against hardware. Here the dead-time volt-seconds are not an input: they *fall out* of
- *        "turn-off is immediate, turn-on is delayed, and whichever device still conducts is decided by the current".
- *        The identity `v_err = -(t_dead/T)*v_bus*sign(i)` is therefore a property that can be *checked* (S19 V2), not
- *        an assumption that is applied (A2's ramp is checked the same way, S19 V6). [zh]
- * 存在的理由：`PlantHal` 里的平均值模型在整个控制周期内保持一个电压矢量，于是它产生的
- * 电流是平滑的、死区误差是一条被喂给它的公式。任何对纹波有反应的观测器——首当其冲是滑模
- * 观测器——因此是在对着公式打分，而不是对着硬件打分。这里死区伏秒不是输入：它从"关断立即、
- * 开通延迟、仍导通的那只器件由电流决定"里**落出来**。所以 `v_err = −(t_dead/T)·v_bus·sign(i)`
- * 是一条可以被**检验**的性质（S19 V2），而不是被施加的假设（A2 的斜坡同样如此，S19 V6）。
+ *     Why this exists: the average-value model in `PlantHal` holds one voltage vector for a whole control period, so
+ *     the current it produces is smooth and the dead-time error is a formula that was handed to it. Any observer that
+ *     reacts to ripple -- a sliding-mode observer above all -- is then being graded against the formula rather than
+ *     against hardware. Here the dead-time volt-seconds are not an input: they *fall out* of "turn-off is immediate,
+ *     turn-on is delayed, and whichever device still conducts is decided by the current". The identity `v_err =
+ *     -(t_dead/T)*v_bus*sign(i)` is therefore a property that can be *checked* (S19 V2), not an assumption that is
+ *     applied (A2's ramp is checked the same way, S19 V6).
  *
- *        [en] Carrier: centre-aligned, so the high window of leg x is `[(1-d)/2, (1+d)/2]*T`. Every switching period is
- *        then self-contained -- at the period boundary all three legs are commanded low -- so the model keeps
- * **no state across periods** and any period is reproducible from its own inputs. That is what makes single-period
- * verification (V1/V2/V3) meaningful. [zh] 载波：中心对齐，于是 x 相的高侧窗口是 `[(1-d)/2,
- * (1+d)/2]·T`。每个开关周期因此是自包含的
- * ——周期边界处三相都被命令为低侧——所以模型**不跨周期存状态**，任何周期都能由它自己的输入复现。
- *        这正是单周期验证（V1/V2/V3）有意义的原因。
+ *     Carrier: centre-aligned, so the high window of leg x is `[(1-d)/2, (1+d)/2]*T`. Every switching period is then
+ *     self-contained -- at the period boundary all three legs are commanded low -- so the model keeps **no state across
+ *     periods** and any period is reproducible from its own inputs. That is what makes single-period verification
+ *     (V1/V2/V3) meaningful.
  *
- *        [en] Resolution: within a sub-step the high-side and dead-time windows are integrated *as fractions*, so the
- *        **mean** voltage over a sub-step is exact and dead time is never quantised; the sub-step length only limits
- *        how finely the ripple is resolved. A coarse model therefore still gets V2 right, which is the property that
- *        lets CI use 20 sub-steps instead of 2000. [zh]
- * 分辨率：子步内高侧窗口与死区窗口按**比例**积分，所以子步的**平均**电压是精确的、死区从不被
- * 量化；子步长度只限制纹波的分辨率。因此粗模型仍然能算对 V2，这才让 CI 能用 20 个子步而不是 2000 个。
+ *     Resolution: within a sub-step the high-side and dead-time windows are integrated *as fractions*, so the **mean**
+ *     voltage over a sub-step is exact and dead time is never quantised; the sub-step length only limits how finely the
+ *     ripple is resolved. A coarse model therefore still gets V2 right, which is the property that lets CI use 20
+ *     sub-steps instead of 2000.
+ *
+ * @brief [zh] 从被控对象看过去的开关逆变器：每条桥臂的门极信号、死区、续流二极管，以及由此得到的三相 极电压。
+ *
+ *     存在的理由：`PlantHal` 里的平均值模型在整个控制周期内保持一个电压矢量，于是它产生的 电流是平滑的、死区误差是一条
+ *     被喂给它的公式。任何对纹波有反应的观测器——首当其冲是滑模 观测器——因此是在对着公式打分，而不是对着硬件打分。这里死
+ *     区伏秒不是输入：它从"关断立即、 开通延迟、仍导通的那只器件由电流决定"里**落出来**。所以 `v_err =
+ *     −(t_dead/T)·v_bus·sign(i)` 是一条可以被**检验**的性质（S19 V2），而不是被施加的假设（A2 的斜坡同样如此，S19 V6
+ *     ）。
+ *
+ *     载波：中心对齐，于是 x 相的高侧窗口是 `[(1-d)/2, (1+d)/2]·T`。每个开关周期因此是自包含的 ——周期边界处三相都被命令
+ *     为低侧——所以模型**不跨周期存状态**，任何周期都能由它自己的输入复现。 这正是单周期验证（V1/V2/V3）有意义的原因。
+ *
+ *     分辨率：子步内高侧窗口与死区窗口按**比例**积分，所以子步的**平均**电压是精确的、死区从不被 量化；子步长度只限制纹
+ *     波的分辨率。因此粗模型仍然能算对 V2，这才让 CI 能用 20 个子步而不是 2000 个。
  *
  * @note [en] The neutral point is not modelled: the machine is a floating star, so only line-to-line voltages matter
- * and the common mode cancels in the Clarke transform. That is also why `clarke(pole voltages)` must reproduce the
- * commanded `v_ab` exactly when dead time is off (V1) -- the same identity that makes `Svpwm`'s midpoint injection
- * equivalent to the classic sector formulation.
- *       [zh] 中性点不建模：电机是浮地星形，只有线电压有意义，共模在 Clarke 变换里自动消掉。这也是为什么 死区关闭时
- *       `clarke(极电压)` 必须精确复现指令 `v_ab`（V1）——正是同一条恒等式让 `Svpwm` 的中点 注入与经典扇区公式等价。
- * @note [en] Known idealisations, stated so the numbers are read correctly: the
- * current sign inside a dead-time window is taken at the sub-step boundary (so
- * a zero crossing inside one sub-step is resolved to sub-step accuracy);
- * reverse recovery, ringing and device capacitance are absent. [zh]
- * 已知的理想化，写下来是为了让数字被正确解读：死区窗口内的电流方向取子步边界处的值（所以子步
- * 内部的过零只有子步精度）；反向恢复、振荡、器件电容均未建模。
+ *            and the common mode cancels in the Clarke transform. That is also why `clarke(pole voltages)` must
+ *            reproduce the commanded `v_ab` exactly when dead time is off (V1) -- the same identity that makes
+ *            `Svpwm`'s midpoint injection equivalent to the classic sector formulation. Known idealisations, stated so
+ *            the numbers are read correctly: the current sign inside a dead-time window is taken at the sub-step
+ *            boundary (so a zero crossing inside one sub-step is resolved to sub-step accuracy); reverse recovery,
+ *            ringing and device capacitance are absent.
+ * @note [zh] 中性点不建模：电机是浮地星形，只有线电压有意义，共模在 Clarke 变换里自动消掉。这也是为什么 死区关闭时
+ *            `clarke(极电压)` 必须精确复现指令 `v_ab`（V1）——正是同一条恒等式让 `Svpwm` 的中点 注入与经典扇区公式等价。
+ *            已知的理想化，写下来是为了让数字被正确解读：死区窗口内的电流方向取子步边界处的值（所以子步 内部的过零只有
+ *            子步精度）；反向恢复、振荡、器件电容均未建模。
  * @context [en] Host-side SIL only: never part of the shipped library.
- *           [zh] 仅 host 侧 SIL：绝不进入发布库。
+ * @context [zh] 仅 host 侧 SIL：绝不进入发布库。
  * @since 0.1.0
  */
 class DiscreteInverter final {
@@ -123,20 +124,17 @@ public:
   }
 
   /**
-   * @brief [en] Latch one control period: the duties, the bus, and how many
-   * sub-steps it is worth. [zh]
-   * 锁存一个控制周期：占空比、母线电压，以及它值多少个子步。
-   *
-   * @param duty [en] per-phase duty from the modulator. Clamped to [0, 1];
-   * out-of-range is reported by `clamped()`. [zh] 调制器给出的每相占空比。钳到
-   * [0, 1]；越界由 `clamped()` 报告。
-   * @param v_bus [en] DC link voltage in V. [zh] 母线电压，V。
-   * @param dt_ctrl_s [en] control period in s; must be a whole number of
-   * switching periods, otherwise the request is refused (0 sub-steps) rather
-   * than silently mis-timed. [zh]
-   * 控制周期，s；必须是开关周期的整数倍，否则请求被拒绝（0 子步）而不是被悄悄 错配时间。
-   * @return [en] number of sub-steps to run, 0 if the request was refused. [zh]
-   * 要跑的子步数；请求被 拒绝时为 0。
+   * @brief [en] Latch one control period: the duties, the bus, and how many sub-steps it is worth.
+   * @brief [zh] 锁存一个控制周期：占空比、母线电压，以及它值多少个子步。
+   * @param duty [en] per-phase duty from the modulator. Clamped to [0, 1]; out-of-range is reported by `clamped()`.
+   * @param duty [zh] 调制器给出的每相占空比。钳到 [0, 1]；越界由 `clamped()` 报告。
+   * @param v_bus [en] DC link voltage in V.
+   * @param v_bus [zh] 母线电压，V。
+   * @param dt_ctrl_s [en] control period in s; must be a whole number of switching periods, otherwise the request is
+   *                       refused (0 sub-steps) rather than silently mis-timed.
+   * @param dt_ctrl_s [zh] 控制周期，s；必须是开关周期的整数倍，否则请求被拒绝（0 子步）而不是被悄悄 错配时间。
+   * @return [en] number of sub-steps to run, 0 if the request was refused.
+   * @return [zh] 要跑的子步数；请求被 拒绝时为 0。
    * @since 0.1.0
    */
   [[nodiscard]] auto begin_period(Uvw<float> duty, float v_bus,
@@ -181,14 +179,13 @@ public:
   [[nodiscard]] auto duty() const noexcept -> Uvw<float> { return duty_; }
 
   /**
-   * @brief [en] The stationary-frame voltage for the next sub-step, given the
-   * currents at its start. [zh] 下一个子步的静止系电压，电流取其起点处的值。
-   *
-   * @param i_uvw [en] phase currents at the start of the sub-step, A; only
-   * their **sign** is used, and only during dead-time windows. [zh]
-   * 子步起点处的相电流，A；只用到它们的**符号**， 且只在死区窗口内。
-   * @return [en] `clarke` of the three pole voltages, V. [zh] 三相极电压的
-   * `clarke`，V。
+   * @brief [en] The stationary-frame voltage for the next sub-step, given the currents at its start.
+   * @brief [zh] 下一个子步的静止系电压，电流取其起点处的值。
+   * @param i_uvw [en] phase currents at the start of the sub-step, A; only their **sign** is used, and only during
+   *                   dead-time windows.
+   * @param i_uvw [zh] 子步起点处的相电流，A；只用到它们的**符号**， 且只在死区窗口内。
+   * @return [en] `clarke` of the three pole voltages, V.
+   * @return [zh] 三相极电压的 `clarke`，V。
    * @since 0.1.0
    */
   [[nodiscard]] auto step(const Uvw<float> &i_uvw) noexcept -> Ab<float> {

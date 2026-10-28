@@ -46,12 +46,11 @@ struct Trace final {
 
 
 /**
- * @brief [en] The profile shapes the velocity command; the plant must show the same shape. The
- *        measured acceleration is bounded by the configured limit (the inner loop tracks the command
- *        much faster than the profile changes it), which is the whole point of putting the profile
- *        in front of the loop instead of inside it.
- *        [zh] 规划器塑造的是速度指令；plant 上量到的也必须是同样的形状。实测加速度受配置上限约束
- *        （内层环跟踪指令远比规划器改变指令快得多）——这正是把规划器放在环**前面**而不是里面的意义。
+ * @brief [en] The profile shapes the velocity command; the plant must show the same shape. The measured acceleration is
+ *             bounded by the configured limit (the inner loop tracks the command much faster than the profile changes
+ *             it), which is the whole point of putting the profile in front of the loop instead of inside it.
+ * @brief [zh] 规划器塑造的是速度指令；plant 上量到的也必须是同样的形状。实测加速度受配置上限约束 （内层环跟踪指令远比规
+ *             划器改变指令快得多）——这正是把规划器放在环**前面**而不是里面的意义。
  */
 TEST(SilMotionProfile, AccelLimitedMoveRespectsItsLimitsAndStillArrives) {
     using MotorT = foc::motor::Motor<foc::core::BackEmfObserver, foc::core::Svpwm, foc::core::Pi, foc::sil::PlantHal,
@@ -111,11 +110,11 @@ TEST(SilMotionProfile, AccelLimitedMoveRespectsItsLimitsAndStillArrives) {
 
 
 /**
- * @brief [en] The same move without the profile: the bare P loop turns the step into a velocity step,
- *        which is exactly the acceleration the profile exists to remove. This is the negative control
- *        that proves the test above is measuring something real.
- *        [zh] 同一次运动去掉规划器：纯 P 环把位置阶跃变成速度阶跃，而这正是规划器要消掉的加速度。
- *        这条反向对照证明上面那条用例量的是真东西。
+ * @brief [en] The same move without the profile: the bare P loop turns the step into a velocity step, which is exactly
+ *             the acceleration the profile exists to remove. This is the negative control that proves the test above is
+ *             measuring something real.
+ * @brief [zh] 同一次运动去掉规划器：纯 P 环把位置阶跃变成速度阶跃，而这正是规划器要消掉的加速度。 这条反向对照证明上面
+ *             那条用例量的是真东西。
  */
 TEST(SilMotionProfile, WithoutTheProfileTheSameMoveIsAVelocityStep) {
     using MotorT = foc::motor::Motor<foc::core::BackEmfObserver, foc::core::Svpwm, foc::core::Pi, foc::sil::PlantHal,

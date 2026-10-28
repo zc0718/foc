@@ -36,8 +36,8 @@ namespace {
 PyObject *g_foc_error_type = nullptr;
 
 /**
- * [en] Raised when a C API call returns anything but FOC_OK; `code` is the raw foc_err_t.
- * [zh] 任一 C API 调用返回非 FOC_OK 时抛出；`code` 是原始的 foc_err_t。
+ *  [en] Raised when a C API call returns anything but FOC_OK; `code` is the raw foc_err_t.
+ *  [zh] 任一 C API 调用返回非 FOC_OK 时抛出；`code` 是原始的 foc_err_t。
  */
 class FocError final : public std::runtime_error {
 public:
@@ -80,10 +80,10 @@ auto check(foc_err_t code, const char *call) -> void {
 
 
 /**
- * [en] RAII owner of one `foc_motor_t`. The handle is destroyed exactly once: `close()` clears it,
- * the destructor calls `close()`, and a destroyed instance cannot be used again.
- * [zh] 一个 `foc_motor_t` 的 RAII 持有者。句柄只销毁一次：`close()` 清空它，析构函数调用
- * `close()`，已销毁的实例不能再用。
+ *  [en] RAII owner of one `foc_motor_t`. The handle is destroyed exactly once: `close()` clears it, the destructor
+ *       calls `close()`, and a destroyed instance cannot be used again.
+ *  [zh] 一个 `foc_motor_t` 的 RAII 持有者。句柄只销毁一次：`close()` 清空它，析构函数调用 `close()`，已销毁的实例不能再
+ *       用。
  */
 class Motor final {
 public:
@@ -181,8 +181,8 @@ private:
 
 
 /**
- * [en] RAII owner of one `foc_protector_t`, same discipline as `Motor`: destroyed exactly once.
- * [zh] 一个 `foc_protector_t` 的 RAII 持有者，纪律与 `Motor` 相同：只销毁一次。
+ *  [en] RAII owner of one `foc_protector_t`, same discipline as `Motor`: destroyed exactly once.
+ *  [zh] 一个 `foc_protector_t` 的 RAII 持有者，纪律与 `Motor` 相同：只销毁一次。
  */
 class Protector final {
 public:

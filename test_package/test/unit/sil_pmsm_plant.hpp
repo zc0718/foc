@@ -22,8 +22,7 @@ constexpr float kOneAndHalf = 1.5F;
 
 /**
  * @brief [en] Surface-mounted PMSM parameters used by the SIL plant, SI units.
- *        [zh] SIL 被控对象使用的表贴式 PMSM 参数，SI 单位。
- *
+ * @brief [zh] SIL 被控对象使用的表贴式 PMSM 参数，SI 单位。
  * @since 0.1.0
  */
 struct PlantParams final {
@@ -38,8 +37,7 @@ struct PlantParams final {
 
 /**
  * @brief [en] Integrator state of the plant (d-q currents, mechanical speed and angle).
- *        [zh] 被控对象的积分状态（d-q 电流、机械转速与机械角度）。
- *
+ * @brief [zh] 被控对象的积分状态（d-q 电流、机械转速与机械角度）。
  * @since 0.1.0
  */
 struct PlantState final {
@@ -51,115 +49,103 @@ struct PlantState final {
 
 /**
  * @brief [en] Parameterised PMSM plant model for software-in-the-loop tests.
- *        [zh] 用于 SIL 测试的参数化 PMSM 被控对象模型。
  *
- *        Equations (d-q, SI). Note the back-EMF term uses the rotor flux linkage `psi_f`, not the
- *        torque constant: `Kt = 1.5 * pole_pairs * psi_f`, so `psi_f = Kt / (1.5 * pole_pairs)`.
- *        Using `Kt` directly in the voltage equation is dimensionally wrong (PRD erratum D24).
- *        方程（d-q，SI）。注意反电动势项用的是转子磁链 `psi_f`，不是转矩常数：
- *        `Kt = 1.5 * pole_pairs * psi_f`，即 `psi_f = Kt / (1.5 * pole_pairs)`。
- *        在电压方程里直接用 `Kt` 量纲不对（PRD 勘误 D24）。
+ * @brief [zh] 用于 SIL 测试的参数化 PMSM 被控对象模型。
  *
- *        did/dt  = (vd - Rs*id + we*Lq*iq) / Ld
- *        diq/dt  = (vq - Rs*iq - we*Ld*id - we*psi_f) / Lq
- *        Te      = 1.5 * p * (psi_f*iq + (Ld - Lq)*id*iq)
- *        dwm/dt  = (Te - B*wm - T_load) / J
- *        dthm/dt = wm,   we = p * wm
+ *     Equations (d-q, SI). Note the back-EMF term uses the rotor flux linkage `psi_f`, not the torque constant: `Kt =
+ *     1.5 * pole_pairs * psi_f`, so `psi_f = Kt / (1.5 * pole_pairs)`. Using `Kt` directly in the voltage equation is
+ *     dimensionally wrong (PRD erratum D24). 方程（d-q，SI）。注意反电动势项用的是转子磁链 `psi_f`，不是转矩常数： `Kt
+ *     = 1.5 * pole_pairs * psi_f`，即 `psi_f = Kt / (1.5 * pole_pairs)`。 在电压方程里直接用 `Kt` 量纲不对（PRD 勘误
+ *     D24）。
+ *
+ *     did/dt = (vd - Rs*id + we*Lq*iq) / Ld diq/dt = (vq - Rs*iq - we*Ld*id - we*psi_f) / Lq Te = 1.5 * p * (psi_f*iq +
+ *     (Ld - Lq)*id*iq) dwm/dt = (Te - B*wm - T_load) / J dthm/dt = wm, we = p * wm
  *
  * @context [en] Host-side SIL only: never part of the shipped library.
- *           [zh] 仅 host 侧 SIL：绝不进入发布库。
+ * @context [zh] 仅 host 侧 SIL：绝不进入发布库。
  * @since 0.1.0
  */
 class PmsmPlant final {
   public:
     /**
      * @brief [en] Construct from nameplate parameters.
-     *        [zh] 用铭牌参数构造。
-     *
+     * @brief [zh] 用铭牌参数构造。
      * @param params [en] plant parameters; must be physically consistent (Rs, Ld, Lq, J > 0).
-     *               [zh] 被控对象参数；需物理自洽（Rs、Ld、Lq、J > 0）。
+     * @param params [zh] 被控对象参数；需物理自洽（Rs、Ld、Lq、J > 0）。
      * @since 0.1.0
      */
     explicit PmsmPlant(PlantParams params) noexcept;
 
     /**
      * @brief [en] Reset the integrator state and the load torque.
-     *        [zh] 复位积分状态与负载转矩。
-     *
-     * @param initial [en] starting state. [zh] 初始状态。
+     * @brief [zh] 复位积分状态与负载转矩。
+     * @param initial [en] starting state.
+     * @param initial [zh] 初始状态。
      * @since 0.1.0
      */
     void reset(PlantState initial) noexcept;
 
     /**
-     * @brief [en] Apply a stator voltage in the rotor frame (hold until changed, like a real
-     *        inverter between two control periods).
-     *        [zh] 在转子系施加定子电压（保持到下次修改，等同真实逆变器在两个控制周期之间）。
-     *
-     * @param v_dq [en] voltage in V. [zh] 电压，V。
+     * @brief [en] Apply a stator voltage in the rotor frame (hold until changed, like a real inverter between two
+     *             control periods).
+     * @brief [zh] 在转子系施加定子电压（保持到下次修改，等同真实逆变器在两个控制周期之间）。
+     * @param v_dq [en] voltage in V.
+     * @param v_dq [zh] 电压，V。
      * @since 0.1.0
      */
     void set_voltage_dq(Dq<float> v_dq) noexcept;
 
     /**
      * @brief [en] Set the mechanical load torque.
-     *        [zh] 设置机械负载转矩。
-     *
+     * @brief [zh] 设置机械负载转矩。
      * @param torque_nm [en] load torque in N*m, opposing the rotation when positive.
-     *                  [zh] 负载转矩，N·m，正值时阻碍旋转。
+     * @param torque_nm [zh] 负载转矩，N·m，正值时阻碍旋转。
      * @since 0.1.0
      */
     void set_load_torque(float torque_nm) noexcept;
 
     /**
-     * @brief [en] Model d-axis magnetic saturation: `Ld(i_d) = Ld0 * (1 - depth * tanh(i_d / current_a))`.
-     *        Off by default (depth = 0), because a nameplate gives one `Ld` at rated current and
-     *        nothing about the shape of its collapse -- saturation is a modelling refinement, not a
-     *        datasheet number.
-     *        [zh] 模拟 d 轴磁饱和：`Ld(i_d) = Ld0·(1 - depth·tanh(i_d/current_a))`。默认关闭
-     *        （depth = 0），因为铭牌只给额定点的一个 `Ld`，不说它怎么塌——饱和是建模细化，不是铭牌数字。
-     *
+     * @brief [en] Model d-axis magnetic saturation: `Ld(i_d) = Ld0 * (1 - depth * tanh(i_d / current_a))`. Off by
+     *             default (depth = 0), because a nameplate gives one `Ld` at rated current and nothing about the shape
+     *             of its collapse -- saturation is a modelling refinement, not a datasheet number.
+     * @brief [zh] 模拟 d 轴磁饱和：`Ld(i_d) = Ld0·(1 - depth·tanh(i_d/current_a))`。默认关闭 （depth = 0），因为铭牌只
+     *             给额定点的一个 `Ld`，不说它怎么塌——饱和是建模细化，不是铭牌数字。
      * @param depth [en] fractional fall of the incremental inductance at `i_d >> current_a`, 0..1.
-     *              [zh] `i_d >> current_a` 时增量电感的下降比例，0..1。
+     * @param depth [zh] `i_d >> current_a` 时增量电感的下降比例，0..1。
      * @param current_a [en] current at which saturation is substantially engaged, > 0.
-     *                  [zh] 饱和明显生效的电流，> 0。
-     * @note [en] Why this exists: the magnet polarity is invisible without it. `+i_d` reinforces the
-     *       rotor flux and `-i_d` opposes it, so the *same* volt-second pulse produces two different
-     *       current rises -- which is the only thing `MagnetPolarityTest` has to measure. The model is
-     *       a local fit near `+-current_a`, not a magnetics reference: the `dL/di` term in the voltage
-     *       equation is deliberately ignored.
-     *       [zh] 它存在的理由：没有它就看不出磁钢极性。`+i_d` 增强转子磁链、`-i_d` 削弱它，于是**相同**
-     *       的伏秒脉冲会产生两个不同的电流上升——这是 `MagnetPolarityTest` 唯一可测的现象。该模型是
-     *       `±current_a` 附近的局部拟合，不是磁学参考：电压方程里的 `dL/di` 项被故意忽略。
+     * @param current_a [zh] 饱和明显生效的电流，> 0。
+     * @note [en] Why this exists: the magnet polarity is invisible without it. `+i_d` reinforces the rotor flux and
+     *            `-i_d` opposes it, so the *same* volt-second pulse produces two different current rises -- which is
+     *            the only thing `MagnetPolarityTest` has to measure. The model is a local fit near `+-current_a`, not a
+     *            magnetics reference: the `dL/di` term in the voltage equation is deliberately ignored.
+     * @note [zh] 它存在的理由：没有它就看不出磁钢极性。`+i_d` 增强转子磁链、`-i_d` 削弱它，于是**相同** 的伏秒脉冲会产
+     *            生两个不同的电流上升——这是 `MagnetPolarityTest` 唯一可测的现象。该模型是 `±current_a` 附近的局部拟合，
+     *            不是磁学参考：电压方程里的 `dL/di` 项被故意忽略。
      * @since 0.1.0
      */
     void set_d_axis_saturation(float depth, float current_a) noexcept;
 
     /**
-     * @brief [en] Incremental d-axis inductance at a given d-axis current, H. Equals `params().ld`
-     *        when saturation is off.
-     *        [zh] 给定 d 轴电流下的增量 d 轴电感，H。饱和关闭时等于 `params().ld`。
-     *
-     * @param id_a [en] d-axis current in A to evaluate at. [zh] 求值点的 d 轴电流，A。
+     * @brief [en] Incremental d-axis inductance at a given d-axis current, H. Equals `params().ld` when saturation is
+     *             off.
+     * @brief [zh] 给定 d 轴电流下的增量 d 轴电感，H。饱和关闭时等于 `params().ld`。
+     * @param id_a [en] d-axis current in A to evaluate at.
+     * @param id_a [zh] 求值点的 d 轴电流，A。
      * @since 0.1.0
      */
     [[nodiscard]] auto effective_ld(float id_a) const noexcept -> float;
 
     /**
      * @brief [en] q-axis saturation: a fraction of `Lq` lost as `i_q` grows.
-     *        [zh] q 轴饱和：随 `i_q` 增大损失的 `Lq` 比例。
-     *
-     * @param [in] depth      [en] fraction lost at large `i_q`, 0 = ideal. [zh]
-     *                        大 `i_q` 下的损失比例，0 = 理想。
-     * @param [in] current_a  [en] current at which that loss is engaged. [zh]
-     *                        该损失生效的电流。
-     *
-     * @note [en] Separate from the d-axis knob because the two are physically
-     * different: d-axis saturation bites the *uphill* direction of the magnet,
-     * q-axis saturation bites the flux produced by the stator. A model with only
-     * the first can look complete while being blind to the second.
-     * [zh] 与 d 轴旋钮分开，因为两者物理上不同：d 轴饱和咬的是磁钢的**上坡**方向，q 轴饱和
-     * 咬的是定子自己产生的磁通。只有前者的模型看起来完整，却对后者完全盲。
+     * @brief [zh] q 轴饱和：随 `i_q` 增大损失的 `Lq` 比例。
+     * @param [en] [in] depth fraction lost at large `i_q`, 0 = ideal. [in] current_a current at which that loss is
+     *             engaged.
+     * @param [zh] 大 `i_q` 下的损失比例，0 = 理想。 该损失生效的电流。
+     * @note [en] Separate from the d-axis knob because the two are physically different: d-axis saturation bites the
+     *            *uphill* direction of the magnet, q-axis saturation bites the flux produced by the stator. A model
+     *            with only the first can look complete while being blind to the second.
+     * @note [zh] 与 d 轴旋钮分开，因为两者物理上不同：d 轴饱和咬的是磁钢的**上坡**方向，q 轴饱和 咬的是定子自己产生的磁
+     *            通。只有前者的模型看起来完整，却对后者完全盲。
      * @since 0.1.0
      */
     void set_q_axis_saturation(float depth, float current_a) noexcept;
@@ -169,17 +155,14 @@ class PmsmPlant final {
 
     /**
      * @brief [en] Iron loss as a shunt resistance across the air-gap voltage.
-     *        [zh] 铁损建模为跨气隙电压的并联电阻。
-     *
-     * @param [in] rm_ohm  [en] shunt resistance, ohm; 0 = ideal (no iron loss). [zh]
-     *                     并联电阻，Ω；0 = 理想（无铁损）。
-     *
-     * @note [en] This is not a torque loss term bolted onto the shaft -- it is
-     * the reason the *sensed* current is not the current that makes torque. That
-     * distinction is the whole point: a torque-loss term cannot perturb an
-     * observer, and this can.
-     * [zh] 这不是往轴上贴一项转矩损失——它说明**被传感的**电流不是产生转矩的电流。这个区别
-     * 才是重点：转矩损失项扰动不了观测器，而这一项可以。
+     * @brief [zh] 铁损建模为跨气隙电压的并联电阻。
+     * @param [en] [in] rm_ohm shunt resistance, ohm; 0 = ideal (no iron loss).
+     * @param [zh] 并联电阻，Ω；0 = 理想（无铁损）。
+     * @note [en] This is not a torque loss term bolted onto the shaft -- it is the reason the *sensed* current is not
+     *            the current that makes torque. That distinction is the whole point: a torque-loss term cannot perturb
+     *            an observer, and this can.
+     * @note [zh] 这不是往轴上贴一项转矩损失——它说明**被传感的**电流不是产生转矩的电流。这个区别 才是重点：转矩损失项扰
+     *            动不了观测器，而这一项可以。
      * @since 0.1.0
      */
     void set_iron_loss(float rm_ohm) noexcept;
@@ -192,98 +175,96 @@ class PmsmPlant final {
 
     /**
      * @brief [en] Model winding heating: `Rs = Rs20 * (1 + alpha * (T - 20))`. Off by default.
-     *        [zh] 模拟绕组发热：`Rs = Rs20·(1 + alpha·(T − 20))`。默认关闭。
-     *
-     * @param temperature_c [en] winding temperature in degrees C. [zh] 绕组温度，摄氏度。
-     * @param alpha_per_k [en] temperature coefficient, copper is about 3.93e-3 per K. [zh]温度系数，铜约为3.93e-3 /K。
-     * @note [en] Why this exists: a parameter-dentification result that only works at 20 C is a
-     *       calculator, not an estimator. A drifting truth is how SIL can test the difference -- the
-     *       plant heats up while the observer keeps believing the nameplate.
-     *       [zh] 它存在的理由：只在 20 °C 成立的参数辨识是计算器，不是估计器。真值漂移是 SIL 能测出这个
-     *       区别的方式——plant 升温而观测器仍然相信铭牌。
+     * @brief [zh] 模拟绕组发热：`Rs = Rs20·(1 + alpha·(T − 20))`。默认关闭。
+     * @param temperature_c [en] winding temperature in degrees C.
+     * @param temperature_c [zh] 绕组温度，摄氏度。
+     * @param alpha_per_k [en] temperature coefficient, copper is about 3.93e-3 per K.
+     * @param alpha_per_k [zh] 温度系数，铜约为3.93e-3 /K。
+     * @note [en] Why this exists: a parameter-dentification result that only works at 20 C is a calculator, not an
+     *            estimator. A drifting truth is how SIL can test the difference -- the plant heats up while the
+     *            observer keeps believing the nameplate.
+     * @note [zh] 它存在的理由：只在 20 °C 成立的参数辨识是计算器，不是估计器。真值漂移是 SIL 能测出这个 区别的方式
+     *            ——plant 升温而观测器仍然相信铭牌。
      * @since 0.1.0
      */
     void set_winding_temperature(float temperature_c, float alpha_per_k) noexcept;
 
     /**
-     * @brief [en] Add sensor noise to the current readings: white, uniform in [-amplitude, +amplitude]
-     *        amps, from a deterministic integer generator so a run is reproducible on any ISA.
-     *        Off by default (amplitude 0).
-     *        [zh] 给电流读数加传感器噪声：均匀分布在 [−amplitude, +amplitude] 安培，由确定性整数生成器
-     *        产生，使同一次运行在任何 ISA 上都可复现。默认关闭（幅值 0）。
-     *
-     * @param amplitude_a [en] peak amplitude in A, >= 0. [zh] 峰值幅值，A，>= 0。
-     * @note [en] Determinism is not a nicety here: the PIL leg compares host against target, and an
-     *       entropy-based generator would make that comparison meaningless the moment noise is on.
-     *       [zh] 确定性不是细节：PIL 腿要比对 host 与 target，一旦打开噪声，基于熵的生成器会让这个比对
-     *       失去意义。
+     * @brief [en] Add sensor noise to the current readings: white, uniform in [-amplitude, +amplitude] amps, from a
+     *             deterministic integer generator so a run is reproducible on any ISA. Off by default (amplitude 0).
+     * @brief [zh] 给电流读数加传感器噪声：均匀分布在 [−amplitude, +amplitude] 安培，由确定性整数生成器 产生，使同一次运
+     *             行在任何 ISA 上都可复现。默认关闭（幅值 0）。
+     * @param amplitude_a [en] peak amplitude in A, >= 0.
+     * @param amplitude_a [zh] 峰值幅值，A，>= 0。
+     * @note [en] Determinism is not a nicety here: the PIL leg compares host against target, and an entropy-based
+     *            generator would make that comparison meaningless the moment noise is on.
+     * @note [zh] 确定性不是细节：PIL 腿要比对 host 与 target，一旦打开噪声，基于熵的生成器会让这个比对 失去意义。
      * @since 0.1.0
      */
     void set_current_noise(float amplitude_a) noexcept;
 
     /**
      * @brief [en] Stator resistance the plant is actually using, ohm (includes the temperature model).
-     *        [zh] plant 实际使用的定子电阻，Ω（含温度模型）。
+     * @brief [zh] plant 实际使用的定子电阻，Ω（含温度模型）。
      * @since 0.1.0
      */
     [[nodiscard]] auto effective_rs() const noexcept -> float;
 
     /**
      * @brief [en] Advance the plant by one fixed step with classical RK4.
-     *        [zh] 用经典 RK4 推进一个固定步长。
-     *
-     * @param dt_s [en] step in s; <= 0 is ignored. [zh] 步长，s；<= 0 被忽略。
+     * @brief [zh] 用经典 RK4 推进一个固定步长。
+     * @param dt_s [en] step in s; <= 0 is ignored.
+     * @param dt_s [zh] 步长，s；<= 0 被忽略。
      * @since 0.1.0
      */
     void advance(float dt_s) noexcept;
 
     /**
      * @brief [en] Current integrator state.
-     *        [zh] 当前积分状态。
+     * @brief [zh] 当前积分状态。
      * @since 0.1.0
      */
     [[nodiscard]] auto state() const noexcept -> PlantState;
 
     /**
      * @brief [en] Mechanical rotor angle in rad (unwrapped).
-     *        [zh] 机械转子角度，rad（不做归一化）。
+     * @brief [zh] 机械转子角度，rad（不做归一化）。
      * @since 0.1.0
      */
     [[nodiscard]] auto theta_mech_rad() const noexcept -> float;
 
     /**
      * @brief [en] Mechanical rotor speed in rad/s.
-     *        [zh] 机械转速，rad/s。
+     * @brief [zh] 机械转速，rad/s。
      * @since 0.1.0
      */
     [[nodiscard]] auto omega_mech_rad_s() const noexcept -> float;
 
     /**
-     * @brief [en] Phase currents reconstructed through inverse Park + inverse Clarke, i.e. what a
-     *        current sensor would see. This is the signal the SIL harness feeds to the HAL stub.
-     *        [zh] 经逆 Park + 逆 Clarke 重构的相电流，即电流传感器"看到"的信号。SIL 夹具把它喂给
-     *        HAL 桩。
+     * @brief [en] Phase currents reconstructed through inverse Park + inverse Clarke, i.e. what a current sensor would
+     *             see. This is the signal the SIL harness feeds to the HAL stub.
+     * @brief [zh] 经逆 Park + 逆 Clarke 重构的相电流，即电流传感器"看到"的信号。SIL 夹具把它喂给 HAL 桩。
      * @since 0.1.0
      */
     [[nodiscard]] auto current_uvw() const noexcept -> core::Uvw<float>;
 
     /**
      * @brief [en] d-q currents in A.
-     *        [zh] d-q 电流，A。
+     * @brief [zh] d-q 电流，A。
      * @since 0.1.0
      */
     [[nodiscard]] auto current_dq() const noexcept -> core::Dq<float>;
 
     /**
      * @brief [en] Electromagnetic torque in N*m.
-     *        [zh] 电磁转矩，N·m。
+     * @brief [zh] 电磁转矩，N·m。
      * @since 0.1.0
      */
     [[nodiscard]] auto torque_nm() const noexcept -> float;
 
     /**
      * @brief [en] Rotor flux linkage derived from the torque constant.
-     *        [zh] 由转矩常数反推的转子磁链。
+     * @brief [zh] 由转矩常数反推的转子磁链。
      * @since 0.1.0
      */
     [[nodiscard]] auto psi_f_wb() const noexcept -> float;

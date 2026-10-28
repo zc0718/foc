@@ -8,11 +8,10 @@
 // Conan::ImportEnd
 
 /**
- * @brief [en] The C path's own layer: raw-pointer validation and float/double entry points, all
- *        compiled as C. Anything that needs the C++ core is one call away, in bridge.h.
- *        [zh] C 路径自己的那一层：原始指针校验与 float/double 入口，全部按 C 编译。任何需要
- *        C++ 核心的事情都只是 bridge.h 里的一次调用。
- *
+ * @brief [en] The C path's own layer: raw-pointer validation and float/double entry points, all compiled as C. Anything
+ *             that needs the C++ core is one call away, in bridge.h.
+ * @brief [zh] C 路径自己的那一层：原始指针校验与 float/double 入口，全部按 C 编译。任何需要 C++ 核心的事情都只是
+ *             bridge.h 里的一次调用。
  * @since 0.1.0
  */
 

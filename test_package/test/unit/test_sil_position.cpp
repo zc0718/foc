@@ -86,11 +86,11 @@ auto step_position(float position_bandwidth_rad_s, float velocity_limit_rad_s, f
 
 
 /**
- * @brief [en] The cascade must land on the commanded angle and stay there. Measured on this bench:
- *        20 rad/s gives 2.1 mrad of overshoot and 180 ms to the 2% band, which is the first-order
- *        response the position-loop contract predicts (`settle ~= 4/kp`).
- *        [zh] 级联必须落到给定角度并保持住。本台架实测：20 rad/s 时超调 2.1 mrad、180 ms 进入 2% 带，
- *        正是位置环契约预测的一阶响应（`settle ≈ 4/kp`）。
+ * @brief [en] The cascade must land on the commanded angle and stay there. Measured on this bench: 20 rad/s gives 2.1
+ *             mrad of overshoot and 180 ms to the 2% band, which is the first-order response the position-loop contract
+ *             predicts (`settle ~= 4/kp`).
+ * @brief [zh] 级联必须落到给定角度并保持住。本台架实测：20 rad/s 时超调 2.1 mrad、180 ms 进入 2% 带， 正是位置环契约预
+ *             测的一阶响应（`settle ≈ 4/kp`）。
  */
 TEST(SilPosition, StepLandsOnTargetAndStaysThere) {
     const Outcome outcome = step_position(20.0F, 50.0F);
@@ -105,11 +105,11 @@ TEST(SilPosition, StepLandsOnTargetAndStaysThere) {
 
 
 /**
- * @brief [en] `kp` is a bandwidth: doubling it should roughly halve the settling time, and the
- *        velocity limit must hold it back from overshooting just the same. A regression here means
- *        the loop lost its first-order character (e.g. an unintentional integral term).
- *        [zh] `kp` 就是带宽：翻倍它应当让稳定时间大致减半，同时速度上限仍要压住超调。这里变红意味着
- *        环路失去了一阶特性（例如不小心多了一个积分项）。
+ * @brief [en] `kp` is a bandwidth: doubling it should roughly halve the settling time, and the velocity limit must hold
+ *             it back from overshooting just the same. A regression here means the loop lost its first-order character
+ *             (e.g. an unintentional integral term).
+ * @brief [zh] `kp` 就是带宽：翻倍它应当让稳定时间大致减半，同时速度上限仍要压住超调。这里变红意味着 环路失去了一阶特性
+ *             （例如不小心多了一个积分项）。
  */
 TEST(SilPosition, BandwidthScalesTheSettlingTimeAsAFirstOrderLoop) {
     const Outcome slow = step_position(10.0F, 50.0F);
@@ -129,9 +129,9 @@ TEST(SilPosition, BandwidthScalesTheSettlingTimeAsAFirstOrderLoop) {
 
 
 /**
- * @brief [en] A velocity limit low enough to bind must turn the step into a ramp, and the axis must
- *        still arrive: the limit shapes the motion, it does not stop it.
- *        [zh] 低到真会触发的速度上限必须把阶跃变成斜坡，而且轴仍要到位：限速塑造运动，而不是阻断运动。
+ * @brief [en] A velocity limit low enough to bind must turn the step into a ramp, and the axis must still arrive: the
+ *             limit shapes the motion, it does not stop it.
+ * @brief [zh] 低到真会触发的速度上限必须把阶跃变成斜坡，而且轴仍要到位：限速塑造运动，而不是阻断运动。
  */
 TEST(SilPosition, AVelocityLimitTurnsTheStepIntoARampButStillArrives) {
     const Outcome limited = step_position(20.0F, 1.0F, 2.0F); // 1 rad at 1 rad/s needs >= 1 s to cover

@@ -13,7 +13,7 @@ namespace {
 
 /**
  * @brief [en] Implements valid_config(); the contract is documented on its declaration.
- *        [zh] 实现 valid_config()；契约文档在对应的声明处。
+ * @brief [zh] 实现 valid_config()；契约文档在对应的声明处。
  * @attacher
  * @since 0.1.0
  */
@@ -35,7 +35,7 @@ auto Pi::step(float setpoint, float feedback, float dt_s) noexcept -> float {
 
 /**
  * @brief [en] Implements step(const SpeedInput&); the contract is documented on its declaration.
- *        [zh] 实现 step(const SpeedInput&)；契约文档在对应的声明处。
+ * @brief [zh] 实现 step(const SpeedInput&)；契约文档在对应的声明处。
  * @attacher
  * @since 0.1.0
  */
@@ -53,7 +53,7 @@ auto Pi::step(const SpeedInput& request, float feedback, float dt_s) noexcept ->
 
 /**
  * @brief [en] The step itself, parameterised by the gains in force for this call.
- *        [zh] 步骤本体，其参数是本次调用生效的增益。
+ * @brief [zh] 步骤本体，其参数是本次调用生效的增益。
  * @since 0.1.0
  */
 auto Pi::run(float setpoint, float feedback, float dt_s, float kp, float integral_min, float integral_max) noexcept

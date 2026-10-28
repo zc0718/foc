@@ -29,13 +29,12 @@ using core::Uvw;
 
 /**
  * @brief [en] Read-back of the last control step, plus the worst tick interval seen so far.
- *        [zh] 最近一个控制步的读回值，外加迄今见过的最差 tick 间隔。
- *
- * @note [en] `max_period_us` is 0 unless the HalPolicy exposes a `clock`: the library never invents
- *       a time base, it only measures the one the platform gives it. It is an overrun indicator,
- *       not a scheduling input -- `tick(dt)` takes its period from the caller.
- *       [zh] 除非 HalPolicy 暴露了 `clock`，`max_period_us` 恒为 0：库从不自造时基，只测量平台给出的
- *       时基。它是过载指示器而非调度输入——`tick(dt)` 的周期来自调用方。
+ * @brief [zh] 最近一个控制步的读回值，外加迄今见过的最差 tick 间隔。
+ * @note [en] `max_period_us` is 0 unless the HalPolicy exposes a `clock`: the library never invents a time base, it
+ *            only measures the one the platform gives it. It is an overrun indicator, not a scheduling input --
+ *            `tick(dt)` takes its period from the caller.
+ * @note [zh] 除非 HalPolicy 暴露了 `clock`，`max_period_us` 恒为 0：库从不自造时基，只测量平台给出的 时基。它是过载指示
+ *            器而非调度输入——`tick(dt)` 的周期来自调用方。
  * @since 0.1.0
  * @exporter
  */
@@ -49,8 +48,7 @@ struct Telemetry final {
 
 /**
  * @brief [en] What the q-axis reference is driven by.
- *        [zh] q 轴给定由什么驱动。
- *
+ * @brief [zh] q 轴给定由什么驱动。
  * @since 0.1.0
  * @exporter
  */
@@ -63,24 +61,21 @@ enum class ReferenceMode : std::uint8_t {
 
 /**
  * @brief [en] One move: where to go, how hard you may push, and what to add on top.
- *        [zh] 一次运动：去哪里、允许用多大力、以及额外叠加多少。
+ * @brief [zh] 一次运动：去哪里、允许用多大力、以及额外叠加多少。
+ * @note [en] The limit and scale fields default to 0, which means "use what the controllers were configured with". The
+ *            mechanism's own limits stay in `core::MotionProfile::Config`; these are the *move's*, and a non-zero value
+ *            replaces the configured one for this move only, without any restore step. The three scales are the
+ *            compliance knobs. `kp_scale` sets how much the joint resists being moved; `ilimit_scale` sets how much
+ *            torque the speed integrator may keep holding, so a joint pushed by hand gives way instead of fighting
+ *            back; `kd_scale` sets the damping around it. They scale gains, never limits, so a compliant joint still
+ *            cannot exceed `max_current_a` or the motion limits.
  *
- * @note [en] The limit and scale fields default to 0, which means "use what the controllers were
- *       configured with". The mechanism's own limits stay in `core::MotionProfile::Config`; these
- *       are the *move's*, and a non-zero value replaces the configured one for this move only,
- *       without any restore step.
- *       [zh] 限制与缩放字段默认 0，含义是"用控制器自身配置的那个"。机构自己的限制仍在
- *       `core::MotionProfile::Config` 里；这些是**这次运动**的，非零值只在本次运动内替换配置值，
- *       不需要任何恢复步骤。
+ * @note [zh] 限制与缩放字段默认 0，含义是"用控制器自身配置的那个"。机构自己的限制仍在 `core::MotionProfile::Config`
+ *            里；这些是**这次运动**的，非零值只在本次运动内替换配置值， 不需要任何恢复步骤。
  *
- * @note [en] The three scales are the compliance knobs. `kp_scale` sets how much the joint resists
- *       being moved; `ilimit_scale` sets how much torque the speed integrator may keep holding, so
- *       a joint pushed by hand gives way instead of fighting back; `kd_scale` sets the damping
- *       around it. They scale gains, never limits, so a compliant joint still cannot exceed
- *       `max_current_a` or the motion limits.
- *       [zh] 三个缩放是柔顺旋钮。`kp_scale` 决定关节抵抗被推动的程度；`ilimit_scale` 决定速度
- *       积分器被允许保有多少转矩，于是被手推的关节会退让而不是对抗；`kd_scale` 决定其周围的阻尼。
- *       它们缩放增益而非限值，因此柔顺的关节仍然不能越过 `max_current_a` 或运动限制。
+ *     三个缩放是柔顺旋钮。`kp_scale` 决定关节抵抗被推动的程度；`ilimit_scale` 决定速度 积分器被允许保有多少转矩，于是被
+ *     手推的关节会退让而不是对抗；`kd_scale` 决定其周围的阻尼。 它们缩放增益而非限值，因此柔顺的关节仍然不能越过
+ *     `max_current_a` 或运动限制。
  * @since 0.1.0
  * @exporter
  */
@@ -97,32 +92,28 @@ struct Command final {
 
 
 /**
- * @brief [en] Policy-composed motor: no globals, no allocation, no virtual calls in the loop.
- *        All state lives in this object, so multiple instances are independent by construction.
- *        [zh] 策略组合的电机：无全局状态、不分配、控制环内无虚函数调用。状态全在对象内，
- *        因此多实例天然相互独立。
+ * @brief [en] Policy-composed motor: no globals, no allocation, no virtual calls in the loop. All state lives in this
+ *             object, so multiple instances are independent by construction.
  *
- *        Binding contract:
- *        - `Observer` provides `update(Ab<float>, Ab<float>, float) noexcept -> ObsState` (and optionally
- *        `seed_flux(Ab<float>)`, used at start()).
- *        - `Modulator` provides `modulate(Ab<float>, float) noexcept -> SvpwmResult`.
- *        - `Controller` provides `step(float, float, float) noexcept -> float` and `reset()`.
- *        - `RefGenerator` provides `generate(const ReferenceInput&) noexcept -> Dq<float>` (default
- *        `core::NullReferenceGenerator` = d axis at zero).
- *        - `FeedForward` provides `generate(const FeedforwardInput&) noexcept -> Dq<float>` (default
- *        `core::NullFeedforward` = no term).
- *        - `PositionControl` provides `step(setpoint, feedback, dt) noexcept -> float` + `reset()`
- *          and commands a *velocity*; the default `core::NullPositionControl` makes position mode
- *          answer `ErrorCode::NotImpl` instead of pretending.
- *        - `Aligner` provides `validate()`, `begin(pole_pairs) -> bool`,
- *          `step(dt, angle_mech) noexcept -> AlignOutput` and `reset()`; the default
- *          `core::NullAlignment` answers `false` from `begin()`, so `start()` goes straight from
- *          Align to Run.
- *        - `HalPolicy` exposes members `pwm`, `current_sense`, `position`, `dc_link`.
- *        绑定契约：见上（Observer 可选 seed_flux，HalPolicy 的成员名固定）。
+ * @brief [zh] 策略组合的电机：无全局状态、不分配、控制环内无虚函数调用。状态全在对象内， 因此多实例天然相互独立。
+ *
+ *     Binding contract:
+ *
+ *     - `Observer` provides `update(Ab<float>, Ab<float>, float) noexcept -> ObsState` (and optionally
+ *     `seed_flux(Ab<float>)`, used at start()). - `Modulator` provides `modulate(Ab<float>, float) noexcept ->
+ *     SvpwmResult`. - `Controller` provides `step(float, float, float) noexcept -> float` and `reset()`. -
+ *     `RefGenerator` provides `generate(const ReferenceInput&) noexcept -> Dq<float>` (default
+ *     `core::NullReferenceGenerator` = d axis at zero). - `FeedForward` provides `generate(const FeedforwardInput&)
+ *     noexcept -> Dq<float>` (default `core::NullFeedforward` = no term). - `PositionControl` provides `step(setpoint,
+ *     feedback, dt) noexcept -> float` + `reset()` and commands a *velocity*; the default `core::NullPositionControl`
+ *     makes position mode answer `ErrorCode::NotImpl` instead of pretending. - `Aligner` provides `validate()`,
+ *     `begin(pole_pairs) -> bool`, `step(dt, angle_mech) noexcept -> AlignOutput` and `reset()`; the default
+ *     `core::NullAlignment` answers `false` from `begin()`, so `start()` goes straight from Align to Run. - `HalPolicy`
+ *     exposes members `pwm`, `current_sense`, `position`, `dc_link`. 绑定契约：见上（Observer 可选 seed_flux，HalPolicy
+ *     的成员名固定）。
  *
  * @context [en] tick() is the ISR entry: noexcept, no allocation, no I/O.
- *           [zh] tick() 是 ISR 入口：noexcept、不分配、无 I/O。
+ * @context [zh] tick() 是 ISR 入口：noexcept、不分配、无 I/O。
  * @since 0.1.0
  * @exporter
  */
@@ -133,7 +124,7 @@ class Motor final {
   public:
     /**
      * @brief [en] Policy instances owned by the motor (one per control axis plus the speed loop).
-     *        [zh] 电机持有的策略实例（每个控制轴一个，外加速度环）。
+     * @brief [zh] 电机持有的策略实例（每个控制轴一个，外加速度环）。
      * @since 0.1.0
      */
     struct Policies final {
@@ -152,199 +143,197 @@ class Motor final {
 
     /**
      * @brief [en] Validate the configuration and configure the inverter.
-     *        [zh] 校验配置并配置逆变器。
-     * @return [en] Ok, or Param/State from the PWM contract. [zh] Ok，或来自 PWM 契约的 Param/State。
-     * @context [en] Initialisation only. [zh] 仅初始化阶段。
+     * @brief [zh] 校验配置并配置逆变器。
+     * @return [en] Ok, or Param/State from the PWM contract.
+     * @return [zh] Ok，或来自 PWM 契约的 Param/State。
+     * @context [en] Initialisation only.
+     * @context [zh] 仅初始化阶段。
      * @since 0.1.0
      */
     auto init() noexcept -> ErrorCode;
 
     /**
      * @brief [en] Idle -> Align -> Run, enable the inverter, seed a flux observer if it takes one.
-     *        [zh] Idle -> Align -> Run，使能逆变器；若观测器支持则为其播种。
-     *
-     * @note [en] With an aligner that has a sequence to run, the machine stays in Align and the
-     *       caller keeps calling `tick()` until `state()` becomes Run; with the default
-     *       `core::NullAlignment` the transition is immediate, as before.
-     *       [zh] 对齐器有流程要跑时，机器会停在 Align，调用方继续 `tick()` 直到 `state()` 变成
-     *       Run；使用默认的 `core::NullAlignment` 时迁移立即完成，与从前一致。
-     * @return [en] Ok, or the state-machine / PWM error. [zh] Ok，或状态机 / PWM 错误。
+     * @brief [zh] Idle -> Align -> Run，使能逆变器；若观测器支持则为其播种。
+     * @note [en] With an aligner that has a sequence to run, the machine stays in Align and the caller keeps calling
+     *            `tick()` until `state()` becomes Run; with the default `core::NullAlignment` the transition is
+     *            immediate, as before.
+     * @note [zh] 对齐器有流程要跑时，机器会停在 Align，调用方继续 `tick()` 直到 `state()` 变成 Run；使用默认的
+     *            `core::NullAlignment` 时迁移立即完成，与从前一致。
+     * @return [en] Ok, or the state-machine / PWM error.
+     * @return [zh] Ok，或状态机 / PWM 错误。
      * @since 0.1.0
      */
     auto start() noexcept -> ErrorCode;
 
     /**
      * @brief [en] Disable the inverter and return to Idle.
-     *        [zh] 关闭逆变器并回到 Idle。
+     * @brief [zh] 关闭逆变器并回到 Idle。
      * @since 0.1.0
      */
     auto stop() noexcept -> ErrorCode;
 
     /**
      * @brief [en] Enter the latched Fault state and disable the inverter.
-     *        [zh] 进入锁存 Fault 状态并关闭逆变器。
+     * @brief [zh] 进入锁存 Fault 状态并关闭逆变器。
      * @since 0.1.0
      */
     void fault() noexcept;
 
     /**
      * @brief [en] Leave Fault (only legal from Fault) and reset the controllers.
-     *        [zh] 退出 Fault（仅能从 Fault 离开）并复位控制器。
+     * @brief [zh] 退出 Fault（仅能从 Fault 离开）并复位控制器。
      * @since 0.1.0
      */
     auto clear_fault() noexcept -> ErrorCode;
 
     /**
      * @brief [en] Torque reference: iq in A, clamped to the nameplate limit.
-     *        [zh] 转矩给定：iq，A，按铭牌限幅。
+     * @brief [zh] 转矩给定：iq，A，按铭牌限幅。
      * @since 0.1.0
      */
     void set_torque(float iq_a) noexcept;
 
     /**
      * @brief [en] Speed reference: mechanical rad/s, fed into the speed loop.
-     *        [zh] 速度给定：机械角速度 rad/s，送入速度环。
+     * @brief [zh] 速度给定：机械角速度 rad/s，送入速度环。
      * @since 0.1.0
      */
     void set_speed(float speed_mech_rad_s) noexcept;
 
     /**
      * @brief [en] Position reference: mechanical angle in rad, closed by the position loop.
-     *        [zh] 位置给定：机械角，rad，由位置环闭合。
-     *
+     * @brief [zh] 位置给定：机械角，rad，由位置环闭合。
      * @param position_rad [en] target in the same frame as `PositionSensor::angle_mech_rad()`.
-     *                     [zh] 目标值，与 `PositionSensor::angle_mech_rad()` 同一坐标系。
-     * @note [en] Requires a compiled-in `PositionControl` and a sensor; without either, `tick()`
-     *       returns `ErrorCode::NotImpl` (not latched).
-     *       [zh] 需要编入 `PositionControl` 且存在传感器；缺任一条件时 `tick()` 返回
-     *       `ErrorCode::NotImpl`（不锁存）。
+     * @param position_rad [zh] 目标值，与 `PositionSensor::angle_mech_rad()` 同一坐标系。
+     * @note [en] Requires a compiled-in `PositionControl` and a sensor; without either, `tick()` returns
+     *            `ErrorCode::NotImpl` (not latched).
+     * @note [zh] 需要编入 `PositionControl` 且存在传感器；缺任一条件时 `tick()` 返回 `ErrorCode::NotImpl`（不锁存）。
      * @since 0.1.0
      */
     void set_position(float position_rad) noexcept;
 
     /**
      * @brief [en] Position reference with a per-move current ceiling and a feedforward torque.
-     *        [zh] 带本次运动电流上限与前馈转矩的位置给定。
-     *
-     * @param command [en] the move to execute. [zh] 要执行的运动。
-     * @note [en] `feedforward_current_a` is where a gravity or friction term goes: it is added after
-     *       the speed loop, so it does not fight the integrator, and it is clamped with everything
-     *       else by the move's current ceiling.
-     *       [zh] `feedforward_current_a` 就是重力或摩擦项该去的地方：它加在速度环之后，所以不会和
-     *       积分器打架，并且和其余量一起受本次运动的电流上限约束。
+     * @brief [zh] 带本次运动电流上限与前馈转矩的位置给定。
+     * @param command [en] the move to execute.
+     * @param command [zh] 要执行的运动。
+     * @note [en] `feedforward_current_a` is where a gravity or friction term goes: it is added after the speed loop, so
+     *            it does not fight the integrator, and it is clamped with everything else by the move's current
+     *            ceiling.
+     * @note [zh] `feedforward_current_a` 就是重力或摩擦项该去的地方：它加在速度环之后，所以不会和 积分器打架，并且和其
+     *            余量一起受本次运动的电流上限约束。
      * @since 0.1.0
      */
     void set_command(const Command& command) noexcept;
 
     /**
      * @brief [en] One current-loop step: sense -> Clarke -> angle -> Park -> PI -> InvPark -> SVPWM.
-     *        [zh] 一步电流环：采样 -> Clarke -> 角度 -> Park -> PI -> InvPark -> SVPWM。
-     *
+     * @brief [zh] 一步电流环：采样 -> Clarke -> 角度 -> Park -> PI -> InvPark -> SVPWM。
      * @param dt_s [en] step length in s; <= 0 is rejected (status Param).
-     *              [zh] 步长，s；<= 0 被拒绝（状态置 Param）。
-     * @return [en] Ok, Param, or State (not running). [zh] Ok、Param 或 State（未运行）。
+     * @param dt_s [zh] 步长，s；<= 0 被拒绝（状态置 Param）。
+     * @return [en] Ok, Param, or State (not running).
+     * @return [zh] Ok、Param 或 State（未运行）。
      * @since 0.1.0
      */
     auto tick(float dt_s) noexcept -> ErrorCode;
 
     /**
      * @brief [en] Current mode state.
-     *        [zh] 当前模式状态。
+     * @brief [zh] 当前模式状态。
      * @since 0.1.0
      */
     [[nodiscard]] auto state() const noexcept -> core::MotorState;
 
     /**
      * @brief [en] Which reference drives the q axis.
-     *        [zh] q 轴由哪种给定驱动。
+     * @brief [zh] q 轴由哪种给定驱动。
      * @since 0.1.0
      */
     [[nodiscard]] auto mode() const noexcept -> ReferenceMode;
 
     /**
      * @brief [en] Telemetry of the last tick.
-     *        [zh] 最近一次 tick 的遥测。
+     * @brief [zh] 最近一次 tick 的遥测。
      * @since 0.1.0
      */
     [[nodiscard]] auto telemetry() const noexcept -> Telemetry;
 
     /**
      * @brief [en] Sticky status of the last operation.
-     *        [zh] 最近一次操作的粘滞状态。
+     * @brief [zh] 最近一次操作的粘滞状态。
      * @since 0.1.0
      */
     [[nodiscard]] auto status() const noexcept -> ErrorCode;
 
     /**
      * @brief [en] Mutable access to the observer (used to seed it from the align routine or a test).
-     *        [zh] 观测器的可变访问（供对齐流程或测试播种）。
+     * @brief [zh] 观测器的可变访问（供对齐流程或测试播种）。
      * @since 0.1.0
      */
     [[nodiscard]] auto observer() noexcept -> Observer&;
 
     /**
      * @brief [en] Hand updated machine parameters to the policies that can take them.
-     *        [zh] 把更新后的机器参数交给能接受的策略。
-     *
-     * @param params [en] the machine as it actually is (identified at commissioning, or re-read later). [zh]机器实际的
-     * 样子（调试时辨识得到，或之后重读）。
-     * @note [en] Forwarded, not stored: `Motor` does not model the machine itself, so keeping a copy would
-     *       create a second source of truth for numbers that belong to the policies. A slot without the
-     *       hook simply keeps what it was built with.
-     *       [zh] 只转发、不保存：`Motor` 自己不建模机器，存一份会给本该属于策略的数字制造第二个真值来源。
-     *       没有该钩子的槽位保持构造时的值。
+     * @brief [zh] 把更新后的机器参数交给能接受的策略。
+     * @param params [en] the machine as it actually is (identified at commissioning, or re-read later).
+     * @param params [zh] 机器实际的 样子（调试时辨识得到，或之后重读）。
+     * @note [en] Forwarded, not stored: `Motor` does not model the machine itself, so keeping a copy would create a
+     *            second source of truth for numbers that belong to the policies. A slot without the hook simply keeps
+     *            what it was built with.
+     * @note [zh] 只转发、不保存：`Motor` 自己不建模机器，存一份会给本该属于策略的数字制造第二个真值来源。 没有该钩子的
+     *            槽位保持构造时的值。
      * @since 0.1.0
      */
     void apply_params(const core::MachineParams& params) noexcept;
 
     /**
      * @brief [en] Mutable access to the reference generator (tuning, diagnostics, tests).
-     *        [zh] 参考生成器的可变访问（整定、诊断、测试）。
+     * @brief [zh] 参考生成器的可变访问（整定、诊断、测试）。
      * @since 0.1.0
      */
     [[nodiscard]] auto reference() noexcept -> RefGenerator&;
 
     /**
      * @brief [en] Mutable access to the feedforward stage (tuning, diagnostics, tests).
-     *        [zh] 前馈阶段的可变访问（整定、诊断、测试）。
+     * @brief [zh] 前馈阶段的可变访问（整定、诊断、测试）。
      * @since 0.1.0
      */
     [[nodiscard]] auto feed_forward() noexcept -> FeedForward&;
 
     /**
      * @brief [en] Mutable access to the aligner, which is where the captured offset lives.
-     *        [zh] 对齐器的可变访问，捕获到的偏置就在这里。
+     * @brief [zh] 对齐器的可变访问，捕获到的偏置就在这里。
      * @since 0.1.0
      */
     [[nodiscard]] auto aligner() noexcept -> Aligner&;
 
     /**
      * @brief [en] Read-only view of the aligner (the captured offset lives here).
-     *        [zh] 对齐器的只读视图（捕获到的偏置在这里）。
+     * @brief [zh] 对齐器的只读视图（捕获到的偏置在这里）。
      * @since 0.1.0
      */
     [[nodiscard]] auto aligner() const noexcept -> const Aligner&;
 
     /**
      * @brief [en] Mutable access to the position slot (retuning without rebuilding the motor).
-     *        [zh] 位置槽位的可变访问（不重建电机即可重新整定）。
+     * @brief [zh] 位置槽位的可变访问（不重建电机即可重新整定）。
      * @since 0.1.0
      */
     [[nodiscard]] auto position() noexcept -> PositionControl&;
 
     /**
      * @brief [en] Nameplate parameters.
-     *        [zh] 铭牌参数。
+     * @brief [zh] 铭牌参数。
      * @since 0.1.0
      */
     [[nodiscard]] auto config() const noexcept -> const MotorConfig&;
 
   private:
     /**
-     * @brief [en] Keep one policy output inside the nameplate. A non-finite value is a policy bug,
-     *        not a physical quantity: it collapses to 0 instead of poisoning the integrators.
-     *        [zh] 把策略的单个输出限制在铭牌范围内。非有限值是策略的缺陷而非物理量：归零而不是让
-     *        它污染积分器。
+     * @brief [en] Keep one policy output inside the nameplate. A non-finite value is a policy bug, not a physical
+     *             quantity: it collapses to 0 instead of poisoning the integrators.
+     * @brief [zh] 把策略的单个输出限制在铭牌范围内。非有限值是策略的缺陷而非物理量：归零而不是让 它污染积分器。
      */
     [[nodiscard]] static auto sanitize_reference(float value, float i_max_a) noexcept -> float {
         return std::isfinite(value) ? core::clamp(value, -i_max_a, i_max_a) : 0.0F;
@@ -352,7 +341,7 @@ class Motor final {
 
     /**
      * @brief [en] Apply the nameplate clamp to both axes of a reference-generator result.
-     *        [zh] 对参考生成器的结果在两个轴上应用铭牌限幅。
+     * @brief [zh] 对参考生成器的结果在两个轴上应用铭牌限幅。
      */
     [[nodiscard]] static auto clamp_reference(Dq<float> ref, float i_max_a) noexcept -> Dq<float> {
         return Dq<float>{sanitize_reference(ref.d, i_max_a), sanitize_reference(ref.q, i_max_a)};
@@ -360,14 +349,12 @@ class Motor final {
 
     /**
      * @brief [en] Hand the captured offset to the sensor, when the sensor can take it.
-     *        [zh] 把捕获到的偏置交给传感器——前提是传感器能接收。
-     *
-     * @note [en] Both halves are optional and detected at compile time: an aligner that reports no
-     *       offset, or a sensor whose offset is owned by the platform, simply does not get written
-     *       to. Nothing is inferred and no default is invented; the value comes from the aligner's
-     *       own capture.
-     *       [zh] 两半都是可选且编译期探测的：不报偏置的对齐器、或偏置由平台掌管的传感器，都不会被
-     *       写入。这里不做任何推断、不编造默认值；值就是对齐器自己捕获的那个。
+     * @brief [zh] 把捕获到的偏置交给传感器——前提是传感器能接收。
+     * @note [en] Both halves are optional and detected at compile time: an aligner that reports no offset, or a sensor
+     *            whose offset is owned by the platform, simply does not get written to. Nothing is inferred and no
+     *            default is invented; the value comes from the aligner's own capture.
+     * @note [zh] 两半都是可选且编译期探测的：不报偏置的对齐器、或偏置由平台掌管的传感器，都不会被 写入。这里不做任何推
+     *            断、不编造默认值；值就是对齐器自己捕获的那个。
      */
     void apply_alignment_offset() noexcept {
         if constexpr (core::concepts::has_mech_offset_v<decltype(hal_->position)> &&

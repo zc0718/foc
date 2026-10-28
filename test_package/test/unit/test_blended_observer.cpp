@@ -14,11 +14,10 @@ namespace {
 
 /**
  * @brief [en] A stand-in observer whose answer is dictated by the test.
- *        [zh] 答案完全由测试指定的替身观测器。
- *
- * @note [en] The blending maths is what is under test here, so it needs inputs it can predict; the
- *       real observers are exercised by S16.
- *       [zh] 这里考的是混合算法本身，因此需要可预测的输入；真实观测器由 S16 覆盖。
+ * @brief [zh] 答案完全由测试指定的替身观测器。
+ * @note [en] The blending maths is what is under test here, so it needs inputs it can predict; the real observers are
+ *            exercised by S16.
+ * @note [zh] 这里考的是混合算法本身，因此需要可预测的输入；真实观测器由 S16 覆盖。
  * @since 0.1.0
  */
 struct FakeObserver final {

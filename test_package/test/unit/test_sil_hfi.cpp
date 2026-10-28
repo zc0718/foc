@@ -67,7 +67,7 @@ auto wrap_pi_local(float angle) noexcept -> float {
 
 /**
  * @brief [en] Config used by every case here; only the fields a case varies are arguments.
- *        [zh] 此处所有用例共用的配置；只有用例要变的字段才作为参数。
+ * @brief [zh] 此处所有用例共用的配置；只有用例要变的字段才作为参数。
  */
 auto make_config(float inject_hz, float inject_v, float pll_bandwidth_hz, float gain_scale) -> core::HfiObserver::Config {
     core::HfiObserver::Config config{};
@@ -90,12 +90,11 @@ auto make_config(float inject_hz, float inject_v, float pll_bandwidth_hz, float 
 
 /**
  * @brief [en] Standstill rig: the plant is held at a known angle and fed nothing but the injection.
- *        [zh] 静止台架：plant 停在已知角度，除注入外不加任何电压。
- *
- * @note [en] The call order mirrors `Motor::tick` exactly -- update(), then ask for the injection,
- *       then apply it -- because an off-by-one period in the phase is invisible otherwise.
- *       [zh] 调用顺序与 `Motor::tick` 完全一致——先 update()，再取注入量，再施加——否则相位上差一个
- *       周期的错误是看不出来的。
+ * @brief [zh] 静止台架：plant 停在已知角度，除注入外不加任何电压。
+ * @note [en] The call order mirrors `Motor::tick` exactly -- update(), then ask for the injection, then apply it --
+ *            because an off-by-one period in the phase is invisible otherwise.
+ * @note [zh] 调用顺序与 `Motor::tick` 完全一致——先 update()，再取注入量，再施加——否则相位上差一个 周期的错误是看不出来
+ *            的。
  */
 class StandstillRig final {
   public:

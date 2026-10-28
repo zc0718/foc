@@ -20,13 +20,11 @@ namespace sil {
 
 /**
  * @brief [en] Where to put the machine, and what to lie to the observers about.
- *        [zh] 把机器放在哪里，以及对观测器谎报什么。
- *
- * @note [en] The *true* machine is always the nameplate one; only the belief
- * varies. That split is what makes an Rs-mismatch sweep meaningful -- heating
- * the machine and heating the belief together would measure nothing. [zh]
- * **真**机器永远是铭牌电机，只有信念在变。这个分离才让 Rs
- * 失配扫描有意义——把机器和信念一起 加热，什么都量不到。
+ * @brief [zh] 把机器放在哪里，以及对观测器谎报什么。
+ * @note [en] The *true* machine is always the nameplate one; only the belief varies. That split is what makes an
+ *            Rs-mismatch sweep meaningful -- heating the machine and heating the belief together would measure nothing.
+ * @note [zh] **真**机器永远是铭牌电机，只有信念在变。这个分离才让 Rs 失配扫描有意义——把机器和信念一起 加热，什么都量不
+ *            到。
  * @since 0.1.0
  */
 struct SwitchingRigConfig final {
@@ -67,16 +65,14 @@ struct SwitchingRigConfig final {
 };
 
 /**
- * @brief [en] Constant-speed machine driven through a switching inverter, with
- * the current sampled once per control period. [zh]
- * 经开关逆变器驱动的恒速电机，电流每个控制周期采一次。
- *
- * @note [en] The observers are handed the **commanded** vector and the
- * **sampled** current, which is all a real controller knows. Everything else --
- * ripple, dead-time volt-seconds, the fact that the current is not the average
- * -- is what they have to cope with. [zh]
- * 观测器拿到的是**指令**矢量和**采样**电流，也就是真实控制器知道的全部。其余的一切——纹波、
- * 死区伏秒、电流不等于平均值——都是它们必须自己应付的。
+ * @brief [en] Constant-speed machine driven through a switching inverter, with the current sampled once per control
+ *             period.
+ * @brief [zh] 经开关逆变器驱动的恒速电机，电流每个控制周期采一次。
+ * @note [en] The observers are handed the **commanded** vector and the **sampled** current, which is all a real
+ *            controller knows. Everything else -- ripple, dead-time volt-seconds, the fact that the current is not the
+ *            average -- is what they have to cope with.
+ * @note [zh] 观测器拿到的是**指令**矢量和**采样**电流，也就是真实控制器知道的全部。其余的一切——纹波、 死区伏秒、电流不
+ *            等于平均值——都是它们必须自己应付的。
  * @since 0.1.0
  */
 class SwitchingRig final {
@@ -186,9 +182,8 @@ private:
 };
 
 /**
- * @brief [en] Runs one observer over a rig and returns the mean |angle error|
- * over the second half. [zh]
- * 在一个台架上跑一个观测器，返回后半段的角度误差绝对均值。
+ * @brief [en] Runs one observer over a rig and returns the mean |angle error| over the second half.
+ * @brief [zh] 在一个台架上跑一个观测器，返回后半段的角度误差绝对均值。
  * @since 0.1.0
  */
 template <typename Update>
@@ -216,19 +211,15 @@ auto run_switched(const SwitchingRigConfig &config, Update &&update) -> float {
 }
 
 /**
- * @brief [en] A textbook sliding-mode observer, **a control and not a
- * candidate**: it exists so the gate has something that can fail. Current-error
- * sliding surface, `z = K * sat(s / layer)` injected as a voltage, and a
- * first-order filter on `z` to read out the equivalent control (the back-EMF).
- *        [zh]
- * 教科书式滑模观测器，**是对照而不是候选**：它的存在是为了让闸有一个能失败的对象。电流误差 滑模面，`z = K·sat(s/layer)`
- * 作为注入电压，再对 `z` 做一阶滤波读出等效控制（反电动势）。
- *
- * @note [en] It is deliberately *sane*: it reaches ~0.03 rad on a plant with
- * neither impairment, so a failure here is about the structure under
- * disturbance, not about a broken straw man. [zh]
- * 它被刻意做得**靠谱**：在没有任何未建模效应的 plant 上它能到 ~0.03
- * rad，所以这里的失败是结构 在扰动下的问题，而不是稻草人写坏了。
+ * @brief [en] A textbook sliding-mode observer, **a control and not a candidate**: it exists so the gate has something
+ *             that can fail. Current-error sliding surface, `z = K * sat(s / layer)` injected as a voltage, and a
+ *             first-order filter on `z` to read out the equivalent control (the back-EMF).
+ * @brief [zh] 教科书式滑模观测器，**是对照而不是候选**：它的存在是为了让闸有一个能失败的对象。电流误差 滑模面，`z =
+ *             K·sat(s/layer)` 作为注入电压，再对 `z` 做一阶滤波读出等效控制（反电动势）。
+ * @note [en] It is deliberately *sane*: it reaches ~0.03 rad on a plant with neither impairment, so a failure here is
+ *            about the structure under disturbance, not about a broken straw man.
+ * @note [zh] 它被刻意做得**靠谱**：在没有任何未建模效应的 plant 上它能到 ~0.03 rad，所以这里的失败是结构 在扰动下的问
+ *            题，而不是稻草人写坏了。
  * @since 0.1.0
  */
 class SmoControl final {
@@ -281,28 +272,26 @@ private:
 };
 
 /**
- * @brief [en] The tuning a sliding-mode observer needs to survive the whole
- * speed range, as a *schedule* rather than a constant. [zh]
- * 滑模观测器要在整个速度范围活下来所需的调参——是一条**调度**，不是一个常数。
- *
- * @param omega_e [en] electrical speed in rad/s. [zh] 电角速度，rad/s。
- * @param psi_f [en] rotor flux linkage in Wb. [zh] 转子磁链，Wb。
- * @return [en] gain in V, filter corner in Hz, boundary layer in A. [zh]
- * 增益（V）、滤波拐点（Hz）、 边界层（A）。
- *
+ * @brief [en] The tuning a sliding-mode observer needs to survive the whole speed range, as a *schedule* rather than a
+ *             constant.
+ * @brief [zh] 滑模观测器要在整个速度范围活下来所需的调参——是一条**调度**，不是一个常数。
+ * @param omega_e [en] electrical speed in rad/s.
+ * @param omega_e [zh] 电角速度，rad/s。
+ * @param psi_f [en] rotor flux linkage in Wb.
+ * @param psi_f [zh] 转子磁链，Wb。
+ * @return [en] gain in V, filter corner in Hz, boundary layer in A.
+ * @return [zh] 增益（V）、滤波拐点（Hz）、 边界层（A）。
  * @note [en] Both numbers come from one fact: the sliding-mode gain must exceed the back-EMF it is trying to
- * reconstruct, `K > |omega_e| * psi_f`, and it must not be much larger than that or the chattering it injects grows
- * with it. So `K` is proportional to speed with a floor. The equivalent-control filter has the mirror problem: its
- * corner must be well above the signal it must pass (lag) but low enough to reject the switching (chatter), so it
- * tracks speed too. [zh]
- * 两个数来自同一个事实：滑模增益必须大于它要重建的反电动势，`K > |omega_e|·psi_f`；又不能比它大
- * 太多，否则注入的抖振跟着涨。所以 `K` 有下限且正比于转速。等效控制滤波器是镜像的问题：拐点要明显
- * 高于必须通过的信号（否则滞后），又要低到能压住开关（否则抖振），所以它也跟随转速。
- * @note [en] These constants are fitted to the S18 record, not derived: the
- * point of the bookkeeping is that a *single constant* provably cannot serve
- * the envelope, not that these particular numbers are optimal. [zh]
- * 这些常数是对着 S18 的记录**拟合**的，不是推导出来的：这份记账要说明的是"单个常数**不可能**
- * 覆盖整个包络"，而不是这几个数字最优。
+ *            reconstruct, `K > |omega_e| * psi_f`, and it must not be much larger than that or the chattering it
+ *            injects grows with it. So `K` is proportional to speed with a floor. The equivalent-control filter has the
+ *            mirror problem: its corner must be well above the signal it must pass (lag) but low enough to reject the
+ *            switching (chatter), so it tracks speed too. These constants are fitted to the S18 record, not derived:
+ *            the point of the bookkeeping is that a *single constant* provably cannot serve the envelope, not that
+ *            these particular numbers are optimal.
+ * @note [zh] 两个数来自同一个事实：滑模增益必须大于它要重建的反电动势，`K > |omega_e|·psi_f`；又不能比它大 太多，否则注
+ *            入的抖振跟着涨。所以 `K` 有下限且正比于转速。等效控制滤波器是镜像的问题：拐点要明显 高于必须通过的信号（否
+ *            则滞后），又要低到能压住开关（否则抖振），所以它也跟随转速。 这些常数是对着 S18 的记录**拟合**的，不是推导
+ *            出来的：这份记账要说明的是"单个常数**不可能** 覆盖整个包络"，而不是这几个数字最优。
  * @since 0.1.0
  */
 struct SmoTuning final {

@@ -26,34 +26,29 @@ namespace sil = foc::sil;
 
 /**
  * @brief [en] The criterion, written before the code it judges.
- *        [zh] 判据，写在它所判定的代码之前。
+ * @brief [zh] 判据，写在它所判定的代码之前。
  *
- * @note [en] `i_char = psi_f/Ld` is the one dimensionless switch that decides
- * whether MTPA is worth anything: it is the current at which the reluctance
- * term is the same size as the magnet term. At `i_char/i_max = 4` (the nominal
- * surface machine) the best possible gain is 3 %; at `i_char/i_max = 1` it is
- * 30 %. So the criterion is stated at the point where MTPA *should* pay, and
- * the nominal machine is used to state where it should not. [zh] `i_char =
- * ψf/Ld` 是决定 MTPA 值不值钱的那个无量纲开关：它就是磁阻项与磁钢项同量级
- * 的电流。`i_char/i_max = 4`（标称表贴机）时最好也就 3 %；`i_char/i_max = 1`
- * 时是 30 %。 所以判据写在 MTPA
- * **该**值钱的那个点上，并用标称机说明它在哪儿不值钱。
+ * @note [en] `i_char = psi_f/Ld` is the one dimensionless switch that decides whether MTPA is worth anything: it is the
+ *            current at which the reluctance term is the same size as the magnet term. At `i_char/i_max = 4` (the
+ *            nominal surface machine) the best possible gain is 3 %; at `i_char/i_max = 1` it is 30 %. So the criterion
+ *            is stated at the point where MTPA *should* pay, and the nominal machine is used to state where it should
+ *            not.
  *
- * 1. [en] `Lq/Ld = 2`, `i_char = i_max` -> torque at full current at least
- *    **+20 %** over `i_d = 0` (the closed-form answer is 30.2 %; 20 % leaves room for the bisection and for the fact
- *    that the two are compared at equal
- *    *current*, not equal *voltage*).
- *    [zh] `Lq/Ld = 2`、`i_char = i_max` → 满电流下转矩比 `i_d = 0` 至少 **+20 %** （闭式解是 30.2 %；留 20 %
- * 是给二分和"两者是在等**电流**而不是等**电压**下比较的" 这件事留余量）。
- * 2. [en] `|i|` never exceeds `i_max`, at any request, including absurd ones.
- *    [zh] 任何给定下 `|i|` 都不超过 `i_max`，包括荒谬的给定。
- * 3. [en] `Lq = Ld` gives `i_d = 0` **exactly**, not "close to zero".
- *    [zh] `Lq = Ld` 下 `i_d` **恰好**为 0，不是"接近 0"。
- * 4. [en] Turning MTPA on must not push the observer past its ceiling on the salient machine: angle error <= 0.15 rad
- * with the single-`L` observer that ships. If it does, MTPA does not ship -- a torque gain bought with a broken angle
- * estimate is not a gain. [zh] 打开 MTPA
- * 不得把观测器推过天花板：在凸极机上，出厂的单 `L` 观测器角度误差 ≤ 0.15
- * rad。若超了，MTPA 不出厂——用坏掉的角度估计换来的转矩增益不是增益。
+ *     `Lq/Ld = 2`, `i_char = i_max` -> torque at full current at least **+20 %** over `i_d = 0` (the closed-form answer
+ *     is 30.2 %; 20 % leaves room for the bisection and for the fact that the two are compared at equal *current*, not
+ *     equal *voltage*). `|i|` never exceeds `i_max`, at any request, including absurd ones. `Lq = Ld` gives `i_d = 0`
+ *     **exactly**, not "close to zero". Turning MTPA on must not push the observer past its ceiling on the salient
+ *     machine: angle error <= 0.15 rad with the single-`L` observer that ships. If it does, MTPA does not ship -- a
+ *     torque gain bought with a broken angle estimate is not a gain.
+ *
+ * @note [zh] `i_char = ψf/Ld` 是决定 MTPA 值不值钱的那个无量纲开关：它就是磁阻项与磁钢项同量级 的电流。`i_char/i_max =
+ *            4`（标称表贴机）时最好也就 3 %；`i_char/i_max = 1` 时是 30 %。 所以判据写在 MTPA **该**值钱的那个点上，并
+ *            用标称机说明它在哪儿不值钱。
+ *
+ *     1. `Lq/Ld = 2`、`i_char = i_max` → 满电流下转矩比 `i_d = 0` 至少 **+20 %** （闭式解是 30.2 %；留 20 % 是给二分和"
+ *     两者是在等**电流**而不是等**电压**下比较的" 这件事留余量）。 2. 任何给定下 `|i|` 都不超过 `i_max`，包括荒谬的给
+ *     定。 3. `Lq = Ld` 下 `i_d` **恰好**为 0，不是"接近 0"。 4. 打开 MTPA 不得把观测器推过天花板：在凸极机上，出厂的单
+ *     `L` 观测器角度误差 ≤ 0.15 rad。若超了，MTPA 不出厂——用坏掉的角度估计换来的转矩增益不是增益。
  */
 constexpr float kMinTorqueGain = 1.20F;
 constexpr float kAngleCeilingRad = 0.15F;

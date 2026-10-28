@@ -22,10 +22,9 @@ namespace sil {
 
 
 /**
- * @brief [en] Machine under test: one table feeds both the plant and the controller nameplate, so
- *        the two can never drift apart. S5 then perturbs the plant only.
- *        [zh] 被控电机：同一张表同时生成 plant 与控制器铭牌，两者不会走偏。S5 只摄动 plant。
- *
+ * @brief [en] Machine under test: one table feeds both the plant and the controller nameplate, so the two can never
+ *             drift apart. S5 then perturbs the plant only.
+ * @brief [zh] 被控电机：同一张表同时生成 plant 与控制器铭牌，两者不会走偏。S5 只摄动 plant。
  * @since 0.1.0
  */
 struct MachineSpec final {
@@ -44,8 +43,7 @@ struct MachineSpec final {
 
 /**
  * @brief [en] Bench settings: bus voltage, control period and loop bandwidths.
- *        [zh] 台架设置：母线电压、控制周期与环路带宽。
- *
+ * @brief [zh] 台架设置：母线电压、控制周期与环路带宽。
  * @since 0.1.0
  */
 struct BenchConfig final {
@@ -60,8 +58,7 @@ struct BenchConfig final {
 
 /**
  * @brief [en] One recorded control tick.
- *        [zh] 一个记录下来的控制周期。
- *
+ * @brief [zh] 一个记录下来的控制周期。
  * @since 0.1.0
  */
 struct Sample final {
@@ -108,11 +105,9 @@ inline auto nominal_motor_config() -> motor::MotorConfig { return motor_config_f
 
 
 /**
- * @brief [en] Current-loop PI tuned for critical damping: `ki = wn^2*L`, `kp = 2*wn*L - R`,
- *        which cancels the electrical pole and gives `s^2 + 2*wn*s + wn^2`.
- *        [zh] 电流环 PI，按临界阻尼整定：`ki = wn^2*L`、`kp = 2*wn*L - R`，抵消电气极点后得到
- *        `s^2 + 2*wn*s + wn^2`。
- *
+ * @brief [en] Current-loop PI tuned for critical damping: `ki = wn^2*L`, `kp = 2*wn*L - R`, which cancels the
+ *             electrical pole and gives `s^2 + 2*wn*s + wn^2`.
+ * @brief [zh] 电流环 PI，按临界阻尼整定：`ki = wn^2*L`、`kp = 2*wn*L - R`，抵消电气极点后得到 `s^2 + 2*wn*s + wn^2`。
  * @since 0.1.0
  */
 inline auto current_pi_config(const motor::MotorConfig& mc, float omega_rad_s, float v_bus) -> core::Pi::Config {
@@ -123,10 +118,8 @@ inline auto current_pi_config(const motor::MotorConfig& mc, float omega_rad_s, f
 
 
 /**
- * @brief [en] Speed-loop PI with pole-zero cancellation of the mechanical pole `B/J`:
- *        `kp = wn*J/Kt`, `ki = wn*B/Kt`.
- *        [zh] 速度环 PI，抵消机械极点 `B/J`：`kp = wn*J/Kt`、`ki = wn*B/Kt`。
- *
+ * @brief [en] Speed-loop PI with pole-zero cancellation of the mechanical pole `B/J`: `kp = wn*J/Kt`, `ki = wn*B/Kt`.
+ * @brief [zh] 速度环 PI，抵消机械极点 `B/J`：`kp = wn*J/Kt`、`ki = wn*B/Kt`。
  * @since 0.1.0
  */
 inline auto speed_pi_config(const motor::MotorConfig& mc, float omega_rad_s) -> core::Pi::Config {
@@ -136,10 +129,9 @@ inline auto speed_pi_config(const motor::MotorConfig& mc, float omega_rad_s) -> 
 
 
 /**
- * @brief [en] Closed-loop bench: plant + HAL adapters + policy-composed motor, ticking at the
- *        control period and pushing every duty into the plant.
- *        [zh] 闭环台架：plant + HAL 适配 + 策略组合电机，按控制周期 tick 并把占空比送入 plant。
- *
+ * @brief [en] Closed-loop bench: plant + HAL adapters + policy-composed motor, ticking at the control period and
+ *             pushing every duty into the plant.
+ * @brief [zh] 闭环台架：plant + HAL 适配 + 策略组合电机，按控制周期 tick 并把占空比送入 plant。
  * @since 0.1.0
  */
 class Bench final {

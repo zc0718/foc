@@ -15,8 +15,7 @@ namespace sil {
 
 /**
  * @brief [en] Outcome of one S2 speed-step run, in the terms of PRD 8.4.
- *        [zh] 一次 S2 速度阶跃的结果，按 PRD 8.4 的口径给出。
- *
+ * @brief [zh] 一次 S2 速度阶跃的结果，按 PRD 8.4 的口径给出。
  * @since 0.1.0
  */
 struct SpeedStepResult final {
@@ -32,11 +31,13 @@ struct SpeedStepResult final {
 
 /**
  * @brief [en] Run the S2 scenario: hold 0 rad/s, then step to `target_rad_s`.
- *        [zh] 运行 S2 场景：先稳住 0 rad/s，再阶跃到 `target_rad_s`。
- *
- * @param plant [en] plant parameters under test (S5 passes perturbed ones). [zh] 被控 plant 参数（S5 传入摄动值）。
- * @param target_rad_s [en] speed reference in rad/s. [zh] 速度给定，rad/s。
- * @param hold_s [en] how long to run after the step. [zh] 阶跃后运行时长。
+ * @brief [zh] 运行 S2 场景：先稳住 0 rad/s，再阶跃到 `target_rad_s`。
+ * @param plant [en] plant parameters under test (S5 passes perturbed ones).
+ * @param plant [zh] 被控 plant 参数（S5 传入摄动值）。
+ * @param target_rad_s [en] speed reference in rad/s.
+ * @param target_rad_s [zh] 速度给定，rad/s。
+ * @param hold_s [en] how long to run after the step.
+ * @param hold_s [zh] 阶跃后运行时长。
  * @since 0.1.0
  */
 inline auto run_speed_step(const PlantParams& plant, float target_rad_s, float hold_s = 0.5F) -> SpeedStepResult {

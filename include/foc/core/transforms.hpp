@@ -10,11 +10,9 @@ namespace core {
 
 
 /**
- * @brief [en] Transform constants, amplitude-invariant convention. Variable templates keep the
- *        literal at full precision for `double` users instead of truncating to `float`.
- *        [zh] 变换常量，幅值不变式约定。用变量模板是为了让 `double` 用户拿到全精度常量，
- *        而不是被截断成 `float`。
- *
+ * @brief [en] Transform constants, amplitude-invariant convention. Variable templates keep the literal at full
+ *             precision for `double` users instead of truncating to `float`.
+ * @brief [zh] 变换常量，幅值不变式约定。用变量模板是为了让 `double` 用户拿到全精度常量， 而不是被截断成 `float`。
  * @since 0.1.0
  * @exporter
  */
@@ -30,15 +28,15 @@ template <typename T> inline constexpr T kSqrt3Over2 = static_cast<T>(0.86602540
 
 
 /**
- * @brief [en] Clarke transform: three-phase (abc) to stationary two-phase (alpha-beta).
- *        Amplitude invariant: a balanced set of amplitude A maps to a vector of amplitude A.
- *        [zh] Clarke 变换：三相 abc 到静止两相 alpha-beta。幅值不变式：幅值 A 的平衡三相映射为
- *        幅值 A 的矢量。
- *
- * @param uvw [en] phase quantities in SI units. [zh] 三相量，SI 单位。
- * @return [en] alpha-beta vector in the same unit. [zh] 同一单位的 alpha-beta 矢量。
+ * @brief [en] Clarke transform: three-phase (abc) to stationary two-phase (alpha-beta). Amplitude invariant: a balanced
+ *             set of amplitude A maps to a vector of amplitude A.
+ * @brief [zh] Clarke 变换：三相 abc 到静止两相 alpha-beta。幅值不变式：幅值 A 的平衡三相映射为 幅值 A 的矢量。
+ * @param uvw [en] phase quantities in SI units.
+ * @param uvw [zh] 三相量，SI 单位。
+ * @return [en] alpha-beta vector in the same unit.
+ * @return [zh] 同一单位的 alpha-beta 矢量。
  * @context [en] Current-loop ISR: noexcept, no allocation, no function pointer.
- *           [zh] 电流环 ISR：noexcept、不分配、无函数指针。
+ * @context [zh] 电流环 ISR：noexcept、不分配、无函数指针。
  * @since 0.1.0
  * @exporter
  */
@@ -52,11 +50,13 @@ template <typename T> auto clarke(Uvw<T> uvw) noexcept -> Ab<T> {
 
 /**
  * @brief [en] Inverse Clarke transform: stationary two-phase back to three-phase.
- *        [zh] 逆 Clarke 变换：静止两相回到三相。
- *
- * @param ab [en] alpha-beta vector. [zh] alpha-beta 矢量。
- * @return [en] balanced three-phase quantities. [zh] 平衡三相量。
- * @context [en] Current-loop ISR: noexcept, no allocation. [zh] 电流环 ISR：noexcept、不分配。
+ * @brief [zh] 逆 Clarke 变换：静止两相回到三相。
+ * @param ab [en] alpha-beta vector.
+ * @param ab [zh] alpha-beta 矢量。
+ * @return [en] balanced three-phase quantities.
+ * @return [zh] 平衡三相量。
+ * @context [en] Current-loop ISR: noexcept, no allocation.
+ * @context [zh] 电流环 ISR：noexcept、不分配。
  * @since 0.1.0
  * @exporter
  */
@@ -70,12 +70,15 @@ template <typename T> auto inv_clarke(Ab<T> ab) noexcept -> Uvw<T> {
 
 /**
  * @brief [en] Park transform: stationary alpha-beta to rotating d-q (d = flux, q = torque).
- *        [zh] Park 变换：静止 alpha-beta 到旋转 d-q（d = 磁链轴，q = 转矩轴）。
- *
- * @param ab [en] alpha-beta vector. [zh] alpha-beta 矢量。
- * @param theta_rad [en] electrical angle in rad. [zh] 电角度，单位 rad。
- * @return [en] d-q vector. [zh] d-q 矢量。
- * @context [en] Current-loop ISR: noexcept, no allocation. [zh] 电流环 ISR：noexcept、不分配。
+ * @brief [zh] Park 变换：静止 alpha-beta 到旋转 d-q（d = 磁链轴，q = 转矩轴）。
+ * @param ab [en] alpha-beta vector.
+ * @param ab [zh] alpha-beta 矢量。
+ * @param theta_rad [en] electrical angle in rad.
+ * @param theta_rad [zh] 电角度，单位 rad。
+ * @return [en] d-q vector.
+ * @return [zh] d-q 矢量。
+ * @context [en] Current-loop ISR: noexcept, no allocation.
+ * @context [zh] 电流环 ISR：noexcept、不分配。
  * @since 0.1.0
  * @exporter
  */
@@ -89,12 +92,15 @@ template <typename T> auto park(Ab<T> ab, T theta_rad) noexcept -> Dq<T> {
 
 /**
  * @brief [en] Inverse Park transform: rotating d-q back to stationary alpha-beta.
- *        [zh] 逆 Park 变换：旋转 d-q 回到静止 alpha-beta。
- *
- * @param dq [en] d-q vector. [zh] d-q 矢量。
- * @param theta_rad [en] electrical angle in rad. [zh] 电角度，单位 rad。
- * @return [en] alpha-beta vector. [zh] alpha-beta 矢量。
- * @context [en] Current-loop ISR: noexcept, no allocation. [zh] 电流环 ISR：noexcept、不分配。
+ * @brief [zh] 逆 Park 变换：旋转 d-q 回到静止 alpha-beta。
+ * @param dq [en] d-q vector.
+ * @param dq [zh] d-q 矢量。
+ * @param theta_rad [en] electrical angle in rad.
+ * @param theta_rad [zh] 电角度，单位 rad。
+ * @return [en] alpha-beta vector.
+ * @return [zh] alpha-beta 矢量。
+ * @context [en] Current-loop ISR: noexcept, no allocation.
+ * @context [zh] 电流环 ISR：noexcept、不分配。
  * @since 0.1.0
  * @exporter
  */

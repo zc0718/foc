@@ -11,7 +11,7 @@ namespace motor {
 
 /**
  * @brief [en] Implements measure_dq(); the contract is documented on its declaration.
- *        [zh] 实现 measure_dq()；契约文档在对应的声明处。
+ * @brief [zh] 实现 measure_dq()；契约文档在对应的声明处。
  * @attacher
  * @since 0.1.0
  */
@@ -22,7 +22,7 @@ auto measure_dq(Uvw<float> i_uvw, float theta_e_rad) noexcept -> Dq<float> {
 
 /**
  * @brief [en] Implements apply_voltage(); the contract is documented on its declaration.
- *        [zh] 实现 apply_voltage()；契约文档在对应的声明处。
+ * @brief [zh] 实现 apply_voltage()；契约文档在对应的声明处。
  * @attacher
  * @since 0.1.0
  */

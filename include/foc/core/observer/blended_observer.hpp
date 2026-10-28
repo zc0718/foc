@@ -16,7 +16,7 @@ namespace detail {
 
 /**
  * @brief [en] Shortest-arc difference, wrapped to (-pi, pi].
- *        [zh] 最短弧差，归一化到 (-π, π]。
+ * @brief [zh] 最短弧差，归一化到 (-π, π]。
  * @since 0.1.0
  */
 inline auto shortest_arc(float to, float from) noexcept -> float {
@@ -33,7 +33,7 @@ inline auto shortest_arc(float to, float from) noexcept -> float {
 
 /**
  * @brief [en] Wrap to [0, 2*pi).
- *        [zh] 归一化到 [0, 2π)。
+ * @brief [zh] 归一化到 [0, 2π)。
  * @since 0.1.0
  */
 inline auto wrap_full_turn(float angle) noexcept -> float {
@@ -51,75 +51,67 @@ inline auto wrap_full_turn(float angle) noexcept -> float {
 
 /**
  * @brief [en] One angle estimate from two observers, each valid in a different speed regime.
- *        [zh] 由两个各自在某个速度区间有效的观测器合成的单一角度估计。
  *
- *        Why neither observer alone is enough: a saliency loop measures the magnetic circuit, which
- *        does not care about speed, so it works at standstill and drowns in the fundamental current as
- *        speed rises. A back-EMF observer measures the voltage the rotation generates, so it needs
- *        rotation and its accuracy improves with speed -- a flux integrator with a 30 % Rs error was
- *        measured at 2.7 rad of angle error near standstill and 0.02 rad at 400 rad/s electrical, on
- *        the same fixture where the saliency loop went the other way. The two curves cross, and this
- *        class is that crossing.
- *        为什么单用哪个都不够：凸极环测的是磁路，与转速无关，因此静止可用，转速升高后被基频电流淹没。
- *        反电动势观测器测的是旋转产生的电压，必须有转速，且精度随转速提高——同一台架上，Rs 偏 30% 的磁链
- *        积分器在近静止处实测角度误差 2.7 rad，400 rad/s 电角速度处 0.02 rad，而凸极环的趋势正好相反。
- *        两条曲线交叉，本类就是这个交叉。
+ * @brief [zh] 由两个各自在某个速度区间有效的观测器合成的单一角度估计。
  *
- *        The weight is a linear ramp between two speeds, not a switch, and the band is required to have
- *        width. A hard switch driven by the very speed being estimated is a limit cycle: it switches,
- *        the speed reading changes, it switches back. The band also has to *end before the low-speed
- *        observer stops working*, which is a measured property of the machine, not a universal
- *        constant -- hence a configuration field rather than a number inside this class.
- *        权重是两个转速之间的线性斜坡而不是开关，且要求带宽不为零。用被估计的转速去驱动的硬开关就是一个
- *        极限环：切换 → 转速读数变化 → 切回来。此外带宽必须**在低速观测器失效之前结束**，而那是被控对象
- *        的实测属性、不是通用常数——所以它是配置字段，而不是本类里的某个数字。
+ *     Why neither observer alone is enough: a saliency loop measures the magnetic circuit, which does not care about
+ *     speed, so it works at standstill and drowns in the fundamental current as speed rises. A back-EMF observer
+ *     measures the voltage the rotation generates, so it needs rotation and its accuracy improves with speed -- a flux
+ *     integrator with a 30 % Rs error was measured at 2.7 rad of angle error near standstill and 0.02 rad at 400 rad/s
+ *     electrical, on the same fixture where the saliency loop went the other way. The two curves cross, and this class
+ *     is that crossing. 为什么单用哪个都不够：凸极环测的是磁路，与转速无关，因此静止可用，转速升高后被基频电流淹没。 反
+ *     电动势观测器测的是旋转产生的电压，必须有转速，且精度随转速提高——同一台架上，Rs 偏 30% 的磁链 积分器在近静止处实测
+ *     角度误差 2.7 rad，400 rad/s 电角速度处 0.02 rad，而凸极环的趋势正好相反。 两条曲线交叉，本类就是这个交叉。
  *
- * @note [en] The angle blend is a shortest-arc interpolation, never a plain mix of two numbers in
- *       [0, 2*pi): the two estimates sit on opposite sides of the wrap every time one of them crosses
- *       zero, and averaging those raw values produces a jump of a whole turn at exactly the wrong
- *       moment.
- *       [zh] 角度混合是**最短弧插值**，绝不是把 [0, 2π) 里的两个数字直接按权重相加：只要其中一个跨过零点，
- *       两个估计就分处环绕的两侧，直接平均会在最不该跳的时刻产生整整一圈的跳变。
+ *     The weight is a linear ramp between two speeds, not a switch, and the band is required to have width. A hard
+ *     switch driven by the very speed being estimated is a limit cycle: it switches, the speed reading changes, it
+ *     switches back. The band also has to *end before the low-speed observer stops working*, which is a measured
+ *     property of the machine, not a universal constant -- hence a configuration field rather than a number inside this
+ *     class. 权重是两个转速之间的线性斜坡而不是开关，且要求带宽不为零。用被估计的转速去驱动的硬开关就是一个 极限环：切
+ *     换 → 转速读数变化 → 切回来。此外带宽必须**在低速观测器失效之前结束**，而那是被控对象 的实测属性、不是通用常数——所
+ *     以它是配置字段，而不是本类里的某个数字。
  *
- * @note [en] The injection is scaled by `1 - weight`, so the carrier winds down as the handover
- *       completes instead of being paid for forever. At full handover it is exactly zero.
- *       [zh] 注入按 `1 − 权重` 缩放，于是载波随交接完成而收掉，而不是永远付着这份代价。完全交接时恰为零。
+ * @note [en] The angle blend is a shortest-arc interpolation, never a plain mix of two numbers in [0, 2*pi): the two
+ *            estimates sit on opposite sides of the wrap every time one of them crosses zero, and averaging those raw
+ *            values produces a jump of a whole turn at exactly the wrong moment. The injection is scaled by `1 -
+ *            weight`, so the carrier winds down as the handover completes instead of being paid for forever. At full
+ *            handover it is exactly zero. What the handover costs the high-speed half: while the carrier is being wound
+ *            down it is still being delivered, and a model-based observer cannot tell it from back-EMF. An open-loop
+ *            flux integrator keeps what it is given, so the crossing leaves it biased by roughly one carrier period of
+ *            volt-seconds -- measured 0.031 rad at 2 V / 2 kHz, against 0.033 predicted by `inject_v /
+ *            (2*pi*inject_hz*psi_f)`. Filtering the voltage handed to the high-speed observer would remove it and cost
+ *            far more: a pole low enough to matter at the carrier frequency lags the fundamental by tens of degrees at
+ *            speed. The usable answers are to size the carrier for the bias you can afford, or to make the high-speed
+ *            half a loop that tracks the flux instead of integrating it open-loop. Where the *speed* noise comes from,
+ *            because it decides what the fix is: not the numerical differentiation. A flux-plus-PLL observer was built
+ *            and measured against the shipped one, on the same signals, expecting the loop's smooth speed to make the
+ *            handover reproducible. It does not: both report the same speed ripple (+-3 rad/s at 20 rad/s electrical,
+ *            +-12 at 100..200) and the loop's *angle* is 2-3x worse at speed (0.030 vs 0.011 rad at 400, 0.060 vs 0.020
+ *            at 800). The reason is that the ripple is in the flux estimate itself -- the integrator is fed `v - Rs*i`
+ *            and swallows the current's switching ripple -- so any estimator of the angle from that flux inherits it,
+ *            and the loop's proportional path turns it straight back into speed. A loop on the *same* flux is therefore
+ *            not the fix. What would be is an observer that closes a loop on the currents (Luenberger / sliding mode),
+ *            so the ripple is rejected before it ever reaches the flux.
  *
- * @note [en] What the handover costs the high-speed half: while the carrier is being wound down it is
- *       still being delivered, and a model-based observer cannot tell it from back-EMF. An open-loop flux
- *       integrator keeps what it is given, so the crossing leaves it biased by roughly one carrier
- *       period of volt-seconds -- measured 0.031 rad at 2 V / 2 kHz, against 0.033 predicted by
- *       `inject_v / (2*pi*inject_hz*psi_f)`. Filtering the voltage handed to the high-speed observer
- *       would remove it and cost far more: a pole low enough to matter at the carrier frequency lags the
- *       fundamental by tens of degrees at speed. The usable answers are to size the carrier for the bias
- *       you can afford, or to make the high-speed half a loop that tracks the flux instead of integrating
- *       it open-loop.
- *       [zh] 交接对高速那一半的代价：载波在收掉的过程中仍在送达，而基于模型的观测器分不清它与反电动势。
- *       开环磁链积分器给什么留什么，因此穿越会给它留下约一个载波周期伏秒的偏差——实测 2 V / 2 kHz 下
- *       0.031 rad，`inject_v / (2π·inject_hz·ψf)` 预测 0.033。给高速观测器的电压做滤波可以消掉它，代价
- *       却更大：低到能在载波频率上起作用的极点，在高速时会把基频滞后几十度。可用的答案是按你能承受的
- *       偏差去定容载波。
+ * @note [zh] 角度混合是**最短弧插值**，绝不是把 [0, 2π) 里的两个数字直接按权重相加：只要其中一个跨过零点， 两个估计就分
+ *            处环绕的两侧，直接平均会在最不该跳的时刻产生整整一圈的跳变。
  *
- * @note [en] Where the *speed* noise comes from, because it decides what the fix is: not the numerical
- *       differentiation. A flux-plus-PLL observer was built and measured against the shipped one, on the
- *       same signals, expecting the loop's smooth speed to make the handover reproducible. It does not:
- *       both report the same speed ripple (+-3 rad/s at 20 rad/s electrical, +-12 at 100..200) and the
- *       loop's *angle* is 2-3x worse at speed (0.030 vs 0.011 rad at 400, 0.060 vs 0.020 at 800). The
- *       reason is that the ripple is in the flux estimate itself -- the integrator is fed `v - Rs*i` and
- *       swallows the current's switching ripple -- so any estimator of the angle from that flux inherits
- *       it, and the loop's proportional path turns it straight back into speed. A loop on the *same*
- *       flux is therefore not the fix. What would be is an observer that closes a loop on the currents
- *       (Luenberger / sliding mode), so the ripple is rejected before it ever reaches the flux.
- *       [zh] **转速**噪声的来源，因为它决定了修法是什么：不是数值微分。本库试过并实测过一个
- *       "磁链 + PLL" 观测器，期待环路的平滑转速能让交接可复现。结果是不行：两者的转速纹波完全相同
- *       （电角速度 20 rad/s 处 ±3 rad/s，100–200 处 ±12），而环路的**角度**在高速反而差 2–3 倍
- *       （400 处 0.030 对 0.011，800 处 0.060 对 0.020）。原因是纹波本来就在磁链估计里——积分器的输入是
- *       `v − Rs·i`，它把电流的开关纹波一并吞了进去——于是任何从该磁链导出的角度都继承它，而环路的比例
- *       通道又把它直接变回转速。所以"对同一条磁链加环"不是修法；修法是让观测器**对电流闭环**
- *       （Luenberger / 滑模），在纹波到达磁链之前就把它压掉。
+ *     注入按 `1 − 权重` 缩放，于是载波随交接完成而收掉，而不是永远付着这份代价。完全交接时恰为零。
  *
- * @context [en] Current-loop ISR after construction: noexcept, no allocation. [zh] 构造之后的电流环 ISR：
- *           noexcept、不分配。
+ *     交接对高速那一半的代价：载波在收掉的过程中仍在送达，而基于模型的观测器分不清它与反电动势。 开环磁链积分器给什么留
+ *     什么，因此穿越会给它留下约一个载波周期伏秒的偏差——实测 2 V / 2 kHz 下 0.031 rad，`inject_v / (2π·inject_hz·ψf)`
+ *     预测 0.033。给高速观测器的电压做滤波可以消掉它，代价 却更大：低到能在载波频率上起作用的极点，在高速时会把基频滞后
+ *     几十度。可用的答案是按你能承受的 偏差去定容载波。
+ *
+ *     **转速**噪声的来源，因为它决定了修法是什么：不是数值微分。本库试过并实测过一个 "磁链 + PLL" 观测器，期待环路的平
+ *     滑转速能让交接可复现。结果是不行：两者的转速纹波完全相同 （电角速度 20 rad/s 处 ±3 rad/s，100–200 处 ±12），而环
+ *     路的**角度**在高速反而差 2–3 倍 （400 处 0.030 对 0.011，800 处 0.060 对 0.020）。原因是纹波本来就在磁链估计里——
+ *     积分器的输入是 `v − Rs·i`，它把电流的开关纹波一并吞了进去——于是任何从该磁链导出的角度都继承它，而环路的比例 通道
+ *     又把它直接变回转速。所以"对同一条磁链加环"不是修法；修法是让观测器**对电流闭环** （Luenberger / 滑模），在纹波到
+ *     达磁链之前就把它压掉。
+ *
+ * @context [en] Current-loop ISR after construction: noexcept, no allocation.
+ * @context [zh] 构造之后的电流环 ISR： noexcept、不分配。
  * @since 0.1.0
  * @exporter
  */
@@ -130,22 +122,19 @@ template <typename LowSpeed, typename HighSpeed> class BlendedObserver final {
 
     /**
      * @brief [en] The handover band, in electrical rad/s.
-     *        [zh] 交接带宽，电角速度 rad/s。
+     * @brief [zh] 交接带宽，电角速度 rad/s。
+     * @note [en] `blend_end_rad_s` must be strictly greater than `blend_start_rad_s`: a zero-width band is a hard
+     *            switch, which is rejected rather than supported. `handover_lpf_hz` exists because the weight must not
+     *            be computed from a raw differentiated angle: measured on the handover fixture, the back-EMF observer's
+     *            speed carried a +-12 rad/s ripple around 100-200 rad/s (the `-L*i` term in its flux estimate ripples
+     *            with the current), which on a 60 rad/s wide band swings the weight by +-20 % and makes the output jump
+     *            between two estimates that are not the same quantity.
      *
-     * @note [en] `blend_end_rad_s` must be strictly greater than `blend_start_rad_s`: a zero-width band
-     *       is a hard switch, which is rejected rather than supported.
-     *       [zh] `blend_end_rad_s` 必须严格大于 `blend_start_rad_s`：零带宽就是硬开关，会被拒绝而不是被
-     *       支持。
+     * @note [zh] `blend_end_rad_s` 必须严格大于 `blend_start_rad_s`：零带宽就是硬开关，会被拒绝而不是被 支持。
      *
-     * @note [en] `handover_lpf_hz` exists because the weight must not be computed from a raw
-     *       differentiated angle: measured on the handover fixture, the back-EMF observer's speed carried a
-     *       +-12 rad/s ripple around 100-200 rad/s (the `-L*i` term in its flux estimate ripples with
-     *       the current), which on a 60 rad/s wide band swings the weight by +-20 % and makes the
-     *       output jump between two estimates that are not the same quantity.
-     *       [zh] `handover_lpf_hz` 存在的理由：权重不能由未经平滑的微分角度算出。台架实测，
-     *       反电动势观测器的转速在 100–200 rad/s 附近带 ±12 rad/s 的纹波（其磁链估计里的 `−L·i` 项随
-     *       电流纹波），在 60 rad/s 宽的带内就会把权重摆动 ±20%，使输出在两个并非同一物理量的估计之间
-     *       跳变。
+     *     `handover_lpf_hz` 存在的理由：权重不能由未经平滑的微分角度算出。台架实测， 反电动势观测器的转速在 100–200
+     *     rad/s 附近带 ±12 rad/s 的纹波（其磁链估计里的 `−L·i` 项随 电流纹波），在 60 rad/s 宽的带内就会把权重摆动
+     *     ±20%，使输出在两个并非同一物理量的估计之间 跳变。
      * @since 0.1.0
      */
     struct Config final {
@@ -157,12 +146,13 @@ template <typename LowSpeed, typename HighSpeed> class BlendedObserver final {
 
     /**
      * @brief [en] Take both observers and the band.
-     *        [zh] 取两个观测器与交接带。
-     *
-     * @param low [en] the observer that works without rotation. [zh] 无需旋转即可工作的观测器。
-     * @param high [en] the observer that needs rotation. [zh] 需要旋转才成立的观测器。
+     * @brief [zh] 取两个观测器与交接带。
+     * @param low [en] the observer that works without rotation.
+     * @param low [zh] 无需旋转即可工作的观测器。
+     * @param high [en] the observer that needs rotation.
+     * @param high [zh] 需要旋转才成立的观测器。
      * @param config [en] invalid values put the object in Param status; update() then holds.
-     *               [zh] 非法值让对象进入 Param 状态；此后 update() 保持。
+     * @param config [zh] 非法值让对象进入 Param 状态；此后 update() 保持。
      * @since 0.1.0
      */
     BlendedObserver(LowSpeed low, HighSpeed high, Config config) noexcept
@@ -171,12 +161,15 @@ template <typename LowSpeed, typename HighSpeed> class BlendedObserver final {
 
     /**
      * @brief [en] Advance both observers and publish the fused estimate.
-     *        [zh] 推进两个观测器并发布融合后的估计。
-     *
-     * @param v_ab [en] applied stator voltage in V. [zh] 施加的定子电压，V。
-     * @param i_ab [en] measured stator current in A. [zh] 实测定子电流，A。
-     * @param dt_s [en] step length in s; <= 0 is rejected (status Param). [zh] 步长，s；<= 0 被拒绝（状态 Param）。
-     * @return [en] fused electrical angle and speed. [zh] 融合后的电角度与电角速度。
+     * @brief [zh] 推进两个观测器并发布融合后的估计。
+     * @param v_ab [en] applied stator voltage in V.
+     * @param v_ab [zh] 施加的定子电压，V。
+     * @param i_ab [en] measured stator current in A.
+     * @param i_ab [zh] 实测定子电流，A。
+     * @param dt_s [en] step length in s; <= 0 is rejected (status Param).
+     * @param dt_s [zh] 步长，s；<= 0 被拒绝（状态 Param）。
+     * @return [en] fused electrical angle and speed.
+     * @return [zh] 融合后的电角度与电角速度。
      * @since 0.1.0
      */
     auto update(Ab<float> v_ab, Ab<float> i_ab, float dt_s) noexcept -> ObsState {
@@ -268,7 +261,7 @@ template <typename LowSpeed, typename HighSpeed> class BlendedObserver final {
 
     /**
      * @brief [en] The carrier to add to the voltage command, wound down by the handover.
-     *        [zh] 要叠加到电压指令上的载波，随交接进度收掉。
+     * @brief [zh] 要叠加到电压指令上的载波，随交接进度收掉。
      * @since 0.1.0
      */
     [[nodiscard]] auto injection_ab() const noexcept -> Ab<float> {
@@ -284,7 +277,7 @@ template <typename LowSpeed, typename HighSpeed> class BlendedObserver final {
 
     /**
      * @brief [en] Forward a flux seed to the high-speed observer when it takes one.
-     *        [zh] 高速观测器需要播种时转发磁链种子。
+     * @brief [zh] 高速观测器需要播种时转发磁链种子。
      * @since 0.1.0
      */
     template <typename T = HighSpeed> void seed_flux(Ab<float> psi_ab) noexcept {
@@ -297,8 +290,9 @@ template <typename LowSpeed, typename HighSpeed> class BlendedObserver final {
 
     /**
      * @brief [en] Forward updated machine parameters to whichever halves can take them.
-     *        [zh] 把更新后的机器参数转发给能接受的那一半。
-     * @param params [en] the machine as it actually is. [zh] 机器实际的样子。
+     * @brief [zh] 把更新后的机器参数转发给能接受的那一半。
+     * @param params [en] the machine as it actually is.
+     * @param params [zh] 机器实际的样子。
      * @since 0.1.0
      */
     void apply_params(const MachineParams& params) noexcept {
@@ -312,7 +306,7 @@ template <typename LowSpeed, typename HighSpeed> class BlendedObserver final {
 
     /**
      * @brief [en] Clear both observers and the handover state.
-     *        [zh] 清除两个观测器与交接状态。
+     * @brief [zh] 清除两个观测器与交接状态。
      * @since 0.1.0
      */
     void reset() noexcept {
@@ -328,21 +322,20 @@ template <typename LowSpeed, typename HighSpeed> class BlendedObserver final {
 
     /**
      * @brief [en] Ok, or Param after an invalid band or non-positive dt.
-     *        [zh] Ok，或非法交接带 / 非正 dt 后的 Param。
+     * @brief [zh] Ok，或非法交接带 / 非正 dt 后的 Param。
      * @since 0.1.0
      */
     [[nodiscard]] auto status() const noexcept -> ErrorCode { return status_; }
 
     /**
      * @brief [en] Whether the fused estimate currently means anything.
-     *        [zh] 融合估计当前是否有意义。
-     *
-     * @note [en] Below the band this is the low-speed observer's own answer, so a machine that cannot
-     *       answer (no saliency, no saturation) still reports that honestly. Once the handover is
-     *       complete it is `true` by definition: the high-speed observer is in the regime it is valid
-     *       in, and whether it is right is not something this class can observe.
-     *       [zh] 带内取低速观测器自己的答案，于是"答不了"的机器（无凸极、无饱和）仍然诚实上报。一旦交接
-     *       完成，按定义就是 `true`：高速观测器处在它有效的工况里，而它是否正确不是本类能观测的事。
+     * @brief [zh] 融合估计当前是否有意义。
+     * @note [en] Below the band this is the low-speed observer's own answer, so a machine that cannot answer (no
+     *            saliency, no saturation) still reports that honestly. Once the handover is complete it is `true` by
+     *            definition: the high-speed observer is in the regime it is valid in, and whether it is right is not
+     *            something this class can observe.
+     * @note [zh] 带内取低速观测器自己的答案，于是"答不了"的机器（无凸极、无饱和）仍然诚实上报。一旦交接 完成，按定义就
+     *            是 `true`：高速观测器处在它有效的工况里，而它是否正确不是本类能观测的事。
      * @since 0.1.0
      */
     [[nodiscard]] auto locked() const noexcept -> bool {

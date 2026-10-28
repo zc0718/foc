@@ -12,24 +12,22 @@ namespace core {
 
 /**
  * @brief [en] Back-EMF flux-linkage observer (open-loop integration), V1's "real" observer.
- *        [zh] 反电动势磁链观测器（开环积分），V1 的"真实可用"观测器。
  *
- *        Model: `psi_ab = integral(v_ab - Rs * i_ab) dt - L * i_ab`, angle = atan2(psi_beta, psi_alpha).
- *        Units are SI; the V1 build assumes `Ld == Lq` (surface-mounted PMSM).
- *        模型：`psi_ab = ∫(v_ab - Rs·i_ab)dt - L·i_ab`，角度 = atan2(psi_beta, psi_alpha)。
- *        SI 单位；V1 假设 `Ld == Lq`（表贴式 PMSM）。
+ * @brief [zh] 反电动势磁链观测器（开环积分），V1 的"真实可用"观测器。
  *
- * @warning [en] A pure integrator cannot know its integration constant, so the **absolute** angle
- *          needs a known initial flux. Seed it with `seed_flux()` during/after the align phase
- *          (the motor layer knows psi_m = Kt / (1.5 * pole_pairs) from the nameplate). Without
- *          seeding the estimate keeps a constant offset of `-psi(0)`; integrator drift over time
- *          still needs a PLL or SMO observer.
- *          [zh] 纯积分器无法知道积分常数，**绝对角**需要已知初始磁链：在 Align 阶段/之后用
- *          `seed_flux()` 播种（电机层可从铭牌得到 psi_m = Kt / (1.5 * pole_pairs)）。不播种时
- *          估计值会带一个 `-psi(0)` 的恒定偏移；长期漂移仍需 PLL 或 SMO 观测器。
+ *     Model: `psi_ab = integral(v_ab - Rs * i_ab) dt - L * i_ab`, angle = atan2(psi_beta, psi_alpha). Units are SI; the
+ *     V1 build assumes `Ld == Lq` (surface-mounted PMSM). 模型：`psi_ab = ∫(v_ab - Rs·i_ab)dt - L·i_ab`，角度 =
+ *     atan2(psi_beta, psi_alpha)。 SI 单位；V1 假设 `Ld == Lq`（表贴式 PMSM）。
  *
+ * @warning [en] A pure integrator cannot know its integration constant, so the **absolute** angle needs a known initial
+ *               flux. Seed it with `seed_flux()` during/after the align phase (the motor layer knows psi_m = Kt / (1.5
+ *               * pole_pairs) from the nameplate). Without seeding the estimate keeps a constant offset of `-psi(0)`;
+ *               integrator drift over time still needs a PLL or SMO observer.
+ * @warning [zh] 纯积分器无法知道积分常数，**绝对角**需要已知初始磁链：在 Align 阶段/之后用 `seed_flux()` 播种（电机层可
+ *               从铭牌得到 psi_m = Kt / (1.5 * pole_pairs)）。不播种时 估计值会带一个 `-psi(0)` 的恒定偏移；长期漂移仍
+ *               需 PLL 或 SMO 观测器。
  * @context [en] Current-loop ISR after construction: noexcept, no allocation.
- *           [zh] 构造之后的电流环 ISR：noexcept、不分配。
+ * @context [zh] 构造之后的电流环 ISR：noexcept、不分配。
  * @since 0.1.0
  * @exporter
  */
@@ -37,8 +35,7 @@ class BackEmfObserver final {
   public:
     /**
      * @brief [en] Electrical parameters of the machine model.
-     *        [zh] 电机模型电气参数。
-     *
+     * @brief [zh] 电机模型电气参数。
      * @since 0.1.0
      */
     struct Config final {
@@ -48,78 +45,77 @@ class BackEmfObserver final {
 
     /**
      * @brief [en] Construct with the machine parameters.
-     *        [zh] 用电机参数构造。
-     *
+     * @brief [zh] 用电机参数构造。
      * @param config [en] invalid values put the observer in Param status (update then holds 0).
-     *               [zh] 非法值会让观测器进入 Param 状态（之后 update 保持 0）。
+     * @param config [zh] 非法值会让观测器进入 Param 状态（之后 update 保持 0）。
      * @since 0.1.0
      */
     explicit BackEmfObserver(Config config) noexcept;
 
     /**
-     * @brief [en] Seed the flux linkage estimate (align phase): the observer's residual integration
-     *        constant is chosen so that the current estimate equals `psi_ab`.
-     *        [zh] 播种磁链估计（对齐阶段）：观测器会把剩余积分常数选成"当前估计等于 `psi_ab`"。
-     *
-     * @param psi_ab [en] flux linkage in Wb at the current instant. [zh] 当前时刻的磁链，Wb。
+     * @brief [en] Seed the flux linkage estimate (align phase): the observer's residual integration constant is chosen
+     *             so that the current estimate equals `psi_ab`.
+     * @brief [zh] 播种磁链估计（对齐阶段）：观测器会把剩余积分常数选成"当前估计等于 `psi_ab`"。
+     * @param psi_ab [en] flux linkage in Wb at the current instant.
+     * @param psi_ab [zh] 当前时刻的磁链，Wb。
      * @since 0.1.0
      */
     void seed_flux(Ab<float> psi_ab) noexcept;
 
     /**
      * @brief [en] Take an updated machine description.
-     *        [zh] 接受更新后的机器描述。
-     *
-     * @param params [en] the machine as it actually is. [zh] 机器实际的样子。
-     * @note [en] `l` becomes `params.lq`, not the average: this observer is used with `id ~ 0`, where the
-     *       current sits on the q axis and the flux it produces is `Lq*i`. With field weakening that
-     *       assumption stops holding -- which is one more reason field weakening needs a different
-     *       observer rather than a parameter change.
-     *       [zh] `l` 取 `params.lq` 而不是平均值：本观测器用于 `id ≈ 0`，此时电流坐在 q 轴上，它产生的
-     *       磁链是 `Lq·i`。一旦进入弱磁这个假设就不成立——这也是弱磁需要换观测器而不是换参数的原因之一。
+     * @brief [zh] 接受更新后的机器描述。
+     * @param params [en] the machine as it actually is.
+     * @param params [zh] 机器实际的样子。
+     * @note [en] `l` becomes `params.lq`, not the average: this observer is used with `id ~ 0`, where the current sits
+     *            on the q axis and the flux it produces is `Lq*i`. With field weakening that assumption stops holding
+     *            -- which is one more reason field weakening needs a different observer rather than a parameter change.
+     * @note [zh] `l` 取 `params.lq` 而不是平均值：本观测器用于 `id ≈ 0`，此时电流坐在 q 轴上，它产生的 磁链是 `Lq·i`。
+     *            一旦进入弱磁这个假设就不成立——这也是弱磁需要换观测器而不是换参数的原因之一。
      * @since 0.1.0
      */
     void apply_params(const MachineParams& params) noexcept;
 
     /**
      * @brief [en] Advance the observer by one current-loop step.
-     *        [zh] 推进一个电流环步。
-     *
-     * @param v_ab [en] applied stator voltage in V. [zh] 施加的定子电压，V。
-     * @param i_ab [en] measured stator current in A. [zh] 实测定子电流，A。
+     * @brief [zh] 推进一个电流环步。
+     * @param v_ab [en] applied stator voltage in V.
+     * @param v_ab [zh] 施加的定子电压，V。
+     * @param i_ab [en] measured stator current in A.
+     * @param i_ab [zh] 实测定子电流，A。
      * @param dt_s [en] step length in s; <= 0 is rejected (status Param, state holds).
-     *              [zh] 步长，s；<= 0 被拒绝（状态置 Param，输出保持）。
-     * @return [en] estimated electrical angle and speed. [zh] 估计的电角度与电角速度。
-     * @note [en] `v_ab` must come from the *same* sample instant as `i_ab`. The update is a
-     *       backward-Euler step anchored there: it pairs `dt * (v - Rs*i)` with
-     *       `L * (i_k - i_{k-1})`. Handing it the voltage of the period that just ended instead looks
-     *       like a harmless half-sample correction and is not one -- measured against the plant's own
-     *       flux it costs an extra `w_e * dt / 2` of angle, i.e. 0.042 rad at 800 rad/s electrical.
-     *       [zh] `v_ab` 必须与 `i_ab` 取自**同一采样时刻**。本步是以该时刻为锚点的后向欧拉步：它把
-     *       `dt*(v - Rs*i)` 与 `L*(i_k - i_{k-1})` 配对。换成交给它"刚刚结束那一周期"的电压，看起来
-     *       只是半个采样的修正，其实不是——以 plant 自己的磁链为基准实测，这会额外多出
-     *       `w_e*dt/2` 的角度，也就是 800 rad/s 电角速度下 0.042 rad。
+     * @param dt_s [zh] 步长，s；<= 0 被拒绝（状态置 Param，输出保持）。
+     * @return [en] estimated electrical angle and speed.
+     * @return [zh] 估计的电角度与电角速度。
+     * @note [en] `v_ab` must come from the *same* sample instant as `i_ab`. The update is a backward-Euler step
+     *            anchored there: it pairs `dt * (v - Rs*i)` with `L * (i_k - i_{k-1})`. Handing it the voltage of the
+     *            period that just ended instead looks like a harmless half-sample correction and is not one -- measured
+     *            against the plant's own flux it costs an extra `w_e * dt / 2` of angle, i.e. 0.042 rad at 800 rad/s
+     *            electrical.
+     * @note [zh] `v_ab` 必须与 `i_ab` 取自**同一采样时刻**。本步是以该时刻为锚点的后向欧拉步：它把 `dt*(v - Rs*i)` 与
+     *            `L*(i_k - i_{k-1})` 配对。换成交给它"刚刚结束那一周期"的电压，看起来 只是半个采样的修正，其实不是——以
+     *            plant 自己的磁链为基准实测，这会额外多出 `w_e*dt/2` 的角度，也就是 800 rad/s 电角速度下 0.042 rad。
      * @since 0.1.0
      */
     auto update(Ab<float> v_ab, Ab<float> i_ab, float dt_s) noexcept -> ObsState;
 
     /**
      * @brief [en] Clear the integrator and the speed estimate.
-     *        [zh] 清除积分器与速度估计。
+     * @brief [zh] 清除积分器与速度估计。
      * @since 0.1.0
      */
     void reset() noexcept;
 
     /**
      * @brief [en] Ok, or Param after an invalid configuration or non-positive dt.
-     *        [zh] Ok，或非法配置 / 非正 dt 后的 Param。
+     * @brief [zh] Ok，或非法配置 / 非正 dt 后的 Param。
      * @since 0.1.0
      */
     [[nodiscard]] auto status() const noexcept -> ErrorCode;
 
     /**
      * @brief [en] Current flux linkage estimate in Wb (diagnostics).
-     *        [zh] 当前磁链估计，Wb（诊断用）。
+     * @brief [zh] 当前磁链估计，Wb（诊断用）。
      * @since 0.1.0
      */
     [[nodiscard]] auto flux() const noexcept -> Ab<float>;

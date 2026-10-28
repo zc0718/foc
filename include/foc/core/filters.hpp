@@ -11,13 +11,11 @@ namespace core {
 
 
 /**
- * @brief [en] First-order low-pass filter, forward Euler discretisation.
- *        `alpha = 2*pi*fc*dt / (1 + 2*pi*fc*dt)`; one multiply-add per step.
- *        [zh] 一阶低通滤波器，前向欧拉离散化。
- *        `alpha = 2*pi*fc*dt / (1 + 2*pi*fc*dt)`；每步一次乘加。
- *
+ * @brief [en] First-order low-pass filter, forward Euler discretisation. `alpha = 2*pi*fc*dt / (1 + 2*pi*fc*dt)`; one
+ *             multiply-add per step.
+ * @brief [zh] 一阶低通滤波器，前向欧拉离散化。 `alpha = 2*pi*fc*dt / (1 + 2*pi*fc*dt)`；每步一次乘加。
  * @context [en] Current-loop ISR after configure(): noexcept, no allocation.
- *           [zh] configure() 之后的电流环 ISR：noexcept、不分配。
+ * @context [zh] configure() 之后的电流环 ISR：noexcept、不分配。
  * @since 0.1.0
  * @exporter
  */
@@ -27,39 +25,40 @@ class FirstOrderLowPass final {
 
     /**
      * @brief [en] Configure the cutoff frequency for a given control period.
-     *        [zh] 按给定控制周期配置截止频率。
-     *
+     * @brief [zh] 按给定控制周期配置截止频率。
      * @param cutoff_hz [en] cutoff frequency in Hz, must satisfy 0 < fc < 1/(2*dt).
-     *                  [zh] 截止频率，单位 Hz，必须满足 0 < fc < 1/(2*dt)。
-     * @param dt_s [en] control period in s, must be > 0. [zh] 控制周期，单位 s，必须 > 0。
+     * @param cutoff_hz [zh] 截止频率，单位 Hz，必须满足 0 < fc < 1/(2*dt)。
+     * @param dt_s [en] control period in s, must be > 0.
+     * @param dt_s [zh] 控制周期，单位 s，必须 > 0。
      * @return [en] Ok, or Param when the cutoff is above Nyquist or the period is not positive.
-     *         [zh] Ok；截止频率超过 Nyquist 或周期非正时返回 Param。
+     * @return [zh] Ok；截止频率超过 Nyquist 或周期非正时返回 Param。
      * @since 0.1.0
      */
     auto configure(float cutoff_hz, float dt_s) noexcept -> ErrorCode;
 
     /**
      * @brief [en] Feed one sample.
-     *        [zh] 输入一个采样。
-     *
-     * @param input [en] new sample. [zh] 新采样。
+     * @brief [zh] 输入一个采样。
+     * @param input [en] new sample.
+     * @param input [zh] 新采样。
      * @return [en] filtered value; returns the input unchanged while unconfigured.
-     *         [zh] 滤波后的值；未配置时原样返回输入。
-     * @context [en] Current-loop ISR. [zh] 电流环 ISR。
+     * @return [zh] 滤波后的值；未配置时原样返回输入。
+     * @context [en] Current-loop ISR.
+     * @context [zh] 电流环 ISR。
      * @since 0.1.0
      */
     auto step(float input) noexcept -> float;
 
     /**
      * @brief [en] Clear the internal state (next step re-seeds from the input).
-     *        [zh] 清除内部状态（下一步用输入重新播种）。
+     * @brief [zh] 清除内部状态（下一步用输入重新播种）。
      * @since 0.1.0
      */
     void reset() noexcept;
 
     /**
      * @brief [en] Whether configure() succeeded.
-     *        [zh] configure() 是否成功。
+     * @brief [zh] configure() 是否成功。
      * @since 0.1.0
      */
     [[nodiscard]] auto configured() const noexcept -> bool;
@@ -73,14 +72,16 @@ class FirstOrderLowPass final {
 
 
 /**
- * @brief [en] Fixed-capacity moving average. Capacity is part of the type: no allocation, no
- *        growth, deterministic cost. Uses `std::array` (ADR-001 allows fixed-capacity `std::array`).
- *        [zh] 固定容量滑动平均。容量是类型的一部分：不分配、不扩容、代价确定。
- *        用 `std::array`（ADR-001 明确允许固定容量 `std::array`）。
- *
- * @tparam T [en] sample type. [zh] 采样类型。
- * @tparam N [en] window length, must be > 0. [zh] 窗口长度，必须 > 0。
- * @context [en] Current-loop ISR: noexcept, no allocation. [zh] 电流环 ISR：noexcept、不分配。
+ * @brief [en] Fixed-capacity moving average. Capacity is part of the type: no allocation, no growth, deterministic
+ *             cost. Uses `std::array` (ADR-001 allows fixed-capacity `std::array`).
+ * @brief [zh] 固定容量滑动平均。容量是类型的一部分：不分配、不扩容、代价确定。 用 `std::array`（ADR-001 明确允许固定容
+ *             量 `std::array`）。
+ * @tparam T [en] sample type.
+ * @tparam T [zh] 采样类型。
+ * @tparam N [en] window length, must be > 0.
+ * @tparam N [zh] 窗口长度，必须 > 0。
+ * @context [en] Current-loop ISR: noexcept, no allocation.
+ * @context [zh] 电流环 ISR：noexcept、不分配。
  * @since 0.1.0
  * @exporter
  */
@@ -90,11 +91,11 @@ template <typename T, std::size_t N> class MovingAverage final {
   public:
     /**
      * @brief [en] Feed one sample and return the current average.
-     *        [zh] 输入一个采样并返回当前平均值。
-     *
-     * @param sample [en] new sample. [zh] 新采样。
+     * @brief [zh] 输入一个采样并返回当前平均值。
+     * @param sample [en] new sample.
+     * @param sample [zh] 新采样。
      * @return [en] average over the samples seen so far (at most N).
-     *         [zh] 目前为止（最多 N 个）采样的平均值。
+     * @return [zh] 目前为止（最多 N 个）采样的平均值。
      * @since 0.1.0
      */
     auto step(T sample) noexcept -> T {
@@ -113,7 +114,7 @@ template <typename T, std::size_t N> class MovingAverage final {
 
     /**
      * @brief [en] Clear the window.
-     *        [zh] 清空窗口。
+     * @brief [zh] 清空窗口。
      * @since 0.1.0
      */
     void reset() noexcept {
@@ -125,7 +126,7 @@ template <typename T, std::size_t N> class MovingAverage final {
 
     /**
      * @brief [en] Number of samples currently in the window.
-     *        [zh] 当前窗口内的采样数量。
+     * @brief [zh] 当前窗口内的采样数量。
      * @since 0.1.0
      */
     [[nodiscard]] auto size() const noexcept -> std::size_t { return count_; }

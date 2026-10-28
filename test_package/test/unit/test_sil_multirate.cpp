@@ -88,12 +88,11 @@ auto step_speed(float speed_loop_period_s) -> Outcome {
 
 /**
  * @brief [en] A decimated outer loop must keep the speed-step acceptance thresholds, and must not change the
- *        closed-loop response by more than a fixed factor. The speed-loop bandwidth here is 250 rad/s
- *        (a 4 ms time constant), so 500 us and even 1 ms remain oversampled -- that is exactly why the
- *        decimation is allowed to be this coarse, and the test pins that reasoning.
- *        [zh] 降采样的外环必须保持 S2 的验收阈值，且不能把闭环响应改变超过一个固定倍数。这里的速度环
- *        带宽是 250 rad/s（时间常数 4 ms），因此 500 us 甚至 1 ms 仍然是过采样——这正是降采样可以
- *        这么粗的理由，用例把这条推理钉住。
+ *             closed-loop response by more than a fixed factor. The speed-loop bandwidth here is 250 rad/s (a 4 ms time
+ *             constant), so 500 us and even 1 ms remain oversampled -- that is exactly why the decimation is allowed to
+ *             be this coarse, and the test pins that reasoning.
+ * @brief [zh] 降采样的外环必须保持 S2 的验收阈值，且不能把闭环响应改变超过一个固定倍数。这里的速度环 带宽是 250 rad/s（
+ *             时间常数 4 ms），因此 500 us 甚至 1 ms 仍然是过采样——这正是降采样可以 这么粗的理由，用例把这条推理钉住。
  */
 TEST(SilMultirate, DecimatedSpeedLoopKeepsTheS2Thresholds) {
     const Outcome every = step_speed(0.0F);

@@ -11,7 +11,7 @@ namespace core {
 
 /**
  * @brief [en] Implements FirstOrderLowPass::configure(); the contract is documented on its declaration.
- *        [zh] 实现 FirstOrderLowPass::configure()；契约文档在对应的声明处。
+ * @brief [zh] 实现 FirstOrderLowPass::configure()；契约文档在对应的声明处。
  * @attacher
  * @since 0.1.0
  */
@@ -36,7 +36,7 @@ auto FirstOrderLowPass::configure(float cutoff_hz, float dt_s) noexcept -> Error
 
 /**
  * @brief [en] Implements FirstOrderLowPass::step(); the contract is documented on its declaration.
- *        [zh] 实现 FirstOrderLowPass::step()；契约文档在对应的声明处。
+ * @brief [zh] 实现 FirstOrderLowPass::step()；契约文档在对应的声明处。
  * @attacher
  * @since 0.1.0
  */
@@ -58,7 +58,7 @@ auto FirstOrderLowPass::step(float input) noexcept -> float {
 
 /**
  * @brief [en] Implements FirstOrderLowPass::reset(); the contract is documented on its declaration.
- *        [zh] 实现 FirstOrderLowPass::reset()；契约文档在对应的声明处。
+ * @brief [zh] 实现 FirstOrderLowPass::reset()；契约文档在对应的声明处。
  * @attacher
  * @since 0.1.0
  */

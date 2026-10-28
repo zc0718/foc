@@ -73,7 +73,7 @@ auto align_recipe() -> foc::core::AlignConfig {
 
 /**
  * @brief [en] Bench rig: plant + HAL + a motor whose alignment slot is the type under test.
- *        [zh] 台架：plant + HAL + 对齐槽位为被测类型的电机。
+ * @brief [zh] 台架：plant + HAL + 对齐槽位为被测类型的电机。
  */
 template <typename AlignerT> class Rig final {
   public:

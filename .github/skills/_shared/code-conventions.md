@@ -44,6 +44,35 @@ Wrap the `#include` area with `// Conan::ImportStart` / `// Conan::ImportEnd`; t
 - Version tag: `@since <version>` → filtered by docs/build.py per version. 版本标注。
 - Active languages come from `doc_languages` in metadata. 生效语言由 metadata 决定。
 
+### Tag shape（标签形状，照 `fcpp/include/doctest.hpp`）
+
+The shape is part of the contract, not a style preference: `docs/build.py` splits a block by
+marker, so a tag in the wrong place moves text into the wrong language version.
+形状是契约的一部分，不是偏好：`docs/build.py` 按标记切块，标签放错位置就会把文字送进错误的
+语言版本。
+
+1. **One tag line per language group.** `@brief [en] …` and `@brief [zh] …` are two lines. Never
+   two `[en]` groups in one `@brief`, never both tags on one line.
+   **每个语言组一行标签**：`[en]`/`[zh]` 各占一行；一个 `@brief` 里不得出现两个 `[en]`，
+   也不得两种标签挤在一行。
+2. **Bodies carry no tag.** A second paragraph under a tag line is plain indented text — its
+   language is the language of the tag line above it.
+   **正文不带标签**：标签行下方的第二段就是缩进正文，语言由上面的标签行决定。
+3. **Every field repeats per language**: `@param x [en] …` / `@param x [zh] …`,
+   `@return [en]` / `[zh]`, `@note [en]` / `[zh]`, `@tparam T [en]` / `[zh]`.
+   **每个字段按语言重复**。
+4. **No tag = every language.** `@since`, `@see`, `@ingroup`, `@version` appear once, untagged.
+   **不带标签 = 所有语言可见**。
+5. **Indentation**: a wrapped line of a tag line aligns under that field's own text; a separate
+   body paragraph uses a block indent five columns in from the star.
+   **缩进**：标签行的折行续行对齐到该字段自身的文字之下；独立正文段落用星号后五格的块缩进。
+
+`.github/misc/docfmt.py` enforces all five (7th gate, `python3 .github/misc/gates.py docs`). It
+refuses to write a file whose prose characters would change — run `--check` first, `--fix` behind
+it, and never hand-edit what it would reflow.
+形状由 `docfmt.py` 强制（第 7 道门禁）。它会拒绝写入任何正文文字发生变化的文件——先 `--check`
+再 `--fix`，不要手改它会被重排的地方。
+
 ## Format / Static Checks（格式化/静态检查）
 
 - 语言族分流（私有约定，见 `conanfile.py` syntax guide #9）：`.c`/`.h` → C（`.github/misc/.clang-format-c`，`PointerAlignment: Right`）；`.hpp`/`.cpp` → C++（`.github/misc/.clang-format-cpp`，`PointerAlignment: Left`、`Standard: c++17`）。**clang-format 内置扩展映射把 `.h` 当 C++，门禁必须显式 `--style=file:` 把 `.h` 路由到 C 配置**。120 cols; no include sort; no comment reflow; `MaxEmptyLinesToKeep: 3` 保护空行规则。

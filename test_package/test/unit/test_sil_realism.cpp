@@ -52,10 +52,9 @@ auto wrap_pi_local(float angle) noexcept -> float {
 }
 
 /**
- * @brief [en] Fixed-speed rig: the rotor is held at a constant electrical speed and fed the steady-state
- *        voltage for `id = 0, iq = kIq`, so an observer sees a real operating point.
- *        [zh] 恒速台架：转子以恒定电角速度运行并施加 `id = 0, iq = kIq` 的稳态电压，于是观测器看到的是
- *        真实工作点。
+ * @brief [en] Fixed-speed rig: the rotor is held at a constant electrical speed and fed the steady-state voltage for
+ *             `id = 0, iq = kIq`, so an observer sees a real operating point.
+ * @brief [zh] 恒速台架：转子以恒定电角速度运行并施加 `id = 0, iq = kIq` 的稳态电压，于是观测器看到的是 真实工作点。
  * @since 0.1.0
  */
 class FluxRig final {

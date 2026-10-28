@@ -86,9 +86,9 @@ auto polarity_config() -> core::MagnetPolarityTest::Config {
 }
 
 /**
- * @brief [en] Commissioning sequence exactly as documented: HFI converges, the polarity test pulses
- *        along the estimate, the answer is applied, and only then is the loop handed over.
- *        [zh] 完全按文档的调试顺序：HFI 收敛 → 极性测试沿估计脉冲 → 应用结论 → 之后才交出环路。
+ * @brief [en] Commissioning sequence exactly as documented: HFI converges, the polarity test pulses along the estimate,
+ *             the answer is applied, and only then is the loop handed over.
+ * @brief [zh] 完全按文档的调试顺序：HFI 收敛 → 极性测试沿估计脉冲 → 应用结论 → 之后才交出环路。
  */
 struct Commissioning final {
     sil::PmsmPlant plant;

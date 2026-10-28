@@ -25,15 +25,14 @@ using core::Uvw;
 using motor::MotorConfig;
 
 /**
- * @brief [en] Inverter adapter: records the duty and lets the bench push it
- * into the plant. [zh] 逆变器适配层：记录占空比，由台架把它送进 plant。
+ * @brief [en] Inverter adapter: records the duty and lets the bench push it into the plant.
  *
- *        The duty is held in the **stationary** frame for a whole control period (zero-order hold on the applied stator
- *        voltage vector), which is what a real inverter does. Disabled or not-yet-enabled states hold 50% duty, i.e.
- *        zero voltage.
- *        占空比在整个控制周期内保持于**静止**坐标系（作用到定子电压矢量上的零阶保持），这才是真实
- *        逆变器的行为。未使能/已关闭状态保持 50% 占空比，即零电压。
+ * @brief [zh] 逆变器适配层：记录占空比，由台架把它送进 plant。
  *
+ *     The duty is held in the **stationary** frame for a whole control period (zero-order hold on the applied stator
+ *     voltage vector), which is what a real inverter does. Disabled or not-yet-enabled states hold 50% duty, i.e. zero
+ *     voltage. 占空比在整个控制周期内保持于**静止**坐标系（作用到定子电压矢量上的零阶保持），这才是真实 逆变器的行为。
+ *     未使能/已关闭状态保持 50% 占空比，即零电压。
  * @since 0.1.0
  */
 class PlantPwm final : public hal::Pwm {
@@ -66,8 +65,7 @@ private:
 
 /**
  * @brief [en] Current sensing adapter reading the plant's phase currents.
- *        [zh] 电流采样适配层，读取 plant 的相电流。
- *
+ * @brief [zh] 电流采样适配层，读取 plant 的相电流。
  * @since 0.1.0
  */
 class PlantCurrentSense final : public hal::CurrentSense {
@@ -85,9 +83,8 @@ private:
 };
 
 /**
- * @brief [en] Position adapter reporting the plant rotor state as a sensored
- * encoder would. [zh] 位置适配层，按带编码器的电机那样汇报 plant 的转子状态。
- *
+ * @brief [en] Position adapter reporting the plant rotor state as a sensored encoder would.
+ * @brief [zh] 位置适配层，按带编码器的电机那样汇报 plant 的转子状态。
  * @since 0.1.0
  */
 class PlantPosition final : public hal::PositionSensor {
@@ -133,8 +130,7 @@ private:
 
 /**
  * @brief [en] DC link adapter with a stiff (ideal) bus voltage.
- *        [zh] 母线适配层，理想（刚性）母线电压。
- *
+ * @brief [zh] 母线适配层，理想（刚性）母线电压。
  * @since 0.1.0
  */
 class PlantDcLink final : public hal::DcLink {
@@ -150,11 +146,10 @@ private:
 };
 
 /**
- * @brief [en] Complete HalPolicy for the SIL bench: the plant replaces the
- * hardware. [zh] SIL 台架用的完整 HalPolicy：plant 代替硬件。
- *
- * @context [en] advance() owns the plant integration; the controller only sees
- * the HAL contracts. [zh] advance() 负责 plant 积分；控制器只看到 HAL 契约。
+ * @brief [en] Complete HalPolicy for the SIL bench: the plant replaces the hardware.
+ * @brief [zh] SIL 台架用的完整 HalPolicy：plant 代替硬件。
+ * @context [en] advance() owns the plant integration; the controller only sees the HAL contracts.
+ * @context [zh] advance() 负责 plant 积分；控制器只看到 HAL 契约。
  * @since 0.1.0
  */
 class PlantHal final {
@@ -168,13 +163,13 @@ public:
 
   /**
    * @brief [en] Integrate the plant over one control period with the held duty.
-   *        [zh] 用保持的占空比把 plant 积分一个控制周期。
-   *
-   * @param dt_ctrl_s [en] control period in s. [zh] 控制周期，s。
-   * @param substeps [en] integration sub-steps per control period. [zh]
-   * 每控制周期的积分子步数。
-   * @post [en] The applied vector is fixed in the stationary frame over the
-   * whole period. [zh] 整个周期内作用矢量在静止坐标系里固定。
+   * @brief [zh] 用保持的占空比把 plant 积分一个控制周期。
+   * @param dt_ctrl_s [en] control period in s.
+   * @param dt_ctrl_s [zh] 控制周期，s。
+   * @param substeps [en] integration sub-steps per control period.
+   * @param substeps [zh] 每控制周期的积分子步数。
+   * @post [en] The applied vector is fixed in the stationary frame over the whole period.
+   * @post [zh] 整个周期内作用矢量在静止坐标系里固定。
    * @since 0.1.0
    */
   void advance(float dt_ctrl_s, int substeps) noexcept;
@@ -184,28 +179,20 @@ public:
   void reset(PlantState initial) noexcept;
 
   /**
-   * @brief [en] Model inverter dead time as a per-phase voltage loss:
-   * `v_applied = v_cmd - v_dead * sign(i_phase)`. [zh]
-   * 把逆变器死区建模为每相的电压损失：`v_applied = v_cmd - v_dead *
-   * sign(i_phase)`。
-   *
-   * @param v_dead [en] the magnitude, in V, of `(t_dead / T_pwm) * v_bus`; 0
-   * disables the model. [zh] `(t_dead / T_pwm) * v_bus` 的量值，V；0
-   * 表示关闭该模型。
-   *
-   * @note [en] What this model buys: without it, the PRD's U1 ("dead time
-   * cannot be verified in SIL") was a statement about the *plant*, not the
-   * library. With it, dead-time distortion becomes a measurable quantity in CI
-   * -- which is the difference between "we know we do not compensate" and "we
-   * can say by how much". [zh] 这个模型换来的是：没有它，PRD 的 U1（"死区在 SIL
-   * 里无法验证"）是一个关于**被控对象** 的陈述，而不是关于库的。有了它，死区畸变在 CI
-   * 里成为可测量的量——这正是"我们知道自己没 补偿"与"我们能说出差多少"之间的区别。
-   * @note [en] Honest limitation: `sign(0) = 0` here, so the zero-current
-   * neighbourhood is modelled as *better* than real hardware, where the
-   * transition is a finite slope with ringing. Numbers from this model are a
-   * lower bound on the real distortion. [zh] 诚实的局限：这里 `sign(0) =
-   * 0`，因此零电流附近被建模得比真实硬件**更好**——真实的
-   *       过渡是一段有限斜率并伴随振荡。本模型给出的数字是真实畸变的**下界**。
+   * @brief [en] Model inverter dead time as a per-phase voltage loss: `v_applied = v_cmd - v_dead * sign(i_phase)`.
+   * @brief [zh] 把逆变器死区建模为每相的电压损失：`v_applied = v_cmd - v_dead * sign(i_phase)`。
+   * @param v_dead [en] the magnitude, in V, of `(t_dead / T_pwm) * v_bus`; 0 disables the model.
+   * @param v_dead [zh] `(t_dead / T_pwm) * v_bus` 的量值，V；0 表示关闭该模型。
+   * @note [en] What this model buys: without it, the PRD's U1 ("dead time cannot be verified in SIL") was a statement
+   *            about the *plant*, not the library. With it, dead-time distortion becomes a measurable quantity in CI --
+   *            which is the difference between "we know we do not compensate" and "we can say by how much". Honest
+   *            limitation: `sign(0) = 0` here, so the zero-current neighbourhood is modelled as *better* than real
+   *            hardware, where the transition is a finite slope with ringing. Numbers from this model are a lower bound
+   *            on the real distortion.
+   * @note [zh] 这个模型换来的是：没有它，PRD 的 U1（"死区在 SIL 里无法验证"）是一个关于**被控对象** 的陈述，而不是关于
+   *            库的。有了它，死区畸变在 CI 里成为可测量的量——这正是"我们知道自己没 补偿"与"我们能说出差多少"之间的区
+   *            别。 诚实的局限：这里 `sign(0) = 0`，因此零电流附近被建模得比真实硬件**更好**——真实的 过渡是一段有限斜率
+   *            并伴随振荡。本模型给出的数字是真实畸变的**下界**。
    * @since 0.1.0
    */
   void set_deadtime_voltage(float v_dead) noexcept;
@@ -218,24 +205,18 @@ public:
   [[nodiscard]] auto deadtime_voltage() const noexcept -> float;
 
   /**
-   * @brief [en] Hand the voltage path to a switching inverter model (nullptr =
-   * the mean-value path). [zh] 把电压通路交给开关逆变器模型（nullptr =
-   * 平均值通路）。
-   *
-   * @param inverter [en] model owned by the caller, or nullptr to restore the
-   * legacy behaviour. [zh] 由调用方持有的模型；nullptr 恢复旧行为。
-   *
-   * @note [en] While a model is attached, `set_deadtime_voltage()` /
-   * `set_deadtime_transition()` are
-   *       **not consulted**: the dead-time effect comes out of the switching process instead of being added to it, and
-   *       having two sources would make the numbers unreadable. [zh] 挂上模型之后 `set_deadtime_voltage()` /
-   *       `set_deadtime_transition()` **不再生效**：死区
-   *       效应从开关过程里出来，而不是加到它上面；两个来源会让数字无法解读。
-   * @note [en] If the model refuses the request (control period not a whole
-   * number of switching periods), `advance()` falls back to the mean-value path
-   * rather than quietly doing nothing. [zh]
-   * 若模型拒绝该请求（控制周期不是开关周期的整数倍），`advance()`
-   * 退回平均值通路，而不是 悄悄什么都不做。
+   * @brief [en] Hand the voltage path to a switching inverter model (nullptr = the mean-value path).
+   * @brief [zh] 把电压通路交给开关逆变器模型（nullptr = 平均值通路）。
+   * @param inverter [en] model owned by the caller, or nullptr to restore the legacy behaviour.
+   * @param inverter [zh] 由调用方持有的模型；nullptr 恢复旧行为。
+   * @note [en] While a model is attached, `set_deadtime_voltage()` / `set_deadtime_transition()` are **not consulted**:
+   *            the dead-time effect comes out of the switching process instead of being added to it, and having two
+   *            sources would make the numbers unreadable. If the model refuses the request (control period not a whole
+   *            number of switching periods), `advance()` falls back to the mean-value path rather than quietly doing
+   *            nothing.
+   * @note [zh] 挂上模型之后 `set_deadtime_voltage()` / `set_deadtime_transition()` **不再生效**：死区 效应从开关过程里
+   *            出来，而不是加到它上面；两个来源会让数字无法解读。 若模型拒绝该请求（控制周期不是开关周期的整数倍），
+   *            `advance()` 退回平均值通路，而不是 悄悄什么都不做。
    * @since 0.1.0
    */
   void set_inverter(DiscreteInverter *inverter) noexcept;

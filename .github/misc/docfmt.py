@@ -91,62 +91,72 @@ NO_LINE_START = "。，、；：！？）》」』】%"
 def _units(text: str) -> list[tuple[str, bool]]:
     """Split into wrap units: ASCII words stay whole, CJK breaks between characters.
 
-    Returns `(unit, space_before)`. A space is inserted only between two ASCII units -- that is how
-    the source reads, and it keeps `**AND**` from colliding with the Chinese that follows it.
-    返回 `(单元, 前置空格)`。只在两个 ASCII 单元之间插空格——源文如此，且能避免 `**AND**` 与
-    其后的中文粘在一起。
+    Returns `(unit, space_before)`. The source's own word boundaries are kept -- a token is
+    whatever sat between two spaces, and the space goes in front of that token and nowhere else.
+    Splitting on `isspace()` and then forgetting which side of the space we came from is exactly
+    how `任一 C API` loses a space and starts reading `任一C API`.
+    返回 `(单元, 前置空格)`。**保留原文的词边界**：一个 token 就是两个空格之间的东西，
+    空格只加在这个 token 之前。先按空白切分、之后忘掉自己在空格的哪一边，正是
+    `任一 C API` 丢掉空格、变成 `任一C API` 的原因。
     """
     units: list[tuple[str, bool]] = []
-    index = 0
-    length = len(text)
-    previous_ascii = False
-    while index < length:
-        char = text[index]
-        if char.isspace():
-            index += 1
-            continue
-        if ord(char) > 0x2E7F:
-            units.append((char, False))
-            previous_ascii = False
-            index += 1
-            continue
-        stop = index
-        while stop < length and not text[stop].isspace() and ord(text[stop]) <= 0x2E7F:
-            stop += 1
-        units.append((text[index:stop], previous_ascii))
-        previous_ascii = True
-        index = stop
+    first_token = True
+    for token in text.split():
+        space = not first_token
+        first_token = False
+        index = 0
+        length = len(token)
+        while index < length:
+            if ord(token[index]) > 0x2E7F:
+                units.append((token[index], space))
+                space = False
+                index += 1
+                continue
+            stop = index
+            while stop < length and not token[stop].isspace() and ord(token[stop]) <= 0x2E7F:
+                stop += 1
+            units.append((token[index:stop], space))
+            space = False
+            index = stop
     return units
 
 
 def _wrap(text: str, indent: int) -> list[str]:
     """Greedy wrap at MAX_COLUMN display columns.
 
-    A single unit wider than the budget still goes on its own line rather than being broken: an
-    unbreakable token broken at an arbitrary point is worse than a long line.
-    单个单元超出预算时也独占一行而不被切开：把一个不可断的单元随便切开，比一行太长更糟。
+    Two invariants. A unit is never split: an unbreakable token broken at an arbitrary point is
+    worse than a long line. And a closing punctuation mark never starts a line -- when one would,
+    the unit in front of it moves down *with* it rather than the last character alone, because
+    pulling one character down cuts numbers and words in half (`±20 %` -> `±2` / `0%`).
+    两条不变量：单元绝不切开（把一个不可断的 token 随便切开，比一行太长更糟）；收尾标点绝不
+    出现在行首——需要时把它**前面整个单元**一起下移，而不是只拽下最后一个字符，因为只拽一个
+    字符会把数字和单词拦腰截断（`±20 %` → `±2` / `0%`）。
     """
     lines: list[str] = []
     current = ""
     width = indent
+    last_piece = ""
     for unit, space in _units(text):
         piece = (" " if (space and current) else "") + unit
         add = _columns(piece)
         if current and (width + add) > MAX_COLUMN:
-            # Do not let closing punctuation begin the next line.
-            # 不让收尾标点跑到下一行行首。
-            while len(current) > 1 and unit and unit[0] in NO_LINE_START and len(unit) == 1:
-                moved = current[-1]
-                current = current[:-1]
-                unit = moved + unit
-                add = _columns((" " if space else "") + unit)
-                break
+            if len(unit) == 1 and unit[0] in NO_LINE_START and last_piece:
+                remainder = current[: len(current) - len(last_piece)]
+                moved = last_piece.lstrip() + (" " if space else "") + unit
+                if remainder.strip():
+                    lines.append(remainder)
+                current = moved
+                width = indent + _columns(moved)
+                last_piece = moved
+                continue
             lines.append(current)
             current = unit
             width = indent + _columns(unit)
+            last_piece = unit
         else:
             current = (current + piece) if current else unit
             width += add
+            last_piece = piece
     if current:
         lines.append(current)
     return lines
@@ -250,6 +260,274 @@ def _fix_block(lines: list[str], start: int, end: int) -> list[str]:
     return out
 
 
+def _prose_characters(text: str) -> dict[str, int]:
+    """Characters that carry meaning: no whitespace, no stars, no `@field` names, no tags.
+
+    Line-stars and field names are the tool's own markup, and repeating a field once per language
+    group is the intended shape, so both are excluded. Every letter, digit, punctuation mark,
+    backtick and CJK character must survive.
+    有意义的字符：不含空白、星号、`@field` 名与语言标签。星号和字段名是本工具自己的标记，
+    而"每个语言组重复一次字段名"正是要的形状，所以两者都排除；其余的字母、数字、标点、
+    反引号与中文都必须原样保留。
+    """
+    clean = FIELD_IN_PROSE.sub(" ", text)
+    counts: dict[str, int] = {}
+    for char in clean:
+        if char.isspace() or char == "*":
+            continue
+        counts[char] = counts.get(char, 0) + 1
+    return counts
+
+
+def _prose_drift(before: str, after: str) -> dict[str, int]:
+    """Characters present before the rewrite and missing after it."""
+    old, new = _prose_characters(before), _prose_characters(after)
+    return {char: n - new.get(char, 0) for char, n in old.items() if n > new.get(char, 0)}
+
+
+# ------------------------------------------------------------------------------------------------
+# Language groups.
+#
+# The template this project follows (`fcpp`, `include/doctest.hpp`) writes one tag line per language
+# group and leaves the body paragraphs untagged:
+#
+#     * @brief [en] one-liner
+#     *
+#     *     a second English paragraph, no tag
+#     *
+#     * @brief [zh] 一句话
+#     *
+#     *     第二段中文，无标记
+#
+# Three shapes break that, and every one of them was present here:
+#   1. a body line that *starts* with a tag -- the doc pipeline then assigns that line to the wrong
+#      language group (English docs show Chinese, Chinese docs lose the text outright),
+#   2. a single line carrying both tags, which cannot be split by language at all,
+#   3. the same field tagged twice in one language, so a `@brief` ends up with two `[en]` groups.
+# The repair is to regroup: per field, all paragraphs of one language become one group, one tag line,
+# bodies untagged.
+# ------------------------------------------------------------------------------------------------
+TAG = re.compile(r"^\[(?P<lang>en|zh)\]\s*(?P<rest>.*)$")
+FIELD = re.compile(r"^(?P<field>@\w+)(?:\s+(?P<args>[A-Za-z_]\w*))?(?P<tail>.*)$")
+# Only these fields own a name argument. Everything else (`@brief bench_entry.cpp`, `@par 修改日志:`)
+# keeps its whole tail as text, which is why the argument pattern cannot be applied to every field.
+# 只有这些字段带"名字"参数；其余字段（`@brief bench_entry.cpp`）整条尾巴都是文字。
+FIELDS_WITH_ARGS = {"@param", "@tparam", "@retval", "@throws", "@exception", "@sa"}
+INLINE_TAGS = re.compile(r"\[(?:en|zh)\]")
+# A body line that opens a list item. It starts a paragraph of its own.
+# 以列表项开头的正文行：它自己起一段。
+LIST_ITEM = re.compile(r"^(?:\d+[.)]|\u2022)\s")
+# A dash is far more often a formula fragment (`- R` the loop is ...`) or emphasis than a bullet.
+# It only counts as a list item when the paragraph it follows ends with a colon, which is what
+# introduces a list.
+# 短横线在本文档里更常是公式片段或强调，而不是列表项。只有上段以冒号结尾（列表的引子）时，
+# 才把它当列表项。
+BULLET_AFTER_COLON = re.compile(r"^[-*+]\s")
+# An ASCII rule or banner (`=====`, `-----`): its own line, never joined with what follows.
+# ASCII 分隔/横幅线（`=====`、`-----`）：独占一行，绝不与后文相连。
+RULE_LINE = re.compile(r"^[=\-_*~]{4,}$")
+FIELD_IN_PROSE = re.compile(r"\[(?:en|zh)\]|@\w+(?:\s+[A-Za-z_]\w*)?")
+
+
+def _split_inline(body: str) -> list[tuple[str | None, str]]:
+    """`'a [en] b [zh] c'` -> [(lang, text)] with `None` for the leading untagged part."""
+    marks = list(re.finditer(r"\[(en|zh)\]", body))
+    if not marks:
+        return [(None, body)]
+    out: list[tuple[str | None, str]] = []
+    lead = body[: marks[0].start()].strip()
+    if lead:
+        out.append((None, lead))
+    for index, mark in enumerate(marks):
+        end = marks[index + 1].start() if index + 1 < len(marks) else len(body)
+        out.append((mark.group(1), body[mark.end() : end].strip()))
+    return out
+
+
+def _body_line(star_spaces: str, indent: int, text: str) -> str:
+    """A continuation line: the star stays, the text keeps its hanging column."""
+    return f"{star_spaces}*{' ' * max(indent - len(star_spaces) - 1, 0)}{text}".rstrip()
+
+
+class _Entry:
+    """One field's content in one language: a list of paragraphs."""
+
+    def __init__(self, field: str, args: str, lang: str | None) -> None:
+        self.field = field
+        self.args = args
+        self.lang = lang
+        self.paragraphs: list[list[str]] = [[]]
+
+    def add(self, text: str) -> None:
+        text = text.strip()
+        if text:
+            self.paragraphs[-1].append(text)
+
+    def new_paragraph(self) -> None:
+        if self.paragraphs[-1]:
+            self.paragraphs.append([])
+
+
+def _canonical_language(lines: list[str]) -> list[str]:
+    """Regroup a Doxygen block body so each field has one group per language."""
+    for raw in lines:
+        plain = LINE.match(raw)
+        text = plain.group("body") if plain is not None else raw
+        # A block that carries a code listing is left alone: joining code lines into paragraphs
+        # would rewrite the listing, and a listing is the one thing a doc block cannot lose.
+        # 带代码清单的块一律不动：把代码行并成段落等于改写清单，而清单是文档块唯一不能丢的东西。
+        if "```" in text or "@code" in text or "@dot" in text or "<table" in text:
+            return lines
+    star_spaces = ""
+    for raw in lines:
+        match = LINE.match(raw)
+        if match is not None and match.group("body").strip():
+            star_spaces = match.group("indent")
+            break
+
+    order: list[tuple[str, str, str | None]] = []
+    entries: dict[tuple[str, str, str | None], _Entry] = {}
+    current: _Entry | None = None
+    blank_pending = False
+
+    def entry_for(field: str, args: str, lang: str | None) -> _Entry:
+        key = (field, args, lang)
+        if key not in entries:
+            entries[key] = _Entry(field, args, lang)
+            order.append(key)
+        return entries[key]
+
+    for raw in lines:
+        match = LINE.match(raw)
+        if match is None:
+            continue
+        body = match.group("body").strip()
+        if not body:
+            blank_pending = True
+            if current is not None:
+                current.new_paragraph()
+            continue
+
+        field = FIELD.match(body)
+        if field and field.group("field") not in {"@en", "@zh"}:
+            name = field.group("field")
+            args = (field.group("args") or "") if name in FIELDS_WITH_ARGS else ""
+            tail = field.group("tail").strip()
+            pieces = _split_inline(tail)
+            langs = [lang for lang, text in pieces if lang is not None and text]
+            if not langs:
+                # An untagged field (`@since`, `@context`, `@exporter`): keep it in place, whole.
+                current = entry_for(name, args, None)
+                current.add(tail)
+            else:
+                lead = " ".join(text for lang, text in pieces if lang is None).strip()
+                first = True
+                for lang, text in pieces:
+                    if lang is None:
+                        continue
+                    current = entry_for(name, args, lang)
+                    if first and lead:
+                        # `@param[in] freq_hz [en] ...`: the bracketed qualifier precedes the first
+                        # tag, so it joins that group's text instead of vanishing.
+                        # `@param[in] freq_hz [en] ...`：方括号限定词在首个标签之前，归入该组。
+                        current.add(lead)
+                        first = False
+                    current.add(text)
+            blank_pending = False
+            continue
+
+        pieces = _split_inline(body)
+        tagged = [(lang, text) for lang, text in pieces if lang is not None]
+        if tagged:
+            # A body line that carries a tag is a language switch: repeat the field.
+            field_name = current.field if current is not None else ""
+            field_args = current.args if current is not None else ""
+            for lang, text in pieces:
+                if lang is None:
+                    # Text before the tag on this line continues whatever language is already
+                    # open. This is the common case -- a sentence wrapped across a line boundary
+                    # with the `[zh]` tag sitting at the end of it -- and skipping it truncates
+                    # the sentence in the rendered docs.
+                    # 标签之前的文字属于**已经打开**的那个语言组。这是最常见的情形——一句话折行、
+                    # `[zh]` 落在行尾——跳过它就是让渲染出来的文档少半句话。
+                    if current is not None and text:
+                        current.add(text)
+                    continue
+                target = entry_for(field_name, field_args, lang)
+                if blank_pending and target is not current:
+                    target.new_paragraph()
+                current = target
+                current.add(text)
+            blank_pending = False
+            continue
+
+        if current is None:
+            # Body text that no field introduced stays body text. Giving it a field name would be
+            # this script writing documentation on the author's behalf.
+            # 没有字段引入的正文就还是正文。给它安一个字段名，等于这个脚本替作者写文档。
+            current = entry_for("", "", None)
+        previous = " ".join(current.paragraphs[-1]) if current.paragraphs[-1] else ""
+        starts_item = bool(LIST_ITEM.match(body)) or (
+            bool(BULLET_AFTER_COLON.match(body)) and previous.rstrip().endswith(":"))
+        if (starts_item or RULE_LINE.match(body)) and current.paragraphs[-1]:
+            # Lists are structure, not prose: each item keeps its own line.
+            # 列表是结构而非散文：每一项各自成行。
+            current.new_paragraph()
+        current.add(body)
+        blank_pending = False
+
+    out: list[str] = []
+    previous_had_bodies = False
+    first_group = True
+    for key in order:
+        entry = entries[key]
+        paragraphs = [p for p in entry.paragraphs if p]
+        joined = [(" ".join(p)).strip() for p in paragraphs]
+        if entry.lang is None:
+            # An untagged entry: `@since 0.1.0`, `@exporter`, or plain body text with no field.
+            # Every paragraph is emitted -- emitting only the first one is how a whole block of
+            # prose disappears without a trace.
+            # 无语言组的条目：`@since 0.1.0`、`@exporter`，或者没有字段的纯正文。
+            # 每一段都要发出来——只发第一段，正是一整块正文无声消失的方式。
+            head = f"{entry.field}{(' ' + entry.args) if entry.args else ''}".strip()
+            block_indent = len(star_spaces) + 6
+            if joined:
+                first_line = f"{head} {joined[0]}".strip()
+                out.append(f"{star_spaces}* {first_line}".rstrip())
+            elif head:
+                out.append(f"{star_spaces}* {head}".rstrip())
+            for paragraph in joined[1:]:
+                out.append(f"{star_spaces}*")
+                for piece in _wrap(paragraph, block_indent):
+                    out.append(_body_line(star_spaces, block_indent, piece))
+            previous_had_bodies = len(joined) > 1
+            first_group = False
+            continue
+        prefix = f"{star_spaces}* {entry.field}{(' ' + entry.args) if entry.args else ''} [{entry.lang}] "
+        # Two columns, as in the template this follows. A wrapped continuation of the tag line aligns
+        # under the field's own text; a *separate* body paragraph gets a fixed block indent five
+        # columns in from the star, which is what makes a long body read as a block rather than as a
+        # hanging line.
+        # 两个列，与所遵循的模板一致：标签行的折行续行对齐到字段自身的文字之下；而**独立**的正文
+        # 段落用星号后固定五格的块缩进——那正是让长正文读起来像一块而不是悬挂行的原因。
+        indent = len(prefix)
+        body_indent = len(star_spaces) + 6
+        has_bodies = len(joined) > 1
+        if not first_group and (previous_had_bodies or has_bodies):
+            out.append(f"{star_spaces}*")
+        head_lines = _wrap(joined[0], indent) if joined else [""]
+        out.append((prefix + head_lines[0]).rstrip())
+        for extra in head_lines[1:]:
+            out.append(_body_line(star_spaces, indent, extra))
+        for paragraph in joined[1:]:
+            out.append(f"{star_spaces}*")
+            for piece in _wrap(paragraph, body_indent):
+                out.append(_body_line(star_spaces, body_indent, piece))
+        previous_had_bodies = has_bodies
+        first_group = False
+    return out
+
+
 def normalise(text: str) -> str:
     lines = text.split("\n")
     out: list[str] = []
@@ -269,7 +547,7 @@ def normalise(text: str) -> str:
             out.extend(raw.rstrip() for raw in lines[index:])
             break
         out.append(line.rstrip())
-        out.extend(_fix_block(lines, index + 1, closer))
+        out.extend(_canonical_language(_fix_block(lines, index + 1, closer)))
         out.append(lines[closer].rstrip())
         index = closer + 1
     return "\n".join(out)
@@ -283,6 +561,7 @@ def main() -> int:
     args = parser.parse_args()
 
     changed: list[Path] = []
+    corrupt: list[tuple[Path, dict[str, int]]] = []
     for name in SCAN_DIRS:
         base = ROOT / name
         if not base.is_dir():
@@ -294,10 +573,25 @@ def main() -> int:
                 continue
             original = path.read_text(encoding="utf-8")
             updated = normalise(original)
-            if updated != original:
-                changed.append(path)
-                if args.fix:
-                    path.write_text(updated, encoding="utf-8")
+            if updated == original:
+                continue
+            drift = _prose_drift(original, updated)
+            if drift:
+                # Refuse to write. A file whose prose changed is a bug in this tool, not a
+                # formatting difference, and writing it would bury the evidence in a 99-file diff.
+                # 拒绝写入。改动了文字的文件是本工具的 bug，不是排版差异；写下去只会把证据
+                # 埋进一个 99 文件的 diff 里。
+                corrupt.append((path, drift))
+                continue
+            changed.append(path)
+            if args.fix:
+                path.write_text(updated, encoding="utf-8")
+
+    if corrupt:
+        for path, drift in corrupt:
+            print(f"[docfmt] REFUSED {path.relative_to(ROOT)}: prose characters would change {drift}")
+        print(f"[docfmt] FAIL {len(corrupt)} file(s) would lose text; nothing was written for them")
+        return 2
 
     verb = "rewrote" if args.fix else "would rewrite"
     if changed:
