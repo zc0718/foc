@@ -87,6 +87,11 @@ struct Setup final {
     float align_tolerance_rad; ///< [en] accepted spread, rad. [zh] 允许离散度，rad。
     float align_verify_s;      ///< [en] direction check hold, s. [zh] 方向校验保持，s。
     float align_angle_e_rad;   ///< [en] forced electrical angle, rad. [zh] 强制电角度，rad。
+    /**
+     * @brief [en] which observer to run, as a `foc_observer_t`; 0 is the shipped default.
+     * @brief [zh] 运行哪个观测器，取 `foc_observer_t`；0 是出厂默认。
+     */
+    int32_t observer;
 };
 
 
@@ -94,8 +99,9 @@ struct Setup final {
  * @brief [en] What `foc_motor_create()` has always used.
  * @brief [zh] `foc_motor_create()` 一直使用的取值。
  */
-constexpr Setup kDefaultSetup{5.0F, 20000.0F, 500.0F, 24.0F, 2000.0F, 200.0F, 0.0F, 20.0F, 50.0F,
-                              0.0F, 0.0F,     0.0F,   0.0F,  0.0F,    0.0F,   0.0F, 0.0F};
+constexpr Setup kDefaultSetup{5.0F, 20000.0F, 500.0F, 24.0F, 2000.0F, 200.0F,
+                              0.0F, 20.0F,    50.0F,  0.0F,  0.0F,    0.0F,
+                              0.0F, 0.0F,     0.0F,   0.0F,  0.0F,    static_cast<std::int32_t>(FOC_OBSERVER_BACK_EMF)};
 
 
 /**
@@ -212,6 +218,12 @@ auto resolve_setup(const foc_motor_setup_t* requested) noexcept -> Setup {
                                sizeof(requested->position_accel_limit_rad_s2))) {
         out.position_accel_limit_rad_s2 = requested->position_accel_limit_rad_s2;
     }
+    // The observer is read literally, like dead time: 0 is a legal value (and the default), so "unset" and "the default"
+    // mean the same thing here and there is nothing to distinguish.
+    // 观测器按字面读取，与死区同理：0 是合法值（也是默认值），因此"未设置"与"默认"在此含义相同，无需区分。
+    if (covers(*requested, offsetof(foc_motor_setup_t, observer) + sizeof(requested->observer))) {
+        out.observer = requested->observer;
+    }
     // Alignment deliberately breaks the "0 = library default" rule: 0 is a meaningful value here
     // ("do not align"), so every field is taken literally and any non-zero value is authoritative.
     // 对齐故意打破“0 = 库默认值”的规则：0 在这里是有意义的值（“不对齐”），所以每个字段按字面生效，
@@ -243,6 +255,34 @@ auto resolve_setup(const foc_motor_setup_t* requested) noexcept -> Setup {
  * @brief [zh] 合并后的设置是否描述了一台核心能接受的电机。
  * @since 0.1.0
  */
+/**
+ * @brief [en] Whether the requested observer can actually be run.
+ * @brief [zh] 所请求的观测器是否真的可以运行。
+ * @return [en] `FOC_OK` for the wired mode, `FOC_ERR_NOT_IMPL` for a mode that is named but not wired, `FOC_ERR_PARAM`
+ *              for a value outside the enumeration.
+ * @return [zh] 已接入的模式返回 `FOC_OK`，已命名但未接入的模式返回 `FOC_ERR_NOT_IMPL`，枚举之外的取值返回
+ *              `FOC_ERR_PARAM`。
+ * @note [en] The three answers are kept apart on purpose. Answering `FOC_OK` and running the default instead would be a
+ *            silent substitution, and answering `PARAM` for `NONLINEAR_FLUX` would tell the caller their call was
+ *            malformed when it was well formed and merely unimplemented.
+ * @note [zh] 三种回答刻意分开。答 `FOC_OK` 却跑默认值，是一种静默替换；而对 `NONLINEAR_FLUX` 答 `PARAM`，则是在调用完全
+ *            正确、只是尚未实现时告诉调用方它写错了。
+ * @since 0.1.4
+ */
+auto observer_status(const Setup& setup) noexcept -> foc_err_t {
+    switch (setup.observer) {
+    case FOC_OBSERVER_BACK_EMF:
+        return FOC_OK;
+    case FOC_OBSERVER_NONLINEAR_FLUX:
+    case FOC_OBSERVER_HFI:
+    case FOC_OBSERVER_BLENDED:
+        return FOC_ERR_NOT_IMPL;
+    default:
+        return FOC_ERR_PARAM;
+    }
+}
+
+
 auto setup_ok(const Setup& setup) noexcept -> bool {
     if (!(std::isfinite(setup.i_max_a) && (setup.i_max_a > 0.0F) && std::isfinite(setup.pwm_freq_hz) &&
           (setup.pwm_freq_hz > 0.0F) && std::isfinite(setup.deadtime_ns) && (setup.deadtime_ns >= 0.0F) &&
@@ -668,6 +708,10 @@ foc_err_t foc_bridge_create_ex(const foc_motor_params_t* params, const foc_motor
     if (!foc::api::setup_ok(resolved)) {
         return FOC_ERR_PARAM;
     }
+    const foc_err_t observer = foc::api::observer_status(resolved);
+    if (observer != FOC_OK) {
+        return observer;
+    }
 
     for (std::size_t i = 0U; i < foc::api::kMaxMotors; ++i) {
         foc::api::Slot& slot = foc::api::g_pool[i];
@@ -734,6 +778,10 @@ foc_err_t foc_bridge_create_host(const foc_motor_params_t* params, const foc_mot
     const foc::api::Setup resolved = foc::api::resolve_setup(setup);
     if (!foc::api::setup_ok(resolved)) {
         return FOC_ERR_PARAM;
+    }
+    const foc_err_t observer = foc::api::observer_status(resolved);
+    if (observer != FOC_OK) {
+        return observer;
     }
 
     const foc::driver::HalCallbacks hal_callbacks = foc::api::to_hal_callbacks(*callbacks);

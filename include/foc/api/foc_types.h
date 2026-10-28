@@ -55,6 +55,27 @@ typedef struct foc_motor_params {
 
 
 /**
+ * @brief [en] Which observer the motor runs.
+ * @brief [zh] 电机运行哪一个观测器。
+ * @note [en] Only the default is wired today. The enumeration and the setup field exist so the *shape* of the choice is
+ *            fixed before more than one mode is implemented: adding a mode must not change this header's meaning, only
+ *            which values answer `FOC_ERR_NOT_IMPL`. A mode that is named but not wired answers that error rather than
+ *            silently falling back to the default, because a silent fallback is indistinguishable from success.
+ * @note [zh] 今天只接入默认值。枚举与设置字段存在的理由，是在真正实现多种模式之前先把选择的**形状**定下来：增加一种模式
+ *            不应改变本头的含义，只改变哪些取值回答 `FOC_ERR_NOT_IMPL`。被命名却未接入的模式回答该错误，而不是静默退回
+ *            默认值——因为静默退回与成功无法区分。
+ * @since 0.1.4
+ * @exporter
+ */
+// NOLINTNEXTLINE(performance-enum-size) -- a C ABI enum cannot carry a C++ base type.
+typedef enum foc_observer {
+    FOC_OBSERVER_BACK_EMF = 0,       /* back-EMF observer; the shipped default */
+    FOC_OBSERVER_NONLINEAR_FLUX = 1, /* non-linear flux observer */
+    FOC_OBSERVER_HFI = 2,            /* high-frequency injection, zero-speed */
+    FOC_OBSERVER_BLENDED = 3         /* the blend of the two across speed */
+} foc_observer_t;
+
+/**
  * @brief [en] Optional setup for the C path: every value the library would otherwise have to guess.
  * @brief [zh] C 路径的可选设置：不提供时库只能自己猜的那些值。
  * @note [en] `struct_size` must be `sizeof(foc_motor_setup_t)`. A caller built against an older header passes a smaller
@@ -100,6 +121,7 @@ typedef struct foc_motor_setup {
     float align_tolerance_rad;         /* accepted spread during the hold, rad; required when aligning */
     float align_verify_s;              /* direction-check hold, s; 0 = skip the check */
     float align_angle_e_rad;           /* forced electrical angle, rad; 0 = the usual zero */
+    int32_t observer;                  /* foc_observer_t; 0 = FOC_OBSERVER_BACK_EMF, the shipped default */
 } foc_motor_setup_t;
 
 
