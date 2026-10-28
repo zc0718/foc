@@ -75,6 +75,12 @@ jobs:
       - name: strict-header gate
         run: python3 .github/misc/gates.py strict
 
+      # required: every installed header has a README claim row, the row names a level, the level
+      # is not L4 (there is no hardware), and the evidence it names exists. This is what keeps the
+      # documentation from drifting away from the measurements, which it silently did once.
+      - name: claim-evidence gate
+        run: python3 .github/misc/gates.py claims
+
       # required: a stub that does not satisfy a HAL/observer contract must fail to compile, the
       # diagnostic must name the contract header, and the conforming control must still compile
       - name: contract negative-compile gate

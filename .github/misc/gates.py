@@ -392,6 +392,14 @@ def cmd_strict(explicit):
     return 0
 
 
+def cmd_claims(_explicit):
+    """Every installed header must carry a claim row with a level and evidence that exists.
+    Delegates to claim_gate.py so the rule has one implementation."""
+    done = subprocess.run([sys.executable, str(ROOT / '.github' / 'misc' / 'claim_gate.py')],
+                          cwd=ROOT, text=True)
+    return done.returncode
+
+
 def main():
     parser = argparse.ArgumentParser(description='Native quality gates (one implementation, three callers).')
     sub = parser.add_subparsers(dest='gate', required=True)
@@ -401,7 +409,8 @@ def main():
         'guard': 'forbidden #include directives, scoped rules from .github/misc/.include-guard.txt',
         'license': 'copyleft / non-free licence markers, scoped rules from .github/misc/.license-guard.txt',
         'strict': 'every public header compiles standalone with -fno-exceptions -fno-rtti (C: -pedantic)',
-        'all': 'format + tidy + guard + license + strict',
+        'claims': 'every installed header has a README claim row with a level and existing evidence',
+        'all': 'format + tidy + guard + license + strict + claims',
     }
     for name, text in helps.items():
         leaf = sub.add_parser(name, help=text)
@@ -424,7 +433,10 @@ def main():
         return cmd_license(args.files)
     if args.gate == 'strict':
         return cmd_strict(args.files)
-    return 1 if (cmd_format([]) or cmd_tidy([]) or cmd_guard([]) or cmd_license([]) or cmd_strict([])) else 0
+    if args.gate == 'claims':
+        return cmd_claims(args.files)
+    return 1 if (cmd_format([]) or cmd_tidy([]) or cmd_guard([]) or cmd_license([]) or cmd_strict([]) or
+                 cmd_claims([])) else 0
 
 
 if __name__ == '__main__':

@@ -97,17 +97,53 @@ matches the model is a separate question, and the library gives you the instrume
 
 ### What each module claims
 
-| Module | Level | The claim, in one line |
-| --- | --- | --- |
-| `foc/core/transforms.hpp`, `svpwm`, `pi`, `filters`, `sm`, `limits` | L1 + L3 | Algebra and discrete-time structure; numerics cross-checked against a phase-variable model |
-| `foc/core/observer/nonlinear_flux_observer.hpp` | L3 | 0.0124 rad at 200 rad/s on the SIL plant, 2.0× worse at 10 % current-gain error, **floor near 50 rad/s** |
-| `foc/core/observer/smo.hpp` | L3 | Admitted as an alternative, *not* shipped as the default — it beats the incumbent on the mean-value plant and loses on a switching one |
-| `foc/core/commissioning.hpp` | L3 | `Rs` +0.01 %, `ψf` +0.51 %, `Ld` +0.14 %, `Lq` +0.23 % on the SIL plant, with the conditions each one needs stated |
-| `foc/core/protection.hpp` | L2 + L3 | I²t budget `i_cont²·τ`; a trip removes the *command* in one period, and the current then decays with `L/R` (0.80 ms) — it cannot be clamped in one period |
-| `foc/core/board_check.hpp` | L3 | Names the correct cause on 3 seeded faults; measures what can be measured at standstill and says what it does not |
-| `foc/core/field_weakening.hpp` | L3 | Matches the analytic voltage/current envelope to four digits; the "is it worth it" rule is a gate, not a suggestion |
-| `foc/core/reference.hpp` (`MtpaReference`) | L3 | +29.2 % torque at `Lq/Ld = 2`, `i_char = i_max` (closed form 30.2 %); the single-`L` observer reads 0.104 rad on that machine, still inside the 0.15 ceiling |
-| `benchmark/` | L1 | Builds and runs; its numbers are timing, not control performance |
+Every installed header is listed here exactly once, with the level of what is claimed about it and
+the thing that checks it. `.github/misc/claim_gate.py` enforces that: a header added without a row
+fails the build, a row naming a test that does not exist fails the build, and **an `L4` row is
+refused outright** because this project has no hardware to measure it on. Paths are relative to
+`include/`.
+
+| Module | Level | The claim, in one line | Evidence |
+| --- | --- | --- | --- |
+| `foc/api/foc_api.h`, `foc/api/foc_types.h` | L1 | The C11 surface compiles as C, links and runs; every misuse is an error code; handles carry their *kind*, so a motor handle cannot be read as a protector | `test_api_c_smoke.cpp`, `c_api_validation.c` |
+| `foc/core/types.hpp` | L1 | Value types with no hidden arithmetic | `test_transforms.cpp` |
+| `foc/core/limits.hpp` | L1 | `clamp`/`sanitize` behave at the boundaries and at NaN | `test_limits.cpp` |
+| `foc/core/version.hpp`, `foc/version.h` | L1 | One version string, identical from C and C++ | `test_version.cpp` |
+| `foc/core/traits.hpp` | L1 | The policy concepts: a wrong policy fails to compile, and the failure is the one intended | `test_traits_contract.cpp`, `negative_compile.py` |
+| `foc/core/transforms.hpp` | L3 | Clarke/Park and inverses; the dq derivation is cross-checked against an independently derived phase-variable model at six operating points (currents within 0.02 A, torque within 0.3 %) | `test_transforms.cpp`, `test_abc_plant.cpp` |
+| `foc/core/svpwm.hpp` | L1 | Duty generation, clamped to the linear range | `test_svpwm.cpp` |
+| `foc/core/pi.hpp` | L1 | `error = setpoint - feedback`; the integral is re-clamped every step so a shrunken window releases torque at once | `test_pi.cpp` |
+| `foc/core/filters.hpp` | L1 | Discrete filters at their declared cutoff | `test_filters.cpp` |
+| `foc/core/sm.hpp` | L1 | The state machine's reachable set and its refusals | `test_sm.cpp` |
+| `foc/core/machine_params.hpp` | L1 | Nameplate → derived `psi_f`, one definition | `test_machine_params.cpp` |
+| `foc/core/deadtime.hpp` | L3 | The axis projection: 4/3 on d, 2/√3 on q, 4/π averaged over a rotation. Using the d number on q costs 15.7 % on `Lq` | `test_deadtime.cpp` |
+| `foc/core/feedforward.hpp` | L2 | Cross-coupling and back-EMF terms, on the SIL plant | `test_sil_s6_feedforward.cpp` |
+| `foc/core/reference.hpp` | L3 | `d = 0` default plus `MtpaReference`: +29.2 % torque at `Lq/Ld = 2`, and exactly `i_d = 0` on a surface machine | `test_mtpa.cpp` |
+| `foc/core/field_weakening.hpp` | L3 | Matches the analytic voltage/current envelope to four digits; the "is it worth it" rule is a gate, not a suggestion; the policy engages end to end through `Motor` (`i_d = -1.93 A` 2 ms in) | `test_field_weakening.cpp`, `test_field_weakening_motor.cpp` |
+| `foc/core/commissioning.hpp` | L3 | `Rs` +0.01 %, `psi_f` +0.51 %, `Ld` +0.14 %, `Lq` +0.23 % on the SIL plant, each with the condition it needs | `test_commissioning.cpp` |
+| `foc/core/protection.hpp` | L2 | I²t budget `i_cont²·tau`; a trip removes the *command* in one period and the current then decays with `L/R` (0.80 ms) -- it cannot be clamped in one period, and the block says so | `test_protection.cpp` |
+| `foc/core/board_check.hpp` | L3 | Names the correct cause on three seeded faults; measures the ADC trigger position when the bench can move it, and reports the optimum rather than assuming 0.5 | `test_board_check.cpp` |
+| `foc/core/alignment.hpp` | L2 | The align/verify sequence and its failure modes | `test_alignment.cpp` |
+| `foc/core/polarity.hpp` | L2 | Polarity detection and its refusal when the answer is not decisive | `test_polarity.cpp`, `test_sil_s15_polarity.cpp` |
+| `foc/core/position.hpp` | L2 | The position loop with velocity and acceleration limits | `test_position_p.cpp` |
+| `foc/core/motion_profile.hpp` | L2 | Trapezoidal profile timing and its endpoints | `test_motion_profile.cpp` |
+| `foc/core/observer/observer_policy.hpp` | L1 | The observer contract (`theta_e`, `omega_e`, one `update`) | `test_traits_contract.cpp` |
+| `foc/core/observer/ideal_observer.hpp` | L2 | The reference every other observer is compared against, on a clean plant | `test_ideal_observer.cpp` |
+| `foc/core/observer/back_emf_observer.hpp` | L2 | Angle and speed on the SIL plant | `test_back_emf_observer.cpp` |
+| `foc/core/observer/nonlinear_flux_observer.hpp` | L3 | 0.0124 rad at 200 rad/s; 2.03× worse with a 10 % current-gain error; **floor near 50 rad/s**, where an ideal plant already reads 0.162 rad | `test_nonlinear_flux_observer.cpp`, `test_sil_sensitivity.cpp`, `test_sil_s18_admission.cpp` |
+| `foc/core/observer/hfi_observer.hpp` | L2 | Injection-based angle: the error signal is proportional to `sin(2δ)` and the method needs saliency | `test_hfi_observer.cpp`, `test_sil_s14_hfi.cpp` |
+| `foc/core/observer/blended_observer.hpp` | L2 | HFI/high-speed handover, with the measured floor (~50 rad/s) stated rather than tuned around | `test_blended_observer.cpp`, `test_sil_s16_blend.cpp` |
+| `foc/hal/clock.hpp`, `foc/hal/current_sense.hpp`, `foc/hal/dc_link.hpp`, `foc/hal/position.hpp`, `foc/hal/pwm.hpp` | L1 | Abstract interfaces only: no behaviour to claim, and the concepts reject an incomplete implementation | `test_traits_contract.cpp` |
+| `foc/driver/stub_hal.hpp`, `foc/driver/stub_pwm.hpp`, `foc/driver/stub_dc_link.hpp`, `foc/driver/sim_position.hpp`, `foc/driver/scripted_current.hpp` | L1 | Host-side stand-ins for the real drivers; they prove the *interfaces* are usable, nothing about the hardware | `test_driver_stubs.cpp` |
+| `foc/motor/motor.hpp` | L3 | Policy composition, mode transitions, and the reference generator actually reaching the current loop | `test_motor.cpp`, `test_field_weakening_motor.cpp` |
+| `foc/motor/foc_loop.hpp` | L2 | Multi-rate loop timing at the SIL plant | `test_sil_s7_multirate.cpp` |
+| `foc/motor/motor_config.hpp` | L2 | Loop gains derived from nameplate `J`, `b`, `kt`, with the current loop's bandwidth the only free parameter | `test_motor.cpp` |
+
+Two entries that used to be in this table are deliberately gone. `smo.hpp` never existed as a
+shipped header -- the SMO is a **test-harness candidate** (`test_sil_s18_admission.cpp`), and it was
+measured to beat the incumbent on the mean-value plant and lose on a switching one, which is why it
+does not ship. `benchmark/` is not an installed header and its numbers are timing, not control
+performance.
 
 ### Operating range, not a single number
 
