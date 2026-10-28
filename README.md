@@ -313,6 +313,38 @@ still lands 0.3 % from the truth. With 20 mA rms of the noise a shunt and an ADC
 So the practical rule the numbers support: record at least ten electrical time constants, and treat any estimate from a
 shorter capture as a statement about `Rs/L` rather than about either one.
 
+### Auto-tuning is a measurement, not a preference (manual, not in CI)
+
+`benchmark/script/autotune_current_loop.py` steps the q-axis current through the real loop (`foc.Motor` on its host HAL)
+across the bandwidth range and reports what the drive actually does. The first column pair is the reason the script
+exists: what was requested is not what is delivered, and the two disagree at **both** ends of the range.
+
+| Requested | kp | Overshoot | 2 % settling | Achieved | Ratio |
+|---|---|---|---|---|---|
+| 700 rad/s | 0.06 | 0.0 % | 163 ticks | 364 rad/s | **0.52** |
+| 1000 rad/s | 0.30 | 0.0 % | 96 ticks | 769 rad/s | 0.77 |
+| 1500 rad/s | 0.70 | 0.0 % | 44 ticks | 1667 rad/s | 1.11 |
+| 2200 rad/s | 1.26 | 1.1 % | 17 ticks | 2857 rad/s | 1.30 |
+| 2600 rad/s | 1.58 | 2.3 % | 25 ticks | 4000 rad/s | **1.54** |
+
+The lower edge is the `Rs/(2*Ld)` floor from the tuning section above: just above it `kp` is still small enough that the
+request is under-delivered. The upper edge is the sampling rate: at 2600 rad/s the 63 % crossing falls between two
+control periods, the ratio jumps, and the settling time gets *worse* than at 2200. So "deliverable" is a band, not a
+half-open interval, and the script now asserts its two edges instead of averaging across them.
+
+Under parameter error -- the controller tuned from the nameplate, the plant the truth -- the loop is forgiving:
+
+| Requested | Worst overshoot over `Rs`/`L` each wrong by 50 % |
+|---|---|
+| 1000 rad/s | 4.7 % |
+| 1500 rad/s | 4.0 % |
+| 2000 rad/s | 4.8 % |
+
+Which yields the recommendation the script prints rather than assumes: **2000 rad/s**, 3.2x the floor and 10 control
+periods per time constant, 0.5 % overshoot with the right parameters and 4.8 % with both wrong by 50 %. The rule it
+encodes is worth more than the number: pick the highest bandwidth that still meets the overshoot bound *with the plant
+50 % wrong*, and never accept a bandwidth the loop cannot deliver.
+
 ### Claims deliberately not made
 
 These are the claims the evidence levels do not support, listed so nobody has to guess whether they
