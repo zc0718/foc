@@ -81,9 +81,19 @@ def _no_recursive_clean_img(x: str):
             os.remove(x + sep + f)
 
 
-def _idx_slicer(x: np.ndarray) -> list[list[int]]:
+def _idx_slicer(x: np.ndarray, closes: list[bool]) -> list[list[int]]:
     res, _in_selection = [], False
     for i, v in enumerate(x):
+        if closes[i]:
+            # A block comment ended here. Whatever follows is code, and code has no language: it
+            # must not inherit the selection that happened to be open. Without this the declaration
+            # right after a documented member is absorbed into the last language group and
+            # disappears from the other language's build.
+            # 块注释在这一行结束。后面是代码，代码没有语言：它不能继承恰好打开的那个选择集。没有
+            # 这一条，紧跟在一个有文档的成员后面的声明会被吸进最后一个语言组，在另一种语言的
+            # 构建里消失。
+            _in_selection = False
+            continue
         if not (v[0] == True and v[1] == True and v[2] == False):
             if v[0] == True and v[1] == False and v[2] == False:
                 _in_selection = False
@@ -105,6 +115,12 @@ def _determine_sub_groups(x: list[list[int]], languages: list[str],
 
 
 _lang_marker_re = re.compile(r"\[(en|zh|jp)\]\s?")
+# Lines that open or close a block comment. They carry no language, and a block whose last entry is
+# a tagged line would otherwise ship without its closer in the other language's build -- which
+# Doxygen reports only as "file ended in the middle of a comment block" and then documents nothing.
+# 开/闭块注释的行。它们不带语言；否则一个以标签行结尾的块，在另一种语言的构建里会少了闭合符——
+# Doxygen 对此只报 "file ended in the middle of a comment block"，然后什么都不文档化。
+_comment_structure_re = re.compile(r"^\s*(?:/\*\*?<?|/\*!|\*/)\s*$")
 _tag_line_re = re.compile(r"^(\s*\*\s*)@([A-Za-z_][A-Za-z0-9_]*)(.*?)(\r?\n)?$")
 _inline_doc_re = re.compile(r"^(.*?(?:///<?|\*\*<)\s*)(.*?)(\r?\n)?$")
 _cjk_re = re.compile(r"[\u3000-\u303f\u4e00-\u9fff\uff01-\uff60]")
@@ -277,11 +293,17 @@ def _inline_lang_pick(line: str, lang_tag: Language) -> str:
     if _m is None:
         return line
     _lead, _segs = _split_lang_segments(_m.group(2))
-    if len(_segs) < 2:
+    if not _segs:
+        # No tag at all: the template says such text belongs to every language, so it stays.
+        # 完全没有标签：按模板规则这段文字属于每个语言版本，保留。
         return line
     for _lang, _text in _segs:
         if _lang == lang_tag:
             return f"{_m.group(1)}{_text.strip()}{_m.group(3) or ''}"
+    # Tagged, but not in this language. A `[zh]`-only field description in the English build is not
+    # a translation gap to paper over, it is text the source says the English reader must not see.
+    # 有标签，但不是这个语言。英文版里只有 `[zh]` 的字段说明不是要遮掩的翻译缺口，而是源码明确说
+    # 英文读者不该看到的内容。
     return ''
 
 
@@ -293,7 +315,8 @@ def _language_filter(lines: list[str], langs: list[str], lang_tag: Language) -> 
     container = []
     _refs = [[_hit_com_tag.match(l), _hit_lang_tag.match(l), _hit_free_tag.match(l)] for l in lines]
     _refs_bool = np.array([[j is not None for j in i] for i in _refs])
-    _idx_sets = _idx_slicer(_refs_bool)
+    _closes = [bool(re.match(r"^\s*\*/\s*$", l)) for l in lines]
+    _idx_sets = _idx_slicer(_refs_bool, _closes)
     _lang_involved_lines, _lang_tag_hit_line = _determine_sub_groups(_idx_sets, langs, _refs)
     _all_lang_involved_lines = []
 
@@ -301,7 +324,9 @@ def _language_filter(lines: list[str], langs: list[str], lang_tag: Language) -> 
         _all_lang_involved_lines.extend(v)
 
     for i, l in enumerate(lines):
-        if i not in _all_lang_involved_lines:
+        # A comment's opening and closing lines are never language-specific.
+        # 注释的开、闭行从不属于某个语言。
+        if _comment_structure_re.match(l) or i not in _all_lang_involved_lines:
             container.append(l)
         else:
             if i in _lang_involved_lines[lang_tag]:
@@ -311,6 +336,21 @@ def _language_filter(lines: list[str], langs: list[str], lang_tag: Language) -> 
                     container.append(l[:(_sp-4)] + l[_sp + 1:])
                 else:
                     container.append(l)
+
+    # A build that ships an unclosed comment documents nothing from that file, and Doxygen says so
+    # only in a warning nobody reads. Fail here instead.
+    # 构建出未闭合注释时，那个文件什么都不会被文档化，而 Doxygen 只在没人看的 warning 里说一声。
+    # 在这里直接失败。
+    _depth = 0
+    for _l in container:
+        _s = _l.strip()
+        if (_s.startswith('/**') or _s.startswith('/*!')) and '*/' not in _s:
+            _depth += 1
+        elif _s.endswith('*/') and _depth > 0:
+            _depth -= 1
+    if _depth:
+        raise RuntimeError(
+            f"docs/build.py: filtering for {lang_tag!r} left {_depth} block comment(s) unclosed")
 
     return container
 

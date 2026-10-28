@@ -36,16 +36,22 @@ namespace core {
  * @exporter
  */
 struct FieldWeakeningAdvice final {
-    float i_char_a;   ///< [en] `psi_f/Ld`, A. [zh] `ψf/Ld`，A。
-    float ratio;      ///< [en] `i_char/i_max`; below 1 means the flux can be
-                      ///< nulled inside the current limit. [zh]
-                      ///< `i_char/i_max`；小于 1 表示在电流限幅内能把磁链削到零。
-    float speed_gain; ///< [en] speed ceiling at `i_q = 0` relative to base,
-                      ///< e.g. 1.34 = +34 %. [zh] `i_q = 0` 处的转速上限相对基速，
-                      ///< 例如 1.34 = +34 %。
-    bool worthwhile;  ///< [en] the verdict, with the rule stated in the docs of
-                      ///< `is_field_weakening_worthwhile()`. [zh] 结论，判据写在
-                      ///< `is_field_weakening_worthwhile()` 的文档里。
+    float i_char_a; ///< [en] `psi_f/Ld`, A. [zh] `ψf/Ld`，A。
+    /**
+     * @brief [en] `i_char/i_max`; below 1 means the flux can be nulled inside the current limit.
+     * @brief [zh] `i_char/i_max`；小于 1 表示在电流限幅内能把磁链削到零。
+     */
+    float ratio;
+    /**
+     * @brief [en] speed ceiling at `i_q = 0` relative to base, e.g. 1.34 = +34 %.
+     * @brief [zh] `i_q = 0` 处的转速上限相对基速， 例如 1.34 = +34 %。
+     */
+    float speed_gain;
+    /**
+     * @brief [en] the verdict, with the rule stated in the docs of `is_field_weakening_worthwhile()`.
+     * @brief [zh] 结论，判据写在 `is_field_weakening_worthwhile()` 的文档里。
+     */
+    bool worthwhile;
 };
 
 /**
@@ -157,14 +163,19 @@ class FieldWeakeningReference final {
      * @since 0.1.0
      */
     struct Config final {
-        float rs;          ///< [en] unused by the decision, kept for symmetry with
-                           ///< the other policies. [zh] 判定不用，保留以与其它策略对称。
-        float l;           ///< [en] single-L model, H. [zh] 单一 L 模型，H。
-        float psi_f;       ///< [en] rotor flux linkage, Wb. [zh] 转子磁链，Wb。
-        float i_max_a;     ///< [en] per-axis current limit, A. [zh] 每轴电流限幅，A。
-        float v_max_ratio; ///< [en] `v_max/v_bus`; `1/sqrt(3)` for SVPWM's
-                           ///< linear range. [zh] `v_max/v_bus`；SVPWM 线性区取
-                           ///< `1/√3`。
+        /**
+         * @brief [en] unused by the decision, kept for symmetry with the other policies.
+         * @brief [zh] 判定不用，保留以与其它策略对称。
+         */
+        float rs;
+        float l;       ///< [en] single-L model, H. [zh] 单一 L 模型，H。
+        float psi_f;   ///< [en] rotor flux linkage, Wb. [zh] 转子磁链，Wb。
+        float i_max_a; ///< [en] per-axis current limit, A. [zh] 每轴电流限幅，A。
+        /**
+         * @brief [en] `v_max/v_bus`; `1/sqrt(3)` for SVPWM's linear range.
+         * @brief [zh] `v_max/v_bus`；SVPWM 线性区取 `1/√3`。
+         */
+        float v_max_ratio;
     };
 
     FieldWeakeningReference() noexcept = default;

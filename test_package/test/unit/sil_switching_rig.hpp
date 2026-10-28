@@ -38,17 +38,29 @@ struct SwitchingRigConfig final {
   /// [zh] d 轴电流，A。这里非零才是凸极机表现为凸极的条件：单 `L` 观测器的模型误差是
   /// `(Ld − Lq)·id`，所以 `i_d = 0` 时任何凸极比看起来都一样。默认 0，既有测试含义不变。
   float id_a{0.0F};
-  float belief_rs{1.10F}; ///< [en] Rs multiplier the observers are told. [zh]
-                          ///< 告诉观测器的 Rs 倍数。
-  float noise_a{0.1F};    ///< [en] phase-current noise amplitude, A; 0 = clean.
-                          ///< [zh] 相电流噪声幅值，A。
-  float t_dead_s{1.0e-6F}; ///< [en] inverter dead time, s; 0 = ideal legs. [zh]
-                           ///< 逆变器死区，s。
+  /**
+   * @brief [en] Rs multiplier the observers are told.
+   * @brief [zh] 告诉观测器的 Rs 倍数。
+   */
+  float belief_rs{1.10F};
+  /**
+   * @brief [en] phase-current noise amplitude, A; 0 = clean.
+   * @brief [zh] 相电流噪声幅值，A。
+   */
+  float noise_a{0.1F};
+  /**
+   * @brief [en] inverter dead time, s; 0 = ideal legs.
+   * @brief [zh] 逆变器死区，s。
+   */
+  float t_dead_s{1.0e-6F};
   std::int32_t sub_per_switch{
       40}; ///< [en] sub-steps per switching period. [zh] 每开关周期子步数。
   float v_bus_v{24.0F}; ///< [en] DC link, V. [zh] 母线电压，V。
-  float seconds{0.4F};  ///< [en] run length; the second half is measured. [zh]
-                        ///< 运行时长；只量后半段。
+  /**
+   * @brief [en] run length; the second half is measured.
+   * @brief [zh] 运行时长；只量后半段。
+   */
+  float seconds{0.4F};
   /// [en] Dead-time volt-seconds to *compensate* for, V; 0 = no compensator in
   /// the loop. [zh] 要**补偿**的死区伏秒，V；0 = 环内没有补偿器。
   float compensate_v{0.0F};

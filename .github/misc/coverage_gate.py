@@ -26,6 +26,7 @@ Exit codes: 0 pass, 1 a floor is violated, 2 the summary is missing or too old t
 """
 import argparse
 import json
+import pathlib
 import sys
 from pathlib import Path
 
@@ -114,6 +115,15 @@ def main():
         print("[coverage] worst files:", file=sys.stderr)
         for rate, path in worst:
             print(f"[coverage]   {rate:>6.2f}%  {path}", file=sys.stderr)
+
+    # Record what was measured, so the numbers printed in the documentation can be checked
+    # against something. A number nobody wrote down is the number that goes stale.
+    # 把量到的记下来，好让文档里印的数字有东西可对。没人写下来的数字，就是会过期的数字。
+    numbers = pathlib.Path(__file__).resolve().parents[2] / "docs/verification-numbers.json"
+    payload = json.loads(numbers.read_text(encoding="utf-8")) if numbers.is_file() else {}
+    payload["coverage_all"] = round(overall["percent"], 2)
+    payload["coverage_core"] = round(core["percent"], 2)
+    numbers.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
     return 1 if failures else 0
 

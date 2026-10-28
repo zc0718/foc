@@ -20,23 +20,46 @@ namespace core {
  * @exporter
  */
 enum class BoardItem : std::uint8_t {
-    CurrentSum,      ///< [en] `i_u + i_v + i_w` under a steady drive; KCL says
-                     ///< zero. [zh] 稳态驱动下 `i_u + i_v + i_w`；基尔霍夫说它
-                     ///< 是零。
-    CurrentOffset,   ///< [en] what a channel reads with the bridge off. [zh]
-                     ///< 桥关断时通道读数。
-    CurrentPolarity, ///< [en] the sign of the response to a known drive. [zh]
-                     ///< 对已知驱动的响应符号。
-    SamplingInstant, ///< [en] measured switching ripple against the predicted
-                     ///< one. [zh] 实测开关纹波对预测纹波。
-    DeadTime,        ///< [en] identified dead-time volts against the board's
-                     ///< setting. [zh] 辨识出的死区伏秒对板子的设定。
-    EncoderOffset,   ///< [en] the mount offset left after alignment. [zh]
-                     ///< 对齐之后残留的安装偏置。
-    Parameters,      ///< [en] `Rs`, `psi_f`, `L` against the nameplate. [zh]
-                     ///< `Rs`、`ψf`、`L` 对铭牌。
-    ObserverHealth,  ///< [en] observer error against a known trajectory. [zh]
-                     ///< 对已知轨迹的观测器误差。
+    /**
+     * @brief [en] `i_u + i_v + i_w` under a steady drive; KCL says zero.
+     * @brief [zh] 稳态驱动下 `i_u + i_v + i_w`；基尔霍夫说它 是零。
+     */
+    CurrentSum,
+    /**
+     * @brief [en] what a channel reads with the bridge off.
+     * @brief [zh] 桥关断时通道读数。
+     */
+    CurrentOffset,
+    /**
+     * @brief [en] the sign of the response to a known drive.
+     * @brief [zh] 对已知驱动的响应符号。
+     */
+    CurrentPolarity,
+    /**
+     * @brief [en] measured switching ripple against the predicted one.
+     * @brief [zh] 实测开关纹波对预测纹波。
+     */
+    SamplingInstant,
+    /**
+     * @brief [en] identified dead-time volts against the board's setting.
+     * @brief [zh] 辨识出的死区伏秒对板子的设定。
+     */
+    DeadTime,
+    /**
+     * @brief [en] the mount offset left after alignment.
+     * @brief [zh] 对齐之后残留的安装偏置。
+     */
+    EncoderOffset,
+    /**
+     * @brief [en] `Rs`, `psi_f`, `L` against the nameplate.
+     * @brief [zh] `Rs`、`ψf`、`L` 对铭牌。
+     */
+    Parameters,
+    /**
+     * @brief [en] observer error against a known trajectory.
+     * @brief [zh] 对已知轨迹的观测器误差。
+     */
+    ObserverHealth,
 };
 
 /**
@@ -54,19 +77,37 @@ enum class BoardItem : std::uint8_t {
  */
 enum class BoardCause : std::uint8_t {
     None = 0,
-    OffsetBias,        ///< [en] a channel's zero is off. [zh] 某通道的零点偏了。
-    PolarityReversed,  ///< [en] a channel's sign is inverted. [zh]
-                       ///< 某通道的符号反了。
-    SamplingInstant,   ///< [en] the ADC samples somewhere other than the centre
-                       ///< of the zero vector. [zh] ADC 采样点不在零矢量中心。
-    DeadTimeMismatch,  ///< [en] the board's dead time is not what it was told.
-                       ///< [zh] 板子的死区不是它被告知的值。
-    EncoderOffset,     ///< [en] the encoder mount offset was not applied. [zh]
-                       ///< 编码器安装偏置没有被用上。
-    ParametersOff,     ///< [en] `Rs`/`psi_f`/`L` disagree with the machine. [zh]
-                       ///< `Rs`/`ψf`/`L` 与机器不符。
-    ObserverUnhealthy, ///< [en] the observer's angle is wrong on a trajectory it
-                       ///< should track. [zh] 在本该跟上的轨迹上角度不对。
+    OffsetBias, ///< [en] a channel's zero is off. [zh] 某通道的零点偏了。
+    /**
+     * @brief [en] a channel's sign is inverted.
+     * @brief [zh] 某通道的符号反了。
+     */
+    PolarityReversed,
+    /**
+     * @brief [en] the ADC samples somewhere other than the centre of the zero vector.
+     * @brief [zh] ADC 采样点不在零矢量中心。
+     */
+    SamplingInstant,
+    /**
+     * @brief [en] the board's dead time is not what it was told.
+     * @brief [zh] 板子的死区不是它被告知的值。
+     */
+    DeadTimeMismatch,
+    /**
+     * @brief [en] the encoder mount offset was not applied.
+     * @brief [zh] 编码器安装偏置没有被用上。
+     */
+    EncoderOffset,
+    /**
+     * @brief [en] `Rs`/`psi_f`/`L` disagree with the machine.
+     * @brief [zh] `Rs`/`ψf`/`L` 与机器不符。
+     */
+    ParametersOff,
+    /**
+     * @brief [en] the observer's angle is wrong on a trajectory it should track.
+     * @brief [zh] 在本该跟上的轨迹上角度不对。
+     */
+    ObserverUnhealthy,
 };
 
 /**
@@ -77,35 +118,71 @@ enum class BoardCause : std::uint8_t {
  * @exporter
  */
 struct BoardMeasurements final {
-    float sum_current_a;      ///< [en] mean `i_u+i_v+i_w` under a steady drive, A.
-                              ///< [zh] 稳态驱动下 `i_u+i_v+i_w` 的均值，A。
-    float offset_a[3];        ///< [en] zero-current reading per phase, A. [zh]
-                              ///< 每相的零电流读数，A。
-    float response_sign[3];   ///< [en] sign of each phase's response to a positive
-                              ///< d-axis drive, +1/-1/+2 = unknown. [zh] 正 d 轴
-                              ///< 驱动下各相响应的符号，+1/−1/+2 = 未知。
-    float ripple_measured_a;  ///< [en] peak-to-peak ripple the ADC actually
-                              ///< sees, A. [zh] ADC 实际看到的纹波峰峰值，A。
-    float ripple_expected_a;  ///< [en] what the switching period implies, A.
-                              ///< [zh] 开关周期应有的值，A。
-    float deadtime_v;         ///< [en] identified dead-time volts (axis
-                              ///< projected), V. [zh] 辨识出的死区伏秒（轴上投
-                              ///< 影），V。
-    float deadtime_cmd_v;     ///< [en] what the board was configured with, V.
-                              ///< [zh] 板子配置的值，V。
-    float encoder_offset_rad; ///< [en] mount offset left after alignment, rad.
-                              ///< [zh] 对齐后残留的安装偏置，rad。
-    float rs_ohm;             ///< [en] identified resistance, ohm. [zh]
-                              ///< 辨识出的电阻，Ω。
-    float rs_nameplate_ohm;   ///< [en] nameplate resistance, ohm. [zh]
-                              ///< 铭牌电阻，Ω。
-    float psi_f_wb;           ///< [en] identified flux linkage, Wb. [zh]
-                              ///< 辨识出的磁链，Wb。
-    float psi_f_nameplate_wb; ///< [en] nameplate flux linkage, Wb. [zh]
-                              ///< 铭牌磁链，Wb。
-    float observer_error_rad; ///< [en] observer angle error on a known
-                              ///< trajectory, rad. [zh] 已知轨迹上的观测器角度
-                              ///< 误差，rad。
+    /**
+     * @brief [en] mean `i_u+i_v+i_w` under a steady drive, A.
+     * @brief [zh] 稳态驱动下 `i_u+i_v+i_w` 的均值，A。
+     */
+    float sum_current_a;
+    /**
+     * @brief [en] zero-current reading per phase, A.
+     * @brief [zh] 每相的零电流读数，A。
+     */
+    float offset_a[3];
+    /**
+     * @brief [en] sign of each phase's response to a positive d-axis drive, +1/-1/+2 = unknown.
+     * @brief [zh] 正 d 轴 驱动下各相响应的符号，+1/−1/+2 = 未知。
+     */
+    float response_sign[3];
+    /**
+     * @brief [en] peak-to-peak ripple the ADC actually sees, A.
+     * @brief [zh] ADC 实际看到的纹波峰峰值，A。
+     */
+    float ripple_measured_a;
+    /**
+     * @brief [en] what the switching period implies, A.
+     * @brief [zh] 开关周期应有的值，A。
+     */
+    float ripple_expected_a;
+    /**
+     * @brief [en] identified dead-time volts (axis projected), V.
+     * @brief [zh] 辨识出的死区伏秒（轴上投 影），V。
+     */
+    float deadtime_v;
+    /**
+     * @brief [en] what the board was configured with, V.
+     * @brief [zh] 板子配置的值，V。
+     */
+    float deadtime_cmd_v;
+    /**
+     * @brief [en] mount offset left after alignment, rad.
+     * @brief [zh] 对齐后残留的安装偏置，rad。
+     */
+    float encoder_offset_rad;
+    /**
+     * @brief [en] identified resistance, ohm.
+     * @brief [zh] 辨识出的电阻，Ω。
+     */
+    float rs_ohm;
+    /**
+     * @brief [en] nameplate resistance, ohm.
+     * @brief [zh] 铭牌电阻，Ω。
+     */
+    float rs_nameplate_ohm;
+    /**
+     * @brief [en] identified flux linkage, Wb.
+     * @brief [zh] 辨识出的磁链，Wb。
+     */
+    float psi_f_wb;
+    /**
+     * @brief [en] nameplate flux linkage, Wb.
+     * @brief [zh] 铭牌磁链，Wb。
+     */
+    float psi_f_nameplate_wb;
+    /**
+     * @brief [en] observer angle error on a known trajectory, rad.
+     * @brief [zh] 已知轨迹上的观测器角度 误差，rad。
+     */
+    float observer_error_rad;
 };
 
 /**
@@ -115,20 +192,41 @@ struct BoardMeasurements final {
  * @exporter
  */
 struct BoardLimits final {
-    float sum_current_a{0.05F};      ///< [en] |sum| allowed, A. [zh]
-                                     ///< 允许的 |和|，A。
-    float offset_a{0.02F};           ///< [en] |zero reading| allowed, A. [zh]
-                                     ///< 允许的 |零读数|，A。
-    float ripple_ratio{1.5F};        ///< [en] measured/expected ripple ceiling.
-                                     ///< [zh] 实测/预期纹波的上限。
-    float deadtime_ratio{0.25F};     ///< [en] dead-time relative error allowed.
-                                     ///< [zh] 允许的死区相对误差。
-    float encoder_offset_rad{0.02F}; ///< [en] residual mount offset allowed,
-                                     ///< rad. [zh] 允许的残余安装偏置，rad。
-    float parameter_ratio{0.10F};    ///< [en] `Rs`/`psi_f` relative error allowed.
-                                     ///< [zh] `Rs`/`ψf` 允许的相对误差。
-    float observer_error_rad{0.10F}; ///< [en] observer error allowed, rad. [zh]
-                                     ///< 允许的观测器误差，rad。
+    /**
+     * @brief [en] |sum| allowed, A.
+     * @brief [zh] 允许的 |和|，A。
+     */
+    float sum_current_a{0.05F};
+    /**
+     * @brief [en] |zero reading| allowed, A.
+     * @brief [zh] 允许的 |零读数|，A。
+     */
+    float offset_a{0.02F};
+    /**
+     * @brief [en] measured/expected ripple ceiling.
+     * @brief [zh] 实测/预期纹波的上限。
+     */
+    float ripple_ratio{1.5F};
+    /**
+     * @brief [en] dead-time relative error allowed.
+     * @brief [zh] 允许的死区相对误差。
+     */
+    float deadtime_ratio{0.25F};
+    /**
+     * @brief [en] residual mount offset allowed, rad.
+     * @brief [zh] 允许的残余安装偏置，rad。
+     */
+    float encoder_offset_rad{0.02F};
+    /**
+     * @brief [en] `Rs`/`psi_f` relative error allowed.
+     * @brief [zh] `Rs`/`ψf` 允许的相对误差。
+     */
+    float parameter_ratio{0.10F};
+    /**
+     * @brief [en] observer error allowed, rad.
+     * @brief [zh] 允许的观测器误差，rad。
+     */
+    float observer_error_rad{0.10F};
 };
 
 /**
@@ -138,12 +236,15 @@ struct BoardLimits final {
  * @exporter
  */
 struct BoardReading final {
-    BoardItem item;     ///< [en] which check. [zh] 哪一项。
-    float value;        ///< [en] the measured number. [zh] 量到的数。
-    float limit;        ///< [en] the number it was compared with. [zh] 比较用的数。
-    bool pass;          ///< [en] the verdict. [zh] 判定。
-    std::uint8_t phase; ///< [en] 0..2 when the item is per-phase, 3 otherwise.
-                        ///< [zh] 逐相项为 0..2，否则 3。
+    BoardItem item; ///< [en] which check. [zh] 哪一项。
+    float value;    ///< [en] the measured number. [zh] 量到的数。
+    float limit;    ///< [en] the number it was compared with. [zh] 比较用的数。
+    bool pass;      ///< [en] the verdict. [zh] 判定。
+    /**
+     * @brief [en] 0..2 when the item is per-phase, 3 otherwise.
+     * @brief [zh] 逐相项为 0..2，否则 3。
+     */
+    std::uint8_t phase;
 };
 
 /**
@@ -154,15 +255,27 @@ struct BoardReading final {
  */
 struct BoardReport final {
     static constexpr int kMaxItems = 12;
-    BoardReading items[kMaxItems]{};    ///< [en] one row per check. [zh]
-                                        ///< 每项一行。
-    int count{0};                       ///< [en] rows filled. [zh] 已填行数。
-    int failures{0};                    ///< [en] rows that failed. [zh]
-                                        ///< 失败行数。
-    BoardCause cause{BoardCause::None}; ///< [en] the one to fix first. [zh]
-                                        ///< 最先该修的那个。
-    std::uint8_t cause_phase{3};        ///< [en] which phase the cause names, or 3.
-                                        ///< [zh] 成因指的是哪一相，或 3。
+    /**
+     * @brief [en] one row per check.
+     * @brief [zh] 每项一行。
+     */
+    BoardReading items[kMaxItems]{};
+    int count{0}; ///< [en] rows filled. [zh] 已填行数。
+    /**
+     * @brief [en] rows that failed.
+     * @brief [zh] 失败行数。
+     */
+    int failures{0};
+    /**
+     * @brief [en] the one to fix first.
+     * @brief [zh] 最先该修的那个。
+     */
+    BoardCause cause{BoardCause::None};
+    /**
+     * @brief [en] which phase the cause names, or 3.
+     * @brief [zh] 成因指的是哪一相，或 3。
+     */
+    std::uint8_t cause_phase{3};
 
     /// [en] Everything passed. [zh] 全部通过。
     [[nodiscard]] auto all_green() const noexcept -> bool { return failures == 0; }
@@ -389,24 +502,46 @@ class BoardSelfTest final {
      * @since 0.1.0
      */
     struct Config final {
-        float probe_v[6];  ///< [en] the d-axis voltages to sweep, V; six or more,
-                           ///< because the `Rs` fit needs them. [zh]
-                           ///< 要扫描的 d 轴电压，V；六个以上，`Rs` 拟合需要。
-        int settle_steps;  ///< [en] switching periods to wait per point. [zh]
-                           ///< 每个点等多少个开关周期。
-        int average_steps; ///< [en] periods to average per point. [zh]
-                           ///< 每个点平均多少个周期。
-        int zero_steps;    ///< [en] zero-current samples to average. [zh]
-                           ///< 要平均的零电流样本数。
-        int ripple_steps;  ///< [en] sub-steps per period for the ripple read. [zh]
-                           ///< 读纹波时每周期取多少子步。
-        int delay_steps;   ///< [en] points of the switching period to sweep when locating the
-                           ///< ADC trigger; 0 = do not sweep. [zh]
-                           ///< 定位 ADC 触发点时在开关周期内扫多少点；0 = 不扫。
-        float l_h;         ///< [en] inductance, H -- for the ripple bound only. [zh]
-                           ///< 电感，H——只用于纹波界。
-        float i_min_a;     ///< [en] below this the loss is not a step yet, A. [zh]
-                           ///< 低于此值时损失还不是阶跃，A。
+        /**
+         * @brief [en] the d-axis voltages to sweep, V; six or more, because the `Rs` fit needs them.
+         * @brief [zh] 要扫描的 d 轴电压，V；六个以上，`Rs` 拟合需要。
+         */
+        float probe_v[6];
+        /**
+         * @brief [en] switching periods to wait per point.
+         * @brief [zh] 每个点等多少个开关周期。
+         */
+        int settle_steps;
+        /**
+         * @brief [en] periods to average per point.
+         * @brief [zh] 每个点平均多少个周期。
+         */
+        int average_steps;
+        /**
+         * @brief [en] zero-current samples to average.
+         * @brief [zh] 要平均的零电流样本数。
+         */
+        int zero_steps;
+        /**
+         * @brief [en] sub-steps per period for the ripple read.
+         * @brief [zh] 读纹波时每周期取多少子步。
+         */
+        int ripple_steps;
+        /**
+         * @brief [en] points of the switching period to sweep when locating the ADC trigger; 0 = do not sweep.
+         * @brief [zh] 定位 ADC 触发点时在开关周期内扫多少点；0 = 不扫。
+         */
+        int delay_steps;
+        /**
+         * @brief [en] inductance, H -- for the ripple bound only.
+         * @brief [zh] 电感，H——只用于纹波界。
+         */
+        float l_h;
+        /**
+         * @brief [en] below this the loss is not a step yet, A.
+         * @brief [zh] 低于此值时损失还不是阶跃，A。
+         */
+        float i_min_a;
     };
 
     /**
@@ -415,22 +550,42 @@ class BoardSelfTest final {
      * @since 0.1.0
      */
     struct Result final {
-        BoardMeasurements measurements;   ///< [en] the numbers to judge. [zh]
-                                          ///< 待判定的数。
-        float rs_ohm;                     ///< [en] identified resistance, ohm. [zh]
-                                          ///< 辨识出的电阻，Ω。
-        bool complete;                    ///< [en] every step ran. [zh] 每一步都跑完了。
-        int points_used;                  ///< [en] voltage points the `Rs` fit accepted. [zh]
-                                          ///< `Rs` 拟合采用的电压点数。
-        bool sample_delay_measured;       ///< [en] the bench could move its trigger, and the
-                                          ///< sweep ran. [zh] 台架能移触发点且扫过了。
-        float sample_delay_fraction;      ///< [en] where the trigger actually sits, in switching
-                                          ///< periods. [zh] 触发点实际所在位置，以开关周期为单位。
-        float sample_delay_best_fraction; ///< [en] where it should sit -- the centre, in
-                                          ///< periods. [zh] 它该在的位置——中心，以周期为单位。
-        float sample_error_a;             ///< [en] how far the reading at the actual trigger sits
-                                          ///< from the period average, A. [zh]
-                                          ///< 实际触发点上的读数偏离周期均值多远，A。
+        /**
+         * @brief [en] the numbers to judge.
+         * @brief [zh] 待判定的数。
+         */
+        BoardMeasurements measurements;
+        /**
+         * @brief [en] identified resistance, ohm.
+         * @brief [zh] 辨识出的电阻，Ω。
+         */
+        float rs_ohm;
+        bool complete; ///< [en] every step ran. [zh] 每一步都跑完了。
+        /**
+         * @brief [en] voltage points the `Rs` fit accepted.
+         * @brief [zh] `Rs` 拟合采用的电压点数。
+         */
+        int points_used;
+        /**
+         * @brief [en] the bench could move its trigger, and the sweep ran.
+         * @brief [zh] 台架能移触发点且扫过了。
+         */
+        bool sample_delay_measured;
+        /**
+         * @brief [en] where the trigger actually sits, in switching periods.
+         * @brief [zh] 触发点实际所在位置，以开关周期为单位。
+         */
+        float sample_delay_fraction;
+        /**
+         * @brief [en] where it should sit -- the centre, in periods.
+         * @brief [zh] 它该在的位置——中心，以周期为单位。
+         */
+        float sample_delay_best_fraction;
+        /**
+         * @brief [en] how far the reading at the actual trigger sits from the period average, A.
+         * @brief [zh] 实际触发点上的读数偏离周期均值多远，A。
+         */
+        float sample_error_a;
     };
 
     explicit BoardSelfTest(const Config& config) noexcept : config_(config) {}

@@ -50,8 +50,11 @@ public:
      */
     struct Params final {
         float rs;         ///< [en] stator resistance, ohm. [zh] 定子电阻，Ω。
-        float ls_minus_m; ///< [en] synchronous inductance `Ls - M`, H. [zh]
-                          ///< 同步电感 `Ls − M`，H。
+        /**
+         * @brief [en] synchronous inductance `Ls - M`, H.
+         * @brief [zh] 同步电感 `Ls − M`，H。
+         */
+        float ls_minus_m;
         float lambda_m;   ///< [en] rotor flux linkage, Wb. [zh] 转子磁链，Wb。
         std::uint8_t pole_pairs; ///< [en] pole pairs. [zh] 极对数。
     };

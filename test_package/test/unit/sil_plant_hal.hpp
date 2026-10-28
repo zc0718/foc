@@ -231,8 +231,11 @@ private:
   DiscreteInverter *inverter_{nullptr};
   float v_dead_{0.0F};
   float transition_a_{
-      0.0F}; ///< [en] dead-zone transition width in A; 0 = ideal `sign()`. [zh]
-             ///< 死区过渡宽度，A；0 = 理想 `sign()`。
+      /**
+       * @brief [en] dead-zone transition width in A; 0 = ideal `sign()`.
+       * @brief [zh] 死区过渡宽度，A；0 = 理想 `sign()`。
+       */
+      0.0F};
 };
 
 // PlantPwm

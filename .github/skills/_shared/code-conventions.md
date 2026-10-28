@@ -73,6 +73,38 @@ it, and never hand-edit what it would reflow.
 形状由 `docfmt.py` 强制（第 7 道门禁）。它会拒绝写入任何正文文字发生变化的文件——先 `--check`
 再 `--fix`，不要手改它会被重排的地方。
 
+### Trailing comments are not doc output（尾部注释不是文档产出）
+
+`///<` says **what a field is**: unit, sign, range, one clause. It is not a place for rationale,
+pitfalls or cross-cutting notes — a doc that needs a second line has become a paragraph, and a
+paragraph in the trailing position is where the reasoning rots into `///< because the Rs fit needs
+them.`
+
+- **One line** → keep the `///<`.
+- **More than one line** → promote it to a `/** ... */` block above the declaration, tagged once per
+  language like any other block. `docfmt.py` does this automatically, so `--check` fails while a
+  multi-line `///<` exists anywhere.
+- **Why** (design reason, pitfall, constraint that spans fields) → `@note`/`@warning` in the owning
+  type's block, where the reader deciding whether to use the type will actually see it.
+
+Measured before writing this rule: of 444 `///<` lines, 431 are field descriptions, 11 mention a
+reason at all, and 2 of those reasons genuinely belong at field level ("six or more, because the
+`Rs` fit needs them"). The rationale this convention is about lives in block docstrings and in
+`//` comments next to the code it explains — not in `///<`.
+
+`///<` 只回答**这个字段是什么**：单位、符号、范围，一句话。它不是放缘由、坑、跨字段关注项的地方——
+需要第二行的文档已经变成一段话，而尾部的段落正是推理烂成 `///< because the Rs fit needs them.` 的地方。
+
+- **一行** → 保留 `///<`。
+- **超过一行** → 提升为该声明上方的 `/** ... */` 块，与其它块一样每语言一个标签。`docfmt.py` 自动做这件事，
+  因此只要仓库里还有多行 `///<`，`--check` 就会失败。
+- **为什么**（设计缘由、坑、跨字段约束）→ 写进所属类型的块里作为 `@note`/`@warning`，那里才是决定
+  "要不要用这个类型"的读者会看到的地方。
+
+写这条规则前量过：444 行 `///<` 里 431 行是字段说明，11 行提到缘由，其中 2 行的缘由确实属于字段级
+（"六个以上，因为 `Rs` 拟合需要"）。本条规则针对的推理，住在块注释和紧贴代码的 `//` 里，不在 `///<` 里。
+
+
 ## Format / Static Checks（格式化/静态检查）
 
 - 语言族分流（私有约定，见 `conanfile.py` syntax guide #9）：`.c`/`.h` → C（`.github/misc/.clang-format-c`，`PointerAlignment: Right`）；`.hpp`/`.cpp` → C++（`.github/misc/.clang-format-cpp`，`PointerAlignment: Left`、`Standard: c++17`）。**clang-format 内置扩展映射把 `.h` 当 C++，门禁必须显式 `--style=file:` 把 `.h` 路由到 C 配置**。120 cols; no include sort; no comment reflow; `MaxEmptyLinesToKeep: 3` 保护空行规则。

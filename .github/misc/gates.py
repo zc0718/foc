@@ -402,10 +402,16 @@ def cmd_claims(_explicit):
 
 def cmd_docs(_explicit):
     """Doxygen block comments: aligned star column, consistent continuation indent, 120 columns,
-    no mid-CJK breaks. Delegates to docfmt.py so the rule has one implementation."""
+    no mid-CJK breaks, one tag line per language group, no multi-line `///<`. Delegates to docfmt.py
+    so the rule has one implementation. Then checks the numbers the documentation claims against the
+    artefacts the build produced, because a number in prose with no owner drifts."""
     done = subprocess.run([sys.executable, str(ROOT / '.github' / 'misc' / 'docfmt.py'), '--check'],
                           cwd=ROOT, text=True)
-    return done.returncode
+    if done.returncode != 0:
+        return done.returncode
+    numbers = subprocess.run([sys.executable, str(ROOT / '.github' / 'misc' / 'number_sheet.py'), '--check'],
+                             cwd=ROOT, text=True)
+    return numbers.returncode
 
 
 def main():

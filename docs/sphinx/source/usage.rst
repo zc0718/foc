@@ -131,11 +131,11 @@ whether your hardware matches that model.
      - Level
    * - Unit, SIL and stress cases
      - :code:`conan create . -s build_type=Debug --build=missing`
-     - 367 cases, 0 failed
+     - 371 cases, 0 failed
      - L1/L2
    * - Line coverage
      - :code:`python3 .github/misc/coverage_gate.py`
-     - 91.29 % overall, 93.49 % in :code:`core/`
+     - 91.27 % overall, 93.44 % in :code:`core/`
      - L1
    * - Layering and standalone headers
      - :code:`gates.py guard` / :code:`gates.py strict`

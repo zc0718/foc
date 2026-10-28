@@ -60,10 +60,16 @@ template <typename Modulator> class DeadTimeCompensator final {
    * @exporter
    */
     struct Config final {
-        float deadtime_v;    ///< [en] (t_dead/T_pwm)*v_bus, V; 0 = off. [zh]
-                             ///< (t_dead/T_pwm)*v_bus，V；0 = 关闭。
-        float min_current_a; ///< [en] below this |i| the sign is not trusted, A.
-                             ///< [zh] |i| 低于此值时不信任符号，A。
+        /**
+         * @brief [en] (t_dead/T_pwm)*v_bus, V; 0 = off.
+         * @brief [zh] (t_dead/T_pwm)*v_bus，V；0 = 关闭。
+         */
+        float deadtime_v;
+        /**
+         * @brief [en] below this |i| the sign is not trusted, A.
+         * @brief [zh] |i| 低于此值时不信任符号，A。
+         */
+        float min_current_a;
         /**
      * @brief [en] The current at which the correction saturates -- i.e. the **width of the fade** in A; 0 keeps the
      *             legacy `sign()` step.
@@ -260,11 +266,17 @@ class DeadTimeFadeEstimator final {
    * @since 0.1.0
    */
     struct Config final {
-        float rs;         ///< [en] stator resistance in ohm. [zh] 定子电阻，Ω。
-        float deadtime_v; ///< [en] (t_dead/T_pwm)*v_bus in V. [zh]
-                          ///< (t_dead/T_pwm)*v_bus，V。
-        float i_limit_a;  ///< [en] samples with |i| above this are ignored, A. [zh]
-                          ///< |i| 超过此值的采样被忽略，A。
+        float rs; ///< [en] stator resistance in ohm. [zh] 定子电阻，Ω。
+        /**
+         * @brief [en] (t_dead/T_pwm)*v_bus in V.
+         * @brief [zh] (t_dead/T_pwm)*v_bus，V。
+         */
+        float deadtime_v;
+        /**
+         * @brief [en] samples with |i| above this are ignored, A.
+         * @brief [zh] |i| 超过此值的采样被忽略，A。
+         */
+        float i_limit_a;
     };
 
     /**
@@ -273,12 +285,21 @@ class DeadTimeFadeEstimator final {
    * @since 0.1.0
    */
     struct Result final {
-        float fade_a;     ///< [en] the width, A; meaningless unless `valid`. [zh]
-                          ///< 宽度，A；`valid` 为假时无意义。
-        float residual_v; ///< [en] rms of what the model could not explain, V. [zh]
-                          ///< 模型解释不掉的部分的均方根，V。
-        bool valid;       ///< [en] enough usable samples, and a fit that explains the
-                          ///< data. [zh] 样本够且拟合解释了数据。
+        /**
+         * @brief [en] the width, A; meaningless unless `valid`.
+         * @brief [zh] 宽度，A；`valid` 为假时无意义。
+         */
+        float fade_a;
+        /**
+         * @brief [en] rms of what the model could not explain, V.
+         * @brief [zh] 模型解释不掉的部分的均方根，V。
+         */
+        float residual_v;
+        /**
+         * @brief [en] enough usable samples, and a fit that explains the data.
+         * @brief [zh] 样本够且拟合解释了数据。
+         */
+        bool valid;
     };
 
     /// [en] Candidate widths, log-spaced over four decades. [zh]

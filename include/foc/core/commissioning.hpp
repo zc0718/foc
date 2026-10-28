@@ -105,12 +105,16 @@ class RsEstimator final {
      * @since 0.1.0
      */
     struct Config final {
-        float i_min_a; ///< [en] below this |i| the loss is not a step yet, A;
-                       ///< 0 disables the floor. [zh] |i| 低于此值时损失还不是阶跃，
-                       ///< A；0 关闭下限。
-        float i_max_a; ///< [en] above this |i| the winding heats during the
-                       ///< sweep, A; 0 disables the ceiling. [zh] |i| 高于此值时绕组
-                       ///< 会在扫描中发热，A；0 关闭上限。
+        /**
+         * @brief [en] below this |i| the loss is not a step yet, A; 0 disables the floor.
+         * @brief [zh] |i| 低于此值时损失还不是阶跃， A；0 关闭下限。
+         */
+        float i_min_a;
+        /**
+         * @brief [en] above this |i| the winding heats during the sweep, A; 0 disables the ceiling.
+         * @brief [zh] |i| 高于此值时绕组 会在扫描中发热，A；0 关闭上限。
+         */
+        float i_max_a;
     };
 
     /**
@@ -119,15 +123,22 @@ class RsEstimator final {
      * @since 0.1.0
      */
     struct Result final {
-        float rs;         ///< [en] stator resistance in ohm. [zh] 定子电阻，Ω。
-        float deadtime_v; ///< [en] the loss the fit implies, V. [zh]
-                          ///< 拟合隐含的损失电压，V。
-        float residual_v; ///< [en] rms of what `rs*i + deadtime_v` could not
-                          ///< explain, V. [zh] `rs·i + deadtime_v` 解释不掉的
-                          ///< 部分的均方根，V。
-        bool valid;       ///< [en] enough samples, two enough-spread currents, and a
-                          ///< fit with a positive slope. [zh]
-                          ///< 样本够、电流跨度够、且斜率是正的。
+        float rs; ///< [en] stator resistance in ohm. [zh] 定子电阻，Ω。
+        /**
+         * @brief [en] the loss the fit implies, V.
+         * @brief [zh] 拟合隐含的损失电压，V。
+         */
+        float deadtime_v;
+        /**
+         * @brief [en] rms of what `rs*i + deadtime_v` could not explain, V.
+         * @brief [zh] `rs·i + deadtime_v` 解释不掉的 部分的均方根，V。
+         */
+        float residual_v;
+        /**
+         * @brief [en] enough samples, two enough-spread currents, and a fit with a positive slope.
+         * @brief [zh] 样本够、电流跨度够、且斜率是正的。
+         */
+        bool valid;
     };
 
     /// [en] Fewer settled points than this is not an identification. [zh]
@@ -269,11 +280,16 @@ class FluxEstimator final {
      * @since 0.1.0
      */
     struct Config final {
-        float i_zero_max_a;    ///< [en] samples with a larger |i| are ignored, A.
-                               ///< [zh] |i| 超过此值的样本被忽略，A。
-        float omega_min_rad_s; ///< [en] below this electrical speed the
-                               ///< back-EMF is too small to measure, rad/s. [zh]
-                               ///< 电角速度低于此值时反电动势太小，rad/s。
+        /**
+         * @brief [en] samples with a larger |i| are ignored, A.
+         * @brief [zh] |i| 超过此值的样本被忽略，A。
+         */
+        float i_zero_max_a;
+        /**
+         * @brief [en] below this electrical speed the back-EMF is too small to measure, rad/s.
+         * @brief [zh] 电角速度低于此值时反电动势太小，rad/s。
+         */
+        float omega_min_rad_s;
     };
 
     /**
@@ -282,13 +298,22 @@ class FluxEstimator final {
      * @since 0.1.0
      */
     struct Result final {
-        float psi_f;      ///< [en] rotor flux linkage in Wb. [zh] 转子磁链，Wb。
-        float offset_v;   ///< [en] the constant part of the measurement, V. [zh]
-                          ///< 测量里的固定偏置，V。
-        float residual_v; ///< [en] rms of what a line could not explain, V.
-                          ///< [zh] 一条直线解释不掉的部分的均方根，V。
-        bool valid;       ///< [en] enough speeds, spread widely enough, positive
-                          ///< slope. [zh] 转速够、跨度够、斜率为正。
+        float psi_f; ///< [en] rotor flux linkage in Wb. [zh] 转子磁链，Wb。
+        /**
+         * @brief [en] the constant part of the measurement, V.
+         * @brief [zh] 测量里的固定偏置，V。
+         */
+        float offset_v;
+        /**
+         * @brief [en] rms of what a line could not explain, V.
+         * @brief [zh] 一条直线解释不掉的部分的均方根，V。
+         */
+        float residual_v;
+        /**
+         * @brief [en] enough speeds, spread widely enough, positive slope.
+         * @brief [zh] 转速够、跨度够、斜率为正。
+         */
+        bool valid;
     };
 
     /// [en] Two points define a line; four let the residual say something. [zh]
@@ -423,12 +448,16 @@ class CurrentSenseCalibrator final {
      * @since 0.1.0
      */
     struct Config final {
-        float span_min_a;        ///< [en] the reference must swing this far for a gain,
-                                 ///< A; 0 disables. [zh] 求增益时基准至少要摆动这么远，A；
-                                 ///< 0 关闭。
-        float zero_spread_max_a; ///< [en] the zero-current readings may differ by
-                                 ///< this much, A; 0 disables. [zh] 零电流读数之间
-                                 ///< 最多允许差这么多，A；0 关闭。
+        /**
+         * @brief [en] the reference must swing this far for a gain, A; 0 disables.
+         * @brief [zh] 求增益时基准至少要摆动这么远，A； 0 关闭。
+         */
+        float span_min_a;
+        /**
+         * @brief [en] the zero-current readings may differ by this much, A; 0 disables.
+         * @brief [zh] 零电流读数之间 最多允许差这么多，A；0 关闭。
+         */
+        float zero_spread_max_a;
     };
 
     /**
@@ -437,19 +466,37 @@ class CurrentSenseCalibrator final {
      * @since 0.1.0
      */
     struct Result final {
-        float gain;          ///< [en] reading = gain*truth + offset. [zh]
-                             ///< 读数 = gain·真值 + 零漂。
-        float offset_a;      ///< [en] the fitted intercept, A. [zh] 拟合截距，A。
-        float residual_a;    ///< [en] rms of what the line could not explain, A.
-                             ///< [zh] 直线解释不掉的部分的均方根，A。
-        float zero_offset_a; ///< [en] mean reading of the zero-current samples,
-                             ///< A. [zh] 零电流样本的平均读数，A。
-        float zero_spread_a; ///< [en] max minus min of those samples, A. [zh]
-                             ///< 那些样本的极差，A。
-        bool gain_valid;     ///< [en] enough pairs spread far enough. [zh]
-                             ///< 样本对够、跨度够。
-        bool offset_valid;   ///< [en] enough zero-current samples, tightly
-                             ///< clustered. [zh] 零电流样本够、够集中。
+        /**
+         * @brief [en] reading = gain*truth + offset.
+         * @brief [zh] 读数 = gain·真值 + 零漂。
+         */
+        float gain;
+        float offset_a; ///< [en] the fitted intercept, A. [zh] 拟合截距，A。
+        /**
+         * @brief [en] rms of what the line could not explain, A.
+         * @brief [zh] 直线解释不掉的部分的均方根，A。
+         */
+        float residual_a;
+        /**
+         * @brief [en] mean reading of the zero-current samples, A.
+         * @brief [zh] 零电流样本的平均读数，A。
+         */
+        float zero_offset_a;
+        /**
+         * @brief [en] max minus min of those samples, A.
+         * @brief [zh] 那些样本的极差，A。
+         */
+        float zero_spread_a;
+        /**
+         * @brief [en] enough pairs spread far enough.
+         * @brief [zh] 样本对够、跨度够。
+         */
+        bool gain_valid;
+        /**
+         * @brief [en] enough zero-current samples, tightly clustered.
+         * @brief [zh] 零电流样本够、够集中。
+         */
+        bool offset_valid;
     };
 
     /// [en] Fewer pairs than this and the slope is noise. [zh]
@@ -631,11 +678,17 @@ class IncrementalInductanceEstimator final {
      * @since 0.1.0
      */
     struct Config final {
-        float rs;           ///< [en] stator resistance in ohm. [zh] 定子电阻，Ω。
-        float deadtime_v;   ///< [en] (t_dead/T_pwm)*v_bus in V; 0 = ignore. [zh]
-                            ///< (t_dead/T_pwm)*v_bus，V；0 = 不计。
-        float i_span_min_a; ///< [en] the step must move the current at least
-                            ///< this far, A. [zh] 阶跃至少要推动电流这么多，A。
+        float rs; ///< [en] stator resistance in ohm. [zh] 定子电阻，Ω。
+        /**
+         * @brief [en] (t_dead/T_pwm)*v_bus in V; 0 = ignore.
+         * @brief [zh] (t_dead/T_pwm)*v_bus，V；0 = 不计。
+         */
+        float deadtime_v;
+        /**
+         * @brief [en] the step must move the current at least this far, A.
+         * @brief [zh] 阶跃至少要推动电流这么多，A。
+         */
+        float i_span_min_a;
     };
 
     /**
@@ -644,14 +697,22 @@ class IncrementalInductanceEstimator final {
      * @since 0.1.0
      */
     struct Result final {
-        float l_h;       ///< [en] incremental inductance in H. [zh] 增量电感，H。
-        float flux_wb;   ///< [en] the flux the step delivered, Wb. [zh]
-                         ///< 阶跃交付的磁链，Wb。
-        float delta_i_a; ///< [en] how far the current moved, A. [zh]
-                         ///< 电流移动了多少，A。
-        bool valid;      ///< [en] begun, enough samples, and a current span wide
-                         ///< enough to divide by. [zh]
-                         ///< 已开始、样本够、电流跨度足够做除法。
+        float l_h; ///< [en] incremental inductance in H. [zh] 增量电感，H。
+        /**
+         * @brief [en] the flux the step delivered, Wb.
+         * @brief [zh] 阶跃交付的磁链，Wb。
+         */
+        float flux_wb;
+        /**
+         * @brief [en] how far the current moved, A.
+         * @brief [zh] 电流移动了多少，A。
+         */
+        float delta_i_a;
+        /**
+         * @brief [en] begun, enough samples, and a current span wide enough to divide by.
+         * @brief [zh] 已开始、样本够、电流跨度足够做除法。
+         */
+        bool valid;
     };
 
     /// [en] Fewer integration steps than this and `dt` dominates. [zh]

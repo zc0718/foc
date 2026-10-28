@@ -27,16 +27,25 @@ namespace core {
  */
 enum class FaultCode : std::uint8_t {
     None = 0,
-    OverCurrent,     ///< [en] |i| above the hard limit. [zh] |i| 超过硬限。
-    OverVoltage,     ///< [en] DC link above the limit. [zh] 母线超过上限。
-    UnderVoltage,    ///< [en] DC link below the limit. [zh] 母线低于下限。
-    OverTemperature, ///< [en] winding or heatsink above the limit. [zh]
-                     ///< 绕组或散热器超过上限。
-    I2t,             ///< [en] the thermal budget is spent. [zh] 热预算用完了。
-    Stall,           ///< [en] current without motion for too long. [zh]
-                     ///< 有电流却没有运动，且持续太久。
-    LostSync,        ///< [en] the observer has no usable angle. [zh]
-                     ///< 观测器给不出可用的角度。
+    OverCurrent,  ///< [en] |i| above the hard limit. [zh] |i| 超过硬限。
+    OverVoltage,  ///< [en] DC link above the limit. [zh] 母线超过上限。
+    UnderVoltage, ///< [en] DC link below the limit. [zh] 母线低于下限。
+    /**
+     * @brief [en] winding or heatsink above the limit.
+     * @brief [zh] 绕组或散热器超过上限。
+     */
+    OverTemperature,
+    I2t, ///< [en] the thermal budget is spent. [zh] 热预算用完了。
+    /**
+     * @brief [en] current without motion for too long.
+     * @brief [zh] 有电流却没有运动，且持续太久。
+     */
+    Stall,
+    /**
+     * @brief [en] the observer has no usable angle.
+     * @brief [zh] 观测器给不出可用的角度。
+     */
+    LostSync,
 };
 
 /**
@@ -74,16 +83,28 @@ enum class FaultCode : std::uint8_t {
  * @exporter
  */
 struct ProtectionInput final {
-    float i_magnitude_a;    ///< [en] peak phase current, A. [zh] 相电流峰值，A。
-    float v_bus_v;          ///< [en] DC link, V. [zh] 母线电压，V。
-    float temperature_c;    ///< [en] hottest measured point, deg C. [zh]
-                            ///< 测到的最热点，℃。
-    float omega_e_rad_s;    ///< [en] electrical speed, rad/s. [zh]
-                            ///< 电角速度，rad/s。
-    float flux_error_ratio; ///< [en] |psi_est - psi_f| / psi_f, 0 = healthy.
-                            ///< [zh] |ψ估计 − ψf|/ψf，0 = 正常。
-    bool flux_valid;        ///< [en] the observer has an answer at all. [zh]
-                            ///< 观测器到底给不给得出答案。
+    float i_magnitude_a; ///< [en] peak phase current, A. [zh] 相电流峰值，A。
+    float v_bus_v;       ///< [en] DC link, V. [zh] 母线电压，V。
+    /**
+     * @brief [en] hottest measured point, deg C.
+     * @brief [zh] 测到的最热点，℃。
+     */
+    float temperature_c;
+    /**
+     * @brief [en] electrical speed, rad/s.
+     * @brief [zh] 电角速度，rad/s。
+     */
+    float omega_e_rad_s;
+    /**
+     * @brief [en] |psi_est - psi_f| / psi_f, 0 = healthy.
+     * @brief [zh] |ψ估计 − ψf|/ψf，0 = 正常。
+     */
+    float flux_error_ratio;
+    /**
+     * @brief [en] the observer has an answer at all.
+     * @brief [zh] 观测器到底给不给得出答案。
+     */
+    bool flux_valid;
 };
 
 /**
@@ -93,33 +114,61 @@ struct ProtectionInput final {
  * @exporter
  */
 struct ProtectionConfig final {
-    float i_hard_a;          ///< [en] instantaneous trip, A. [zh] 瞬时跳闸，A。
-    float i_max_a;           ///< [en] nominal continuous limit before derating, A.
-                             ///< [zh] 降额前的额定连续限幅，A。
-    float i2t_a2s;           ///< [en] thermal budget, A^2*s. [zh] 热预算，A²·s。
-    float i2t_cooling_s;     ///< [en] the budget's decay time constant, s; this is
-                             ///< the winding's thermal time constant in the squared
-                             ///< current, not a tuning number. [zh] 预算的衰减时间常数，s；
-                             ///< 它是绕组在电流平方上的热时间常数，不是整定值。
-    float v_max_v;           ///< [en] DC link upper limit, V. [zh] 母线上限，V。
-    float v_min_v;           ///< [en] DC link lower limit, V. [zh] 母线下限，V。
-    float t_trip_c;          ///< [en] temperature that trips, deg C. [zh]
-                             ///< 跳闸温度，℃。
-    float t_derate_start_c;  ///< [en] where derating begins, deg C. [zh]
-                             ///< 开始降额的温度，℃。
-    float t_derate_end_c;    ///< [en] where the limit reaches zero, deg C. [zh]
-                             ///< 限幅降到零的温度，℃。
-    float stall_speed_rad_s; ///< [en] below this the axis is not moving, rad/s.
-                             ///< [zh] 低于此值算没有运动，rad/s。
-    float stall_current_a;   ///< [en] above this the axis is pushing, A. [zh]
-                             ///< 高于此值算在使劲，A。
-    float stall_time_s;      ///< [en] and for this long before it is a stall, s.
-                             ///< [zh] 持续这么久才算堵转，s。
-    float sync_error_ratio;  ///< [en] flux error that counts as lost, 1 = 100 %.
-                             ///< [zh] 算失步的磁链误差，1 = 100 %。
-    float hysteresis_ratio;  ///< [en] an auto fault clears only inside
-                             ///< `(1-h)*threshold`, e.g. 0.05. [zh]
-                             ///< 自恢复故障只在 `(1−h)·阈值` 以内才清，例如 0.05。
+    float i_hard_a; ///< [en] instantaneous trip, A. [zh] 瞬时跳闸，A。
+    /**
+     * @brief [en] nominal continuous limit before derating, A.
+     * @brief [zh] 降额前的额定连续限幅，A。
+     */
+    float i_max_a;
+    float i2t_a2s; ///< [en] thermal budget, A^2*s. [zh] 热预算，A²·s。
+    /**
+     * @brief [en] the budget's decay time constant, s; this is the winding's thermal time constant in the squared
+     *             current, not a tuning number.
+     * @brief [zh] 预算的衰减时间常数，s； 它是绕组在电流平方上的热时间常数，不是整定值。
+     */
+    float i2t_cooling_s;
+    float v_max_v; ///< [en] DC link upper limit, V. [zh] 母线上限，V。
+    float v_min_v; ///< [en] DC link lower limit, V. [zh] 母线下限，V。
+    /**
+     * @brief [en] temperature that trips, deg C.
+     * @brief [zh] 跳闸温度，℃。
+     */
+    float t_trip_c;
+    /**
+     * @brief [en] where derating begins, deg C.
+     * @brief [zh] 开始降额的温度，℃。
+     */
+    float t_derate_start_c;
+    /**
+     * @brief [en] where the limit reaches zero, deg C.
+     * @brief [zh] 限幅降到零的温度，℃。
+     */
+    float t_derate_end_c;
+    /**
+     * @brief [en] below this the axis is not moving, rad/s.
+     * @brief [zh] 低于此值算没有运动，rad/s。
+     */
+    float stall_speed_rad_s;
+    /**
+     * @brief [en] above this the axis is pushing, A.
+     * @brief [zh] 高于此值算在使劲，A。
+     */
+    float stall_current_a;
+    /**
+     * @brief [en] and for this long before it is a stall, s.
+     * @brief [zh] 持续这么久才算堵转，s。
+     */
+    float stall_time_s;
+    /**
+     * @brief [en] flux error that counts as lost, 1 = 100 %.
+     * @brief [zh] 算失步的磁链误差，1 = 100 %。
+     */
+    float sync_error_ratio;
+    /**
+     * @brief [en] an auto fault clears only inside `(1-h)*threshold`, e.g. 0.05.
+     * @brief [zh] 自恢复故障只在 `(1−h)·阈值` 以内才清，例如 0.05。
+     */
+    float hysteresis_ratio;
 };
 
 /**
@@ -129,17 +178,31 @@ struct ProtectionConfig final {
  * @exporter
  */
 struct ProtectionOutput final {
-    FaultCode fault;            ///< [en] the highest-ranked active fault. [zh]
-                                ///< 排名最高的活动故障。
-    std::uint16_t active_mask;  ///< [en] bit `1 << code` for each active fault.
-                                ///< [zh] 每个活动故障一位 `1 << code`。
-    std::uint16_t latched_mask; ///< [en] the same, for faults that will not
-                                ///< clear on their own. [zh]
-                                ///< 同上，但只含不会自行清除的故障。
-    float i_limit_a;            ///< [en] the derated current limit, 0 when tripped.
-                                ///< [zh] 降额后的电流限幅，跳闸时为 0。
-    bool output_allowed;        ///< [en] false = stop switching this step. [zh]
-                                ///< false = 本步停止开关。
+    /**
+     * @brief [en] the highest-ranked active fault.
+     * @brief [zh] 排名最高的活动故障。
+     */
+    FaultCode fault;
+    /**
+     * @brief [en] bit `1 << code` for each active fault.
+     * @brief [zh] 每个活动故障一位 `1 << code`。
+     */
+    std::uint16_t active_mask;
+    /**
+     * @brief [en] the same, for faults that will not clear on their own.
+     * @brief [zh] 同上，但只含不会自行清除的故障。
+     */
+    std::uint16_t latched_mask;
+    /**
+     * @brief [en] the derated current limit, 0 when tripped.
+     * @brief [zh] 降额后的电流限幅，跳闸时为 0。
+     */
+    float i_limit_a;
+    /**
+     * @brief [en] false = stop switching this step.
+     * @brief [zh] false = 本步停止开关。
+     */
+    bool output_allowed;
 };
 
 /**

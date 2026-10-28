@@ -326,7 +326,10 @@ BULLET_AFTER_COLON = re.compile(r"^[-*+]\s")
 # An ASCII rule or banner (`=====`, `-----`): its own line, never joined with what follows.
 # ASCII 分隔/横幅线（`=====`、`-----`）：独占一行，绝不与后文相连。
 RULE_LINE = re.compile(r"^[=\-_*~]{4,}$")
-FIELD_IN_PROSE = re.compile(r"\[(?:en|zh)\]|@\w+(?:\s+[A-Za-z_]\w*)?")
+# Markup the tool is allowed to add or remove: the language tags, the field names, and the inline
+# doc markers it may promote out of existence. Everything else is prose.
+# 工具允许增删的标记：语言标签、字段名、以及可能被提升掉的尾部注释标记。其余都是正文。
+FIELD_IN_PROSE = re.compile(r"///<|/\*\*<|\[(?:en|zh)\]|@\w+(?:\s+[A-Za-z_]\w*)?")
 
 
 def _split_inline(body: str) -> list[tuple[str | None, str]]:
@@ -528,8 +531,103 @@ def _canonical_language(lines: list[str]) -> list[str]:
     return out
 
 
+# ------------------------------------------------------------------------------------------------
+# Inline docs.
+#
+# A trailing `///<` may say what a field is -- unit, sign, range. Once it needs a second line it has
+# become a paragraph, and a paragraph in the trailing position is where rationale accumulates and
+# where it reads worst:
+#
+#     float probe_v[6];  ///< [en] the d-axis voltages to sweep, V; six or more,
+#                        ///< because the `Rs` fit needs them. [zh] ...
+#
+# The repair is to promote the whole doc into a block above the declaration, in the same shape as
+# every other doc block here -- which is also where a reader looks before deciding to use the type.
+# ------------------------------------------------------------------------------------------------
+INLINE_DOC = re.compile(r"^(?P<decl>.*?)\s*///<(?P<doc>.*)$")
+DECL_END = (";", "{", "}", ":")
+
+
+def _inline_group(lines: list[str], start: int) -> tuple[list[str], int]:
+    """The doc text of the `///<` group that begins on `start`, and the line after it."""
+    match = INLINE_DOC.match(lines[start])
+    pieces = [match.group("doc")]
+    index = start + 1
+    while index < len(lines):
+        following = INLINE_DOC.match(lines[index])
+        if following is None or following.group("decl").strip():
+            break
+        pieces.append(following.group("doc"))
+        index += 1
+    return pieces, index
+
+
+def _declaration_start(lines: list[str], end: int) -> int:
+    """Walk back from `end` to the first line of the declaration it terminates."""
+    index = end
+    while index > 0:
+        previous = lines[index - 1].strip()
+        if not previous or previous.endswith(DECL_END) or "///" in previous or "/*" in previous:
+            break
+        index -= 1
+    return index
+
+
+def _promote_inline_docs(lines: list[str]) -> list[str]:
+    """Move every multi-line `///<` doc to a block above its declaration."""
+    out: list[str] = []
+    index = 0
+    while index < len(lines):
+        match = INLINE_DOC.match(lines[index])
+        if match is None or not match.group("decl").strip():
+            out.append(lines[index])
+            index += 1
+            continue
+        pieces, after = _inline_group(lines, index)
+        if after == index + 1:
+            # One line: a field description, which is what `///<` is for.
+            out.append(lines[index])
+            index += 1
+            continue
+        first = _declaration_start(lines, index)
+        indent = lines[first][: len(lines[first]) - len(lines[first].lstrip())]
+        declaration = " ".join(
+            part.strip() for part in list(lines[first:index]) + [match.group("decl")]
+        )
+        text = _wrap_inline_text(pieces)
+        out.extend(_block_from_text(indent, text))
+        out.append(f"{indent}{declaration}")
+        index = after
+    return out
+
+
+def _wrap_inline_text(pieces: list[str]) -> list[str]:
+    """Rebuild the doc text as `<star> @brief [en] ...` style lines for the canonicaliser."""
+    joined = " ".join(piece.strip() for piece in pieces if piece.strip())
+    segments = _split_inline(joined)
+    tagged = [(lang, text) for lang, text in segments if lang is not None and text]
+    lead = " ".join(text for lang, text in segments if lang is None and text).strip()
+    lines: list[str] = []
+    if lead and not tagged:
+        lines.append(f" * @brief {lead}")
+    for lang, text in tagged:
+        lines.append(f" * @brief [{lang}] {text}")
+    return lines
+
+
+def _block_from_text(indent: str, body: list[str]) -> list[str]:
+    """Wrap `<indent>/**`, the given star-lines, and the closer."""
+    out = [f"{indent}/**"]
+    out.extend(f"{indent}{line}" for line in body)
+    out.append(f"{indent} */")
+    return out
+
+
 def normalise(text: str) -> str:
-    lines = text.split("\n")
+    # Promotions come first: a multi-line `///<` becomes a block, and then it is just another block
+    # for the loop below to align and wrap.
+    # 先做提升：多行 `///<` 变成块，于是它只是下面那个循环里的又一个块。
+    lines = _promote_inline_docs(text.split("\n"))
     out: list[str] = []
     index = 0
     while index < len(lines):
