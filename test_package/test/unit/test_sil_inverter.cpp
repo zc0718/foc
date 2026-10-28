@@ -161,7 +161,7 @@ auto low_current_point(float v_d) -> LowCurrentPoint {
 
 } // namespace
 
-TEST(SilS19Inverter, V1_TheDutyReachesTheMachineUnchangedWithoutDeadTime) {
+TEST(SilInverter, V1_TheDutyReachesTheMachineUnchangedWithoutDeadTime) {
   // The algebraic identity the whole model rests on: `clarke(pole voltages)` is
   // the commanded vector, because the neutral point floats and SVPWM's midpoint
   // injection is exactly the common mode that cancels. If this ever fails,
@@ -194,7 +194,7 @@ TEST(SilS19Inverter, V1_TheDutyReachesTheMachineUnchangedWithoutDeadTime) {
   EXPECT_LT(worst, 1.0e-4F);
 }
 
-TEST(SilS19Inverter, V2_TheDeadTimeVoltSecondsFallOutOfTheSwitching) {
+TEST(SilInverter, V2_TheDeadTimeVoltSecondsFallOutOfTheSwitching) {
   // The claim that makes this model worth building: the dead-time error is a
   // *consequence* of "turn-off is immediate, turn-on is delayed, the conducting
   // device is chosen by the current", not an input. So the number the model
@@ -268,7 +268,7 @@ TEST(SilS19Inverter, V2_TheDeadTimeVoltSecondsFallOutOfTheSwitching) {
   EXPECT_NEAR(2.0F, loss_doubled / loss_at_one_us, 0.01F);
 }
 
-TEST(SilS19Inverter, V3_TheRippleIsThereAndTheSampleInstantSeesIt) {
+TEST(SilInverter, V3_TheRippleIsThereAndTheSampleInstantSeesIt) {
   // Two things at once: the current really ripples at the switching frequency
   // (the mean-value plant has no ripple at all), and the mean sits at the
   // period boundary and at the middle -- which is *why* "sample at the carrier
@@ -311,7 +311,7 @@ TEST(SilS19Inverter, V3_TheRippleIsThereAndTheSampleInstantSeesIt) {
   EXPECT_NEAR(expected, with_dead.mean_u, 0.03F);
 }
 
-TEST(SilS19Inverter, V4_SubStepsChangeTheRippleNotTheMean) {
+TEST(SilInverter, V4_SubStepsChangeTheRippleNotTheMean) {
   // The property that lets CI afford this model: the sub-step count is a
   // resolution knob for the *ripple* only, because the mean over a sub-step is
   // integrated exactly. If the mean moved with the sub-step count, every number
@@ -338,7 +338,7 @@ TEST(SilS19Inverter, V4_SubStepsChangeTheRippleNotTheMean) {
             0.05F * fine.peak_to_peak);
 }
 
-TEST(SilS19Inverter, V5_WithoutDeadTimeItReproducesTheMeanValueBench) {
+TEST(SilInverter, V5_WithoutDeadTimeItReproducesTheMeanValueBench) {
   // Degenerate equivalence: with the dead time and the conduction drop switched
   // off, attaching the model must land on the bench it replaces. Without this,
   // a difference in the closed-loop numbers could not be attributed to
@@ -371,7 +371,7 @@ TEST(SilS19Inverter, V5_WithoutDeadTimeItReproducesTheMeanValueBench) {
   EXPECT_LT(relative, 0.02F);
 }
 
-TEST(SilS19Inverter,
+TEST(SilInverter,
      V6_TheModelGrowsTheLowCurrentFadeAndItIsSteeperThanTheFormula) {
   // A2 derived `loss = dV*clamp(i/I_ripple)` by averaging the rail occupancy
   // over a whole period. The switching model says only the *dead windows*
@@ -421,7 +421,7 @@ TEST(SilS19Inverter,
   }
 }
 
-TEST(SilS19Inverter, V7_DeterministicClampedAndRefusesAMisTimedRequest) {
+TEST(SilInverter, V7_DeterministicClampedAndRefusesAMisTimedRequest) {
   // A simulator that is not reproducible turns every failure into a story. And
   // a mis-timed request has to be refused: silently rounding a control period
   // to a different switching period would put a frequency error into every

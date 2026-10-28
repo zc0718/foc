@@ -24,7 +24,7 @@ constexpr float kSettleSeconds = 0.25F; // skip the initial transient
 
 
 
-TEST(SilS3Sine, TracksTheOneHertzSineWithinFivePercent) {
+TEST(SilSine, TracksTheOneHertzSineWithinFivePercent) {
     foc::sil::Bench bench(foc::sil::standard_bench_config());
     bench.motor().set_speed(0.0F);
     ASSERT_EQ(foc::ErrorCode::Ok, bench.init_and_start());
@@ -65,7 +65,7 @@ TEST(SilS3Sine, TracksTheOneHertzSineWithinFivePercent) {
 
 
 
-TEST(SilS3Sine, DoesNotDriftOrDiverge) {
+TEST(SilSine, DoesNotDriftOrDiverge) {
     foc::sil::Bench bench(foc::sil::standard_bench_config());
     bench.motor().set_speed(0.0F);
     ASSERT_EQ(foc::ErrorCode::Ok, bench.init_and_start());

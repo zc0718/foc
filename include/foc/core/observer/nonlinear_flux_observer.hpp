@@ -86,9 +86,9 @@ class NonlinearFluxObserver final {
      * @param params [en] the machine as it actually is. [zh] 机器实际的样子。
      * @note [en] Unlike the open-loop observer this one does *not* need a re-seed to shed the error a wrong
      *       parameter left behind: the correction keeps pulling towards `psi_f`, so it converges on its own.
-     *       That is the whole point of the extra term, and S17 measures it.
+     *       That is the whole point of the extra term, and it is measured.
      *       [zh] 与开环观测器不同，这一个**不需要**重新播种来摆脱错误参数留下的误差：修正会持续把幅值拉向
-     *       `ψf`，因此它自行收敛。这正是那一项存在的意义，S17 有实测。
+     *       `ψf`，因此它自行收敛。这正是那一项存在的意义，有实测。
      * @since 0.1.0
      */
     void apply_params(const MachineParams& params) noexcept;

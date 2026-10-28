@@ -15,7 +15,7 @@ pipeline is:
    source ~/venv/build/bin/activate        # matplotlib + numpy
    python3 docs/demos/make_figures.py      # regenerate figures and tables
 
-The scenarios mirror the SIL acceptance suite (S1–S3), so what you see here is the same closed
+The scenarios mirror the SIL acceptance suite, so what you see here is the same closed
 loop the test suite asserts on.
 
 .. toctree::

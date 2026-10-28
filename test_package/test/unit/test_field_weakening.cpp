@@ -59,7 +59,7 @@ auto exact_voltage(const core::MachineParams &p, float i_d, float i_q,
 
 } // namespace
 
-TEST(FieldWeakening, P8d_TheAdviceSaysDoNotBuildItForThisMachine) {
+TEST(FieldWeakening, TheAdviceSaysDoNotBuildItForThisMachine) {
   // P8-d. The whole point of this test is that it says **no** with numbers: an
   // advisory that always says yes is not an advisory.
   // P8-d。这个测试的全部意义是它**用数说不**：永远说"该做"的建议不是建议。
@@ -99,7 +99,7 @@ TEST(FieldWeakening, P8d_TheAdviceSaysDoNotBuildItForThisMachine) {
   EXPECT_NEAR(0.40F, high.ratio, 0.02F);
 }
 
-TEST(FieldWeakening, P8a_ThePolicyFindsTheEnvelopeAndTheExactVoltageAgrees) {
+TEST(FieldWeakening, ThePolicyFindsTheEnvelopeAndTheExactVoltageAgrees) {
   // P8-a. The policy solves the ellipse **without `Rs`**; this test is what
   // keeps that approximation honest, by evaluating the full voltage equation at
   // the point the policy chose. P8-a。策略**不含 `Rs`**
@@ -163,7 +163,7 @@ TEST(FieldWeakening, P8a_ThePolicyFindsTheEnvelopeAndTheExactVoltageAgrees) {
   EXPECT_LT(rows[4].i_q, 0.4F) << "3800 rad/s is the end of the envelope";
 }
 
-TEST(FieldWeakening, P8c_TheDaxisReferenceIsContinuousAcrossTheBaseSpeed) {
+TEST(FieldWeakening, TheDaxisReferenceIsContinuousAcrossTheBaseSpeed) {
   // P8-c, at the level where it can actually be checked without a full loop:
   // `i_d(omega)` must be continuous. A discontinuous reference is what winds a
   // current integrator up and costs an overshoot on the way back down.
@@ -204,7 +204,7 @@ TEST(FieldWeakening, P8c_TheDaxisReferenceIsContinuousAcrossTheBaseSpeed) {
          "30 rad/s";
 }
 
-TEST(FieldWeakening, P8b_TheObserverStaysInsideTheGateInTheWeakFluxRegion) {
+TEST(FieldWeakening, TheObserverStaysInsideTheGateInTheWeakFluxRegion) {
   // P8-b. The weak-flux region changes the *stator* flux to `psi_f + Ld*i_d`
   // while the observer pulls its magnitude towards `psi_f`; the question is
   // whether that is fatal. Measured: it is not, but it costs -- and the
@@ -298,7 +298,7 @@ TEST(FieldWeakening, P8b_TheObserverStaysInsideTheGateInTheWeakFluxRegion) {
                                  "measured worse: keep the plain one";
 }
 
-TEST(FieldWeakening, P8e_ItIsADropInPolicyAndNothingElseChanges) {
+TEST(FieldWeakening, ItIsADropInPolicyAndNothingElseChanges) {
   // P8-e. The whole architectural claim: `Motor` already hands the reference
   // generator
   // `{iq, omega_e, v_bus, i_meas}`, so field weakening is **one template

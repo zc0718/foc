@@ -94,7 +94,7 @@ template <typename FeedForward> auto run_with(FeedForward ff) -> Outcome {
  *        [zh] d 轴给定为零，因此出现的每一个 |id| 都是电流环必须对抗的扰动。解耦把其中大部分消掉；
  *        用例断言的只是数量级而不是具体数值，正常的整定变更不会把它弄红。
  */
-TEST(SilS6Feedforward, CrossDecouplingCutsTheDaxisDisturbanceByAnOrderOfMagnitude) {
+TEST(SilFeedforward, CrossDecouplingCutsTheDaxisDisturbanceByAnOrderOfMagnitude) {
     const Outcome without = run_with(foc::core::NullFeedforward{});
     const Outcome with = run_with(foc::core::DecouplingFeedforward{foc::feedforward_config(machine())});
 
@@ -120,7 +120,7 @@ TEST(SilS6Feedforward, CrossDecouplingCutsTheDaxisDisturbanceByAnOrderOfMagnitud
  *        [zh] 全零配置必须与「无前馈」完全等价：没有电感、没有磁链的电机没有可抵消的东西。这条
  *        用例钉住「未配置即关闭」的规则。
  */
-TEST(SilS6Feedforward, AZeroedConfigurationIsIndistinguishableFromNoFeedforward) {
+TEST(SilFeedforward, AZeroedConfigurationIsIndistinguishableFromNoFeedforward) {
     const Outcome none = run_with(foc::core::NullFeedforward{});
     const Outcome zeroed = run_with(foc::core::DecouplingFeedforward{});
 

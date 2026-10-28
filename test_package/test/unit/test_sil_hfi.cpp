@@ -157,7 +157,7 @@ auto open_loop_error(float hz, float dtheta) -> float {
     return rig.observer().error();
 }
 
-TEST(SilS14Hfi, ItFindsTheRotorFromAWrongStart) {
+TEST(SilHfi, ItFindsTheRotorFromAWrongStart) {
     // The estimate starts at 0 while the rotor sits half a radian away in either direction: no
     // information about the rotor exists anywhere except in the current response.
     // 估计值从 0 开始，而转子就在任一方向的半个弧度外：除电流响应外，系统中没有任何关于转子的信息。
@@ -169,7 +169,7 @@ TEST(SilS14Hfi, ItFindsTheRotorFromAWrongStart) {
     }
 }
 
-TEST(SilS14Hfi, TheErrorSignalIsProportionalToSineOfTwiceTheErrorAngle) {
+TEST(SilHfi, TheErrorSignalIsProportionalToSineOfTwiceTheErrorAngle) {
     // The whole method rests on `err ~= -sin(2*dtheta)`. A loop tuned for a linear error and fed a
     // signal that is not one converges to a biased point, so the shape has to be checked, not assumed.
     // 整个方法建立在 `err ≈ -sin(2·dtheta)` 上。为线性误差整定的环路若吃到非线性的信号，会收敛到
@@ -199,7 +199,7 @@ TEST(SilS14Hfi, TheErrorSignalIsProportionalToSineOfTwiceTheErrorAngle) {
     EXPECT_NEAR(1.0F, mean, 0.25F);
 }
 
-TEST(SilS14Hfi, TheFirstOrderFormulaDegradesAsTheInductiveReactanceFalls) {
+TEST(SilHfi, TheFirstOrderFormulaDegradesAsTheInductiveReactanceFalls) {
     // `predicted_gain_a` ignores Rs. With wh*Ld = 2.5 ohm against Rs = 0.35 the prediction is close;
     // with wh*Ld = 0.63 it is half. The signal stays *proportional* either way -- that is the fact
     // this case exists to pin down: a wrong sensitivity is a loop-gain error, not a broken method.
@@ -214,7 +214,7 @@ TEST(SilS14Hfi, TheFirstOrderFormulaDegradesAsTheInductiveReactanceFalls) {
     EXPECT_NEAR(0.51F, at_500, 0.10F);
 }
 
-TEST(SilS14Hfi, OutsideTheHalfTurnWindowItLocksToTheMirror) {
+TEST(SilHfi, OutsideTheHalfTurnWindowItLocksToTheMirror) {
     // `sin(2*dtheta)` has a second stable zero at pi. Starting the estimate two radians away (outside
     // the +-pi/2 window) lands there: the d axis is right to within a factor of two and the magnet is
     // backwards. Nothing in the signal can tell the two apart.
@@ -225,7 +225,7 @@ TEST(SilS14Hfi, OutsideTheHalfTurnWindowItLocksToTheMirror) {
     EXPECT_NEAR(kPiFloat, std::fabs(rig.error_rad()), 0.05F);
 }
 
-TEST(SilS14Hfi, AWrongSaliencyDirectionRunsAwayInsteadOfLocking) {
+TEST(SilHfi, AWrongSaliencyDirectionRunsAwayInsteadOfLocking) {
     // A machine with Ld > Lq needs the opposite sign, and passing the wrong one is not a tuning
     // detail: the loop drives the estimate to the unstable equilibrium at +-pi/2 and stays there.
     // Ld > Lq 的电机需要相反的符号，给错不是个整定细节：环路把估计值推到 ±π/2 的不稳定平衡点并停住。
@@ -234,7 +234,7 @@ TEST(SilS14Hfi, AWrongSaliencyDirectionRunsAwayInsteadOfLocking) {
     EXPECT_NEAR(0.5F * kPiFloat, std::fabs(rig.error_rad()), 0.10F);
 }
 
-TEST(SilS14Hfi, WithoutHfCurrentItHoldsTheAngleInsteadOfGuessing) {
+TEST(SilHfi, WithoutHfCurrentItHoldsTheAngleInsteadOfGuessing) {
     // The lock detector is the only channel through which this observer can say "I do not know".
     // Raise the threshold above the current the injection actually produces and the estimate must
     // stop moving rather than integrate noise into a number that looks measured.
@@ -270,7 +270,7 @@ auto hfi_policies(float inject_v) -> HfiMotor::Policies {
 
 } // namespace
 
-TEST(SilS14Hfi, TheShippedMotorRunsSensorlessAtStandstill) {
+TEST(SilHfi, TheShippedMotorRunsSensorlessAtStandstill) {
     // End to end: `Motor` cannot tell this observer apart from a back-EMF one, its injection lands on
     // the voltage command, and the angle it produces is good enough to regulate current with.
     // 端到端：`Motor` 无法把这个观测器与反电动势观测器区别对待，它的注入真的落到电压指令上，产出的

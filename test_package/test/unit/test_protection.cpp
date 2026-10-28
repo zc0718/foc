@@ -159,7 +159,7 @@ auto i2t_trip_seconds(float current_a) -> float {
 
 } // namespace
 
-TEST(Protection, P6a_EveryFaultIsClassifiedAsItselfAndNothingElse) {
+TEST(Protection, EveryFaultIsClassifiedAsItselfAndNothingElse) {
   // The injection matrix the plan asks for: one row per mechanism, each row
   // perturbing exactly one input, and the reported code has to be that
   // mechanism. 100 % or the classification is useless
@@ -200,7 +200,7 @@ TEST(Protection, P6a_EveryFaultIsClassifiedAsItselfAndNothingElse) {
   EXPECT_EQ(8, correct) << "the matrix has to be exact, not mostly right";
 }
 
-TEST(Protection, P6b_ATripRemovesOutputAuthorityInTheSameStepItIsDetected) {
+TEST(Protection, ATripRemovesOutputAuthorityInTheSameStepItIsDetected) {
   // "Within one control period" means *this* step, not the next one. The
   // measurement and the decision share a step, so the PWM update that follows
   // already has no authority.
@@ -232,7 +232,7 @@ TEST(Protection, P6b_ATripRemovesOutputAuthorityInTheSameStepItIsDetected) {
   EXPECT_FALSE(again.output_allowed);
 }
 
-TEST(Protection, P6c_WhatSelfClearsDoesAndWhatDoesNotStaysUntilReset) {
+TEST(Protection, WhatSelfClearsDoesAndWhatDoesNotStaysUntilReset) {
   // P6-c, both halves. The split is physical (see `fault_is_latched`): a
   // sagging bus lifts, a shorted winding does not fix itself. P6-c
   // 的两半。这个分法是物理的（见
@@ -280,7 +280,7 @@ TEST(Protection, P6c_WhatSelfClearsDoesAndWhatDoesNotStaysUntilReset) {
   EXPECT_TRUE(after_reset.output_allowed);
 }
 
-TEST(Protection, P6d_DeratingIsMonotoneAndItsEndsAreTheConfiguredCurve) {
+TEST(Protection, DeratingIsMonotoneAndItsEndsAreTheConfiguredCurve) {
   // P6-d. A derating curve that is not monotone is a curve that hands authority
   // back to a hotter machine, which is the one thing it must never do.
   // P6-d。不单调的降额曲线会把权限还给更热的机器，而那正是它绝不该做的事。
@@ -318,7 +318,7 @@ TEST(Protection, P6d_DeratingIsMonotoneAndItsEndsAreTheConfiguredCurve) {
   EXPECT_FLOAT_EQ(0.0F, protector.derated_limit(t_end + 20.0F));
 }
 
-TEST(Protection, P6d_TheThermalBudgetCoolsAndTheStallNeedsItsDuration) {
+TEST(Protection, TheThermalBudgetCoolsAndTheStallNeedsItsDuration) {
   // The two faults that are *durations* rather than thresholds, and both would
   // be wrong as plain counters. (1) `I2t` has to cool, or an idle machine
   // carries a stale memory. (2) A stall is current-without-motion for a *time*;
@@ -482,7 +482,7 @@ private:
 } // namespace
 
 TEST(Protection,
-     P6b_OnAPlantTheCommandDiesInOnePeriodAndTheCurrentTakesLOverR) {
+     OnAPlantTheCommandDiesInOnePeriodAndTheCurrentTakesLOverR) {
   // The policy-level test above says the *decision* is taken in the same step.
   // This one asks what that means physically, and the answer is not what the
   // plan assumed: **the current cannot be clamped to zero in one control

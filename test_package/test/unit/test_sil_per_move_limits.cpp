@@ -87,7 +87,7 @@ auto run_move(float accel_limit_rad_s2, float duration_s) -> MoveResult {
 
 
 
-TEST(SilS11PerMove, ATighterPerMoveAccelLimitIsVisiblyGentlerAndStillArrives) {
+TEST(SilPerMoveLimits, ATighterPerMoveAccelLimitIsVisiblyGentlerAndStillArrives) {
     // The same distance, the same gain, the same mechanism: only the move's acceleration allowance
     // differs. The gentler move peaks at half the speed -- which is what "half this value" means
     // physically -- and still lands on target without overshooting.
@@ -110,7 +110,7 @@ TEST(SilS11PerMove, ATighterPerMoveAccelLimitIsVisiblyGentlerAndStillArrives) {
 
 
 
-TEST(SilS11PerMove, AZeroPerMoveLimitFallsBackToTheMechanismConfiguration) {
+TEST(SilPerMoveLimits, AZeroPerMoveLimitFallsBackToTheMechanismConfiguration) {
     // 0 means "no override". The move is then shaped by `MotionProfile::Config`, so its peak speed is
     // the one the *mechanism* allows, not the gentle one.
     // 0 表示"不覆盖"。此时运动由 `MotionProfile::Config` 塑造，于是峰值速度是**机构**允许的那个，
@@ -122,7 +122,7 @@ TEST(SilS11PerMove, AZeroPerMoveLimitFallsBackToTheMechanismConfiguration) {
 
 
 
-TEST(SilS11PerMove, APerMoveVelocityCeilingHolds) {
+TEST(SilPerMoveLimits, APerMoveVelocityCeilingHolds) {
     // A long move with a low velocity ceiling: the rotor must never exceed it, which is observable
     // because the ceiling is well below what the mechanism would otherwise allow.
     // 长距离运动配上低速度上限：转子绝不得超过它，这可以观测，因为该上限远低于机构本来的许可。

@@ -270,7 +270,7 @@ auto measure_all(const Effects &fx) -> Row {
 
 } // namespace
 
-TEST(SilSensitivity, T1_EachUnmodelledEffectHasAMeasuredBound) {
+TEST(SilSensitivity, EachUnmodelledEffectHasAMeasuredBound) {
   const Row base = measure_all(Effects{});
 
   std::printf(
@@ -460,7 +460,7 @@ TEST(SilSensitivity, T1_EachUnmodelledEffectHasAMeasuredBound) {
 }
 
 TEST(SilSensitivity,
-     T1_IronLossIsLoadIndependentWhichIsWhyItCannotBeATorqueLoss) {
+     IronLossIsLoadIndependentWhichIsWhyItCannotBeATorqueLoss) {
   // The plant-level property that makes iron loss a different animal from a
   // shaft torque loss: the shunt draws `omega*psi_f/Rm`, which does not contain
   // the load. A torque-loss term would scale with load and could never

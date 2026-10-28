@@ -117,30 +117,30 @@ refused outright** because this project has no hardware to measure it on. Paths 
 | `foc/core/sm.hpp` | L1 | The state machine's reachable set and its refusals | `test_sm.cpp` |
 | `foc/core/machine_params.hpp` | L1 | Nameplate → derived `psi_f`, one definition | `test_machine_params.cpp` |
 | `foc/core/deadtime.hpp` | L3 | The axis projection: 4/3 on d, 2/√3 on q, 4/π averaged over a rotation. Using the d number on q costs 15.7 % on `Lq` | `test_deadtime.cpp` |
-| `foc/core/feedforward.hpp` | L2 | Cross-coupling and back-EMF terms, on the SIL plant | `test_sil_s6_feedforward.cpp` |
+| `foc/core/feedforward.hpp` | L2 | Cross-coupling and back-EMF terms, on the SIL plant | `test_sil_feedforward.cpp` |
 | `foc/core/reference.hpp` | L3 | `d = 0` default plus `MtpaReference`: +29.2 % torque at `Lq/Ld = 2`, and exactly `i_d = 0` on a surface machine | `test_mtpa.cpp` |
 | `foc/core/field_weakening.hpp` | L3 | Matches the analytic voltage/current envelope to four digits; the "is it worth it" rule is a gate, not a suggestion; the policy engages end to end through `Motor` (`i_d = -1.93 A` 2 ms in) | `test_field_weakening.cpp`, `test_field_weakening_motor.cpp` |
 | `foc/core/commissioning.hpp` | L3 | `Rs` +0.01 %, `psi_f` +0.51 %, `Ld` +0.14 %, `Lq` +0.23 % on the SIL plant, each with the condition it needs | `test_commissioning.cpp` |
 | `foc/core/protection.hpp` | L2 | I²t budget `i_cont²·tau`; a trip removes the *command* in one period and the current then decays with `L/R` (0.80 ms) -- it cannot be clamped in one period, and the block says so | `test_protection.cpp` |
 | `foc/core/board_check.hpp` | L3 | Names the correct cause on three seeded faults; measures the ADC trigger position when the bench can move it, and reports the optimum rather than assuming 0.5 | `test_board_check.cpp` |
 | `foc/core/alignment.hpp` | L2 | The align/verify sequence and its failure modes | `test_alignment.cpp` |
-| `foc/core/polarity.hpp` | L2 | Polarity detection and its refusal when the answer is not decisive | `test_polarity.cpp`, `test_sil_s15_polarity.cpp` |
+| `foc/core/polarity.hpp` | L2 | Polarity detection and its refusal when the answer is not decisive | `test_polarity.cpp`, `test_sil_polarity.cpp` |
 | `foc/core/position.hpp` | L2 | The position loop with velocity and acceleration limits | `test_position_p.cpp` |
 | `foc/core/motion_profile.hpp` | L2 | Trapezoidal profile timing and its endpoints | `test_motion_profile.cpp` |
 | `foc/core/observer/observer_policy.hpp` | L1 | The observer contract (`theta_e`, `omega_e`, one `update`) | `test_traits_contract.cpp` |
 | `foc/core/observer/ideal_observer.hpp` | L2 | The reference every other observer is compared against, on a clean plant | `test_ideal_observer.cpp` |
 | `foc/core/observer/back_emf_observer.hpp` | L2 | Angle and speed on the SIL plant | `test_back_emf_observer.cpp` |
-| `foc/core/observer/nonlinear_flux_observer.hpp` | L3 | 0.1044 rad at 200 rad/s with `i_d = 0`; 2.03× worse with a 10 % current-gain error; **floor near 50 rad/s**; and **it requires `i_d = 0`** -- see the row below | `test_nonlinear_flux_observer.cpp`, `test_sil_sensitivity.cpp`, `test_sil_s18_admission.cpp`, `test_salient_observer.cpp` |
-| `foc/core/observer/hfi_observer.hpp` | L2 | Injection-based angle: the error signal is proportional to `sin(2δ)` and the method needs saliency | `test_hfi_observer.cpp`, `test_sil_s14_hfi.cpp` |
-| `foc/core/observer/blended_observer.hpp` | L2 | HFI/high-speed handover, with the measured floor (~50 rad/s) stated rather than tuned around | `test_blended_observer.cpp`, `test_sil_s16_blend.cpp` |
+| `foc/core/observer/nonlinear_flux_observer.hpp` | L3 | 0.1044 rad at 200 rad/s with `i_d = 0`; 2.03× worse with a 10 % current-gain error; **floor near 50 rad/s**; and **it requires `i_d = 0`** -- see the row below | `test_nonlinear_flux_observer.cpp`, `test_sil_sensitivity.cpp`, `test_sil_admission.cpp`, `test_salient_observer.cpp` |
+| `foc/core/observer/hfi_observer.hpp` | L2 | Injection-based angle: the error signal is proportional to `sin(2δ)` and the method needs saliency | `test_hfi_observer.cpp`, `test_sil_hfi.cpp` |
+| `foc/core/observer/blended_observer.hpp` | L2 | HFI/high-speed handover, with the measured floor (~50 rad/s) stated rather than tuned around | `test_blended_observer.cpp`, `test_sil_observer_blend.cpp` |
 | `foc/hal/clock.hpp`, `foc/hal/current_sense.hpp`, `foc/hal/dc_link.hpp`, `foc/hal/position.hpp`, `foc/hal/pwm.hpp` | L1 | Abstract interfaces only: no behaviour to claim, and the concepts reject an incomplete implementation | `test_traits_contract.cpp` |
 | `foc/driver/stub_hal.hpp`, `foc/driver/stub_pwm.hpp`, `foc/driver/stub_dc_link.hpp`, `foc/driver/sim_position.hpp`, `foc/driver/scripted_current.hpp` | L1 | Host-side stand-ins for the real drivers; they prove the *interfaces* are usable, nothing about the hardware | `test_driver_stubs.cpp` |
 | `foc/motor/motor.hpp` | L3 | Policy composition, mode transitions, and the reference generator actually reaching the current loop | `test_motor.cpp`, `test_field_weakening_motor.cpp` |
-| `foc/motor/foc_loop.hpp` | L2 | Multi-rate loop timing at the SIL plant | `test_sil_s7_multirate.cpp` |
+| `foc/motor/foc_loop.hpp` | L2 | Multi-rate loop timing at the SIL plant | `test_sil_multirate.cpp` |
 | `foc/motor/motor_config.hpp` | L2 | Loop gains derived from nameplate `J`, `b`, `kt`, with the current loop's bandwidth the only free parameter | `test_motor.cpp` |
 
 Two entries that used to be in this table are deliberately gone. `smo.hpp` never existed as a
-shipped header -- the SMO is a **test-harness candidate** (`test_sil_s18_admission.cpp`), and it was
+shipped header -- the SMO is a **test-harness candidate** (`test_sil_admission.cpp`), and it was
 measured to beat the incumbent on the mean-value plant and lose on a switching one, which is why it
 does not ship. `benchmark/` is not an installed header and its numbers are timing, not control
 performance.
@@ -169,7 +169,7 @@ were overlooked or rejected:
 | "Works down to a few milliamps" | The current-loop evidence is at 0.1 A and above. Below that the resolution of the *model* is the limit, not the ADC: 12-bit quantisation over a +/-10 A range was measured and found to have no effect, but that says nothing about a real sensor's noise, offset drift and amplifier settling. |
 | "MTPA works with the shipped observer" | Not below ~1000 rad/s. MTPA's whole point is `i_d < 0`, and the observer's flux target is a constant `psi_f`; at 200 rad/s with `i_d = -1 A` the angle reads 0.5079 rad against a 0.15 ceiling. The two are compatible at high speed and incompatible at low speed, and nothing in the library enforces the boundary — the user has to know it. |
 | "The single-`L` observer has a saliency limit" | Withdrawn, because it was measured to be false as stated. With `i_d = 0` the error is flat in `Lq/Ld` (0.1044 / 0.1048 / 0.1035 at ratios 1 / 2 / 2.5) -- a single-`L` observer's model error is `(Ld - Lq)*i_d`, so zero d-axis current hides all of it. The limit is `i_d`, not the ratio. |
-| "The speed loop is validated past base speed" | Not established. Field weakening itself does engage end to end through `Motor` -- 2 ms after parking at 3200 rad/s with the setpoint above it, `i_d` is -1.93 A while the drive is still at 3178 rad/s (P11-d). But at that operating point the **q-axis current settles negative** (-1.54 A) while the speed error is positive, which the PI's contract says cannot happen. That is an open measurement, not a resolved one: the reference generator and the voltage budget are validated, the outer loop in that regime is not. |
+| "The speed loop is validated past base speed" | Not established. Field weakening itself does engage end to end through `Motor` -- 2 ms after parking at 3200 rad/s with the setpoint above it, `i_d` is -1.93 A while the drive is still at 3178 rad/s. But at that operating point the **q-axis current settles negative** (-1.54 A) while the speed error is positive, which the PI's contract says cannot happen. That is an open measurement, not a resolved one: the reference generator and the voltage budget are validated, the outer loop in that regime is not. |
 | Anything about a specific motor | Every number is a property of `sil_pmsm_plant.hpp` with the nominal `MachineSpec`, or of a plant varied deliberately. `BoardSelfTest` and `check_board()` exist to tell you how far your hardware is from that model, and they are L3 -- themselves unproven on metal. |
 
 ### Not a safety component

@@ -299,7 +299,7 @@ auto smo_error(const sil::SwitchingRigConfig &config, bool heun) -> float {
 
 } // namespace
 
-TEST(SilS20Discretization, C2a_TheTestCopyReproducesTheShippedObserver) {
+TEST(SilDiscretization, C2a_TheTestCopyReproducesTheShippedObserver) {
   // Without this, every number below compares an observer against a slightly
   // different observer and the conclusion is about the copy, not about the
   // discretisation.
@@ -326,7 +326,7 @@ TEST(SilS20Discretization, C2a_TheTestCopyReproducesTheShippedObserver) {
   EXPECT_LT(worst, 1.0e-4F);
 }
 
-TEST(SilS20Discretization, C2b_TheRankingDoesNotComeFromTheIntegrator) {
+TEST(SilDiscretization, C2b_TheRankingDoesNotComeFromTheIntegrator) {
   // The question this batch was asked to settle. If the SMO wins only because
   // the incumbent is on a cruder integrator, then "the SMO is better" is a
   // statement about numerical analysis, not about estimation -- and adopting it

@@ -99,10 +99,10 @@ class NullPositionControl final {
  * @note [en] What it does *not* do is look ahead. With a velocity or acceleration limit binding it
  *       overshoots by roughly the braking distance, because the proportional term only starts
  *       easing off when the error is already small -- measured at 0.108 rad on a 1 rad step in the
- *       S9 scenario. `MotionProfile` exists for exactly that reason; pick it whenever a limit will
+ *       position-step scenario. `MotionProfile` exists for exactly that reason; pick it whenever a limit will
  *       actually bind.
  *       [zh] 它**不做**的是向前看。速度或加速度限制真正起作用时，它会冲过目标大约一个制动距离，
- *       因为比例项要等误差已经很小才开始回落——在 S9 场景的 1 rad 阶跃上实测为 0.108 rad。
+ *       因为比例项要等误差已经很小才开始回落——在 1 rad 位置阶跃上实测为 0.108 rad。
  *       `MotionProfile` 正是为此存在的；只要限制会真正生效，就用它。
  * @since 0.1.0
  * @exporter

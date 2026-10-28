@@ -46,7 +46,7 @@ auto abc_params() -> sil::AbcPlant::Params {
 } // namespace
 
 TEST(AbcPlantCrossCheck,
-     T2_ThePhaseVariableModelReproducesTheDqOperatingPoints) {
+     ThePhaseVariableModelReproducesTheDqOperatingPoints) {
   // T2: two independently derived plants, six operating points. This is the
   // substitute for the motor-expert review this project does not have -- a sign
   // or a factor error in the dq derivation would make every SIL conclusion
@@ -116,7 +116,7 @@ TEST(AbcPlantCrossCheck,
   }
 }
 
-TEST(AbcPlantCrossCheck, T2_TheTwoModelsShareTheSameElectricalTimeConstant) {
+TEST(AbcPlantCrossCheck, TheTwoModelsShareTheSameElectricalTimeConstant) {
   // Dynamics, not just the operating point: a d-axis step in each plant must
   // decay with the same `L/R`. If the dq derivation had the inductance in the
   // wrong place, steady state could still agree while the transient did not.

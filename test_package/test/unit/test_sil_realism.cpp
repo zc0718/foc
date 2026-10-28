@@ -141,7 +141,7 @@ auto flux_angle_error(FluxRig& rig, float belief_scale, float seconds) -> float 
 
 } // namespace
 
-TEST(SilS17Realism, TheKnobsAreOffByDefault) {
+TEST(SilRealism, TheKnobsAreOffByDefault) {
     // Every scenario written before these knobs existed has to stay bit-for-bit unchanged, otherwise
     // the 16 SIL cases stop being comparable to their own recorded numbers.
     // 这些旋钮之前写的每个场景都必须逐位不变，否则 16 个 SIL 用例就与自己记录的数字不可比了。
@@ -160,7 +160,7 @@ TEST(SilS17Realism, TheKnobsAreOffByDefault) {
     EXPECT_FLOAT_EQ(0.0F, hal.deadtime_voltage());
 }
 
-TEST(SilS17Realism, WindingHeatMakesTheFluxObserverWorse) {
+TEST(SilRealism, WindingHeatMakesTheFluxObserverWorse) {
     // The observer keeps believing Rs at 20 C while the winding heats up. This is the assertion that
     // gives a future parameter identifier something to fix -- without it, "identify Rs" would be a
     // solution looking for a problem.
@@ -182,7 +182,7 @@ TEST(SilS17Realism, WindingHeatMakesTheFluxObserverWorse) {
     EXPECT_GT(at_hot, 1.5F * at_twenty) << "heat must actually cost the observer something";
 }
 
-TEST(SilS17Realism, SensorNoiseRaisesTheSaliencyLoopFloor) {
+TEST(SilRealism, SensorNoiseRaisesTheSaliencyLoopFloor) {
     // A saliency loop reads its angle out of a current of a few hundred milliamps of carrier; 0.1 A of
     // sensor noise is a fifth of that. If the estimator is not affected, the noise is not connected.
     // 凸极环从几百毫安载波电流中读角度；0.1 A 的传感器噪声是它的五分之一。若估计器毫无反应，说明噪声没接上。
@@ -231,7 +231,7 @@ TEST(SilS17Realism, SensorNoiseRaisesTheSaliencyLoopFloor) {
     EXPECT_GT(noisy, 2.0F * clean) << "noise must raise the floor";
 }
 
-TEST(SilS17Realism, RightParametersFromTheStartAreEightTimesBetter) {
+TEST(SilRealism, RightParametersFromTheStartAreEightTimesBetter) {
     // P1's payoff, stated as a number, and stated the way it actually works. Measured at 200 rad/s with
     // the winding at 140 C: an observer believing Rs 10 % high lands at 0.0398 rad, one believing the
     // true hot value at 0.0050. Parameter accuracy is not a refinement here, it is a factor of eight.
@@ -259,7 +259,7 @@ TEST(SilS17Realism, RightParametersFromTheStartAreEightTimesBetter) {
     EXPECT_LT(with_wrong_belief / with_right_belief, 12.0F) << "and not more than the recorded ~8x";
 }
 
-TEST(SilS17Realism, AnUpdateMidRunDoesNotUndoWhatTheIntegratorAlreadyAccumulated) {
+TEST(SilRealism, AnUpdateMidRunDoesNotUndoWhatTheIntegratorAlreadyAccumulated) {
     // The uncomfortable half, and the reason `apply_params` alone is not a fix. A flux observer integrates
     // `v - Rs*i`, so an error in Rs leaves a *flux* error behind, and the integrator has no reset. Telling it
     // the right Rs corrects the integrand from that moment on but cannot remove what is already integrated --
@@ -311,7 +311,7 @@ TEST(SilS17Realism, AnUpdateMidRunDoesNotUndoWhatTheIntegratorAlreadyAccumulated
     EXPECT_GT(after_update, 1.5F * without_update) << "a mid-run update is not a reset";
 }
 
-TEST(SilS17Realism, TheMagnitudeCorrectionBeatsTheOpenLoopObserverOnAverage) {
+TEST(SilRealism, TheMagnitudeCorrectionBeatsTheOpenLoopObserverOnAverage) {
     // The judgement the plan fixed in advance: NLFO's mean angle error over the speed set must be *strictly*
     // lower than the open-loop observer's. Both run on the same fixture, at the same points, with Rs believed
     // 10 % high. Recorded per point so a future regression shows where it happened, not just that a mean moved.

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""PIL leg (Processor-In-the-Loop): run the S2 scenario on the *target ISA*, not just compile it.
+"""PIL leg (Processor-In-the-Loop): run the speed-step scenario on the *target ISA*, not just compile it.
 
 What it proves
 --------------
@@ -21,7 +21,7 @@ Layout
 Exit codes
 ----------
   0  ok  (or: the target toolchain is absent and --require-target was not given)
-  1  the comparison or the S2 acceptance failed
+  1  the comparison or the speed-step acceptance failed
   2  --require-target was given but a tool is missing (CI uses this)
 
 Usage
@@ -57,11 +57,11 @@ SOURCES = [
     'src/motor/foc_loop.cpp',
 ]
 
-# The S2 scenario, then the modules added after it: field weakening, MTPA, the dead-time axis
+# The speed-step scenario, then the modules added after it: field weakening, MTPA, the dead-time axis
 # projection, the protector's 2000-step I^2t integral, and the board checklist. Those modules are
 # header-only and reach thousands of integration steps or a square root, so they are exactly the
 # kind of code whose host and target answers can differ.
-# S2 场景，然后是它之后新增的模块：弱磁、MTPA、死区轴投影、保护器 2000 步的 I²t 积分、以及板级
+# 速度阶跃场景，然后是它之后新增的模块：弱磁、MTPA、死区轴投影、保护器 2000 步的 I²t 积分、以及板级
 # 检查表。这些模块是 header-only，且要跑几千步积分或开方，正是"宿主与目标可能给出不同答案"的
 # 那类代码。
 METRICS = [
@@ -71,8 +71,8 @@ METRICS = [
     'deadtime_d', 'deadtime_q', 'protector_budget', 'board_failures', 'board_cause',
 ]
 
-# PRD 8.4: S2 must not exceed 10 % overshoot and must settle within 1 % steady-state error.
-S2_LIMITS = {'overshoot': 0.10, 'steady_error_fraction': 0.01}
+# The acceptance thresholds: no more than 10 % overshoot and must settle within 1 % steady-state error.
+SPEED_STEP_LIMITS = {'overshoot': 0.10, 'steady_error_fraction': 0.01}
 
 # host vs target: the same algorithm on a different FPU. FMA contraction differs between x86-64
 # (no FMA in the baseline instruction set) and aarch64 (FMA is baseline), so equality is not the
@@ -120,7 +120,7 @@ def run_binary(prefix):
 
 def check_s2(name, values):
     failures = 0
-    for key, limit in S2_LIMITS.items():
+    for key, limit in SPEED_STEP_LIMITS.items():
         value = values[key]
         ok = value <= limit
         print(f'[pil] {name:<6} {key:<24} {value:.6g}  (limit {limit:g})  {"ok" if ok else "FAIL"}')
@@ -195,7 +195,7 @@ def main():
     if subject:
         print(f'[pil] FAIL ({subject} check(s))')
         return 1
-    print('[pil] OK: the target ISA reproduces the host result and meets S2')
+    print('[pil] OK: the target ISA reproduces the host result and meets the acceptance thresholds')
     return 0
 
 

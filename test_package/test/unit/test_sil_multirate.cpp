@@ -1,5 +1,5 @@
 // S7 - multi-rate. The speed loop is decimated by elapsed time, not by a tick count, so a 10x or
-// 20x slower outer loop must still meet the S2 acceptance thresholds. This is the closed-loop
+// 20x slower outer loop must still meet the speed-step acceptance thresholds. This is the closed-loop
 // counterpart of Motor.SpeedLoopDecimationKeepsTheIntegralOverTheSameElapsedTime: that one proves the
 // integral is preserved, this one proves the loop still behaves.
 // S7 - 多速率。速度环按累计时间降采样，而不是按 tick 计数，因此外环慢 10 倍或 20 倍时仍须满足 S2
@@ -87,7 +87,7 @@ auto step_speed(float speed_loop_period_s) -> Outcome {
 
 
 /**
- * @brief [en] A decimated outer loop must keep the S2 acceptance thresholds, and must not change the
+ * @brief [en] A decimated outer loop must keep the speed-step acceptance thresholds, and must not change the
  *        closed-loop response by more than a fixed factor. The speed-loop bandwidth here is 250 rad/s
  *        (a 4 ms time constant), so 500 us and even 1 ms remain oversampled -- that is exactly why the
  *        decimation is allowed to be this coarse, and the test pins that reasoning.
@@ -95,7 +95,7 @@ auto step_speed(float speed_loop_period_s) -> Outcome {
  *        带宽是 250 rad/s（时间常数 4 ms），因此 500 us 甚至 1 ms 仍然是过采样——这正是降采样可以
  *        这么粗的理由，用例把这条推理钉住。
  */
-TEST(SilS7Multirate, DecimatedSpeedLoopKeepsTheS2Thresholds) {
+TEST(SilMultirate, DecimatedSpeedLoopKeepsTheS2Thresholds) {
     const Outcome every = step_speed(0.0F);
     const Outcome dec10 = step_speed(10.0F * kDt);
     const Outcome dec20 = step_speed(20.0F * kDt);

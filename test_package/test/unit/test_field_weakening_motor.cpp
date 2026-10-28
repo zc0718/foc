@@ -249,7 +249,7 @@ auto run_speed_loop(bool with_policy, float iq_command, float start_rad,
                   end.d, end.q};
 }
 
-TEST(FieldWeakeningMotor, P11d_ThePolicyEngagesEndToEndThroughMotor) {
+TEST(FieldWeakeningMotor, ThePolicyEngagesEndToEndThroughMotor) {
   // P11-d exists because P11-a's first version was wrong and said the opposite.
   // It ran 1.5 s and read the *final* state, by which time the bench's P-only
   // speed loop had let the machine decay to a speed where no weakening is
@@ -318,7 +318,7 @@ TEST(FieldWeakeningMotor, P11d_ThePolicyEngagesEndToEndThroughMotor) {
       << "and it must be engaging above base speed";
 }
 
-TEST(FieldWeakeningMotor, P11a_TheVoltageBudgetIsWhatUnlocksTheSpeed) {
+TEST(FieldWeakeningMotor, TheVoltageBudgetIsWhatUnlocksTheSpeed) {
   // The product claim, measured through the only thing that can stop it. Park
   // two identical motors at 3000 rad/s with a 1 A torque command and let them
   // run: the one with the policy weakens its field, keeps its current inside
@@ -366,7 +366,7 @@ TEST(FieldWeakeningMotor, P11a_TheVoltageBudgetIsWhatUnlocksTheSpeed) {
   EXPECT_GT(plain.id_a, 0.25F * weak.id_a);
 }
 TEST(FieldWeakeningMotor,
-     P11b_TheNormalisationHypothesisIsAGainChangeAndItWasMeasured) {
+     TheNormalisationHypothesisIsAGainChangeAndItWasMeasured) {
   // The field-weakened operating point: here the magnet flux the correction
   // pulls towards is genuinely not the flux present.
   // 弱磁工作点：这里"修正所拉向的磁钢磁链"确实不是"实际存在的磁链"。
@@ -433,7 +433,7 @@ TEST(FieldWeakeningMotor,
   EXPECT_GT(std::fabs(fw_angle_error(current, 3.0F) - at_incumbent), 1.0e-3F);
 }
 
-TEST(FieldWeakeningMotor, P11c_TheWorthItTestIsAvailableBeforeYouTuneAnything) {
+TEST(FieldWeakeningMotor, TheWorthItTestIsAvailableBeforeYouTuneAnything) {
   // Productisation means the library answers "is this worth doing on my motor"
   // before the user spends a day tuning it. The answer for the nominal machine
   // is *no*, and saying so is the feature.

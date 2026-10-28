@@ -183,11 +183,11 @@ class FieldWeakeningReference final {
      * @note [en] `i_d` is **continuous** in `omega_e` across the base speed: the
      * ellipse solution grows away from zero as soon as the point no longer fits,
      * so there is no step for an integrator to be shocked by. That continuity is
-     * what P8-c is about -- a discontinuous reference would wind the current PI
+     * what the continuity requirement is about -- a discontinuous reference would wind the current PI
      * up and cost an overshoot on the way back down, which is the classic way a
      * field-weakening implementation damages a machine it was supposed to help.
      *       [zh] `i_d` 在基速处对 `omega_e` 是**连续**的：一旦工作点装不下，椭圆解就从零连续
-     * 长出来，所以积分器没有台阶可被震。这个连续性正是 P8-c 的内容——不连续的参考会把电流 PI
+     * 长出来，所以积分器没有台阶可被震。这个连续性正是那条要求的来由——不连续的参考会把电流 PI
      * 积分上去，回程时付出一个过冲，那正是弱磁实现伤到它本该帮助的机器时的经典方式。
      * @since 0.1.0
      */

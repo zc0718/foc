@@ -73,19 +73,19 @@ class HfiObserver final {
      *       back-EMF, and whatever it leaves behind stays there because an integrator has no reset. The
      *       residue is about one carrier period of volt-seconds, `inject_v / (2*pi*inject_hz)` in Wb,
      *       which shows up as `inject_v / (2*pi*inject_hz*psi_f)` radians of angle bias. Measured on
-     *       S16: 2 V at 2 kHz on a 4.8 mWb rotor gave 0.031 rad against 0.033 predicted. So the
+     *       Measured: 2 V at 2 kHz on a 4.8 mWb rotor gave 0.031 rad against 0.033 predicted. So the
      *       amplitude is a trade -- enough current to read the saliency, little enough that the bias it
      *       leaves elsewhere is under what the application tolerates.
      *       [zh] 定容 `inject_v`：注入载波不是免费的。与它并行的**任何其他**观测器——比如反电动势磁链
      *       积分器——都分不清载波与真正的反电动势，而积分器没有复位，留下的东西就一直留着。残余量约为
      *       一个载波周期的伏秒，即 `inject_v / (2π·inject_hz)`，单位 Wb；换算成角度偏差就是
-     *       `inject_v / (2π·inject_hz·ψf)` rad。S16 实测：4.8 mWb 转子上 2 V / 2 kHz 给出 0.031 rad，
+     *       `inject_v / (2π·inject_hz·ψf)` rad。实测：4.8 mWb 转子上 2 V / 2 kHz 给出 0.031 rad，
      *       预测 0.033。因此幅值是一笔交易——大到能读出凸极，小到它在别处留下的偏差在应用可接受范围内。
      *
      * @note [en] Why `current_hp_hz` exists: the demodulator multiplies the measured current by the
      *       carrier, so *any* DC content in the current leaks through the follow-on filter at the
      *       carrier frequency and becomes a standing bias in the error signal. A load step at
-     *       standstill is exactly that: a DC current appearing from nowhere. Measured on the S16
+     *       standstill is exactly that: a DC current appearing from nowhere. Measured on the handover
      *       fixture, 0.5 A of q-axis current biased the error by 0.034 -- enough to push a start-up
      *       over the `pi/2` boundary and lock the estimate to the mirror. The high-pass removes the
      *       fundamental before demodulation, and because the filter primes on its first sample a
@@ -93,7 +93,7 @@ class HfiObserver final {
      *       frequency at which HFI is meant to work and well below `inject_hz`.
      *       [zh] `current_hp_hz` 存在的理由：解调器把实测电流与载波相乘，于是电流中**任何**直流成分
      *       都会以载波频率漏过后级滤波器，变成误差信号上的固定偏置。静止时的负载阶跃正好如此：凭空
-     *       出现一个直流电流。在 S16 台架上实测，0.5 A 的 q 轴电流使误差偏置 0.034——足以把一次起动
+     *       出现一个直流电流。在台架上实测，0.5 A 的 q 轴电流使误差偏置 0.034——足以把一次起动
      *       推过 `pi/2` 边界、锁到镜像上。高通在解调前去掉基频，且由于滤波器在第一个采样上自播种，
      *       恒定电流根本到不了乘法器。取值应在“HFI 预期工作的最高电频率”之上、`inject_hz` 之下。
      * @since 0.1.0

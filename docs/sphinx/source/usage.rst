@@ -165,5 +165,5 @@ to review the derivation, a second derivation is the only thing that can disagre
 
 
 The SIL bench is layered on purpose: an analytic reference (L1), an independent offline
-arbiter (L2), and scenario tests S1–S5 (current step, speed step, sine tracking, saturation
+arbiter (L2), and the scenario tests (current step, speed step, sine tracking, saturation
 limit, parameter perturbation). The SguanFOC project is a *third* reference, not the judge.

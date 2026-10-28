@@ -128,7 +128,7 @@ auto salient_params() -> sil::PlantParams {
 // P5-a：一次直流扫描同时得到定子电阻与死区电压。
 // ---------------------------------------------------------------------------
 
-TEST(Commissioning, P5a_ResistanceAndDeadTimeComeOutOfOneDcSweep) {
+TEST(Commissioning, ResistanceAndDeadTimeComeOutOfOneDcSweep) {
   // The sweep a commissioning routine would actually run: a list of voltages,
   // each held until the current settles, and the settled pair (v, i) fed to the
   // fit. No bisection, no targeting of currents -- targeting would need the
@@ -172,7 +172,7 @@ TEST(Commissioning, P5a_ResistanceAndDeadTimeComeOutOfOneDcSweep) {
   EXPECT_NEAR(kVAxisDead, fit.deadtime_v, 0.2F * kVAxisDead);
 }
 
-TEST(Commissioning, P5a_TheWindingTemperatureIsMeasuredRatherThanAssumed) {
+TEST(Commissioning, TheWindingTemperatureIsMeasuredRatherThanAssumed) {
   // Copper moves about 0.4 %/K, so a winding at +100 K reads 40 % high. The
   // nameplate in `nominal_params()` is the cold number; the point of measuring
   // is that the *hot* machine is what the observers will actually run against.
@@ -201,7 +201,7 @@ TEST(Commissioning, P5a_TheWindingTemperatureIsMeasuredRatherThanAssumed) {
 }
 
 TEST(Commissioning,
-     P5a_SamplesInsideTheFadeBandAreRefusedRatherThanAveragedIn) {
+     SamplesInsideTheFadeBandAreRefusedRatherThanAveragedIn) {
   // Below a few tens of milliamps the loss is not a step yet (SIL S13), so the
   // model being fitted does not hold there. The estimator must say so instead
   // of tilting `rs` downwards: a sample at 5 mA would put almost the whole 0.48
@@ -227,7 +227,7 @@ TEST(Commissioning,
       << "no number is invented when the model does not hold";
 }
 
-TEST(Commissioning, P5a_OneCurrentCannotSeparateTheResistanceFromTheDeadTime) {
+TEST(Commissioning, OneCurrentCannotSeparateTheResistanceFromTheDeadTime) {
   // Six samples, all settled at the same current. Two unknowns cannot come out
   // of one point, and the estimator must refuse rather than return the slope of
   // noise.
@@ -283,7 +283,7 @@ auto zero_current_voltage(float omega_e, const sil::PlantParams &params)
 
 } // namespace
 
-TEST(Commissioning, P5b_FluxComesOutOfTwoZeroCurrentSpeeds) {
+TEST(Commissioning, FluxComesOutOfTwoZeroCurrentSpeeds) {
   const sil::PlantParams params = nominal_params();
   const float truth = sil::SwitchingRig::psi_f();
   core::FluxEstimator estimator(core::FluxEstimator::Config{0.02F, 100.0F});
@@ -313,7 +313,7 @@ TEST(Commissioning, P5b_FluxComesOutOfTwoZeroCurrentSpeeds) {
   EXPECT_LT(std::fabs(fit.offset_v), 0.05F);
 }
 
-TEST(Commissioning, P5b_AConstantOffsetShowsUpInTheInterceptAndNotInTheFlux) {
+TEST(Commissioning, AConstantOffsetShowsUpInTheInterceptAndNotInTheFlux) {
   // Two speeds are enough *because* the offset is a free parameter: a constant
   // volt added to every measurement moves the intercept and leaves the slope
   // alone. This is the property that makes the method usable on real hardware,
@@ -335,7 +335,7 @@ TEST(Commissioning, P5b_AConstantOffsetShowsUpInTheInterceptAndNotInTheFlux) {
   EXPECT_NEAR(bias, fit.offset_v, 0.005F);
 }
 
-TEST(Commissioning, P5b_OneSpeedAndCurrentCarryingSamplesAreBothRefused) {
+TEST(Commissioning, OneSpeedAndCurrentCarryingSamplesAreBothRefused) {
   core::FluxEstimator estimator(core::FluxEstimator::Config{0.02F, 100.0F});
   // One speed is not a slope.
   // 一个转速不是斜率。
@@ -361,7 +361,7 @@ TEST(Commissioning, P5b_OneSpeedAndCurrentCarryingSamplesAreBothRefused) {
 // ---------------------------------------------------------------------------
 
 TEST(Commissioning,
-     P5d_TheOffsetNeedsNoReferenceAndTheGainCannotExistWithoutOne) {
+     TheOffsetNeedsNoReferenceAndTheGainCannotExistWithoutOne) {
   // The asymmetry is the finding, not a limitation of the implementation.
   // 不对称本身就是结论，不是实现的局限。
   core::CurrentSenseCalibrator offset_only(
@@ -390,7 +390,7 @@ TEST(Commissioning,
       << "a gain is underdetermined at any single current";
 }
 
-TEST(Commissioning, P5d_GainAndOffsetComeOutTogetherAgainstAReference) {
+TEST(Commissioning, GainAndOffsetComeOutTogetherAgainstAReference) {
   // The pair a real calibration collects: sweep the current with a clamp meter
   // on the wire, and regress the channel against it. Gain 0.9 (-10 %), offset
   // 30 mA.
@@ -431,7 +431,7 @@ TEST(Commissioning, P5d_GainAndOffsetComeOutTogetherAgainstAReference) {
 }
 
 TEST(Commissioning,
-     P5d_TheThreeWireSumFindsThatSomethingIsWrongButNotWhichPhase) {
+     TheThreeWireSumFindsThatSomethingIsWrongButNotWhichPhase) {
   // True phase currents sum to zero, so the *readings* sum to the sum of the
   // offsets: measurable with no reference at all. But it is one equation for
   // three unknowns, so it is a diagnostic and not a calibration. Both halves
@@ -466,7 +466,7 @@ TEST(Commissioning,
 // P5-e：把整定顺序这件事定量化。
 // ---------------------------------------------------------------------------
 
-TEST(Commissioning, P5e_ASensorOffsetCorruptsTheAlignedAngleSoTheOrderMatters) {
+TEST(Commissioning, ASensorOffsetCorruptsTheAlignedAngleSoTheOrderMatters) {
   // S10 already checks that the aligner captures the mount offset to 0.02 rad,
   // so P5-e's criterion is met -- what is *not* covered is that the aligner's
   // accuracy rests on the current sensors, and that is what decides the order
@@ -558,7 +558,7 @@ auto gate_error(const sil::MachineSpec &spec, float omega_e,
 
 } // namespace
 
-TEST(Commissioning, P5f_ThreeUnrelatedMachinesAtOneTuning) {
+TEST(Commissioning, ThreeUnrelatedMachinesAtOneTuning) {
   // The plan's only library-level criterion. Written as "three machines, no
   // retuning, all inside the 0.10 rad gate". It fails, and chasing the failure
   // turned it into two separate statements
@@ -702,7 +702,7 @@ auto step_axis(const sil::PlantParams &params, bool on_d_axis, int periods,
 
 } // namespace
 
-TEST(Commissioning, P5c_InductanceComesOutOfTheFluxIntegralOnEitherAxis) {
+TEST(Commissioning, InductanceComesOutOfTheFluxIntegralOnEitherAxis) {
   // A salient machine, so a d/q mix-up cannot hide. The nominal machine has `Ld
   // == Lq`, and a test on it would pass with the axes swapped -- which is the
   // failure mode worth catching, because `Ld` and `Lq` differ by a factor of
@@ -741,7 +741,7 @@ TEST(Commissioning, P5c_InductanceComesOutOfTheFluxIntegralOnEitherAxis) {
 }
 
 TEST(Commissioning,
-     P5c_TheAxisProjectionIsWhatTheQStepNeedsAndTheDNumberIsNotIt) {
+     TheAxisProjectionIsWhatTheQStepNeedsAndTheDNumberIsNotIt) {
   // Two hypotheses died here, and both died by measurement rather than by
   // argument. 两个假设在这里死掉，都是被测量杀掉的，不是被辩论杀掉的。
   //
@@ -818,7 +818,7 @@ TEST(Commissioning,
       << "and by more than the gate, or this is not worth a test";
 }
 
-TEST(Commissioning, P5c_AStepTooShortToSpanIsNotAnIdentification) {
+TEST(Commissioning, AStepTooShortToSpanIsNotAnIdentification) {
   // Three periods move the current a few hundred milliamps; dividing by that is
   // dividing by noise, and the estimator has to refuse rather than report a
   // confident wrong number.
@@ -849,7 +849,7 @@ TEST(Commissioning, P5c_AStepTooShortToSpanIsNotAnIdentification) {
 // P5-f 的增益地板债，量而不是假设。
 // ---------------------------------------------------------------------------
 
-TEST(Commissioning, P5f_TheGainFloorIsASafetyBoundAndNotATuningKnob) {
+TEST(Commissioning, TheGainFloorIsASafetyBoundAndNotATuningKnob) {
   // P5-f's conclusion was "the observer's gains are absolute, so they do not
   // travel". Half of that is true and half of it is not, and this test
   // separates them. P5-f

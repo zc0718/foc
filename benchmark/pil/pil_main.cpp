@@ -1,4 +1,4 @@
-// PIL entry point: the *same* S2 scenario the host GTest runs, compiled for the target ISA.
+// PIL entry point: the *same* speed-step scenario the host GTest runs, compiled for the target ISA.
 //
 // Why this file lives under benchmark/ and not under test_package/: `test-conventions.md` gives
 // `test_package` to host-side GTest and `benchmark/` to the target side. PIL is the target side, so
@@ -6,7 +6,7 @@
 // The scenario itself is *not* copied: the include below reaches the single definition the unit
 // tests use, so a change to the plant or the bench reaches PIL automatically.
 //
-// PIL 入口：与宿主 GTest **同一个** S2 场景，按目标 ISA 编译。
+// PIL 入口：与宿主 GTest **同一个**速度阶跃场景，按目标 ISA 编译。
 // 放在 benchmark/ 而不是 test_package/：test-conventions.md 把 test_package 给宿主 GTest、
 // 把 benchmark/ 给目标侧。PIL 属于目标侧，所以借目标槽位，而不是发明一个模板里没有的测试目录。
 // 场景本身**不复制**：下面的 include 直接取单元测试用的那一份定义，plant 或台架改了，PIL 自动跟上。
@@ -19,12 +19,12 @@
 #include <foc/core/protection.hpp>
 #include <foc/core/reference.hpp>
 
-#include "../../test_package/test/unit/sil_s2_case.hpp"
+#include "../../test_package/test/unit/sil_speed_step_case.hpp"
 
 
 
 int main() {
-    const foc::sil::S2Result result = foc::sil::run_s2(foc::sil::nominal_plant_params(), 100.0F, 0.5F);
+    const foc::sil::SpeedStepResult result = foc::sil::run_speed_step(foc::sil::nominal_plant_params(), 100.0F, 0.5F);
 
     // One key=value per line: the harness parses this, and a human can read it.
     // 每行一个 key=value：脚本解析它，人也能直接读。
@@ -35,16 +35,16 @@ int main() {
     std::printf("speed_final=%.9g\n", static_cast<double>(result.speed_final));
     std::printf("peak_iq=%.9g\n", static_cast<double>(result.peak_iq));
 
-    // --- the modules added after the S2 scenario, on the same target ISA ---
-    // --- S2 之后新增的模块，在同一个目标 ISA 上 ---
+    // --- the modules added after the speed-step scenario, on the same target ISA ---
+    // --- 速度阶跃场景之后新增的模块，在同一个目标 ISA 上 ---
     //
     // Why these belong in PIL rather than only in the host tests: the target is a different FPU with
     // a different libm, and every one of these modules either takes a square root, a tangent or a
     // cosine, or integrates a state across thousands of steps. A host-only green build says nothing
-    // about whether the target agrees -- the S2 comparison exists because that difference is real.
+    // about whether the target agrees -- the speed-step comparison exists because that difference is real.
     // 为什么这些该进 PIL 而不只是宿主测试：目标机是另一个 FPU、另一套 libm，而这些模块要么开方、
     // 要么取正切、要么取余弦，要么把状态积分几千步。只在宿主上绿，对"目标是否给出同一个答案"
-    // 什么也没说——S2 的比对本就是因为这个差别是真实存在的。
+    // 什么也没说——速度阶跃的比对本就是因为这个差别是真实存在的。
 
     const foc::core::MachineParams machine{0.5F, 4.0e-4F, 4.0e-4F, 4.7619048e-3F};
     const auto verdict = foc::core::is_field_weakening_worthwhile(machine, 3.0F);

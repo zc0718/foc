@@ -92,7 +92,7 @@ auto step_position(float position_bandwidth_rad_s, float velocity_limit_rad_s, f
  *        [zh] 级联必须落到给定角度并保持住。本台架实测：20 rad/s 时超调 2.1 mrad、180 ms 进入 2% 带，
  *        正是位置环契约预测的一阶响应（`settle ≈ 4/kp`）。
  */
-TEST(SilS8Position, StepLandsOnTargetAndStaysThere) {
+TEST(SilPosition, StepLandsOnTargetAndStaysThere) {
     const Outcome outcome = step_position(20.0F, 50.0F);
 
     EXPECT_EQ(foc::ErrorCode::Ok, outcome.status);
@@ -111,7 +111,7 @@ TEST(SilS8Position, StepLandsOnTargetAndStaysThere) {
  *        [zh] `kp` 就是带宽：翻倍它应当让稳定时间大致减半，同时速度上限仍要压住超调。这里变红意味着
  *        环路失去了一阶特性（例如不小心多了一个积分项）。
  */
-TEST(SilS8Position, BandwidthScalesTheSettlingTimeAsAFirstOrderLoop) {
+TEST(SilPosition, BandwidthScalesTheSettlingTimeAsAFirstOrderLoop) {
     const Outcome slow = step_position(10.0F, 50.0F);
     const Outcome fast = step_position(20.0F, 50.0F);
 
@@ -133,7 +133,7 @@ TEST(SilS8Position, BandwidthScalesTheSettlingTimeAsAFirstOrderLoop) {
  *        still arrive: the limit shapes the motion, it does not stop it.
  *        [zh] 低到真会触发的速度上限必须把阶跃变成斜坡，而且轴仍要到位：限速塑造运动，而不是阻断运动。
  */
-TEST(SilS8Position, AVelocityLimitTurnsTheStepIntoARampButStillArrives) {
+TEST(SilPosition, AVelocityLimitTurnsTheStepIntoARampButStillArrives) {
     const Outcome limited = step_position(20.0F, 1.0F, 2.0F); // 1 rad at 1 rad/s needs >= 1 s to cover
 
     EXPECT_EQ(foc::ErrorCode::Ok, limited.status);

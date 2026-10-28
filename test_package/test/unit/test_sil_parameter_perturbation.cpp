@@ -7,7 +7,7 @@
 #include <gtest/gtest.h>
 
 #include "sil_bench.hpp"
-#include "sil_s2_case.hpp"
+#include "sil_speed_step_case.hpp"
 
 
 
@@ -38,12 +38,12 @@ auto perturbed(const Perturbation& p) -> foc::sil::PlantParams {
 
 
 
-TEST(SilS5Perturbation, StaysStableAndAccurateWithinPlusMinusThirtyPercent) {
+TEST(SilParameterPerturbation, StaysStableAndAccurateWithinPlusMinusThirtyPercent) {
     const Perturbation cases[] = {{"rs +30%", 0, 1.3F}, {"rs -30%", 0, 0.7F}, {"ld +30%", 1, 1.3F},
                                   {"ld -30%", 1, 0.7F}, {"lq +30%", 2, 1.3F}, {"lq -30%", 2, 0.7F}};
 
     for (const Perturbation& c : cases) {
-        const foc::sil::S2Result r = foc::sil::run_s2(perturbed(c), kTargetRadS);
+        const foc::sil::SpeedStepResult r = foc::sil::run_speed_step(perturbed(c), kTargetRadS);
 
         // PRD 8.4: still stable, no divergence or sustained oscillation.
         EXPECT_GE(r.settling_s, 0.0F) << c.name << ": speed never settled";
@@ -57,11 +57,11 @@ TEST(SilS5Perturbation, StaysStableAndAccurateWithinPlusMinusThirtyPercent) {
 
 
 
-TEST(SilS5Perturbation, OvershootStaysBounded) {
+TEST(SilParameterPerturbation, OvershootStaysBounded) {
     const Perturbation cases[] = {{"ld +30%", 1, 1.3F}, {"lq -30%", 2, 0.7F}};
 
     for (const Perturbation& c : cases) {
-        const foc::sil::S2Result r = foc::sil::run_s2(perturbed(c), kTargetRadS);
+        const foc::sil::SpeedStepResult r = foc::sil::run_speed_step(perturbed(c), kTargetRadS);
         // Mismatched inductances desynchronise the current loop; the speed loop must still not ring.
         EXPECT_LE(r.overshoot, 0.20F) << c.name << ": overshoot out of bounds";
     }

@@ -18,12 +18,12 @@ namespace core {
  *        With the current on the q axis they carry `(0, +i*sqrt(3)/2, -i*sqrt(3)/2)`: one phase carries nothing, and
  *        the projection is `(2/3)*(sqrt(3)/2 + sqrt(3)/2) = 2/sqrt(3)` times -- 0.554 V instead of 0.64 V at 24 V. That
  *        13 % difference is not cosmetic: using the d-axis number on a q-axis step leaves `Lq` reading 16 % low (SIL
- *        P5-c).
+ *        the two-point sweep).
  *        [zh] 为什么这不是每相的数值。逆变器从每相拿走 `deadtime_v·sign(i_phase)`，
  *        三个这样的量投影到一个轴上，取决于电流在哪里：电流在 d 轴上时相电流是 `(+i, −i/2, −i/2)`，投影是 `(2/3)·(1 +
  *        1/2 + 1/2)·deadtime_v = (4/3)·deadtime_v`； 电流在 q 轴上时是 `(0, +i·√3/2,
  *        −i·√3/2)`：有一相根本不带电流，投影是 `(2/3)·(√3/2 + √3/2) = 2/√3` 倍——24 V 下是 0.554 V 而不是 0.64 V。这 13
- *        % 不是 无关紧要：在 q 轴阶跃上用 d 轴的数，会让 `Lq` 读低 16 %（SIL P5-c）。
+ *        % 不是 无关紧要：在 q 轴阶跃上用 d 轴的数，会让 `Lq` 读低 16 %（两点扫描实测）。
  *
  * @param deadtime_v [en] (t_dead/T_pwm)*v_bus per phase, V. [zh]
  * (t_dead/T_pwm)*v_bus，每相，V。
@@ -49,12 +49,12 @@ namespace core {
     // `cos(theta_p - angle)`, so `sign(i_p) * cos(theta_p - angle)` is its
     // magnitude. On d that sum is `1 + 1/2 + 1/2 = 2`; on q it is
     // `0 + sqrt(3)/2 + sqrt(3)/2 = sqrt(3)`; averaged over all angles it is
-    // `3 * 2/pi = 1.91`, which is where P4's `4/pi` rotating-frame factor comes
+    // `3 * 2/pi = 1.91`, which is where the `4/pi` rotating-frame factor comes
     // from. One formula, three numbers, all of them the same physics.
     // 投影是 `(2/3)·Σ|cos(θ_p − angle)|`：一相的损失是 `deadtime_v·sign(i_p)`，而
     // `i_p` 正比于 `cos(θ_p − angle)`，所以 `sign(i_p)·cos(θ_p − angle)` 就是它的
     // 大小。d 轴上这个和是 `1 + 1/2 + 1/2 = 2`；q 轴上是
-    // `0 + √3/2 + √3/2 = √3`；对全部角度取平均是 `3·2/π = 1.91`，P4 里那个 `4/π`
+    // `0 + √3/2 + √3/2 = √3`；对全部角度取平均是 `3·2/π = 1.91`，那个 `4/π`
     // 的旋转系系数正是从这里来的。一个公式、三个数，都是同一份物理。
     const float projection = std::fabs(c0) + std::fabs(c1) + std::fabs(c2);
     return (0.6666667F * deadtime_v) * projection;
@@ -77,13 +77,13 @@ namespace core {
  * 完全等价。两个电流就能分开：随 `i` 的斜率是 `rs`，截距是 `deadtime_v`。
  *
  *        [en] Two conditions it cannot work without, both physical rather than numerical. (1) **Currents above the fade
- *        band**: below a few tens of milliamps the loss is not yet a step (SIL S13 measures it going from 2.7 % to 97 %
+ *        band**: below a few tens of milliamps the loss is not yet a step (measured: it goes from 2.7 % to 97 %
  *        of `(4/pi)*deadtime_v` between 21 mA and 86 mA), so a low-current sample measures the fade, not the step, and
  *        biases `rs` downwards. (2)
  * **One polarity**: `sign(i)` has to be constant across the sweep, or the
  * intercept flips sign half way through and the fit means nothing. [zh]
  * 两个它离不开的条件，都是物理的而不是数值的。（1）**电流要在淡出带以上**：
- * 几十毫安以下损失还不是阶跃（SIL S13 量到它在 21 mA 到 86 mA 之间从
+ * 几十毫安以下损失还不是阶跃（实测它在 21 mA 到 86 mA 之间从
  * `(4/π)·deadtime_v` 的 2.7 % 走到 97 %），所以小电流样本量的是淡出、不是阶跃，
  * 会把 `rs` 往下带。（2）**单极性**：`sign(i)` 在整个扫描里必须不变，否则截距中途
  * 变号，拟合没有意义。
@@ -607,12 +607,12 @@ class CurrentSenseCalibrator final {
  *
  *        [en] What `v_delivered` is, and the error that follows. The inverter delivers `v_command -
  *        deadtime_v*sign(i)`, which is what this integrator subtracts using the `deadtime_v` measured by `RsEstimator`.
- *        While the current crosses zero the true loss is *less* than `deadtime_v` (that is the fade band, SIL S13), so
+ *        While the current crosses zero the true loss is *less* than `deadtime_v` (that is the fade band), so
  *        the integrator over-subtracts for the crossing time `t_cross` and the flux comes out low by about `deadtime_v
  *        * t_cross`. At 0.48 V and 20 us against `L*delta_i = 4e-4 V*s` for a 1 A step, that is 2.4 % -- inside the
  *        tolerance, but it is a *known direction*, so it is documented rather than hoped away. [zh] `v_delivered`
  *        是什么，以及随之而来的误差。逆变器交付 `v_cmd − deadtime_v·sign(i)`， 本积分器用 `RsEstimator` 量到的
- *        `deadtime_v` 把它减掉。电流过零期间真实损失**小** 于 `deadtime_v`（那就是淡出带，SIL S13），所以积分在穿越时间
+ *        `deadtime_v` 把它减掉。电流过零期间真实损失**小** 于 `deadtime_v`（那就是淡出带），所以积分在穿越时间
  *        `t_cross` 内减多了， 磁链偏低约 `deadtime_v·t_cross`。0.48 V、20 µs，对 1 A 阶跃的 `L·Δi = 4e-4 V·s` 是 2.4
  *        %——在容差内，但**方向是已知的**，所以要写下来而不是 指望它不存在。
  *

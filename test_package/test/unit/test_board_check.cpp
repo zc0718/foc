@@ -87,7 +87,7 @@ void print_report(const char *label, const core::BoardReport &report) {
 
 } // namespace
 
-TEST(BoardCheck, P7b_ACorrectBoardProducesNoComplaintAndStillCarriesNumbers) {
+TEST(BoardCheck, ACorrectBoardProducesNoComplaintAndStillCarriesNumbers) {
   const core::BoardReport report =
       core::check_board(good_board(), core::BoardLimits{});
   print_report("correct board", report);
@@ -109,7 +109,7 @@ TEST(BoardCheck, P7b_ACorrectBoardProducesNoComplaintAndStillCarriesNumbers) {
 }
 
 TEST(BoardCheck,
-     P7a_AReversedChannelIsNamedAsAPolarityFaultAndNotAsThreeSeparateOnes) {
+     AReversedChannelIsNamedAsAPolarityFaultAndNotAsThreeSeparateOnes) {
   // A channel whose sign is inverted. The physics of the signature: a positive
   // d-axis drive puts
   // `(+i, -i/2, -i/2)` on the phases, and negating one of them turns the sum
@@ -140,7 +140,7 @@ TEST(BoardCheck,
 }
 
 TEST(BoardCheck,
-     P7a_ASamplingInstantFaultShowsUpAsRippleAndIsNotBlamedOnTheDeadTime) {
+     ASamplingInstantFaultShowsUpAsRippleAndIsNotBlamedOnTheDeadTime) {
   // The ADC sampling somewhere other than the centre of the zero vector: it
   // then reads the ripple instead of the average. The number is the ratio of
   // measured to predicted peak-to-peak, which is the only threshold that
@@ -162,7 +162,7 @@ TEST(BoardCheck,
   EXPECT_EQ(3, report.cause_phase) << "this cause is not per-phase";
 }
 
-TEST(BoardCheck, P7a_AnOffsetIsAlsoWhatBreaksTheAlignmentAndTheReportSaysSo) {
+TEST(BoardCheck, AnOffsetIsAlsoWhatBreaksTheAlignmentAndTheReportSaysSo) {
   // An offset on every channel. Two items fail for the *same* reason, and the
   // second one is not obvious: the aligner forces the current vector onto a
   // known angle, and an offset tilts it by `atan(offset/pull)` = 0.12 rad on a
@@ -190,7 +190,7 @@ TEST(BoardCheck, P7a_AnOffsetIsAlsoWhatBreaksTheAlignmentAndTheReportSaysSo) {
   EXPECT_GE(report.failures, 2);
 }
 
-TEST(BoardCheck, P7a_FourWrongBoardsFourDifferentNames) {
+TEST(BoardCheck, FourWrongBoardsFourDifferentNames) {
   // The summary P7-a asks for: four boards, four distinct names, no collisions.
   // One cause per board is only useful if different faults do not produce the
   // same answer. P7-a
@@ -401,7 +401,7 @@ auto spinning_truth() -> core::BoardMeasurements {
 
 } // namespace
 
-TEST(BoardCheck, P7a_TheSelfTestMeasuresAndTheChecklistNamesTheCause) {
+TEST(BoardCheck, TheSelfTestMeasuresAndTheChecklistNamesTheCause) {
   // P7-a end to end: the sequence **measures**, `check_board` **judges**, and
   // the answer names the thing the operator has to touch. Three boards, one
   // `Fault` setting each. P7-a 端到端：序列**测量**，`check_board`
@@ -450,7 +450,7 @@ TEST(BoardCheck, P7a_TheSelfTestMeasuresAndTheChecklistNamesTheCause) {
 }
 
 
-TEST(BoardCheck, T4_TheSelfTestFindsWhereTheAdcTriggerSits) {
+TEST(BoardCheck, TheSelfTestFindsWhereTheAdcTriggerSits) {
   // T4: the ripple check only has signal if the bench can move its trigger. With
   // a movable trigger the standstill sequence reports **where** the trigger is,
   // and what that position is worth in amps.
@@ -513,7 +513,7 @@ TEST(BoardCheck, T4_TheSelfTestFindsWhereTheAdcTriggerSits) {
          "period centre";
 }
 
-TEST(BoardCheck, T4_TheSamplingErrorIsZeroAtTheCentreAndMaximalAtTheEdge) {
+TEST(BoardCheck, TheSamplingErrorIsZeroAtTheCentreAndMaximalAtTheEdge) {
   // The number the position is worth, on the same board with nothing else
   // changed: what the ADC reads minus what the current really is. A flat plant
   // with a fine trigger grid is the only place this can be checked without
@@ -545,7 +545,7 @@ TEST(BoardCheck, T4_TheSamplingErrorIsZeroAtTheCentreAndMaximalAtTheEdge) {
   EXPECT_GT(at_peak.sample_error_a, 4.0F * at_centre.sample_error_a);
 }
 
-TEST(BoardCheck, T4_EveryItemAndCauseHasADistinctName) {
+TEST(BoardCheck, EveryItemAndCauseHasADistinctName) {
   // The 5-minute procedure dumps the report with these two functions, so a
   // duplicated name would make two different faults look like one line of output.
   // 5 分钟流程就是用这两个函数导出报告的，名字重复会让两个不同的故障看起来像同一行输出。

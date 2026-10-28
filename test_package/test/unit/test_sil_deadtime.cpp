@@ -144,7 +144,7 @@ auto run_compensated_sine(float v_dead, float transition_a = 0.0F,
 
 } // namespace
 
-TEST(SilS13Deadtime, TheModelInjectsTheVoltSecondsTheDeadTimeTakes) {
+TEST(SilDeadtime, TheModelInjectsTheVoltSecondsTheDeadTimeTakes) {
   // 1 us at 20 kHz is 2 % of the switching period; at a 24 V bus that is 0.48 V
   // per phase, which is the quantity every dead-time compensation scheme has to
   // reconstruct. 20 kHz 下 1 us 占开关周期的 2%；24 V 母线上就是每相 0.48
@@ -162,7 +162,7 @@ TEST(SilS13Deadtime, TheModelInjectsTheVoltSecondsTheDeadTimeTakes) {
   EXPECT_FLOAT_EQ(0.0F, hal.deadtime_voltage());
 }
 
-TEST(SilS13Deadtime, LowCurrentTrackingDegradesOnceDeadTimeIsModelled) {
+TEST(SilDeadtime, LowCurrentTrackingDegradesOnceDeadTimeIsModelled) {
   // The distortion is *not* monotonic in amplitude, and the sweep below is why
   // this test uses 2 rad/s rather than "as slow as possible" -- measured
   // worst-error ratio with 1 us of dead time:
@@ -205,7 +205,7 @@ TEST(SilS13Deadtime, LowCurrentTrackingDegradesOnceDeadTimeIsModelled) {
                                   ideal.worst_error_rad_s));
 }
 
-TEST(SilS13Deadtime, CompensatingTheDeadTimeClosesTheGapItOpened) {
+TEST(SilDeadtime, CompensatingTheDeadTimeClosesTheGapItOpened) {
   // The point of the previous test: it measured a gap. This one shows the gap
   // is *closable* by a library stage rather than by hand-tuning, and by how
   // much. Same scenario, same plant, same dead time -- only the modulator
@@ -242,7 +242,7 @@ TEST(SilS13Deadtime, CompensatingTheDeadTimeClosesTheGapItOpened) {
                                   ideal.worst_error_rad_s));
 }
 
-TEST(SilS13Deadtime, ASmoothZeroCrossingIsNotWhatSignCompensationAssumes) {
+TEST(SilDeadtime, ASmoothZeroCrossingIsNotWhatSignCompensationAssumes) {
   // The compensator models the inverter as `v_dead * sign(i)`. A real inverter
   // clamps to a rail and approaches it smoothly, so near a zero crossing the
   // model over-corrects -- which is exactly the part of the remaining 14 % that
@@ -269,7 +269,7 @@ TEST(SilS13Deadtime, ASmoothZeroCrossingIsNotWhatSignCompensationAssumes) {
   }
 }
 
-TEST(SilS13Deadtime, TheRampFadesTheCorrectionWhereTheSignIsNotYetInformation) {
+TEST(SilDeadtime, TheRampFadesTheCorrectionWhereTheSignIsNotYetInformation) {
   // Fixes finding 1 from the other side. The sweep above showed that a `sign()`
   // correction is *worse than nothing* once the zero crossing is not an ideal
   // step -- because it commands a full +-0.48 V square wave at currents where
@@ -395,7 +395,7 @@ auto hold_current_switched(float iq_ref_a, float v_dead, float ripple_a)
 
 } // namespace
 
-TEST(SilS13Deadtime,
+TEST(SilDeadtime,
      C3_TheFadeWasTunedOnTheWrongPlantAndTheSwitchingOneSaysSo) {
   // C3 of the plan: re-check "fade by current" on the plant that actually
   // switches, at both ends of the current range. The answer was not "it is
@@ -550,8 +550,8 @@ auto identify_fade(float v_bus) -> foc::core::DeadTimeFadeEstimator::Result {
 
 } // namespace
 
-TEST(SilS13Deadtime,
-     P4c_TheFadeIsIdentifiableFromARotatingCurrentAndScalesWithTheRipple) {
+TEST(SilDeadtime,
+     TheFadeIsIdentifiableFromARotatingCurrentAndScalesWithTheRipple) {
   // P4 of the plan. The width is the number the compensation stage needs
   // and the one nobody can compute from the nameplate, so it has to be
   // *measured*. The experiment has to be a **rotating** current: a locked
@@ -593,7 +593,7 @@ TEST(SilS13Deadtime,
       << "the fade is set by the ripple, so it tracks the bus";
   static_cast<void>(deadtime_v_at_24);
 }
-TEST(SilS13Deadtime, P4d_TheIdentifiedWidthIsNotBetterThanTheStep) {
+TEST(SilDeadtime, TheIdentifiedWidthIsNotBetterThanTheStep) {
   // **The pre-written criterion failed, and the feature lost.** P4-d asked
   // for `ramp <= 1.1x step` at 0.3 A; the measured width gives 1.16x. It
   // also loses at 20 mA, where the step is *better* (0.01350 vs 0.02135).

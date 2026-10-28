@@ -145,7 +145,7 @@ template <typename AlignerT> class Rig final {
 
 
 
-TEST(SilS10Align, TheRotorSettlesOnTheForcedFieldAndTheOffsetIsCaptured) {
+TEST(SilAlignment, TheRotorSettlesOnTheForcedFieldAndTheOffsetIsCaptured) {
     // A joint whose encoder is mounted 2.3 rad off, starting from an arbitrary rotor angle.
     // 一个编码器装偏 2.3 rad 的关节，起始转子角任意。
     constexpr float kMountOffset = 2.3F;
@@ -175,7 +175,7 @@ TEST(SilS10Align, TheRotorSettlesOnTheForcedFieldAndTheOffsetIsCaptured) {
 
 
 
-TEST(SilS10Align, WithoutAlignmentTheSameCommandProducesTorqueInTheWrongDirection) {
+TEST(SilAlignment, WithoutAlignmentTheSameCommandProducesTorqueInTheWrongDirection) {
     // Negative control. Same machine, same mounting error, same torque command -- but no alignment.
     // The commutation offset is then 2.3*7 rad off, i.e. close to half a turn, so the q-axis current
     // the controller thinks it is applying lands almost entirely on -q.
@@ -194,7 +194,7 @@ TEST(SilS10Align, WithoutAlignmentTheSameCommandProducesTorqueInTheWrongDirectio
 
 
 
-TEST(SilS10Align, AfterAlignmentTheSameTorqueCommandProducesTorqueInTheRightDirection) {
+TEST(SilAlignment, AfterAlignmentTheSameTorqueCommandProducesTorqueInTheRightDirection) {
     Rig<foc::core::AlignRoutine> rig(1.0F, 2.3F, foc::core::AlignRoutine{align_recipe()});
     ASSERT_GT(rig.run_through_alignment(2.0F), 0.0F);
     ASSERT_EQ(foc::core::MotorState::Run, rig.motor.state());
@@ -212,7 +212,7 @@ TEST(SilS10Align, AfterAlignmentTheSameTorqueCommandProducesTorqueInTheRightDire
 
 
 
-TEST(SilS10Align, PositionControlWorksOnTheAlignedFrame) {
+TEST(SilAlignment, PositionControlWorksOnTheAlignedFrame) {
     // The point of the whole exercise: position mode was unusable on real hardware exactly because
     // the frame it closes on was unknown. After alignment, a 0.2 rad move lands where it was asked.
     // 整套流程的意义：位置模式在真机上不可用，原因正是它所闭环的坐标系未知。对齐之后，0.2 rad 的移动
@@ -237,7 +237,7 @@ TEST(SilS10Align, PositionControlWorksOnTheAlignedFrame) {
 
 
 
-TEST(SilS10Align, PositionControlFailsWithoutAlignment) {
+TEST(SilAlignment, PositionControlFailsWithoutAlignment) {
     // Negative control for the same claim: with the mounting offset unknown, the frame the position
     // loop closes on is not the frame the rotor lives in. Commanding the same +0.2 rad from the same
     // starting point ends somewhere else entirely.

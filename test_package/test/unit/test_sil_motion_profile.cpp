@@ -53,7 +53,7 @@ struct Trace final {
  *        [zh] 规划器塑造的是速度指令；plant 上量到的也必须是同样的形状。实测加速度受配置上限约束
  *        （内层环跟踪指令远比规划器改变指令快得多）——这正是把规划器放在环**前面**而不是里面的意义。
  */
-TEST(SilS9Profile, AccelLimitedMoveRespectsItsLimitsAndStillArrives) {
+TEST(SilMotionProfile, AccelLimitedMoveRespectsItsLimitsAndStillArrives) {
     using MotorT = foc::motor::Motor<foc::core::BackEmfObserver, foc::core::Svpwm, foc::core::Pi, foc::sil::PlantHal,
                                      foc::core::NullReferenceGenerator, foc::core::NullFeedforward,
                                      foc::core::MotionProfile>;
@@ -117,7 +117,7 @@ TEST(SilS9Profile, AccelLimitedMoveRespectsItsLimitsAndStillArrives) {
  *        [zh] 同一次运动去掉规划器：纯 P 环把位置阶跃变成速度阶跃，而这正是规划器要消掉的加速度。
  *        这条反向对照证明上面那条用例量的是真东西。
  */
-TEST(SilS9Profile, WithoutTheProfileTheSameMoveIsAVelocityStep) {
+TEST(SilMotionProfile, WithoutTheProfileTheSameMoveIsAVelocityStep) {
     using MotorT = foc::motor::Motor<foc::core::BackEmfObserver, foc::core::Svpwm, foc::core::Pi, foc::sil::PlantHal,
                                      foc::core::NullReferenceGenerator, foc::core::NullFeedforward, foc::core::PositionP>;
     const foc::motor::MotorConfig mc{0.5F, 4.0e-4F, 4.0e-4F, 0.05F, 1.0e-4F, 1.0e-4F, kPolePairs, 3.0F, 20000.0F, 0.0F};

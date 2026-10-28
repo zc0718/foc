@@ -91,7 +91,7 @@ auto sag_under_load(float kp_scale, float ilimit_scale) -> float {
  *       速度"来回应负载，而速度积分器只在存在速度误差时才吸收负载。所以这段下垂就是积分器的建立过程，
  *       收敛得很慢。
  */
-TEST(SilS12Compliance, AConstantLoadAlwaysProducesSomeSag) {
+TEST(SilCompliance, AConstantLoadAlwaysProducesSomeSag) {
     const float stiff = sag_under_load(0.0F, 0.0F);
     EXPECT_GT(stiff, 5e-3F) << "a proportional position loop cannot hold a load at exactly zero error";
     EXPECT_LT(stiff, 2e-2F) << "and the integrator still does most of the work: " << stiff << " rad";
@@ -99,7 +99,7 @@ TEST(SilS12Compliance, AConstantLoadAlwaysProducesSomeSag) {
 
 
 
-TEST(SilS12Compliance, SofteningTheStiffnessIncreasesTheSag) {
+TEST(SilCompliance, SofteningTheStiffnessIncreasesTheSag) {
     // Monotonic in the knob, which is what makes it usable as a compliance setting. The values are
     // the measured ones for this rig; the assertion is the ordering, not the numbers.
     // 随旋钮单调变化，这正是它能当柔顺参数使用的原因。数值是本台架的实测值；断言的是大小顺序，不是数值。
@@ -113,7 +113,7 @@ TEST(SilS12Compliance, SofteningTheStiffnessIncreasesTheSag) {
 
 
 
-TEST(SilS12Compliance, ReleasingTheIntegralAlsoIncreasesTheSag) {
+TEST(SilCompliance, ReleasingTheIntegralAlsoIncreasesTheSag) {
     // The second knob works too, and it works in the same direction -- but in this rig it is the
     // weaker of the two, which is worth stating out loud instead of asserting a theory that the
     // measurement does not support.

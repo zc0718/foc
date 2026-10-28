@@ -25,7 +25,7 @@ auto make_bench() -> foc::sil::BenchConfig {
 
 
 
-TEST(SilS1CurrentStep, TracksTheReferenceWithoutOvershoot) {
+TEST(SilCurrentStep, TracksTheReferenceWithoutOvershoot) {
     Bench bench(make_bench());
     ASSERT_EQ(foc::ErrorCode::Ok, bench.init_and_start());
 
@@ -55,7 +55,7 @@ TEST(SilS1CurrentStep, TracksTheReferenceWithoutOvershoot) {
 
 
 
-TEST(SilS1CurrentStep, HoldsTheDaxisCurrentAtZero) {
+TEST(SilCurrentStep, HoldsTheDaxisCurrentAtZero) {
     Bench bench(make_bench());
     ASSERT_EQ(foc::ErrorCode::Ok, bench.init_and_start());
 
@@ -70,7 +70,7 @@ TEST(SilS1CurrentStep, HoldsTheDaxisCurrentAtZero) {
 
 
 
-TEST(SilS1CurrentStep, NegativeReferenceIsSymmetric) {
+TEST(SilCurrentStep, NegativeReferenceIsSymmetric) {
     Bench bench(make_bench());
     ASSERT_EQ(foc::ErrorCode::Ok, bench.init_and_start());
 

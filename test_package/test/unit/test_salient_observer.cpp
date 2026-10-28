@@ -112,7 +112,7 @@ auto incumbent_error(const sil::MachineSpec &s, float id_a) -> float {
 
 } // namespace
 
-TEST(SalientObserver, S21_WithZeroDaxisCurrentTheSaliencyRatioDoesNotMatter) {
+TEST(SalientObserver, WithZeroDaxisCurrentTheSaliencyRatioDoesNotMatter) {
   // The claim under test: "the single-L observer survives to Lq/Ld = 2 and
   // fails at 2.5". If that were true the three numbers below would climb with
   // the ratio. They do not move at all, and the reason is arithmetic rather
@@ -140,7 +140,7 @@ TEST(SalientObserver, S21_WithZeroDaxisCurrentTheSaliencyRatioDoesNotMatter) {
 }
 
 TEST(SalientObserver,
-     S21_NonZeroDaxisCurrentIsTheRealLimitAndItIsWorseThanSaliency) {
+     NonZeroDaxisCurrentIsTheRealLimitAndItIsWorseThanSaliency) {
   // The limit that does exist, and it is not about having two inductances: it
   // is about the observer's flux target being a constant. `i_d = -1 A` costs
   // more angle than any saliency ratio does, on a *surface* machine, at low

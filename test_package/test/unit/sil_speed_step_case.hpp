@@ -19,7 +19,7 @@ namespace sil {
  *
  * @since 0.1.0
  */
-struct S2Result final {
+struct SpeedStepResult final {
     float overshoot;             ///< [en] overshoot as a fraction of the step. [zh] 超调占阶跃的比例。
     float steady_error_fraction; ///< [en] steady-state error over the target. [zh] 稳态误差占目标的比例。
     float tail_peak_to_peak;     ///< [en] ripple over the last 20 %. [zh] 末 20% 的峰峰值。
@@ -39,7 +39,7 @@ struct S2Result final {
  * @param hold_s [en] how long to run after the step. [zh] 阶跃后运行时长。
  * @since 0.1.0
  */
-inline auto run_s2(const PlantParams& plant, float target_rad_s, float hold_s = 0.5F) -> S2Result {
+inline auto run_speed_step(const PlantParams& plant, float target_rad_s, float hold_s = 0.5F) -> SpeedStepResult {
     Bench bench(standard_bench_config(), plant);
     bench.motor().set_speed(0.0F);
     static_cast<void>(bench.init_and_start());
@@ -65,7 +65,7 @@ inline auto run_s2(const PlantParams& plant, float target_rad_s, float hold_s = 
         peak_iq = (current_abs > peak_iq) ? current_abs : peak_iq;
     }
 
-    S2Result r{};
+    SpeedStepResult r{};
     r.speed_final = tail_mean(speed, 0.1F);
     r.overshoot = overshoot_fraction(normalised, magnitude, 0.0F);
     const float error =

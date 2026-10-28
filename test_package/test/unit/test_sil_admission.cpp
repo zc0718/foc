@@ -226,7 +226,7 @@ auto smo_switched_error(const sil::SwitchingRigConfig &config, float gain,
 
 } // namespace
 
-TEST(SilS18Admission,
+TEST(SilAdmission,
      TheIncumbentPassesTheGateButTheGateWasCalibratedAfterwards) {
   // The honest history of one number. The gate was written as 0.05 rad before
   // anything ran; the shipped observer came in at 0.068 and *failed its own
@@ -257,7 +257,7 @@ TEST(SilS18Admission,
       << "clean " << clean << " vs impaired " << impairments;
 }
 
-TEST(SilS18Admission,
+TEST(SilAdmission,
      ATunedSlidingModeObserverPassesTheGateAndBeatsTheIncumbent) {
   // A3-b was written as "the idealised SMO fails the gate". **It does not.**
   // Given the same three knobs (gain, filter bandwidth, boundary layer) and its
@@ -312,7 +312,7 @@ TEST(SilS18Admission,
       static_cast<int>(100.0F * (gate - best) / gate));
 }
 
-TEST(SilS18Admission, ItsTuningIsBoundToTheDisturbanceAndSoIsTheIncumbents) {
+TEST(SilAdmission, ItsTuningIsBoundToTheDisturbanceAndSoIsTheIncumbents) {
   // The third thing I expected to separate them, and the second hypothesis this
   // file falsifies. I wrote that the shipped observer would be insensitive to
   // the two plants (within 1.5x) while the SMO's accuracy would be a function
@@ -390,7 +390,7 @@ TEST(SilS18Admission, ItsTuningIsBoundToTheDisturbanceAndSoIsTheIncumbents) {
   EXPECT_GT(impaired, 3.0F * clean);
 }
 
-TEST(SilS18Admission, TheRankingSurvivesASwitchingInverterAndTheGapWidens) {
+TEST(SilAdmission, TheRankingSurvivesASwitchingInverterAndTheGapWidens) {
   // V8 of the S19 plan, and the reason the model was built. §5's original
   // reason for skipping SMO was that "chattering is a hardware effect, so SIL
   // makes an SMO look too good". Measured on a model whose dead time and ripple
@@ -463,7 +463,7 @@ TEST(SilS18Admission, TheRankingSurvivesASwitchingInverterAndTheGapWidens) {
   EXPECT_LT(best, switched_incumbent);
 }
 
-TEST(SilS18Admission, C1_TheCandidateRecordAcrossSpeedsAndMismatches) {
+TEST(SilAdmission, C1_TheCandidateRecordAcrossSpeedsAndMismatches) {
   // V8 answered "which is more accurate" at **one** point. One point is not a
   // library-level statement, so this is the record: five speeds, three Rs
   // beliefs. V8
@@ -571,7 +571,7 @@ TEST(SilS18Admission, C1_TheCandidateRecordAcrossSpeedsAndMismatches) {
       << "the incumbent is expected to take back the top of the range";
 }
 
-TEST(SilS18Admission,
+TEST(SilAdmission,
      P4ab_DeadTimeCompensationBelongsToTheBandwidthLimitedObserver) {
   // P4-a and P4-b of the plan, and the finding that came out of measuring them.
   // plan 的 P4-a 与 P4-b，以及量它们时掉出来的那个结论。

@@ -91,7 +91,7 @@ auto request(core::MtpaReference &ref, float iq) -> core::Dq<float> {
 
 } // namespace
 
-TEST(Mtpa, P10_TheGainIsWorthShippingWhereTheReluctanceTermIs) {
+TEST(Mtpa, TheGainIsWorthShippingWhereTheReluctanceTermIs) {
   const sil::MachineSpec s = salient_spec();
   const float i_char = psi_f_of(s) / s.ld;
   const float i_max = i_char; // the criterion's operating point
@@ -141,7 +141,7 @@ TEST(Mtpa, P10_TheGainIsWorthShippingWhereTheReluctanceTermIs) {
   EXPECT_GE(gain_at_full, kMinTorqueGain);
 }
 
-TEST(Mtpa, P10_AtAbsurdRequestsTheCurveIsWalkedRatherThanScaled) {
+TEST(Mtpa, AtAbsurdRequestsTheCurveIsWalkedRatherThanScaled) {
   const sil::MachineSpec s = salient_spec();
   const float i_max = 1.0F;
   auto ref = make_reference(s, i_max);
@@ -173,7 +173,7 @@ TEST(Mtpa, P10_AtAbsurdRequestsTheCurveIsWalkedRatherThanScaled) {
   EXPECT_NEAR(i.d, on_curve.d, 1.0e-5F);
 }
 
-TEST(Mtpa, P10_ASurfaceMachineGetsExactlyZeroNotAnEpsilon) {
+TEST(Mtpa, ASurfaceMachineGetsExactlyZeroNotAnEpsilon) {
   // `Lq = Ld` is not a small saliency, it is no saliency. An epsilon in the
   // denominator would produce `i_d ~ psi_f/eps`, which is not a smaller version
   // of the right answer -- it is a different number entirely.
@@ -200,7 +200,7 @@ TEST(Mtpa, P10_ASurfaceMachineGetsExactlyZeroNotAnEpsilon) {
   EXPECT_GT(i_char / nominal.i_max_a, 3.0F);
 }
 
-TEST(Mtpa, P10_TurningMtpaOnDoesNotBreakTheObserverOnTheSalientMachine) {
+TEST(Mtpa, TurningMtpaOnDoesNotBreakTheObserverOnTheSalientMachine) {
   // Rule 4, and the one that decides whether this ships. MTPA only pays on a
   // salient machine, and the shipped observer is a single-`L` model. So the
   // question is not "is the torque gain real" but "can the library still see

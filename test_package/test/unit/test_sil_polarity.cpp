@@ -160,7 +160,7 @@ struct Commissioning final {
 
 } // namespace
 
-TEST(SilS15Polarity, SaturationGivesThePolarityTestSomethingToMeasure) {
+TEST(SilPolarity, SaturationGivesThePolarityTestSomethingToMeasure) {
     // The plant has to show it before any conclusion drawn from it means anything: the incremental
     // d-axis inductance must fall with positive current. Without this the whole scenario would be
     // measuring nothing and agreeing with itself.
@@ -175,7 +175,7 @@ TEST(SilS15Polarity, SaturationGivesThePolarityTestSomethingToMeasure) {
     EXPECT_FLOAT_EQ(kLd, ideal.effective_ld(3.0F));
 }
 
-TEST(SilS15Polarity, ItSaysAlignedWhenTheSaliencyLoopAlreadyLandedOnTheMagnet) {
+TEST(SilPolarity, ItSaysAlignedWhenTheSaliencyLoopAlreadyLandedOnTheMagnet) {
     // Rotor half a radian from where the estimate starts: inside the +-pi/2 window, so the loop lands
     // on the correct half and the pulse pair should confirm it.
     // 转子距估计起点半弧度：在 ±π/2 窗口内，于是环路落在正确的那半边，脉冲对应当确认它。
@@ -196,7 +196,7 @@ TEST(SilS15Polarity, ItSaysAlignedWhenTheSaliencyLoopAlreadyLandedOnTheMagnet) {
     EXPECT_LT(std::fabs(run.error_rad()), 0.05F);
 }
 
-TEST(SilS15Polarity, StartingOutsideTheWindowIsCaughtRatherThanTrusted) {
+TEST(SilPolarity, StartingOutsideTheWindowIsCaughtRatherThanTrusted) {
     // Two radians out is past the +-pi/2 window, so the saliency loop locks to the pi mirror: it
     // converges *confidently* and wrongly. That is the failure the polarity test exists for.
     // 偏两弧度超出 ±π/2 窗口，于是凸极环锁到 π 镜像：它**自信地**收敛到了错的地方。这正是极性测试要
@@ -212,7 +212,7 @@ TEST(SilS15Polarity, StartingOutsideTheWindowIsCaughtRatherThanTrusted) {
     EXPECT_LT(std::fabs(run.error_rad()), 0.05F);
 }
 
-TEST(SilS15Polarity, WithoutTheCorrectionTheMirrorStaysAndTheDriveIsUpsideDown) {
+TEST(SilPolarity, WithoutTheCorrectionTheMirrorStaysAndTheDriveIsUpsideDown) {
     // Same run, correction withheld: the estimate stays half a turn out, which is what makes a torque
     // command turn the joint the wrong way. Recorded as a measurement so the cost of skipping the
     // step is not a mystery.
@@ -230,7 +230,7 @@ TEST(SilS15Polarity, WithoutTheCorrectionTheMirrorStaysAndTheDriveIsUpsideDown) 
     EXPECT_NEAR(-1.0F, std::cos(run.error_rad()), 0.05F) << "the estimate must be anti-parallel, not merely wrong";
 }
 
-TEST(SilS15Polarity, AMachineWithoutSaturationGetsNoAnswerAndNoCorrection) {
+TEST(SilPolarity, AMachineWithoutSaturationGetsNoAnswerAndNoCorrection) {
     // No saturation, no asymmetry, no information. The third verdict is what keeps the sequence honest:
     // the caller is told "this machine cannot answer" and applies no correction, rather than being
     // handed a coin flip that looks like a measurement.
@@ -246,7 +246,7 @@ TEST(SilS15Polarity, AMachineWithoutSaturationGetsNoAnswerAndNoCorrection) {
                 static_cast<double>(run.delta_negative_a));
 }
 
-TEST(SilS15Polarity, ThePulsesLeaveTheRotorWhereTheyFoundIt) {
+TEST(SilPolarity, ThePulsesLeaveTheRotorWhereTheyFoundIt) {
     // A polarity test that moved the rotor would be measuring a different machine position on its
     // second pulse, and it would also be a small uncontrolled motion on every power-up.
     // 会推动转子的极性测试，第二个脉冲测的就是另一个转子位置了；而且每次上电都会多一次不受控的小动作。
@@ -275,7 +275,7 @@ auto policies_with(core::HfiObserver observer) -> HfiMotor::Policies {
 
 } // namespace
 
-TEST(SilS15Polarity, TheCorrectionIsWhatStopsTheJointTurningBackwards) {
+TEST(SilPolarity, TheCorrectionIsWhatStopsTheJointTurningBackwards) {
     // The point of the whole exercise, measured instead of argued. Same commissioning run, same torque
     // command, same plant -- only the correction differs, and the joint either turns the way it was
     // told or the opposite way. A handed-over observer is copied into the motor, which is exactly the

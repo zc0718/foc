@@ -41,7 +41,7 @@ auto applied_v_ab(foc::sil::PlantHal& hal) -> float {
 
 
 
-TEST(SilS4Limit, SaturatesTheModulatorAndRecoversWithinTwoHundredMilliseconds) {
+TEST(SilSaturationLimit, SaturatesTheModulatorAndRecoversWithinTwoHundredMilliseconds) {
     foc::sil::Bench bench(make_config());
     bench.motor().set_speed(0.0F);
     ASSERT_EQ(foc::ErrorCode::Ok, bench.init_and_start());
@@ -87,7 +87,7 @@ TEST(SilS4Limit, SaturatesTheModulatorAndRecoversWithinTwoHundredMilliseconds) {
 
 
 
-TEST(SilS4Limit, RecoversToTheTwoPercentBandInsideTwoHundredMilliseconds) {
+TEST(SilSaturationLimit, RecoversToTheTwoPercentBandInsideTwoHundredMilliseconds) {
     foc::sil::Bench bench(make_config());
     bench.motor().set_speed(0.0F);
     ASSERT_EQ(foc::ErrorCode::Ok, bench.init_and_start());

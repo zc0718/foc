@@ -23,10 +23,10 @@ namespace core {
  *          needs a known initial flux. Seed it with `seed_flux()` during/after the align phase
  *          (the motor layer knows psi_m = Kt / (1.5 * pole_pairs) from the nameplate). Without
  *          seeding the estimate keeps a constant offset of `-psi(0)`; integrator drift over time
- *          still needs a PLL/SMO observer (P2).
+ *          still needs a PLL or SMO observer.
  *          [zh] 纯积分器无法知道积分常数，**绝对角**需要已知初始磁链：在 Align 阶段/之后用
  *          `seed_flux()` 播种（电机层可从铭牌得到 psi_m = Kt / (1.5 * pole_pairs)）。不播种时
- *          估计值会带一个 `-psi(0)` 的恒定偏移；长期漂移仍需 PLL/SMO 观测器（P2）。
+ *          估计值会带一个 `-psi(0)` 的恒定偏移；长期漂移仍需 PLL 或 SMO 观测器。
  *
  * @context [en] Current-loop ISR after construction: noexcept, no allocation.
  *           [zh] 构造之后的电流环 ISR：noexcept、不分配。

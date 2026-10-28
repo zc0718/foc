@@ -38,10 +38,10 @@ namespace core {
  * @note [en] What it cannot do: the loss does not switch polarity at a zero
  * crossing the way `sign()` says. It fades over a current range, and inside
  * that range a `sign()` step *over-corrects* -- measured on a switching plant,
- * the step is worse than no compensation at all near zero (SIL S13). [zh]
+ * the step is worse than no compensation at all near zero (measured on the switching plant). [zh]
  * 它做不到的：损失不会像 `sign()`
  * 说的那样在过零处瞬间换极性，而是在一段电流范围内淡出； 在这个范围内 `sign()`
- * 会**过修**——开关 plant 上实测，近零处阶跃补偿比不补偿还差（SIL S13）。
+ * 会**过修**——开关 plant 上实测，近零处阶跃补偿比不补偿还差。
  *
  * @context [en] Current-loop ISR: noexcept, no allocation, one branch when
  * disabled. [zh] 电流环 ISR：noexcept、不分配、未启用时只有一个分支。
@@ -74,14 +74,14 @@ template <typename Modulator> class DeadTimeCompensator final {
      * @note [en] This is *not* the switching ripple: measured on a switching
      * plant the two differ by more than an order of magnitude (0.375 A vs about
      * 0.03 A here), and feeding the ripple makes the correction far too weak at
-     * intermediate currents (6.6x the step's error at 0.3 A, SIL S13). It is
+     * intermediate currents (6.6x the step's error at 0.3 A, on the switching plant). It is
      * identifiable -- see `DeadTimeFadeEstimator`. [zh]
      * 这**不是**开关纹波：开关 plant 上实测两者差一个数量级以上（本机 0.375 A
      * vs 约 0.03 A），填纹波会让修正在中间电流处过弱得多（0.3 A 处误差是阶跃的
-     * 6.6 倍，SIL S13 的 C3）。它是**可辨识**的——见 `DeadTimeFadeEstimator`。
+     * 6.6 倍，开关 plant 实测）。它是**可辨识**的——见 `DeadTimeFadeEstimator`。
      *
-     * @warning [en] **Not recommended, as of P4.** The width can be identified
-     * (SIL S13: 0.0355 A at 24 V, and it halves exactly when the bus halves),
+     * @warning [en] **Not recommended.** The width can be identified
+     * (measured: 0.0355 A at 24 V, and it halves exactly when the bus halves),
      * but the identified number still loses to the plain `sign()` step: 1.16x
      * its error at 0.3 A and 1.58x at 20 mA. The reason is a wrong *shape*, not
      * a wrong number -- on the plant the loss goes from 2.7 % to 97 % of
@@ -90,7 +90,7 @@ template <typename Modulator> class DeadTimeCompensator final {
      * steep. So leave this at 0 unless a measurement on *your* hardware says the
      * transition really is broad; and note that a ramp's advantage, when it
      * exists, is at low current, where the PI already holds the mean. [zh]
-     * **自 P4 起不建议使用。** 宽度是可辨识的（SIL S13：24 V 下 0.0355 A，且母线
+     * **不建议使用。** 宽度是可辨识的（实测：24 V 下 0.0355 A，且母线
      * 减半时它正好减半），但辨识出来的数仍然输给朴素的 `sign()` 阶跃：0.3 A 处
      * 误差是它的 1.16 倍，20 mA 处 1.58 倍。原因是**形状**错而不是数错——plant 上
      * 损失在 |i| 从 21 mA 到 86 mA 之间从 `(4/π)·deadtime_v` 的 2.7 % 跳到 97 %，

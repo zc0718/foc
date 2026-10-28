@@ -138,11 +138,11 @@ template <typename LowSpeed, typename HighSpeed> class BlendedObserver final {
      *       支持。
      *
      * @note [en] `handover_lpf_hz` exists because the weight must not be computed from a raw
-     *       differentiated angle: measured on the S16 fixture, the back-EMF observer's speed carried a
+     *       differentiated angle: measured on the handover fixture, the back-EMF observer's speed carried a
      *       +-12 rad/s ripple around 100-200 rad/s (the `-L*i` term in its flux estimate ripples with
      *       the current), which on a 60 rad/s wide band swings the weight by +-20 % and makes the
      *       output jump between two estimates that are not the same quantity.
-     *       [zh] `handover_lpf_hz` 存在的理由：权重不能由未经平滑的微分角度算出。S16 台架实测，
+     *       [zh] `handover_lpf_hz` 存在的理由：权重不能由未经平滑的微分角度算出。台架实测，
      *       反电动势观测器的转速在 100–200 rad/s 附近带 ±12 rad/s 的纹波（其磁链估计里的 `−L·i` 项随
      *       电流纹波），在 60 rad/s 宽的带内就会把权重摆动 ±20%，使输出在两个并非同一物理量的估计之间
      *       跳变。

@@ -90,10 +90,10 @@ auto current_pi_config(const motor::MotorConfig& config, float bandwidth_rad_s, 
  * @param bandwidth_rad_s [en] target closed-loop bandwidth (> 0). [zh] 目标闭环带宽（> 0）。
  * @return [en] gains and limits. The integral clamp is a quarter of `i_max_a`, not the full
  *         output range: the PI has no back-calculation, so a wide integral window is what makes a
- *         saturated speed step wind up (see the SIL S2/S4 scenarios).
+ *         saturated speed step wind up (the current-step and saturation-limit scenarios show it).
  *         [zh] 增益与限幅。积分限幅取 `i_max_a` 的四分之一而非满量程：本 PI 没有
  *         back-calculation，积分窗口给满量程正是速度阶跃打满输出后积分饱和的原因（见 SIL 的
- *         S2/S4 场景）。
+ *         电流阶跃与饱和限幅两个场景）。
  * @since 0.1.0
  * @exporter
  */

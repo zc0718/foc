@@ -226,7 +226,7 @@ auto mean_angle_error(Observer &observer, SpeedRig &rig, float seconds)
 
 } // namespace
 
-TEST(SilS16Blend, TheFusedEstimateHoldsAcrossTheWholeSpeedRange) {
+TEST(SilObserverBlend, TheFusedEstimateHoldsAcrossTheWholeSpeedRange) {
   // The claim this scenario exists to support. Nothing here is allowed to be
   // quietly average: the two observers are also run alone at the same operating
   // points, so the table below shows where each one fails and that the blend
@@ -259,7 +259,7 @@ TEST(SilS16Blend, TheFusedEstimateHoldsAcrossTheWholeSpeedRange) {
   }
 }
 
-TEST(SilS16Blend, EachObserverAloneFailsWhereTheBandSaysItDoes) {
+TEST(SilObserverBlend, EachObserverAloneFailsWhereTheBandSaysItDoes) {
   // Both halves of "neither alone is enough", measured rather than asserted
   // from theory. If either of these ever stops failing, the band has become
   // unnecessary and this file should say so.
@@ -277,7 +277,7 @@ TEST(SilS16Blend, EachObserverAloneFailsWhereTheBandSaysItDoes) {
       << "the flux integrator must be useless here";
 }
 
-TEST(SilS16Blend, TheCarrierIsGoneOnceTheHandoverIsComplete) {
+TEST(SilObserverBlend, TheCarrierIsGoneOnceTheHandoverIsComplete) {
   // The cost side of the blend: injection is current, heat and audible noise,
   // and above the band it buys nothing. Measured as the HF amplitude the
   // saliency loop still reports.
@@ -305,7 +305,7 @@ TEST(SilS16Blend, TheCarrierIsGoneOnceTheHandoverIsComplete) {
               static_cast<double>(fast.injection_ab().alpha));
 }
 
-TEST(SilS16Blend, ARampThroughTheBandNeverLosesTheRotor) {
+TEST(SilObserverBlend, ARampThroughTheBandNeverLosesTheRotor) {
   // A real trajectory, because the previous version of this test stepped the
   // speed and measured its own artefact: a speed *step* is not something a
   // joint does, and the observers legitimately ring for a few periods
@@ -419,7 +419,7 @@ TEST(SilS16Blend, ARampThroughTheBandNeverLosesTheRotor) {
   EXPECT_FLOAT_EQ(0.0F, blend.blend());
 }
 
-TEST(SilS16Blend, TheCarrierBiasesTheFluxObserverAndTheBiasScalesWithIt) {
+TEST(SilObserverBlend, TheCarrierBiasesTheFluxObserverAndTheBiasScalesWithIt) {
   // The number the previous commit could not explain, explained and pinned. At
   // 400 rad/s in the band configuration the blend measured 0.042 rad where the
   // flux observer alone measures 0.011 -- and forcing the weight to 1 gave
@@ -515,7 +515,7 @@ auto corrected_flux_config() -> core::NonlinearFluxObserver::Config {
       kRsSeenByFluxObserver, kLq, kPsi, 0.3F, 3.0F, 0.5F * kPsi};
 }
 
-TEST(SilS16Blend,
+TEST(SilObserverBlend,
      TheMagnitudeCorrectionRemovesTheCarrierBiasAndLowerstheWorstCase) {
   // What the correction buys in the configuration that actually ships. The
   // comparison is against the numbers this file already recorded for the
@@ -581,7 +581,7 @@ TEST(SilS16Blend,
   EXPECT_LT(std::fabs(excess_2v), 0.1F * kRecordedCarrierBias);
 }
 
-TEST(SilS16Blend, TheCorrectionHalvesTheRampTransient) {
+TEST(SilObserverBlend, TheCorrectionHalvesTheRampTransient) {
   // The largest single win of the correction, and the least obvious: the ramp
   // case above records 0.2445 rad worst (0.1927 in band) and attributes it to
   // the open-loop half's own transient -- "an integrator's drift still needs a
