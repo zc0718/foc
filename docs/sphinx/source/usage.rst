@@ -190,6 +190,40 @@ current cross-coupling into torque on a turning machine, and :code:`inject_v` is
 :code:`observer_error` is exactly zero for observers that publish no error signal, so read it together with
 :code:`observer_locked` and :code:`observer`.
 
+**Record the window, rather than watching a scalar.** A status report answers "what is true now"; a fault is usually a
+question about the last few milliseconds. The trace channel is a ninth policy on the motor, so it is chosen at compile
+time and costs nothing when it is not chosen:
+
+.. code-block:: cpp
+
+   using Traced = foc::motor::Motor<foc::core::BackEmfObserver, foc::core::Svpwm, foc::core::Pi,
+                                    MyHal, foc::core::NullReferenceGenerator, foc::core::NullFeedforward,
+                                    foc::core::NullPositionControl, foc::core::NullAlignment,
+                                    foc::core::RingTrace<1024>>;   // 1024 periods = 36 KiB at 36 B/sample
+
+   Traced motor(config, policies, hal);
+   ...
+   const auto sample = motor.trace().latest();       // the period that just ran
+   const auto dropped = motor.trace().dropped();     // 0 unless the ring wrapped
+
+One sample per period, six numbers and two states: the measured currents the PI acted on, the currents it was asked for,
+the voltage it applied, the mechanical speed, and the mode and status the period ended in. With the default
+:code:`foc::core::NullTrace` the type is empty -- no member, no branch, no pointer check -- so "off costs nothing" is a
+property of the type system rather than a promise about the optimiser.
+
+A full ring keeps recording and counts what it overwrote, because forgetting with a counter is reversible and stopping is
+not: a trace that freezes when it fills loses exactly the window a fault is interesting in. Timestamps come from the
+platform clock, truncated to 32 bits (71.6 minutes); with no clock every :code:`t_us` is zero, which means "no timestamp"
+rather than "everything happened at once".
+
+Three things this channel is measured to do, and one it cannot. Measured: a sample agrees with
+:code:`telemetry()`/:code:`state()`/:code:`status()` **bit for bit** in the same period; the null channel adds no storage
+and no branch (host, best of three rounds: 158.0 ns/period off against 161.9 on over 20 000 periods -- the +3.9 ns difference is at the resolution of that measurement, and one round of it reported recording as *faster*, which is how a noise figure announces itself); and a sample survives a :code:`%.9g` text
+round trip bit for bit, so a trace written to a file is still the same numbers when it is read back. What it cannot do is
+tell you what the *hardware* did -- it records what the loop believed, so a perfect-looking trace is entirely consistent
+with a miscalibrated current sensor. Per-period cost on a target is also unmeasured here: the host figure above says
+nothing about a 100 MHz core, and a budget for that is a claim somebody would have to take with a scope.
+
 _`Verification: what is actually checked`
 -----------------------------------------
 
@@ -212,7 +246,7 @@ whether your hardware matches that model.
      - Level
    * - Unit, SIL and stress cases
      - :code:`conan create . -s build_type=Debug --build=missing`
-     - 460 cases, 0 failed
+     - 465 cases, 0 failed
      - L1/L2
    * - Line coverage
      - :code:`python3 .github/misc/coverage_gate.py`

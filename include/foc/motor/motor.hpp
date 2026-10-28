@@ -120,7 +120,8 @@ struct Command final {
  */
 template <typename Observer, typename Modulator, typename Controller, typename HalPolicy,
           typename RefGenerator = core::NullReferenceGenerator, typename FeedForward = core::NullFeedforward,
-          typename PositionControl = core::NullPositionControl, typename Aligner = core::NullAlignment>
+          typename PositionControl = core::NullPositionControl, typename Aligner = core::NullAlignment,
+          typename Trace = core::NullTrace>
 class Motor final {
   public:
     /**
@@ -138,6 +139,12 @@ class Motor final {
         FeedForward feed_forward{};
         PositionControl position{};
         Aligner align{};
+        /**
+         * @brief [en] The trace channel. Defaults to the switch that costs nothing: an empty type with no-op calls.
+         * @brief [zh] 轨迹通道。默认是不花代价的那个开关：一个空类型，调用皆空操作。
+         * @since 0.1.8
+         */
+        Trace trace{};
     };
 
     Motor(MotorConfig config, Policies policies, HalPolicy& hal) noexcept;
@@ -259,6 +266,18 @@ class Motor final {
      * @since 0.1.0
      */
     [[nodiscard]] auto telemetry() const noexcept -> Telemetry;
+
+    /**
+     * @brief [en] The trace channel, for reading back what the loop recorded.
+     * @brief [zh] 轨迹通道，用于读回控制环记录的内容。
+     * @note [en] With the default `NullTrace` this returns an empty object whose `size()` is 0 -- the accessor exists
+     *            in both cases so a template never has to ask which one it has.
+     * @note [zh] 默认的 `NullTrace` 下它返回一个 `size()` 为 0 的空对象——两种情况都有这个访问器，于是模板不必去问它拿到
+     *            的是哪一个。
+     * @since 0.1.8
+     */
+    [[nodiscard]] auto trace() noexcept -> Trace& { return policies_.trace; }
+    [[nodiscard]] auto trace() const noexcept -> const Trace& { return policies_.trace; }
 
     /**
      * @brief [en] Sticky status of the last operation.
@@ -406,8 +425,8 @@ class Motor final {
 };
 
 template <typename Observer, typename Modulator, typename Controller, typename HalPolicy, typename RefGenerator,
-          typename FeedForward, typename PositionControl, typename Aligner>
-Motor<Observer, Modulator, Controller, HalPolicy, RefGenerator, FeedForward, PositionControl, Aligner>::Motor(
+          typename FeedForward, typename PositionControl, typename Aligner, typename Trace>
+Motor<Observer, Modulator, Controller, HalPolicy, RefGenerator, FeedForward, PositionControl, Aligner, Trace>::Motor(
     MotorConfig config, Policies policies, HalPolicy& hal) noexcept
     : config_(config), policies_(policies), hal_(&hal),
       position_reference_(core::PositionReference::Config{config.pole_pairs, 0.0F}), sm_(),
@@ -417,9 +436,9 @@ Motor<Observer, Modulator, Controller, HalPolicy, RefGenerator, FeedForward, Pos
       last_clock_us_(0U), clock_seeded_(false), v_ab_prev_{} {}
 
 template <typename Observer, typename Modulator, typename Controller, typename HalPolicy, typename RefGenerator,
-          typename FeedForward, typename PositionControl, typename Aligner>
-auto Motor<Observer, Modulator, Controller, HalPolicy, RefGenerator, FeedForward, PositionControl,
-           Aligner>::init() noexcept -> ErrorCode {
+          typename FeedForward, typename PositionControl, typename Aligner, typename Trace>
+auto Motor<Observer, Modulator, Controller, HalPolicy, RefGenerator, FeedForward, PositionControl, Aligner,
+           Trace>::init() noexcept -> ErrorCode {
     if (!(config_.rs >= 0.0F) || !(config_.pwm_freq_hz > 0.0F) || (config_.pole_pairs == 0U) ||
         !(config_.speed_loop_period_s >= 0.0F) || !(config_.position_loop_period_s >= 0.0F)) {
         status_ = ErrorCode::Param;
@@ -431,9 +450,9 @@ auto Motor<Observer, Modulator, Controller, HalPolicy, RefGenerator, FeedForward
 }
 
 template <typename Observer, typename Modulator, typename Controller, typename HalPolicy, typename RefGenerator,
-          typename FeedForward, typename PositionControl, typename Aligner>
-auto Motor<Observer, Modulator, Controller, HalPolicy, RefGenerator, FeedForward, PositionControl,
-           Aligner>::start() noexcept -> ErrorCode {
+          typename FeedForward, typename PositionControl, typename Aligner, typename Trace>
+auto Motor<Observer, Modulator, Controller, HalPolicy, RefGenerator, FeedForward, PositionControl, Aligner,
+           Trace>::start() noexcept -> ErrorCode {
     if (status_ != ErrorCode::Ok) {
         return status_;
     }
@@ -493,9 +512,9 @@ auto Motor<Observer, Modulator, Controller, HalPolicy, RefGenerator, FeedForward
 }
 
 template <typename Observer, typename Modulator, typename Controller, typename HalPolicy, typename RefGenerator,
-          typename FeedForward, typename PositionControl, typename Aligner>
-auto Motor<Observer, Modulator, Controller, HalPolicy, RefGenerator, FeedForward, PositionControl,
-           Aligner>::stop() noexcept -> ErrorCode {
+          typename FeedForward, typename PositionControl, typename Aligner, typename Trace>
+auto Motor<Observer, Modulator, Controller, HalPolicy, RefGenerator, FeedForward, PositionControl, Aligner,
+           Trace>::stop() noexcept -> ErrorCode {
     hal_->pwm.disable();
     // An aborted alignment must not resume where it stopped: the rotor will have been moved by
     // whatever held it in between.
@@ -505,17 +524,17 @@ auto Motor<Observer, Modulator, Controller, HalPolicy, RefGenerator, FeedForward
 }
 
 template <typename Observer, typename Modulator, typename Controller, typename HalPolicy, typename RefGenerator,
-          typename FeedForward, typename PositionControl, typename Aligner>
-void Motor<Observer, Modulator, Controller, HalPolicy, RefGenerator, FeedForward, PositionControl,
-           Aligner>::fault() noexcept {
+          typename FeedForward, typename PositionControl, typename Aligner, typename Trace>
+void Motor<Observer, Modulator, Controller, HalPolicy, RefGenerator, FeedForward, PositionControl, Aligner,
+           Trace>::fault() noexcept {
     hal_->pwm.disable();
     static_cast<void>(sm_.request(core::MotorState::Fault));
 }
 
 template <typename Observer, typename Modulator, typename Controller, typename HalPolicy, typename RefGenerator,
-          typename FeedForward, typename PositionControl, typename Aligner>
-auto Motor<Observer, Modulator, Controller, HalPolicy, RefGenerator, FeedForward, PositionControl,
-           Aligner>::clear_fault() noexcept -> ErrorCode {
+          typename FeedForward, typename PositionControl, typename Aligner, typename Trace>
+auto Motor<Observer, Modulator, Controller, HalPolicy, RefGenerator, FeedForward, PositionControl, Aligner,
+           Trace>::clear_fault() noexcept -> ErrorCode {
     const ErrorCode rc = sm_.clear_fault();
     if (rc == ErrorCode::Ok) {
         policies_.current_d.reset();
@@ -530,47 +549,48 @@ auto Motor<Observer, Modulator, Controller, HalPolicy, RefGenerator, FeedForward
 }
 
 template <typename Observer, typename Modulator, typename Controller, typename HalPolicy, typename RefGenerator,
-          typename FeedForward, typename PositionControl, typename Aligner>
-void Motor<Observer, Modulator, Controller, HalPolicy, RefGenerator, FeedForward, PositionControl, Aligner>::set_torque(
-    float iq_a) noexcept {
+          typename FeedForward, typename PositionControl, typename Aligner, typename Trace>
+void Motor<Observer, Modulator, Controller, HalPolicy, RefGenerator, FeedForward, PositionControl, Aligner,
+           Trace>::set_torque(float iq_a) noexcept {
     mode_ = ReferenceMode::Torque;
     iq_ref_a_ = core::clamp(iq_a, -config_.i_max_a, config_.i_max_a);
 }
 
 template <typename Observer, typename Modulator, typename Controller, typename HalPolicy, typename RefGenerator,
-          typename FeedForward, typename PositionControl, typename Aligner>
-void Motor<Observer, Modulator, Controller, HalPolicy, RefGenerator, FeedForward, PositionControl, Aligner>::set_speed(
-    float speed_mech_rad_s) noexcept {
+          typename FeedForward, typename PositionControl, typename Aligner, typename Trace>
+void Motor<Observer, Modulator, Controller, HalPolicy, RefGenerator, FeedForward, PositionControl, Aligner,
+           Trace>::set_speed(float speed_mech_rad_s) noexcept {
     mode_ = ReferenceMode::Speed;
     speed_ref_rad_s_ = speed_mech_rad_s;
 }
 
 template <typename Observer, typename Modulator, typename Controller, typename HalPolicy, typename RefGenerator,
-          typename FeedForward, typename PositionControl, typename Aligner>
-void Motor<Observer, Modulator, Controller, HalPolicy, RefGenerator, FeedForward, PositionControl,
-           Aligner>::set_position(float position_rad) noexcept {
+          typename FeedForward, typename PositionControl, typename Aligner, typename Trace>
+void Motor<Observer, Modulator, Controller, HalPolicy, RefGenerator, FeedForward, PositionControl, Aligner,
+           Trace>::set_position(float position_rad) noexcept {
     set_command(Command{position_rad, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F});
 }
 
 template <typename Observer, typename Modulator, typename Controller, typename HalPolicy, typename RefGenerator,
-          typename FeedForward, typename PositionControl, typename Aligner>
-void Motor<Observer, Modulator, Controller, HalPolicy, RefGenerator, FeedForward, PositionControl,
-           Aligner>::set_command(const Command& command) noexcept {
+          typename FeedForward, typename PositionControl, typename Aligner, typename Trace>
+void Motor<Observer, Modulator, Controller, HalPolicy, RefGenerator, FeedForward, PositionControl, Aligner,
+           Trace>::set_command(const Command& command) noexcept {
     mode_ = ReferenceMode::Position;
     command_ = command;
     position_ref_rad_ = command.position_rad;
 }
 
 template <typename Observer, typename Modulator, typename Controller, typename HalPolicy, typename RefGenerator,
-          typename FeedForward, typename PositionControl, typename Aligner>
-auto Motor<Observer, Modulator, Controller, HalPolicy, RefGenerator, FeedForward, PositionControl, Aligner>::tick(
-    float dt_s) noexcept -> ErrorCode {
+          typename FeedForward, typename PositionControl, typename Aligner, typename Trace>
+auto Motor<Observer, Modulator, Controller, HalPolicy, RefGenerator, FeedForward, PositionControl, Aligner,
+           Trace>::tick(float dt_s) noexcept -> ErrorCode {
     // Optional overrun measurement: only when the platform gave us a clock. It never feeds back into
     // the control law -- it exists so an ISR overrun becomes visible instead of silent.
     // 可选过载测量：仅当平台提供了时钟时启用。它从不参与控制律——存在的意义是让 ISR 过载可见而非
     // 静默。
+    std::uint64_t now_us = 0U;
     if constexpr (core::concepts::has_clock_v<HalPolicy>) {
-        const std::uint64_t now_us = hal_->clock.now_us();
+        now_us = hal_->clock.now_us();
         if (clock_seeded_) {
             const std::uint64_t delta_us = now_us - last_clock_us_;
             const std::uint32_t clamped = (delta_us > UINT32_MAX) ? UINT32_MAX : static_cast<std::uint32_t>(delta_us);
@@ -811,6 +831,28 @@ auto Motor<Observer, Modulator, Controller, HalPolicy, RefGenerator, FeedForward
     v_ab_prev_ = v_ab;
     telemetry_ = Telemetry{speed_mech, i_dq.d, i_dq.q, max_period_us_};
 
+    // The trace records what the loop decided, after it decided it. Placed here rather than earlier so one sample is one
+    // period: the currents the PI acted on, the voltage it asked for, and the state the period ended in. With the default
+    // `NullTrace` this whole block is an inline no-op, which is the only way "off costs nothing" survives a code review:
+    // there is no branch to predict, no pointer to check and no counter to increment.
+    // 轨迹记录的是控制环的决策，且记录在决策之后。放在这里而不是更早，是为了让一条样本恰好对应一个周期：PI 作用其上的
+    // 电流、它请求的电压、以及该周期结束时的状态。默认的 `NullTrace` 下这一整块是内联空操作，这是"关掉不花代价"能过
+    // 代码评审的唯一方式：没有分支要预测、没有指针要检查、没有计数器要自增。
+    if constexpr (core::concepts::is_trace_sink_v<Trace>) {
+        core::TraceSample sample{};
+        sample.t_us = static_cast<std::uint32_t>(now_us);
+        sample.i_d = i_dq.d;
+        sample.i_q = i_dq.q;
+        sample.i_ref_d = i_ref.d;
+        sample.i_ref_q = i_ref.q;
+        sample.v_d = v_dq.d;
+        sample.v_q = v_dq.q;
+        sample.speed_mech = speed_mech;
+        sample.mode = static_cast<std::uint8_t>(sm_.state());
+        sample.status = static_cast<std::uint8_t>(status_);
+        static_cast<void>(policies_.trace.push(sample));
+    }
+
     if (modulated.status != ErrorCode::Ok) {
         status_ = modulated.status;
     }
@@ -825,91 +867,91 @@ auto Motor<Observer, Modulator, Controller, HalPolicy, RefGenerator, FeedForward
 }
 
 template <typename Observer, typename Modulator, typename Controller, typename HalPolicy, typename RefGenerator,
-          typename FeedForward, typename PositionControl, typename Aligner>
-auto Motor<Observer, Modulator, Controller, HalPolicy, RefGenerator, FeedForward, PositionControl, Aligner>::state()
-    const noexcept -> core::MotorState {
+          typename FeedForward, typename PositionControl, typename Aligner, typename Trace>
+auto Motor<Observer, Modulator, Controller, HalPolicy, RefGenerator, FeedForward, PositionControl, Aligner,
+           Trace>::state() const noexcept -> core::MotorState {
     return sm_.state();
 }
 
 template <typename Observer, typename Modulator, typename Controller, typename HalPolicy, typename RefGenerator,
-          typename FeedForward, typename PositionControl, typename Aligner>
-auto Motor<Observer, Modulator, Controller, HalPolicy, RefGenerator, FeedForward, PositionControl, Aligner>::mode()
-    const noexcept -> ReferenceMode {
+          typename FeedForward, typename PositionControl, typename Aligner, typename Trace>
+auto Motor<Observer, Modulator, Controller, HalPolicy, RefGenerator, FeedForward, PositionControl, Aligner,
+           Trace>::mode() const noexcept -> ReferenceMode {
     return mode_;
 }
 
 template <typename Observer, typename Modulator, typename Controller, typename HalPolicy, typename RefGenerator,
-          typename FeedForward, typename PositionControl, typename Aligner>
-auto Motor<Observer, Modulator, Controller, HalPolicy, RefGenerator, FeedForward, PositionControl, Aligner>::telemetry()
-    const noexcept -> Telemetry {
+          typename FeedForward, typename PositionControl, typename Aligner, typename Trace>
+auto Motor<Observer, Modulator, Controller, HalPolicy, RefGenerator, FeedForward, PositionControl, Aligner,
+           Trace>::telemetry() const noexcept -> Telemetry {
     return telemetry_;
 }
 
 template <typename Observer, typename Modulator, typename Controller, typename HalPolicy, typename RefGenerator,
-          typename FeedForward, typename PositionControl, typename Aligner>
-auto Motor<Observer, Modulator, Controller, HalPolicy, RefGenerator, FeedForward, PositionControl, Aligner>::status()
-    const noexcept -> ErrorCode {
+          typename FeedForward, typename PositionControl, typename Aligner, typename Trace>
+auto Motor<Observer, Modulator, Controller, HalPolicy, RefGenerator, FeedForward, PositionControl, Aligner,
+           Trace>::status() const noexcept -> ErrorCode {
     return status_;
 }
 
 template <typename Observer, typename Modulator, typename Controller, typename HalPolicy, typename RefGenerator,
-          typename FeedForward, typename PositionControl, typename Aligner>
-auto Motor<Observer, Modulator, Controller, HalPolicy, RefGenerator, FeedForward, PositionControl,
-           Aligner>::observer() noexcept -> Observer& {
+          typename FeedForward, typename PositionControl, typename Aligner, typename Trace>
+auto Motor<Observer, Modulator, Controller, HalPolicy, RefGenerator, FeedForward, PositionControl, Aligner,
+           Trace>::observer() noexcept -> Observer& {
     return policies_.observer;
 }
 
 template <typename Observer, typename Modulator, typename Controller, typename HalPolicy, typename RefGenerator,
-          typename FeedForward, typename PositionControl, typename Aligner>
-auto Motor<Observer, Modulator, Controller, HalPolicy, RefGenerator, FeedForward, PositionControl,
-           Aligner>::reference() noexcept -> RefGenerator& {
+          typename FeedForward, typename PositionControl, typename Aligner, typename Trace>
+auto Motor<Observer, Modulator, Controller, HalPolicy, RefGenerator, FeedForward, PositionControl, Aligner,
+           Trace>::reference() noexcept -> RefGenerator& {
     return policies_.reference;
 }
 
 template <typename Observer, typename Modulator, typename Controller, typename HalPolicy, typename RefGenerator,
-          typename FeedForward, typename PositionControl, typename Aligner>
-auto Motor<Observer, Modulator, Controller, HalPolicy, RefGenerator, FeedForward, PositionControl,
-           Aligner>::feed_forward() noexcept -> FeedForward& {
+          typename FeedForward, typename PositionControl, typename Aligner, typename Trace>
+auto Motor<Observer, Modulator, Controller, HalPolicy, RefGenerator, FeedForward, PositionControl, Aligner,
+           Trace>::feed_forward() noexcept -> FeedForward& {
     return policies_.feed_forward;
 }
 
 
 template <typename Observer, typename Modulator, typename Controller, typename HalPolicy, typename RefGenerator,
-          typename FeedForward, typename PositionControl, typename Aligner>
-auto Motor<Observer, Modulator, Controller, HalPolicy, RefGenerator, FeedForward, PositionControl,
-           Aligner>::position_reference() const noexcept -> const core::PositionReference& {
+          typename FeedForward, typename PositionControl, typename Aligner, typename Trace>
+auto Motor<Observer, Modulator, Controller, HalPolicy, RefGenerator, FeedForward, PositionControl, Aligner,
+           Trace>::position_reference() const noexcept -> const core::PositionReference& {
     return position_reference_;
 }
 
 template <typename Observer, typename Modulator, typename Controller, typename HalPolicy, typename RefGenerator,
-          typename FeedForward, typename PositionControl, typename Aligner>
-auto Motor<Observer, Modulator, Controller, HalPolicy, RefGenerator, FeedForward, PositionControl,
-           Aligner>::aligner() noexcept -> Aligner& {
+          typename FeedForward, typename PositionControl, typename Aligner, typename Trace>
+auto Motor<Observer, Modulator, Controller, HalPolicy, RefGenerator, FeedForward, PositionControl, Aligner,
+           Trace>::aligner() noexcept -> Aligner& {
     return policies_.align;
 }
 
 
 
 template <typename Observer, typename Modulator, typename Controller, typename HalPolicy, typename RefGenerator,
-          typename FeedForward, typename PositionControl, typename Aligner>
-auto Motor<Observer, Modulator, Controller, HalPolicy, RefGenerator, FeedForward, PositionControl, Aligner>::aligner()
-    const noexcept -> const Aligner& {
+          typename FeedForward, typename PositionControl, typename Aligner, typename Trace>
+auto Motor<Observer, Modulator, Controller, HalPolicy, RefGenerator, FeedForward, PositionControl, Aligner,
+           Trace>::aligner() const noexcept -> const Aligner& {
     return policies_.align;
 }
 
 
 
 template <typename Observer, typename Modulator, typename Controller, typename HalPolicy, typename RefGenerator,
-          typename FeedForward, typename PositionControl, typename Aligner>
-auto Motor<Observer, Modulator, Controller, HalPolicy, RefGenerator, FeedForward, PositionControl,
-           Aligner>::position() noexcept -> PositionControl& {
+          typename FeedForward, typename PositionControl, typename Aligner, typename Trace>
+auto Motor<Observer, Modulator, Controller, HalPolicy, RefGenerator, FeedForward, PositionControl, Aligner,
+           Trace>::position() noexcept -> PositionControl& {
     return policies_.position;
 }
 
 template <typename Observer, typename Modulator, typename Controller, typename HalPolicy, typename RefGenerator,
-          typename FeedForward, typename PositionControl, typename Aligner>
-auto Motor<Observer, Modulator, Controller, HalPolicy, RefGenerator, FeedForward, PositionControl, Aligner>::config()
-    const noexcept -> const MotorConfig& {
+          typename FeedForward, typename PositionControl, typename Aligner, typename Trace>
+auto Motor<Observer, Modulator, Controller, HalPolicy, RefGenerator, FeedForward, PositionControl, Aligner,
+           Trace>::config() const noexcept -> const MotorConfig& {
     return config_;
 }
 

@@ -77,6 +77,15 @@ point -- the alternative is a library that grows algorithms and forgets how they
      - ``SilSpeedFromAngleClosedLoop.AWindowShortEnoughToBeOnTimeIsTheOnlyWayThisRouteWins``
      - ElapsedTimeDecidesTheIntegralNotTheCallCount
      - A-3
+   * - ``core/trace.hpp``
+     - ``size()``, ``dropped()``, ``latest()`` -- a full ring keeps recording and counts what it overwrote, so \"I lost
+       the window\" is a number rather than an absence. ``t_us == 0`` on every sample means the platform has no clock,
+       which is a fact about the HAL and not a claim that everything happened at once.
+     - ``n/a`` -- nothing to configure: the capacity is the type, and reading past the retained window returns a zeroed
+       sample instead of reaching out of bounds.
+     - ``Trace.TheRecordAgreesWithTheScalarReadBitForBit``
+     - na -- a recorder of other capabilities' arithmetic, with none of its own.
+     - A-8
    * - ``core/observer/observer_policy.hpp``
      - na -- concepts: it names what an observer must provide and provides nothing itself.
      - na -- a type either satisfies the concept or fails to compile, which is the strongest admission there is.

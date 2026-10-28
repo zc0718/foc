@@ -10,6 +10,7 @@
 #include <foc/core/position.hpp>
 #include <foc/core/reference.hpp>
 #include <foc/core/svpwm.hpp>
+#include <foc/core/trace.hpp>
 #include <foc/core/types.hpp>
 // Conan::ImportEnd
 
@@ -656,6 +657,35 @@ struct has_align_offset<T, std::void_t<decltype(std::declval<const T&>().offset_
  * @exporter
  */
 template <typename T> inline constexpr bool has_align_offset_v = has_align_offset<T>::value;
+
+
+/**
+ * @brief [en] `T` is a trace sink: something the control loop can hand one `TraceSample` per period.
+ * @brief [zh] `T` 是轨迹接收端：控制环每周期可以交给它一个 `TraceSample`。
+ * @note [en] Deliberately about what the loop *calls*, not about which class it is: `NullTrace` satisfies it (with
+ *            no-ops) so the loop has one code path, and a test double that counts pushes satisfies it without being a
+ *            ring at all. That is the difference between a policy and a special case.
+ * @note [zh] 它描述的是环**调用**什么，而不是那个类是谁：`NullTrace` 满足它（全部空操作），于是环只有一条代码路径；一个
+ *            只数调用次数的测试替身也满足它，而它根本不是环。这就是策略与特例的区别。
+ * @since 0.1.8
+ * @exporter
+ */
+template <typename T, typename = void> struct is_trace_sink : std::false_type {};
+
+template <typename T>
+struct is_trace_sink<
+    T, std::void_t<decltype(std::declval<T&>().push(std::declval<const TraceSample&>())),
+                   decltype(std::declval<const T&>().size()), decltype(std::declval<const T&>().dropped())>>
+    : std::true_type {};
+
+
+/**
+ * @brief [en] Convenience variable template for the trace sink contract.
+ * @brief [zh] 轨迹接收端契约的便捷变量模板。
+ * @since 0.1.8
+ * @exporter
+ */
+template <typename T> inline constexpr bool is_trace_sink_v = is_trace_sink<T>::value;
 
 } // namespace concepts
 

@@ -211,6 +211,18 @@ The log
      - One plan sentence, and the next row's whole reason for existing.
      - ``pending``
 
+   * - A-8
+     - A
+     - I sized the trace record at 32 bytes in the header comment and in the case that pins its size. It is 36: four
+       bytes of timestamp, **seven** floats, two bytes of state. The wrong number came from counting six floats in a list
+       of seven, and it had already been copied into two files before the assertion noticed.
+     - The assertion itself, `EXPECT_EQ(sizeof(TraceSample), 32U)`, which reported 36 on its first run. Nothing else
+       would have: a struct that is four bytes larger than documented changes how many periods fit in 2 KiB, and no other
+       case cares.
+     - Two comments and one test constant. Which is the point of pinning a size at all -- the claim "2 KiB holds N
+       periods" is now arithmetic nobody has to remember.
+     - ``pending``
+
 Two kinds of row that are currently empty
 -----------------------------------------
 

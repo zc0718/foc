@@ -203,6 +203,11 @@
       "core/svpwm.hpp",
       "core/types.hpp"
     ],
+    "core/trace.hpp": [
+      "core/trace.hpp",
+      "motor/motor.hpp",
+      "test_package/test/unit/test_trace.cpp"
+    ],
     "core/transforms.hpp": [
       "src/core/transforms.cpp",
       "core/types.hpp",

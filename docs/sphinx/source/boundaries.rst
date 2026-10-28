@@ -57,6 +57,11 @@ only reason this page can be trusted after the person who wrote it has moved on.
        the injected current cross-coupling into torque on a turning machine -- linear in `inject_v` and in speed,
        indifferent to the saliency. Improving the angle by 13x does not move it. `inject_v` is the knob.
      - ``SilSpeedRipple.TheFigureSurvivesSubstepResolution``
+   * - **Reconstruct what the hardware actually did from a trace.**
+     - The trace records what the loop *believed*: the currents the PI acted on and the voltages it applied before
+       modulation. A trace that looks perfect is therefore entirely consistent with a miscalibrated current sensor -- the
+       loop is faithful to a wrong measurement. Use it to explain the loop's decisions, not to measure the phases.
+     - ``Trace.TheRecordAgreesWithTheScalarReadBitForBit``
    * - **Get a quiet speed estimate out of the injection observer for free.**
      - `omega_e = omega_int + kp*error`, and `error` carries the carrier, so the published speed holds 0.4180 rad/s at
        2000 Hz in a 20 rad/s servo unless `speed_lpf_hz` is set. The library's own path sets it (200 Hz); a caller that
