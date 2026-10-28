@@ -324,25 +324,35 @@ auto observer_status(const Setup& setup, const foc_motor_params_t& params) noexc
     case FOC_OBSERVER_NONLINEAR_FLUX:
         return FOC_OK;
     case FOC_OBSERVER_HFI:
-        // Three conditions, each a fact about the request or the machine rather than a preference:
+        // Four conditions, each a fact about the request or the machine rather than a preference:
         //   - the carrier has to be stated, because there is no defensible default for it;
         //   - the machine has to be salient. `predicted_gain_a()` is proportional to `(lq - ld)`, so on a surface
         //     machine the demodulated signal is identically zero and no follower can lock. The observer's own
         //     constructor rejects `demod_gain_a == 0`, so admitting the mode would only move the refusal later, into
         //     a construction whose status nobody reads;
         //   - the carrier has to clear the demodulation cutoff by `kHfiMinRatio`, which is what keeps the filter from
-        //     removing the component it is supposed to demodulate.
-        // 三个条件，每一个都是关于请求或机器的事实而非偏好：
+        //     removing the component it is supposed to demodulate;
+        //   - and the control rate has to be able to resolve it, `kMinSamplesPerCarrier` control
+        //     periods per carrier period. Not a preference either: past that boundary the observer
+        //     freezes silently and a loop closing on it runs away, so the request is refused at setup.
+        // 四个条件，每一个都是关于请求或机器的事实而非偏好：
         //   - 载波必须给出，因为它没有站得住的默认值；
         //   - 机器必须有凸极。`predicted_gain_a()` 正比于 `(lq - ld)`，表贴机上解调信号恒为零、任何跟随器都锁不住。
         //     观测器自己的构造函数就拒绝 `demod_gain_a == 0`，放行只会把拒绝推后到一次没人读状态返回值的构造里；
-        //   - 载波必须比解调截止频率高出 `kHfiMinRatio` 倍，这正是让滤波器不会滤掉它本该解调的那个分量的条件。
+        //   - 载波必须比解调截止频率高出 `kHfiMinRatio` 倍，这正是让滤波器不会滤掉它本该解调的那个分量的条件；
+        //   - 而且控制率必须能分辨它，即每个载波周期至少 `kMinSamplesPerCarrier` 个控制周期。这也不是偏好： 越过这条边界观测器会静默冻结、闭在它上面的环会跑飞，所以请求在装配时就被拒绝。
         if (!(std::isfinite(setup.inject_v) && (setup.inject_v > 0.0F) && std::isfinite(setup.inject_hz) &&
               (setup.inject_hz > (kHfiMinRatio * kHfiDemodLpfHz)))) {
             return FOC_ERR_PARAM;
         }
         if (!(std::isfinite(params.ld) && std::isfinite(params.lq) && (params.ld > 0.0F) && (params.lq > 0.0F) &&
               (params.ld != params.lq))) {
+            return FOC_ERR_PARAM;
+        }
+        // `pwm_freq_hz == 0` means the caller left the rate to the library default, so there is nothing to compare
+        // against here; the observer's own `update()` refuses at the first period instead.
+        // `pwm_freq_hz == 0` 表示调用方把控制率交给库的默认值，这里没有可比的东西；改由观测器在第一个周期上拒绝。
+        if ((setup.pwm_freq_hz > 0.0F) && !(setup.inject_hz <= core::HfiObserver::max_inject_hz(setup.pwm_freq_hz))) {
             return FOC_ERR_PARAM;
         }
         return FOC_OK;
@@ -359,6 +369,9 @@ auto observer_status(const Setup& setup, const foc_motor_params_t& params) noexc
         }
         if (!(std::isfinite(params.ld) && std::isfinite(params.lq) && (params.ld > 0.0F) && (params.lq > 0.0F) &&
               (params.ld != params.lq))) {
+            return FOC_ERR_PARAM;
+        }
+        if ((setup.pwm_freq_hz > 0.0F) && !(setup.inject_hz <= core::HfiObserver::max_inject_hz(setup.pwm_freq_hz))) {
             return FOC_ERR_PARAM;
         }
         if (!(std::isfinite(setup.blend_start_rad_s) && (setup.blend_start_rad_s >= 0.0F) &&

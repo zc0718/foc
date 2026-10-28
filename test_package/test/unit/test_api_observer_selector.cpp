@@ -253,6 +253,49 @@ TEST(ApiObserverSelector, TheHfiModeRefusesWithoutACarrierOrWithoutSaliency) {
     EXPECT_EQ(foc_motor_destroy(hfi_motor), FOC_OK);
 }
 
+TEST(ApiObserverSelector, ACarrierTheControlRateCannotResolveIsRefusedAtSetup) {
+    // The fourth fact HFI is admitted on, and the only one about the *rate* rather than the machine: a carrier needs
+    // `kMinSamplesPerCarrier` control periods per cycle to be resolvable. Below that the observer is not noisy, it is
+    // dead -- the demodulated amplitude collapses, the lock drops out, the angle freezes and the speed reads zero, which
+    // a loop cannot tell from a stalled rotor (measured: -19.5 rad/s of speed bias on the SIL fixture).
+    // 第四个放行 HFI 的事实，也是唯一关于**控制率**而非机器的那一个：载波每个周期需要 `kMinSamplesPerCarrier` 个控制
+    // 周期才分辨得出来。低于此观测器不是变吵，而是死了——解调幅值塌掉、锁定脱落、角度冻结、转速读零，环无法把它与堵转
+    // 区分开（SIL 台架实测转速偏差 -19.5 rad/s）。
+    //
+    // Refusing at setup rather than at the first tick is the point: `foc_motor_create_ex` is where a caller can still do
+    // something else, and an observer that froze mid-run would only be discovered as a runaway axis.
+    // 在装配时而不是在第一个 tick 上拒绝才是要点：`foc_motor_create_ex` 是调用方还能改主意的位置，而一个运行中冻结的
+    // 观测器只会以一条跑飞的轴的形式被发现。
+    const foc_motor_params_t salient = salient_params();
+    const std::int32_t hfi = static_cast<std::int32_t>(FOC_OBSERVER_HFI);
+    foc_motor_t motor{};
+
+    // 9200 Hz at 20 kHz is 2.17 control periods per carrier period.
+    // 20 kHz 上的 9200 Hz 是每个载波周期 2.17 个控制周期。
+    const foc_motor_setup_t too_fast = setup_with_carrier(hfi, 12.0F, 9200.0F);
+    EXPECT_EQ(foc_motor_create_ex(&salient, &too_fast, &motor), FOC_ERR_PARAM)
+        << "a carrier the control rate cannot resolve was accepted";
+    EXPECT_EQ(motor, nullptr);
+
+    // Exactly at the ceiling is admitted: 8000 Hz at 20 kHz is 2.50 periods per cycle, the value the SIL envelope
+    // certifies. An inequality that refused its own boundary would reject the measured-good configuration.
+    // 正好在天花板上是准入的：20 kHz 上的 8000 Hz 是每周期 2.50 个样本，即 SIL 包线认证过的那个值。一条拒绝自身边界的
+    // 判据会把实测良好的配置挡在外面。
+    const foc_motor_setup_t at_ceiling = setup_with_carrier(hfi, 12.0F, 8000.0F);
+    EXPECT_EQ(foc_motor_create_ex(&salient, &at_ceiling, &motor), FOC_OK) << "the ceiling itself was refused";
+    ASSERT_NE(motor, nullptr);
+    EXPECT_EQ(foc_motor_destroy(motor), FOC_OK);
+
+    // And the same 9200 Hz is admitted once the rate can carry it, which is what makes this a rule about the rate and
+    // not a ban on the carrier.
+    // 而一旦频率能承载它，同一个 9200 Hz 就被准入，这正是它是一条关于频率的规则、而不是对载波的禁令的原因。
+    foc_motor_setup_t faster = setup_with_carrier(hfi, 12.0F, 9200.0F);
+    faster.pwm_freq_hz = 40000.0F;
+    EXPECT_EQ(foc_motor_create_ex(&salient, &faster, &motor), FOC_OK) << "9200 Hz refused at 40 kHz, where it is fine";
+    ASSERT_NE(motor, nullptr);
+    EXPECT_EQ(foc_motor_destroy(motor), FOC_OK);
+}
+
 TEST(ApiObserverSelector, EveryModeInTheEnumerationIsWiredAndEachIsAdmittedOnFacts) {
     // One row per way a request can be accepted or refused, so that a change in what the library promises is a change to
     // this table rather than a discovery made by a user. The refusals are the interesting rows: each names a fact about

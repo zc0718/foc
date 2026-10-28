@@ -72,6 +72,13 @@ auto HfiObserver::predicted_gain_a(float inject_v, float inject_hz, float ld, fl
     return static_cast<float>(inject_v * (ld - lq) / denominator);
 }
 
+auto HfiObserver::max_inject_hz(float control_hz) noexcept -> float {
+    if (!(control_hz > 0.0F) || !std::isfinite(control_hz)) {
+        return 0.0F;
+    }
+    return control_hz / kMinSamplesPerCarrier;
+}
+
 auto HfiObserver::configure_filters(float dt_s) noexcept -> ErrorCode {
     // Five one-poles: two high-pass the current (one per stationary axis), two on the error signal and
     // one on the amplitude the lock detector uses. Two stages on the error because the demodulated
@@ -115,6 +122,17 @@ auto HfiObserver::update(Ab<float> v_ab, Ab<float> i_ab, float dt_s) noexcept ->
     // 仅在周期真的变了时重配。这里故意用精确比较：周期要么是同一个值、要么不是，加一个容差只会得到
     // 一个没人能从物理上解释的数字。
     if (dt_s != dt_configured_) {
+        // The carrier has to be one this rate can resolve, and the rate only becomes known here. Refusing is the whole
+        // point rather than a nicety: past the boundary the failure is silent -- the amplitude collapses, the lock drops
+        // out, the angle freezes and the speed reads zero -- so an observer that accepted the configuration would hold
+        // an angle nobody measured while the loop it feeds ran away. See kMinSamplesPerCarrier for the measurement.
+        // 载波必须是这个频率能分辨的，而这个频率只有在这里才知道。拒绝是要点而不是讲究：越过边界后失效是静默的——幅值
+        // 塌掉、锁定脱落、角度冻结、转速报零——于是接受该配置的观测器会端着一个没人测过的角度、看着它喂的环路跑飞。
+        // 测量见 kMinSamplesPerCarrier。
+        if (!(config_.inject_hz <= max_inject_hz(1.0F / dt_s))) {
+            status_ = ErrorCode::Param;
+            return state_;
+        }
         if (configure_filters(dt_s) != ErrorCode::Ok) {
             status_ = ErrorCode::Param;
             return state_;

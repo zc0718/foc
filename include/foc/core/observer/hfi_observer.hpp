@@ -96,11 +96,43 @@ class HfiObserver final {
      *     器，变成误差信号上的固定偏置。静止时的负载阶跃正好如此：凭空 出现一个直流电流。在台架上实测，0.5 A 的 q 轴电
      *     流使误差偏置 0.034——足以把一次起动 推过 `pi/2` 边界、锁到镜像上。高通在解调前去掉基频，且由于滤波器在第一个采
      *     样上自播种， 恒定电流根本到不了乘法器。取值应在“HFI 预期工作的最高电频率”之上、`inject_hz` 之下。
+     *
+     *     Sizing `inject_hz` is not free either, and both ends were measured on the SIL envelope fixture (a loaded
+     *     machine held at a given speed, the observer as a passenger, so a cell is a property of the observer): 定容
+     *     `inject_hz` 同样不自由，两端都在 SIL 包线台架上量过（带载电机给定转速、观测器当乘客，于是一个格子是观测器的性
+     *     质）：
+     *
+     *     - **Within what the control rate resolves, higher is better.** At 20 rad/s mech the angle bias, which is what
+     *     a lag looks like at a constant speed, fell from 0.0060 rad at 2000 Hz to 0.0012 at 4000 and 0.00018 at 8000
+     *     -- a factor of 33 across a 4x carrier -- while the HF current it drew with the same 12 V fell from 4.04 A to
+     *     0.38 A. Both ends of that are wins, which is unusual enough to state: the same volts buy a smaller bias *and*
+     *     less injected current. - **Above it, the method stops working and says nothing.** The boundary is `control_hz
+     *     / 2.5` measured as kMinSamplesPerCarrier: 8000 Hz at 20 kHz (2.50 periods per cycle) held in every cell of
+     *     the sweep, 8400 (2.38) already failed at the widest demodulation cutoff tried, 9200 (2.17) failed at all of
+     *     them. Past the boundary the demodulated amplitude collapses, the lock detector drops out, the angle freezes
+     *     and the speed reads zero: a loop closing on it ran to a speed bias of -19.5 rad/s in the fixture. `update()`
+     *     therefore refuses a carrier this rate cannot resolve, rather than leaving the caller with a frozen angle. -
+     *     **`demod_lpf_hz` should be scheduled by nothing.** A grid over 0/5/20/50 rad/s mech crossed with 100/200/400
+     *     Hz found the window's effect at speed to be under 0.5 %, and at standstill the *narrowest* window best by 14x
+     *     (0.00011 against 0.00154 rad). So the window is a noise/protection trade with a fixed answer, not a quantity
+     *     to schedule by speed; what looked like "a narrow window breaks at speed" in an early draft was a start-up
+     *     transient, which is what `blank_s_` below is for. - **范围之内，越高越好。** 20 rad/s 机械下，角度偏差（恒速
+     *     下滞后就是这个样子）从 2000 Hz 的 0.0060 rad 降到 4000 Hz 的 0.0012、8000 Hz 的 0.00018——4 倍载波换来 33 倍改
+     *     善——而同样 12 V 拉出的高频电流从 4.04 A 降到 0.38 A。两端都是收益，这值得明说：同样的伏特数既买到更小的偏差，
+     *     又买到更少的注入电流。 - **超出之后，方法失效且一声不响。** 边界是实测的 `control_hz / 2.5`（即
+     *     kMinSamplesPerCarrier）：20 kHz 上的 8000 Hz（每周期 2.50 个样本）在扫描每一格都站住，8400（2.38）在试过的最
+     *     宽解调截止频率上已失败，9200 （ 2.17）在三个截止频率上全部失败。越过边界后解调幅值塌掉、锁定判据脱落、角度冻
+     *     结、转速报零：台架上闭在它上面的环跑到 -19.5 rad/s 的转速偏差。因此 `update()` 会拒绝这个控制率分辨不了的载
+     *     波，而不是把冻结的角度留给调用方。 - **`demod_lpf_hz` 不该由任何东西调度。** 0/5/20/50 rad/s 机械 ×
+     *     100/200/400 Hz 的网格显示，窗口在转速下的影响不到 0.5%，而静止时**最窄**的窗口好 14 倍（0.00011 对 0.00154
+     *     rad）。因此窗口是一个有固定答案的噪声/ 保护折中，不是按转速调度的量；早先某一版里"窄窗在高速下会崩"其实是一个
+     *     起动瞬态，那正是下面 `blank_s_` 的用途。
      * @since 0.1.0
      */
     struct Config final {
-        float inject_v;  ///< [en] injection amplitude, peak V, > 0. [zh] 注入幅值，峰值 V，> 0。
-        float inject_hz; ///< [en] injection frequency in Hz, > demod_lpf_hz. [zh] 注入频率，Hz，> demod_lpf_hz。
+        float inject_v; ///< [en] injection amplitude, peak V, > 0. [zh] 注入幅值，峰值 V，> 0。
+        float
+            inject_hz; ///< [en] injection frequency in Hz, > demod_lpf_hz and <= max_inject_hz(control_hz), see the note. [zh] 注入频率，Hz，> demod_lpf_hz 且 <= max_inject_hz(control_hz)，见注释。
         float
             current_hp_hz; ///< [en] high-pass on the measured current in Hz, see the note below. [zh] 实测电流的高通截止频率，Hz，见下方注释。
         float demod_lpf_hz;     ///< [en] demodulation filter cutoff in Hz. [zh] 解调滤波截止频率，Hz。
@@ -137,6 +169,41 @@ class HfiObserver final {
      * @since 0.1.0
      */
     [[nodiscard]] static auto predicted_gain_a(float inject_v, float inject_hz, float ld, float lq) noexcept -> float;
+
+    /**
+     * @brief [en] The fewest control periods one carrier period may span: `control_hz >= kMinSamplesPerCarrier *
+     *             inject_hz`. `update()` refuses a configuration that breaks it.
+     * @brief [zh] 一个载波周期至少要跨多少个控制周期：`control_hz >= kMinSamplesPerCarrier · inject_hz`。破坏它的配置会
+     *             被 `update()` 拒绝。
+     * @note [en] 2.5 is measured, not chosen. On the SIL envelope fixture at 20 kHz, 8000 Hz (2.50 periods per cycle)
+     *            held in every cell, 8400 Hz (2.38) already failed at the widest demodulation cutoff tried (400 Hz),
+     *            and 9200 Hz (2.17) failed at all three cutoffs. The failure is silent in the worst way: the
+     *            demodulated amplitude collapses, the lock detector drops out, the angle freezes and the speed reads
+     *            zero, so a loop closing on it runs away (speed bias -19.5 rad/s measured). Refusing is therefore the
+     *            only honest answer, and it has to happen where the control rate first becomes known -- inside
+     *            `update()`.
+     * @note [zh] 2.5 是量出来的、不是挑出来的。20 kHz 的 SIL 包线台架上，8000 Hz（每周期 2.50 个样本）每一格都站住，
+     *            8400 Hz（2.38）在试过的最宽解调截止频率（400 Hz）上已失败，9200 Hz（2.17）在三个截止频率上全部失败。失
+     *            效是最糟的那种静默：解调幅值塌掉、锁定判据脱落、角度冻结、转速报零，于是闭在它上面的环跑飞（实测转速偏
+     *            差 -19.5 rad/s）。因此拒绝是唯一诚实的回答，而且必须发生在控制率第一次可知的地方——`update()` 之内。
+     * @since 0.1.4
+     */
+    static constexpr float kMinSamplesPerCarrier = 2.5F;
+
+    /**
+     * @brief [en] The highest carrier a given control rate can resolve: `control_hz / kMinSamplesPerCarrier`.
+     * @brief [zh] 给定控制率能分辨的最高载波：`control_hz / kMinSamplesPerCarrier`。
+     * @param control_hz [en] control-loop rate in Hz, > 0.
+     * @param control_hz [zh] 控制环频率，Hz，> 0。
+     * @return [en] the ceiling in Hz; 0 for a non-positive or non-finite rate, which admits nothing.
+     * @return [zh] 天花板的 Hz 值；非正或非有限频率返回 0，此时什么都不准入。
+     * @note [en] Public so that a caller can size `inject_hz` before construction. It is a property of the *rate*, not
+     *            of the machine, which is why it is static and why it is not a config field.
+     * @note [zh] 公开是为了让调用方在构造之前就能定容 `inject_hz`。它是**控制率**的性质而不是机器的性质，这也是它为何是
+     *            静态的、而不是一个配置字段。
+     * @since 0.1.4
+     */
+    [[nodiscard]] static auto max_inject_hz(float control_hz) noexcept -> float;
 
     /**
      * @brief [en] Advance one current-loop step.

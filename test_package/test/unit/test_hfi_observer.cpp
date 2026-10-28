@@ -176,3 +176,63 @@ TEST(HfiObserver, ThePredictedGainCarriesTheSaliencyDirectionInItsSign) {
     EXPECT_FLOAT_EQ(0.0F, foc::core::HfiObserver::predicted_gain_a(12.0F, 2000.0F, 0.0F, 4e-4F));
     EXPECT_FLOAT_EQ(0.0F, foc::core::HfiObserver::predicted_gain_a(12.0F, 0.0F, 2e-4F, 4e-4F));
 }
+
+TEST(HfiObserver, ACarrierThisControlRateCannotResolveIsRefusedNotFrozen) {
+    // The rule is `control_hz >= kMinSamplesPerCarrier * inject_hz`, and it has to be enforced here because this is the
+    // first place the rate is known: the constructor does not take one, and `Config` cannot carry one without pretending
+    // a per-machine fact is a per-machine-*rate* fact.
+    // 规则是 `control_hz >= kMinSamplesPerCarrier · inject_hz`，而它必须在这里执行，因为这里是频率第一次可知的地方：
+    // 构造函数不接受频率，而 `Config` 携带它就等于把一个"关于控制率"的事实伪装成"关于机器"的事实。
+    foc::core::HfiObserver::Config config = valid_config();
+    config.inject_hz = 9200.0F; // 2.17 control periods per carrier period at 20 kHz: measured to fail at every cutoff
+    config.demod_gain_a = foc::core::HfiObserver::predicted_gain_a(config.inject_v, config.inject_hz, kLd, kLq);
+    foc::core::HfiObserver observer(config);
+    EXPECT_EQ(foc::ErrorCode::Ok, observer.status()) << "the configuration is legal until a rate is known";
+
+    static_cast<void>(update_once(observer));
+    EXPECT_EQ(foc::ErrorCode::Param, observer.status()) << "a carrier the rate cannot resolve must be refused";
+    // And refusing has to mean refusing: no angle invented, no voltage injected. The measured consequence of running it
+    // anyway is a frozen angle with zero speed, which a loop cannot tell from a stalled rotor.
+    // 而拒绝必须是真拒绝：不编角度、不注入电压。照跑不管的实测后果是角度冻结、转速为零，环无法把它与堵转区分开。
+    EXPECT_FLOAT_EQ(0.0F, observer.state().theta_e);
+    EXPECT_FLOAT_EQ(0.0F, observer.state().omega_e);
+    EXPECT_FLOAT_EQ(0.0F, observer.injection_ab().alpha);
+    EXPECT_FLOAT_EQ(0.0F, observer.injection_ab().beta);
+}
+
+TEST(HfiObserver, TheCarrierCeilingScalesWithTheControlRate) {
+    // A ceiling that did not move with the rate would be a machine fact; this one is a sampling fact, so the same
+    // carrier is admissible at one rate and not at another. Measured on the SIL envelope: at 20 kHz, 8000 Hz (2.50
+    // periods per cycle) held in every cell while 8400 (2.38) failed at the widest cutoff, so 2.5 is the boundary.
+    // 一个不随控制率移动的天花板会是机器的事实；这一条是采样的事实，于是同一个载波在某个频率上准入、在另一个上不。
+    // SIL 包线实测：20 kHz 下 8000 Hz（每周期 2.50 个样本）每一格都站住，而 8400（2.38）在最宽截止频率上失败，故边界
+    // 为 2.5。
+    EXPECT_FLOAT_EQ(8000.0F, foc::core::HfiObserver::max_inject_hz(20000.0F));
+    EXPECT_FLOAT_EQ(16000.0F, foc::core::HfiObserver::max_inject_hz(40000.0F));
+    EXPECT_FLOAT_EQ(0.0F, foc::core::HfiObserver::max_inject_hz(0.0F));
+
+    // Exactly at the ceiling is admissible -- an inequality that excluded its own boundary would refuse the value the
+    // measurement certifies -- and one hertz past it is not.
+    // 正好在天花板上是准入的——一条排除自身边界的判据会拒绝实测认证过的那个值——而越过一赫兹就不是。
+    foc::core::HfiObserver::Config config = valid_config();
+    config.inject_hz = 8000.0F;
+    config.demod_gain_a = foc::core::HfiObserver::predicted_gain_a(config.inject_v, config.inject_hz, kLd, kLq);
+    foc::core::HfiObserver at_ceiling(config);
+    static_cast<void>(update_once(at_ceiling));
+    EXPECT_EQ(foc::ErrorCode::Ok, at_ceiling.status());
+
+    config.inject_hz = 8001.0F;
+    config.demod_gain_a = foc::core::HfiObserver::predicted_gain_a(config.inject_v, config.inject_hz, kLd, kLq);
+    foc::core::HfiObserver past_ceiling(config);
+    static_cast<void>(update_once(past_ceiling));
+    EXPECT_EQ(foc::ErrorCode::Param, past_ceiling.status());
+
+    // The same 9200 Hz that 20 kHz refuses is fine at 40 kHz, which is what makes this a rate rule and not a ban.
+    // 20 kHz 拒绝的同一个 9200 Hz 在 40 kHz 上是准入的，这正是它是一条频率规则而不是一道禁令的原因。
+    config.inject_hz = 9200.0F;
+    config.demod_gain_a = foc::core::HfiObserver::predicted_gain_a(config.inject_v, config.inject_hz, kLd, kLq);
+    foc::core::HfiObserver at_faster_rate(config);
+    static_cast<void>(update_once(at_faster_rate, 2.5e-5F)); // 40 kHz
+    EXPECT_EQ(foc::ErrorCode::Ok, at_faster_rate.status());
+}
+
