@@ -11,6 +11,7 @@ instead of failing.
 
 import math
 import pathlib
+import random
 import sys
 
 import numpy as np
@@ -33,6 +34,7 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[3] / "benchmark"
 import golden  # noqa: E402
 import analyze  # noqa: E402
 import foc_sil_plant  # noqa: E402
+import montecarlo  # noqa: E402
 
 def check_finite(telemetry):
     for key, value in telemetry.items():
@@ -955,6 +957,110 @@ def test_the_spectrum_and_the_distortion_measure_a_signal_that_has_a_known_disto
     assert abs(harmonics[2] - 0.00) <= 0.005, harmonics[2]   # 4th: absent
     assert abs(harmonics[3] - 0.05) <= 0.005, harmonics[3]   # 5th
     assert abs(measured_fundamental - 1.0) <= 0.01, measured_fundamental
+
+
+# ---- Monte-Carlo ---------------------------------------------------------------------------------
+#
+# Four criteria, written before the harness and each one watched going red:
+#
+# 1. sigma = 0 reproduces the nominal measurement bit for bit -- a harness that perturbs something of its own shows up
+#    here and nowhere else;
+# 2. one nameplate parameter off by a factor moves the bandwidth by the analytic factor (kp = wb*J/Kt, so J enters
+#    proportionally and kt inversely);
+# 3. a matched family -- every drawn machine correctly described by its own nameplate -- spreads far less than a
+#    mismatched one, which is the gain law's central claim turned into a number;
+# 4. the sampler draws the distribution it reports.
+#
+# 四条判据，写在 harness 之前，每条都验过能变红：σ=0 逐位复现；单参数铭牌偏差给出解析倍数；匹配族的离散度远小于不匹配族
+# （这是"增益律抵消机器"这条中心断言的数字化）；抽样器抽出的分布与它报告的分布一致。
+
+def test_the_sampler_draws_the_distribution_it_reports():
+    rng = random.Random(3)
+    n = 2000
+    drawn = [montecarlo.draw(rng, 0.20)['kt'] / montecarlo.NOMINAL['kt'] for _ in range(n)]
+    mean_error = 3.0 * 0.20 / math.sqrt(n)
+    std_error = 3.0 * 0.20 / math.sqrt(2 * n)
+    assert abs(float(np.mean(drawn)) - 1.0) <= mean_error, np.mean(drawn)
+    assert abs(float(np.std(drawn)) - 0.20) <= std_error, np.std(drawn)
+    # A draw that lands on a non-physical machine is redrawn, not clamped -- so the mean must not drift upward.
+    # 落在非物理机器上的抽样是重抽而非截断——因此均值不得向上漂移。
+    assert all(value > 0.0 for value in drawn)
+
+
+def test_zero_perturbation_reproduces_the_nominal_measurement_bit_for_bit():
+    """The harness must add nothing of its own, and the *stream* is where it would add it.
+
+    The first draft of this case called `one_trial` twice and compared the two. It was green for the wrong reason: it
+    never went through the sampler, so a sampler that perturbs by a hair at `sigma = 0` -- the exact bug this criterion
+    exists for -- was invisible to it. Discovered by drifting the sampler and watching the case stay green.
+    本用例的第一版调用 `one_trial` 两次再比较。它绿得没有意义：它从不经过抽样器，因此"σ=0 时仍扰动了一点点"这个
+    正是本判据要抓的缺陷，对它完全不可见。这是通过漂移抽样器、看着它保持绿而发现的。
+    """
+    nominal = dict(montecarlo.NOMINAL)
+    direct = montecarlo.one_trial(nominal, nominal)
+
+    drawn_zero = montecarlo.stream(1, sigma=0.0, seed=5, matched=True)[0]
+    assert drawn_zero.bandwidth_rad_s == direct.bandwidth_rad_s, (drawn_zero.bandwidth_rad_s, direct.bandwidth_rad_s)
+    assert drawn_zero.settling_s == direct.settling_s
+
+    # A second stream at the same seed is the same stream: a seeded run has to be reproducible or the report is an
+    # anecdote.
+    # 同一种子的第二条流是同一条流：带种子的运行必须可复现，否则报告就是轶事。
+    again = montecarlo.stream(1, sigma=0.0, seed=5, matched=True)[0]
+    assert again.bandwidth_rad_s == direct.bandwidth_rad_s
+
+    # sigma = 0 with a mismatched family is the same machine, so it is the same number.
+    # σ=0 且不匹配族时是同一台机器，因此是同一个数。
+    mismatched_zero = montecarlo.stream(1, sigma=0.0, seed=5, matched=False)[0]
+    assert mismatched_zero.bandwidth_rad_s == direct.bandwidth_rad_s
+
+    # And the harness agrees with measuring the same step through the loop's own trace: two ways to read one machine.
+    # 而且这套装置与"从环路自己的轨迹读同一个阶跃"一致：读同一台机器的两条路。
+    directly = analyze.step_metrics(montecarlo.step_window(nominal, nominal), montecarlo.DT_S, montecarlo.TARGET_RAD_S,
+                                    0.02 * montecarlo.TARGET_RAD_S)
+    assert directly.bandwidth_rad_s == direct.bandwidth_rad_s, (directly.bandwidth_rad_s, direct.bandwidth_rad_s)
+
+
+def test_a_single_nameplate_error_moves_the_bandwidth_by_the_analytic_factor():
+    """`kp = wb*J/Kt` makes the prediction arithmetic: J enters proportionally, kt inversely, and nothing else moves."""
+    nominal = dict(montecarlo.NOMINAL)
+    base = montecarlo.one_trial(nominal, nominal).bandwidth_rad_s
+
+    # Measured, and why the band is 2 % rather than 0: J alone leaves the mechanical pole B/J only partly cancelled
+    # (ki = wb*B/Kt does not move with J), which costs 1.40 % of the prediction. kt is a pure gain and lands within
+    # 0.47 %. The band covers the physical effect rather than hiding it.
+    # 实测，以及为什么带是 2% 而不是 0：单独改 J 只能部分抵消机械极点 B/J（ki = wb*B/Kt 不随 J 动），这损失了预测的
+    # 1.40%；kt 是纯增益，落在 0.47% 以内。带覆盖的是真实物理效应，而不是把它藏起来。
+    for name, factor, predicted in (('j', 1.10, 1.10), ('kt', 1.10, 1.0 / 1.10), ('kt', 0.90, 1.0 / 0.90)):
+        told = dict(nominal)
+        told[name] = nominal[name] * factor
+        measured = montecarlo.one_trial(told, nominal).bandwidth_rad_s / base
+        assert abs(measured / predicted - 1.0) <= 0.02, f"{name} x{factor}: {measured:.4f} against {predicted:.4f}"
+
+
+def test_the_gain_law_absorbs_the_nameplate_ignorance_it_was_designed_to_absorb():
+    """The library's claim, measured as a ratio.
+
+    At a 10 % nameplate standard deviation the *matched* family -- every machine correctly described -- spreads 2.92 %
+    in bandwidth while the mismatched one spreads 19.18 %, and the yield inside the 10 % band is 97.5 % against 42.5 %.
+    That is what deriving every gain from the nameplate buys, and it is the only number on this page that says so.
+    """
+    matched = montecarlo.stream(40, sigma=0.10, seed=11, matched=True)
+    mismatched = montecarlo.stream(40, sigma=0.10, seed=11, matched=False)
+
+    matched_spread = float(np.std([t.bandwidth_rad_s for t in matched]) / montecarlo.BANDWIDTH_RAD_S)
+    mismatched_spread = float(np.std([t.bandwidth_rad_s for t in mismatched]) / montecarlo.BANDWIDTH_RAD_S)
+
+    assert mismatched_spread > 0.10, f"the mismatched family is not spread out: {mismatched_spread:.4f}"
+    # 2.92 % measured; 5 % is the band, and it is three quarters of the mismatched spread's floor below.
+    # 实测 2.92%；5% 是带，且它比不匹配族下限的三分之二还低。
+    assert matched_spread < 0.05, f"the matched family is spread out: {matched_spread:.4f}"
+    assert mismatched_spread / matched_spread >= 3.0, (
+        f"the cancellation buys only {mismatched_spread / matched_spread:.2f}x: "
+        f"{matched_spread:.4f} vs {mismatched_spread:.4f}")
+
+    assert montecarlo.report(matched)['yield'] >= 0.90, montecarlo.report(matched)
+    assert montecarlo.report(mismatched)['yield'] <= 0.75, montecarlo.report(mismatched)
 
 
 def main():

@@ -358,6 +358,26 @@ answer is arithmetic rather than a modelling opinion: a unit tone reads 1.000 un
 correction, and a known 11.2 % distortion made of a 10 % third harmonic and a 5 % fifth reads 0.1118 with each harmonic
 in its own bin. Neither has a C-side counterpart, and neither needs one: they measure the window, not the loop.
 
+**Ask what a wrong nameplate costs.** Every gain here is derived from the nameplate, so the design question is how wrong
+it can be before the claim stops holding. `benchmark/script/montecarlo.py` draws machines, runs the loop on each and
+reports the spread:
+
+.. code-block:: console
+
+   python3 benchmark/script/montecarlo.py --trials 40 --sigma 0.10           # nameplate error, machine nominal
+   python3 benchmark/script/montecarlo.py --trials 40 --sigma 0.10 --matched # each machine correctly described
+
+With a 10 % standard deviation on six nameplate parameters, a **matched** family -- every drawn machine described
+correctly by its own nameplate -- spreads **2.92 %** in bandwidth and 97.5 % of it stays inside the 10 % band, while the
+**mismatched** family spreads **19.18 %** and 42.5 % of it does. At 20 % the same pair reads 6.21 % against 29.74 %
+(yields 92.5 % and 12.5 %). That factor of about six and a half is what deriving every gain from the nameplate buys, and
+it is the only number on this page that states it as a quantity rather than a design intention. All four figures are
+`--trials 40 --seed 11`, the seed the suite uses.
+
+A single parameter moves predictably, which is the arithmetic behind `kp = wb*J/Kt`: a nameplate `J` 10 % high raises
+the bandwidth 8.46 % (the 1.40 % shortfall is the mechanical pole `B/J` only partly cancelled, since `ki = wb*B/Kt` does
+not move with `J`), and a nameplate `kt` 10 % high lowers it 9.28 % (prediction 9.09 %, within 0.2 %).
+
 Read back through the CLI, the ledger's own `speed_step_100` window measures **197.59 rad/s** against the 200 rad/s the
 library defaults to (-1.2 %) -- on a window decimated to one sample per millisecond against a four-millisecond time
 constant. That is the analysis layer replaying a stored file rather than the object that produced it.

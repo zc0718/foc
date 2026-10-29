@@ -365,6 +365,20 @@ The log
        (how the servo behaves, not where its corner is).
      - ``pending``
 
+   * - A-13
+     - A
+     - The first Monte-Carlo criterion -- "with `sigma = 0` the harness must reproduce the nominal measurement bit for
+       bit" -- called one trial twice and compared the two. It was green, and it could not fail: it never went through
+       the sampler, so the bug it exists to catch (a sampler that perturbs by a hair when asked not to) was invisible
+       to it. Drifting the sampler to add 0.001 to sigma left the case green.
+     - Drifting every criterion and watching which ones stay green. Three of the four drifted cases went red; this one
+       did not, which is how the hole was found.
+     - The criterion now runs the *stream*, so `draw()` is in the path: the same 0.001 drift produces 244.4909 against
+       244.4273 and the case fails. Third instance of one family -- A-6 ("a control that is never exercised"), A-11 ("a
+       band the defect fits inside"), A-13 ("a criterion that bypasses the code it is about"). The common cause is that
+       a green test is evidence of nothing until it has been made to go red.
+     - ``pending``
+
 Two kinds of row that are currently empty
 -----------------------------------------
 
