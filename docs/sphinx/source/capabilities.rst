@@ -114,6 +114,16 @@ point -- the alternative is a library that grows algorithms and forgets how they
      - ``TorqueMap.TheLimitsAreNarrowedToWhatTheInverterCanDeliver``
      - na -- algebraic, no state to keep invariant across frames or time scales.
      - A-14
+   * - ``core/stall_start.hpp``
+     - ``phase()`` and `limited`. "starting", "released" and "cannot start" are three states rather than one number, and
+       `Failed` is a first-class answer: a load the drive cannot move is a fact about the machine, and a sequence that
+       ramps forever instead of saying so leaves the operator watching a silent axis.
+     - ``Param`` from `validate()`/`begin()` when the limit is not above the breakaway point -- a sequence whose ceiling
+       is under the breakaway can only ever produce `Failed`, so accepting it would accept a recipe known in advance
+       not to work -- and when the ramp, release speed or grace period is not positive.
+     - ``StallStart.AStuckAxisSaysFailedInsteadOfRampingForever``
+     - na -- a sequencer over other capabilities, not an equation of its own.
+     - C-5
    * - ``core/observer/observer_policy.hpp``
      - na -- concepts: it names what an observer must provide and provides nothing itself.
      - na -- a type either satisfies the concept or fails to compile, which is the strongest admission there is.

@@ -358,6 +358,26 @@ answer is arithmetic rather than a modelling opinion: a unit tone reads 1.000 un
 correction, and a known 11.2 % distortion made of a 10 % third harmonic and a 5 % fifth reads 0.1118 with each harmonic
 in its own bin. Neither has a C-side counterpart, and neither needs one: they measure the window, not the loop.
 
+**Break a stuck axis loose on purpose.** A speed PI does eventually break a stuck axis free -- its integral ramps the
+current until the torque passes the breakaway point -- and that is the problem: by then the integral has stored the
+whole windup, so the moment the rotor lets go the stored torque drives it past the setpoint. `core/stall_start.hpp`
+does the same thing deliberately: a known torque ramp, a report the instant the rotor moves, and the torque it moved on
+as the handover value.
+
+.. code-block:: cpp
+
+   foc::core::StallStart sequence(recipe);   // breakaway 0.030 N*m, limit 0.200, ramp 0.5 N*m/s
+   if (sequence.begin()) {
+       const auto out = sequence.step(dt_s, speed_mech);
+       if (out.phase == foc::core::StallStartPhase::Released) { /* take over from out.torque_nm */ }
+       if (out.phase == foc::core::StallStartPhase::Failed) { /* this load cannot be started here */ }
+   }
+
+Measured: 0.030 N*m of breakaway at 0.5 N*m/s is reached and released at **60.1 ms**; against a real stuck plant
+(stiction 0.020 N*m, load 0.010 N*m) the sequence releases at **0.0307 N*m after 61.3 ms**, and a 0.9x torque -- a
+sequence asking for less than it believes -- moves that to 68.0 ms and the case fails. A jam at the limit reports
+`Failed` with zero torque after 400 ms of ramp plus a 200 ms grace.
+
 **A fault is not a temperature.** Protection is graded -- derate, then trip -- and the two decisions are separate
 fields rather than one code: `output_allowed` is defined as `active_mask == 0`, so a **fault means authority was
 removed**, while a **derating** drive is still running and says so through `i_limit_a` falling below the `i_max_a` the
@@ -432,7 +452,7 @@ whether your hardware matches that model.
      - Level
    * - Unit, SIL and stress cases
      - :code:`conan create . -s build_type=Debug --build=missing`
-     - 489 cases, 0 failed
+     - 493 cases, 0 failed
      - L1/L2
    * - Line coverage
      - :code:`python3 .github/misc/coverage_gate.py`

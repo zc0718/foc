@@ -187,6 +187,9 @@
       "src/core/speed_from_angle.cpp",
       "core/types.hpp"
     ],
+    "core/stall_start.hpp": [
+      "core/types.hpp"
+    ],
     "core/startup.hpp": [
       "src/core/startup.cpp",
       "core/alignment.hpp",

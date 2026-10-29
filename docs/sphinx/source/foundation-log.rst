@@ -417,6 +417,20 @@ The log
        arithmetic is exact will say so.
      - ``pending``
 
+   * - C-5
+     - C
+     - The first version of the breakaway case could not tell "it started" from "it is still being held": the plant's
+       stiction band was 0.5 rad/s and the sequence's release threshold was also 0.5 rad/s, so the two thresholds
+       described the same speed and "last torque at rest" and "first torque moving" printed the same number. Separately
+       the handover value carried 5.4 ms of ramp -- 2.7 mN*m -- because the rotor has to accelerate to the release speed,
+       which was larger than the quantity the case was checking.
+     - Printing both numbers and noticing they were identical, then asking what each threshold means: the band is a
+       numerical necessity at the zero crossing, the release speed is a physical claim about motion. They must differ by
+       a decade, and the handover's lag must be stated rather than absorbed by the tolerance.
+     - The case now separates them (band 0.01, release 0.05 for the plant run) and states the observation lag instead
+       of hiding it: 1 mN*m of slack, measured at 0.5 mN*m.
+     - ``pending``
+
 Two kinds of row that are currently empty
 -----------------------------------------
 

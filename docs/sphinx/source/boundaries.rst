@@ -62,6 +62,12 @@ only reason this page can be trusted after the person who wrote it has moved on.
        modulation. A trace that looks perfect is therefore entirely consistent with a miscalibrated current sensor -- the
        loop is faithful to a wrong measurement. Use it to explain the loop's decisions, not to measure the phases.
      - ``Trace.TheRecordAgreesWithTheScalarReadBitForBit``
+   * - **Start a load the drive cannot move.**
+     - The sequence ramps to its limit, holds, and after its grace period reports `Failed` with zero torque: measured
+       0.200 N*m at 0.5 N*m/s reached at 400 ms, then a 200 ms grace. It cannot conjure torque -- the only honest
+       answers are "released" and "cannot start", and from outside a silent axis is indistinguishable from a working
+       one, which is why the failure is a state rather than an absence.
+     - ``StallStart.AStuckAxisSaysFailedInsteadOfRampingForever``
    * - **See a fault code while the drive is derating.**
      - A hot machine below the trip temperature reports `fault = None` and `active_mask = 0` while its current limit is
        already falling -- measured: 3.00 A at 45 C, 1.80 A at 80 C, both with output allowed, then 0 A and no output at
