@@ -39,7 +39,7 @@
     "core_scopes": ["include/foc/core/", "src/core/"],
     "floors": {
       "Linux": {"core": 95.6, "all": 94.0},
-      "macOS": {"core": 90.0, "all": 70.0}
+      "macOS": {"core": 90.9, "all": 87.7}
     },
     "default_floor": {"core": 90.0, "all": 70.0}
   },
