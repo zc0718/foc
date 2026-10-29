@@ -846,12 +846,26 @@ The log
        lost. Recorded because a wrong expectation fails in the shape of an implementation bug, which is the most
        expensive shape to be wrong in.
      - ``pending``
+   * - F-22
+     - F
+     - `security-linters.yml`, an upstream file, carried six project-private checks as bare steps -- `gates.py`
+       strict, claims, docs, boundaries, capabilities and the negative-compile harness. Upstream's `gates.py` has
+       four subcommands, so a project inheriting this workflow fails on its first push with `invalid choice:
+       'strict'`. Same shape as the FMU step we put in the test workflow, except six at once, and invisible to us
+       because our `gates.py` always recognises them.
+     - `python3 <upstream>/.github/misc/gates.py --help` lists `format tidy guard all`; ours lists twelve. The six
+       steps were written as `run: python3 .github/misc/gates.py <gate>` with nothing between them and the runner.
+     - One guarded step now asks each gate for by name and skips what is absent: the checks still run everywhere
+       they exist, and a derived project pays nothing. Verified both branches -- our help text matches all five
+       names, upstream's matches none. The two private ids left in `.pre-commit-config.yaml` are recorded as a
+       known risk rather than changed, because that file is a developer-local configuration.
+     - ``pending``
 
 What ``pending`` means in the commit column
 -------------------------------------------
 
 A row cannot cite the hash of the commit that contains it, and these rows are written in the same commit as the fix, so
-fifty-one of the sixty-two say ``pending``. That is a convention and it was, until this paragraph, an unstated one --
+fifty-two of the sixty-three say ``pending``. That is a convention and it was, until this paragraph, an unstated one --
 which is the same defect the rows themselves are about. The row is recoverable rather than lost:
 
 .. code-block:: console

@@ -71,37 +71,36 @@ jobs:
       - name: include-guard gate
         run: python3 .github/misc/gates.py guard
 
-      # required: every public header must stand alone under -fno-exceptions -fno-rtti
-      - name: strict-header gate
-        run: python3 .github/misc/gates.py strict
-
-      # required: every installed header has a README claim row, the row names a level, the level
-      # is not L4 (there is no hardware), and the evidence it names exists. This is what keeps the
-      # documentation from drifting away from the measurements, which it silently did once.
-      - name: claim-evidence gate
-        run: python3 .github/misc/gates.py claims
-
-      # required: a stub that does not satisfy a HAL/observer contract must fail to compile, the
-      # diagnostic must name the contract header, and the conforming control must still compile
-      - name: contract negative-compile gate
-        run: python3 .github/misc/negative_compile.py
-
-      # required: doxygen blocks are aligned and wrapped, and every number the documentation quotes
-      # still matches the artefact that produced it (docfmt.py + number_sheet.py --check; no doxygen
-      # or sphinx needed, which is why this gate can run here)
-      - name: documentation-consistency gate
-        run: python3 .github/misc/gates.py docs
-
-      # required: every limit stated on the boundaries page still names a case that exists, and the
-      # page has not been emptied into a table that satisfies the per-row check trivially
-      - name: boundaries gate
-        run: python3 .github/misc/gates.py boundaries
-
-      # required: every capability under core/ or motor/ states its diagnostic channel, its admission
-      # path, its boundary and the invariants it obeys -- or is named as deliberately unlisted. This is
-      # the gate that stops a new algorithm from arriving with no way to tell "zero" from "no idea".
-      - name: capability-matrix gate
-        run: python3 .github/misc/gates.py capabilities
+      # The gates below exist in *this* project's `gates.py`, not in the template's: upstream ships
+      # format / tidy / guard / all, and strict, claims, docs, boundaries, capabilities plus the
+      # negative-compile harness are ours. Written as five bare steps they were private syntax in a shared
+      # file -- a derived project inheriting this workflow would fail on its first push with
+      # `invalid choice: 'strict'`. So each is asked for first and skipped when absent: the *guard* is the
+      # generic part, and the check still runs everywhere it exists.
+      # 下面这些是本项目 gates.py 才有的（上游只有 format/tidy/guard/all）。写成五条裸步骤等于把私域语法
+      # 放进共享文件：派生项目第一次推送就会 `invalid choice: 'strict'`。所以先问再跑——通用的是守卫，
+      # 检查在它存在的地方照旧执行。
+      - name: project gates (run what this project's gates.py actually has)
+        run: |
+          failed=0
+          for gate in strict claims docs boundaries capabilities; do
+            if python3 .github/misc/gates.py --help | grep -qE "^[[:space:]]+${gate}[[:space:]]"; then
+              echo "::group::$gate"
+              python3 .github/misc/gates.py "$gate" || failed=1
+              echo "::endgroup::"
+            else
+              echo "[$gate] not in this project's gates.py; skipped"
+            fi
+          done
+          # the negative-compile harness is a project file (its cases name this project's contract types)
+          if [ -f .github/misc/negative_compile.py ]; then
+            echo "::group::negative-compile"
+            python3 .github/misc/negative_compile.py || failed=1
+            echo "::endgroup::"
+          else
+            echo "[negative-compile] no harness in this project; skipped"
+          fi
+          exit $failed
 
       # NOT here, on purpose: `gates.py pil`. It builds the library twice (host and aarch64) and runs
       # the target binary under qemu, which is minutes of emulator time per push for evidence that

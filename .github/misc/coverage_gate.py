@@ -17,7 +17,7 @@ three-line header like a three-hundred-line source.
 
 Usage
 -----
-    python3 .github/misc/coverage_gate.py                  # core >= 90, all >= 70
+    python3 .github/misc/coverage_gate.py                  # floors for this OS, from metadata.json
     python3 .github/misc/coverage_gate.py --core 95 --all 80
     python3 .github/misc/coverage_gate.py --verbose        # per-file table + margins
     python3 .github/misc/coverage_gate.py --list           # files in each scope
@@ -27,14 +27,19 @@ Exit codes: 0 pass, 1 a floor is violated, 2 the summary is missing or too old t
 import argparse
 import json
 import pathlib
+import platform
 import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_SUMMARY = ROOT / "test_package" / "test" / "export" / "coverage" / "coverage_summary.json"
 
-# "Core algorithms" per PRD G7: the core layer of both the C++ headers and the sources.
+# Fallbacks, used only when metadata.json says nothing. The real values live there (`coverage.core_scopes`,
+# `coverage.floors`, `coverage.default_floor`) so that this gate and the CI step assert the same numbers.
+# 下面的值只是 metadata.json 缺席时的兜底；真值在那份文件里，好让本地与 CI 断言同一组数字。
 DEFAULT_CORE_SCOPES = ("include/foc/core/", "src/core/")
+DEFAULT_CORE_FLOOR = 90.0
+DEFAULT_ALL_FLOOR = 70.0
 
 
 def line_rate(hit, found):
@@ -53,11 +58,33 @@ def scope_of(per_file, prefixes):
     return {"hit": hit, "found": found, "percent": line_rate(hit, found), "files": files}
 
 
+def policy():
+    """The floors and the core scope, from `metadata.json` -- the same file CI reads.
+
+    One source of truth on purpose: this gate and the workflow assert the *same* numbers, so a local green
+    and a runner green mean the same thing. The floors are per-runner (`floors.<os>`), because gcov and
+    llvm-cov do not count the same lines and the gap between them is the instrument, not the code; the
+    runner this script is on picks its own row, and anything unlisted falls back to `default_floor`.
+    """
+    meta_path = ROOT / "metadata.json"
+    try:
+        coverage = json.loads(meta_path.read_text(encoding="utf-8")).get("coverage", {})
+    except (OSError, json.JSONDecodeError):
+        return (), {}, {}
+    leg = {"Linux": "Linux", "Darwin": "macOS", "Windows": "Windows"}.get(platform.system())
+    floors = coverage.get("floors", {}).get(leg) or coverage.get("default_floor", {})
+    scopes = tuple(coverage.get("core_scopes", []))
+    return scopes, floors, coverage
+
+
 def main():
+    scopes, floors, _coverage = policy()
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--input", default=str(DEFAULT_SUMMARY), help="coverage_summary.json path")
-    parser.add_argument("--core", type=float, default=90.0, help="core-scope line-rate floor in %%")
-    parser.add_argument("--all", type=float, default=70.0, help="whole-library line-rate floor in %%")
+    parser.add_argument("--core", type=float, default=float(floors.get("core", DEFAULT_CORE_FLOOR)),
+                        help="core-scope line-rate floor in %% (default: metadata.json for this OS)")
+    parser.add_argument("--all", type=float, default=float(floors.get("all", DEFAULT_ALL_FLOOR)),
+                        help="whole-library line-rate floor in %% (default: metadata.json for this OS)")
     parser.add_argument("--core-scope", action="append", default=None,
                         help="path prefix counted as core (repeatable)")
     parser.add_argument("--verbose", action="store_true", help="print the per-file table")
@@ -77,7 +104,7 @@ def main():
               "judging a scope", file=sys.stderr)
         return 2
 
-    core_scopes = tuple(args.core_scope) if args.core_scope else DEFAULT_CORE_SCOPES
+    core_scopes = tuple(args.core_scope) if args.core_scope else (scopes or DEFAULT_CORE_SCOPES)
     core = scope_of(per_file, core_scopes)
     overall = {"hit": summary["lines"]["hit"], "found": summary["lines"]["found"],
                "percent": summary["lines"]["percent"], "files": summary.get("files", [])}

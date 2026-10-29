@@ -35,6 +35,14 @@
   "trigger_tests": true,
   "saving_tests_log": true,
   "enable_python_bindings": true,
+  "coverage": {
+    "core_scopes": ["include/foc/core/", "src/core/"],
+    "floors": {
+      "Linux": {"core": 95.2, "all": 90.1},
+      "macOS": {"core": 90.4, "all": 86.2}
+    },
+    "default_floor": {"core": 90.0, "all": 70.0}
+  },
   "workflow_triggers": {
     "build": true,
     "tests": true,

@@ -27,6 +27,38 @@
     "build_cstd": { "type": "string" },
     "build_type": { "type": "string", "enum": ["Debug", "Release"] },
     "activate_code_coverage": { "type": "boolean" },
+    "coverage": {
+      "type": "object",
+      "description": "Per-runner line-rate floors. A runner is held to its own best measured value: the same library measured by gcov and by llvm-cov does not produce the same number, and the difference is a property of the instrument, not of the code. Runners not listed fall back to default_floor.",
+      "properties": {
+        "core_scopes": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Path prefixes counted as the core scope, relative to the repository root."
+        },
+        "floors": {
+          "type": "object",
+          "description": "Keyed by the runner's OS name as GitHub reports it (Linux, macOS, Windows).",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "core": { "type": "number" },
+              "all": { "type": "number" }
+            },
+            "additionalProperties": false
+          }
+        },
+        "default_floor": {
+          "type": "object",
+          "properties": {
+            "core": { "type": "number" },
+            "all": { "type": "number" }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
     "is_shared": { "type": "boolean" },
     "is_header": { "type": "boolean" },
     "generate_modules_inplace": { "type": "boolean" },

@@ -157,11 +157,44 @@ jobs:
           fpct=$(python3 -c "import json;print(json.load(open('$summary'))['functions']['percent'])")
           fhit=$(python3 -c "import json;print(json.load(open('$summary'))['functions']['hit'])")
           ffound=$(python3 -c "import json;print(json.load(open('$summary'))['functions']['found'])")
-          # the gate stays on lines; functions are reported so a drop is visible, not yet a threshold
-          if ! python3 -c 'import sys; sys.exit(0 if float(sys.argv[1]) > 0 else 1)' "$lpct"; then
-            echo "::error::line coverage is ${lpct}% (${lhit} of ${lfound} lines) -- expected greater than zero"
-            exit 1
-          fi
+          # The floors live in metadata.json, per runner, because the two legs measure with different
+          # instruments and the gap between them is the instrument, not the code: llvm-cov attributes the
+          # header and inline lines that gcov gives to the caller. Each leg is held to its own best measured
+          # value -- a ratchet, so a drop shows up as red instead of as a slightly smaller number nobody reads.
+          # A runner that metadata does not list falls back to `default_floor`, so a derived project that says
+          # nothing keeps working with whatever it declared there.
+          # 底线按腿取，因为它量的是各自的仪器；没列出的 runner 退回 default_floor。
+          python3 - "$summary" "$RUNNER_OS" <<'PY'
+          import json, sys
+
+          summary, leg = sys.argv[1], sys.argv[2]
+          meta = json.load(open('metadata.json'))['coverage']
+          scopes = tuple(meta.get('core_scopes', []))
+          floors = meta.get('floors', {}).get(leg, meta.get('default_floor', {}))
+          if not floors:
+              print(f'::error::no coverage floor for {leg} and no default_floor in metadata.json')
+              sys.exit(1)
+
+          data = json.load(open(summary))
+          hit = found = 0
+          for path, counts in data.get('per_file', {}).items():
+              if any(path.startswith(scope) for scope in scopes):
+                  hit += counts.get('lines_hit', 0)
+                  found += counts.get('lines_found', 0)
+          rates = {'core': (100.0 * hit / found if found else 0.0, hit, found),
+                   'all': (data['lines']['percent'], data['lines']['hit'], data['lines']['found'])}
+
+          missed = []
+          for name, (rate, h, f) in rates.items():
+              floor = float(floors.get(name, 0.0))
+              verdict = 'ok  ' if rate + 1e-9 >= floor else 'FAIL'
+              print(f'[coverage] {verdict} {name:4s} {rate:6.2f}% ({h}/{f}) floor {floor:.2f}%')
+              if verdict == 'FAIL':
+                  missed.append(f'{name} {rate:.2f}% below {floor:.2f}%')
+          if missed:
+              print('::error::coverage floor missed on ' + leg + ': ' + '; '.join(missed))
+              sys.exit(1)
+          PY
           {
             echo "### Coverage (${{ matrix.os }}, ${{ inputs.build_type }})"
             echo
