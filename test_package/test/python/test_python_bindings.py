@@ -1063,6 +1063,56 @@ def test_the_gain_law_absorbs_the_nameplate_ignorance_it_was_designed_to_absorb(
     assert montecarlo.report(mismatched)['yield'] <= 0.75, montecarlo.report(mismatched)
 
 
+# ---- the torque map --------------------------------------------------------------------------------
+#
+# Newton-metres in, amps out, with the two limits a real application needs: an inverter limit the map cannot exceed and a
+# one-way floor for the tensioner case. The `limited` flag is the diagnostic -- a clipped command and an obeyed one are
+# otherwise identical, so a caller that cannot tell them apart reports a saturating tensioner as holding.
+#
+# N·m 进、安培出，外加真实应用需要的两个限幅：地图超不过的逆变器限幅，以及张力控制那种单向工况的下限。`limited` 是
+# 诊断通道——被裁剪的指令与被执行的指令在其他方面毫无差别，分不清二者的调用方会在张力控制已经饱和时报"正在保持"。
+
+def test_the_torque_map_turns_newton_metres_into_amps_and_says_when_it_clipped():
+    params = foc.MotorParams()
+    params.kt, params.pole_pairs = 0.05, 7
+    params.ld, params.lq = 4e-4, 8e-4
+
+    torque_map = foc.torque_map(params, 5.0, 0.0, 1.0)      # one-way: never pull backwards
+    assert torque_map.status == foc.ErrorCode.OK.value, torque_map.status
+    assert abs(torque_map.nm_per_a - 0.05) < 1e-6, torque_map.nm_per_a
+    assert torque_map.min_nm == 0.0
+    assert abs(torque_map.max_nm - 0.25) < 1e-6, torque_map.max_nm   # kt * i_max narrows the upper limit
+
+    forward = torque_map.command(0.2)
+    assert not forward['limited'], forward
+    assert abs(forward['iq_a'] - 4.0) < 1e-4, forward
+    # The command path and the estimate are inverses of each other: a commanded torque the estimate would not confirm is
+    # a command that does not deliver what it says.
+    # 指令路径与估计互为逆运算：估计不认可的指令，就是不交付它声称之物的指令。
+    assert abs(torque_map.estimate(0.0, forward['iq_a']) - 0.2) < 1e-5
+
+    backward = torque_map.command(-0.2)
+    assert backward['limited'], backward
+    assert backward['iq_a'] == 0.0 and backward['torque_nm'] == 0.0, backward
+
+    # Beyond what the inverter can deliver, the request is clipped and says so.
+    # 超出逆变器能交付的范围时，请求被裁剪并如实说明。
+    over = torque_map.command(0.9)
+    assert over['limited'] and abs(over['torque_nm'] - 0.25) < 1e-6, over
+    assert abs(over['iq_a'] - 5.0) < 1e-4, over
+
+    # A nameplate that produces no torque per amp is refused rather than turned into a map of zeros.
+    # 每安培不产生力矩的铭牌被拒绝，而不是变成一张全零的地图。
+    flat = foc.MotorParams()
+    flat.kt, flat.pole_pairs = 0.0, 7
+    try:
+        foc.torque_map(flat, 5.0, -1.0, 1.0)
+    except RuntimeError:
+        pass
+    else:
+        raise AssertionError("a machine with kt = 0 was admitted to a torque map")
+
+
 def main():
     failures = 0
     for name, case in sorted(globals().items()):

@@ -923,6 +923,64 @@ PYBIND11_MODULE(foc_python, m) {
         "`status` 为 `ErrorCode.OK` 表示拟合到衰减，`STATE` 表示窗口里没有可用衰减（此时稳定时间等数仍然有效），"
         "无法描述阶跃的参数会抛异常。窗口必须从阶跃前或阶跃处开始：`y[0]` 是阶跃前的值。");
 
+    // The torque map, as an object rather than three loose functions: the map is a *value* derived from a nameplate,
+    // and a caller who has one should not be able to pass a different one to `command` than the one they built.
+    // 力矩地图做成对象而不是三个散落的函数：地图是由铭牌导出的一个**值**，而持有它的调用方不应该有机会把另一份地图传给
+    // `command`。
+    py::class_<foc_torque_map_t>(m, "TorqueMap",
+                                 "[en] The nameplate as N*m per amp, plus the limits a torque command works inside.\n"
+                                 "[zh] 把铭牌换算成每安培多少 N·m，外加力矩指令工作的限幅。")
+        .def_readonly("status", &foc_torque_map_t::status)
+        .def_readonly("nm_per_a", &foc_torque_map_t::nm_per_a)
+        .def_readonly("reluctance", &foc_torque_map_t::reluctance)
+        .def_readonly("i_limit_a", &foc_torque_map_t::i_limit_a)
+        .def_readonly("min_nm", &foc_torque_map_t::min_nm)
+        .def_readonly("max_nm", &foc_torque_map_t::max_nm)
+        .def(
+            "estimate",
+            [](const foc_torque_map_t &self, double id_a, double iq_a) {
+                return ::foc_torque_estimate(&self, static_cast<float>(id_a), static_cast<float>(iq_a));
+            },
+            py::arg("id_a"), py::arg("iq_a"),
+            "[en] Torque produced by a dq current pair, N*m.\n[zh] 一对 dq 电流产生的力矩，N·m。")
+        .def(
+            "command",
+            [](const foc_torque_map_t &self, double requested_nm, double id_a) {
+                foc_torque_command_t out{};
+                out.struct_size = sizeof(out);
+                const foc_err_t rc =
+                    ::foc_torque_command(&self, static_cast<float>(requested_nm), static_cast<float>(id_a), &out);
+                if (rc == FOC_ERR_PARAM) {
+                    throw std::runtime_error("foc_torque_command rejected its arguments: the map is unusable, or the "
+                                             "d-axis current cancels the torque constant");
+                }
+                py::dict commanded;
+                commanded["torque_nm"] = out.torque_nm;
+                commanded["iq_a"] = out.iq_a;
+                commanded["limited"] = (out.limited != 0U);
+                return commanded;
+            },
+            py::arg("requested_nm"), py::arg("id_a") = 0.0,
+            "[en] Turn a requested torque into the q current that delivers it, after both limits. `limited` says "
+            "whether anything was clipped.\n[zh] 把请求的力矩变成交付它的 q 轴电流，并施加双侧限幅。`limited` 表示是否"
+            "有内容被裁剪。");
+
+    m.def(
+        "torque_map",
+        [](const foc_motor_params_t &params, double i_max_a, double min_nm, double max_nm) {
+            foc_torque_map_t out{};
+            out.struct_size = sizeof(out);
+            if (::foc_torque_map_build(&params, static_cast<float>(i_max_a), static_cast<float>(min_nm),
+                                       static_cast<float>(max_nm), &out) != FOC_OK) {
+                throw std::runtime_error("foc_torque_map_build rejected its arguments: the nameplate produces no "
+                                         "torque per amp, or the limits do not describe an interval");
+            }
+            return out;
+        },
+        py::arg("params"), py::arg("i_max_a"), py::arg("min_nm"), py::arg("max_nm"),
+        "[en] Build a torque map from the nameplate. Pass `min_nm = 0` with a positive maximum for a one-way command.\n"
+        "[zh] 由铭牌建立力矩地图。`min_nm = 0` 配一个正的上限即单向指令。");
+
     m.def("board_item_name", &foc_board_item_name, py::arg("item"),
           "[en] Stable lowercase name of a board item. [zh] 检查项的稳定小写名。");    // The sweep's only moving part, next to the step-response metric: fit one tone at a known frequency out of a window.
     // A sweep is the instrument that notices a gain law scaled wrongly, because a magnitude at a known frequency moves

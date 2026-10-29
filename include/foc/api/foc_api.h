@@ -881,3 +881,66 @@ foc_err_t foc_step_metrics(const float *y, uint32_t n, float dt_s, float target,
  * @exporter
  */
 foc_err_t foc_sinusoid_fit(const float *y, uint32_t n, float dt_s, float omega_rad_s, foc_sinusoid_fit_t *out);
+
+
+/**
+ * @brief [en] Build a torque map from the nameplate: N*m per amp, and the limits a torque command works inside.
+ * @brief [zh] 由铭牌建立力矩地图：每安培多少 N·m，以及力矩指令工作的限幅。
+ * @param params [en] the machine; `kt` and `pole_pairs` must describe a machine that produces torque.
+ * @param params [zh] 机器；`kt` 与 `pole_pairs` 必须描述一台能产生力矩的机器。
+ * @param i_max_a [en] per-axis current limit, A (> 0). The torque limits are narrowed to what this can deliver.
+ * @param i_max_a [zh] 每轴电流限幅，A（> 0）。力矩限幅会被收窄到这个值能交付的范围。
+ * @param min_nm [en] lower torque limit, N*m. Pass 0 with a positive `max_nm` for a one-way command -- a tensioner or a
+ *                    hold that must never pull backwards.
+ * @param min_nm [zh] 力矩下限，N·m。与正的 `max_nm` 一起传 0 即单向指令——张力控制或保持，绝不允许反向拉。
+ * @param max_nm [en] upper torque limit, N*m; must be >= `min_nm`.
+ * @param max_nm [zh] 力矩上限，N·m；必须 >= `min_nm`。
+ * @param out [en] filled even when the status is not `FOC_OK`, so ignoring the status yields zeros rather than an
+ *                 uninitialised limit.
+ * @param out [zh] 即使状态不是 `FOC_OK` 也会填入，因此忽略状态得到的是零而不是未初始化的限幅。
+ * @return [en] FOC_OK; FOC_ERR_PARAM for a NULL pointer, an unusable nameplate, a non-positive current limit, or limits
+ *              that do not describe an interval.
+ * @return [zh] FOC_OK；空指针、不可用的铭牌、非正的电流限幅、或两个限幅不构成区间时返回 FOC_ERR_PARAM。
+ * @since 0.1.8
+ * @exporter
+ */
+foc_err_t foc_torque_map_build(const foc_motor_params_t *params, float i_max_a, float min_nm, float max_nm,
+                               foc_torque_map_t *out);
+
+
+/**
+ * @brief [en] The torque a dq current pair is producing: `kt*iq + 1.5*pp*(ld-lq)*id*iq`, in N*m.
+ * @brief [zh] 一对 dq 电流正在产生的力矩：`kt·iq + 1.5·pp·(ld − lq)·id·iq`，单位 N·m。
+ * @param map [en] a map from foc_torque_map_build(); an unusable map estimates 0.
+ * @param map [zh] 由 foc_torque_map_build() 得到的地图；不可用的地图估计出 0。
+ * @param id_a [en] d-axis current, A. @param id_a
+ * @param id_a [zh] d 轴电流，A。
+ * @param iq_a [en] q-axis current, A. @param iq_a
+ * @param iq_a [zh] q 轴电流，A。
+ * @return [en] torque in N*m. @return
+ * @return [zh] 力矩，N·m。
+ * @since 0.1.8
+ * @exporter
+ */
+float foc_torque_estimate(const foc_torque_map_t *map, float id_a, float iq_a);
+
+
+/**
+ * @brief [en] Turn a requested torque into the q-axis current that delivers it, after both limits.
+ * @brief [zh] 把请求的力矩变成交付它的 q 轴电流，并施加双侧限幅。
+ * @param map [en] a map from foc_torque_map_build().
+ * @param map [zh] 由 foc_torque_map_build() 得到的地图。
+ * @param requested_nm [en] the torque asked for, N*m; clipped to the map's limits. @param requested_nm
+ * @param requested_nm [zh] 请求的力矩。
+ * @param id_a [en] the d-axis current the command will be applied at, A. @param id_a
+ * @param id_a [zh] 指令将在其上下发的 d 轴电流。
+ * @param out [en] filled whenever the map is usable; `limited` says whether anything was clipped.
+ * @param out [zh] 地图可用时填入；`limited` 表示是否有内容被裁剪。
+ * @return [en] FOC_OK; FOC_ERR_PARAM for a NULL pointer, an unusable map, or a d-axis current that cancels the torque
+ *              constant and leaves no current able to deliver the request.
+ * @return [zh] FOC_OK；空指针、不可用的地图、或抵消了转矩常数、使任何电流都交付不了该请求的 d 轴电流时返回
+ *              FOC_ERR_PARAM。
+ * @since 0.1.8
+ * @exporter
+ */
+foc_err_t foc_torque_command(const foc_torque_map_t *map, float requested_nm, float id_a, foc_torque_command_t *out);

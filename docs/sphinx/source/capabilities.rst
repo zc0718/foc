@@ -103,6 +103,16 @@ point -- the alternative is a library that grows algorithms and forgets how they
      - ``BodeSweep.TheThreeDecibelPointIsTheBandwidthTheGainLawWasAskedFor``
      - na -- it measures other capabilities' arithmetic and owns none of its own.
      - A-12
+   * - ``motor/torque_map.hpp``
+     - ``status`` for the map and ``limited`` for every command. The second one is the point: a clipped command and an
+       obeyed one are otherwise identical, and a caller who cannot tell them apart reports a saturating tensioner as
+       holding.
+     - ``Param`` when the nameplate produces no torque per amp (`kt <= 0`), has no pole pairs, or when the limits do not
+       describe an interval; and ``Param`` from `torque_command` when the d-axis current cancels the torque constant and
+       no current can deliver the request -- a refusal, because clamping would report a torque that cannot be produced.
+     - ``TorqueMap.TheLimitsAreNarrowedToWhatTheInverterCanDeliver``
+     - na -- algebraic, no state to keep invariant across frames or time scales.
+     - A-14
    * - ``core/observer/observer_policy.hpp``
      - na -- concepts: it names what an observer must provide and provides nothing itself.
      - na -- a type either satisfies the concept or fails to compile, which is the strongest admission there is.

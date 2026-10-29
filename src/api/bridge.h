@@ -83,6 +83,11 @@ foc_err_t foc_bridge_hfi_size(const foc_motor_params_t *params, float pwm_freq_h
 foc_err_t foc_bridge_step_metrics(const float *y, uint32_t n, float dt_s, float target, float band,
                                   foc_step_metrics_t *out);
 foc_err_t foc_bridge_sinusoid_fit(const float *y, uint32_t n, float dt_s, float omega_rad_s, foc_sinusoid_fit_t *out);
+foc_err_t foc_bridge_torque_map_build(const foc_motor_params_t *params, float i_max_a, float min_nm, float max_nm,
+                                      foc_torque_map_t *out);
+float foc_bridge_torque_estimate(const foc_torque_map_t *map, float id_a, float iq_a);
+foc_err_t foc_bridge_torque_command(const foc_torque_map_t *map, float requested_nm, float id_a,
+                                    foc_torque_command_t *out);
 #ifdef __cplusplus
 }
 #endif

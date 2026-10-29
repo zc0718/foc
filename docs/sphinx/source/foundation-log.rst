@@ -379,6 +379,17 @@ The log
        a green test is evidence of nothing until it has been made to go red.
      - ``pending``
 
+   * - A-14
+     - A
+     - The first version of the torque map's arithmetic case asserted that a positive `id` *raises* the torque on an
+       `ld < lq` machine. It lowers it: the reluctance term is `1.5*pp*(ld-lq)*id*iq`, so the sign follows `ld - lq`
+       and the usual interior machine has `ld < lq`. The map was right and the case was wrong.
+     - The case failing against arithmetic that was already correct, and the analytic expression it was comparing with.
+       Nothing in the map had to change.
+     - Two assertions, and one more reason the case states the expression instead of quoting a number: a quoted number
+       would have been edited to match the wrong sign.
+     - ``pending``
+
 Two kinds of row that are currently empty
 -----------------------------------------
 

@@ -25,6 +25,7 @@
 #include <foc/driver/stub_hal.hpp>
 #include <foc/motor/motor.hpp>
 #include <foc/motor/motor_config.hpp>
+#include <foc/motor/torque_map.hpp>
 // Conan::ImportEnd
 
 namespace foc {
@@ -1821,6 +1822,73 @@ foc_err_t foc_bridge_sinusoid_fit(const float* y, uint32_t n, float dt_s, float 
         return FOC_OK;
     }
     return (fitted.status == foc::ErrorCode::State) ? FOC_ERR_STATE : FOC_ERR_PARAM;
+}
+
+namespace {
+
+/**
+ * @brief The C map and the C++ map must stay the same object, field for field.
+ */
+auto to_core(const foc_torque_map_t& map) noexcept -> foc::TorqueMap {
+    foc::TorqueMap out{};
+    out.status = static_cast<foc::ErrorCode>(map.status);
+    out.nm_per_a = map.nm_per_a;
+    out.reluctance = map.reluctance;
+    out.i_limit_a = map.i_limit_a;
+    out.min_nm = map.min_nm;
+    out.max_nm = map.max_nm;
+    return out;
+}
+
+} // namespace
+
+foc_err_t foc_bridge_torque_map_build(const foc_motor_params_t* params, float i_max_a, float min_nm, float max_nm,
+                                      foc_torque_map_t* out) {
+    if ((params == nullptr) || (out == nullptr)) {
+        return FOC_ERR_PARAM;
+    }
+    foc::motor::MotorConfig config{};
+    config.rs = params->rs;
+    config.ld = params->ld;
+    config.lq = params->lq;
+    config.kt = params->kt;
+    config.j = params->j;
+    config.b = params->b;
+    config.pole_pairs = params->pole_pairs;
+    config.i_max_a = i_max_a;
+    const foc::TorqueMap built = foc::torque_map(config, min_nm, max_nm);
+    out->struct_size = sizeof(foc_torque_map_t);
+    out->status = static_cast<std::int32_t>(built.status);
+    out->nm_per_a = built.nm_per_a;
+    out->reluctance = built.reluctance;
+    out->i_limit_a = built.i_limit_a;
+    out->min_nm = built.min_nm;
+    out->max_nm = built.max_nm;
+    return (built.status == foc::ErrorCode::Ok) ? FOC_OK : FOC_ERR_PARAM;
+}
+
+float foc_bridge_torque_estimate(const foc_torque_map_t* map, float id_a, float iq_a) {
+    if (map == nullptr) {
+        return 0.0F;
+    }
+    return foc::torque_estimate(to_core(*map), id_a, iq_a);
+}
+
+foc_err_t foc_bridge_torque_command(const foc_torque_map_t* map, float requested_nm, float id_a,
+                                    foc_torque_command_t* out) {
+    if ((map == nullptr) || (out == nullptr)) {
+        return FOC_ERR_PARAM;
+    }
+    const foc::TorqueCommand command = foc::torque_command(to_core(*map), requested_nm, id_a);
+    out->struct_size = sizeof(foc_torque_command_t);
+    out->status = static_cast<std::int32_t>(command.status);
+    out->torque_nm = command.torque_nm;
+    out->iq_a = command.iq_a;
+    out->limited = command.limited ? 1U : 0U;
+    out->reserved[0] = 0U;
+    out->reserved[1] = 0U;
+    out->reserved[2] = 0U;
+    return (command.status == foc::ErrorCode::Ok) ? FOC_OK : FOC_ERR_PARAM;
 }
 
 } // extern "C"

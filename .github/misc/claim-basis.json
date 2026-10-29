@@ -313,6 +313,12 @@
       "core/position.hpp",
       "core/limits.hpp"
     ],
+    "motor/torque_map.hpp": [
+      "src/api/bridge.cpp",
+      "api/foc_api.h",
+      "api/python_bindings.cpp",
+      "motor/motor_config.hpp"
+    ],
     "version.h": [
       "src/version.c"
     ]

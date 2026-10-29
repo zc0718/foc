@@ -311,3 +311,26 @@ foc_err_t foc_sinusoid_fit(const float *y, uint32_t n, float dt_s, float omega_r
     }
     return foc_bridge_sinusoid_fit(y, n, dt_s, omega_rad_s, out);
 }
+
+foc_err_t foc_torque_map_build(const foc_motor_params_t *params, float i_max_a, float min_nm, float max_nm,
+                               foc_torque_map_t *out) {
+    if ((params == NULL) || (out == NULL) || !isfinite(i_max_a) || !(i_max_a > 0.0F) || !isfinite(min_nm) ||
+        !isfinite(max_nm)) {
+        return FOC_ERR_PARAM;
+    }
+    return foc_bridge_torque_map_build(params, i_max_a, min_nm, max_nm, out);
+}
+
+float foc_torque_estimate(const foc_torque_map_t *map, float id_a, float iq_a) {
+    if ((map == NULL) || !isfinite(id_a) || !isfinite(iq_a)) {
+        return 0.0F;
+    }
+    return foc_bridge_torque_estimate(map, id_a, iq_a);
+}
+
+foc_err_t foc_torque_command(const foc_torque_map_t *map, float requested_nm, float id_a, foc_torque_command_t *out) {
+    if ((map == NULL) || (out == NULL) || !isfinite(requested_nm) || !isfinite(id_a)) {
+        return FOC_ERR_PARAM;
+    }
+    return foc_bridge_torque_command(map, requested_nm, id_a, out);
+}

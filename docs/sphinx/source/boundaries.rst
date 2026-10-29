@@ -62,6 +62,12 @@ only reason this page can be trusted after the person who wrote it has moved on.
        modulation. A trace that looks perfect is therefore entirely consistent with a miscalibrated current sensor -- the
        loop is faithful to a wrong measurement. Use it to explain the loop's decisions, not to measure the phases.
      - ``Trace.TheRecordAgreesWithTheScalarReadBitForBit``
+   * - **Estimate a torque that accounts for iron loss or magnet temperature.**
+     - `torque_estimate()` is `kt*iq + 1.5*pp*(ld-lq)*id*iq`, and `kt` is a nameplate number: it does not know that the
+       magnet weakens as it heats, that iron loss subtracts torque at speed, or that the inverter adds no torque. The
+       5 % agreement it reports is against the same model the plant integrates, so it is an agreement about the
+       *model*, not a claim about a hot machine.
+     - ``TorqueMap.TheEstimateMatchesTheMechanicsOfTheSilBench``
    * - **Improve a sensored axis's angle by adding the carrier.**
      - The sensor owns the commutation angle, so the injection observer now runs for its own demodulation only: the
        carrier does reach the inverter (measured swing 0.45--0.67 across eight rate/PWM combinations), but the sensor

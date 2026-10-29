@@ -358,6 +358,23 @@ answer is arithmetic rather than a modelling opinion: a unit tone reads 1.000 un
 correction, and a known 11.2 % distortion made of a 10 % third harmonic and a 5 % fifth reads 0.1118 with each harmonic
 in its own bin. Neither has a C-side counterpart, and neither needs one: they measure the window, not the loop.
 
+**Command a torque, not an amperage.** `set_torque()` takes amps and leaves the N*m conversion to the caller -- the
+same arithmetic, with the same sign convention and the same limit, in every product. `foc/motor/torque_map.hpp` is that
+arithmetic once:
+
+.. code-block:: cpp
+
+   const foc::TorqueMap map = foc::torque_map(config, /*min_nm=*/0.0F, /*max_nm=*/1.0F);   // one-way
+   const foc::TorqueCommand cmd = foc::torque_command(map, 0.2F, /*id_a=*/0.0F);
+   motor.set_torque(cmd.iq_a);          // 0.2 N*m -> 4 A at kt = 0.05 N*m/A
+   if (cmd.limited) { /* the request was clipped, and someone should know */ }
+
+The estimate is `kt*iq + 1.5*pp*(ld-lq)*id*iq`, which is the expression the plant integrates -- so it is checked against
+something that shares no line with it: the mechanical torque `J*dw/dt + B*w` from the recorded speed. The two agree to
+**+0.006 % at 2 A** and **+0.007 % at 20 A**, where the loop is saturated; the plan's 5 % band is three orders of
+magnitude wider than the measured residual, which is the forward-difference error in `dw/dt`. Scaling the map's gain by
+10 % moves the same measurement to **-9.994 %**, so the band is a gate rather than decoration.
+
 **Ask what a wrong nameplate costs.** Every gain here is derived from the nameplate, so the design question is how wrong
 it can be before the claim stops holding. `benchmark/script/montecarlo.py` draws machines, runs the loop on each and
 reports the spread:
@@ -408,7 +425,7 @@ whether your hardware matches that model.
      - Level
    * - Unit, SIL and stress cases
      - :code:`conan create . -s build_type=Debug --build=missing`
-     - 477 cases, 0 failed
+     - 483 cases, 0 failed
      - L1/L2
    * - Line coverage
      - :code:`python3 .github/misc/coverage_gate.py`
