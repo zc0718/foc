@@ -171,3 +171,46 @@ TEST(PositionReference, AJumpTooLargeToUnwrapIsReportedAndTheMarkClearsIt) {
     EXPECT_FALSE(reference.lost_count()) << "the mark is exactly the information that was lost and must restore it";
     EXPECT_TRUE(reference.homed());
 }
+
+// C6  a zero pole count is treated as one pole instead of dividing by zero. Unclamped, the very first sample
+//     would read `inf` or `nan`; the mechanical angle would then be useless for every later sample too.
+// C6  极对数取 0 时按一拍处理，而不是除以零。不夹取的话，第一次采样就会读出 `inf`/`nan`，此后每一拍的机械角
+//     都会一起失去意义。
+TEST(PositionReference, C6_AZeroPoleCountIsOnePoleNotADivision) {
+  core::PositionReference reference{core::PositionReference::Config{0U, 0.0F}};
+  static_cast<void>(reference.update(1.0F, false));
+  ASSERT_TRUE(std::isfinite(reference.unwrapped_mech_rad())) << "a zero pole count must not divide by zero";
+  EXPECT_FLOAT_EQ(reference.unwrapped_mech_rad(), 1.0F);
+  static_cast<void>(reference.update(1.5F, false));
+  EXPECT_NEAR(reference.unwrapped_mech_rad(), 1.5F, 1.0e-5F);
+}
+
+// C7  `reset()` forgets the origin *and* the unwrap. After it, the first sample re-primes the estimator, so an
+//     angle far from the pre-reset one is a new starting point rather than a jump of several turns.
+// C7  `reset()` 同时忘掉原点与折返累积。重置后第一次采样重新预置，因此与重置前相差很大的角度是**新的起点**，
+//     而不是几圈的跳变。
+TEST(PositionReference, C7_ResetForgetsTheOriginAndTheUnwrap) {
+  core::PositionReference reference = make_reference();
+  for (int i = 0; i < 40; ++i) {
+    static_cast<void>(reference.update(electrical_of(static_cast<float>(i) * kMechStepRad), i == 10));
+  }
+  ASSERT_TRUE(reference.homed());
+  ASSERT_NE(reference.referenced_mech_rad(), 0.0F);
+
+  reference.reset();
+  EXPECT_FALSE(reference.homed());
+  EXPECT_FLOAT_EQ(reference.referenced_mech_rad(), 0.0F);
+  EXPECT_FLOAT_EQ(reference.unwrapped_mech_rad(), 0.0F);
+  EXPECT_FALSE(reference.lost_count());
+
+  // Far from where it stopped. Re-priming means the mechanical angle is this sample's **principal value**: an
+  // electrical angle only pins the mechanical one modulo 2*pi/poles, so 3.0 rad reads 3.0 mod 0.8976 = 0.3072.
+  // The point of the case is that it is that value and not a continuation of the old count -- and that a 3 rad
+  // jump is not reported as a lost count, because after a reset there is nothing to have lost.
+  constexpr float kFarMechRad = 3.0F;
+  constexpr float kPolesPerTurnRad = kTwoPi / static_cast<float>(kPoles);
+  static_cast<void>(reference.update(electrical_of(kFarMechRad), false));
+  const float principal = std::fmod(kFarMechRad, kPolesPerTurnRad);
+  EXPECT_NEAR(reference.unwrapped_mech_rad(), principal, 1e-4F) << "reset must not leave a stale previous angle";
+  EXPECT_FALSE(reference.lost_count());
+}

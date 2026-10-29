@@ -833,12 +833,25 @@ The log
        silently drops files is indistinguishable from a gate that passes them, and the number it prints is not the
        number it claims.
      - ``pending``
+   * - C-12
+     - C
+     - A new case asserted that after `reset()` the unwrapped mechanical angle equals the mechanical angle it handed
+       in -- 3.0 rad. It cannot: the estimator is handed an **electrical** angle, which pins the mechanical one only
+       modulo 2*pi/poles, so 3.0 reads 0.3072. The case went red on its first run and the implementation was right;
+       the criterion was written from the caller's mental model instead of from the quantity the API receives.
+     - `The difference between reference.unwrapped_mech_rad() and kFarMechRad is 2.6928 ... where
+       reference.unwrapped_mech_rad() evaluates to 0.30720621` -- and 0.3072 is exactly `3.0 mod (2*pi/7)`.
+     - The criterion is the principal value now, and the case keeps the point it always had: after a reset there is
+       no stale previous angle, and a 3 rad jump is not reported as a lost count because there is nothing to have
+       lost. Recorded because a wrong expectation fails in the shape of an implementation bug, which is the most
+       expensive shape to be wrong in.
+     - ``pending``
 
 What ``pending`` means in the commit column
 -------------------------------------------
 
 A row cannot cite the hash of the commit that contains it, and these rows are written in the same commit as the fix, so
-fifty of the sixty-one say ``pending``. That is a convention and it was, until this paragraph, an unstated one --
+fifty-one of the sixty-two say ``pending``. That is a convention and it was, until this paragraph, an unstated one --
 which is the same defect the rows themselves are about. The row is recoverable rather than lost:
 
 .. code-block:: console
