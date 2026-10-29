@@ -896,12 +896,29 @@ The log
      - Both call sites go through `_baremetal_whitelist()`, which lowercases once. Re-probed: `ETL`, `Etl` and `etl` all keep
        etl, and `ArduinoJson` still drops it, so the filter still filters.
      - ``pending``
+   * - F-25
+     - A
+     - Run 40840909635 spent 489 s in the cross-compile legs' `apt-get install gcc-arm-none-eabi`, and the natural reading
+       -- "the Conan cache is broken, so every leg reinstalls" -- was wrong twice over: all legs printed `Cache restored
+       from key` and the Build leg's `conan create` took 1 s. The apt step's own log says `Fetched 607 MB in 7min 51s (1290
+       kB/s)`: 377 s of the 489 s was one slow mirror, and unpacking 3.2 GB is ~10 s. The baseline had already dealt with
+       this -- `cross-compile.yml` in v0.3.1 carries an apt archive cache -- and our copy was 62 lines behind it.
+     - The same job re-run on the same commit, with archives cached, prints `Need to get 0 B/607 MB of archives` and
+       finishes the step in 35.8 s. The cold run of that commit drew a fast mirror for the same 607 MB (`10s (61.9 MB/s)`,
+       step 48.8 s). So the cost is mirror variance rather than a constant, which bounds what caching can win: it removes
+       the 8-minute tail, it does not make a fast mirror faster.
+     - The first attempt was a hand-rolled download cache (`~/.cache/apt-archives` copied into and back out of
+       `/var/cache/apt/archives`). It was then thrown away for the baseline file, which caches the directory in place and
+       -- the part a rewrite loses -- keeps `DEBIAN_FRONTEND=noninteractive` with `Dpkg::Options` (a prompt on a hosted
+       runner is a hang), `restore-keys` for partial hits, and an `if: always()` chown that stops the post-job save from
+       failing silently when apt leaves `partial/` root-owned. `git diff` against v0.3.1 is now empty for that file.
+     - ``pending``
 
 What ``pending`` means in the commit column
 -------------------------------------------
 
 A row cannot cite the hash of the commit that contains it, and these rows are written in the same commit as the fix, so
-fifty-five of the sixty-six say ``pending``. That is a convention and it was, until this paragraph, an unstated one --
+fifty-six of the sixty-seven say ``pending``. That is a convention and it was, until this paragraph, an unstated one --
 which is the same defect the rows themselves are about. The row is recoverable rather than lost:
 
 .. code-block:: console

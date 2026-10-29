@@ -23,10 +23,7 @@ jobs:
   cross-compile:
     name: Cross Compile (${{ matrix.target }})
     runs-on: ubuntu-latest
-    # Backstop: the apt step below is the only network-dependent step here, and a single
-    # stalled mirror would otherwise hold the job -- and the push-triggered concurrency
-    # group -- for the default 360 minutes. Mirrors the 55-minute backstops in
-    # ci-build-test.yml / full-test-automation.yml.
+    # Backstop: a stalled apt mirror would otherwise hold this job (and the push concurrency group) for 360 minutes.
     timeout-minutes: 40
     strategy:
       # fail-fast off: each target must report its own result
@@ -56,39 +53,48 @@ jobs:
         run: |
           pip install --only-binary :all: conan==2.31.2
 
-      - name: Cache the cross toolchain debs
+      - name: Prepare the apt download cache
+        shell: bash
+        # /var/cache/apt/archives is root-owned: hand it to the runner user before the cache action restores into it.
+        run: sudo chown -R "$USER:$USER" /var/cache/apt/archives
+
+      - name: Restore the apt download cache
         uses: actions/cache@v6
         with:
-          path: ~/.cache/apt-archives
-          # Keyed on this file: the package set lives in the matrix below and the versions live in the
-          # runner image, so editing either starts a fresh cache instead of serving an old deb set.
-          key: apt-debs-${{ matrix.target }}-${{ hashFiles('.github/workflows/cross-compile.yml') }}
+          path: /var/cache/apt/archives
+          # Keyed by target: the two matrix legs install different packages.
+          key: apt-archives-${{ matrix.target }}-${{ hashFiles('.github/workflows/cross-compile.yml') }}
+          restore-keys: |
+            apt-archives-${{ matrix.target }}-
 
       - name: Install the cross toolchain and the Conan default profile
         shell: bash
-        # apt is the flakiest part of a hosted runner: a stalled mirror turns into the
-        # default 360-minute step limit, so bound the step and let retries + timeouts do
-        # the work. The options go into apt.conf.d so they apply to update AND install.
-        timeout-minutes: 12
+        # Cold-cache bound: 234 MB of aarch64 packages took 11-17 min on a degraded mirror, while unpacking took seconds.
+        timeout-minutes: 30
         run: |
-          printf '%s\n' 'Acquire::Retries "3";' 'Acquire::http::Timeout "20";' 'Acquire::https::Timeout "20";' \
+          printf '%s\n' \
+            'Acquire::Retries "3";' \
+            'Acquire::http::Timeout "30";' \
+            'Acquire::https::Timeout "30";' \
+            'Acquire::Languages "none";' \
             | sudo tee /etc/apt/apt.conf.d/99-ci-retries >/dev/null
-          # Run 40840909635 spent 377 s of its 489 s apt step fetching 607 MB at 1.3 MB/s and ~10 s
-          # unpacking, so the download is the only part worth caching -- the debs are content-addressed
-          # by version, apt re-verifies the size and hash, and a stale entry just gets re-fetched.
-          sudo mkdir -p /var/cache/apt/archives/partial
-          if compgen -G "$HOME/.cache/apt-archives/*.deb" >/dev/null; then
-            sudo cp "$HOME"/.cache/apt-archives/*.deb /var/cache/apt/archives/
-            echo "seeded $(find "$HOME/.cache/apt-archives" -name '*.deb' | wc -l) cached archives"
-          fi
           sudo apt-get update
-          sudo apt-get install -y ${{ matrix.packages }}
-          # Re-save exactly the version set this job used, so a mirror bump replaces instead of grows it.
-          # Only reached after apt succeeded, so the cache can never pin a tree that does not install.
-          rm -rf "$HOME/.cache/apt-archives"
-          mkdir -p "$HOME/.cache/apt-archives"
-          cp /var/cache/apt/archives/*.deb "$HOME/.cache/apt-archives/"
+          # noninteractive + confdef/confold avoid prompt-looking hangs; keep --no-install-recommends off (newlib for arm-none-eabi is a Recommends).
+          sudo DEBIAN_FRONTEND=noninteractive NEEDRESTART_MODE=a \
+            apt-get install -y \
+            -o Dpkg::Options::=--force-confdef \
+            -o Dpkg::Options::=--force-confold \
+            ${{ matrix.packages }}
           conan profile detect --force
+
+      - name: Normalize the apt archive cache
+        if: always()
+        shell: bash
+        # The post-job save runs as the runner user but apt creates partial/ as root 0700, which fails the save silently.
+        run: |
+          sudo chown -R "$USER:$USER" /var/cache/apt/archives 2>/dev/null || true
+          du -sh /var/cache/apt/archives 2>/dev/null || true
+          ls -1 /var/cache/apt/archives/*.deb 2>/dev/null | wc -l | xargs echo "cached .deb files:"
 
       - name: Cache Conan packages
         uses: actions/cache@v6
