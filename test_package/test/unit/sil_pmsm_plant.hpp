@@ -33,6 +33,27 @@ struct PlantParams final {
     float j;                 ///< [en] rotor inertia in kg*m^2. [zh] 转子惯量，kg·m²。
     float b;                 ///< [en] viscous friction in N*m*s. [zh] 粘性摩擦，N·m·s。
     std::uint8_t pole_pairs; ///< [en] pole pairs. [zh] 极对数。
+    /**
+     * @brief [en] breakaway (static) torque, N*m. The rotor does not move until the net torque exceeds it, and then it
+     *             moves against the Coulomb term instead. 0 = no stiction, which is the behaviour every earlier case
+     *             was written against.
+     * @brief [zh] 起动（静）摩擦力矩，N·m。净力矩超过它之前转子不动，超过之后改为对抗库仑项。0 = 无静摩擦，也就是此前每
+     *             一个用例所对着的行为。
+     */
+    float t_static_nm{0.0F};
+    /**
+     * @brief [en] Coulomb (kinetic) friction torque, N*m, opposing motion at any non-zero speed.
+     * @brief [zh] 库仑（动）摩擦力矩， N·m，在任何非零速度下阻碍运动。
+     */
+    float t_coulomb_nm{0.0F};
+    /**
+     * @brief [en] speed below which the rotor counts as at rest for the stiction decision, rad/s. A small band is
+     *             unavoidable: `sign(0)` is not defined, and a model that integrates through zero without one chatters
+     *             across it.
+     * @brief [zh] 判定"静止"的速度带宽，rad/s。这一带宽不可避免：`sign(0)` 无定义，而一个穿过零点却无带宽的模型会在零点
+     *             两侧抖动。
+     */
+    float omega_eps_rad_s{0.0F};
 };
 
 /**
@@ -103,6 +124,18 @@ class PmsmPlant final {
      * @since 0.1.0
      */
     void set_load_torque(float torque_nm) noexcept;
+
+    /**
+     * @brief [en] The friction torque opposing motion or starting, N*m.
+     * @brief [zh] 阻碍运动或起步的摩擦力矩，N·m。
+     * @param omega_mech [en] current mechanical speed, rad/s. @param omega_mech
+     * @param omega_mech [zh] 当前机械转速，rad/s。
+     * @param driving_nm [en] the electromagnetic torque being produced, N*m.
+     * @param driving_nm [zh] 正在产生的电磁力矩，N·m。
+     * @return [en] the friction torque, signed so that it opposes the drive at rest and the motion otherwise.
+     * @return [zh] 摩擦力矩，符号使其在静止时对抗驱动、其余时候对抗运动。
+     */
+    [[nodiscard]] auto friction_nm(float omega_mech, float driving_nm) const noexcept -> float;
 
     /**
      * @brief [en] Model d-axis magnetic saturation: `Ld(i_d) = Ld0 * (1 - depth * tanh(i_d / current_a))`. Off by
@@ -347,6 +380,27 @@ inline void PmsmPlant::set_voltage_dq(core::Dq<float> v_dq) noexcept { v_dq_ = v
 
 inline void PmsmPlant::set_load_torque(float torque_nm) noexcept { load_nm_ = torque_nm; }
 
+
+auto PmsmPlant::friction_nm(float omega_mech, float driving_nm) const noexcept -> float {
+    // Coulomb friction opposes motion; stiction opposes *starting*. The two are different mechanisms and a machine that
+    // has only the first one always creeps when the torque is small -- which is exactly the behaviour a stall-start
+    // control law has to be tested against, and it cannot be tested against a model that does not have it.
+    //
+    // 库仑摩擦阻碍**运动**，静摩擦阻碍**起步**。二者是不同机理，而只有前者的机器在小力矩下总会缓慢蠕动——那正是
+    // "带载起动"控制律必须被检验的行为，而一个没有该现象的模型检验不出来。
+    const float net_at_rest = driving_nm - load_nm_;
+    if (std::fabs(omega_mech) <= params_.omega_eps_rad_s) {
+        // At rest the drive must beat the breakaway torque before anything moves. Below it the friction term cancels
+        // the drive exactly, so the acceleration is zero and the rotor stays put instead of creeping.
+        // 静止时驱动必须超过起动摩擦才会动。低于它时摩擦项正好抵消驱动，加速度为零，转子保持不动而不是缓慢蠕动。
+        if (std::fabs(net_at_rest) <= params_.t_static_nm) {
+            return net_at_rest;
+        }
+        return (net_at_rest > 0.0F) ? params_.t_coulomb_nm : -params_.t_coulomb_nm;
+    }
+    return (omega_mech > 0.0F) ? params_.t_coulomb_nm : -params_.t_coulomb_nm;
+}
+
 inline void PmsmPlant::set_mechanical_speed(float omega_mech_rad_s) noexcept { state_.omega_mech = omega_mech_rad_s; }
 
 inline void PmsmPlant::set_d_axis_saturation(float depth, float current_a) noexcept {
@@ -432,7 +486,9 @@ inline auto PmsmPlant::derivative(const PlantState& s) const noexcept -> Derivat
         (v_dq_.q - (rs * itq) - (omega_e * ld * s.id_a) - (omega_e * psi_f_)) / lq);
 
     const float torque = kOneAndHalf * poles * ((psi_f_ * s.iq_a) + ((ld - lq) * s.id_a * s.iq_a));
-    const float domega = static_cast<float>((torque - (params_.b * s.omega_mech) - load_nm_) / params_.j);
+    const float domega =
+        static_cast<float>((torque - (params_.b * s.omega_mech) - friction_nm(s.omega_mech, torque) - load_nm_) /
+                           params_.j);
 
     return Derivative{did, diq, domega, s.omega_mech};
 }

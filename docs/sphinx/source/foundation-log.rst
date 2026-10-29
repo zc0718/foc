@@ -404,6 +404,19 @@ The log
        the thing it is for.
      - ``pending``
 
+   * - A-15
+     - A
+     - Building the stiction rig I wrote a "current source" that nulled `diq` **at the current the plant happened to
+       have**. That is a free integrator, not a source: it holds the current wherever the transient left it. The case's
+       own arithmetic caught it twice -- 37.85 rad/s against a promised 40.00 with the d current drifting, then 35.49
+       with the d current pinned, because `iq` had settled at 0.90988 A against a 1.0 A setpoint.
+     - Printing what the plant actually ended with (`id 0.00700 iq 0.90988`) instead of reasoning about the voltage.
+       Two fixes were guesses at the voltage; the third read the state and the answer was in the current.
+     - The source now feeds the **setpoints** with the d-q cross-coupling: steady speed 39.997 against 40.000, `iq`
+       1.00000, torque 0.050000. The lesson: regulating a derivative is not regulating a value, and a case whose
+       arithmetic is exact will say so.
+     - ``pending``
+
 Two kinds of row that are currently empty
 -----------------------------------------
 
