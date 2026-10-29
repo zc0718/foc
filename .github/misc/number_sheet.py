@@ -77,7 +77,10 @@ def main() -> int:
 
     documented = CASES_ROW.search(text)
     if cases is None:
-        skipped.append("case count (no configured build under test_package/build)")
+        skipped.append(
+            "case count (no configured build under test_package/build; the Tests leg is where CTest runs, "
+            "so this job does not verify this number -- that is a coverage gap of this run, not a pass)"
+        )
     elif documented is None:
         problems.append("the case-count row is gone from usage.rst")
     elif int(documented.group(1)) != cases:
