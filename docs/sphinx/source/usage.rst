@@ -378,6 +378,27 @@ Measured: 0.030 N*m of breakaway at 0.5 N*m/s is reached and released at **60.1 
 sequence asking for less than it believes -- moves that to 68.0 ms and the case fails. A jam at the limit reports
 `Failed` with zero torque after 400 ms of ramp plus a 200 ms grace.
 
+**Turn a standing error into arithmetic.** A proportional position loop on a machine with friction has a *dead band*, not
+a residual: below a certain error the torque it can still ask for is under the breakaway and the axis does not move at
+all. `core/friction_comp.hpp` adds the Coulomb term that moves that wall, and refuses the estimates that would turn it
+into a motor.
+
+.. code-block:: cpp
+
+   foc::core::FrictionComp friction(recipe);   // coulomb 0.010 N*m, static 0.020, viscous 1e-3, band 0.05 rad/s
+   const auto out = friction.step(speed_ref, speed_meas, demand_torque);
+   const float torque = demand_torque + out.torque_nm;   // and check out.stalled before trusting either
+
+The numbers are the capability. The band is `static / kp` -- **4.003 mrad measured against 4.0 predicted** at
+`kp = 5 N*m/rad` -- and with the compensation it is `(static - coulomb) / kp`, **2.021 against 2.0**. It follows the
+estimate, which is why the estimate has to come from a measurement: 1.007 mrad with a 50 % over-estimate, and above the
+breakaway there is no band at all -- a `(0.030, 0.030)` estimate walks the axis **5.625 mrad with the reference held at
+zero and no command at all**.
+
+The latch is not decoration. At rest the measured speed is zero-mean noise, so a Coulomb term on `sign(speed)` is a
+square wave of amplitude twice the term: measured with +-0.01 rad/s of encoder noise, the naive law ripples **20.03
+mN*m** peak to peak and the latched one **0.036**, 550 times quieter, while both park the axis in the same place.
+
 **Run a motor from three Hall sensors.** `core/hall.hpp` carries the two things a Hall drive needs and nothing else:
 the six-step table, and an electrical angle interpolated from edge timing.
 
@@ -473,7 +494,7 @@ whether your hardware matches that model.
      - Level
    * - Unit, SIL and stress cases
      - :code:`conan create . -s build_type=Debug --build=missing`
-     - 507 cases, 0 failed
+     - 514 cases, 0 failed
      - L1/L2
    * - Line coverage
      - :code:`python3 .github/misc/coverage_gate.py`

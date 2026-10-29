@@ -183,6 +183,9 @@
       "src/core/sm.cpp",
       "core/types.hpp"
     ],
+    "core/friction_comp.hpp": [
+      "core/types.hpp"
+    ],
     "core/hall.hpp": [
       "core/types.hpp",
       "core/transforms.hpp"

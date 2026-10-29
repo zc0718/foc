@@ -87,6 +87,17 @@ point -- the alternative is a library that grows algorithms and forgets how they
      - ``Trace.TheRecordAgreesWithTheScalarReadBitForBit``
      - na -- a recorder of other capabilities' arithmetic, with none of its own.
      - A-8
+   * - ``core/friction_comp.hpp``
+     - ``at_rest`` and `stalled` -- and the fact that the output is a *constant* at rest rather than a square wave. A
+       Coulomb term on `sign(measured speed)` ripples by twice the term where the stage is needed most; the latch is what
+       turns that into a number an axis can hold. `stalled` separates "holding a load" from "going nowhere", which the
+       position signal cannot.
+     - `Param` when the estimate describes a machine that cannot exist -- kinetic friction above breakaway, a negative
+       coefficient, a non-finite value -- and in that case nothing is added at all, rather than a smaller guess.
+     - ``FrictionComp.AnEstimateAboveTheBreakawayWalksTheAxisWithNoCommandAtAll``
+     - na -- no time constant and no integration; the only state is the latched direction, and the cases check that it
+       survives a re-tune.
+     - A-18, A-19, C-9
    * - ``core/hall.hpp``
      - ``status()`` -- three answers rather than one number: `Fault` when the code is 0 or 7 (the two a three-bit field
        leaves over), `State` when the interval between edges stopped looking like a sector, `Ok` otherwise -- plus

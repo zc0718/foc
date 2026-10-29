@@ -120,6 +120,19 @@ only reason this page can be trusted after the person who wrote it has moved on.
        codes. This is the number that decides how the fault has to be handled, and it is asserted so it cannot quietly
        become "the fault is caught".
      - ``HallTracker.AStuckSensorIsCoveredByTwoChannelsAndNeitherAloneIsEnough``
+   * - **Cancel friction you have not measured.**
+     - The compensation is a torque of its own, so an estimate above the machine's breakaway moves the rotor even when
+       the reference is held still -- measured, **5.625 mrad of travel with no command at all** from a `(0.030, 0.030)`
+       estimate on a machine whose breakaway is 0.020. Below the breakaway it is safe but it takes the residual with it:
+       `(static - coulomb)/kp` follows the estimate wherever it goes, 2.021 mrad at the true value and 1.007 at a 50 %
+       over-estimate. There is nothing in the code stream that can tell you the estimate is wrong -- it has to come from a
+       measurement, and the boundary of "good enough" is the breakaway.
+     - ``FrictionComp.AnEstimateAboveTheBreakawayWalksTheAxisWithNoCommandAtAll``
+   * - **Tell a stalled axis from a friction estimate that is too low.**
+     - Both read as "at rest while the loop asks for more than the estimate", which is exactly what `stalled` reports, so
+       the flag is honest about being one fact and not a diagnosis. Distinguishing them needs a second signal -- a torque
+       measurement, an encoder that is not moving, or a command that would obviously move a healthy axis.
+     - ``FrictionComp.TheStallFlagNeedsBothStillnessAndADemandAboveTheBreakaway``
 
 What is *not* on this page, because it is enforced by a gate rather than by a test case: no exceptions, no RTTI, no
 `new`/`delete`, no `std::vector`/`std::string`, C++17 and C11 only (`strict`), every installed header carrying a README

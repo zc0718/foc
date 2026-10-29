@@ -535,6 +535,40 @@ The log
      - The three cases now assert the measured behaviour and quote the numbers, including the 42 degrees, which is the
        evidence for "a loop on this estimate must stop when the status says so".
      - ``pending``
+   * - A-18
+     - A
+     - The first rig that measured the dead band was scaled so that a 20 mrad step demanded 1 N*m against a 3 A current
+       limit: the loop saturated on the first period and limit-cycled at 125 mrad, and the file measured that instead of
+       the friction. The module was never wrong; the instrument was.
+     - The trajectory print rather than the summary: `theta` swinging between -26 and +125 mrad while the demanded torque
+       sat on the clamp for most of every cycle. Two symptoms pointed the same way -- the "compensated" run did not settle
+       either, and the ripple was 1.14 N*m when the term being added was 0.010.
+     - A velocity damping term (as any real position loop has) and a step that stays inside the current limit. The dead
+       band is set by the proportional path at rest, where the damping term is zero, so the arithmetic being checked did
+       not change: 4.003 and 2.021 mrad against 4.0 and 2.0.
+     - ``pending``
+   * - A-19
+     - A
+     - I predicted that an over-estimate past the breakaway would park the axis `(coulomb - static)/kp` on the *wrong
+       side* of the target. It does not: the latch turns around as soon as the demand passes the term, so there is no such
+       equilibrium -- with the reference held at zero the axis simply walks away, and the size of the walk is set by where
+       the loop's own demand finally balances the compensation.
+     - Measuring it instead of deriving it: 114 mrad of excursion in the first attempt and 5.625 mrad of net travel in
+       the second, against a predicted 2 mrad in the wrong direction.
+     - The case asserts the measured behaviour. The point survives and is sharper than the prediction: an estimate above
+       the breakaway is a motor, and `validate()` can only catch the version of it that shows up in the numbers.
+     - ``pending``
+   * - C-9
+     - C
+     - The first criterion for "the residual drops" was a single step's final position. It is not reproducible: where
+       inside the dead band the trajectory happens to stop depends on the step size and the ringing, and the same three
+       mechanisms read 2.9, 1.1 and 0.24 mrad at 20, 20 and 200 mrad steps -- a criterion that would have been "fixed" by
+       choosing the step that made it look right.
+     - Measuring the same mechanism at three step sizes and getting three answers, which is a property of the criterion
+       and not of the mechanism.
+     - The dead band itself is measured instead, by bisection on the reference step: a threshold, not a snapshot of a
+       trajectory, and it lands on the arithmetic to four digits.
+     - ``pending``
 
 What ``pending`` means in the commit column
 -------------------------------------------
