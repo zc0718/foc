@@ -147,6 +147,19 @@ only reason this page can be trusted after the person who wrote it has moved on.
        is the gear's velocity output fed forward as `+kd*v_ref`. A gear that emits only a position is a lag generator with
        a ratio.
      - ``ElectronicGear.TheSyncErrorIsTheRampLagInBothOfItsTerms``
+   * - **Trust `v_max / psi_f` for the top speed.**
+     - It over-promises by about 4 %: the d-axis drop `we*Lq*iq` is part of the bus too. At 24 V and this nameplate the
+       naive ceiling is **2910 rad/s electrical** and the machine's own steady state reaches **2794**, and weakening by
+       `id = -2 A` lifts it to **3320** -- a factor of **1.188**, not the 1.202 the flux ratio promises, because the
+       weakening current's own d-axis voltage eats part of the margin it buys. Both numbers come from bisecting the voltage
+       that holds the operating point, not from a datasheet.
+     - ``HighSpeed.TheVoltageCeilingIsFourPercentBelowTheNaiveRatioAndWeakeningLiftsIt``
+   * - **Read the open-loop flux observer's angle at speed without knowing its bias.**
+     - Seeded and fed correctly it still carries a **0.12 rad mean error at 200 rad/s electrical and 0.08 at 600** -- a bias,
+       not a sampling effect, which is why it is not speed-proportional and why the number has to be measured for the
+       machine in front of you rather than assumed small. What *is* speed-independent at a fixed samples-per-cycle ratio and
+       degrades 4.7x when the ratio drops from 40 to 8 is the sampling error on top of it.
+     - ``HighSpeed.TheErrorFollowsSamplesPerCycleRatherThanTheSpeed``
 
 What is *not* on this page, because it is enforced by a gate rather than by a test case: no exceptions, no RTTI, no
 `new`/`delete`, no `std::vector`/`std::string`, C++17 and C11 only (`strict`), every installed header carrying a README

@@ -109,6 +109,28 @@ with fixed-step RK4 at 10 µs against a 100 µs control step:
 with :math:`\psi_f = K_t / (1.5 p)` and :math:`\omega_e = p\,\omega_m`. The torque constant is
 *knot* the back-EMF constant: conflating them is the classic way to be wrong by 1.5 p.
 
+**How that model earns its place.** Everything else in this documentation is measured against it, so it is the one thing
+that cannot be taken on trust. Four checks, none of which is a comparison with itself:
+
+- **The equations above are the equations the plant integrates** -- same terms, same `psi_f = Kt/(1.5p)` substitution, and
+  the header block states them next to the code that computes them.
+- **An independent formulation agrees.** `sil_abc_plant.hpp` integrates the three phase fluxes directly from
+  `v = Rs*i + d(lambda)/dt` with `lambda_p = (Ls - M)*i_p + lambda_m*cos(theta_p)` and derives torque from co-energy,
+  without Clarke, Park or `psi_f`. The two models agree on `i_d`/`i_q` to 2 % and on torque, and on the electrical time
+  constant: two different formulations of the same physics is the strongest evidence available without a bench.
+- **Analytic anchors.** An `RL` step matches the closed-form solution; the mechanical steady state satisfies the torque
+  balance; positive torque at positive speed delivers mechanical power; phase currents round-trip back to the dq frame;
+  `psi_f` follows the torque constant.
+- **A conservation law at the frequency it is used at.** `P_elec = P_copper + dW/dt + P_mech`, with
+  `W = 1.5*(Ld*id^2/2 + Lq*iq^2/2 + psi_f*id)`, run at **900 rad/s electrical**: 11313.95 J in, 11302.81 J out as copper
+  plus mechanical work over 0.1 s (**0.098 %**), and the worst single period within **0.37 %**. One invariant catches a
+  wrong factor of 1.5, a wrong `psi_f` and a cross-coupling sign at the same time.
+
+What none of the four do is say the *parameters* describe a real motor. Saturation, iron loss and winding temperature are
+modelled and **off by default**; the plant is exact for the machine it describes and says nothing about a specific one.
+That is why every claim in this library is of the form "this algorithm does X on a machine described by these equations"
+-- falsifiable, and true -- and none of them is of the form "this will work on your motor", which would need a bench.
+
 _`Sizing the injection (HFI)`
 -----------------------------------
 
@@ -520,7 +542,7 @@ whether your hardware matches that model.
      - Level
    * - Unit, SIL and stress cases
      - :code:`conan create . -s build_type=Debug --build=missing`
-     - 523 cases, 0 failed
+     - 526 cases, 0 failed
      - L1/L2
    * - Line coverage
      - :code:`python3 .github/misc/coverage_gate.py`

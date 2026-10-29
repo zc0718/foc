@@ -602,6 +602,27 @@ The log
      - The criterion is the formula, in both of its arguments, plus the velocity feedforward as the only term that removes
        it. "Small" is no longer a criterion anywhere in that case.
      - ``pending``
+   * - A-22
+     - A
+     - The first high-speed ceiling case asserted the *flux* ratio against the *ceiling* ratio -- the two are inverses -- and
+       expected the weakened operating point to need *more* voltage at the unweakened ceiling, when the whole point of
+       weakening is that it needs less (12.22 V against a 13.86 V ceiling).
+     - Both assertions failed with numbers that contradicted the claim rather than the model: 1.2019 against 0.832, and
+       12.22 V where `> v_max` was expected.
+     - The ceiling is now bisected on the plant's own steady state, which produced the more interesting answer: the naive
+       `v_max/psi_f` is 4 % optimistic and weakening lifts the ceiling by 1.188 rather than the 1.202 the flux ratio
+       promises.
+     - ``pending``
+   * - C-11
+     - C
+     - The sampling-ratio case was written with a 0.02 rad bound on the observer's angle error at 40 samples per electrical
+       cycle. The open-loop flux integrator, seeded and fed correctly, measures **0.121 rad at 200 rad/s and 0.080 at 600**
+       -- a bias it carries whatever the sampling ratio, and the bound was invented rather than measured.
+     - The measurement itself, once the flux was seeded: the error did not fall with the bound relaxed, it stayed where the
+       bias lives.
+     - The criterion is now the *ratio* effect that is actually there: speed-independent at a fixed 40 samples per cycle,
+       and 4.7x worse at 8 (0.380 rad against 0.080). The bias is published as a boundary instead of being asserted away.
+     - ``pending``
 
 What ``pending`` means in the commit column
 -------------------------------------------
