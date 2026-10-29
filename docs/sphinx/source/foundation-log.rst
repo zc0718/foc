@@ -623,6 +623,20 @@ The log
      - The criterion is now the *ratio* effect that is actually there: speed-independent at a fixed 40 samples per cycle,
        and 4.7x worse at 8 (0.380 rad against 0.080). The bias is published as a boundary instead of being asserted away.
      - ``pending``
+   * - A-23
+     - A
+     - I reported "12 gates green" as if the online CI had been exercised, then pushed 25 commits and read the run as
+       "everything else passed". It had not run anything: build, tests, docs, security and cross-compile are each started
+       by an emoji in the commit messages (`:building_construction:`, `:beer:`, `:book:`, `:shield:`,
+       `:hammer_and_wrench:`), and `metadata.json` only grants *permission*. Every commit in the push carried `:sparkles:`,
+       `:bug:`, `:memo:` or `:wrench:`, so the controller logged five `false` and the run went green in 20 seconds with
+       every substantive job skipped -- a green that means "nothing ran", which is the same shape as A-13 (a criterion
+       that bypassed its own subject).
+     - Reading the Log Decisions job rather than the run's conclusion. The conclusion was `success`; the job said
+       `Build: false, Tests: false, Docs: false, Security: false, Cross compile: false`.
+     - The local gates are not a substitute for the pipelines, and the trigger set is the five emojis above. A commit that
+       carries them is the only way to exercise the sweep, so that is what this row's own commit does.
+     - ``pending``
 
 What ``pending`` means in the commit column
 -------------------------------------------
