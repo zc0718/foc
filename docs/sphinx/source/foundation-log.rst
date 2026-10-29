@@ -431,6 +431,20 @@ The log
        of hiding it: 1 mN*m of slack, measured at 0.5 mN*m.
      - ``pending``
 
+   * - A-16
+     - A
+     - Editing the plan I located the 3.2 row with `line.startswith('| 3.2 |')`. That pattern also matched the **ROI
+       audit table's** own `| 3.2 | 1.00 | 1.50 | 低估 |` row, which sits two hundred lines earlier, so the two new
+       rows landed inside the audit table and the real 3.2 row in the Phase 3 table was never touched. The script
+       printed "3.2 closed" and I believed it; the plan still said the work was undone, and the user found it, not me.
+     - Reading the artifact back instead of the tool's own success message. `grep '^| 3.2'` on the finished file would
+       have shown two rows in one place and none in the other.
+     - The two rows moved to where they belong, the audit table's row restored, and the plan now states the ordering
+       policy it was silently applying. The rule: **a tool's "done" is a claim about the tool, not about the file** --
+       the same shape as A-4 (did not look before starting) and A-13 (a criterion that bypassed its own subject), and
+       the same fix: look at the artifact.
+     - ``pending``
+
 Two kinds of row that are currently empty
 -----------------------------------------
 
