@@ -59,6 +59,11 @@ REPOSITORY_DEVSKIM_ARGUMENTS:
 # use the FLAT <LINTER>_CONFIG_FILE key; the nested form is silently ignored
 C_CLANG_FORMAT_CONFIG_FILE: ".github/misc/.clang-format-c"
 CPP_CLANG_FORMAT_CONFIG_FILE: ".github/misc/.clang-format-cpp"
+# cppcheck 2.14 answers "too many branches, analysis limited" with an `information:` diagnostic, and MegaLinter
+# runs it with `--error-exitcode=1`, so eleven headers turned the job red without a single defect behind them.
+# `exhaustive` removes the message by doing the analysis rather than by suppressing it -- a suppressed rule checks
+# nothing anywhere, which is the failure mode this repository exists to avoid.
+CPP_CPPCHECK_ARGUMENTS: "--check-level=exhaustive"
 
 # .h belongs to the C family (see code-conventions.md): the C++ linter must not claim it,
 # or a C header gets the left-aligned C++ style and fails a header-only package
