@@ -850,3 +850,34 @@ foc_err_t foc_motor_trace_reset(foc_motor_t motor);
  * @exporter
  */
 foc_err_t foc_step_metrics(const float *y, uint32_t n, float dt_s, float target, float band, foc_step_metrics_t *out);
+
+
+/**
+ * @brief [en] Fit one sinusoid at a known frequency to a recorded window.
+ * @brief [zh] 在已知频率上，对一段录制窗口做单音最小二乘拟合。
+ * @param y [en] response samples, oldest first, at least six.
+ * @param y [zh] 响应样本，最早的在前，至少六个。
+ * @param n [en] sample count.
+ * @param n [zh] 样本数。
+ * @param dt_s [en] spacing between samples, s (> 0).
+ * @param dt_s [zh] 相邻样本间隔，s（> 0）。
+ * @param omega_rad_s [en] the frequency asked about, rad/s (> 0 and below Nyquist).
+ * @param omega_rad_s [zh] 所问的角频率，rad/s（> 0 且低于 Nyquist）。
+ * @param out [en] filled whenever the arguments describe a sinusoid, including the `FOC_ERR_STATE` case.
+ * @param out [zh] 只要参数描述得了一段正弦就填入，包括 `FOC_ERR_STATE` 的情形。
+ * @return [en] FOC_OK; FOC_ERR_STATE when the window is shorter than one period; FOC_ERR_PARAM for a NULL pointer,
+ *              non-finite or non-positive arguments, fewer than six samples, or a frequency at or above Nyquist.
+ * @return [zh] FOC_OK；窗口短于一个周期时 FOC_ERR_STATE；空指针、非有限或非正参数、少于六个样本、或频率达到及超过
+ *              Nyquist 时 FOC_ERR_PARAM。
+ * @note [en] This is the moving part of a frequency sweep: drive the reference with `A*cos(w*t)`, record the response,
+ *            fit both, divide. The step-response bandwidth in `foc_step_metrics()` is an estimate that carries a bias
+ *            comparable to the errors it is meant to catch (measured: a 20 % gain error moved it 9.9 %); a magnitude at
+ *            a known frequency needs no model and moves by about the error itself, which is why a sweep is the
+ *            instrument for scale errors.
+ * @note [zh] 这是扫频的运动部件：用 `A*cos(w*t)` 驱动给定，录下响应，两边都拟合，相除。`foc_step_metrics()` 的阶跃带宽
+ *            是一个估计，其偏差与被测误差同量级（实测：20% 增益错误只让它挪动 9.9%）；而已知频率上的幅值不需要模型，且
+ *            随误差本身移动约同样比例，这正是扫频成为"比例错误"之仪器的原因。
+ * @since 0.1.8
+ * @exporter
+ */
+foc_err_t foc_sinusoid_fit(const float *y, uint32_t n, float dt_s, float omega_rad_s, foc_sinusoid_fit_t *out);

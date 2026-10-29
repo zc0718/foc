@@ -924,6 +924,35 @@ PYBIND11_MODULE(foc_python, m) {
         "无法描述阶跃的参数会抛异常。窗口必须从阶跃前或阶跃处开始：`y[0]` 是阶跃前的值。");
 
     m.def("board_item_name", &foc_board_item_name, py::arg("item"),
+          "[en] Stable lowercase name of a board item. [zh] 检查项的稳定小写名。");    // The sweep's only moving part, next to the step-response metric: fit one tone at a known frequency out of a window.
+    // A sweep is the instrument that notices a gain law scaled wrongly, because a magnitude at a known frequency moves
+    // with the error instead of carrying a comparable bias of its own.
+    // 扫频唯一的运动部件，与阶跃指标并列：从一个窗口里拟合出已知频率上的单音。扫频是能发现"增益律比例错"的仪器，
+    // 因为已知频率上的幅值随误差移动，而不是自带与之相当的偏差。
+    m.def(
+        "sinusoid_fit",
+        [](const std::vector<float> &y, double dt_s, double omega_rad_s) {
+            foc_sinusoid_fit_t out{};
+            out.struct_size = sizeof(out);
+            const foc_err_t rc = ::foc_sinusoid_fit(y.data(), static_cast<uint32_t>(y.size()),
+                                                    static_cast<float>(dt_s), static_cast<float>(omega_rad_s), &out);
+            if (rc == FOC_ERR_PARAM) {
+                throw std::runtime_error("foc_sinusoid_fit rejected its arguments: fewer than six samples, a "
+                                         "non-positive dt or frequency, or a frequency at or above Nyquist");
+            }
+            py::dict fitted;
+            fitted["status"] = rc;
+            fitted["amplitude"] = out.amplitude;
+            fitted["phase_rad"] = out.phase_rad;
+            return fitted;
+        },
+        py::arg("y"), py::arg("dt_s"), py::arg("omega_rad_s"),
+        "[en] Fit one tone at a known frequency: returns amplitude and phase of `A*cos(w*t + phase)`. `status` is "
+        "`ErrorCode.OK` when the fit is conditioned and `STATE` when the window is shorter than one period.\n"
+        "[zh] 在已知频率上拟合一个单音：返回 `A*cos(w*t + phase)` 的幅值与相位。`status` 为 `ErrorCode.OK` 表示拟合良态，"
+        "`STATE` 表示窗口不足一个周期。");
+
+    m.def("board_item_name", &foc_board_item_name, py::arg("item"),
           "[en] Stable lowercase name of a board item. [zh] 检查项的稳定小写名。");
     m.def("board_cause_name", &foc_board_cause_name, py::arg("cause"),
           "[en] Stable lowercase name of a board cause. [zh] 成因的稳定小写名。");    // The fault table, standalone. `Protector.step()` already returns a name, but only for the fault it just produced;

@@ -14,6 +14,7 @@
 #include <foc/core/commissioning.hpp>
 #include <foc/core/field_weakening.hpp>
 #include <foc/core/observer/back_emf_observer.hpp>
+#include <foc/core/sinusoid_fit.hpp>
 #include <foc/core/step_metrics.hpp>
 #include <foc/core/observer/switchable_observer.hpp>
 #include <foc/core/protection.hpp>
@@ -1805,6 +1806,21 @@ foc_err_t foc_bridge_step_metrics(const float* y, uint32_t n, float dt_s, float 
         return FOC_OK;
     }
     return (measured.status == foc::ErrorCode::State) ? FOC_ERR_STATE : FOC_ERR_PARAM;
+}
+
+foc_err_t foc_bridge_sinusoid_fit(const float* y, uint32_t n, float dt_s, float omega_rad_s, foc_sinusoid_fit_t* out) {
+    if ((y == nullptr) || (out == nullptr)) {
+        return FOC_ERR_PARAM;
+    }
+    const foc::core::SinusoidFit fitted = foc::core::sinusoid_fit(y, static_cast<std::size_t>(n), dt_s, omega_rad_s);
+    out->struct_size = sizeof(foc_sinusoid_fit_t);
+    out->status = static_cast<std::int32_t>(fitted.status);
+    out->amplitude = fitted.amplitude;
+    out->phase_rad = fitted.phase_rad;
+    if (fitted.status == foc::ErrorCode::Ok) {
+        return FOC_OK;
+    }
+    return (fitted.status == foc::ErrorCode::State) ? FOC_ERR_STATE : FOC_ERR_PARAM;
 }
 
 } // extern "C"

@@ -60,6 +60,18 @@ class Metrics:
         }
 
 
+@dataclass
+class Tone:
+    """One tone measured out of a window: the same three numbers `foc_sinusoid_fit` reports."""
+
+    status: str
+    amplitude: float
+    phase_rad: float
+
+    def as_dict(self) -> dict:
+        return {'status': self.status, 'amplitude': self.amplitude, 'phase_rad': self.phase_rad}
+
+
 def step_metrics(y, dt_s: float, target: float, band: float) -> Metrics:
     """Measure a step response. Raises `ValueError` for arguments that cannot describe a step.
 
@@ -112,6 +124,47 @@ def step_metrics(y, dt_s: float, target: float, band: float) -> Metrics:
 
     tau = -1.0 / slope
     return Metrics('Ok', 1.0 / tau, tau, settling_s, overshoot, tail_error)
+
+
+def sinusoid_fit(y, dt_s: float, omega_rad_s: float) -> 'Tone':
+    """Least-squares fit of one tone at a known frequency: the numpy side of `foc_sinusoid_fit`.
+
+    Same definition, same normal equations -- the projection onto `{1, cos, sin}` -- so a disagreement between the two
+    means one of them drifted, not that they asked different questions. `status` is ``Ok`` for a conditioned fit and
+    ``State`` when the window is shorter than one period, where the amplitude is a number but not the tone's.
+    """
+    y = np.asarray(y, dtype=np.float64)
+    n = y.size
+    if n < 6:
+        raise ValueError('fewer than six samples cannot describe a sinusoid')
+    if not dt_s > 0.0:
+        raise ValueError('dt_s must be positive')
+    if not omega_rad_s > 0.0:
+        raise ValueError('omega_rad_s must be positive')
+    if not (omega_rad_s * dt_s) < np.pi:
+        raise ValueError('above Nyquist the projection aliases')
+
+    if not (n * dt_s) >= (2.0 * np.pi / omega_rad_s):
+        return Tone('State', 0.0, 0.0)
+
+    t = np.arange(n, dtype=np.float64) * float(dt_s)
+    basis = np.column_stack((np.ones(n), np.cos(omega_rad_s * t), np.sin(omega_rad_s * t)))
+    coefficients, *_ = np.linalg.lstsq(basis, y, rcond=None)
+    return Tone('Ok', float(np.hypot(coefficients[1], coefficients[2])),
+                float(np.arctan2(-coefficients[2], coefficients[1])))
+
+
+def frequency_response(command, response, dt_s: float, omega_rad_s: float):
+    """Gain and lag of `response` against `command` at one frequency: |H| and `phi_in - phi_out`, in rad.
+
+    Both windows go through the *same* fit, so the time origin cancels: what is left is the system's phase, not the
+    bookkeeping of where the recording started. That is the whole reason the command is fitted rather than assumed.
+    """
+    fed = sinusoid_fit(command, dt_s, omega_rad_s)
+    out = sinusoid_fit(response, dt_s, omega_rad_s)
+    if fed.status != 'Ok' or out.status != 'Ok':
+        raise ValueError(f'no tone to compare: command {fed.status}, response {out.status}')
+    return out.amplitude / fed.amplitude, fed.phase_rad - out.phase_rad
 
 
 def spectrum(y, dt_s: float):

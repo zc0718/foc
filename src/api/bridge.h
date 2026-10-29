@@ -82,6 +82,7 @@ foc_err_t foc_bridge_hfi_size(const foc_motor_params_t *params, float pwm_freq_h
                               foc_hfi_sizing_t *out);
 foc_err_t foc_bridge_step_metrics(const float *y, uint32_t n, float dt_s, float target, float band,
                                   foc_step_metrics_t *out);
+foc_err_t foc_bridge_sinusoid_fit(const float *y, uint32_t n, float dt_s, float omega_rad_s, foc_sinusoid_fit_t *out);
 #ifdef __cplusplus
 }
 #endif

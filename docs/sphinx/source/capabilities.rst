@@ -95,6 +95,14 @@ point -- the alternative is a library that grows algorithms and forgets how they
      - ``StepMetrics.AWindowWithoutADecayReportsStateRatherThanAConfidentNumber``
      - na -- it measures other capabilities' arithmetic and owns none of its own.
      - F-8, F-9
+   * - ``core/sinusoid_fit.hpp``
+     - ``status``: ``Ok`` for a conditioned fit, ``State`` when the window is shorter than one period of the frequency
+       asked about -- where a number would be produced but would not be the tone's amplitude.
+     - ``Param`` for fewer than six samples, a non-positive ``dt_s`` or frequency, or a frequency at or above Nyquist,
+       where the projection aliases and reports the tone at a frequency the signal does not have.
+     - ``BodeSweep.TheThreeDecibelPointIsTheBandwidthTheGainLawWasAskedFor``
+     - na -- it measures other capabilities' arithmetic and owns none of its own.
+     - A-12
    * - ``core/observer/observer_policy.hpp``
      - na -- concepts: it names what an observer must provide and provides nothing itself.
      - na -- a type either satisfies the concept or fails to compile, which is the strongest admission there is.

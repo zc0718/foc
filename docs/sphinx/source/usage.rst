@@ -326,6 +326,38 @@ Three criteria, each of which was watched going red before it was believed:
 - **replay, error 0.** The settling time is an *index* decision, not a fitted number, so both sides must pick the same
   sample: the analysis layer recomputes it from the window and the comparison is on the index, exactly.
 
+A sweep closes the gap the band above leaves open. Drive the reference with `A*cos(w t)`, fit both the command and the
+response at that frequency (`foc/core/sinusoid_fit.hpp`), divide: the -3 dB point needs no model and moves *with* an
+error instead of carrying a bias of its own. Measured: **234.91 rad/s against 250 requested (-6.04 %)** on the C++
+bench, **236.18 rad/s (-5.53 %)** through the Python plant, two independent machines agreeing to 0.5 %. The same 20 %
+gain error that the step band could not see moves this crossing to **210.79 rad/s (-15.68 %)**, outside the band.
+
+.. list-table:: the same defect, two instruments
+   :header-rows: 1
+   :widths: 34 22 22 22
+
+   * - criterion
+     - no defect
+     - gain law x0.8
+     - verdict
+   * - step fit vs analytic, 10 % band
+     - +9.15 %
+     - -9.88 %
+     - blind: passes either way
+   * - step fit ratio 125 / 250
+     - 2.026
+     - 2.026
+     - blind: a ratio cannot see a scale error
+   * - sweep -3 dB, 10 % band
+     - -6.04 %
+     - **-15.68 %**
+     - fails, as it should
+
+The analysis layer also carries a spectrum and a THD (`analyze.spectrum`, `analyze.thd`), checked against a signal whose
+answer is arithmetic rather than a modelling opinion: a unit tone reads 1.000 under a Hann window with the usual 2/sum
+correction, and a known 11.2 % distortion made of a 10 % third harmonic and a 5 % fifth reads 0.1118 with each harmonic
+in its own bin. Neither has a C-side counterpart, and neither needs one: they measure the window, not the loop.
+
 Read back through the CLI, the ledger's own `speed_step_100` window measures **197.59 rad/s** against the 200 rad/s the
 library defaults to (-1.2 %) -- on a window decimated to one sample per millisecond against a four-millisecond time
 constant. That is the analysis layer replaying a stored file rather than the object that produced it.
@@ -356,7 +388,7 @@ whether your hardware matches that model.
      - Level
    * - Unit, SIL and stress cases
      - :code:`conan create . -s build_type=Debug --build=missing`
-     - 475 cases, 0 failed
+     - 477 cases, 0 failed
      - L1/L2
    * - Line coverage
      - :code:`python3 .github/misc/coverage_gate.py`

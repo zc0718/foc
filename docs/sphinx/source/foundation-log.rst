@@ -342,6 +342,29 @@ The log
        is the next increment.
      - ``pending``
 
+   * - A-12
+     - A
+     - The first version of the sweep found the -3 dB crossing by interpolating in log-log space between 0.5 and 2
+       times the bandwidth, and reported **180 rad/s for a loop whose answer is 235** -- a 28 % error, made entirely of
+       interpolation. Interpolating a first-order magnitude between two points that far apart is not a straight line:
+       reduced per point (wb = w / sqrt(1/g^2 - 1)) the same four measurements give 236.4, 235.8, 236.4 and 238.3.
+     - Reducing every measured point individually instead of trusting the interpolant. The four values agreeing to 1 %
+       is what proved the loop is first-order at the Python face and the error was the arithmetic between the points.
+     - The -3 dB definition: the sweep now bisects, which assumes nothing about shape. The C++ bench turns out *not*
+       to be first-order (its per-point equivalents fall 269.5 to 188.8), which the interpolation had been hiding.
+     - ``pending``
+   * - A-11b
+     - A
+     - A-11 said the frequency sweep would catch what the absolute step band cannot, and left it as a claim about a
+       future instrument. It is now measured on the same defect: scaling the speed loop's proportional gain by 0.8
+       moves the sweep's crossing from 234.91 to **210.79 rad/s (-15.68 %, outside the 10 % band)** while the step fit
+       moves from +9.15 % to -9.88 %, still inside its own. Same defect, two instruments, one blind and one not.
+     - Running both criteria against the same perturbation, which is the only way to know which one is carrying the
+       claim.
+     - The sweep is now the criterion that carries it; the step response stays because it says something different
+       (how the servo behaves, not where its corner is).
+     - ``pending``
+
 Two kinds of row that are currently empty
 -----------------------------------------
 

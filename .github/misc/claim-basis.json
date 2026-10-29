@@ -173,6 +173,12 @@
     "core/reference.hpp": [
       "core/types.hpp"
     ],
+    "core/sinusoid_fit.hpp": [
+      "src/api/bridge.cpp",
+      "api/foc_api.h",
+      "api/python_bindings.cpp",
+      "core/types.hpp"
+    ],
     "core/sm.hpp": [
       "src/core/sm.cpp",
       "core/types.hpp"

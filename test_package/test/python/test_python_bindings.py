@@ -13,6 +13,8 @@ import math
 import pathlib
 import sys
 
+import numpy as np
+
 import foc_python as foc
 
 # The "from zero to a servo" example lives in its own file so that the quick-start page can include it verbatim, and it
@@ -837,6 +839,122 @@ def test_the_analysis_layer_replays_the_settling_index_exactly():
     from_ledger = analyze.step_metrics(recorded['speed_mech'], 1e-3, 100.0, 2.0)
     assert from_ledger.status == 'Ok', from_ledger
     assert abs(from_ledger.bandwidth_rad_s / 200.0 - 1.0) <= 0.10, from_ledger.bandwidth_rad_s
+
+
+# ---- the sweep -----------------------------------------------------------------------------------
+#
+# The step-response band is weak by construction (A-11: a 20 % gain error moved it 9.9 %, inside its own 10 %). The
+# frequency-domain -3 dB needs no model and moved 15.7 % on the same defect, so it is the criterion that carries the
+# claim. Both are kept: the step response says how the servo *behaves*, the sweep says where its corner is.
+#
+# 阶跃带在构造上就是弱的（A-11：20% 的增益错误只让它移动 9.9%，仍在自己的 10% 带内）。频域 -3 dB 不需要模型，同一个
+# 缺陷下移动了 15.7%，因此由它来承载这条断言。两者都保留：阶跃说伺服**行为如何**，扫频说它的拐点在哪里。
+
+def _gain_at(bandwidth_rad_s, omega_rad_s, amplitude=10.0):
+    """Drive the reference with `A*cos(w t)` through the Python plant and measure |H| and the lag."""
+    params = foc.MotorParams()
+    params.rs, params.ld, params.lq = golden.PLANT['rs'], golden.PLANT['ld'], golden.PLANT['lq']
+    params.j, params.b = golden.PLANT['j'], golden.PLANT['b']
+    params.pole_pairs = golden.PLANT['pole_pairs']
+    params.kt = 1.5 * golden.PLANT['pole_pairs'] * golden.PLANT['psi_f']
+
+    setup = foc.MotorSetup(pwm_freq_hz=10000.0, i_max_a=5.0, v_bus_v=golden.PLANT['v_bus'])
+    setup.speed_bandwidth_rad_s = bandwidth_rad_s
+    dt = 1e-4
+    plant = foc_sil_plant.PmsmPlant(**golden.PLANT, dt_s=dt)
+
+    period = 2.0 * math.pi / omega_rad_s
+    with foc.Motor(params, setup, plant) as motor:
+        motor.enable()
+        motor.set_speed(0.0)
+        for _ in range(50):
+            motor.tick(dt)
+        t = 0.0
+        for _ in range(int(6.0 * period / dt)):
+            motor.set_speed(amplitude * math.cos(omega_rad_s * t))
+            motor.tick(dt)
+            t += dt
+        command, response = [], []
+        for _ in range(int(4.0 * period / dt)):
+            c = amplitude * math.cos(omega_rad_s * t)
+            motor.set_speed(c)
+            motor.tick(dt)
+            command.append(c)
+            response.append(plant.velocity_rad_s())
+            t += dt
+    return analyze.frequency_response(command, response, dt, omega_rad_s)
+
+
+def test_the_sweep_finds_the_corner_the_gain_law_promised():
+    requested = 250.0
+    lo, hi = 0.5 * requested, 2.0 * requested
+    for _ in range(8):
+        mid = math.sqrt(lo * hi)
+        gain, _lag = _gain_at(requested, mid)
+        if gain > 0.70710678:
+            lo = mid
+        else:
+            hi = mid
+    crossing = math.sqrt(lo * hi)
+    assert abs(crossing / requested - 1.0) <= 0.10, f"-3 dB at {crossing:.2f} rad/s against {requested} requested"
+
+    # The same corner the C++ bench reports (234.91 rad/s, -6.04 %) to within the two plants' differences, which is a
+    # statement about the machines rather than about the metric -- the two plants are independent models.
+    # 与 C++ 台架报出的同一个拐点（234.91 rad/s，-6.04%）的差别只来自两台不同的 plant 模型，那是关于机器的陈述，
+    # 而不是关于指标的。
+    assert abs(crossing / 234.91 - 1.0) <= 0.05, f"the two benches disagree about the corner: {crossing:.2f}"
+
+
+def test_the_tone_fit_agrees_between_c_and_numpy_on_the_same_window():
+    from_curve = [3.5 + 1.25 * math.cos(2.0 * math.pi * 137.0 * k * 1e-4 + 0.7) for k in range(2000)]
+    omega = 2.0 * math.pi * 137.0
+
+    c_fit = foc.sinusoid_fit(from_curve, 1e-4, omega)
+    py_fit = analyze.sinusoid_fit(from_curve, 1e-4, omega)
+    assert c_fit['status'] == foc.ErrorCode.OK, c_fit
+    assert py_fit.status == 'Ok', py_fit
+    assert abs(py_fit.amplitude - c_fit['amplitude']) / c_fit['amplitude'] <= 0.01, (py_fit, c_fit)
+    assert abs(py_fit.phase_rad - c_fit['phase_rad']) <= 0.01, (py_fit, c_fit)
+
+    # Both recover the tone that is actually there, which is what makes the agreement worth having.
+    # 两者都复原了真正存在的那个音——这才是"一致"值得拥有的原因。
+    assert abs(c_fit['amplitude'] / 1.25 - 1.0) <= 0.001, c_fit['amplitude']
+    assert abs(py_fit.phase_rad - 0.7) <= 0.001, py_fit.phase_rad
+
+    # And a window shorter than one period is a State, not a number.
+    # 短于一个周期的窗口是 State，不是一个数。
+    short = foc.sinusoid_fit(from_curve[:20], 1e-4, omega)
+    assert short['status'] == foc.ErrorCode.STATE, short
+    assert analyze.sinusoid_fit(from_curve[:20], 1e-4, omega).status == 'State'
+
+
+def test_the_spectrum_and_the_distortion_measure_a_signal_that_has_a_known_distortion():
+    """`spectrum` and `thd` against a signal whose answer is arithmetic, not a modelling opinion."""
+    dt = 1e-4
+    f0 = 250.0
+    n = 20000                      # 2 s: whole cycles of every harmonic below, so leakage cannot be blamed
+    t = np.arange(n) * dt
+    signal = (2.0
+              + 1.0 * np.cos(2.0 * math.pi * f0 * t)
+              + 0.10 * np.cos(2.0 * math.pi * 3.0 * f0 * t + 0.3)
+              + 0.05 * np.cos(2.0 * math.pi * 5.0 * f0 * t + 1.1))
+
+    freqs, amps = analyze.spectrum(signal, dt)
+    fundamental = float(np.max(amps[np.abs(freqs - f0) < 1.0]))
+    assert abs(fundamental - 1.0) <= 0.01, f"a unit tone reads {fundamental:.4f}"
+
+    distortion, measured_fundamental, harmonics = analyze.thd(freqs, amps, f0)
+    expected = math.sqrt(0.10 ** 2 + 0.05 ** 2)
+    assert abs(distortion - expected) <= 0.005, f"THD {distortion:.4f} against {expected:.4f}"
+    # `thd` starts at the *second* harmonic, and this signal has none: the third and fifth are where its distortion
+    # lives. Getting that indexing wrong is what a bare peak-picker would have silently reported as "clean".
+    # `thd` 从**二次**谐波开始，而这个信号没有二次：它的失真在三次与五次上。把这个下标搞错，正是"只挑峰值"的实现会
+    # 静默报成"干净"的地方。
+    assert abs(harmonics[0] - 0.00) <= 0.005, harmonics[0]   # 2nd: absent on purpose
+    assert abs(harmonics[1] - 0.10) <= 0.005, harmonics[1]   # 3rd
+    assert abs(harmonics[2] - 0.00) <= 0.005, harmonics[2]   # 4th: absent
+    assert abs(harmonics[3] - 0.05) <= 0.005, harmonics[3]   # 5th
+    assert abs(measured_fundamental - 1.0) <= 0.01, measured_fundamental
 
 
 def main():

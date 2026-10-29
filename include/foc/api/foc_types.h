@@ -611,3 +611,25 @@ typedef struct foc_step_metrics {
     float overshoot_fraction;  /* peak beyond the target, as a fraction of the step */
     float tail_error_fraction; /* mean of the last tenth minus the target, as a fraction of the step */
 } foc_step_metrics_t;
+
+
+/**
+ * @brief [en] One tone measured out of a recorded window.
+ * @brief [zh] 从一段录制窗口里测出的一个单音。
+ * @note [en] `status` separates "there is a tone" from "there is a number": `FOC_OK` means a conditioned fit,
+ *            `FOC_ERR_STATE` means the window is shorter than one period of the frequency asked about (a fit over a
+ *            fraction of a cycle produces a number, but not the tone's amplitude), `FOC_ERR_PARAM` means the arguments
+ *            are not a sinusoid at all -- including an `omega_rad_s` above Nyquist, where the projection aliases and
+ *            the amplitude would be reported at a frequency the signal does not have.
+ * @note [zh] `status` 区分"有音"与"有数"：`FOC_OK` 表示良态拟合，`FOC_ERR_STATE` 表示窗口短于所问频率的一个周期（在不足
+ *            一周期处拟合也会出数，但那不是这个音的幅值），`FOC_ERR_PARAM` 表示参数根本不是正弦——包括 `omega_rad_s` 超
+ *            过 Nyquist，那里投影会混叠，幅值会被报到信号并不具有的频率上。
+ * @since 0.1.8
+ * @exporter
+ */
+typedef struct foc_sinusoid_fit {
+    uint32_t struct_size; /* sizeof(foc_sinusoid_fit_t) */
+    int32_t status;       /* foc_err_t of the fit itself */
+    float amplitude;      /* peak amplitude of the fitted tone, same unit as the samples */
+    float phase_rad;      /* phase of +A*cos(w*t + phase), rad */
+} foc_sinusoid_fit_t;

@@ -303,3 +303,11 @@ foc_err_t foc_step_metrics(const float *y, uint32_t n, float dt_s, float target,
     }
     return foc_bridge_step_metrics(y, n, dt_s, target, band, out);
 }
+
+foc_err_t foc_sinusoid_fit(const float *y, uint32_t n, float dt_s, float omega_rad_s, foc_sinusoid_fit_t *out) {
+    if ((y == NULL) || (out == NULL) || (n < 6U) || !isfinite(dt_s) || !(dt_s > 0.0F) || !isfinite(omega_rad_s) ||
+        !(omega_rad_s > 0.0F) || !((omega_rad_s * dt_s) < 3.14159265F)) {
+        return FOC_ERR_PARAM;
+    }
+    return foc_bridge_sinusoid_fit(y, n, dt_s, omega_rad_s, out);
+}
