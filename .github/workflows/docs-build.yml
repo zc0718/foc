@@ -31,7 +31,18 @@ jobs:
 
       - name: Build documentation
         run: |
-          python ./docs/build.py
+          set -o pipefail
+          python ./docs/build.py 2>&1 | tee /tmp/documentation.log
+          # Sphinx exits 0 when a document fails to parse: it prints `ERROR: ...`, writes whatever it could
+          # and reports "build succeeded". A green job is therefore not evidence that the pages are right --
+          # it is evidence that the process returned. The judgement goes on the marker instead of the status.
+          # Warnings stay non-fatal on purpose: many are benign, and a warning worth failing on can be
+          # promoted deliberately later.
+          # Sphinx 解析失败时退出码仍是 0，只打印 ERROR；所以判据是日志里的标记，不是退出码。
+          if grep -nE '(^| )ERROR: ' /tmp/documentation.log; then
+            echo "::error::the documentation build reported an error (see the ERROR line above)"
+            exit 1
+          fi
 
       - name: Assert the documentation was produced
         shell: bash

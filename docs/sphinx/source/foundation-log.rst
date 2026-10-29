@@ -761,9 +761,10 @@ The log
        line of defence either.
      - Run 40822980678, job `Documentation / Build Documentation`: `ERROR: Error parsing` sits three lines above
        `build succeeded, 1 warning.` in the same log, and the job's conclusion is `success`.
-     - The row is fixed (F-15 had grown a seventh field, so its commit cell shifted out of the table). The gap is
-       recorded rather than closed: making a Sphinx ERROR fail the job, or teaching the local gate to parse list-table
-       shapes, is a change to the shared docs pipeline and is not made here.
+     - The row is fixed (F-15 had grown a seventh field, so its commit cell shifted out of the table) and so is the
+       gap: the docs workflow now fails when the build log contains an `ERROR: ` marker, because Sphinx exits 0 on a
+       parse failure and only prints one. The local stand-in for "the Documentation job said yes" is
+       `sphinx-build -b dummy` over the page itself, which parses it instead of trusting a conclusion.
      - ``pending``
    * - A-27
      - A
@@ -777,12 +778,53 @@ The log
        Documentation job said yes". Same family as A-26: one instrument's green read as a statement about something
        else.
      - ``pending``
+   * - F-20
+     - F
+     - The gcc coverage collector read only the *package's* build folder for every project that is not
+       `is_header`, so any code whose only instantiation point is a test TU was invisible -- and a header-only
+       module's only instantiation point is exactly that. Thirteen core files and 496 lines were missing from the
+       table, 474 of them covered, so the omission *lowered* the reported rate: `core 85.82 %` against a 90 % floor,
+       when the same files measured 93.18 % once they were collected. The clang path never had the blind spot -- it
+       merges every profraw and exports from the test binaries -- so the two legs were also measuring different
+       file sets.
+     - Two artifacts of the same tree: `coverage_gate.py` reporting `FAIL core 85.82 % (1313/1530)` with four
+       headers absent, and a hand-merged capture of the consumer side finding those files at 95.5 % (hall), 100 %
+       (friction_comp, gear_ratio), 86.7 % (soft_limit).
+     - Both halves are collected now, and the capture tolerates two things it must: `source` (the generated
+       `ucov_*` copies are deleted before the capture runs) and `mismatch` (gcov's line range for gtest macros).
+       Dropping files was the worse tolerance. `core` reads 93.18 % (2132/2288) and `all` 89.18 % (4279/4798).
+     - ``pending``
+   * - A-28
+     - A
+     - I told you the python bindings were verified locally only, and that moving them into CI would need a
+       scaffold change. They had been built, registered and executed in the online tests job all along, on both
+       legs -- `-- Found Python: 3.12.15` -> `foc_python.cpython-312-*.so` -> `Test #526: python_bindings`. What was
+       missing was not the coverage but the sight of it: the case failed on every push and the failure was swallowed
+       (A-25). The 3.10-versus-3.12 worry I repeated as an obstacle was never one, because the extension is compiled
+       by the same interpreter that imports it.
+     - The logs of run 40822980678, both legs, plus `test_package/CMakeLists.txt`'s own comment ("reuse the
+       interpreter pybind11 picked: a module built for 3.12 cannot be imported by 3.13").
+     - A capability that is already covered should never be argued as a cost: before proposing work, check what the
+       pipeline actually does. Same shape as A-23 -- a story about CI believed without reading CI.
+     - ``pending``
+   * - A-29
+     - A
+     - I reported `core 85.82 % vs a 90 % floor` as a coverage *shortfall*, and a plan to raise it. The number was
+       measured over an incomplete file set (F-20): the four newest algorithm headers, and nine more files, were not
+       counted at all. The library was above its floor the whole time.
+     - The same tree measured twice: `85.82 % (1313/1530)` from the recipe's summary, `93.18 % (2132/2288)` after the
+       collector was fixed. The thirteen omitted files had 474 of 496 lines covered, so their absence could only
+       push the rate down.
+     - Before treating a measurement as bad news, check that its scope contains the thing being judged. A gate that
+       silently drops files is indistinguishable from a gate that passes them, and the number it prints is not the
+       number it claims.
+     - ``pending``
 
 What ``pending`` means in the commit column
 -------------------------------------------
 
 A row cannot cite the hash of the commit that contains it, and these rows are written in the same commit as the fix, so
-forty-six of the fifty-seven say ``pending``. That is a convention and it was, until this paragraph, an unstated one --
+forty-nine of the sixty say ``pending``. That is a convention and it was, until this paragraph, an unstated one --
 which is the same defect the rows themselves are about. The row is recoverable rather than lost:
 
 .. code-block:: console

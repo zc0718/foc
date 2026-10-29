@@ -308,7 +308,7 @@ def _include_directives(path):
 # a developer machine and before a release. `cmd_guard` fails the build if a workflow calls one of these,
 # so the constraint is enforced rather than remembered -- the failure message names the reason and where
 # the gate is supposed to run.
-LOCAL_ONLY = {'pil'}
+LOCAL_ONLY = {'pil', 'fmu'}
 
 
 def _ci_policy_violations():
