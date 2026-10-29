@@ -1,0 +1,8 @@
+# Requirements of the *optional* python consumer test (`test_python_bindings.py`), not of the library.
+#
+# Nothing in `include/` or `src/` needs any of this. The test needs it because it compares the binding against the
+# project's own reference analyser (`benchmark/script/analyze.py` and `montecarlo.py`), which is written in numpy --
+# that comparison is the reason the test exists, so the dependency is real; it is just a property of *this* test
+# rather than of "python bindings on", which is why it is declared here instead of being assumed by a workflow.
+# 这是"可选 Python 消费方测试"的依赖，不是库的依赖：测试要与本项目自己的 numpy 参考实现比对，所以才需要它。
+numpy>=2.0

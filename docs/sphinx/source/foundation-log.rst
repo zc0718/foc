@@ -663,12 +663,14 @@ The log
        it also arrives through the project's reference analyser (`benchmark/script/analyze.py`, `montecarlo.py`), which
        imports numpy at module scope -- so the wheel is needed by the comparison against a second implementation, which
        is a choice this project made.
-     - The first fix was withdrawn. It installed numpy in the shared test workflow behind `enable_python_bindings`; its
-       first version installed nothing at all because `print(... is True)` emits `True` and the shell compared `true`
-       (F-16), and the surviving version was still wrong for a bigger reason: a project's choice of reference
-       implementation is not a property of "python bindings on", so it does not belong in a workflow every derived
-       project shares. The case now fails with a sentence that names the missing dependency; where the declaration
-       belongs is an open question, and CI is red on it deliberately rather than silenced.
+     - Declared by the project, installed by a file: `test_package/test/python/requirements.txt` carries `numpy>=2.0`,
+       and the shared test job runs `pip install -r` on that path **if it exists**. The workflow names a file, never a
+       package, so a derived project with no such file pays nothing and one with different needs writes its own list.
+       The case itself now fails with a sentence that names the missing dependency, instead of a bare
+       `ModuleNotFoundError` in 0.04 s.
+     - Two earlier fixes were withdrawn, and both are worth keeping: the first installed numpy from a step gated on a
+       boolean that never fired (F-16), and both wrote a project's choice of reference implementation into a file every
+       derived project shares. The dependency was never the defect; the *undeclared* dependency was.
      - ``pending``
    * - A-24
      - A
@@ -705,9 +707,10 @@ The log
      - Run 40817097696, both test legs, line 226: `enable_python_bindings is off: the python consumer is not built,
        nothing to satisfy`, while `metadata.json` says `"enable_python_bindings": true`. The case failed 40 lines later
        with "numpy is missing from this interpreter", which is the only reason the gate was caught.
-     - The step is gone (F-15 records why it should not exist here at all). The rule that replaces it: a boolean that
-       crosses from Python to the shell crosses as an **exit status**, not as a printed word -- `sys.exit(0 if ... else
-       1)` has no case to get wrong and no string to compare.
+     - The numpy-named step is gone; what stands in its place is F-15's file-driven hook, where the package name does
+       not appear in the workflow at all. The rule that outlives both: a boolean crossing from Python to the shell
+       crosses as an **exit status**, not as a printed word -- `sys.exit(0 if ... else 1)` has no case to get wrong and
+       no string to compare.
      - ``pending``
    * - F-17
      - F

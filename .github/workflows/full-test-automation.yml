@@ -57,6 +57,16 @@ jobs:
         run: |
           pip install --only-binary :all: conan==2.31.2
 
+      # A file, not a package name. The optional consumer test's requirements are the project's business -- this
+      # repository's test compares the binding against a numpy reference analyser, the next repository's may compare
+      # it against nothing at all -- so the shared job only has to honour the declaration. Absent or empty file means
+      # nothing to install, and `--only-binary :all:` keeps the install from wanting a compiler on the runner.
+      # 项目声明、共享层安装：共享作业只知道"有这个文件就装"，不知道里面是 numpy 还是别的什么。
+      - name: Optional consumer test requirements
+        if: ${{ hashFiles('test_package/test/python/requirements.txt') != '' }}
+        run: |
+          python3 -m pip install --only-binary :all: -r test_package/test/python/requirements.txt
+
       - name: Set metadata from inputs
         id: read_metadata
         run: |
