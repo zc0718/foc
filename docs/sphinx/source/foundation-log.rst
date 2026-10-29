@@ -637,12 +637,65 @@ The log
      - The local gates are not a substitute for the pipelines, and the trigger set is the five emojis above. A commit that
        carries them is the only way to exercise the sweep, so that is what this row's own commit does.
      - ``pending``
+   * - F-14
+     - F
+     - The FMU gate searched for the FMI headers in exactly one place, `workspace/materials/FMPy/src/fmpy/c-code`, a
+       gitignored local checkout. CI installs FMPy with `pip`, and the wheel ships the same unmodified
+       `fmi2Functions.h` inside `fmpy/c-code`; the gate meanwhile had already proved an importable FMPy existed, because
+       `_fmpy_python()` imports it. So it failed with "fmi2Functions.h not found; pass --fmpy" on the one machine where
+       the header was one `import` away, and passed everywhere the checkout happened to be.
+     - Run 40814535913, job `Auto Testing (ubuntu-latest)`: `fmi2Functions.h not found` is that job's **only** error, while
+       `gates.py fmu` is green locally where the checkout exists. Pointing `ROOT` at a path that does not exist and calling
+       `find_fmpy_headers(None)` resolved to `<site-packages>/fmpy/c-code`, which is what proved the header was reachable
+       the whole time.
+     - The installed package's `c-code` directory joined the candidate list, the checkout still searched first, and the
+       error now names `pip install fmpy` as the alternative. A gate's search path is part of its precondition: if it
+       accepts a machine it must be able to run there.
+     - ``pending``
+   * - F-15
+     - F
+     - The optional python consumer imported `numpy` at module scope, and nothing declared it. The test job installed
+       conan, then built and ran the suite; numpy arrived later in the same job, as a transitive dependency of
+       `fmpy==0.3.32` installed for the FMU gate. On Ubuntu the `ModuleNotFoundError` cost the case 0.04 s and printed
+       nothing, so it read like a broken binding rather than a missing wheel.
+     - Two line numbers in one log: the failing case at 2415, the `pip install fmpy` that would have supplied numpy at
+       2585. Locally the same case passes in 0.80 s, because this box has numpy.
+     - The job installs numpy before the build, gated on `metadata.json`'s `enable_python_bindings` so a project without
+       bindings pays nothing, and the case itself now fails with a sentence naming the missing dependency. Ordering was
+       the defect: a dependency installed after the test that needs it is not a dependency.
+     - ``pending``
+   * - A-24
+     - A
+     - Asked whether deleting the FMU step would turn CI green, I answered "no, the tests run first and they fail". Both
+       halves were wrong. The ctest failure never reached the job at all (A-25), so it could not have been the cause; and
+       the FMU step was the job's **only** red. I had argued from the step order in the workflow file, which proves
+       sequence and says nothing about causation.
+     - The log has exactly one `##[error]`, at line 2659, inside the FMU step; the `python_bindings` failure at line 2415
+       carries no error marker and the step that ran it exited 0. One grep over the whole job, instead of two reads of the
+       YAML, would have settled it.
+     - The question "which step turned this job red" is answered by the log's error markers, not by the file's step order.
+       Same shape as A-23: a plausible story about the pipeline, believed without asking the pipeline.
+     - ``pending``
+   * - A-25
+     - A
+     - A failing case could not fail the pipeline. `_run_ctest_suite` caught every exception, printed `CTest Crashed:` and
+       returned, so a suite of 526 cases with one red reported success to conan and the job inherited it. The gate could
+       not go red, which means the green it produced was never evidence -- the same defect as A-13, one level up: a
+       criterion that bypasses its own subject.
+     - An injected `EXPECT_EQ(1, 2)` case: before the fix the step exited 0 with the failure recorded only in a log nobody
+       reads; after it, exit 1, the case's own message in the output, and coverage still written (87.4 % of lines) before
+       the exception left `test()`. Online, the same shape: 526 cases, one red, job green.
+     - Archive `LastTest.log` in `finally`, collect coverage, then re-raise: evidence first, failure never swallowed.
+       ctest prints a failed case only on request, and conan's `CMake.test` (2.31.2) forwards build-tool arguments but not
+       ctest ones -- its docstring points at the `CTEST_` variables, and `Popen` inherits `os.environ`, so
+       `CTEST_OUTPUT_ON_FAILURE=1` is set in the recipe.
+     - ``pending``
 
 What ``pending`` means in the commit column
 -------------------------------------------
 
 A row cannot cite the hash of the commit that contains it, and these rows are written in the same commit as the fix, so
-twenty-two of the thirty-six say ``pending``. That is a convention and it was, until this paragraph, an unstated one --
+forty of the fifty-one say ``pending``. That is a convention and it was, until this paragraph, an unstated one --
 which is the same defect the rows themselves are about. The row is recoverable rather than lost:
 
 .. code-block:: console

@@ -14,9 +14,17 @@ import pathlib
 import random
 import sys
 
-import numpy as np
+try:
+    import numpy as np
+except ImportError:  # a missing wheel must not read like a broken library
+    raise SystemExit(
+        "test_python_bindings: numpy is missing from this interpreter. It is a dependency of this test, not of "
+        "the library: install it (`python3 -m pip install numpy`) or run the case on an interpreter that has "
+        "it. Left as a bare ModuleNotFoundError the case failed in 0.04 s with no output, which reads like a "
+        "broken binding rather than a missing dependency."
+    )
 
-import foc_python as foc
+import foc_python as foc  # noqa: E402 -- the diagnosis above must be the first thing to fail
 
 # The "from zero to a servo" example lives in its own file so that the quick-start page can include it verbatim, and it
 # carries its own assertion. Importing it here is what makes it run: the page cannot drift from a file the suite

@@ -25,10 +25,25 @@ def find_fmpy_headers(explicit: str | None) -> pathlib.Path:
     if explicit:
         return pathlib.Path(explicit)
     candidates = sorted(ROOT.glob("workspace/materials/FMPy/src/fmpy/c-code"))
+    # An installed FMPy ships the same headers beside its Python package (`fmpy/c-code`), and on a machine
+    # without the materials checkout that copy is the only one there is -- CI is such a machine, where
+    # `pip install fmpy` is the whole of its FMPy. Searching only under `workspace/` made the gate unreachable
+    # there while `gates.py` had already proved an importable FMPy existed, so it failed for the one reason it
+    # should not: the header was on disk, one `import` away.
+    # 已安装的 FMPy 自带同一份头文件（fmpy/c-code）；没有 materials 检出的机器上，这是唯一一份。
+    try:
+        import fmpy
+    except ImportError:
+        pass
+    else:
+        candidates.append(pathlib.Path(fmpy.__file__).resolve().parent / "c-code")
     for path in candidates:
         if (path / "fmi2Functions.h").is_file():
             return path
-    raise SystemExit("fmi2Functions.h not found; pass --fmpy <dir with fmi2Functions.h>")
+    raise SystemExit(
+        "fmi2Functions.h not found; pass --fmpy <dir with fmi2Functions.h>, or install FMPy "
+        "(`python3 -m pip install fmpy`) so that its `fmpy/c-code` directory is searched"
+    )
 
 
 def find_library(explicit: str | None) -> pathlib.Path:

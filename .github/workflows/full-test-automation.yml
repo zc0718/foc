@@ -57,6 +57,20 @@ jobs:
         run: |
           pip install --only-binary :all: conan==2.31.2
 
+      # The optional python consumer (`test_package/test/python/`) imports numpy at module scope and no runner
+      # image ships it. Installed here, before the build, and only when the package declares bindings: the flag
+      # that turns the feature on is the flag that brings its dependency, so a project without bindings pays
+      # nothing. Order matters -- a missing module otherwise surfaces as a ctest case that fails in 0.04 s.
+      # 可选 Python 消费方测试依赖 numpy；只在 enable_python_bindings 打开时安装，关掉的项目零成本。
+      - name: Optional consumer test dependencies
+        run: |
+          enabled=$(python3 -c "import json; print(json.load(open('metadata.json')).get('enable_python_bindings') is True)")
+          if [ "$enabled" = "true" ]; then
+            python3 -m pip install --only-binary :all: numpy
+          else
+            echo "enable_python_bindings is off: the python consumer is not built, nothing to satisfy"
+          fi
+
       - name: Set metadata from inputs
         id: read_metadata
         run: |

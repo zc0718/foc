@@ -175,18 +175,35 @@ class PackageTestConan(ConanFile):
 
         # test cases in test_pacakge/test/*.cpp
         if self._tests_enabled():
-            self._run_ctest_suite()
+            # Coverage is written *before* a red suite is raised, not instead of raising it: the report is the
+            # evidence a red gate has to leave behind, so it must exist either way. What must not happen is
+            # returning success with a failed case inside it -- 526 cases, one red, job green is the one outcome
+            # nobody can recover from, because the run that could have said so exited 0.
+            # 先出覆盖率报告再抛异常：证据要留，红不许被吞。
+            suite_error = None
+            try:
+                self._run_ctest_suite()
+            except Exception as err:  # noqa: BLE001 -- re-raised below, once the report exists
+                suite_error = err
 
             if self.metadata.get('activate_code_coverage'):
                 self._code_coverage_auto()
 
+            if suite_error is not None:
+                raise suite_error
+
     def _run_ctest_suite(self):
+        # A failed ctest case prints its output only when asked, and conan's CMake.test (2.31.2) can forward
+        # build-tool arguments but not ctest ones -- there is no `ctest_args` in its signature; its docstring
+        # points at the CTEST_ environment variables instead. Popen is called without `env=`, so a variable set
+        # here reaches ctest. Without it a red case is a name and a time: 0.04 s, no output, and the diagnosis
+        # has to start from a rerun the pipeline cannot do.
+        # CTEST_OUTPUT_ON_FAILURE 是 ctest 官方环境变量，等价于 --output-on-failure。
+        os.environ['CTEST_OUTPUT_ON_FAILURE'] = '1'
         try:
             if can_run(self):
                 cmake = CMake(self)
                 cmake.test()
-        except (Exception, ) as err:
-            print('CTest Crashed:', err)
         finally:
             target_folder = self.recipe_folder + sep + 'test' + sep + 'export'
 
