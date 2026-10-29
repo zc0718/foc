@@ -133,6 +133,20 @@ only reason this page can be trusted after the person who wrote it has moved on.
        the flag is honest about being one fact and not a diagnosis. Distinguishing them needs a second signal -- a torque
        measurement, an encoder that is not moving, or a command that would obviously move a healthy axis.
      - ``FrictionComp.TheStallFlagNeedsBothStillnessAndADemandAboveTheBreakaway``
+   * - **Stop an axis at a wall without knowing the drive's delay.**
+     - The velocity ceiling is `v^2 <= 2*a*(d - v*dt)` and `dt` is the drive's own latency, not the control period: on the
+       SIL axis it is about 1 ms (one period plus the 0.8 ms current rise). Assuming it is zero -- the natural reading of
+       "it can decelerate at `a`" -- crosses the wall by **19 mm at 20 rad/s**, which is exactly `v*dt`; with it the axis
+       stops **1.04 mm short**. It cannot be derived from anything in the library, so it has to come from a commissioning
+       run or a datasheet, and the number passed in should be the conservative one.
+     - ``SoftLimit.TheDelayTermIsTheDifferenceBetweenNineteenMillimetresPastAndOneShort``
+   * - **Synchronise two axes with a position-only gear.**
+     - A perfectly geared pair still shows a standing error of `v*kd/kp` -- **25.6 mrad** at 10 rad/s with `kd` 0.02 and
+       `kp` 8 -- because a position loop following a moving reference always lags it. It scales with the rate and
+       inversely with the gain, so raising `kp` buys accuracy at the price of stability, and the only term that removes it
+       is the gear's velocity output fed forward as `+kd*v_ref`. A gear that emits only a position is a lag generator with
+       a ratio.
+     - ``ElectronicGear.TheSyncErrorIsTheRampLagInBothOfItsTerms``
 
 What is *not* on this page, because it is enforced by a gate rather than by a test case: no exceptions, no RTTI, no
 `new`/`delete`, no `std::vector`/`std::string`, C++17 and C11 only (`strict`), every installed header carrying a README

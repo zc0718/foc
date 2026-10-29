@@ -183,6 +183,12 @@
       "src/core/sm.cpp",
       "core/types.hpp"
     ],
+    "core/soft_limit.hpp": [
+      "core/types.hpp"
+    ],
+    "core/gear_ratio.hpp": [
+      "core/types.hpp"
+    ],
     "core/friction_comp.hpp": [
       "core/types.hpp"
     ],

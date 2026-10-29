@@ -569,6 +569,39 @@ The log
      - The dead band itself is measured instead, by bisection on the reference step: a threshold, not a snapshot of a
        trajectory, and it lands on the arithmetic to four digits.
      - ``pending``
+   * - A-20
+     - A
+     - The soft-limit case asserted the *ideal* invariant `v^2 <= 2*a*d` on the plant's own state, and failed by 19 mm. The
+       invariant is true of the **command** from the instant the ceiling bites; the axis needs a delay before the braking
+       deceleration arrives, and during that delay it keeps travelling at `v`.
+     - The failure message did not say "wrong criterion", it said "the shaped run reached the wall", and the trajectory
+       showed the axis pinned at maximum braking from the moment the ceiling appeared -- i.e. the loop was doing
+       everything it could.
+     - 19 mm at 19.5 rad/s is 1 ms of travel, so the missing term was `v*dt`. With it the ceiling becomes
+       `v^2 <= 2*a*(d - v*dt)` and the axis stops 1.04 mm short. The case now runs all three: with the term, without it,
+       and with no shaper at all.
+     - ``pending``
+   * - A-21
+     - A
+     - The first synchronisation measurement compared a *step* response and read 58 mrad, which I attributed to the ramp lag
+       `v*kd/kp`. It was not: a step has no ramp, and what the number contained was the slave loop's own ringing for the
+       first 0.09 s.
+     - Measuring a ramp instead -- and, separately, feeding the gear the ideal ramp rather than the master's measured
+       position -- separated the three contributions: 25.6 mrad from the formula, +4 mrad from the master's own tracking,
+       and the rest from the transient.
+     - The case now asserts the formula on an ideal ramp, its two scalings (`v` and `kp`), and the residue the velocity
+       feedforward leaves behind.
+     - ``pending``
+   * - C-10
+     - C
+     - The criterion for the geared pair was "sync error below 2 mrad", written before the mechanism was understood. A
+       perfectly geared pair cannot meet it: the standing lag is `v*kd/kp`, which is 25 mrad at the configuration used. The
+       criterion was wrong by an order of magnitude in the direction that would have had me raise `kp` until the number
+       passed -- buying accuracy with the stability margin, and hiding the real lesson.
+     - The measurement landing 25.6 mrad against a 2 mrad criterion, and the arithmetic explaining it exactly.
+     - The criterion is the formula, in both of its arguments, plus the velocity feedforward as the only term that removes
+       it. "Small" is no longer a criterion anywhere in that case.
+     - ``pending``
 
 What ``pending`` means in the commit column
 -------------------------------------------

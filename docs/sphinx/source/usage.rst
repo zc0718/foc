@@ -399,6 +399,32 @@ The latch is not decoration. At rest the measured speed is zero-mean noise, so a
 square wave of amplitude twice the term: measured with +-0.01 rad/s of encoder noise, the naive law ripples **20.03
 mN*m** peak to peak and the latched one **0.036**, 550 times quieter, while both park the axis in the same place.
 
+**Keep an axis out of a wall, and gear two axes together.** Two small stages for the shapes an AGV or a winder needs.
+`core/soft_limit.hpp` refuses a target outside the window (status, not a clamp -- a clamp makes a programming fault look
+plausible) and caps the velocity on the way in:
+
+.. code-block:: cpp
+
+   foc::core::SoftLimit limit(foc::core::SoftLimitConfig{min_rad, max_rad});
+   const auto admitted = limit.apply(target_rad);          // Param when refused, previous target comes back
+   const float velocity = limit.shape(v_cmd, position_rad, a_decel, drive_delay_s);
+
+The ceiling is `v^2 <= 2*a*(d - v*dt)`, and the `v*dt` term is what makes it work: at 20 rad/s toward a wall the axis
+crosses by **19 mm** without it and stops **1.04 mm short** with it, where 19 mm is exactly the 1 ms this drive takes to
+deliver a braking current. `core/gear_ratio.hpp` is the other half of an AGV:
+
+.. code-block:: cpp
+
+   foc::core::ElectronicGear gear(foc::core::GearConfig{/*ratio*/ 2.0F, /*offset*/ 0.0F});
+   const auto out = gear.apply(master_wrapped_rad, dt_s);
+   slave_target_rad = out.slave_rad;      // the unwrap is the whole difficulty
+   slave_velocity_ff = out.slave_velocity_rad_s;
+
+The unwrap is not a detail: three wrapped revolutions become 18.85 rad of continuous reference instead of two 6.28 rad
+jumps. And the synchronisation error of a *perfectly geared* pair is `v*kd/kp` -- **25.6 mrad measured against 25.0
+predicted**, linear in the rate and inverse in the gain -- which the velocity output removes (1.3 mrad). A gear that emits
+only a position is a lag generator with a ratio.
+
 **Run a motor from three Hall sensors.** `core/hall.hpp` carries the two things a Hall drive needs and nothing else:
 the six-step table, and an electrical angle interpolated from edge timing.
 
@@ -494,7 +520,7 @@ whether your hardware matches that model.
      - Level
    * - Unit, SIL and stress cases
      - :code:`conan create . -s build_type=Debug --build=missing`
-     - 514 cases, 0 failed
+     - 523 cases, 0 failed
      - L1/L2
    * - Line coverage
      - :code:`python3 .github/misc/coverage_gate.py`

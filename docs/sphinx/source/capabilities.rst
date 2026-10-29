@@ -87,6 +87,23 @@ point -- the alternative is a library that grows algorithms and forgets how they
      - ``Trace.TheRecordAgreesWithTheScalarReadBitForBit``
      - na -- a recorder of other capabilities' arithmetic, with none of its own.
      - A-8
+   * - ``core/soft_limit.hpp``
+     - `at_wall`, and the `Param` that a refused target returns. A clamp would make an impossible command look plausible
+       and the caller would never learn; the status is the only channel a programming fault has.
+     - `Param` for a target outside the window (the previous one comes back), and for an inverted or non-finite window.
+       A wall is *inclusive*: "move to the limit" is the one command a soft limit exists to make safe.
+     - ``SoftLimit.TheDelayTermIsTheDifferenceBetweenNineteenMillimetresPastAndOneShort``
+     - na -- no integration; the remembered target is the whole state.
+     - A-20
+   * - ``core/gear_ratio.hpp``
+     - `master_unwrapped_rad` and `slave_velocity_rad_s`. The unwrapped master is the synchronisation error's reference --
+       comparing against the wrapped one is how a perfect pair reports 6.28 rad once a revolution -- and the velocity is
+       what makes the `v*kd/kp` lag removable at all.
+     - `Param` for a zero, negative-infinite or NaN ratio, and for a non-finite master sample (the unwrap state is then
+       untouched). A zero ratio is refused because a decoupled slave and a stuck slave look identical.
+     - ``ElectronicGear.TheSyncErrorIsTheRampLagInBothOfItsTerms``
+     - na -- one state variable (the accumulated master angle); the cases check that a ratio change does not move it.
+     - A-21, C-10
    * - ``core/friction_comp.hpp``
      - ``at_rest`` and `stalled` -- and the fact that the output is a *constant* at rest rather than a square wave. A
        Coulomb term on `sign(measured speed)` ripples by twice the term where the stage is needed most; the latch is what
