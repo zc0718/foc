@@ -481,6 +481,60 @@ The log
      - One factor removed. The lesson recorded here is why the count was written as an absolute number: a `>= 6` would
        have been satisfied by twelve and the whole file would have read double forever.
      - ``pending``
+   * - F-10
+     - F
+     - `HallTracker` stored the first sample's timestamp as if it were an edge. The rotor can be anywhere inside a
+       sector when the first sample is taken, so the interval from that sample to the first real edge is short by an
+       unknown amount -- and it became the reference every later interval was judged against.
+     - A perfectly healthy sensor set reported `State` on its second sector: 23 samples of a 1280-sample run at
+       120 rad/s. The case that found it was the one asserting `stale_fraction == 0` on a healthy run, which is the
+       negative half of the fault criterion and the only reason the startup path was exercised at all.
+     - Intervals count only when both of their ends were edges.
+     - ``pending``
+   * - F-11
+     - F
+     - The reference period was updated from any interval that arrived, including one that was evidence of a fault.
+       Two instances, opposite directions: a **doubled** interval adopted as the new period let a dead sensor become the
+       tracker's idea of normal (36 % of a revolution reporting `Ok` with an error up to 120 degrees), and a **short**
+       one -- six samples of a sliver-thin but genuine sector just after a fault cleared (375 us against a 3.5 ms true
+       period) -- poisoned the reference so that every real interval afterwards looked late, i.e. `State` forever.
+     - Measuring the stuck-sensor case rather than assuming the fault channels covered it, and tracing the recovery
+       path sample by sample when the status refused to return to `Ok` after the fault cleared.
+     - The interval test is now a two-sided band around the last period, and an interval outside it is refused instead
+       of adopted. Measured effect on the dead-sensor run: the undetected fraction fell from 36 % to 8.4 % without the
+       false alarm on a healthy set changing at all (0 of 1280).
+     - ``pending``
+   * - F-12
+     - F
+     - Two things about a transition that crosses a stretch of illegal reads. The crossing happened without being
+       seen, yet the interval spanning it was spent as a measurement; and the direction was taken from the shorter arc
+       of the code jump, which for a four-sector gap reads as two sectors backwards.
+     - The dead-sensor trace: the recovery edge was 119 degrees from the truth while the status said `Ok`.
+     - A crossing during an illegal read is now marked unobserved and its interval refused; and when the jump is too
+       far for the short arc to be meaningful, the direction falls back on the sign of the last known speed. Worst
+       undetected error 120 -> 59 degrees on the low-stuck sensor.
+     - ``pending``
+   * - F-13
+     - F
+     - The transition that carried a refused interval reported `Ok`. The verdict was stored, and then the very sample
+       that produced it returned `Ok` unconditionally, so the next period said `State` and the one sample in between --
+       the one holding the largest error of the run, 119 degrees -- claimed to be a measurement.
+     - Reading the trace rather than the aggregate: the worst undetected sample sat exactly on a transition, which is
+       where the status assignment and the verdict were separated by one line.
+     - The status of a transition now follows its own interval verdict.
+     - ``pending``
+   * - C-8
+     - C
+     - Three claims about `HallTracker` were wrong before any code shipped: that the angle "freezes" during an illegal
+       read (it free-runs and is *clamped*, because the angle is a function of time); that the two fault channels
+       "cover" a dead sensor (they cover roughly two thirds of a revolution); and that while `State` is up the angle is
+       "still good to a few degrees" (at 20000 rad/s^2 it is 42 degrees out, which is what makes the flag load-bearing
+       rather than decorative).
+     - Each one failed its own case on the first run, in the direction of the case rather than of the code -- the
+       signature of a claim written from expectation instead of from the artefact.
+     - The three cases now assert the measured behaviour and quote the numbers, including the 42 degrees, which is the
+       evidence for "a loop on this estimate must stop when the status says so".
+     - ``pending``
 
 What ``pending`` means in the commit column
 -------------------------------------------

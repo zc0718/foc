@@ -183,6 +183,10 @@
       "src/core/sm.cpp",
       "core/types.hpp"
     ],
+    "core/hall.hpp": [
+      "core/types.hpp",
+      "core/transforms.hpp"
+    ],
     "core/speed_from_angle.hpp": [
       "src/core/speed_from_angle.cpp",
       "core/types.hpp"

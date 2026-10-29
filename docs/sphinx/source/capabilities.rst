@@ -87,6 +87,19 @@ point -- the alternative is a library that grows algorithms and forgets how they
      - ``Trace.TheRecordAgreesWithTheScalarReadBitForBit``
      - na -- a recorder of other capabilities' arithmetic, with none of its own.
      - A-8
+   * - ``core/hall.hpp``
+     - ``status()`` -- three answers rather than one number: `Fault` when the code is 0 or 7 (the two a three-bit field
+       leaves over), `State` when the interval between edges stopped looking like a sector, `Ok` otherwise -- plus
+       `illegal_reads()`/`stale_reads()`, which say which channel fired. A code-only decoder cannot know how wrong it
+       is; these say whether it is measuring at all.
+     - `Param` on a non-finite timestamp; an illegal code answers a zero vector and `Fault` rather than a guessed
+       vector, and an interval that leaves `[period/1.5, period*1.5]` is refused rather than adopted as the new
+       reference -- adopting it is what a dead sensor needs to stay hidden (measured: 36 % of a revolution reporting
+       `Ok` with a 120-degree error, against 8.4 % once refused).
+     - ``HallTracker.AStuckSensorIsCoveredByTwoChannelsAndNeitherAloneIsEnough``
+     - na -- a per-sample decoder; the only cross-frame state is the sector period, and a doubtful one is kept rather
+       than taken.
+     - F-10, F-11, F-12, F-13, C-8
    * - ``core/step_metrics.hpp``
      - ``status``, and it carries weight: ``Ok`` means a first-order decay was fitted, ``State`` means the window carried
        none -- and the settling numbers stay valid in that case, because a response can settle without being fittable.

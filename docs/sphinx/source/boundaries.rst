@@ -112,6 +112,14 @@ only reason this page can be trusted after the person who wrote it has moved on.
        decoders carry never fires -- measured, not assumed, and the first version of that case asserted the opposite.
        Anything built on Halls must watch the illegal window *and* the edge timing; either alone has a blind spot.
      - ``HallPhysics.ADeadSensorIsSilentForFiveSixthsOfTheRevolutionAndKeepsEveryRemainingCodeLegal``
+   * - **Declare a dead Hall sensor over the whole revolution.**
+     - Both channels together still leave **8.4 % of a revolution reading `Ok` while wrong by up to 59 degrees**
+       (13.7 % and 120 degrees with the sensor stuck high): the illegal window is 15.5 % and the interval check another
+       53.9 %, so roughly a third of every revolution is undeclared. A drive built on Halls needs a second opinion --
+       current or torque sanity, an index, anything independent of the codes -- rather than a cleverer check on the
+       codes. This is the number that decides how the fault has to be handled, and it is asserted so it cannot quietly
+       become "the fault is caught".
+     - ``HallTracker.AStuckSensorIsCoveredByTwoChannelsAndNeitherAloneIsEnough``
 
 What is *not* on this page, because it is enforced by a gate rather than by a test case: no exceptions, no RTTI, no
 `new`/`delete`, no `std::vector`/`std::string`, C++17 and C11 only (`strict`), every installed header carrying a README

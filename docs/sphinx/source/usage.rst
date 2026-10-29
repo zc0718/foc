@@ -378,6 +378,27 @@ Measured: 0.030 N*m of breakaway at 0.5 N*m/s is reached and released at **60.1 
 sequence asking for less than it believes -- moves that to 68.0 ms and the case fails. A jam at the limit reports
 `Failed` with zero torque after 400 ms of ramp plus a 200 ms grace.
 
+**Run a motor from three Hall sensors.** `core/hall.hpp` carries the two things a Hall drive needs and nothing else:
+the six-step table, and an electrical angle interpolated from edge timing.
+
+.. code-block:: cpp
+
+   foc::core::HallTracker tracker;
+   // every control period, with the three GPIOs as a code:
+   const auto status = tracker.update(now_s, hall_code);
+   const float theta_e = tracker.angle_elec_rad(now_s);   // use only when status == Ok
+   const auto duty = foc::core::six_step_duty(hall_code, amplitude, foc::core::HallDirection::Forward);
+
+The numbers that decide whether that is enough. Held at one commutation state, the torque is the cosine of where the
+rotor sits in the sector: maximum at the centre, **0.866 at both edges, never negative** -- a 14.0 % peak-to-peak ripple
+that six-step cannot avoid, and the argument for interpolating an angle at all. Interpolating buys a factor of **52 at
+120 rad/s electrical** (0.338 degrees RMS against the sector centre's 17.52), and the factor shrinks to 7.5 at 900 rad/s
+because what is left is one *sampling period* of rotation (2.30 degrees at 62.5 us) rather than the 60-degree sector.
+
+What it cannot do is in the same header: with a sensor stuck, `Fault` covers 15.5 % of a revolution and `State` another
+53.9 %, and **8.4 % still reads `Ok` while wrong by up to 59 degrees**. The status is the whole admission story -- an
+estimate that is not being measured says so rather than reporting a sector centre as if it were a measurement.
+
 **A fault is not a temperature.** Protection is graded -- derate, then trip -- and the two decisions are separate
 fields rather than one code: `output_allowed` is defined as `active_mask == 0`, so a **fault means authority was
 removed**, while a **derating** drive is still running and says so through `i_limit_a` falling below the `i_max_a` the
@@ -452,7 +473,7 @@ whether your hardware matches that model.
      - Level
    * - Unit, SIL and stress cases
      - :code:`conan create . -s build_type=Debug --build=missing`
-     - 499 cases, 0 failed
+     - 507 cases, 0 failed
      - L1/L2
    * - Line coverage
      - :code:`python3 .github/misc/coverage_gate.py`
