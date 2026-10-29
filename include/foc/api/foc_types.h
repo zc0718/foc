@@ -586,3 +586,28 @@ typedef struct foc_trace_sample {
     uint8_t status;   /* foc_err_t at the end of the period, as its unsigned byte */
     uint16_t pad;     /* keeps the record a fixed size; written as 0 */
 } foc_trace_sample_t;
+
+
+/**
+ * @brief [en] What a recorded step response did, measured rather than eyeballed.
+ * @brief [zh] 一段记录下来的阶跃响应到底做了什么，是测出来的而不是看出来的。
+ * @note [en] `status` is the diagnostic channel and not decoration: `FOC_OK` means a first-order decay was fitted,
+ *            `FOC_ERR_STATE` means the window carried no usable decay -- `bandwidth_rad_s` is 0 **and the settling
+ *            numbers are still valid**, because a response can settle without being fittable. `FOC_ERR_PARAM` means the
+ *            arguments cannot describe a step at all. A bandwidth of 0 therefore never means "not measured by
+ *            accident".
+ * @note [zh] `status` 是诊断通道，不是装饰：`FOC_OK` 表示拟合到一阶衰减，`FOC_ERR_STATE` 表示窗口里没有可用的衰减—— 此
+ *            时 `bandwidth_rad_s` 为 0，**而稳定时间等数仍然有效**，因为一段响应可以稳定却不可拟合。`FOC_ERR_PARAM` 表
+ *            示参数根本描述不了一个阶跃。因此带宽为 0 永远不会是"不小心没测"。
+ * @since 0.1.8
+ * @exporter
+ */
+typedef struct foc_step_metrics {
+    uint32_t struct_size;      /* sizeof(foc_step_metrics_t) */
+    int32_t status;            /* foc_err_t of the measurement itself */
+    float bandwidth_rad_s;     /* -3 dB of the fitted first-order loop, rad/s; 0 unless status is FOC_OK */
+    float tau_s;               /* fitted time constant, s; 1 / bandwidth_rad_s */
+    float settling_s;          /* s from the first sample until it stays inside the band; -1 = never */
+    float overshoot_fraction;  /* peak beyond the target, as a fraction of the step */
+    float tail_error_fraction; /* mean of the last tenth minus the target, as a fraction of the step */
+} foc_step_metrics_t;

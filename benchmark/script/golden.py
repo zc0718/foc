@@ -58,6 +58,11 @@ sys.path.insert(0, str(ROOT / 'benchmark' / 'script'))
 # numbers mean anything.
 # 场景驱动的机器，不可省：走 C ABI 时电机背后是桩 HAL，其电流是一个脚本常数，因此那样写的场景记录下来的是一条没有物理的
 # 环——这正是本台账第一次录制得到的东西，也是摘要算成 -1 和 0 的原因。只有主控 plant 才能让这些数字有意义。
+# The control period every scenario ticks at. One constant, because the plant and the loop have to agree about it
+# and they did not: the plant used its own module constant.
+# 所有场景的节拍周期。只此一个常量，因为 plant 与环路必须对它有共识——而它们曾经没有：plant 用的是自己的模块常量。
+DT_S = 1e-4
+
 PLANT = {
     'rs': 0.5, 'ld': 4e-4, 'lq': 4e-4, 'psi_f': 0.05 / (1.5 * 7), 'pole_pairs': 7,
     'j': 1e-5, 'b': 1e-6, 'v_bus': 48.0,
@@ -120,12 +125,16 @@ def _plant():
     ledger is that the numbers came from the same inputs."""
     from foc_sil_plant import PmsmPlant
 
-    return PmsmPlant(**PLANT)
+    # The plant integrates one step per write, so it is told the period the loop ticks at. Before this was wired the
+    # plant advanced 50 us per 100 us tick and every window in this ledger described a machine running at half speed.
+    # plant 每次写入积分一步，因此要告诉它环路真正的节拍周期。在接上之前，plant 每次 100 µs 节拍只前进 50 µs，
+    # 本台账里每个窗口描述的都是一个半速运行的电机。
+    return PmsmPlant(**PLANT, dt_s=DT_S)
 
 
 def speed_step(foc, stride: int):
     """A 100 rad/s step from rest: the response shape, not a setpoint."""
-    periods, dt, target = 2000, 1e-4, 100.0
+    periods, dt, target = 2000, DT_S, 100.0
     trace = foc.Trace(periods)
     with foc.Motor(foc.MotorParams(), foc.MotorSetup(i_max_a=5.0, v_bus_v=PLANT['v_bus']), _plant()) as motor:
         motor.set_trace(trace)
@@ -150,7 +159,7 @@ def speed_step(foc, stride: int):
 
 def standstill_torque(foc, stride: int):
     """A current step at standstill, held: what the injection-free path does with no motion at all."""
-    periods, dt, target = 400, 1e-4, 0.5
+    periods, dt, target = 400, DT_S, 0.5
     trace = foc.Trace(periods)
     with foc.Motor(foc.MotorParams(), foc.MotorSetup(i_max_a=5.0, v_bus_v=PLANT['v_bus']), _plant()) as motor:
         motor.set_trace(trace)
@@ -181,7 +190,7 @@ def current_limit(foc, stride: int):
     foundation-log.rst as an open defect. A ledger must not freeze a baseline around behaviour nobody understands: the
     next person would compare against "locked = False" and explain a real change away.
     """
-    periods, dt, limit = 800, 1e-4, 2.0
+    periods, dt, limit = 800, DT_S, 2.0
     trace = foc.Trace(periods)
     setup = foc.MotorSetup(i_max_a=limit, v_bus_v=48.0)
     with foc.Motor(foc.MotorParams(), setup, _plant()) as motor:

@@ -86,6 +86,15 @@ point -- the alternative is a library that grows algorithms and forgets how they
      - ``Trace.TheRecordAgreesWithTheScalarReadBitForBit``
      - na -- a recorder of other capabilities' arithmetic, with none of its own.
      - A-8
+   * - ``core/step_metrics.hpp``
+     - ``status``, and it carries weight: ``Ok`` means a first-order decay was fitted, ``State`` means the window carried
+       none -- and the settling numbers stay valid in that case, because a response can settle without being fittable.
+       A bandwidth of 0 is impossible under ``Ok``, so zero cannot be mistaken for "not measured".
+     - ``Param`` for a window that cannot describe a step: fewer than three samples, a non-positive ``dt_s``, a negative
+       band, or a window that does not move at all (``y[0] == target``).
+     - ``StepMetrics.AWindowWithoutADecayReportsStateRatherThanAConfidentNumber``
+     - na -- it measures other capabilities' arithmetic and owns none of its own.
+     - F-8, F-9
    * - ``core/observer/observer_policy.hpp``
      - na -- concepts: it names what an observer must provide and provides nothing itself.
      - na -- a type either satisfies the concept or fails to compile, which is the strongest admission there is.

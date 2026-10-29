@@ -14,6 +14,7 @@
 #include <foc/core/commissioning.hpp>
 #include <foc/core/field_weakening.hpp>
 #include <foc/core/observer/back_emf_observer.hpp>
+#include <foc/core/step_metrics.hpp>
 #include <foc/core/observer/switchable_observer.hpp>
 #include <foc/core/protection.hpp>
 #include <foc/core/reference.hpp>
@@ -1781,6 +1782,29 @@ foc_err_t foc_bridge_protector_destroy(foc_protector_t protector) {
     slot->alive = false;
     slot->generation = (slot->generation + 1U) & 0xFFFFFFU; // invalidate outstanding handles
     return FOC_OK;
+}
+
+foc_err_t foc_bridge_step_metrics(const float* y, uint32_t n, float dt_s, float target, float band,
+                                  foc_step_metrics_t* out) {
+    if ((y == nullptr) || (out == nullptr)) {
+        return FOC_ERR_PARAM;
+    }
+    // Stateless: no motor handle, no slot, no generation check. The arithmetic lives in the header so a C++ caller and
+    // this bridge run the same code -- two implementations of one metric would be a defect waiting to disagree.
+    // 无状态：没有电机句柄、没有槽位、没有代号校验。算术在 header 里，因此 C++ 调用方与这座桥跑的是同一份代码——
+    // 同一个指标的两份实现就是一颗等待分道扬镳的缺陷。
+    const foc::core::StepMetrics measured = foc::core::step_metrics(y, static_cast<std::size_t>(n), dt_s, target, band);
+    out->struct_size = sizeof(foc_step_metrics_t);
+    out->status = static_cast<std::int32_t>(measured.status);
+    out->bandwidth_rad_s = measured.bandwidth_rad_s;
+    out->tau_s = measured.tau_s;
+    out->settling_s = measured.settling_s;
+    out->overshoot_fraction = measured.overshoot_fraction;
+    out->tail_error_fraction = measured.tail_error_fraction;
+    if (measured.status == foc::ErrorCode::Ok) {
+        return FOC_OK;
+    }
+    return (measured.status == foc::ErrorCode::State) ? FOC_ERR_STATE : FOC_ERR_PARAM;
 }
 
 } // extern "C"

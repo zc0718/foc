@@ -289,6 +289,59 @@ The log
        eight rate/PWM combinations. Same window, one knob, both directions.
      - ``pending``
 
+   * - F-8
+     - F
+     - `benchmark/script/foc_sil_plant.py` added the **mechanical** acceleration `torque / j` to `omega_e`, which is an
+       **electrical** speed, and then divided by the pole-pair count when reporting mechanical speed. Every mechanical
+       transient in the Python plant was therefore `pole_pairs` times too slow -- measured **7.002x** at seven pole
+       pairs on an open-loop acceleration test against `T / J`.
+     - The analysis layer's analytic criterion, on its first run. The fitted bandwidth of a speed step on the Python
+       face read **17.78 rad/s against the 250 rad/s the setup asked for**. Varying one knob at a time separated the
+       suspects: the fitted bandwidth scaled exactly as `1 / kt` and exactly as `j`, which is the gain law behaving
+       correctly on a plant that was too slow to respond, not a gain law that was wrong. A two-line open-loop test then
+       produced the number 7.002.
+     - Every mechanical quantity ever derived from that plant. The golden ledger's `speed_step_100` settled in 0.2 s
+       (the whole window) and now settles in 0.0211 s; its "overshoot" was a 5.6 % *undershoot* of a loop still
+       crawling, and is now +0.005 %. The three windows were re-recorded, and every figure that had been quoted from
+       them replaced.
+     - ``pending``
+   * - F-9
+     - F
+     - The same plant integrated a fixed 50 us (`DT`) per `write_duty` call, while `golden.py` ticks at 100 us. The
+       model advanced half a period per call, so simulated time ran at **half speed** -- an exact factor of two on top
+       of F-8's seven.
+     - Reading the constant after F-8's factor of seven did not explain the whole 14x: 250/7 = 35.7, and the
+       measurement said 17.8. `grep DT` found `50e-6` against the caller's `1e-4`.
+     - The plant now takes `dt_s`, `golden.py` carries one `DT_S` that both the loop and the plant use, and the two
+       development scripts that already ticked at 50 us are unaffected. Together F-8 and F-9 account for 14.05x, and
+       the corrected measurement is 243.57 rad/s against 250 (-2.57 %).
+     - ``pending``
+   * - A-10
+     - A
+     - The ledger could not have found either defect, and it was not asked to: it compares the Python plant against a
+       recording *of the same Python plant*. A self-referential baseline detects regressions and is silent about initial
+       errors, however long it is stared at.
+     - The analysis layer's second opinion -- the gain law's analytic bandwidth on one side, the C++ bench's independent
+       plant on the other. Neither shares a line of model code with the Python plant, and the disagreement was 14x.
+     - The reason 1.3 was worth doing before more scenarios were added: a ledger with one implementation can only say
+       "unchanged", and "unchanged" is how a wrong model becomes a specification.
+     - ``pending``
+
+   * - A-11
+     - A
+     - The absolute 10 % criterion was written into the plan, met at 9.15 %, and looked like a passing gate. Scaling the
+       speed loop's proportional gain by 0.8 -- a 20 % error in the gain law the criterion exists to check -- moved the
+       reading to 225.31 rad/s, i.e. **-9.88 %, still inside the band**. The estimator's own +9.15 % bias was the same
+       size as the defect.
+     - Perturbing the thing the criterion is about, rather than trusting it because it went green. A tolerance met by
+       an estimator whose bias is comparable to the effect has almost no discriminating power, and no amount of reading
+       the tolerance reveals that -- you have to break the system and watch.
+     - A second criterion that cannot be hidden by the bias: request 125 and 250 rad/s and demand the measurements move
+       by the same factor (measured 134.66 and 272.87 rad/s, ratio 2.026). It catches a loop that ignores the request,
+       not a scale error -- the frequency sweep that catches scale errors is the next increment, and this row is why it
+       is the next increment.
+     - ``pending``
+
 Two kinds of row that are currently empty
 -----------------------------------------
 

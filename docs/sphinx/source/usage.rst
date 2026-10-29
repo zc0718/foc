@@ -288,6 +288,52 @@ A golden is a recording from one machine and one build, not a specification: a d
 floats in the last digits. The header carries the module hash so the report can say when a baseline came from another
 build, and the bands above are what keep that honest -- a foreign baseline shows up as drift, not as a silent pass.
 
+**Measure the loop instead of eyeballing the plot.** A window tells you what happened; `foc/core/step_metrics.hpp`
+turns it into the numbers a tuning decision rests on. The library's own speed loop is designed as a first-order closed
+loop with time constant `1 / wb` (`speed_pi_config()` cancels the mechanical pole `B/J` and leaves `wb / s`), so the
+bandwidth it reports can be checked against the bandwidth that was *asked for* -- a measurement of the gain law, not of
+the fit.
+
+.. code-block:: cpp
+
+   // y: the recorded window, oldest first, starting at or before the step.
+   // y：录制窗口，最早的在前，从阶跃前或阶跃处开始。
+   const foc::core::StepMetrics m = foc::core::step_metrics(y, n, dt_s, target, band);
+   if (m.status == foc::ErrorCode::Ok) { use(m.bandwidth_rad_s, m.settling_s); }
+
+.. code-block:: python
+
+   # The same metric, and the same window, from the other side of the C ABI.
+   # 同一个指标、同一个窗口，从 C ABI 的另一侧。
+   import analyze, foc_python as foc
+   c = foc.step_metrics(speed, dt, target, band)          # C++
+   p = analyze.step_metrics(speed, dt, target, band)      # numpy
+   assert abs(p.bandwidth_rad_s - c['bandwidth_rad_s']) / c['bandwidth_rad_s'] <= 0.01
+
+Three criteria, each of which was watched going red before it was believed:
+
+- **fitted vs analytic, <= 10 %.** A 10 rad/s step on the SIL bench fits to **243.57 rad/s against the 250 rad/s
+  requested (-2.57 %)** through the Python plant, and **+9.15 %** through the C++ bench. This band is weak and the
+  weakness is measured: a 20 % error in the gain law moves the reading only to -9.88 %, still inside it, because the
+  estimator's bias is the same size as the defect. The companion criterion -- request 125 and 250 rad/s and demand the
+  measurements move by the same factor (134.66 and 272.87 rad/s, ratio 2.026) -- is what notices a loop that ignores
+  the request it was given. Attribution, one knob at a
+  time: raising that bench's inner current bandwidth 2000 to 4000 rad/s moves the number from +9.4 % to +5.8 %, halving
+  the control period moves it 0.07 points, and giving the window its pre-step sample moves it 0.30. The inner loop is
+  the story; the rest is a first-order model applied to a cascade.
+- **C++ vs Python on the same samples, <= 1 %.** Two implementations of one definition, compared in one process --
+  measured agreement is 0.003 % at 400 rad/s, so the band is a tripwire for drift rather than a tolerance.
+- **replay, error 0.** The settling time is an *index* decision, not a fitted number, so both sides must pick the same
+  sample: the analysis layer recomputes it from the window and the comparison is on the index, exactly.
+
+Read back through the CLI, the ledger's own `speed_step_100` window measures **197.59 rad/s** against the 200 rad/s the
+library defaults to (-1.2 %) -- on a window decimated to one sample per millisecond against a four-millisecond time
+constant. That is the analysis layer replaying a stored file rather than the object that produced it.
+
+What it cannot do: a first-order fit on a response that is not first-order reports the first-order *equivalent*, which
+is a real number and not the system's bandwidth -- which is why the band above is 10 % and is attributed rather than
+assumed.
+
 _`Verification: what is actually checked`
 -----------------------------------------
 
@@ -310,7 +356,7 @@ whether your hardware matches that model.
      - Level
    * - Unit, SIL and stress cases
      - :code:`conan create . -s build_type=Debug --build=missing`
-     - 467 cases, 0 failed
+     - 475 cases, 0 failed
      - L1/L2
    * - Line coverage
      - :code:`python3 .github/misc/coverage_gate.py`

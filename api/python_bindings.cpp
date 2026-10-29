@@ -888,6 +888,41 @@ PYBIND11_MODULE(foc_python, m) {
         "[zh] 由机器与控制率定容一份注入配置：该控制率能分辨的载波、拉出你预算的高频电流所需的伏特、以及两个实测"
         "截止频率。结果是库会接受的配置。");
 
+    // The measurement side of the same question `hfi_size` answers: the loop can now be asked what it did, in numbers a
+    // tuning decision rests on, and the answer comes from the same C++ that the C ABI returns -- so a Python author
+    // checking their own numpy fit against this one is comparing two implementations of one metric, not two metrics.
+    // 与 `hfi_size` 回答同一个问题的测量那一侧：现在可以问环路它到底做了什么，答案是能据以整定的数，而且与 C ABI
+    // 返回的来自同一份 C++——因此 Python 作者把自己的 numpy 拟合与它比对，比的是同一个指标的两份实现，而不是两个指标。
+    m.def(
+        "step_metrics",
+        [](const std::vector<float> &y, double dt_s, double target, double band) {
+            foc_step_metrics_t out{};
+            out.struct_size = sizeof(out);
+            const foc_err_t rc =
+                ::foc_step_metrics(y.data(), static_cast<uint32_t>(y.size()), static_cast<float>(dt_s),
+                                   static_cast<float>(target), static_cast<float>(band), &out);
+            if (rc == FOC_ERR_PARAM) {
+                throw std::runtime_error("foc_step_metrics rejected its arguments: fewer than three samples, a "
+                                         "non-positive dt, a negative band, or a window that does not move");
+            }
+            py::dict measured;
+            measured["status"] = rc;
+            measured["bandwidth_rad_s"] = out.bandwidth_rad_s;
+            measured["tau_s"] = out.tau_s;
+            measured["settling_s"] = out.settling_s;
+            measured["overshoot_fraction"] = out.overshoot_fraction;
+            measured["tail_error_fraction"] = out.tail_error_fraction;
+            return measured;
+        },
+        py::arg("y"), py::arg("dt_s"), py::arg("target"), py::arg("band"),
+        "[en] Measure a recorded step response: fit a first-order decay and report the loop's bandwidth, time constant, "
+        "settling time, overshoot and tail error. `status` is `ErrorCode.OK` when a decay was fitted, `STATE` when the "
+        "window carried none (the settling numbers are still valid then), and arguments that cannot describe a step "
+        "raise. The window must start at or before the step: `y[0]` is the pre-step value.\n"
+        "[zh] 测量一段记录下来的阶跃响应：拟合一个一阶衰减，并给出环路的带宽、时间常数、稳定时间、超调与尾部误差。"
+        "`status` 为 `ErrorCode.OK` 表示拟合到衰减，`STATE` 表示窗口里没有可用衰减（此时稳定时间等数仍然有效），"
+        "无法描述阶跃的参数会抛异常。窗口必须从阶跃前或阶跃处开始：`y[0]` 是阶跃前的值。");
+
     m.def("board_item_name", &foc_board_item_name, py::arg("item"),
           "[en] Stable lowercase name of a board item. [zh] 检查项的稳定小写名。");
     m.def("board_cause_name", &foc_board_cause_name, py::arg("cause"),

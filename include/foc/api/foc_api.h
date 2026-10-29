@@ -814,3 +814,39 @@ foc_err_t foc_motor_trace_read(foc_motor_t motor, uint32_t index, foc_trace_samp
  * @exporter
  */
 foc_err_t foc_motor_trace_reset(foc_motor_t motor);
+
+
+/**
+ * @brief [en] Measure a recorded step response: fit a first-order decay to the approach and report the loop's numbers.
+ * @brief [zh] 测量一段记录下来的阶跃响应：对逼近段拟合一个一阶衰减，并给出环路的几个数。
+ * @param y [en] response samples, oldest first, at least three; a caller gets them from a trace window or from an
+ *               oscilloscope export.
+ * @param y [zh] 响应样本，最早的在前，至少三个；调用方从轨迹窗口或示波器导出里拿到它们。
+ * @param n [en] sample count.
+ * @param n [zh] 样本数。
+ * @param dt_s [en] spacing between samples, s (> 0).
+ * @param dt_s [zh] 相邻样本间隔，s（> 0）。
+ * @param target [en] the commanded value the response approaches; `y[0]` is taken as the pre-step value, so the window
+ *                    must start at or before the step.
+ * @param target [zh] 响应逼近的目标值；`y[0]` 被当作阶跃前的值，因此窗口必须从阶跃前或阶跃处开始。
+ * @param band [en] half-width of the settling band, same unit as `y` (>= 0).
+ * @param band [zh] 稳定带半宽，与 `y` 同单位（>= 0）。
+ * @param out [en] filled whenever the arguments describe a step, including the `FOC_ERR_STATE` case.
+ * @param out [zh] 只要参数能描述一个阶跃就填入，包括 `FOC_ERR_STATE` 的情形。
+ * @return [en] FOC_OK when a decay was fitted; FOC_ERR_STATE when it was not (settling numbers still valid);
+ *              FOC_ERR_PARAM for a NULL pointer, non-finite arguments, `dt_s <= 0`, `band < 0`, `n < 3`, or a window
+ *              that does not move at all.
+ * @return [zh] 拟合到衰减时返回 FOC_OK；未拟合到时返回 FOC_ERR_STATE（稳定时间等数仍然有效）；空指针、非有限参数、
+ *              `dt_s <= 0`、`band < 0`、`n < 3`、或完全不动的一窗数据返回 FOC_ERR_PARAM。
+ * @note [en] `bandwidth_rad_s = 1 / tau`, and for this library's speed loop that is the whole claim:
+ *            `speed_pi_config()` cancels the mechanical pole and leaves `wb / s`, a first-order loop whose -3 dB point
+ *            is the bandwidth the caller asked for. Fitting `tau` from a trace and comparing it with the request
+ *            therefore measures whether the gain law did what its documentation says -- which is the SIL case that pins
+ *            this function.
+ * @note [zh] `bandwidth_rad_s = 1 / tau`，对本库的速度环而言这就是断言的全部：`speed_pi_config()` 抵消机械极点后留下
+ *            `wb / s`，其 -3 dB 点就是调用方请求的带宽。因此从轨迹拟合 `tau` 并与请求值比较，就是在测量增益律是否做到了
+ *            文档说的事——钉住本函数的 SIL 用例做的正是这件事。
+ * @since 0.1.8
+ * @exporter
+ */
+foc_err_t foc_step_metrics(const float *y, uint32_t n, float dt_s, float target, float band, foc_step_metrics_t *out);

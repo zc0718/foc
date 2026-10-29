@@ -186,11 +186,24 @@
       "core/alignment.hpp",
       "core/types.hpp"
     ],
+    "core/step_metrics.hpp": [
+      "src/api/bridge.cpp",
+      "api/foc_api.h",
+      "api/python_bindings.cpp",
+      "core/types.hpp"
+    ],
     "core/svpwm.hpp": [
       "src/core/svpwm.cpp",
       "core/types.hpp",
       "core/limits.hpp",
       "core/transforms.hpp"
+    ],
+    "core/trace.hpp": [
+      "core/trace.hpp",
+      "motor/motor.hpp",
+      "test_package/test/unit/test_trace.cpp",
+      "src/api/bridge.cpp",
+      "api/python_bindings.cpp"
     ],
     "core/traits.hpp": [
       "core/alignment.hpp",
@@ -202,13 +215,6 @@
       "core/reference.hpp",
       "core/svpwm.hpp",
       "core/types.hpp"
-    ],
-    "core/trace.hpp": [
-      "core/trace.hpp",
-      "motor/motor.hpp",
-      "test_package/test/unit/test_trace.cpp",
-      "src/api/bridge.cpp",
-      "api/python_bindings.cpp"
     ],
     "core/transforms.hpp": [
       "src/core/transforms.cpp",

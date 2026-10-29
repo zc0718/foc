@@ -295,3 +295,11 @@ foc_err_t foc_hfi_size(const foc_motor_params_t *params, float pwm_freq_hz, floa
     }
     return foc_bridge_hfi_size(params, pwm_freq_hz, hf_current_a, out);
 }
+
+foc_err_t foc_step_metrics(const float *y, uint32_t n, float dt_s, float target, float band, foc_step_metrics_t *out) {
+    if ((y == NULL) || (out == NULL) || (n < 3U) || !isfinite(dt_s) || !(dt_s > 0.0F) || !isfinite(target) ||
+        !isfinite(band) || !(band >= 0.0F)) {
+        return FOC_ERR_PARAM;
+    }
+    return foc_bridge_step_metrics(y, n, dt_s, target, band, out);
+}

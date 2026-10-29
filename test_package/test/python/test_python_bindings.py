@@ -29,6 +29,8 @@ from from_zero_to_servo import test_the_example_settles_a_speed_step  # noqa: E4
 # 对没见过的任何东西都判"相同"的台账。
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[3] / "benchmark" / "script"))
 import golden  # noqa: E402
+import analyze  # noqa: E402
+import foc_sil_plant  # noqa: E402
 
 def check_finite(telemetry):
     for key, value in telemetry.items():
@@ -720,6 +722,121 @@ def test_the_report_names_the_trace_the_quantity_and_the_difference():
     # 而一次干净的运行会明说，而不是什么都不打
     clean = "\n".join(golden.compare("speed_step_100", meta, golden_rows, golden_rows[:1], summary))
     assert 'every summary quantity and every window slot is "same"' in clean
+
+
+# ---- the analysis layer -------------------------------------------------------------------------
+#
+# 1.3's criteria, measured where the two implementations can be compared without a shared file: one window, one process,
+# the library's C++ on one side and numpy on the other. The plan asks for two things at once -- the fitted bandwidth
+# against the analytic one the gain law promises (<= 10 %), and the C++ metric against the Python one on the same
+# samples (<= 1 %) -- and neither is worth anything if it cannot go red, so both are checked against the number that
+# would be wrong if the arithmetic drifted.
+#
+# 分析层的判据，在"两份实现无需共享文件就能比对"的地方测量：一个窗口、一个进程，一边是库的 C++，一边是 numpy。
+# 计划同时要两件事——拟合带宽对增益律承诺的解析带宽（≤10%），以及 C++ 指标对同一批样本上的 Python 指标（≤1%）——
+# 而两者若不能变红就都没有价值，因此都与"算术漂移后会变错"的那个数对齐。
+
+def _speed_step_window(target_rad_s, bandwidth_rad_s, periods=1000):
+    """A small speed step, recorded: the window starts exactly at the command, so `speed[i]` sits at `i * dt`.
+
+    Small on purpose. A large step saturates the current limit, and a saturated response is not the linear loop the
+    bandwidth claim is about; 10 rad/s on this machine stays inside 5 A.
+    """
+    params = foc.MotorParams()
+    params.rs, params.ld, params.lq = golden.PLANT['rs'], golden.PLANT['ld'], golden.PLANT['lq']
+    params.j, params.b = golden.PLANT['j'], golden.PLANT['b']
+    params.pole_pairs = golden.PLANT['pole_pairs']
+    params.kt = 1.5 * golden.PLANT['pole_pairs'] * golden.PLANT['psi_f']
+
+    setup = foc.MotorSetup(pwm_freq_hz=10000.0, i_max_a=5.0, v_bus_v=golden.PLANT['v_bus'])
+    setup.speed_bandwidth_rad_s = bandwidth_rad_s
+    dt = 1e-4
+    plant = foc_sil_plant.PmsmPlant(**golden.PLANT, dt_s=dt)
+
+    trace = foc.Trace(periods + 1)
+    with foc.Motor(params, setup, plant) as motor:
+        motor.enable()
+        for _ in range(50):
+            motor.tick(dt)          # hold at zero before the step
+        motor.set_trace(trace)      # the window starts at the command, not before it
+        motor.set_speed(target_rad_s)
+        for _ in range(periods):
+            motor.tick(dt)
+        rows = trace.samples(motor)
+
+    return [0.0] + [row['speed_mech'] for row in rows], dt
+
+
+def test_the_analysis_layer_and_the_library_measure_one_loop_the_same_way():
+    requested = 250.0
+    target = 10.0
+    speed, dt = _speed_step_window(target, requested)
+    band = 0.02 * target
+
+    c_metric = foc.step_metrics(speed, dt, target, band)
+    py_metric = analyze.step_metrics(speed, dt, target, band)
+
+    assert c_metric['status'] == foc.ErrorCode.OK, c_metric
+    assert py_metric.status == 'Ok', py_metric
+
+    # Criterion B: two implementations, one metric, the same samples.
+    # 判据 B：两份实现、一个指标、同一批样本。
+    relative = abs(py_metric.bandwidth_rad_s - c_metric['bandwidth_rad_s']) / c_metric['bandwidth_rad_s']
+    assert relative <= 0.01, f"C++ {c_metric['bandwidth_rad_s']:.3f} vs numpy {py_metric.bandwidth_rad_s:.3f} rad/s"
+
+    # Criterion A: the measurement against the bandwidth the gain law was asked for.
+    # 判据 A：测量值对增益律被请求的带宽。
+    assert abs(c_metric['bandwidth_rad_s'] / requested - 1.0) <= 0.10, (
+        f"{c_metric['bandwidth_rad_s']:.2f} rad/s measured against {requested} rad/s requested")
+    assert abs(py_metric.bandwidth_rad_s / requested - 1.0) <= 0.10, (
+        f"{py_metric.bandwidth_rad_s:.2f} rad/s measured against {requested} rad/s requested")
+
+
+def test_the_analysis_layer_replays_the_settling_index_exactly():
+    """The replay contract from the plan: the analysis layer must recompute the number the loop's own side computed.
+
+    Settling is the quantity where "error 0" is achievable and meaningful, because it is an *index* decision, not a
+    fitted number: both sides must pick the same sample. The seconds are `index * dt`, and comparing those in float
+    would compare two roundings rather than the fact -- so the fact is compared, and the seconds only to half a period.
+    """
+    target, band = 10.0, 0.2
+    speed, dt = _speed_step_window(target, 250.0)
+
+    c_metric = foc.step_metrics(speed, dt, target, band)
+    py_metric = analyze.step_metrics(speed, dt, target, band)
+
+    # The same sample, decided the same way, by an independent implementation.
+    # 同一个样本、同一个判定，由一份独立实现给出。
+    c_index = int(round(c_metric['settling_s'] / dt))
+    py_index = int(round(py_metric.settling_s / dt))
+    assert c_index == py_index, f"C++ settled at sample {c_index}, numpy at {py_index}"
+
+    # And that index is the one a reader of the window would pick by hand: the first sample after the last one outside.
+    # 而且这正是读这份窗口的人会手挑的下标：最后一个带外样本之后的第一个样本。
+    outside = [i for i, value in enumerate(speed) if abs(value - target) > band]
+    assert c_index == outside[-1] + 1, f"index {c_index} is not the last-exit + 1 ({outside[-1] + 1})"
+    assert abs(py_metric.settling_s - c_metric['settling_s']) <= 0.5 * dt
+
+    # The reader the CLI depends on, checked against the file the ledger actually stores: a window format that drifts
+    # silently would make `analyze.py <window.csv>` answer confidently about the wrong columns.
+    # CLI 依赖的读取器，对着台账真正存下的文件检查：格式若悄悄漂移，`analyze.py <window.csv>` 会自信地回答错误的列。
+    assert tuple(golden.FIELDS) == analyze.TRACE_COLUMNS, 'the writer and the reader disagree about the column order'
+    recorded = analyze.load_window(pathlib.Path(__file__).resolve().parents[2] / 'resources' / 'golden' /
+                                   'speed_step_100.csv')
+    assert recorded['speed_mech'].size == 200, recorded['speed_mech'].size
+    assert 'module_sha' in recorded['_header'], recorded['_header']
+    assert recorded['speed_mech'][-1] > 0.9 * 100.0, recorded['speed_mech'][-1]
+
+    # End to end on the ledger's own artifact: that window was recorded from a 100 rad/s step with the library's default
+    # speed bandwidth (200 rad/s), and reading it back measures the loop. 197.59 rad/s is -1.2 % -- on a window
+    # decimated to one sample per millisecond against a four-millisecond time constant, which is the point: the reader
+    # and the metric recover a documented default from a stored file, not from the object that produced it.
+    # 在台账自己的产物上做端到端：那个窗口来自 100 rad/s 阶跃，用的是库默认速度带宽（200 rad/s），读回来就能测出环路。
+    # 197.59 rad/s 即 -1.2%——而且这还是抽稀到每毫秒一个样本、而时间常数是 4 ms 的窗口，这正是关键：读取器与指标从
+    # 一个存下来的文件里、而不是从产出它的对象里，复原了一个有文档的默认值。
+    from_ledger = analyze.step_metrics(recorded['speed_mech'], 1e-3, 100.0, 2.0)
+    assert from_ledger.status == 'Ok', from_ledger
+    assert abs(from_ledger.bandwidth_rad_s / 200.0 - 1.0) <= 0.10, from_ledger.bandwidth_rad_s
 
 
 def main():
