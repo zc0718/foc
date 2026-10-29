@@ -737,12 +737,27 @@ The log
      - A local suite says what the local compiler does. It cannot stand in for a second toolchain, and a green test leg
        only means something once a red case has been watched failing a job -- which is exactly what A-25 was about.
      - ``pending``
+   * - F-18
+     - F
+     - `ci-orchestrator.yml` advertises a `workflow_dispatch` input named `commit_messages` ("Emoji trigger
+       simulation"), and `metadata-controller.yml` requires `EVENT_NAME == "push"` in every one of its six trigger
+       conditions. A dispatched sweep therefore cannot start a pipeline: it completes green in half a minute having run
+       only the metadata, lint and skills jobs. The documented way to exercise the sweep without touching history is
+       inert, which is A-23's shape again -- a green that means "nothing ran" -- except that this time the template
+       itself offered the shortcut.
+     - Run 40822813297, dispatched with all five emojis in `commit_messages`: `Log Decisions` prints `Build: false,
+       Tests: false, Docs: false, Security: false, Cross compile: false`, every pipeline job is `skipped`, and the run's
+       conclusion is `success`. The emoji string did reach the workflow; the `EVENT_NAME == "push"` guards stop it.
+     - Recorded, not fixed: letting a dispatch trigger pipelines is a template design decision, because a dispatch has
+       no commit to audit and that absence is the reason the push-emoji rule exists at all. The sweep is requested the
+       supported way instead -- a push whose message carries the set.
+     - ``pending``
 
 What ``pending`` means in the commit column
 -------------------------------------------
 
 A row cannot cite the hash of the commit that contains it, and these rows are written in the same commit as the fix, so
-forty-three of the fifty-four say ``pending``. That is a convention and it was, until this paragraph, an unstated one --
+forty-four of the fifty-five say ``pending``. That is a convention and it was, until this paragraph, an unstated one --
 which is the same defect the rows themselves are about. The row is recoverable rather than lost:
 
 .. code-block:: console
