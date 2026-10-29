@@ -794,6 +794,20 @@ The log
        `ucov_*` copies are deleted before the capture runs) and `mismatch` (gcov's line range for gtest macros).
        Dropping files was the worse tolerance. `core` reads 93.18 % (2132/2288) and `all` 89.18 % (4279/4798).
      - ``pending``
+   * - F-21
+     - F
+     - The tolerance list for the capture was written against this workstation's lcov 2.0-1, where gcov's line
+       range disagreeing with a gtest macro is categorised `mismatch`. The runner has lcov 2.4-3, which files the
+       same condition under `(inconsistent)` -- so the capture aborted on ubuntu while the identical command exited 0
+       locally. A tolerance list is a contract with a **tool version**, and I verified it against the wrong one.
+     - Run 40826192872, job `Auto Testing (ubuntu-latest)`: `526/526` cases passed, then `lcov: ERROR:
+       (inconsistent) mismatched end line ... while capturing from .../ucov_test_deadtime.cpp.gcda`, then
+       `CalledProcessError: Command '[... --ignore-errors mismatch,source]' returned non-zero exit status 1`.
+       Same tree, same command, lcov 2.0-1: exit 0.
+     - Both names are listed now (`mismatch,source,inconsistent`); a name lcov does not know is itself an error, so
+       the list has to carry both. The comment in the recipe records which version files it under which name.
+       Verified again on 2.0-1 after the change: `conan create` exit 0, `core 93.18 %`, `all 89.18 %`.
+     - ``pending``
    * - A-28
      - A
      - I told you the python bindings were verified locally only, and that moving them into CI would need a
@@ -824,7 +838,7 @@ What ``pending`` means in the commit column
 -------------------------------------------
 
 A row cannot cite the hash of the commit that contains it, and these rows are written in the same commit as the fix, so
-forty-nine of the sixty say ``pending``. That is a convention and it was, until this paragraph, an unstated one --
+fifty of the sixty-one say ``pending``. That is a convention and it was, until this paragraph, an unstated one --
 which is the same defect the rows themselves are about. The row is recoverable rather than lost:
 
 .. code-block:: console

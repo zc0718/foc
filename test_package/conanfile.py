@@ -507,15 +507,18 @@ class PackageTestConan(ConanFile):
 
         # auto html report generation
         #
-        # Two tolerances, both measured rather than assumed:
+        # Three tolerances, each measured rather than assumed:
         #  * `source`: the generated `ucov_*` copies are deleted by `_remove_entries` before this runs, so
         #    geninfo cannot re-read them and aborts the whole capture over a file it never needed;
-        #  * `mismatch`: gcov's line range for the gtest macros disagrees with the source by a few lines in
-        #    every test TU. Neither changes a count, and the alternative -- dropping the consumer's objects --
-        #    silently removes whole files from the report, which is the worse thing to be tolerant about.
+        #  * `mismatch` / `inconsistent`: gcov's line range for the gtest macros disagrees with the source by a
+        #    few lines in every test TU. The category is *named differently by lcov version* -- 2.0-1 says
+        #    `mismatch`, 2.4-3 says `(inconsistent)` -- so both are listed; a name lcov does not know is an
+        #    error, and an unhandled category aborts the capture on the runner while passing on a workstation.
+        # None of them changes a count, and the alternative -- dropping the consumer's objects -- silently
+        # removes whole files from the report, which is the worse thing to be tolerant about.
         cmd1 = ['lcov', '--directory', coverage_folder, '--capture', '--output-file',
                 os.path.join(coverage_folder, 'coverage_test.info'), '--rc', 'geninfo_auto_base=1',
-                '--ignore-errors', 'mismatch,source']
+                '--ignore-errors', 'mismatch,source,inconsistent']
         subprocess.run(cmd1, check=True)
 
         self._render_html_report(coverage_folder,
