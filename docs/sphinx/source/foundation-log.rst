@@ -884,12 +884,24 @@ The log
      - A rate is only as good as its denominator's self-consistency: the check `totals == sum(breakdown)` now runs on every
        summary, and any future aggregation change has to keep it true.
      - ``pending``
+   * - F-24
+     - F
+     - The baremetal whitelist was compared case-sensitively in both places that read it: `requirements()` tested the
+       conandata package name (`etl`) against the metadata list, and `_preparing_deps_links()` tested the metadata key
+       (`Eigen3`) against that same list. `metadata-contract.md` states the rule -- compare lowercase -- and its own default
+       value is `["etl","ArduinoJson"]`, an entry whose case can never match a conandata name. Both lines are upstream's.
+     - `conan graph info . -pr:h <mcu profile>` with the whitelist set to `["ETL"]` resolved a graph of `cmake` only: etl was
+       dropped. With `["etl"]` the graph was `cmake, etl`. Nothing failed -- a missing dependency in a baremetal build
+       surfaces later, as a compile error in someone else's file.
+     - Both call sites go through `_baremetal_whitelist()`, which lowercases once. Re-probed: `ETL`, `Etl` and `etl` all keep
+       etl, and `ArduinoJson` still drops it, so the filter still filters.
+     - ``pending``
 
 What ``pending`` means in the commit column
 -------------------------------------------
 
 A row cannot cite the hash of the commit that contains it, and these rows are written in the same commit as the fix, so
-fifty-four of the sixty-five say ``pending``. That is a convention and it was, until this paragraph, an unstated one --
+fifty-five of the sixty-six say ``pending``. That is a convention and it was, until this paragraph, an unstated one --
 which is the same defect the rows themselves are about. The row is recoverable rather than lost:
 
 .. code-block:: console
