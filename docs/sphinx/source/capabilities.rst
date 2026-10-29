@@ -65,10 +65,11 @@ point -- the alternative is a library that grows algorithms and forgets how they
      - --
    * - ``core/protection.hpp``
      - ``thermal_budget()``, ``derated_limit()``, ``fault_is_latched()`` -- "fine", "derating" and "stopped" are three
-       readable numbers rather than one code.
+       readable numbers rather than one code. The split is by definition and not by accident: `output_allowed` is
+       `active_mask == 0`, so a fault in this library *means* "authority removed", and derating -- the axis still
+       running at reduced authority -- is announced by `i_limit_a` falling below the configured `i_max_a`.
      - na -- the configuration is a set of numbers; a nonsensical one is refused by the constructor that consumes it.
-     - todo -- the fault ranking is the contract and is asserted case by case, but the derating curve is a
-       thermal model and no case measures it against a temperature rise.
+     - ``Protection.TheTemperatureLadderIsGradedRatherThanACliff``
      - na -- a supervisor over other capabilities, not an equation of its own.
      - --
    * - ``core/speed_from_angle.hpp``

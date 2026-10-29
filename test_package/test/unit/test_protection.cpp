@@ -30,6 +30,8 @@ constexpr float kDt = 5.0e-5F; // 20 kHz
  * @brief [en] A machine that is healthy in every respect, so each test can move exactly one thing.
  * @brief [zh] 各方面都健康的机器，于是每个测试只动一样东西。
  */
+constexpr auto both_bits(std::uint16_t a, std::uint16_t b) -> std::uint16_t { return static_cast<std::uint16_t>(a | b); }
+
 auto healthy() -> core::ProtectionInput {
   return core::ProtectionInput{1.5F, 24.0F, 45.0F, 200.0F, 0.02F, true};
 }
@@ -319,6 +321,106 @@ TEST(Protection, DeratingIsMonotoneAndItsEndsAreTheConfiguredCurve) {
   EXPECT_FLOAT_EQ(0.0F, protector.derated_limit(t_end));
   EXPECT_FLOAT_EQ(0.0F, protector.derated_limit(t_end + 20.0F));
 }
+
+TEST(Protection, TheTemperatureLadderIsGradedRatherThanACliff) {
+  // The plan's criterion for graded fault actions, and the case that was missing: the derating test above asserts the
+  // *curve* `derated_limit(T)`, which is a pure function, and nothing ever stepped the protector with a temperature
+  // inside the band. An implementation that tripped at `t_derate_start_c` -- no derating at all -- would pass every
+  // case this file had, because the curve it never consults is still correct.
+  //
+  // The discriminating assertion is the middle rung: inside the band the output is **still allowed** and the limit is
+  // strictly between zero and nominal. That is precisely what "skip the derating and trip" cannot produce.
+  //
+  // 计划给分级动作定的判据，也正是缺失的那个用例：上面的降额测试断言的是**曲线** `derated_limit(T)`，那是个纯函数，
+  // 而从来没有让保护器在带内的温度上走过一步。一个在 `t_derate_start_c` 就跳闸的实现——完全不做降额——会通过本文件
+  // 原有的每一个用例，因为它从不查询的那条曲线本身是对的。
+  //
+  // 判别性的断言是中间那一级：带内输出**仍然被允许**、限幅严格落在 0 与额定之间。这正是"跳过降额直接跳闸"给不出的。
+  core::Protector protector(config());
+  const float t_start = config().t_derate_start_c;
+  const float t_trip = config().t_trip_c;
+  const float i_nom = config().i_max_a;
+  const auto heat_to = [](float temperature_c) {
+    core::ProtectionInput input = healthy();
+    input.temperature_c = temperature_c;
+    input.i_magnitude_a = 1.0F; // no current fault, so only the heat speaks
+    return input;
+  };
+
+  // Rung 0: cold. Full authority, no over-temperature bit.
+  // 第 0 级：常温。全权限，无过温位。
+  const core::ProtectionOutput cold = protector.step(heat_to(45.0F), 1e-4F);
+  std::printf("\n[P6-e] ladder: %.0f C -> limit %.3f A, output %d, fault %s\n", 45.0, static_cast<double>(cold.i_limit_a),
+              cold.output_allowed ? 1 : 0, fault_name(cold.fault));
+  EXPECT_TRUE(cold.output_allowed);
+  EXPECT_FLOAT_EQ(i_nom, cold.i_limit_a);
+
+  // Rung 1: inside the band, below the trip. The limit falls, the output stays.
+  // 第 1 级：带内、跳闸温度以下。限幅下降，输出保留。
+  const float middle_c = 0.5F * (t_start + t_trip);
+  const core::ProtectionOutput warm = protector.step(heat_to(middle_c), 1e-4F);
+  std::printf("[P6-e] ladder: %.0f C -> limit %.3f A, output %d, fault %s\n", static_cast<double>(middle_c),
+              static_cast<double>(warm.i_limit_a), warm.output_allowed ? 1 : 0, fault_name(warm.fault));
+  EXPECT_TRUE(warm.output_allowed)
+      << "inside the derating band the axis must still run, at reduced authority -- tripping here is the failure this "
+         "case exists to catch";
+  EXPECT_LT(warm.i_limit_a, i_nom) << "the limit must have come down";
+  EXPECT_GT(warm.i_limit_a, 0.0F) << "and it must not have reached zero before the trip";
+  // No fault code here, and that is the design rather than an omission: `output_allowed` is defined as
+  // `active_mask == 0`, so a "fault" in this library *means* "authority removed". Derating is the other decision --
+  // the axis still runs, at reduced authority -- and it is announced by `i_limit_a` falling below the `i_max_a` the
+  // caller configured. A `derating` flag was considered and rejected: it would be a seventh element on a tuple that
+  // five consumers already unpack, for a boolean the number beside it already states.
+  // 这里没有故障码，而这是设计而不是遗漏：`output_allowed` 的定义是 `active_mask == 0`，因此本库的"故障"**就是**"权限被
+  // 收回"。降额是另一个决定——轴仍在跑，只是权限降低——它由 `i_limit_a` 跌到调用方自己配置的 `i_max_a` 之下来宣告。曾
+  // 考虑加一个 `derating` 布尔并否决了：那是给五个消费者已经在解包的元组加第七个元素，只为重复旁边那个数已经说明的事。
+  EXPECT_EQ(core::FaultCode::None, warm.fault) << "a fault here means 'authority removed', and it has not been";
+  EXPECT_EQ(0U, warm.active_mask) << "derating is not a fault: the axis is still running";
+
+  // Rung 2: above the trip temperature. Now authority goes to zero and switching stops.
+  // 第 2 级：超过跳闸温度。权限归零，开关停止。
+  const core::ProtectionOutput hot = protector.step(heat_to(t_trip + 5.0F), 1e-4F);
+  std::printf("[P6-e] ladder: %.0f C -> limit %.3f A, output %d, fault %s\n", static_cast<double>(t_trip + 5.0F),
+              static_cast<double>(hot.i_limit_a), hot.output_allowed ? 1 : 0, fault_name(hot.fault));
+  EXPECT_FALSE(hot.output_allowed);
+  EXPECT_FLOAT_EQ(0.0F, hot.i_limit_a);
+  EXPECT_EQ(core::FaultCode::OverTemperature, hot.fault);
+}
+
+
+TEST(Protection, TwoFaultsAtOnceReportTheLowerRankedCodeAndBothBits) {
+  // "Ranked by the enum order, so current before heat before motion" is what the header claims and no case checked: every
+  // case so far moved one input, so `active_mask` and the ranking were unexercised. A machine does not fail politely,
+  // and the code a log shows has to be the one a person would act on first.
+  // 头文件声称"按枚举顺序排名，电流先于热、热先于运动"，而没有任何用例检查过：至今每个用例只动一个输入，于是
+  // `active_mask` 与排名从未被激励。机器不会礼貌地只坏一处，而日志里出现的那个码必须是人会先处理的那个。
+  core::Protector protector(config());
+
+  core::ProtectionInput both = healthy();
+  both.i_magnitude_a = 4.5F;  // OverCurrent, index 1
+  both.v_bus_v = 31.0F;       // OverVoltage, index 2
+  const core::ProtectionOutput over = protector.step(both, 1e-4F);
+  const auto bit = [](core::FaultCode code) { return static_cast<std::uint16_t>(1U << static_cast<std::uint8_t>(code)); };
+  std::printf("[P6-f] current+voltage -> fault %s, mask 0x%03x\n", fault_name(over.fault),
+              static_cast<unsigned>(over.active_mask));
+  EXPECT_EQ(core::FaultCode::OverCurrent, over.fault) << "the lower index wins";
+  EXPECT_EQ(both_bits(bit(core::FaultCode::OverCurrent), bit(core::FaultCode::OverVoltage)), over.active_mask)
+      << "both faults are still visible, even though only one is reported";
+
+  // The same test with the pair the other way round in the enum: under-voltage (2) against over-temperature (3).
+  // 同样的检验换一对枚举位置：欠压（2）对过温（3）。
+  core::Protector second(config());
+  core::ProtectionInput pair = healthy();
+  pair.v_bus_v = 17.0F;
+  pair.temperature_c = 105.0F;
+  const core::ProtectionOutput second_out = second.step(pair, 1e-4F);
+  std::printf("[P6-f] voltage+heat   -> fault %s, mask 0x%03x\n", fault_name(second_out.fault),
+              static_cast<unsigned>(second_out.active_mask));
+  EXPECT_EQ(core::FaultCode::UnderVoltage, second_out.fault);
+  EXPECT_EQ(both_bits(bit(core::FaultCode::UnderVoltage), bit(core::FaultCode::OverTemperature)),
+            second_out.active_mask);
+}
+
 
 TEST(Protection, TheThermalBudgetCoolsAndTheStallNeedsItsDuration) {
   // The two faults that are *durations* rather than thresholds, and both would

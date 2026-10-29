@@ -62,6 +62,13 @@ only reason this page can be trusted after the person who wrote it has moved on.
        modulation. A trace that looks perfect is therefore entirely consistent with a miscalibrated current sensor -- the
        loop is faithful to a wrong measurement. Use it to explain the loop's decisions, not to measure the phases.
      - ``Trace.TheRecordAgreesWithTheScalarReadBitForBit``
+   * - **See a fault code while the drive is derating.**
+     - A hot machine below the trip temperature reports `fault = None` and `active_mask = 0` while its current limit is
+       already falling -- measured: 3.00 A at 45 C, 1.80 A at 80 C, both with output allowed, then 0 A and no output at
+       105 C. `output_allowed` is defined as `active_mask == 0`, so a fault means "authority removed" and derating is
+       not one: read `i_limit_a` against the `i_max_a` you configured if you want to know the machine is hot. A
+       commissioning tool that shows only the fault code will report a derating drive as healthy.
+     - ``Protection.TheTemperatureLadderIsGradedRatherThanACliff``
    * - **Estimate a torque that accounts for iron loss or magnet temperature.**
      - `torque_estimate()` is `kt*iq + 1.5*pp*(ld-lq)*id*iq`, and `kt` is a nameplate number: it does not know that the
        magnet weakens as it heats, that iron loss subtracts torque at speed, or that the inverter adds no torque. The

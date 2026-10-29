@@ -390,6 +390,20 @@ The log
        would have been edited to match the wrong sign.
      - ``pending``
 
+   * - C-4
+     - C
+     - The graded protection ladder had a case for the derating curve (`derated_limit(T)`, a pure function) and a case
+       for the trip, and nothing in between: no case ever stepped the protector with a temperature *inside* the band, and
+       no case anywhere asserted `active_mask`, so the enum-order ranking the header documents was unexercised too.
+     - Writing the two cases the plan's own criterion named -- "each rung has a case, and an implementation that trips
+       without derating must be red" -- and then building exactly that wrong implementation: replacing `t_trip_c` with
+       `t_derate_start_c` in the over-temperature condition left **seven of eight** protection cases green. Only the new
+       ladder case failed.
+     - Two cases, and the `todo` in the capability matrix's boundary column that had been standing in for them is now a
+       case name. The rule this row is about: a capability with a curve test and a trip test can still have no test of
+       the thing it is for.
+     - ``pending``
+
 Two kinds of row that are currently empty
 -----------------------------------------
 

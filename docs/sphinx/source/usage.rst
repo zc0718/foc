@@ -358,6 +358,13 @@ answer is arithmetic rather than a modelling opinion: a unit tone reads 1.000 un
 correction, and a known 11.2 % distortion made of a 10 % third harmonic and a 5 % fifth reads 0.1118 with each harmonic
 in its own bin. Neither has a C-side counterpart, and neither needs one: they measure the window, not the loop.
 
+**A fault is not a temperature.** Protection is graded -- derate, then trip -- and the two decisions are separate
+fields rather than one code: `output_allowed` is defined as `active_mask == 0`, so a **fault means authority was
+removed**, while a **derating** drive is still running and says so through `i_limit_a` falling below the `i_max_a` the
+caller configured. Measured on the ladder case: 3.00 A at 45 C, **1.80 A at 80 C with output still allowed and no
+fault**, then 0 A and no output at 105 C. When two faults are active at once the lower-ranked one is reported and both
+bits stay visible in `active_mask` (0x006 for current plus voltage, 0x018 for voltage plus heat).
+
 **Command a torque, not an amperage.** `set_torque()` takes amps and leaves the N*m conversion to the caller -- the
 same arithmetic, with the same sign convention and the same limit, in every product. `foc/motor/torque_map.hpp` is that
 arithmetic once:
@@ -425,7 +432,7 @@ whether your hardware matches that model.
      - Level
    * - Unit, SIL and stress cases
      - :code:`conan create . -s build_type=Debug --build=missing`
-     - 483 cases, 0 failed
+     - 485 cases, 0 failed
      - L1/L2
    * - Line coverage
      - :code:`python3 .github/misc/coverage_gate.py`
