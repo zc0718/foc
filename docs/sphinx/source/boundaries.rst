@@ -97,6 +97,21 @@ only reason this page can be trusted after the person who wrote it has moved on.
        is transport delay in the feedback path, and no window length from 500 us to 10 ms wins on both settled accuracy
        and peak. The route is closed by measurement, not by taste.
      - ``SilSpeedFromAngleClosedLoop.AWindowShortEnoughToBeOnTimeIsTheOnlyWayThisRouteWins``
+   * - **Get a rotor angle out of three Hall sensors alone.**
+     - The code carries 60 degrees of information per edge and *nothing* inside a sector: two angles 59.96 degrees
+       apart read the same code, so a decoder that sees only the code is wrong by up to 30 degrees -- worst case, half a
+       sector, and no cleverness improves it. Ten degrees of mounting error on one sensor widens the bound to 35 and
+       narrows the other sectors to 25 without ever producing an illegal code, so misplacement is invisible to the
+       wiring. Everything finer than 60 degrees has to come from edge *timing*, which is the decoder's work, not the
+       sensor's.
+     - ``HallPhysics.InsideOneSectorTheCodeCarriesNoAngleInformation``
+   * - **See a dead Hall sensor all the time.**
+     - A stuck sensor freezes its bit: one sixth of a revolution reads as the illegal code 0 or 7 (that is the entire
+       visible fault) and the other five sixths read as perfectly legal codes at 120-degree resolution, with the edge
+       interval doubled. Worse, every surviving transition still flips exactly one bit, so the adjacency check that most
+       decoders carry never fires -- measured, not assumed, and the first version of that case asserted the opposite.
+       Anything built on Halls must watch the illegal window *and* the edge timing; either alone has a blind spot.
+     - ``HallPhysics.ADeadSensorIsSilentForFiveSixthsOfTheRevolutionAndKeepsEveryRemainingCodeLegal``
 
 What is *not* on this page, because it is enforced by a gate rather than by a test case: no exceptions, no RTTI, no
 `new`/`delete`, no `std::vector`/`std::string`, C++17 and C11 only (`strict`), every installed header carrying a README

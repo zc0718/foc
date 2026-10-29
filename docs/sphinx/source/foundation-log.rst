@@ -445,6 +445,58 @@ The log
        the same fix: look at the artifact.
      - ``pending``
 
+   * - C-6
+     - C
+     - The criterion for "a dead Hall sensor" was written as "somewhere two bits change at once (6 -> 4), which is the
+       trace of the missing sensor". Measurement says otherwise: the dead bit is **frozen**, so every surviving
+       transition still flips exactly one bit and the code walk degenerates onto a smaller Gray cycle instead of
+       breaking the rule. The criterion would have gone red on a *correct* model, and the natural repair for a red
+       case is to change the model -- which would have broken a model that was right.
+     - Measuring the model in a throwaway script before the first compile: the flip counts for the stuck case read
+       `[1,1,1,1]`, not `[1,2,...]`. Reasoning would have kept the wrong signature, because "a sensor is missing so
+       more than one thing must be wrong" is a plausible-sounding sentence.
+     - The criterion, replaced by three facts measured instead: one 60-degree illegal window per revolution (one
+       sixth of the time), runs of 120 degrees (the edge interval doubles), and three distinct legal codes left. Plus
+       the assertion that adjacency **survives** -- the useful negative result, since it says an adjacency check cannot
+       be the fault detector.
+     - ``pending``
+   * - C-7
+     - C
+     - The quantisation case assumed the sector layout instead of reading it: it took `theta = 0..60 deg` to be one
+       sector. Sensors at 0/120/240 degrees put their edges at 30/90/150/..., so **no** sector begins at zero; the case
+       straddled an edge and found two codes 59.96 degrees apart, then reported it as a model error.
+     - The case went red only after the sweep bug (A-17) was fixed; before that every case failed on the count and the
+       layout assumption stayed hidden behind it.
+     - The sector is now taken out of the sweep (the widest measured run), so the case tests the sensor and not the
+       arrangement. A model whose edges are somewhere else now passes it, which is the point.
+     - ``pending``
+   * - A-17
+     - A
+     - The sweep that measures the sectors ran **two** revolutions: it computed `samples = (2.0F * kTwoPiRad) / kStep`,
+       and `kTwoPiRad` is already 2*pi, so every count in the file was double six edge crossings instead of six, twelve
+       sectors instead of six, and a wrap-merge that had nothing to do.
+     - The very first assertion: `runs.size()` read 12 against an expected 6. Five of the six cases in the file failed
+       at once, and the sixth (no illegal code anywhere) passed -- which localised it to the counting rather than to the
+       model, since the illegal-code sweep does not depend on where the revolution ends.
+     - One factor removed. The lesson recorded here is why the count was written as an absolute number: a `>= 6` would
+       have been satisfied by twelve and the whole file would have read double forever.
+     - ``pending``
+
+What ``pending`` means in the commit column
+-------------------------------------------
+
+A row cannot cite the hash of the commit that contains it, and these rows are written in the same commit as the fix, so
+twenty-two of the thirty-six say ``pending``. That is a convention and it was, until this paragraph, an unstated one --
+which is the same defect the rows themselves are about. The row is recoverable rather than lost:
+
+.. code-block:: console
+
+   git log --oneline -S 'A-16' -- docs/sphinx/source/foundation-log.rst
+
+prints every commit that added or removed that string, and the earliest of them is the commit that introduced the row
+(verified for A-16, A-13, C-5 and F-9). A hash in that column therefore means "the row was written later, and cites the
+commit that carried the fix"; ``pending`` means "the fix and the row are the same commit, use the command above".
+
 Two kinds of row that are currently empty
 -----------------------------------------
 
