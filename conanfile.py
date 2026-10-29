@@ -260,7 +260,7 @@ class PackageRecipe(ConanFile):
         return bool(self.meta.get("enable_python_bindings"))
 
     def _baremetal_whitelist(self):
-        """The whitelist as a lowercase set: conandata names and metadata keys do not share a case (`Eigen3` vs `eigen`)."""
+        """Lowercase set: ConanCenter only moved to lowercase names in 2026 H1, so `OpenCV/4.x.x` is legitimate."""
         return {str(_name).lower() for _name in (self.meta.get('baremetal_white_list') or ())}
 
     def requirements(self):

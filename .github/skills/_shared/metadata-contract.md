@@ -34,6 +34,14 @@
 3. **pybind11 enters the main package only when `enable_python_bindings=true`** (gated in both main recipe and test_package). pybind11 跟随开关。
 4. Keys differ in case from conandata package names (`Eigen3` vs `eigen`) — always compare lowercase. 键名与 conandata 包名大小写不同，统一小写归一。
 
+   The reason is historical, not cosmetic: ConanCenter moved to lowercase names during 2026 H1, and before
+   that `OpenCV/4.x.x` was the official spelling. A `conandata.yml` written against either era (and a
+   `baremetal_white_list` derived from it, default `["etl","ArduinoJson"]`) can therefore carry mixed
+   case, and the whitelist is matched against **both** namespaces — conandata package names in
+   `requirements()` and metadata keys in the component graph. Comparing them raw made the two paths disagree
+   about the same entry. 大小写来自 ConanCenter 上半年才统一小写的历史，白名单同时与包名、metadata 键两个命名
+   空间比对，所以两侧都归一。
+
 ### Component Graph（组件图，可选）
 ```json
 "component_requires": {"<name>_c": ["<name>_cpp"]}
