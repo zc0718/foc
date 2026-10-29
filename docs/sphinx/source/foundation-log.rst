@@ -667,10 +667,10 @@ The log
        and the shared test job runs `pip install -r` on that path **if it exists**. The workflow names a file, never a
        package, so a derived project with no such file pays nothing and one with different needs writes its own list.
        The case itself now fails with a sentence that names the missing dependency, instead of a bare
-       `ModuleNotFoundError` in 0.04 s.
-     - Two earlier fixes were withdrawn, and both are worth keeping: the first installed numpy from a step gated on a
-       boolean that never fired (F-16), and both wrote a project's choice of reference implementation into a file every
-       derived project shares. The dependency was never the defect; the *undeclared* dependency was.
+       `ModuleNotFoundError` in 0.04 s. Two earlier fixes were withdrawn and are worth keeping: the first installed
+       numpy from a step gated on a boolean that never fired (F-16), and both wrote a project's choice of reference
+       implementation into a file every derived project shares. The dependency was never the defect; the *undeclared*
+       dependency was.
      - ``pending``
    * - A-24
      - A
@@ -752,12 +752,37 @@ The log
        no commit to audit and that absence is the reason the push-emoji rule exists at all. The sweep is requested the
        supported way instead -- a push whose message carries the set.
      - ``pending``
+   * - F-19
+     - F
+     - The Documentation job reports `success` while Sphinx prints `ERROR: Error parsing content block for the
+       "list-table" directive: row 53 does not contain the same number of items as row 1 (7 vs 6)`. The step does not
+       treat a Sphinx ERROR as a failure, so a page that cannot be parsed ships green; and the local `gates.py docs`
+       gate checks Doxygen block shape and the claim numbers but never parses the RST itself, so there was no second
+       line of defence either.
+     - Run 40822980678, job `Documentation / Build Documentation`: `ERROR: Error parsing` sits three lines above
+       `build succeeded, 1 warning.` in the same log, and the job's conclusion is `success`.
+     - The row is fixed (F-15 had grown a seventh field, so its commit cell shifted out of the table). The gap is
+       recorded rather than closed: making a Sphinx ERROR fail the job, or teaching the local gate to parse list-table
+       shapes, is a change to the shared docs pipeline and is not made here.
+     - ``pending``
+   * - A-27
+     - A
+     - I appended a seven-item row to a six-column list-table, pushed it, and read the green Documentation job as "the
+       docs are fine". The table had been six columns for fifty rows; nothing about appending an entry made that fact
+       visible, and I never compared the row I wrote against the header.
+     - The push's own log: `row 53 ... (7 vs 6)` while the job concluded `success`. Re-rendering the page afterwards
+       reproduced nothing, because by then the malformed row was gone.
+     - Rows added since are written by copying a neighbouring row's shape and then parsing the page with
+       `sphinx-build -b dummy source /tmp/out source/foundation-log.rst`, which is the local stand-in for "the
+       Documentation job said yes". Same family as A-26: one instrument's green read as a statement about something
+       else.
+     - ``pending``
 
 What ``pending`` means in the commit column
 -------------------------------------------
 
 A row cannot cite the hash of the commit that contains it, and these rows are written in the same commit as the fix, so
-forty-four of the fifty-five say ``pending``. That is a convention and it was, until this paragraph, an unstated one --
+forty-six of the fifty-seven say ``pending``. That is a convention and it was, until this paragraph, an unstated one --
 which is the same defect the rows themselves are about. The row is recoverable rather than lost:
 
 .. code-block:: console
