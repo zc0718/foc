@@ -127,9 +127,12 @@ def main():
     failures = 0
     rows = (("core", core, args.core), ("all", overall, args.all))
     for name, stats, floor in rows:
-        margin = stats["percent"] - floor
+        # Exact counts, never the rounded rate: the CI step compares against `100 * hit / found`, and a
+        # rounded 95.70 that is really 95.6989 must not pass a 95.7 floor here and fail it there.
+        rate = 100.0 * stats["hit"] / stats["found"] if stats["found"] else 0.0
+        margin = rate - floor
         verdict = "ok" if margin >= 0.0 else "FAIL"
-        print(f"[coverage] {verdict:<4} {name:<5} {stats['percent']:>6.2f}% "
+        print(f"[coverage] {verdict:<4} {name:<5} {rate:>6.2f}% "
               f"({stats['hit']}/{stats['found']} lines, floor {floor:.1f}%, margin {margin:+.2f})")
         if margin < 0.0:
             failures += 1

@@ -57,11 +57,7 @@ jobs:
         run: |
           pip install --only-binary :all: conan==2.31.2
 
-      # A file, not a package name. The optional consumer test's requirements are the project's business -- this
-      # repository's test compares the binding against a numpy reference analyser, the next repository's may compare
-      # it against nothing at all -- so the shared job only has to honour the declaration. Absent or empty file means
-      # nothing to install, and `--only-binary :all:` keeps the install from wanting a compiler on the runner.
-      # 项目声明、共享层安装：共享作业只知道"有这个文件就装"，不知道里面是 numpy 还是别的什么。
+      # A file, not a package name: the consumer test's requirements are the project's business, and an absent file installs nothing.
       - name: Optional consumer test requirements
         if: ${{ hashFiles('test_package/test/python/requirements.txt') != '' }}
         run: |
@@ -105,13 +101,7 @@ jobs:
           -c tools.system.package_manager:mode=install -c tools.system.package_manager:sudo=True
         timeout-minutes: 55
 
-      # NOT here, on purpose: `gates.py fmu` and `gates.py pil`. Both are LOCAL_ONLY, and `gates.py guard`
-      # fails the build if a workflow calls either. `pil` rebuilds for aarch64 and runs under qemu -- minutes
-      # per push for evidence that only changes when the control loop does. `fmu` loads the module in a
-      # third-party master, which is a property of *this* project's deliverable and not of a library template:
-      # a derived project has no `api/fmu` to build, so leaving the step here would fail every one of them.
-      # Both stay in `gates.py all`, so they run before every commit rather than on every push.
-      # 两个都是私域检查：派生项目没有 api/fmu，共享作业里放这一步等于给每个派生项目埋一颗必红的雷。
+      # NOT here, on purpose: `gates.py fmu` and `gates.py pil` are LOCAL_ONLY (a derived project has no `api/fmu`).
 
       - name: Set timestamp
         id: timestamp
@@ -157,23 +147,14 @@ jobs:
           fpct=$(python3 -c "import json;print(json.load(open('$summary'))['functions']['percent'])")
           fhit=$(python3 -c "import json;print(json.load(open('$summary'))['functions']['hit'])")
           ffound=$(python3 -c "import json;print(json.load(open('$summary'))['functions']['found'])")
-          # The floors live in metadata.json, per runner, because the two legs measure with different
-          # instruments and the gap between them is the instrument, not the code: llvm-cov attributes the
-          # header and inline lines that gcov gives to the caller. Each leg is held to its own best measured
-          # value -- a ratchet, so a drop shows up as red instead of as a slightly smaller number nobody reads.
-          # A runner that metadata does not list falls back to `default_floor`, so a derived project that says
-          # nothing keeps working with whatever it declared there.
-          # 底线按腿取，因为它量的是各自的仪器；没列出的 runner 退回 default_floor。
+          # Floors are per runner in metadata.json (gcov and llvm-cov count differently); no declared floor keeps the old > 0 check.
           python3 - "$summary" "$RUNNER_OS" <<'PY'
           import json, sys
 
           summary, leg = sys.argv[1], sys.argv[2]
-          meta = json.load(open('metadata.json'))['coverage']
-          scopes = tuple(meta.get('core_scopes', []))
-          floors = meta.get('floors', {}).get(leg, meta.get('default_floor', {}))
-          if not floors:
-              print(f'::error::no coverage floor for {leg} and no default_floor in metadata.json')
-              sys.exit(1)
+          coverage = json.load(open('metadata.json')).get('coverage') or {}
+          scopes = tuple(coverage.get('core_scopes') or ())
+          floors = (coverage.get('floors') or {}).get(leg) or (coverage.get('default_floor') or {})
 
           data = json.load(open(summary))
           hit = found = 0
@@ -181,8 +162,21 @@ jobs:
               if any(path.startswith(scope) for scope in scopes):
                   hit += counts.get('lines_hit', 0)
                   found += counts.get('lines_found', 0)
-          rates = {'core': (100.0 * hit / found if found else 0.0, hit, found),
-                   'all': (data['lines']['percent'], data['lines']['hit'], data['lines']['found'])}
+
+          # Rates from the counts, never from the rounded `percent` field: a rounding difference is not a verdict.
+          overall = (data['lines']['hit'], data['lines']['found'])
+          rates = {'all': (100.0 * overall[0] / overall[1] if overall[1] else 0.0, *overall)}
+          if scopes and found:
+              rates['core'] = (100.0 * hit / found, hit, found)
+          elif scopes:
+              print('::warning::a core scope is declared but matched no instrumented file; core not judged')
+
+          if not floors:
+              print('::warning::metadata.json has no coverage floors; judging only that the report is not empty')
+              if not overall[0]:
+                  print(f'::error::line coverage is 0 ({overall[0]} of {overall[1]} lines)')
+                  sys.exit(1)
+              sys.exit(0)
 
           missed = []
           for name, (rate, h, f) in rates.items():

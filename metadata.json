@@ -38,8 +38,8 @@
   "coverage": {
     "core_scopes": ["include/foc/core/", "src/core/"],
     "floors": {
-      "Linux": {"core": 95.2, "all": 90.1},
-      "macOS": {"core": 90.4, "all": 86.2}
+      "Linux": {"core": 95.6, "all": 94.0},
+      "macOS": {"core": 90.0, "all": 70.0}
     },
     "default_floor": {"core": 90.0, "all": 70.0}
   },

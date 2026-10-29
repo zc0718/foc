@@ -64,6 +64,15 @@
 | `workflow_triggers.*` | CI master switches (build/tests/release/docs/security_scan/cross_compile); **all false = gitmoji triggers nothing**; on by default: build/tests/docs/security_scan/cross_compile (only `release` is off); `cross_compile` is not part of PR shift-left |
 | `baremetal_white_list` | baremetal cross-compile whitelist (default `["etl","ArduinoJson"]`); applied in both deps & requirements |
 
+### Coverage Policy（覆盖率策略，可选）
+| Field（字段） | Purpose（作用） |
+|------|------|
+| `coverage.core_scopes` | 计入 "core" 的路径前缀（数组）；为空则该作用域不判定 |
+| `coverage.floors.<os>` | 按 runner OS（`Linux`/`macOS`/`Windows`）声明的 `{core, all}` 行覆盖率底线 |
+| `coverage.default_floor` | 未列出的 runner 用的兜底底线；**整块缺席时只断言报表非空**，不因缺少声明而失败 |
+
+底线按腿取，因为 gcov 与 llvm-cov 的计数口径不同（后者把头文件/内联行归给调用方）。棘轮语义：只升不降，下调须在提交信息里写明理由。CI 与 `.github/misc/coverage_gate.py` 读同一份。
+
 ### Run-time Knobs（运行期旋钮，不进 metadata）
 | Knob（旋钮） | Form（形式） | Purpose（作用） |
 |------|------|------|

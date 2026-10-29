@@ -860,12 +860,36 @@ The log
        names, upstream's matches none. The two private ids left in `.pre-commit-config.yaml` are recorded as a
        known risk rather than changed, because that file is a developer-local configuration.
      - ``pending``
+   * - F-23
+     - F
+     - Collecting both halves (F-20) put every header into the tracefile **twice**: the library's units are compiled
+       against the build-tree copy and the test units against the installed one, so `b/include/x.hpp` and
+       `p/include/x.hpp` became two records for one file -- and not with the same instrumented line set. `_coverage_totals`
+       summed every record into `lines` but keyed `per_file` by the normalised path, so the totals and the breakdown were
+       computed over different bases: 4327 of 4798 lines against a per-file sum of 3577 of 3821, i.e. 750 lines counted
+       twice. The scope floors read `per_file`, the published figure read `lines`.
+     - The same tracefile, two aggregations: summing records gives `89.53 % (2617/2923)` for the core scope, keeping one
+       record per file gives `93.18 % (2132/2288)` -- a 3.6 point spread decided by an implementation detail.
+     - The tracefile is now merged per source file (line union by `max(count)`, larger record for functions and branches)
+       and every total is the sum of its own breakdown. Re-measured on the same commit: `lines` and the per-file sum agree
+       exactly (3630/3857), core 95.70 %, all 94.11 %.
+     - ``pending``
+   * - A-30
+     - A
+     - I published `core 95.24 % / all 90.16 %`, pinned the per-leg floors to those numbers, and put them in the audit
+       report as evidence for DoD G7 -- on top of a denominator that counted 750 lines twice (F-23). The direction of the
+       earlier finding was right (files were missing, F-20); the precision was invented.
+     - The reviewer's counter-example, reproduced on our own tree: `lines 4327/4798` against `per_file` sum `3577/3821`, and
+       two aggregations of one tracefile 3.6 points apart.
+     - A rate is only as good as its denominator's self-consistency: the check `totals == sum(breakdown)` now runs on every
+       summary, and any future aggregation change has to keep it true.
+     - ``pending``
 
 What ``pending`` means in the commit column
 -------------------------------------------
 
 A row cannot cite the hash of the commit that contains it, and these rows are written in the same commit as the fix, so
-fifty-two of the sixty-three say ``pending``. That is a convention and it was, until this paragraph, an unstated one --
+fifty-four of the sixty-five say ``pending``. That is a convention and it was, until this paragraph, an unstated one --
 which is the same defect the rows themselves are about. The row is recoverable rather than lost:
 
 .. code-block:: console

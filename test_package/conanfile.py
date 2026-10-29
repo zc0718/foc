@@ -175,30 +175,28 @@ class PackageTestConan(ConanFile):
 
         # test cases in test_pacakge/test/*.cpp
         if self._tests_enabled():
-            # Coverage is written *before* a red suite is raised, not instead of raising it: the report is the
-            # evidence a red gate has to leave behind, so it must exist either way. What must not happen is
-            # returning success with a failed case inside it -- 526 cases, one red, job green is the one outcome
-            # nobody can recover from, because the run that could have said so exited 0.
-            # 先出覆盖率报告再抛异常：证据要留，红不许被吞。
+            # The report is written before a red suite is raised, never instead of raising it.
             suite_error = None
             try:
                 self._run_ctest_suite()
             except Exception as err:  # noqa: BLE001 -- re-raised below, once the report exists
                 suite_error = err
 
+            coverage_error = None
             if self.metadata.get('activate_code_coverage'):
-                self._code_coverage_auto()
+                try:
+                    self._code_coverage_auto()
+                except Exception as err:  # noqa: BLE001 -- reported, but after the suite's own verdict
+                    coverage_error = err
 
+            # The suite's failure is the verdict; raising the coverage error instead would hide which case failed.
             if suite_error is not None:
-                raise suite_error
+                raise suite_error from coverage_error
+            if coverage_error is not None:
+                raise coverage_error
 
     def _run_ctest_suite(self):
-        # A failed ctest case prints its output only when asked, and conan's CMake.test (2.31.2) can forward
-        # build-tool arguments but not ctest ones -- there is no `ctest_args` in its signature; its docstring
-        # points at the CTEST_ environment variables instead. Popen is called without `env=`, so a variable set
-        # here reaches ctest. Without it a red case is a name and a time: 0.04 s, no output, and the diagnosis
-        # has to start from a rerun the pipeline cannot do.
-        # CTEST_OUTPUT_ON_FAILURE 是 ctest 官方环境变量，等价于 --output-on-failure。
+        # ctest prints a failed case only on request, and CMake.test has no `ctest_args`; Popen inherits os.environ.
         os.environ['CTEST_OUTPUT_ON_FAILURE'] = '1'
         try:
             if can_run(self):
@@ -318,11 +316,7 @@ class PackageTestConan(ConanFile):
                 _names.add(_m.group(1))
             for _m in re.finditer(_add_test, _text):
                 _bin = _m.group(1) or _m.group(2)
-                # Only binaries WE built can carry our profiles. An `add_test` command may point
-                # at an interpreter or a system tool (a python script test is exactly that), and
-                # feeding such a file to `llvm-cov export` aborts the whole coverage step.
-                # 只有我们自己构建的可执行文件才带我们的 profile；`add_test` 也可能指向解释器或
-                # 系统工具（脚本型用例就是），把它喂给 `llvm-cov export` 会让整个覆盖率步骤失败。
+                # Only binaries we built carry our profiles; foreign executables must never reach llvm-cov.
                 if _bin and os.path.isfile(_bin) and _is_within(_bin, build_folder):
                     _paths.append(_bin)
 
@@ -369,34 +363,44 @@ class PackageTestConan(ConanFile):
         return _tools['llvm-profdata'], _tools['llvm-cov']
 
     def _coverage_totals(self, info_file):
-        """Sum the tracefile's own LF/LH/FNF/FNH/BRF/BRH records; each file record carries its totals, so a plain sum is the report's."""
-        _sums, _files, _per_file = {}, set(), {}
+        """Merge the tracefile per source file, then sum, so every total is the sum of its own breakdown."""
+        _lines, _meta, _files = {}, {}, set()
         _current = None
         with open(info_file, 'r', encoding='utf-8') as f:
             for _line in f:
                 if _line.startswith('SF:'):
                     _current = _source_relpath(_line[3:].strip())
                     _files.add(_current)
-                    _per_file.setdefault(_current, {})
+                    _lines.setdefault(_current, {})
+                    _meta.setdefault(_current, {})
+                    continue
+                if _current is None:
+                    continue
+                if _line.startswith('DA:'):
+                    _number, _, _rest = _line[3:].strip().partition(',')
+                    _count = _rest.partition(',')[0]
+                    if _number.isdigit() and _count.isdigit():
+                        _seen = _lines[_current]
+                        _seen[int(_number)] = max(_seen.get(int(_number), 0), int(_count))
                     continue
                 _key, _, _value = _line.strip().partition(':')
-                if _key in ('LF', 'LH', 'FNF', 'FNH', 'BRF', 'BRH') and _value.isdigit():
-                    _sums[_key] = _sums.get(_key, 0) + int(_value)
-                    if _current is not None:
-                        _per_file[_current][_key] = int(_value)
+                if _key in ('FNF', 'FNH', 'BRF', 'BRH') and _value.isdigit():
+                    # no line key to merge on: the larger record stands for the file, never the sum of two.
+                    _meta[_current][_key] = max(_meta[_current].get(_key, 0), int(_value))
+        _per_file = {_p: {'lines_hit': sum(1 for _c in _d.values() if _c > 0), 'lines_found': len(_d)}
+                     for _p, _d in _lines.items()}
+        _sum = lambda key: sum(_v.get(key, 0) for _v in _meta.values())
         _rate = lambda hit, found: round(100.0 * hit / found, 2) if found else 0.0
-        _totals = {_what: {'hit': _sums.get(_h, 0), 'found': _sums.get(_f, 0),
-                           'percent': _rate(_sums.get(_h, 0), _sums.get(_f, 0))}
-                   for _what, _h, _f in [('lines', 'LH', 'LF'),
-                                         ('functions', 'FNH', 'FNF'),
-                                         ('branches', 'BRH', 'BRF')]}
+        _counts = [('lines', sum(_v['lines_hit'] for _v in _per_file.values()),
+                    sum(_v['lines_found'] for _v in _per_file.values())),
+                   ('functions', _sum('FNH'), _sum('FNF')),
+                   ('branches', _sum('BRH'), _sum('BRF'))]
+        _totals = {_what: {'hit': _hit, 'found': _found, 'percent': _rate(_hit, _found)}
+                   for _what, _hit, _found in _counts}
         # the file set is what two platforms can compare; the rates cannot match (see _code_coverage_clang)
         _totals['files'] = sorted(_files)
-        # Per-file line counts: a scope threshold ("core >= 90 %, whole library >= 70 %") can only be
-        # computed from counts. Averaging per-file percentages would weight a 3-line header like a
-        # 300-line source, so the counts travel with the summary instead.
-        _totals['per_file'] = {_p: {'lines_hit': _v.get('LH', 0), 'lines_found': _v.get('LF', 0)}
-                               for _p, _v in sorted(_per_file.items()) if _v}
+        # Per-file counts, not percentages: averaging would weight a 3-line header like a 300-line source.
+        _totals['per_file'] = {_p: _v for _p, _v in sorted(_per_file.items()) if _v['lines_found']}
         return _totals
 
     def _render_html_report(self, coverage_folder, info_file, pkg_root):
@@ -486,15 +490,7 @@ class PackageTestConan(ConanFile):
         _main_pkg_build_fd = _pkg_root + sep + 'b' + sep + 'build'
 
         # collect code coverage files to export/coverage/
-        #
-        # Both halves, always. The package's own objects are the obvious half; the consumer's are the half in
-        # which a header-only module can be measured at all, because a header is instantiated by whoever
-        # includes it and by nothing else. Restricting the second half to `is_header` packages deleted every
-        # algorithm whose only instantiation point is a test -- thirteen core files and 496 lines here, 474 of
-        # them covered, so the omission lowered the reported rate instead of flattering it. Either direction is
-        # the defect; the numbers are the thing to argue about afterwards.
-        # 库侧对象只是其中一半：header-only 模块只能由包含它的 TU 实例化。只采库侧等于把它们从报表里删掉
-        # （本项目 13 个文件、496 行，其中 474 行是覆盖的）。
+        # Both halves: a header-only module is instantiated by whoever includes it, and often only by a test.
         _gcda = [str(_) for _ in Path(_main_pkg_build_fd).rglob('*.gcda')]
         _gcda += [str(_) for _ in Path(self.build_folder).rglob('*.gcda')]
         _gcno = [_[:-4] + 'gcno' for _ in _gcda]
@@ -505,17 +501,7 @@ class PackageTestConan(ConanFile):
             shutil.copy2(v1, coverage_folder + sep + _get_file_name(v1))
             shutil.copy2(v2, coverage_folder + sep + _get_file_name(v2))
 
-        # auto html report generation
-        #
-        # Three tolerances, each measured rather than assumed:
-        #  * `source`: the generated `ucov_*` copies are deleted by `_remove_entries` before this runs, so
-        #    geninfo cannot re-read them and aborts the whole capture over a file it never needed;
-        #  * `mismatch` / `inconsistent`: gcov's line range for the gtest macros disagrees with the source by a
-        #    few lines in every test TU. The category is *named differently by lcov version* -- 2.0-1 says
-        #    `mismatch`, 2.4-3 says `(inconsistent)` -- so both are listed; a name lcov does not know is an
-        #    error, and an unhandled category aborts the capture on the runner while passing on a workstation.
-        # None of them changes a count, and the alternative -- dropping the consumer's objects -- silently
-        # removes whole files from the report, which is the worse thing to be tolerant about.
+        # `source` = deleted ucov_ copies; `mismatch`/`inconsistent` = gtest line ranges (named per lcov version).
         cmd1 = ['lcov', '--directory', coverage_folder, '--capture', '--output-file',
                 os.path.join(coverage_folder, 'coverage_test.info'), '--rc', 'geninfo_auto_base=1',
                 '--ignore-errors', 'mismatch,source,inconsistent']
