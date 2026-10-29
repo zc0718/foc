@@ -302,6 +302,17 @@ TEST(SilDeadtime, TheRampFadesTheCorrectionWhereTheSignIsNotYetInformation) {
 
   // The recorded legacy column, so a change in the step path shows up as a
   // mismatch here. 记录的旧行为一列，阶跃路径若变化会在这里显示为不匹配。
+  //
+  // The tolerance below is measured, not chosen for comfort. The column was recorded with gcc 13, and
+  // apple-clang disagrees at exactly one of the five widths -- 0.10 reads 0.14336 against 0.14364, a
+  // drift of 2.8e-4 -- while agreeing to better than 1e-5 at the other four. So "bit for bit" was a
+  // claim that no supported compiler set could keep; it was believed because the failure was
+  // swallowed by the test package and never reached a job report (F-16). 1e-3 is 3.6x that drift, and
+  // the smallest change this assertion must still catch is one sweep row apart (0.0579 -> 0.1350),
+  // which is 77x the bound. Room on both sides, and neither number is a preference.
+  // 容差是量出来的：gcc 13 记录的列，apple-clang 只在 0.10 这一点上差 2.8e-4，其余四个吻合到 1e-5。
+  // "逐位一致"是任何受支持的编译器集合都兑现不了的断言。1e-3 是该漂移的 3.6 倍；而本断言要抓的最小改动
+  // 是相邻两行之差（7.7e-2），是它的 77 倍。
   const float legacy[] = {0.05791F, 0.13498F, 0.14364F, 0.16482F, 0.17555F};
   int index = 0;
   for (const float width : {0.0F, 0.05F, 0.1F, 0.2F, 0.5F}) {
@@ -311,8 +322,8 @@ TEST(SilDeadtime, TheRampFadesTheCorrectionWhereTheSignIsNotYetInformation) {
                 static_cast<double>(stepped.worst_error_rad_s),
                 static_cast<double>(ramped.worst_error_rad_s));
 
-    EXPECT_NEAR(legacy[index], stepped.worst_error_rad_s, 2.0e-4F)
-        << "ripple 0 has to be bit-for-bit the old behaviour, width " << width;
+    EXPECT_NEAR(legacy[index], stepped.worst_error_rad_s, 1.0e-3F)
+        << "the step path has to reproduce the recorded column, width " << width;
 
     if (width > 0.0F) {
       // Where the step loses -- i.e. every inverter that really exists -- the

@@ -659,10 +659,16 @@ The log
        `fmpy==0.3.32` installed for the FMU gate. On Ubuntu the `ModuleNotFoundError` cost the case 0.04 s and printed
        nothing, so it read like a broken binding rather than a missing wheel.
      - Two line numbers in one log: the failing case at 2415, the `pip install fmpy` that would have supplied numpy at
-       2585. Locally the same case passes in 0.80 s, because this box has numpy.
-     - The job installs numpy before the build, gated on `metadata.json`'s `enable_python_bindings` so a project without
-       bindings pays nothing, and the case itself now fails with a sentence naming the missing dependency. Ordering was
-       the defect: a dependency installed after the test that needs it is not a dependency.
+       2585. Locally the same case passes in 0.80 s, because this box has numpy. The import is not only the test's own:
+       it also arrives through the project's reference analyser (`benchmark/script/analyze.py`, `montecarlo.py`), which
+       imports numpy at module scope -- so the wheel is needed by the comparison against a second implementation, which
+       is a choice this project made.
+     - The first fix was withdrawn. It installed numpy in the shared test workflow behind `enable_python_bindings`; its
+       first version installed nothing at all because `print(... is True)` emits `True` and the shell compared `true`
+       (F-16), and the surviving version was still wrong for a bigger reason: a project's choice of reference
+       implementation is not a property of "python bindings on", so it does not belong in a workflow every derived
+       project shares. The case now fails with a sentence that names the missing dependency; where the declaration
+       belongs is an open question, and CI is red on it deliberately rather than silenced.
      - ``pending``
    * - A-24
      - A
@@ -690,12 +696,50 @@ The log
        ctest ones -- its docstring points at the `CTEST_` variables, and `Popen` inherits `os.environ`, so
        `CTEST_OUTPUT_ON_FAILURE=1` is set in the recipe.
      - ``pending``
+   * - F-16
+     - F
+     - A step I added to the shared test workflow to install numpy decided whether to run with
+       `enabled=$(python3 -c "... is True")` and then compared `"$enabled"` against the string `true`. Python prints
+       `True`, so the comparison never matched and the step took the else branch on every machine, printing
+       "enable_python_bindings is off" about a flag that was on. It was inert, and it looked healthy in the diff.
+     - Run 40817097696, both test legs, line 226: `enable_python_bindings is off: the python consumer is not built,
+       nothing to satisfy`, while `metadata.json` says `"enable_python_bindings": true`. The case failed 40 lines later
+       with "numpy is missing from this interpreter", which is the only reason the gate was caught.
+     - The step is gone (F-15 records why it should not exist here at all). The rule that replaces it: a boolean that
+       crosses from Python to the shell crosses as an **exit status**, not as a printed word -- `sys.exit(0 if ... else
+       1)` has no case to get wrong and no string to compare.
+     - ``pending``
+   * - F-17
+     - F
+     - `SilDeadtime.TheRampFadesTheCorrectionWhereTheSignIsNotYetInformation` asserted that the recorded `sign()` column
+       is reproduced "bit-for-bit" within `2.0e-4`, and it cannot be: apple-clang reads 0.14336 at width 0.10 against the
+       gcc-13 recording of 0.14364, a drift of 2.8e-4, while the other four widths agree to better than 1e-5. The
+       criterion was a claim about compilers disguised as a claim about code, and the swallow in A-25 hid the counter-
+       example for a full version.
+     - Two runs of the same filter, same case, different toolchains: gcc gives `0.05791 / 0.13498 / 0.14364 / 0.16482 /
+       0.17555`, apple-clang gives the same five numbers except the third, `0.14336`. The macOS leg reported it in run
+       40817097696, the first run in which a failing case could reach a job.
+     - The bound is now `1.0e-3`, and both sides of it are measured: 3.6x the observed cross-compiler drift, and 1/77 of
+       the smallest change the assertion must still catch (one sweep row apart, 0.0579 -> 0.1350). The message no longer
+       says "bit-for-bit"; it says what is true, which is that the step path reproduces the recorded column.
+     - ``pending``
+   * - A-26
+     - A
+     - I read the local `526/526` as the whole answer twice: first as evidence that the suite was green, then as
+       evidence that "only `python_bindings` was red" online. The macOS leg had a second failing case the entire time --
+       a real cross-compiler defect (F-17) -- and it was invisible because nothing that failed could fail a job. "All
+       green locally" was true and said almost nothing about the two legs that matter.
+     - The macOS log at line 1742 of run 40817097696, which is the first run where a red case produced an error marker at
+       all. The next line is the assertion output, printed by `CTEST_OUTPUT_ON_FAILURE`.
+     - A local suite says what the local compiler does. It cannot stand in for a second toolchain, and a green test leg
+       only means something once a red case has been watched failing a job -- which is exactly what A-25 was about.
+     - ``pending``
 
 What ``pending`` means in the commit column
 -------------------------------------------
 
 A row cannot cite the hash of the commit that contains it, and these rows are written in the same commit as the fix, so
-forty of the fifty-one say ``pending``. That is a convention and it was, until this paragraph, an unstated one --
+forty-three of the fifty-four say ``pending``. That is a convention and it was, until this paragraph, an unstated one --
 which is the same defect the rows themselves are about. The row is recoverable rather than lost:
 
 .. code-block:: console
