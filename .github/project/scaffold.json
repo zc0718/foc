@@ -1,0 +1,133 @@
+{
+  "_comment": [
+    "The zero-modification contract, as data. `checked` is the build + CI plumbing: every file upstream ships that this",
+    "project promised not to fork, so that the next scaffold release merges without replaying private code.",
+    "`sha256` is upstream's pinned bytes; the gate compares the working tree against them.",
+    "`tolerated` is the honest list of files that currently *are* forked, each with why and what removes it. It is a",
+    "ratchet: the count may not rise, and an entry that has become identical is itself a failure, because a stale",
+    "tolerance hides the next real divergence.",
+    "Not in this tier, with reasons: `.include-guard.txt` (the scaffold's own docstring says a derived project states its",
+    "layering in that file), `.github/skills/**` (agent guidance, project-specific by design), and every content path --",
+    "README, metadata.json, include/, src/, api/, benchmark/, docs sources, tests, editor settings."
+  ],
+  "pinned": {
+    "project": "fcpp",
+    "version": "0.3.3",
+    "commit": "6d69c85"
+  },
+  "checked": [
+    ".github/misc/.checkov.yml",
+    ".github/misc/.clang-format-c",
+    ".github/misc/.clang-format-cpp",
+    ".github/misc/.clang-tidy",
+    ".github/misc/.gitleaks.toml",
+    ".github/misc/.mega-linter.yml",
+    ".github/misc/.pre-commit-config.yaml",
+    ".github/misc/.releaserc.json",
+    ".github/misc/Codegen-Starter.txt",
+    ".github/misc/commitlint.config.js",
+    ".github/misc/cross_compile_check.py",
+    ".github/misc/gates.py",
+    ".github/misc/labels.yml",
+    ".github/misc/meta.py",
+    ".github/misc/metadata.schema.json",
+    ".github/misc/run-megalinter.sh",
+    ".github/workflows/ci-build-test.yml",
+    ".github/workflows/ci-orchestrator.yml",
+    ".github/workflows/cross-compile.yml",
+    ".github/workflows/docs-build.yml",
+    ".github/workflows/full-test-automation.yml",
+    ".github/workflows/hetai-package-matrix.yml",
+    ".github/workflows/metadata-controller.yml",
+    ".github/workflows/security-linters.yml",
+    ".github/workflows/semver-release.yml",
+    ".github/workflows/sync-template.yml",
+    "CMakeLists.txt",
+    "Doxyfile",
+    "conan_provider.cmake",
+    "conanfile.py",
+    "docs/build.py",
+    "test_package/CMakeLists.txt",
+    "test_package/conanfile.py"
+  ],
+  "tolerated": {
+    ".github/misc/.mega-linter.yml": {
+      "why": "one added linter argument: cppcheck `--check-level=exhaustive`, because 2.14 answers `too many branches` with an informational diagnostic and MegaLinter runs it with --error-exitcode=1",
+      "exit": "proposed upstream: workspace/scaffold/0019-cppcheck-exhaustive.{md,patch} (1 file, +5/-0); verified to apply on 6d69c85 and to reproduce this file byte for byte",
+      "patch": "workspace/scaffold/0019-cppcheck-exhaustive.patch"
+    },
+    "docs/build.py": {
+      "why": "this project is AHEAD of the pinned release here: a `closes` parameter and comment-structure recognition so the bilingual pipeline accepts all three doc shapes",
+      "exit": "proposed upstream: workspace/scaffold/0020-bilingual-doc-integrity.{md,patch} (1 file, +109/-11); verified to apply on 6d69c85 and to reproduce this file byte for byte",
+      "patch": "workspace/scaffold/0020-bilingual-doc-integrity.patch"
+    }
+  },
+  "baseline_divergences": 2,
+  "sha256": {
+    ".github/misc/.checkov.yml": "ff9d84399876a7ccb5bc3bf7acd15dda2cc26cd4005e9196eabc8e928eb8f651",
+    ".github/misc/.clang-format-c": "412c3b92a6063fa5f92380b4499fe148edfc156eea9c2a9ae1b97ab6ecb79148",
+    ".github/misc/.clang-format-cpp": "4680d77ed9bf6e0bfbbd450c3605badc523eebbf12873db3011f73a01dbcd483",
+    ".github/misc/.clang-tidy": "806d861207938894f26ba330cbefee89b0e680e1383138cc4dbf6599af99668f",
+    ".github/misc/.gitleaks.toml": "76584aa80618d9e384b36820dcec8d131be0b393a5185293966692b38a11e831",
+    ".github/misc/.mega-linter.yml": "65a67325dfce87949f10e1d24a87bda91be6eb55a6e02dccb73b6c83eac8e4a9",
+    ".github/misc/.pre-commit-config.yaml": "fa2f4fb3bdaf5198cccd30c3017502a1e5f4f61d3039fcdafc3d3027aeb85462",
+    ".github/misc/.releaserc.json": "ada533b236db881012813ab6fd0f994a5c3f097da8c1f70ef13e033e20365cce",
+    ".github/misc/Codegen-Starter.txt": "c18f1a185e1d85e865b384f62fa4dd312052b8410691febc1a000d0e0687f328",
+    ".github/misc/commitlint.config.js": "ebc75172f811cd2ee2755b3915995b2e72b49801f729129b7d2880190dee886f",
+    ".github/misc/cross_compile_check.py": "e9e1ded1088596f0bc7c8956cfe5a7024fa5ae748b3365261271087467dac33d",
+    ".github/misc/gates.py": "1801888050b78d81d1a4f38ffd46117f7ee1c29832c62df5ef801eeefbc4734f",
+    ".github/misc/labels.yml": "ae1e767203b2f6c5356468fe076509f538acb89fe964e960b3902544dddcf297",
+    ".github/misc/meta.py": "9370b2edfbb966191cd55b9aaca239c889ac46f20c8dfb418428e137455ffc7d",
+    ".github/misc/metadata.schema.json": "a865454060a74dd713d20fd5ca59f5400615ecc421046cd7b679057a40526d6a",
+    ".github/misc/run-megalinter.sh": "994e6680f2ad0e2cb0134f28e9ad27a8a43a9fe3a4afd51754bc18aa01cf71fd",
+    ".github/workflows/ci-build-test.yml": "be6101c0eac7fbb3573c74ed55e5a9ca8b2a429c8a057cf7b0ae5d1903a07012",
+    ".github/workflows/ci-orchestrator.yml": "c594fa48d8f1ee5e3cf679624e3d2e926bbbd9358989435210384fbf45b7368c",
+    ".github/workflows/cross-compile.yml": "597a76de8d3e105e30ec64554c673f7e1d6e65c1d208a21902bc947f2a025bdc",
+    ".github/workflows/docs-build.yml": "7d7b583ad3159852b752fd2c39e8c3b8ac10299395f203c787f738ff9e9720c7",
+    ".github/workflows/full-test-automation.yml": "51a2f869696135375d966b1d827628c125100c3233a1c8216f629d4acf5cdfc8",
+    ".github/workflows/hetai-package-matrix.yml": "c7534da5b97f35d415c9793ae0a07313347c099630ee2fcb1e33a66be98941b0",
+    ".github/workflows/metadata-controller.yml": "0d25cb65b286060dcd5749c331fb0ae5b4ee61d3520ac231dcce3403b306ce26",
+    ".github/workflows/security-linters.yml": "cb1f5e6029d53c1217de95932d72ffa0d9c91ee021e51e78015df9f9e2711da1",
+    ".github/workflows/semver-release.yml": "de0afd2b3752de9fba921b68ca44c7fb440c692e0dc92d67ddeefb8a68a36c67",
+    ".github/workflows/sync-template.yml": "507a3d044010ff5535bee670532e3c52d5467237ace1e5e76bd62ec16763de9e",
+    "CMakeLists.txt": "40ef3b66f0f62e96d2ed7749e13bab864ee3f26dfc214b81aaf248eb064dc317",
+    "Doxyfile": "22d1691b9e52db03826f9efc146f1f3f7cea08d669c597d94e85fcca0b148162",
+    "conan_provider.cmake": "5595fd3c0653bf8e631f7e939164dc614f5dcbe57f99e39458976050a82e0994",
+    "conandata.yml": "5e30b4764b118f14a7fb63df04837d194b1a8e3240251808c6f29d51d664e2c5",
+    "conanfile.py": "1562f096d84dc5dc935df50dcbd9610fee4a7d76c665c2ad467d225aa22033f2",
+    "docs/build.py": "d6d0f8bafc3e099b3a42c57b99796f622d7f4031ff42eba016643c6de5b11821",
+    "test_package/CMakeLists.txt": "35a2dcc681698e4db3da07a6d5e07ac9ec6af161fc727ee763dd41fe940b74e1",
+    "test_package/conanfile.py": "6b9afce9b5d2e333a7da6f0a1b3740b3cb60df3a38234ad7aced1397be3073c2"
+  },
+  "owned_dirs": {
+    ".github/misc": {
+      "upstream_file_set": [
+        ".checkov.yml",
+        ".clang-format-c",
+        ".clang-format-cpp",
+        ".clang-tidy",
+        ".gitleaks.toml",
+        ".include-guard.txt",
+        ".mega-linter.yml",
+        ".pre-commit-config.yaml",
+        ".releaserc.json",
+        "Codegen-Starter.txt",
+        "commitlint.config.js",
+        "cross_compile_check.py",
+        "gates.py",
+        "labels.yml",
+        "meta.py",
+        "metadata.schema.json",
+        "run-megalinter.sh"
+      ],
+      "declared_additions": {
+        ".license-guard.txt": "rule data for this project's licence gate, in the same class as .include-guard.txt, which the scaffold's own cmd_guard docstring says a derived project states itself"
+      },
+      "why_checked": "eight project scripts had collected here (claim/capability/coverage/docfmt/number-sheet/arbiter/assume/anchor) and a byte-check of the files upstream ships cannot see a directory that has grown extras -- which is precisely how the private code got in. The file set is compared, not only the contents."
+    }
+  },
+  "not_checked": {
+    "conandata.yml": "the project's own dependency list (gtest / etl / pybind11 here). The template's metadata-contract describes this file as the place a project states its requirements, so a different content is the intended state, not a fork.",
+    ".include-guard.txt": "the scaffold's cmd_guard docstring says a derived project states its own layering in this file, so editing it is the sanctioned mechanism."
+  }
+}

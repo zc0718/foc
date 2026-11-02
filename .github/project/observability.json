@@ -1,0 +1,234 @@
+{
+  "note": "Observability registry: every time the foundation layer gains the ability to OBSERVE something it could not observe before, the existing evidence chain is re-read against it. This file is the record of that re-read, and `project/gates.py observability` keeps it honest.",
+  "rule": [
+    "An upgrade must say which claim rows it re-opened and what the verdict was for each.",
+    "A verdict of `promoted` requires README to say L3 for that header; `still_short` requires L2 and a named missing leg.",
+    "An implementation-level leg may NOT promote anything. Re-implementing the same rule in another language proves the code does what the code says; it says nothing about whether the rule is right, and L3 in this repository means a cross-model check.",
+    "An upgrade that re-opened nothing must say why (`no_effect`), so the next reader can tell 'considered and rejected' from 'never considered'."
+  ],
+  "known_limit": "The mechanical trigger is the evidence string: an L2 row whose evidence names a `test_sil_*` case must be registered. That is a proxy for 'measured on a plant trajectory', and it misses rows measured on the plant through a file without SIL in the name -- `test_soft_limit.cpp`, `test_friction_comp.cpp`, `test_gear_ratio.cpp` and `test_position_reference.cpp` all build a `PmsmPlant` and none of them is caught automatically. They are registered below by hand, and the gap between the proxy and the truth is stated here rather than papered over.",
+  "upgrades": [
+    {
+      "id": "O-1",
+      "date": "2026-10-30",
+      "leg": "implementation",
+      "capability": "Any plant scenario can be replayed period by period in float64 by an independent solver, because the harness dumps the applied phase voltages alongside the state. Closed-loop included, with no controller re-implemented in Python.",
+      "source": "scipy.integrate DOP853 (adaptive, rtol 1e-12) as the second solver; the right-hand side re-derived from `sil_pmsm_plant.hpp`; machine parameters handed over by the C++ side so the two cannot drift. Audits: per-period replay, energy conservation, kinematics, each proved able to go red by `--selftest`.",
+      "reopened": [
+        {
+          "claim": "core/homing.hpp",
+          "verdict": "still_short",
+          "missing": "per-source sensitivity (creep speed, index jitter, timeout) and a model-level second source -- CiA 402 is the candidate, but we do not claim conformance and adopting it would be a scope increase, not a cross-check"
+        }
+      ]
+    },
+    {
+      "id": "O-2",
+      "date": "2026-10-30",
+      "leg": "model",
+      "capability": "The plant can now carry a Stribeck dip between breakaway and kinetic friction, so a friction claim can be tested against a published model that the compensator does not implement.",
+      "source": "Stribeck curve / Armstrong-Helouvry, Dupont & Canudas de Wit (1994), seven-parameter friction model. The dip is a published, validated mechanism; the plant reproduces it with one width parameter whose default of 0 degenerates to the previous exact-Coulomb law.",
+      "reopened": [
+        {
+          "claim": "core/friction_comp.hpp",
+          "verdict": "promoted",
+          "note": "O-1 re-opened this row and could not promote it, correctly: an implementation-level leg is not a cross-model check. What promoted it is O-2, and the claim it now carries is a limitation stated with a formula -- inside a dip of width vs at speed v the residual is (Fs-Fc)*exp(-(v/vs)^2)/kKp, unreachable by a law with no state."
+        }
+      ]
+    },
+    {
+      "id": "O-3",
+      "date": "2026-10-30",
+      "leg": "model",
+      "capability": "The speed estimator's noise gain can be measured on a synthetic angle stream with a known error, so its closed-form statistics become checkable rather than asserted.",
+      "source": "Statistics of a difference operator and of a least-squares slope over the same window (textbook regression variance). An analytic leg, not a second simulator: it is derived, so it catches an implementation that does not do what its documentation says, and it is the leg that found F-42.",
+      "reopened": [
+        {
+          "claim": "core/speed_from_angle.hpp",
+          "verdict": "promoted",
+          "note": "O-1 re-opened this row and could not promote it (implementation-level). O-3 promotes it: the closed forms are now measured against the shipped estimator, and the measurement discriminates between them. The row also absorbed a defect the derivation exposed -- the header's least-squares factor was wrong by sqrt(2) (F-42)."
+        }
+      ]
+    },
+    {
+      "id": "O-4",
+      "date": "2026-10-30",
+      "leg": "model",
+      "capability": "Every master-side error source of the electronic gear now has a closed form that can be measured on a synthetic master, and the header's stated decode assumption is checked instead of promised.",
+      "source": "Kinematics of a sampled wrapped angle plus the arithmetic of telescoping differences: the quantisation bound |ratio|*q is a property of the decoder, the jitter law v_ref = ratio*delta/dt follows from which quantity is wrong, and the lost-count step follows from the unwrap. Derived, not consulted, but derived from the stated assumption rather than from the implementation.",
+      "reopened": [
+        {
+          "claim": "core/gear_ratio.hpp",
+          "verdict": "promoted",
+          "note": "O-1 re-opened this row and could not promote it (implementation-level). O-4 promotes it, and the pass found two defects on the way: kMaxStepRad had no consumer (F-43), and the flag it now sets was copied into the output before being set. Two of the four predictions were also wrong first and are recorded rather than fitted."
+        }
+      ]
+    },
+    {
+      "id": "O-5",
+      "date": "2026-10-30",
+      "leg": "model",
+      "capability": "The profile's three ceilings have closed-form switch points that can be read off the shipped class one ceiling at a time, and the move's own kinematics give the arrival time independently of the code.",
+      "source": "The algebra of `g*e = sqrt(2*a*e)` and `sqrt(2*a*e) = v` for the landmarks, and the trapezoid planner's `D/v + v/a` for the timing -- the move's kinematics, which the profile never computes and which is a different structure (a phase machine) from this one (a minimum of ceilings plus a rate limiter).",
+      "reopened": [
+        {
+          "claim": "core/motion_profile.hpp",
+          "verdict": "promoted",
+          "note": "O-1 reopened this row and named two missing legs. Both are now supplied. The pass also turned A-40's null result into a condition (`g >= 2a/v`) instead of an absence of explanation, and found one documentation defect (F-44: the stopping-distance law was stated as a property of the axis when it is a property of the command). No code defect: the structure was right, which is worth recording, because a row that always finds a bug is a row whose tests are being written to fit."
+        }
+      ]
+    },
+    {
+      "id": "O-6",
+      "date": "2026-10-30",
+      "leg": "model",
+      "capability": "The soft limit's invariant can be solved, not only checked: the cap's seam is an exact observable with no tolerance, which turns 'is the invariant respected' into 'how much speed does this distance buy' and gives one sensitivity coefficient per error source.",
+      "source": "The quadratic `v^2 + 2*a*tau*v - 2*a*d = 0` solved for `v`; the plant's own stopping distance for the delay-travel law. Neither comes from the code: the code never solves for the seam, it only compares against a ceiling each period.",
+      "reopened": [
+        {
+          "claim": "core/soft_limit.hpp",
+          "verdict": "promoted",
+          "note": "O-1 reopened this row for a sensitivity table and a model-level second source; both are supplied. The hypothesised under-protection -- the margin term is computed from the command, so an axis moving faster than it is being commanded should lose protection -- was tested and does not occur, because the cap has already bounded the speed by the time the command can lie. No code defect; what was missing was the solution of the invariant, which is now in the header."
+        }
+      ]
+    },
+    {
+      "id": "O-7",
+      "date": "2026-10-30",
+      "leg": "model",
+      "capability": "The counting channel's four error sources each have an exact closed form, which is a stronger position than the continuous-angle channels are in: the channel is a sum of integers and one division, so the identities can be checked rather than bounded.",
+      "source": "The arithmetic of a sampled wrapped angle: wrap rate `p*s/(2*pi)`, reconstructed turn length `2*pi*p/p'`, and the residue a once-per-revolution mark must therefore see. Nothing here comes from the code; the code never computes a turn length.",
+      "reopened": [
+        {
+          "claim": "core/position_reference.hpp",
+          "verdict": "promoted",
+          "note": "O-1 reopened this row for four source coefficients and a model-level second source; both are supplied. Deriving the turn length turned up a real defect (F-45): the index snap had no plausibility guard, so a spurious pulse moved the origin by up to 3.14 rad silently -- and with the guard in place an integer pole-pair error became detectable, which this row could not claim before."
+        }
+      ]
+    },
+    {
+      "id": "O-8",
+      "date": "2026-10-30",
+      "leg": "model",
+      "capability": "The decimated outer loop's period is now an observed quantity rather than a restatement of the configuration, and its stability boundary is predicted by a z-domain model instead of being tuned.",
+      "source": "The trace channel's own sample stream gives the loop's instants; the z-domain difference equation (`L(z) = [omega_b*T*(z-1) + omega_b*T^2/tau_b]/(z-1)^2`) gives the pole locations. Neither is derived from the code -- the code contains no frequency at all in this path.",
+      "reopened": [
+        {
+          "claim": "motor/foc_loop.hpp",
+          "verdict": "promoted",
+          "note": "O-1 reopened this row for a sensitivity to the loop period and a model-level second source; both are supplied. Two things fell out that the row could not claim before: the period is quantised to ticks and may be one tick longer than requested (F-46, documented rather than changed), and the decimation limit is 160x with a derivation rather than a rule of thumb."
+        }
+      ]
+    },
+    {
+      "id": "O-9",
+      "date": "2026-10-30",
+      "leg": "model",
+      "capability": "The polarity test's answer is now a function of the d-axis error with a closed form, and its window is measured rather than assumed -- including the limit that closes it first.",
+      "source": "The projection algebra: two factors of `cos(delta)` on the d-axis volt-seconds and the measurement, with the saliency term common-mode. The code contains no angle dependence at all -- it projects on whatever angle it was handed.",
+      "reopened": [
+        {
+          "claim": "core/polarity.hpp",
+          "verdict": "promoted",
+          "note": "O-1 reopened this row for a per-source sensitivity and a model-level second source; both are supplied, and the angle sweep turned up F-47 -- the method's premise was unchecked, and a short settle produced a confident wrong polarity. The unit-test fixture had no winding relaxation at all, which is why every case there had been exercising the degenerate path and getting the right label for the wrong reason."
+        }
+      ]
+    },
+    {
+      "id": "O-10",
+      "date": "2026-10-30",
+      "leg": "model",
+      "capability": "The feedforward's error sources are now a closed form with a number per source, and the machine's own steady-state equation is read back through the PI as an independent check.",
+      "source": "The steady-state voltage equation (`di/dt = 0`) of the plant, and the projection of a command built in one frame into another. Neither is in the feedforward: it never sees the plant, and it never sees an angle error.",
+      "reopened": [
+        {
+          "claim": "core/feedforward.hpp",
+          "verdict": "promoted",
+          "note": "O-1 reopened this row for a parameter-mismatch table and a model-level second source; both are supplied. No defect in the feedforward itself -- its q-axis term is exact to 0.05 % -- but the pass found that the d axis is confounded by the estimator's angle error at 55.5 % of the term it is meant to measure, which is a boundary the row did not have before."
+        }
+      ]
+    },
+    {
+      "id": "O-11",
+      "date": "2026-10-30",
+      "leg": "model",
+      "capability": "The blend's coefficients are now closed forms measured exactly, and the circle-valued nature of the interpolation is a case rather than a comment.",
+      "source": "The algebra of a convex combination plus the geometry of a circle: `theta_low + w*arc(theta_high, theta_low)`. Neither is in the module -- it computes a weight and adds a product.",
+      "reopened": [
+        {
+          "claim": "core/observer/blended_observer.hpp",
+          "verdict": "promoted",
+          "note": "O-1 reopened this row for a sensitivity across the blend region and a model-level second source; both are supplied, with stub observers so the coefficients are exact rather than plant-noise-limited. No defect: what the pass adds is the statement that a handover moves the angle without moving the speed, which a consumer integrating the speed would get wrong by exactly the disagreement."
+        }
+      ]
+    },
+    {
+      "id": "O-12",
+      "date": "2026-10-30",
+      "leg": "model",
+      "capability": "The carrier's three error sources each have a closed form, and the demodulator's own scale is measured and stated instead of being assumed away.",
+      "source": "The high-frequency admittance of a salient machine: `(V/(2*w))*(1/Lq - 1/Ld)`. The module never computes an admittance -- it multiplies a demodulated current by a gain.",
+      "reopened": [
+        {
+          "claim": "core/observer/hfi_observer.hpp",
+          "verdict": "promoted",
+          "note": "O-1 reopened this row for a per-source table and a model-level second source; the sin(2*dtheta) law and the Rs degradation already had cases, and the table adds the amplitude, saliency and sample-timing coefficients. One measurement corrected a claim I would otherwise have made: `hf_current_a` is 3.601630 times the predicted gain at every amplitude, so the formula is right in shape and the factor is the demodulator's -- asserting equality would have been fitting."
+        }
+      ]
+    },
+    {
+      "id": "O-13",
+      "date": "2026-10-30",
+      "leg": "implementation",
+      "capability": "Per-decision modified condition/decision coverage of the safety subset, so a condition that no case has ever made false is visible instead of being averaged into a line-coverage number.",
+      "source": "clang 18 `-fcoverage-mcdc` + `llvm-cov show --show-mcdc`: the independence pairs per decision, which is a property of the tests rather than of the physics.",
+      "reopened": [
+        {
+          "claim": "core/protection.hpp",
+          "verdict": "still_short",
+          "note": "Re-opened because the `lost` decision's first term (`!input.flux_valid`) had never been true, so the behaviour it decides -- an invalid flux estimate reaches LostSync with no error ratio at all -- was untested; a boundary pair now covers it and the decision reads 100 %. The row stays L2: structural coverage is implementation-level and may not promote, and the missing leg is still a model-level second source for the ranking of two simultaneous faults.",
+          "missing": "a model-level second source for how two simultaneous faults are ranked; the current rank is the enum order, which is a design choice with no independent derivation"
+        },
+        {
+          "claim": "core/sm.hpp",
+          "verdict": "still_short",
+          "note": "Re-opened because the range term (`to >= kStateCount`) had never been true either, and removing it does not weaken a check but changes the answer: `kLegal[from][4]` reads past the table, happens to be true, and `request(4)` returns Ok while moving the machine into a state that does not exist. A boundary pair now covers it. The row stays L1: it has no measurement leg of any kind, and MC/DC says which tests exist, not what the transition table should be.",
+          "missing": "any measurement at all -- the row is L1, and MC/DC says which transitions the cases reach, not what the transition table should be"
+        }
+      ]
+    },
+    {
+      "id": "O-14",
+      "date": "2026-10-31",
+      "leg": "model",
+      "capability": "A third, physically different source for the field itself: an independent magnetostatic FEM on a geometry whose answer is closed-form, so that a lumped parameter in this kernel can later be compared against a number that shares no code, no discretisation and no assumptions with it.",
+      "source": "FEMM 4.2 x64 under Wine on this machine, driven through its Lua entry point; the expected value is a closed form derived here and the discriminating power is proved rather than assumed -- the same geometry solved as `planar` returns +40 to +54 % error where the axisymmetric solve returns -0.3 to -0.1 %.",
+      "reopened": [],
+      "no_effect": "Nothing is re-opened, and the reason is now a *category* gap rather than a missing instrument. A geometry with a rotor, a magnet and a saturating stator has been solved (pyleecan's IPMSM_A, 48 slots, 8 poles, 0.75 mm gap, 3.15 mm bridges), and the result matched a numeric prediction written down before the run: the gap-field fundamental came out 0.8503 T against a predicted 0.85 T, giving psi_f = 0.3858 Wb-turns against a pre-registered band of 0.35-0.40. That is a stronger validation than the two closed-form cases, because the number was registered in advance and the model had to saturate its way there. It still re-opens no claim row: the rows naming ld/lq/psi_f describe *this* kernel's machine, which has no geometry anywhere in the repository, and a second machine's numbers are not a cross-check of the first -- treating them as one would be the exact self-deception this leg exists to prevent. The gap closes by a decision, not by more code: either give the kernel's own machine a geometry, or declare the reference design explicitly and rewrite the claim rows to name it. Until one of those happens, this leg produces instrument credibility, not claim credibility. (A silent-failure defect was found on the way -- a B-H curve attached before its material existed is discarded with no message, so earlier 'saturating' runs had all been linear. Recorded as F-81; the diff-against-a-known-baseline habit is what caught it.)"
+    },
+    {
+      "id": "O-15",
+      "date": "2026-11-02",
+      "leg": "model",
+      "capability": "A measurement of the same physical machine by somebody else. Not another of our own calculations: a number produced on real hardware by a third party, transcribed from a public report with a DOI, which a reader can re-download and re-derive without asking anyone for a datasheet.",
+      "source": "U.S. DOE / Oak Ridge National Laboratory benchmark testing of the 2004 Toyota Prius traction motor -- ORNL/TM-2006/423 (doi:10.2172/947571) Table 3.4, Table 6.2 and Table 6.3, and ORNL/TM-2004/137 (doi:10.2172/885676). Both are OSTI full text. `IPMSM_A` in this repository *is* that machine, so the measurement is of the object the geometry describes. Transcription and unit interpretation are gated by four assertions that must all hold before a comparison is printed, and `oracle_ornl.py --selftest` detunes psi_f by 1.30x and 0.70x and requires both to be rejected -- the check is proved able to go red rather than assumed to be.",
+      "reopened": [],
+      "no_effect": "No claim row is promoted, and this time the reason is *not* the O-14 category gap -- that gap is now closed, because the measurement is of the same machine. What changed is that this project can state an error bar instead of an agreement between two of its own calculations: measured voltage constant 1.33 Vrms/Hz gives psi_f = 0.17283 Wb, our FEMM gives 0.18826 Wb, i.e. +8.93%. The rows naming ld/lq/psi_f still describe this kernel's SIL machine, which still has no geometry, so a verified 8.93% error on IPMSM_A does not become an error bar on those rows. That half of the obstruction is a decision about what the kernel's machine is, not an instrument. Recorded as F-93 (the missing external truth) and A-93 (the measurement and its band, including the admission that +-10% was chosen after the number was seen). The judgement that follows is that further FEMM depth now has low marginal value: the residual is dominated by end-leakage-free 2D, a reconstructed geometry, an assumed M400-50A B-H and the vendor Hc-derived Br, none of which a finer mesh or more rotor positions can reach."
+    },
+    {
+      "id": "O-16",
+      "date": "2026-11-02",
+      "leg": "model",
+      "capability": "Two things at once: a sensitivity table whose entries are the error bars this project measured elsewhere rather than numbers chosen to make the table look reasonable, and a torque witness that never forms a d-q quantity and never uses kt -- plus, in the same table, a measurement of how far that witness cannot reach.",
+      "source": "Measured bars: +8.93 % on psi_f against the ORNL bench data (A-93) and -13.4 %/-8.1 % on Ld/Lq between a 50-100 A nameplate and a 200 A point (A-92). Witness: `AbcPlant`, driven to six operating points with the inverse-Park of the d-q prediction and read back through its co-energy torque. `test_torque_map.cpp`, three new cases, one of which is a falsifier that must reject a 10 % gain error.",
+      "reopened": [
+        {
+          "claim": "motor/torque_map.hpp",
+          "verdict": "promoted",
+          "missing": ""
+        }
+      ],
+      "no_effect": ""
+    }
+  ]
+}

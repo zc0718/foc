@@ -156,9 +156,21 @@ def main():
     meta = json.loads(Path('metadata.json').read_text(encoding='utf-8'))
     lib_name, lib_ver = meta['name'], meta['version']
 
-    # README's documented cross-build: host profile + cross profile + no test folder.
-    run(['conan', 'create', '.', '-pr:b=default', f'-pr:h={profile}',
-         '-tf=', '--build=missing'])
+    # README's documented cross-build: host profile + cross profile + no test folder. `--build=<pkg>`
+    # forces a real rebuild (a cached package would make the archive check a replay), while
+    # `--build=missing` still builds the target-side dependencies on a cold cache.
+    _create = ['conan', 'create', '.', '-pr:b=default', f'-pr:h={profile}',
+               '-tf=', '--build=missing', f'--build={lib_name}*']
+    try:
+        _proc = run(_create, capture_output=True, text=True)
+    except subprocess.CalledProcessError as err:
+        print(err.stdout or '', end='', flush=True)
+        print(err.stderr or '', end='', flush=True, file=sys.stderr)
+        raise
+    print(_proc.stdout or '', end='', flush=True)
+    print(_proc.stderr or '', end='', flush=True, file=sys.stderr)
+    if f'{lib_name}/{lib_ver}: Already installed' in _proc.stdout:
+        raise RuntimeError(f'conan did not build {lib_name}: the archive check below would describe a cached package')
 
     pkg_folder = package_folder(lib_name, lib_ver)
     print(f'package folder: {pkg_folder}')

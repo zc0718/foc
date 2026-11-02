@@ -19,8 +19,8 @@ otherwise; the threshold lives in doc/PRD 8.5.
 
 Usage
 -----
-    python3 .github/misc/offline_arbiter.py            # regenerate every ref_*.csv
-    python3 .github/misc/offline_arbiter.py --check    # fail if the committed CSV is stale
+    python3 .github/project/offline_arbiter.py            # regenerate every ref_*.csv
+    python3 .github/project/offline_arbiter.py --check    # fail if the committed CSV is stale
 
 The output lands in test_package/resources/ (flat, covered by export_sources = "resources/*").
 

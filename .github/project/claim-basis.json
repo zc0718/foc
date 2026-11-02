@@ -19,7 +19,7 @@
     "`basis` answers 'what would invalidate it'. The two are different: a claim can have evidence that",
     "passes while resting on a plant model that is wrong, which is exactly the W7-c failure.",
     "",
-    "QUERY:  python3 .github/misc/gates.py claims --impact <path or identifier>",
+    "QUERY:  python3 .github/project/gates.py claims --impact <path or identifier>",
     "It prints every claim whose basis names that thing, with the evidence to re-run. Use it before",
     "changing a shared file, and use its output -- never an estimate -- to fill the blast-radius column",
     "of foundation-log.rst.",

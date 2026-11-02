@@ -28,9 +28,9 @@ So this gate enforces four things:
    printed on every run: a reported number is one that gets reduced.
 
 Usage:
-    python3 .github/misc/claim_gate.py                    # check
-    python3 .github/misc/claim_gate.py --verbose          # also print every row
-    python3 .github/misc/claim_gate.py --impact <term>    # which claims rest on this?
+    python3 .github/project/claim_gate.py                    # check
+    python3 .github/project/claim_gate.py --verbose          # also print every row
+    python3 .github/project/claim_gate.py --impact <term>    # which claims rest on this?
 """
 
 from __future__ import annotations
@@ -44,8 +44,11 @@ ROOT = Path(__file__).resolve().parents[2]
 README = ROOT / "README.md"
 INCLUDE = ROOT / "include" / "foc"
 UNIT_TESTS = ROOT / "test_package" / "test" / "unit"
-GATES = ROOT / ".github" / "misc"
-BASIS = GATES / "claim-basis.json"
+# Evidence may name a gate script from either home: the scaffold's `.github/misc` (format/tidy/guard) or this
+# project's `.github/project`. The scaffold directory is upstream's and must stay byte-identical, which is why the
+# project's own scripts are not there.
+GATE_DIRS = (ROOT / ".github" / "misc", ROOT / ".github" / "project")
+BASIS = Path(__file__).resolve().with_name("claim-basis.json")
 BASIS_SCAN = (ROOT / "include", ROOT / "src")
 
 SECTION_START = "### What each module claims"
@@ -186,7 +189,8 @@ def main() -> int:
         if not evidence:
             problems.append(f"row {modules}: no evidence -- a claim with nothing checking it is a wish")
         for item in evidence:
-            candidates = (UNIT_TESTS / item, ROOT / "test_package" / item, GATES / item)
+            candidates = (UNIT_TESTS / item, ROOT / "test_package" / item,
+                          *(gates / item for gates in GATE_DIRS))
             if any(candidate.is_file() for candidate in candidates):
                 continue
             problems.append(

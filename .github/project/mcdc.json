@@ -1,0 +1,75 @@
+{
+  "comment": [
+    "Modified condition/decision coverage for the safety subset.",
+    "",
+    "`subset` is the list of files whose multi-condition decisions must all have independent pairs covered.",
+    "It is a *list* rather than a glob on purpose: 'the whole library' would include the simulation plant, the",
+    "tuning aids and the drivers, whose decisions are not safety-relevant and would drown the signal. Adding a",
+    "file here is a claim that its decisions decide whether the bridge is switched off in time, so each entry",
+    "carries `why`.",
+    "",
+    "`min_multi_condition_decisions` per file and again for the subset is the vacuity guard: a file (or a subset)",
+    "with no multi-condition decision scores a perfect ratio while measuring nothing, and that must be red.",
+    "",
+    "`excluded_tests` must name every test object that cannot join the instrumented link, with the reason. The",
+    "C ABI is declared without `extern \"C\"` in the tests that include <foc/api/...>, so their references are",
+    "C++-mangled names that the C translation units cannot satisfy (282 unresolved references otherwise). They",
+    "exercise the ABI, not the safety subset, so excluding them narrows the measurement without biasing it.",
+    "",
+    "`run_filter` drops nothing today: with RESOURCES_PATH defined every case passes, and a red suite is reported",
+    "as a failure rather than silently skipped, because coverage of a failing program describes the wrong program.",
+    "",
+    "`src/version.c` is in the C++ bucket on purpose: `include/foc/version.h` declares `foc_version_string` without",
+    "`extern \"C\"`, and the repository's own build hands the file to g++, which compiles a `.c` by suffix as C++.",
+    "Instrumenting it as C defines the unmangled symbol and leaves every caller unresolved, which is how this was",
+    "found. `src/api/foc_api.c` is the real C ABI and stays in the C bucket.",
+    "",
+    "Measured on 2026-10-30, clang 18.1.3 (baseline before the two boundary pairs: protection.hpp 4 conditions /",
+    "1 missed, sm.cpp 2 conditions / 1 missed): protection.hpp 2 decisions (4 conditions), sm.cpp 1 decision",
+    "(2 conditions), limits.hpp and limits.cpp none. Six conditions in the whole subset is why the plan's",
+    "'>=' 90 %' threshold was replaced by per-decision 100 %."
+  ],
+  "cxx": ["/usr/bin/clang++-18", "clang++-18", "clang++"],
+  "cc": ["/usr/bin/clang-18", "clang-18", "clang"],
+  "profdata": ["/usr/bin/llvm-profdata-18", "llvm-profdata-18", "llvm-profdata"],
+  "cov": ["/usr/bin/llvm-cov-18", "llvm-cov-18", "llvm-cov"],
+  "cxx_flags": ["-std=c++17", "-O1", "-fprofile-instr-generate", "-fcoverage-mapping", "-fcoverage-mcdc"],
+  "c_flags": ["-std=c11", "-O1", "-fprofile-instr-generate", "-fcoverage-mapping", "-fcoverage-mcdc"],
+  "defines": ["RESOURCES_PATH=\"test_package/resources\""],
+  "include_dirs": ["include", "test_package/test/unit"],
+  "link_flags": ["-fprofile-instr-generate", "-Wl,--allow-multiple-definition"],
+  "sources_cxx": ["src/**/*.cpp", "src/version.c"],
+  "sources_c": ["src/api/foc_api.c"],
+  "tests": ["test_package/test/unit/*.cpp"],
+  "run_filter": "*",
+  "excluded_tests": {
+    "test_api_c_smoke.cpp": "C ABI from C++, declared without extern \"C\" in the test",
+    "test_api_host_motor.cpp": "C ABI from C++, declared without extern \"C\" in the test",
+    "test_api_identification.cpp": "C ABI from C++, declared without extern \"C\" in the test",
+    "test_api_observer_selector.cpp": "C ABI from C++, declared without extern \"C\" in the test",
+    "test_api_position_absolute.cpp": "C ABI from C++, declared without extern \"C\" in the test",
+    "test_invariants.cpp": "uses the same non-extern-C ABI declarations for its driver harness",
+    "test_sil_api_equivalence.cpp": "compares the ABI against the C++ API, so it needs the ABI"
+  },
+  "min_multi_condition_decisions": 3,
+  "subset": [
+    {
+      "file": "include/foc/core/protection.hpp",
+      "why": "the trip decisions: whether the bridge is switched off, and how far it is derated",
+      "min_multi_condition_decisions": 2
+    },
+    {
+      "file": "src/core/sm.cpp",
+      "why": "the state machine: an illegal or out-of-range transition must not move the axis",
+      "min_multi_condition_decisions": 1
+    },
+    {
+      "file": "include/foc/core/limits.hpp",
+      "why": "the clamps between the controller and the modulator; single comparisons, so no decision here is multi-condition and the file is checked only for uncovered pairs"
+    },
+    {
+      "file": "src/core/limits.cpp",
+      "why": "the same clamps out of line; same reason"
+    }
+  ]
+}

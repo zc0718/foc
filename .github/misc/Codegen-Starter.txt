@@ -121,6 +121,10 @@ generate/modify each one according to the project design above.
        C++23 module generation is experimental and not applicable under C++17.
      • Set "is_shared", "is_header", "enable_python_bindings",
        "activate_code_coverage" from Section 1.
+     • "coverage" is optional and must never be invented: run the test chain
+       once, read the rate from coverage_summary.json, then write
+       {"floors": {"Linux": {"all": <rate - 5>}, "macOS": {"all": <rate - 5>}}}
+       and raise it as the suite grows (metadata-contract.md → Coverage Policy).
      • Populate "dependencies" → common/c/cpp/infra from Section 3.
      • Leave "component_requires" empty unless one component calls into the
        other: {"<name>_c": ["<name>_cpp"]} means the C component uses the C++
@@ -211,24 +215,6 @@ generate/modify each one according to the project design above.
      • If resource files are needed, read from "./resources/" (copied by the
        Conan test harness via RESOURCES_PATH).
 
-4.5.1  test_package/c_api_validation.c  (OPTIONAL pure-C consumer)
-       ---------------------------------
-       PURPOSE: Validate the C API from a *C translation unit*: compiled by the C
-       compiler, linked, and run. A C header that compiles but does not link
-       (undefined reference to __cxa_* or __gcov_*) is the one failure mode no
-       C++ test can catch.
-       WHEN TO ADD IT: only if your C API is implemented across a C++ core. Skip
-       it -- and leave test_package/CMakeLists.txt untouched -- when the library
-       is pure C++ or pure C; the CMake block simply does not fire.
-       AGENT INSTRUCTIONS:
-       * Plain C11: no C++ header, no template, no hand-written extern "C".
-       * main() returns 0 on all-pass, non-zero on any failure; call the public C
-         API only (include/<lib>/api/*.h).
-       * test_package/CMakeLists.txt builds and registers it automatically when the
-         file exists, with LINKER_LANGUAGE CXX -- the C ABI is stable but the
-         implementation is C++, so a C consumer still links the C++ runtime.
-       * Exercise the _Generic entry points if the headers provide them.
-
 4.6  test_package/test/unit/*.cpp  (GTest unit tests)
      ────────────────────────────
      PURPOSE: Fine-grained correctness tests. Each .cpp file maps to one or
@@ -251,15 +237,6 @@ generate/modify each one according to the project design above.
      • Create stress test files for performance-critical functions.
      • Use std::chrono for timing, std::thread for concurrency tests.
      • DO NOT add a main() — same auto-generation as unit tests.
-     • NEVER LEAVE THIS DIRECTORY EMPTY — keep at least one trivial case.
-       Two reasons, both verified the hard way:
-         1. git does not track empty directories, so a fresh clone has no
-            test_package/test/stress/ at all; but conanfile.py writes its
-            generated gtest main.cpp into it during generate(), and that
-            open() raises FileNotFoundError before anything is built.
-         2. even with the directory present, an empty file(GLOB_RECURSE)
-            turns add_executable(stress_tests) into a source-less target —
-            only CMake >= 3.11 tolerates that, so it is a version trap.
 
 4.8  test_package/resources/  (test resource files)
      ───────────────────────
@@ -274,6 +251,13 @@ generate/modify each one according to the project design above.
        - Bind every public class, function, enum using PYBIND11_MODULE.
        - For template functions/classes, bind each concrete instantiation.
        - Name the module "<project_name>_python".
+       - Put the import smoke test at `test_package/test/python/`
+         `test_python_bindings.py`; the test package registers it as a CTest
+         only when the built package ships `<name>_python*`, so a project without
+         bindings needs nothing there.
+       - If that smoke test needs third-party packages (numpy, ...), list them in
+         `test_package/test/python/requirements.txt`; CI installs that file when
+         it exists (run `pip install -r` yourself for a local run).
        - If the library already exposes a C ABI (an `include/*/api/` header),
          bind THAT instead of the C++ templates: a stable ABI, no
          per-instantiation bindings, and no C++ ABI leaking through Python.

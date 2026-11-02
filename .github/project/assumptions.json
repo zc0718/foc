@@ -1,0 +1,141 @@
+{
+  "_comment": [
+    "Cross-cutting assumptions: statements that many claims rest on at once, each with the test that fails if the",
+    "statement is false. `claim-basis.json` answers 'what would invalidate this claim' (dependency edges); this",
+    "file answers 'what would catch this being false' (a falsifier). The gap between them is why this file exists:",
+    "a claim can have an intact basis, green evidence, and still be wrong because one assumption under it is wrong.",
+    "",
+    "Rules enforced by assume_gate.py:",
+    "  * every assumption names a falsifier that exists -- a test file the build compiles, or a gate by name;",
+    "  * `affects` names headers under include/foc/ (a trailing `*` matches a directory);",
+    "  * an assumption we cannot falsify yet goes in `gaps`, never in `assumptions`. `gaps` may only shrink:",
+    "    the count is pinned in `gaps_baseline`, and growing it takes an explicit edit of that number.",
+    "",
+    "strength: measured = a test asserts it; argued = derived and cross-checked but not falsified; unverified = not yet."
+  ],
+  "assumptions": [
+    {
+      "id": "M-01",
+      "statement": "the d-q bench plant and the phase-variable plant agree at every operating point the bench uses, including the transient an open-loop start puts it through",
+      "if_wrong": "every SIL number rests on a bench whose two models contradict each other, and the disagreement is invisible because each is self-consistent; for the start it would also break the electrical-pendulum law, which is a statement about the same coupling",
+      "affects": [
+        "core/transforms.hpp",
+        "core/observer/*.hpp",
+        "core/startup.hpp"
+      ],
+      "falsifier": {
+        "kind": "test",
+        "ref": "test_package/test/unit/test_abc_plant.cpp"
+      },
+      "strength": "measured",
+      "reviewed": "2026-10-30"
+    },
+    {
+      "id": "M-02",
+      "statement": "the parameter set the bench is built from is physically self-consistent (a salient machine has Lq > Ld, and i_char is read against i_max)",
+      "if_wrong": "a claim about MTPA or field weakening is argued on a machine where that physics does not apply, so the number is a property of a wrong parameter table",
+      "affects": [
+        "core/reference.hpp",
+        "core/field_weakening.hpp",
+        "core/machine_params.hpp"
+      ],
+      "falsifier": {
+        "kind": "gate",
+        "ref": "anchor"
+      },
+      "strength": "measured",
+      "reviewed": "2026-10-30"
+    },
+    {
+      "id": "M-03",
+      "statement": "the injected magnitudes in the sensitivity rig cover the error sources, and no error source exists that the tables do not measure",
+      "if_wrong": "the sensitivity table reports a comfortable bound because the injected errors were too small, and the bound is not a bound",
+      "affects": [
+        "core/observer/*.hpp",
+        "core/pi.hpp",
+        "core/transforms.hpp"
+      ],
+      "falsifier": {
+        "kind": "gate",
+        "ref": "budget"
+      },
+      "strength": "measured",
+      "reviewed": "2026-10-30"
+    },
+    {
+      "id": "M-04",
+      "statement": "the shipped single-inductance observer cannot serve a non-zero d-axis current below the speed the table in its test states",
+      "if_wrong": "a low-speed MTPA or field-weakening combination is offered as supported while the observer's angle error is far past any usable bound",
+      "affects": [
+        "core/observer/nonlinear_flux_observer.hpp",
+        "core/reference.hpp"
+      ],
+      "falsifier": {
+        "kind": "test",
+        "ref": "test_package/test/unit/test_daxis_observer_limit.cpp"
+      },
+      "strength": "measured",
+      "reviewed": "2026-10-30"
+    },
+    {
+      "id": "M-05",
+      "statement": "the protection grade is graded (it moves with temperature and with the I2t budget) rather than a single fixed threshold",
+      "if_wrong": "a derating claim is really a constant, and a build that trips at the derating start passes the suite",
+      "affects": [
+        "core/protection.hpp"
+      ],
+      "falsifier": {
+        "kind": "test",
+        "ref": "test_package/test/unit/test_protection.cpp"
+      },
+      "strength": "measured",
+      "reviewed": "2026-10-30"
+    },
+    {
+      "id": "M-06",
+      "statement": "the C11 surface refuses a stale, foreign or wrong-kind handle instead of reading it",
+      "if_wrong": "every C-side guarantee downstream of the handle kind is a comment rather than a check",
+      "affects": [
+        "api/foc_api.h"
+      ],
+      "falsifier": {
+        "kind": "test",
+        "ref": "test_package/test/unit/test_api_c_smoke.cpp"
+      },
+      "strength": "measured",
+      "reviewed": "2026-10-30"
+    },
+    {
+      "id": "M-07",
+      "statement": "the electrical-pendulum frequency law describes a LOCKED rotor: it stops applying once the slip leaves the pull-out region, which doubling the inertia is enough to do",
+      "if_wrong": "the claim's domain would be wrong in the unsafe direction: the frequency would be quoted for starts that lose lock, where the measured 9.42 rad/s sits 4.8x below the 45.40 predicted",
+      "affects": [
+        "core/startup.hpp"
+      ],
+      "falsifier": {
+        "kind": "test",
+        "ref": "test_package/test/unit/test_sil_startup.cpp"
+      },
+      "strength": "measured",
+      "reviewed": "2026-10-30"
+    }
+  ],
+  "gaps": [
+    {
+      "id": "G-01",
+      "statement": "the plant omits no effect that matters at the scale of the claims it is used for (cross-saturation, iron loss, winding temperature)",
+      "needs": "a third model with different assumptions (geometry/FEMM for Ld/Lq/psi) or hardware; the two existing plants share the omitted set"
+    },
+    {
+      "id": "G-02",
+      "statement": "the ~50 rad/s observer floor holds on a physical machine, and so does the claim that the slip oscillates at sqrt(p*Kt*i*cos(delta*)/J) rather than at a steady load angle",
+      "needs": "one motor, one inverter, one current probe -- nothing in the tree can substitute; note that a real machine may leave the locked-rotor domain sooner than this one does"
+    },
+    {
+      "id": "G-03",
+      "statement": "the error budget for a positioning axis adds up to the measured error rather than to a subset of it",
+      "needs": "the budget table itself (planned: C3), then a falsifier that removes one term and shows the measurement leaves the budget"
+    }
+  ],
+  "gaps_baseline": 3
+}

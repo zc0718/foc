@@ -7,8 +7,8 @@ number in prose has no owner. This gives them one: the case count comes from CTe
 (no tests are executed), the coverage and negative-compilation numbers from
 `docs/verification-numbers.json`, which the gates that measure them write.
 
-    python3 .github/misc/number_sheet.py --check      # what CI runs
-    python3 .github/misc/number_sheet.py --record     # refresh the json from the artefacts
+    python3 .github/project/number_sheet.py --check      # what CI runs
+    python3 .github/project/number_sheet.py --record     # refresh the json from the artefacts
 
 A missing artefact is reported, never assumed correct: a number nobody measured is exactly the
 number that goes stale.

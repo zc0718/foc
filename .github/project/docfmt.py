@@ -21,9 +21,9 @@ So the invariant is stated once, here, and checked by a gate:
 5. No trailing whitespace; no tab characters.
 
 Usage:
-    python3 .github/misc/docfmt.py --check            # exit 1 if anything would change
-    python3 .github/misc/docfmt.py --fix              # rewrite in place
-    python3 .github/misc/docfmt.py --check --verbose  # list every file that would change
+    python3 .github/project/docfmt.py --check            # exit 1 if anything would change
+    python3 .github/project/docfmt.py --fix              # rewrite in place
+    python3 .github/project/docfmt.py --check --verbose  # list every file that would change
 
 The scan covers the directories that hold shipped prose: `include/`, `src/`, `api/`, `benchmark/`,
 `test_package/`, and skips build trees.

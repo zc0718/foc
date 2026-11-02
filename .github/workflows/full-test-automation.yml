@@ -101,8 +101,6 @@ jobs:
           -c tools.system.package_manager:mode=install -c tools.system.package_manager:sudo=True
         timeout-minutes: 55
 
-      # NOT here, on purpose: `gates.py fmu` and `gates.py pil` are LOCAL_ONLY (a derived project has no `api/fmu`).
-
       - name: Set timestamp
         id: timestamp
         run: |
@@ -152,11 +150,11 @@ jobs:
           import json, sys
 
           summary, leg = sys.argv[1], sys.argv[2]
-          coverage = json.load(open('metadata.json')).get('coverage') or {}
+          coverage = json.load(open('metadata.json', encoding='utf-8')).get('coverage') or {}
           scopes = tuple(coverage.get('core_scopes') or ())
           floors = (coverage.get('floors') or {}).get(leg) or (coverage.get('default_floor') or {})
 
-          data = json.load(open(summary))
+          data = json.load(open(summary, encoding='utf-8'))
           hit = found = 0
           for path, counts in data.get('per_file', {}).items():
               if any(path.startswith(scope) for scope in scopes):

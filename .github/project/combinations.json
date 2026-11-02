@@ -1,0 +1,79 @@
+{
+  "note": [
+    "Which (reference generator x observer) pairings the library supports, and what stands behind each verdict.",
+    "A pairing is a template combination, so nothing in the type system can reject it: `Motor` will happily",
+    "compile MTPA against an observer whose model has no d-axis term, and the result is a plausible angle that",
+    "is wrong. This file is the register that turns 'we thought about it' into 'someone had to write a verdict'.",
+    "VERDICTS: allow | conditional | forbid | unmeasured.",
+    "  allow        -- supported, and the evidence exists.",
+    "  conditional  -- supported only while a stated condition holds; `condition` must be a sentence a caller",
+    "                  can check against their own machine, and `enforced_by` must say what enforces it.",
+    "  forbid       -- not supported; `falsifier` must name a case that exists, because 'do not do this' is a",
+    "                  claim like any other and needs something that can go red.",
+    "  unmeasured   -- nobody has measured it. This is a verdict, not a gap: it says the library makes no claim,",
+    "                  and `reason` must say what would have to be measured to change it.",
+    "`pairs` is checked against the headers: every reference generator crossed with every observer must appear."
+  ],
+  "pairs": [
+    {
+      "reference": "NullReferenceGenerator",
+      "observer": "*",
+      "verdict": "allow",
+      "why": "d is pinned to zero by construction, so the d-axis currents that make the observers disagree with their own flux model never appear.",
+      "evidence": ["test_package/test/unit/test_motor.cpp"]
+    },
+    {
+      "reference": "MtpaReference",
+      "observer": "*",
+      "verdict": "conditional",
+      "condition": "i_d_per_speed_a_s_per_rad must be zero or a measured safe rate. At the default rate of zero this pairing is indistinguishable from `NullReferenceGenerator`; any non-zero rate is a claim about how much d-axis current the observer in the slot can carry at that speed.",
+      "enforced_by": "MtpaReference::i_d_limit_a() -- the allowance is `rate * abs(omega_e)`, so the rate is the only thing standing between MTPA and an observer that cannot see d-axis current at all.",
+      "evidence": [
+        "test_package/test/unit/test_mtpa.cpp",
+        "test_package/test/unit/test_daxis_observer_limit.cpp"
+      ]
+    },
+    {
+      "reference": "MtpaReference",
+      "observer": "NonlinearFluxObserver",
+      "verdict": "conditional",
+      "condition": "abs(i_d) <= rate * abs(omega_e) with the rate taken from the measured table: at i_d = 0 the 0.15 rad ceiling holds from 100 rad/s up, at i_d = -1 A the same observer reads three times the ceiling at 200 rad/s and is harmless at 3200 rad/s. The safe rate is therefore not a constant.",
+      "enforced_by": "MtpaReference::i_d_limit_a() with a rate the caller set from test_daxis_observer_limit.cpp; the library defaults the rate to zero rather than guessing one.",
+      "evidence": ["test_package/test/unit/test_daxis_observer_limit.cpp"]
+    },
+    {
+      "reference": "MtpaReference",
+      "observer": "BackEmfObserver",
+      "verdict": "unmeasured",
+      "why": "The slot's model is a single inductance with a constant flux target, so a non-zero i_d moves the flux it believes it is tracking by `Ld*i_d` with nothing to outvote it at any speed. On the nominal machine that is 0.042 rad at i_d = -1 A, which is *inside* the 0.15 rad ceiling -- so the obvious argument says it is harmless and the argument has never been checked. Measuring it needs a rig that holds a non-zero i_d and reads the observer's angle, which does not exist yet.",
+      "reason": "Build the rig, then fill this cell with a measured table like the NLFO one.",
+      "evidence": ["test_package/test/unit/test_daxis_observer_limit.cpp"]
+    },
+    {
+      "reference": "*",
+      "observer": "IdealObserver",
+      "verdict": "allow",
+      "why": "The ideal observer is the sensor the observer slot is measured against; it carries no model of the machine and therefore has no parameters to disagree with a non-zero d-axis current.",
+      "evidence": ["test_package/test/unit/test_ideal_observer.cpp"]
+    },
+    {
+      "reference": "*",
+      "observer": "HfiObserver",
+      "verdict": "conditional",
+      "condition": "The carrier's own estimate is only valid while the saliency signal is above min_hf_current_a, and it is resolved by MagnetPolarityTest before the loop closes. A reference generator that asks for a large negative i_d saturates the saliency it depends on.",
+      "enforced_by": "HfiObserver::locked() plus config.min_hf_current_a; the polarity half is a separate, explicitly sequenced step.",
+      "evidence": [
+        "test_package/test/unit/test_sil_hfi.cpp",
+        "test_package/test/unit/test_sil_polarity.cpp"
+      ]
+    },
+    {
+      "reference": "*",
+      "observer": "BlendedObserver",
+      "verdict": "conditional",
+      "condition": "Both of its observers must themselves be allowed with the reference in the slot: the blend interpolates between them, so a pairing that is forbidden on either side is forbidden here (at the weight where that side is in charge).",
+      "enforced_by": "Nothing mechanical -- this cell is a rule about how to read the matrix, and it is why the blend's own observers appear in their own rows.",
+      "evidence": ["test_package/test/unit/test_blended_observer.cpp"]
+    }
+  ]
+}

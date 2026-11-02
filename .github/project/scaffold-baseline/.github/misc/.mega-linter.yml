@@ -1,0 +1,68 @@
+# .mega-linter.yml
+#
+# MegaLinter version is pinned outside this file: the CI action SHA and run-megalinter.sh --release
+FILTER_REGEX_INCLUDE: "(include|src)/"
+
+ENABLE: "C,CPP"
+DISABLE: "SPELL"
+
+ENABLE_LINTERS:
+  - REPOSITORY_GITLEAKS
+  - REPOSITORY_SEMGREP
+  - REPOSITORY_CHECKOV
+  - REPOSITORY_DEVSKIM
+
+DISABLE_LINTERS:
+  - C_CPPLINT
+  - CPP_CPPLINT
+  # clang-tidy is owned by the native required gate
+  - C_CLANG_TIDY
+  - CPP_CLANG_TIDY
+
+COPYPASTE_JSCPD_ARGUMENTS:
+  - "--pattern"
+  - "include/**/*,src/**/*"
+
+REPOSITORY_GITLEAKS_ARGUMENTS:
+  - "-c"
+  - ".github/misc/.gitleaks.toml"
+  - "--verbose"
+
+REPOSITORY_SEMGREP_ARGUMENTS:
+  - "--include"
+  - "include/"
+  - "--include"
+  - "src/"
+
+REPOSITORY_CHECKOV_CONFIG_FILE: ".github/misc/.checkov.yml"
+
+REPOSITORY_CHECKOV_ARGUMENTS:
+  # no `-d .`: the checkov descriptor already scans the repo root, duplicating findings
+  - "--skip-path"
+  - "include/"
+  - "--skip-path"
+  - "src/"
+  - "--skip-path"
+  - "test_package/test/"
+  - "--skip-path"
+  - "test_package/main.cpp"
+  # Avoid scanning MegaLinter's own report output from a previous run
+  - "--skip-path"
+  - "megalinter-reports/"
+
+REPOSITORY_DEVSKIM_ARGUMENTS:
+  - "--include-globs"
+  - "**/include/**,**/src/**"
+  - "--ignore-globs"
+  - "**/test_package/**"
+
+# use the FLAT <LINTER>_CONFIG_FILE key; the nested form is silently ignored
+C_CLANG_FORMAT_CONFIG_FILE: ".github/misc/.clang-format-c"
+CPP_CLANG_FORMAT_CONFIG_FILE: ".github/misc/.clang-format-cpp"
+
+# .h belongs to the C family (see code-conventions.md): the C++ linter must not claim it,
+# or a C header gets the left-aligned C++ style and fails a header-only package
+CPP_CLANG_FORMAT_FILTER_REGEX_EXCLUDE: "(^|/)[^/]+\\.h$"
+
+SARIF_REPORTER: true
+MARKDOWN_SUMMARY_REPORTER: true

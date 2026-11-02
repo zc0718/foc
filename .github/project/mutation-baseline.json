@@ -1,0 +1,672 @@
+{
+  "modules": {
+    "observer": {
+      "mutate": [
+        "include/foc/core/observer/nonlinear_flux_observer.hpp",
+        "src/core/observer/nonlinear_flux_observer.cpp"
+      ],
+      "tests": [
+        "test_package/test/unit/test_nonlinear_flux_observer.cpp"
+      ],
+      "limit_per_file": 200,
+      "killed": 46,
+      "survived": 6,
+      "invalid": 13,
+      "timeout": 0,
+      "survivors": [
+        {
+          "file": "src/core/observer/nonlinear_flux_observer.cpp",
+          "line": 35,
+          "col": 18,
+          "original": "<",
+          "replacement": "<=",
+          "operator": "swap"
+        },
+        {
+          "file": "src/core/observer/nonlinear_flux_observer.cpp",
+          "line": 38,
+          "col": 18,
+          "original": ">=",
+          "replacement": ">",
+          "operator": "swap"
+        },
+        {
+          "file": "src/core/observer/nonlinear_flux_observer.cpp",
+          "line": 52,
+          "col": 18,
+          "original": "<=",
+          "replacement": "<",
+          "operator": "swap"
+        },
+        {
+          "file": "src/core/observer/nonlinear_flux_observer.cpp",
+          "line": 55,
+          "col": 18,
+          "original": ">",
+          "replacement": ">=",
+          "operator": "swap"
+        },
+        {
+          "file": "src/core/observer/nonlinear_flux_observer.cpp",
+          "line": 115,
+          "col": 27,
+          "original": "0.5",
+          "replacement": "0.5005",
+          "operator": "constant"
+        },
+        {
+          "file": "src/core/observer/nonlinear_flux_observer.cpp",
+          "line": 120,
+          "col": 25,
+          "original": ">",
+          "replacement": ">=",
+          "operator": "swap"
+        }
+      ],
+      "invalid_sites": 13,
+      "truncated": [],
+      "judged": 52,
+      "score": 88.5,
+      "seconds": 176.8,
+      "recorded": "2026-10-31"
+    },
+    "pi": {
+      "mutate": [
+        "include/foc/core/pi.hpp",
+        "src/core/pi.cpp"
+      ],
+      "tests": [
+        "test_package/test/unit/test_pi.cpp"
+      ],
+      "limit_per_file": 200,
+      "killed": 20,
+      "survived": 0,
+      "invalid": 9,
+      "timeout": 0,
+      "survivors": [],
+      "invalid_sites": 9,
+      "truncated": [],
+      "judged": 20,
+      "score": 100.0,
+      "seconds": 61.4,
+      "recorded": "2026-10-31"
+    },
+    "svpwm": {
+      "mutate": [
+        "include/foc/core/svpwm.hpp",
+        "src/core/svpwm.cpp"
+      ],
+      "tests": [
+        "test_package/test/unit/test_svpwm.cpp"
+      ],
+      "limit_per_file": 200,
+      "killed": 45,
+      "survived": 12,
+      "invalid": 6,
+      "timeout": 0,
+      "survivors": [
+        {
+          "file": "src/core/svpwm.cpp",
+          "line": 21,
+          "col": 40,
+          "original": "8",
+          "replacement": "9",
+          "operator": "constant"
+        },
+        {
+          "file": "src/core/svpwm.cpp",
+          "line": 21,
+          "col": 46,
+          "original": "0",
+          "replacement": "1",
+          "operator": "constant"
+        },
+        {
+          "file": "src/core/svpwm.cpp",
+          "line": 21,
+          "col": 74,
+          "original": "4",
+          "replacement": "5",
+          "operator": "constant"
+        },
+        {
+          "file": "src/core/svpwm.cpp",
+          "line": 43,
+          "col": 18,
+          "original": ">",
+          "replacement": ">=",
+          "operator": "swap"
+        },
+        {
+          "file": "src/core/svpwm.cpp",
+          "line": 43,
+          "col": 41,
+          "original": ">",
+          "replacement": ">=",
+          "operator": "swap"
+        },
+        {
+          "file": "src/core/svpwm.cpp",
+          "line": 43,
+          "col": 85,
+          "original": ">",
+          "replacement": ">=",
+          "operator": "swap"
+        },
+        {
+          "file": "src/core/svpwm.cpp",
+          "line": 45,
+          "col": 18,
+          "original": "<",
+          "replacement": "<=",
+          "operator": "swap"
+        },
+        {
+          "file": "src/core/svpwm.cpp",
+          "line": 45,
+          "col": 41,
+          "original": "<",
+          "replacement": "<=",
+          "operator": "swap"
+        },
+        {
+          "file": "src/core/svpwm.cpp",
+          "line": 45,
+          "col": 85,
+          "original": "<",
+          "replacement": "<=",
+          "operator": "swap"
+        },
+        {
+          "file": "src/core/svpwm.cpp",
+          "line": 54,
+          "col": 49,
+          "original": "||",
+          "replacement": "&&",
+          "operator": "swap"
+        },
+        {
+          "file": "src/core/svpwm.cpp",
+          "line": 81,
+          "col": 85,
+          "original": "2.0",
+          "replacement": "2.002",
+          "operator": "constant"
+        },
+        {
+          "file": "src/core/svpwm.cpp",
+          "line": 84,
+          "col": 83,
+          "original": "+",
+          "replacement": "-",
+          "operator": "swap"
+        }
+      ],
+      "invalid_sites": 6,
+      "truncated": [],
+      "judged": 57,
+      "score": 78.9,
+      "seconds": 146.2,
+      "recorded": "2026-10-31"
+    },
+    "transforms": {
+      "mutate": [
+        "include/foc/core/transforms.hpp",
+        "src/core/transforms.cpp"
+      ],
+      "tests": [
+        "test_package/test/unit/test_transforms.cpp"
+      ],
+      "limit_per_file": 200,
+      "killed": 36,
+      "survived": 2,
+      "invalid": 0,
+      "timeout": 0,
+      "survivors": [
+        {
+          "file": "include/foc/core/transforms.hpp",
+          "line": 21,
+          "col": 69,
+          "original": "*",
+          "replacement": "/",
+          "operator": "swap"
+        },
+        {
+          "file": "include/foc/core/transforms.hpp",
+          "line": 21,
+          "col": 66,
+          "original": "2",
+          "replacement": "3",
+          "operator": "constant"
+        }
+      ],
+      "invalid_sites": 0,
+      "truncated": [],
+      "judged": 38,
+      "score": 94.7,
+      "seconds": 52.5,
+      "recorded": "2026-10-31"
+    },
+    "limits": {
+      "mutate": [
+        "include/foc/core/limits.hpp",
+        "src/core/limits.cpp"
+      ],
+      "tests": [
+        "test_package/test/unit/test_limits.cpp"
+      ],
+      "limit_per_file": 200,
+      "killed": 2,
+      "survived": 5,
+      "invalid": 2,
+      "timeout": 0,
+      "survivors": [
+        {
+          "file": "include/foc/core/limits.hpp",
+          "line": 22,
+          "col": 19,
+          "original": "<",
+          "replacement": "<=",
+          "operator": "swap"
+        },
+        {
+          "file": "include/foc/core/limits.hpp",
+          "line": 22,
+          "col": 42,
+          "original": ">",
+          "replacement": ">=",
+          "operator": "swap"
+        },
+        {
+          "file": "src/core/limits.cpp",
+          "line": 26,
+          "col": 14,
+          "original": ">",
+          "replacement": ">=",
+          "operator": "swap"
+        },
+        {
+          "file": "src/core/limits.cpp",
+          "line": 29,
+          "col": 19,
+          "original": ">",
+          "replacement": ">=",
+          "operator": "swap"
+        },
+        {
+          "file": "src/core/limits.cpp",
+          "line": 31,
+          "col": 26,
+          "original": "<",
+          "replacement": "<=",
+          "operator": "swap"
+        }
+      ],
+      "invalid_sites": 2,
+      "truncated": [],
+      "judged": 7,
+      "score": 28.6,
+      "seconds": 11.7,
+      "equivalents": [
+        {
+          "file": "include/foc/core/limits.hpp",
+          "line": 22,
+          "col": 19,
+          "original": "<",
+          "replacement": "<=",
+          "kind": "equivalent",
+          "why": "The low clamp: at `value == low` both the `<` and the `<=` form return `low`."
+        },
+        {
+          "file": "include/foc/core/limits.hpp",
+          "line": 22,
+          "col": 42,
+          "original": ">",
+          "replacement": ">=",
+          "kind": "equivalent",
+          "why": "The high clamp: at `value == high` both forms return `high`."
+        },
+        {
+          "file": "src/core/limits.cpp",
+          "line": 26,
+          "col": 14,
+          "original": ">",
+          "replacement": ">=",
+          "kind": "equivalent",
+          "why": "A zero period makes `max_delta` zero; every branch then leaves the output where it was, or assigns it the target it already equals."
+        },
+        {
+          "file": "src/core/limits.cpp",
+          "line": 29,
+          "col": 19,
+          "original": ">",
+          "replacement": ">=",
+          "kind": "equivalent",
+          "why": "At `delta == max_delta` the two forms differ only in whether the output is computed as `value + max_delta` or assigned the target -- and `delta == max_delta` means those are the same number."
+        },
+        {
+          "file": "src/core/limits.cpp",
+          "line": 31,
+          "col": 26,
+          "original": "<",
+          "replacement": "<=",
+          "kind": "equivalent",
+          "why": "The mirror of 29:19 on the negative side."
+        }
+      ],
+      "notes": "5 of 5 survivor(s) classified. equivalent: 5; equivalent_by_overspecification: 0; unreachable: 0; invisible_without_memory_checker: 0",
+      "recorded": "2026-10-31"
+    },
+    "sm": {
+      "mutate": [
+        "include/foc/core/sm.hpp",
+        "src/core/sm.cpp"
+      ],
+      "tests": [
+        "test_package/test/unit/test_sm.cpp"
+      ],
+      "limit_per_file": 200,
+      "killed": 4,
+      "survived": 0,
+      "invalid": 15,
+      "timeout": 0,
+      "survivors": [],
+      "invalid_sites": 15,
+      "truncated": [],
+      "judged": 4,
+      "score": 100.0,
+      "seconds": 39.8,
+      "recorded": "2026-10-31"
+    },
+    "protection": {
+      "mutate": [
+        "include/foc/core/protection.hpp"
+      ],
+      "tests": [
+        "test_package/test/unit/test_protection.cpp"
+      ],
+      "limit_per_file": 200,
+      "killed": 52,
+      "survived": 15,
+      "invalid": 23,
+      "timeout": 0,
+      "survivors": [
+        {
+          "file": "include/foc/core/protection.hpp",
+          "line": 267,
+          "col": 18,
+          "original": ">",
+          "replacement": ">=",
+          "operator": "swap"
+        },
+        {
+          "file": "include/foc/core/protection.hpp",
+          "line": 270,
+          "col": 22,
+          "original": ">",
+          "replacement": ">=",
+          "operator": "swap"
+        },
+        {
+          "file": "include/foc/core/protection.hpp",
+          "line": 278,
+          "col": 60,
+          "original": ">",
+          "replacement": ">=",
+          "operator": "swap"
+        },
+        {
+          "file": "include/foc/core/protection.hpp",
+          "line": 286,
+          "col": 51,
+          "original": ">",
+          "replacement": ">=",
+          "operator": "swap"
+        },
+        {
+          "file": "include/foc/core/protection.hpp",
+          "line": 292,
+          "col": 82,
+          "original": "1.0",
+          "replacement": "1.001",
+          "operator": "constant"
+        },
+        {
+          "file": "include/foc/core/protection.hpp",
+          "line": 293,
+          "col": 84,
+          "original": "<",
+          "replacement": "<=",
+          "operator": "swap"
+        },
+        {
+          "file": "include/foc/core/protection.hpp",
+          "line": 293,
+          "col": 106,
+          "original": "1.0",
+          "replacement": "1.001",
+          "operator": "constant"
+        },
+        {
+          "file": "include/foc/core/protection.hpp",
+          "line": 304,
+          "col": 26,
+          "original": "8",
+          "replacement": "9",
+          "operator": "constant"
+        },
+        {
+          "file": "include/foc/core/protection.hpp",
+          "line": 346,
+          "col": 31,
+          "original": ">",
+          "replacement": ">=",
+          "operator": "swap"
+        },
+        {
+          "file": "include/foc/core/protection.hpp",
+          "line": 349,
+          "col": 27,
+          "original": "<=",
+          "replacement": "<",
+          "operator": "swap"
+        },
+        {
+          "file": "include/foc/core/protection.hpp",
+          "line": 353,
+          "col": 20,
+          "original": ">",
+          "replacement": ">=",
+          "operator": "swap"
+        },
+        {
+          "file": "include/foc/core/protection.hpp",
+          "line": 357,
+          "col": 18,
+          "original": ">=",
+          "replacement": ">",
+          "operator": "swap"
+        },
+        {
+          "file": "include/foc/core/protection.hpp",
+          "line": 384,
+          "col": 42,
+          "original": "<",
+          "replacement": "<=",
+          "operator": "swap"
+        },
+        {
+          "file": "include/foc/core/protection.hpp",
+          "line": 384,
+          "col": 44,
+          "original": "8",
+          "replacement": "9",
+          "operator": "constant"
+        },
+        {
+          "file": "include/foc/core/protection.hpp",
+          "line": 398,
+          "col": 22,
+          "original": "0",
+          "replacement": "1",
+          "operator": "constant"
+        }
+      ],
+      "invalid_sites": 23,
+      "truncated": [],
+      "judged": 67,
+      "score": 77.6,
+      "seconds": 547.0,
+      "equivalents": [
+        {
+          "file": "include/foc/core/protection.hpp",
+          "line": 267,
+          "col": 18,
+          "original": ">",
+          "replacement": ">=",
+          "kind": "equivalent",
+          "why": "With dt == 0 the body adds `i^2*0 - 0` and re-clamps a value that is already non-negative."
+        },
+        {
+          "file": "include/foc/core/protection.hpp",
+          "line": 270,
+          "col": 22,
+          "original": ">",
+          "replacement": ">=",
+          "kind": "equivalent",
+          "why": "The clamp to zero: at q == 0 both forms return 0."
+        },
+        {
+          "file": "include/foc/core/protection.hpp",
+          "line": 278,
+          "col": 60,
+          "original": ">",
+          "replacement": ">=",
+          "kind": "equivalent",
+          "why": "Inside `pushing`, a zero period adds zero to the stall timer either way."
+        },
+        {
+          "file": "include/foc/core/protection.hpp",
+          "line": 286,
+          "col": 51,
+          "original": ">",
+          "replacement": ">=",
+          "kind": "equivalent",
+          "why": "The hysteresis guard: at a ratio of exactly 0 the ternary selects 0 either way."
+        },
+        {
+          "file": "include/foc/core/protection.hpp",
+          "line": 292,
+          "col": 82,
+          "original": "1.0",
+          "replacement": "1.001",
+          "kind": "equivalent_by_overspecification",
+          "why": "Under-voltage clears above `v_min*(1+h)`; the mutant moves that from 12.000 to 12.012 V."
+        },
+        {
+          "file": "include/foc/core/protection.hpp",
+          "line": 293,
+          "col": 84,
+          "original": "<",
+          "replacement": "<=",
+          "kind": "unreachable",
+          "why": "The I2t clear compares q against `budget*(1-h)`; q is a decayed float32 accumulator and no input can stop it on that exact value."
+        },
+        {
+          "file": "include/foc/core/protection.hpp",
+          "line": 293,
+          "col": 106,
+          "original": "1.0",
+          "replacement": "1.001",
+          "kind": "equivalent_by_overspecification",
+          "why": "Same expression as 292:82 on the I2t side: 2.2500 -> 2.2523 A^2*s."
+        },
+        {
+          "file": "include/foc/core/protection.hpp",
+          "line": 304,
+          "col": 26,
+          "original": "8",
+          "replacement": "9",
+          "kind": "equivalent",
+          "why": "The array size: a ninth element is zero-filled and the loop still stops at eight."
+        },
+        {
+          "file": "include/foc/core/protection.hpp",
+          "line": 346,
+          "col": 31,
+          "original": ">",
+          "replacement": ">=",
+          "kind": "equivalent",
+          "why": "With `i_max == 0` the guard returns 0 and the fall-through returns `0*(1-used)`, also 0."
+        },
+        {
+          "file": "include/foc/core/protection.hpp",
+          "line": 349,
+          "col": 27,
+          "original": "<=",
+          "replacement": "<",
+          "kind": "equivalent",
+          "why": "At exactly `t_derate_start_c` the fall-through computes `used = 0` and returns the full limit."
+        },
+        {
+          "file": "include/foc/core/protection.hpp",
+          "line": 353,
+          "col": 20,
+          "original": ">",
+          "replacement": ">=",
+          "kind": "equivalent",
+          "why": "With `span == 0` the fall-through divides by zero, `used` becomes +inf, and `used >= 1` returns 0 -- the answer the guard gives."
+        },
+        {
+          "file": "include/foc/core/protection.hpp",
+          "line": 357,
+          "col": 18,
+          "original": ">=",
+          "replacement": ">",
+          "kind": "equivalent",
+          "why": "At `used == 1` the mutant returns `i_max*(1-1)`, the same 0."
+        },
+        {
+          "file": "include/foc/core/protection.hpp",
+          "line": 384,
+          "col": 42,
+          "original": "<",
+          "replacement": "<=",
+          "kind": "equivalent",
+          "why": "The write `tripped_[code]` is guarded by `fault_is_latched(code)`, which is false for the out-of-range code, so the overrun is never executed -- measured, not assumed: UndefinedBehaviorSanitizer, which does catch this class, reports nothing."
+        },
+        {
+          "file": "include/foc/core/protection.hpp",
+          "line": 384,
+          "col": 44,
+          "original": "8",
+          "replacement": "9",
+          "kind": "equivalent",
+          "why": "Same loop and same guard: the ninth iteration reads nothing and writes nothing."
+        },
+        {
+          "file": "include/foc/core/protection.hpp",
+          "line": 398,
+          "col": 22,
+          "original": "0",
+          "replacement": "1",
+          "kind": "equivalent",
+          "why": "Starting the clear loop at 1 leaves `tripped_[0]` alone, and index 0 is `FaultCode::None`, never set."
+        }
+      ],
+      "notes": "15 of 15 survivor(s) classified (equivalent: 12, equivalent_by_overspecification: 2, unreachable: 1); none requires a memory checker any more",
+      "recorded": "2026-10-31"
+    }
+  },
+  "_comment": [
+    "Mutation scores as measured by mutate.py, one entry per module, with the exact file set and limit used.",
+    "Stage 2 of the maturity plan records these numbers without setting a target: a threshold chosen before the first",
+    "measurement is a number picked to be met. The gate refuses a drop of more than 5 points, refuses a module with no",
+    "entry at all, and (for modules marked `classify`) refuses a survivor that is not listed in `equivalents`.",
+    "The instrument includes AddressSanitizer and UndefinedBehaviorSanitizer with recovery disabled: an overrun of a",
+    "standalone array is caught by ASan, an overrun of a member array only by UBSan's array-bounds (measured with a",
+    "one-line probe: 0 reports vs 1). A score is only comparable across the same instrument.",
+    "`survivors` is the work list: each one is either a blind spot in the tests or an equivalent mutant, and only a",
+    "human can say which -- a survivor classified as equivalent is not deleted, it is explained."
+  ]
+}

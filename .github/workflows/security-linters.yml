@@ -67,46 +67,8 @@ jobs:
         run: python3 .github/misc/gates.py tidy
 
       # required: layering guard -- a scope may not include what its rules forbid
-      # (e.g. the algorithm core must stay hardware- and C-API-agnostic)
       - name: include-guard gate
         run: python3 .github/misc/gates.py guard
-
-      # The gates below exist in *this* project's `gates.py`, not in the template's: upstream ships
-      # format / tidy / guard / all, and strict, claims, docs, boundaries, capabilities plus the
-      # negative-compile harness are ours. Written as five bare steps they were private syntax in a shared
-      # file -- a derived project inheriting this workflow would fail on its first push with
-      # `invalid choice: 'strict'`. So each is asked for first and skipped when absent: the *guard* is the
-      # generic part, and the check still runs everywhere it exists.
-      # 下面这些是本项目 gates.py 才有的（上游只有 format/tidy/guard/all）。写成五条裸步骤等于把私域语法
-      # 放进共享文件：派生项目第一次推送就会 `invalid choice: 'strict'`。所以先问再跑——通用的是守卫，
-      # 检查在它存在的地方照旧执行。
-      - name: project gates (run what this project's gates.py actually has)
-        run: |
-          failed=0
-          for gate in strict claims docs boundaries capabilities; do
-            if python3 .github/misc/gates.py --help | grep -qE "^[[:space:]]+${gate}[[:space:]]"; then
-              echo "::group::$gate"
-              python3 .github/misc/gates.py "$gate" || failed=1
-              echo "::endgroup::"
-            else
-              echo "[$gate] not in this project's gates.py; skipped"
-            fi
-          done
-          # the negative-compile harness is a project file (its cases name this project's contract types)
-          if [ -f .github/misc/negative_compile.py ]; then
-            echo "::group::negative-compile"
-            python3 .github/misc/negative_compile.py || failed=1
-            echo "::endgroup::"
-          else
-            echo "[negative-compile] no harness in this project; skipped"
-          fi
-          exit $failed
-
-      # NOT here, on purpose: `gates.py pil`. It builds the library twice (host and aarch64) and runs
-      # the target binary under qemu, which is minutes of emulator time per push for evidence that
-      # changes only when the control loop changes. It stays a local gate -- run it before a release
-      # or after touching a non-template translation unit. The same list is enforced in `gates.py`:
-      # `LOCAL_ONLY` names the gates a workflow must not call.
 
       # Required gate: secrets scan with pinned binary version
       - name: gitleaks gate

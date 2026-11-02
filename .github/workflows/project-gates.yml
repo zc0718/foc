@@ -1,0 +1,52 @@
+name: Project gates
+
+# This project's own gates, in their own workflow.
+#
+# Why a separate file: the scaffold's `security-linters.yml` is a `workflow_call` target of
+# `ci-orchestrator.yml`, and both are upstream files that must stay byte-identical so the next scaffold
+# release can be merged without replaying private code. Adding a step to either one is exactly the
+# modification this repository promised not to make. A project-owned workflow that triggers on its own
+# needs nothing from the orchestrator, so the scaffold keeps its files and the gates still run.
+#
+# Not here, on purpose: `pil`, `fmu` and `mutants`. They build and emulate for minutes per push for evidence
+# that only changes when the control loop, the FMI interface or the test set does, and `mutants` additionally
+# needs gtest from the conan cache. `project/gates.py ci-policy` fails the build if this file ever calls one of
+# them, so the rule cannot quietly erode.
+#
+# What each gate proves is documented where the gate is implemented: `.github/project/gates.py`.
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.ref }}-${{ github.workflow }}
+  cancel-in-progress: true
+
+jobs:
+  project-gates:
+    name: Project gates
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v7
+
+      # stdlib only: no conan, no clang-tidy. Each gate reads this repository's own files.
+      - name: Project gates
+        run: |
+          failed=0
+          for gate in license strict claims docs boundaries capabilities ci-policy assume anchor scaffold budget; do
+            echo "::group::$gate"
+            python3 .github/project/gates.py "$gate" || failed=1
+            echo "::endgroup::"
+          done
+          exit $failed
+
+      # The contracts live in these headers: an incomplete stub must fail to compile.
+      - name: contract negative-compile
+        run: python3 .github/project/negative_compile.py

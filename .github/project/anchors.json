@@ -1,0 +1,55 @@
+{
+  "_comment": [
+    "Machines the bench claims are anchored to, and the arithmetic that decides whether a claim *can* be made on",
+    "them. Two of the four entries are here because they teach something:",
+    "  * `SIL` is the repository's own nominal machine, and `ld == lq`: it is a surface machine, so it witnesses",
+    "    observer/position claims but can never witness MTPA. Registering it as salient was a mistake made once.",
+    "  * `mtpa-as-published` is a table that fails check 1 (Lq < Ld) and must be rejected by the gate. Its",
+    "    `mtpa-swapped` sibling is the same table with the columns exchanged -- an assumption of ours, registered",
+    "    in assumptions.json rather than quietly applied.",
+    "`i_char` in the repository's vocabulary is `psi_f / Ld` (test_mtpa.cpp prints it that way). The classic",
+    "characteristic ratio the leverage check needs is `k = psi_f / ((Lq - Ld) * i_max)`; the two coincide only at",
+    "Lq/Ld = 2, which is the saliency test_mtpa.cpp measures at."
+  ],
+  "machines": [
+    {
+      "id": "SIL",
+      "origin": "this repository's nominal bench machine (test_package/test/unit/sil_bench.hpp: nominal_spec)",
+      "Rs_ohm": 0.5, "Ld_H": 0.0004, "Lq_H": 0.0004, "psi_Wb": 0.004762, "J_kgm2": 0.0001,
+      "pole_pairs": 7, "i_max_A": 3.0, "claims": ["observer", "startup", "position"],
+      "expect": "accept",
+      "note": "ld == lq, so MTPA on it is zero by construction; PLAN 0.1's 3.97 is the repo ratio psi/(Ld*i_max)"
+    },
+    {
+      "id": "mtpa-test",
+      "origin": "test_mtpa.cpp salient_spec(), measured with i_max set to i_char for the criterion",
+      "Rs_ohm": 0.5, "Ld_H": 0.0002, "Lq_H": 0.0004, "psi_Wb": 0.004762, "J_kgm2": 0.0001,
+      "pole_pairs": 7, "i_max_A": 23.8095, "claims": ["mtpa"],
+      "reported_mtpa_gain_percent": 29.2,
+      "expect": "accept"
+    },
+    {
+      "id": "startup-2026",
+      "origin": "materials/startup-2026-sensorless-control-of-pmsm-across-the-fu.pdf, Table 2",
+      "Rs_ohm": 0.958, "Ld_H": 0.00525, "Lq_H": 0.012, "psi_Wb": 0.1827, "J_kgm2": 0.03,
+      "pole_pairs": 4, "i_max_A": 4.0, "claims": ["startup", "observer"],
+      "expect": "accept",
+      "note": "salient but magnet-dominated (k ~ 6.8): a fine startup observer witness, a useless MTPA one"
+    },
+    {
+      "id": "mtpa-as-published",
+      "origin": "materials/mtpa-2021-maximum-torque-per-ampere-strategy-in-ip.pdf, Table 1, as printed",
+      "Rs_ohm": 0.0463, "Ld_H": 0.000282, "Lq_H": 0.0000828, "psi_Wb": 0.0182, "J_kgm2": 0.0072,
+      "pole_pairs": 4, "i_max_A": 51.6, "claims": ["mtpa"],
+      "expect": "reject",
+      "reject_reason": "Lq < Ld contradicts the salient premise, so this table cannot witness MTPA as printed"
+    },
+    {
+      "id": "mtpa-swapped",
+      "origin": "same table with Ld and Lq exchanged -- OUR correction, registered as an assumption",
+      "Rs_ohm": 0.0463, "Ld_H": 0.0000828, "Lq_H": 0.000282, "psi_Wb": 0.0182, "J_kgm2": 0.0072,
+      "pole_pairs": 4, "i_max_A": 51.6, "claims": ["mtpa"],
+      "expect": "accept"
+    }
+  ]
+}

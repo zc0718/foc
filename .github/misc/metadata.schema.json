@@ -29,7 +29,7 @@
     "activate_code_coverage": { "type": "boolean" },
     "coverage": {
       "type": "object",
-      "description": "Per-runner line-rate floors. A runner is held to its own best measured value: the same library measured by gcov and by llvm-cov does not produce the same number, and the difference is a property of the instrument, not of the code. Runners not listed fall back to default_floor.",
+      "description": "Per-runner line-rate floors: gcov and llvm-cov do not produce the same number for the same code, so each runner is held to its own. Runners not listed fall back to default_floor.",
       "properties": {
         "core_scopes": {
           "type": "array",

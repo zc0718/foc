@@ -23,8 +23,8 @@ Scope. Every header under a covered root (`core/`, `motor/`) must be either list
 so a capability cannot be added with no row at all.
 
 Usage:
-    python3 .github/misc/capability_gate.py            # check
-    python3 .github/misc/capability_gate.py --verbose  # also print every row
+    python3 .github/project/capability_gate.py            # check
+    python3 .github/project/capability_gate.py --verbose  # also print every row
 """
 
 from __future__ import annotations
@@ -36,7 +36,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 PAGE = ROOT / "docs" / "sphinx" / "source" / "capabilities.rst"
-SCOPE = ROOT / ".github" / "misc" / "capability-scope.json"
+SCOPE = Path(__file__).resolve().with_name("capability-scope.json")
 INCLUDE = ROOT / "include" / "foc"
 README = ROOT / "README.md"
 UNIT = ROOT / "test_package" / "test" / "unit"
@@ -152,7 +152,7 @@ def main() -> int:
         print("[capabilities] FAIL: docs/sphinx/source/capabilities.rst is missing", file=sys.stderr)
         return 1
     if not SCOPE.is_file():
-        print("[capabilities] FAIL: .github/misc/capability-scope.json is missing", file=sys.stderr)
+        print("[capabilities] FAIL: .github/project/capability-scope.json is missing", file=sys.stderr)
         return 1
 
     problems: list[str] = []

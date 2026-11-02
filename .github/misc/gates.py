@@ -24,7 +24,6 @@ from pathlib import Path
 #   python3 .github/misc/gates.py format [FILE ...]   # clang-format --dry-run --Werror
 #   python3 .github/misc/gates.py tidy   [FILE ...]   # clang-tidy (WarningsAsErrors)
 #   python3 .github/misc/gates.py guard  [FILE ...]   # forbidden #include, rules in .include-guard.txt
-#   python3 .github/misc/gates.py strict [FILE ...]   # every public header under -fno-exceptions/-fno-rtti
 #   python3 .github/misc/gates.py all
 # format covers include/ + src/. tidy covers src/ translation units; when metadata says
 # is_header (or src/ holds no TU) it instead synthesizes one TU per public header, which
@@ -43,7 +42,6 @@ FORMAT_C = '.github/misc/.clang-format-c'
 FORMAT_CPP = '.github/misc/.clang-format-cpp'
 TIDY_CONFIG = '.github/misc/.clang-tidy'
 GUARD_CONFIG = '.github/misc/.include-guard.txt'
-LICENSE_CONFIG = '.github/misc/.license-guard.txt'
 
 _META = None
 
@@ -249,13 +247,11 @@ def cmd_tidy(explicit, extra_include=(), extra_isystem=()):
     return 0
 
 
-def _scoped_rules(config_name, flags=0):
-    """(scope glob, compiled regex) pairs from a rule file: "<scope glob> <regex>" per line,
-    `#` comments allowed. One loader for every scoped gate, so a new gate is a new rule file rather
-    than a new parser."""
-    config = ROOT / config_name
+def _guard_rules():
+    """(scope glob, compiled regex) pairs from .github/misc/.include-guard.txt."""
+    config = ROOT / GUARD_CONFIG
     if not config.is_file():
-        _die(f'{config_name} not found; it lists "<scope glob> <forbidden regex>" per line')
+        _die(f'{GUARD_CONFIG} not found; it lists "<scope glob> <forbidden include regex>" per line')
     rules = []
     for lineno, raw in enumerate(config.read_text(encoding='utf-8').splitlines(), start=1):
         line = raw.split('#', 1)[0].strip()
@@ -263,20 +259,14 @@ def _scoped_rules(config_name, flags=0):
             continue
         parts = line.split(None, 1)
         if len(parts) != 2:
-            _die(f'{config_name}:{lineno}: expected "<scope glob> <regex>", got {raw!r}')
+            _die(f'{GUARD_CONFIG}:{lineno}: expected "<scope glob> <regex>", got {raw!r}')
         scope, pattern = parts
         try:
-            rules.append((scope, re.compile(pattern, flags)))
+            rules.append((scope, re.compile(pattern)))
         except re.error as exc:
-            _die(f'{config_name}:{lineno}: bad regex {pattern!r}: {exc}')
+            _die(f'{GUARD_CONFIG}:{lineno}: bad regex {pattern!r}: {exc}')
     if not rules:
-        _die(f'{config_name} defines no rule')
-    return rules
-
-
-def _guard_rules():
-    """Include-layering rules (see .include-guard.txt)."""
-    return _scoped_rules(GUARD_CONFIG)
+        _die(f'{GUARD_CONFIG} defines no rule')
     return rules
 
 
@@ -302,41 +292,10 @@ def _include_directives(path):
     return found
 
 
-# Gates that rebuild or emulate something expensive and are deliberately kept off the cloud runners.
-# The reason is runtime, not principle: `pil` builds the library twice and runs the target binary under
-# qemu, which is minutes per push for evidence that only changes when the control loop does. It runs on
-# a developer machine and before a release. `cmd_guard` fails the build if a workflow calls one of these,
-# so the constraint is enforced rather than remembered -- the failure message names the reason and where
-# the gate is supposed to run.
-LOCAL_ONLY = {'pil', 'fmu'}
-
-
-def _ci_policy_violations():
-    """Workflows must not call a LOCAL_ONLY gate. Comments are ignored: they are where the rule is explained."""
-    problems = []
-    workflows = ROOT / '.github' / 'workflows'
-    if not workflows.is_dir():
-        return problems
-    for path in sorted(workflows.glob('*.y*ml')):
-        for lineno, line in enumerate(path.read_text(encoding='utf-8').splitlines(), start=1):
-            stripped = line.strip()
-            if not stripped or stripped.startswith('#'):
-                continue
-            for gate in LOCAL_ONLY:
-                if re.search(rf'gates\.py\s+{gate}\b', stripped):
-                    problems.append(f'{path.name}:{lineno}: calls `gates.py {gate}`, which is local-only -- '
-                                    f'it rebuilds and emulates for minutes per push; run it locally and '
-                                    f'before a release instead')
-    return problems
-
-
 def cmd_guard(explicit):
     """Layering guard: a scope may not include something its rules forbid (e.g. core must stay
     hardware-agnostic). Rules live in .github/misc/.include-guard.txt, one per line, so a derived
-    project states its own layering instead of editing this file.
-
-    Also the CI-policy check, because both are "a structural rule that a well-meant edit would break":
-    a workflow may not call a LOCAL_ONLY gate."""
+    project states its own layering instead of editing this file."""
     files = _gated_files(explicit, GATE_DIRS)
     if not files:
         return _empty(explicit, 'guard', GATE_DIRS)
@@ -354,216 +313,8 @@ def cmd_guard(explicit):
     if violations:
         print(f'[gates] guard: FAIL ({violations} violation(s))', flush=True)
         return 1
-    policy = _ci_policy_violations()
-    if policy:
-        for problem in policy:
-            print(f'[gates] guard: {problem}', file=sys.stderr, flush=True)
-        print(f'[gates] guard: FAIL ({len(policy)} CI-policy violation(s))', flush=True)
-        return 1
-    print(f'[gates] guard: OK ({len(files)} file(s), no local-only gate in CI)', flush=True)
+    print(f'[gates] guard: OK ({len(files)} file(s))', flush=True)
     return 0
-
-
-def cmd_license(explicit):
-    """Copyleft gate: shipped sources may not carry a copyleft or non-free licence marker.
-
-    Rules live in .github/misc/.license-guard.txt, one "<scope glob> <regex>" per line, because a
-    derived project may legitimately vendor a GPL subtree under its own scope while the library
-    itself stays permissive."""
-    files = _gated_files(explicit, GATE_DIRS)
-    if not files:
-        return _empty(explicit, 'license', GATE_DIRS)
-    rules = _scoped_rules(LICENSE_CONFIG, re.IGNORECASE)
-    print(f'[gates] license: {len(files)} file(s), {len(rules)} rule(s) from {LICENSE_CONFIG}', flush=True)
-    violations = 0
-    for path in files:
-        scoped = _scoped_name(path)
-        active = [regex for scope, regex in rules if fnmatch.fnmatch(scoped, scope)]
-        if not active:
-            continue
-        for lineno, line in enumerate(path.read_text(encoding='utf-8', errors='replace').splitlines(), start=1):
-            for regex in active:
-                if regex.search(line):
-                    violations += 1
-                    print(f'{_rel(path)}:{lineno}: forbidden licence marker ({regex.pattern})', flush=True)
-                    print(f'    {line.strip()[:100]}', flush=True)
-    if violations:
-        print(f'[gates] license: FAIL ({violations} violation(s))', flush=True)
-        return 1
-    print(f'[gates] license: OK ({len(files)} file(s))', flush=True)
-    return 0
-
-
-def cmd_strict(explicit):
-    """Every public header must compile standalone under the project's hard constraints
-    (-fno-exceptions -fno-rtti for C++, -pedantic for C). ADR-level promises become testable here."""
-    headers = _gated_files(explicit, ('include',))
-    if not headers:
-        return _empty(explicit, 'strict', ('include',))
-    cstd, cppstd = _standards()
-    compilers = {
-        '.h': (_require('gcc', 'install it with `apt-get install gcc`'), [f'-std=c{cstd}', '-pedantic']),
-        '.hpp': (_require('g++', 'install it with `apt-get install g++`'),
-                 [f'-std=c++{cppstd}', '-fno-exceptions', '-fno-rtti']),
-    }
-    print(f'[gates] strict: {len(headers)} header(s), -std=c{cstd} / -std=c++{cppstd} '
-          f'-fno-exceptions -fno-rtti', flush=True)
-    failed = []
-    with tempfile.TemporaryDirectory(prefix='gates-strict-') as workdir:
-        for header in headers:
-            exe, flags = compilers[header.suffix]
-            tu = Path(workdir) / (header.stem + ('.c' if header.suffix == '.h' else '.cpp'))
-            tu.write_text(f'#include "{header.relative_to(ROOT / "include").as_posix()}"\n'
-                          '\nint main(void) { return 0; }\n', encoding='utf-8')
-            cmd = [exe, *flags, '-Wall', '-Wextra', '-Werror', '-I', str(ROOT / 'include'),
-                   '-fsyntax-only', str(tu)]
-            done = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True)
-            if done.returncode != 0:
-                failed.append(header)
-                print(f'--- {_rel(header)}', flush=True)
-                print((done.stdout + done.stderr).strip(), flush=True)
-    if failed:
-        print(f'[gates] strict: FAIL ({len(failed)}/{len(headers)} header(s))', flush=True)
-        return 1
-    print(f'[gates] strict: OK ({len(headers)} header(s))', flush=True)
-    return 0
-
-
-def cmd_claims(explicit):
-    """Every installed header must carry a claim row with a level and evidence that exists.
-    Delegates to claim_gate.py so the rule has one implementation.
-
-    With `--impact <path|identifier>` it answers a different question -- which claims rest on this thing,
-    and which cases must be re-run -- by reading the basis graph in `claim-basis.json`. That is the
-    query the foundation log's blast-radius column is filled from.
-    """
-    args = [sys.executable, str(ROOT / '.github' / 'misc' / 'claim_gate.py'), *explicit]
-    done = subprocess.run(args, cwd=ROOT, text=True)
-    return done.returncode
-
-
-def cmd_capabilities(_explicit):
-    """Every capability states its diagnostic channel, admission, boundary and invariant participation.
-    Delegates to capability_gate.py so the rule has one implementation."""
-    done = subprocess.run([sys.executable, str(ROOT / '.github' / 'misc' / 'capability_gate.py')],
-                          cwd=ROOT, text=True)
-    return done.returncode
-
-
-def cmd_docs(_explicit):
-    """Doxygen block comments: aligned star column, consistent continuation indent, 120 columns,
-    no mid-CJK breaks, one tag line per language group, no multi-line `///<`. Delegates to docfmt.py
-    so the rule has one implementation. Then checks the numbers the documentation claims against the
-    artefacts the build produced, because a number in prose with no owner drifts."""
-    done = subprocess.run([sys.executable, str(ROOT / '.github' / 'misc' / 'docfmt.py'), '--check'],
-                          cwd=ROOT, text=True)
-    if done.returncode != 0:
-        return done.returncode
-    numbers = subprocess.run([sys.executable, str(ROOT / '.github' / 'misc' / 'number_sheet.py'), '--check'],
-                             cwd=ROOT, text=True)
-    return numbers.returncode
-
-
-def cmd_boundaries(_explicit):
-    """Every statement on the boundaries page names the case that pins it, and that case exists.
-
-    The page is only worth having if it cannot rot: a limit documented next to a case that was renamed, deleted or never
-    written is worse than no page, because it reads as a guarantee. So each row carries `Suite.Case`, and this gate
-    refuses a reference for which no `TEST(Suite, Case)` exists in the test tree. It also refuses a page that has lost its
-    rows -- an emptied table would satisfy a per-row check trivially."""
-    page = ROOT / 'docs' / 'sphinx' / 'source' / 'boundaries.rst'
-    if not page.is_file():
-        _die(f'missing {_rel(page)}')
-    text = page.read_text(encoding='utf-8')
-    refs = re.findall(r'``([A-Z][A-Za-z0-9_]*)\.([A-Za-z0-9_]+)``', text)
-    sources = '\n'.join(path.read_text(encoding='utf-8', errors='replace')
-                         for path in (ROOT / 'test_package' / 'test').rglob('*.cpp'))
-    missing = [f'{suite}.{case}' for suite, case in refs if f'TEST({suite}, {case})' not in sources]
-    minimum = 8
-    if len(refs) < minimum:
-        _die(f'{_rel(page)}: {len(refs)} pinned statement(s), expected at least {minimum}')
-    if missing:
-        for name in missing:
-            print(f'[boundaries] no TEST() pins {name}', file=sys.stderr, flush=True)
-        _die(f'{_rel(page)}: {len(missing)} of {len(refs)} statement(s) point at a case that does not exist')
-    print(f'[boundaries] OK ({len(refs)} statement(s), each pinned by a case that exists)')
-    return 0
-
-
-def _fmpy_python():
-    """An interpreter that can `import fmpy`, or None.
-
-    Same optional-material convention as the FMI headers: an explicit environment variable first, then the materials
-    checkout this box happens to have, then the interpreter running the gate."""
-    candidates = []
-    explicit = os.environ.get('FOC_FMPY_PYTHON')
-    if explicit:
-        candidates.append(explicit)
-    candidates.append(str(ROOT / 'workspace' / 'materials' / '.venv' / 'bin' / 'python'))
-    candidates.append(sys.executable)
-    for exe in candidates:
-        if not Path(exe).is_file():
-            continue
-        try:
-            done = subprocess.run([exe, '-c', 'import fmpy'], capture_output=True, text=True, timeout=300)
-        except OSError:
-            continue
-        if done.returncode == 0:
-            return exe
-    return None
-
-
-def cmd_fmu(_explicit, tolerant=False):
-    """The FMU is a claim about a third-party master, so the check is that a third-party master loads it.
-
-    Build it with `api/fmu/build.py` (the FMI headers are the standard ones FMPy ships, unmodified), then drive it with
-    `api/fmu/smoke.py`, which instantiates the block, moves the rotor from the master side and asserts on what comes
-    back. Both halves need optional material -- a Python that can import fmpy, and the C archives a `conan create`
-    produced. When they are absent this prints one SKIPPED line and stops: loudly, because a silent skip would turn
-    "the FMU loads in a standard master" into a claim nobody has checked."""
-    python = _fmpy_python()
-    # CONAN_HOME first: CI sets it explicitly, and assuming `~/.conan2` there would work by accident until
-    # somebody moves the cache and the gate reports "no archive" instead of a real answer.
-    conan_home = Path(os.environ.get('CONAN_HOME') or (Path.home() / '.conan2')).expanduser()
-    archives = sorted(conan_home.glob('p/b/foc*/p/lib/libfoc_c.a'))
-    reason = None
-    if python is None:
-        reason = 'no interpreter that can import fmpy (set FOC_FMPY_PYTHON to one)'
-    elif not archives:
-        reason = f'no libfoc_c.a in the Conan cache at {conan_home} (run `conan create .` first)'
-    if reason is not None:
-        if not tolerant:
-            _die(f'the FMU check cannot run: {reason}')
-        print(f'[fmu] SKIPPED: {reason}', flush=True)
-        return 0
-    built = subprocess.run([python, str(ROOT / 'api' / 'fmu' / 'build.py')], cwd=ROOT, text=True)
-    if built.returncode != 0:
-        return built.returncode
-    checked = subprocess.run([python, str(ROOT / 'api' / 'fmu' / 'smoke.py')], cwd=ROOT, text=True)
-    return checked.returncode
-
-
-def cmd_pil(_explicit, tolerant=False):
-    """The target ISA must compute what the host computes, not merely compile for it.
-
-    `benchmark/script/run_pil.py` builds the same scenario twice -- once for the host, once for aarch64 -- runs both,
-    and compares the metrics. A cross-compile leg answers "does it build"; this answers "does it compute the same
-    thing", which is the question a different `float` implementation, a different FMA contraction or a different
-    `-ffast-math` can answer "no" to.
-
-    Optional material, same convention as the FMU: a cross compiler and qemu-user. Absent, this prints one SKIPPED line
-    and stops when it is one in a chain of gates, and fails when it was asked for by name -- a gate that skips quietly
-    is not a gate. The measurement this gate would produce has therefore *not* been made on a machine without qemu, and
-    the skip line says so rather than implying a pass."""
-    script = ROOT / 'benchmark' / 'script' / 'run_pil.py'
-    done = subprocess.run([sys.executable, str(script), '--require-target'], cwd=ROOT, text=True)
-    if done.returncode == 2:
-        reason = 'no aarch64 cross compiler or qemu-user on this machine'
-        if tolerant:
-            print(f'[pil] SKIPPED: {reason}; the target-ISA comparison was NOT run', flush=True)
-            return 0
-        _die(f'the PIL comparison cannot run: {reason}')
-    return done.returncode
 
 
 def main():
@@ -573,17 +324,7 @@ def main():
         'format': 'clang-format --dry-run --Werror over include/ + src/',
         'tidy': 'clang-tidy (WarningsAsErrors) over src/ TUs; header-only: one synthetic TU per header',
         'guard': 'forbidden #include directives, scoped rules from .github/misc/.include-guard.txt',
-        'license': 'copyleft / non-free licence markers, scoped rules from .github/misc/.license-guard.txt',
-        'strict': 'every public header compiles standalone with -fno-exceptions -fno-rtti (C: -pedantic)',
-        'claims': 'every installed header has a README claim row with a level and existing evidence; '
-                  '`claims --impact <path|name>` lists what rests on it',
-        'docs': 'Doxygen blocks: star alignment, continuation indent, 120 columns, no mid-CJK breaks',
-        'boundaries': 'every statement on the boundaries page names a test case that exists',
-        'capabilities': 'every capability states its diagnostic channel, admission, boundary and invariant participation',
-        'fmu': 'build the FMU and load it in a standard FMI master (FMPy); SKIPPED when its material is absent',
-        'pil': 'run the speed-step scenario on the target ISA under qemu and compare with the host; SKIPPED when its '
-               'material is absent',
-        'all': 'format + tidy + guard + license + strict + claims + docs + boundaries + capabilities + fmu + pil',
+        'all': 'format + tidy + guard',
     }
     for name, text in helps.items():
         leaf = sub.add_parser(name, help=text)
@@ -594,9 +335,6 @@ def main():
         if name == 'tidy':
             leaf.add_argument('--include', action='append', default=[], metavar='DIR', help='extra -I (repeatable)')
             leaf.add_argument('--isystem', action='append', default=[], metavar='DIR', help='extra -isystem (repeatable)')
-        if name == 'claims':
-            leaf.add_argument('--impact', metavar='TERM',
-                              help='list the claims that rest on this path or identifier, with the cases to re-run')
     args = parser.parse_args()
 
     if args.gate == 'format':
@@ -605,25 +343,7 @@ def main():
         return cmd_tidy(args.files, args.include, args.isystem)
     if args.gate == 'guard':
         return cmd_guard(args.files)
-    if args.gate == 'license':
-        return cmd_license(args.files)
-    if args.gate == 'strict':
-        return cmd_strict(args.files)
-    if args.gate == 'claims':
-        return cmd_claims([*args.files, *(['--impact', args.impact] if args.impact else [])])
-    if args.gate == 'docs':
-        return cmd_docs(args.files)
-    if args.gate == 'boundaries':
-        return cmd_boundaries(args.files)
-    if args.gate == 'capabilities':
-        return cmd_capabilities(args.files)
-    if args.gate == 'fmu':
-        return cmd_fmu(args.files)
-    if args.gate == 'pil':
-        return cmd_pil(args.files)
-    return 1 if (cmd_format([]) or cmd_tidy([]) or cmd_guard([]) or cmd_license([]) or cmd_strict([]) or
-                 cmd_claims([]) or cmd_docs([]) or cmd_boundaries([]) or cmd_capabilities([]) or
-                 cmd_fmu([], tolerant=True) or cmd_pil([], tolerant=True)) else 0
+    return 1 if (cmd_format([]) or cmd_tidy([]) or cmd_guard([])) else 0
 
 
 if __name__ == '__main__':

@@ -11,16 +11,16 @@ breakdown so a regression is attributable instead of mysterious.
 Where the numbers come from
 ---------------------------
 `test_package/test/export/coverage/coverage_summary.json`, written by the coverage leg of
-`conan create` (`.github/misc/coverage_gate.py` never instruments anything itself). Scope rates are
+`conan create` (`.github/project/coverage_gate.py` never instruments anything itself). Scope rates are
 summed from per-file LF/LH counts, **never** averaged over per-file percentages: that would weight a
 three-line header like a three-hundred-line source.
 
 Usage
 -----
-    python3 .github/misc/coverage_gate.py                  # floors for this OS, from metadata.json
-    python3 .github/misc/coverage_gate.py --core 95 --all 80
-    python3 .github/misc/coverage_gate.py --verbose        # per-file table + margins
-    python3 .github/misc/coverage_gate.py --list           # files in each scope
+    python3 .github/project/coverage_gate.py                  # floors for this OS, from metadata.json
+    python3 .github/project/coverage_gate.py --core 95 --all 80
+    python3 .github/project/coverage_gate.py --verbose        # per-file table + margins
+    python3 .github/project/coverage_gate.py --list           # files in each scope
 
 Exit codes: 0 pass, 1 a floor is violated, 2 the summary is missing or too old to judge.
 """

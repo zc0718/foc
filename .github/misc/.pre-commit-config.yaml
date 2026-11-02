@@ -25,20 +25,6 @@ repos:
         language: system
         files: '^(include|src)/.*\.(c|h|cpp|hpp)$'
 
-      - id: strict-header
-        name: strict headers (-fno-exceptions -fno-rtti)
-        entry: python3 .github/misc/gates.py strict
-        language: system
-        files: '^include/.*\.(h|hpp)$'
-
-      # the contracts live in these headers, so touching them (or the gate) reruns the cases
-      - id: contract-negative-compile
-        name: contract negative-compile (incomplete stub must not compile)
-        entry: python3 .github/misc/negative_compile.py
-        language: system
-        pass_filenames: false
-        files: '^(include/foc/(hal|core/observer)/.*\.hpp|\.github/misc/negative_compile\.py)$'
-
       - id: commitlint
         name: commitlint
         entry: npx commitlint --edit --config .github/misc/commitlint.config.js

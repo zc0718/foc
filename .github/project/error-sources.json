@@ -1,0 +1,58 @@
+{
+ "_comment": [
+  "Which injectable model error source is covered by which sensitivity table.",
+  "哪个可注入的模型误差源由哪张敏感度表覆盖。",
+  "",
+  "Why this file exists. A sensitivity table is a snapshot: it says 'on the day we ran it, these eleven",
+  "sources had these effects'. The failure it cannot see is the twelfth source -- someone adds a knob to the",
+  "plant or the HAL, the table keeps passing, and the claim keeps being published as if the new knob were",
+  "covered. The README's L3 row rests on this table, so 'a new knob must enter the table' has to be a gate.",
+  "本文件存在的理由。敏感度表是一张快照：它说的是'跑它的那天，这十一项有此效果'。它看不见的失败是第十二项——",
+  "有人给 plant 或 HAL 加了一个旋钮，表格照旧通过，而主张照旧被发表得好像新旋钮已被覆盖。README 的 L3 行靠这张",
+  "表支撑，所以'新旋钮必须入表'必须是一条门禁。",
+  "",
+  "How it is checked (`gates.py budget`). Every `void set_<name>(` in `files` must appear either in",
+  "`covered` -- in which case the `StartupEffects` field it drives must appear in `covered_by`, so the",
+  "mapping cannot rot into a claim -- or in `not_an_error_source` with a written reason. A setter in",
+  "neither list is red.",
+  "检查方式（`gates.py budget`）。`files` 里每一个 `void set_<name>(` 必须出现在 `covered` 中",
+  "（此时它驱动的 `StartupEffects` 字段必须出现在 `covered_by` 里，于是这层映射不会退化成一句声明），",
+  "或出现在带理由的 `not_an_error_source` 中。两者都不在 = 红。",
+  "A knob may be covered by a table other than `covered_by`: `covered` maps the setter to the field it drives, and `covered_in` overrides which file that field must appear in. Position quantisation is covered by the positioning budget table, not by the start-up sensitivity table, and both are tables under the same rule."
+ ],
+ "files": [
+  "test_package/test/unit/sil_pmsm_plant.hpp",
+  "test_package/test/unit/sil_plant_hal.hpp"
+ ],
+ "covered_by": "test_package/test/unit/test_sil_startup.cpp",
+ "covered": {
+  "set_d_axis_saturation": "dsat_depth",
+  "set_q_axis_saturation": "qsat_depth",
+  "set_iron_loss": "rm_ohm",
+  "set_winding_temperature": "winding_c",
+  "set_current_noise": "noise_a",
+  "set_phase_gain": "gain",
+  "set_offset_a": "offset_a",
+  "set_mount_error_rad": "mount_error_rad",
+  "set_deadtime_voltage": "v_dead",
+  "set_resolution_rad": "resolution_rad",
+  "set_stribeck_speed": "stribeck_speed_rad_s"
+ },
+ "not_an_error_source": {
+  "set_voltage_dq": "the drive input, not an imperfection: it is what the controller commands.",
+  "set_voltage": "the drive input of the phase-variable plant, same reason.",
+  "set_load_torque": "an operating condition the claim is stated over, not a modelling error. The load-step series covers it as a sweep.",
+  "set_mechanical_speed": "a test-double switch that freezes the mechanics (dyno mode), not a physical effect.",
+  "set_state": "initial condition of the phase-variable plant, not an imperfection.",
+  "set_sensor_present": "topology (sensored vs sensorless), not an error magnitude: it changes which claim applies rather than degrading a number.",
+  "set_offset_mech_rad": "the alignment offset the library itself computes and hands over, not a plant imperfection.",
+  "set_index_position_mech_rad": "presence and location of an index mark: topology, same reason as set_sensor_present.",
+  "set_voltage_v": "the DC link setting, an operating condition.",
+  "set_deadtime_transition": "shapes the same dead-time source rather than adding one: the table covers its magnitude with the ideal sign() model, which is the larger of the two because a smooth transition reduces the clamp.",
+  "set_inverter": "attaches a different voltage path (switching model instead of mean value); the dead-time row covers that source, and two sources for one effect would make the number unreadable."
+ },
+ "covered_in": {
+  "set_resolution_rad": "test_package/test/unit/test_sil_position_budget.cpp",
+  "set_stribeck_speed": "test_package/test/unit/test_friction_comp.cpp"
+ }
+}

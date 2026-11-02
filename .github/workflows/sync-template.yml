@@ -13,6 +13,12 @@ name: Template Bootstrap
 # Windows (``core.symlinks`` is off by default).  A byte-identical mirror makes a
 # fresh instance work with zero setup; `skillkit validate` rejects any mirror
 # that has drifted, so the body is still edited in exactly one place.
+#
+# It also drops `CHANGELOG.md`: "Use this template" copies this repository's own
+# release history, whose entries link to this repository's commits and tags, and
+# that history belongs here rather than to a new project.  semantic-release
+# recreates the file on the instance's first release with its own URLs (see
+# `.github/misc/.releaserc.json`).
 on:
   push:
     branches:
@@ -40,18 +46,22 @@ jobs:
         name: Materialize the .agents view
         run: python3 .github/skills/_shared/skillkit/cli.py sync --view-mode copy
       -
-        name: Commit the view
+        name: Drop the template's release history
+        # --ignore-unmatch keeps a re-run harmless; semantic-release recreates the file on the first release.
+        run: git rm -q --ignore-unmatch CHANGELOG.md
+      -
+        name: Commit the preparation
         run: |
           git add -f .agents/skills
           if git diff --cached --quiet; then
-            echo "::notice::.agents/skills is already materialized"
+            echo "::notice::the instance is already prepared (skills view in place, no template changelog)"
             exit 0
           fi
           git -c user.name='github-actions[bot]' \
               -c user.email='41898282+github-actions[bot]@users.noreply.github.com' \
-              commit -m 'chore(:wrench:): materialize the .agents skills view'
+              commit -m 'chore(:wrench:): prepare the instance after template instantiation'
           if ! git push; then
-            echo "::warning::could not push the view (is 'contents: write' allowed?); run"
+            echo "::warning::could not push the preparation (is 'contents: write' allowed?); run"
             echo "::warning::'python3 .github/skills/_shared/skillkit/cli.py sync --view-mode copy' once and commit the result"
           fi
 
