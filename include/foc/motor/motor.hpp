@@ -10,6 +10,7 @@
 #include <foc/core/observer/observer_policy.hpp>
 #include <foc/core/position_reference.hpp>
 #include <foc/core/position.hpp>
+#include <foc/core/protection.hpp>
 #include <foc/core/reference.hpp>
 #include <foc/core/sm.hpp>
 #include <foc/core/traits.hpp>
@@ -189,6 +190,30 @@ class Motor final {
     void fault() noexcept;
 
     /**
+     * @brief [en] Enter the latched Fault state with a cause, and disable the inverter.
+     * @brief [zh] 带成因进入锁存 Fault 状态，并关闭逆变器。
+     * @param code [en] what went wrong; `FaultCode::None` when the caller has no word for it.
+     * @param code [zh] 出了什么问题；调用方没有对应词条时用 `FaultCode::None`。
+     * @note [en] A fault state without a cause is a support call with no first question, so every raise point here
+     *            states one. This is the C++ half of the vocabulary the C API already names through
+     *            `foc_bridge_fault_name()`.
+     * @note [zh] 没有成因的 Fault 状态是"无从问起"的售后电话，因此这里的每个触发点都要报一个。它就是 C API 已经通过
+     *            `foc_bridge_fault_name()` 给出名字的那套词条的 C++ 半边。
+     * @since 0.1.6
+     */
+    void fault(core::FaultCode code) noexcept;
+
+    /**
+     * @brief [en] The cause recorded by the last `fault()`, or `None` when there was no fault.
+     * @brief [zh] 最近一次 `fault()` 记录的成因；没有故障时为 `None`。
+     * @note [en] `clear_fault()` resets it together with the controllers, so a stale cause can never outlive the state
+     *            it explains.
+     * @note [zh] `clear_fault()` 会连同控制器一起把它复位，因此陈旧的成因不会比它所解释的状态活得更久。
+     * @since 0.1.6
+     */
+    [[nodiscard]] auto fault_code() const noexcept -> core::FaultCode;
+
+    /**
      * @brief [en] Leave Fault (only legal from Fault) and reset the controllers.
      * @brief [zh] 退出 Fault（仅能从 Fault 离开）并复位控制器。
      * @since 0.1.0
@@ -366,6 +391,55 @@ class Motor final {
 
   private:
     /**
+     * @brief [en] How long after a forced-angle hand-over the observer gets before its speed is compared with the
+     *             commanded one. 20 ms is the window the hand-over case already measured convergence in.
+     * @brief [zh] 强制角交接之后留给观测器的时间，之后才把它的转速与命令值比较。20 ms 是交接用例已经实测过收敛的窗口。
+     */
+    static constexpr float kHandoverCheckS = 0.02F;
+
+    /**
+     * @brief [en] Below this fraction of the hand-over speed the start is reported as `LostSync`. Half is not a tuned
+     *             number: a caught rotor is at the commanded rate, one that was never caught is at a few percent.
+     * @brief [zh] 低于交接速度的这个比例就报 `LostSync`。一半不是调出来的数：被抓住的转子就在命令速率上，而从未被抓住的
+     *             只有几个百分点。
+     */
+    static constexpr float kLostSyncSpeedFraction = 0.5F;
+
+    /**
+     * @brief [en] Below this forced rate the hand-over is a *hold*, not a pull, and there is nothing to lose sync with:
+     *             a plain alignment hands over at zero speed by design and must not be judged against a fraction of
+     *             zero.
+     * @brief [zh] 低于这个强制速率时，交接是"按住"而不是"拖动"，没有同步可失：纯对齐按设计就在零速交接，不能用零的几分
+     *             之几去判它。
+     */
+    static constexpr float kLostSyncMinHandoverRadS = 1.0F;
+
+    /**
+     * @brief [en] How long the loop may sit at full current without the machine moving the way it was asked to before
+     *             `Stall` latches. 100 ms is long enough that a speed step's own transient passes through, and short
+     *             enough that a jammed axis is stopped before the winding heats.
+     * @brief [zh] 环路可以顶在满电流、而机器没有按指令方向运动多久之后锁存 `Stall`。100 ms 足够让一次速度阶跃的暂态穿过
+     *             去，又足够短，不至于让卡住的轴先把绕组烤热。
+     */
+    static constexpr float kStallWindowS = 0.1F;
+
+    /**
+     * @brief [en] The current has to be at this fraction of the ceiling for the loop to be out of authority. Below it
+     *             the drive is choosing not to push harder, which is not a stall.
+     * @brief [zh] 电流要到天花板的这个比例，才算环路已经用尽权限。低于它说明驱动是选择不再用力，那不是堵转。
+     */
+    static constexpr float kStallCurrentFraction = 0.9F;
+
+    /**
+     * @brief [en] Speed below this fraction of the command -- or of the wrong sign -- counts as "not moving the way it
+     *             was asked to". Reversal counts: a machine driven backwards under load is more stuck than one that is
+     *             merely slow.
+     * @brief [zh] 转速低于命令的这个比例、或者符号相反，都算"没有按指令方向运动"。反向也算：负载下被推着倒转的机器比只
+     *             是慢一点的机器更"卡"。
+     */
+    static constexpr float kStallSpeedFraction = 0.25F;
+
+    /**
      * @brief [en] Keep one policy output inside the nameplate. A non-finite value is a policy bug, not a physical
      *             quantity: it collapses to 0 instead of poisoning the integrators.
      * @brief [zh] 把策略的单个输出限制在铭牌范围内。非有限值是策略的缺陷而非物理量：归零而不是让 它污染积分器。
@@ -425,6 +499,7 @@ class Motor final {
     core::StateMachine sm_;
     Telemetry telemetry_;
     ErrorCode status_;
+    core::FaultCode fault_code_{core::FaultCode::None};
     ReferenceMode mode_;
     float iq_ref_a_;
     float speed_ref_rad_s_;
@@ -443,6 +518,17 @@ class Motor final {
     std::uint64_t last_clock_us_;
     bool clock_seeded_;
     Ab<float> v_ab_prev_;
+    // Post-hand-over check: the open-loop start forces the angle and cannot see the rotor, so it cannot tell whether
+    // the rotor was caught. The observer can, one window later. Kept as a countdown in seconds rather than ticks so a
+    // variable control period cannot stretch the window.
+    // 交接后检查：开环起动强制角度、看不见转子，因此它无法判断转子是否被抓住。观测器在一个窗口之后可以。
+    // 用秒而不是 tick 做倒计时，变化的控制周期就不能把这个窗口拉长。
+    float handover_omega_e_rad_s_{0.0F};
+    float handover_check_s_{0.0F};
+    // Stall detector: the loop is at full current and the machine is not moving the way it was asked to. Counted in
+    // seconds for the same reason as the hand-over window -- a tick count means nothing across control rates.
+    // 堵转检测：环路顶在满电流，而机器没有按指令方向运动。用秒计数，理由与交接窗口相同——tick 数跨控制频率没有意义。
+    float stall_elapsed_s_{0.0F};
 };
 
 template <typename Observer, typename Modulator, typename Controller, typename HalPolicy, typename RefGenerator,
@@ -548,8 +634,25 @@ template <typename Observer, typename Modulator, typename Controller, typename H
           typename FeedForward, typename PositionControl, typename Aligner, typename Trace>
 void Motor<Observer, Modulator, Controller, HalPolicy, RefGenerator, FeedForward, PositionControl, Aligner,
            Trace>::fault() noexcept {
+    fault(core::FaultCode::None);
+}
+
+
+template <typename Observer, typename Modulator, typename Controller, typename HalPolicy, typename RefGenerator,
+          typename FeedForward, typename PositionControl, typename Aligner, typename Trace>
+void Motor<Observer, Modulator, Controller, HalPolicy, RefGenerator, FeedForward, PositionControl, Aligner,
+           Trace>::fault(core::FaultCode code) noexcept {
+    fault_code_ = code;
     hal_->pwm.disable();
     static_cast<void>(sm_.request(core::MotorState::Fault));
+}
+
+
+template <typename Observer, typename Modulator, typename Controller, typename HalPolicy, typename RefGenerator,
+          typename FeedForward, typename PositionControl, typename Aligner, typename Trace>
+auto Motor<Observer, Modulator, Controller, HalPolicy, RefGenerator, FeedForward, PositionControl, Aligner,
+           Trace>::fault_code() const noexcept -> core::FaultCode {
+    return fault_code_;
 }
 
 template <typename Observer, typename Modulator, typename Controller, typename HalPolicy, typename RefGenerator,
@@ -565,6 +668,9 @@ auto Motor<Observer, Modulator, Controller, HalPolicy, RefGenerator, FeedForward
         policies_.align.reset();
         iq_ref_a_ = 0.0F;
         status_ = ErrorCode::Ok;
+        fault_code_ = core::FaultCode::None;
+        handover_check_s_ = 0.0F;
+        stall_elapsed_s_ = 0.0F;
     }
     return rc;
 }
@@ -696,6 +802,13 @@ auto Motor<Observer, Modulator, Controller, HalPolicy, RefGenerator, FeedForward
         speed_mech = std::isnan(sensor_speed) ? 0.0F : sensor_speed;
         i_dq = measure_dq(i_uvw, theta_e);
         if (align_out.finished) {
+            // Hand-over. The forced vector's own rate is the speed the rotor has to be at if it was caught, and it is
+            // the only speed available here: the observer is not stepped while the angle is forced, so waiting for its
+            // estimate is the only way to learn whether the rotor actually followed.
+            // 交接。强制矢量自身的角速度就是"若转子被抓住则它应有的转速"，而这也是此处唯一可得的转速：强制角度期间观测器
+            // 不被推进，因此要等它的估计才能知道转子是否真的跟上了。
+            handover_omega_e_rad_s_ = align_out.handover_speed_e_rad_s;
+            handover_check_s_ = kHandoverCheckS;
             apply_alignment_offset();
             alignment_finished = true;
         }
@@ -861,6 +974,52 @@ auto Motor<Observer, Modulator, Controller, HalPolicy, RefGenerator, FeedForward
             v_ab = Ab<float>{static_cast<float>(v_ab.alpha + injected.alpha),
                              static_cast<float>(v_ab.beta + injected.beta)};
         }
+    }
+    // The window after a forced-angle hand-over, checked on the speed the loop *publishes* -- from the sensor or from
+    // the observer, whichever owns the angle -- because the open-loop start cannot see the rotor at all. A ramp that
+    // outran the rotor still reaches its hand-over speed: the routine only knows the angle it commands. Half the
+    // commanded rate is the threshold, and it is stated rather than tuned: a caught rotor sits at the commanded rate,
+    // one that was never caught sits at a few percent of it.
+    // 强制角交接之后的窗口，检查的是环路**发布**的转速——不论角度归传感器还是归观测器——因为开环起动完全看不见转子。
+    // 跑得比转子快的斜坡照样会到达交接速度：例程只知道它下发的角度。阀值取命令速率的一半，并且是写下来的而不是调出来的：
+    // 被抓住的转子就坐在命令速率上，从未被抓住的只有它的几个百分点。
+    if (handover_check_s_ > 0.0F) {
+        handover_check_s_ -= dt_s;
+        if (handover_check_s_ <= 0.0F) {
+            handover_check_s_ = 0.0F;
+            const float electrical_speed = std::abs(speed_mech) * static_cast<float>(config_.pole_pairs);
+            if ((handover_omega_e_rad_s_ > kLostSyncMinHandoverRadS) &&
+                (electrical_speed < (kLostSyncSpeedFraction * handover_omega_e_rad_s_))) {
+                fault(core::FaultCode::LostSync);
+                status_ = ErrorCode::Fault;
+                return status_;
+            }
+        }
+    }
+    // Stall: the loop is asking for everything it has and the machine is still not moving the way it was told to. This
+    // is the second fault code that had a definition and no producer. The condition is deliberately narrow -- full
+    // current *and* the wrong speed *and* sustained -- because the alternative is a drive that trips on every large
+    // speed step, and a protection nobody trusts gets disabled.
+    // 堵转：环路已经在要求它能给出的全部，而机器仍没有按指令方向运动。这是第二个"有定义、没有生产者"的故障码。
+    // 条件刻意写得窄——满电流**且**转速不对**且**持续——因为另一种写法会让每一次大的速度阶跃都跳闸，而没人信任的保护
+    // 最终会被关掉。
+    if (mode_ != ReferenceMode::Torque) {
+        const float command = std::abs(speed_ref_rad_s_);
+        const bool out_of_authority = std::abs(iq_ref_a_) >= (kStallCurrentFraction * config_.i_max_a);
+        const bool not_moving = (command > 0.0F) && ((speed_mech * speed_ref_rad_s_) < 0.0F ||
+                                                     (std::abs(speed_mech) < (kStallSpeedFraction * command)));
+        if (out_of_authority && not_moving) {
+            stall_elapsed_s_ += dt_s;
+            if (stall_elapsed_s_ >= kStallWindowS) {
+                fault(core::FaultCode::Stall);
+                status_ = ErrorCode::Fault;
+                return status_;
+            }
+        } else {
+            stall_elapsed_s_ = 0.0F;
+        }
+    } else {
+        stall_elapsed_s_ = 0.0F;
     }
     // The modulator is told what it is producing *and* what the phases are carrying: a dead-time
     // compensator in front of it needs the second half, and a plain SVPWM ignores it.

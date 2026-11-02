@@ -81,8 +81,21 @@ struct AlignConfig final {
 struct AlignOutput final {
     float id_a;        ///< [en] d-axis current, A. [zh] d 轴电流，A。
     float theta_e_rad; ///< [en] forced electrical angle, rad. [zh] 强制电角度，rad。
-    bool finished;     ///< [en] accepted on this tick. [zh] 本次 tick 捕获通过。
-    bool failed;       ///< [en] rejected on this tick. [zh] 本次 tick 捕获被拒。
+    /**
+     * @brief [en] The electrical speed the sequence hands over *at*, or 0 when it hands over without a pull.
+     * @brief [zh] 序列交接时的电角速度；不拖动就交接时为 0。
+     * @details [en] The aligner is the only party that knows whether the rotor was dragged up to a speed or merely
+     *               held: a plain alignment turns the vector to its target and stops, so its own angle rate says
+     *               nothing about the rotor. `Motor` reads this to decide whether a hand-over can be judged as "caught"
+     *               at all -- with 0 there is nothing to lose sync with, and a drive that faults on a stationary
+     *               alignment would be unusable.
+     * @details [zh] 只有对齐器自己知道转子是被拖到了某个转速、还是仅仅被按住：纯对齐把矢量转到目标就停，它自己的角速度
+     *               与转子无关。`Motor` 用它判断这次交接是否**可以**被判为"抓住了"——为 0 时没有同步可失，否则一个静止对
+     *               齐就会报故障，这样的驱动无法使用。
+     */
+    float handover_speed_e_rad_s{0.0F};
+    bool finished; ///< [en] accepted on this tick. [zh] 本次 tick 捕获通过。
+    bool failed;   ///< [en] rejected on this tick. [zh] 本次 tick 捕获被拒。
 };
 
 
@@ -124,7 +137,7 @@ class NullAlignment final {
     [[nodiscard]] auto step(float dt_s, float angle_mech_rad) noexcept -> AlignOutput {
         static_cast<void>(dt_s);
         static_cast<void>(angle_mech_rad);
-        return AlignOutput{0.0F, 0.0F, false, false};
+        return AlignOutput{0.0F, 0.0F, 0.0F, false, false};
     }
 
     /**

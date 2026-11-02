@@ -29,7 +29,7 @@ constexpr auto valid_config(const MagnetPolarityTest::Config& config) noexcept -
 MagnetPolarityTest::MagnetPolarityTest(Config config) noexcept
     : config_(config), status_(valid_config(config) ? ErrorCode::Ok : ErrorCode::Param), stage_(Stage::SettlePositive),
       verdict_(PolarityVerdict::Inconclusive), theta_e_(0.0F), stage_s_(0.0F), i_before_a_(0.0F),
-      delta_positive_a_(0.0F), delta_negative_a_(0.0F) {}
+      i_before_positive_a_(0.0F), delta_positive_a_(0.0F), delta_negative_a_(0.0F) {}
 
 void MagnetPolarityTest::begin(float theta_e) noexcept {
     // Beginning again is how a caller retries after an Inconclusive answer, so it has to clear the
@@ -42,6 +42,7 @@ void MagnetPolarityTest::begin(float theta_e) noexcept {
     theta_e_ = theta_e;
     stage_s_ = 0.0F;
     i_before_a_ = 0.0F;
+    i_before_positive_a_ = 0.0F;
     delta_positive_a_ = 0.0F;
     delta_negative_a_ = 0.0F;
     status_ = valid_config(config_) ? ErrorCode::Ok : ErrorCode::Param;
@@ -76,6 +77,7 @@ auto MagnetPolarityTest::step(float dt_s, Ab<float> i_ab) noexcept -> Output {
     case Stage::SettlePositive:
         if (stage_s_ >= config_.settle_s) {
             i_before_a_ = i_along;
+            i_before_positive_a_ = i_along;
             stage_ = Stage::PulsePositive;
             stage_s_ = 0.0F;
         }
@@ -127,6 +129,23 @@ auto MagnetPolarityTest::decide() noexcept -> void {
     const float negative = std::fabs(delta_negative_a_);
     const float asymmetry = static_cast<float>(positive - negative);
     if (std::fabs(asymmetry) < config_.min_asymmetry_a) {
+        verdict_ = PolarityVerdict::Inconclusive;
+        return;
+    }
+
+    // The comparison is only meaningful if both pulses started from the same operating point: the
+    // method's premise is "the *same* volt-second pulse in two directions". A settle shorter than the
+    // current's decay leaves the second pulse starting from the first pulse's tail, where the
+    // inductance is already collapsed -- the second rise is then larger for a reason that has nothing
+    // to do with the magnet, and the answer comes out confidently **wrong**. The yardstick is the
+    // caller's own declared resolution: if the two start more than one answer-resolution apart, they
+    // are not the same pulse and no verdict at that resolution can be supported.
+    // 只有在两个脉冲从同一工作点出发时比较才有意义：这个方法的前提是“**相同**伏秒的脉冲在两个
+    // 方向上”。松弛时间短于电流衰减时间时，第二个脉冲从第一个脉冲的尾巴上出发，那里的电感已经塌
+    // 陷——于是第二个上升更大，原因与磁钢无关，而答案会**自信地错**。判据用调用方自己声明的分辨
+    // 力：两个起点相差超过一个答案分辨力时，它们就不是同一个脉冲，那个分辨力下的任何结论都不成立。
+    const float start_spread = std::fabs(i_before_positive_a_ - i_before_a_);
+    if (start_spread >= config_.min_asymmetry_a) {
         verdict_ = PolarityVerdict::Inconclusive;
         return;
     }

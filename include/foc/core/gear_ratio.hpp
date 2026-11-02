@@ -73,6 +73,19 @@ struct GearOutput final {
      *            项。一个没有速度输出的齿轮，就是一台带传动比的滞后发生器。
      */
     float slave_velocity_rad_s;
+    /**
+     * @brief [en] Whether a master step was too large to decode. Sticky until `reset()`.
+     * @brief [zh] 是否有一次主轴步长大到无法解码。粘滞，直到 `reset()`。
+     * @note [en] The same rule as `SpeedFromAngle`, and the same reason: a wrapped angle cannot express a step of half
+     *            a turn or more, so the shortest-arc decode is only a decode while the step stays well inside that.
+     *            This reports the case rather than guessing it. What it cannot do is stated rather than implied: a
+     *            master that loses a *whole* revolution decodes to a step of zero and is indistinguishable from
+     *            standing still, so the flag catches the near-boundary case and not the lost-revolution case.
+     * @note [zh] 与 `SpeedFromAngle` 同一条规则、同一个理由：环绕的角度表达不了半圈以上的步长，所以最短弧解码只在步长远
+     *            小于半圈时才是解码。这里把这个情形**报出来**而不是猜。它做不到的事写明而不暗示：**整整丢掉一圈**的主轴
+     *            会解码成零步长，与静止无法区分，所以这个标志抓的是接近边界的情形，不是丢整圈的情形。
+     */
+    bool lost_count;
 };
 
 
@@ -134,6 +147,7 @@ class ElectronicGear final {
         started_ = false;
         unwrapped_rad_ = 0.0F;
         last_wrapped_rad_ = 0.0F;
+        lost_count_ = false;
     }
 
     /**
@@ -152,7 +166,7 @@ class ElectronicGear final {
      * @since 0.1.10
      */
     [[nodiscard]] auto apply(float master_wrapped_rad, float dt_s) noexcept -> GearOutput {
-        GearOutput out{validate(), 0.0F, 0.0F, 0.0F};
+        GearOutput out{validate(), 0.0F, 0.0F, 0.0F, lost_count_};
         if (out.status != ErrorCode::Ok) {
             return out;
         }
@@ -166,6 +180,13 @@ class ElectronicGear final {
             unwrapped_rad_ = 0.0F;
         } else {
             const float delta = wrap_pi(master_wrapped_rad - last_wrapped_rad_);
+            // `kMaxStepRad` exists to be used. Below the 0.9 factor the decode is inside its domain; at or above it the
+            // shortest arc is no longer a statement about motion, and the count is reported as lost rather than guessed.
+            // `kMaxStepRad` 存在就是为了被使用。在 0.9 系数以下解码还在自己的域内；到或超过它，最短弧就不再是关于运动
+            // 的陈述，此时报"丢计数"而不是猜。
+            if (std::fabs(delta) >= (0.9F * kMaxStepRad)) {
+                lost_count_ = true;
+            }
             unwrapped_rad_ += delta;
             last_wrapped_rad_ = master_wrapped_rad;
             if (dt_s > 0.0F) {
@@ -175,6 +196,7 @@ class ElectronicGear final {
         }
         out.master_unwrapped_rad = unwrapped_rad_;
         out.slave_rad = (config_.ratio * unwrapped_rad_) + config_.offset_rad;
+        out.lost_count = lost_count_; // the flag is set above, after `out` was constructed
         out.status = ErrorCode::Ok;
         return out;
     }
@@ -185,6 +207,12 @@ class ElectronicGear final {
      * @since 0.1.10
      */
     [[nodiscard]] auto master_unwrapped_rad() const noexcept -> float { return unwrapped_rad_; }
+
+    /**
+     * @brief [en] Whether any master step was too large to decode since the last `reset()`.
+     * @brief [zh] 自上次 `reset()` 以来是否有过无法解码的主轴步长。
+     */
+    [[nodiscard]] auto lost_count() const noexcept -> bool { return lost_count_; }
 
     /**
      * @brief [en] The largest jump between two consecutive master samples that counts as motion rather than a jump,
@@ -203,6 +231,7 @@ class ElectronicGear final {
     float unwrapped_rad_{0.0F};
     float last_wrapped_rad_{0.0F};
     bool started_{false};
+    bool lost_count_{false};
 };
 
 

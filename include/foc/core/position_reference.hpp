@@ -96,12 +96,17 @@ class PositionReference final {
     [[nodiscard]] auto homed() const noexcept -> bool { return homed_; }
 
     /**
-     * @brief [en] Whether the last `update()` saw a step too large to unwrap.
-     * @brief [zh] 上一次 `update()` 是否遇到了无法解开折返的跳变。
-     * @note [en] Sticky until `reset()`. A reconstruction that quietly guessed its way through a jump would produce a
-     *            plausible angle that is off by a whole turn, which is worse than saying it lost count.
-     * @note [zh] 一直保持到 `reset()`。悄悄猜过去的重建会给出一个"看起来合理"却差了整整一圈的角度，那比承认丢了计数更
-     *            糟。
+     * @brief [en] Whether the reconstruction is no longer trustworthy: a step too large to unwrap, or a mark that
+     *             disagrees with the count by more than the channel can resolve.
+     * @brief [zh] 重建是否已不可信：无法解开折返的跳变，或与计数相差超过通道分辨力的标记。
+     * @note [en] Sticky until `reset()` or the next accepted mark. A reconstruction that quietly guessed its way
+     *            through a jump would produce a plausible angle that is off by a whole turn, which is worse than saying
+     *            it lost count. The index path is guarded because a spurious pulse would otherwise move the origin by
+     *            up to half a mechanical turn and nothing could tell: the same rule the electrical step follows, in the
+     *            same units.
+     * @note [zh] 一直保持到 `reset()` 或下一个被接受的标记。悄悄猜过去的重建会给出一个"看起来合理"却差了整整一圈的角
+     *            度，那比承认丢了计数更糟。索引通路也受同一个护栏约束，否则一个虚假脉冲会把原点移走最多半个机械圈而无从
+     *            得知——与电角度跳变遵守同一条规则、同一个单位。
      * @since 0.1.6
      */
     [[nodiscard]] auto lost_count() const noexcept -> bool { return lost_count_; }

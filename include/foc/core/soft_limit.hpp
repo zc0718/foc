@@ -69,6 +69,13 @@ struct SoftLimitOutput final {
  *     mm is exactly `v*dt` for the 1 ms this drive takes to deliver the current it was asked for. A ceiling that
  *     assumes instantaneous braking assumes infinite jerk, and no drive has it.
  *
+ *     The invariant also has a *solution*, and that solution is the number to commission against: the largest speed the
+ *     cap lets through at distance `d` is `sqrt(a^2*tau^2 + 2*a*d) - a*tau`, which falls back to the familiar
+ *     `sqrt(2*a*d)` as the delay goes to zero. It is homogeneous of degree one in `(d, a)` jointly, so a machine twice
+ *     as strong working over twice the distance is exactly twice as fast rather than `sqrt(2)` times, and each error
+ *     source has a plain coefficient: `a/(v+a*tau)` per radian of wall error, `v^2/(2*a*(v+a*tau))` per rad/s^2 of
+ *     braking capability, and `-a*v/(v+a*tau)` per second of delay.
+ *
  *     两半回答两种不同的失效，把它们混在一起正是软限位名声不好的原因。拒绝窗口外的目标修的是**编程**错误——一次本就不该
  *     下发的运动——而它用状态回答而不是钳位，因为钳位会把一条不可能的命令变成一条看起来合理的命令，调用方永远学不到。靠
  *     近墙时限制速度修的是**物理**错误——轴有动量，需要距离把它耗掉——而它用一个每周期都成立的守恒式回答： `v² <= 2·a·(d
@@ -80,6 +87,11 @@ struct SoftLimitOutput final {
  *     `v·dt` 这一项不是精修，而是能不能用的分界。在 SIL plant 上以 20 rad/s 冲向一面墙：没有这一项时轴越过 **19 mm**，
  *     有它时停在墙前 **1.04 mm**，而 19 mm 恰好是这台驱动把电流送到位所需的 1 ms 里的 `v·dt`。假设瞬时制动的上限等于假
  *     设无限加加速度，而没有哪台驱动有这个。
+ *
+ *     这条守恒式还有一个**解**，而那个解才是调试时该对着的数：距离 `d` 处上限放过的最大速度是 `sqrt(a²·τ² + 2·a·d) −
+ *     a·τ`，延迟趋零时它退回熟悉的 `sqrt(2·a·d)`。它在 `(d, a)` 上联合一次齐次，所以一台强一倍、行程也长一倍的机器恰好
+ *     快一倍而不是 `sqrt(2)` 倍；每个误差源都有一个平实的系数：每弧度墙的位置误差 `a/(v+a·τ)`、每 rad/s² 的制动能力
+ *     `v²/(2·a·(v+a·τ))`、每秒延迟 `−a·v/(v+a·τ)`。
  * @since 0.1.10
  * @exporter
  */

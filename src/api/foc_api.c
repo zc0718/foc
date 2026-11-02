@@ -173,6 +173,13 @@ foc_err_t foc_motor_get_status(foc_motor_t motor, foc_motor_status_t *out) {
     return foc_bridge_get_status(motor, out);
 }
 
+foc_err_t foc_motor_get_position_absolute(foc_motor_t motor, float *position_mech_rad) {
+    if ((motor == NULL) || (position_mech_rad == NULL)) {
+        return FOC_ERR_PARAM;
+    }
+    return foc_bridge_get_position_absolute(motor, position_mech_rad);
+}
+
 foc_err_t foc_tick(foc_motor_t motor, float dt_s) {
     if ((motor == NULL) || !isfinite(dt_s) || !(dt_s > 0.0F)) {
         return FOC_ERR_PARAM;

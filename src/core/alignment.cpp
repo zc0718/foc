@@ -313,7 +313,10 @@ auto AlignRoutine::fail(AlignFailure reason) noexcept -> AlignOutput {
     state_ = AlignState::Failed;
     failure_ = reason;
     id_a_ = 0.0F;
-    return AlignOutput{0.0F, config_.align_angle_e_rad, false, true};
+    // A plain alignment holds the rotor at the target angle and hands over at rest, so the hand-over speed is 0:
+    // there is nothing to lose sync with, and `Motor` reads the 0 as "do not judge this hand-over".
+    // 纯对齐把转子按在目标角上、静止交接，因此交接速度为 0：没有同步可失，`Motor` 把这个 0 读作"不必评判这次交接"。
+    return AlignOutput{0.0F, config_.align_angle_e_rad, 0.0F, false, true};
 }
 
 

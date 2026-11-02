@@ -105,6 +105,22 @@ struct HalCallbacks final {
     std::uint64_t (*now_us)(void* user);
 
     /**
+     * @brief [en] Whether the host's position source has an index mark; NULL = it has none.
+     * @brief [zh] 主控方的位置源是否有索引标记；NULL = 没有。
+     * @note [en] Optional, and its absence is a *capability* answer rather than a degradation: a host without a mark
+     *            simply cannot home, so `PositionReference::homed()` stays false and an absolute position is refused.
+     * @note [zh] 可选，而它的缺失是一个**能力**答复而不是降级：没有标记的主控方就是无法回零，于是
+     *            `PositionReference::homed()` 恒为 false、绝对位置被拒绝。
+     */
+    std::int32_t (*position_has_index)(void* user);
+
+    /**
+     * @brief [en] Non-zero only on the tick the mark was crossed.
+     * @brief [zh] 仅在越过标记的那一拍为非零。
+     */
+    std::int32_t (*position_index_pulse)(void* user);
+
+    /**
      * @brief [en] Whether every required callback is present.
      * @brief [zh] 必需的回调是否都在。
      * @return [en] true when duties, currents, angle and bus voltage all have a callback.
@@ -113,6 +129,20 @@ struct HalCallbacks final {
     [[nodiscard]] auto valid() const noexcept -> bool {
         return (pwm_write_duty != nullptr) && (read_current != nullptr) && (read_angle_mech_rad != nullptr) &&
                (read_voltage_v != nullptr);
+    }
+
+    /**
+     * @brief [en] The same test for a sensor-less host: the angle callback may be absent.
+     * @brief [zh] 同一判据的无感版本：角度回调可以缺席。
+     * @note [en] Why a second predicate rather than a flag: a sensored host without an angle is a configuration
+     *            mistake, while a sensor-less host without one is the normal case, because the observer derives the
+     *            angle from voltage and current. One predicate with a flag would let the mistake be spelled like the
+     *            normal case.
+     * @note [zh] 为什么是两个判据而不是一个带标志的判据：带传感器的宿主没有角度回调是配置错误，而无感宿主没有它是正常情
+     *            形，因为观测器用电压和电流算出角度。用一个带标志的判据会让这个错误和正常情形写成同一个样子。
+     */
+    [[nodiscard]] auto valid_without_angle() const noexcept -> bool {
+        return (pwm_write_duty != nullptr) && (read_current != nullptr) && (read_voltage_v != nullptr);
     }
 };
 
@@ -259,10 +289,39 @@ class CallbackPosition final : public hal::PositionSensor {
         return callbacks_.read_velocity_rad_s(callbacks_.user);
     }
 
-    [[nodiscard]] auto has_sensor() const noexcept -> bool override { return true; }
+    [[nodiscard]] auto has_sensor() const noexcept -> bool override { return sensor_present_; }
+
+    /**
+     * @brief [en] Declare this axis sensor-less: the commutation angle then comes from the observer.
+     * @brief [zh] 声明本轴无传感器：换相角此后来自观测器。
+     * @note [en] It does not change what the angle callbacks return; it changes whether they are asked. With `false`
+     *            the loop takes `theta_e` from the observer and advances `PositionReference`, which is the only way an
+     *            absolute position can exist.
+     * @note [zh] 它不改角度回调的返回值，只改"要不要去问"。置 `false` 之后环路的 `theta_e` 来自观测器、并推进
+     *            `PositionReference`，那是绝对位置能够存在的唯一途径。
+     */
+    void set_sensor_present(bool present) noexcept { sensor_present_ = present; }
+
+    /**
+     * @brief [en] Whether this host supplies an index mark at all.
+     * @brief [zh] 本主控方是否提供索引标记。
+     * @note [en] The method always exists, so the compile-time concept probe always approves; the *answer* is a runtime
+     *            fact about the host. Keeping both is what lets one `Motor` serve a host with a mark and one without.
+     * @note [zh] 方法总是存在，所以编译期概念探测总是通过；**答案**是关于主控方的运行期事实。两者都保留，同一个 `Motor`
+     *            才能既服务带标记的主控方、又服务不带的。
+     */
+    [[nodiscard]] auto has_index() const noexcept -> bool {
+        return (callbacks_.position_has_index != nullptr) && (callbacks_.position_has_index(callbacks_.user) != 0);
+    }
+
+    /** @brief [en] True only on the tick the mark was crossed. [zh] 仅在越过标记的那一拍为真。 */
+    [[nodiscard]] auto index_pulse() noexcept -> bool {
+        return (callbacks_.position_index_pulse != nullptr) && (callbacks_.position_index_pulse(callbacks_.user) != 0);
+    }
 
   private:
     HalCallbacks callbacks_{};
+    bool sensor_present_{true};
 };
 
 

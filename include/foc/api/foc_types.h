@@ -130,6 +130,17 @@ typedef struct foc_motor_setup {
     float blend_start_rad_s;           /* below this speed only the injection observer runs; required for BLENDED */
     float blend_end_rad_s;             /* above this speed only the back-EMF observer runs; required for BLENDED */
     float handover_lpf_hz;             /* smoothing of the speed the handover is decided on, Hz; required for BLENDED */
+    /* 1 when the commutation angle comes from the selected observer instead of the position callbacks. Appended and
+       gated by struct_size. Default 0 leaves every existing caller where it is: an axis whose angle callbacks are the
+       truth. Setting it is what makes an absolute position reachable through this ABI at all, because `PositionReference`
+       is only advanced while the angle is observer-derived; with a sensor present the library uses the sensor and keeps
+       no origin. When set, `read_angle_mech_rad` may be NULL: commutation does not consult it, and the observer needs
+       voltage and current, not an angle. */
+    /* 换相角来自选中的观测器、而不是位置回调时为 1。追加字段，由 struct_size 门控。默认 0 把每个现有调用方留在
+       原地：它的角度回调就是真值。置 1 才是「通过本 ABI 得到绝对位置」的前提，因为 `PositionReference` 只在角度
+       来自观测器时才被推进；有传感器时库用传感器、不维护原点。置 1 时 `read_angle_mech_rad` 可为 NULL：换相不看
+       它，观测器需要的是电压与电流。 */
+    int32_t use_observer_angle;
 } foc_motor_setup_t;
 
 
@@ -262,6 +273,24 @@ typedef struct foc_motor_status {
     /* 选中观测器归一化的误差信号，注入观测器约为 -sin(2·角度误差)，不发布该信号的观测器为 0.0。追加字段，由
        struct_size 门控。零是有意保留歧义的：锁定的注入观测器同样停在零附近，因此要与 `observer_locked` 一起读。 */
     float observer_error;
+    /* 1 when an index mark has been seen since the motor was created or reset, 0 before that. Appended and gated by
+       struct_size. This flag decides whether an *absolute* position means anything: alignment resolves the electrical
+       offset only, and only modulo one pole pitch. */
+    /* 自构造或复位以来是否见过索引标记，见过为 1。追加字段，由 struct_size 门控。这个标志决定**绝对**位置是否有
+       意义：对齐只解决电角度偏置，而且只能定到一个极距的模。 */
+    int32_t homed;
+    /* 1 when the reconstruction has seen a step too large to unwrap and is therefore untrustworthy. Appended and
+       gated by struct_size. Sticky until the origin is re-established. */
+    /* 重建遇到过无法解开折返的跳变、因而不可信任时为 1。追加字段，由 struct_size 门控。一直保持到原点重建为止。 */
+    int32_t lost_count;
+    /* The mechanical angle referred to the index mark, rad. Appended and gated by struct_size. **Valid only when
+       `homed` is 1 and `lost_count` is 0** -- before the first mark it reads 0, and 0 is a legal mechanical angle, so
+       the value alone cannot tell a homed axis parked at the origin from one that was never homed. Prefer
+       `foc_motor_get_position_absolute()`, which refuses instead of returning that 0. */
+    /* 以索引标记为基准的机械角，rad。追加字段，由 struct_size 门控。**仅在 `homed` 为 1 且 `lost_count` 为 0 时
+       有效**——第一次索引之前它读 0，而 0 是合法机械角，所以单看这个值分不出「回零后停在原点」与「从未回过零」。
+       请优先用 `foc_motor_get_position_absolute()`，它在那种情形拒绝而不是返回那个 0。 */
+    float referenced_mech_rad;
 } foc_motor_status_t;
 
 
@@ -556,6 +585,19 @@ typedef struct foc_hal_callbacks {
     void (*pwm_disable)(void *user);
     /* Optional: monotonic microseconds; NULL = trust the dt given to each tick. */
     uint64_t (*now_us)(void *user);
+    /* Optional: non-zero when this position source has an index mark at all; NULL = no mark. Appended and gated by
+       struct_size, because this is an *input* struct: a caller built against the previous header never allocated these
+       two pointers, and reading them anyway would read their stack. Without a mark the axis can never be homed, which
+       is a fact rather than an error and comes back as `homed == 0`. */
+    /* 可选：这个位置源是否有索引标记，有为非零；NULL 表示没有。追加字段，由 struct_size 门控，因为这是**输入**
+       结构：按旧头编译的调用方从未分配这两个指针，照旧去读就是读它的栈。没有标记时轴永远无法回零——那是一个事实
+       而不是错误，并以 `homed == 0` 回到调用方。 */
+    int32_t (*position_has_index)(void *user);
+    /* Optional: non-zero **only** on the tick the mark was crossed, never as a level -- a level is counted once per
+       tick spent near the mark. Appended and gated by struct_size. */
+    /* 可选：**仅在**越过标记的那一拍为非零，绝不能是电平——电平会把一次经过数成很多次。追加字段，由 struct_size
+       门控。 */
+    int32_t (*position_index_pulse)(void *user);
 } foc_hal_callbacks_t;
 
 /** @brief [en] Handle to a protector instance. [zh] 保护器实例的句柄。 @since 0.1.1 */

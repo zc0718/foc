@@ -104,6 +104,10 @@ auto StartupRoutine::step(float dt_s, float angle_mech_rad) noexcept -> AlignOut
         if (omega_e_ >= config_.handover_speed_rad_s) {
             state_ = StartupState::Done;
             out.finished = true;
+            // The speed the rotor has to be at if the pull caught it. Stated by the sequence itself, because this is
+            // the only component that knows it was dragging rather than holding.
+            // 若拖动抓住了转子、转子此时应有的转速。由序列自己给出，因为只有它知道自己是在拖动而不是按住。
+            out.handover_speed_e_rad_s = config_.handover_speed_rad_s;
         }
         return out;
     }

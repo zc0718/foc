@@ -132,11 +132,12 @@ struct Setup final {
      * @brief [zh] 运行哪个观测器，取 `foc_observer_t`；0 是出厂默认。
      */
     int32_t observer;
-    float inject_v;          ///< [en] HFI carrier amplitude, peak V. [zh] HFI 载波幅值，峰值 V。
-    float inject_hz;         ///< [en] HFI carrier frequency, Hz. [zh] HFI 载波频率，Hz。
-    float blend_start_rad_s; ///< [en] below this only the injection observer runs. [zh] 低于此值只用注入观测器。
-    float blend_end_rad_s;   ///< [en] above this only the back-EMF observer runs. [zh] 高于此值只用反电势观测器。
-    float handover_lpf_hz;   ///< [en] smoothing of the handover speed, Hz. [zh] 交接判据转速的平滑，Hz。
+    float inject_v;             ///< [en] HFI carrier amplitude, peak V. [zh] HFI 载波幅值，峰值 V。
+    float inject_hz;            ///< [en] HFI carrier frequency, Hz. [zh] HFI 载波频率，Hz。
+    float blend_start_rad_s;    ///< [en] below this only the injection observer runs. [zh] 低于此值只用注入观测器。
+    float blend_end_rad_s;      ///< [en] above this only the back-EMF observer runs. [zh] 高于此值只用反电势观测器。
+    float handover_lpf_hz;      ///< [en] smoothing of the handover speed, Hz. [zh] 交接判据转速的平滑，Hz。
+    int32_t use_observer_angle; ///< [en] 1 = the commutation angle comes from the observer. [zh] 1 = 换相角来自观测器。
 };
 
 
@@ -298,6 +299,9 @@ auto resolve_setup(const foc_motor_setup_t* requested) noexcept -> Setup {
     // 观测器按字面读取，与死区同理：0 是合法值（也是默认值），因此"未设置"与"默认"在此含义相同，无需区分。
     if (covers(*requested, offsetof(foc_motor_setup_t, observer) + sizeof(requested->observer))) {
         out.observer = requested->observer;
+    }
+    if (covers(*requested, offsetof(foc_motor_setup_t, use_observer_angle) + sizeof(requested->use_observer_angle))) {
+        out.use_observer_angle = (requested->use_observer_angle != 0) ? 1 : 0;
     }
     // The carrier's amplitude and frequency are the caller's decision -- the bus voltage and the current limit bound
     // them -- and have no defensible default, so they are read literally like `observer`: zero means "not supplied",
@@ -979,6 +983,18 @@ auto to_hal_callbacks(const foc_hal_callbacks_t& c) noexcept -> driver::HalCallb
     callbacks.pwm_enable = c.pwm_enable;
     callbacks.pwm_disable = c.pwm_disable;
     callbacks.now_us = c.now_us;
+    // This struct is an *input*, so the appended fields must be gated by what the caller declared. Without the gate a
+    // caller built against the previous header would have us read two pointers it never allocated -- a stack overrun in
+    // the one direction the output-side clamp cannot protect. No caller can truthfully declare less than the original
+    // layout, so 0 is treated as full size, matching the rule stated for the output structs.
+    // 这是**输入**结构，追加字段必须按调用方声明的大小门控。没有这道门，按旧头编译的调用方会让我们去读它从未分配的
+    // 两个指针——而输出侧的钳位保护不了这个方向。没有调用方能诚实地声明小于原始布局，因此 0 按完整大小处理，
+    // 与输出结构的规矩一致。
+    const std::size_t declared = (c.struct_size == 0U) ? sizeof(foc_hal_callbacks_t) : c.struct_size;
+    if (declared >= sizeof(foc_hal_callbacks_t)) {
+        callbacks.position_has_index = c.position_has_index;
+        callbacks.position_index_pulse = c.position_index_pulse;
+    }
     return callbacks;
 }
 
@@ -1084,7 +1100,14 @@ foc_err_t foc_bridge_create_host(const foc_motor_params_t* params, const foc_mot
     }
 
     const foc::driver::HalCallbacks hal_callbacks = foc::api::to_hal_callbacks(*callbacks);
-    if (!hal_callbacks.valid()) {
+    // Which callbacks are required depends on where the angle comes from, and the caller said so in the setup: a
+    // sensor-less host legitimately has no angle callback, because the observer derives the angle from voltage and
+    // current. Requiring it there would refuse the only configuration that can produce an absolute position.
+    // 需要哪些回调取决于角度来自哪里，而这件事调用方已经在 setup 里说了：无感宿主本来就没有角度回调，因为观测器
+    // 是用电压和电流算出角度的。在那里要求它，等于拒绝掉唯一能产生绝对位置的配置。
+    const bool callbacks_ok =
+        (resolved.use_observer_angle != 0) ? hal_callbacks.valid_without_angle() : hal_callbacks.valid();
+    if (!callbacks_ok) {
         return FOC_ERR_PARAM;
     }
 
@@ -1107,6 +1130,12 @@ foc_err_t foc_bridge_create_host(const foc_motor_params_t* params, const foc_mot
                                                resolved.align_verify_s,  resolved.align_angle_e_rad};
 
         slot.hal = foc::driver::CallbackHal(hal_callbacks);
+        // The setup decides where the commutation angle comes from, and it has to be decided *before* the motor is
+        // constructed: the motor reads `has_sensor()` every tick, and the reference it maintains is advanced only when
+        // the angle is observer-derived.
+        // 换相角来自哪里由 setup 决定，而这件事必须在电机构造**之前**定下：电机每拍读 `has_sensor()`，而它维护的
+        // 参考角只在角度来自观测器时才被推进。
+        slot.hal.position.set_sensor_present(resolved.use_observer_angle == 0);
         slot.setup = resolved;
 
         const foc::api::MotorT_Host::Policies policies{foc::api::make_observer(*params, resolved),
@@ -1424,6 +1453,15 @@ foc_err_t foc_bridge_get_status(foc_motor_t motor, foc_motor_status_t* out) {
         // 调用方没有别的通道能区分它们。
         result.observer_locked = instance.observer().locked() ? 1 : 0;
         result.observer_error = instance.observer().error();
+        // The origin facts travel with the status for the same reason the lock verdict does: without them the caller has
+        // a number with no way to know whether it means anything, and "no origin yet" is indistinguishable from
+        // "sitting at the origin".
+        // 原点相关的三件事与锁定结论同一个理由要随状态一起走：没有它们，调用方手里有一个数却无从知道它是否有意义，
+        // 而"还没有原点"与"停在原点"无法区分。
+        const foc::core::PositionReference& reference = instance.position_reference();
+        result.homed = reference.homed() ? 1 : 0;
+        result.lost_count = reference.lost_count() ? 1 : 0;
+        result.referenced_mech_rad = reference.referenced_mech_rad();
         // A byte-range copy of a POD into the caller's struct. `std::copy_n` over `std::byte` rather than `memcpy`: the
         // two are equivalent here (`limit` has already been clamped to `sizeof(result)` and both pointers are
         // `unsigned char`-aliasing-safe), and a security scanner flags the C function itself -- "problematic C function
@@ -1433,6 +1471,29 @@ foc_err_t foc_bridge_get_status(foc_motor_t motor, foc_motor_status_t* out) {
         // ——"problematic C function detected (memcpy)"——那样就只能屏蔽，规则也就不再对任何地方生效。
         std::copy_n(reinterpret_cast<const std::byte*>(&result), static_cast<std::size_t>(limit),
                     reinterpret_cast<std::byte*>(out));
+        return foc::ErrorCode::Ok;
+    });
+}
+
+
+foc_err_t foc_bridge_get_position_absolute(foc_motor_t motor, float* position_mech_rad) {
+    if (position_mech_rad == nullptr) {
+        return FOC_ERR_PARAM;
+    }
+    return foc::api::on_slot(motor, [position_mech_rad](auto& slot) {
+        // The whole point of this entry point. `referenced_mech_rad()` answers 0 before the first index, and 0 is a
+        // legal mechanical angle, so returning it with FOC_OK would hand the caller a number it cannot tell apart from
+        // "homed and parked at the origin". A missing origin is a *state*, not a value: it answers FOC_ERR_STATE and
+        // writes nothing, so the caller's variable keeps whatever it had -- a bug they can see rather than a plausible
+        // zero they cannot.
+        // 这个入口的全部意义就在这里。第一次索引之前 `referenced_mech_rad()` 答 0，而 0 是合法机械角，所以配着
+        // FOC_OK 返回它等于交给调用方一个与"已回零且停在原点"无法区分的数。缺原点是一个**状态**而不是一个取值：
+        // 它答 FOC_ERR_STATE 且什么都不写，调用方的变量保持原样——那是一个能看见的 bug，而不是一个看不出来的合理零。
+        const foc::core::PositionReference& reference = slot.instance->position_reference();
+        if (!reference.homed() || reference.lost_count()) {
+            return foc::ErrorCode::State;
+        }
+        *position_mech_rad = reference.referenced_mech_rad();
         return foc::ErrorCode::Ok;
     });
 }

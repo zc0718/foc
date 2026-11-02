@@ -316,6 +316,33 @@ foc_err_t foc_motor_get_status(foc_motor_t motor, foc_motor_status_t *out);
 
 
 /**
+ * @brief [en] Read the absolute mechanical position, or refuse when the axis has no origin.
+ * @brief [zh] 读绝对机械位置；轴没有原点时**拒绝**，而不是返回一个数。
+ * @param motor [en] valid handle.
+ * @param motor [zh] 有效句柄。
+ * @param position_mech_rad [en] non-NULL receiver, written only on FOC_OK.
+ * @param position_mech_rad [zh] 非 NULL 的接收者，**仅在 FOC_OK 时被写入**。
+ * @return [en] FOC_OK with the angle; FOC_ERR_STATE when no index has been seen yet or the turn count was lost;
+ *              FOC_ERR_PARAM for a NULL / stale handle or a NULL receiver.
+ * @return [zh] FOC_OK 并给出角度；尚未见过索引、或圈计数已丢失时返回 FOC_ERR_STATE；句柄为 NULL/已失效或接收者为 NULL
+ *              时返回 FOC_ERR_PARAM。
+ * @note [en] Why this is not just a field read. `foc_motor_status_t::referenced_mech_rad` answers **0** before the
+ *            first index, and 0 is a legal mechanical angle -- so a caller comparing that value against a target cannot
+ *            tell "homed and parked at the origin" from "never homed". A missing origin is a state, so it answers a
+ *            state error and leaves the receiver untouched. There is deliberately **no** matching setter: an absolute
+ *            target would have to close on the referenced angle, and with a position sensor present the loop closes on
+ *            the sensor's frame instead. Adding the setter means adding a control mode, not an entry point.
+ * @note [zh] 为什么这不只是"读一个字段"。`foc_motor_status_t::referenced_mech_rad` 在第一次索引之前答 **0**，而 0 是一
+ *            个合法的机械角——因此拿它去和目标比的调用方，分不出"已回零且停在原点"与"从未回过零"。缺原点是一个状态，所以
+ *            它答一个状态错误，并且不去动接收者。故意**没有**配套的 setter：绝对目标必须闭环在 referenced 角度上，而存
+ *            在位置传感器时环路闭环在传感器坐标系上。加那个 setter 等于加一个控制模式，而不是加一个入口。
+ * @since 0.1.8
+ * @exporter
+ */
+foc_err_t foc_motor_get_position_absolute(foc_motor_t motor, float *position_mech_rad);
+
+
+/**
  * @brief [en] Advance the control loop by one step (host / SIL driven).
  * @brief [zh] 推进一个控制步（host / SIL 驱动）。
  * @param motor [en] valid handle.

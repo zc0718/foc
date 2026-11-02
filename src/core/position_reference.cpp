@@ -89,7 +89,20 @@ auto PositionReference::update(float theta_e_rad, bool index_pulse) noexcept -> 
         // turn and make the reported angle go backwards; on a repeat pass the mark's job is to remove accumulated drift.
         // 之后的经过：吸附到**最近的**索引位置，而不是重新定义零点。重新定义会减掉整整一圈、让报出的角度倒退；重复经过
         // 时标记的职责是消除累积漂移。
-        index_offset_rad_ += wrap_pi(referenced_mech_rad_ - config_.index_mech_rad);
+        const float residual = wrap_pi(referenced_mech_rad_ - config_.index_mech_rad);
+        // The mark says where the axis is and the residual says how far the count disagrees. Past the step the unwrap
+        // already calls unresolvable, the two are not describing the same event -- a spurious pulse in the index line
+        // would move the origin by up to half a mechanical turn, silently, and the next real mark would move it back.
+        // Reporting it is the only honest answer, and it is the same rule the electrical step already follows, in the
+        // same units.
+        // 标记说轴在哪、残差说计数差多少。超过解折返已声明无法分辨的那个步长时，两者描述的不是同一个事件——索引线上
+        // 一个虚假脉冲会把原点静默地移走最多半个机械圈，再由下一次真实标记移回来。**报告**是唯一诚实的答案，而这
+        // 就是电角度跳变已经在遵守的同一条规则，用的是同一个单位。
+        if (std::fabs(residual) >= (0.9F * kPi / poles)) {
+            lost_count_ = true;
+            return false;
+        }
+        index_offset_rad_ += residual;
     }
     // Recomputed rather than set to `index_mech_rad`: the mark says *which turn* this is, and the residual above already
     // moved the origin onto it. Assigning the bare index position would rewind the count by a whole turn on every pass,

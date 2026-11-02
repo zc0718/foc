@@ -26,6 +26,19 @@ constexpr bool kLegal[kStateCount][kStateCount] = {
 
 constexpr auto to_index(MotorState state) noexcept -> std::uint8_t { return static_cast<std::uint8_t>(state); }
 
+// The table's rows and columns are positional, so the only place the assumed order of `MotorState` is written down is
+// these four constants -- and until mutation testing looked, they had no consumer at all: changing `kIdle` from 0 to 1
+// changed nothing, because nothing read it. Pinning them to the enum here turns a comment into a check. If the enum is
+// ever reordered, this stops compiling instead of silently permuting the transition table under the same comments.
+// 表格的行与列是**按位置**的，于是 `MotorState` 假定顺序的唯一记载就是这四个常量——而在变异测试看过来之前，它们没有
+// 任何消费者：把 `kIdle` 从 0 改成 1 什么都不变，因为没人读。把它们在这里钉到枚举上，把一句注释变成一个检查。若枚举
+// 顺序被改动，这里会编译失败，而不是在同一批注释底下悄悄把转移表换掉。
+static_assert(to_index(MotorState::Idle) == kIdle, "kLegal's row 0 is Idle");
+static_assert(to_index(MotorState::Align) == kAlign, "kLegal's row 1 is Align");
+static_assert(to_index(MotorState::Run) == kRun, "kLegal's row 2 is Run");
+static_assert(to_index(MotorState::Fault) == kFault, "kLegal's row 3 is Fault");
+static_assert(kStateCount == 4U, "kLegal is written as four rows");
+
 } // namespace
 
 auto StateMachine::state() const noexcept -> MotorState { return state_; }

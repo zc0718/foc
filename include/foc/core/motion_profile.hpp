@@ -23,6 +23,14 @@ namespace core {
  *     retargeting for free, and no overshoot when a limit binds. It is not time-optimal against a moving target, and it
  *     does not pretend to be.
  *
+ *     That stopping distance is a property of the *command*, not of the axis. The axis reaches the deceleration
+ *     threshold after covering `v^2/(2a)` plus whatever it travels while the inner loop catches up, so a plant that
+ *     lags the command passes the threshold and overshoots by an amount this class cannot bound -- measured at 13.7 %
+ *     of the threshold on the SIL axis. The command itself cannot overshoot: both ceilings fall monotonically in
+ *     `|error|` and the sign follows the error. 那个制动距离是**指令**的属性，不是轴的属性。轴走完 `v^2/(2a)` 之后还要
+ *     加上内层环追赶期间走过的距离，因此跟随滞后的 plant 会越过阈值，并超出这个类无法约束的量——在 SIL 轴上测得阈值的
+ *     13.7 %。指令本身不会过冲：两个上限都随 `|error|` 单调下降，符号跟着误差走。
+ *
  * @brief [zh] 会塑造速度指令的位置控制器：对实测误差做比例，再用配置的加速度做速率限制。
  *
  *     它占用与 `Pi` 相同的控制器槽位（`step(setpoint, feedback, dt)` + `reset()`），但回答的 是另一个问题：不只是“为了
