@@ -53,13 +53,13 @@
   "tolerated": {
     ".github/misc/.mega-linter.yml": {
       "why": "one added linter argument: cppcheck `--check-level=exhaustive`, because 2.14 answers `too many branches` with an informational diagnostic and MegaLinter runs it with --error-exitcode=1",
-      "exit": "proposed upstream: workspace/scaffold/0019-cppcheck-exhaustive.{md,patch} (1 file, +5/-0); verified to apply on 6d69c85 and to reproduce this file byte for byte",
-      "patch": "workspace/scaffold/0019-cppcheck-exhaustive.patch"
+      "exit": "proposed upstream: .github/project/upstream-patches/0019-cppcheck-exhaustive.{md,patch} (1 file, +5/-0); verified to apply on 6d69c85 and to reproduce this file byte for byte",
+      "patch": ".github/project/upstream-patches/0019-cppcheck-exhaustive.patch"
     },
     "docs/build.py": {
       "why": "this project is AHEAD of the pinned release here: a `closes` parameter and comment-structure recognition so the bilingual pipeline accepts all three doc shapes",
-      "exit": "proposed upstream: workspace/scaffold/0020-bilingual-doc-integrity.{md,patch} (1 file, +109/-11); verified to apply on 6d69c85 and to reproduce this file byte for byte",
-      "patch": "workspace/scaffold/0020-bilingual-doc-integrity.patch"
+      "exit": "proposed upstream: .github/project/upstream-patches/0020-bilingual-doc-integrity.{md,patch} (1 file, +109/-11); verified to apply on 6d69c85 and to reproduce this file byte for byte",
+      "patch": ".github/project/upstream-patches/0020-bilingual-doc-integrity.patch"
     }
   },
   "baseline_divergences": 2,
