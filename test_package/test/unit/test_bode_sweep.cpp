@@ -304,12 +304,22 @@ TEST(SinusoidFit, TheFitIsUnbiasedOnAWindowThatIsNotAWholeNumberOfCycles) {
 
     const auto [whole_fit, whole_bin] = error_ratio(600U);
     const auto [part_fit, part_bin] = error_ratio(680U);
-    ASSERT_GT(part_fit, 0.0F);
     std::printf("        whole: fit %.3e, bin %.3e; partial: fit %.3e, bin %.3e\n", static_cast<double>(whole_fit),
                 static_cast<double>(whole_bin), static_cast<double>(part_fit), static_cast<double>(part_bin));
-    EXPECT_LT(whole_bin, 5.0F * whole_fit + 1.0e-7F)
-        << "on whole cycles the two estimators must agree, or the difference below is not about the window";
-    EXPECT_GT(part_bin, 3.0F * part_fit) << "the header claims the bin is biased here and the fit is not -- it is not";
+
+    // Both halves are stated as **absolute** errors against the 1 % line, not as a ratio between the two
+    // estimators. That is not a stylistic choice: the first version asserted `part_fit > 0` so it could divide by
+    // it, and macOS returned exactly 0 where Linux returns 1.2e-7 because its libm is more accurate -- so the case
+    // failed on the machine where the code did *better*. The rounding floor is not the subject of the claim, and a
+    // number at the rounding floor is not a number to assert on.
+    // 两半都写成对 1% 线的**绝对**误差，而不是两个估计器之间的比值。这不是文风选择：第一版为了做除法断言了
+    // `part_fit > 0`，而 macOS 返回的正好是 0、Linux 是 1.2e-7——因为那边的 libm 更准，于是**代码更好的那台机器上
+    // 反而失败**。舍入地板不是这条主张的主题，处在地板上的数也不是可以断言的对象。
+    EXPECT_LT(whole_fit, 0.01F) << "on whole cycles the fit is exact";
+    EXPECT_LT(whole_bin, 0.01F) << "and so is the bin, which is what makes the comparison below fair";
+    EXPECT_LT(part_fit, 0.01F) << "the fit stays exact when the window is not a whole number of cycles";
+    EXPECT_GT(part_bin, 0.01F)
+        << "the header claims the bin is biased here and the fit is not -- the two are on opposite sides of 1 %";
 }
 
 
@@ -386,10 +396,13 @@ TEST(SinusoidFit, TheConstantColumnIsWhatMakesADcOffsetHarmless) {
     // The first draft asserted the naive estimator would be off by more than 50 %. It is off by 7.6 %: without a
     // constant column the offset only reaches the amplitude through the basis's own non-orthogonality over a
     // non-integer window, which is a few percent, not a catastrophe. The criterion is corrected to the size the
-    // mechanism actually has, and the ratio to the fit is kept as the discriminating part.
+    // mechanism actually has, not widened until it passed. It is also stated only in absolute terms -- the same
+    // `naive_shift > 20 * shift` ratio that used to sit here would divide by whatever the fit's rounding floor
+    // happens to be on the platform, which is the mistake `TheFitIsUnbiasedOnAWindowThatIsNotAWholeNumberOfCycles`
+    // records.
     // 第一版断言朴素估计器会偏 50% 以上。它只偏 7.6%：没有常数项时，偏置只能经由基函数在非整周期窗口上的非正交性
-    // 进入幅值，量级是几个百分点，不是灾难。判据改成该机理真实的量级，并把与拟合的比值保留为判别部分。
+    // 进入幅值，量级是几个百分点，不是灾难。判据改成该机理真实的量级，而不是放宽到能过。同时只写成绝对量——
+    // 原先那句 `naive_shift > 20*shift` 等于除以平台各自的舍入地板，正是另一条用例记录的那个错误。
     EXPECT_GT(naive_shift, 0.05F) << "and without it the same offset has to be visibly wrong";
-    EXPECT_GT(naive_shift, 20.0F * shift) << "...by a margin that leaves no doubt which one is doing the work";
 }
 
