@@ -279,7 +279,7 @@ class Protector final {
 
         // Stall is a *duration*, so it needs a timer rather than a threshold.
         // 堵转是一个**持续时长**，所以它需要计时器而不是阈值。
-        const bool pushing = (std::fabs(input.i_magnitude_a) >= config_.stall_current_a) &&
+        const bool pushing = (std::fabs(input.i_magnitude_a) > config_.stall_current_a) &&
                              (std::fabs(input.omega_e_rad_s) < config_.stall_speed_rad_s);
         if (pushing) {
             stall_s_ = static_cast<float>(stall_s_ + (dt_s > 0.0F ? dt_s : 0.0F));
