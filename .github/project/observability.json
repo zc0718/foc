@@ -259,6 +259,21 @@
         }
       ],
       "no_effect": ""
+    },
+    {
+      "id": "O-19",
+      "date": "2026-11-02",
+      "leg": "model",
+      "capability": "The tracker's own input error, as a table instead of a hope. Every earlier case perturbed what the tracker was fed -- the speed, a sensor that stopped answering -- but nothing had ever moved the sensors, which is the error a real bracket actually has. `HallSetup::mount_error_rad` existed for that and had only ever been set to zero.",
+      "source": "`test_hall_decoder.cpp`, one new case sweeping a 2/4/8 degree offset on all three sensors and on one: a rigid rotation displaces the worst-case error one-for-one (maxima minus base maxima 1.988/3.976/8.002 deg, i.e. 0.994/0.994/1.000) while a single misplaced sensor carries about three quarters of it in rms (0.679/0.752/0.751) and produces a *worse* worst case (5.105 against 3.199 deg at 2 deg, reaching 1.9-2.6x the offset) -- so the bracket spec is set by the single-sensor case, which a table listing only the rigid rotation would understate by more than a factor of two. Two further cases close the tracker's remaining contract holes: a non-finite timestamp is refused without being adopted (two trackers, one fed a NaN every 37th tick, stay bit-identical) and the lower clamp is exercised on a reversal, which no forward run ever visits.",
+      "reopened": [
+        {
+          "claim": "core/hall.hpp",
+          "verdict": "promoted",
+          "missing": ""
+        }
+      ],
+      "no_effect": ""
     }
   ]
 }
