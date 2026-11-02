@@ -6,6 +6,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <limits>
 
 #include <gtest/gtest.h>
 
@@ -498,6 +499,139 @@ TEST(SoftLimit, TheDelayTermShiftsTheClosestApproachByExactlyTheDelayTravel) {
         EXPECT_GT(shaped.closest_approach, 0.0) << "the shaped run has to stay inside the window";
         EXPECT_LT(ideal.closest_approach, 0.0) << "the idealised ceiling has to cross it";
     }
+}
+
+/**
+ * @brief [en] A window that is not an interval is refused in every way it can fail to be one, and the accessors report
+ *             the window that is actually in force.
+ *
+ * @brief [zh] 不是一个区间的窗口，在它失败的每一种方式上都被拒绝；而访问器报出的是真正生效的那个窗口。
+ *
+ *     The three failures are separate arithmetic accidents -- reversed, and non-finite on either end -- and the
+ *     non-finite ones are the ones that matter downstream, because `NaN` compares false against everything: a `min <=
+ *     target <= max` test written against a `NaN` wall refuses every target for a reason nothing reports. The accessor
+ *     half is the other direction: `set_config()` claims to replace the window, and the only way to see that it did is
+ *     to ask for the window back and to watch the new one start refusing.
+ *
+ *     这三种失败是三起彼此独立的算术事故——反了、以及任一端非有限——而其中非有限的那几个才是下游真正要紧的，因为 `NaN` 与
+ *     任何东西比较都为假：用一面 `NaN` 的墙去写 `min <= target <= max`，会以一件没人报出的事情为由拒绝每一个目标。访问
+ *     器那一半是另一个方向：`set_config()` 声称换掉了窗口，而要看它真换了，唯一的办法就是把窗口要回来，再看新窗口开始拒
+ *     绝。
+ */
+TEST(SoftLimit, AWindowThatIsNotAnIntervalIsRefusedHoweverItIsBroken) {
+    const float inf = std::numeric_limits<float>::infinity();
+    const float nan_v = std::numeric_limits<float>::quiet_NaN();
+    const foc::core::SoftLimitConfig broken[] = {
+        foc::core::SoftLimitConfig{1.0F, -1.0F},      // reversed
+        foc::core::SoftLimitConfig{nan_v, 0.5F},      // low end not a number
+        foc::core::SoftLimitConfig{-0.5F, nan_v},     // high end not a number
+        foc::core::SoftLimitConfig{-inf, inf},        // unbounded: not a window at all
+    };
+    for (const foc::core::SoftLimitConfig& window_in : broken) {
+        foc::core::SoftLimit limit(window_in);
+        EXPECT_EQ(limit.validate(), foc::ErrorCode::Param);
+        // And the refusal reaches the caller as a status, not as a clamped target: the remembered target is
+        // still the initial zero because nothing was ever admitted.
+        const foc::core::SoftLimitOutput out = limit.apply(0.0F);
+        EXPECT_EQ(out.status, foc::ErrorCode::Param);
+        EXPECT_FLOAT_EQ(out.target_rad, 0.0F);
+        EXPECT_FALSE(out.at_wall);
+    }
+    EXPECT_EQ(foc::core::SoftLimit(window()).validate(), foc::ErrorCode::Ok);
+}
+
+TEST(SoftLimit, SetConfigReplacesTheWindowTheLimitActuallyEnforces) {
+    foc::core::SoftLimit limit(window());
+    EXPECT_FLOAT_EQ(limit.config().min_rad, kMinRad);
+    EXPECT_FLOAT_EQ(limit.config().max_rad, kMaxRad);
+
+    limit.set_config(foc::core::SoftLimitConfig{-0.25F, 0.25F});
+    EXPECT_FLOAT_EQ(limit.config().min_rad, -0.25F);
+    EXPECT_FLOAT_EQ(limit.config().max_rad, 0.25F);
+
+    // The point of asking: the new window is the one that decides. A target the old window admitted and the
+    // new one does not must now be refused, and one inside the new window must be admitted.
+    // 追问的意义：新窗口才是做决定的那个。旧窗口接纳、新窗口不接纳的目标此刻必须被拒绝，而新窗口内的目标必须被
+    // 接纳。
+    EXPECT_EQ(limit.apply(0.4F).status, foc::ErrorCode::Param);
+    EXPECT_EQ(limit.apply(0.2F).status, foc::ErrorCode::Ok);
+    EXPECT_FLOAT_EQ(limit.target_rad(), 0.2F);
+}
+
+TEST(SoftLimit, ResetForgetsTheTargetSoTheFirstTargetRuleAppliesAgain) {
+    foc::core::SoftLimit limit(window());
+    ASSERT_EQ(limit.apply(0.2F).status, foc::ErrorCode::Ok);
+    EXPECT_FLOAT_EQ(limit.target_rad(), 0.2F);
+
+    // The refused target carries the remembered one back to the caller -- that echo is the whole difference
+    // between "refused" and "silently kept", so it is the observation that says whether the reset happened.
+    // 被拒绝的目标会把记住的那个带回给调用方——这个回声正是"被拒绝"与"被悄悄保留"的全部区别，所以它才是能说明
+    // 复位究竟发生了没有的那个观测。
+    EXPECT_FLOAT_EQ(limit.apply(0.9F).target_rad, 0.2F);
+
+    limit.reset();
+    EXPECT_FLOAT_EQ(limit.target_rad(), 0.0F);
+    // Same out-of-window target, and now there is nothing remembered to echo: the reset forgot it and the
+    // first-target rule is in force again, so 0.2 is not coming back.
+    // 同一个越界目标，而此刻没有可回声的记忆：复位把它忘掉了、首个目标规则重新生效，于是 0.2 不会再回来。
+    const foc::core::SoftLimitOutput after_reset = limit.apply(0.9F);
+    EXPECT_EQ(after_reset.status, foc::ErrorCode::Param);
+    EXPECT_FLOAT_EQ(after_reset.target_rad, 0.0F);
+    // A target inside the window is a legal *first* target again, which is what "the limit can be re-armed" means.
+    // 窗口内的目标重新成为一个合法的**首个**目标，这正是"限位可以重新上膛"的意思。
+    EXPECT_EQ(limit.apply(0.2F).status, foc::ErrorCode::Ok);
+    EXPECT_FLOAT_EQ(limit.target_rad(), 0.2F);
+}
+
+/**
+ * @brief [en] The cap is symmetric in the direction of travel, and a zero command is never rewritten.
+ *
+ * @brief [zh] 上限对行进方向是对称的，而零指令永远不被改写。
+ *
+ *     The header states the cap in terms of `|v|`, so a reader is entitled to expect the low wall to behave like the
+ *     high one mirrored. Until this case the negative direction had never been driven, which means half of the claim
+ *     "the axis can always stop before the wall it is heading for" was untested -- the low wall is the wall a negative
+ *     coordinate moves toward, and a test that only ever drives `+` cannot see a sign error there.
+ *
+ *     The distances used are exact: -0.5 + 0.0625 is representable, so `position - min` is exactly 0.0625 and both
+ *     sides of the comparison compute `sqrt` of the same float. That is why the equality below is bit-exact and not a
+ *     tolerance -- the comparison is of two computations of one number, not of a measurement.
+ *
+ *     头文件是用 `|v|` 陈述这条上限的，所以读者有权期望低墙表现得像高墙的镜像。在这个用例之前，负方向从未被驱动过，这意
+ *     味着"轴总能在它正驶向的那面墙之前停住"这条主张有一半未被测——低墙正是负坐标移动过去的那面墙，而一个永远只驱动 `+`
+ *     的测试看不出那里的符号错误。
+ *
+ *     所用的距离是精确的：-0.5 + 0.0625 可精确表示，于是 `position - min` 恰好是 0.0625，比较两边算的是同一个 float 的
+ *     `sqrt`。这就是下面的等号逐位成立、而不是一个容差的原因——被比较的是一个数的两次计算，不是一次测量。
+ */
+TEST(SoftLimit, TheCapIsSymmetricInTheDirectionOfTravel) {
+    constexpr float kDecel = 1500.0F;
+    constexpr float kDistance = 0.0625F;
+    const foc::core::SoftLimit limit(window());
+
+    // Far from either wall the command passes through untouched, in both directions.
+    // 离两面墙都远时指令原样通过，两个方向都是。
+    EXPECT_FLOAT_EQ(limit.shape(5.0F, 0.0F, kDecel, 0.0F), 5.0F);
+    EXPECT_FLOAT_EQ(limit.shape(-5.0F, 0.0F, kDecel, 0.0F), -5.0F);
+
+    // At the same distance from each wall the same magnitude comes back, with the sign of the command.
+    // The command is well above the ceiling on purpose: below it the cap returns the caller's float unchanged
+    // (that is the earlier half of this case), so a smaller command would prove nothing about the sign.
+    // 离每面墙同样的距离处，回来的幅值相同，符号跟着指令。指令故意远高于上限：低于上限时上限原样放过调用方的
+    // float（那是本用例的上半段），所以一个更小的指令对符号什么也证明不了。
+    const float ceiling = std::sqrt(2.0F * kDecel * kDistance);
+    EXPECT_FLOAT_EQ(limit.shape(40.0F, kMaxRad - kDistance, kDecel, 0.0F), ceiling);
+    EXPECT_FLOAT_EQ(limit.shape(-40.0F, kMinRad + kDistance, kDecel, 0.0F), -ceiling);
+
+    // A command toward a wall with no distance left is removed entirely rather than reversed.
+    // 面对一面已经没有距离的墙，指令被整个去掉，而不是反号。
+    EXPECT_FLOAT_EQ(limit.shape(-5.0F, kMinRad, kDecel, 0.0F), 0.0F);
+    EXPECT_FLOAT_EQ(limit.shape(5.0F, kMaxRad, kDecel, 0.0F), 0.0F);
+
+    // And zero stays zero: a stopped axis is not offered a speed by its own limit.
+    // 而零仍是零：停住的轴不会被它自己的限位推出一份速度。
+    EXPECT_FLOAT_EQ(limit.shape(0.0F, 0.4F, kDecel, 0.0F), 0.0F);
+    EXPECT_FLOAT_EQ(limit.shape(0.0F, -0.4F, kDecel, 0.0F), 0.0F);
 }
 
 

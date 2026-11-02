@@ -13,7 +13,10 @@
 
 #include <gtest/gtest.h>
 
+#include <foc/core/machine_params.hpp>
 #include <foc/core/observer/back_emf_observer.hpp>
+#include <foc/core/observer/blended_observer.hpp>
+#include <foc/core/observer/hfi_observer.hpp>
 #include <foc/core/observer/nonlinear_flux_observer.hpp>
 #include <foc/core/observer/switchable_observer.hpp>
 
@@ -25,17 +28,54 @@ constexpr float kLq = 4.0e-4F;
 constexpr float kPsiF = 0.0047619F;
 constexpr float kDt = 5e-5F;
 
+/** @brief [en] The blend the wrapper builds internally, so a standalone one can be built the same way.
+ *  @brief [zh] 包装器内部构造的那个混合观测器类型，于是可以照同样的方式构造一个独立的。 */
+using Blend = foc::core::BlendedObserver<foc::core::HfiObserver, foc::core::BackEmfObserver>;
+
 auto back_emf_config() -> foc::core::BackEmfObserver::Config { return {kRs, kLd}; }
 
 auto nlfo_config() -> foc::core::NonlinearFluxObserver::Config {
     return {kRs, kLq, kPsiF, 0.3F, 3.0F, 0.5F * kPsiF};
 }
 
+/** @brief [en] A valid carrier configuration at the 20 kHz control rate this file drives at.
+ * @brief [zh] 在本文件 20 kHz 控制率下合法的载波配置。
+ *
+ *     The demodulation gain is passed in as `predicted_gain_a(inject_v, inject_hz, Ld, Lq + Ld)` rather than from the
+ *     machine's own saliency: this file's machine has `Ld == Lq`, whose saliency is zero, and a zero gain is refused by
+ *     the observer (the error normalisation would divide by it) -- so the plain formula would put the carrier in
+ *     `Param` and the two injecting modes would hold at zero forever. The `+ Ld` is the same substitution the lock
+ *     verdict case below already uses, and it stands for "a machine that does have saliency" -- a per-machine number,
+ *     which is why the observer takes it as a field instead of deriving it.
+ *
+ *     解调增益按 `predicted_gain_a(inject_v, inject_hz, Ld, Lq + Ld)` 传入，而不是由机器自身的凸极算出：本文件的机器
+ *     `Ld == Lq`，其凸极为零，而零增益会被观测器拒绝（误差归一化要除以它）——于是朴素公式会把载波放进 `Param`，两个注入
+ *     模式就永远停在零。`+ Ld` 与下面那个锁定判据用例已在用的替换相同，它代表"一台确实有凸极的机器"——这是一个逐机器的
+ *     数，也正是观测器把它作为字段而非推导它的原因。
+ */
+auto hfi_config() -> foc::core::HfiObserver::Config {
+    foc::core::HfiObserver::Config config{};
+    config.inject_v = 12.0F;
+    config.inject_hz = 2000.0F;
+    config.current_hp_hz = 300.0F;
+    config.demod_lpf_hz = 200.0F;
+    config.pll_bandwidth_hz = 40.0F;
+    config.pll_zeta = 0.9F;
+    config.demod_gain_a =
+        foc::core::HfiObserver::predicted_gain_a(config.inject_v, config.inject_hz, kLd, kLq + kLd);
+    config.min_hf_current_a = 0.05F;
+    return config;
+}
+
+auto blend_config() -> Blend::Config { return Blend::Config{1.0F, 5.0F, 20.0F}; }
+
 /** @brief [en] A wrapper config with the given starting kind. [zh] 给定起始 kind 的包装器配置。 */
 auto wrapper_config(foc::core::ObserverKind kind) -> foc::core::SwitchableObserver::Config {
     foc::core::SwitchableObserver::Config config{};
     config.back_emf = back_emf_config();
     config.nonlinear_flux = nlfo_config();
+    config.hfi = hfi_config();
+    config.blended = blend_config();
     config.kind = kind;
     return config;
 }
@@ -56,29 +96,106 @@ auto current_at(int step) -> foc::core::Ab<float> {
 TEST(SwitchableObserver, ForwardsToWhicheverObserverIsSelected) {
     // The criterion: the wrapper's output is bit-identical to a standalone observer of the selected kind driven by the
     // same inputs. Anything else would mean the wrapper is not a forwarder but a third algorithm.
+    //
+    // All four kinds, not the two that were easy to build. The name of this case claimed "whichever" while it drove
+    // back-EMF and the NLFO only, and the two it skipped are exactly the ones with an arm of their own in every switch
+    // inside the wrapper -- the carrier observer and the blend. A forwarding bug in either of those would have been a
+    // bug in the only two modes the loop had nothing to say about.
     // 判据：包装器的输出与被选中的那种观测器单独驱动时**逐位相同**。否则它就成不了转发器，而是第三种算法。
-    for (const foc::core::ObserverKind kind : {foc::core::ObserverKind::BackEmf, foc::core::ObserverKind::NonlinearFlux}) {
+    //
+    // 四种而不是"好构造的两种"。这个用例的名字声称"whichever"，却只驱动了反电势与 NLFO，而它跳过的两种恰恰是在包装器内部
+    // 每个 switch 里都各有一条分支的那两种——载波观测器与混合观测器。这两者中的转发错误，会正是循环无话可说的那两处的错误。
+    const foc::core::Ab<float> seed{kPsiF, 0.0F};
+    for (const foc::core::ObserverKind kind : {foc::core::ObserverKind::BackEmf, foc::core::ObserverKind::NonlinearFlux,
+                                               foc::core::ObserverKind::Hfi, foc::core::ObserverKind::Blended}) {
         foc::core::SwitchableObserver wrapper(wrapper_config(kind));
-        wrapper.seed_flux(foc::core::Ab<float>{kPsiF, 0.0F});
+        wrapper.seed_flux(seed);
 
         foc::core::BackEmfObserver standalone_be(back_emf_config());
-        standalone_be.seed_flux(foc::core::Ab<float>{kPsiF, 0.0F});
+        standalone_be.seed_flux(seed);
         foc::core::NonlinearFluxObserver standalone_nlfo(nlfo_config());
-        standalone_nlfo.seed_flux(foc::core::Ab<float>{kPsiF, 0.0F});
+        standalone_nlfo.seed_flux(seed);
+        foc::core::HfiObserver standalone_hfi(hfi_config());
+        Blend standalone_blend(foc::core::HfiObserver{hfi_config()}, foc::core::BackEmfObserver{back_emf_config()},
+                               blend_config());
+        standalone_blend.seed_flux(seed);
 
         foc::core::ObsState wrapped{};
         foc::core::ObsState direct{};
+        bool saw_carrier = false;
+        foc::core::Ab<float> last_carried{0.0F, 0.0F};
         for (int step = 0; step < 200; ++step) {
             wrapped = wrapper.update(input_at(step), current_at(step), kDt);
-            direct = (kind == foc::core::ObserverKind::BackEmf)
-                         ? standalone_be.update(input_at(step), current_at(step), kDt)
-                         : standalone_nlfo.update(input_at(step), current_at(step), kDt);
+            switch (kind) {
+            case foc::core::ObserverKind::NonlinearFlux:
+                direct = standalone_nlfo.update(input_at(step), current_at(step), kDt);
+                break;
+            case foc::core::ObserverKind::Hfi:
+                direct = standalone_hfi.update(input_at(step), current_at(step), kDt);
+                break;
+            case foc::core::ObserverKind::Blended:
+                direct = standalone_blend.update(input_at(step), current_at(step), kDt);
+                break;
+            case foc::core::ObserverKind::BackEmf:
+            default:
+                direct = standalone_be.update(input_at(step), current_at(step), kDt);
+                break;
+            }
+            // The carrier has to arrive through the same door, and it is the one output that distinguishes the two
+            // injecting modes from the two that do not inject at all.
+            // 载波必须从同一扇门到达，而它正是把两个注入模式与两个完全不注入的模式区分开的那个输出。
+            const foc::core::Ab<float> carried = wrapper.injection_ab();
+            const foc::core::Ab<float> expected_carrier =
+                (kind == foc::core::ObserverKind::Hfi)
+                    ? standalone_hfi.injection_ab()
+                    : ((kind == foc::core::ObserverKind::Blended) ? standalone_blend.injection_ab()
+                                                                  : foc::core::Ab<float>{0.0F, 0.0F});
+            EXPECT_FLOAT_EQ(expected_carrier.alpha, carried.alpha);
+            EXPECT_FLOAT_EQ(expected_carrier.beta, carried.beta);
+            saw_carrier = saw_carrier || (carried.alpha != 0.0F) || (carried.beta != 0.0F);
+            last_carried = carried;
         }
         EXPECT_FLOAT_EQ(direct.theta_e, wrapped.theta_e);
         EXPECT_FLOAT_EQ(direct.omega_e, wrapped.omega_e);
-        std::printf("\n[switchable] %s: theta %.6f rad, omega %.6f rad/s after 200 steps\n",
-                    (kind == foc::core::ObserverKind::BackEmf) ? "back-EMF" : "NLFO",
-                    static_cast<double>(wrapped.theta_e), static_cast<double>(wrapped.omega_e));
+        // `state()` reads from the same selection rather than from a cache, so it cannot disagree with the last update.
+        // `state()` 从同一个选择里读，而不是从缓存读，因此它不可能与上一次 update 不一致。
+        EXPECT_FLOAT_EQ(wrapped.theta_e, wrapper.state().theta_e);
+        EXPECT_FLOAT_EQ(wrapped.omega_e, wrapper.state().omega_e);
+        // Which mode is injecting is a question about the mode, not about the number that comes back. The carrier
+        // observer must be putting one on the wire -- otherwise the wind-down below would be indistinguishable from
+        // "this mode never injects" -- while the blend, once it has handed the estimate over to its high-speed half,
+        // has wound its carrier down to exactly zero. Both are `injecting()`: a carrier of zero is not an absent
+        // carrier, which is the distinction the header's `injecting()` note draws.
+        //
+        // The blend keeps injecting for as long as the handover takes (the weight ramps on the filtered high-speed
+        // speed), which is why the claim is "seen, and gone by the end" rather than "never seen": a blend that went to
+        // zero on the first step would mean the weight had jumped straight to one, and a blend that never reached zero
+        // at 59 rad/s would mean the band's top end does not actually close the carrier.
+        // 哪个模式在注入是关于**模式**的问题，而不是关于回来的那个数。载波观测器必须在线上放着一个载波——否则下面那个
+        // 收掉就与"这个模式从不注入"无从区分——而混合一旦把估计交给高速那一半，就把载波收到恰好为零。两者都
+        // `injecting()`：零载波不是不存在的载波，这正是头文件 `injecting()` 注释所指的那个区分。
+        //
+        // 混合在交接期间会持续注入（权重是按滤波后的高速转速爬升的），所以这里的主张是"见到过，并且到最后已经收掉"，
+        // 而不是"从未见到"：第一步就归零的混合意味着权重直接跳到了 1，而在 59 rad/s 处永不归零则意味着交接带的上端
+        // 并没有真正关掉载波。
+        const bool injects = (kind == foc::core::ObserverKind::Hfi) || (kind == foc::core::ObserverKind::Blended);
+        EXPECT_EQ(wrapper.injecting(), injects);
+        if (injects) {
+            EXPECT_TRUE(saw_carrier) << "an injecting mode never put a voltage on the wire";
+        } else {
+            EXPECT_FALSE(saw_carrier) << "a mode that cannot inject reported a carrier";
+        }
+        if (kind == foc::core::ObserverKind::Blended) {
+            EXPECT_FLOAT_EQ(last_carried.alpha, 0.0F) << "the blend's carrier must be wound down once it is handed over";
+            EXPECT_FLOAT_EQ(last_carried.beta, 0.0F) << "the blend's carrier must be wound down once it is handed over";
+        }
+        std::printf("\n[switchable] %s: theta %.6f rad, omega %.6f rad/s after 200 steps, carrier seen %d\n",
+                    (kind == foc::core::ObserverKind::BackEmf)         ? "back-EMF"
+                    : (kind == foc::core::ObserverKind::NonlinearFlux) ? "NLFO"
+                    : (kind == foc::core::ObserverKind::Hfi)           ? "HFI"
+                                                                       : "blend",
+                    static_cast<double>(wrapped.theta_e), static_cast<double>(wrapped.omega_e),
+                    static_cast<int>(saw_carrier));
     }
 }
 
@@ -267,5 +384,107 @@ TEST(SwitchableObserver, TheSelectedObserversLockVerdictIsReachableThroughTheSlo
     }
     EXPECT_FALSE(slot.locked()) << "an injection observer fed no current reported a lock";
     EXPECT_FLOAT_EQ(0.0F, slot.error()) << "an unlocked observer must not publish an error signal";
+}
+
+TEST(SwitchableObserver, AHandOverToTheBlendCarriesTheEstimateLikeTheOthers) {
+    // The third arm of `hand_over_to()`. The existing A/B case hands over to the NLFO and shows that a hand-over to
+    // the carrier observer is refused; the blend is the arm nobody drove, and it is the one that is easiest to get
+    // wrong, because the blend takes a seed by forwarding it to its *high-speed* half -- so "it returned true" does
+    // not by itself mean the estimate went anywhere useful.
+    //
+    // The observable is the one the wrapper's own rule allows: a blend built independently and seeded with the vector
+    // the hand-over is supposed to have written -- `psi_f` at the outgoing angle -- must then answer bit-identically,
+    // step for step. Equality of the two runs is the claim; the reference is the hand-over written out by hand.
+    // `psi_f` is `Config::nonlinear_flux.psi_f`, the wrapper's one copy of the machine's flux linkage.
+    //
+    // `hand_over_to()` 的第三条分支。已有的 A/B 用例交接给 NLFO、并表明交接**给**载波观测器会被拒绝；混合是没人驱动过的
+    // 那条分支，而它恰恰是最容易搞错的那条，因为混合是**转发**种子给它的高速那一半——所以"返回了 true"本身并不等于估计
+    // 去了什么有用的地方。
+    //
+    // 观测量是包装器自己的规则允许的那一个：独立构造、并按交接本应写入的那个矢量（交出角处的 `psi_f`）播种的混合观测器，
+    // 此后必须**逐步逐位**相同。两个运行相等就是主张；参照物是手写出来的那次交接。`psi_f` 取自
+    // `Config::nonlinear_flux.psi_f`，也就是包装器唯一的那个机器磁链副本。
+    constexpr int kSteps = 200;
+    constexpr int kSwitch = 150;
+
+    foc::core::SwitchableObserver handed(wrapper_config(foc::core::ObserverKind::BackEmf));
+    handed.seed_flux(foc::core::Ab<float>{kPsiF, 0.0F});
+    for (int step = 0; step < kSwitch; ++step) {
+        static_cast<void>(handed.update(input_at(step), current_at(step), kDt));
+    }
+    const float outgoing = handed.state().theta_e;
+    ASSERT_TRUE(handed.hand_over_to(foc::core::ObserverKind::Blended))
+        << "the blend has a flux estimate to place, so it must have been seeded";
+    ASSERT_EQ(foc::core::ObserverKind::Blended, handed.kind());
+
+    const foc::core::Ab<float> written_by_hand{static_cast<float>(kPsiF * std::cos(outgoing)),
+                                               static_cast<float>(kPsiF * std::sin(outgoing))};
+    Blend reference(foc::core::HfiObserver{hfi_config()}, foc::core::BackEmfObserver{back_emf_config()},
+                    blend_config());
+    reference.seed_flux(written_by_hand);
+
+    for (int step = kSwitch; step < kSteps; ++step) {
+        const foc::core::ObsState from_slot = handed.update(input_at(step), current_at(step), kDt);
+        const foc::core::ObsState from_reference = reference.update(input_at(step), current_at(step), kDt);
+        ASSERT_FLOAT_EQ(from_reference.theta_e, from_slot.theta_e)
+            << "the hand-over did not write the outgoing estimate into the blend, step " << step;
+        ASSERT_FLOAT_EQ(from_reference.omega_e, from_slot.omega_e) << "step " << step;
+    }
+    std::printf("\n[switchable] hand-over to the blend from theta %.4f rad: %d steps bit-identical\n",
+                static_cast<double>(outgoing), kSteps - kSwitch);
+}
+
+TEST(SwitchableObserver, ApplyParamsIsEquivalentToConstructingWithThoseParams) {
+    // `apply_params()` is how a caller tells an observer the machine changed under it (identification finishing, a
+    // re-flashed parameter set). It had never been called by any case, so nothing in the suite would have noticed if
+    // it silently did nothing -- and "silently does nothing" is the exact failure mode of a forwarding method that
+    // forgets one of its members.
+    //
+    // The claim, and its falsifier, in one run: an observer told the new machine must answer exactly like one built
+    // with it, and an observer *not* told must not -- otherwise the equality proves only that both runs were the same
+    // object. The observers are re-seeded after the reconfiguration, because a seed is a state and the point here is
+    // the parameters, not the history.
+    // `apply_params()` 是调用方告诉观测器"机器在它脚下变了"的方式（辨识刚结束、参数集重新烧写）。它从未被任何用例调用
+    // 过，所以若它悄悄什么都不做，整个套件里没有一个地方会注意到——而"悄悄什么都不做"正是一个忘了转发某个成员的转发方法
+    // 的确切失效方式。
+    //
+    // 一次运行里同时给出主张与它的伪证：被告知新机器的观测器必须和用新机器构造的**逐位相同**，而**没**被告知的必须不同
+    // ——否则这个相等只证明了两次运行是同一个对象。重配置之后重新播种，因为种子是状态，而这里的要点是参数而非历史。
+    constexpr int kSteps = 200;
+    const foc::core::MachineParams machine{kRs, kLq, kLq, kPsiF};
+    const foc::core::Ab<float> seed{kPsiF, 0.0F};
+
+    for (const foc::core::ObserverKind kind :
+         {foc::core::ObserverKind::BackEmf, foc::core::ObserverKind::NonlinearFlux}) {
+        foc::core::SwitchableObserver::Config wrong = wrapper_config(kind);
+        wrong.back_emf = {2.0F * kRs, kLq};
+        wrong.nonlinear_flux = {2.0F * kRs, kLq, kPsiF, 0.3F, 3.0F, 0.5F * kPsiF};
+
+        foc::core::SwitchableObserver told(wrong);
+        told.apply_params(machine);
+        told.seed_flux(seed);
+
+        foc::core::SwitchableObserver built(wrapper_config(kind));
+        built.seed_flux(seed);
+
+        foc::core::SwitchableObserver not_told(wrong);
+        not_told.seed_flux(seed);
+
+        for (int step = 0; step < kSteps; ++step) {
+            const foc::core::ObsState a = told.update(input_at(step), current_at(step), kDt);
+            const foc::core::ObsState b = built.update(input_at(step), current_at(step), kDt);
+            static_cast<void>(not_told.update(input_at(step), current_at(step), kDt));
+            ASSERT_FLOAT_EQ(b.theta_e, a.theta_e) << "apply_params did not reproduce the constructor, step " << step;
+            ASSERT_FLOAT_EQ(b.omega_e, a.omega_e) << "step " << step;
+        }
+
+        const float taken = told.state().omega_e;
+        const float ignored = not_told.state().omega_e;
+        std::printf("\n[switchable] apply_params %s: omega %.6f rad/s as told, %.6f rad/s if ignored (%.3e apart)\n",
+                    (kind == foc::core::ObserverKind::BackEmf) ? "back-EMF" : "NLFO", static_cast<double>(taken),
+                    static_cast<double>(ignored), static_cast<double>(std::fabs(taken - ignored)));
+        EXPECT_GT(std::fabs(taken - ignored), 1.0e-3F * std::fabs(taken) + 1.0e-4F)
+            << "doubling Rs changed nothing, so this case cannot tell a working apply_params from an empty one";
+    }
 }
 
