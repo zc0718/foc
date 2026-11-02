@@ -140,13 +140,20 @@ def recount_without_comment_lines(tracefile, per_file):
     for line in lines:
         if line.startswith("SF:"):
             raw = line[3:].strip()
-            candidate = pathlib.Path(raw)
-            if not candidate.is_absolute():
-                candidate = root / raw
-            try:
-                key = candidate.resolve().relative_to(root).as_posix()
-            except (OSError, ValueError):
-                key = raw
+            # The tracefile names the source through whichever build root compiled it -- `<repo>/b/include/...`
+            # for the package's own objects, `<repo>/p/include/...` for the consumer's -- and neither exists as
+            # written. Locate the project directory in the path and take it from there, which is the same
+            # normalisation the recipe's own summary does with `_source_relpath`.
+            # tracefile 用「哪个构建根把它编出来的」来命名源文件——包自己的对象是 `<repo>/b/include/...`，消费者
+            # 的是 `<repo>/p/include/...`，两者按字面都不存在。在路径里找到项目目录、从那里截取，与 recipe 自己
+            # 汇总时 `_source_relpath` 做的归一化一致。
+            parts = pathlib.PurePosixPath(raw.replace("\\", "/")).parts
+            key = raw
+            for marker in ("include", "src", "api", "test_package", "docs"):
+                if marker in parts:
+                    start = len(parts) - 1 - parts[::-1].index(marker)
+                    key = "/".join(parts[start:])
+                    break
             current = key
             counts.setdefault(current, {})
             continue
