@@ -266,6 +266,13 @@ class Protector final {
         // 热模型一直在跑，不管有没有跳闸：热量不会因为越了阈值就停下。
         if (dt_s > 0.0F) {
             const float cooled = (config_.i2t_cooling_s > 0.0F) ? (q_ * (dt_s / config_.i2t_cooling_s)) : 0.0F;
+            // `q` is an energy in A^2*s, so the increment is `i^2 * dt`, not `i^2 / dt`: dividing would make a
+            // machine at its own nameplate spend 180000 A^2*s per period against a 4.5 A^2*s budget and trip on
+            // the first healthy step. The equilibrium of this model is `i^2 * tau`, which is the number the
+            // nameplate budget is supposed to equal -- that identity is what pins the units down.
+            // `q` 的单位是 A²·s，所以增量是 `i²·dt` 而不是 `i²/dt`：除法会让一台照铭牌运行的机器每个周期
+            // 花掉 180000 A²·s 去对 4.5 A²·s 的预算，并在第一个健康步就跳闸。本模型的平衡是 `i²·τ`，
+            // 而那正是铭牌预算应当等于的数——正是这条恒等式把量纲钉死。
             q_ = static_cast<float>(q_ + ((input.i_magnitude_a * input.i_magnitude_a * dt_s) - cooled));
             q_ = (q_ > 0.0F) ? q_ : 0.0F;
         }
