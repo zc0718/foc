@@ -1013,4 +1013,154 @@ TEST(Protection, ResetClearsTheLatchedOnesButKeepsTheHeatUntilResetCold) {
   EXPECT_FLOAT_EQ(0.0F, protector.thermal_budget()) << "reset_cold() is the one that forgets the heat";
 }
 
+
+namespace {
+
+/**
+ * @brief [en] Step a protector at a steady current until `I2t` trips, and say how many steps that took.
+ *
+ * @brief [zh] 在恒定电流下步进一个保护器直到 `I2t` 跳闸，并交回用了多少步。
+ *
+ *     The currents used here all stay below `i_hard_a`, so `OverCurrent` cannot fire and the code that comes back is
+ *     `I2t` alone -- above the hard limit the ranking would report the other one and the measurement would be about a
+ *     different mechanism. 这里用的电流都低于 `i_hard_a`，所以 `OverCurrent` 不可能先跳，返回的码只可能是 `I2t`——超过硬
+ *     限时排名会报另一个，那次测量就变成关于别的机理了。
+ */
+auto steps_to_i2t(float current_a) -> int {
+  core::Protector protector(config());
+  core::ProtectionInput in = healthy();
+  in.i_magnitude_a = current_a;
+  const int limit = static_cast<int>(20.0F / kDt);
+  for (int k = 0; k < limit; ++k) {
+    const core::ProtectionOutput out = protector.step(in, kDt);
+    if (out.fault == core::FaultCode::I2t) {
+      return k + 1;
+    }
+  }
+  return -1;
+}
+
+} // namespace
+
+
+TEST(Protection, TheClosedFormAndTheSteppingLoopAgreeOnWhenI2tTrips) {
+  // The second leg L3 asks for, and the first time this module has had one: the trip instant computed by *stepping
+  // the recurrence* and the trip instant computed by *solving the differential equation* are two different routes to
+  // one number. The loop integrates `q += i^2*dt - q*dt/tau`; the closed form solves `dq/dt = i^2 - q/tau`.
+  //
+  // Criterion, written before the run: agreement within 1 %. Explicit Euler over 0.663 s at a 50 us step has a
+  // discretisation error of order `dt/tau` = 1e-4, so 1 % is a loose band that the correct pair cannot miss and an
+  // off-by-a-term implementation cannot pass.
+  // L3 要求的第二条腿，也是本模块第一次有：**步进递推**得到的跳闸时刻与**解微分方程**得到的跳闸时刻，是同一个数的两条
+  // 不同路径。环路积分 `q += i²·dt − q·dt/τ`；闭式解解的是 `dq/dt = i² − q/τ`。
+  //
+  // 判据写在跑之前：一致到 1% 以内。50 µs 步长、0.663 s 上的显式欧拉离散误差量级是 `dt/τ` = 1e-4，所以 1% 是一条
+  // 正确的一对必然过、错一项的实现必然过不了的带。
+  std::printf("\n[L3] I2t trip instant: stepping the recurrence against solving the ODE\n");
+  std::printf("        %8s %12s %12s %9s\n", "current", "stepped", "closed form", "gap");
+
+  for (const float current_a : {3.2F, 3.5F, 3.8F}) {
+    const int steps = steps_to_i2t(current_a);
+    ASSERT_GT(steps, 0) << "no I2t trip at " << current_a << " A, so there is nothing to compare";
+    const float stepped = static_cast<float>(steps) * kDt;
+    const float closed = i2t_trip_seconds(current_a);
+    const float naive = 4.5F / (current_a * current_a);
+    std::printf("        %7.2fA %11.4fs %11.4fs %8.2f%%\n", static_cast<double>(current_a),
+                static_cast<double>(stepped), static_cast<double>(closed),
+                100.0 * static_cast<double>((stepped / closed) - 1.0F));
+    EXPECT_NEAR(1.0F, stepped / closed, 0.01F) << "current " << current_a;
+
+    // And the comparison has to be able to tell the closed form from the naive one, or "it agrees" means nothing.
+    // 而且这个比较必须能分辨闭式与朴素值，否则"它一致"毫无意义。
+    EXPECT_GT(std::fabs((stepped / naive) - 1.0F), 0.4F)
+        << "budget/i^2 is not the trip time, and the measurement must not be confusable with it";
+  }
+}
+
+
+TEST(Protection, TheSensitivityOfTheTripInstantToAWrongCurrentOrClockIsMeasured) {
+  // What the protection does when the model behind it is wrong -- the other half of L3. Both errors here are the ones
+  // that actually happen: a current sensor whose gain is off, and a loop whose real period is not the one it was told.
+  //
+  // Criteria written first, and both are *predictions* rather than shapes. A `+g` current-gain error makes the
+  // protector integrate `(i(1+g))^2`, so it must trip at the closed-form time for that larger current. A real period
+  // `dt_real` while the code is told `dt` makes it accumulate `dt/dt_real` of the true energy per real second, so the
+  // trip must stretch by exactly `dt_real/dt`.
+  // 当保护背后的模型错了，保护会怎样——L3 的另一半。这里两个误差都是真会发生的：电流传感器增益不准，以及环路的真实周期
+  // 不是它被告知的那个。
+  //
+  // 判据先写，且两条都是**预测**而不是形状。电流增益偏 `+g` 让保护器去积分 `(i(1+g))²`，所以它必须在那个更大电流对应的
+  // 闭式时间跳闸。真实周期 `dt_real` 而代码被告知 `dt`，则每真实秒累积的是真实能量的 `dt/dt_real`，于是跳闸时刻必须正好
+  // 被拉伸 `dt_real/dt` 倍。
+  std::printf("\n[L3] what a wrong model does to the protection decision\n");
+  std::printf("        %-34s %12s %12s %9s\n", "error", "measured", "predicted", "gap");
+
+  const float nominal_a = 3.5F;
+  const int nominal_steps = steps_to_i2t(nominal_a);
+  ASSERT_GT(nominal_steps, 0);
+  const float nominal_s = static_cast<float>(nominal_steps) * kDt;
+
+  for (const float gain : {-0.10F, 0.10F}) {
+    const float seen = nominal_a * (1.0F + gain);
+    const int steps = steps_to_i2t(seen);
+    ASSERT_GT(steps, 0) << "gain " << gain;
+    const float measured = static_cast<float>(steps) * kDt;
+    const float predicted = i2t_trip_seconds(seen);
+    std::printf("        current gain %+5.1f%% (%.2f A seen)%s %11.4fs %11.4fs %8.2f%%\n",
+                100.0 * static_cast<double>(gain), static_cast<double>(seen),
+                gain < 0.0F ? "" : " ", static_cast<double>(measured), static_cast<double>(predicted),
+                100.0 * static_cast<double>((measured / predicted) - 1.0F));
+    EXPECT_NEAR(1.0F, measured / predicted, 0.02F) << "gain " << gain;
+    // The size of the effect, which is the point of a sensitivity table: a 10 % gain error is not a 10 % change in
+    // the trip instant, because the budget goes with the square.
+    // 效应的量级，这正是敏感度表的用处：10% 的增益误差不是 10% 的跳闸时刻变化，因为预算是平方项。
+    EXPECT_GT(std::fabs((measured / nominal_s) - 1.0F), 0.15F)
+        << "a 10 % current-gain error has to be worth more than 15 % on the trip instant";
+  }
+
+  for (const float dt_ratio : {1.0F, 1.1F, 0.9F}) {
+    // The loop is told `kDt`; the physical period is `kDt * dt_ratio`. Elapsed physical time at the trip is
+    // therefore `steps * kDt * dt_ratio`.
+    // 环路被告知 `kDt`；物理周期是 `kDt·dt_ratio`。于是跳闸时经过的物理时间是 `steps·kDt·dt_ratio`。
+    const int steps = steps_to_i2t(nominal_a);
+    const float measured = static_cast<float>(steps) * kDt * dt_ratio;
+    const float predicted = i2t_trip_seconds(nominal_a) * dt_ratio;
+    std::printf("        real period %+5.0f%% of the told one  %11.4fs %11.4fs %8.2f%%\n",
+                100.0 * static_cast<double>(dt_ratio - 1.0F), static_cast<double>(measured),
+                static_cast<double>(predicted), 100.0 * static_cast<double>((measured / predicted) - 1.0F));
+    EXPECT_NEAR(1.0F, measured / predicted, 0.02F) << "dt ratio " << dt_ratio;
+  }
+}
+
+
+TEST(Protection, TheSensitivityOfTheDeratingToATemperatureSensorOffsetIsMeasured) {
+  // The derating ramp is a straight line from `t_derate_start_c` to `t_derate_end_c`, so a temperature-sensor offset
+  // has a size that can be written down before it is measured: `i_max * offset / (end - start)`. A 5 K offset on this
+  // configuration is 10 % of `i_max`, which is the same order as the current-sense error the project treats as its
+  // dominant one -- and unlike that one, nothing calibrates it unless the caller does.
+  // 降额斜坡是从 `t_derate_start_c` 到 `t_derate_end_c` 的直线，所以温度传感器偏置的效应在测量之前就能写下来：
+  // `i_max·offset/(end−start)`。本配置下 5 K 偏置就是 `i_max` 的 10%，与本项目当作主导误差的电流采样误差同一量级——而
+  // 与后者不同，除非调用方自己标定，没有任何东西标定它。
+  const core::Protector protector(config());
+  const float start = config().t_derate_start_c;
+  const float end = config().t_derate_end_c;
+  const float slope = config().i_max_a / (end - start);
+
+  std::printf("\n[L3] derated limit against a temperature-sensor offset\n");
+  std::printf("        %10s %12s %12s %9s\n", "offset", "limit", "predicted", "gap");
+  for (const float offset : {-10.0F, -5.0F, 0.0F, 5.0F, 10.0F}) {
+    const float reported_c = 80.0F + offset;
+    const float limit = protector.derated_limit(reported_c);
+    const float predicted = config().i_max_a - (slope * (reported_c - start));
+    std::printf("        %+9.1fK %12.4f %12.4f %8.2f%%\n", static_cast<double>(offset), static_cast<double>(limit),
+                static_cast<double>(predicted), 100.0 * static_cast<double>((limit / predicted) - 1.0F));
+    EXPECT_NEAR(predicted, limit, 1.0e-6F) << "offset " << offset;
+  }
+  // The headline, stated as a number rather than as a warning.
+  // 头条，写成数字而不是一句警告。
+  const float ten_k = std::fabs(protector.derated_limit(85.0F) - protector.derated_limit(75.0F));
+  EXPECT_NEAR(0.2F * config().i_max_a, ten_k, 1.0e-6F)
+      << "a 10 K sensor offset is worth 20 % of the current limit on this ramp";
+}
+
 } // namespace foc
