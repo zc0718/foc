@@ -29,7 +29,7 @@
       "label": "strict",
       "type": "shell",
       "command": "python3",
-      "args": [".github/misc/gates.py", "strict"],
+      "args": [".github/project/gates.py", "strict"],
       "windows": { "command": "python" },
       "problemMatcher": []
     },
@@ -37,7 +37,7 @@
       "label": "negative",
       "type": "shell",
       "command": "python3",
-      "args": [".github/misc/negative_compile.py"],
+      "args": [".github/project/negative_compile.py"],
       "windows": { "command": "python" },
       "problemMatcher": []
     },
@@ -45,7 +45,7 @@
       "label": "coverage",
       "type": "shell",
       "command": "python3",
-      "args": [".github/misc/coverage_gate.py"],
+      "args": [".github/project/coverage_gate.py"],
       "windows": { "command": "python" },
       "problemMatcher": []
     },

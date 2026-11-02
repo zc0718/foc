@@ -74,25 +74,7 @@ function(split_conan_dependency INPUT_STR PACKAGE_NAME TARGETS)
 endfunction()
 
 
-# define file search mode (can be adjusted according to the project structure)
-set(C_HEADER_PATTERNS "*.h")
-set(CPP_HEADER_PATTERNS "*.hpp")
-set(C_SOURCE_PATTERNS "*.c")
-set(CPP_SOURCE_PATTERNS "*.cpp")
-set(MODULE_PATTERNS "*.ixx" "*.cppm")
-
-
-# auto file collection
-# `file(GLOB_RECURSE)` has no `PATHS` keyword: the old `PATHS "<dir>"` spelling was silently
-# treated as two more globbing expressions, and because GLOB_RECURSE recurses from the current
-# source directory, `*.cpp` matched *every* .cpp under the recipe folder -- `api/python_bindings.cpp`
-# ended up inside the library target, and so did the `CompilerIdCXX.cpp` CMake writes into the
-# build folder. Scope the patterns to their directory instead: "<dir>/*.cpp" recurses within that
-# directory only.
-# `file(GLOB_RECURSE)` 没有 `PATHS` 关键字：旧写法里 `PATHS "<dir>"` 被当成两个额外的通配表达式，
-# 而 GLOB_RECURSE 是从当前源目录递归，于是 `*.cpp` 把 recipe 目录下**所有** .cpp 都收了进来——
-# `api/python_bindings.cpp` 因此被编进了库目标，CMake 自己写进 build 目录的
-# `CompilerIdCXX.cpp` 也一样。把通配限定到各自目录：`"<dir>/*.cpp"` 只在该目录内递归。
+# GLOB_RECURSE has no PATHS keyword, so build "<root>/<pattern>" to recurse inside that directory only.
 function(collect_files out_var root)
     set(_globs "")
     foreach(_pattern IN LISTS ARGN)
@@ -106,6 +88,30 @@ function(collect_files out_var root)
     set(${out_var} "${_found}" PARENT_SCOPE)
 endfunction()
 
+
+# install(FILES) drops the relative directory, so a nested public header would be flattened.
+function(install_header_tree headers component)
+    foreach(_header IN LISTS headers)
+        file(RELATIVE_PATH _rel "${CMAKE_CURRENT_SOURCE_DIR}/include" "${_header}")
+        get_filename_component(_rel_dir "${_rel}" DIRECTORY)
+        if(_rel_dir)
+            install(FILES "${_header}" DESTINATION "include/${_rel_dir}" COMPONENT ${component})
+        else()
+            install(FILES "${_header}" DESTINATION include COMPONENT ${component})
+        endif()
+    endforeach()
+endfunction()
+
+
+# define file search mode (can be adjusted according to the project structure)
+set(C_HEADER_PATTERNS "*.h")
+set(CPP_HEADER_PATTERNS "*.hpp")
+set(C_SOURCE_PATTERNS "*.c")
+set(CPP_SOURCE_PATTERNS "*.cpp")
+set(MODULE_PATTERNS "*.ixx" "*.cppm")
+
+
+# auto file collection
 collect_files(C_HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/include" ${C_HEADER_PATTERNS})
 collect_files(CPP_HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/include" ${CPP_HEADER_PATTERNS})
 collect_files(C_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/src" ${C_SOURCE_PATTERNS})
@@ -354,11 +360,7 @@ else()  # general package
   endif()
 
   if(ENABLE_PYBIND AND CMAKE_CROSSCOMPILING)
-    # A pybind11 module embeds the *host* CPython ABI and needs that interpreter (and its headers)
-    # to be built and importable. A cross toolchain has neither, and the library itself does not
-    # depend on the module, so this is a skip with a reason -- not a failure.
-    # pybind11 模块绑定的是**宿主机**的 CPython ABI，构建与导入都需要宿主解释器和头文件；交叉
-    # 工具链两者都没有，而库本体并不依赖该模块，所以这里是"带原因跳过"，不是失败。
+    # A pybind11 module needs the host CPython to build and import, which a cross toolchain lacks.
     message(STATUS "Python bindings skipped: cross-compiling for ${CMAKE_SYSTEM_NAME}/${CMAKE_SYSTEM_PROCESSOR}")
   elseif(ENABLE_PYBIND)
     set(PYTHON_MODULE_NAME "${LIB_NAME}_python")
@@ -374,10 +376,7 @@ else()  # general package
     pybind11_add_module(${PY_TARGET_INTERNAL} ${PYTHON_BINDINGS_SOURCE})
     target_link_libraries(${PY_TARGET_INTERNAL} PRIVATE ${LIB_NAME})
 
-    # Under coverage the module links instrumented archives: a shared object without the coverage
-    # runtime imports with `undefined symbol: __gcov_*`, exactly like the pure-C consumer did.
-    # 覆盖率构建下模块链接的是插桩过的静态库：少了覆盖率运行时的 .so 会在 import 时报
-    # `undefined symbol: __gcov_*`，与当初纯 C 消费者遇到的完全一样。
+    # Under coverage the module links instrumented archives and needs the coverage runtime too.
     if(ENABLE_COVERAGE AND NOT CMAKE_CROSSCOMPILING AND LINK_FLAGS)
       target_link_options(${PY_TARGET_INTERNAL} PRIVATE ${LINK_FLAGS})
     endif()
@@ -418,22 +417,7 @@ install(TARGETS ${INSTALL_TARGETS}
         RUNTIME DESTINATION bin
 )
 
-# Public headers keep their tree. A flat include/ tree installs exactly as before
-# (include/x.hpp); a nested tree keeps its relative path (include/foc/core/x.hpp) instead of
-# being collapsed into include/x.hpp -- install(FILES) drops the relative directory, which
-# silently broke the "flat or nested" contract of this scaffold.
-function(install_header_tree headers component)
-    foreach(_header IN LISTS headers)
-        file(RELATIVE_PATH _rel "${CMAKE_CURRENT_SOURCE_DIR}/include" "${_header}")
-        get_filename_component(_rel_dir "${_rel}" DIRECTORY)
-        if(_rel_dir)
-            install(FILES "${_header}" DESTINATION "include/${_rel_dir}" COMPONENT ${component})
-        else()
-            install(FILES "${_header}" DESTINATION include COMPONENT ${component})
-        endif()
-    endforeach()
-endfunction()
-
+# Public headers keep their tree: a flat include/ installs as before, a nested one keeps its relative path.
 install_header_tree("${C_HEADERS}" c_headers)
 
 install_header_tree("${CPP_HEADERS}" cpp_headers)

@@ -110,9 +110,7 @@ class PackageRecipe(ConanFile):
     options = {"shared": [True, False], "fPIC": [True, False]}
     default_options = {"shared": _metadata.get('is_shared'), "fPIC": True}  # inherit from config
 
-    # Sources are located in the same place as this recipe, copy them to the recipe
-    # api/* rides along: the pybind11 module is part of the package when
-    # enable_python_bindings is true, and CMake compiles it from the exported sources.
+    # Sources live beside this recipe; api/* rides along so the pybind11 module is part of the package.
     exports_sources = ["CMakeLists.txt", "src/*", "include/*", "api/*", METADATA_FILENAME, "LICENSE"]
     exports = ["conandata.yml", METADATA_FILENAME, "LICENSE"]
 
@@ -128,8 +126,7 @@ class PackageRecipe(ConanFile):
         metadata_path = Path(self.recipe_folder) / METADATA_FILENAME
         license_path = Path(self.recipe_folder) / "LICENSE"
 
-        # explicit utf-8: the default is the locale encoding, which is cp1252/cp936 on Windows
-        # and cannot decode the Chinese comments these files carry
+        # Explicit utf-8: the locale default is cp1252/cp936 on Windows and cannot decode the Chinese comments here.
         self.conandata = yaml.safe_load(conandata_path.read_text(encoding='utf-8'))
         self.meta = yaml.safe_load(metadata_path.read_text(encoding='utf-8'))
 
@@ -272,7 +269,7 @@ class PackageRecipe(ConanFile):
                     continue
             if _pkg == 'gtest':
                 continue
-            if _pkg == 'pybind11' and not self._python_bindings_enabled():
+            if _pkg == 'pybind11' and (not self._python_bindings_enabled() or cross_building(self)):
                 continue
             self.requires(req)
 
@@ -302,7 +299,7 @@ class PackageRecipe(ConanFile):
                                          for z in [_c, _cpp, _common, _infra]]
         else:
             _infra.pop("GTest", None)
-            if not self._python_bindings_enabled():
+            if not self._python_bindings_enabled() or cross_building(self):
                 _infra.pop("pybind11", None)
 
         _infra_deps = [f"{k}@{' '.join(v)}" for k, v in _infra.items()]
@@ -314,6 +311,10 @@ class PackageRecipe(ConanFile):
         # Extra edges between the generated components, declared in metadata.json as {from: [to]}.
         _known = {f"{self.name}_c", f"{self.name}_cpp"}
         _edges = self.meta.get("component_requires") or {}
+        if _edges and self.meta.get("is_header"):
+            raise ConanInvalidConfiguration(
+                "component_requires must stay empty when is_header=true: "
+                "a header-only package has no component libraries")
         _normalized = {}
         for _from, _to in _edges.items():
             _targets = _to if isinstance(_to, list) else [_to]
@@ -321,6 +322,13 @@ class PackageRecipe(ConanFile):
                 raise ConanInvalidConfiguration(
                     f"component_requires: invalid edge '{_from}' -> {_to}; known components are {sorted(_known)}")
             _normalized[_from] = _targets
+        # Conan reports a component cycle much later and less clearly, so reject it while configuring.
+        for _from, _targets in _normalized.items():
+            for _to in _targets:
+                if _from in _normalized.get(_to, []):
+                    raise ConanInvalidConfiguration(
+                        f"component_requires: cycle between '{_from}' and '{_to}'; "
+                        "declare exactly one direction")
         return _normalized
 
     def package_id(self):
