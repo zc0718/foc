@@ -102,7 +102,8 @@ python .github/skills/_shared/skillkit/cli.py catalog --format markdown
 
 ## Shell Portability（命令可移植性）
 
-The quality gates are cross-platform (`python .github/misc/gates.py ...`); the remaining POSIX-only pieces are
+The quality gates are cross-platform (`python .github/misc/gates.py ...` for the scaffold's three and
+`python .github/project/gates.py ...` for this project's); the remaining POSIX-only pieces are
 `bash .github/misc/run-megalinter.sh` and the docs toolchain. On Windows use one of:
 
 - **WSL** or **Git Bash** for the POSIX commands;

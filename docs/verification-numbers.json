@@ -1,6 +1,6 @@
 {
-  "cases": 388,
-  "coverage_all": 94.11,
-  "coverage_core": 95.7,
+  "cases": 599,
+  "coverage_all": 94.22,
+  "coverage_core": 95.74,
   "negative_cases": 27
 }

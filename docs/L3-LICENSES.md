@@ -6,12 +6,12 @@ source file would relicense the whole thing.
 在细读、引入或摘抄任何一个上游 FOC 项目之前，先查这张表。本库是 **Apache-2.0，并且要被链接进产品**，
 一个 copyleft 源文件就会把整个库的许可改掉。
 
-**Enforced / 由门禁强制**：`python3 .github/misc/gates.py license` checks every file under
+**Enforced / 由门禁强制**：`python3 .github/project/gates.py license` checks every file under
 `include/` and `src/` against `.github/misc/.license-guard.txt`, and is part of `gates.py all`.
 Self-tested: a `SPDX-License-Identifier: GPL-3.0-or-later` line, a "GNU General Public License"
 header, and an `AGPL` mention all fail; `Apache-2.0` / `MIT` / `BSD-*` / `ISC` / `CC0` / `Unlicense`
 pass.
-`python3 .github/misc/gates.py license` 会对 `include/` 与 `src/` 下每个文件按 `.license-guard.txt`
+`python3 .github/project/gates.py license` 会对 `include/` 与 `src/` 下每个文件按 `.license-guard.txt`
 检查，并已并入 `gates.py all`。已自测：GPL 的 SPDX 标识、GPL 抬头原文、`AGPL` 字样都会失败；
 `Apache-2.0`/`MIT`/`BSD-*`/`ISC`/`CC0`/`Unlicense` 通过。
 

@@ -67,7 +67,7 @@ marker, so a tag in the wrong place moves text into the wrong language version.
    body paragraph uses a block indent five columns in from the star.
    **缩进**：标签行的折行续行对齐到该字段自身的文字之下；独立正文段落用星号后五格的块缩进。
 
-`.github/misc/docfmt.py` enforces all five (7th gate, `python3 .github/misc/gates.py docs`). It
+`.github/project/docfmt.py` enforces all five (7th gate, `python3 .github/project/gates.py docs`). It
 refuses to write a file whose prose characters would change — run `--check` first, `--fix` behind
 it, and never hand-edit what it would reflow.
 形状由 `docfmt.py` 强制（第 7 道门禁）。它会拒绝写入任何正文文字发生变化的文件——先 `--check`
@@ -111,7 +111,9 @@ reason at all, and 2 of those reasons genuinely belong at field level ("six or m
 - 空行分段：全局对象间 2 空行（`\n\n\n`），模块生成 `_get_export_objects` 按 `split('\n\n')` 切分（`conanfile.py`，含 TODO）；2~3 空行均兼容，超过 3 个是违规。
 - 宏命名规则由 clang-tidy `cppcoreguidelines-macro-usage` 强制（`^[A-Z][A-Z0-9]*(_[A-Z0-9]+)*$`），不在 `.clang-format` 中。
 - `.clang-tidy`: `bugprone-*` + `performance-*` + `cppcoreguidelines-avoid-magic-numbers`; **WarningsAsErrors: '*'**. warning 即失败；`HeaderFilterRegex: "^(include|src)/"` 锚定仓库路径。
-- Local check（本地自查）: the gate body lives in `.github/misc/gates.py` (CI / pre-commit / editor share it). 门禁实现只有一份。
+- Local check（本地自查）: the scaffold's gates live in `.github/misc/gates.py` (format / tidy / guard) and this
+  project's in `.github/project/gates.py`. The scaffold's file is upstream's and stays byte-identical -- private
+  gates go beside it, never inside it (`project/gates.py scaffold` enforces that). 门禁实现只有一份，入口有两个。
   ```bash
   python3 .github/misc/gates.py format   # clang-format --dry-run --Werror, dual C/C++ configs
   python3 .github/misc/gates.py tidy     # clang-tidy, standards read from metadata.json

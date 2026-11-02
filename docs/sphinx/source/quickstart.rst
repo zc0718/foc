@@ -100,13 +100,13 @@ _`5. Prove it yourself`
    python3 .github/misc/gates.py format
    python3 .github/misc/gates.py tidy
    python3 .github/misc/gates.py guard
-   python3 .github/misc/gates.py strict
+   python3 .github/project/gates.py strict
 
    # negative compilation: a fake HAL must NOT compile
-   python3 .github/misc/negative_compile.py
+   python3 .github/project/negative_compile.py
 
    # coverage gate (reads the summary the recipe exports)
-   python3 .github/misc/coverage_gate.py
+   python3 .github/project/coverage_gate.py
 
    # bilingual documentation (needs sphinx and a loadable doxygen)
    python3 docs/build.py

@@ -29,8 +29,9 @@ user-invocable: true
 ## Quick Script（本地快速跑一遍）
 
 ```bash
-# 1) quality（门禁实现只有一份：.github/misc/gates.py）
+# 1) quality（脚手架三门 .github/misc/gates.py；本项目门 .github/project/gates.py；实现各一份）
 python3 .github/misc/gates.py all
+python3 .github/project/gates.py all
 # 2) tests + coverage
 conan create . -s build_type=Debug --build=missing
 # 3) docs
