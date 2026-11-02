@@ -368,6 +368,51 @@ TEST(SinusoidFit, TheSensitivityToBeingAskedAboutTheWrongFrequencyIsMeasured) {
 }
 
 
+TEST(SinusoidFit, EveryRefusalIsReportedAndTheResultIsStillWritten) {
+    // The header documents three statuses, and until now no case asserted any of them: `Ok` was assumed everywhere
+    // and the `Param` / `State` channels were decoration. A diagnostic channel nobody exercises is a comment -- and
+    // these are the branches a sweep will actually hit, because a sweep asks about frequencies the recording cannot
+    // answer.
+    // 头文件写了三种状态，而在此之前没有任何用例断言过任何一条：处处假定 `Ok`，`Param`/`State` 两个通道只是装饰。
+    // 没人跑过的诊断通道就是一句注释——而这些分支正是扫频会真正撞上的，因为扫频一定会问到这段录制答不了的频率。
+    const float dt = 1.0e-4F;
+    const float omega = kFitTwoPi * 50.0F;
+    std::vector<float> y;
+    tone(y, 600U, dt, omega, 3.0F, 0.0F, 0.0F);
+
+    // `Param`: the arguments do not describe a sinusoid at all.
+    // `Param`：这些参数根本不足以描述一段正弦。
+    EXPECT_EQ(foc::ErrorCode::Param, foc::core::sinusoid_fit(nullptr, 600U, dt, omega).status) << "no samples";
+    EXPECT_EQ(foc::ErrorCode::Param, foc::core::sinusoid_fit(y.data(), 5U, dt, omega).status)
+        << "fewer than six samples cannot carry a fit";
+    EXPECT_EQ(foc::ErrorCode::Param, foc::core::sinusoid_fit(y.data(), y.size(), 0.0F, omega).status)
+        << "no time base";
+    EXPECT_EQ(foc::ErrorCode::Param, foc::core::sinusoid_fit(y.data(), y.size(), dt, 0.0F).status) << "no frequency";
+    EXPECT_EQ(foc::ErrorCode::Param, foc::core::sinusoid_fit(y.data(), y.size(), dt, -omega).status)
+        << "a negative frequency is not a frequency";
+
+    // `Param` again, and this one is the interesting refusal: **above Nyquist the projection aliases**, so the answer
+    // would be an amplitude for a tone the recording cannot contain. Reporting a number here would be worse than
+    // reporting nothing, because the number is well formed.
+    // 又一次 `Param`，而这一次是耐人寻味的拒绝：**越过 Nyquist 后投影会混叠**，给出的幅值属于这段录制根本装不下的
+    // 那个音。在这里报一个数比什么都不报更糟，因为那个数格式完全正常。
+    EXPECT_EQ(foc::ErrorCode::Param, foc::core::sinusoid_fit(y.data(), y.size(), dt, kFitTwoPi / (2.0F * dt)).status)
+        << "at Nyquist the tone folds onto its own mirror image";
+
+    // `State`: the window is shorter than one period of the frequency asked about, so it is a number but not this
+    // tone's amplitude. 5 ms of recording against a 20 ms period.
+    // `State`：窗口短于所问频率的一个周期，于是它是个数、但不是这个音的幅值。5 ms 的录制对 20 ms 的周期。
+    const foc::core::SinusoidFit short_window = foc::core::sinusoid_fit(y.data(), 50U, dt, omega);
+    EXPECT_EQ(foc::ErrorCode::State, short_window.status) << "a fraction of a cycle is `State`, not a number";
+
+    // Every refusal writes both fields, so a caller that ignores the status reads zero rather than whatever the last
+    // successful call left behind.
+    // 每一次拒绝都会写满两个字段，所以忽略状态的调用方读到的是零，而不是上一次成功调用留下的东西。
+    EXPECT_FLOAT_EQ(0.0F, short_window.amplitude);
+    EXPECT_FLOAT_EQ(0.0F, short_window.phase_rad);
+}
+
+
 TEST(SinusoidFit, TheConstantColumnIsWhatMakesADcOffsetHarmless) {
     // Both halves are needed: the claim, and a version of the estimator without the column that the claim would be
     // false about. A criterion that cannot tell them apart is decoration.

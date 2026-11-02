@@ -77,6 +77,107 @@ def policy():
     return scopes, floors, coverage
 
 
+def _code_mask(text: str) -> list:
+    """True for each line that holds code: not blank, not inside a block comment, not a `//` line.
+
+    Written as a two-state scan rather than a regex because `*` and `/` appear in expressions; a rule
+    like "starts with `*`" would also swallow a dereference continuation and quietly shrink the
+    denominator.
+    两态扫描而不是正则：`*` 与 `/` 在表达式里也会出现，靠"以 `*` 开头"判断会连解引用的续行一起吞掉，
+    静悄悄地缩小分母。
+    """
+    mask = []
+    in_block = False
+    for raw in text.splitlines():
+        code = False
+        i = 0
+        while i < len(raw):
+            if in_block:
+                end = raw.find("*/", i)
+                if end < 0:
+                    i = len(raw)
+                    break
+                i = end + 2
+                in_block = False
+                continue
+            pair = raw[i:i + 2]
+            if pair == "//":
+                break
+            if pair == "/*":
+                in_block = True
+                i += 2
+                continue
+            if not raw[i].isspace():
+                code = True
+            i += 1
+        mask.append(code)
+    return mask
+
+
+def recount_without_comment_lines(tracefile, per_file):
+    """Drop tracefile records that land on a blank or comment-only line; return (per_file, dropped).
+
+    llvm-cov's lcov export on the macOS toolchain writes `DA:<line>,0` for comment and blank lines,
+    and gcov never does -- so the recipe, which counts *distinct DA line numbers*, charges macOS for
+    every comment in every header. Measured: `include/foc/core/protection.hpp` reads **133** lines on
+    macOS against **104** under clang 18 on Linux, and 31 of the 33 lines macOS calls uncovered are
+    comments or blanks (the two real ones, 354 and 361, are uncovered on both runners). Nothing about
+    the program differs, so the two must not be measured with different rulers; the fix is to use the
+    ruler that counts code.
+
+    Linux is unaffected: gcov emits no such records, so `dropped` is 0 there and every historical
+    number stands.
+    """
+    root = pathlib.Path(__file__).resolve().parents[2]
+    counts = {}
+    masks = {}
+    try:
+        lines = tracefile.read_text(encoding="utf-8", errors="replace").splitlines()
+    except OSError:
+        return per_file, 0
+    current = None
+    dropped = 0
+    for line in lines:
+        if line.startswith("SF:"):
+            raw = line[3:].strip()
+            candidate = pathlib.Path(raw)
+            if not candidate.is_absolute():
+                candidate = root / raw
+            try:
+                key = candidate.resolve().relative_to(root).as_posix()
+            except (OSError, ValueError):
+                key = raw
+            current = key
+            counts.setdefault(current, {})
+            continue
+        if current is None or not line.startswith("DA:"):
+            continue
+        number, _, rest = line[3:].strip().partition(",")
+        count = rest.partition(",")[0]
+        if not (number.isdigit() and count.isdigit()):
+            continue
+        number = int(number)
+        if current not in masks:
+            try:
+                masks[current] = _code_mask((root / current).read_text(encoding="utf-8", errors="replace"))
+            except OSError:
+                masks[current] = None
+        mask = masks[current]
+        if mask is not None and 1 <= number <= len(mask) and not mask[number - 1]:
+            dropped += 1            # a blank or comment line is not a line of code
+            continue
+        seen = counts[current]
+        seen[number] = max(seen.get(number, 0), int(count))
+    if not dropped:
+        return per_file, 0
+    rebuilt = {path: {"lines_hit": sum(1 for c in seen.values() if c > 0), "lines_found": len(seen)}
+               for path, seen in counts.items() if seen}
+    # Keep any file the tracefile did not mention, so a filter can never *remove* a file from the report.
+    for path, entry in per_file.items():
+        rebuilt.setdefault(path, entry)
+    return rebuilt, dropped
+
+
 def main():
     scopes, floors, _coverage = policy()
     parser = argparse.ArgumentParser(description=__doc__)
@@ -108,6 +209,27 @@ def main():
     core = scope_of(per_file, core_scopes)
     overall = {"hit": summary["lines"]["hit"], "found": summary["lines"]["found"],
                "percent": summary["lines"]["percent"], "files": summary.get("files", [])}
+
+    # One ruler for both runners: see `recount_without_comment_lines`. The recipe counts DA records and
+    # the macOS toolchain puts comments in them; counting code lines here makes the two comparable, and
+    # leaves Linux untouched because gcov never emits those records.
+    # 两个 runner 用同一把尺子：见 `recount_without_comment_lines`。recipe 数的是 DA 记录，而 macOS 那套
+    # 工具链会把注释写进去；这里改数代码行，两边才可比，且 gcov 从不产出那种记录，Linux 侧不受影响。
+    _trace = summary_path.with_name("coverage_test.filtered.info")
+    if not _trace.is_file():
+        _candidates = sorted(summary_path.parent.glob("*.info"))
+        _trace = _candidates[0] if _candidates else None
+    if _trace is not None:
+        _rebuilt, _dropped = recount_without_comment_lines(_trace, per_file)
+        if _dropped:
+            per_file = _rebuilt
+            core = scope_of(per_file, core_scopes)
+            _hit = sum(c.get("lines_hit", 0) for c in per_file.values())
+            _found = sum(c.get("lines_found", 0) for c in per_file.values())
+            overall = {"hit": _hit, "found": _found, "percent": line_rate(_hit, _found),
+                       "files": summary.get("files", [])}
+            print(f"[coverage] dropped {_dropped} record(s) that land on comment or blank lines "
+                  f"({_trace.name} counts them, gcov does not)", flush=True)
 
     if args.list:
         print(f"core scope {core_scopes}:")
