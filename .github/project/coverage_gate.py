@@ -230,6 +230,24 @@ def main():
                        "files": summary.get("files", [])}
             print(f"[coverage] dropped {_dropped} record(s) that land on comment or blank lines "
                   f"({_trace.name} counts them, gcov does not)", flush=True)
+            # Write the corrected counts back. The workflow's own coverage step reads this file next,
+            # and if only this gate knew about the correction the two judges would disagree about the
+            # same run -- which is the defect this fix is about, not its remedy. The raw numbers stay
+            # in the payload so the correction is auditable rather than invisible.
+            # 把校正后的计数写回去。workflow 自己那一步随后读的就是这个文件；如果只有本门禁知道这处校正，
+            # 两个裁判会对同一次运行给出不同结论——那正是本修复针对的缺陷本身，而不是它的解法。原始数字
+            # 留在 payload 里，使这次校正可审计而不是隐形的。
+            _previous = {"lines": summary.get("lines"), "per_file": summary.get("per_file")}
+            summary["lines"] = {"hit": _hit, "found": _found, "percent": overall["percent"]}
+            summary["per_file"] = per_file
+            summary["comment_line_filter"] = {"dropped_records": _dropped, "unfiltered": _previous}
+            try:
+                summary_path.write_text(json.dumps(summary, indent=2, sort_keys=True) + "\n",
+                                        encoding="utf-8")
+                print(f"[coverage] rewrote {summary_path.name} with the filtered counts", flush=True)
+            except OSError as _exc:
+                print(f"[coverage] cannot rewrite {summary_path}: {_exc}; the report is still judged "
+                      f"with the filtered counts here", file=sys.stderr)
 
     if args.list:
         print(f"core scope {core_scopes}:")
