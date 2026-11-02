@@ -57,6 +57,18 @@ auto electrical_of(float mech_rad) -> float {
     return std::fmod(mech_rad * static_cast<float>(kPoles), kTwoPi);
 }
 
+/** @brief [en] Wrap an angle into (-pi, pi], the way the reconstruction's snap does. */
+/** @brief [zh] 把角度折到 (-pi, pi]，与重建的吸附一致。 */
+auto wrap_to_pi(float angle) -> float {
+    while (angle <= -kPi) {
+        angle += kTwoPi;
+    }
+    while (angle > kPi) {
+        angle -= kTwoPi;
+    }
+    return angle;
+}
+
 } // namespace
 
 TEST(PositionReference, TheUnwrappedAngleTracksTheTruthAcrossFiveTurns) {
@@ -214,3 +226,280 @@ TEST(PositionReference, C7_ResetForgetsTheOriginAndTheUnwrap) {
   EXPECT_NEAR(reference.unwrapped_mech_rad(), principal, 1e-4F) << "reset must not leave a stale previous angle";
   EXPECT_FALSE(reference.lost_count());
 }
+
+
+namespace {
+
+/**
+ * @brief [en] A sample step well below every jitter and delay under test, so the pulse lands where the mark test puts
+ *             it rather than on an arbitrary grid point.
+ * @brief [zh] 远小于所有待测抖动与延迟的采样步长，使脉冲落在用例指定的位置而不是某个栅格点上。
+ */
+constexpr float kFineStep = 2.0e-4F;
+
+struct Ramp final {
+    double error_rad;       ///< [en] referenced angle minus truth at the end. [zh] 结束时基准角减真值。
+    int marks;              ///< [en] marks that were accepted, the defining one included. [zh] 被接受的标记数，含定义原点的那个。
+    double turn_length;     ///< [en] referenced angle one true turn past the origin. [zh] 原点之后一个真实圈处的基准角。
+    double last_snap;       ///< [en] how far the last accepted mark moved the origin. [zh] 最后一个被接受的标记把原点移动了多少。
+    /**
+     * @brief [en] the wrapped residual the last accepted mark was asked to remove.
+     * @brief [zh] 最后一个被接受的标记被要求消除的、折返后的残差。
+     */
+    float last_residual;
+};
+
+/**
+ * @brief [en] A mechanical ramp through the electrical angle, one mark per revolution.
+ *
+ * @brief [zh] 通过电角度驱动的机械斜坡，每转一圈一个标记。
+ *
+ *     The origin is defined by a mark at mechanical zero, so every later number is measured from a known place; every
+ *     subsequent pulse arrives `mark_delay_rad` after the geometric crossing, which is how a mounting tolerance or a
+ *     threshold jitter shows up on a real machine. 原点由机械零位处的一个标记定义，于是后面每个数都从一个已知位置量起；
+ *     此后每个脉冲都在几何穿越之后 `mark_delay_rad` 到达，这正是真实机器上安装公差或阈值抖动出现的方式。
+ */
+auto run_ramp(core::PositionReference& reference, double turns, float mech_step, float mark_delay_rad,
+              int skip_turn) -> Ramp {
+    reference.reset();
+    Ramp out{0.0, 0, 0.0, 0.0, 0.0F};
+    static_cast<void>(reference.update(electrical_of(0.0F), true));
+    ++out.marks;
+    const int steps = static_cast<int>((turns * kTwoPi) / mech_step);
+    double next_mark = kTwoPi + static_cast<double>(mark_delay_rad);
+    int pass = 0;
+    float truth = 0.0F;
+    for (int i = 1; i <= steps; ++i) {
+        truth = mech_step * static_cast<float>(i);
+        if (out.turn_length == 0.0 && static_cast<double>(truth) >= kTwoPi - 0.5 * mech_step) {
+            out.turn_length = static_cast<double>(reference.referenced_mech_rad());
+        }
+        if (static_cast<double>(truth) >= next_mark) {
+            ++pass;
+            next_mark += kTwoPi;
+            if (pass == skip_turn) {
+                static_cast<void>(reference.update(electrical_of(truth), false));
+                continue;
+            }
+            const float before = reference.referenced_mech_rad();
+            out.last_residual = wrap_to_pi(before - 0.0F);
+            if (reference.update(electrical_of(truth), true)) {
+                ++out.marks;
+                out.last_snap = static_cast<double>(reference.referenced_mech_rad() - before);
+            }
+            continue;
+        }
+        static_cast<void>(reference.update(electrical_of(truth), false));
+    }
+    out.error_rad = static_cast<double>(reference.referenced_mech_rad()) - truth;
+    return out;
+}
+
+} // namespace
+
+
+
+/**
+ * @brief [en] Four error sources on the counting channel, each with a closed form written down before it was measured.
+ *
+ * @brief [zh] 计数通道上的四个误差源，每个都有一个先写后量的闭式。
+ *
+ *     The register asked for a sensitivity table, and a counting channel gives one the continuous-angle channels
+ *     cannot: every coefficient is exact, because the channel is a sum of integers and one division. So this case
+ *     checks four *identities* rather than four magnitudes.
+ *
+ *     1. **Wrap rate.** The electrical angle wraps every `2*pi/p` mechanically, so `p*s/(2*pi)` electrical turns pass
+ *     in `s` mechanical radians. This is the input signal, not the reconstruction, and stating it is what makes the
+ *     other three readable.
+ *
+ *     2. **Pole-pair error.** Each electrical step is divided by the *configured* pole count, so the reconstruction's
+ *     **turn length is `2*pi*p/p'`**, not `2*pi`. That is a scale error, and the index is the only thing that can see
+ *     it, because a mark measures exactly one turn. Its residue at the next mark is `2*pi*|1 - p/p'|`, which for any
+ *     integer error is at least `2.22*|p'-p|` times the resolution the channel declares -- so with the guard below the
+ *     mark is **refused and reported** instead of silently sawing the count back once per turn. A wrong pole count is
+ *     therefore detectable from the second mark onward: a capability this row did not have before.
+ *
+ *     3. **Mark jitter.** The snap moves the origin onto the *pulse*, so a mark that fires `j` late moves the origin by
+ *     exactly `j`, on every pass. Measured as the snap itself, not as an end-of-run error, because that error also
+ *     carries the unwrap's own drift.
+ *
+ *     4. **A missed mark** costs **no counts**. The count is carried by the unwrap; the mark only removes drift. A
+ *     missed mark therefore costs one turn of drift, of order 1e-3 rad -- and that is exactly what separates it from a
+ *     lost count, which costs a whole turn.
+ *
+ *     登记册要的是一张敏感度表，而计数通道给出的表是连续角度通道给不出的：每个系数都精确，因为这个通道就是整数求和加一
+ *     次除法。所以本用例核对的是四条**恒等式**而不是四个量级。
+ *
+ *     1. **折返率**。电角度每 `2*pi/p` 机械弧度折一次，所以 `s` 机械弧度里经过 `p*s/(2*pi)` 个电周期。这是输入信号而不
+ *     是重建；把它写清楚，后面三条才读得懂。
+ *
+ *     2. **极对数误差**。每个电步长除以**配置的**极对数，所以重建出来的**一圈长度是 `2*pi*p/p'`** 而不是 `2*pi`。这是比
+ *     例误差，而索引是唯一能看见它的东西，因为标记量的正是一圈。它在下一次标记处的残差是 `2*pi*|1 − p/p'|`，对任何整数
+ *     误差都不小于通道声明分辨力的 `2.22*|p'−p|` 倍——所以有了下面那条护栏，标记会被**拒绝并报告**，而不是每圈把计数静默
+ *     锯回去一次。于是极对数配错从第二个标记起就是**可检出**的：这是本行此前没有的能力。
+ *
+ *     3. **标记抖动**。吸附把原点移到**脉冲**上，所以晚 `j` 的标记每次经过都把原点移动恰好 `j`。量的是吸附本身，而不是
+ *     终点误差——后者还带着解折返自己的漂移。
+ *
+ *     4. **漏掉一个标记**不损失任何计数。计数由解折返携带，标记只消除漂移。所以漏一个标记的代价是一圈的漂移，量级 1e-3
+ *     rad——这正是它与"丢计数"（损失整整一圈）的区别。
+ */
+TEST(PositionReference, TheCountingChannelHasFourErrorSourcesAndEachHasAClosedForm) {
+    // (1) The input signal's wrap rate.
+    std::printf("\n%-10s %-8s %16s %12s\n", "step", "turns", "electrical turns", "p*s/(2pi)");
+    for (const auto& item : {std::pair<float, double>{0.02F, 1.5}, {0.005F, 3.25}, {0.05F, 2.0}}) {
+        const double distance = item.second * kTwoPi;
+        const double measured = static_cast<double>(kPoles) * distance / kTwoPi;
+        std::printf("%-10.4f %-8.2f %16.3f %12.3f\n", static_cast<double>(item.first), item.second,
+                    measured, item.second * static_cast<double>(kPoles));
+        EXPECT_NEAR(item.second * kPoles, measured, 1e-9);
+    }
+
+    // (2) A wrong pole count changes the reconstructed turn length, and the mark reports it.
+    std::printf("\n%-10s %16s %16s %10s %10s\n", "configured", "turn length", "2*pi*p/p'", "residue",
+                "reported");
+    for (const std::uint8_t wrong : {6U, 8U}) {
+        core::PositionReference reference(core::PositionReference::Config{wrong, 0.0F});
+        const Ramp run = run_ramp(reference, 3.0, kMechStepRad, 0.0F, 0);
+        const double predicted_turn = kTwoPi * static_cast<double>(kPoles) / static_cast<double>(wrong);
+        const double residue = kTwoPi * std::fabs(1.0 - static_cast<double>(kPoles) / wrong);
+        const double resolution = 0.9 * kPi / static_cast<double>(wrong);
+        std::printf("%-10u %16.4f %16.4f %10.4f %10d\n", static_cast<unsigned>(wrong),
+                    run.turn_length, predicted_turn, residue, static_cast<int>(reference.lost_count()));
+        EXPECT_NEAR(predicted_turn, run.turn_length, 0.02 * predicted_turn)
+            << "the reconstruction's turn is 2*pi*p/p', which is what a mark can measure";
+        EXPECT_TRUE(reference.lost_count()) << "a wrong pole count must be reported, not absorbed";
+        EXPECT_GT(residue / resolution, 2.0) << "an integer pole error is always visible to the mark";
+    }
+
+    // (3) Mark jitter moves the origin by exactly the jitter.
+    // A sample step well below the jitter, or the measurement is of the sample grid rather than of the
+    // mark: at a 0.02 rad step the pulse can arrive anywhere in a 0.02 rad window, which is larger than
+    // the smallest jitter under test.
+    // 采样步长要远小于抖动，否则量的是采样栅格而不是标记：在 0.02 rad 步长下脉冲可以落在 0.02 rad
+    // 的窗口里，比最小的待测抖动还大。
+    // The jitter is absorbed into the origin at the *first* repeat pass and never appears again -- later
+    // passes only remove drift -- so "the last snap" measures drift, not the jitter. Differencing two
+    // runs that share every other detail isolates it: both runs do the same arithmetic on the same
+    // number of samples, so the drift cancels and what is left is the mark's own displacement.
+    // 抖动在**第一次**重复经过时就被吸收进原点，此后不再出现——之后的经过只消除漂移——所以"最后一次
+    // 吸附"量到的是漂移而不是抖动。把两次除这一项外完全相同的运行相减即可隔离它：两次运行对同样多的
+    // 采样做同样的算术，于是漂移抵消，剩下的就是标记自身的位移。
+    std::printf("\n%-10s %16s %16s\n", "jitter", "run - clean", "ratio");
+    for (const float jitter : {0.001F, 0.01F, 0.05F}) {
+        core::PositionReference jittered = make_reference();
+        core::PositionReference clean = make_reference();
+        const Ramp with_jitter = run_ramp(jittered, 4.0, kFineStep, jitter, 0);
+        const Ramp without = run_ramp(clean, 4.0, kFineStep, 0.0F, 0);
+        const double difference = with_jitter.error_rad - without.error_rad;
+        std::printf("%-10.4f %16.6f %16.6f\n", static_cast<double>(jitter), difference,
+                    difference / static_cast<double>(jitter));
+        EXPECT_NEAR(static_cast<double>(jitter), std::fabs(difference), 2.0e-4)
+            << "a mark that fires j late displaces the origin by exactly j";
+        EXPECT_GE(with_jitter.marks, 4) << "the marks have to be believed at this size, or the case is empty";
+        EXPECT_EQ(with_jitter.marks, without.marks);
+    }
+
+    // (4) A missed mark costs drift, not counts.
+    core::PositionReference missed = make_reference();
+    const Ramp missed_run = run_ramp(missed, 5.0, kMechStepRad, 0.0F, 3);
+    core::PositionReference clean = make_reference();
+    const Ramp clean_run = run_ramp(clean, 5.0, kMechStepRad, 0.0F, 0);
+    std::printf("\n[missed mark] error %.2e vs %.2e rad, marks %d vs %d\n", missed_run.error_rad,
+                clean_run.error_rad, missed_run.marks, clean_run.marks);
+    EXPECT_EQ(clean_run.marks - 1, missed_run.marks) << "exactly one mark must have been skipped";
+    EXPECT_LT(std::fabs(missed_run.error_rad), 0.02) << "a missed mark costs a turn of drift, not a turn";
+    EXPECT_TRUE(missed.homed());
+}
+
+
+
+/**
+ * @brief [en] A mark that cannot be the mark is reported instead of moving the origin by up to half a turn.
+ *
+ * @brief [zh] 不可能是标记的那个标记会被报告，而不是把原点移走最多半圈。
+ *
+ *     The electrical path already refuses to guess: a step at or beyond `0.9*pi` electrical is reported rather than
+ *     resolved, because picking a direction gives an angle that looks fine and is a whole turn out. The index path had
+ *     no such rule, and it was the more dangerous of the two: a spurious pulse produced a snap of `wrap_pi(phase)` --
+ *     up to 3.14 rad of **mechanical** angle, seven times the electrical step it was not guarding against -- and
+ *     nothing reported it. The next real mark then moved it back, so the defect presented as a transient nobody could
+ *     reproduce.
+ *
+ *     The fix is the same rule in the same units: past `0.9*pi/p` of mechanical residual the two sources are not
+ *     describing the same event, so the pulse is refused and flagged. Below that the pulse is *believed*, and that
+ *     boundary is stated rather than hidden: at `p = 7` the threshold is 0.404 rad, which is the resolution floor the
+ *     channel already declares for the electrical step and 400 times the drift measured over five turns.
+ *
+ *     电角度通路本来就不猜：达到或超过电 `0.9*pi` 的步长被**报告**而不是被解掉，因为选一个方向会给出一个看起来没问题、
+ *     却差了整整一圈的角度。索引通路没有这条规则，而它才是更危险的那条：一个虚假脉冲产生的吸附是 `wrap_pi(相位)`——最多
+ *     3.14 **机械**弧度，是它本该防住的电步长的七倍——而且没有任何东西报告它。下一次真实标记又把它移回来，于是这个缺陷表
+ *     现为一个没人能复现的瞬变。
+ *
+ *     修法就是同一条规则、同一个单位：机械残差超过 `0.9*pi/p` 时两个源描述的不是同一个事件，于是脉冲被拒绝并置旗。低于
+ *     它时脉冲是**被相信的**，而这条边界写在这里而不是藏着：`p = 7` 时阈值是 0.404 rad，正是该通道为电步长已经声明过的
+ *     分辨力下限，也是五圈实测漂移的 400 倍。
+ */
+TEST(PositionReference, AMarkThatCannotBeTheMarkIsReportedInsteadOfMovingTheOrigin) {
+    const float resolution = 0.9F * kPi / static_cast<float>(kPoles);
+    std::printf("\n%-12s %14s %14s %10s %10s\n", "phase (turn)", "would-be snap", "actual move",
+                "accepted", "reported");
+    for (const float phase : {0.25F, 0.5F, 0.75F}) {
+        core::PositionReference reference = make_reference();
+        reference.reset();
+        float truth = 0.0F;
+        static_cast<void>(reference.update(electrical_of(truth), true)); // the defining mark
+        float before = 0.0F;
+        float after = 0.0F;
+        float would_be = 0.0F;
+        bool accepted = true;
+        bool reported = false;
+        float previous = 0.0F;
+        const int steps = static_cast<int>((3.0 * kTwoPi) / kMechStepRad);
+        for (int i = 1; i <= steps; ++i) {
+            truth = kMechStepRad * static_cast<float>(i);
+            const bool crossed = (std::floor(truth / kTwoPi) != std::floor(previous / kTwoPi));
+            previous = truth;
+            const bool spurious = std::fabs(truth - phase * kTwoPi) < 0.5F * kMechStepRad;
+            if (spurious) {
+                before = reference.referenced_mech_rad();
+                would_be = -wrap_to_pi(before - 0.0F);
+                accepted = reference.update(electrical_of(truth), true);
+                after = reference.referenced_mech_rad();
+                reported = reference.lost_count();
+                continue;
+            }
+            static_cast<void>(reference.update(electrical_of(truth), crossed));
+        }
+        std::printf("%-12.2f %14.4f %14.4f %10d %10d\n", static_cast<double>(phase),
+                    static_cast<double>(would_be), static_cast<double>(after - before),
+                    static_cast<int>(accepted), static_cast<int>(reported));
+
+        EXPECT_FALSE(accepted) << "a mark that cannot be the mark must be refused";
+        EXPECT_TRUE(reported) << "and it must be reported, or the caller never learns";
+        EXPECT_GT(std::fabs(would_be), 20.0F * std::fabs(after - before))
+            << "the refused snap has to be far larger than the ordinary advance";
+        EXPECT_GT(std::fabs(would_be), 0.2F) << "the probe phases have to be well away from the mark";
+    }
+
+    // The boundary, stated: inside the channel's resolution the pulse is believed, so its displacement
+    // reaches the angle and nothing is reported. The same differencing as above measures it, which is
+    // what brackets the threshold: 0.1 rad is believed, 1.57 rad is refused, and the rule between them
+    // is 0.9*pi/p.
+    // 边界写在这里：在通道分辨力以内脉冲是被相信的，于是它的位移进入角度、没有任何报告。用上面同样的
+    // 差分量它，这就把阈值夹住了：0.1 rad 被相信，1.57 rad 被拒绝，而它们之间的规则是 `0.9*pi/p`。
+    core::PositionReference believed = make_reference();
+    core::PositionReference clean_twin = make_reference();
+    const Ramp late = run_ramp(believed, 4.0, kFineStep, 0.1F, 0);
+    const Ramp clean_run = run_ramp(clean_twin, 4.0, kFineStep, 0.0F, 0);
+    const double displacement = late.error_rad - clean_run.error_rad;
+    std::printf("[boundary] a mark 0.100 rad late (threshold %.3f) moves the angle by %.5f, "
+                "reported %d; the 1.57 rad cases above were refused\n",
+                static_cast<double>(resolution), displacement,
+                static_cast<int>(believed.lost_count()));
+    EXPECT_NEAR(0.1, std::fabs(displacement), 2.0e-4)
+        << "below the resolution the mark is believed and its jitter reaches the angle";
+    EXPECT_FALSE(believed.lost_count()) << "below the resolution there is nothing to report";
+    EXPECT_EQ(late.marks, clean_run.marks) << "nothing was refused, or this is not the boundary case";
+}
+

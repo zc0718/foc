@@ -330,3 +330,224 @@ TEST(SilPolarity, TheCorrectionIsWhatStopsTheJointTurningBackwards) {
     EXPECT_GT(speed_with_correction, 1.0F) << "the corrected estimate must produce the commanded direction";
     EXPECT_LT(speed_without_correction, -1.0F) << "the mirror must produce the opposite direction";
 }
+
+
+
+namespace {
+
+struct PulseResult final {
+    core::PolarityVerdict verdict{core::PolarityVerdict::Inconclusive};
+    double delta_positive_a{0.0};
+    double delta_negative_a{0.0};
+    double asymmetry_a{0.0};
+    double rotor_moved_rad{0.0};
+};
+
+/**
+ * @brief [en] Pulse along a deliberately offset d-axis estimate, with no saliency loop in front.
+ *
+ * @brief [zh] 沿刻意偏移的 d 轴估计脉冲，前面不接凸极环。
+ *
+ *     The sweep is *about* the angle the caller hands in, so converging HFI first would defeat it: the loop's job is to
+ *     land on the d-axis line, and this case asks what happens when it does not. 这次扫描**就是**关于调用方给出的角度
+ *     的，所以先让 HFI 收敛会毁掉它：那个环的职责正是落在 d 轴线上，而本用例问的是它没落准时会怎样。
+ */
+auto pulse_at(double delta_rad, double settle_s) -> PulseResult {
+    sil::PmsmPlant plant = saturating_plant(0.0F);
+    core::MagnetPolarityTest test(
+        core::MagnetPolarityTest::Config{1.0F, 4e-4F, static_cast<float>(settle_s), 0.02F});
+    test.begin(static_cast<float>(delta_rad));
+    const double rotor_before = static_cast<double>(kPoles) * plant.theta_mech_rad();
+    PulseResult result{};
+    for (int i = 0; i < 20000; ++i) {
+        const core::MagnetPolarityTest::Output out = test.step(kDt, core::clarke(plant.current_uvw()));
+        for (int k = 0; k < kSubsteps; ++k) {
+            const float theta_e = static_cast<float>(kPoles) * plant.theta_mech_rad();
+            plant.set_voltage_dq(core::park(out.v_ab, theta_e));
+            plant.advance(kDt / static_cast<float>(kSubsteps));
+        }
+        if (!out.running) {
+            result.verdict = out.verdict;
+            result.delta_positive_a = out.delta_positive_a;
+            result.delta_negative_a = out.delta_negative_a;
+            result.asymmetry_a = std::fabs(static_cast<double>(out.delta_positive_a)) -
+                                 std::fabs(static_cast<double>(out.delta_negative_a));
+            break;
+        }
+    }
+    result.rotor_moved_rad = static_cast<double>(kPoles) * plant.theta_mech_rad() - rotor_before;
+    return result;
+}
+
+} // namespace
+
+
+
+/**
+ * @brief [en] The answer is attenuated by `cos^2` of the d-axis error, and the window is then closed by the rotor
+ *             moving before it is closed by the signal fading.
+ *
+ * @brief [zh] 答案按 d 轴误差的 `cos²` 衰减，而窗口是先被**转子被推走**关上的，不是先被信号淡出关上的。
+ *
+ *     Both pulses are applied along the *estimate*, so the d-axis volt-seconds are cut by `cos(delta)` and the measured
+ *     projection cuts them again -- two factors, hence `cos^2`. The saliency term `sin^2(delta)/Lq` is common to both
+ *     pulses and cancels in the difference, so saliency attenuates the answer without contaminating it: that is the
+ *     structural reason the method is sound, and `cos^2` is why it has a finite window.
+ *
+ *     Measured ratios against `cos^2`: **0.987 at 15 degrees, 0.943 at 30, 0.850 at 45**, and 0.658 at 60 where the
+ *     first-order law is visibly over-predicting -- at large `delta` the pulse drives less current, so it engages less
+ *     of the inductance collapse and the true attenuation is faster. That is the small-signal limit of the law, and it
+ *     is stated as a domain rather than fitted away.
+ *
+ *     The window itself is set by something else, which this case found rather than assumed: at 60 degrees the
+ *     asymmetry is still 0.093 A, **4.6 times the 0.02 A threshold**, and the answer is refused anyway -- because the
+ *     pulse now has a large q component, the rotor moves 14 mrad electrical, and the two pulses no longer start from
+ *     one operating point. Lengthening the settle to 20 ms restores the answer at 60 degrees, which is what identifies
+ *     the binding limit.
+ *
+ *     两个脉冲都沿**估计**施加，所以 d 轴伏秒被 `cos(delta)` 砍一次、测量投影再砍一次——两个因子，因此是 `cos²`。凸极项
+ *     `sin²(delta)/Lq` 对两个脉冲共模、在差值里抵消，所以凸极只衰减答案而不污染它：这是方法成立的结构性原因，而 `cos²`
+ *     是它窗口有限的原因。
+ *
+ *     对照 `cos²` 实测比值：**15° 0.987、30° 0.943、45° 0.850**，60° 处 0.658，那里一阶律明显过预测—— 大 `delta` 下脉冲
+ *     推动的电流更小，激起的电感塌陷也更少，真实衰减更快。这是一阶律的小信号边界，写成域而不是拟合掉。
+ *
+ *     窗口本身是被别的东西定下的，这是本用例**发现**的而不是假设的：60° 处不对称仍有 0.093 A，是 0.02 A 阈值的 **4.6 倍
+ *     **，而答案照样被拒——因为脉冲现在有很大的 q 分量，转子被推走 14 mrad 电角度，两个脉冲不再从同一个工作点出发。把松
+ *     弛加到 20 ms 后 60° 又能作答，这就指出了真正的限制项。
+ */
+TEST(SilPolarity, TheAnswerFadesAsTheCosineSquaredAndTheRotorClosesTheWindow) {
+    const PulseResult aligned = pulse_at(0.0, 5e-3);
+    ASSERT_EQ(core::PolarityVerdict::Aligned, aligned.verdict);
+    ASSERT_GT(aligned.asymmetry_a, 0.1) << "the reference asymmetry has to be real";
+
+    std::printf("\n%-10s %12s %12s %10s %8s %12s\n", "delta_deg", "asymmetry", "cos^2 pred", "ratio",
+                "verdict", "rotor_rad");
+    const struct {
+        double degrees;
+        double tolerance;
+    } points[] = {{0.0, 0.001}, {15.0, 0.03}, {30.0, 0.07}, {45.0, 0.16}};
+    for (const auto& point : points) {
+        const double delta = point.degrees * 3.14159265358979 / 180.0;
+        const PulseResult run = pulse_at(delta, 5e-3);
+        const double predicted = aligned.asymmetry_a * std::cos(delta) * std::cos(delta);
+        const double ratio = run.asymmetry_a / predicted;
+        std::printf("%-10.1f %12.5f %12.5f %10.4f %8d %12.5f\n", point.degrees, run.asymmetry_a,
+                    predicted, ratio, static_cast<int>(run.verdict), run.rotor_moved_rad);
+        // The small-signal law, with the tolerance stated per angle before the run.
+        // 小信号律，每个角度的容差在跑之前就写好了。
+        EXPECT_NEAR(1.0, ratio, point.tolerance);
+        EXPECT_EQ(core::PolarityVerdict::Aligned, run.verdict) << "inside the window the answer holds";
+    }
+
+    // The two limits, separated by experiment. At 60 degrees the signal is still far above the threshold
+    // and the answer is refused; lengthening the settle brings it back, so the rotor's drift is what
+    // closed the window there and not the threshold.
+    // 两条限值，用实验分开。60° 处信号仍远高于阈值而答案被拒；加长松弛它又回来，所以那里关上窗口的是
+    // 转子漂移而不是阈值。
+    const PulseResult faded = pulse_at(60.0 * 3.14159265358979 / 180.0, 5e-3);
+    const PulseResult restored = pulse_at(60.0 * 3.14159265358979 / 180.0, 20e-3);
+    std::printf("[window] 60 deg: settle 5 ms -> asym %.5f (reported %d, rotor %.5f); settle 20 ms -> "
+                "asym %.5f (reported %d, rotor %.5f)\n",
+                faded.asymmetry_a, static_cast<int>(faded.verdict != core::PolarityVerdict::Inconclusive),
+                faded.rotor_moved_rad, restored.asymmetry_a,
+                static_cast<int>(restored.verdict != core::PolarityVerdict::Inconclusive),
+                restored.rotor_moved_rad);
+    EXPECT_GT(faded.asymmetry_a, 4.0 * 0.02) << "the signal at 60 degrees is not what silences it";
+    EXPECT_EQ(core::PolarityVerdict::Inconclusive, faded.verdict)
+        << "the two pulses do not start from one operating point any more";
+    EXPECT_EQ(core::PolarityVerdict::Aligned, restored.verdict)
+        << "a longer settle puts the second pulse back on the same start, so this was the binding limit";
+
+    // A quarter turn out the estimate is nearer the other axis, and the answer is the right one.
+    // 差四分之一圈时估计离另一条轴更近，答案就是正确的那个。
+    const PulseResult half = pulse_at(3.14159265358979, 5e-3);
+    std::printf("[mirror] 180 deg: asym %+.5f (verdict %d), |asym| within %.2f %% of the aligned case\n",
+                half.asymmetry_a, static_cast<int>(half.verdict),
+                100.0 * std::fabs(std::fabs(half.asymmetry_a) - aligned.asymmetry_a) /
+                    aligned.asymmetry_a);
+    EXPECT_EQ(core::PolarityVerdict::Reversed, half.verdict);
+    EXPECT_NEAR(aligned.asymmetry_a, std::fabs(half.asymmetry_a), 0.01 * aligned.asymmetry_a)
+        << "half a turn out is the same measurement with the opposite sign, and the rotor does not move";
+}
+
+
+
+/**
+ * @brief [en] A settle shorter than the winding's `L/R` is refused rather than answered -- and the crossing is the
+ *             closed form.
+ *
+ * @brief [zh] 短于绕组 `L/R` 的松弛被拒绝而不是被作答——而那个交界正是闭式。
+ *
+ *     This is F-47. Without the guard the failure shape is the worst possible one: at a zero-length settle the second
+ *     pulse starts on the first pulse's tail, the asymmetry comes out at **-0.5404 A** for a machine whose magnet is
+ *     `Aligned` -- the wrong sign, and 96 % *larger* in magnitude than the honest 0.5651 A. A wrong answer that is
+ *     louder than the right one is invisible to any magnitude check downstream.
+ *
+ *     The crossing is derivable with nothing but the winding: the residual decays as `exp(-t/tau)` with `tau = Ld/Rs =
+ *     571 us`, and the guard releases when it falls below `min_asymmetry_a = 0.02 A`, i.e. at `tau*ln(1.791/0.020) =
+ *     2.57 ms`. Measured: **refused at 2 ms, answered at 3 ms** -- the first grid point above the prediction. The
+ *     precondition is therefore not a comfort margin; it is a number, and one the caller can compute for their own
+ *     winding.
+ *
+ *     这就是 F-47。没有护栏时的失效形态是最糟的那种：零松弛下第二个脉冲从第一个脉冲的尾巴上出发，磁钢为 `Aligned` 的机
+ *     器算出 **-0.5404 A** 的不对称——符号错，幅值还比诚实的 0.5651 A **大 96 %**。一个比正确答案更"响"的错误答案，下游
+ *     任何幅值检查都看不见。
+ *
+ *     交界可以只用绕组推出来：残余按 `exp(-t/tau)` 衰减，`tau = Ld/Rs = 571 us`，护栏在它落到 `min_asymmetry_a = 0.02
+ *     A` 以下时放开，即 `tau*ln(1.791/0.020) = 2.57 ms`。实测：**2 ms 被拒、 3 ms 作答**——预测之上的第一个栅格点。所以
+ *     这条前置条件不是舒适裕度；它是一个数，而且调用方可以按自己的绕组算出来。
+ */
+TEST(SilPolarity, ASettleShorterThanTheWindingDecayIsRefusedAndTheCrossingIsTheClosedForm) {
+    const double tau_s = static_cast<double>(kLd) / static_cast<double>(kRs);
+    const PulseResult settled = pulse_at(0.0, 5e-3);
+    ASSERT_EQ(core::PolarityVerdict::Aligned, settled.verdict);
+    const double predicted_crossing_s = tau_s * std::log(settled.delta_positive_a / 0.02);
+    std::printf("\n[precondition] tau = Ld/Rs = %.1f us, crossing at %.3f ms\n", tau_s * 1.0e6,
+                predicted_crossing_s * 1.0e3);
+
+    std::printf("%10s %12s %12s %12s %8s\n", "settle_ms", "delta+", "delta-", "asymmetry", "verdict");
+    double first_accepted_ms = -1.0;
+    for (const double settle_ms : {0.0, 0.5, 1.0, 2.0, 3.0, 4.0, 5.0, 8.0}) {
+        const PulseResult run = pulse_at(0.0, settle_ms * 1e-3);
+        std::printf("%10.2f %12.5f %12.5f %12.5f %8d\n", settle_ms, run.delta_positive_a,
+                    run.delta_negative_a, run.asymmetry_a, static_cast<int>(run.verdict));
+        const bool accepted = (run.verdict != core::PolarityVerdict::Inconclusive);
+        if (accepted && first_accepted_ms < 0.0) {
+            first_accepted_ms = settle_ms;
+        }
+        if (settle_ms * 1e-3 < predicted_crossing_s) {
+            EXPECT_EQ(core::PolarityVerdict::Inconclusive, run.verdict)
+                << "below the predicted crossing the answer is not supported";
+        }
+    }
+    // The crossing is the first grid point at or above the closed form.
+    // 交界是闭式之上（含）的第一个栅格点。
+    ASSERT_GT(first_accepted_ms, 0.0) << "the sequence never converges, so nothing above is measured";
+    EXPECT_GE(first_accepted_ms * 1e-3, predicted_crossing_s) << "it cannot answer before the residual is small";
+    // The sweep is on a 1 ms grid, so the crossing is only locatable to one grid step. Saying so is the
+    // difference between "the closed form is right" and "the closed form is within the resolution of
+    // this experiment".
+    // 扫描是 1 ms 栅格，所以交界只能定位到一个栅格步长。把这一点说出来，是"闭式是对的"与"闭式在这次
+    // 实验的分辨力之内"的区别。
+    EXPECT_LE(first_accepted_ms * 1e-3, predicted_crossing_s + 1.0e-3) << "and one grid step is enough";
+
+    // The trap, with its number.
+    // 陷阱，连数一起。
+    const PulseResult unsettled = pulse_at(0.0, 0.0);
+    std::printf("[trap] unsettled asym %+.4f A vs settled %+.4f A: wrong sign, and %.1f %% of the "
+                "honest magnitude\n",
+                unsettled.asymmetry_a, settled.asymmetry_a,
+                100.0 * std::fabs(unsettled.asymmetry_a) / settled.asymmetry_a);
+    EXPECT_LT(unsettled.asymmetry_a, 0.0) << "without the guard this sign is what a caller would act on";
+    // The wrong answer is not a small one that a magnitude check could filter out: it is within a few
+    // percent of the honest magnitude, with the opposite sign. (On this winding it comes out at 95.6 % of
+    // the honest value; on a winding with a shorter `L/R` it comes out *larger*. Either way the sizes are
+    // the same order, which is the point -- the sign is the only thing that separates them, and nothing
+    // downstream can check a sign it was never given.)
+    // 错误答案不是那种能被幅值检查滤掉的小值：它的幅值与诚实值只差几个百分点，符号相反。（在这台绕组上
+    // 是诚实值的 95.6 %；在 `L/R` 更短的绕组上它会**更大**。两种情况下量级都相同，这才是要点——隔开两者
+    // 的只有符号，而下游无法检查一个它从未被告知的符号。）
+    EXPECT_GT(std::fabs(unsettled.asymmetry_a), 0.5 * settled.asymmetry_a)
+        << "the wrong answer is the same order of magnitude, so no magnitude check could catch it";
+}

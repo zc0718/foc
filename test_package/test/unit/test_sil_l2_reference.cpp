@@ -1,6 +1,6 @@
 // L2 - discretisation arbiter (hard gate per PRD 8.5): the C++ closed loop is compared with the
-// reference trace produced by .github/misc/offline_arbiter.py (scipy, independent integrator).
-// L2 - 离散化仲裁（PRD 8.5 硬门禁）：C++ 闭环与 .github/misc/offline_arbiter.py（scipy、独立积分器）
+// reference trace produced by .github/project/offline_arbiter.py (scipy, independent integrator).
+// L2 - 离散化仲裁（PRD 8.5 硬门禁）：C++ 闭环与 .github/project/offline_arbiter.py（scipy、独立积分器）
 // 生成的参考轨迹比对。
 
 #include <cmath>

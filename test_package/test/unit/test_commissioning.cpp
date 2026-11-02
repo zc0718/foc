@@ -629,9 +629,20 @@ TEST(Commissioning, ThreeUnrelatedMachinesAtOneTuning) {
   // 那台——已经在闸外。0.10261 对 0.10，就是 S18 在开关逆变器上记下的那 3
   // %，而闸是从均值 plant 的 0.0676 上定下来的。从一个 plant 搬到另一个 plant
   // 的绝对闸，是没有含义的数。
-  EXPECT_GT(same_snr[0], kGateRad)
-      << "the reference machine misses the carried-over gate, so P5-f as "
-         "written is unsatisfiable";
+  // This line used to assert `same_snr[0] > kGateRad` -- "the written gate is unsatisfiable" -- on a measurement of
+  // 0.10261 against 0.10, a 2.6 % margin. When the plant started integrating its mechanical angle in double (F-40) the
+  // same measurement landed at 0.09959, 0.4 % on the other side. A claim that changes sign under a 3 % change of
+  // instrument is not a claim about the gate, and this file already says why: the gate was set from the mean plant's
+  // 0.0676, so an absolute threshold carried from one plant to another has no meaning. What is asserted instead is the
+  // fact that survives -- the reference machine sits *on* the gate -- which makes the written criterion unresolved
+  // rather than violated. The relative question is (2), and it is answered there.
+  // 这一行原本断言 `same_snr[0] > kGateRad`——"写下来的这道闸不可满足"——依据是 0.10261 对 0.10，余量 2.6 %。plant
+  // 改用双精度积分机械角（F-40）后，同一个测量落到 0.09959，在另一侧 0.4 %。一个在仪器变化 3 % 内就翻符号的断言，
+  // 不是关于这道闸的断言；本文件已写着原因：闸是从均值 plant 的 0.0676 上定的，绝对阈值从一个 plant 搬到另一个没有
+  // 含义。改断言那个站得住的事实——参考机恰好**落在**闸上——于是写下来的判据是"未定"而不是"被违反"。相对问题在
+  // 下面 (2)，那里有答案。
+  const float gate_gap = (same_snr[0] > kGateRad) ? (same_snr[0] - kGateRad) : (kGateRad - same_snr[0]);
+  EXPECT_LT(gate_gap, 0.03F * kGateRad) << "the reference machine is no longer on the gate: " << same_snr[0];
 
   // (2) What P5-f *meant* to ask -- does one tuning travel -- is answerable
   // only at equal signal-to-disturbance, and there the answer is yes: 0.1026 /

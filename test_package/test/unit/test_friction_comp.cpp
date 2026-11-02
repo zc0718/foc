@@ -60,6 +60,40 @@ auto current_source(const foc::sil::PlantParams &params, float omega_mech, float
 }
 
 /**
+ * @brief Hold a constant speed and report the steady following error, with or without compensation.
+ *
+ *     A ramp in, the same PD law the other cases use, so the arithmetic under test is the same arithmetic. The only
+ *     thing that changes between rows is the width of the Stribeck dip. 斜坡输入，用其它用例同一套 PD 律，所以被测的算
+ *     术是同一套算术。行与行之间变的只有 Stribeck 下凹的宽度。
+ */
+auto cruise_error(float speed_rad_s, float stribeck_rad_s, bool compensate) -> float {
+    foc::sil::PlantParams params = friction_plant();
+    params.stribeck_speed_rad_s = stribeck_rad_s;
+    foc::sil::PmsmPlant plant(params);
+    plant.reset(foc::sil::PlantState{0.0F, 0.0F, 0.0F, 0.0F});
+    foc::core::FrictionComp module{friction_recipe(kCoulombNm, kStaticNm)};
+    const float psi_f = params.kt / (1.5F * static_cast<float>(params.pole_pairs));
+    const int ticks = static_cast<int>(0.6F / kDt);
+    float sum = 0.0F;
+    int counted = 0;
+    for (int i = 0; i < ticks; ++i) {
+        const foc::sil::PlantState now = plant.state();
+        const float omega = static_cast<float>(now.omega_mech);
+        const float reference = speed_rad_s * static_cast<float>(i) * kDt;
+        const float demand = (kKp * (reference - static_cast<float>(now.theta_mech))) - (kKd * omega);
+        const float compensation = compensate ? module.step(speed_rad_s, omega, demand).torque_nm : 0.0F;
+        const float iq = std::max(-kIMax, std::min(kIMax, (demand + compensation) / params.kt));
+        plant.set_voltage_dq(current_source(params, omega, iq, psi_f));
+        plant.advance(kDt);
+        if (i > (ticks * 3) / 4) {
+            sum += reference - static_cast<float>(plant.state().theta_mech);
+            ++counted;
+        }
+    }
+    return sum / static_cast<float>(counted);
+}
+
+/**
  * @brief A position axis: proportional-derivative loop on the mechanical angle, friction compensation in front of the current source, and three ways of producing the compensation so the latch can be compared with the law it replaces. 一根位置轴：机械角上的比例-微分环、电流源之前的摩擦补偿，以及三种产生补偿的方式，好把锁存与它替代的规律对比。
  */
 class Axis final {
@@ -86,8 +120,8 @@ class Axis final {
         float highest = -1.0e9F;
         for (int i = 0; i < ticks; ++i) {
             const foc::sil::PlantState now = plant_.state();
-            furthest_rad_ = std::max(furthest_rad_, std::fabs(now.theta_mech));
-            const float speed = now.omega_mech + (noisy_ ? noise() : 0.0F);
+            furthest_rad_ = std::max(furthest_rad_, static_cast<float>(std::fabs(now.theta_mech)));
+            const float speed = static_cast<float>(now.omega_mech) + (noisy_ ? noise() : 0.0F);
             // Position plus velocity damping, which is what a real axis has and what keeps a stepped loop out of
             // saturation. The dead band is set by the proportional path at rest, where the damping term is zero, so the
             // arithmetic the cases check is unchanged by it. Without it the loop saturates against `i_max` on the first
@@ -363,4 +397,67 @@ TEST(FrictionComp, TheSignComesFromTheReferenceThenTheDemandThenStaysWhereItWas)
     // 静止处转子的粘性项不贡献，所以输出就是库仑项本身。
     EXPECT_NEAR(out.torque_nm, kCoulombNm, 1.0e-6F);
     EXPECT_TRUE(out.at_rest);
+}
+
+/**
+ * @brief The Stribeck dip is what a Coulomb-plus-viscous feedforward structurally cannot reach.
+ *
+ *     Until now the plant's friction was exactly the model the compensator assumes -- Coulomb plus viscous -- so every
+ *     check of the compensator was the model checking itself. The published friction models (Stribeck;
+ *     Armstrong-Helouvry et al. 1994) say the transition between breakaway and kinetic friction is smooth, and a
+ *     velocity-sign feedforward has neither the state nor the velocity dependence to reproduce it. The predictions
+ *     below are derived from that model, written before the measurement:
+ *
+ *     P1 cruising at `v` with a dip of width `vs`, the compensated following error is larger than with no dip by `(Fs -
+ *     Fc) * exp(-(v/vs)^2) / kKp`. At v = 0.25 / 1 / 2 rad/s with vs = 1 rad/s that is 1.879 / 0.7358 / 0.0367 mrad. P2
+ *     uncompensated minus compensated equals `(Fc + b*v) / kKp` -- the Coulomb term plus the viscous one, because the
+ *     loop's viscous share is cancelled too. 2.0500 / 2.2000 / 2.4000 mrad at 0.25 / 1 / 2 rad/s. P3 the saving is
+ *     **identical with and without the dip**. This is the one with teeth: P1 says where the compensation stops working,
+ *     P3 says it never learns about the dip at all. That is a statement about the *structure* of the law, and a
+ *     compensator with any model of the dip would fail it.
+ *
+ *     P2 was written wrong the first time -- as `Fc / kKp`, 2.000 mrad flat -- because the plant applies `b*omega` as a
+ *     separate term from the friction law, so cancelling it is part of the saving. The measurement said 2.05 / 2.20 /
+ *     2.40 and the corrected form reproduced all three to four digits; the prediction was corrected from a
+ *     re-derivation, not from the numbers (A-40, and A-42 before it). P1 巡速 `v`、下凹宽 `vs` 时，补偿后的跟随误差比无
+ *     下凹时大 `(Fs − Fc)·exp(−(v/vs)²)/kKp`。v = 0.25 / 1 / 2 rad/s、 vs = 1 rad/s 时分别是 1.879 / 0.7358 / 0.0367
+ *     mrad。 P2 不补偿减补偿等于 `(Fc + b·v)/kKp`——库仑项**加**粘性项，因为环路那部分粘性也被抵消了。0.25 / 1 / 2 rad/s
+ *     下分别是 2.0500 / 2.2000 / 2.4000 mrad。 P3 这个节省**与有没有下凹完全相同**。这条才是有牙齿的：P1 说补偿在哪里失
+ *     效，P3 说它**从来不知道**下凹的存在。这是关于该规律**结构**的断言；任何带下凹模型的补偿器都过不了它。 P2 第一版写
+ *     错了——写成 `Fc/kKp` 恒定 2.000 mrad——因为 plant 把 `b·ω` 当作与摩擦律**分开**的一项，抵消它也是节省的一部分。实测
+ *     是 2.05 / 2.20 / 2.40，更正后的式子把三个数复现到四位；更正来自重新推导，不是来自这几个数。
+ */
+TEST(FrictionComp, TheStribeckDipIsWhatASignFeedforwardStructurallyCannotReach) {
+    constexpr float kDipRadS = 1.0F;
+    struct Row final {
+        float speed;
+        float predicted_excess;
+    };
+    const Row rows[] = {{0.25F, 1.879e-3F}, {1.0F, 0.7358e-3F}, {2.0F, 0.0367e-3F}};
+
+    std::printf("\n[friction]  v     excess    predicted   ratio   saving   predicted   dip-blind\n");
+    for (const Row& row : rows) {
+        const float excess = cruise_error(row.speed, kDipRadS, true) - cruise_error(row.speed, 0.0F, true);
+        const float saving = cruise_error(row.speed, kDipRadS, false) - cruise_error(row.speed, kDipRadS, true);
+        const float saving_flat = cruise_error(row.speed, 0.0F, false) - cruise_error(row.speed, 0.0F, true);
+        const float predicted_saving = (kCoulombNm + (kViscous * row.speed)) / kKp;
+        std::printf("[friction] %5.2f %9.4f %10.4f %8.2f %8.4f %10.4f %+10.1e\n", static_cast<double>(row.speed),
+                    static_cast<double>(excess * 1e3F), static_cast<double>(row.predicted_excess * 1e3F),
+                    static_cast<double>(excess / row.predicted_excess), static_cast<double>(saving * 1e3F),
+                    static_cast<double>(predicted_saving * 1e3F), static_cast<double>((saving - saving_flat) * 1e3F));
+        // P1: the dip's contribution, from the friction model rather than from the measurement. 25 % because the loop
+        // has to reach a steady state on a ramp and the exponential is steep at the slow end.
+        EXPECT_NEAR(excess, row.predicted_excess, 0.25F * row.predicted_excess)
+            << "at " << row.speed << " rad/s the dip contributed " << excess * 1e3F << " mrad against "
+            << row.predicted_excess * 1e3F << " predicted";
+        // P2: Coulomb plus viscous, both identities of the law, so 2 % and not a fitted band.
+        EXPECT_NEAR(saving, predicted_saving, 0.02F * predicted_saving)
+            << "at " << row.speed << " rad/s the compensation saved " << saving * 1e3F << " mrad instead of "
+            << predicted_saving * 1e3F;
+        // P3: the structural one. Nothing about a Coulomb-plus-viscous feedforward can depend on the dip, so the saving
+        // must be the same to the loop's own resolution. 1e-3 mrad is a thousandth of any number in the table.
+        EXPECT_NEAR(saving, saving_flat, 1.0e-3F * 1e-3F)
+            << "at " << row.speed << " rad/s the saving moved by " << (saving - saving_flat) * 1e3F
+            << " mrad when the dip was added, so the compensation does see it";
+    }
 }

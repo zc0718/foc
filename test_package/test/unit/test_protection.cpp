@@ -657,4 +657,360 @@ TEST(Protection,
   EXPECT_LT(after_full, 0.4F * before)
       << "and it is gone in a couple of time constants";
 }
+
+/**
+ * @brief [en] An invalid flux trips `LostSync` on its own, with the error ratio comfortably inside its limit -- the
+ *             boundary pair MC/DC asked for, and a real hole in the behaviour.
+ *
+ * @brief [zh] 磁链无效本身就触发 `LostSync`，而误差比舒服地落在限值之内——MC/DC 要的那条边界对，也是一个真实的行为空洞。
+ *
+ *     The decision is `(!input.flux_valid) || (abs(flux_error_ratio) > sync_error_ratio)`. Every existing case feeds
+ *     `flux_valid = true`, so the first term has never been true and its independent effect was never shown: the
+ *     short-circuit means a machine that says "my flux estimate is not valid" reaches `LostSync` **without any error
+ *     ratio at all**, and nothing tested that. The pair is therefore the boundary one -- the same input twice,
+ *     differing only in `flux_valid`, with the ratio held small in both -- so the first term is the only thing that can
+ *     change the answer.
+ *
+ *     那个判定是 `(!input.flux_valid) || (abs(flux_error_ratio) > sync_error_ratio)`。既有用例全部喂 `flux_valid =
+ *     true`，于是第一项从未为真、它的独立作用从未被演示：短路意味着一台说"我的磁链估计无效" 的机器**根本不需要误差比**
+ *     就会落到 `LostSync`，而这件事没有任何用例测过。所以这一对是边界对——同一个输入跑两次，只差 `flux_valid`，两次的误
+ *     差比都很小——于是第一项是唯一能改变答案的东西。
+ */
+TEST(Protection, AnInvalidFluxTripsLostSyncWithoutAnyErrorRatio) {
+  foc::core::Protector protection(config());
+  foc::core::ProtectionInput input = healthy();
+  // The ratio is already tiny (0.02 against a limit well above it), so the second term cannot fire.
+  // 误差比本就已经很小（0.02，远低于限值），所以第二项不可能触发。
+  ASSERT_TRUE(input.flux_valid);
+  ASSERT_LT(std::fabs(input.flux_error_ratio), config().sync_error_ratio);
+
+  EXPECT_EQ(foc::core::FaultCode::None, protection.step(input, 1.0e-3F).fault)
+      << "the healthy input must not trip anything, or the pair is meaningless";
+
+  input.flux_valid = false;
+  const foc::core::ProtectionOutput verdict = protection.step(input, 1.0e-3F);
+  EXPECT_EQ(foc::core::FaultCode::LostSync, verdict.fault)
+      << "an invalid flux has to reach LostSync on the first term alone";
+  EXPECT_LT(std::fabs(input.flux_error_ratio), config().sync_error_ratio)
+      << "and the second term must still be false, or this proves nothing about the first";
+}
+
+/**
+ * @brief [en] A configuration whose clearing thresholds are exactly representable, so "just below the band" is a place
+ *             the test can actually stand.
+ *
+ * @brief [zh] 清除阈值可精确表示的配置，于是"刚好在带内/带外"是测试真能站住的位置。
+ *
+ *     Mutation found this: eleven mutants in the four clearing expressions survived, all of them arithmetic on `x*(1
+ *     -/+ h)`. The reason was not a weak assertion but an absent one -- no case had ever made a tripped fault *stop*
+ *     being tripped, so the whole clearing half of `keep()` was unmeasured. The header claims hysteresis as one of the
+ *     three things this block does ("a bus hovering on the threshold would otherwise chatter"), and the claim had no
+ *     test. The thresholds here are dyadic (`128*0.5 = 64`) so the boundary is a number a test can name exactly; with
+ *     the shipped `t_trip = 100, h = 0.05` the product is 94.999999... and no assertion can stand on it.
+ *
+ *     变异测试发现的：四条清除表达式里的十一个变异体全部存活，全是 `x*(1 ∓ h)` 上的算术。原因不是断言写弱了，是根本没写
+ *     ——没有任何用例让已跳闸的故障**停止**跳闸，于是 `keep()` 的清除那一半整体未被测量。头文件把迟滞列为本块的三个特性
+ *     之一（"母线悬在阈值上会反复抖"），而这个主张没有用例。这里的阈值取二进制可精确表示的值（`128*0.5 = 64`），边界才
+ *     是测试能精确指定的数；若用出厂值 `t_trip = 100, h = 0.05`，乘积是 94.999999…，没有断言能站在上面。
+ */
+auto band_config() -> core::ProtectionConfig {
+  core::ProtectionConfig band = config();
+  band.t_trip_c = 128.0F;   // 128*(1-0.5) = 64 exactly
+  band.v_max_v = 32.0F;     //  32*(1-0.5) = 16 exactly
+  band.v_min_v = 8.0F;      //   8*(1+0.5) = 12 exactly
+  band.hysteresis_ratio = 0.5F;
+  return band;
+}
+
+/**
+ * @brief [en] The clear is strictly below the clearing threshold, and each self-clearing mechanism has its own.
+ * @brief [zh] 清除严格发生在清除阈值之下，且每个自恢复机理各有自己的那一个。
+ */
+TEST(Protection, TheClearingBandIsWhereTheFaultStopsBeingReported) {
+  // Over-temperature: trip at 129, sit exactly on 128*(1-0.5) = 64, then step below it.
+  {
+    core::Protector protector(band_config());
+    core::ProtectionInput input = healthy();
+    input.temperature_c = 129.0F;
+    EXPECT_EQ(core::FaultCode::OverTemperature, protector.step(input, kDt).fault);
+    input.temperature_c = 64.0F;
+    EXPECT_EQ(core::FaultCode::OverTemperature, protector.step(input, kDt).fault)
+        << "exactly on the clearing threshold is still inside the band: the clear is strict, so the fault stays";
+    input.temperature_c = 63.0F;
+    EXPECT_EQ(core::FaultCode::None, protector.step(input, kDt).fault) << "one step below it clears";
+  }
+  // Over-voltage: 32*(1-0.5) = 16, and 15 must not fall foul of the under-voltage threshold (8).
+  {
+    core::Protector protector(band_config());
+    core::ProtectionInput input = healthy();
+    input.v_bus_v = 33.0F;
+    EXPECT_EQ(core::FaultCode::OverVoltage, protector.step(input, kDt).fault);
+    input.v_bus_v = 16.0F;
+    EXPECT_EQ(core::FaultCode::OverVoltage, protector.step(input, kDt).fault);
+    input.v_bus_v = 15.0F;
+    EXPECT_EQ(core::FaultCode::None, protector.step(input, kDt).fault);
+  }
+  // Under-voltage clears *upwards*: 8*(1+0.5) = 12, and 13 is still below 32 so nothing else trips.
+  {
+    core::Protector protector(band_config());
+    core::ProtectionInput input = healthy();
+    input.v_bus_v = 7.0F;
+    EXPECT_EQ(core::FaultCode::UnderVoltage, protector.step(input, kDt).fault);
+    input.v_bus_v = 12.0F;
+    EXPECT_EQ(core::FaultCode::UnderVoltage, protector.step(input, kDt).fault);
+    input.v_bus_v = 13.0F;
+    EXPECT_EQ(core::FaultCode::None, protector.step(input, kDt).fault);
+  }
+}
+
+/**
+ * @brief [en] Every trip threshold is strict: the limit itself does not trip, and neither does the stall timer at
+ *             exactly its own duration.
+ *
+ * @brief [zh] 每个跳闸阈值都是严格的：限值本身不跳，堵转计时恰好等于时长也不跳。
+ *
+ *     Six `>`/`<` mutants survived by being `>=`/`<=` instead, because no case had ever put an input *exactly* on a
+ *     threshold. That is a specification question, not a tolerance: "does the protection fire at 4.0 A when the hard
+ *     limit is 4.0 A" has one right answer, and the code answers "no". The stall timer is the interesting one -- it is
+ *     a float32 accumulation, so the test uses `1/64 s` steps, which are exact, and can therefore stand on 0.5 exactly
+ *     after 32 of them.
+ *
+ *     六个 `>`/`<` 变异体改成 `>=`/`<=` 后存活，因为没有用例把输入放在阈值**正上**。这是规格问题不是容差： "硬限 4.0 A
+ *     时 4.0 A 跳不跳"只有一个正确答案，代码答"不跳"。堵转计时更有意思——它是 float32 累加，所以用例用 `1/64 s` 的步长（
+ *     可精确表示），于是能精确站在 32 步之后的 0.5 上。
+ */
+TEST(Protection, EachTripThresholdIsStrictAndTheLimitItselfDoesNotTrip) {
+  constexpr float kExactDt = 1.0F / 64.0F;
+  auto fault_of = [](auto prepare, int steps, float dt) {
+    core::Protector protector(config());
+    core::ProtectionInput input = healthy();
+    prepare(input);
+    core::ProtectionOutput out{};
+    for (int k = 0; k < steps; ++k) {
+      out = protector.step(input, dt);
+    }
+    return out.fault;
+  };
+
+  EXPECT_EQ(core::FaultCode::None,
+            fault_of([](core::ProtectionInput &i) { i.temperature_c = 100.0F; }, 1, kDt))
+      << "100 C against a 100 C trip is not above it";
+  EXPECT_EQ(core::FaultCode::None, fault_of([](core::ProtectionInput &i) { i.v_bus_v = 30.0F; }, 1, kDt))
+      << "30 V against a 30 V ceiling is not above it";
+  EXPECT_EQ(core::FaultCode::None, fault_of([](core::ProtectionInput &i) { i.v_bus_v = 18.0F; }, 1, kDt))
+      << "18 V against an 18 V floor is not below it";
+  EXPECT_EQ(core::FaultCode::None, fault_of([](core::ProtectionInput &i) { i.i_magnitude_a = 4.0F; }, 1, kDt))
+      << "4.0 A against a 4.0 A hard limit is not above it";
+  EXPECT_EQ(core::FaultCode::None,
+            fault_of([](core::ProtectionInput &i) { i.flux_error_ratio = 0.25F; }, 1, kDt))
+      << "a ratio equal to its limit is not above it";
+  // Stall: `|i|` exactly at the stall current, and `|omega|` exactly at the stall speed, are both inside the
+  // condition "above the current AND below the speed" -- neither may start the timer.
+  EXPECT_EQ(core::FaultCode::None,
+            fault_of([](core::ProtectionInput &i) { i.i_magnitude_a = 1.0F; i.omega_e_rad_s = 0.0F; }, 40, kExactDt))
+      << "an exact-1.0 A current is not above the 1.0 A stall current";
+  EXPECT_EQ(core::FaultCode::None,
+            fault_of([](core::ProtectionInput &i) { i.i_magnitude_a = 2.0F; i.omega_e_rad_s = 5.0F; }, 40, kExactDt))
+      << "an exact-5.0 rad/s speed is not below the 5.0 rad/s stall speed";
+  // And the timer itself: 32 steps of exactly 1/64 s make exactly 0.5 s, which is not *above* 0.5 s.
+  EXPECT_EQ(core::FaultCode::None,
+            fault_of([](core::ProtectionInput &i) { i.i_magnitude_a = 2.0F; i.omega_e_rad_s = 0.0F; }, 32, kExactDt))
+      << "exactly the stall duration is not above it";
+  EXPECT_EQ(core::FaultCode::Stall,
+            fault_of([](core::ProtectionInput &i) { i.i_magnitude_a = 2.0F; i.omega_e_rad_s = 0.0F; }, 33, kExactDt))
+      << "one step past it is";
+}
+
+/**
+ * @brief [en] `latched_mask` is a different promise from `active_mask`, and nothing was checking it.
+ *
+ * @brief [zh] `latched_mask` 与 `active_mask` 是两个不同的承诺，而此前没人检查过它。
+ *
+ *     Two mutants survived here and they are the whole of the second mask: `latched_mask = 0` turned into `= 1` on a
+ *     healthy step, and the bit-OR `1U << code` doubled into `2U << code`. Both survived because every case reads
+ *     `fault` or `active_mask`, so the field a caller uses to decide "this one will not clear on its own" was written
+ *     and never read.
+ *
+ *     这里有两个变异体存活，而它们覆盖了第二个掩码的全部：健康步上 `latched_mask = 0` 被改成 `= 1`，以及位或 `1U <<
+ *     code` 被翻倍成 `2U << code`。两者都存活，因为所有用例只读 `fault` 或 `active_mask`——调用方用来判断"这一条不会自己
+ *     好"的字段，写了但从来没人读。
+ */
+TEST(Protection, TheLatchedMaskSaysWhichFaultsWillNotClearOnTheirOwn) {
+  core::Protector healthy_step(config());
+  const core::ProtectionOutput quiet = healthy_step.step(healthy(), kDt);
+  EXPECT_EQ(core::FaultCode::None, quiet.fault);
+  EXPECT_EQ(static_cast<std::uint16_t>(0U), quiet.active_mask) << "a healthy step has nothing active";
+  EXPECT_EQ(static_cast<std::uint16_t>(0U), quiet.latched_mask) << "and nothing latched";
+  EXPECT_TRUE(quiet.output_allowed);
+
+  core::Protector over_current(config());
+  const core::ProtectionOutput latched = over_current.step(perturbed(core::FaultCode::OverCurrent), kDt);
+  EXPECT_EQ(core::FaultCode::OverCurrent, latched.fault);
+  EXPECT_EQ(static_cast<std::uint16_t>(1U << 1), latched.active_mask);
+  EXPECT_EQ(static_cast<std::uint16_t>(1U << 1), latched.latched_mask)
+      << "over-current is one of the faults that will not clear on its own";
+
+  core::Protector over_temperature(config());
+  const core::ProtectionOutput self_clearing =
+      over_temperature.step(perturbed(core::FaultCode::OverTemperature), kDt);
+  EXPECT_EQ(core::FaultCode::OverTemperature, self_clearing.fault);
+  EXPECT_EQ(static_cast<std::uint16_t>(1U << 4), self_clearing.active_mask);
+  EXPECT_EQ(static_cast<std::uint16_t>(0U), self_clearing.latched_mask)
+      << "over-temperature is in the hysteresis set, so it is active and not latched";
+}
+
+/**
+ * @brief [en] A zero cooling constant means "no cooling", not "cool infinitely": the guard that says so had no test.
+ *
+ * @brief [zh] 冷却常数为零意味着"不冷却"，不是"无限冷却"：那个说这件事的守卫没有用例。
+ *
+ *     The guard is `(i2t_cooling_s > 0) ? q*(dt/i2t_cooling_s) : 0`, and the mutant makes it `>=`, which turns `dt / 0`
+ *     into `inf` and empties the budget every step. Nothing caught it because every configuration in the suite supplies
+ *     a positive thermal constant, so the branch that exists *for* the zero case was never taken. With no cooling the
+ *     budget is exactly `i^2 * t`: 3 A for 32 steps of 1/64 s is 4.5 A^2*s -- the budget itself -- and the thirty-third
+ *     step is the first that spends past it.
+ *
+ *     守卫是 `(i2t_cooling_s > 0) ? q*(dt/i2t_cooling_s) : 0`，变异体把它改成 `>=`，于是 `dt / 0` 变成 `inf`，每步把预
+ *     算清空。没人抓到，因为套件里所有配置都给了正的散热常数，那个**为**零值而存在的分支从未走到。不冷却时预算正好是
+ *     `i²·t`：3 A 走 32 个 1/64 s 步恰为 4.5 A²·s（预算本身），第 33 步才是第一步花过头。
+ */
+TEST(Protection, AZeroCoolingConstantMeansTheBudgetOnlyAccumulates) {
+  core::ProtectionConfig no_cooling = config();
+  no_cooling.i2t_cooling_s = 0.0F;
+  core::Protector protector(no_cooling);
+  core::ProtectionInput input = healthy();
+  input.i_magnitude_a = 3.0F;
+  constexpr float kExactDt = 1.0F / 64.0F;
+
+  core::ProtectionOutput out{};
+  for (int k = 0; k < 32; ++k) {
+    out = protector.step(input, kExactDt);
+  }
+  EXPECT_EQ(core::FaultCode::None, out.fault) << "32 steps of 3 A is exactly the 4.5 A^2*s budget, not past it";
+  out = protector.step(input, kExactDt);
+  EXPECT_EQ(core::FaultCode::I2t, out.fault) << "the thirty-third step spends past it, which only works if the budget "
+                                               "kept accumulating instead of being emptied by a division by zero";
+}
+
+/**
+ * @brief [en] The `I2t` clear is hysteresis too, and its band is in A^2*s: a spent budget that is decaying must stay
+ *             spent until it is *below* `budget*(1-h)`.
+ *
+ * @brief [zh] `I2t` 的清除也是迟滞，只是它的带在 A²·s 里：正在衰减的已花预算必须一直算"已花"，直到它**低于**
+ *             `budget*(1-h)`。
+ *
+ *     Two more mutants survived here -- the `*` turned into `/` and the `-` into `+` in `budget*(1-h)` -- because the
+ *     only `I2t` case in the suite drives the budget *up* to a trip and stops. The decay half was never run. The
+ *     charging current has to be **above** `budget/tau` (3 A only approaches the 4.5 A^2*s budget asymptotically and
+ *     never crosses it -- the first version of this case made that mistake and failed on its own trip assertion), so
+ *     the charge is 4 A, which reaches 4.9 in 30 steps. With `budget = 4.5` and `h = 0.5` the band is 2.25..4.5, while
+ *     the mutant thresholds are 9 and 6.75 -- both of which clear while the budget is still well inside the band, so
+ *     one step in the middle tells them apart.
+ *
+ *     这里又有两个变异体存活——`budget*(1-h)` 里的 `*` 变 `/`、`-` 变 `+`——因为套件里唯一的 `I2t` 用例只把预算 **推上去
+ *     **跳到闸就停了，衰减那一半从未跑过。充电电流必须**高于** `budget/tau`（3 A 只会渐近逼近 4.5 A²·s 而永远不越过——这
+ *     条用例的第一版就犯了这个错，被它自己的跳闸断言挡住了），所以用 4 A，30 步到 4.9。 `budget = 4.5`、`h = 0.5` 时带
+ *     是 2.25..4.5，而变异的阈值是 9 与 6.75——两者都会在预算还稳稳落在带内时就清除，所以带中间走一步就能分开它们。
+ */
+TEST(Protection, TheSpentBudgetStaysSpentUntilItIsBelowTheBand) {
+  constexpr float kExactDt = 1.0F / 64.0F;
+  core::ProtectionConfig wide_band = config();
+  wide_band.hysteresis_ratio = 0.5F; // the shipped 0.05 gives a band 4.275..4.5, too narrow to stand in
+  core::Protector protector(wide_band);
+  core::ProtectionInput charging = healthy();
+  charging.i_magnitude_a = 4.0F; // above the 3 A equilibrium current (i^2 > budget/tau), and not above the 4.0 A hard limit
+  for (int k = 0; k < 30; ++k) {
+    protector.step(charging, kExactDt); // q crosses 4.5 at step 27 and reaches about 4.9
+  }
+
+  core::ProtectionInput idle = healthy();
+  idle.i_magnitude_a = 0.0F;
+  core::ProtectionOutput out{};
+  for (int k = 0; k < 10; ++k) {
+    out = protector.step(idle, kExactDt); // q decays to about 3.6, comfortably inside the 2.25..4.5 band
+  }
+  EXPECT_EQ(core::FaultCode::I2t, out.fault)
+      << "inside the clearing band the budget is still spent: I2t is active and not latching, so this is the hysteresis";
+
+  for (int k = 0; k < 17; ++k) {
+    out = protector.step(idle, kExactDt); // q decays to about 2.1, below 4.5*0.5 = 2.25
+  }
+  EXPECT_EQ(core::FaultCode::None, out.fault) << "below the band it clears";
+}
+
+/**
+ * @brief [en] Past the end of the derating ramp the limit is exactly zero -- not slightly negative.
+ *
+ * @brief [zh] 越过降额斜坡的终点后，限幅**恰好**为零，而不是一个很小的负数。
+ *
+ *     `used >= 1` returns 0 and the next line would return `i_max*(1-used)`, which is negative for any `used` just
+ *     above 1. The mutant moves the comparison to `> 1.001`, so a temperature between the two hands the caller a small
+ *     negative current limit -- a limit that a caller clamping with it turns into a *reversed* command. The path is
+ *     unreachable through `step()` (the trip fires first at `t_trip < t_derate_end` in every sane config), which is
+ *     exactly why it needs a case that calls `derated_limit()` directly.
+ *
+ *     `used >= 1` 返回 0，而下一行会返回 `i_max*(1-used)`——对任何略大于 1 的 `used` 都是负数。变异体把比较挪到 `>
+ *     1.001`，于是落在两者之间的温度会给调用方一个很小的**负**限幅；调用方拿它做钳位，就把指令钳成了反向。这条路径从
+ *     `step()` 走不到（任何合理配置下 `t_trip < t_derate_end`，先跳闸），所以它需要一条直接调用 `derated_limit()` 的用
+ *     例。
+ */
+TEST(Protection, PastTheEndOfTheDeratingRampTheLimitIsExactlyZero) {
+  const core::Protector protector(config()); // derating runs 60 C -> 110 C
+  EXPECT_FLOAT_EQ(config().i_max_a, protector.derated_limit(60.0F)) << "at the start of the ramp the full limit";
+  EXPECT_FLOAT_EQ(0.0F, protector.derated_limit(110.0F)) << "at the end of the ramp nothing";
+  // Swept rather than sampled at one magic temperature: the claim is that the limit is zero *everywhere* past the
+  // end, so the case walks the first tenth of a degree in 5 mK steps. A 0.1 % shift of the `used >= 1` comparison
+  // turns into a small negative limit at 110.02 C, which is inside this sweep and outside a test that only probes
+  // 110.5.
+  // 这里是扫而不是只取一个魔法温度：主张是越过终点后**处处**为零，所以用例把最初 0.1 度按 5 mK 走一遍。
+  // 把 `used >= 1` 挪动 0.1 % 后，110.02 C 处会出现一个很小的负限幅——它落在这个扫的范围里，却跑得出只探 110.5 的用例。
+  for (int k = 0; k <= 20; ++k) {
+    const float temperature_c = 110.0F + (0.005F * static_cast<float>(k));
+    EXPECT_FLOAT_EQ(0.0F, protector.derated_limit(temperature_c))
+        << "past the end of the ramp at " << temperature_c << " C the limit is zero, never negative";
+  }
+  EXPECT_FLOAT_EQ(0.0F, protector.derated_limit(400.0F)) << "nor far past it";
+}
+
+/**
+ * @brief [en] `reset()` clears what latched and keeps the thermal memory; `reset_cold()` is the one that also forgets
+ *             the heat.
+ *
+ * @brief [zh] `reset()` 清掉锁存的、保留热记忆；`reset_cold()` 才是连热度一起忘掉的那个。
+ *
+ *     Under AddressSanitizer the two loops in `reset()`/`reset_cold()` were the only survivors left that no arithmetic
+ *     could explain, and the reason was not subtlety: **nothing in this module's tests ever called them**. They are
+ *     reached from the C ABI (`bridge.cpp` calls `reset_cold()`), so line coverage was satisfied and the claim was
+ *     never checked -- an operator action whose entire contract ("clear the latched faults", "`I2t` is *not* cleared
+ *     here, the winding is still hot") had no direct witness.
+ *
+ *     在 AddressSanitizer 下，`reset()`/`reset_cold()` 里那两个循环是最后一批算术解释不了的存活体，而原因并不微妙：**本
+ *     模块的用例从未调用过它们**。它们从 C ABI 走得到（`bridge.cpp` 调 `reset_cold()`），所以行覆盖率是满足的，而主张从
+ *     未被检查——一个运维动作的完整契约（"清掉锁存的故障"、"这里**不**清 `I2t`，绕组还热着"）没有直接证词。
+ */
+TEST(Protection, ResetClearsTheLatchedOnesButKeepsTheHeatUntilResetCold) {
+  core::Protector protector(config());
+  core::ProtectionInput over_current = healthy();
+  over_current.i_magnitude_a = 4.5F;
+  core::ProtectionOutput out{};
+  for (int k = 0; k < 10; ++k) {
+    out = protector.step(over_current, kDt);
+  }
+  ASSERT_EQ(core::FaultCode::OverCurrent, out.fault);
+  ASSERT_NE(static_cast<std::uint16_t>(0U), out.latched_mask) << "over-current is a latched fault";
+  const float spent = protector.thermal_budget();
+  ASSERT_GT(spent, 0.0F) << "the overload spent thermal budget, which is the point of the next assertion";
+
+  protector.reset();
+  EXPECT_FLOAT_EQ(spent, protector.thermal_budget())
+      << "reset() must not clear the thermal budget: the winding is still hot";
+
+  const core::ProtectionOutput after = protector.step(healthy(), kDt);
+  EXPECT_EQ(core::FaultCode::None, after.fault) << "the latched fault is gone";
+  EXPECT_EQ(static_cast<std::uint16_t>(0U), after.latched_mask);
+
+  protector.reset_cold();
+  EXPECT_FLOAT_EQ(0.0F, protector.thermal_budget()) << "reset_cold() is the one that forgets the heat";
+}
+
 } // namespace foc

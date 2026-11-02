@@ -14,7 +14,12 @@ constexpr float kDt = 5e-5F; // s, 20 kHz
 constexpr float kPulseV = 1.0F;
 
 auto valid_config() -> foc::core::MagnetPolarityTest::Config {
-    return foc::core::MagnetPolarityTest::Config{kPulseV, 2e-4F, 1e-4F, 0.05F};
+    // The settle is five decay constants of the fixture winding, which is what the documented protocol
+    // asks for: `decide()` now refuses to answer when the two pulses start more than one resolution
+    // apart, so a settle of two ticks (1e-4 s) would -- correctly -- come back Inconclusive.
+    // 松弛时间是夹具绕组五个衰减常数，这正是文档协议要求的：`decide()` 现在会在两个脉冲起点相差超过
+    // 一个分辨力时拒绝作答，所以两拍（1e-4 s）的松弛会——正确地——答 Inconclusive。
+    return foc::core::MagnetPolarityTest::Config{kPulseV, 2e-4F, 5e-3F, 0.05F};
 }
 
 /**
@@ -24,15 +29,29 @@ auto valid_config() -> foc::core::MagnetPolarityTest::Config {
  */
 class FakeDx final {
   public:
-    FakeDx(float ld_positive, float ld_negative) noexcept : ld_positive_(ld_positive), ld_negative_(ld_negative) {}
+    /**
+     * @param decay_s [en] the winding's decay time constant, i.e. `L/R`. Zero means a winding whose current never
+     *                     relaxes -- which is not a machine, and is exactly the fixture that let the missing `settle_s`
+     *                     precondition go unnoticed until F-47.
+     * @param decay_s [zh] 绕组的衰减时间常数，即 `L/R`。取 0 表示电流永不松弛的绕组——那不是一台电机，而正是这个夹具让缺
+     *                     失的 `settle_s` 前置条件一直没被发现，直到 F-47。
+     */
+    FakeDx(float ld_positive, float ld_negative, float decay_s = 1.0e-3F) noexcept
+        : ld_positive_(ld_positive), ld_negative_(ld_negative), decay_s_(decay_s) {}
 
-    void apply(foc::core::Ab<float> v_ab, float dt_s) noexcept { i_ += v_ab.alpha * dt_s / (v_ab.alpha >= 0.0F ? ld_positive_ : ld_negative_); }
+    void apply(foc::core::Ab<float> v_ab, float dt_s) noexcept {
+        i_ += v_ab.alpha * dt_s / (v_ab.alpha >= 0.0F ? ld_positive_ : ld_negative_);
+        if (decay_s_ > 0.0F) {
+            i_ -= i_ * (dt_s / decay_s_);
+        }
+    }
 
     [[nodiscard]] auto current() const noexcept -> foc::core::Ab<float> { return foc::core::Ab<float>{i_, 0.0F}; }
 
   private:
     float ld_positive_;
     float ld_negative_;
+    float decay_s_;
     float i_{0.0F};
 };
 
@@ -40,11 +59,12 @@ class FakeDx final {
  * @brief [en] Runs the whole sequence and returns the verdict.
  * @brief [zh] 跑完整个序列并返回结论。
  */
-auto run_sequence(const foc::core::MagnetPolarityTest::Config& config, float ld_positive, float ld_negative) -> foc::core::PolarityVerdict {
+auto run_sequence(const foc::core::MagnetPolarityTest::Config& config, float ld_positive,
+                  float ld_negative, float decay_s = 1.0e-3F) -> foc::core::PolarityVerdict {
     foc::core::MagnetPolarityTest test(config);
     test.begin(0.0F); // pulses along alpha
 
-    FakeDx machine(ld_positive, ld_negative);
+    FakeDx machine(ld_positive, ld_negative, decay_s);
     for (int i = 0; i < 20000; ++i) {
         const foc::core::MagnetPolarityTest::Output out = test.step(kDt, machine.current());
         machine.apply(out.v_ab, kDt);
@@ -176,4 +196,56 @@ TEST(MagnetPolarityTest, RejectsNonPositivePeriod) {
 
     static_cast<void>(test.step(0.0F, foc::core::Ab<float>{0.0F, 0.0F}));
     EXPECT_EQ(foc::ErrorCode::Param, test.status());
+}
+
+
+
+/**
+ * @brief [en] A winding whose current never relaxes gets `Inconclusive` instead of a confident wrong answer, and the
+ *             fixture that never relaxed is why this went unnoticed.
+ *
+ * @brief [zh] 电流永不松弛的绕组得到 `Inconclusive` 而不是一个自信的错误答案，而"从不松弛的夹具" 正是这件事一直没被发现
+ *             的原因。
+ *
+ *     `decide()` compares two rises and calls the larger one the magnet's `+d`. The premise is that both pulses are the
+ *     *same* volt-second pulse in two directions, which requires both to start from the same current. With a settle
+ *     shorter than the winding's `L/R` the second pulse starts on the first pulse's tail, where the incremental
+ *     inductance has already collapsed -- so the second rise is larger for a reason that has nothing to do with the
+ *     magnet. On the plant this is not a subtle bias: at a zero-length settle the asymmetry came out at **-0.5496 A**
+ *     for a machine whose magnet is `Aligned`, i.e. a confident `Reversed`.
+ *
+ *     The guard uses the caller's own declared resolution as its yardstick -- if the two start points differ by more
+ *     than `min_asymmetry_a`, no verdict at that resolution can be supported. The case below checks the guard *and* the
+ *     fixture: `FakeDx` used to have no decay at all, so every case here was silently exercising the degenerate path
+ *     and getting the right label for the wrong reason.
+ *
+ *     `decide()` 比较两次上升，把更大的那次当成磁钢的 `+d`。前提是两个脉冲是**同一个**伏秒脉冲在两个方向上的施加，这要
+ *     求两者从同一个电流出发。松弛时间短于绕组的 `L/R` 时，第二个脉冲从第一个脉冲的尾巴上出发，那里的增量电感已塌陷——于
+ *     是第二个上升更大，原因与磁钢无关。在 plant 上这不是细微偏差：零松弛时磁钢为 `Aligned` 的机器算出 **-0.5496 A** 的
+ *     不对称，即自信的 `Reversed`。
+ *
+ *     护栏用调用方自己声明的分辨力当尺子——两个起点相差超过 `min_asymmetry_a` 时，那个分辨力下的任何结论都不成立。下面的
+ *     用例同时检查护栏**与夹具**：`FakeDx` 原本完全没有衰减，于是这里的每个用例都在悄悄走那条退化路径，并以错误的理由得
+ *     到正确的标签。
+ */
+TEST(MagnetPolarityTest, AWindingThatNeverRelaxesGetsInconclusiveInsteadOfAWrongAnswer) {
+    // The motor is the one that is `Aligned`; only the winding's relaxation changes.
+    // 电机是 `Aligned` 的那台；变的只是绕组的松弛。
+    EXPECT_EQ(foc::core::PolarityVerdict::Aligned, run_sequence(valid_config(), 1.8e-4F, 2.2e-4F));
+    EXPECT_EQ(foc::core::PolarityVerdict::Inconclusive,
+              run_sequence(valid_config(), 1.8e-4F, 2.2e-4F, /*decay_s=*/0.0F))
+        << "a winding that never relaxes must not produce a verdict";
+
+    // And the settle is the knob: two ticks is not enough for the fixture's 1 ms winding.
+    // 而松弛时间就是这个旋钮：对夹具的 1 ms 绕组，两拍不够。
+    foc::core::MagnetPolarityTest::Config short_settle = valid_config();
+    short_settle.settle_s = 1e-4F;
+    EXPECT_EQ(foc::core::PolarityVerdict::Inconclusive,
+              run_sequence(short_settle, 1.8e-4F, 2.2e-4F))
+        << "the settle is a precondition, and two ticks does not meet it";
+
+    // Above it the same machine answers again, so the guard is a precondition and not a ban.
+    // 超过它之后同一台机器又能作答，所以这条护栏是前置条件而不是禁令。
+    short_settle.settle_s = 3e-3F;
+    EXPECT_EQ(foc::core::PolarityVerdict::Aligned, run_sequence(short_settle, 1.8e-4F, 2.2e-4F));
 }

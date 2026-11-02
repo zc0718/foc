@@ -251,3 +251,135 @@ TEST(ElectronicGear, AZeroRatioIsRefusedRatherThanSilentlyDecoupling) {
     EXPECT_EQ(gear.apply(NAN, kDt).status, foc::ErrorCode::Param);
     EXPECT_FLOAT_EQ(gear.master_unwrapped_rad(), before);
 }
+
+/**
+ * @brief Every master error source has a closed form, and the assumption the header states is now checked.
+ *
+ *     Four predictions, derived before the measurement:
+ *
+ *     P1 a master step of 0.9*pi or more cannot be decoded from a wrapped angle and must be **reported**, not guessed.
+ *     `kMaxStepRad` was declared and documented for this and had no consumer until F-43. P2 quantising the master to
+ *     `q` costs at most `|ratio| * q` of synchronisation error and **does not grow with time**, because consecutive
+ *     deltas telescope: the accumulated unwrapped angle is off by `e_k - e_0`, not by a random walk of `k` errors. A
+ *     bound that holds for four seconds of travel is evidence of that structure; a slowly growing error would be
+ *     evidence against it. P3 a sample interval that is off by fraction `j` puts the velocity reference off by `ratio *
+ *     omega * j / (1+j)` -- exactly, since `v_ref = ratio * delta / dt` and only `dt` is wrong. P4 one dropped master
+ *     sample leaves the unwrapped reference permanently short by one step, so the sync error is `|ratio| * omega * dt`
+ *     and stays there.
+ *
+ *     四条预言，测量之前写下来： P1 0.9π 以上的主轴步长无法从环绕角度解出，必须**报告**而不是猜。`kMaxStepRad` 就是为这
+ *     个声明和注释的，而在 F-43 之前它没有消费者。 P2 把主轴量化到 `q`，同步误差至多 `|ratio|·q` 且**不随时间增长**，因
+ *     为相邻差分是望远镜式相消：累积的去卷绕角度只差 `e_k − e_0`，不是 `k` 个误差的随机游走。四秒行程上成立的上界就是这
+ *     条结构的证据；一个缓慢增长的误差会是反证。 P3 采样间隔偏了比例 `j`，速度参考就偏 `ratio·ω·j/(1+j)`——精确，因为
+ *     `v_ref = ratio·delta/dt`，只有 `dt` 错。 P4 丢掉一个主轴采样，去卷绕参考会永久短一步，于是同步误差是
+ *     `|ratio|·ω·dt` 并停在那里。
+ */
+TEST(ElectronicGear, EveryMasterErrorSourceHasAClosedFormAndTheAssumptionIsChecked) {
+    constexpr float kRatio = 2.5F;
+    constexpr float kOffset = 0.3F;
+    constexpr float kSpeed = 1.0F; // master rad/s
+    constexpr float kSeconds = 4.0F;
+    const auto ticks = static_cast<int>(kSeconds / kDt);
+
+    // P1: the assumption.
+    {
+        foc::core::ElectronicGear gear({kRatio, kOffset});
+        static_cast<void>(gear.apply(0.0F, kDt));
+        static_cast<void>(gear.apply(0.01F, kDt));
+        EXPECT_FALSE(gear.lost_count()) << "a 0.01 rad step is inside the decode domain";
+        const auto jumped = gear.apply(0.01F + (0.95F * kPi), kDt);
+        EXPECT_TRUE(jumped.lost_count) << "a 0.95*pi step was decoded without complaint";
+        EXPECT_TRUE(gear.lost_count()) << "the flag is sticky, so the caller sees it after the sample that caused it";
+        gear.reset();
+        EXPECT_FALSE(gear.lost_count()) << "reset() is what makes the history meaningless, so it clears the flag";
+    }
+
+    // P2: quantisation, bounded and non-growing.
+    {
+        constexpr float kLsb = 1.0e-3F;
+        foc::core::ElectronicGear gear({kRatio, kOffset});
+        float worst = 0.0F;
+        float worst_late = 0.0F;
+        for (int k = 0; k < ticks; ++k) {
+            const float truth = kSpeed * static_cast<float>(k) * kDt;
+            const float sample = kLsb * std::round(wrap_two_pi(truth) / kLsb);
+            const auto out = gear.apply(sample, kDt);
+            const float error = std::fabs(out.slave_rad - ((kRatio * truth) + kOffset));
+            worst = std::max(worst, error);
+            if (k > ticks / 2) {
+                worst_late = std::max(worst_late, error);
+            }
+        }
+        std::printf("\n[gear] quantised master q %.1f mrad: worst sync %.4f mrad, worst in the second half %.4f mrad, "
+                    "bound |ratio|*q = %.4f mrad\n", static_cast<double>(kLsb * 1e3F), static_cast<double>(worst * 1e3F),
+                    static_cast<double>(worst_late * 1e3F), static_cast<double>(kRatio * kLsb * 1e3F));
+        EXPECT_LE(worst, kRatio * kLsb) << "quantisation cost more than the telescoping bound";
+        EXPECT_LE(worst_late, kRatio * kLsb) << "the error grew with time, so the deltas are not telescoping";
+        EXPECT_GT(worst, 0.2F * kRatio * kLsb) << "the bound is not being exercised at all";
+    }
+
+    // P3: a wrong sample interval. Measured at 20 rad/s master, where the per-sample step is a hundred times the
+    // decode's own rounding; at 1 rad/s the step is 6.25e-5 rad and `wrap_pi`'s `fmod(x + pi, 2*pi) - pi` loses about
+    // 1e-7 of it per sample, which is a separate (and larger) term than the jitter being tested. That resolution limit is
+    // recorded rather than hidden: it is the reason this case runs fast.
+    // P3 采样间隔有误。在主轴 20 rad/s 上测量，此时每个采样的步长是解码自身舍入的一百倍；在 1 rad/s 上步长只有
+    // 6.25e-5 rad，而 `wrap_pi` 的 `fmod(x + π, 2π) − π` 每次采样会丢掉其中约 1e-7，那是比被测抖动更大的另一项。这条
+    // 分辨率限制记录而不隐藏：它正是本用例跑快的原因。
+    {
+        constexpr float kJitter = 0.05F;
+        constexpr float kFast = 20.0F;
+        foc::core::ElectronicGear gear({kRatio, kOffset});
+        static_cast<void>(gear.apply(0.0F, kDt));
+        const float step = kFast * kDt;
+        const auto clean = gear.apply(wrap_two_pi(step), kDt);
+        const auto dirty = gear.apply(wrap_two_pi(2.0F * step), kDt * (1.0F + kJitter));
+        const float predicted_ratio = 1.0F - (kJitter / (1.0F + kJitter));
+        std::printf("[gear] jitter %.0f %%: velocity reference %.5f against %.5f nominal (%.5f of it), predicted "
+                    "%.5f\n", static_cast<double>(kJitter * 100.0F),
+                    static_cast<double>(dirty.slave_velocity_rad_s), static_cast<double>(kRatio * kFast),
+                    static_cast<double>(dirty.slave_velocity_rad_s / (kRatio * kFast)),
+                    static_cast<double>(predicted_ratio));
+        EXPECT_NEAR(clean.slave_velocity_rad_s / (kRatio * kFast), 1.0F, 2.0e-3F);
+        EXPECT_NEAR(dirty.slave_velocity_rad_s / (kRatio * kFast), predicted_ratio, 2.0e-3F)
+            << "a wrong interval did not move the velocity reference by the derived fraction";
+    }
+
+    // P4: a *count* the encoder never counted costs one permanent step. The first version of this prediction said a
+    // dropped *sample* did the same, and the measurement said zero -- correctly, because the next sample carries the full
+    // accumulated angle and the unwrap recovers it exactly. Both halves are asserted, because the half that cannot fail
+    // is what makes the half that can meaningful.
+    // P4 编码器**没数到的一个计数**会留下一个永久步差。这条预言的第一版说丢掉一个**采样**也一样，而实测是零——正确，
+    // 因为下一个采样带着完整的累积角度，去卷绕会精确恢复它。两半都断言，因为"不可能失败"的那一半才让"可能失败"的那一半
+    // 有意义。
+    {
+        constexpr float kLsb = 1.0e-3F;
+        constexpr int kDropAt = 40;
+        foc::core::ElectronicGear gear({kRatio, kOffset});
+        float settled = 0.0F;
+        for (int k = 0; k < ticks; ++k) {
+            const float truth = kSpeed * static_cast<float>(k) * kDt;
+            const float reported = (k >= kDropAt) ? wrap_two_pi(truth - kLsb) : wrap_two_pi(truth);
+            const auto out = gear.apply(reported, kDt);
+            settled = out.slave_rad - ((kRatio * truth) + kOffset);
+        }
+        const float predicted = kRatio * kLsb;
+        std::printf("[gear] one master count never counted: %.5f mrad against |ratio|*q = %.5f mrad\n",
+                    static_cast<double>(-settled * 1e3F), static_cast<double>(predicted * 1e3F));
+        EXPECT_NEAR(-settled, predicted, 0.05F * predicted) << "a lost count did not cost exactly one count";
+    }
+    {
+        // A sample that never arrives, with the next one carrying the full angle: the unwrap sees a double step and
+        // recovers it, so there is no error at all.
+        foc::core::ElectronicGear gear({kRatio, kOffset});
+        float settled = 0.0F;
+        for (int k = 0; k < ticks; ++k) {
+            const int delivered = (k < 40) ? k : (k - 1);
+            const float truth = kSpeed * static_cast<float>(delivered) * kDt;
+            const auto out = gear.apply(wrap_two_pi(truth), kDt);
+            settled = out.slave_rad - ((kRatio * truth) + kOffset);
+        }
+        std::printf("[gear] one sample never delivered, next one complete: %.2e mrad (expected 0)\n",
+                    static_cast<double>(settled * 1e3F));
+        EXPECT_LT(std::fabs(settled), 1.0e-6F) << "a missing sample that the next one covers left a step behind";
+    }
+}

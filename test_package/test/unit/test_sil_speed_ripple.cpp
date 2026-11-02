@@ -560,16 +560,25 @@ TEST(SilSpeedRipple, TheRippleIsMechanicalOrItIsTheController) {
                 static_cast<double>(light.speed_ripple_ctrl), static_cast<double>(explanation),
                 ((explanation > 0.5F) && (explanation < 2.0F)) ? "the chain closes" : "the chain does not close");
 
-    // C2's criterion is **not** met, and that is the finding rather than a failure of the run. Ten times the inertia
-    // bought 0.71x less speed ripple instead of 10x, because the q-axis ripple grew 5.9x at the same time: the speed
-    // loop's gains are derived from the inertia, so a heavier rotor is asked for a proportionally larger current, and
-    // the `1/J` advantage is cancelled by a proportional increase in `T`. The ripple is therefore *inertia-invariant*,
-    // which is a property of a fixed-bandwidth cascade and not of the rotor -- the mechanical story is falsified.
-    // C2 的判据**没有**成立，而这正是发现本身，而不是这次运行失败。十倍惯量只换来 0.71 倍的转速纹波，而不是 10 倍，因为
-    // q 轴纹波同时涨了 5.9 倍：速度环的增益由惯量导出，于是更重的转子被要求给出成比例更大的电流，`1/J` 的好处被 `T` 的
-    // 成比例增加抵消。因此纹波是**惯量无关**的——这是固定带宽串级环的性质，不是转子的性质，机械那个说法被否证了。
-    EXPECT_LT(fall, 2.0F) << "the ripple did follow the inertia after all, so the mechanical story holds and this case "
-                             "needs rewriting back the other way";
+    // C2's criterion is **met**: ten times the inertia bought 9.16x less speed ripple, and the q-axis ripple did not
+    // move at all (0.0201 A against 0.0200 A), so nothing cancels the `1/J` advantage -- the chain is mechanical.
+    //
+    // This reverses this case's first conclusion, and the reversal is worth more than the result. While the plant
+    // integrated its mechanical angle in float32, a sub-ulp step was rounded away and the axis froze with its speed
+    // still non-zero (F-40). The light rotor froze first, its measured ripple was inflated, and the ratio collapsed to
+    // 0.71x. The "inertia-invariant" story -- which had a mechanism (gains derived from the inertia) and a number
+    // (5.9x q-ripple growth) and read as a real finding -- described the simulator, not the machine. **A falsification
+    // is only as good as the instrument that produced it**, and this is the second time in this file that the answer
+    // changed when the instrument did.
+    // C2 的判据**成立**：十倍惯量换来 9.16 倍的转速纹波下降，而 q 轴纹波根本没动（0.0201 A 对 0.0200 A），所以没有
+    // 任何东西抵消 `1/J` 的好处——这条链是机械的。
+    //
+    // 这**推翻**了本用例第一版的结论，而推翻本身比结论更要紧。plant 用 float32 积分机械角时，亚 ulp 的步长被舍掉，
+    // 轴冻住而转速仍非零（F-40）；轻转子先冻住，它的纹波被测大，比值塌到 0.71 倍。那个"惯量无关"的说法——有机理
+    // （增益由惯量导出）、有数字（q 纹波涨 5.9 倍）、读起来像个真发现——描述的是仿真器而不是机器。**否证的价值不超
+    // 过产生它的那台仪器**，而这已经是本文件里第三次换仪器就换答案。
+    EXPECT_GT(fall, 5.0F) << "the ripple no longer follows the inertia, so something else broke the mechanical chain "
+                              "and this case has to say what";
     EXPECT_GT(explanation, 0.5F) << "the current ripple is too small to be the cause: something else drives the ripple";
     EXPECT_LT(explanation, 2.0F) << "the current ripple over-predicts: the mechanical equation is not what limits it";
 }
@@ -900,7 +909,20 @@ TEST(SilSpeedRipple, ThePublishedSpeedCanBeCleanedAndTheRotorDoesNotCare) {
         EXPECT_TRUE(rows[i].reached_command) << "cutoff " << kCutoffs[i] << " left the loop unable to reach 20 rad/s";
     }
     EXPECT_GT(tone_fall, 5.0F) << "the filter does not remove the carrier from the published speed";
-    EXPECT_LT(bias_change, 1.2F) << "the filter cost steady accuracy, which is a different trade than the one claimed";
+    // C10c is **violated**, and on the corrected plant it is violated at every cutoff on the sweep, not just the chosen
+    // one: cleaning the published speed costs steady accuracy. So the three-way trade C10 claimed -- tone gone, rotor
+    // untouched, accuracy kept -- does not exist here, and the case records that instead of picking the cutoff that
+    // loses least. Stated as an assertion so that a future change which *does* buy all three shows up as a change of
+    // story. One caveat is left open rather than hidden: this bias is measured at the run's window, and the loop is
+    // known to carry a ~1 s settling tail, so part of the 1.87x may be settling time rather than a permanent offset;
+    // separating the two is not done here (foundation-log A-42).
+    // C10c 被**违反**，而且在修正后的 plant 上，整个扫频范围里每一档截止频率都违反，不只是选中的那一档：把已发布
+    // 转速洗干净是要拿稳态精度换的。所以 C10 声称的三向交易——音调没了、转子不受影响、精度保住——在这里不存在，
+    // 用例把这个记下来，而不是挑一个输得最少的截止频率。写成断言，是为了将来某个**真的**三者兼得的改动会在这里表
+    // 现为故事的改变。一个限定不藏起来：这个偏差是在本次运行的窗口上量的，而环路已知带一条约 1 s 的收敛尾巴，所以
+    // 1.87 倍里可能有一部分是收敛时间而不是永久偏置；拆开这两者这次没做（foundation-log A-42）。
+    EXPECT_GT(bias_change, 1.2F) << "the filter now keeps steady accuracy as well: the trade recorded here no longer "
+                                     "describes this loop";
 
     // C10b is **falsified**, and it is the more valuable half of this case. Removing 10x of the carrier tone from the
     // published speed moved the closed-loop ripple from 0.0900 to 0.0879 -- nothing. So the tone in the rotor was never

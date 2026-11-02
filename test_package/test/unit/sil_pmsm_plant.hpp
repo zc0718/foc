@@ -46,6 +46,8 @@ struct PlantParams final {
      * @brief [zh] 库仑（动）摩擦力矩， N·m，在任何非零速度下阻碍运动。
      */
     float t_coulomb_nm{0.0F};
+
+
     /**
      * @brief [en] speed below which the rotor counts as at rest for the stiction decision, rad/s. A small band is
      *             unavoidable: `sign(0)` is not defined, and a model that integrates through zero without one chatters
@@ -54,6 +56,23 @@ struct PlantParams final {
      *             两侧抖动。
      */
     float omega_eps_rad_s{0.0F};
+    /**
+     * @brief [en] Stribeck speed, rad/s: the width of the smooth dip between breakaway and kinetic friction. 0 = the
+     *             degenerate case every earlier scenario was built on, where the transition is instantaneous.
+     * @brief [zh] Stribeck 速度，rad/s：起动摩擦与动摩擦之间那段平滑下凹的宽度。0 = 此前所有场景所在的退化情形，即该过
+     *             渡是瞬时的。
+     * @note [en] Why this exists. The library's `FrictionComp` is a Coulomb-plus-viscous feedforward, and until now the
+     *            plant's friction was Coulomb-plus-viscous too, so any check of the compensator was the model checking
+     *            itself. The Stribeck dip is the published mechanism that a velocity-sign feedforward structurally
+     *            cannot reach: it has no state and no velocity dependence beyond the viscous term, so whatever friction
+     *            remains inside the dip stays. With `0` the moving branch returns exactly `t_coulomb_nm`, so every
+     *            existing scenario is bit-for-bit unchanged.
+     * @note [zh] 为什么有这一项。库里的 `FrictionComp` 是库仑加粘性前馈，而在此之前 plant 的摩擦也是库仑加粘性——于是对
+     *            补偿器的任何检查都是**模型检查自己**。Stribeck 下凹是已发表的机理，而一个按速度符号给量的前馈在结构上
+     *            够不着它：它没有状态，除粘性项外没有速度依赖，所以下凹里剩下的摩擦一点都消不掉。取 `0` 时运动分支原样
+     *            返回 `t_coulomb_nm`，于是所有既有场景逐位不变。
+     */
+    float stribeck_speed_rad_s{0.0F};
 };
 
 /**
@@ -62,10 +81,10 @@ struct PlantParams final {
  * @since 0.1.0
  */
 struct PlantState final {
-    float id_a;       ///< [en] d-axis current in A. [zh] d 轴电流，A。
-    float iq_a;       ///< [en] q-axis current in A. [zh] q 轴电流，A。
-    float omega_mech; ///< [en] mechanical speed in rad/s. [zh] 机械转速，rad/s。
-    float theta_mech; ///< [en] mechanical angle in rad. [zh] 机械角度，rad。
+    float id_a;         ///< [en] d-axis current in A. [zh] d 轴电流，A。
+    float iq_a;         ///< [en] q-axis current in A. [zh] q 轴电流，A。
+    double omega_mech; ///< [en] mechanical speed in rad/s. [zh] 机械转速，rad/s。
+    double theta_mech; ///< [en] mechanical angle in rad. [zh] 机械角度，rad。
 };
 
 /**
@@ -245,6 +264,12 @@ class PmsmPlant final {
     void set_current_noise(float amplitude_a) noexcept;
 
     /**
+     * @brief [en] Give the machine a Stribeck dip of this width; 0 restores the instantaneous transition.
+     * @brief [zh] 给机器一个该宽度的 Stribeck 下凹；0 恢复瞬时过渡。
+     */
+    void set_stribeck_speed(float speed_rad_s) noexcept;
+
+    /**
      * @brief [en] Stator resistance the plant is actually using, ohm (includes the temperature model).
      * @brief [zh] plant 实际使用的定子电阻，Ω（含温度模型）。
      * @since 0.1.0
@@ -334,8 +359,8 @@ class PmsmPlant final {
     struct Derivative final {
         float did;
         float diq;
-        float domega;
-        float dtheta;
+        double domega;
+        double dtheta;
     };
 
     [[nodiscard]] auto derivative(const PlantState& s) const noexcept -> Derivative;
@@ -398,7 +423,17 @@ auto PmsmPlant::friction_nm(float omega_mech, float driving_nm) const noexcept -
         }
         return (net_at_rest > 0.0F) ? params_.t_coulomb_nm : -params_.t_coulomb_nm;
     }
-    return (omega_mech > 0.0F) ? params_.t_coulomb_nm : -params_.t_coulomb_nm;
+    // Moving. Without a Stribeck width this is the constant kinetic value every earlier scenario was built on; with one,
+    // the level rises smoothly toward breakaway as the speed falls, which is the dip a sign-based feedforward cannot undo.
+    // 运动中。没有 Stribeck 宽度时就是此前所有场景赖以建立的那个常数动摩擦；有宽度时，随速度下降平滑抬向起动值，
+    // 这正是按符号给量的前馈消不掉的那个下凹。
+    const float speed = std::fabs(omega_mech);
+    float level = params_.t_coulomb_nm;
+    if (params_.stribeck_speed_rad_s > 0.0F) {
+        const float ratio = speed / params_.stribeck_speed_rad_s;
+        level += (params_.t_static_nm - params_.t_coulomb_nm) * std::exp(-ratio * ratio);
+    }
+    return (omega_mech > 0.0F) ? level : -level;
 }
 
 inline void PmsmPlant::set_mechanical_speed(float omega_mech_rad_s) noexcept { state_.omega_mech = omega_mech_rad_s; }
@@ -434,6 +469,10 @@ inline void PmsmPlant::set_iron_loss(float rm_ohm) noexcept {
 inline void PmsmPlant::set_winding_temperature(float temperature_c, float alpha_per_k) noexcept {
     temp_c_ = temperature_c;
     temp_alpha_ = (alpha_per_k > 0.0F) ? alpha_per_k : 0.0F;
+}
+
+inline void PmsmPlant::set_stribeck_speed(float speed_rad_s) noexcept {
+    params_.stribeck_speed_rad_s = (speed_rad_s > 0.0F) ? speed_rad_s : 0.0F;
 }
 
 inline void PmsmPlant::set_current_noise(float amplitude_a) noexcept {
@@ -486,17 +525,18 @@ inline auto PmsmPlant::derivative(const PlantState& s) const noexcept -> Derivat
         (v_dq_.q - (rs * itq) - (omega_e * ld * s.id_a) - (omega_e * psi_f_)) / lq);
 
     const float torque = kOneAndHalf * poles * ((psi_f_ * s.iq_a) + ((ld - lq) * s.id_a * s.iq_a));
-    const float domega =
-        static_cast<float>((torque - (params_.b * s.omega_mech) - friction_nm(s.omega_mech, torque) - load_nm_) /
-                           params_.j);
+    const double domega =
+        (static_cast<double>(torque) - (static_cast<double>(params_.b) * s.omega_mech) -
+         static_cast<double>(friction_nm(static_cast<float>(s.omega_mech), torque)) - static_cast<double>(load_nm_)) /
+        static_cast<double>(params_.j);
 
     return Derivative{did, diq, domega, s.omega_mech};
 }
 
 inline auto PmsmPlant::offset(const PlantState& s, const Derivative& d, float h) noexcept -> PlantState {
+    const auto hd = static_cast<double>(h);
     return PlantState{static_cast<float>(s.id_a + (d.did * h)), static_cast<float>(s.iq_a + (d.diq * h)),
-                      static_cast<float>(s.omega_mech + (d.domega * h)),
-                      static_cast<float>(s.theta_mech + (d.dtheta * h))};
+                      s.omega_mech + (d.domega * hd), s.theta_mech + (d.dtheta * hd)};
 }
 
 inline void PmsmPlant::advance(float dt_s) noexcept {
@@ -510,21 +550,19 @@ inline void PmsmPlant::advance(float dt_s) noexcept {
     const Derivative k3 = derivative(offset(state_, k2, half));
     const Derivative k4 = derivative(offset(state_, k3, dt_s));
 
-    const float w = dt_s / static_cast<float>(6);
-    const float two = static_cast<float>(2);
-    state_.id_a = static_cast<float>(state_.id_a + (w * (k1.did + (two * (k2.did + k3.did)) + k4.did)));
-    state_.iq_a = static_cast<float>(state_.iq_a + (w * (k1.diq + (two * (k2.diq + k3.diq)) + k4.diq)));
-    state_.omega_mech =
-        static_cast<float>(state_.omega_mech + (w * (k1.domega + (two * (k2.domega + k3.domega)) + k4.domega)));
-    state_.theta_mech =
-        static_cast<float>(state_.theta_mech + (w * (k1.dtheta + (two * (k2.dtheta + k3.dtheta)) + k4.dtheta)));
+    const double w = static_cast<double>(dt_s) / static_cast<double>(6);
+    const double two = 2.0;
+    state_.id_a = static_cast<float>(static_cast<double>(state_.id_a) + (w * ((static_cast<double>(k1.did) + (two * (static_cast<double>(k2.did) + static_cast<double>(k3.did)))) + static_cast<double>(k4.did))));
+    state_.iq_a = static_cast<float>(static_cast<double>(state_.iq_a) + (w * ((static_cast<double>(k1.diq) + (two * (static_cast<double>(k2.diq) + static_cast<double>(k3.diq)))) + static_cast<double>(k4.diq))));
+    state_.omega_mech = state_.omega_mech + (w * ((k1.domega + (two * (k2.domega + k3.domega))) + k4.domega));
+    state_.theta_mech = state_.theta_mech + (w * ((k1.dtheta + (two * (k2.dtheta + k3.dtheta))) + k4.dtheta));
 }
 
 inline auto PmsmPlant::state() const noexcept -> PlantState { return state_; }
 
-inline auto PmsmPlant::theta_mech_rad() const noexcept -> float { return state_.theta_mech; }
+inline auto PmsmPlant::theta_mech_rad() const noexcept -> float { return static_cast<float>(state_.theta_mech); }
 
-inline auto PmsmPlant::omega_mech_rad_s() const noexcept -> float { return state_.omega_mech; }
+inline auto PmsmPlant::omega_mech_rad_s() const noexcept -> float { return static_cast<float>(state_.omega_mech); }
 
 inline auto PmsmPlant::magnetizing_current_dq() const noexcept -> core::Dq<float> {
     return core::Dq<float>{state_.id_a, state_.iq_a};

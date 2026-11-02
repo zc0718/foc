@@ -85,9 +85,36 @@ public:
   auto calibrate_offset() noexcept -> ErrorCode override;
   [[nodiscard]] auto sample_rate_hz() const noexcept -> float override;
 
+  /**
+   * @brief [en] Per-phase gain of the measuring chain; 1 is a perfect sensor.
+   * @brief [zh] 测量链的每相增益；1 表示理想传感器。
+   * @param gain_uvw [en] multiplier applied to each phase reading.
+   * @param gain_uvw [zh] 施加到每相读数的乘数。
+   * @note [en] `u+10 v-10 %` is the *differential* case on purpose: a uniform gain error is a loop-gain error and
+   *            scales with the current, while a mismatch creates a phantom negative-sequence component that the loop
+   *            then tries to regulate away. The two are not the same defect, so the knobs are separate per phase.
+   * @note [zh] `u+10 v-10 %` 是**差分**情形，故意与均匀增益分开：均匀增益是环路增益误差，随电流成比例；相间失配会造出一
+   *            个虚假负序分量，环路随后会去调节它。两者不是同一个缺陷，所以每相分开。
+   * @since 0.1.0
+   */
+  void set_phase_gain(Uvw<float> gain_uvw) noexcept;
+
+  /**
+   * @brief [en] Offset added to every phase reading, A; 0 is a calibrated sensor.
+   * @brief [zh] 加到每相读数上的偏置，A；0 表示已校准。
+   * @note [en] A *common* offset cancels identically in Clarke, so it cannot be the source of a d-q error -- that is
+   *            measured, not assumed, and it is why this knob exists at all rather than being left out.
+   * @note [zh] **共模**偏置在 Clarke 里严格相互抵消，因此它不可能成为 d-q 误差的来源——这一点是量出来的、不是假设的，也
+   *            正是保留这个旋钮（而不是干脆不提供）的原因。
+   * @since 0.1.0
+   */
+  void set_offset_a(float offset_a) noexcept;
+
 private:
   const PmsmPlant *plant_;
   const PlantPwm *pwm_;
+  Uvw<float> gain_{1.0F, 1.0F, 1.0F};
+  float offset_a_{0.0F};
 };
 
 /**
@@ -108,6 +135,19 @@ public:
    * @brief [zh] 模拟驱动需要找出的编码器安装误差。
    */
   void set_mount_error_rad(float error_rad) noexcept;
+
+  /**
+   * @brief [en] Quantise the reported angle to `lsb_rad`; 0 (the default) reports it unquantised.
+   * @brief [zh] 把报出的角度量化到 `lsb_rad`；0（默认）表示不量化。
+   * @note [en] Why this is a separate knob from the mounting error. A mounting error is a *bias*: the loop can converge
+   *            to it and sit there, so it costs the same at every target. Quantisation is a *resolution*: the loop
+   *            closes on a staircase, so the residual depends on where the target happens to fall between two counts.
+   *            Tying them together would make one number explain two different behaviours.
+   * @note [zh] 为什么它与安装误差是两个旋钮。安装误差是**偏置**：环路会收敛到它并停在那里，所以每个目标处代价相同。量化
+   *            是**分辨率**：环路在一个台阶上闭环，残差取决于目标恰好落在两个计数之间的哪里。把两者绑在一起，一个数字就
+   *            要解释两种不同的行为。
+   */
+  void set_resolution_rad(float lsb_rad) noexcept;
 
   /**
    * @brief [en] Model a sensor-less setup: has_sensor() starts returning false, so the angle has to come from the
@@ -162,6 +202,7 @@ private:
   const PmsmPlant *plant_;
   float mount_error_rad_{0.0F};
   float offset_rad_{0.0F};
+  float resolution_rad_{0.0F};
   bool sensor_present_{true};
   bool has_index_{false};
   float index_position_rad_{0.0F};
@@ -323,8 +364,19 @@ inline PlantCurrentSense::PlantCurrentSense(const PmsmPlant &plant,
                                             const PlantPwm &pwm) noexcept
     : plant_(&plant), pwm_(&pwm) {}
 
+inline void PlantCurrentSense::set_phase_gain(Uvw<float> gain_uvw) noexcept {
+  gain_ = gain_uvw;
+}
+
+inline void PlantCurrentSense::set_offset_a(float offset_a) noexcept {
+  offset_a_ = offset_a;
+}
+
 inline auto PlantCurrentSense::read_uvw() noexcept -> Uvw<float> {
-  return plant_->current_uvw();
+  const Uvw<float> raw = plant_->current_uvw();
+  return Uvw<float>{static_cast<float>((gain_.u * raw.u) + offset_a_),
+                    static_cast<float>((gain_.v * raw.v) + offset_a_),
+                    static_cast<float>((gain_.w * raw.w) + offset_a_)};
 }
 
 inline auto PlantCurrentSense::calibrate_offset() noexcept -> ErrorCode {
@@ -356,7 +408,20 @@ inline auto PlantPosition::angle_mech_rad() noexcept -> float {
   if (angle < 0.0F) {
     angle += two_pi;
   }
+  // A real encoder reports counts, not radians: the loop then closes on a staircase and the true position can sit up
+  // to half a count away while the reading says "on target". That is a resolution limit, not an offset -- the error it
+  // contributes depends on where the target lands between two counts, which is why the budget gives it half an LSB and
+  // not a fixed number.
+  // 真实编码器报的是计数而不是弧度：环路随后在台阶上闭环，读数说着"到位"时真值可能还差半格。这是分辨率限制而不是
+  // 偏置——它贡献的误差取决于目标落在两个计数之间的哪里，所以预算给它半个 LSB，而不是一个固定数。
+  if (resolution_rad_ > 0.0F) {
+    angle = resolution_rad_ * std::round(angle / resolution_rad_);
+  }
   return angle;
+}
+
+inline void PlantPosition::set_resolution_rad(float lsb_rad) noexcept {
+  resolution_rad_ = (lsb_rad > 0.0F) ? lsb_rad : 0.0F;
 }
 
 inline void PlantPosition::set_mount_error_rad(float error_rad) noexcept {

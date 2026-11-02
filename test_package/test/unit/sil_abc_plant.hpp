@@ -62,12 +62,75 @@ public:
     explicit AbcPlant(const Params& params) noexcept : params_(params) {}
 
     /**
+     * @brief [en] What turns the co-energy torque into motion: rotor inertia and viscous friction.
+     * @brief [zh] 把磁共能转矩变成运动的东西：转子惯量与粘性摩擦。
+     */
+    struct Mechanics final {
+        float j; ///< [en] rotor inertia, kg*m^2. [zh] 转子惯量，kg·m²。
+        float b; ///< [en] viscous friction, N*m*s. [zh] 粘性摩擦，N·m·s。
+    };
+
+    /**
+     * @brief [en] Let the model integrate mechanics instead of holding the speed it was handed.
+     * @brief [zh] 让模型自己积分机械方程，而不是保持交给它的转速。
+     * @param mechanics [en] inertia and damping of the same machine the parameters describe.
+     * @param mechanics [zh] 参数所描述的那台机器的惯量与阻尼。
+     * @note [en] **Off by default, and that matters.** With mechanics off the speed and angle are exactly what
+     *            `set_state()` put there, which is the frozen-speed model the six-point cross-check was written
+     *            against; turning it on is a different experiment and must not silently change that one. Why it exists
+     *            at all: a *transient* exchange between mechanics and the electrical side is the one thing a
+     *            frozen-speed model cannot witness, and it is where this project's open-loop start claim lives. Here it
+     *            is computed without ever forming a d-q quantity, and without ever using `Kt`.
+     * @note [zh] **默认关闭，这一点很重要。** 关闭时转速与角度完全等于 `set_state()` 放进去的值，也就是六点对拍所对着的
+     *            冻结转速模型；打开它是另一个实验，不能悄悄把它改掉。存在的理由：机械侧与电气侧之间的**瞬态**交换，正是
+     *            冻结转速模型无法见证的东西，而本项目的开环起动主张就住在那里。这里的计算从不构造 d-q 量，也从不使用
+     *            `Kt`。
+     * @since 0.1.0
+     */
+    void enable_mechanics(const Mechanics& mechanics) noexcept {
+        mechanics_on_ = mechanics.j > 0.0F;
+        mech_ = mechanics;
+    }
+
+    /** @brief [en] Load torque opposing positive rotation, N*m. [zh] 阻碍正向旋转的负载转矩，N·m。 */
+    void set_load_torque(float torque_nm) noexcept { load_nm_ = torque_nm; }
+
+    /** @brief [en] Rotor angle in mechanical radians. [zh] 转子机械角，rad。 */
+    [[nodiscard]] auto theta_mech_rad() const noexcept -> float {
+        return theta_e_ / static_cast<float>(params_.pole_pairs);
+    }
+
+    /** @brief [en] Rotor speed in mechanical rad/s. [zh] 转子机械转速，rad/s。 */
+    [[nodiscard]] auto omega_mech_rad_s() const noexcept -> float {
+        return omega_e_ / static_cast<float>(params_.pole_pairs);
+    }
+
+    /** @brief [en] The parameters this model was built with. [zh] 构造本模型所用的参数。 */
+    [[nodiscard]] auto params() const noexcept -> const Params& { return params_; }
+
+    /** @brief [en] The three phase currents, same accessor name as the d-q plant. [zh] 三相电流，访问名与 d-q plant 一致。 */
+    [[nodiscard]] auto current_uvw() const noexcept -> core::Uvw<float> { return current(); }
+
+    /**
+     * @brief [en] Put the rotor at a mechanical angle and speed, currents to zero.
+     * @brief [zh] 把转子放到某个机械角度与转速，电流归零。
+     */
+    void reset(float theta_mech_rad, float omega_mech_rad_s) noexcept {
+        theta_e_ = static_cast<float>(params_.pole_pairs) * theta_mech_rad;
+        omega_e_ = static_cast<float>(params_.pole_pairs) * omega_mech_rad_s;
+        omega_m_ = omega_mech_rad_s;
+        i_u_ = 0.0F;
+        i_v_ = 0.0F;
+    }
+
+    /**
      * @brief [en] Set the frozen electrical speed and the rotor angle.
      * @brief [zh] 设定冻结的电角速度与转子角。
      */
     void set_state(float theta_e_rad, float omega_e_rad_s) noexcept {
         theta_e_ = theta_e_rad;
         omega_e_ = omega_e_rad_s;
+        omega_m_ = omega_e_rad_s / static_cast<float>(params_.pole_pairs);
     }
 
     /**
@@ -89,6 +152,17 @@ public:
         float theta = theta_e_;
         const float h = dt_s / 8.0F;
         for (int step = 0; step < 8; ++step) {
+            if (mechanics_on_) {
+                // The mechanical half of the same sub-step: co-energy torque in, speed and angle out. It uses no `Kt`
+                // and no Park transform, which is the whole reason this model exists -- if a law that carries `p*Kt`
+                // comes out the same here, the derivation has a witness that never mentions that product.
+                // 同一子步的机械半：磁共能转矩进，转速与角度出。它不使用 `Kt`、也不做 Park 变换，这正是本模型存在的理由
+                // —— 若一条带 `p*Kt` 的规律在这里得到同样的结果，那个推导就有了一个根本不提这个乘积的证人。
+                const float te = torque_at(iu, iv, theta);
+                omega_m_ = static_cast<float>(
+                    omega_m_ + (h * (((te - (mech_.b * omega_m_)) - load_nm_) / mech_.j)));
+                omega_e_ = static_cast<float>(params_.pole_pairs) * omega_m_;
+            }
             const Derivatives k1 = derivative(iu, iv, theta);
             const Derivatives k2 = derivative(
                 static_cast<float>(iu + (0.5F * h * k1.du)),
@@ -107,8 +181,8 @@ public:
             iv = static_cast<float>(iv + ((h / 6.0F) * ((k1.dv + (2.0F * k2.dv)) +
                                                         ((2.0F * k3.dv) + k4.dv))));
             theta = static_cast<float>(theta + (h * omega_e_));
-            theta_e_ = theta;
         }
+        theta_e_ = theta;
         i_u_ = iu;
         i_v_ = iv;
     }
@@ -126,14 +200,7 @@ public:
      * @brief [zh] 由磁共能给出的电磁转矩，**不经 Park**：N·m。
      */
     [[nodiscard]] auto torque() const noexcept -> float {
-        const core::Uvw<float> i = current();
-        float sum = 0.0F;
-        for (int phase = 0; phase < 3; ++phase) {
-            const float angle = static_cast<float>(
-                theta_e_ - (kTwoThirdPi * static_cast<float>(phase)));
-            sum = static_cast<float>(sum + (phase_current(i, phase) * std::sin(angle)));
-        }
-        return -static_cast<float>(params_.pole_pairs) * params_.lambda_m * sum;
+        return torque_at(i_u_, i_v_, theta_e_);
     }
 
     /**
@@ -160,16 +227,19 @@ private:
 
     static constexpr float kTwoThirdPi = 2.0943951F;
 
-    [[nodiscard]] static auto phase_current(const core::Uvw<float>& i,
-                                            int phase) noexcept -> float {
-        switch (phase) {
-        case 0:
-            return i.u;
-        case 1:
-            return i.v;
-        default:
-            return i.w;
+    /**
+     * @brief [en] Co-energy torque at an explicit state, so the integrator can ask without mutating first.
+     * @brief [zh] 给定显式状态的磁共能转矩，好让积分器不必先改状态再问。
+     */
+    [[nodiscard]] auto torque_at(float iu, float iv, float theta) const noexcept -> float {
+        const float iw = static_cast<float>(-iu - iv);
+        float sum = 0.0F;
+        for (int phase = 0; phase < 3; ++phase) {
+            const float angle = static_cast<float>(theta - (kTwoThirdPi * static_cast<float>(phase)));
+            const float phase_i = (phase == 0) ? iu : ((phase == 1) ? iv : iw);
+            sum = static_cast<float>(sum + (phase_i * std::sin(angle)));
         }
+        return -static_cast<float>(params_.pole_pairs) * params_.lambda_m * sum;
     }
 
     /**
@@ -188,11 +258,15 @@ private:
     }
 
     Params params_{};
+    Mechanics mech_{0.0F, 0.0F};
     core::Uvw<float> v_{0.0F, 0.0F, 0.0F};
     float i_u_{0.0F};
     float i_v_{0.0F};
     float theta_e_{0.0F};
     float omega_e_{0.0F};
+    float omega_m_{0.0F};
+    float load_nm_{0.0F};
+    bool mechanics_on_{false};
 };
 
 } // namespace sil

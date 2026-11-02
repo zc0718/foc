@@ -313,7 +313,14 @@ TEST(SilDeadtime, TheRampFadesTheCorrectionWhereTheSignIsNotYetInformation) {
   // 容差是量出来的：gcc 13 记录的列，apple-clang 只在 0.10 这一点上差 2.8e-4，其余四个吻合到 1e-5。
   // "逐位一致"是任何受支持的编译器集合都兑现不了的断言。1e-3 是该漂移的 3.6 倍；而本断言要抓的最小改动
   // 是相邻两行之差（7.7e-2），是它的 77 倍。
-  const float legacy[] = {0.05791F, 0.13498F, 0.14364F, 0.16482F, 0.17555F};
+  // Re-recorded 2026-10-30 after the plant started integrating its mechanical angle in double (F-40). The old
+  // column was 0.05791 / 0.13498 / 0.14364 / 0.16482 / 0.17555; rows 3 and 4 moved to 0.13564 and 0.16421, and
+  // rows 1, 2 and 5 did not move by a digit. That is the signature of a pin on a quantity the old plant was
+  // not integrating: a plant that rounds away sub-ulp motion cannot pin the error of a low-amplitude sine.
+  // 2026-10-30 重录，起因是 plant 的机械角改用双精度积分（F-40）。旧列是 0.05791 / 0.13498 / 0.14364 /
+  // 0.16482 / 0.17555；第 3、4 行变为 0.13564 与 0.16421，第 1、2、5 行一位没动。这正是"把一个旧 plant 没有
+  // 在积分的量钉住"的指纹：舍掉亚 ulp 位移的 plant 钉不住小幅正弦的误差。
+  const float legacy[] = {0.05791F, 0.13498F, 0.13564F, 0.16421F, 0.17555F};
   int index = 0;
   for (const float width : {0.0F, 0.05F, 0.1F, 0.2F, 0.5F}) {
     const SineResult stepped = run_compensated_sine(v_dead, width);
