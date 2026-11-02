@@ -16,6 +16,19 @@ MAIN_CPP = 'main.cpp'
 _get_file_name = (lambda x: x.split(sep)[-1])
 
 
+def _lcov_ignore_errors() -> str:
+    """The error classes to continue past, named for the lcov in use: geninfo 2.x renamed the line-range ones from
+    `gcov` to `mismatch`/`inconsistent` and **validates the list**, while geninfo 1.x rejects a name it does not know
+    (measured: 1.16 exits 2 on `mismatch`), so one fixed list cannot serve both.
+    """
+    try:
+        _version = subprocess.run(['lcov', '--version'], check=True, capture_output=True, text=True).stdout
+        _major = int(re.search(r'(\d+)\.', _version).group(1))
+    except (OSError, AttributeError, ValueError, subprocess.CalledProcessError):
+        return 'mismatch,source,inconsistent'
+    return 'mismatch,source,inconsistent' if _major >= 2 else 'gcov,source'
+
+
 def _clear_test_build():
     _build = sep.join(__file__.split(sep)[:-1] + ['build'])
     _presets = sep.join(__file__.split(sep)[:-1] + ['CMakeUserPresets.json'])
@@ -263,28 +276,22 @@ class PackageTestConan(ConanFile):
         return coverage_folder
 
     def _package_root(self):
-        """Root of THIS package's entry inside the conan cache.
+        """Root of the tested package's cache entry, i.e. the parent of its `p/` folder.
 
-        `conan cache path <ref>` prints the PACKAGE folder of the cache entry:
-          <CONAN_HOME>/p/b/<pkgname-prefix><hash>/p
-        Its parent is the entry root that holds this package's b/ (build +
-        copied sources) and p/ trees -- the only reliable scope for our code.
+        Asking `conan list` used to return whichever package was printed first, so a cross build of
+        the same version (armv8 next to x86_64) pointed the coverage filter at the wrong tree and
+        every record was excluded. The dependency itself knows its own folder.
         """
-        _name, _ver = [self.metadata.get(_) for _ in ['name', 'version']]
-        _tmp = subprocess.run(["conan", "list", f"{_name}/{_ver}:*"], capture_output=True, text=True)
-        _tmp_ref = [str(_).strip() for _ in _tmp.stdout.split('\n')]
-        _marked = [i for i, _ in enumerate(_tmp_ref) if _ == 'packages']
-        if not _marked:
-            raise RuntimeError(f'conan list {_name}/{_ver}:* listed no package; '
-                               f'cannot scope the coverage report')
-        _pkg_uid = _tmp_ref[_marked[0] + 1]
-        _tmp = subprocess.run(["conan", "cache", "path", f"{_name}/{_ver}:{_pkg_uid}"],
-                              capture_output=True, text=True)
-        _pkg_folder = _tmp.stdout.strip()
-        _pkg_root = sep.join(_pkg_folder.split(sep)[:-1])
-        if not _pkg_root:
-            raise RuntimeError(f'conan cache path {_name}/{_ver}:{_pkg_uid} returned "{_pkg_folder}"')
-        return _pkg_root
+        _name = self.tested_reference_str.split('/')[0]
+        try:
+            _dep = self.dependencies[_name]
+        except KeyError:
+            _dep = None
+        _pkg_folder = str(_dep.package_folder) if _dep and _dep.package_folder else ''
+        if not _pkg_folder:
+            raise RuntimeError(f'coverage: cannot resolve the package folder of {_name}; '
+                               f'the coverage report cannot be scoped')
+        return str(Path(_pkg_folder).parent)
 
     def _instrumented_binaries(self, build_folder):
         """The instrumented executables of this test package.
@@ -363,7 +370,12 @@ class PackageTestConan(ConanFile):
         return _tools['llvm-profdata'], _tools['llvm-cov']
 
     def _coverage_totals(self, info_file):
-        """Merge the tracefile per source file, then sum, so every total is the sum of its own breakdown."""
+        """Merge the tracefile per source file, then sum, so every total is the sum of its own breakdown.
+
+        ``_source_relpath`` is the identity of a file here: two records that normalise to the same path are the
+        same source seen from two build roots and are merged line by line. A project that genuinely ships two
+        different files at the same relative path under different roots would see them treated as one.
+        """
         _lines, _meta, _files = {}, {}, set()
         _current = None
         with open(info_file, 'r', encoding='utf-8') as f:
@@ -403,22 +415,57 @@ class PackageTestConan(ConanFile):
         _totals['per_file'] = {_p: _v for _p, _v in sorted(_per_file.items()) if _v['lines_found']}
         return _totals
 
-    def _render_html_report(self, coverage_folder, info_file, pkg_root):
-        """Filter the tracefile down to OUR entry, render the HTML, clean up.
+    def _merge_tracefile(self, info_file, merged_file):
+        """Rewrite ``SF:`` to one existing path per normalised key, then let lcov add the records.
 
-        Shared verbatim by the gcc and clang paths so the two cannot drift: the
-        artifact path produced here is what downstream parses.
+        One header is compiled into the package's objects and again into the consumer's, so lcov reports it once
+        per directory: ``lines`` counts the same source twice and every rate is computed on an inflated
+        denominator. Two records of one file only merge once they carry the same path, and the path kept has to be
+        one that exists -- ``genhtml`` reads the source through it to draw the annotated view. Counts are summed by
+        lcov here; that does not affect the rate, which asks whether a line ran at all, not how often.
+        """
+        _raw, _candidates = [], {}
+        with open(info_file, 'r', encoding='utf-8') as f:
+            for _line in f:
+                _raw.append(_line)
+                if _line.startswith('SF:'):
+                    _path = _line[3:].strip()
+                    _candidates.setdefault(_source_relpath(_path), []).append(_path)
+
+        _chosen = {_key: next((_p for _p in _paths if os.path.exists(_p)), _paths[0])
+                   for _key, _paths in _candidates.items()}
+        _rewritten = merged_file + '.rewritten'
+        with open(_rewritten, 'w', encoding='utf-8') as f:
+            for _line in _raw:
+                if _line.startswith('SF:'):
+                    _line = 'SF:' + _chosen[_source_relpath(_line[3:].strip())] + '\n'
+                f.write(_line)
+
+        subprocess.run(['lcov', '--ignore-errors', _lcov_ignore_errors(),
+                        '-a', _rewritten, '--output-file', merged_file], check=True)
+        os.remove(_rewritten)
+        return merged_file
+
+    def _render_html_report(self, coverage_folder, info_file, pkg_root):
+        """Filter the tracefile down to OUR entry, merge duplicates, render the HTML, clean up.
+
+        Shared verbatim by the gcc and clang paths so the two cannot drift: the artifact path produced here is
+        what downstream parses.
         """
         # scope the report to this package's derived cache root; a non-matching filter makes lcov 2.x abort
         cmd2 = ['lcov', '--extract', info_file,
                 pkg_root.replace(sep, '/') + '/*', '--output-file',
                 os.path.join(coverage_folder, 'coverage_test.filtered.info')]
         subprocess.run(cmd2, check=True)
-        cmd3 = ['genhtml', os.path.join(coverage_folder, 'coverage_test.filtered.info'),
+
+        # one tracefile for the HTML and the numbers: two artefacts with two rates is worse than either being wrong.
+        _merged = self._merge_tracefile(os.path.join(coverage_folder, 'coverage_test.filtered.info'),
+                                        os.path.join(coverage_folder, 'coverage_test.merged.info'))
+        cmd3 = ['genhtml', _merged,
                 '--output-directory', os.path.join(coverage_folder, 'coverage_report')]
         subprocess.run(cmd3, check=True)
 
-        _totals = self._coverage_totals(os.path.join(coverage_folder, 'coverage_test.filtered.info'))
+        _totals = self._coverage_totals(_merged)
 
         # remove intermediate files
         for _f in os.listdir(coverage_folder):
@@ -489,8 +536,7 @@ class PackageTestConan(ConanFile):
         _pkg_root = self._package_root()
         _main_pkg_build_fd = _pkg_root + sep + 'b' + sep + 'build'
 
-        # collect code coverage files to export/coverage/
-        # Both halves: a header-only module is instantiated by whoever includes it, and often only by a test.
+        # collect from both halves: a header-only module is instantiated by whoever includes it, often only a test.
         _gcda = [str(_) for _ in Path(_main_pkg_build_fd).rglob('*.gcda')]
         _gcda += [str(_) for _ in Path(self.build_folder).rglob('*.gcda')]
         _gcno = [_[:-4] + 'gcno' for _ in _gcda]
@@ -501,10 +547,10 @@ class PackageTestConan(ConanFile):
             shutil.copy2(v1, coverage_folder + sep + _get_file_name(v1))
             shutil.copy2(v2, coverage_folder + sep + _get_file_name(v2))
 
-        # `source` = deleted ucov_ copies; `mismatch`/`inconsistent` = gtest line ranges (named per lcov version).
+        # `source` = deleted ucov_ copies; the line-range classes are named per lcov release (see _lcov_ignore_errors).
         cmd1 = ['lcov', '--directory', coverage_folder, '--capture', '--output-file',
                 os.path.join(coverage_folder, 'coverage_test.info'), '--rc', 'geninfo_auto_base=1',
-                '--ignore-errors', 'mismatch,source,inconsistent']
+                '--ignore-errors', _lcov_ignore_errors()]
         subprocess.run(cmd1, check=True)
 
         self._render_html_report(coverage_folder,

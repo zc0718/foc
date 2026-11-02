@@ -55,9 +55,7 @@ function(link_to_resources EXECUTE_FILE)
 endfunction()
 
 
-# One place decides what "--coverage" means for this compiler: the unit legs, the main executable
-# and any extra consumer (e.g. a pure C smoke test) must instrument and link identically, otherwise
-# the archives carry __gcov_* references a consumer cannot resolve.
+# One place decides what "--coverage" means, so every consumer instruments and links identically.
 function(apply_coverage_flags TARGET_NAME)
     if(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
         set(COVERAGE_FLAGS "--coverage" "-O0" "-g")
@@ -124,22 +122,14 @@ if(TRIGGER_TESTS)
     include(GoogleTest)
     enable_testing()
 
-    # OPTIONAL pure-C validation of the C API (gate G6). Add `c_api_validation.c` ONLY IF the
-    # library's C API is implemented across a C++ core -- that is the case where a C header
-    # compiles but fails to link. Pure C++ and pure C libraries need nothing here: the block below
-    # simply does not fire, and nothing else in this file has to change.
-    # LINKER_LANGUAGE CXX is the honest part: the C ABI is stable, the implementation is C++, so a
-    # C consumer still links the C++ runtime (limitation U8, never to be papered over).
+    # OPTIONAL pure-C consumer: add c_api_validation.c only when a C header is implemented by a C++ core.
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/c_api_validation.c")
         message(STATUS "[test] pure-C consumer found: c_api_validation.c "
                        "(linked with the CXX linker; see the U8 note in the repo docs)")
         add_executable(c_api_validation c_api_validation.c)
         set_target_properties(c_api_validation PROPERTIES LINKER_LANGUAGE CXX)
         target_link_libraries(c_api_validation PRIVATE ${MAIN_LIB_TARGET})
-        # The C side of the contract: this consumer is compiled as strict ISO C, so a GNU
-        # extension leaking out of a public .h (statement expressions, void* arithmetic, ...)
-        # fails here rather than in a customer's `-std=c99 -pedantic` build. /permissive- is the
-        # MSVC spelling of the same intent and is C++ only, so the flags are GNU/Clang-only.
+        # Strict ISO C: a GNU extension leaking from a public .h fails here, not in a customer build.
         if(NOT MSVC)
             target_compile_options(c_api_validation PRIVATE -pedantic -Wall -Wextra -Werror)
         endif()
@@ -149,10 +139,7 @@ if(TRIGGER_TESTS)
         add_test(NAME c_api_validation COMMAND c_api_validation)
     endif()
 
-    # OPTIONAL Python consumer: only fires when the package actually ships a `<name>_python` module
-    # (metadata.enable_python_bindings = true). Compiling the module proves it links; importing it
-    # is the only way to prove the bound surface behaves like the C API, so the test is worth the
-    # twenty lines. A package without the module skips it -- pure C++/C projects need nothing here.
+    # OPTIONAL python consumer: runs only when the package really ships a <name>_python module.
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/test/python/test_python_bindings.py")
       set(PY_CONSUMER_MODULE_DIR "")
       if(${LIB_NAME}_INCLUDE_DIRS)
