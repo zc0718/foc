@@ -244,6 +244,21 @@
         }
       ],
       "no_effect": ""
+    },
+    {
+      "id": "O-18",
+      "date": "2026-11-02",
+      "leg": "model",
+      "capability": "A second solution of the same model, obtained by calculus instead of by stepping, plus the effect sizes of the wrong models the module is most likely to meet in service. Together they turn 'the protection trips' into 'the protection trips at this instant, and here is what a 10 % sensor error does to that instant'.",
+      "source": "`test_protection.cpp`, three new cases: the I2t trip instant from the stepping loop against `tau*ln(1/(1-limit/(i^2*tau)))` at 3.2/3.5/3.8 A, with the naive `budget/i^2` kept as the thing the measurement must not be confusable with; a sensitivity table over a +-10 % current-sense gain and a +-10 % error in the loop period; and the derating ramp against a +-10 K temperature-sensor offset.",
+      "reopened": [
+        {
+          "claim": "core/protection.hpp",
+          "verdict": "still_short",
+          "missing": "the leg O-13 already named, and it is untouched: how two simultaneous faults are ranked is the enum order, a design choice with no independent derivation. What this upgrade did add is the other two kinds of leg for a different quantity in the same module -- the I2t trip instant now has a calculus solution to compare against the stepping recurrence (agreement 1e-4 at 3.2/3.5/3.8 A, and provably not confusable with the naive budget/i^2), plus a sensitivity table where a 10 % current-sense gain error is worth +79 %/-30 % on that instant and a 10 K sensor offset is worth 20 % of the current limit. Those do not touch the ranking, so the row stays L2 rather than being promoted on evidence from a neighbouring question."
+        }
+      ],
+      "no_effect": ""
     }
   ]
 }

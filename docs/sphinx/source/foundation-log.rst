@@ -2823,11 +2823,44 @@ The log
        difference attributable to the window rather than to the comparison.
      - ``pending``
 
+   * - A-102
+     - A
+     - **`protection` gains both kinds of L3 leg and deliberately stays L2, because the leg O-13 named is a
+       different question and is still open.** Stepping the recurrence and solving the ODE agree to **1e-4**:
+       1.0555 s against 1.0556 s at 3.2 A, 0.6635 against 0.6634 at 3.5 A, 0.4881 against 0.4881 at 3.8 A. That is a weak test by construction for a *correct* pair -- explicit Euler at a 50 us step
+       over 0.66 s cannot miss by much -- so the case also asserts the measurement is **not** confusable with
+       the naive `budget/i^2` (0.367 s), which it misses by more than 40 %. A comparison that cannot tell the
+       right closed form from the wrong one is decoration.
+     - **The sensitivity numbers are the reason this promotion is worth having.** A 10 % current-sense gain
+       error moves the trip instant to **1.1877 s / 0.4672 s** from 0.6635 s -- **+79 % / -30 %**, asymmetric
+       because the budget goes with the square of the current, and both land on the closed form to 0.00 %. A
+       real loop period 10 % away from the one the code was told stretches the trip by **exactly that factor**
+       (0.7298 s and 0.5971 s), which is a prediction the case checks rather than a shape it observes. A 10 K
+       temperature-sensor offset is worth **0.6 A on a 3 A machine** -- 20 % of the current limit, the same
+       order as the current-sense error the project treats as its dominant one, and unlike that one nothing
+       calibrates it unless the caller does.
+
+       Two limits are stated rather than glossed. The cross-check compares two solutions of **the same lumped
+       model**, so it validates the discretisation and the closed form against each other and says nothing
+       about whether `i^2*tau` describes a winding -- README's boundary row already says this is not a
+       temperature, and that row did not move. And the derating path is exercised through
+       `derated_limit()` directly, not through a thermal sensor, because there is no sensor model to inject
+       into; the offset is applied to the number the caller would pass in.
+     - **Why the level did not move, recorded because it is the rule working.** The first draft of this row
+       said "promoted" and the observability gate refused it: O-13 had already re-opened this header and
+       named the missing leg as *"a model-level second source for how two simultaneous faults are ranked; the
+       current rank is the enum order, which is a design choice with no independent derivation"*. The legs
+       added here are about the **trip instant**, not about the ranking, so the named leg is as open as it was
+       -- and promoting on evidence from a neighbouring question is exactly the substitution this repository's
+       levels exist to prevent. The row stays L2, the new evidence is in it, and the missing leg is unchanged
+       and still named.
+     - ``pending``
+
 What ``pending`` means in the commit column
 -------------------------------------------
 
 A row cannot cite the hash of the commit that contains it, and these rows are written in the same commit as the fix, so
-a hundred and forty-seven of the hundred and sixty say ``pending``. Both counts are grepped from the table, not counted by hand -- the previous version of this sentence was two rows out, which is exactly the kind of number that goes stale while reading as a fact, and it had gone stale again before this line was corrected again. That is a convention and it was, until this paragraph, an unstated one --
+a hundred and forty-eight of the hundred and sixty-one say ``pending``. Both counts are grepped from the table, not counted by hand -- the previous version of this sentence was two rows out, which is exactly the kind of number that goes stale while reading as a fact, and it had gone stale again before this line was corrected again. That is a convention and it was, until this paragraph, an unstated one --
 which is the same defect the rows themselves are about. The row is recoverable rather than lost:
 
 .. code-block:: console
