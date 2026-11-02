@@ -2856,11 +2856,37 @@ The log
        and still named.
      - ``pending``
 
+   * - F-103
+     - F
+     - **The gate that verifies every exit plan was reading an artifact under a git-ignored directory, so it
+       passed locally and failed in CI on every push.** `scaffold.json` points each tolerated fork at the
+       patch that proposes its upstream exit, and the gate applies that patch to the pinned baseline before
+       accepting the tolerance. Both patches lived in `workspace/scaffold/`, which `.gitignore` line 10
+       excludes -- so the file was present in the working tree and absent from every checkout.
+     - Surfaced by reading CI instead of assuming: `Project gates` was red on every push, and the log line
+       is unambiguous -- `the declared patch workspace/scaffold/0019-cppcheck-exhaustive.patch does not
+       exist`. Twelve red runs were read as "CI is broken" before anyone read the one line that says why.
+       The local run of the same gate was green throughout, and green is what got reported.
+
+       Blast radius is not the gate, it is everything the gate is for: `Project gates` is the workflow that
+       enforces `license strict claims docs boundaries capabilities ci-policy assume anchor scaffold budget`
+       and the negative-compile probes, so a red workflow from its third step meant the remaining eight were
+       **never verified in CI at all**. The artifacts now live in
+       `.github/project/upstream-patches/`, next to the `scaffold-baseline/` copies the patches are diffed
+       against, and the verification is done in a **fresh `git clone`** -- the only tree that looks like CI's
+       -- where all eleven gates plus 27/27 negative cases now pass.
+     - This is the third row of one shape, and the shape is worth naming once: F-89 decided from an exit code
+       instead of an artefact, F-99 measured by running a tool over another process's leftovers, and this row
+       verified a gate against a tree CI never sees. All three are **"the thing you looked at was not the
+       thing you thought"**, and the local habit that prevents all three is the same: reproduce the
+       condition, then report.
+     - ``pending``
+
 What ``pending`` means in the commit column
 -------------------------------------------
 
 A row cannot cite the hash of the commit that contains it, and these rows are written in the same commit as the fix, so
-a hundred and forty-eight of the hundred and sixty-one say ``pending``. Both counts are grepped from the table, not counted by hand -- the previous version of this sentence was two rows out, which is exactly the kind of number that goes stale while reading as a fact, and it had gone stale again before this line was corrected again. That is a convention and it was, until this paragraph, an unstated one --
+a hundred and forty-nine of the hundred and sixty-two say ``pending``. Both counts are grepped from the table, not counted by hand -- the previous version of this sentence was two rows out, which is exactly the kind of number that goes stale while reading as a fact, and it had gone stale again before this line was corrected again. That is a convention and it was, until this paragraph, an unstated one --
 which is the same defect the rows themselves are about. The row is recoverable rather than lost:
 
 .. code-block:: console
