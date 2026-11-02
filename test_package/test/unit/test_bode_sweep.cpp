@@ -166,3 +166,230 @@ TEST(BodeSweep, TheThreeDecibelPointIsTheBandwidthTheGainLawWasAskedFor) {
     // 移动约 20%（经摄动验证），而它只让阶跃拟合移动 9.9%，仍在后者自己的带内。
     EXPECT_NEAR(1.0F, crossing / wb, 0.10F) << "the -3 dB point is not where the gain law was asked to put it";
 }
+
+
+namespace {
+
+constexpr float kFitTwoPi = 6.28318530717959F;
+
+/**
+ * @brief [en] A tone of known amplitude, phase and offset, sampled the way the sweep samples it.
+ * @brief [zh] 一个幅值、相位、偏置都已知的音，按扫频的采样方式取样。
+ */
+auto tone(std::vector<float> &y, std::size_t n, float dt, float omega, float amp, float phase, float dc) -> void {
+    y.resize(n);
+    for (std::size_t i = 0U; i < n; ++i) {
+        y[i] = static_cast<float>(dc + (amp * std::cos((omega * dt * static_cast<float>(i)) + phase)));
+    }
+}
+
+/**
+ * @brief [en] The estimator the header claims to be better than: one rectangular-window DFT bin, `2/N*|bin|`.
+ *
+ * @brief [zh] 头文件声称比它更好的那个估计器：矩形窗只取一个 DFT bin，`2/N·|bin|`。
+ *
+ *     This is not a strawman and it is not a reimplementation of the thing under test: it is the *other* way to do this
+ *     job, it is exact on a whole number of cycles, and the header's claim is precisely that it is biased when the
+ *     window is not one. Writing it down is what turns that sentence into a measurement. 这不是稻草人，也不是被测对象的
+ *     另一种写法：它是做这件事的**另一种**方式，在整周期窗口上是精确的，而头文件的主张恰恰是"窗口不是整周期时它有偏"。
+ *     把它写下来，那句话才变成一次测量。
+ */
+auto bin_amplitude(const std::vector<float> &y, float dt, float omega) -> float {
+    double c = 0.0;
+    double s = 0.0;
+    for (std::size_t i = 0U; i < y.size(); ++i) {
+        const double t = static_cast<double>(dt) * static_cast<double>(i);
+        c += static_cast<double>(y[i]) * std::cos(static_cast<double>(omega) * t);
+        s += static_cast<double>(y[i]) * std::sin(static_cast<double>(omega) * t);
+    }
+    return static_cast<float>(2.0 * std::sqrt((c * c) + (s * s)) / static_cast<double>(y.size()));
+}
+
+/**
+ * @brief [en] The same projection with the `c0` column dropped, i.e. no DC term.
+ *
+ * @brief [zh] 同一个投影，但去掉 `c0` 列，也就是没有直流项。
+ *
+ *     Exists only so the "a DC offset is harmless because the fit carries a constant column" claim has something that
+ *     would fail if the column were not there. Two normal equations instead of three. 只为让"直流偏置无害，因为拟合带常
+ *     数项"这条主张有一个"若没有那一列就会失败"的对照。两个正规方程而不是三个。
+ */
+auto amplitude_without_dc(const std::vector<float> &y, float dt, float omega) -> float {
+    double cc = 0.0;
+    double ss = 0.0;
+    double yc = 0.0;
+    double ys = 0.0;
+    for (std::size_t i = 0U; i < y.size(); ++i) {
+        const double t = static_cast<double>(dt) * static_cast<double>(i);
+        const double c = std::cos(static_cast<double>(omega) * t);
+        const double s = std::sin(static_cast<double>(omega) * t);
+        const double v = static_cast<double>(y[i]);
+        cc += c * c;
+        ss += s * s;
+        yc += v * c;
+        ys += v * s;
+    }
+    const double c1 = (cc > 0.0) ? (yc / cc) : 0.0;
+    const double c2 = (ss > 0.0) ? (ys / ss) : 0.0;
+    return static_cast<float>(std::sqrt((c1 * c1) + (c2 * c2)));
+}
+
+} // namespace
+
+
+TEST(SinusoidFit, AWholeCycleWindowIsRecoveredByBothEstimators) {
+    // Baseline for the comparison below. On a whole number of cycles the plain bin is *exact*, so a large error
+    // there would mean the comparison estimator is broken rather than the fit being good.
+    // 下面那个比较的基线。整周期上单 bin 是**精确**的，所以若那里出现大误差，说明比较用的估计器坏了，而不是拟合好。
+    const float dt = 1.0e-4F;
+    const float omega = kFitTwoPi * 50.0F;
+    const float amp = 3.0F;
+    std::vector<float> y;
+    tone(y, 600U, dt, omega, amp, 0.7F, 0.0F); // 600 samples * 1e-4 s = 0.06 s = exactly 3 cycles
+
+    const foc::core::SinusoidFit fit = foc::core::sinusoid_fit(y.data(), y.size(), dt, omega);
+    ASSERT_EQ(foc::ErrorCode::Ok, fit.status);
+    const float bin = bin_amplitude(y, dt, omega);
+    std::printf("\n[L3] whole cycles: fit %.9f, bin %.9f (asked %.1f)\n", static_cast<double>(fit.amplitude),
+                static_cast<double>(bin), static_cast<double>(amp));
+    EXPECT_NEAR(amp, fit.amplitude, 1.0e-5F);
+    EXPECT_NEAR(amp, bin, 1.0e-5F) << "the comparison estimator has to be exact here or it is not a fair comparison";
+}
+
+
+TEST(SinusoidFit, TheFitIsUnbiasedOnAWindowThatIsNotAWholeNumberOfCycles) {
+    // The header's own claim, made measurable: "exact for a window that contains whole cycles and unbiased for one
+    // that does not, which a plain DFT bin would not be".
+    //
+    // Criterion, written before the run: the fit's error must stay under 1 % on a 3.4-cycle window, the bin's must
+    // exceed the fit's by at least 3x, and the same comparison at a whole number of cycles must collapse to a ratio
+    // near 1. If the measured ratio is under 3 the sentence in the header is wrong and gets corrected instead of the
+    // threshold getting widened.
+    // 头文件自己的主张，此处把它变成可测的："整周期精确、非整周期无偏，而单 bin 做不到"。
+    //
+    // 判据写在跑之前：3.4 周期窗口上拟合误差必须低于 1%，单 bin 的误差必须至少是拟合的 3 倍，且同一比较在整周期上
+    // 必须塌回接近 1 的比值。若实测比值低于 3，说明头文件那句话是错的，那就改那句话而不是把阈值放宽。
+    const float dt = 1.0e-4F;
+    const float omega = kFitTwoPi * 50.0F;
+    const float amp = 3.0F;
+
+    const auto error_ratio = [&](std::size_t n) {
+        std::vector<float> y;
+        tone(y, n, dt, omega, amp, 0.7F, 0.0F);
+        const foc::core::SinusoidFit fit = foc::core::sinusoid_fit(y.data(), y.size(), dt, omega);
+        EXPECT_EQ(foc::ErrorCode::Ok, fit.status) << "n " << n;
+        const float fit_err = std::fabs((fit.amplitude / amp) - 1.0F);
+        const float bin_err = std::fabs((bin_amplitude(y, dt, omega) / amp) - 1.0F);
+        return std::pair<float, float>{fit_err, bin_err};
+    };
+
+    std::printf("\n[L3] window sensitivity of the fit against a single DFT bin\n");
+    std::printf("        %6s %8s | %10s %10s %8s\n", "n", "cycles", "fit error", "bin error", "ratio");
+    for (const std::size_t n : {400U, 500U, 600U, 640U, 680U, 700U}) {
+        const auto [fit_err, bin_err] = error_ratio(n);
+        const float cycles = static_cast<float>(n) * dt * omega / kFitTwoPi;
+        // The ratio is only meaningful while the fit's error is above its own rounding floor; below that the
+        // quotient is a division by noise and prints millions.
+        // 比值只在拟合误差高于它自己的舍入底噪时有意义；低于那个底噪时商就是除噪，会印出百万级。
+        if (fit_err > 1.0e-5F) {
+            std::printf("        %6zu %8.2f | %9.4f%% %9.4f%% %8.1f\n", n, static_cast<double>(cycles),
+                        100.0 * static_cast<double>(fit_err), 100.0 * static_cast<double>(bin_err),
+                        static_cast<double>(bin_err / fit_err));
+        } else {
+            std::printf("        %6zu %8.2f | %9.4f%% %9.4f%% %8s\n", n, static_cast<double>(cycles),
+                        100.0 * static_cast<double>(fit_err), 100.0 * static_cast<double>(bin_err), "-");
+        }
+        EXPECT_LT(fit_err, 0.01F) << "the fit is biased on a " << cycles << "-cycle window";
+    }
+
+    const auto [whole_fit, whole_bin] = error_ratio(600U);
+    const auto [part_fit, part_bin] = error_ratio(680U);
+    ASSERT_GT(part_fit, 0.0F);
+    std::printf("        whole: fit %.3e, bin %.3e; partial: fit %.3e, bin %.3e\n", static_cast<double>(whole_fit),
+                static_cast<double>(whole_bin), static_cast<double>(part_fit), static_cast<double>(part_bin));
+    EXPECT_LT(whole_bin, 5.0F * whole_fit + 1.0e-7F)
+        << "on whole cycles the two estimators must agree, or the difference below is not about the window";
+    EXPECT_GT(part_bin, 3.0F * part_fit) << "the header claims the bin is biased here and the fit is not -- it is not";
+}
+
+
+TEST(SinusoidFit, TheSensitivityToBeingAskedAboutTheWrongFrequencyIsMeasured) {
+    // The realistic way this function is wrong in service: the tone is not exactly at the frequency you ask about,
+    // because the drive, the clock or the machine moved.
+    //
+    // The first draft of this case asserted that the error grows *monotonically* with the offset. The measurement
+    // refused: +0.5 % gives 0.095 % while -0.5 % gives 0.218 %, and +1 % gives less than either, because the error
+    // depends on how much of a cycle the mismatch accumulated before the window ended, not just on its size. So the
+    // criterion is the analytic envelope instead, which is a *prediction* rather than a shape: the projection of a
+    // tone at `w+dw` onto the basis at `w` is attenuated by `|sinc(dw*T/2)|`, and the measured error has to land
+    // within one percentage point of it at every offset.
+    // 这个函数在实机上出错的最现实方式：音并不正好在你所问的频率上——驱动器、时钟或机器动了。
+    //
+    // 本用例第一版断言误差随偏移**单调**增长。测量拒绝了这个说法：+0.5% 给 0.095%，而 -0.5% 给 0.218%，+1% 比两者都小——
+    // 因为误差取决于窗口结束前失配累积了多少个周期，而不只是失配多大。所以判据换成解析包络，那是**预测**而不是形状：
+    // `w+dw` 上的音向 `w` 的基函数投影时被 `|sinc(dw·T/2)|` 衰减，实测误差必须在每个偏移上都落在它 1 个百分点之内。
+    const float dt = 1.0e-4F;
+    const float omega = kFitTwoPi * 50.0F;
+    const float amp = 3.0F;
+    const std::size_t n = 680U; // 3.4 cycles at the nominal frequency
+    const double window_s = static_cast<double>(n) * static_cast<double>(dt);
+
+    std::printf("\n[L3] asking at the nominal frequency while the tone is elsewhere\n");
+    std::printf("        %8s %12s %10s %12s %8s\n", "offset", "fit amplitude", "error", "sinc envelope", "gap");
+    float at_five = 0.0F;
+    for (const float offset : {0.0F, 0.005F, -0.005F, 0.01F, -0.01F, 0.02F, -0.02F, 0.05F}) {
+        std::vector<float> y;
+        tone(y, n, dt, omega * (1.0F + offset), amp, 0.7F, 0.0F);
+        const foc::core::SinusoidFit fit = foc::core::sinusoid_fit(y.data(), y.size(), dt, omega);
+        ASSERT_EQ(foc::ErrorCode::Ok, fit.status) << "offset " << offset;
+        const float err = std::fabs((fit.amplitude / amp) - 1.0F);
+        const double half = (static_cast<double>(offset) * static_cast<double>(omega) * window_s) / 2.0;
+        const double envelope = (std::fabs(half) > 1.0e-12) ? std::fabs(std::sin(half) / half) : 1.0;
+        const float predicted = static_cast<float>(std::fabs(envelope - 1.0));
+        std::printf("        %+7.2f%% %12.6f %9.3f%% %11.3f%% %+7.3f%%\n", 100.0 * static_cast<double>(offset),
+                    static_cast<double>(fit.amplitude), 100.0 * static_cast<double>(err),
+                    100.0 * static_cast<double>(predicted), 100.0 * static_cast<double>(err - predicted));
+        EXPECT_NEAR(err, predicted, 0.01F) << "offset " << offset << ": the sinc envelope is the model here";
+        if (offset == 0.05F) {
+            at_five = err;
+        }
+    }
+    EXPECT_GT(at_five, 0.02F) << "a 5 % frequency error has to be visible, or the sweep cannot report its own";
+}
+
+
+TEST(SinusoidFit, TheConstantColumnIsWhatMakesADcOffsetHarmless) {
+    // Both halves are needed: the claim, and a version of the estimator without the column that the claim would be
+    // false about. A criterion that cannot tell them apart is decoration.
+    // 两半都需要：主张本身，以及一个"若没有那一列、主张就不成立"的对照。分不开二者的判据只是装饰。
+    const float dt = 1.0e-4F;
+    const float omega = kFitTwoPi * 50.0F;
+    const float amp = 3.0F;
+
+    std::vector<float> clean;
+    tone(clean, 680U, dt, omega, amp, 0.7F, 0.0F);
+    std::vector<float> offset;
+    tone(offset, 680U, dt, omega, amp, 0.7F, 5.0F); // +5 V on a 3 V tone
+
+    const foc::core::SinusoidFit fit_clean = foc::core::sinusoid_fit(clean.data(), clean.size(), dt, omega);
+    const foc::core::SinusoidFit fit_offset = foc::core::sinusoid_fit(offset.data(), offset.size(), dt, omega);
+    ASSERT_EQ(foc::ErrorCode::Ok, fit_clean.status);
+    ASSERT_EQ(foc::ErrorCode::Ok, fit_offset.status);
+
+    const float shift = std::fabs((fit_offset.amplitude / fit_clean.amplitude) - 1.0F);
+    const float naive_shift = std::fabs((amplitude_without_dc(offset, dt, omega) / amp) - 1.0F);
+    std::printf("\n[L3] a +5 V offset on a 3 V tone: fit %.6f (%.4f%%), without the c0 column %.6f (%.1f%%)\n",
+                static_cast<double>(fit_offset.amplitude), 100.0 * static_cast<double>(shift),
+                static_cast<double>(amplitude_without_dc(offset, dt, omega)),
+                100.0 * static_cast<double>(naive_shift));
+    EXPECT_LT(shift, 0.005F) << "the c0 column is supposed to absorb the offset entirely";
+    // The first draft asserted the naive estimator would be off by more than 50 %. It is off by 7.6 %: without a
+    // constant column the offset only reaches the amplitude through the basis's own non-orthogonality over a
+    // non-integer window, which is a few percent, not a catastrophe. The criterion is corrected to the size the
+    // mechanism actually has, and the ratio to the fit is kept as the discriminating part.
+    // 第一版断言朴素估计器会偏 50% 以上。它只偏 7.6%：没有常数项时，偏置只能经由基函数在非整周期窗口上的非正交性
+    // 进入幅值，量级是几个百分点，不是灾难。判据改成该机理真实的量级，并把与拟合的比值保留为判别部分。
+    EXPECT_GT(naive_shift, 0.05F) << "and without it the same offset has to be visibly wrong";
+    EXPECT_GT(naive_shift, 20.0F * shift) << "...by a margin that leaves no doubt which one is doing the work";
+}
+
