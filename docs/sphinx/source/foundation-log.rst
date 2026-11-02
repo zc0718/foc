@@ -2782,11 +2782,52 @@ The log
        completion -- which is what happened here, and why the retraction is in the same log.
      - ``pending``
 
+   * - F-100
+     - F
+     - **A claim in a shipped header was wider than the behaviour, and nothing could catch it because
+       nothing computed the alternative.** `sinusoid_fit.hpp` said the normal-equation projection is
+       "unbiased for one [window] that does not [contain whole cycles], which a plain DFT bin would not be".
+       Measured: a plain rectangular-window bin is **also exact on half cycles** -- 2.50 and 3.50 cycles give
+       **0.0000 %** error -- and is biased only on the other fractions (**+4.09 %** at 3.20 cycles,
+       **+2.01 %** at 3.40). So the sentence was true of 3.2 cycles, false of 2.5, and had no test that
+       could tell.
+     - Surfaced by writing the L3 cross-check, which is the first time the alternative estimator was
+       actually implemented. That is the general shape: **a comparison stated in prose but never computed is
+       unfalsifiable**, and the log has no way to distinguish it from a comparison that was measured.
+     - Blast radius is one sentence, and the conclusion it supports survives: the normal equations are still
+       the right choice, and they are exact at *every* window length tested where the bin is exact at only
+       some. The correction narrows the premise and puts the measured table where the prose used to be, so
+       the next reader can check it without re-deriving the alternative.
+     - ``pending``
+
+   * - A-101
+     - A
+     - **`sinusoid_fit` promoted L2 to L3 on three measured sensitivities and one cross-check against an
+       estimator that is supposed to differ.** Window length: the fit reads **0.0000 %** (1.2e-7) at 2.00,
+       2.50, 3.00, 3.20, 3.40 and 3.50 cycles while the plain bin reads **4.09 %** and **2.01 %** at the
+       last two of the non-exact ones. Frequency mismatch: 0 %, +-0.5 %, +-1 %, +-2 % and 5 % offsets, each
+       against the analytic envelope `abs(sinc(dw*T/2))`, all **within 1 percentage point** (5 % offset:
+       **5.159 %** measured, 4.687 % predicted). DC offset: **0.0000 %** shift with the constant column,
+       **7.6 %** without it.
+     - **Two of my own guesses were wrong and are recorded rather than quietly replaced.** First, I
+       predicted the amplitude error would grow *monotonically* with the frequency offset; it does not --
+       +0.5 % gives 0.095 % while -0.5 % gives 0.218 %, and +1 % gives less than either, because the error
+       depends on how much of a cycle the mismatch accumulated, not on its size. The criterion was replaced
+       with the envelope, which is a prediction instead of a shape. Second, I predicted the no-DC variant
+       would be off by more than **50 %**; it is off by **7.6 %**, because without a constant column an
+       offset only reaches the amplitude through the basis's non-orthogonality over a non-integer window.
+       The threshold was corrected to the size the mechanism has, not widened until it passed.
+     - Scope stated in the README row: the sinc envelope is a **bound, not an identity** -- the residual is
+       one-sided at negative offsets and is reported as such. The cross-check leg is a real second
+       estimator and a fair one (it is exact where the fit is exact), which is what makes the 4.09 %
+       difference attributable to the window rather than to the comparison.
+     - ``pending``
+
 What ``pending`` means in the commit column
 -------------------------------------------
 
 A row cannot cite the hash of the commit that contains it, and these rows are written in the same commit as the fix, so
-a hundred and forty-five of the hundred and fifty-eight say ``pending``. Both counts are grepped from the table, not counted by hand -- the previous version of this sentence was two rows out, which is exactly the kind of number that goes stale while reading as a fact, and it had gone stale again before this line was corrected again. That is a convention and it was, until this paragraph, an unstated one --
+a hundred and forty-seven of the hundred and sixty say ``pending``. Both counts are grepped from the table, not counted by hand -- the previous version of this sentence was two rows out, which is exactly the kind of number that goes stale while reading as a fact, and it had gone stale again before this line was corrected again. That is a convention and it was, until this paragraph, an unstated one --
 which is the same defect the rows themselves are about. The row is recoverable rather than lost:
 
 .. code-block:: console

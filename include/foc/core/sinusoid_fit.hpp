@@ -49,8 +49,11 @@ struct SinusoidFit {
  *
  *     Exists so the loop can measure its own frequency response without a spectrum analyser: drive the reference with
  *     `A*cos(w*t)`, record the response, fit both, divide. The arithmetic is a projection onto `{1, cos, sin}`, solved
- *     as the normal equations -- exact for a window that contains whole cycles and unbiased for one that does not,
- *     which a plain DFT bin would not be.
+ *     as the normal equations -- exact for a window that contains whole cycles and unbiased for one that does not. A
+ *     plain DFT bin is **not** the same thing, and the precise statement is narrower than "a bin is biased off a whole
+ *     cycle": a bin is also exact on half cycles, and pays only on the other fractions. Measured on a 3 V tone at 10
+ *     kHz (A-101): 2.00, 2.50, 3.00 and 3.50 cycles give a bin error of 0.0000 %, while 3.20 and 3.40 give +4.09 % and
+ *     +2.01 % -- against 0.0000 % (1.2e-7) for the fit at every one of those lengths.
  *
  *     为什么有这个函数。`step_metrics.hpp` 里的阶跃带宽是一个**估计**：它把一阶模型套在一个并不完全是一阶的响应上，其偏
  *     差与被测缺陷同样大小（实测：速度环增益律 20% 的错误只让它挪动 9.9%，仍在自己 10% 的带内）。而在已知频率上的频域幅
@@ -58,8 +61,10 @@ struct SinusoidFit {
  *     仪器的原因，而本函数是扫频唯一的运动部件。
  *
  *     存在的意义是让环路不需要频谱仪就能测自己的频率响应：用 `A*cos(w*t)` 驱动给定，录下响应，两边都拟合，相除。算术是
- *     向 `{1, cos, sin}` 的投影，用正规方程求解——对整周期窗口精确，对非整周期窗口无偏，而单纯取 DFT 的一个 bin 做不到后
- *     者。
+ *     向 `{1, cos, sin}` 的投影，用正规方程求解——对整周期窗口精确，对非整周期窗口无偏。单取 DFT 一个 bin **不** 是一回
+ *     事，而精确的说法比“非整周期就有偏”要窄：bin 在**半周期**上也是精确的，只在其余分数上付代价。3 V 音、 10 kHz 下实
+ *     测（A-101）：2.00 / 2.50 / 3.00 / 3.50 周期的 bin 误差均为 0.0000 %，而 3.20 与 3.40 周期分别为 +4.09 % 与
+ *     +2.01 % —— 同一批长度下本函数的误差恒为 0.0000 %（1.2e-7）。
  *
  * @param y [en] response samples, oldest first, SI units.
  * @param y [zh] 响应样本，最早的在前，SI 单位。

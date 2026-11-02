@@ -229,6 +229,21 @@
         }
       ],
       "no_effect": ""
+    },
+    {
+      "id": "O-17",
+      "date": "2026-11-02",
+      "leg": "model",
+      "capability": "A second estimator for the same quantity, implemented rather than described. The header had asserted for two versions that a plain DFT bin would be biased where this fit is not; writing the bin down is what turned that sentence into a number, and the number narrowed the sentence.",
+      "source": "`test_bode_sweep.cpp`, four new cases: whole-cycle exactness for both estimators; a six-point window table at 2.00/2.50/3.00/3.20/3.40/3.50 cycles; an eight-point frequency-offset table checked against the analytic envelope `abs(sinc(dw*T/2))`; and a DC-offset case with the same projection minus its constant column as the falsifier.",
+      "reopened": [
+        {
+          "claim": "core/sinusoid_fit.hpp",
+          "verdict": "promoted",
+          "missing": ""
+        }
+      ],
+      "no_effect": ""
     }
   ]
 }
