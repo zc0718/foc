@@ -2882,11 +2882,36 @@ The log
        condition, then report.
      - ``pending``
 
+   * - F-104
+     - F
+     - **A case asserted on a floating-point rounding floor, so it failed on the platform where the code did
+       better.** `TheFitIsUnbiasedOnAWindowThatIsNotAWholeNumberOfCycles` carried `ASSERT_GT(part_fit, 0.0F)`
+       -- a guard written only so a ratio could be printed -- where `part_fit` is the fit's own rounding
+       error: **1.2e-07 on Linux, exactly 0.0 on macOS**, because Apple's libm is more accurate. In other
+       words the assertion encoded "this platform's trig must be at least as inaccurate as glibc's".
+     - Surfaced by the platform matrix, not by review: `Tests / Auto Testing (macos-latest)` reported
+       605 of 606 passing with that one case failing on `Expected: (part_fit) > (0.0F), actual: 0 vs 0`.
+       The case had been reported green locally for a day, and locally it *is* green -- Linux is the platform
+       where the noise is non-zero. A single-platform pass was never evidence about this assertion.
+
+       Blast radius is small in files and large in kind: three of the assertions added in this session were
+       comparative (`x > k * y`) where `y` sat at or near a noise floor, and the other two were removed in
+       the same edit before they could fail. Both halves are now **absolute errors against the 1 % line** --
+       the fit inside it on every window length, the plain DFT bin outside it at 3.20 and 3.40 cycles --
+       which states the same discrimination without dividing by a platform constant.
+     - The rule this produces: **a tolerance has to be written in the units the claim is about.** "This fit
+       is exact" is a statement against a behavioural threshold, not against another estimator's rounding
+       noise; and a quantity *at* the floor has no resolution, so comparing it to anything is comparing
+       nothing. This is the second time a defect has turned out to be the criterion rather than the
+       implementation (the first was A-39, a signed metric measured at a single target), and it is worth
+       noting that both were found by a measurement refusing to agree, not by reading the test.
+     - ``pending``
+
 What ``pending`` means in the commit column
 -------------------------------------------
 
 A row cannot cite the hash of the commit that contains it, and these rows are written in the same commit as the fix, so
-a hundred and forty-nine of the hundred and sixty-two say ``pending``. Both counts are grepped from the table, not counted by hand -- the previous version of this sentence was two rows out, which is exactly the kind of number that goes stale while reading as a fact, and it had gone stale again before this line was corrected again. That is a convention and it was, until this paragraph, an unstated one --
+a hundred and fifty of the hundred and sixty-three say ``pending``. Both counts are grepped from the table, not counted by hand -- the previous version of this sentence was two rows out, which is exactly the kind of number that goes stale while reading as a fact, and it had gone stale again before this line was corrected again. That is a convention and it was, until this paragraph, an unstated one --
 which is the same defect the rows themselves are about. The row is recoverable rather than lost:
 
 .. code-block:: console
