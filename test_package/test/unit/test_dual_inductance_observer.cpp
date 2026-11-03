@@ -681,6 +681,76 @@ TEST(DualInductanceObserver, TheTwoFluxSourcesDifferExactlyWhereTheyShould) {
       << "if this now passes, the lock-in was fixed and this recorded failure mode is stale";
 }
 
+TEST(DualInductanceObserver, ASeedErrorTakesTheCorrectionTermToTheOtherBranch) {
+  // The corrected source pulls the flux back onto the model manifold, and that is worth 7.7x under a nameplate `Rs`
+  // error -- *given an exact seed*, which is how it was measured. This case asks what happens to it when the seed is
+  // wrong, because that is the situation a hand-over creates, and the answer is that the pull is a nearest-point
+  // search on a curve: an angular seed error lands it on the other branch and it stays there.
+  // 修正版把磁链拉回模型流形，在 `Rs` 有铭牌误差时值 7.7 倍——但那是在**种子准确**的前提下量的。本例问的是种子错的时候它
+  // 怎么样，因为交接造成的正是这个局面；答案是这把"拉"本质上是曲线上的一次最近点搜索：一个角度上的种子误差会把它落到
+  // 另一支上，然后它就停在那里。
+  const sil::MachineSpec spec = salient_spec();
+  const float psi_f = psi_f_of(spec);
+  const float omega = 200.0F;
+  const float seed_offset = 0.30F;
+  const auto run = [&](core::DualInductanceObserver::FluxSource source, float iq) {
+    sil::PmsmPlant plant(sil::plant_params_from(spec));
+    plant.set_mechanical_speed(omega / static_cast<float>(spec.pole_pairs));
+    const core::Dq<float> v_dq{-(omega * spec.lq * iq), (spec.rs * iq) + (omega * psi_f)};
+    plant.set_voltage_dq(v_dq);
+    for (int k = 0; k < 6000; ++k) {
+      plant.advance(kDt);
+    }
+    const float theta = wrap_two_pi(plant.theta_mech_rad() * static_cast<float>(spec.pole_pairs));
+    const core::Dq<float> psi_dq{psi_f, spec.lq * iq};
+    core::DualInductanceObserver observer(
+        core::DualInductanceObserver::Config{spec.rs, spec.ld, spec.lq, psi_f, source, 2.0F});
+    observer.seed_flux(core::inv_park(psi_dq, theta + seed_offset));
+    float sum = 0.0F;
+    int count = 0;
+    for (int k = 0; k < 40000; ++k) {
+      plant.advance(kDt);
+      const float truth = wrap_two_pi(plant.theta_mech_rad() * static_cast<float>(spec.pole_pairs));
+      const core::ObsState state =
+          observer.update(core::inv_park(v_dq, truth), core::clarke(plant.current_uvw()), kDt);
+      if (k >= 36000) {
+        sum += std::fabs(wrap_pi(state.theta_e - truth));
+        ++count;
+      }
+    }
+    return sum / static_cast<float>(count);
+  };
+  std::printf("\n[dual-L] seed +%.2f rad off, exact Rs, %.0f rad/s electrical: what a seed error does to the correction\n",
+              static_cast<double>(seed_offset), static_cast<double>(omega));
+  std::printf("     %-10s %12s %12s %10s\n", "iq [A]", "integrator", "corrected", "ratio");
+  float ratios[3] = {0.0F, 0.0F, 0.0F};
+  float plain[3] = {0.0F, 0.0F, 0.0F};
+  const float currents[3] = {0.2F, 1.0F, 3.0F};
+  for (int k = 0; k < 3; ++k) {
+    plain[k] = run(core::DualInductanceObserver::FluxSource::Integrator, currents[k]);
+    const float corrected = run(core::DualInductanceObserver::FluxSource::Corrected, currents[k]);
+    ratios[k] = (corrected > 0.0F) ? (plain[k] / corrected) : 0.0F;
+    std::printf("     %-10.2f %12.6f %12.6f %10.3f\n", static_cast<double>(currents[k]),
+                static_cast<double>(plain[k]), static_cast<double>(corrected), static_cast<double>(ratios[k]));
+  }
+  // The integrator forgets nothing, so it holds the seed offset (it even grows a little with current, where the
+  // rotating saliency term makes the readout nonlinear). The corrected one is worse at every current: the pull is a
+  // nearest-point search on the flux curve, and an angular seed error puts the nearest point on the other branch.
+  // 纯积分器什么都不忘，所以它按种子偏移量保持（电流大一点还会更大，那里旋转的凸极项让读数非线性）。修正版在每个电流下
+  // 都更差：那把"拉"是磁链曲线上的一次最近点搜索，而角度上的种子误差会让最近点落在另一支上。
+  for (int k = 0; k < 3; ++k) {
+    EXPECT_GE(plain[k], 0.5F * seed_offset)
+        << "iq " << currents[k] << ": a pure integrator should hold the seed offset, not converge off it";
+    EXPECT_LT(plain[k], 3.0F * seed_offset) << "iq " << currents[k] << ": the integrator itself diverged";
+    EXPECT_LT(ratios[k], 0.5F) << "iq " << currents[k]
+                               << ": the correction term is no longer a remedy once the seed is wrong (ratio "
+                               << ratios[k] << ")";
+  }
+  // And the declaration this closes: the corrected source's measured domain is "exact seed, nameplate error".
+  // 而这条断言收口的是那句声明：修正版的实测适用域是"种子准确、铭牌有误差"。
+  EXPECT_GT(ratios[0], 0.0F) << "if this is zero the corrected run produced a non-finite state, which is another fact";
+}
+
 TEST(DualInductanceObserver, TheClosedFormAgreesWithANumericalInversionOfTheFluxRelation) {
   // A second implementation of the same inversion, kept here rather than shipped: it produces the same answer from the
   // same inputs, so as a public option it would be a knob whose only effect is which code path rounds differently --

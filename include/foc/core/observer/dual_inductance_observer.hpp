@@ -101,10 +101,21 @@ class DualInductanceObserver final {
      * @since 0.1.11
      */
     enum class FluxSource : std::uint8_t {
-        Integrator =
-            0, ///< [en] pure `integral(v - Rs*i)`: exact, seeded, and it never forgets a bad seed. [zh] 纯积分：精确、需播种，且永不忘记坏种子。
-        Corrected =
-            1, ///< [en] the same integral, pulled back onto the flux relation each step. [zh] 同一个积分，但每步被拉回磁链关系上。
+        /**
+         * @brief [en] pure `integral(v - Rs*i)`: exact, and it never forgets a bad seed. @brief
+         * @brief [zh] 纯积分：精确，且永不忘记坏种子。
+         */
+        Integrator = 0,
+        /**
+         * @brief [en] the same integral, pulled back onto the flux relation each step -- **only from a faithful seed**.
+         *             The pull is a nearest-point search on the flux curve, so an angular seed error moves it to the
+         *             other branch (measured: 1.5 rad mean error from a 0.30 rad seed error, against 0.20 rad for the
+         *             pure integrator).
+         * @brief [zh] 同一个积分，但每步被拉回磁链关系上——**只限种子忠实**。这把"拉"是磁链曲线上的一次最近点搜索，所以
+         *             角度上的种子误差会把它挪到另一支（实测：0.30 rad 的种子误差下平均误差 1.5 rad，纯积分器是 0.20
+         *             rad）。
+         */
+        Corrected = 1,
     };
 
     struct Config final {

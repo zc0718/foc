@@ -3051,28 +3051,42 @@ The log
        compare the two, because a hand-maintained list of "everything" fails silently and the failure looks like
        success.
      - ``pending``
-   * - F-110
+   * - A-110
+     - A
+     - **The instrument, not the library: the fifth observer member was never configured.** The row read "the
+       dual-inductance observer is not hand-over-safe and the deficit is pi" -- 2.9834 rad 20 ms after the hand-over
+       against the other high-speed member's 0.7244, from the same inherited 0.5611. The real cause is that
+       `observer_config()` in the rig never assigned `config.dual_inductance`, so the member ran with an all-zero
+       `Config{0, 0, 0, 0}`, `valid_config` refused it, `update()` held its state and the readout was a constant. With
+       the member configured the two land **0.6543** and **0.7244** rad out -- the same inherited error, 9.7 % apart.
+     - Surfaced by asking a criterion that had been withdrawn as *vacuous* (C2: "within 20 ms the angle is inside
+       0.05 rad", withdrawn because the rig it was written for was sensored). That refutation **stands**: both members
+       are far outside 0.05, and for the reason the rig can now name -- the *outgoing* observer hands over an estimate
+       that is 0.56 rad out, and neither incoming member can forget it in 20 ms. What does not stand is the claim that
+       the incoming member was broken.
+     - The falsifier was in the case the whole time and pointed the wrong way: it asserted `max_error > 2.0` "so it
+       goes red the day the member is repaired". A recorded failure asserts a *number*, so the first thing to check
+       when the number is a constant is whether the member is running at all. `status()` returns `Param` for an invalid
+       config, and a rig that never reads it cannot tell a held output from a wrong algorithm -- the two are identical
+       at the port. The case now asserts faithfulness for both members (0.8x to 2.0x the inherited error) and that the
+       two agree within 15 %, and every rig that configures a member it also selects now prints the status.
+     - ``pending``
+   * - F-111
      - F
-     - **The dual-inductance observer is not hand-over-safe, and the deficit is pi.** Handing the chain over to it at
-       50 rad/s mechanical -- the injection observer's own floor, which is what the withdrawn C2 criterion named --
-       inherits an estimate that is 0.5611 rad out and is 2.9834 rad out 20 ms later. The other high-speed observer
-       inherits the same 0.5611 and shows 0.7244, i.e. faithful within the ramp. So the defect is in the new member,
-       not in the hand-over and not in the criterion.
-     - Surfaced by asking a criterion that had been withdrawn as *vacuous*: C2 originally said "within 20 ms of the
-       hand-over the angle is inside 0.05 rad", and it was withdrawn because the rig it was written for was sensored,
-       where the observer's error against the sensor is identically zero. The sensor-less rig already existed; nobody
-       had asked. The answer to the criterion is **no** for both members (0.7244 and 2.9834 against 0.05) -- and the
-       second number is what pointed at this row.
-     - Blast radius: the C path's `foc_motor_set_observer` handed over with the **one-argument** form, which seeds
-       `psi_f*e^(j*theta)`; that is incomplete for a member whose state is the stator flux, so the bridge and the rig
-       now pass the current (`hand_over_to(kind, i_ab)`). That change moved **no** number here, which is itself the
-       evidence that the seed was not the cause -- the pi jump survives a correct seed and is therefore in the
-       readout or the branch choice, and stays open. Recorded rather than fixed in the same commit, with its own
-       falsifier: the case asserts `max_error_during_ramp_rad > 2.0` so it goes red the day the member is repaired.
-
-       The rule this produces: **a criterion withdrawn as vacuous is not a criterion retired -- it is one waiting for
-       the instrument that can ask it.** Four of them had accumulated (C2's ③, the steady-slip cases, and two more),
-       and asking this one after the bench finally existed produced a defect on the first run.
+     - **The flux-source correction is not a remedy for a wrong seed: it is a nearest-point search and it changes
+       branch.** With an exact seed the corrected source is worth 7.71x under a nameplate `Rs` error (recorded in
+       O-56's neighbourhood as an L2 result). With the seed 0.30 rad off it is 8x **worse** at 0.2 A and 3.7x worse
+       at 3 A (mean error 1.545 / 1.530 / 1.570 rad for the corrected source against 0.195 / 0.222 / 0.424 for the
+       pure integrator, exact `Rs`, 200 rad/s electrical, 2 s). So "hand over, then switch the correction on so the
+       inherited error decays" does not work, and the flux source's measured domain is exactly *exact seed, nameplate
+       error* -- nothing wider.
+     - Surfaced while looking for a fix for F-110, i.e. before F-110 turned out to be the rig's. The same behaviour
+       shows in the chain: with `FluxSource::Corrected` the dual-inductance member lands 2.9834 rad out at gain 2 and
+       3.0830 at gain 0.2, against 0.6543 for the pure integrator.
+     - The pull is a projection onto the flux curve, and an angular seed error moves the *nearest* point to the other
+       branch; the branch is then kept by continuity and never revisited. Nothing in shipped code changes (the ABI
+       leaves the member on `Integrator`); what changes is the declaration, which now carries the domain instead of
+       selling the correction as an upgrade.
      - ``pending``
 
 

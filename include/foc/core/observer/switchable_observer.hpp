@@ -347,6 +347,37 @@ class SwitchableObserver final {
     void set_kind(ObserverKind kind) noexcept { kind_ = kind; }
 
     /**
+     * @brief [en] The **configuration** status of the selected member, which is what tells a held output from a wrong
+     *             algorithm.
+     * @brief [zh] 被选中成员的**配置**状态——它才是把"保持不动的输出"和"算错的算法"区分开的东西。
+     * @note [en] Added because a rig that selects a member without configuring it reads a constant: an all-zero
+     *            `Config` is refused by `valid_config`, `update()` then holds, and at the port a member that is not
+     *            running is indistinguishable from one that is wrong. A defect recorded against this class (`A-110` in
+     *            the foundation log) was exactly that, so the way to see it is part of the class now.
+     * @note [zh] 之所以有它：只选中成员却没配置它的台架读到的是个常数——全零 `Config` 会被 `valid_config` 拒绝、
+     *            `update()` 随后保持不动，而在端口上"没在跑的成员"与"算错的成员"完全一样。记在这个类名下的一个缺陷（
+     *            foundation-log 的 `A-110`）正是如此，所以"看得见它"的办法现在是类的一部分。
+     * @return [en] `ErrorCode::Ok` when the selected member accepted its configuration, `Param` when it did not.
+     * @return [zh] 被选中成员接受了配置时为 `ErrorCode::Ok`，否则为 `Param`。
+     * @since 0.1.11
+     */
+    [[nodiscard]] auto member_status() const noexcept -> ErrorCode {
+        switch (kind_) {
+        case ObserverKind::NonlinearFlux:
+            return nonlinear_flux_.status();
+        case ObserverKind::Hfi:
+            return hfi_.status();
+        case ObserverKind::Blended:
+            return blended_.status();
+        case ObserverKind::DualInductance:
+            return dual_inductance_.status();
+        case ObserverKind::BackEmf:
+        default:
+            return back_emf_.status();
+        }
+    }
+
+    /**
      * @brief [en] The observer currently forwarded to.
      * @brief [zh] 当前转发的观测器。
      */

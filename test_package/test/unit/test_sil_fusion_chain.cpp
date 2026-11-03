@@ -160,6 +160,11 @@ auto observer_config() -> core::SwitchableObserver::Config {
     config.hfi.pll_zeta = 0.9F;
     config.hfi.demod_gain_a = core::HfiObserver::predicted_gain_a(config.hfi.inject_v, config.hfi.inject_hz, kLd, kLq);
     config.hfi.min_hf_current_a = 0.05F;
+    // The fifth member, and this line is the whole of A-110: without it the config is all zeros, `valid_config`
+    // refuses it, `update()` holds and the member reports a constant -- which a rig reads as a pi-sized error.
+    // 第五个成员。这一行就是 A-110 的全部：没有它，配置全零，`valid_config` 拒绝它，`update()` 保持不动，而成员报出一个
+    // 常数——台架把它读成偏 π 的误差。
+    config.dual_inductance = core::DualInductanceObserver::Config{cfg.rs, cfg.ld, cfg.lq, psi_f};
     config.kind = core::ObserverKind::Hfi;
     return config;
 }
@@ -178,6 +183,7 @@ struct ChainResult final {
     float speed_at_switch_rad_s{0.0F};
     float observed_speed_at_switch_rad_s{0.0F};
     bool seeded_at_switch{false};
+    bool member_ok_at_switch{false};
     bool switched{false};
     bool aligned{false};
     int ticks_before_switch{0};
@@ -372,14 +378,20 @@ auto run_chain(float switch_at_rad_s, core::ObserverKind kind_after, int freeze_
                 // `SwitchableObserver::hand_over_to()` 里，因此台架必须证明库原语能重现同样的数字——否则这个修复
                 // 只活在测试里，每一个真实调用方仍然会跳四分之一圈。
                 // The current goes with the angle. The dual-L member's state is the stator flux, and handing it the
-                // rotor flux alone is a seed that is missing the current's own flux -- measured on this very rig as a
-                // hand-over that landed pi away. Every other member ignores the argument.
-                // 电流随角度一起过去。双电感成员的状态是定子磁链，只给它转子磁链的种子漏掉了电流自身的磁链——就在本台架上
-                // 量到过落在偏 π 处的交接。其余成员会忽略这个参数。
+                // rotor flux alone is a seed that is missing the current's own flux (0.0525 rad of permanent offset at
+                // 2.5 A, measured in `test_switchable_observer.cpp`). Every other member ignores the argument.
+                // 电流随角度一起过去。双电感成员的状态是定子磁链，只给它转子磁链的种子漏掉了电流自身的磁链（2.5 A 下
+                // 0.0525 rad 的永久偏移，在 `test_switchable_observer.cpp` 里量的）。其余成员会忽略这个参数。
                 const motor::Telemetry hand_over_tm = motor.telemetry();
                 const core::Ab<float> i_ab_now = core::inv_park(
                     core::Dq<float>{hand_over_tm.id_a, hand_over_tm.iq_a}, motor.observer().state().theta_e);
                 const bool seeded = motor.observer().hand_over_to(kind_after, i_ab_now);
+                // A-110: a member that was selected but never configured holds its state, and its output is a constant
+                // that reads like an algorithm defect. The status is the only thing that tells the two apart, so the rig
+                // reads it at the one moment the member's configuration is what the hand-over just changed.
+                // A-110：选中却从未配置的成员会保持不动，它的输出是个常数，看起来像算法缺陷。只有状态能把两者分开，
+                // 所以台架恰好在交接改变成员配置的那一刻读它。
+                result.member_ok_at_switch = (motor.observer().member_status() == foc::ErrorCode::Ok);
                 result.seeded_at_switch = seeded;
                 changed = true;
                 result.switched = true;
@@ -436,20 +448,30 @@ TEST(SilFusionChain, ACriterionThatWasWithdrawnAsVacuousIsRefutedWhenItIsAskedPr
     // C2's original wording was "0 -> 50 rad/s, within 20 ms after the hand-over the angle is inside 0.05 rad". It was
     // withdrawn because the SIL rig it was written for was **sensored**: the loop used the encoder angle, so the
     // observer's error against the sensor was identically zero and the criterion could not fail. This rig is the
-    // sensor-less one, so the criterion can finally be asked -- and the answer is **no**, for both high-speed observers.
+    // sensor-less one, so the criterion can finally be asked -- and the answer is **no**, for both high-speed members.
     //
     // The measurement also says *why*, and it is not the hand-over. The switch triggers on the plant's true speed, and
     // at 50 rad/s mechanical the injection observer is already past its own floor, so it hands over an angle that is
-    // 0.72 rad out (and 2.98 rad out for one run) -- and a pure flux integrator never forgets an angle it inherits. The
-    // criterion is therefore refuted at the *outgoing* end, which is a different statement from "the hand-over is
-    // broken", and the case asserts the latter, true one: what comes out 20 ms after the switch is what went in.
+    // 0.56 rad out -- and neither incoming member can forget an angle it inherits within 20 ms. So the criterion is
+    // refuted at the *outgoing* end, which is a different statement from "the hand-over is broken"; the case asserts
+    // the latter, true one: what comes out 20 ms after the switch is what went in, for both members and to within 10 %.
+    //
+    // A-110 was first recorded here as "the dual-inductance member lands pi away". That was this file's own defect: the
+    // rig never filled in `config.dual_inductance`, so the member ran with an all-zero configuration, `valid_config`
+    // refused it, `update()` held and the readout was a constant -- which this rig printed as a pi-sized error. With
+    // the member configured the two land 0.6543 and 0.7244 rad out, i.e. the same inherited error.
     // C2 原话是"0 → 50 rad/s，交接后 20 ms 内角度在 0.05 rad 以内"。撤回首因为写它的那个 SIL 台架是**带传感器**的：环路用的
     // 就是编码器角度，观测器对传感器的误差恒为零，这条判据不可能失败。本台架是无感的，所以这条判据终于问得出来——而答案是
-    // **否**，两个高速观测器都是。
+    // **否**，两个高速成员都是。
     //
     // 测量还说明了**为什么**，而那不是交接的问题。切换用 plant 的真实转速触发，而在 50 rad/s 机械处注入观测器已经越过它自己的
-    // 地板，于是它交出的角度偏了 0.72 rad（另一次跑偏 2.98 rad）——而纯磁链积分器不会忘记它继承来的角度。所以判据是在**交出端**
-    // 被否掉的，这与"交接坏了"是不同的陈述；用例断言的是后者那个**真的**陈述：切换后 20 ms 出来的，就是进去的那个。
+    // 地板，于是它交出的角度偏了 0.56 rad——而两个接任者都没法在 20 ms 内忘掉继承来的角度。所以判据是在**交出端**被否掉的，
+    // 这与"交接坏了"是不同的陈述；用例断言的是后者那个**真的**陈述：切换后 20 ms 出来的，就是进去的那个，两个成员都是，且相差
+    // 不到 10 %。
+    //
+    // A-110 最初在这里记成"双电感成员落在偏 π 的地方"。那是本文件自己的缺陷：台架从未填写 `config.dual_inductance`，成员带着
+    // 全零配置运行，`valid_config` 拒绝它，`update()` 保持不动，读数是个常数——本台架把它打印成了偏 π 的误差。配置上之后两个
+    // 成员分别偏 0.6543 和 0.7244 rad，也就是同一个继承误差。
     std::printf("\n[chain] a criterion withdrawn as vacuous, asked on the sensor-less rig\n");
     std::printf("     %-22s %8s %12s %12s %10s\n", "incoming observer", "speed", "inherited", "max in 20 ms",
                 "seeded");
@@ -459,46 +481,51 @@ TEST(SilFusionChain, ACriterionThatWasWithdrawnAsVacuousIsRefutedWhenItIsAskedPr
     };
     const Row rows[] = {{"NonlinearFlux", core::ObserverKind::NonlinearFlux},
                         {"DualInductance", core::ObserverKind::DualInductance}};
+    float post[2] = {0.0F, 0.0F};
+    float inherited_all = 0.0F;
+    int index = 0;
     for (const Row& row : rows) {
         const ChainResult r = run_chain(kEdgeHandoverRadS, row.kind, kPostSwitchWindowTicks);
-        std::printf("     %-22s %8.2f %12.4f %12.4f %10d\n", row.name, static_cast<double>(r.speed_at_switch_rad_s),
-                    static_cast<double>(r.error_before_switch_rad), static_cast<double>(r.max_error_during_ramp_rad),
+        std::printf("     %-22s %8.2f %12.4f %12.4f %10d\n", row.name,
+                    static_cast<double>(r.speed_at_switch_rad_s),
+                    static_cast<double>(r.error_before_switch_rad),
+                    static_cast<double>(r.max_error_during_ramp_rad),
                     static_cast<int>(r.seeded_at_switch));
         ASSERT_TRUE(r.aligned) << row.name << ": alignment did not finish, so there is no chain to measure";
         ASSERT_TRUE(r.switched) << row.name << ": the speed never reached the hand-over band";
         EXPECT_TRUE(r.seeded_at_switch) << row.name << ": the hand-over did not seed the incoming observer";
+        EXPECT_TRUE(r.member_ok_at_switch) << row.name << ": the incoming member is in Param, so its output is a held "
+                                                      "constant and every number below is meaningless";
         // What is true: the hand-over is faithful. Nothing added, nothing forgotten -- the 20 ms window shows the error
         // it inherited from the outgoing observer and no more.
         // 真的那个陈述：交接是忠实的。既没有加上也没有丢掉什么——20 ms 的窗口里看到的就是它从交出者继承来的误差，不多一分。
         const float inherited = std::fabs(r.error_before_switch_rad);
+        EXPECT_GE(r.max_error_during_ramp_rad, 0.8F * inherited)
+            << row.name << ": the estimate improved right after the switch, which no flux observer can do";
+        EXPECT_LE(r.max_error_during_ramp_rad, 2.0F * inherited + 0.02F)
+            << row.name << ": it degraded after the switch, so the hand-over itself is what is wrong";
         // And what is refuted: the criterion. Recorded as a refutation rather than deleted, because a criterion that was
         // withdrawn as vacuous and is false when asked properly is a fact about the chain, not about the wording.
         // 而被否掉的是判据本身。作为否证记下来而不是删掉：一条"因空真被撤回、认真问起来却是假"的判据，是关于这条链路的事实，
         // 不是措辞问题。
-        if (row.kind == core::ObserverKind::NonlinearFlux) {
-            // Faithful: it shows the error it inherited and no more. Asserted only for this member, because the other one
-            // is not faithful yet (F-110) and asserting a property that does not hold would be the defect this file is
-            // recording.
-            // 忠实：它显示的是继承来的误差，不多一分。只对这个成员断言，因为另一个还不忠实（F-110），断言一个并不成立的
-            // 性质，正是本文件要记录的那个缺陷。
-            EXPECT_GE(r.max_error_during_ramp_rad, 0.8F * inherited)
-                << row.name << ": the estimate improved right after the switch, which no flux integrator can do";
-            EXPECT_LE(r.max_error_during_ramp_rad, 2.0F * inherited + 0.02F)
-                << row.name << ": it degraded after the switch, so the hand-over itself is what is wrong";
-            EXPECT_GT(r.max_error_during_ramp_rad, kConvergedRad)
-                << "if this now passes, the 20 ms criterion holds after all and this recorded refutation is stale";
-        } else {
-            // **An open defect, recorded rather than fixed here (F-110).** The dual-inductance member inherits the same
-            // -0.5611 rad and is 2.9834 rad out 20 ms later: it does not carry the estimate across, it lands pi away.
-            // The assertion is written so it goes red the day the member is fixed -- a recorded failure with its own
-            // falsifier, which is what this repository does with a defect it is not fixing in the same commit.
-            // **一个尚未修的缺陷，记下来而不是在这里修（F-110）。** 双电感成员继承同样的 −0.5611 rad，20 ms 后却偏 2.9834 rad：
-            // 它没有把估计带过去，而是落在偏 π 的地方。这条断言写成"修好那天会红"的形式——一个带自身否证器的记录性失败，正是
-            // 本仓库对"不在同一个提交里修的缺陷"的处理方式。
-            EXPECT_GT(r.max_error_during_ramp_rad, 2.0F)
-                << "the dual-inductance hand-over no longer lands pi away: F-110 is fixed, so this record is stale";
-        }
+        EXPECT_GT(r.max_error_during_ramp_rad, kConvergedRad)
+            << "if this now passes, the 20 ms criterion holds after all and this recorded refutation is stale";
+        post[index] = r.max_error_during_ramp_rad;
+        inherited_all = inherited;
+        ++index;
     }
+    // The two members agree to within 10 %: whichever model observer is asked, a hand-over adds nothing to and takes
+    // nothing from the error it inherits. That agreement is the claim; the absolute number above is the refutation.
+    // 两个成员相差不到 10 %：无论问哪个模型观测器，交接对继承来的误差既不添也不减。这个一致性才是要断言的命题，上面那个
+    // 绝对数值是那条否证。
+    const float spread = std::fabs(post[0] - post[1]) / post[0];
+    std::printf("     %-22s %8.4f\n", "member spread", static_cast<double>(spread));
+    // Measured 0.0968; the threshold is 0.15 so that a different optimisation level cannot turn this into a red test.
+    // 实测 0.0968；阈值取 0.15，以便不同的优化级别不会把这条变成红测。
+    EXPECT_LT(spread, 0.15F) << "the two members should land within 15 % of each other, not " << spread;
+    EXPECT_GE(inherited_all, 0.5F)
+        << "the outgoing observer was supposed to be past its floor at this speed; if it is not, this is a different "
+           "measurement";
 }
 
 TEST(SilFusionChain, TheWholeChainStaysInsideItsCeilingAndNothingJumpsAtTheSwitch) {

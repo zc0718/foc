@@ -541,3 +541,46 @@ TEST(SwitchableObserver, AHandOverIntoTheSalientObserverNeedsTheCurrentAsWellAsT
   EXPECT_LT(gap, 0.2F) << "the gap is far larger than the model difference: something else moved";
 }
 
+
+TEST(SwitchableObserver, AMemberThatIsSelectedButNotConfiguredSaysSo) {
+    // A-110 in the foundation log: a rig selected the dual-inductance member and never filled in its `Config`, so the
+    // member ran with all zeros, `valid_config` refused it, `update()` held, and the readout was a constant -- which the
+    // rig printed as a 2.98 rad angle error and the log first recorded as a defect in the observer. At the port a member
+    // that is not running and a member that computes the wrong thing are indistinguishable, so the wrapper now answers
+    // the question instead of leaving it to the caller: `member_status()` is the selected member's own status.
+    // foundation-log 的 A-110：一个台架选中了双电感成员却从未填写它的 `Config`，于是成员带着全零运行、`valid_config`
+    // 拒绝它、`update()` 保持不动，读数是个常数——台架把它打印成了 2.98 rad 的角度误差，而日志一开始把它记成了观测器的
+    // 缺陷。在端口上"没在跑的成员"与"算错的成员"无法区分，所以包装器现在自己回答这个问题：`member_status()` 就是被选中
+    // 成员自己的状态。
+    foc::core::SwitchableObserver::Config unconfigured = wrapper_config(foc::core::ObserverKind::DualInductance);
+    unconfigured.dual_inductance = foc::core::DualInductanceObserver::Config{};
+    foc::core::SwitchableObserver unnamed(unconfigured);
+    EXPECT_EQ(unnamed.member_status(), foc::ErrorCode::Param)
+        << "an all-zero member configuration has to be visible through the wrapper";
+
+    // And the number that made this look like an algorithm defect: the held output is a constant, not an error.
+    // 还有那个把它看成算法缺陷的数：保持不动的输出是个常数，而不是误差。
+    float first = 0.0F;
+    bool moved = false;
+    for (int step = 0; step < 2000; ++step) {
+        const foc::core::ObsState state = unnamed.update(input_at(step), current_at(step), kDt);
+        if (step == 0) {
+            first = state.theta_e;
+        } else if (state.theta_e != first) {
+            moved = true;
+        }
+    }
+    EXPECT_FALSE(moved) << "a member in Param should hold, and here it moved";
+    EXPECT_EQ(first, 0.0F) << "the held output should be the zero state, not some arbitrary angle";
+
+    // The configured one answers Ok, so the check has both outcomes and is not a restatement of `kind()`.
+    // 配置好的那个回答 Ok，于是这项检查有两种结果，不是 `kind()` 的复述。
+    foc::core::SwitchableObserver named(wrapper_config(foc::core::ObserverKind::DualInductance));
+    EXPECT_EQ(named.member_status(), foc::ErrorCode::Ok);
+    for (const foc::core::ObserverKind kind : {foc::core::ObserverKind::BackEmf,
+                                               foc::core::ObserverKind::NonlinearFlux, foc::core::ObserverKind::Hfi,
+                                               foc::core::ObserverKind::Blended}) {
+        foc::core::SwitchableObserver member(wrapper_config(kind));
+        EXPECT_EQ(member.member_status(), foc::ErrorCode::Ok) << "kind " << static_cast<int>(kind);
+    }
+}
