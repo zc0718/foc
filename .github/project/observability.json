@@ -274,6 +274,21 @@
         }
       ],
       "no_effect": ""
+    },
+    {
+      "id": "O-20",
+      "date": "2026-11-03",
+      "leg": "model",
+      "capability": "The breakaway recipe's own sensitivity, measured by separating the number the caller *tells* the sequence from the number the machine actually has -- which is the only way to ask whether the handover torque is a measurement or a setting. It is a measurement: a 50 % error in the recipe moves it by 0.0000 N*m, while the same sweep on a heavier plant moves it by 10 mN*m. Found by asking which field of the config could carry a sensitivity row and then reading the code: `breakaway_nm` appears in `validate()` and nowhere else, so the sequence is deliberately insensitive to its own brightest-sounding input.",
+      "source": "`test_stall_start.cpp`, four new cases: the release instant against `breakaway/rate` at 0.25/0.50/1.00 N*m/s (121.3 / 61.3 / 31.3 ms, so the time halves with the rate to within 2 %, while the torque moves 1 mN*m over the 4x change -- observation lag, not physics); the recipe sweep 0.015/0.030/0.045 on a 0.030 machine (0.0307 N*m at 61.3 ms, all three identical) with the heavier-plant falsifier (0.0405 N*m at 81.0 ms) that a config-driven value could not produce; the failure instant against `max/rate + give_up`, exactly 6000 ticks for a 0.2 s grace and 8001 for 0.4 s (the extra tick is the float32 accumulator, recorded not tuned away); and a step before `begin()` answering `State` with zero torque, which was the last line of the header no case had ever executed.",
+      "reopened": [
+        {
+          "claim": "core/stall_start.hpp",
+          "verdict": "promoted",
+          "missing": ""
+        }
+      ],
+      "no_effect": ""
     }
   ]
 }
