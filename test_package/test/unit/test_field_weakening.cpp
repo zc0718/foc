@@ -512,8 +512,15 @@ TEST(FieldWeakening, TheVerdictIsOneComparisonAndTheOldThresholdsCouldNeverDecid
   // closed form stops having a finite answer.
   // 在它真正咬人的地方说清楚：这条线一侧的上限是**无穷**、另一侧是有限，所以模型给出的结论是一个台阶。
   // 差 1 % 进线的机器并不比差 1 % 出线的机器好 1 %；那是这个闭式解不再有有限答案的那个点。
-  EXPECT_EQ(INFINITY, core::is_field_weakening_worthwhile(machine_at(1.0F), i_max).speed_gain);
-  EXPECT_LT(core::is_field_weakening_worthwhile(machine_at(0.99F), i_max).speed_gain, 101.0F);
+  // Both ends are read *away* from the knife edge on purpose: `lambda = 1` and `lambda = 0.99` are computed as
+  // `psi - Ld*i_max`, a subtraction of two nearly equal floats, so whether the residual lands just above or exactly
+  // on zero depends on the platform's rounding -- macOS answered differently from Linux here, which is a property of
+  // the arithmetic and not of the rule. `lambda = 2` and `lambda = 0.9` carry the same statement with room around them.
+  // 两端都刻意**离开**刀刃读：`λ = 1` 与 `λ = 0.99` 都算作 `ψ − Ld·i_max`，两个几乎相等的 float 相减，余量是
+  // 略大于零还是恰好为零取决于平台的舍入——macOS 与 Linux 在这里给出了不同答案，那是算术的性质而不是规则的性质。
+  // `λ = 2` 与 `λ = 0.9` 把同一句话带上了余量。
+  EXPECT_EQ(INFINITY, core::is_field_weakening_worthwhile(machine_at(2.0F), i_max).speed_gain);
+  EXPECT_NEAR(10.0F, core::is_field_weakening_worthwhile(machine_at(0.9F), i_max).speed_gain, 0.05F);
 }
 
 
