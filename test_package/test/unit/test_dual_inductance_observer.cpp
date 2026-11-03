@@ -592,6 +592,89 @@ TEST(DualInductanceObserver, AnLqErrorMovesTheAngleAndAnLdErrorMovesTheRadius) {
   EXPECT_GT(lq_up.angle, 20.0F * std::fabs(lq_up.radius)) << "dLq must show in the angle, not the radius";
 }
 
+TEST(DualInductanceObserver, TheClosedFormAgreesWithANumericalInversionOfTheFluxRelation) {
+  // A second implementation of the same inversion, kept here rather than shipped: it produces the same answer from the
+  // same inputs, so as a public option it would be a knob whose only effect is which code path rounds differently --
+  // dead weight of the kind F-107 and F-43 were about. As a **check** it has a job, because it inverts by searching
+  // instead of by solving: no discriminant, no roots, no branch. If the closed form had a sign or a factor wrong, the
+  // two would part company on some sample.
+  // 同一个反解的第二种实现，放在测试里而不是发布出去：它从同样的输入给出同样的答案，作为公开选项就只是一个"决定哪条代码路径
+  // 舍入得不同"的旋钮——正是 F-107 / F-43 所讲的那种死重量。而作为**检查**它有活干，因为它靠搜索而不是靠求解来反解：没有
+  // 判别式、没有求根、没有分支。闭式里若有一个符号或系数错，两者会在某个样本上分道扬镳。
+  //
+  // And the two do not share their *forward* statement either: the flux is built from the physical d-q definition
+  // (`psi = e^(j*theta) * (psi_f + Ld*i_d + j*Lq*i_q)`), while the search minimises the alpha-beta relation the class
+  // uses. So this compares two ways of writing the machine as well as two ways of inverting it.
+  // 而且两者连**正向**表述也不共享：磁链按物理的 d-q 定义构造（`psi = e^(jθ)·(psi_f + Ld·i_d + j·Lq·i_q)`），而搜索最小化的是
+  // 本类使用的 αβ 关系。所以这里同时比较了机器的两种写法与两种反解。
+  const sil::MachineSpec spec = salient_spec();
+  const float psi_f = psi_f_of(spec);
+  const float l0 = 0.5F * (spec.ld + spec.lq);
+  const float l1 = 0.5F * (spec.ld - spec.lq);
+  const auto residual = [&](float phi, const core::Ab<float>& flux, const core::Ab<float>& i_ab) {
+    const float c1 = std::cos(phi);
+    const float s1 = std::sin(phi);
+    const float c2 = std::cos(2.0F * phi);
+    const float s2 = std::sin(2.0F * phi);
+    const float alpha = (psi_f * c1) + (l0 * i_ab.alpha) + (l1 * ((i_ab.alpha * c2) + (i_ab.beta * s2)));
+    const float beta = (psi_f * s1) + (l0 * i_ab.beta) + (l1 * ((i_ab.alpha * s2) - (i_ab.beta * c2)));
+    return ((alpha - flux.alpha) * (alpha - flux.alpha)) + ((beta - flux.beta) * (beta - flux.beta));
+  };
+  float worst_closed_vs_algebra = 0.0F;
+  float worst_closed_vs_search = 0.0F;
+  float worst_residual = 0.0F;
+  for (const float theta : {0.0F, 0.9F, 2.2F, 4.7F, 6.0F}) {
+    for (const float id : {0.0F, -1.0F, -2.5F, 1.5F}) {
+      for (const float iq : {0.0F, 0.5F, -1.0F}) {
+        // The flux by the physical d-q definition, rotated into alpha-beta.
+        const core::Dq<float> psi_dq{psi_f + (spec.ld * id), spec.lq * iq};
+        const core::Ab<float> flux = core::inv_park(psi_dq, theta);
+        const core::Ab<float> i_ab = core::inv_park(core::Dq<float>{id, iq}, theta);
+        const core::Ab<float> v_ab{spec.rs * i_ab.alpha, spec.rs * i_ab.beta};
+        core::DualInductanceObserver observer(
+            core::DualInductanceObserver::Config{spec.rs, spec.ld, spec.lq, psi_f});
+        observer.seed_flux(flux);
+        const float closed = observer.update(v_ab, i_ab, kDt).theta_e;
+        worst_closed_vs_algebra = std::max(worst_closed_vs_algebra, std::fabs(wrap_pi(closed - theta)));
+        // The search: coarse scan then ternary refinement, entirely independent of the quadratic.
+        // 搜索：粗扫 + 三分细化，完全不用二次方程。
+        float best = 0.0F;
+        float best_cost = 1.0e30F;
+        constexpr int kScan = 720;
+        for (int k = 0; k < kScan; ++k) {
+          const float phi = (core::kTwoPi<float> * static_cast<float>(k)) / static_cast<float>(kScan);
+          const float cost = residual(phi, flux, i_ab);
+          if (cost < best_cost) {
+            best_cost = cost;
+            best = phi;
+          }
+        }
+        float lo = best - (core::kTwoPi<float> / static_cast<float>(kScan));
+        float hi = best + (core::kTwoPi<float> / static_cast<float>(kScan));
+        for (int k = 0; k < 80; ++k) {
+          const float m1 = lo + ((hi - lo) / 3.0F);
+          const float m2 = hi - ((hi - lo) / 3.0F);
+          if (residual(m1, flux, i_ab) < residual(m2, flux, i_ab)) {
+            hi = m2;
+          } else {
+            lo = m1;
+          }
+        }
+        const float searched = 0.5F * (lo + hi);
+        worst_closed_vs_search = std::max(worst_closed_vs_search, std::fabs(wrap_pi(closed - searched)));
+        worst_residual = std::max(worst_residual, residual(searched, flux, i_ab));
+      }
+    }
+  }
+  std::printf("\n[dual-L] closed form against a numerical inversion, 60 (angle, i_d, i_q) samples\n");
+  std::printf("[dual-L] closed vs the d-q definition: %.3e rad | closed vs the search: %.3e rad | search residual %.3e\n",
+              static_cast<double>(worst_closed_vs_algebra), static_cast<double>(worst_closed_vs_search),
+              static_cast<double>(worst_residual));
+  EXPECT_LT(worst_closed_vs_algebra, 1.0e-4F) << "the closed form must invert the physical d-q definition";
+  EXPECT_LT(worst_closed_vs_search, 1.0e-4F) << "two inversions of the same relation must agree";
+  EXPECT_LT(worst_residual, 1.0e-8F) << "the search must actually reach a zero of the alpha-beta relation";
+}
+
 TEST(DualInductanceObserver, AnInvalidConfigurationHoldsAndANonPositiveStepIsRejected) {
   // The contract every other observer in this directory keeps, so a caller can treat them uniformly.
   // 本目录里每个观测器都守的契约，调用方才能一视同仁。
