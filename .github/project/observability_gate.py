@@ -112,32 +112,48 @@ def selftest(data: dict, rows: dict[str, tuple[str, str]]) -> bool:
         print("[observability-selftest] the shipped registry does not pass, so the mutations below prove nothing")
         return False
 
+    # The three mutations below need an entry whose *first* verdict is a `still_short` on an L2 row, and they used to
+    # name `upgrades[0]`. That entry's first item was `core/homing.hpp`, which O-26 later measured into L3 -- and the
+    # second mutation then stopped being an error at all, so the self-test went on passing a case that could no longer
+    # happen. Chosen from the data for the same reason as the fourth case below: a self-test pinned to a row that can
+    # still be promoted stops testing anything the day it is.
+    # 下面三个变异需要一个**首条判定**为 `still_short`（指向 L2 行）的条目，原先写死了 `upgrades[0]`。该条目首项是
+    # `core/homing.hpp`，后来被 O-26 量成了 L3——于是第二个变异不再构成错误，自检却继续"通过"。与下面第四个用例同理，
+    # 目标从数据里选：钉在一个还能被提升的行上的自检，会在它被提升那天失灵。
+    index = next((i for i, upgrade in enumerate(data["upgrades"])
+                  if (upgrade.get("reopened") or []) and upgrade["reopened"][0].get("verdict") == "still_short"), None)
+    if index is None:
+        print("[observability-selftest] no entry carries a still_short verdict, so the first three cases prove nothing")
+        return False
+
     mutated = json.loads(json.dumps(data))
-    mutated["upgrades"][0]["leg"] = "implementation"
-    mutated["upgrades"][0]["reopened"][0]["verdict"] = "promoted"
+    mutated["upgrades"][index]["leg"] = "implementation"
+    mutated["upgrades"][index]["reopened"][0]["verdict"] = "promoted"
     expect("implementation leg promoting a row", mutated, "cannot promote")
 
     mutated = json.loads(json.dumps(data))
-    mutated["upgrades"][0]["reopened"][0]["missing"] = ""
+    mutated["upgrades"][index]["reopened"][0]["missing"] = ""
     expect("still_short with no missing leg", mutated, "without naming")
 
     mutated = json.loads(json.dumps(data))
-    mutated["upgrades"][0]["reopened"] = []
-    mutated["upgrades"][0].pop("no_effect", None)
+    mutated["upgrades"][index]["reopened"] = []
+    mutated["upgrades"][index].pop("no_effect", None)
     expect("upgrade that re-opened nothing", mutated, "gave no reason")
 
-    # Chosen from the data rather than written down: the first version named a row that was later promoted, so the
-    # selftest went on passing a case that could no longer happen. A self-test pinned to a moving target stops testing
-    # anything the day the target moves -- and it reports that as a failure, which is the only reason it was noticed.
-    target = next((module for module, (level, evidence) in sorted(rows.items())
-                   if level == "L2" and "test_sil_" in evidence), None)
-    if target is None:
-        print("[observability-selftest] no L2 SIL row to drop, so the fourth case proves nothing")
-        return False
+    # This case used to hunt the data for an L2 row measured on a plant. Promoting the last such row (`core/homing.hpp`,
+    # O-26) left nothing to hunt for, and the case then reported that it proved nothing -- which is the failure mode the
+    # previous version of this comment already learned once, in a different disguise: a self-test that follows the
+    # repository can be promoted out of existence. So the row is synthesised here instead. The rule is exercised for as
+    # long as the rule exists, whatever the repository happens to contain on the day.
+    # 这个用例原先在数据里找一条"在 plant 上量过的 L2 行"。最后一条这样的行（`core/homing.hpp`，O-26）被提升后，
+    # 就没得找了，用例于是自称"证明不了任何事"——这正是上一版注释已经学过一次的失效形态换了个马甲：跟着仓库走的自检，
+    # 会被提升"提升"到消失。所以这里改成合成一条。只要规则还在，它就一直被检验，与仓库当天恰好含有什么无关。
+    target = "__selftest_l2_sil_row__"
+    rows = {**rows, target: ("L2", "test_sil_selftest_only.cpp")}
     mutated = json.loads(json.dumps(data))
     for upgrade in mutated["upgrades"]:
         upgrade["reopened"] = [item for item in upgrade.get("reopened") or [] if item["claim"] != target]
-    expect(f"an L2 SIL row dropped from the registry ({target})", mutated, "not in the registry")
+    expect(f"an unregistered L2 SIL row ({target})", mutated, "not in the registry")
     return ok
 
 

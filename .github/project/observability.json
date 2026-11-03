@@ -14,13 +14,8 @@
       "leg": "implementation",
       "capability": "Any plant scenario can be replayed period by period in float64 by an independent solver, because the harness dumps the applied phase voltages alongside the state. Closed-loop included, with no controller re-implemented in Python.",
       "source": "scipy.integrate DOP853 (adaptive, rtol 1e-12) as the second solver; the right-hand side re-derived from `sil_pmsm_plant.hpp`; machine parameters handed over by the C++ side so the two cannot drift. Audits: per-period replay, energy conservation, kinematics, each proved able to go red by `--selftest`.",
-      "reopened": [
-        {
-          "claim": "core/homing.hpp",
-          "verdict": "still_short",
-          "missing": "per-source sensitivity (creep speed, index jitter, timeout) and a model-level second source -- CiA 402 is the candidate, but we do not claim conformance and adopting it would be a scope increase, not a cross-check"
-        }
-      ]
+      "reopened": [],
+      "no_effect": "Nothing that is still open. `core/homing.hpp` was re-read here in 2026-10-30 and left short on per-source sensitivity (creep speed, index jitter, timeout); O-26 has since measured all three, so the row's verdict lives there -- an implementation-level leg may not carry a promotion, which is exactly the rule that made this entry hand the row over instead of closing it. The float64 replay introduced here is unchanged and is still the cross-model leg the L3 rows stand on."
     },
     {
       "id": "O-2",
@@ -359,6 +354,21 @@
       "reopened": [
         {
           "claim": "motor/motor_config.hpp",
+          "verdict": "promoted",
+          "missing": ""
+        }
+      ],
+      "no_effect": ""
+    },
+    {
+      "id": "O-26",
+      "date": "2026-11-03",
+      "leg": "model",
+      "capability": "The homing recipe as an envelope, measured in samples rather than seconds -- and the discovery that the clock the envelope is measured against is a float32 accumulator, so a long recipe times out early and a very long one never times out at all. Its third leg is the origin itself: the zero cannot be better than where the axis was when the index was honoured, so an index delay is a distance, and that distance is paid for in creep speed.",
+      "source": "`test_homing_routine.cpp`, two new cases. Envelope: the reference is driven with the speed the routine actually commands and the index pulsed when travel crosses a known mark. 1 rad/s for 1 s at 100 us buys 0.9999 rad, exactly `(ticks - 1)*creep*dt`, so a mark at 0.9999 or 1.0 is missed and 0.9990 is found; at 10 rad/s, 9.99 found and 10.0 missed. Timer: a 512 s recipe at 40 kHz fires after 446.664 s of real time (12.8 % fast) in 17 866 579 ticks, and a 520 s recipe does not fire in 40 M ticks (1000 s of real time). The floor is `2^24*dt` rounded up to a power of two -- 512 / 2048 / 32768 s for dt = 25 us / 100 us / 1 ms -- checked both through the routine (no finish past the floor) and on a bare float mirroring `elapsed_s_ += dt_s`. The fix (tick counting, or a double accumulator) is a library change this row does not make; the case is written to fail if the behaviour changes. Origin: the same sweep, with the pulse delayed 0/1/5/20 ticks after the crossing and the travel at the honouring tick compared against the true mark -- 1.00/2.00/6.00/21.00 samples at 1 rad/s, exactly `(jitter + 1)*creep*dt`, and the ratio to `creep*dt` stays 21.000 at 0.5/1/2/4 rad/s, so the error is one-for-one in creep speed while the search time is one-over-creep speed: `error x time` is fixed.",
+      "reopened": [
+        {
+          "claim": "core/homing.hpp",
           "verdict": "promoted",
           "missing": ""
         }
