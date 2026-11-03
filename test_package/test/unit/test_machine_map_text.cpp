@@ -8,6 +8,10 @@
 #include <cstring>
 #include <string>
 
+#include <cstdlib>
+
+#include <cstdint>
+
 #include <gtest/gtest.h>
 
 #include <foc/core/machine_map_text.hpp>
@@ -140,3 +144,66 @@ TEST(MachineMapText, ASmallBufferIsReportedRatherThanTruncatingSilently) {
 }
 
 } // namespace foc
+
+TEST(MachineMapText, NineSignificantDigitsAreExactlyWhatAFloatNeedsAndEightAreNot) {
+  // The writer uses `%.9g`, and `%.9g` is not a round number picked for looks: `FLT_DECIMAL_DIG` is 9, the shortest
+  // width that is guaranteed to round-trip every finite float. The way to show that a chosen precision is the right one
+  // is to measure the alternative and watch it fail -- so both are measured here on the same deterministic samples.
+  // 写方用 `%.9g`，而 `%.9g` 不是随手挑的整齐数字：`FLT_DECIMAL_DIG` 就是 9，是保证任意有限 float 都能往返的最短宽度。
+  // 要证明选定的精度是对的，就把替代方案量出来并看它失败——所以这里在同一批确定性样本上把两者都量了。
+  const auto lcg = [](std::uint32_t& state) {
+    state = (state * 1664525U) + 1013904223U;
+    return state;
+  };
+  const auto bits_of = [](float value) {
+    std::uint32_t word = 0U;
+    std::memcpy(&word, &value, sizeof(word));
+    return word;
+  };
+  std::uint32_t state = 12345U;
+  int nine_ok = 0;
+  int nine_bad = 0;
+  int eight_ok = 0;
+  int eight_bad = 0;
+  for (int sample = 0; sample < 4000; ++sample) {
+    // A float in the range the map actually holds: millihenries, finite, non-zero.
+    // 落在表实际取值的范围里：毫亨、有限、非零。
+    const float truth = 1.0e-4F + (static_cast<float>(lcg(state) >> 8U) * 3.0e-3F / 16777216.0F);
+    // The library's own codec, one row per document: write then read, compare the bits.
+    // 用库自己的编解码，一个文档一行：写、读、比位。
+    foc::core::MachineDocument document{};
+    document.params.rs = 0.1F;
+    document.map.count = 1U;
+    document.map.rows[0].i_a = 1.0F;
+    document.map.rows[0].ld_h = truth;
+    document.map.rows[0].lq_h = truth;
+    document.map.rows[0].psi_f_wb = 0.1F;
+    char text[512]{};
+    const std::size_t used = foc::core::write_document(document, text, sizeof(text));
+    EXPECT_GT(used, 0U);
+    foc::core::MachineDocument back{};
+    foc::core::TextError error{};
+    ASSERT_TRUE(foc::core::read_document(text, used, &back, &error)) << "sample " << sample;
+    if (bits_of(back.map.rows[0].ld_h) == bits_of(truth)) {
+      ++nine_ok;
+    } else {
+      ++nine_bad;
+    }
+    // The falsifier: the same value through `%.8g` and back. One digit shorter, and the last bit is where it shows.
+    // 反证：同一个值走 `%.8g` 再回来。少一位数字，露出来的地方就是最低位。
+    char narrow[64]{};
+    (void)std::snprintf(narrow, sizeof(narrow), "%.8g", static_cast<double>(truth));
+    const float round_tripped = std::strtof(narrow, nullptr);
+    if (bits_of(round_tripped) == bits_of(truth)) {
+      ++eight_ok;
+    } else {
+      ++eight_bad;
+    }
+  }
+  // `%d` takes an int: passing a double to it is the same undefined behaviour the codec's own comment warns about.
+  // `%d` 接 int：把 double 传给它，正是编解码器自己注释里警告的那种未定义行为。
+  std::printf("[map-text] %%.9g (the writer's width): %d/%d round-trip bit-exactly\n", nine_ok, nine_ok + nine_bad);
+  std::printf("[map-text] %%.8g (one digit shorter): %d/%d round-trip bit-exactly\n", eight_ok, eight_ok + eight_bad);
+  EXPECT_EQ(0, nine_bad) << "9 significant digits must round-trip every float (FLT_DECIMAL_DIG)";
+  EXPECT_GT(eight_bad, 0) << "if 8 digits also round-tripped everything, the writer would be one digit too wide";
+}

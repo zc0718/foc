@@ -482,6 +482,51 @@
         }
       ],
       "no_effect": ""
+    },
+    {
+      "id": "O-35",
+      "date": "2026-11-03",
+      "leg": "model",
+      "capability": "The rate limiter measured as an exact step count instead of as a waveform: the number of steps a ramp needs is a ceiling, it is exact to the step, and both factors enter it one-for-one -- so a ramp schedule can be sized from the nameplate with a proportional error and no leverage.",
+      "source": "`test_limits.cpp`, three new cases. 14 (rate, period) combinations, all powers of two so the arithmetic is exact: `steps = ceil(travel/(rate*dt))` holds as an equality (32/16/8 steps for budgets 1/32, 1/16, 1/8), and the point with a budget of 2.0 for a travel of 1.0 reaches the target in one step and lands on it. Boundary side of the `min`: inside the budget the output is the target on the same call, exactly at the budget it lands on the target, one step beyond is one budget, and a non-positive period changes nothing.",
+      "reopened": [
+        {
+          "claim": "core/limits.hpp",
+          "verdict": "promoted",
+          "missing": ""
+        }
+      ],
+      "no_effect": ""
+    },
+    {
+      "id": "O-36",
+      "date": "2026-11-03",
+      "leg": "model",
+      "capability": "The map's between-row error measured against its own law: it is the chord error, it goes as the square of the spacing, it reads low, and the spacing rather than the row count is the lever that sizes a table.",
+      "source": "`test_machine_map.cpp`, one new case. Analytic saturation L0/(1+(i/ik)^2), L0=4e-4 H, ik=120 A, 60 A held as a chord centre at every spacing. Measured interpolation error 1.538e-6 / 3.630e-7 / 8.936e-8 H at spacings 40 / 20 / 10 A against the chord law 1.422e-6 / 3.556e-7 / 8.889e-8: ratios 1.082 / 1.021 / 1.005, halving ratio 4.062 against the law's 4.0. Sign checked (the chord lies below a concave curve, so the table reads low).",
+      "reopened": [
+        {
+          "claim": "core/machine_map.hpp",
+          "verdict": "promoted",
+          "missing": ""
+        }
+      ],
+      "no_effect": ""
+    },
+    {
+      "id": "O-37",
+      "date": "2026-11-03",
+      "leg": "model",
+      "capability": "The document's number width is justified by measurement rather than by taste: `%.9g` is FLT_DECIMAL_DIG, the shortest width that round-trips every float, and `%.8g` is measured failing.",
+      "source": "`test_machine_map_text.cpp`, one new case. 4000 deterministic samples (LCG) drawn from the map's own range, each written and read through the library's own codec and compared on the bits: `%.9g` 4000/4000, `%.8g` 3993/4000 -- the last bit is lost on 7 of 4000, so the falsifier for a narrower width exists and fires.",
+      "reopened": [
+        {
+          "claim": "core/machine_map_text.hpp",
+          "verdict": "promoted",
+          "missing": ""
+        }
+      ],
+      "no_effect": ""
     }
   ]
 }
