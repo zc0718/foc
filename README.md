@@ -430,6 +430,13 @@ What the table settles:
   200 rad/s unloaded but 800 rad/s with `i_d = -1 A`. The same current at 3200 rad/s costs 0.0291 rad. Saliency is not
   a screening axis at all -- at `i_d = 0` a 2.5x change in `Lq/Ld` moves the shipping observer by 16 % and `NLFO` not at
   all, because the model error is `(Ld - Lq)*i_d`.
+* **This rig cannot separate the two observer families, and that is recorded as a negative result.** A fourth
+  column was measured for `DualInductanceObserver` on the same switching rig (`Lq/Ld = 2.5`, 800 rad/s): at
+  `i_d = -2 A` it reads 0.1699 rad against the single-`L` 0.1708, while the model difference between them is
+  0.105 rad. A few tenths of a volt of dead time is already 0.1 rad of flux angle at this `psi_f`, so both columns
+  are measuring the inverter. The separation is measured on the plant instead (see the row for
+  `dual_inductance_observer.hpp`), and no other column in this table should be read as if the rig were finer than
+  it is.
 * **The `i_d` limit is the single-`L` model's, not MTPA's.** On the same plant with `Lq/Ld = 3` the single-`L`
   bias is `atan((Ld - Lq)*i_d/psi_f)` -- 0.0273 / 0.0433 / 0.0604 / 0.0773 / 0.0939 rad at `i_d` = -0.5 to
   -2.5 A against the law's 0.0210 / 0.0420 / 0.0629 / 0.0838 / 0.1046 -- and it does not fade with speed, while

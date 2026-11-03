@@ -557,6 +557,15 @@
         }
       ],
       "no_effect": ""
+    },
+    {
+      "id": "O-40",
+      "date": "2026-11-03",
+      "leg": "model",
+      "capability": "A negative result recorded instead of a column that flatters: the observer screening table cannot separate the dual-inductance observer from the single-L one, because at this flux linkage the inverter's dead time is the same size as the model difference. What the table can and cannot see is now stated.",
+      "source": "`test_observer_screening.cpp`, one new case. `Lq/Ld = 2.5`, 800 rad/s, `iq = 0.5 A`: at `i_d` = 0 / -0.5 / -1 / -2 A the single-L observer reads 0.0253 / 0.0678 / 0.1240 / 0.1708 rad and the dual-inductance one 0.0197 / 0.0579 / 0.1217 / 0.1699, i.e. the same number to 2 % where the models differ by 0.105 rad (the bias law of `test_dual_inductance_observer.cpp`). The assertion is written both ways: both stay outside the 0.15 rad ceiling at 2 A, and the two must not separate -- if they ever do, the instrument changed and the table has to be retaken.",
+      "reopened": [],
+      "no_effect": "The screening table's existing columns are unchanged; this adds what it cannot resolve, not a new verdict about the observers. `MtpaReference x DualInductanceObserver` remains `allow` on the plant measurement, not on this rig."
     }
   ]
 }

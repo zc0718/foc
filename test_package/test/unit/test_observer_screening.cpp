@@ -21,6 +21,7 @@
 #include <gtest/gtest.h>
 
 #include <foc/core/observer/back_emf_observer.hpp>
+#include <foc/core/observer/dual_inductance_observer.hpp>
 #include <foc/core/observer/nonlinear_flux_observer.hpp>
 
 #include "sil_bench.hpp"
@@ -66,6 +67,24 @@ auto back_emf_error(const foc::sil::MachineSpec &spec, float omega_e, float id_a
 auto nlfo_error(const foc::sil::MachineSpec &spec, float omega_e, float id_a) -> float {
     foc::core::NonlinearFluxObserver observer(foc::core::NonlinearFluxObserver::Config{
         1.05F * spec.rs, spec.lq, psi_f_of(spec), 0.3F, 3.0F, 0.5F * psi_f_of(spec)});
+    observer.seed_flux(foc::core::Ab<float>{psi_f_of(spec), 0.0F});
+    foc::sil::SwitchingRigConfig config{};
+    config.spec = spec;
+    config.omega_e = omega_e;
+    config.iq_a = kIqA;
+    config.id_a = id_a;
+    return foc::sil::run_switched(config, [&observer](foc::sil::SwitchingRig &rig) {
+        return observer.update(rig.command(), rig.current(), foc::sil::SwitchingRig::kControlPeriod);
+    });
+}
+
+/**
+ * @brief [en] Angle error of the dual-inductance observer: both inductances, no `i_d` term in its model.
+ * @brief [zh] 双电感观测器的角度误差：两个电感都带，模型里没有 `i_d` 项。
+ */
+auto dual_l_error(const foc::sil::MachineSpec &spec, float omega_e, float id_a) -> float {
+    foc::core::DualInductanceObserver observer(
+        foc::core::DualInductanceObserver::Config{spec.rs, spec.ld, spec.lq, psi_f_of(spec)});
     observer.seed_flux(foc::core::Ab<float>{psi_f_of(spec), 0.0F});
     foc::sil::SwitchingRigConfig config{};
     config.spec = spec;
@@ -155,3 +174,45 @@ TEST(ObserverScreening, SaliencyIsNotAScreeningAxisWhenTheDaxisCurrentIsZero) {
     // Flat within a few percent across a 2.5x change of saliency: there is no trend, which is the point.
     EXPECT_LT(std::fabs(last - first), 0.20F * first) << "a trend with saliency would contradict the arithmetic";
 }
+
+TEST(ObserverScreening, TheSwitchingRigCannotSeparateTheDualInductanceObserverFromTheSingleLOne) {
+  // The column that was tried for this table. The premise was that the dual-inductance observer would show its worth on a
+  // salient machine with d-axis current; measured here it does **not**, and the reason is the instrument rather than the
+  // observer: at 2 A the single-`L` observer reads 0.1708 rad and the dual-inductance one 0.1699, while the model
+  // difference between them is 0.105 rad (the bias law of `test_dual_inductance_observer.cpp`). A few tenths of a volt of
+  // dead time is already 0.1 rad of flux angle at this `psi_f`, so on this rig both columns are measuring the inverter.
+  // That is worth recording as a negative result: the screening table cannot separate these two observers, and nothing in
+  // the table's other columns should be read as if it could. The separation needs the plant measurement.
+  // 为这张表试过的那一列。前提是双电感观测器会在带 d 轴电流的凸极机上显出价值；在这里量**并没有**，而原因是仪器不是观测器：
+  // 2 A 时单 `L` 读 0.1708 rad、双电感 0.1699，而两者模型上的差是 0.105 rad（`test_dual_inductance_observer.cpp` 的偏置定
+  // 律）。这个 `psi_f` 下几百毫伏的死区就已经是 0.1 rad 磁链角，所以在这台架子上两列都在量逆变器。这个否定结果值得记下：本
+  // 筛选表分不开这两个观测器，表里其它列也不该被读成它分得开。要分离得靠 plant 测量。
+  const foc::sil::MachineSpec spec = spec_with_ratio(2.5F);
+  std::printf("\n[screening] Lq/Ld = 2.5, iq = %.1f A, 800 rad/s: who survives d-axis current\n",
+              static_cast<double>(kIqA));
+  std::printf("%10s %12s %12s %12s\n", "i_d A", "BackEmf", "NLFO", "Dual-L");
+  float dual_loaded = 0.0F;
+  float back_emf_loaded = 0.0F;
+  for (const float id : {0.0F, -0.5F, -1.0F, -2.0F}) {
+    const float back_emf = back_emf_error(spec, 800.0F, id);
+    const float nlfo = nlfo_error(spec, 800.0F, id);
+    const float dual = dual_l_error(spec, 800.0F, id);
+    std::printf("%10.2f %12.4f %12.4f %12.4f\n", static_cast<double>(id), static_cast<double>(back_emf),
+                static_cast<double>(nlfo), static_cast<double>(dual));
+    EXPECT_GT(back_emf, back_emf_loaded) << "the single-L error must grow with i_d, or this table is not measuring it";
+    back_emf_loaded = back_emf;
+    if (id < -1.5F) {
+      dual_loaded = dual;
+    }
+  }
+  std::printf("[screening] at i_d = -2 A: BackEmf %.4f rad, Dual-L %.4f rad -- the rig cannot separate them\n",
+              static_cast<double>(back_emf_loaded), static_cast<double>(dual_loaded));
+  // What the rig does show: both are outside the ceiling, and they are the same number to two percent. The second half is
+  // the finding -- if these two columns ever *do* separate on this rig, the instrument changed and the table has to be
+  // retaken.
+  // 台架能显示的：两者都在天花板之外，且到 2% 之内是同一个数。后半句才是结论——如果这两列哪天在这台架子上真的分开了，说明
+  // 仪器变了，整张表要重测。
+  EXPECT_GT(back_emf_loaded, kCeilingRad) << "the single-L observer must be outside the ceiling here";
+  EXPECT_NEAR(back_emf_loaded, dual_loaded, 0.02F) << "the rig separated them: the instrument changed";
+}
+
