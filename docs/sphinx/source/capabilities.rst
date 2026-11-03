@@ -188,8 +188,8 @@ point -- the alternative is a library that grows algorithms and forgets how they
    * - ``core/observer/dual_inductance_observer.hpp``
      - ``state()``, ``flux()``, ``root_gap_rad()`` -- the last is a diagnostic and not an estimate: it says how far
        apart the two rotor positions consistent with the measured flux and current are.
-     - na -- ``ld``, ``lq`` and ``psi_f`` all arrive together through ``apply_params()``; there is no "which
-       inductance" choice to contradict, which is the whole difference from the back-EMF observer.
+     - ``FluxSource::Corrected`` is admitted only with ``correction_gain`` in (0, 1]; ``Integrator`` never reads the
+       gain, so leaving it at zero is not refused for a value it does not use.
      - none -- measured, and the hole closes the other way round: the second root of the quadratic is never a rotor
        position (modulus 20 to 68 against 1 across `i_d` = -0.5 to -2.5 A, its angle pi away), so there is no physical
        branch for continuity to pick wrongly; and a seed no angle explains is *not* corrected -- 0.1128 rad after one

@@ -66,7 +66,7 @@ nowhere in `include/` or `src/`, fails the build, because a decayed graph return
 that is worse than returning nothing. It caught two while being filled -- `src/core/protection.hpp`, which is a header,
 and three entries that resolved to nothing.
 
-One answer worth knowing before the next wave: **33 of the 41 claims rest on `core/types.hpp`**. That is not a surprise,
+One answer worth knowing before the next wave: **155 of the 168 claims rest on `core/types.hpp`**. That is not a surprise,
 and it is the reason a change to the value layer is not a small change no matter how mechanical it looks.
 
 The log
@@ -3025,6 +3025,33 @@ The log
        construction.** A floor subtracted from a table is an assumption with a number next to it; a floor measured at
        zero current is the instrument answering a question whose true answer is known.
      - ``pending``
+   * - F-109
+     - F
+     - **Four gates had never run in CI, and the workflow's gate list was a second copy of the gate set.**
+       `clocks`, `observability`, `combinations` and `domain` were each implemented, registered in `PROJECT_GATES`,
+       given a dispatch branch in `gates.py`, and documented -- and the only workflow that runs project gates
+       enumerates gate names by hand and stopped at `budget`. So they ran when a human typed them and never
+       otherwise. Two of the four carry this session's evidence chain (`observability`, `combinations`), and one
+       guards the F-105 timeout rule.
+     - Surfaced by asking "does CI actually run the gate I just added" during a records-vs-implementation check:
+       the records were consistent, and the wiring was not. What would have shown it first is a comparison inside
+       `ci-policy`, which already knows the gate set -- it prints the local-only exclusions -- but never compares
+       it with what the workflows actually enumerate. That comparison is now written into the workflow as a
+       comment, and the loop carries every non-local gate.
+     - Blast radius: no claim moved, because every one of the four was green locally; what was missing was the
+       enforcement, not the check. Re-run: the widened loop, fifteen gates green on the runner, and `ci-policy`
+       still refuses the five whose cost belongs on a developer machine (`fmu`, `mcdc`, `mutants`, `pil`,
+       `plantref`).
+
+       Third instance in one day of the same shape: **a second copy of a set that is not derived from the set.**
+       The first was `foc_motor_set_observer`'s upper bound saying `FOC_OBSERVER_BLENDED` instead of the last
+       enumerator, so a new mode was refused; the second was the bilingual note pair in `foc_types.h` where the
+       Chinese half had been false for several releases while the English half was right; this is the third. The
+       rule they produce: when a set already exists somewhere, the consumer must derive from it or a gate must
+       compare the two, because a hand-maintained list of "everything" fails silently and the failure looks like
+       success.
+     - ``pending``
+
 
 
 What ``pending`` means in the commit column

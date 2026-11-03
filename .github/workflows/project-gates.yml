@@ -40,7 +40,14 @@ jobs:
       - name: Project gates
         run: |
           failed=0
-          for gate in license strict claims docs boundaries capabilities ci-policy assume anchor scaffold budget; do
+          # The list is the whole gate set a machine without conan can run, and it was four short: `clocks`,
+          # `observability`, `combinations` and `domain` were written, wired into `gates.py`, and then never run by
+          # any workflow -- a gate nobody's CI runs is prose. Adding a gate now means adding it here as well as to
+          # `PROJECT_GATES`; `ci-policy` still refuses the ones whose cost belongs on a developer machine.
+          # 这个列表是「没有 conan 的机器能跑的全部门禁」，而它少了四个：`clocks`、`observability`、`combinations`、`domain`
+          # 都写了、也接进了 `gates.py`，却从没被任何工作流跑过——没人 CI 跑的门禁就是散文。现在加一个门禁，就要同时加到
+          # `PROJECT_GATES` 与这里；而 `ci-policy` 仍然拒绝那些开销属于开发者机器的门禁。
+          for gate in license strict claims docs boundaries capabilities ci-policy assume anchor scaffold budget clocks observability combinations domain; do
             echo "::group::$gate"
             python3 .github/project/gates.py "$gate" || failed=1
             echo "::endgroup::"
