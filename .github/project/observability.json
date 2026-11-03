@@ -581,6 +581,21 @@
         }
       ],
       "no_effect": "`MtpaReference x DualInductanceObserver` stays `allow`: nothing here changed the pairing, only what can be observed about it. The `Ld`-acts-on-the-radius result is a statement about this observer's algebra and not about a controller."
+    },
+    {
+      "id": "O-42",
+      "date": "2026-11-03",
+      "leg": "model",
+      "capability": "The one `method=` this class should have: `FluxSource::{Integrator, Corrected}`. Same interface, same inputs, and the options are measured to fail differently -- the only reason to ship a switch at all.",
+      "source": "`test_dual_inductance_observer.cpp`, one new case, 2 s at 200 rad/s on the speed-locked plant. With the machine's own `Rs`: integrator 0.019895 rad against corrected 0.002580 (7.71x better, from the accumulated numerical error of a 40 000-step integration). With `Rs` 20 % high: integrator 0.167421 against corrected 3.079977 (18.4x worse) -- the projection locks onto a self-consistent but wrong state. Both predictions made before measuring were wrong and are recorded in the case: the correction is not a no-op when the nameplate is exact, and it does not help under a nameplate error.",
+      "reopened": [
+        {
+          "claim": "core/observer/dual_inductance_observer.hpp",
+          "verdict": "promoted",
+          "missing": ""
+        }
+      ],
+      "no_effect": "The default is unchanged (`Integrator`), so no existing caller moves; `MtpaReference x DualInductanceObserver` stays `allow` on the same plant measurement."
     }
   ]
 }

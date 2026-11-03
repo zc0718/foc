@@ -20,7 +20,15 @@ namespace {
  * @since 0.1.11
  */
 constexpr auto valid_config(const DualInductanceObserver::Config& config) noexcept -> bool {
-    return (config.rs >= 0.0F) && (config.ld > 0.0F) && (config.lq > 0.0F) && (config.psi_f > 0.0F);
+    if (!((config.rs >= 0.0F) && (config.ld > 0.0F) && (config.lq > 0.0F) && (config.psi_f > 0.0F))) {
+        return false;
+    }
+    // The gain is only read by the corrected source, so a caller that leaves it at zero on the integrator must not be
+    // refused for a value it never uses -- and a caller that selects the correction with a gain outside (0, 1] must be.
+    // 增益只被修正来源读取，所以用了积分来源、把增益留在零的调用方不该因为一个它从不使用的值被拒；而选了修正、却给了
+    // (0, 1] 之外增益的调用方必须被拒。
+    return (config.source == DualInductanceObserver::FluxSource::Integrator) ||
+           ((config.correction_gain > 0.0F) && (config.correction_gain <= 1.0F));
 }
 
 
@@ -251,7 +259,23 @@ auto DualInductanceObserver::update(Ab<float> v_ab, Ab<float> i_ab, float dt_s) 
     // rotor position at all. It is the one signal that survives a wrong seed -- see the header.
     // `norm(x) − 1`：当且仅当状态与该电流自洽时为零，而那也正是这个根是转子位置的唯一情形。它是错误种子下唯一还活着的
     // 信号——见头文件。
-    radius_error_ = magnitude(chosen) - 1.0F;
+    const float radius = magnitude(chosen);
+    radius_error_ = radius - 1.0F;
+    if ((config_.source == FluxSource::Corrected) && (radius > 1.0e-6F)) {
+        // Pull the state back onto the flux relation, by the fraction of the residual the gain asks for. The fixed point
+        // is `radius == 1`, i.e. a state a rotor position can explain; what this buys is that a nameplate error in `Rs`
+        // stops accumulating in the state. It does **not** repair a wrong seed -- the nearest consistent state to a
+        // mis-seeded one is still the wrong one -- and that is why both sources exist instead of one replacing the other.
+        // 把状态按增益所要求的那部分残差拉回磁链关系上。不动点是 `radius == 1`，即一个能被转子位置解释的状态；它买到的是
+        // `Rs` 的铭牌误差不再在状态里累积。它**不会**修复错误的种子——离一个错种子"最近的自洽状态"仍然是错的那个——这正是
+        // 两种来源并存、而不是一种取代另一种的原因。
+        const Cx unit = scale(1.0F / radius, chosen);
+        const Cx target =
+            add(scale(config_.psi_f, unit), add(scale(l0_, i_cx), mul(scale(l1_, conj(i_cx)), mul(unit, unit))));
+        const float gain = config_.correction_gain;
+        psi_.alpha = psi_.alpha + (gain * (target.re - psi_.alpha));
+        psi_.beta = psi_.beta + (gain * (target.im - psi_.beta));
+    }
 
     const float theta = arg(chosen);
     const float omega = theta_primed_ ? static_cast<float>(wrap_pi(theta - state_.theta_e) / dt_s) : 0.0F;

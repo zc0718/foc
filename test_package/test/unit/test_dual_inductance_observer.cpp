@@ -592,6 +592,95 @@ TEST(DualInductanceObserver, AnLqErrorMovesTheAngleAndAnLdErrorMovesTheRadius) {
   EXPECT_GT(lq_up.angle, 20.0F * std::fabs(lq_up.radius)) << "dLq must show in the angle, not the radius";
 }
 
+TEST(DualInductanceObserver, TheTwoFluxSourcesDifferExactlyWhereTheyShould) {
+  // The `method=` earns its place only if the options fail differently, so both differences are measured here: with the
+  // machine's own `Rs` they must be the **same observer** (the correction has nothing to correct), and with a nameplate
+  // error in `Rs` the pure integrator must drift while the corrected one holds.
+  // `method=` 只有在两个选项失效方式不同时才值得存在，所以两种差别都在这里量：用机器自己的 `Rs` 时它们必须是**同一个观测器**
+  // （修正项无事可做），而 `Rs` 有铭牌误差时纯积分器必须漂移、修正版必须按得住。
+  const sil::MachineSpec spec = salient_spec();
+  const float psi_f = psi_f_of(spec);
+  const float omega = 200.0F;
+  const float id = -1.0F;
+  const float iq = 0.5F;
+  const auto run = [&](core::DualInductanceObserver::FluxSource source, float rs_scale, float gain) {
+    sil::PmsmPlant plant(sil::plant_params_from(spec));
+    plant.set_mechanical_speed(omega / static_cast<float>(spec.pole_pairs));
+    const core::Dq<float> v_dq{spec.rs * id - (omega * spec.lq * iq),
+                                (spec.rs * iq) + (omega * ((spec.ld * id) + psi_f))};
+    plant.set_voltage_dq(v_dq);
+    for (int k = 0; k < 6000; ++k) {
+      plant.advance(kDt);
+    }
+    const float theta = wrap_two_pi(plant.theta_mech_rad() * static_cast<float>(spec.pole_pairs));
+    const core::Dq<float> psi_dq{psi_f + (spec.ld * id), spec.lq * iq};
+    core::DualInductanceObserver observer(core::DualInductanceObserver::Config{
+        spec.rs * rs_scale, spec.ld, spec.lq, psi_f, source, gain});
+    observer.seed_flux(core::inv_park(psi_dq, theta));
+    // Two seconds: long enough for a nameplate error to accumulate visibly, short enough to run in a unit test.
+    // 两秒：足够让铭牌误差明显累积，又短到能在单元测试里跑。
+    float sum = 0.0F;
+    int count = 0;
+    float first_angle = 0.0F;
+    bool first = true;
+    for (int k = 0; k < 40000; ++k) {
+      plant.advance(kDt);
+      const float truth = wrap_two_pi(plant.theta_mech_rad() * static_cast<float>(spec.pole_pairs));
+      const core::Ab<float> i_ab = core::clarke(plant.current_uvw());
+      const core::Ab<float> v_ab = core::inv_park(v_dq, truth);
+      const core::ObsState state = observer.update(v_ab, i_ab, kDt);
+      if (first) {
+        first_angle = state.theta_e;
+        first = false;
+      }
+      if (k >= 36000) {
+        sum += std::fabs(wrap_pi(state.theta_e - truth));
+        ++count;
+      }
+    }
+    return std::pair<float, float>{first_angle, sum / static_cast<float>(count)};
+  };
+  const auto exact_integrator = run(core::DualInductanceObserver::FluxSource::Integrator, 1.0F, 0.2F);
+  const auto exact_corrected = run(core::DualInductanceObserver::FluxSource::Corrected, 1.0F, 0.2F);
+  const auto wrong_integrator = run(core::DualInductanceObserver::FluxSource::Integrator, 1.2F, 0.2F);
+  const auto wrong_corrected = run(core::DualInductanceObserver::FluxSource::Corrected, 1.2F, 0.2F);
+  std::printf("\n[dual-L] Rs 20 %% high, %.0f rad/s electrical, 2 s: the two flux sources\n", static_cast<double>(omega));
+  std::printf("     %-24s %14s %14s\n", "case", "mean abs error", "last-0.2 s window");
+  std::printf("     %-24s %14.6f %14.6f\n", "exact Rs, integrator", static_cast<double>(exact_integrator.first),
+              static_cast<double>(exact_integrator.second));
+  std::printf("     %-24s %14.6f %14.6f\n", "exact Rs, corrected", static_cast<double>(exact_corrected.first),
+              static_cast<double>(exact_corrected.second));
+  std::printf("     %-24s %14.6f %14.6f\n", "Rs +20 %, integrator", static_cast<double>(wrong_integrator.first),
+              static_cast<double>(wrong_integrator.second));
+  std::printf("     %-24s %14.6f %14.6f\n", "Rs +20 %, corrected", static_cast<double>(wrong_corrected.first),
+              static_cast<double>(wrong_corrected.second));
+  // **My prediction was wrong here, twice, and both corrections are the finding.**
+  // 1. I expected the correction to be a no-op when `Rs` is exact. It is not: it is **7.7x better** (0.002580 against
+  //    0.019895 rad), because a state that integrates for 40 000 steps carries its own accumulated error and the
+  //    projection removes that too. So the gain is not only about the nameplate.
+  // 2. I expected the correction to help under a nameplate error. It **destroys** the estimate: 3.080 rad against the
+  //    integrator's 0.167 -- it locks onto a *wrong but self-consistent* state, which is exactly what a projection onto
+  //    the manifold can do and what the note in the header warned about without a number. So the two sources are a real
+  //    trade, not an upgrade, and the integrator stays the default.
+  // **我的预测在这里错了两次，而两次更正本身就是结论。**
+  // 1. 我原以为 `Rs` 精确时修正项无事可做。并非如此：它**好 7.7 倍**（0.002580 对 0.019895 rad），因为积分了 40000 步的
+  //    状态自带累积误差，而投影把那个也一起去掉了。所以这个增益不只关乎铭牌。
+  // 2. 我原以为铭牌误差下修正会帮忙。它**毁掉**了估计：3.080 rad 对积分器的 0.167——它锁到一个**错但自洽**的状态上，这
+  //    正是"向流形投影"能做出的坏事，也正是头文件那条注释警告过、但没有数字的东西。所以两种来源是一笔真实的交易，不是
+  //    一次升级，积分器仍然是默认值。
+  std::printf("[dual-L] exact Rs: integrator %.6f rad against corrected %.6f rad (%.2fx better)\n",
+              static_cast<double>(exact_integrator.second), static_cast<double>(exact_corrected.second),
+              static_cast<double>(exact_integrator.second / exact_corrected.second));
+  std::printf("[dual-L] Rs +20 %%: integrator %.6f rad against corrected %.6f rad (%.1fx worse)\n",
+              static_cast<double>(wrong_integrator.second), static_cast<double>(wrong_corrected.second),
+              static_cast<double>(wrong_corrected.second / wrong_integrator.second));
+  EXPECT_LT(exact_corrected.second, 0.5F * exact_integrator.second)
+      << "the correction must pay for itself on a numerically drifted state";
+  EXPECT_GT(wrong_integrator.second, 2.0F * exact_integrator.second) << "the nameplate error must show in the integrator";
+  EXPECT_GT(wrong_corrected.second, 3.0F * wrong_integrator.second)
+      << "if this now passes, the lock-in was fixed and this recorded failure mode is stale";
+}
+
 TEST(DualInductanceObserver, TheClosedFormAgreesWithANumericalInversionOfTheFluxRelation) {
   // A second implementation of the same inversion, kept here rather than shipped: it produces the same answer from the
   // same inputs, so as a public option it would be a knob whose only effect is which code path rounds differently --

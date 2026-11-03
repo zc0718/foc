@@ -80,11 +80,41 @@ class DualInductanceObserver final {
      * @brief [zh] 电气参数：两个电感分开保留，转子磁链显式给出。
      * @since 0.1.11
      */
+    /**
+     * @brief [en] Where the flux state comes from -- the one choice on this class that changes *behaviour*.
+     * @brief [zh] 磁链状态从哪来——本类上唯一改变**行为**的选择。
+     * @note [en] Both options integrate `v - Rs*i`; what differs is whether the state is pulled back onto the flux
+     *            relation that the algebra is about to invert. `Integrator` leaves it alone, so a nameplate error in
+     *            `Rs` accumulates in the state for as long as the drive runs. `Corrected` closes a loop on the residual
+     *            and holds the state on the manifold, at the cost of one gain. This is the shape a `method=` should
+     *            have: **Measured both ways**: with the machine's own `Rs` the corrected source is 7.71x better
+     *            (0.002580 against 0.019895 rad over 2 s at 200 rad/s), because a state that integrates for forty
+     *            thousand steps carries its own numerical error; with `Rs` 20 % high it is 18.4x **worse** (3.080
+     *            against 0.167 rad) -- it locks onto a self-consistent state that is wrong, which is what a projection
+     *            onto the manifold can do. So the trade is real and the integrator stays the default. same interface,
+     *            same inputs, **different failure modes** (see the note on the class for why the other candidate -- a
+     *            second inversion -- is not shipped).
+     * @note [zh] 两个选项都积分 `v − Rs·i`；差别在于是否把状态拉回到代数即将反解的那个磁链关系上。`Integrator` 不管它，
+     *            于是 `Rs` 的铭牌误差会随运行时间在状态里累积。`Corrected` 在残差上闭合一个环、把状态按住在流形上，代价
+     *            是一个增益。这才是 `method=` 该有的形状：同接口、同输入、**失效模式不同**（另一个候选——第二种反解—— 为
+     *            什么不发布，见类上的注释）。
+     * @since 0.1.11
+     */
+    enum class FluxSource : std::uint8_t {
+        Integrator =
+            0, ///< [en] pure `integral(v - Rs*i)`: exact, seeded, and it never forgets a bad seed. [zh] 纯积分：精确、需播种，且永不忘记坏种子。
+        Corrected =
+            1, ///< [en] the same integral, pulled back onto the flux relation each step. [zh] 同一个积分，但每步被拉回磁链关系上。
+    };
+
     struct Config final {
-        float rs;    ///< [en] stator resistance in ohm, >= 0. [zh] 定子电阻，Ω，>= 0。
-        float ld;    ///< [en] d-axis inductance in H, > 0. [zh] d 轴电感，H，> 0。
-        float lq;    ///< [en] q-axis inductance in H, > 0. [zh] q 轴电感，H，> 0。
-        float psi_f; ///< [en] rotor flux linkage in Wb, > 0. [zh] 转子磁链，Wb，> 0。
+        float rs;                                  ///< [en] stator resistance in ohm, >= 0. [zh] 定子电阻，Ω，>= 0。
+        float ld;                                  ///< [en] d-axis inductance in H, > 0. [zh] d 轴电感，H，> 0。
+        float lq;                                  ///< [en] q-axis inductance in H, > 0. [zh] q 轴电感，H，> 0。
+        float psi_f;                               ///< [en] rotor flux linkage in Wb, > 0. [zh] 转子磁链，Wb，> 0。
+        FluxSource source{FluxSource::Integrator}; ///< [en] see FluxSource. [zh] 见 FluxSource。
+        float correction_gain{
+            0.2F}; ///< [en] fraction of the residual removed per step, (0, 1]; unused by `Integrator`. [zh] 每步消掉的残差比例，(0, 1]；`Integrator` 不用。
     };
 
     /**
@@ -191,6 +221,13 @@ class DualInductanceObserver final {
      * @since 0.1.11
      */
     [[nodiscard]] auto flux() const noexcept -> Ab<float>;
+
+    /**
+     * @brief [en] Which flux source this instance runs, as configured.
+     * @brief [zh] 这个实例跑的是哪种磁链来源（按配置）。
+     * @since 0.1.11
+     */
+    [[nodiscard]] auto source() const noexcept -> FluxSource { return config_.source; }
 
     /**
      * @brief [en] How the last step chose between the two roots of the quadratic.
