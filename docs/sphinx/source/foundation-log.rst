@@ -3002,12 +3002,36 @@ The log
        check with information in it is a graph property computed from the *measured* relation -- reachability, sinks,
        degrees -- because those are the things a reader of the prose is actually relying on.
      - ``pending``
+   * - A-109
+     - A
+     - **The first instrument for the saliency bias could not see it, and the negative result read like a finding about
+       the code.** Measuring the new `DualInductanceObserver` against the shipped single-`L` observer on the switching
+       rig gave 0.13 to 0.15 rad for *both* of them at every d-axis current -- i.e. "the dual-inductance observer is
+       useless" -- while the algebra says the whole difference is a closed form. At `psi_f = 4.76 mWb` the 800 rad/s
+       back-EMF is 3.8 V, so a few tenths of a volt of dead-time volt-seconds is already 0.1 rad of flux angle: the
+       impairment was the size of the effect and common to both observers, so it cancelled nothing and buried
+       everything.
+     - Surfaced by a **zero-current probe**. With no current neither model has a saliency term to neglect, so whatever
+       both still report is the instrument itself: 0.0024 / 0.0096 / 0.0196 rad at 100 / 400 / 800 rad/s, which is
+       `w_e*dt/2`, the backward-Euler lag of the flux integrator, and the line goes through all three points. What would
+       have shown it first is that same probe **before** the effect was measured -- it is one loop and it costs a second.
+     - Blast radius: no existing claim moved, because the wrong reading was never written down; the new row
+       (`core/observer/dual_inductance_observer.hpp`) and O-38 are its only consumers. The table was retaken on a
+       speed-locked plant driven by the exact steady-state d-q voltage at 100 rad/s, where `w_e*dt/2` is 0.0025 rad and
+       the bias under test is 0.021 to 0.105 rad, and the 800 rad/s runs are recorded inside the test as *not usable*
+       rather than quoted. Re-run: `test_dual_inductance_observer.cpp`, 5 cases green.
+
+       The rule this produces: **measure the floor before the effect, and measure it where the effect is zero by
+       construction.** A floor subtracted from a table is an assumption with a number next to it; a floor measured at
+       zero current is the instrument answering a question whose true answer is known.
+     - ``pending``
+
 
 What ``pending`` means in the commit column
 -------------------------------------------
 
 A row cannot cite the hash of the commit that contains it, and these rows are written in the same commit as the fix, so
-a hundred and fifty of the hundred and sixty-three say ``pending``. Both counts are grepped from the table, not counted by hand -- the previous version of this sentence was two rows out, which is exactly the kind of number that goes stale while reading as a fact, and it had gone stale again before this line was corrected again. That is a convention and it was, until this paragraph, an unstated one --
+154 of the 167 say ``pending``. Both counts are grepped from the table, not counted by hand -- the previous version of this sentence was two rows out, which is exactly the kind of number that goes stale while reading as a fact, and it had gone stale again before this line was corrected again. That is a convention and it was, until this paragraph, an unstated one --
 which is the same defect the rows themselves are about. The row is recoverable rather than lost:
 
 .. code-block:: console
