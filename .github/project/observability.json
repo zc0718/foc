@@ -349,6 +349,21 @@
         }
       ],
       "no_effect": ""
+    },
+    {
+      "id": "O-25",
+      "date": "2026-11-03",
+      "leg": "model",
+      "capability": "The gain law's own error budget, and the asymmetry inside it: it cancels the mechanical pole exactly in continuous time, and on a sampled loop with an ideal current source it lands within 3.5 % of the request across a decade of bandwidth -- but of the two nameplate terms only the inertia moves the bandwidth, one for one. That is the number a commissioning run needs (fit J before b), and it is also what bounds how much of step_metrics' +9.15 % this row can be blamed for: none of it.",
+      "source": "`test_motor.cpp`, one new case. The -3 dB is found by bisection on the amplitude gain of the sampled loop (20 kHz, ideal current loop, torque = kt*i in the same period) at 50/100/200/400 rad/s: ratios 1.02516/1.02661/1.02948/1.03462, residual tracking `wb*dt`. Inertia error -20/20/50 %: 0.7991/1.2012/1.5044 of the clean row -- one for one. Friction error -50/+50/+200 % at a non-negligible `b = 1e-3`: coefficient 0.0537/0.0543/0.0523 per unit, 18x below inertia. The first version of the friction block scaled `b` *down* by 1e-3 and measured an exact zero, which proved only that a negligible term is negligible; that experiment was replaced rather than reported.",
+      "reopened": [
+        {
+          "claim": "motor/motor_config.hpp",
+          "verdict": "promoted",
+          "missing": ""
+        }
+      ],
+      "no_effect": ""
     }
   ]
 }

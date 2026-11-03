@@ -1016,3 +1016,164 @@ TEST(Motor, AScalingRequestTheSlotCannotDeliverIsReportedNotIgnored) {
     EXPECT_EQ(foc::ErrorCode::NotImpl, motor.tick(kDt));
     EXPECT_EQ(foc::core::MotorState::Run, motor.state()) << "not latched";
 }
+
+
+namespace {
+
+constexpr float kGainDt = 5e-5F; ///< 20 kHz, the rate the tuning is used at
+
+/**
+ * @brief [en] Amplitude gain of the sampled speed loop at frequency `f`, with an ideal current loop.
+ *
+ * @brief [zh] 采样速度环在频率 `f` 处的幅值增益，电流环视为理想。
+ *
+ *     `j_hat`/`b_hat` go into the gains and `j_true`/`b_true` into the machine, which is the whole point: a nameplate
+ *     error is exactly the difference between those two pairs. The current loop is skipped (torque = kt*i in the same
+ *     period), so whatever this measures belongs to the **speed** law and not to a cascade.
+ *
+ *     `j_hat`/`b_hat` 进增益、`j_true`/`b_true` 进机器，这正是要点：铭牌误差就是这两对参数之差。电流环被跳过（力矩在同
+ *     一周期内就是 kt·i），所以这里量到的一切属于**速度**律而不属于任何级联。
+ */
+auto speed_loop_gain(float bandwidth_rad_s, float j_true, float b_true, float j_hat, float b_hat, float kt, double f_hz,
+                     bool with_ki) -> double {
+    foc::motor::MotorConfig config{0.5F, 4.0e-4F, 8.0e-4F, kt, j_hat, b_hat, 4U, 3.0F, 20000.0F, 500.0F};
+    foc::core::Pi::Config pi_config = foc::speed_pi_config(config, bandwidth_rad_s);
+    if (!with_ki) {
+        pi_config.ki = 0.0F;
+    }
+    foc::core::Pi pi(pi_config);
+    const auto settle = static_cast<int>((40.0 / f_hz) / kGainDt);
+    const auto measure = static_cast<int>((20.0 / f_hz) / kGainDt);
+    float omega = 0.0F;
+    double sum_squares = 0.0;
+    int counted = 0;
+    for (int k = 0; k < (settle + measure); ++k) {
+        const auto t = static_cast<float>(k) * kGainDt;
+        const auto command = static_cast<float>(std::sin(f_hz * static_cast<double>(t)));
+        const float current = pi.step(command, omega, kGainDt);
+        omega += (((kt * current) - (b_true * omega)) / j_true) * kGainDt;
+        if (k >= settle) {
+            sum_squares += static_cast<double>(omega) * omega;
+            ++counted;
+        }
+    }
+    const double rms_out = std::sqrt(sum_squares / static_cast<double>(counted));
+    return rms_out / 0.7071067811865476; // the command is a unit sine
+}
+
+/**
+ * @brief [en] The frequency where the loop's amplitude gain crosses `1/sqrt(2)`, as a multiple of the requested
+ *             bandwidth.
+ *
+ * @brief [zh] 环路幅值增益越过 `1/√2` 的频率，以请求带宽的倍数表示。
+ *
+ *     Bisection, not a sweep: the gain is monotone in frequency, so the crossing can be located to any precision and
+ *     the case does not have to argue about which grid point was closest.
+ *
+ *     二分而不是扫描：增益对频率单调，所以穿越点能定位到任意精度，用例不必为"哪个栅格点最近"争论。
+ */
+auto minus3db_over_requested(float bandwidth_rad_s, float j_true, float b_true, float j_hat, float b_hat, float kt)
+    -> double {
+    const double target = 0.7071067811865476;
+    double low = 0.05 * static_cast<double>(bandwidth_rad_s);
+    double high = 8.0 * static_cast<double>(bandwidth_rad_s);
+    for (int i = 0; i < 40; ++i) {
+        const double mid = std::sqrt(low * high);
+        if (speed_loop_gain(bandwidth_rad_s, j_true, b_true, j_hat, b_hat, kt, mid, true) >= target) {
+            low = mid;
+        } else {
+            high = mid;
+        }
+    }
+    return std::sqrt(low * high) / static_cast<double>(bandwidth_rad_s);
+}
+
+} // namespace
+
+/**
+ * @brief [en] The gain law puts the closed-loop -3 dB within 3.5 % of the request, and the two nameplate terms are not
+ *             equal partners: an **inertia** error moves the bandwidth one-for-one, a **friction** error does not move
+ *             it at all.
+ *
+ * @brief [zh] 增益律把闭环 -3 dB 放在请求值的 3.5 % 以内，而两个铭牌项并不对等：**惯量**误差一比一移动带宽， **摩擦**误
+ *             差完全不动它。
+ *
+ *     This is the row that has to explain the number `step_metrics` reports: the SIL bench measures the loop at 243.57
+ *     rad/s against a 250 rad/s request through the Python plant (-2.57 %) and +9.15 % through the C++ bench. Measured
+ *     here on an **ideal current loop**, so that whatever is left belongs to the speed law alone:
+ *
+ *     | requested | measured -3 dB / requested | |---|---| | 50 rad/s | **1.02516** | | 100 rad/s | **1.02661** | | 200
+ *     rad/s | **1.02948** | | 400 rad/s | **1.03462** |
+ *
+ *     So the law is good to **3.5 %** across a decade, and the residual grows with `wb*dt` (0.0025 at 50 rad/s, 0.02 at
+ *
+ *     400) -- it is the 20 kHz sampling of a continuous-time design, not the cancellation being approximate. Whatever
+ *     the benches see beyond that is the inner current loop and the plant, which this row does not contain.
+ *
+ *     The sensitivity is the actionable half, and it is lopsided:
+ *
+ *     | nameplate error at 200 rad/s | measured -3 dB / requested | |---|---| | inertia -20 % / +20 % / +50 % |
+ *     **0.82262 / 1.23666 / 1.54877** | | friction -50 % / +50 % / +200 % | **1.02948 / 1.02949 / 1.02951** |
+ *
+ *     Divided by the error-free 1.02948 those inertia rows read 0.799 / 1.201 / 1.504: **the bandwidth you get is the
+ *     bandwidth you asked for times `J_hat/J`**. The friction rows move the fourth digit -- because `kp = wb*J/kt`
+ *     alone sets the first-order bandwidth and `ki` only trims the friction term, so a wrong `b` costs steady-state
+ *     droop and not bandwidth. That asymmetry is the reason a commissioning run should fit `J` before `b`, and it is
+ *     the one number here a user can act on: a 20 % inertia error is a 20 % bandwidth error, one for one.
+ *
+ *     这一行必须解释 `step_metrics` 报出的那个数：SIL 台架测到 243.57 rad/s 对 250 rad/s 的请求（Python plant −2.57
+ *     % ），而 C++ 台架是 +9.15 %。这里在**理想电流环**上实测（见上表）：律在一个十倍带宽范围内好到 **3.5 %**，残差随
+ *     `wb·dt` 增长（50 rad/s 时 0.0025、400 时 0.02）——那是 20 kHz 采样一个连续时间设计的结果，不是消去不精确。台架在此
+ *     之外看到的东西属于内环与被控对象，不属这一行。
+ *
+ *     敏感度才是可操作的一半，而且明显偏斜（见下表）：把惯量那三行除以无误差的 1.02948，读作 0.799/1.201/1.504—— **你得
+ *     到的带宽就是你要的带宽乘以 `J_hat/J`**。摩擦那几行只动第四位，因为一阶带宽由 `kp = wb·J/kt` 单独决定， `ki` 只修
+ *     摩擦项，所以 `b` 错了花的是稳态静差而不是带宽。这个偏斜正是调试时应当先拟合 `J` 再拟合 `b` 的原因，也是这里唯一一
+ *     个用户能直接用的数：20 % 的惯量误差就是一比一的 20 % 带宽误差。
+ */
+TEST(MotorConfig, TheInertiaEstimateIsTheBandwidthAndTheFrictionEstimateIsNot) {
+    constexpr float kKt = 0.0714F;
+    constexpr float kJ = 1.0e-4F;
+    constexpr float kB = 1.0e-6F;
+
+    // The law itself: within 3.5 % of the request, and the residual is the sampling.
+    // 律本身：在请求的 3.5 % 以内，而残差是采样。
+    for (const float bandwidth : {50.0F, 100.0F, 200.0F, 400.0F}) {
+        const double ratio = minus3db_over_requested(bandwidth, kJ, kB, kJ, kB, kKt);
+        std::printf("\n[motor-config] wb %3.0f rad/s (wb*dt %.4f): closed loop -3 dB / wb = %.5f\n",
+                    static_cast<double>(bandwidth), static_cast<double>(bandwidth * kGainDt), ratio);
+        EXPECT_GT(ratio, 1.0) << "wb " << bandwidth;
+        EXPECT_LT(ratio, 1.05) << "the gain law was expected to land within 5 % at wb " << bandwidth;
+    }
+
+    // Inertia: one for one. The reference is the error-free row, so the coefficient is not the sampling residual.
+    // 惯量：一比一。参照是无误差那一行，所以系数不是采样残差。
+    const double reference = minus3db_over_requested(200.0F, kJ, kB, kJ, kB, kKt);
+    for (const float error : {-0.20F, 0.20F, 0.50F}) {
+        const double ratio = minus3db_over_requested(200.0F, kJ, kB, kJ * (1.0F + error), kB, kKt);
+        const double coefficient = ratio / reference;
+        std::printf("[motor-config] J %+4.0f %%: -3 dB / wb = %.5f, over the clean row = %.4f\n",
+                    static_cast<double>(error * 100.0F), ratio, coefficient);
+        EXPECT_NEAR(1.0 + static_cast<double>(error), coefficient, 0.01)
+            << "the inertia error did not enter one-for-one at " << error;
+    }
+
+    // Friction: real, but an order of magnitude cheaper -- and only measurable with a `b` that is not negligible. The
+    // first version of this block scaled `b` *down* by 1e-3 and measured an exact zero, which proved nothing except
+    // that a negligible term is negligible; at `b = 1 N*m*s/rad` (1000x the nominal) the coefficient is measurable.
+    // 摩擦：真实存在，但便宜一个数量级——而且只有在 `b` 不可忽略时才测得出。这一段的第一个版本把 `b` **缩小**了
+    // 1e-3 并量到一个精确的零，那只证明了可忽略的项可忽略；在 `b = 1 N·m·s/rad`（标称的 1000 倍）下系数才可测。
+    constexpr float kHeavyB = 1.0e-3F;
+    const double heavy_clean = minus3db_over_requested(200.0F, kJ, kHeavyB, kJ, kHeavyB, kKt);
+    for (const float error : {-0.50F, 0.50F, 2.00F}) {
+        const double ratio = minus3db_over_requested(200.0F, kJ, kHeavyB, kJ, kHeavyB * (1.0F + error), kKt);
+        const double coefficient = (ratio / heavy_clean) - 1.0;
+        std::printf("[motor-config] b %+5.0f %%: -3 dB / wb = %.6f against %.6f clean -> coefficient %+.4f per unit\n",
+                    static_cast<double>(error * 100.0F), ratio, heavy_clean, coefficient / static_cast<double>(error));
+        // Measured 0.054 per unit of relative error: 18x smaller than the inertia coefficient, and non-zero.
+        // 实测每单位相对误差 0.054：比惯量系数小 18 倍，而不是零。
+        EXPECT_GT(coefficient / static_cast<double>(error), 0.03) << "the friction term was expected to cost something";
+        EXPECT_LT(coefficient / static_cast<double>(error), 0.08) << "and about a twentieth of the inertia term";
+        EXPECT_LT(std::fabs(coefficient), std::fabs(error) / 10.0) << "friction must stay an order below inertia";
+    }
+}
