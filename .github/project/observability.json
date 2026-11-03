@@ -319,6 +319,21 @@
         }
       ],
       "no_effect": ""
+    },
+    {
+      "id": "O-23",
+      "date": "2026-11-03",
+      "leg": "model",
+      "capability": "The sensitivity table for the step analyser, where the rows that matter are the ones that are exactly zero: the fit is invariant to the sample rate, to the window and to a DC offset because each of those is absorbed by the model, so the only error that costs anything is a target the loop does not actually reach. That turns 'the measured bandwidth is off by 9 %' into 'the measured bandwidth is off by 9 % because the C++ bench's inner loop droops, and a 5 % droop is worth 44 % of tau'.",
+      "source": "`test_step_metrics.cpp`, three new cases. Sample rate 0.2/0.5/1/2 ms at a fixed 20 ms window gives tau ratios 0.999999931/1.000000047/0.999999815/0.999999582; a 10/20/40 ms window gives 1.000000 to 0.999999; a DC offset of -1/0/+1/+5 on a 10 A step gives 1.000000. Final-value errors: 1.10/1.05/0.95/0.90 give 0.660542/0.735124/1.438404/1.767368 (asymmetric by a measured 1.65x, which falsified my first guess of 4x); noise sigma 1 %/2 % over 200 deterministic seeds gives 0.987336/0.982475 (my first bound of 'under 1:1' was also falsified -- measured 1.27:1). Settling: 18.5000 ms against `tau*ln(step/band)` = 18.4207 ms, plus the `0` and `-1` ends that no case had produced. Boundaries recorded rather than glossed: the `!(slope < 0)` guard is unreachable (every usable sample has `0 < w < 1`), and the 20-time-constant limit is float32 resolution (1.002148), not the algebra.",
+      "reopened": [
+        {
+          "claim": "core/step_metrics.hpp",
+          "verdict": "promoted",
+          "missing": ""
+        }
+      ],
+      "no_effect": ""
     }
   ]
 }

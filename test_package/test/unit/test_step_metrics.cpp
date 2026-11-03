@@ -258,3 +258,269 @@ TEST(StepMetrics, TheLibraryAndTheSilHelperAgreeOnSettlingTime) {
     const foc::core::StepMetrics m = foc::core::step_metrics(y.data(), y.size(), kDt, 100.0F, 2.0F);
     EXPECT_FLOAT_EQ(helper, m.settling_s) << "helper " << helper << " vs library " << m.settling_s;
 }
+
+
+namespace {
+
+constexpr double kProbeTauS = 0.004;  ///< 4 ms, i.e. 250 rad/s
+constexpr double kProbeStepA = 10.0;  ///< the step amplitude the probe signals approach
+
+/**
+ * @brief [en] A first-order approach with an independent gain, a DC offset and optional Gaussian noise, in float.
+ *
+ * @brief [zh] 带独立增益、直流偏置与可选高斯噪声的一阶逼近，用 float 表示。
+ *
+ *     `gain` is the ratio between the value the response actually converges to and the `target` the analyser is told.
+ *     At 1.0 they agree and the fit is exact; otherwise the caller has passed a target the loop does not reach, which
+ *     is what a P-only loop with steady-state droop does to whoever measures it.
+ *
+ *     `gain` 是响应真正收敛到的值与告知分析器的 `target` 之间的比。为 1.0 时两者一致、拟合精确；否则调用方给的是一个环
+ *     路到不了的目标——那正是带静差的比例环对"拿它做测量的人"所做的事。
+ */
+auto probe_signal(double dt_s, std::size_t n, double gain, double offset, double noise_sigma, unsigned seed)
+    -> std::vector<float> {
+    std::vector<float> y(n, 0.0F);
+    unsigned state = seed;
+    for (std::size_t i = 0U; i < n; ++i) {
+        const double t = static_cast<double>(i) * dt_s;
+        double value = offset + (gain * kProbeStepA * (1.0 - std::exp(-t / kProbeTauS)));
+        if (noise_sigma > 0.0) {
+            state = (state * 1103515245U) + 12345U;
+            const double u1 = static_cast<double>((state >> 16U) & 0x7fffU) / 32768.0;
+            state = (state * 1103515245U) + 12345U;
+            const double u2 = static_cast<double>((state >> 16U) & 0x7fffU) / 32768.0;
+            const double gauss = std::sqrt(-2.0 * std::log(u1 + 1.0e-12)) * std::cos(6.283185307179586 * u2);
+            value += noise_sigma * kProbeStepA * gauss;
+        }
+        y[i] = static_cast<float>(value);
+    }
+    return y;
+}
+
+/** @brief [en] Fit the probe and return `tau / kProbeTauS`, or a negative number when the fit refused.
+ *  @brief [zh] 拟合探针信号并返回 `tau / kProbeTauS`，拟合被拒时返回负数。 */
+auto fitted_ratio(double dt_s, std::size_t n, double gain, double offset, double noise_sigma = 0.0, unsigned seed = 1U)
+    -> double {
+    const std::vector<float> y = probe_signal(dt_s, n, gain, offset, noise_sigma, seed);
+    const auto metrics = foc::core::step_metrics(y.data(), y.size(), static_cast<float>(dt_s),
+                                                 static_cast<float>(kProbeStepA + offset),
+                                                 static_cast<float>(0.02 * kProbeStepA));
+    if (metrics.status != foc::ErrorCode::Ok) {
+        return -1.0;
+    }
+    return static_cast<double>(metrics.tau_s) / kProbeTauS;
+}
+
+} // namespace
+
+/**
+ * @brief [en] The fit is exact in its own sample rate, in its window, and in a DC offset -- three coefficients of
+ *             exactly zero, and they are the ones that say what kind of estimator this is.
+ *
+ * @brief [zh] 拟合在自身的采样率、窗口与直流偏置上都是精确的——三个**恰好为零**的系数，而它们说明的正是这是什么估计器。
+ *
+ *     A sensitivity table with only non-zero rows cannot distinguish a good estimator from a lucky one; the interesting
+ *     rows here are the zeros, because each of them is a structural fact that a plausible alternative implementation
+ *     would break:
+ *
+ *     - **sample rate, 0.2 ms to 2 ms (10x): ratio 1.000000 -> 0.9999995.** The regressor is `t` and the ordinate is
+ *     `ln(1 - progress)`; for a sampled exponential that relation is *exactly* linear at any spacing, so the fit is not
+ *     approximating a continuous curve. An implementation that fitted a continuous-time approximation, or that assumed
+ *     a particular number of samples per time constant, would move here. - **window, 10 ms to 40 ms (2.5x more
+ *     samples): ratio 1.000000 -> 0.999999.** Same reason -- every sample is on the line, so adding samples adds
+ *     information and not bias. - **DC offset, +-1 and +5 on a 10 A step: ratio 1.000000.** The offset appears in
+ *     `y[0]` and in `y[i]` and cancels in `progress`. That cancellation is the reason a biased current sensor does not
+ *     corrupt a bandwidth measurement -- and a version that forgot to subtract `y[0]` would show it immediately.
+ *
+ *     The boundary is stated rather than hidden: at an 80 ms window (**20 time constants**) the ratio is 1.002148, and
+ *     that is not the fit's fault -- the samples are `float32`, and `1 - exp(-20)` cannot be represented finely enough
+ *     to keep `ln(1 - progress)` straight. So the estimator's accuracy at long windows is set by the *sample format*,
+ *     not by the algebra, which is worth knowing before recording a 20-time-constant window and expecting 1e-6.
+ *
+ *     只有非零行的敏感度表分不清"好估计器"与"运气好的估计器"；这里有意思的行是那三个零，因为它们每一个都是一条会被貌似
+ *     合理的替代实现破坏的结构性事实：采样率（0.2→2 ms）**1.000000 → 0.9999995**、窗口（10→40 ms）**1.000000 →
+ *     0.999999**（理由相同：每个样本都在那条直线上，加样本只加信息不加偏置）、直流偏置 ±1 与 +5（对 10 A 阶跃）
+ *     **1.000000**（偏置在 `y[0]` 与 `y[i]` 里同时出现、在 `progress` 里约掉——这正是偏置的电流传感器不会污染带宽测量的
+ *     原因，而一个忘了减 `y[0]` 的版本会立刻显形）。
+ *
+ *     边界写出来而不是藏起来：**20 个时间常数**（80 ms）处比值是 1.002148，那不是拟合的问题——样本是 `float32`， `1 −
+ *     exp(−20)` 无法表示得足够细以让 `ln(1 − progress)` 保持平直。所以长窗口下的精度由**样本格式**而不是代数决定，这一
+ *     点在录一段 20τ 的窗口并期待 1e-6 之前值得知道。
+ */
+TEST(StepMetrics, TheFitIsExactInItsOwnSampleRateWindowAndDcOffset) {
+    // Sample rate: same physical window, tenfold change in spacing.
+    // 采样率：同一个物理窗口，间距变化十倍。
+    for (const double dt : {0.0002, 0.0005, 0.001, 0.002}) {
+        const auto n = static_cast<std::size_t>(0.020 / dt) + 1U;
+        const double ratio = fitted_ratio(dt, n, 1.0, 0.0);
+        ASSERT_GT(ratio, 0.0) << "the fit refused a clean exponential at dt " << dt;
+        EXPECT_NEAR(1.0, ratio, 1.0e-5) << "dt " << dt;
+        std::printf("\n[step] dt %.4f s (n=%zu): tau ratio %.9f\n", dt, n, ratio);
+    }
+    // Window: same spacing, 2.5x more samples.
+    // 窗口：同一间距，多 2.5 倍的样本。
+    for (const double window : {0.010, 0.020, 0.040}) {
+        const auto n = static_cast<std::size_t>(window / 0.0002) + 1U;
+        const double ratio = fitted_ratio(0.0002, n, 1.0, 0.0);
+        ASSERT_GT(ratio, 0.0);
+        EXPECT_NEAR(1.0, ratio, 1.0e-5) << "window " << window;
+    }
+    // DC offset: a biased sensor must not move the bandwidth.
+    // 直流偏置：偏置的传感器不得移动带宽。
+    for (const double offset : {-1.0, 0.0, 1.0, 5.0}) {
+        const double ratio = fitted_ratio(0.0002, 101U, 1.0, offset);
+        ASSERT_GT(ratio, 0.0);
+        EXPECT_NEAR(1.0, ratio, 1.0e-6) << "offset " << offset;
+    }
+    // And the stated boundary: 20 time constants is the sample format, not the algebra.
+    // 以及写明的边界：20 个时间常数处是样本格式在说话，不是代数。
+    const double long_window = fitted_ratio(0.0002, 401U, 1.0, 0.0);
+    EXPECT_GT(long_window, 1.0015) << "the float32 resolution limit moved, so revisit the stated boundary";
+    EXPECT_LT(long_window, 1.0030) << "the float32 resolution limit moved, so revisit the stated boundary";
+}
+
+/**
+ * @brief [en] The one error that really costs: a final value the caller did not pass as the target. A 5 % droop
+ *             inflates the fitted time constant by 44 %, and noise moves it 1.3 % per 1 %.
+ *
+ * @brief [zh] 真正花钱的那一个误差：调用方没有把响应真正收敛到的值当作 `target`。5 % 的静差把拟合出的时间常数抬高 44
+ *             %，而噪声每 1 % 只动 1.3 %。
+ *
+ *     The fit is exact in everything the model can absorb (see the case above), so the error sources that survive are
+ *     the ones that put the samples *off* the model's line at the far end:
+ *
+ *     | what is wrong | ratio to the true tau | |---------------|-----------------------| | final value 5 % **below**
+ *     the target (P-only droop) | **1.438404** | | final value 5 % **above** the target | **0.735124** | | final value
+ *     10 % below | **1.767368** | | final value 10 % above | **0.660542** | | noise, sigma = 1 % of the step (200
+ *     seeds) | **0.987336** | | noise, sigma = 2 % | **0.982475** |
+ *
+ *     Two things follow, and both are operational. **Asymmetric and large**: passing the *command* as the target while
+ *     the loop has a steady-state error is the mistake that matters -- 5 % costs 44 % -- and it is the mistake a P-only
+ *     speed loop invites, so the target has to be the measured settled value, not the request. **Noise is cheap**: 1 %
+ *     of the step buys 1.3 % of tau, which is why this estimator can be run on a bench with ordinary current noise and
+ *     still resolve a 10 % tuning change.
+ *
+ *     拟合在模型能吸收的一切上都是精确的（见上一个用例），所以存活下来的误差源是那些把样本在**远端**推离模型直线的：终
+ *     值比 target 低 5 %（比例环静差）**1.438404**、高 5 % **0.735124**、低 10 % **1.767368**、高 10 % **0.660542**；噪
+ *     声 σ = 阶跃的 1 %（200 个种子）**0.987336**、2 % 时 **0.982475**。
+ *
+ *     两个后果都可操作。**不对称且很大**：环路有静差时把**指令**当 target 传进去是真正要命的错——5 % 就花掉 44 %—— 而这
+ *     正是比例速度环招来的错，所以 target 必须是实测的稳态值，不是请求值。**噪声很便宜**：1 % 的阶跃只买 1.3 % 的时间常
+ *     数，这正是这个估计器能在有普通电流噪声的台架上跑、还能分辨 10 % 整定变化的原因。
+ */
+TEST(StepMetrics, ADroopInTheFinalValueCostsFarMoreThanNoiseDoes) {
+    struct GainRow final {
+        double gain;
+        double expected;
+    };
+    for (const GainRow& row : {GainRow{1.10, 0.660542}, GainRow{1.05, 0.735124}, GainRow{0.95, 1.438404},
+                               GainRow{0.90, 1.767368}}) {
+        const double ratio = fitted_ratio(0.0002, 101U, row.gain, 0.0);
+        ASSERT_GT(ratio, 0.0) << "gain " << row.gain;
+        EXPECT_NEAR(row.expected, ratio, 0.002) << "gain " << row.gain;
+    }
+    // A droop and a surplus must not look the same: the map is not symmetric, and the asymmetry is what makes the
+    // sign of the error identifiable from the measurement.
+    // 低落与超出不得看起来一样：这个映射不对称，而正是不对称让误差的符号可从测量中辨认。
+    const double droop = fitted_ratio(0.0002, 101U, 0.95, 0.0);
+    const double surplus = fitted_ratio(0.0002, 101U, 1.05, 0.0);
+    EXPECT_GT(droop, 1.4) << "a 5 % droop must lengthen the measured tau";
+    EXPECT_LT(surplus, 0.8) << "and a 5 % surplus must shorten it";
+    // Asymmetric, but only mildly: the measured distances from 1.0 are 0.438404 (droop) against 0.265124 (surplus),
+    // i.e. 1.65x. Asserting a larger asymmetry was my own first guess and it was wrong, so the band is the measured
+    // ratio and not a round number chosen to look decisive.
+    // 不对称，但只是轻微地：实测离 1.0 的距离是 0.438404（低落）对 0.265124（超出），即 1.65 倍。断言更大的不对称
+    // 是我自己的第一版猜测，而它是错的，所以带子取实测比值，而不是一个挑来显得果断的整数。
+    EXPECT_GT(std::fabs(droop - 1.0), 1.5 * std::fabs(surplus - 1.0)) << "the map was expected to be asymmetric";
+    EXPECT_LT(std::fabs(droop - 1.0), 1.8 * std::fabs(surplus - 1.0)) << "and asymmetric by about 1.65x, not more";
+
+    // Noise: averaged over 200 deterministic seeds, so the number is reproducible rather than "about".
+    // 噪声：对 200 个确定性种子取平均，所以这个数可复现，而不是"大概"。
+    double previous_ratio = 1.0;
+    for (const double sigma : {0.01, 0.02}) {
+        double sum = 0.0;
+        int fitted = 0;
+        for (unsigned seed = 1U; seed <= 200U; ++seed) {
+            const double ratio = fitted_ratio(0.0002, 101U, 1.0, 0.0, sigma, seed * 7919U);
+            if (ratio > 0.0) {
+                sum += ratio;
+                ++fitted;
+            }
+        }
+        ASSERT_EQ(200, fitted) << "the fit refused a noisy but healthy response at sigma " << sigma;
+        const double mean_ratio = sum / static_cast<double>(fitted);
+        std::printf("[step] noise %.0f %% of the step: mean tau ratio %.6f over %d seeds\n", sigma * 100.0, mean_ratio,
+                    fitted);
+        // Noise biases tau *low*, between one and two times sigma (measured 1.27 % at sigma = 1 %, 1.75 % at 2 %).
+        // The first version of this bound claimed "less than 1:1" -- measured 1.27, so the claim was wrong and the
+        // band is the measurement rather than the guess.
+        // 噪声把 tau 往**低**推，约在一到两倍 σ 之间（实测 σ=1 % 时 1.27 %，2 % 时 1.75 %）。这条界的第一个版本写的是
+        // "小于 1:1"——实测 1.27，所以那个断言是错的，带子改成实测值而不是那个猜的数。
+        EXPECT_LT(mean_ratio, 1.0) << "noise was expected to shorten the fitted tau, at sigma " << sigma;
+        EXPECT_GT(mean_ratio, 1.0 - (2.0 * sigma)) << "noise cost more than 2:1 at sigma " << sigma;
+        EXPECT_LT(mean_ratio, previous_ratio) << "more noise must shorten the fit further, at sigma " << sigma;
+        previous_ratio = mean_ratio;
+    }
+}
+
+/**
+ * @brief [en] The two ends of the settling rule -- `0` for a response that never leaves the band and `-1` for one that
+ *             never reaches it -- and the arrival time in between against its closed form.
+ *
+ * @brief [zh] 稳定规则的两端——从未离开带内的响应为 `0`、永不到达的为 `-1`——以及两者之间那个到达时刻对着闭式。
+ *
+ *     `settling_s` promises three different things and two of them had never been produced: `0` when the response
+ *     starts inside the band, `-1` when it never gets there, and the arrival time otherwise. The `0` looks like a
+ *     degenerate corner until it is stated as a contract: a caller that reports "settled at 0 s" for a loop that never
+ *     moved is wrong in the direction that hurts, because 0 s reads as *perfect*. The arrival in the middle has a
+ *     closed form -- the response is inside once `step*exp(-t/tau) <= band` -- so it is compared to arithmetic rather
+ *     than to a remembered number: measured **18.5000 ms** against `tau*ln(step/band) = 18.4207 ms`, one sample grid
+ *     apart.
+ *
+ *     `settling_s` 承诺三件不同的事，而其中两件从未被产出过：起始就在带内为 `0`、永不到达为 `-1`、其余是到达时刻。那个
+ *     `0` 看着像退化的角落，直到它被写成契约：对一个根本没动过的环路报"0 s 就稳定了"是朝**有害**方向的错，因为 0 s 读起
+ *     来是**完美**。中间那个到达时刻有闭式——一旦 `step·exp(−t/τ) ≤ band` 就进带——所以它对着算术比而不是对着一个记下来的
+ *     数：实测 **18.5000 ms** 对 `τ·ln(step/band) = 18.4207 ms`，差一个采样栅格。
+ *
+ *     Stated rather than tested: the fit's `!(slope < 0)` guard is **unreachable**. Every regression sample has `0 <
+ *     progress < 1`, hence `0 < w < 1`, hence `ln(w) < 0`, and `t > 0`, so the through-origin slope is a sum of
+ *     strictly negative terms -- it cannot come out non-negative. A receding response therefore reports `State` from
+ *     the *earlier* guard (fewer than three usable samples), which the existing case already covers. The dead guard is
+ *     harmless and worth keeping as a tripwire, but no test can reach it, and claiming otherwise would be claiming a
+ *     branch that does not exist.
+ *
+ *     写明而不是测出：拟合的 `!(slope < 0)` 守卫**不可达**。每个回归样本都有 `0 < progress < 1`，于是 `0 < w < 1`，于是
+ *     `ln(w) < 0`，而 `t > 0`，所以过原点斜率是一串严格负数之和——它不可能非负。因此"退回"的响应是由**更早**那条守卫（可
+ *     用样本少于三个）报 `State` 的，而那条已有用例覆盖。这条死守卫无害、值得留着当绊线，但没有任何测试能到达它，声称能
+ *     到达就是在声称一个不存在的分支。
+ */
+TEST(StepMetrics, TheTwoEndsOfTheSettlingRuleAreZeroAndMinusOne) {
+    // Already inside: a half-width band as wide as the whole gap, so no sample is ever outside it.
+    // 已在带内：半宽等于整个间距的带宽，于是没有哪个样本落在带外。
+    const std::vector<float> almost_there = first_order(0.004F, 10.0F, 50U);
+    const auto inside = foc::core::step_metrics(almost_there.data(), almost_there.size(), kDt, 10.0F, 10.0F);
+    EXPECT_EQ(foc::ErrorCode::Ok, inside.status);
+    EXPECT_FLOAT_EQ(0.0F, inside.settling_s) << "a response that never leaves the band has settled at 0 s, not -1";
+
+    // Then not inside at all: the same window with a band far narrower than its tail reports "never", which is -1 --
+    // and the difference between -1 and 0 is the whole point of having both.
+    // 然后再看完全不在带内：同一窗口配一条远窄于其尾巴的带报"永不"，即 -1——而 -1 与 0 之间的差别正是两者都存在的原因。
+    const auto never = foc::core::step_metrics(almost_there.data(), almost_there.size(), kDt, 10.0F, 1e-4F);
+    EXPECT_FLOAT_EQ(-1.0F, never.settling_s) << "a response that never arrives reported something else";
+
+    // And the positive arrival time, which has a closed form: the response is inside the band once
+    // `step*exp(-t/tau) <= band`, i.e. `t >= tau*ln(step/band)`. For a 10 rad/s step, a 0.1 rad/s band and a 4 ms
+    // time constant that is `4 ms * ln(100) = 18.42 ms`; the sample grid can only resolve it to a period, so the band
+    // below is two periods. (My first version of this line used `ln(1000)` -- it assumed a 0.1 % band from a 1 % one
+    // and predicted 27.6 ms, which the measurement refused. The formula, not the number, was wrong.)
+    // 以及正的到达时刻，它有闭式：一旦 `step·exp(−t/τ) ≤ band` 即 `t ≥ τ·ln(step/band)` 就进了带。对 10 rad/s 的阶跃、
+    // 0.1 rad/s 的带、4 ms 的时间常数，那是 `4 ms · ln(100) = 18.42 ms`；采样栅格只能分辨到一个周期，所以下面的带是
+    // 两个周期。（这一行第一版用了 `ln(1000)`——它把 1 % 的带当成了 0.1 %，于是预测 27.6 ms，被测量挡下了。错的是公式，
+    // 不是那个数。）
+    const std::vector<float> long_window = first_order(0.004F, 10.0F, 401U);
+    const auto arriving = foc::core::step_metrics(long_window.data(), long_window.size(), kDt, 10.0F, 0.1F);
+    const float predicted_s = 0.004F * std::log(10.0F / 0.1F);
+    EXPECT_NEAR(predicted_s, arriving.settling_s, 2.0F * kDt) << "the arrival time is `tau*ln(step/band)`";
+    std::printf("[step] settling measured %.4f ms against tau*ln(step/band) = %.4f ms\n",
+                static_cast<double>(arriving.settling_s) * 1e3, static_cast<double>(predicted_s) * 1e3);
+}
