@@ -444,6 +444,21 @@
         }
       ],
       "no_effect": ""
+    },
+    {
+      "id": "O-32",
+      "date": "2026-11-03",
+      "leg": "model",
+      "capability": "The filters measured against their own z-domain transfer function by sweep, and the one number a user actually needs -- where the corner really is, as a function of the sampling ratio -- which turns out to be the opposite side of the request from the obvious guess.",
+      "source": "`test_filters.cpp`, four new cases. Corner: bisected on |H(e^{jw})| of the recurrence at five fc*dt ratios, 0.9847 / 0.9305 / 0.8751 / 0.7918 / 0.6518 x the request, monotone in fc*dt and asserted as such. Sweep: sine in, both command and response fit by `sinusoid_fit.hpp`, quotient vs the analytic model to 0.000 % and 0.0001 rad at seven frequencies; corner phase -0.7051 vs the analogue -0.7854. Period error: corner ratio 0.9105 / 0.9555 / 1.0441 / 1.0877 for k = 0.90/0.95/1.05/1.10. Moving average: null at fs/N = 3.1e-17, group delay 3.5000 samples from the phase slope, Dirichlet kernel magnitude 0.90176 both ways.",
+      "reopened": [
+        {
+          "claim": "core/filters.hpp",
+          "verdict": "promoted",
+          "missing": ""
+        }
+      ],
+      "no_effect": ""
     }
   ]
 }
