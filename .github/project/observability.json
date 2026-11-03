@@ -334,6 +334,21 @@
         }
       ],
       "no_effect": ""
+    },
+    {
+      "id": "O-24",
+      "date": "2026-11-03",
+      "leg": "model",
+      "capability": "Which input errors an uncorrected integrator can survive and which one kills it, in numbers rather than in adjectives. The row previously said 'angle and speed on the SIL plant' and carried no measurement at all. The answer is structural: a parameter error enters as a rotating perturbation on a machine at constant speed and therefore stays bounded (with a 1/omega law that this case also records the failure point of), while a DC offset enters as the same vector every step and integrates without ever reversing.",
+      "source": "`test_back_emf_observer.cpp`, two new cases. Exact model: residue is one step of rotation, 5.2e-4 / 5.3e-3 / 1.06e-2 rad at 20 / 100 / 200 rad/s against `omega*dt` = 1e-3 / 5e-3 / 1e-2. Rs +10 %: 0.191 rad at 200 rad/s and 0.091 at 400 against `eps*Rs*iq/(omega*psi_f)` = 0.1575 / 0.0788 (1.21x / 1.16x), and 3.14 rad at 50 rad/s against the law's 0.63 -- the case asserts the saturation, so the law's domain of validity is part of the record. L +-20 %: bounded, 0.191 / 0.212 rad. DC offset 50 mA: 0.711 rad in 100 ms and 1.014 in 200, with the clean run asserted to stay under 0.02 rad so the comparison has a control. `apply_params()` -- never called by any test before -- is pinned behaviourally to the q-axis inductance (bit-identical to a `lq` build, 0.68 rad from an `ld` build), and an impossible parameter set is asserted to disable the observer rather than let it run on the old model.",
+      "reopened": [
+        {
+          "claim": "core/observer/back_emf_observer.hpp",
+          "verdict": "promoted",
+          "missing": ""
+        }
+      ],
+      "no_effect": ""
     }
   ]
 }
