@@ -10,6 +10,7 @@
 // 最后一个问题才值得写测试。库里其他诊断回答的是"这个数合理吗"；轨迹不同——它记下的东西会成为之后每次比对所用的基准。
 // 一条与状态结构差一个比特的轨迹比没有轨迹更糟：它会发起一场针对控制环的追查，而真正的缺陷在记录器里。
 
+#include <array>
 #include <chrono>
 #include <cstdio>
 #include <cstdlib>
@@ -357,3 +358,222 @@ TEST(Trace, ASampleSurvivesTheTextRoundTripBitForBit) {
     EXPECT_EQ(parsed.mode, original.mode);
     EXPECT_EQ(parsed.status, original.status);
 }
+
+namespace {
+
+/**
+ * @brief [en] The ring contract written a second way: keep every push in a plain log, then project the last `capacity`.
+ *
+ * @brief [zh] 用第二种写法表达环形缓冲的契约：把每次推入都存进一张平铺的日志，再把最后 `capacity` 个投影出来。
+ *
+ *     This is a genuinely different structure from a circular index -- there is no wrap, no `head_`, no modulo -- and
+ *     that is exactly what makes it useful as a reference: the classic ring defect is an index arithmetic error after
+ *     the wrap, and an implementation that never wraps cannot make that error. It costs O(n) storage, which is why it
+ *     lives in a test and not in the library.
+ *
+ *     它与循环下标是**结构上不同**的东西——没有回绕、没有 `head_`、没有取模——而这正是它作为参照有用的原因：环的经典缺陷
+ *     是回绕之后的索引算术错误，而一个永不回绕的实现犯不了那种错。它花 O(n) 存储，所以它住在测试里而不是库里。
+ */
+template <std::size_t N> struct PlainLog final {
+    std::array<foc::core::TraceSample, N> all{};
+    std::size_t count{0U};
+
+    void push(const foc::core::TraceSample& sample) noexcept {
+        if (count < N) {
+            all[count] = sample;
+            ++count;
+        }
+    }
+    [[nodiscard]] auto retained(std::size_t capacity) const -> std::size_t {
+        return (count < capacity) ? count : capacity;
+    }
+    [[nodiscard]] auto at(std::size_t capacity, std::size_t index) const -> foc::core::TraceSample {
+        if (index >= retained(capacity)) {
+            return foc::core::TraceSample{};
+        }
+        return all[count - retained(capacity) + index];
+    }
+    [[nodiscard]] auto dropped(std::size_t capacity) const -> std::size_t {
+        return (count > capacity) ? (count - capacity) : 0U;
+    }
+};
+
+/** @brief [en] A sample whose every field is a function of `k`, so a misplaced sample cannot look like the right one.
+ *  @brief [zh] 每个字段都是 `k` 的函数，于是放错位置的样本不可能看起来像对的。 */
+auto sample_of(std::uint32_t k) -> foc::core::TraceSample {
+    foc::core::TraceSample sample{};
+    sample.t_us = k;
+    sample.i_d = static_cast<float>(k) * 0.25F;
+    sample.i_q = -(static_cast<float>(k) * 0.5F);
+    sample.speed_mech = static_cast<float>(k) * 3.0F;
+    sample.mode = static_cast<std::uint8_t>(k % 5U);
+    sample.status = static_cast<std::uint8_t>(k % 3U);
+    return sample;
+}
+
+auto same_sample(const foc::core::TraceSample& a, const foc::core::TraceSample& b) -> bool {
+    return (a.t_us == b.t_us) && (std::memcmp(&a.i_d, &b.i_d, sizeof(float)) == 0) &&
+           (std::memcmp(&a.i_q, &b.i_q, sizeof(float)) == 0) &&
+           (std::memcmp(&a.speed_mech, &b.speed_mech, sizeof(float)) == 0) && (a.mode == b.mode) && (a.status == b.status);
+}
+
+} // namespace
+
+/**
+ * @brief [en] Both rings agree with a model that cannot wrap, sample by sample, and the drop counter counts exactly the
+ *             pushes that fell off -- including for the capacity the motor actually ships with.
+ *
+ * @brief [zh] 两个环都与一个"不会回绕"的模型逐样本一致，而丢帧计数恰好等于掉出去的推入次数——包括电机真正在用的那个容
+ *             量。
+ *
+ *     `RingTrace` had one case, on capacity 4, and it passed: the wrap, the ordering and `dropped()` were all correct
+ *     there. Coverage said something the case could not: the `RingTrace<8>` the clocked motor instantiates and the
+ *     `RingTrace<64>` the traced motor instantiates are **separate functions**, and neither of them had ever
+ *     overwritten a sample. A template's contract is only as tested as each instantiation the product uses, which is
+ *     the kind of thing a hand-written case list hides and a per-instantiation measurement does not.
+ *
+ *     The reference is `PlainLog`, which keeps every push and projects the tail: no wrap, no head, no modulo. Over 100
+ *     pushes at capacity 8 the ring retains 8, drops 92, and `at(i)` must equal `log.at(8, i)` for every `i` -- the
+ *     full ring, not a spot check -- and `latest()` must equal the 100th. Doing it for `SpanTrace` over a caller array
+ *     as well is not duplication: they are two implementations of one contract, and the pair is the check that the
+ *     contract is written down rather than invented per class.
+ *
+ *     `RingTrace` 只有一个容量 4 的用例，而它通过了：回绕、顺序、`dropped()` 在那里都对。覆盖率说出了用例说不出的事：时
+ *     钟电机实例化的 `RingTrace<8>` 与被追踪电机实例化的 `RingTrace<64>` 是**各自的函数**，两者都从未覆盖过一个样本。模
+ *     板的契约只被"产品用到的每个实例化"测到多少算多少——这正是手写用例清单会藏住、而按实例化测量藏不住的东西。
+ *
+ *     参照物是 `PlainLog`：它保留每次推入、投影尾部，没有回绕、没有 head、没有取模。容量 8 上推 100 次，环保留 8 个、丢
+ *     掉 92 个，而 `at(i)` 对**每个** `i` 都必须等于 `log.at(8, i)`——整个环，不是抽查——`latest()` 必须等于第 100 个。对
+ *     调用方数组上的 `SpanTrace` 也这么做不是重复：它们是同一份契约的两种实现，而这一对正是"契约是写下来的、不是每个类
+ *     各自发明"的证据。
+ */
+TEST(Trace, BothRingsAgreeWithAModelThatCannotWrap) {
+    constexpr std::uint32_t kPushes = 100U;
+    constexpr std::size_t kSpanCapacity = 8U;
+
+    foc::core::RingTrace<8> ring;
+    std::array<foc::core::TraceSample, kSpanCapacity> storage{};
+    foc::core::SpanTrace span(storage.data(), static_cast<std::uint32_t>(kSpanCapacity));
+    PlainLog<kPushes> log;
+
+    for (std::uint32_t k = 0; k < kPushes; ++k) {
+        const foc::core::TraceSample sample = sample_of(k);
+        log.push(sample);
+        const bool ring_overwrote = ring.push(sample);
+        const bool span_overwrote = span.push(sample);
+        // Both must report the overwrite before they do it, not after: a caller uses the flag to know that its own
+        // earlier read is stale.
+        // 两者都必须在覆盖**之前**报出覆盖，而不是之后：调用方用这个标志知道自己更早的读已经过期。
+        const bool expect_overwrite = (k >= kSpanCapacity);
+        EXPECT_EQ(ring_overwrote, expect_overwrite) << "ring push " << k;
+        EXPECT_EQ(span_overwrote, expect_overwrite) << "span push " << k;
+        EXPECT_EQ(ring.dropped(), log.dropped(kSpanCapacity)) << "ring dropped " << k;
+        EXPECT_EQ(span.dropped(), log.dropped(kSpanCapacity)) << "span dropped " << k;
+        EXPECT_EQ(ring.size(), log.retained(kSpanCapacity)) << "ring size " << k;
+        EXPECT_EQ(span.size(), log.retained(kSpanCapacity)) << "span size " << k;
+    }
+    for (std::size_t i = 0; i < kSpanCapacity; ++i) {
+        const foc::core::TraceSample expected = log.at(kSpanCapacity, i);
+        ASSERT_TRUE(same_sample(expected, ring.at(static_cast<std::uint16_t>(i)))) << "ring index " << i;
+        ASSERT_TRUE(same_sample(expected, span.at(static_cast<std::uint32_t>(i)))) << "span index " << i;
+    }
+    // One past the retained window on a *full* ring: the plotter that iterates `index <= size()` lands here, and the
+    // answer has to be a zero sample rather than the oldest one wrapped around.
+    // 满环上读保留窗口之外的一格：按 `index <= size()` 迭代的画图器就落在这里，而答案必须是全零样本，不是绕回来的最旧一个。
+    ASSERT_TRUE(same_sample(foc::core::TraceSample{}, ring.at(static_cast<std::uint16_t>(kSpanCapacity))))
+        << "one past the window returned a sample";
+    ASSERT_TRUE(same_sample(sample_of(kPushes - kSpanCapacity), ring.at(0U))) << "the oldest retained sample moved";
+    EXPECT_TRUE(same_sample(sample_of(kPushes - 1U), ring.latest()));
+    EXPECT_TRUE(same_sample(sample_of(kPushes - 1U), span.latest()));
+    // Out of range on both: a zeroed sample, not a neighbour and not a read past the end.
+    // 两者越界都返回全零样本，不是邻居、也不是越界读。
+    EXPECT_TRUE(same_sample(foc::core::TraceSample{}, span.at(kSpanCapacity)));
+    EXPECT_TRUE(same_sample(foc::core::TraceSample{}, span.at(kSpanCapacity + 32U)));
+
+    // And on the capacity the traced motor actually instantiates: `RingTrace<64>` is a different function from
+    // `RingTrace<8>`, and asking past the end is what a plotter does by accident when the buffer is not yet full.
+    // 以及被追踪电机真正实例化的那个容量：`RingTrace<64>` 与 `RingTrace<8>` 是两个函数，而"缓冲还没满时画图器顺手
+    // 多读一格"正是越界读会发生的地方。
+    foc::core::RingTrace<64> shipped;
+    ASSERT_FALSE(shipped.push(sample_of(1U)));
+    EXPECT_TRUE(same_sample(foc::core::TraceSample{}, shipped.at(1U))) << "reading past the end gave a neighbour";
+    EXPECT_TRUE(same_sample(sample_of(1U), shipped.at(0U))) << "and the sample that is there is still there";
+    std::printf("\n[trace] 100 pushes at capacity 8: dropped %u, retained %u, latest t_us %u\n",
+                static_cast<unsigned>(ring.dropped()), static_cast<unsigned>(ring.size()), ring.latest().t_us);
+}
+
+/**
+ * @brief [en] A span over no storage is a null channel: it refuses pushes, answers zero, and `attach()` will not take a
+ *             null array or a zero length as a ring.
+ *
+ * @brief [zh] 没有存储的 span 就是一个空通道：它拒绝推入、答零，而 `attach()` 不会把空数组或零长度当成一个环。
+ *
+ *     `SpanTrace` is what the C ABI actually points at (`src/api/bridge.cpp`), so its detached state is not academic: a
+ *     host that asks for a trace buffer of length 0, or whose allocation failed, ends up exactly here, and the two
+ *     wrong answers it could give are "dereference null" and "report a size". The header promises neither.
+ *
+ *     The falsifier is the same calls with real storage: they must behave, so "refuse everything" cannot pass this
+ *     case, and the buffer's own bytes are checked to be untouched while detached -- a detached ring writing into the
+ *     caller's array would be a defect that only shows up on the host that owns it.
+ *
+ *     `SpanTrace` 正是 C ABI 指向的东西（`src/api/bridge.cpp`），所以它的未挂载状态不是学术问题：一个请求长度为 0 的轨
+ *     迹缓冲、或分配失败的宿主，落到的就是这个状态，而它可能给出的两个错误答案是"解引用空指针"与"报一个尺寸"。头文件两
+ *     个都不承诺。
+ *
+ *     伪证是同样这些调用配上真存储：它们必须正常工作，于是"一律拒绝"过不了本用例；而未挂载期间调用方的字节被检查为未被
+ *     触碰——一个未挂载却往调用方数组里写的环，是只在拥有它的宿主上才显形的缺陷。
+ */
+TEST(Trace, ASpanOverNoStorageIsANullChannelRatherThanACrash) {
+    std::array<foc::core::TraceSample, 4> storage{};
+    for (foc::core::TraceSample& slot : storage) {
+        slot = sample_of(999U);
+    }
+    const std::array<foc::core::TraceSample, 4> untouched = storage;
+
+    foc::core::SpanTrace detached{};
+    EXPECT_FALSE(static_cast<bool>(detached));
+    EXPECT_EQ(0U, detached.capacity());
+    EXPECT_EQ(0U, detached.size());
+    EXPECT_FALSE(detached.push(sample_of(1U)));
+    EXPECT_EQ(0U, detached.size()) << "a detached ring counted a sample it did not store";
+    EXPECT_EQ(0U, detached.dropped());
+    EXPECT_TRUE(same_sample(foc::core::TraceSample{}, detached.at(0U)));
+    EXPECT_TRUE(same_sample(foc::core::TraceSample{}, detached.latest()));
+
+    // A null array with a non-zero length is not a ring, and neither is a real array of length zero.
+    // 空数组配非零长度不是环，真数组配长度零也不是。
+    detached.attach(nullptr, 16U);
+    EXPECT_FALSE(static_cast<bool>(detached));
+    EXPECT_EQ(0U, detached.capacity());
+    detached.attach(storage.data(), 0U);
+    EXPECT_FALSE(static_cast<bool>(detached));
+    EXPECT_EQ(0U, detached.capacity());
+    EXPECT_FALSE(detached.push(sample_of(2U)));
+    for (std::size_t i = 0; i < storage.size(); ++i) {
+        ASSERT_TRUE(same_sample(untouched[i], storage[i])) << "a detached span wrote into the caller's array at " << i;
+    }
+
+    // The falsifier: with real storage the same calls do work, and detaching again returns to the null channel.
+    // 伪证：配上真存储，同样的调用就工作；再卸载又回到空通道。
+    detached.attach(storage.data(), 4U);
+    ASSERT_TRUE(static_cast<bool>(detached));
+    EXPECT_EQ(4U, detached.capacity());
+    for (std::uint32_t k = 0; k < 4U; ++k) {
+        EXPECT_FALSE(detached.push(sample_of(100U + k))) << "push " << k << " has nothing to overwrite yet";
+    }
+    EXPECT_TRUE(same_sample(sample_of(103U), detached.latest()));
+    EXPECT_TRUE(detached.push(sample_of(200U))) << "the fifth push overwrites the oldest";
+    EXPECT_EQ(1U, detached.dropped());
+    EXPECT_TRUE(same_sample(sample_of(200U), detached.latest()));
+    EXPECT_TRUE(same_sample(sample_of(101U), detached.at(0U))) << "the oldest retained sample is the second push";
+    detached.detach();
+    EXPECT_FALSE(static_cast<bool>(detached));
+    EXPECT_EQ(0U, detached.size()) << "detach must forget the samples, not just the pointer";
+    // `reset()` keeps the drop count -- the record of what was already lost is not the samples.
+    // `reset()` 保留丢帧计数——"已经丢了什么"的记录不是样本。
+    detached.attach(storage.data(), 4U);
+    EXPECT_FALSE(detached.push(sample_of(9U)));
+    EXPECT_EQ(0U, detached.dropped()) << "attaching is a fresh ring, so its drop counter starts at zero";
+}
+
+

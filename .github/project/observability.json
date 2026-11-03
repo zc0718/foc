@@ -289,6 +289,21 @@
         }
       ],
       "no_effect": ""
+    },
+    {
+      "id": "O-21",
+      "date": "2026-11-03",
+      "leg": "model",
+      "capability": "A second implementation of the ring contract that cannot make the defect the ring is most likely to have, driven against both rings the product uses -- which is how it came out that each *instantiation* is a separate function and the two the motors use had never dropped a sample. Plus the caller-storage channel (`SpanTrace`), which the C ABI points at and which no unit case had ever touched: a null array with a length, a real array of length zero, and a detached ring that must not write into the caller's buffer.",
+      "source": "`test_trace.cpp`, two new cases. `PlainLog` keeps every push and projects the tail -- no wrap, no head, no modulo -- and 100 pushes at capacity 8 are compared index by index against `RingTrace<8>` and `SpanTrace`, including the drop counter, the overwrite flag (which must be reported *before* the write) and the exact retained window. The detached-span case asserts `push` refuses, `at`/`latest` answer zero, `attach(nullptr, 16)` and `attach(buf, 0)` are not rings, the caller's bytes are untouched while detached, and the falsifier (real storage) does work. Coverage per instantiation, not per header: `RingTrace<8>` (the clocked motor) and `RingTrace<64>` (the traced motor) both had `++dropped_` and the out-of-range guard unexecuted.",
+      "reopened": [
+        {
+          "claim": "core/trace.hpp",
+          "verdict": "still_short",
+          "missing": "an error-source sensitivity table, and a recorder does not have one: its fidelity is exact (the sample equals the scalar reads bit for bit, and survives the text and C ABI transports bit for bit), so there is no coefficient to measure. Its only failure mode is a loss event, and that is counted exactly rather than approximately. Writing coefficients for a byte copy would fill the template rather than measure anything, which is the signal this project treats as a warning, so the row stays L2 and says so. What did close: `trace.hpp` now has zero unexecuted lines across all four instantiations (including the two the motors actually use) and `SpanTrace` -- the type the C ABI points at -- finally has a direct case."
+        }
+      ],
+      "no_effect": ""
     }
   ]
 }
