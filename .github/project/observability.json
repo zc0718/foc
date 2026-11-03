@@ -553,7 +553,7 @@
         {
           "claim": "core/observer/switchable_observer.hpp",
           "verdict": "still_short",
-          "missing": "a case for a wrong root: the dual-L member disambiguates its quadratic by continuity with the previous estimate, and nothing yet pins what it does when continuity is wrong (a seeded observer stepping backwards through the estimate)."
+          "missing": "no case hands over *out of* the blend while its band is active, which is the one path where the outgoing estimate comes from a composite rather than a single observer."
         }
       ],
       "no_effect": ""

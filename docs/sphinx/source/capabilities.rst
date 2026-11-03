@@ -190,9 +190,11 @@ point -- the alternative is a library that grows algorithms and forgets how they
        apart the two rotor positions consistent with the measured flux and current are.
      - na -- ``ld``, ``lq`` and ``psi_f`` all arrive together through ``apply_params()``; there is no "which
        inductance" choice to contradict, which is the whole difference from the back-EMF observer.
-     - todo -- the two roots of the quadratic are disambiguated by continuity alone, and no case yet pins what happens
-       when continuity is wrong (a seeded observer stepping backwards through the estimate). Writing the row without
-       the case is the folklore the boundaries gate exists to prevent.
+     - none -- measured, and the hole closes the other way round: the second root of the quadratic is never a rotor
+       position (modulus 20 to 68 against 1 across `i_d` = -0.5 to -2.5 A, its angle pi away), so there is no physical
+       branch for continuity to pick wrongly; and a seed no angle explains is *not* corrected -- 0.1128 rad after one
+       step and 0.1128 after 200 -- which is why `seed_at()` takes an angle rather than a guess. See
+       ``DualInductanceObserver.TheSecondRootIsNotARotorPositionAndAWrongSeedIsPermanent``.
      - na -- one complex square root and one quadratic, evaluated pointwise.
      - --
    * - ``core/observer/nonlinear_flux_observer.hpp``

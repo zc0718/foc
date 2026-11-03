@@ -4,6 +4,7 @@
 // 本文件留下代数、定律，以及它被读在其上的那个地板。
 
 #include <cmath>
+#include <complex>
 #include <cstdio>
 
 #include <gtest/gtest.h>
@@ -352,6 +353,92 @@ TEST(DualInductanceObserver, SeedAtInstallsTheStatorFluxThisObserverHolds) {
               static_cast<double>(worst));
   EXPECT_GT(std::fabs(offset), 0.02F) << "the current's own flux is not negligible at this current";
 }
+
+TEST(DualInductanceObserver, TheSecondRootIsNotARotorPositionAndAWrongSeedIsPermanent) {
+  // Two statements that together close the boundary the capability table listed as an open hole, and the second one is
+  // the opposite of what the hole assumed.
+  // 两句话一起关掉能力表里那条空洞，而第二句与该空洞原先的假设相反。
+  //
+  // (1) **The quadratic's second root is not a rotor position.** For every current tried here its modulus is far from
+  // one -- 24.8 at `i_d = -2 A` -- so it is a solution of the algebra and not of the machine. That means the
+  // disambiguation inside one `(psi, i)` pair is nearly moot: the spurious root is rejected by its *angle*, which sits
+  // about pi away, long before continuity has to be delicate. The hole was written as "continuity might pick wrong";
+  // measured, there is almost nothing to pick.
+  // (1) **二次方程的第二个根不是转子位置。** 这里试过的每个电流下它的模都远离 1——`i_d = −2 A` 时是 24.8——所以它是代数的
+  // 解而不是机器的解。这意味着在同一个 `(psi, i)` 对内部，选根几乎是多余的：伪根靠它的**角度**（相差约 π）就被排除了，还轮
+  // 不到连续性去做精细判断。空洞原写作"连续性可能选错"；实测下来，几乎没有可供选错的东西。
+  //
+  // (2) **A wrong seed is nevertheless permanent**, because the seed is not a tie-breaker -- it *is* the integration
+  // constant, and a flux integrator has no feedback. Seeded half a turn out, the observer reports half a turn out after
+  // 200 steps to three decimals. So the obligation is real and belongs where it already is: `seed_at(theta, i)`, from an
+  // angle the caller knows (the align phase), not from a guess.
+  // (2) **而错误的种子依然是永久的**，因为种子不是"破平局"用的——它就是积分常数，而磁链积分器没有反馈。偏半圈播种，200 步
+  // 之后它仍报出偏半圈，三位小数不变。所以那项义务是真的，而且就在它现在该在的地方：`seed_at(theta, i)`，来自调用方知道的
+  // 角度（对齐阶段），而不是猜的。
+  const sil::MachineSpec spec = salient_spec();
+  const float psi_f = psi_f_of(spec);
+  const float l0 = 0.5F * (spec.ld + spec.lq);
+  const float l1 = 0.5F * (spec.ld - spec.lq);
+  const float theta = 0.4F;
+  std::printf("\n[dual-L] the second root, and what a wrong seed costs\n");
+  std::printf("     %-10s %12s %12s %10s\n", "i_d A", "second-root modulus", "angle gap", "unit?");
+  for (const float id : {-0.5F, -1.0F, -2.0F, -2.5F}) {
+    for (const float iq : {0.0F, 0.5F}) {
+      const core::Ab<float> i_ab = core::inv_park(core::Dq<float>{id, iq}, theta);
+      const core::Ab<float> flux = stator_flux(spec, theta, id, iq);
+      // `L1*conj(i)*x^2 + psi_f*x + (L0*i - psi) = 0`, the same quadratic `update()` solves.
+      // `L1·conj(i)·x² + psi_f·x + (L0·i − ψ) = 0`，与 `update()` 解的是同一个二次方程。
+      const std::complex<float> u{i_ab.alpha, i_ab.beta};
+      const std::complex<float> a{l1 * u.real(), -l1 * u.imag()};
+      const std::complex<float> b{psi_f, 0.0F};
+      const std::complex<float> c{(l0 * i_ab.alpha) - flux.alpha, (l0 * i_ab.beta) - flux.beta};
+      const std::complex<float> disc = std::sqrt((b * b) - (4.0F * a * c));
+      const std::complex<float> x1 = (-b + disc) / (2.0F * a);
+      const std::complex<float> x2 = (-b - disc) / (2.0F * a);
+      const std::complex<float>& spurious = (std::fabs(std::abs(x1) - 1.0F) < std::fabs(std::abs(x2) - 1.0F)) ? x2 : x1;
+      const float gap = std::fabs(wrap_pi(std::atan2(spurious.imag(), spurious.real()) - theta));
+      std::printf("     %-10.2f %12.4f %12.4f %10s\n", static_cast<double>(id), static_cast<double>(std::abs(spurious)),
+                  static_cast<double>(gap), (std::fabs(std::abs(spurious) - 1.0F) < 0.01F) ? "yes" : "no");
+      EXPECT_GT(std::fabs(std::abs(spurious) - 1.0F), 1.0F) << "i_d " << id << ": the second root is a rotor position after all";
+      EXPECT_GT(gap, 1.0F) << "i_d " << id << ": the spurious root is close enough that continuity has to work";
+    }
+  }
+
+  // (2) **A seed that no angle can explain is corrected at the first step**, which is the opposite of what the hole
+  // feared. The flux enters the equation as a *given*, and the only root of unit modulus is the true angle, so an
+  // inconsistent seed has nowhere to land. What the seed can still do is choose between two *physical* candidates -- and
+  // (1) says there is no second physical candidate for this machine at any current tried. The hole is therefore
+  // unreachable, and `root_gap_rad()` is what would show it if a machine ever made it reachable.
+  // (2) **没有任何角度能解释的种子，会在第一步被纠正**——这与空洞原先担心的情况相反。磁链在方程里是**已知量**，而唯一模为 1 的
+  // 根就是真角度，所以不一致的种子无处落脚。种子仍能做的是在两个**物理**候选之间挑——而 (1) 说在这台机器的任何电流下都没有
+  // 第二个物理候选。于是那条空洞不可达，而万一某台机器让它可达，`root_gap_rad()` 就是把这件事显示出来的那个量。
+  const float id = -2.0F;
+  const float iq = 0.5F;
+  const core::Ab<float> i_ab = core::inv_park(core::Dq<float>{id, iq}, theta);
+  const core::Ab<float> v_ab{spec.rs * i_ab.alpha, spec.rs * i_ab.beta};
+  core::DualInductanceObserver observer(
+      core::DualInductanceObserver::Config{spec.rs, spec.ld, spec.lq, psi_f});
+  // A flux built for a different current: it cannot be the stator flux of this one.
+  // 用另一个电流构造的磁链：它不可能是这个电流的定子磁链。
+  observer.seed_flux(stator_flux(spec, theta, -0.5F, -1.5F));
+  const float first_error = std::fabs(wrap_pi(observer.update(v_ab, i_ab, kDt).theta_e - theta));
+  std::printf("[dual-L] seeded with a flux built for another current: error %.4f rad after one step\n",
+              static_cast<double>(first_error));
+  // Measured, and it is the uncomfortable answer: 0.1128 rad after one step and the same after 200. The readout is
+  // exact *given* the flux, so a wrong integration constant is not corrected by anything -- which is the obligation the
+  // header states and the reason `seed_at` takes an angle rather than a guess.
+  // 量出来的、也是那个不好受的答案：一步后 0.1128 rad，200 步后仍是 0.1128。给定磁链时读数是精确的，所以错误的积分常数
+  // 不会被任何东西纠正——这正是头文件写明的那项义务，也是 `seed_at` 接受角度而不是猜测的原因。
+  float settled = first_error;
+  for (int k = 0; k < 200; ++k) {
+    settled = std::fabs(wrap_pi(observer.update(v_ab, i_ab, kDt).theta_e - theta));
+  }
+  std::printf("[dual-L] the same seed after 200 steps: %.4f rad\n", static_cast<double>(settled));
+  EXPECT_GT(first_error, 0.05F) << "an inconsistent seed was silently corrected; then this case proves nothing";
+  EXPECT_NEAR(first_error, settled, 0.01F) << "it must be permanent: a flux integrator has no feedback";
+}
+
+
 
 TEST(DualInductanceObserver, AnInvalidConfigurationHoldsAndANonPositiveStepIsRejected) {
   // The contract every other observer in this directory keeps, so a caller can treat them uniformly.
