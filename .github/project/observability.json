@@ -429,6 +429,21 @@
         }
       ],
       "no_effect": ""
+    },
+    {
+      "id": "O-31",
+      "date": "2026-11-03",
+      "leg": "model",
+      "capability": "The PI closed on a plant, measured against two models at once: the exact droop law it has with no free parameter, and the continuum it is a sampling of -- which is how the textbook pole-only overshoot formula turned out to be wrong for this structure.",
+      "source": "`test_pi.cpp`, three new cases. Droop: three disturbance levels at kp = 0.01 give 0.100000 / 0.200000 / 0.500000 against d/kp exactly, and 1e-6 with ki = 1. Continuum: the closed loop is (kp*s + ki)/(J*s^2 + kp*s + ki) with a zero at -ki/kp, so the pole-only law's 16.3 % / 0 % are 29.8 % / 13.5 % in the loop; the same loop as two ODEs at 10 ns agrees to 0.06 / 0.04 / 0.02 % at kp = 0.01/0.02/0.03. Period error: the controller's own dt is what scales the integral, so a k-times-wrong period moves the time to first peak as 1/sqrt(k) -- measured 1.0415 / 1.0166 / 0.9793 / 0.9627 against 1.0541 / 1.0260 / 0.9759 / 0.9535.",
+      "reopened": [
+        {
+          "claim": "core/pi.hpp",
+          "verdict": "promoted",
+          "missing": ""
+        }
+      ],
+      "no_effect": ""
     }
   ]
 }
