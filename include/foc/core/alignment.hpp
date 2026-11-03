@@ -288,7 +288,8 @@ class AlignRoutine final {
     AlignState state_{AlignState::Idle};
     AlignFailure failure_{AlignFailure::None};
     std::uint32_t pole_pairs_{0U};
-    float elapsed_s_{0.0F};
+    ElapsedClock
+        elapsed_; ///< [en] Integer clock: a float sum of periods drifts, then freezes. [zh] 整数钟：浮点周期累加会漂移，然后冻结。
     float id_a_{0.0F};
     float offset_mech_rad_{0.0F};
     float spread_rad_{0.0F};

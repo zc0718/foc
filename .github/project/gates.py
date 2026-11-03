@@ -356,7 +356,8 @@ def cmd_ci_policy(_explicit):
 
 
 PROJECT_GATES = ('license', 'strict', 'claims', 'docs', 'boundaries', 'capabilities', 'ci-policy', 'assume', 'anchor',
-                 'scaffold', 'budget', 'observability', 'combinations', 'mutants', 'plantref', 'fmu', 'pil', 'mcdc')
+                 'scaffold', 'budget', 'clocks', 'observability', 'combinations', 'mutants', 'plantref', 'fmu', 'pil',
+                 'mcdc')
 
 
 def cmd_observability(_explicit):
@@ -462,6 +463,23 @@ def cmd_budget(_explicit):
     return 0
 
 
+def cmd_clocks(_explicit):
+    """A duration that only grows is not a float, and this is not a style rule.
+
+    `HomingRoutine` decided its timeout on `elapsed_s_ += dt_s` in float: the sum reached "512 s" after 446.664 s of
+    real time (12.8 % fast) and then could not advance at all, so a 520 s recipe never timed out at all and the axis
+    would have crept without end. The same line existed in four more modules with limits small enough to hide it. The
+    rule is mechanical so that the next timer cannot reintroduce it: every `float` accumulated with a `dt` term is a
+    defect unless it is bounded by construction and named on the allow list with its bound written down.
+    `--selftest` runs first, so a classifier that no longer finds anything cannot pass by finding nothing."""
+    script = ROOT / '.github' / 'project' / 'clock_gate.py'
+    for _args in (['--selftest'], []):
+        _rc = subprocess.run([sys.executable, str(script), *_args], cwd=ROOT, text=True).returncode
+        if _rc:
+            return _rc
+    return 0
+
+
 def cmd_mutants(_explicit):
     """Would a wrong line be noticed? Coverage cannot answer that; a mutation score can.
 
@@ -506,6 +524,7 @@ def main():
         'scaffold': 'the scaffold\'s build and CI files are byte-identical to the pinned release (zero-modification)',
         'budget': 'every injectable model error source is either covered by a sensitivity table or excluded with a '
                   'reason -- so a new knob cannot arrive silently',
+        'clocks': 'no float accumulates a duration that only grows: a timeout is a core::ElapsedClock (F-105)',
         'mutants': 'mutation score per core module: would a wrong operator or constant be noticed by its tests?',
         'plantref': 'the SIL plant reproduces its own stated equations under an independent float64/scipy solver',
         'observability': 'every new observation capability has re-read the evidence chain, and a port never promotes',
@@ -547,6 +566,8 @@ def main():
         return cmd_scaffold(args.files)
     if args.gate == 'budget':
         return cmd_budget(args.files)
+    if args.gate == 'clocks':
+        return cmd_clocks(args.files)
     if args.gate == 'mutants':
         return cmd_mutants(args.files)
     if args.gate == 'fmu':
@@ -579,7 +600,7 @@ def main():
               if {'license': cmd_license, 'strict': cmd_strict, 'claims': lambda _f: cmd_claims([]),
                   'docs': cmd_docs, 'boundaries': cmd_boundaries, 'capabilities': cmd_capabilities,
                   'ci-policy': cmd_ci_policy, 'assume': cmd_assume, 'anchor': cmd_anchor,
-                  'scaffold': cmd_scaffold, 'budget': cmd_budget, 'mutants': cmd_mutants,
+                  'scaffold': cmd_scaffold, 'budget': cmd_budget, 'clocks': cmd_clocks, 'mutants': cmd_mutants,
                   'plantref': cmd_plantref, 'observability': cmd_observability, 'combinations': cmd_combinations,
                   'mcdc': cmd_mcdc,
                   'fmu': lambda _f: cmd_fmu([], tolerant=True),

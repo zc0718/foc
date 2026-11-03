@@ -374,6 +374,21 @@
         }
       ],
       "no_effect": ""
+    },
+    {
+      "id": "O-27",
+      "date": "2026-11-03",
+      "leg": "model",
+      "capability": "A clock with a stated law, in place of five unstated ones. `core::ElapsedClock` counts nanoseconds in a uint64 and is exact to 1 ns; the four routines that own a timeout now use it, and the rule that produced them -- a duration that only grows is not a float -- is enforced by `gates.py clocks` rather than by memory.",
+      "source": "`test_elapsed_clock.cpp`, two cases, plus the rewritten homing timeout case. The discriminator is a second implementation of the same sum: 20 480 000 periods of 25 us reach 512 s on tick 20 480 000 in the clock and on tick 17 866 579 in float (446.664 s of real time, 12.8 % fast, and frozen from there). The same three homing recipes now fire at 40 000 / 20 480 000 / 20 800 000 ticks; before the fix the 512 s recipe fired at 17 866 579 and the 520 s one never fired at all (40 M ticks, 1000 s of real time). `gates.py clocks` scans include/ and src/ for a float accumulated with a dt term and fails on every one that is not on an allow list carrying its bound; its selftest classifies four snippets so a classifier that finds nothing cannot pass. Measured while doing it: the conversion `seconds * 1e9F` in one float multiply needs 39 bits and left a 520 s recipe 16 us long, one tick late -- split into whole seconds and a fraction.",
+      "reopened": [
+        {
+          "claim": "core/types.hpp",
+          "verdict": "promoted",
+          "missing": ""
+        }
+      ],
+      "no_effect": ""
     }
   ]
 }

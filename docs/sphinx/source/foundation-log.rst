@@ -2907,6 +2907,50 @@ The log
        noting that both were found by a measurement refusing to agree, not by reading the test.
      - ``pending``
 
+   * - F-105
+     - F
+     - **A timeout decided on a float sum of control periods, so it fired early and then stopped firing at all.**
+       `HomingRoutine` kept `elapsed_s_ += dt_s` in float and compared it to the recipe's `timeout_s`. A float sum of
+       equal terms does not lose precision slowly -- it changes speed and then freezes: once `ulp(t) > dt/2` each
+       addition advances the sum by an ULP instead of by `dt`, and once `ulp(t) > dt` the addition is a no-op. At a
+       25 us period the sum read "512 s" after **17 866 579** periods, i.e. after **446.664 s** of real time, and
+       could not advance at all past that. So a 512 s recipe gave up 65 s early and a 520 s recipe **never gave up**,
+       which is the exact opposite of what the failure path in that file promises: "giving up rather than turning
+       forever". Measured at the freeze point: 512 s at 40 kHz, 2048 s at 10 kHz, 32768 s at 1 kHz -- `2^24*dt`
+       rounded up to a power of two.
+     - Surfaced by the L3 work on `core/homing.hpp`: the case that was supposed to show "the timeout is decided on
+       the sample grid" printed `446.664 s` where the recipe said 512 s. The number was found by *not* accepting the
+       first explanation -- "the caller's period is coarse" -- and instead asking where a sum of equal floats stops
+       being a sum. A test that had only asserted "the search eventually stops" would have passed for a year: the
+       freeze only shows up past a magnitude nobody exercises, which is why the 20 M-tick case that found it is now
+       in `test_homing_routine.cpp` and the same sum is mirrored in `test_elapsed_clock.cpp`.
+
+       **The same line was in four more modules** and one more accumulator: `startup.cpp`, `alignment.cpp`,
+       `polarity.cpp`, `stall_start.hpp` (a hold timer) and `stall_start.hpp`'s torque ramp -- the last of which
+       freezes at 4.19 N*m for a gentle 0.01 N*m/s recipe, i.e. *inside* its working range, because there the
+       increment is `ramp*dt` rather than `dt`. Four of the five had limits small enough (milliseconds to a couple of
+       seconds) that the floor was never reachable, which is precisely how a defect survives: not because it is
+       invisible, but because the numbers used in every test sit below it. Finding the first one is what made the
+       other five findable, and fixing only the first would have been the same defect one magnitude away.
+     - Blast radius, from `gates.py claims --impact core/types.hpp`: **40 claim rows** rest on the header that now
+       carries the clock, so the re-run is the whole core suite plus the SIL cases that own a timeout --
+       `test_homing_routine.cpp`, `test_sil_homing.cpp`, `test_startup.cpp`, `test_sil_startup.cpp`,
+       `test_alignment.cpp`, `test_polarity.cpp`, `test_stall_start.cpp`, `test_elapsed_clock.cpp`, all green, and
+       the recipe ticks are now what the arithmetic says: 40 000 / 20 480 000 / 20 800 000 for 1 s / 512 s / 520 s at
+       40 kHz.
+
+       The rule this produces: **a duration that only grows is never accumulated in float.** It is not a style
+       preference and the fix is not an `if` -- a growing sum of periods has a *speed* proportional to its own
+       magnitude, so it has no valid range that a tolerance can be written against. `gates.py clocks` now scans
+       `include/` and `src/` for a float accumulated with a `dt` term and fails on every one that is not on an
+       allow list carrying its bound (`speed_elapsed_s_`, `position_elapsed_s_`, `stall_elapsed_s_` -- all bounded by
+       construction, all cleared or faulted before their magnitude could matter). Its `--selftest` classifies four
+       snippets, so a classifier that has stopped finding anything cannot pass by finding nothing. The deeper lesson
+       is about the earlier L3 row itself: it **measured** this defect, wrote it into the README as a limitation, and
+       moved on. A measured defect on the boundary of a published claim is not a limitation to record -- it is the
+       claim being wrong, and recording it is what made it look handled.
+     - ``pending``
+
 What ``pending`` means in the commit column
 -------------------------------------------
 

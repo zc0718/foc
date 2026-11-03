@@ -159,8 +159,8 @@ class MagnetPolarityTest final {
     ErrorCode status_;
     Stage stage_;
     PolarityVerdict verdict_;
-    float theta_e_;    ///< [en] d-axis angle the pulses are applied along. [zh] 脉冲施加的 d 轴角度。
-    float stage_s_;    ///< [en] time spent in the current stage, s. [zh] 当前阶段已用时间，s。
+    float theta_e_;            ///< [en] d-axis angle the pulses are applied along. [zh] 脉冲施加的 d 轴角度。
+    ElapsedClock stage_clock_; ///< [en] time in the current stage, as an integer clock. [zh] 当前阶段已用时间，整数钟。
     float i_before_a_; ///< [en] current along d at the end of the preceding settle. [zh] 前一段松弛结束时的 d 轴电流。
     /**
      * @brief [en] The same value captured before the *positive* pulse, kept so `decide()` can check that the two pulses

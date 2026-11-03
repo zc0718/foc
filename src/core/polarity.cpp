@@ -28,7 +28,7 @@ constexpr auto valid_config(const MagnetPolarityTest::Config& config) noexcept -
 
 MagnetPolarityTest::MagnetPolarityTest(Config config) noexcept
     : config_(config), status_(valid_config(config) ? ErrorCode::Ok : ErrorCode::Param), stage_(Stage::SettlePositive),
-      verdict_(PolarityVerdict::Inconclusive), theta_e_(0.0F), stage_s_(0.0F), i_before_a_(0.0F),
+      verdict_(PolarityVerdict::Inconclusive), theta_e_(0.0F), stage_clock_(), i_before_a_(0.0F),
       i_before_positive_a_(0.0F), delta_positive_a_(0.0F), delta_negative_a_(0.0F) {}
 
 void MagnetPolarityTest::begin(float theta_e) noexcept {
@@ -40,7 +40,7 @@ void MagnetPolarityTest::begin(float theta_e) noexcept {
     stage_ = Stage::SettlePositive;
     verdict_ = PolarityVerdict::Inconclusive;
     theta_e_ = theta_e;
-    stage_s_ = 0.0F;
+    stage_clock_.reset();
     i_before_a_ = 0.0F;
     i_before_positive_a_ = 0.0F;
     delta_positive_a_ = 0.0F;
@@ -67,7 +67,7 @@ auto MagnetPolarityTest::step(float dt_s, Ab<float> i_ab) noexcept -> Output {
     const float s = std::sin(theta_e_);
     const float i_along = static_cast<float>((i_ab.alpha * c) + (i_ab.beta * s));
 
-    stage_s_ += dt_s;
+    stage_clock_.add_sample(dt_s);
 
     // Transitions happen on the sample that ends a stage, so the captured current is the one measured
     // at the notch between two stages and not a sample from the middle of a pulse.
@@ -75,33 +75,33 @@ auto MagnetPolarityTest::step(float dt_s, Ab<float> i_ab) noexcept -> Output {
     // 采样。
     switch (stage_) {
     case Stage::SettlePositive:
-        if (stage_s_ >= config_.settle_s) {
+        if (stage_clock_.reached(config_.settle_s)) {
             i_before_a_ = i_along;
             i_before_positive_a_ = i_along;
             stage_ = Stage::PulsePositive;
-            stage_s_ = 0.0F;
+            stage_clock_.reset();
         }
         break;
     case Stage::PulsePositive:
-        if (stage_s_ >= config_.pulse_s) {
+        if (stage_clock_.reached(config_.pulse_s)) {
             delta_positive_a_ = static_cast<float>(i_along - i_before_a_);
             stage_ = Stage::SettleNegative;
-            stage_s_ = 0.0F;
+            stage_clock_.reset();
         }
         break;
     case Stage::SettleNegative:
-        if (stage_s_ >= config_.settle_s) {
+        if (stage_clock_.reached(config_.settle_s)) {
             i_before_a_ = i_along;
             stage_ = Stage::PulseNegative;
-            stage_s_ = 0.0F;
+            stage_clock_.reset();
         }
         break;
     case Stage::PulseNegative:
-        if (stage_s_ >= config_.pulse_s) {
+        if (stage_clock_.reached(config_.pulse_s)) {
             delta_negative_a_ = static_cast<float>(i_along - i_before_a_);
             decide();
             stage_ = Stage::Done;
-            stage_s_ = 0.0F;
+            stage_clock_.reset();
         }
         break;
     case Stage::Done:

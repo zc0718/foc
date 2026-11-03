@@ -161,7 +161,8 @@ class StartupRoutine final {
   private:
     StartupConfig config_{};
     StartupState state_{StartupState::Idle};
-    float elapsed_s_{0.0F};
+    ElapsedClock
+        elapsed_; ///< [en] Integer clock: a float sum of periods drifts, then freezes. [zh] 整数钟：浮点周期累加会漂移，然后冻结。
     float theta_e_{0.0F};
     float omega_e_{0.0F};
     float offset_mech_{0.0F};

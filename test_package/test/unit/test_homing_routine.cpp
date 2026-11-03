@@ -247,63 +247,48 @@ TEST(HomingRoutine, TheSearchCanOnlyFindAMarkInsideItsOwnTravelBudget) {
     }
 }
 
-TEST(HomingRoutine, TheTimerItGivesUpOnIsAFloatSumNotAClock) {
-    // L3: the timeout is decided on `elapsed_s_ += dt_s` in float32, so it is only a clock while the sum is small.
-    // Two things follow, both measured here: the clock runs *fast* as the sum gets large, and past a fixed point it
-    // stops entirely -- so a long recipe never times out at all, which is the opposite of what the routine promises.
-    // L3：超时是靠 float32 的 `elapsed_s_ += dt_s` 判的，所以只有当和很小的时候它才是个钟。由此得到两件事，
-    // 都实测了：和变大时钟会**走快**；越过某个定点后它彻底不动——于是一个很长的配方根本不会超时，与流程承诺相反。
-
-    // A 512 s recipe at 40 kHz fires at 446.7 s of real time: the accumulated clock is 12.7 % fast by then.
-    // 40 kHz 下 512 s 的配方在真实 446.7 s 就触发了：那时累计钟已经快了 12.7 %。
-    {
-        const Sweep run = sweep(1.0F, 512.0F, 2.5e-5F, 1.0e6); // a mark that is never reached
-        const double real_elapsed_s = static_cast<double>(run.ticks) * 2.5e-5;
-        std::printf("[homing] 512 s recipe at 40 kHz fired after %.3f s of real time (%.1f %% fast), %ld ticks\n",
-                    real_elapsed_s, (100.0 * (1.0 - (real_elapsed_s / 512.0))), run.ticks);
-        ASSERT_FALSE(run.found_the_mark);
-        EXPECT_GT(real_elapsed_s, 440.0) << "the recipe did not last long enough to reach the float32 floor";
-        EXPECT_LT(real_elapsed_s, 500.0) << "the clock was expected to run fast, not slow";
-    }
-
-    // Past that point the sum cannot advance at all: 25 M ticks is 625 s of real time, and a 520 s recipe is still
-    // creeping. The header says "giving up rather than turning forever"; that holds only below the floor.
-    // 越过那一点，和彻底加不动：2500 万 tick 是真实 625 s，而 520 s 的配方仍在爬行。头文件写的是"放弃而不是一直转"，
-    // 那句话只在地板以下成立。
-    {
-        const Sweep run = sweep(1.0F, 520.0F, 2.5e-5F, 1.0e6);
-        std::printf("[homing] 520 s recipe at 40 kHz: %ld ticks = %.1f s of real time, finished = %s\n", run.ticks,
-                    static_cast<double>(run.ticks) * 2.5e-5, run.found_the_mark ? "yes" : "NO");
-        EXPECT_EQ(40000000L, run.ticks) << "the routine stopped on its own past the float32 floor";
-    }
-
-    // The floor is `2^24 * dt` rounded up to the next power of two, because the sum sits at a power of two when its ULP
-    // first exceeds half a tick. Mirrored here on a bare float so the three decades can be checked without 25 M ticks
-    // each; it is the same one line as `elapsed_s_ += dt_s`.
-    // 地板是 `2^24 * dt` 向上取到 2 的幂：当 ULP 首次超过半个 tick 时，和正停在 2 的幂上。这里用裸 float 复现同一行，
-    // 好把三个数量级都查一遍而不必每个跑 2500 万 tick；它与 `elapsed_s_ += dt_s` 是同一行。
-    struct Floor final {
-        float dt;
-        float measured_s;
-    };
-    for (const Floor& f : {Floor{2.5e-5F, 512.0F}, Floor{1.0e-4F, 2048.0F}, Floor{1.0e-3F, 32768.0F}}) {
-        float sum = 0.0F;
-        long ticks = 0;
-        while (ticks < 40000000L) {
-            const float before = sum;
-            sum += f.dt;
-            ++ticks;
-            if (sum == before) {
-                break;
-            }
-        }
-        std::printf("[homing] dt %.7f: the clock freezes at %.1f s = 2^24*dt rounded up to a power of two\n",
-                    static_cast<double>(f.dt), static_cast<double>(sum));
-        EXPECT_FLOAT_EQ(f.measured_s, sum) << "the float32 floor moved; re-derive the envelope before trusting it";
-        EXPECT_LE(static_cast<double>(f.dt) * 16777216.0, static_cast<double>(sum));
-        EXPECT_GT(static_cast<double>(f.dt) * 16777216.0 * 2.0, static_cast<double>(sum));
-    }
+TEST(HomingRoutine, TheTimeoutFiresWhereTheRecipeSaysItWill) {
+  // F-105, and this case is the one that found it: the timeout used to be
+  // decided on `elapsed_s_ += dt_s` in float, which ran 12.8 % fast by 512 s
+  // and then froze -- a 512 s recipe fired at 446.664 s and a 520 s recipe
+  // never fired at all. It is now a `core::ElapsedClock` (integer nanoseconds,
+  // see `test_elapsed_clock.cpp` for the clock's own law), so this case asserts
+  // the contract instead of the defect: the recipe fires on the tick its own
+  // arithmetic says, and a recipe longer than the old float floor is still a
+  // recipe and not an endless creep.
+  // F-105，而且正是一个用例发现了它：超时原先由浮点的 `elapsed_s_ += dt_s`
+  // 判定，那在 512 s 处快 12.8 % 并随即 冻结——512 s 的配方在 446.664 s
+  // 触发、520 s 的配方根本不触发。现在用的是 `core::ElapsedClock`（整纳秒，时钟
+  // 自身的定律见
+  // `test_elapsed_clock.cpp`），于是本用例断言的是契约而不是缺陷：配方在它自己的算术规定的
+  // tick 上 触发，比旧的浮点地板更长的配方仍然是配方，而不是无限爬行。
+  const float dt = 2.5e-5F; // 40 kHz
+  struct Case final {
+    float timeout;
+    long ticks;
+  };
+  // 512 s and 520 s bracket the old freeze point exactly; 1 s is the ordinary
+  // case a recipe usually is. 512 s 与 520 s 恰好夹住旧的冻结点；1 s
+  // 是配方通常所处的普通情形。
+  for (const Case &c :
+       {Case{1.0F, 40000L}, Case{512.0F, 20480000L}, Case{520.0F, 20800000L}}) {
+    const Sweep run =
+        sweep(1.0F, c.timeout, dt,
+              1.0e7); // a mark it can never reach, so only the timeout decides
+    const double real_s =
+        static_cast<double>(run.ticks) * static_cast<double>(dt);
+    std::printf("[homing] %.0f s recipe at 40 kHz: gave up after %ld ticks = "
+                "%.4f s (recipe says %.1f s)\n",
+                static_cast<double>(c.timeout), run.ticks, real_s,
+                static_cast<double>(c.timeout));
+    EXPECT_FALSE(run.found_the_mark)
+        << "the unreachable mark was found, so the timeout was never exercised";
+    EXPECT_EQ(c.ticks, run.ticks)
+        << "the timeout did not fire on the tick its own arithmetic says";
+    EXPECT_NEAR(static_cast<double>(c.timeout), real_s, 1.0e-4);
+  }
 }
+
 
 namespace {
 

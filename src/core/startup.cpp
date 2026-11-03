@@ -62,7 +62,7 @@ auto StartupRoutine::begin(std::uint32_t pole_pairs) noexcept -> bool {
     }
     pole_pairs_ = pole_pairs;
     state_ = StartupState::Align;
-    elapsed_s_ = 0.0F;
+    elapsed_.reset();
     theta_e_ = 0.0F;
     omega_e_ = 0.0F;
     offset_mech_ = 0.0F;
@@ -83,10 +83,10 @@ auto StartupRoutine::step(float dt_s, float angle_mech_rad) noexcept -> AlignOut
         // 矢量在定子坐标系里静止，转子走过去。这是整条序列里唯一有已知答案的部分，所以偏置只在这里捕获。
         out.id_a = config_.align_current_a;
         out.theta_e_rad = theta_e_;
-        elapsed_s_ += dt_s;
-        if (elapsed_s_ >= config_.align_hold_s) {
+        elapsed_.add_sample(dt_s);
+        if (elapsed_.reached(config_.align_hold_s)) {
             offset_mech_ = std::isfinite(angle_mech_rad) ? angle_mech_rad : 0.0F;
-            elapsed_s_ = 0.0F;
+            elapsed_.reset();
             omega_e_ = 0.0F;
             state_ = StartupState::Pull;
         }
@@ -131,7 +131,7 @@ auto StartupRoutine::step(float dt_s, float angle_mech_rad) noexcept -> AlignOut
 
 void StartupRoutine::reset() noexcept {
     state_ = StartupState::Idle;
-    elapsed_s_ = 0.0F;
+    elapsed_.reset();
     theta_e_ = 0.0F;
     omega_e_ = 0.0F;
     offset_mech_ = 0.0F;

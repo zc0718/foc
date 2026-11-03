@@ -72,10 +72,17 @@ struct HomingConfig final {
  * @note [en] The only failure it reports is the timeout. Losing the turn count while searching is **not** a failure
  *            here: the search exists precisely because the origin is unknown, and the mark is what restores the count
  *            (see `PositionReference::lost_count()`). A routine that gave up on a lost count would refuse to search
- *            whenever the axis was bumped before homing, which is the normal case.
- * @note [zh] 它唯一报告的是超时。搜索期间丢失圈计数在这里**不是**失败：搜索之所以存在正是因为原点未知，而标记正是恢复计
- *            数的东西（见 `PositionReference::lost_count()`）。一个因为丢计数就放弃的流程，会在轴回零前被动过时拒绝搜索
- *            ——而那正是常态。
+ *            whenever the axis was bumped before homing, which is the normal case. The timeout is decided on a
+ *            `core::ElapsedClock` -- an integer nanosecond count -- and not on a float sum of periods. That was a real
+ *            defect here (F-105): `elapsed_s_ += dt_s` in float ran 12.8 % fast at 512 s and froze past that, so a 512
+ *            s recipe fired at 446.664 s and a 520 s recipe never fired at all, which is the exact opposite of the
+ *            "give up rather than turn forever" the failure path promises.
+ * @note [zh] 超时由 `core::ElapsedClock`——整纳秒计数——判定，而不是浮点的周期累加。这里曾是一个真实缺陷（F-105）：浮点的
+ *            `elapsed_s_ += dt_s` 在 512 s 处快 12.8 % 并自此冻结，于是一个 512 s 的配方在 446.664 s 触发、一个 520 s
+ *            的配方根本不触发，恰好与失败路径承诺的"放弃而不是一直转"相反。它唯一报告的是超时。搜索期间丢失圈计数在这里
+ *            **不是**失败：搜索之所以存在正是因为原点未知，而标记正是恢复计数的东西（见
+ *            `PositionReference::lost_count()`）。一个因为丢计数就放弃的流程，会在轴回零前被动过时拒绝搜索 ——而那正是常
+ *            态。
  * @since 0.1.6
  * @exporter
  */
@@ -143,7 +150,7 @@ class HomingRoutine final {
     [[nodiscard]] auto failure() const noexcept -> HomingFailure { return failure_; }
 
     /** @brief [en] Time spent searching so far, s. [zh] 目前已搜索的时间，s。 */
-    [[nodiscard]] auto elapsed_s() const noexcept -> float { return elapsed_s_; }
+    [[nodiscard]] auto elapsed_s() const noexcept -> float { return elapsed_.seconds(); }
 
     /** @brief [en] Back to `Idle` with the timer cleared, keeping the recipe. [zh] 回到 `Idle` 并清空计时，保留配方。 */
     void reset() noexcept;
@@ -152,7 +159,8 @@ class HomingRoutine final {
     HomingConfig config_;
     HomingState state_;
     HomingFailure failure_;
-    float elapsed_s_;
+    ElapsedClock elapsed_;
+    std::uint64_t timeout_nanos_;
 };
 
 

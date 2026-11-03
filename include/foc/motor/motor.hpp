@@ -503,6 +503,16 @@ class Motor final {
     ReferenceMode mode_;
     float iq_ref_a_;
     float speed_ref_rad_s_;
+    // These three stay float on purpose, and they are a different thing from the `core::ElapsedClock` the routines
+    // use: none of them only grows. `speed_elapsed_s_` and `position_elapsed_s_` are phase decimators, cleared every
+    // time the loop they gate runs, so their magnitude is bounded by the configured period; `stall_elapsed_s_` is
+    // bounded by `kStallWindowS` because reaching it faults. A float is exact enough for a value that never leaves
+    // hundredths of a second -- but a *timeout* is not bounded that way, which is why the routines that own one no
+    // longer accumulate it in float (F-105), and `gates.py clocks` holds the line.
+    // 这三个故意留作 float，与各流程用的 `core::ElapsedClock` 不是一回事：它们都**不是只增不减**的。
+    // `speed_elapsed_s_` 与 `position_elapsed_s_` 是分频相位，它们所门控的环每跑一次就清零，量级被配置的周期兜住；
+    // `stall_elapsed_s_` 被 `kStallWindowS` 兜住（达到即故障）。一个永不超出百分之几秒的量，float 足够精确——
+    // 但**超时**不是这样被兜住的，所以拥有超时的流程不再用 float 累加它（F-105），并由 `gates.py clocks` 守住。
     float speed_elapsed_s_;
     bool speed_step_due_;
     float position_ref_rad_;

@@ -164,10 +164,10 @@ auto AlignRoutine::step(float dt_s, float angle_mech_rad) noexcept -> AlignOutpu
         return out;
     }
 
-    elapsed_s_ += dt_s;
+    elapsed_.add_sample(dt_s);
 
     if (state_ == AlignState::Ramp) {
-        const float fraction = (config_.ramp_s > 0.0F) ? (elapsed_s_ / config_.ramp_s) : 1.0F;
+        const float fraction = (config_.ramp_s > 0.0F) ? (elapsed_.seconds() / config_.ramp_s) : 1.0F;
         if (fraction < 1.0F) {
             id_a_ = config_.current_a * fraction;
             out.id_a = id_a_;
@@ -180,7 +180,7 @@ auto AlignRoutine::step(float dt_s, float angle_mech_rad) noexcept -> AlignOutpu
     if (state_ == AlignState::Settle) {
         out.id_a = id_a_;
         accumulate(angle_mech_rad);
-        if (elapsed_s_ >= config_.hold_s) {
+        if (elapsed_.reached(config_.hold_s)) {
             first_mean_rad_ = capture_mean();
             if (!(last_spread_rad_ <= config_.settle_tolerance_rad)) {
                 // Reject as "did not settle" rather than accept the mean of a moving rotor: a mean
@@ -213,7 +213,7 @@ auto AlignRoutine::step(float dt_s, float angle_mech_rad) noexcept -> AlignOutpu
     out.theta_e_rad = config_.align_angle_e_rad + kHalfPi;
     out.id_a = id_a_;
     accumulate(angle_mech_rad);
-    if (elapsed_s_ >= config_.verify_s) {
+    if (elapsed_.reached(config_.verify_s)) {
         const float second_mean_rad = capture_mean();
         const float delta_rad = wrap_pi(second_mean_rad - first_mean_rad_);
         // No spread test here, and that is not an oversight: the rotor is *supposed* to traverse a
@@ -257,7 +257,7 @@ void AlignRoutine::reset() noexcept {
     state_ = AlignState::Idle;
     failure_ = AlignFailure::None;
     pole_pairs_ = 0U;
-    elapsed_s_ = 0.0F;
+    elapsed_.reset();
     id_a_ = 0.0F;
     offset_mech_rad_ = 0.0F;
     spread_rad_ = 0.0F;
@@ -338,7 +338,7 @@ void AlignRoutine::finish() noexcept {
  */
 void AlignRoutine::enter(AlignState next) noexcept {
     state_ = next;
-    elapsed_s_ = 0.0F;
+    elapsed_.reset();
     sum_sin_ = 0.0F;
     sum_cos_ = 0.0F;
     samples_ = 0U;

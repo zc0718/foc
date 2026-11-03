@@ -30,7 +30,8 @@ auto usable(const HomingConfig& config) noexcept -> bool {
 
 HomingRoutine::HomingRoutine(HomingConfig config) noexcept
     : config_(config), state_(usable(config) ? HomingState::Idle : HomingState::Failed),
-      failure_(usable(config) ? HomingFailure::None : HomingFailure::NotConfigured), elapsed_s_(0.0F) {}
+      failure_(usable(config) ? HomingFailure::None : HomingFailure::NotConfigured), elapsed_(),
+      timeout_nanos_(ElapsedClock::to_nanos(config.timeout_s)) {}
 
 auto HomingRoutine::validate() const noexcept -> ErrorCode {
     const bool all_zero =
@@ -54,7 +55,7 @@ auto HomingRoutine::validate() const noexcept -> ErrorCode {
 void HomingRoutine::reset() noexcept {
     state_ = usable(config_) ? HomingState::Idle : HomingState::Failed;
     failure_ = usable(config_) ? HomingFailure::None : HomingFailure::NotConfigured;
-    elapsed_s_ = 0.0F;
+    elapsed_.reset();
 }
 
 auto HomingRoutine::begin(const PositionReference& reference) noexcept -> bool {
@@ -78,7 +79,7 @@ auto HomingRoutine::step(const PositionReference& reference, float dt_s) noexcep
         return out;
     }
 
-    elapsed_s_ += dt_s;
+    elapsed_.add_sample(dt_s);
     if (reference.homed()) {
         state_ = HomingState::Done;
         out.speed_ref_rad_s = 0.0F;
@@ -86,7 +87,9 @@ auto HomingRoutine::step(const PositionReference& reference, float dt_s) noexcep
         out.finished = true;
         return out;
     }
-    if (elapsed_s_ >= config_.timeout_s) {
+    // The recipe's own timeout, converted once at construction: integer arithmetic per period, no float sum to drift.
+    // 配方自己的超时，在构造时转换一次：每周期整数算术，没有会漂移的浮点累加。
+    if (elapsed_.nanos() >= timeout_nanos_) {
         // Giving up rather than turning forever: an axis that never sees its mark is a machine with a broken sensor or a
         // mark out of reach, and both need a human rather than more current.
         // 放弃而不是一直转：一个永远见不到标记的轴，要么传感器坏了，要么标记在行程之外，两者都需要人，而不是更大的电流。

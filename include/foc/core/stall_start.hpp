@@ -121,8 +121,8 @@ class StallStart final {
     void set_config(const StallStartConfig& config) noexcept {
         config_ = config;
         phase_ = StallStartPhase::Idle;
-        torque_nm_ = 0.0F;
-        hold_s_ = 0.0F;
+        ramp_.reset();
+        hold_.reset();
     }
 
     [[nodiscard]] auto config() const noexcept -> const StallStartConfig& { return config_; }
@@ -154,8 +154,8 @@ class StallStart final {
             return false;
         }
         phase_ = StallStartPhase::Ramping;
-        torque_nm_ = 0.0F;
-        hold_s_ = 0.0F;
+        ramp_.reset();
+        hold_.reset();
         return true;
     }
 
@@ -186,40 +186,52 @@ class StallStart final {
             if (motion > config_.release_speed_rad_s) {
                 phase_ = StallStartPhase::Released;
             } else if (dt_s > 0.0F) {
-                torque_nm_ += config_.ramp_nm_per_s * dt_s;
-                if (torque_nm_ >= config_.max_torque_nm) {
-                    torque_nm_ = config_.max_torque_nm;
-                    hold_s_ += dt_s;
-                    if (hold_s_ >= config_.give_up_s) {
+                // The torque is *computed from* the ramp clock and not accumulated into a float: an integrated ramp
+                // stops rising once `ulp(torque) > ramp*dt`, which for a gentle recipe is inside the working range --
+                // at 0.01 N*m/s and a 25 us period the float version froze at 4.19 N*m and could never reach a
+                // ceiling above it, so the give-up branch was unreachable for exactly the slow recipes that need it.
+                // 力矩是由爬升时钟**算出来的**，不是累加进 float 的：一旦 `ulp(力矩) > 爬升率*dt`，浮点积分就不再
+                // 上升，而对温和的配方这个点就落在工作范围内——0.01 N·m/s、25 us 周期下浮点版在 4.19 N·m 冻结，
+                // 永远到不了更高的上限，于是"放弃"分支偏偏对需要它的慢配方不可达。
+                ramp_.add_sample(dt_s);
+                if (ramped_torque_nm() >= config_.max_torque_nm) {
+                    hold_.add_sample(dt_s);
+                    if (hold_.reached(config_.give_up_s)) {
                         phase_ = StallStartPhase::Failed;
                     }
                 } else {
-                    hold_s_ = 0.0F;
+                    hold_.reset();
                 }
             }
         }
 
         out.phase = phase_;
         out.status = ErrorCode::Ok;
-        out.torque_nm = (phase_ == StallStartPhase::Failed) ? 0.0F : torque_nm_;
-        out.limited = (torque_nm_ >= config_.max_torque_nm);
+        out.torque_nm = (phase_ == StallStartPhase::Failed) ? 0.0F : ramped_torque_nm();
+        out.limited = (ramped_torque_nm() >= config_.max_torque_nm);
         return out;
     }
 
     [[nodiscard]] auto phase() const noexcept -> StallStartPhase { return phase_; }
-    [[nodiscard]] auto torque_nm() const noexcept -> float { return torque_nm_; }
+    [[nodiscard]] auto torque_nm() const noexcept -> float { return ramped_torque_nm(); }
 
     void reset() noexcept {
         phase_ = StallStartPhase::Idle;
-        torque_nm_ = 0.0F;
-        hold_s_ = 0.0F;
+        ramp_.reset();
+        hold_.reset();
     }
 
   private:
+    /** @brief [en] The ramp evaluated at the ramp clock, clamped to the recipe's ceiling. [zh] 在爬升时钟处求值的爬升，夹到配方上限。 */
+    [[nodiscard]] auto ramped_torque_nm() const noexcept -> float {
+        const float ramped = config_.ramp_nm_per_s * ramp_.seconds();
+        return (ramped < config_.max_torque_nm) ? ramped : config_.max_torque_nm;
+    }
+
     StallStartConfig config_{};
     StallStartPhase phase_{StallStartPhase::Idle};
-    float torque_nm_{0.0F};
-    float hold_s_{0.0F};
+    ElapsedClock ramp_; ///< [en] how long the ramp has been climbing. [zh] 爬升已进行多久。
+    ElapsedClock hold_; ///< [en] how long it has held at the torque ceiling. [zh] 已在力矩上限上停留多久。
 };
 
 
