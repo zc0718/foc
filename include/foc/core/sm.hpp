@@ -24,10 +24,25 @@ enum class MotorState : std::uint8_t {
 
 
 /**
- * @brief [en] Mode state machine: Idle -> Align -> Run, any state -> Fault, Fault -> Idle on an explicit clear. Illegal
- *             transitions are counted and ignored -- never a crash.
- * @brief [zh] 模式状态机：Idle -> Align -> Run，任意状态 -> Fault，Fault 显式清除后回到 Idle。 非法迁移只计数并忽略——绝
- *             不崩溃。
+ * @brief [en] Mode state machine: `Idle -> Align -> Run` forwards, **back to `Idle` from `Align` or `Run`** (the
+ *             abort), any live state -> `Fault`, and `Fault` -> `Idle` only through `clear_fault()`. That is seven
+ *             legal edges and nothing else; every refusal is counted and ignored -- never a crash.
+ * @brief [zh] 模式状态机：`Idle -> Align -> Run` 前进，**从 `Align` 或 `Run` 可以退回 `Idle`**（中止），任意活状态 ->
+ *             `Fault`，而 `Fault` -> `Idle` 只能经 `clear_fault()`。合法边只有这七条，其余一律拒绝；拒绝只计数并忽略——
+ *             绝不崩溃。
+ * @note [en] The seven edges are counted rather than described, because the description was wrong until it was counted:
+ *            the line above used to say `Idle -> Align -> Run` and stop, which reads as "a running motor cannot be
+ *            commanded back to `Idle`" -- so a caller obeying the documentation would have had to fault the drive to
+ *            stop it. Measured, both abort edges are legal; `test_sm.cpp` now enumerates the whole relation and
+ *            computes its graph properties (every state reachable from `Idle`, `Fault` the only sink) instead of
+ *            trusting the sentence (F-108). A request for the state the machine is already in is **refused**, not
+ *            ignored: a supervisor that re-asserts its target every cycle fills `illegal_transitions()` with attempts
+ *            that mean nothing.
+ * @note [zh] 这七条边是**数出来**的而不是描述出来的，因为在数之前那句描述是错的：上面那行原写作 `Idle -> Align -> Run`
+ *            就结束了，读起来是"正在运行的电机无法被命令回 `Idle`"——照文档办事的调用方只能先让它故障才能停机。实测两条
+ *            中止边都是合法的；`test_sm.cpp` 现在枚举整个关系并计算它的图性质（每个状态都可自 `Idle` 到达、 `Fault` 是
+ *            唯一汇），而不是相信那句话（F-108）。请求机器**已经处于**的状态会被**拒绝**，而不是被忽略：每周期重申一次
+ *            目标的管理层会把 `illegal_transitions()` 填满毫无意义的尝试。
  * @context [en] Called from the control loop or the command layer: noexcept, no allocation.
  * @context [zh] 由控制环或命令层调用：noexcept、不分配。
  * @since 0.1.0

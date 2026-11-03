@@ -177,15 +177,8 @@
       "leg": "implementation",
       "capability": "Per-decision modified condition/decision coverage of the safety subset, so a condition that no case has ever made false is visible instead of being averaged into a line-coverage number.",
       "source": "clang 18 `-fcoverage-mcdc` + `llvm-cov show --show-mcdc`: the independence pairs per decision, which is a property of the tests rather than of the physics.",
-      "reopened": [
-        {
-          "claim": "core/sm.hpp",
-          "verdict": "still_short",
-          "note": "Re-opened because the range term (`to >= kStateCount`) had never been true either, and removing it does not weaken a check but changes the answer: `kLegal[from][4]` reads past the table, happens to be true, and `request(4)` returns Ok while moving the machine into a state that does not exist. A boundary pair now covers it. The row stays L1: it has no measurement leg of any kind, and MC/DC says which tests exist, not what the transition table should be.",
-          "missing": "any measurement at all -- the row is L1, and MC/DC says which transitions the cases reach, not what the transition table should be"
-        }
-      ],
-      "no_effect": "`core/protection.hpp` was left short here on a model-level second source for the two-fault ranking; O-29 has since supplied the derivation that exists (threshold codes are unordered by measurement, durations must follow, path independence verified), so the row's verdict lives there -- an implementation-level leg may not carry a promotion. `core/sm.hpp` is still short and stays so."
+      "reopened": [],
+      "no_effect": "`core/protection.hpp` was left short here on a model-level second source for the two-fault ranking; O-29 has since supplied the derivation that exists (threshold codes are unordered by measurement, durations must follow, path independence verified), so the row's verdict lives there -- an implementation-level leg may not carry a promotion. `core/sm.hpp` is still short and stays so. `core/sm.hpp` was left short here on 'any measurement at all'; O-34 has since measured it as a graph (7 edges, Fault the only sink, refusals inert by exactly one) and fixed the docstring's omitted abort edges (F-108), so the row's verdict lives there -- an implementation-level leg may not carry a promotion."
     },
     {
       "id": "O-14",
@@ -469,6 +462,21 @@
       "reopened": [
         {
           "claim": "core/svpwm.hpp",
+          "verdict": "promoted",
+          "missing": ""
+        }
+      ],
+      "no_effect": ""
+    },
+    {
+      "id": "O-34",
+      "date": "2026-11-03",
+      "leg": "model",
+      "capability": "The mode machine measured as a graph instead of as a table: reachability from Idle, Fault as the only sink, and the refusal measured as an exact zero on state and +1 on the counter -- which is what makes an existing diagnostic counter trustworthy.",
+      "source": "`test_sm.cpp`, three new cases. Relation measured on the code over 4 start states x 4 targets: 7 legal edges, out-degree 2/3/2/0, in-degree 2/1/1/3, all four states reachable from Idle by BFS, Fault out-degree 0. Refusals: 9 of 16 cells refuse and each leaves the state unchanged with the counter +1 exactly, plus 8 out-of-range targets (static_cast<MotorState>(4) and (200)) equally inert. Retry: request(current) refused three times -> counter +3, state unchanged. Found and fixed: the class docstring described `Idle -> Align -> Run` and stopped, omitting the two abort edges back to Idle -- F-108.",
+      "reopened": [
+        {
+          "claim": "core/sm.hpp",
           "verdict": "promoted",
           "missing": ""
         }

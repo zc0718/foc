@@ -2978,6 +2978,31 @@ The log
        **every machine you have parameters for**, not just the one on the bench.
      - ``pending``
 
+   * - F-108
+     - F
+     - **The mode machine's documented transition rule omitted two of its seven edges, and the two it omitted are the
+       aborts.** `sm.hpp` said "Idle -> Align -> Run, any state -> Fault, Fault -> Idle on an explicit clear". Measured,
+       `Align -> Idle` and `Run -> Idle` are legal as well -- the table has seven edges, not five -- so the sentence
+       told a reader that a running motor **cannot be commanded back to Idle**. A caller obeying the documentation
+       would have had to fault the drive in order to stop it.
+     - Surfaced by measuring the machine as a **graph** instead of as a table of cells: enumerating the relation on the
+       code (four start states x four targets) gives out-degree `2 / 3 / 2 / 0` and in-degree `2 / 1 / 1 / 3`, and the
+       seven edges only balance against the documentation if the two aborts exist. The cell-by-cell test that was
+       already there could not catch it: it compared the table against a *copy of the table*, which is exactly the
+       shape of check that cannot notice a sentence disagreeing with both.
+     - Blast radius: the class documentation of a safety-subset module, and any caller that planned a stop. No code
+       changed -- the behaviour is right and the abort is the useful edge. `test_sm.cpp` now enumerates the relation and
+       computes the graph properties over it (every state reachable from `Idle`, `Fault` the only sink, no self-loop
+       through `request()`), so the sentence is no longer load-bearing; the header states the seven edges and names
+       the one thing that is easy to get wrong in the other direction (**`request(current)` is a refusal, not a
+       no-op**, so a supervisor that re-asserts its target every cycle fills `illegal_transitions()`). Re-run:
+       `test_sm.cpp`, 14 cases green, and `gates.py mcdc` still 100 % on the subset.
+
+       The rule this produces: **a table checked against a copy of itself is not checked.** For a state machine, the
+       check with information in it is a graph property computed from the *measured* relation -- reachability, sinks,
+       degrees -- because those are the things a reader of the prose is actually relying on.
+     - ``pending``
+
 What ``pending`` means in the commit column
 -------------------------------------------
 
