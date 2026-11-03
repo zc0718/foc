@@ -459,6 +459,21 @@
         }
       ],
       "no_effect": ""
+    },
+    {
+      "id": "O-33",
+      "date": "2026-11-03",
+      "leg": "model",
+      "capability": "The modulator's linear range as the hexagon it actually is, with the boundary matched to the geometry at six angles, plus the two identities a control loop relies on: the mapping has no gain error, and a wrong bus voltage comes out exactly and inverted.",
+      "source": "`test_svpwm.cpp`, four new cases. Boundary: bisected on the code at 0/10/20/30/40/50 degrees, 16.00000 V at a vertex and 13.85641 V at a flat side, matching (2/3*v_bus)*cos(30)/cos(theta'-30) to 1e-5 relative. Full-turn sweep: 0 of 72 saturated at 0.999x the inscribed circle, 6 at the circle itself, 66 of 72 at 2/3*v_bus. Reconstruction: duties -> (duty-mean)*v_bus -> Clarke equals the request to <=1e-6 V at seven angles in all sectors. Sensitivity: realised/commanded = 1/k, measured 1.111111 / 1.052632 / 0.952381 / 0.909091 for k = 0.90/0.95/1.05/1.10.",
+      "reopened": [
+        {
+          "claim": "core/svpwm.hpp",
+          "verdict": "promoted",
+          "missing": ""
+        }
+      ],
+      "no_effect": ""
     }
   ]
 }
