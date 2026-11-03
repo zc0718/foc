@@ -337,6 +337,11 @@
     ],
     "version.h": [
       "src/version.c"
+    ],
+    "core/observer/dual_inductance_observer.hpp": [
+      "core/observer/observer_policy.hpp",
+      "core/types.hpp",
+      "core/transforms.hpp"
     ]
   },
   "unmapped": []

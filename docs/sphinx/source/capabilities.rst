@@ -185,6 +185,16 @@ point -- the alternative is a library that grows algorithms and forgets how they
        without the case is the folklore the boundaries gate exists to prevent.
      - na -- a flux integration, not an algebraic identity.
      - --
+   * - ``core/observer/dual_inductance_observer.hpp``
+     - ``state()``, ``flux()``, ``root_gap_rad()`` -- the last is a diagnostic and not an estimate: it says how far
+       apart the two rotor positions consistent with the measured flux and current are.
+     - na -- ``ld``, ``lq`` and ``psi_f`` all arrive together through ``apply_params()``; there is no "which
+       inductance" choice to contradict, which is the whole difference from the back-EMF observer.
+     - todo -- the two roots of the quadratic are disambiguated by continuity alone, and no case yet pins what happens
+       when continuity is wrong (a seeded observer stepping backwards through the estimate). Writing the row without
+       the case is the folklore the boundaries gate exists to prevent.
+     - na -- one complex square root and one quadratic, evaluated pointwise.
+     - --
    * - ``core/observer/nonlinear_flux_observer.hpp``
      - ``locked()``, ``state()``, ``flux()``
      - na -- parameters arrive through ``apply_params()``; saliency enters the flux law, not a switch.

@@ -527,6 +527,21 @@
         }
       ],
       "no_effect": ""
+    },
+    {
+      "id": "O-38",
+      "date": "2026-11-03",
+      "leg": "model",
+      "capability": "The C8 capability piece the plan still listed as missing: an observer that carries BOTH inductances, so the d-axis current that MtpaReference is defined by no longer costs steering accuracy. The saliency term the single-L model discards is a closed-form bias, and it is removed exactly rather than reduced.",
+      "source": "`test_dual_inductance_observer.cpp`, five cases. Algebra: the flux relation is a quadratic in `x = e^(j*theta)`; seeded with the flux a salient machine has at a known angle and handed `v = Rs*i`, the inversion returns the angle to 4.768e-07 rad over 48 (angle, i_d, i_q) combinations, and on Ld == Lq it is bit-identical to the shipped observer's `arg(psi - L*i)` (gap 0.000e+00 over 36 combinations). Model: on the repository's speed-locked plant with the exact steady-state d-q voltage, the single-L bias is `atan((ld-lq)*i_d/psi_f)` -- measured 0.0273/0.0433/0.0604/0.0773/0.0939 rad against the law's 0.0210/0.0420/0.0629/0.0838/0.1046 (within 30 %), monotone in i_d and independent of speed -- while the dual-L answer is flat at 0.0145 to 0.0157 rad over the same range and 6.5x better at 2.5 A. Documented floor: a backward-Euler flux integrator lags by about w_e*dt/2 (0.0025 rad at 100 rad/s, 0.02 at 800), so the table is taken at 100 rad/s and the faster numbers are recorded as unusable. The combinations matrix gains `MtpaReference + DualInductanceObserver -> allow` and a wildcard allow, both pointing at this file.",
+      "reopened": [
+        {
+          "claim": "core/observer/dual_inductance_observer.hpp",
+          "verdict": "promoted",
+          "missing": ""
+        }
+      ],
+      "no_effect": "Not wired into `SwitchableObserver` yet, so no C caller can select it: the header and its measurements exist, the runtime selector and the ABI are the next batch. `core/observer/switchable_observer.hpp` stays at L1 for that reason and not because its forwarding is untested."
     }
   ]
 }

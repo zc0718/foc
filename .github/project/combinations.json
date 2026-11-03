@@ -20,7 +20,9 @@
       "observer": "*",
       "verdict": "allow",
       "why": "d is pinned to zero by construction, so the d-axis currents that make the observers disagree with their own flux model never appear.",
-      "evidence": ["test_package/test/unit/test_motor.cpp"]
+      "evidence": [
+        "test_package/test/unit/test_motor.cpp"
+      ]
     },
     {
       "reference": "MtpaReference",
@@ -39,7 +41,9 @@
       "verdict": "conditional",
       "condition": "abs(i_d) <= rate * abs(omega_e) with the rate taken from the measured table: at i_d = 0 the 0.15 rad ceiling holds from 100 rad/s up, at i_d = -1 A the same observer reads three times the ceiling at 200 rad/s and is harmless at 3200 rad/s. The safe rate is therefore not a constant.",
       "enforced_by": "MtpaReference::i_d_limit_a() with a rate the caller set from test_daxis_observer_limit.cpp; the library defaults the rate to zero rather than guessing one.",
-      "evidence": ["test_package/test/unit/test_daxis_observer_limit.cpp"]
+      "evidence": [
+        "test_package/test/unit/test_daxis_observer_limit.cpp"
+      ]
     },
     {
       "reference": "MtpaReference",
@@ -47,14 +51,18 @@
       "verdict": "unmeasured",
       "why": "The slot's model is a single inductance with a constant flux target, so a non-zero i_d moves the flux it believes it is tracking by `Ld*i_d` with nothing to outvote it at any speed. On the nominal machine that is 0.042 rad at i_d = -1 A, which is *inside* the 0.15 rad ceiling -- so the obvious argument says it is harmless and the argument has never been checked. Measuring it needs a rig that holds a non-zero i_d and reads the observer's angle, which does not exist yet.",
       "reason": "Build the rig, then fill this cell with a measured table like the NLFO one.",
-      "evidence": ["test_package/test/unit/test_daxis_observer_limit.cpp"]
+      "evidence": [
+        "test_package/test/unit/test_daxis_observer_limit.cpp"
+      ]
     },
     {
       "reference": "*",
       "observer": "IdealObserver",
       "verdict": "allow",
       "why": "The ideal observer is the sensor the observer slot is measured against; it carries no model of the machine and therefore has no parameters to disagree with a non-zero d-axis current.",
-      "evidence": ["test_package/test/unit/test_ideal_observer.cpp"]
+      "evidence": [
+        "test_package/test/unit/test_ideal_observer.cpp"
+      ]
     },
     {
       "reference": "*",
@@ -73,7 +81,27 @@
       "verdict": "conditional",
       "condition": "Both of its observers must themselves be allowed with the reference in the slot: the blend interpolates between them, so a pairing that is forbidden on either side is forbidden here (at the weight where that side is in charge).",
       "enforced_by": "Nothing mechanical -- this cell is a rule about how to read the matrix, and it is why the blend's own observers appear in their own rows.",
-      "evidence": ["test_package/test/unit/test_blended_observer.cpp"]
+      "evidence": [
+        "test_package/test/unit/test_blended_observer.cpp"
+      ]
+    },
+    {
+      "reference": "MtpaReference",
+      "observer": "DualInductanceObserver",
+      "verdict": "allow",
+      "why": "The dual-inductance observer is the first one in the library whose angle does not depend on i_d: its residual is the harness floor and stays flat (0.0145 to 0.0157 rad) across a 5x current range where the single-L observer reads 0.027 to 0.094 rad, so the i_d MtpaReference asks for no longer costs steering accuracy.",
+      "evidence": [
+        "test_package/test/unit/test_dual_inductance_observer.cpp"
+      ]
+    },
+    {
+      "reference": "*",
+      "observer": "DualInductanceObserver",
+      "verdict": "allow",
+      "why": "Nothing to refuse: the observer carries both inductances and the rotor flux, and on a surface-mounted machine it reduces to the shipped back-EMF algebra bit for bit, so it is at least as good as the observer it replaces under every reference this library ships.",
+      "evidence": [
+        "test_package/test/unit/test_dual_inductance_observer.cpp"
+      ]
     }
   ]
 }
