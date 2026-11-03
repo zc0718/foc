@@ -566,6 +566,21 @@
       "source": "`test_observer_screening.cpp`, one new case. `Lq/Ld = 2.5`, 800 rad/s, `iq = 0.5 A`: at `i_d` = 0 / -0.5 / -1 / -2 A the single-L observer reads 0.0253 / 0.0678 / 0.1240 / 0.1708 rad and the dual-inductance one 0.0197 / 0.0579 / 0.1217 / 0.1699, i.e. the same number to 2 % where the models differ by 0.105 rad (the bias law of `test_dual_inductance_observer.cpp`). The assertion is written both ways: both stay outside the 0.15 rad ceiling at 2 A, and the two must not separate -- if they ever do, the instrument changed and the table has to be retaken.",
       "reopened": [],
       "no_effect": "The screening table's existing columns are unchanged; this adds what it cannot resolve, not a new verdict about the observers. `MtpaReference x DualInductanceObserver` remains `allow` on the plant measurement, not on this rig."
+    },
+    {
+      "id": "O-41",
+      "date": "2026-11-03",
+      "leg": "model",
+      "capability": "A wrong seed becomes reportable, and the two inductances become separable: `radius_error()` (the chosen root's distance from the unit circle) says whether the flux state can be explained by a rotor position at all, and a static (integration-free) sensitivity measurement shows that `Lq` errors move the angle while `Ld` errors move the radius.",
+      "source": "`test_dual_inductance_observer.cpp`, two new cases. Radius: consistent state 0.000e+00, seed half a turn out -9.048e-02, seed built from another current 3.381e-02; a consistent state stepped 2000 times stays at 0.000e+00; a seed a tenth of a turn out reads -5.767e-03 and therefore passes the 1e-02 tolerance while its angle error is 0.2794 rad, recorded as the limit of the detector. Sensitivity, static (`v = Rs*i`, no integration so no floor): `dLq` +10 % moves the angle 2.871e-03 rad against `dLq*i_q/psi_f` = 3.150e-03 (0.91) and `dLd` +10 % moves the radius 3.888e-03 against `dLd*i_d/psi_f` = 4.200e-03 (0.93), while it moves the angle only 7.176e-05 -- 58x less than the derivation I wrote first predicted. The refuted derivation is recorded in the case itself.",
+      "reopened": [
+        {
+          "claim": "core/observer/dual_inductance_observer.hpp",
+          "verdict": "promoted",
+          "missing": ""
+        }
+      ],
+      "no_effect": "`MtpaReference x DualInductanceObserver` stays `allow`: nothing here changed the pairing, only what can be observed about it. The `Ld`-acts-on-the-radius result is a statement about this observer's algebra and not about a controller."
     }
   ]
 }

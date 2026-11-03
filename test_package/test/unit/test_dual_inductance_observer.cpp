@@ -440,6 +440,158 @@ TEST(DualInductanceObserver, TheSecondRootIsNotARotorPositionAndAWrongSeedIsPerm
 
 
 
+TEST(DualInductanceObserver, AWrongSeedIsVisibleInTheRadiusEvenThoughItIsPermanent) {
+  // A flux integrator cannot correct a bad seed, but the algebra still knows: the quadratic has a root of **unit modulus
+  // exactly when** the state came from a real rotor position. So `radius_error()` turns the silent permanence of the
+  // previous case into something a caller can refuse to use -- and it is measured here against the angle error it
+  // accompanies, so the threshold is chosen from numbers rather than from taste.
+  // 磁链积分器改不了坏种子，但代数仍然知道：二次方程**当且仅当**状态来自真实转子位置时才有一个**模为 1** 的根。于是
+  // `radius_error()` 把上一节那个静默的永久偏差变成"调用方可以拒绝使用"的东西——这里把它与相应的角度误差一起量出来，
+  // 好让阈值取自有依据的数字。
+  const sil::MachineSpec spec = salient_spec();
+  const float psi_f = psi_f_of(spec);
+  const float theta = 0.4F;
+  const float id = -2.0F;
+  const float iq = 0.5F;
+  const core::Ab<float> i_ab = core::inv_park(core::Dq<float>{id, iq}, theta);
+  const core::Ab<float> v_ab{spec.rs * i_ab.alpha, spec.rs * i_ab.beta};
+  const auto probe = [&](float seed_theta, float seed_id, float seed_iq) {
+    core::DualInductanceObserver observer(
+        core::DualInductanceObserver::Config{spec.rs, spec.ld, spec.lq, psi_f});
+    observer.seed_flux(stator_flux(spec, seed_theta, seed_id, seed_iq));
+    const core::ObsState state = observer.update(v_ab, i_ab, kDt);
+    return std::pair<float, float>{observer.radius_error(), std::fabs(wrap_pi(state.theta_e - theta))};
+  };
+  std::printf("\n[dual-L] radius_error against the angle error it accompanies\n");
+  std::printf("     %-34s %14s %12s %10s\n", "seed", "radius_error", "angle error", "plausible");
+  struct Row final {
+    const char* name;
+    float theta_;
+    float id_;
+    float iq_;
+    bool expect_plausible;
+  };
+  const Row rows[] = {{"consistent (stator_flux at truth)", theta, id, iq, true},
+                      {"half a turn out", theta + core::kPi<float>, id, iq, false},
+                      {"built for another current", theta, -0.5F, -1.5F, false}};
+  for (const Row& row : rows) {
+    const auto measured = probe(row.theta_, row.id_, row.iq_);
+    core::DualInductanceObserver observer(
+        core::DualInductanceObserver::Config{spec.rs, spec.ld, spec.lq, psi_f});
+    observer.seed_flux(stator_flux(spec, row.theta_, row.id_, row.iq_));
+    static_cast<void>(observer.update(v_ab, i_ab, kDt));
+    std::printf("     %-34s %14.3e %12.4f %10s\n", row.name, static_cast<double>(measured.first),
+                static_cast<double>(measured.second), observer.flux_plausible() ? "yes" : "no");
+    EXPECT_EQ(row.expect_plausible, observer.flux_plausible()) << row.name;
+  }
+  // The two ends are twelve orders of magnitude apart, which is what makes a threshold meaningful at all.
+  // 两端相差十二个数量级，这才使一个阈值有意义。
+  const auto good = probe(theta, id, iq);
+  const auto bad = probe(theta, -0.5F, -1.5F);
+  EXPECT_LT(std::fabs(good.first), 1.0e-5F) << "a consistent state must sit on the unit circle";
+  EXPECT_GT(std::fabs(bad.first), 1.0e-2F) << "an inconsistent state must not";
+  // And this is the point: the *angle* error of the inconsistent case is permanent (see the case above), so the radius is
+  // the only thing that says anything. It is small in angle yet large in radius, which is exactly why counting on a small
+  // angle error cannot detect it.
+  // 而这才是要点：不一致情形下的**角度**误差是永久的（见上一节），所以半径是唯一还在说话的东西。它的角度不大而半径很大，
+  // 这正是"靠角度误差小"无法发现它的原因。
+  std::printf("[dual-L] the inconsistent seed: %.4f rad of angle error, %.3e of radius error\n",
+              static_cast<double>(bad.second), static_cast<double>(bad.first));
+  EXPECT_LT(bad.second, 0.5F) << "if the angle error were large, the case would prove nothing about the radius";
+  // The honest limit, measured rather than hoped for: a seed only a tenth of a turn out reads 5.8e-03 of radius, i.e.
+  // it **passes** the tolerance while its angle is 0.28 rad wrong. So this is a gross-fault detector and not an accuracy
+  // guarantee, and the case records that instead of raising the threshold to make it look like one.
+  // 诚实的边界，量出来的而不是希望出来的：偏十分之一圈的种子读到 5.8e-03 的半径，即它**通过**容差，而角度错了 0.28 rad。
+  // 所以这是粗略故障检出器，不是精度保证；用例把这一条记下来，而不是把阈值调高好让它看起来像保证。
+  const auto tenth = probe(theta + (0.1F * core::kPi<float>), id, iq);
+  std::printf("[dual-L] a tenth of a turn out: radius %.3e (passes), angle error %.4f rad\n",
+              static_cast<double>(tenth.first), static_cast<double>(tenth.second));
+  EXPECT_LT(std::fabs(tenth.first), core::DualInductanceObserver::kRadiusTolerance)
+      << "if this now fails, the detector got sharper and the limit recorded here is stale";
+  // And the noise floor that the tolerance has to clear: a consistent state stepped 2000 times stays on the circle.
+  // 而容差必须让开的那个噪声地板：自洽状态走 2000 步仍然停在单位圆上。
+  core::DualInductanceObserver long_run(core::DualInductanceObserver::Config{spec.rs, spec.ld, spec.lq, psi_f});
+  long_run.seed_flux(stator_flux(spec, theta, id, iq));
+  float worst_radius = 0.0F;
+  for (int k = 0; k < 2000; ++k) {
+    static_cast<void>(long_run.update(v_ab, i_ab, kDt));
+    worst_radius = std::max(worst_radius, std::fabs(long_run.radius_error()));
+  }
+  std::printf("[dual-L] consistent state over 2000 steps: worst radius %.3e (tolerance %.0e)\n",
+              static_cast<double>(worst_radius), static_cast<double>(core::DualInductanceObserver::kRadiusTolerance));
+  EXPECT_LT(worst_radius, 0.1F * core::DualInductanceObserver::kRadiusTolerance) << "the floor must clear the tolerance";
+}
+
+TEST(DualInductanceObserver, AnLqErrorMovesTheAngleAndAnLdErrorMovesTheRadius) {
+  // The sensitivity leg the plant could not resolve (a 10 % `Ld` error is far under the harness's 13 mrad floor), measured
+  // **statically**: seed at a known angle and current, then hand it `v = Rs*i`, which leaves the flux untouched -- so
+  // there is no integration and therefore no floor.
+  // plant 分辨不了的那条敏感度腿（10 % 的 `Ld` 远在夹具 13 mrad 地板之下），改在**静态**下量：用已知角度与电流播种，再
+  // 交给它 `v = Rs·i`（磁链不变）——于是没有积分，也就没有地板。
+  //
+  // **The law I derived first was wrong, and the measurement says so.** I wrote that an `Ld` error acts on the *angle* as
+  // `dLd*i_d/psi_f`, by the same argument that makes an `Lq` error act as `dLq*i_q/psi_f`. Measured: the `Lq` law holds
+  // (2.871e-3 against 3.150e-3 predicted, ratio 0.91) but the `Ld` law misses by **58x** -- 7.2e-5 rad where 4.2e-3 was
+  // predicted. An `Ld` error mostly *rotates and scales the flux* rather than re-aiming it, and the angle of the solved
+  // root is second-order insensitive to that. What it does move is the **radius**: 3.888e-3 against the same
+  // `dLd*i_d/psi_f` = 4.2e-3, ratio 0.93. So the two inductances are separable in two different observables, and this
+  // is why `radius_error()` earns its place: it is where an `Ld` error shows at all.
+  // **我先推的定律是错的，而测量如此说。** 我写过 `Ld` 误差按 `dLd·i_d/psi_f` 作用于**角度**，依据与 `Lq` 误差按
+  // `dLq·i_q/psi_f` 作用相同。实测：`Lq` 定律成立（2.871e-3 对预测 3.150e-3，比 0.91），而 `Ld` 定律差了 **58 倍**——
+  // 预测 4.2e-3 的地方只有 7.2e-5。`Ld` 误差主要是**转动并缩放**磁链而不是重新指向它，而解出根的角度对那是二阶不敏感的。
+  // 它真正挪动的是**半径**：3.888e-3 对同一个 `dLd·i_d/psi_f` = 4.2e-3，比 0.93。于是两个电感在两个不同的可观测量上可
+  // 分离，而这正是 `radius_error()` 值得存在的原因：`Ld` 误差只在那里露面。
+  const sil::MachineSpec spec = salient_spec();
+  const float psi_f = psi_f_of(spec);
+  const float theta = 0.7F;
+  const float id = -2.0F;
+  const float iq = 0.5F;
+  const core::Ab<float> i_ab = core::inv_park(core::Dq<float>{id, iq}, theta);
+  const core::Ab<float> v_ab{spec.rs * i_ab.alpha, spec.rs * i_ab.beta};
+  struct Pair final {
+    float angle;
+    float radius;
+  };
+  const auto probe = [&](float ld_scale, float lq_scale) {
+    core::DualInductanceObserver observer(
+        core::DualInductanceObserver::Config{spec.rs, spec.ld * ld_scale, spec.lq * lq_scale, psi_f});
+    observer.seed_flux(stator_flux(spec, theta, id, iq));
+    const float angle = std::fabs(wrap_pi(observer.update(v_ab, i_ab, kDt).theta_e - theta));
+    return Pair{angle, observer.radius_error()};
+  };
+  const float law_ld = std::fabs(0.1F * spec.ld * id / psi_f);
+  const float law_lq = std::fabs(0.1F * spec.lq * iq / psi_f);
+  std::printf("\n[dual-L] static nameplate sensitivity, i_d = %.1f A, i_q = %.1f A (psi_f = %.4e Wb)\n",
+              static_cast<double>(id), static_cast<double>(iq), static_cast<double>(psi_f));
+  std::printf("     %-12s %12s %12s %12s %12s\n", "case", "angle err", "radius err", "law", "ratio");
+  const Pair ld_up = probe(1.1F, 1.0F);
+  const Pair ld_down = probe(0.9F, 1.0F);
+  const Pair lq_up = probe(1.0F, 1.1F);
+  const Pair lq_down = probe(1.0F, 0.9F);
+  std::printf("     %-12s %12.3e %12.3e %12.3e %12.3f\n", "dLd +10 %", static_cast<double>(ld_up.angle),
+              static_cast<double>(ld_up.radius), static_cast<double>(law_ld),
+              static_cast<double>(std::fabs(ld_up.radius) / law_ld));
+  std::printf("     %-12s %12.3e %12.3e %12.3e %12.3f\n", "dLd -10 %", static_cast<double>(ld_down.angle),
+              static_cast<double>(ld_down.radius), static_cast<double>(law_ld),
+              static_cast<double>(std::fabs(ld_down.radius) / law_ld));
+  std::printf("     %-12s %12.3e %12.3e %12.3e %12.3f\n", "dLq +10 %", static_cast<double>(lq_up.angle),
+              static_cast<double>(lq_up.radius), static_cast<double>(law_lq),
+              static_cast<double>(lq_up.angle / law_lq));
+  std::printf("     %-12s %12.3e %12.3e %12.3e %12.3f\n", "dLq -10 %", static_cast<double>(lq_down.angle),
+              static_cast<double>(lq_down.radius), static_cast<double>(law_lq),
+              static_cast<double>(lq_down.angle / law_lq));
+  // The laws, as measured.
+  EXPECT_NEAR(law_lq, lq_up.angle, 0.15F * law_lq) << "dLq must move the angle by dLq*i_q/psi_f";
+  EXPECT_NEAR(law_lq, lq_down.angle, 0.15F * law_lq);
+  EXPECT_NEAR(law_ld, std::fabs(ld_up.radius), 0.15F * law_ld) << "dLd must move the *radius* by dLd*i_d/psi_f";
+  EXPECT_NEAR(law_ld, std::fabs(ld_down.radius), 0.15F * law_ld);
+  // And the separation is what makes the pair of observables worth having: `Ld` moves the radius by more than an order
+  // of magnitude more than it moves the angle, `Lq` the other way round.
+  // 而正是这种分离让这两个可观测量值得同时存在：`Ld` 对半径的推动比它对角度的大一个数量级以上，`Lq` 反过来。
+  EXPECT_GT(std::fabs(ld_up.radius), 20.0F * ld_up.angle) << "dLd must show in the radius, not the angle";
+  EXPECT_GT(lq_up.angle, 20.0F * std::fabs(lq_up.radius)) << "dLq must show in the angle, not the radius";
+}
+
 TEST(DualInductanceObserver, AnInvalidConfigurationHoldsAndANonPositiveStepIsRejected) {
   // The contract every other observer in this directory keeps, so a caller can treat them uniformly.
   // 本目录里每个观测器都守的契约，调用方才能一视同仁。

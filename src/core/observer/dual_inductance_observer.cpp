@@ -160,7 +160,7 @@ constexpr float kLinearRatio = 1.0e-4F;
 DualInductanceObserver::DualInductanceObserver(Config config) noexcept
     : config_(config), l0_(0.5F * (config.ld + config.lq)), l1_(0.5F * (config.ld - config.lq)), psi_{},
       seed_theta_(0.0F), state_{}, status_(valid_config(config) ? ErrorCode::Ok : ErrorCode::Param),
-      theta_primed_(false), root_gap_rad_(0.0F) {}
+      theta_primed_(false), root_gap_rad_(0.0F), radius_error_(0.0F) {}
 
 void DualInductanceObserver::seed_flux(Ab<float> psi_ab) noexcept {
     psi_ = psi_ab;
@@ -247,6 +247,11 @@ auto DualInductanceObserver::update(Ab<float> v_ab, Ab<float> i_ab, float dt_s) 
     const float gap_b = std::fabs(wrap_pi(arg(root_b) - reference));
     const Cx chosen = (gap_b < gap_a) ? root_b : root_a;
     root_gap_rad_ = std::fabs(wrap_pi(arg(root_a) - arg(root_b)));
+    // `norm(x) - 1`: zero iff the state is consistent with this current, which is the only case in which the root is a
+    // rotor position at all. It is the one signal that survives a wrong seed -- see the header.
+    // `norm(x) − 1`：当且仅当状态与该电流自洽时为零，而那也正是这个根是转子位置的唯一情形。它是错误种子下唯一还活着的
+    // 信号——见头文件。
+    radius_error_ = magnitude(chosen) - 1.0F;
 
     const float theta = arg(chosen);
     const float omega = theta_primed_ ? static_cast<float>(wrap_pi(theta - state_.theta_e) / dt_s) : 0.0F;
@@ -263,6 +268,7 @@ void DualInductanceObserver::reset() noexcept {
     state_ = ObsState{0.0F, 0.0F};
     theta_primed_ = false;
     root_gap_rad_ = 0.0F;
+    radius_error_ = 0.0F;
     status_ = valid_config(config_) ? ErrorCode::Ok : ErrorCode::Param;
 }
 

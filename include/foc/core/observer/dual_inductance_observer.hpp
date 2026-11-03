@@ -189,6 +189,49 @@ class DualInductanceObserver final {
      */
     [[nodiscard]] auto root_gap_rad() const noexcept -> float { return root_gap_rad_; }
 
+    /**
+     * @brief [en] How far the chosen root is from being a unit vector: `norm(x) - 1`.
+     * @brief [zh] 被选中的根离单位矢量有多远：`norm(x) − 1`。
+     * @return [en] Zero when the flux state and the current are consistent with each other, which is the only case in
+     *              which a rotor position exists at all.
+     * @return [zh] 磁链状态与电流彼此自洽时为零——而那是存在转子位置的唯一情形。
+     * @note [en] This is the **only** signal that can tell a caller its seed was wrong. A flux integrator has no
+     *            feedback, so a bad seed is permanent (measured: 0.1128 rad, unchanged after 200 steps); but the
+     *            algebra still says something, because the quadratic has a root of unit modulus **iff** the state came
+     *            from a real rotor position. Measured: 4.4e-16 for a consistent state and 3.4e-02 for a seed built from
+     *            another current -- twelve orders of magnitude apart, which is why a threshold can be stated at all.
+     * @note [zh] 这是**唯一**能告诉调用方"种子错了"的信号。磁链积分器没有反馈，所以坏种子是永久的（实测 0.1128 rad，
+     *            200 步后不变）；但代数仍然说了话——二次方程**当且仅当**状态来自真实转子位置时才有一个模为 1 的根。实
+     *            测：自洽状态 4.4e-16，用另一个电流构造的种子 3.4e-02——相差十二个数量级，这才使阈值可以被写下来。
+     * @since 0.1.11
+     */
+    [[nodiscard]] auto radius_error() const noexcept -> float { return radius_error_; }
+
+    /**
+     * @brief [en] Whether the last step landed on a state that a rotor position can explain.
+     * @brief [zh] 上一步是否落在一个能被转子位置解释的状态上。
+     * @return [en] `true` when `abs(radius_error()) <= kRadiusTolerance`, i.e. the estimate is self-consistent.
+     * @return [zh] `abs(radius_error()) <= kRadiusTolerance` 时为 `true`，即估计自洽。
+     * @note [en] The tolerance is 1e-2 and it is chosen from the measurement, not for looks: on this machine the
+     *            consistent case reads 4.4e-16 and an inconsistent seed 3.4e-02, so anything between the two separates
+     *            them; 1e-2 keeps a margin of three orders on the good side and half an order on the bad one. It is
+     *            *not* an angle tolerance -- it is a statement that the state can be explained at all.
+     * @note [zh] 容差取 1e-2，取自测量而不是为了好看：这台机器上自洽情形读 4.4e-16、不一致的种子读 3.4e-02，两者之间任
+     *            何值都能分开它们；1e-2 在好的一侧留三个数量级、坏的一侧留半个数量级。它**不是**角度容差——它说的是 "这
+     *            个状态到底能不能被解释"。
+     * @since 0.1.11
+     */
+    [[nodiscard]] auto flux_plausible() const noexcept -> bool {
+        return !(radius_error_ > kRadiusTolerance) && !(radius_error_ < -kRadiusTolerance);
+    }
+
+    /**
+     * @brief [en] Boundary of `flux_plausible()`; see the note there for how it was chosen.
+     * @brief [zh] `flux_plausible()` 的边界；取值依据见那里的注释。
+     * @since 0.1.11
+     */
+    static constexpr float kRadiusTolerance = 1.0e-2F;
+
   private:
     Config config_;
     float l0_;      ///< [en] (ld + lq) / 2. [zh] (ld+lq)/2。
@@ -199,6 +242,7 @@ class DualInductanceObserver final {
     ErrorCode status_;
     bool theta_primed_;
     float root_gap_rad_;
+    float radius_error_;
 };
 
 } // namespace core
