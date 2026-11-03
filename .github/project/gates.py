@@ -356,8 +356,8 @@ def cmd_ci_policy(_explicit):
 
 
 PROJECT_GATES = ('license', 'strict', 'claims', 'docs', 'boundaries', 'capabilities', 'ci-policy', 'assume', 'anchor',
-                 'scaffold', 'budget', 'clocks', 'observability', 'combinations', 'mutants', 'plantref', 'fmu', 'pil',
-                 'mcdc')
+                 'scaffold', 'budget', 'clocks', 'observability', 'combinations', 'domain', 'mutants', 'plantref', 'fmu',
+                 'pil', 'mcdc')
 
 
 def cmd_observability(_explicit):
@@ -373,6 +373,23 @@ def cmd_observability(_explicit):
     done = subprocess.run([sys.executable, str(ROOT / '.github' / 'project' / 'observability_gate.py'), '--selftest'],
                           cwd=ROOT, text=True)
     return done.returncode
+
+
+def cmd_domain(explicit):
+    """The domain in which C7 and C8 hold, as a table the gate recomputes.
+
+    Section 0 of the plan splits "high" into the capability existing, the number being credible, and the **domain**
+    being known. The first two have gates. The third was prose in five places, which is why two L3 capabilities still
+    read as "low": nobody could see at a glance that no machine in this repository is inside either domain.
+    """
+    from domain_gate import main as domain_main
+
+    # The selftest runs first, every time: a gate that has never been red is a gate nobody has a reason to trust, and
+    # this family proves it on each invocation rather than on request.
+    # 自检每次都先跑：一个从未红过的门禁没有理由被信任，而这一族是把这件事做成每次调用都证明，而不是按需证明。
+    if domain_main(['--selftest']) != 0:
+        return 1
+    return domain_main([])
 
 
 def cmd_combinations(_explicit):
@@ -529,6 +546,7 @@ def main():
         'plantref': 'the SIL plant reproduces its own stated equations under an independent float64/scipy solver',
         'observability': 'every new observation capability has re-read the evidence chain, and a port never promotes',
         'combinations': 'every (reference x observer) pairing has a verdict, and a forbidden one names a case that can go red',
+        'domain': 'the domain in which C7 and C8 hold is a table the gate recomputes, not prose in five places',
         'mcdc': 'every multi-condition decision in the safety subset has all of its independence pairs covered, and the '
                 'subset is big enough for that to mean something',
         'fmu': 'build the FMU and load it in a standard FMI master (FMPy); SKIPPED when its material is absent',
@@ -586,6 +604,8 @@ def main():
         return cmd_combinations(args.files)
     if args.gate == 'mcdc':
         return cmd_mcdc(args.files)
+    if args.gate == 'domain':
+        return cmd_domain([])
     # The chain above is the only thing standing between a single-gate invocation and the aggregate below, and it
     # has now been forgotten twice (`plantref` before, `combinations` and `mcdc` this time). A missing branch does
     # not fail: it runs *every* gate and prints "all N", which reads as success. So the fall-through is refused
@@ -602,6 +622,7 @@ def main():
                   'ci-policy': cmd_ci_policy, 'assume': cmd_assume, 'anchor': cmd_anchor,
                   'scaffold': cmd_scaffold, 'budget': cmd_budget, 'clocks': cmd_clocks, 'mutants': cmd_mutants,
                   'plantref': cmd_plantref, 'observability': cmd_observability, 'combinations': cmd_combinations,
+                  'domain': cmd_domain,
                   'mcdc': cmd_mcdc,
                   'fmu': lambda _f: cmd_fmu([], tolerant=True),
                   'pil': lambda _f: cmd_pil([], tolerant=True)}[name]([]) ]

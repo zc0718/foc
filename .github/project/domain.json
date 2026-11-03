@@ -1,0 +1,125 @@
+{
+  "_comment": [
+    "The applicability domain of the two capabilities the plan called narrow, as a table the gate recomputes.",
+    "计划里称作\"窄\"的那两个能力的适用域，做成一张由门禁重算的表。",
+    "",
+    "Every row is a closed form on machine parameters plus the in-repository machines it was evaluated on. `recorded`",
+    "is the value the arithmetic gives, and `domain_gate.py` recomputes it and compares -- so this file cannot drift",
+    "from the law, and the law is tied to the implementation by the C++ case in `evidence`.",
+    "每一行都是机器参数上的闭式，加上评估过的、仓库内真实存在的机器。`recorded` 是算术给出的值，`domain_gate.py` 重算并比较",
+    "--所以本文件不会与定律脱节，而定律通过 `evidence` 里的 C++ 用例与实现绑定。",
+    "",
+    "`null` means the law has no finite value for that machine (a surface machine has no `Lq - Ld`), not that the row",
+    "was left unfinished. `null` 表示该机器下定律没有有限值（表贴机没有 `Lq − Ld`），而不是这一行没做完。"
+  ],
+  "required": [
+    "C7",
+    "C8"
+  ],
+  "rows": [
+    {
+      "capability": "C7",
+      "law": "lambda",
+      "statement": "Field weakening can hold the voltage envelope only when the characteristic current is inside the current limit, i.e. lambda = Ld*i_max/psi_f >= 1.",
+      "threshold": 1.0,
+      "comparison": ">=",
+      "holds_when": "holds",
+      "fails_when": "outside",
+      "machines": [
+        {
+          "name": "nominal (surface)",
+          "ld": 0.0004,
+          "lq": 0.0004,
+          "psi_f": 0.0047619,
+          "i_max": 3.0,
+          "recorded": 0.252,
+          "verdict": "outside"
+        },
+        {
+          "name": "salient test machine",
+          "ld": 0.0001,
+          "lq": 0.0003,
+          "psi_f": 0.0047619,
+          "i_max": 3.0,
+          "recorded": 0.063,
+          "verdict": "outside"
+        },
+        {
+          "name": "ratio 2.0",
+          "ld": 0.0002,
+          "lq": 0.0004,
+          "psi_f": 0.0047619,
+          "i_max": 3.0,
+          "recorded": 0.126,
+          "verdict": "outside"
+        },
+        {
+          "name": "ratio 2.5",
+          "ld": 0.00016,
+          "lq": 0.0004,
+          "psi_f": 0.0047619,
+          "i_max": 3.0,
+          "recorded": 0.1008,
+          "verdict": "outside"
+        }
+      ],
+      "note": "Every machine in this repository is outside the domain by at least 3.9x (the best is the nominal one at 0.252). That is the recorded reason C7's closed loop is blocked rather than untried: no machine here can reach the closure condition, so a closed-loop case would be measuring the wrong machine. The measurement that does exist is the envelope itself (four digits) and the decision table, both L3.",
+      "evidence": [
+        "test_package/test/unit/test_field_weakening.cpp",
+        "include/foc/core/field_weakening.hpp"
+      ]
+    },
+    {
+      "capability": "C8",
+      "law": "i_char",
+      "statement": "MTPA's d-axis term stops paying once the reference asks for more d-axis current than the saliency can pay for, so the domain is i_char = psi_f/(Lq - Ld) <= i_max; a surface machine has no term at all.",
+      "threshold": 3.0,
+      "comparison": "<=",
+      "holds_when": "holds",
+      "fails_when": "outside",
+      "machines": [
+        {
+          "name": "nominal (surface)",
+          "ld": 0.0004,
+          "lq": 0.0004,
+          "psi_f": 0.0047619,
+          "i_max": 3.0,
+          "recorded": null,
+          "verdict": "outside"
+        },
+        {
+          "name": "salient test machine",
+          "ld": 0.0001,
+          "lq": 0.0003,
+          "psi_f": 0.0047619,
+          "i_max": 3.0,
+          "recorded": 23.8095,
+          "verdict": "outside"
+        },
+        {
+          "name": "ratio 2.0",
+          "ld": 0.0002,
+          "lq": 0.0004,
+          "psi_f": 0.0047619,
+          "i_max": 3.0,
+          "recorded": 23.8095,
+          "verdict": "outside"
+        },
+        {
+          "name": "ratio 2.5",
+          "ld": 0.00016,
+          "lq": 0.0004,
+          "psi_f": 0.0047619,
+          "i_max": 3.0,
+          "recorded": 19.8413,
+          "verdict": "outside"
+        }
+      ],
+      "note": "The reference still generates the d-axis current -- what fails is the *worth* claim: on every machine here the characteristic current is 6.6x to 7.9x the limit, so the +29.2 % measured at Lq/Ld = 2 belongs to the torque formula, not to a regime this machine can be driven in. That is why the pairing matrix marks MtpaReference as allow with a model-complete observer and conditional otherwise, and why the honest statement is 'the reference is correct, the machine is not a candidate'.",
+      "evidence": [
+        "test_package/test/unit/test_mtpa.cpp",
+        "include/foc/core/reference.hpp"
+      ]
+    }
+  ]
+}

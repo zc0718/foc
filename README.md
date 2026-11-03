@@ -447,6 +447,22 @@ What the table settles:
 * **The recorded 0.5079 rad is `NLFO`'s**, reproduced here to four digits, which is also what confirms this rig matches
   the one those records came from. The plan notes that quote observer limits were describing the non-shipping observer.
 
+### Applicability domain of C7 and C8
+
+Both capabilities the strategic map still calls "low" are **L3 headers with measured numbers**; what is narrow is the
+region in which they are worth running, and that region used to be prose in five places. It is now a table the gate
+recomputes -- `.github/project/domain.json`, checked by `gates.py domain`, whose arithmetic is tied to the implementation
+by the case each row names:
+
+| Capability | Domain law | Threshold | Where this repository's machines sit |
+| --- | --- | --- | --- |
+| C7 field weakening | `lambda = Ld*i_max/psi_f` | `lambda >= 1` | 0.252 (nominal), 0.126 (`Lq/Ld = 2`), 0.101 (2.5), 0.063 (salient test machine) -- **all outside**, the best by 3.9x, so a closed-loop case would be measuring the wrong machine |
+| C8 MTPA | `i_char = psi_f/(Lq - Ld)` | `i_char <= i_max` | 19.8 to 23.8 A against a 3 A limit on every salient machine, and infinite (no d-axis term) on the surface one -- **all outside**; the reference is correct, the machine is not a candidate |
+
+A row whose machines all fall outside must carry a note saying what that means, and the gate refuses a silent one.
+Nothing here is a claim about a real motor: it is the arithmetic that says which of these two capabilities these
+machines can even exercise.
+
 ### Claims deliberately not made
 
 These are the claims the evidence levels do not support, listed so nobody has to guess whether they
