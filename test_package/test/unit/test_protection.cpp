@@ -1163,4 +1163,149 @@ TEST(Protection, TheSensitivityOfTheDeratingToATemperatureSensorOffsetIsMeasured
       << "a 10 K sensor offset is worth 20 % of the current limit on this ramp";
 }
 
+TEST(Protection, TheRankingIsTheOnlyOrderThePhysicsSupplies) {
+  // The row is L2 because "how two simultaneous faults rank is the enum order, a design choice with no independent
+  // derivation" -- that is the missing leg O-13 and O-18 both named. This case supplies the derivation that exists and
+  // measures the exact place where it stops existing, which is a narrower and more useful statement than either
+  // "it is a design choice" or a claimed severity order borrowed from nowhere.
+  //
+  // The available derivation: a code can only be ranked by the physics if the physics distinguishes it. Four of the
+  // seven are *threshold* detectors -- the quantity is over the limit in the step it arrives -- so they all become true
+  // in the same step and nothing in the machine says which is worse. Two are *duration* detectors (I2t integrates,
+  // Stall holds a window), so they can only assert later. That is one real statement, and the enum either respects it
+  // or it does not.
+  //
+  // 这一行留在 L2 的原因是"两个故障同时发生时如何排名就是枚举顺序，一个没有独立推导的设计选择"——这是 O-13 与
+  // O-18 都点名的缺失腿。本用例给出**存在的**那份推导，并量出它在哪里停住；这比"这是设计选择"或凭空借来的严重度
+  // 次序都更窄、也更有用。
+  // 可用的推导：一个码只有在物理能区分它的时候才能被物理排序。七个里有四个是**阈值**检测器——量在到来的那一步就
+  // 越限——于是它们在同一步全部为真，机器没有任何说法指出哪个更糟。两个是**时长**检测器（I2t 积分、Stall 计窗），
+  // 因此只可能更晚断言。这是一条真实的陈述，而枚举要么遵守它、要么不遵守。
+
+  // (1) Every threshold code asserts in the same step, so the physics is silent among them.
+  // （1）每个阈值码都在同一步断言，所以物理在它们之间是沉默的。
+  struct Threshold final {
+    core::FaultCode code;
+    float i_a;
+    float v_bus_v;
+    float temperature_c;
+  };
+  const Threshold thresholds[] = {{core::FaultCode::OverCurrent, 4.1F, 24.0F, 45.0F},
+                                  {core::FaultCode::OverVoltage, 1.5F, 30.5F, 45.0F},
+                                  {core::FaultCode::UnderVoltage, 1.5F, 17.5F, 45.0F},
+                                  {core::FaultCode::OverTemperature, 1.5F, 24.0F, 101.0F}};
+  for (const Threshold& one : thresholds) {
+    core::Protector protector(config());
+    int steps = 0;
+    for (; steps < 8; ++steps) {
+      core::ProtectionInput input = healthy();
+      input.i_magnitude_a = one.i_a;
+      input.v_bus_v = one.v_bus_v;
+      input.temperature_c = one.temperature_c;
+      if (protector.step(input, kDt).fault == one.code) {
+        break;
+      }
+    }
+    std::printf("[P6-g] %s asserts after %d step(s)\n", fault_name(one.code), steps + 1);
+    EXPECT_EQ(0, steps) << fault_name(one.code) << " is not a one-step threshold detector, so the ranking of the "
+                                                   "threshold codes has physics behind it after all";
+  }
+
+  // (2) The two duration codes can only assert later. That is the one order the physics does supply.
+  // （2）两个时长码只可能更晚断言。这是物理唯一给出的次序。
+  core::Protector integral(config());
+  int i2t_steps = 0;
+  for (; i2t_steps < 40000; ++i2t_steps) {
+    core::ProtectionInput input = healthy();
+    input.i_magnitude_a = 3.5F;
+    input.omega_e_rad_s = 200.0F; // spinning, so this is the budget and not a stall
+    if (integral.step(input, kDt).fault == core::FaultCode::I2t) {
+      break;
+    }
+  }
+  core::Protector window(config());
+  int stall_steps = 0;
+  for (; stall_steps < 40000; ++stall_steps) {
+    core::ProtectionInput input = healthy();
+    input.i_magnitude_a = 2.0F;
+    input.omega_e_rad_s = 0.0F;
+    if (window.step(input, kDt).fault == core::FaultCode::Stall) {
+      break;
+    }
+  }
+  std::printf("[P6-g] I2t asserts after %d steps (%.3f s), Stall after %d steps (%.3f s), a threshold after 1\n",
+              i2t_steps + 1, static_cast<double>(i2t_steps + 1) * static_cast<double>(kDt), stall_steps + 1,
+              static_cast<double>(stall_steps + 1) * static_cast<double>(kDt));
+  ASSERT_LT(i2t_steps, 40000);
+  ASSERT_LT(stall_steps, 40000);
+  // The enum respects it: both duration codes are ranked below all four threshold codes.
+  // 枚举遵守了它：两个时长码都排在四个阈值码之后。
+  for (const Threshold& one : thresholds) {
+    EXPECT_LT(static_cast<int>(one.code), static_cast<int>(core::FaultCode::I2t)) << fault_name(one.code);
+    EXPECT_LT(static_cast<int>(one.code), static_cast<int>(core::FaultCode::Stall)) << fault_name(one.code);
+  }
+  // And this is where the derivation stops, stated rather than glossed: among the four threshold codes, and between
+  // the two duration ones, the enum order is a design choice with nothing behind it but "current before heat before
+  // motion". `LostSync` is the sharpest case -- it is a *model* failing, which is the least trustworthy measurement in
+  // the library, and it is ranked last.
+  // 推导到此为止，这一点要说出来而不是糊过去：在四个阈值码之间、以及两个时长码之间，枚举顺序只是一个设计选择，
+  // 背后只有"电流先于热度先于运动"。`LostSync` 最尖锐——它是一个**模型**失效，是本库里最不可信的测量，却排最后。
+
+  // (3) Path independence, which the enum order alone does not give: raising A then B must report the same code and
+  // the same mask as raising B then A. This is what a reader of a fault log relies on, and latching is where it could
+  // break. A pair is built by *union* of the two violations -- the first version of this block applied the second
+  // fault's whole input row over the first, which silently un-violated the first one and made the library look
+  // order-dependent when the harness was.
+  // （3）路径无关性，单靠枚举顺序给不出：先抬 A 再抬 B，必须与先抬 B 再抬 A 报出同一个码和同一张掩码。读故障日志的
+  // 人依赖的正是这个，而锁存正是它可能破掉的地方。一对故障按两个违规的**并集**构造——这一段的第一版把第二个故障整行
+  // 输入盖到第一个上，静默地取消了第一个故障，于是库看起来依赖顺序，其实是夹具的问题。
+  const auto bit = [](core::FaultCode code) {
+    return static_cast<std::uint16_t>(1U << static_cast<std::uint8_t>(code));
+  };
+  const auto merged = [](const Threshold& a, const Threshold& b) {
+    const core::ProtectionInput base = healthy();
+    core::ProtectionInput both = base;
+    both.i_magnitude_a = (a.i_a == base.i_magnitude_a) ? b.i_a : a.i_a;
+    both.v_bus_v = (a.v_bus_v == base.v_bus_v) ? b.v_bus_v : a.v_bus_v;
+    both.temperature_c = (a.temperature_c == base.temperature_c) ? b.temperature_c : a.temperature_c;
+    return both;
+  };
+  for (std::size_t first = 0; first < 4; ++first) {
+    for (std::size_t second = first + 1; second < 4; ++second) {
+      const Threshold& a = thresholds[first];
+      const Threshold& b = thresholds[second];
+      // Over-voltage and under-voltage together is not a machine state, so it is not a ranking question.
+      // 过压与欠压同时成立不是一种机器状态，所以它不是排名问题。
+      if ((a.code == core::FaultCode::OverVoltage && b.code == core::FaultCode::UnderVoltage) ||
+          (a.code == core::FaultCode::UnderVoltage && b.code == core::FaultCode::OverVoltage)) {
+        continue;
+      }
+      const core::ProtectionInput together = merged(a, b);
+      const auto only = [&](const Threshold& one) {
+        const core::ProtectionInput single = merged(one, Threshold{core::FaultCode::None, healthy().i_magnitude_a,
+                                                                   healthy().v_bus_v, healthy().temperature_c});
+        return single;
+      };
+      // Order A -> B.
+      core::Protector ab(config());
+      static_cast<void>(ab.step(only(a), kDt));
+      const core::ProtectionOutput out_ab = ab.step(together, kDt);
+      // Order B -> A.
+      core::Protector ba(config());
+      static_cast<void>(ba.step(only(b), kDt));
+      const core::ProtectionOutput out_ba = ba.step(together, kDt);
+
+      std::printf("[P6-g] onset %s then %s vs the reverse: %s / 0x%03x and %s / 0x%03x\n", fault_name(a.code),
+                  fault_name(b.code), fault_name(out_ab.fault), static_cast<unsigned>(out_ab.active_mask),
+                  fault_name(out_ba.fault), static_cast<unsigned>(out_ba.active_mask));
+      EXPECT_EQ(out_ab.fault, out_ba.fault) << "the reported code depends on which fault arrived first";
+      EXPECT_EQ(out_ab.active_mask, out_ba.active_mask) << "the visible set depends on which fault arrived first";
+      // And the winner is the lower-ranked of the two, not the one that arrived first.
+      // 而且获胜者是两者中排名靠前的那个，不是先到的那个。
+      EXPECT_EQ(a.code, out_ab.fault) << "the higher-ranked of the pair did not win";
+      EXPECT_EQ(both_bits(bit(a.code), bit(b.code)), out_ab.active_mask);
+    }
+  }
+}
+
 } // namespace foc

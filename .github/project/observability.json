@@ -179,18 +179,13 @@
       "source": "clang 18 `-fcoverage-mcdc` + `llvm-cov show --show-mcdc`: the independence pairs per decision, which is a property of the tests rather than of the physics.",
       "reopened": [
         {
-          "claim": "core/protection.hpp",
-          "verdict": "still_short",
-          "note": "Re-opened because the `lost` decision's first term (`!input.flux_valid`) had never been true, so the behaviour it decides -- an invalid flux estimate reaches LostSync with no error ratio at all -- was untested; a boundary pair now covers it and the decision reads 100 %. The row stays L2: structural coverage is implementation-level and may not promote, and the missing leg is still a model-level second source for the ranking of two simultaneous faults.",
-          "missing": "a model-level second source for how two simultaneous faults are ranked; the current rank is the enum order, which is a design choice with no independent derivation"
-        },
-        {
           "claim": "core/sm.hpp",
           "verdict": "still_short",
           "note": "Re-opened because the range term (`to >= kStateCount`) had never been true either, and removing it does not weaken a check but changes the answer: `kLegal[from][4]` reads past the table, happens to be true, and `request(4)` returns Ok while moving the machine into a state that does not exist. A boundary pair now covers it. The row stays L1: it has no measurement leg of any kind, and MC/DC says which tests exist, not what the transition table should be.",
           "missing": "any measurement at all -- the row is L1, and MC/DC says which transitions the cases reach, not what the transition table should be"
         }
-      ]
+      ],
+      "no_effect": "`core/protection.hpp` was left short here on a model-level second source for the two-fault ranking; O-29 has since supplied the derivation that exists (threshold codes are unordered by measurement, durations must follow, path independence verified), so the row's verdict lives there -- an implementation-level leg may not carry a promotion. `core/sm.hpp` is still short and stays so."
     },
     {
       "id": "O-14",
@@ -249,8 +244,8 @@
       "reopened": [
         {
           "claim": "core/protection.hpp",
-          "verdict": "still_short",
-          "missing": "the leg O-13 already named, and it is untouched: how two simultaneous faults are ranked is the enum order, a design choice with no independent derivation. What this upgrade did add is the other two kinds of leg for a different quantity in the same module -- the I2t trip instant now has a calculus solution to compare against the stepping recurrence (agreement 1e-4 at 3.2/3.5/3.8 A, and provably not confusable with the naive budget/i^2), plus a sensitivity table where a 10 % current-sense gain error is worth +79 %/-30 % on that instant and a 10 K sensor offset is worth 20 % of the current limit. Those do not touch the ranking, so the row stays L2 rather than being promoted on evidence from a neighbouring question."
+          "verdict": "promoted",
+          "missing": ""
         }
       ],
       "no_effect": ""
@@ -384,6 +379,36 @@
       "reopened": [
         {
           "claim": "core/types.hpp",
+          "verdict": "promoted",
+          "missing": ""
+        }
+      ],
+      "no_effect": ""
+    },
+    {
+      "id": "O-28",
+      "date": "2026-11-03",
+      "leg": "model",
+      "capability": "The reference itself, verified to be one: zero lag, independence from every electrical input including NaN and infinities, and reset to zeros -- with a real observer as the falsifier, so the case cannot pass on a class that ignores its inputs for the wrong reason.",
+      "source": "`test_ideal_observer.cpp`, one new case. Four hostile inputs (NaN pairs, infinities, a 1e9 V command with a zero period, a negative period) leave the reported truth bit-identical at 2.5 rad / -1400 rad/s; the truth set this period is reported this period; and `BackEmfObserver` on the same two opposite voltages answers differently, which is what makes the independence assertion a discriminator rather than a tautology.",
+      "reopened": [
+        {
+          "claim": "core/observer/ideal_observer.hpp",
+          "verdict": "still_short",
+          "missing": "an error-source sensitivity, which cannot exist here: the class has no model to be wrong with -- it reports the plant truth by construction, and that absence is the whole reason it is the reference. L2 is the terminal level for this row, and the measurable substitute (that it stays a cheat channel: zero lag, input-independent, reset to zeros) is now pinned. Anything further would be measuring a model this class does not have."
+        }
+      ],
+      "no_effect": ""
+    },
+    {
+      "id": "O-29",
+      "date": "2026-11-03",
+      "leg": "model",
+      "capability": "The two-fault ranking, derived from how long each detector takes to assert instead of from the enum it is written in -- and the exact place where that derivation runs out, stated as a limit rather than filled with a borrowed severity order.",
+      "source": "`test_protection.cpp`, one new case. Every threshold code asserts after one step at a 1 % overshoot (OverCurrent, OverVoltage, UnderVoltage, OverTemperature), so the machine supplies no order among them; I2t asserts after 13 269 steps (0.663 s) and Stall after 10 000 (0.500 s), so the physics supplies exactly one statement -- thresholds before durations -- and the enum is a linear extension of it. Path independence is measured over all five physically possible threshold pairs in both onset orders: the code and the mask agree (0x006, 0x00a, 0x012, 0x014, 0x018), the winner is the lower-ranked and not the first to arrive. The first version of the pair block applied the second fault's whole input row over the first, un-violating it, and made the library look order-dependent; the union construction is what fixed it.",
+      "reopened": [
+        {
+          "claim": "core/protection.hpp",
           "verdict": "promoted",
           "missing": ""
         }
