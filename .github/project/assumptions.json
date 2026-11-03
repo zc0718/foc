@@ -118,6 +118,20 @@
       },
       "strength": "measured",
       "reviewed": "2026-10-30"
+    },
+    {
+      "id": "M-08",
+      "statement": "the contributors in the positioning error budget are the ones that decide this axis, and their sum brackets the combined measurement -- so the accuracy figure is falsifiable rather than descriptive",
+      "if_wrong": "a published accuracy figure would be attributed to terms that do not dominate it, and the one that does would be unbounded",
+      "affects": [
+        "core/position.hpp"
+      ],
+      "falsifier": {
+        "kind": "test",
+        "ref": "test_package/test/unit/test_sil_position_budget.cpp"
+      },
+      "strength": "measured",
+      "reviewed": "2026-11-03"
     }
   ],
   "gaps": [
@@ -130,12 +144,7 @@
       "id": "G-02",
       "statement": "the ~50 rad/s observer floor holds on a physical machine, and so does the claim that the slip oscillates at sqrt(p*Kt*i*cos(delta*)/J) rather than at a steady load angle",
       "needs": "one motor, one inverter, one current probe -- nothing in the tree can substitute; note that a real machine may leave the locked-rotor domain sooner than this one does"
-    },
-    {
-      "id": "G-03",
-      "statement": "the error budget for a positioning axis adds up to the measured error rather than to a subset of it",
-      "needs": "the budget table itself (planned: C3), then a falsifier that removes one term and shows the measurement leaves the budget"
     }
   ],
-  "gaps_baseline": 3
+  "gaps_baseline": 2
 }
