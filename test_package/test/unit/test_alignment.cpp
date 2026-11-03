@@ -453,3 +453,194 @@ TEST(Alignment, SteppingAfterTheSequenceIsOverDoesNothing) {
     EXPECT_EQ(foc::core::AlignState::Done, routine.state());
     EXPECT_FLOAT_EQ(captured, routine.offset_mech_rad());
 }
+
+
+namespace {
+
+/**
+ * @brief [en] What one capture over a creeping rotor produced.
+ * @brief [zh] 一次在"还在缓慢爬动"的转子上的捕获产生了什么。
+ */
+struct CreepResult final {
+    float offset_error_rad{0.0F}; ///< captured offset minus the rotor's true angle
+    float spread_rad{0.0F};
+    bool finished{false};
+};
+
+/**
+ * @brief [en] Capture an offset while the rotor creeps at a constant rate through the hold window.
+ *
+ * @brief [zh] 在转子以恒定速率爬过保持窗口的期间捕获一个偏置。
+ *
+ *     The tolerance is set to "accept anything" on purpose: this case is about what the estimator *produces* under a
+ *     creep, not about what it should reject. The rejection rule is a separate case.
+ *
+ *     容差故意设成"什么都接受"：本用例关心的是估计器在爬动下**产出**什么，而不是它该拒绝什么。拒绝规则是另一个用例。
+ */
+auto run_creeping_capture(float creep_rad_s, float hold_s, float start_rad) -> CreepResult {
+    const foc::core::AlignConfig config{1.0F, 0.0F, hold_s, 1.0e9F, 0.0F, 0.0F};
+    foc::core::AlignRoutine routine(config);
+    CreepResult result{};
+    if (!routine.begin(1U)) {
+        return result;
+    }
+    float t = 0.0F;
+    for (int i = 0; i < 100000; ++i) {
+        const auto out = routine.step(kDt, start_rad + (creep_rad_s * t));
+        t += kDt;
+        if (out.finished || out.failed) {
+            result.finished = out.finished;
+            break;
+        }
+    }
+    result.offset_error_rad = angular_difference(routine.offset_mech_rad(), start_rad);
+    result.spread_rad = routine.spread_rad();
+    return result;
+}
+
+} // namespace
+
+/**
+ * @brief [en] A rotor that is still creeping corrupts the offset by exactly half its travel, shows up as
+ *             `travel/sqrt(12)` of spread, and the ratio of the two is `sqrt(3)` at every rate.
+ *
+ * @brief [zh] 仍在爬动的转子把偏置错掉恰好半个行程，以 `行程/√12` 的离散度显现，而两者之比在**每个**速率上都是 `√3`。
+ *
+ *     `settle_tolerance_rad` is the one number a commissioning engineer sets to make a sticky machine pass, and nothing
+ *     said what passing it *costs*. The capture is a circular mean over the hold window, so for a rotor sweeping
+ *     uniformly through `ω·T`:
+ *
+ *     - the mean sits at the **middle of the arc**, so the offset is wrong by `ω·T/2` -- half the travel; - the
+ *     readings are spread uniformly over that arc, and the circular spread (`sqrt(-2 ln R)`) of a uniform distribution
+ *     is its standard deviation, `ω·T/sqrt(12)`; - both are the same sweep seen two ways, so their ratio is `sqrt(3) =
+ *     1.7321` **at every rate** -- a scale-free quantity that no fitted constant can satisfy.
+ *
+ *     Measured at 300 rad/s of output quantisation, `hold = 50 ms`, four creep rates (offset / spread): 0.012475 /
+ *     0.007217, 0.024950 / 0.014434, 0.049900 / 0.028869, 0.099800 / 0.057745. The spreads match `ω·T/sqrt(12)` to four
+ *     digits (0.007217, 0.014434, 0.028868, 0.057735); the offsets are 0.2 % short of `ω·T/2` at every rate, which is
+ *     the second-order shrink of the *circular* mean relative to the arc's midpoint and is why the band below is 0.3 %
+ *     rather than exact. The ratio reads 1.7286 / 1.7286 / 1.7285 / 1.7283 -- constant to four digits across an
+ *     eightfold range of creep, and 0.2 % below `sqrt(3)` for the same reason.
+ *
+ *     The consequence is worth stating plainly because it is the answer to "may I just loosen the tolerance": a capture
+ *     accepted at exactly `tol` has an offset error of `sqrt(3)·tol`, i.e. **1.73 times the number that was relaxed**.
+ *     The tolerance is not a knob for making a sticky machine pass; it is a budget for how wrong the offset may be,
+ *     read through a factor of `sqrt(3)`.
+ *
+ *     `settle_tolerance_rad` 是调试工程师为了"让一台有点粘的机器通过"而设的那一个数，而此前没有任何东西说明通过它 **代
+ *     价**多少。捕获是保持窗口上的圆均值，因此对一个以 `ω` 均匀扫过 `ω·T` 的转子：
+ *
+ *     - 均值落在**弧的中点**，于是偏置错 `ω·T/2`——半个行程； - 读数在弧上均匀分布，而均匀分布的圆离散度（`√(−2·ln R)`）
+ *     就是它的标准差 `ω·T/√12`； - 两者是同一次扫掠的两种看法，所以它们的比值在**每个**速率上都是 `√3 = 1.7321`——一个任
+ *     何拟合常数都满足不了的、无标度的量。
+ *
+ *     实测（`hold = 50 ms`，四个爬动速率，偏置/离散度）：0.012475/0.007217、0.024950/0.014434、0.049900/0.028869、
+ *     0.099800/0.057745。离散度与 `ω·T/√12` 四位吻合（0.007217、0.014434、0.028868、0.057735）；偏置在每个速率上比
+ *     `ω·T/2` 短 0.2 %，那是**圆**均值相对弧中点的二阶收缩，也正是下面的带取 0.3 % 而不是精确等号的原因。比值读出
+ *     1.7286/1.7286/1.7285/1.7283——在八倍的爬动范围内四位不变，且因同一原因比 `√3` 低 0.2 %。
+ *
+ *     后果值得直说，因为它正是"我能不能干脆把容差放松"的答案：恰好在 `tol` 处被接受的捕获，其偏置误差是 `√3·tol`，即**
+ *     被放松的那个数的 1.73 倍**。容差不是让粘滞机器通过的旋钮，它是"偏置可以错多少"的预算，而读数要经过一个 `√3` 的换
+ *     算。
+ */
+TEST(Alignment, ARotorStillCreepingCostsHalfItsTravelAndShowsRootThreeTimesThatInTheSpread) {
+    constexpr float kHoldS = 0.05F;
+    constexpr float kStartRad = 0.3F;
+    const float rates[] = {0.5F, 1.0F, 2.0F, 4.0F};
+
+    // Zero creep is the anchor every coefficient is measured against: a still rotor is captured exactly.
+    // 零爬动是所有系数所对着的锚点：静止的转子被精确捕获。
+    const CreepResult still = run_creeping_capture(0.0F, kHoldS, kStartRad);
+    ASSERT_TRUE(still.finished);
+    EXPECT_FLOAT_EQ(0.0F, still.offset_error_rad) << "a stationary rotor must be captured exactly";
+    EXPECT_FLOAT_EQ(0.0F, still.spread_rad);
+
+    float first_ratio = 0.0F;
+    float ratio_spread = 0.0F;
+    for (const float rate : rates) {
+        const CreepResult run = run_creeping_capture(rate, kHoldS, kStartRad);
+        ASSERT_TRUE(run.finished) << "rate " << rate;
+        const float travel = rate * kHoldS;
+        // The mean sits at the middle of the arc.
+        // 均值落在弧的中点。
+        EXPECT_NEAR(travel * 0.5F, run.offset_error_rad, 0.003F * travel * 0.5F) << "rate " << rate;
+        // The spread of a uniform sweep is its standard deviation.
+        // 均匀扫掠的离散度就是它的标准差。
+        EXPECT_NEAR(travel / std::sqrt(12.0F), run.spread_rad, 0.005F * (travel / std::sqrt(12.0F))) << "rate " << rate;
+        // And the ratio is the same at every rate, because both are the same arc.
+        // 而比值在每个速率上都一样，因为两者是同一条弧。
+        const float ratio = run.offset_error_rad / run.spread_rad;
+        EXPECT_NEAR(std::sqrt(3.0F), ratio, 0.01F) << "rate " << rate;
+        if (first_ratio == 0.0F) {
+            first_ratio = ratio;
+        } else {
+            EXPECT_LT(std::fabs(ratio - first_ratio), 0.001F) << "the ratio moved with the creep rate at " << rate;
+        }
+        ratio_spread = std::fmax(ratio_spread, ratio);
+        std::printf("\n[align] creep %.1f rad/s: offset %.6f (omega*T/2 = %.6f), spread %.6f (omega*T/sqrt12 = %.6f), "
+                    "ratio %.4f\n",
+                    static_cast<double>(rate), static_cast<double>(run.offset_error_rad),
+                    static_cast<double>(travel * 0.5F), static_cast<double>(run.spread_rad),
+                    static_cast<double>(travel / std::sqrt(12.0F)), static_cast<double>(ratio));
+    }
+    // The consequence, stated as arithmetic so it cannot drift: at the tolerance boundary the offset error is 1.73x it.
+    // 后果，写成算术所以不会漂移：在容差边界上偏置误差是它的 1.73 倍。
+    EXPECT_GT(ratio_spread, 1.72F);
+    EXPECT_LT(ratio_spread, 1.74F);
+}
+
+/**
+ * @brief [en] A rejected alignment keeps saying so on every following tick, and only `reset()` clears it.
+ *
+ * @brief [zh] 被拒的对齐在此后每一拍都继续这么说，而只有 `reset()` 能清掉它。
+ *
+ *     `failed` is polled, not counted: a caller that reads the slot once per period and sees `failed` on the tick it
+ *     happened, then silence afterwards, cannot tell "this alignment failed" from "it is running". The sequence is
+ *     therefore sticky by construction -- and `step()`'s `Failed` branch is what makes it sticky, a branch no case had
+ *     ever executed, because every scripted run stops the moment it sees a failure.
+ *
+ *     The same loop pins the other half of the slot contract: a plain alignment hands over **at rest**, so
+ *     `handover_speed_e_rad_s` is 0 on every tick, including the failed ones. That zero is not a placeholder -- `Motor`
+ *     reads it as "this hand-over cannot be judged as caught", and a version that reported the *forced vector's* rate
+ *     would make every stationary alignment look like a lost-sync candidate.
+ *
+ *     `failed` 是被轮询的，不是被计数的：每周期读一次槽位、只在出事那一拍看到 `failed`、之后一片安静的调用方，分不清 "
+ *     这次对齐失败了"与"它正在跑"。所以这个序列在构造上就是粘滞的——而让 `它是粘滞的` 正是 `step()` 的 `Failed` 分支，一
+ *     个从未被执行过的分支，因为每个脚本化运行一看到失败就停。
+ *
+ *     同一个循环还钉住了槽位契约的另一半：纯对齐**静止**交接，所以 `handover_speed_e_rad_s` 每一拍都是 0，包括失败的那
+ *     些。这个 0 不是占位符——`Motor` 把它读作"这次交接不能按'抓住了'评判"，而一个报**强制矢量**速率的版本会让每次静止对
+ *     齐都看起来像失步候选。
+ */
+TEST(Alignment, ARejectedAlignmentKeepsSayingSoUntilItIsReset) {
+    foc::core::AlignConfig config = make_config();
+    config.settle_tolerance_rad = 0.001F; // far below the spread of a rotor that never stops
+    foc::core::AlignRoutine routine(config);
+    ASSERT_TRUE(routine.begin(1U));
+    const auto runaway = run_scripted(routine, 1.0F, [](float t) { return 0.4F + (3.0F * t); });
+    ASSERT_TRUE(runaway.failed) << "the rotor never stopped, so this case needs a rejection to be about";
+    ASSERT_EQ(foc::core::AlignFailure::NotSettled, routine.failure());
+    EXPECT_EQ(foc::core::AlignState::Failed, routine.state());
+    EXPECT_FLOAT_EQ(0.0F, runaway.last.handover_speed_e_rad_s) << "a plain alignment hands over at rest";
+
+    // Ten more ticks: every one of them still reports the failure, and none of them commands current.
+    // 再走十拍：每一拍都仍然报出失败，而且没有一拍下发电流。
+    for (int i = 0; i < 10; ++i) {
+        const auto out = routine.step(kDt, 0.4F);
+        EXPECT_TRUE(out.failed) << "tick " << i << " went quiet after the failure";
+        EXPECT_FALSE(out.finished) << "tick " << i << " reported a finish on a failed routine";
+        EXPECT_FLOAT_EQ(0.0F, out.id_a) << "tick " << i << " commanded current after failing";
+        EXPECT_FLOAT_EQ(0.0F, out.handover_speed_e_rad_s) << "tick " << i;
+    }
+    EXPECT_EQ(foc::core::AlignFailure::NotSettled, routine.failure()) << "the reason changed while nothing happened";
+
+    // The falsifier: `reset()` is what clears it, and a fresh run is not failed.
+    // 伪证：清掉它的是 `reset()`，而重新开始的一次运行不是失败的。
+    routine.reset();
+    EXPECT_EQ(foc::core::AlignState::Idle, routine.state());
+    EXPECT_EQ(foc::core::AlignFailure::None, routine.failure());
+    const auto idle = routine.step(kDt, 0.4F);
+    EXPECT_FALSE(idle.failed) << "reset did not clear the failure";
+    EXPECT_FALSE(idle.finished);
+    EXPECT_FLOAT_EQ(0.0F, idle.id_a);
+}

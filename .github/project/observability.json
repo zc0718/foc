@@ -304,6 +304,21 @@
         }
       ],
       "no_effect": ""
+    },
+    {
+      "id": "O-22",
+      "date": "2026-11-03",
+      "leg": "model",
+      "capability": "The number a commissioning engineer actually spends when they loosen `settle_tolerance_rad`, which nothing had ever stated. The capture is a circular mean over the hold window, so a creeping rotor is captured at the arc's midpoint; the two error statistics of that sweep -- the offset bias and the circular spread -- are computable in closed form and, because they are the same arc seen twice, their ratio is a scale-free `sqrt(3)`. That ratio is what turns the tolerance into a budget for the offset instead of a knob for passing a sticky machine.",
+      "source": "`test_alignment.cpp`, two new cases. Four creep rates at a 50 ms hold: offsets 0.012475/0.024950/0.049900/0.099800 against `omega*T/2`, spreads 0.007217/0.014434/0.028869/0.057745 against `omega*T/sqrt(12)` (four digits), ratio 1.7286/1.7286/1.7285/1.7283 across an eightfold range; a still rotor captured exactly (0.000000/0.000000) as the anchor; and the derived consequence that a capture accepted at exactly the tolerance carries an offset error of `sqrt(3)*tol`. The second case executes `step()`'s `Failed` branch -- no scripted run had ever stepped past a failure -- so the rejection is shown to be sticky until `reset()`, with `handover_speed_e_rad_s` zero on every tick, which is what `Motor` reads as 'this hand-over cannot be judged'.",
+      "reopened": [
+        {
+          "claim": "core/alignment.hpp",
+          "verdict": "promoted",
+          "missing": ""
+        }
+      ],
+      "no_effect": ""
     }
   ]
 }
