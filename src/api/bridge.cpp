@@ -853,7 +853,15 @@ template <typename Slot> auto set_observer(Slot& slot, foc_observer_t observer) 
     if (observer_status(requested, params_of(instance.config())) != FOC_OK) {
         return ErrorCode::Param;
     }
-    static_cast<void>(instance.observer().hand_over_to(observer_kind(requested.observer)));
+    // The two-argument form: `DualInductanceObserver` integrates the **stator** flux, so a seed of `psi_f*e^(j*theta)`
+    // alone leaves the current's own flux out of the integration constant and a pure integrator never forgets -- on this
+    // repository's own chain that showed up as a hand-over that landed pi away. Every other member ignores the argument.
+    // 用双参数版本：`DualInductanceObserver` 积分的是**定子**磁链，只给 `psi_f·e^(jθ)` 会把电流自身的磁链漏在积分常数之外，
+    // 而纯积分器不会遗忘——在本仓库自己的链路上，它表现为交接后落在偏 π 的位置。其余成员会忽略这个参数。
+    const motor::Telemetry hand_over_tm = instance.telemetry();
+    const core::Ab<float> i_ab_now =
+        core::inv_park(core::Dq<float>{hand_over_tm.id_a, hand_over_tm.iq_a}, instance.observer().state().theta_e);
+    static_cast<void>(instance.observer().hand_over_to(observer_kind(requested.observer), i_ab_now));
     slot.setup.observer = requested.observer;
     return ErrorCode::Ok;
 }

@@ -66,7 +66,7 @@ nowhere in `include/` or `src/`, fails the build, because a decayed graph return
 that is worse than returning nothing. It caught two while being filled -- `src/core/protection.hpp`, which is a header,
 and three entries that resolved to nothing.
 
-One answer worth knowing before the next wave: **155 of the 168 claims rest on `core/types.hpp`**. That is not a surprise,
+One answer worth knowing before the next wave: **156 of the 169 claims rest on `core/types.hpp`**. That is not a surprise,
 and it is the reason a change to the value layer is not a small change no matter how mechanical it looks.
 
 The log
@@ -3051,6 +3051,30 @@ The log
        compare the two, because a hand-maintained list of "everything" fails silently and the failure looks like
        success.
      - ``pending``
+   * - F-110
+     - F
+     - **The dual-inductance observer is not hand-over-safe, and the deficit is pi.** Handing the chain over to it at
+       50 rad/s mechanical -- the injection observer's own floor, which is what the withdrawn C2 criterion named --
+       inherits an estimate that is 0.5611 rad out and is 2.9834 rad out 20 ms later. The other high-speed observer
+       inherits the same 0.5611 and shows 0.7244, i.e. faithful within the ramp. So the defect is in the new member,
+       not in the hand-over and not in the criterion.
+     - Surfaced by asking a criterion that had been withdrawn as *vacuous*: C2 originally said "within 20 ms of the
+       hand-over the angle is inside 0.05 rad", and it was withdrawn because the rig it was written for was sensored,
+       where the observer's error against the sensor is identically zero. The sensor-less rig already existed; nobody
+       had asked. The answer to the criterion is **no** for both members (0.7244 and 2.9834 against 0.05) -- and the
+       second number is what pointed at this row.
+     - Blast radius: the C path's `foc_motor_set_observer` handed over with the **one-argument** form, which seeds
+       `psi_f*e^(j*theta)`; that is incomplete for a member whose state is the stator flux, so the bridge and the rig
+       now pass the current (`hand_over_to(kind, i_ab)`). That change moved **no** number here, which is itself the
+       evidence that the seed was not the cause -- the pi jump survives a correct seed and is therefore in the
+       readout or the branch choice, and stays open. Recorded rather than fixed in the same commit, with its own
+       falsifier: the case asserts `max_error_during_ramp_rad > 2.0` so it goes red the day the member is repaired.
+
+       The rule this produces: **a criterion withdrawn as vacuous is not a criterion retired -- it is one waiting for
+       the instrument that can ask it.** Four of them had accumulated (C2's ③, the steady-slip cases, and two more),
+       and asking this one after the bench finally existed produced a defect on the first run.
+     - ``pending``
+
 
 
 
