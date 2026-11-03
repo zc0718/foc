@@ -8,7 +8,18 @@
     "tolerance hides the next real divergence.",
     "Not in this tier, with reasons: `.include-guard.txt` (the scaffold's own docstring says a derived project states its",
     "layering in that file), `.github/skills/**` (agent guidance, project-specific by design), and every content path --",
-    "README, metadata.json, include/, src/, api/, benchmark/, docs sources, tests, editor settings."
+    "README, metadata.json, include/, src/, api/, benchmark/, docs sources, tests, editor settings.",
+    "The two tolerated forks cannot be removed from the private side, and that is structural rather than a judgement:",
+    "each one is in a file that an upstream caller names **by path** -- .mega-linter.yml is named by",
+    ".github/workflows/security-linters.yml:118 and :138 (MEGALINTER_CONFIG) and by run-megalinter.sh, and",
+    "docs/build.py is named by .github/workflows/docs-build.yml:35 -- while all five of those files are themselves in",
+    "this same byte-checked tier. Moving the private bits into an environment variable or a wrapper therefore moves the",
+    "fork to another checked file instead of removing it. The exits below are upstream patches 0019/0020, verified to",
+    "apply on 6d69c85 and to reproduce these files byte for byte. For .mega-linter.yml a private-side alternative does",
+    "exist -- splitting the eleven functions that trip cppcheck's analysis limit would let upstream's bytes pass, at",
+    "the cost of real code churn -- and for docs/build.py it does not: those 109 lines fix three defects (lost block",
+    "closers, swallowed lead text on continuation lines, a selection that outlives its comment), so reverting means",
+    "accepting silent loss of published text."
   ],
   "pinned": {
     "project": "fcpp",
