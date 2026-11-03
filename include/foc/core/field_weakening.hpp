@@ -59,17 +59,24 @@ struct FieldWeakeningAdvice final {
  *
  *     The rule, and why each half of it exists:
  *
- *     - **`ratio < 0.6`**: the flux has to be substantially nullable inside the current limit, or the region is a
- *     sliver. - **`speed_gain >= 1.5`**: the product has to actually gain speed. A 32 % stretch is usually cheaper to
- *     buy with bus voltage, and raising the bus does not break `i_d ~ 0`, does not touch the observer, and does not
- *     spend current on heat. Either failing means "do not build it"; both passing means the machine was designed for
- *     it.
+ *     - **the current limit has to be able to null the flux at all**: `i_char <= i_max`, i.e. `Ld*i_max >= psi_f`.
+ *     Below that line the speed ceiling is finite and modest, and the region is a sliver; at and above it the ceiling
+ *     is unbounded in the model. Every machine measured so far sits far below it (see `test_field_weakening.cpp`: the
+ *     2004 Prius traction motor, a machine designed for this, is 3.3x short). - Two thresholds used to be written here,
+ *     `ratio < 0.6` and `speed_gain >= 1.5`, each with a rationale. They are both **implied** by the clause above
+ *     (`ratio <= 1` and an infinite gain), so neither could ever be the deciding test -- the function returned
+ *     `worthwhile = true` from the early branch and the two-condition expression was unreachable-as-true. Removed
+ *     rather than left in place: a threshold that cannot bind reads as a policy and is decoration (F-107). The *reason*
+ *     it existed is kept in the sentence above.
  *
  * @brief [zh] 只用铭牌数字做的"做/不做"判定。
  *
- *     规则，以及每一半为什么存在： - **`ratio < 0.6`**：磁链要在电流限幅内被大幅削弱，否则那个区只是一条缝。 -
- *     **`speed_gain >= 1.5`**：产品要真的因此提速。32 % 的延展通常用母线电压买更便宜， 而升母线不破坏 `i_d ≈ 0`、不碰观
- *     测器、也不需要拿电流去发热。 任一条不满足就是"不要做"；两条都满足说明这台机器本来就是为弱磁设计的。
+ *     规则如下： - **电流限幅必须至少能把磁链削到零**：`i_char <= i_max`，即 `Ld·i_max >= ψf`。这条线以下是有限的小转速
+ *     上限、那个区只是一条缝；线上及以上的模型转速上限是无界的。目前量过的机器都远在线的下面（见
+ *     `test_field_weakening.cpp`：2004 Prius 牵引电机——一台正为此而造的机器——差 3.3 倍）。 - 这里原先写着两个阈值
+ *     `ratio < 0.6` 与 `speed_gain >= 1.5`，各配一条理由。两者都被上面那一条蕴含（`ratio <= 1`、增益无穷），因此都不可
+ *     能成为决定性的检验——函数是从早返回分支返回 `worthwhile = true` 的，那条两条件表达式**永远不可能为真**。已删除而不
+ *     是留在原地：一个不可能生效的阈值读起来像策略，其实是装饰（F-107）。它当初存在的**理由**已并入上一句。
  *
  * @param params [en] the machine, SI.
  * @param params [zh] 机器，SI。
@@ -89,18 +96,24 @@ struct FieldWeakeningAdvice final {
     advice.i_char_a = params.psi_f / params.ld;
     advice.ratio = advice.i_char_a / i_max_a;
     const float residual_flux = params.psi_f - (params.ld * i_max_a);
-    // A machine whose current limit already nulls the flux has no ceiling; the
-    // gain is reported as infinite rather than as a huge float, because a huge
-    // float invites arithmetic on it.
-    // 电流限幅本身就能把磁链削到零的机器没有转速上限；这里把增益报成无穷而不是一个巨大的浮点数，
-    // 因为巨大的浮点数会诱使别人拿它去做算术。
+    // The verdict is this branch and nothing else: `i_char <= i_max` means the current limit can null the flux, which is
+    // the whole of what field weakening is for. A machine that cannot is not a machine to build it for, whatever else
+    // its nameplate says.
+    // 结论就是这一个分支，别无其它：`i_char <= i_max` 意味着电流限幅能把磁链削到零，而这正是弱磁的全部意义。
+    // 做不到的机器，铭牌上写什么都不值得为它做弱磁。
     if (!(residual_flux > 0.0F)) {
+        // The gain is reported as infinite rather than as a huge float, because a huge float invites arithmetic on it.
+        // 增益报成无穷而不是一个巨大的浮点数，因为巨大的浮点数会诱使别人拿它去做算术。
         advice.speed_gain = INFINITY;
         advice.worthwhile = true;
         return advice;
     }
     advice.speed_gain = params.psi_f / residual_flux;
-    advice.worthwhile = (advice.ratio < 0.6F) && (advice.speed_gain >= 1.5F);
+    // Below the line the ceiling is finite and modest: a stretch this size is usually cheaper to buy with bus voltage,
+    // which does not break `i_d ~ 0`, does not touch the observer and does not spend current on heat.
+    // 线下转速上限有限且不大：这个量级的延展通常用母线电压买更便宜——升母线不破坏 `i_d ≈ 0`、不碰观测器、
+    // 也不需要拿电流去发热。
+    advice.worthwhile = false;
     return advice;
 }
 

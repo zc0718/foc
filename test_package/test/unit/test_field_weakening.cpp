@@ -362,4 +362,249 @@ TEST(FieldWeakening, ItIsADropInPolicyAndNothingElseChanges) {
       << "and it does not spend d-axis current for nothing";
 }
 
+
+TEST(FieldWeakening, OneNumberDecidesItAndEveryRealMachineHereFailsIt) {
+  // C7 step (1): the go/no-go as a **selection function**, run over the machines this project actually has
+  // parameters for. The interesting part is not that it says no -- the single-machine case already did that -- but
+  // that it says no to all of them, including a traction motor designed by people who knew what they were doing, and
+  // that the two-condition rule in the header is really one condition.
+  // C7 第（1）步：把做/不做做成**选型函数**，跑在本项目真正有参数的机器上。有价值的不是它说"不"——单机用例
+  // 已经说过——而是它对**全部**这些机器都说"不"，包括一台由懂行的人设计的牵引电机；以及头文件里那条"两条件"
+  // 规则其实只是一条。
+  struct Row final {
+    const char* name;
+    float ld;
+    float lq;
+    float psi_f;
+    float i_max;
+    const char* source;
+  };
+  // Every number below is transcribed from a document, not fitted: the paper tables are in `workspace/materials/`,
+  // `IPMSM_A` is the pyleecan geometry of the 2004 Prius traction motor with `psi_f` = 0.188 Wb and Ld/Lq measured by
+  // the FEMM differential route, and the SIL machine is this repository's own.
+  // 下面每个数都是抄自文档、不是拟合的：论文表格在 `workspace/materials/`，`IPMSM_A` 是 2004 Prius 牵引电机的
+  // pyleecan 几何，ψf = 0.188 Wb、Ld/Lq 由 FEMM 差分路线量出，SIL 机是本仓库自己的。
+  const Row rows[] = {
+      {"SIL nominal", sil::nominal_spec().ld, sil::nominal_spec().lq, nominal_psi(), sil::nominal_spec().i_max_a,
+       "this repository, machine_params.hpp"},
+      {"startup-2026 T2", 5.25e-3F, 12.0e-3F, 0.1827F, 4.0F, "startup paper, table 2"},
+      {"mtpa-2021 T1 raw", 0.282e-3F, 0.0828e-3F, 0.0182F, 51.6F, "mtpa paper, table 1 as printed"},
+      {"mtpa-2021 T1 swapped", 0.0828e-3F, 0.282e-3F, 0.0182F, 51.6F, "same table, Ld/Lq exchanged (our correction)"},
+      {"IPMSM_A = Prius 2004", 0.1899e-3F, 0.6406e-3F, 0.188F, 250.0F, "pyleecan geometry + FEMM, DOE locked rotor"},
+  };
+  int accepted = 0;
+  int worthwhile = 0;
+  float closest = 0.0F;
+  for (const Row& row : rows) {
+    // The health check comes first, and it is not a formality: a parameter table with `Lq < Ld` cannot describe an
+    // interior-PM machine at all, so every number derived from it afterwards is fiction. This is why the mtpa table's
+    // raw row is excluded rather than averaged in.
+    // 体检先行，而且不是形式：`Lq < Ld` 的参数表根本描述不了内置式永磁电机，之后从它推出的每个数都是虚构的。
+    // 这就是 mtpa 表原样那一行被排除而不是被平均进来的原因。
+    // A table with `Lq < Ld` cannot describe an interior-PM machine; `Lq == Ld` is a surface machine, which is a real
+    // machine but not one this criterion was written for -- both are still read through the same function.
+    // `Lq < Ld` 的表描述不了内置式永磁电机；`Lq == Ld` 是表贴机，是真实机器但不是这条判据面向的对象——
+    // 两者都照样过同一个函数。
+    const bool is_a_machine = row.lq >= row.ld;
+    const core::MachineParams params{0.0F, row.ld, row.lq, row.psi_f};
+    const core::FieldWeakeningAdvice advice = core::is_field_weakening_worthwhile(params, row.i_max);
+    // The one number that decides it, from the row's own nameplate: `lambda = Ld*i_max/psi_f`. The header's rule has
+    // two halves; below it is proved that the second can never bind, so this is the criterion.
+    // 决定它的一个数，来自该行自己的铭牌：`lambda = Ld·i_max/ψf`。头文件的规则有两半；下面证明第二半永不生效，
+    // 所以这就是判据。
+    const float lambda = (row.ld * row.i_max) / row.psi_f;
+    std::printf("[C7] %-22s ld %.5f lq %.5f psi %.5f i_max %6.1f | i_char %8.3f A ratio %6.3f lambda %6.3f "
+                "gain x%7.3f -> %s%s\n",
+                row.name, static_cast<double>(row.ld), static_cast<double>(row.lq), static_cast<double>(row.psi_f),
+                static_cast<double>(row.i_max), static_cast<double>(advice.i_char_a),
+                static_cast<double>(advice.ratio), static_cast<double>(lambda), static_cast<double>(advice.speed_gain),
+                advice.worthwhile ? "BUILD IT" : "do not", is_a_machine ? "" : "   [not a machine: Lq < Ld]");
+    if (!is_a_machine) {
+      continue;
+    }
+    ++accepted;
+    // The verdict is checked against the rule recomputed from the row, not trusted.
+    // 结论对着从该行重算出来的规则验，不是信它。
+    EXPECT_EQ((lambda >= 1.0F), advice.worthwhile) << row.name << ": lambda " << lambda;
+    if (advice.worthwhile) {
+      ++worthwhile;
+    } else if (row.ld * row.i_max / row.psi_f > closest) {
+      closest = lambda;
+      (void)closest;
+    }
+  }
+  EXPECT_EQ(4, accepted) << "the health check should have rejected exactly one row";
+  // **This is the finding**: not one of the four real machines has enough inductance per unit of flux to earn field
+  // weakening, and the closest is the Prius traction motor -- a machine built for exactly this -- at lambda = 0.51,
+  // i.e. 3.3x short of the 5/3 the criterion asks for. So "field weakening" is a niche feature for low-flux,
+  // high-inductance designs, and claiming it in general would be claiming it for machines that do not exist here.
+  // **这就是发现**：四台真实机器里没有一台的"每单位磁链的电感"足以撑起弱磁，最接近的是 Prius 牵引电机——一台
+  // 正为此而造的机器——λ = 0.51，比判据要的 5/3 差 3.3 倍。所以弱磁是一个面向"低磁链、高电感"设计的窄众特性，
+  // 泛泛地声称它，等于为这里并不存在的机器声称。
+  EXPECT_EQ(0, worthwhile) << "a real machine passed; the table's conclusion needs rewriting, not the assertion";
+}
+
+TEST(FieldWeakening, TheVerdictIsOneComparisonAndTheOldThresholdsCouldNeverDecideIt) {
+  // The header used to state the rule as `ratio < 0.6 && speed_gain >= 1.5` and give a rationale for each half. Both
+  // halves are **implied** by the branch that actually decides -- `i_char <= i_max`, i.e. `lambda = Ld*i_max/psi_f >= 1`
+  // -- so the two-condition expression was unreachable-as-true and the thresholds were decoration (F-107). This case
+  // pins the boundary the function really has, and pins that the old pair could never have moved it.
+  // 头文件原先把规则写成 `ratio < 0.6 && speed_gain >= 1.5`，并为每一半给理由。两半都被真正决定它的那个分支
+  // ——`i_char <= i_max`，即 `λ = Ld·i_max/ψf >= 1`——所**蕴含**，于是那条两条件表达式永远不可能为真、两个阈值只是
+  // 装饰（F-107）。本用例钉住函数真正的边界，并钉住那对旧阈值从来不可能移动它。
+  const float psi = 4.762e-3F;
+  const float i_max = 3.0F;
+  const auto machine_at = [&](float lambda) {
+    const float ld = (lambda * psi) / i_max;
+    return core::MachineParams{0.0F, ld, 2.0F * ld, psi};
+  };
+  int implied_ratio = 0;
+  int implied_gain = 0;
+  int samples = 0;
+  for (int k = 0; k <= 400; ++k) {
+    // `lambda` from 0.02 to 6: below the line, at it, and far above it.
+    // `λ` 从 0.02 到 6：线下一段、线上、远在其上。
+    const float lambda = 0.02F * std::pow(300.0F, static_cast<float>(k) / 400.0F);
+    const core::FieldWeakeningAdvice advice = core::is_field_weakening_worthwhile(machine_at(lambda), i_max);
+    ++samples;
+    // The implemented rule, at every sample.
+    // 实现的规则，在每个采样点上。
+    EXPECT_EQ(lambda >= 1.0F, advice.worthwhile) << "lambda " << lambda;
+    // And the implication: whenever the *old* ratio threshold passes, so does the verdict, and whenever it fails the
+    // verdict can still pass -- which is exactly why it was not the deciding test.
+    // 以及这个蕴含：旧比率阈值通过时结论必然通过，而它不通过时结论仍可能通过——这正是它不是决定性检验的原因。
+    if (advice.ratio < 0.6F) {
+      ++implied_ratio;
+      EXPECT_TRUE(advice.worthwhile) << "the ratio half was the strict one at lambda " << lambda;
+    }
+    if (advice.speed_gain >= 1.5F) {
+      ++implied_gain;
+    }
+  }
+  // The sweep has to actually reach both sides of both old thresholds, or the implications below prove nothing.
+  // 扫描必须真正跨过两个旧阈值的两侧，否则下面的蕴含什么也证明不了。
+  EXPECT_EQ(401, samples);
+  EXPECT_GT(implied_ratio, 0) << "the sweep never reached the region where the old ratio threshold passes";
+  EXPECT_LT(implied_ratio, samples) << "the old ratio threshold passed everywhere, so it was not a threshold";
+  EXPECT_GT(implied_gain, implied_ratio) << "the gain half never fired more widely than the ratio half, so the two "
+                                           "thresholds would have agreed and there would be nothing to remove";
+
+  // The flip point, bisected on the function itself: `lambda = 1`, where the current limit can just null the flux.
+  // 翻转点，直接在函数上二分：`λ = 1`，即电流限幅刚好能把磁链削到零。
+  float lo = 0.5F;
+  float hi = 2.0F;
+  ASSERT_FALSE(core::is_field_weakening_worthwhile(machine_at(lo), i_max).worthwhile);
+  ASSERT_TRUE(core::is_field_weakening_worthwhile(machine_at(hi), i_max).worthwhile);
+  for (int k = 0; k < 40; ++k) {
+    const float mid = 0.5F * (lo + hi);
+    if (core::is_field_weakening_worthwhile(machine_at(mid), i_max).worthwhile) {
+      hi = mid;
+    } else {
+      lo = mid;
+    }
+  }
+  std::printf("[C7] the verdict flips between lambda %.6f and %.6f (at 1.0 the flux is exactly nullable)\n",
+              static_cast<double>(lo), static_cast<double>(hi));
+  EXPECT_NEAR(1.0F, hi, 1.0e-5F);
+  EXPECT_NEAR(1.0F, lo, 1.0e-5F);
+  // Stated where it bites: the ceiling is *infinite* on one side of that line and finite on the other, so the model's
+  // verdict is a step. A machine 1 % inside is not 1 % better than one 1 % outside; it is the point where this
+  // closed form stops having a finite answer.
+  // 在它真正咬人的地方说清楚：这条线一侧的上限是**无穷**、另一侧是有限，所以模型给出的结论是一个台阶。
+  // 差 1 % 进线的机器并不比差 1 % 出线的机器好 1 %；那是这个闭式解不再有有限答案的那个点。
+  EXPECT_EQ(INFINITY, core::is_field_weakening_worthwhile(machine_at(1.0F), i_max).speed_gain);
+  EXPECT_LT(core::is_field_weakening_worthwhile(machine_at(0.99F), i_max).speed_gain, 101.0F);
+}
+
+
+TEST(FieldWeakening, TheFluxSensitivityIsAsymmetricAndTheCurrentCircleIsWhy) {
+  // C7 step (2): the operating point under `Rs +/- 20 %` and `psi_f +/- 10 %`, which is what S4 asks for. Two things
+  // come out of it that a single symmetric coefficient would have hidden.
+  //
+  // **First**, the naive law is an upper bound that is never reached. `Rs = 0`, `i_q = 0` gives
+  // `i_d = (v_max/omega - psi_f)/Ld`, hence `d i_d / d psi_f = -1/Ld`; measured, the flux swing moves `i_d` by only
+  // **0.67 / 0.50 / 0.24 / 0.01** of that at 2910 / 3200 / 3500 / 3800 rad/s. The reason is that the policy is at the
+  // current limit at **every** one of those speeds (`|i| = i_max` to 4 decimal places), so the d axis cannot take all
+  // of the flux change it is being handed.
+  //
+  // **Second, and this is the actionable half**: the two directions are not symmetric. Over-estimating `psi_f` by
+  // 10 % moves `i_d` by -0.795 A at the base speed but by **-0.016 A** at 3800 rad/s, because there the point is
+  // already at `i_d = -2.98` of a 3 A budget and `i_q` has been eaten down to 0.31 -- there is nothing left to give up.
+  // Under-estimating it still moves `i_d` by +0.49 A at the same speed. Asymmetry **1.31x at the base speed, 30.4x at
+  // the top of the envelope**. So a `psi_f` that reads high is the dangerous sign, and it is dangerous exactly where
+  // field weakening is doing the work.
+  //
+  // C7 第（2）步：`Rs ± 20 %` 与 `ψf ± 10 %` 下的工作点，也就是 S4 要的那张表。这里出来两件单个对称系数会掩盖的事。
+  // **第一**，那条朴素定律是永远达不到的上界：实测磁链摆幅只把它推动 **0.67 / 0.50 / 0.24 / 0.01**（2910/3200/
+  // 3500/3800 rad/s），因为策略在**每一个**这些转速上都顶在电流限幅上（`|i| = i_max` 到四位小数），d 轴吃不下
+  // 全部被交过来的磁链变化。**第二，也是可行动的那一半**：两个方向并不对称。把 `ψf` 高估 10 % 在基速只推动
+  // −0.795 A，到 3800 rad/s 只推动 **−0.016 A**——那里工作点已经在 3 A 预算的 −2.98 上、`i_q` 被吃到 0.31，
+  // 没有东西可让了；而低估它同转速下仍推动 +0.49 A。**不对称度在基速 1.31 倍，到包络顶端 30.4 倍。** 所以读高的
+  // `ψf` 才是危险的方向，而它恰好在弱磁真正干活的地方最危险。
+  const core::MachineParams params = nominal_params();
+  const float i_max = sil::nominal_spec().i_max_a;
+  const auto point = [&](float rs, float psi, float omega) {
+    core::FieldWeakeningReference policy(core::FieldWeakeningReference::Config{rs, params.ld, psi, i_max, kVMaxRatio});
+    return policy.generate(core::ReferenceInput{3.0F, omega, kVBus, core::Dq<float>{0.0F, 0.0F}});
+  };
+  struct Row final {
+    float omega;
+    float i_d;
+    float i_q;
+    float up;
+    float down;
+    float up_share;
+    float down_share;
+    float asymmetry;
+    float rs_share;
+  };
+  Row rows[4]{};
+  const float omegas[4] = {2910.0F, 3200.0F, 3500.0F, 3800.0F};
+  const float law = 0.1F * params.psi_f / params.ld; // `-d i_d` per +10 % of flux, `Rs = 0`, `i_q = 0`
+  for (int k = 0; k < 4; ++k) {
+    const core::Dq<float> base = point(params.rs, params.psi_f, omegas[k]);
+    const float up = point(params.rs, params.psi_f * 1.1F, omegas[k]).d - base.d;
+    const float down = point(params.rs, params.psi_f * 0.9F, omegas[k]).d - base.d;
+    const float rs_swing = point(params.rs * 1.2F, params.psi_f, omegas[k]).d - point(params.rs * 0.8F, params.psi_f, omegas[k]).d;
+    rows[k] = Row{omegas[k], base.d, base.q, up, down, up / -law, down / law, std::fabs(down / up), rs_swing / (up - down)};
+    std::printf("[C7] w %6.0f | i_d %8.4f i_q %6.4f |i| %6.4f | +10%% psi -> %+8.4f (%.2f law) | -10%% psi -> "
+                "%+8.4f (%.2f law) | asym %5.2fx | 20%% Rs is %4.1f %% of the swing\n",
+                static_cast<double>(rows[k].omega), static_cast<double>(rows[k].i_d), static_cast<double>(rows[k].i_q),
+                static_cast<double>(std::sqrt((rows[k].i_d * rows[k].i_d) + (rows[k].i_q * rows[k].i_q))),
+                static_cast<double>(rows[k].up), static_cast<double>(rows[k].up_share), static_cast<double>(rows[k].down),
+                static_cast<double>(rows[k].down_share), static_cast<double>(rows[k].asymmetry),
+                static_cast<double>(100.0F * std::fabs(rows[k].rs_share)));
+    // The point is on the current circle at every speed in the weakened region -- which is *why* the law is only an
+    // upper bound, and it is measured rather than argued.
+    // 工作点在弱磁区的每个转速上都坐在电流圆上——这正是那条定律只是上界的原因，而且是量出来的。
+    const float magnitude = std::sqrt((rows[k].i_d * rows[k].i_d) + (rows[k].i_q * rows[k].i_q));
+    EXPECT_NEAR(i_max, magnitude, 0.001F * i_max) << "the current limit no longer binds at omega " << omegas[k];
+    // Sign, in both directions: more flux needs more negative `i_d`.
+    // 两个方向的符号都对：磁链更大要更负的 `i_d`。
+    EXPECT_LT(rows[k].up, 0.0F) << "omega " << omegas[k];
+    EXPECT_GT(rows[k].down, 0.0F) << "omega " << omegas[k];
+    // And the law is an upper bound that is never reached, in either direction.
+    // 而那条定律是两向上都达不到的上界。
+    EXPECT_LT(rows[k].up_share, 1.0F) << "omega " << omegas[k];
+    EXPECT_LT(rows[k].down_share, 1.0F) << "omega " << omegas[k];
+    // `Rs` never dominates the flux, at any speed -- which is what makes the policy's `Rs`-free ellipse defensible
+    // rather than a compromise.
+    // `Rs` 在任何转速下都不敌磁链——这正是策略那条不含 `Rs` 的椭圆可辩护、而不是妥协的原因。
+    EXPECT_LT(std::fabs(rows[k].rs_share), 0.25F) << "omega " << omegas[k];
+  }
+  // The asymmetry is the finding: it grows by more than an order of magnitude across the envelope.
+  // 不对称就是发现本身：它在包络内涨了一个数量级以上。
+  EXPECT_NEAR(1.31F, rows[0].asymmetry, 0.05F);
+  for (int k = 1; k < 4; ++k) {
+    EXPECT_GT(rows[k].asymmetry, rows[k - 1].asymmetry) << "the asymmetry stopped growing at omega " << omegas[k];
+  }
+  EXPECT_GT(rows[3].asymmetry, 20.0F) << "an over-read flux is no longer much more damaging than an under-read one";
+  // Both directions also shrink with speed: there is less `i_q` left to spend on the discrepancy.
+  // 两个方向都随转速变小：留给出这笔差额的 `i_q` 越来越少。
+  for (int k = 1; k < 4; ++k) {
+    EXPECT_LT(std::fabs(rows[k].up), std::fabs(rows[k - 1].up));
+    EXPECT_LT(rows[k].down, rows[k - 1].down);
+  }
+}
+
 } // namespace foc

@@ -2951,6 +2951,33 @@ The log
        claim being wrong, and recording it is what made it look handled.
      - ``pending``
 
+   * - F-107
+     - F
+     - **The documented go/no-go rule for field weakening could never return `true`, and the branch that decided it
+       was undocumented.** `is_field_weakening_worthwhile()` promised `worthwhile = ratio < 0.6 && speed_gain >= 1.5`,
+       each half with a rationale. An earlier `if` returns `true` whenever `Ld*i_max >= psi_f` (the current limit can
+       null the flux), so the surviving expression was reached only with `lambda = Ld*i_max/psi_f < 1`, where
+       `ratio = 1/lambda > 1` and `gain = 1/(1-lambda) < 1.5` -- i.e. it was **unreachable-as-true**. The function's
+       real rule was one comparison, `i_char <= i_max`, and it was written nowhere.
+     - Surfaced by turning the advice into a selection table and asserting each verdict against the *documented* rule
+       recomputed from the same nameplate. Four of five rows agreed -- they are all far below the line, where both
+       readings say no -- and the disagreement only appears in `1 <= lambda < 5/3`, a band no real machine in the
+       collection occupies. That is the shape of the defect worth remembering: **two pieces of code agreed on every
+       input anyone had tried, because every input was far from the boundary.**
+     - Blast radius: the verdict is exposed to C as `foc_field_weakening_worthwhile`, so the documentation of a public
+       answer was wrong for a whole band of machines. No behaviour changed -- the code's answer (a step at
+       `i_char = i_max`) is the defensible one, since below the line the flux cannot be nulled at all, and the
+       docstring's own rationale ("the region is a sliver") describes exactly that. The fix is to the header: the rule
+       is now stated as the one comparison, the two dead thresholds are removed, and `test_field_weakening.cpp` pins
+       the step at `lambda = 1` (bisected to 1e-5) and asserts that neither old threshold could ever have decided.
+       Re-run: `test_field_weakening.cpp`, `test_field_weakening_motor.cpp`, `test_api_c_smoke.cpp`, all green.
+
+       The rule this produces: **a threshold that cannot bind is not a policy, it is decoration.** When two conditions
+       are written in series, prove that each one can be the deciding test -- otherwise remove it and say what the
+       remaining one means. And the corollary that made it invisible for so long: a shipped advisory should be run over
+       **every machine you have parameters for**, not just the one on the bench.
+     - ``pending``
+
 What ``pending`` means in the commit column
 -------------------------------------------
 

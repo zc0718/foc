@@ -414,6 +414,21 @@
         }
       ],
       "no_effect": ""
+    },
+    {
+      "id": "O-30",
+      "date": "2026-11-03",
+      "leg": "model",
+      "capability": "The field-weakening go/no-go run as a selection function over the machines this project actually has parameters for, plus the regime map of the ellipse sensitivity -- and, on the way, the discovery that the rule the header advertised could never be the one that decided.",
+      "source": "`test_field_weakening.cpp`, three new cases. Selection: five rows (SIL machine, a published SPMSM-class drive, a published IPM raw and Ld/Lq-corrected, the 2004 Prius traction motor) with the health check rejecting the row whose own table has Lq<Ld; no accepted machine passes; lambdas 0.115/0.235/0.252/0.253 against a line at 1.0. Rule: the verdict is `i_char <= i_max`, bisected to 1e-5; the old `ratio<0.6 && speed_gain>=1.5` expression is unreachable-as-true because the ratio half implies λ>5/3 which the early branch already accepted -- F-107, fixed in the header rather than pinned as-is. Sensitivity: psi_f +/-10% and Rs +/-20% at 2910/3200/3500/3800 rad/s; the point is on the current circle at all four (`|i| = i_max`), the law is an upper bound (0.67/0.50/0.24/0.01 of it upward), and the two directions differ by 1.31x growing to 30.3x.",
+      "reopened": [
+        {
+          "claim": "core/field_weakening.hpp",
+          "verdict": "promoted",
+          "missing": ""
+        }
+      ],
+      "no_effect": ""
     }
   ]
 }
