@@ -48,7 +48,12 @@ foc_err_t foc_motor_get_setup(foc_motor_t motor, foc_motor_setup_t *out) {
 }
 
 foc_err_t foc_motor_set_observer(foc_motor_t motor, foc_observer_t observer) {
-    if ((motor == NULL) || (observer < FOC_OBSERVER_BACK_EMF) || (observer > FOC_OBSERVER_BLENDED)) {
+    /* The upper bound is the last enumerator. It used to say FOC_OBSERVER_BLENDED, which was a second copy of the
+       enumeration and stayed behind when a fifth mode was added -- the mode was admitted by the bridge and refused
+       here. `ApiObserverSelector.TheDualInductanceModeIsWiredAndCanBeSelectedAtRunTime` is the case that fails on that
+       drift. 上界取最后一个枚举值。它原先写的是 FOC_OBSERVER_BLENDED，那是枚举的第二份拷贝，增加第五种模式时没有跟着
+       改——bridge 已经放行，却被这里拒掉。那个漂移由上面点名的用例负责变红。 */
+    if ((motor == NULL) || (observer < FOC_OBSERVER_BACK_EMF) || (observer > FOC_OBSERVER_DUAL_INDUCTANCE)) {
         return FOC_ERR_PARAM;
     }
     return foc_bridge_set_observer(motor, observer);

@@ -93,6 +93,26 @@ class DualInductanceObserver final {
     void seed_flux(Ab<float> psi_ab) noexcept;
 
     /**
+     * @brief [en] Seed from the rotor angle and the current at that instant, computing the stator flux this class
+     *             holds.
+     * @brief [zh] 由转子角与该时刻的电流播种，算出本类真正持有的那个定子磁链。
+     * @param theta_e [en] electrical rotor angle in rad.
+     * @param theta_e [zh] 电角度转子角，rad。
+     * @param i_ab [en] stator current in A at the same instant.
+     * @param i_ab [zh] 同一时刻的定子电流，A。
+     * @note [en] `psi_f*e^(j*theta) + L0*i + L1*conj(i)*e^(j*2*theta)`, with this observer's own `ld`, `lq` and
+     *            `psi_f`. It exists so a hand-over does not have to know that this observer's state is the **stator**
+     *            flux: a caller that seeds it with the rotor flux alone leaves the current's own flux out of the
+     *            integration constant, and a pure integrator never forgets -- the cost would be a permanent angle
+     *            offset of about `atan(|L0*i| / psi_f)`, not a transient.
+     * @note [zh] `psi_f·e^(jθ) + L0·i + L1·conj(i)·e^(j2θ)`，用本观测器自己的 `ld`、`lq`、`psi_f` 算。它存在的意义是交
+     *            接方不必知道本观测器的状态是**定子**磁链：只拿转子磁链播种，会把电流自身的磁链漏在积分常数之外，而纯积
+     *            分器不会遗忘——代价是一个约 `atan(|L0·i|/psi_f)` 的**永久**角度偏移，不是暂态。
+     * @since 0.1.11
+     */
+    void seed_at(float theta_e, Ab<float> i_ab) noexcept;
+
+    /**
      * @brief [en] Take an updated machine description.
      * @brief [zh] 接受更新后的机器描述。
      * @param params [en] the machine as it actually is.

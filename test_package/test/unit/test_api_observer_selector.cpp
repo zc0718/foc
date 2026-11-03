@@ -483,3 +483,36 @@ TEST(ApiObserverSelector, TheSizingItSuggestsIsAConfigurationItAccepts) {
     EXPECT_EQ(foc_hfi_size(&salient, 20000.0F, 0.0F, &sizing), FOC_ERR_PARAM) << "a zero current budget was sized";
 }
 
+TEST(ApiObserverSelector, TheDualInductanceModeIsWiredAndCanBeSelectedAtRunTime) {
+  // The fifth mode, through the C path both ways: at construction and as a run-time hand-over. What is asserted is the
+  // status field -- the bridge fills it from the live observer, not from the request -- so a selector that admitted the
+  // mode and kept running the default would fail here rather than look fine.
+  // 第五种模式，经 C 路径的两个方向：构造时选，以及运行时交接。断言的是状态字段——bridge 用活着的观测器填它，而不是用请
+  // 求值——所以"接受该模式却继续跑默认值"的实现会在这里失败，而不是看起来正常。
+  const foc_motor_params_t params = params_struct();
+  const foc_motor_setup_t setup = setup_with_observer(FOC_OBSERVER_BACK_EMF);
+  foc_motor_t motor{};
+  ASSERT_EQ(foc_motor_create_ex(&params, &setup, &motor), FOC_OK);
+  ASSERT_NE(motor, nullptr);
+  ASSERT_EQ(foc_motor_enable(motor), FOC_OK);
+  ASSERT_EQ(foc_set_torque(motor, 0.5F), FOC_OK);
+  for (int tick = 0; tick < 20; ++tick) {
+    ASSERT_EQ(foc_tick(motor, 1.0F / 20000.0F), FOC_OK);
+  }
+  ASSERT_EQ(foc_motor_set_observer(motor, FOC_OBSERVER_DUAL_INDUCTANCE), FOC_OK);
+  foc_motor_status_t status{};
+  status.struct_size = sizeof(foc_motor_status_t);
+  ASSERT_EQ(foc_motor_get_status(motor, &status), FOC_OK);
+  EXPECT_EQ(status.observer, static_cast<std::int32_t>(FOC_OBSERVER_DUAL_INDUCTANCE))
+      << "the hand-over was accepted but the slot still reports the mode it had";
+  // And it keeps running under the new mode: acceptance without a working step would be the silent substitution this
+  // whole file exists to refuse.
+  // 而且它在新模式下继续运行：只接受却不真能推进，正是本文件存在的意义所在的那种静默替换。
+  for (int tick = 0; tick < 40; ++tick) {
+    ASSERT_EQ(foc_tick(motor, 1.0F / 20000.0F), FOC_OK);
+  }
+  ASSERT_EQ(foc_motor_get_status(motor, &status), FOC_OK);
+  EXPECT_EQ(status.observer, static_cast<std::int32_t>(FOC_OBSERVER_DUAL_INDUCTANCE));
+  EXPECT_EQ(foc_motor_destroy(motor), FOC_OK);
+}
+

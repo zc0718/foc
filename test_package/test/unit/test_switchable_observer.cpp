@@ -17,6 +17,7 @@
 #include <foc/core/observer/back_emf_observer.hpp>
 #include <foc/core/observer/blended_observer.hpp>
 #include <foc/core/observer/hfi_observer.hpp>
+#include <foc/core/observer/dual_inductance_observer.hpp>
 #include <foc/core/observer/nonlinear_flux_observer.hpp>
 #include <foc/core/observer/switchable_observer.hpp>
 
@@ -76,6 +77,7 @@ auto wrapper_config(foc::core::ObserverKind kind) -> foc::core::SwitchableObserv
     config.nonlinear_flux = nlfo_config();
     config.hfi = hfi_config();
     config.blended = blend_config();
+    config.dual_inductance = foc::core::DualInductanceObserver::Config{0.5F, 1.0e-4F, 3.0e-4F, kPsiF};
     config.kind = kind;
     return config;
 }
@@ -486,5 +488,56 @@ TEST(SwitchableObserver, ApplyParamsIsEquivalentToConstructingWithThoseParams) {
         EXPECT_GT(std::fabs(taken - ignored), 1.0e-3F * std::fabs(taken) + 1.0e-4F)
             << "doubling Rs changed nothing, so this case cannot tell a working apply_params from an empty one";
     }
+}
+
+TEST(SwitchableObserver, AHandOverIntoTheSalientObserverNeedsTheCurrentAsWellAsTheAngle) {
+  // The fifth member is the only one whose state is the **stator** flux, so the one-argument hand-over -- which seeds
+  // `psi_f*e^(j*theta)` -- installs a seed missing the current's own flux. A pure integrator never forgets, so that
+  // omission is a permanent offset rather than a transient. The A/B: two identical runs, handed over with the angle
+  // alone and with the angle plus the current, then stepped the same way; the gap that opens up is the defect the
+  // overload exists to prevent.
+  // 第五个成员是唯一一个状态为**定子**磁链的，所以只带角度的单参数交接（播种 `psi_f·e^(jθ)`）装进去的种子漏掉了电流自身的
+  // 磁链。纯积分器不会遗忘，所以这个疏漏是永久偏移而不是暂态。A/B：两次完全相同的运行，分别只带角度、以及带上角度与电流地
+  // 交接，然后用同样的输入推进；两者之间张开的差距，就是那个重载存在的理由。
+  constexpr int kSteps = 200;
+  constexpr int kSwitch = 150;
+  const auto run = [](bool with_current) {
+    foc::core::SwitchableObserver wrapper(wrapper_config(foc::core::ObserverKind::BackEmf));
+    wrapper.seed_flux(foc::core::Ab<float>{kPsiF, 0.0F});
+    for (int step = 0; step < kSwitch; ++step) {
+      static_cast<void>(wrapper.update(input_at(step), current_at(step), kDt));
+    }
+    const float before = wrapper.state().theta_e;
+    const bool seeded = with_current
+                            ? wrapper.hand_over_to(foc::core::ObserverKind::DualInductance, current_at(kSwitch))
+                            : wrapper.hand_over_to(foc::core::ObserverKind::DualInductance);
+    float theta = before;
+    for (int step = kSwitch; step < kSteps; ++step) {
+      theta = wrapper.update(input_at(step), current_at(step), kDt).theta_e;
+    }
+    return std::pair<bool, float>{seeded, theta};
+  };
+  const auto angle_only = run(false);
+  const auto with_i = run(true);
+  const auto step_of = [](float a, float b) {
+    float d = a - b;
+    while (d <= -3.14159265F) {
+      d += 6.28318531F;
+    }
+    while (d > 3.14159265F) {
+      d -= 6.28318531F;
+    }
+    return std::fabs(d);
+  };
+  const float gap = step_of(angle_only.second, with_i.second);
+  std::printf("[handover] into the dual-L member: angle-only vs angle+current, gap after %d steps %.6f rad\n",
+              kSteps - kSwitch, static_cast<double>(gap));
+  EXPECT_TRUE(angle_only.first) << "the member has a flux estimate, so both forms must seed it";
+  EXPECT_TRUE(with_i.first);
+  // Not zero: at 0.1 A the current's own flux still moves the answer, and it does not decay. Small, but *permanent* is
+  // what makes it worth an overload rather than a note.
+  // 不是零：0.1 A 下电流自身的磁链仍能挪动答案，而且它不会衰减。数值不大，但**永久**正是它值得一个重载而不是一句注释的理由。
+  EXPECT_GT(gap, 1.0e-4F) << "the two seeds are indistinguishable, so this A/B proves nothing";
+  EXPECT_LT(gap, 0.2F) << "the gap is far larger than the model difference: something else moved";
 }
 

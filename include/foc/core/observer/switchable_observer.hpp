@@ -6,6 +6,7 @@
 #include <foc/core/machine_params.hpp>
 #include <foc/core/observer/back_emf_observer.hpp>
 #include <foc/core/observer/blended_observer.hpp>
+#include <foc/core/observer/dual_inductance_observer.hpp>
 #include <foc/core/observer/hfi_observer.hpp>
 #include <foc/core/observer/nonlinear_flux_observer.hpp>
 #include <foc/core/observer/observer_policy.hpp>
@@ -28,6 +29,8 @@ enum class ObserverKind : std::uint8_t {
     NonlinearFlux = 1, ///< [en] the non-linear flux observer. [zh] 非线性磁链观测器。
     Hfi = 2,           ///< [en] the injection observer; the only one that injects. [zh] 注入观测器；唯一会注入的那个。
     Blended = 3,       ///< [en] injection below the band, back-EMF above it. [zh] 带下用注入，带上用反电势。
+    DualInductance =
+        4, ///< [en] the salient-machine observer: both inductances, no `i_d` bias. [zh] 凸极机观测器：两个电感都带，没有 `i_d` 偏置。
 };
 
 
@@ -83,6 +86,7 @@ class SwitchableObserver final {
         NonlinearFluxObserver::Config nonlinear_flux{};
         HfiObserver::Config hfi{};
         BlendedObserver<HfiObserver, BackEmfObserver>::Config blended{};
+        DualInductanceObserver::Config dual_inductance{};
         ObserverKind kind{ObserverKind::BackEmf};
     };
 
@@ -92,8 +96,8 @@ class SwitchableObserver final {
      */
     explicit SwitchableObserver(Config config) noexcept
         : back_emf_(config.back_emf), nonlinear_flux_(config.nonlinear_flux), hfi_(config.hfi),
-          blended_(HfiObserver{config.hfi}, BackEmfObserver{config.back_emf}, config.blended), kind_(config.kind),
-          psi_f_wb_(config.nonlinear_flux.psi_f) {}
+          blended_(HfiObserver{config.hfi}, BackEmfObserver{config.back_emf}, config.blended),
+          dual_inductance_(config.dual_inductance), kind_(config.kind), psi_f_wb_(config.nonlinear_flux.psi_f) {}
 
     /**
      * @brief [en] Advance whichever observer is selected.
@@ -107,6 +111,8 @@ class SwitchableObserver final {
             return hfi_.update(v_ab, i_ab, dt_s);
         case ObserverKind::Blended:
             return blended_.update(v_ab, i_ab, dt_s);
+        case ObserverKind::DualInductance:
+            return dual_inductance_.update(v_ab, i_ab, dt_s);
         case ObserverKind::BackEmf:
         default:
             return back_emf_.update(v_ab, i_ab, dt_s);
@@ -133,6 +139,7 @@ class SwitchableObserver final {
             return blended_.injection_ab();
         case ObserverKind::BackEmf:
         case ObserverKind::NonlinearFlux:
+        case ObserverKind::DualInductance:
         default:
             return Ab<float>{0.0F, 0.0F};
         }
@@ -148,6 +155,7 @@ class SwitchableObserver final {
         back_emf_.seed_flux(psi_ab);
         nonlinear_flux_.seed_flux(psi_ab);
         blended_.seed_flux(psi_ab);
+        dual_inductance_.seed_flux(psi_ab);
     }
 
     /**
@@ -166,6 +174,8 @@ class SwitchableObserver final {
             return hfi_.state();
         case ObserverKind::Blended:
             return blended_.state();
+        case ObserverKind::DualInductance:
+            return dual_inductance_.state();
         case ObserverKind::BackEmf:
         default:
             return back_emf_.state();
@@ -202,6 +212,8 @@ class SwitchableObserver final {
             return blended_.locked();
         case ObserverKind::NonlinearFlux:
             return nonlinear_flux_.locked();
+        case ObserverKind::DualInductance:
+            return true; // no detector: a declined step is a Param status, not a withheld measurement
         case ObserverKind::BackEmf:
         default:
             return true; // no detector: nothing is being withheld
@@ -227,6 +239,7 @@ class SwitchableObserver final {
             return hfi_.error();
         case ObserverKind::Blended:
         case ObserverKind::NonlinearFlux:
+        case ObserverKind::DualInductance:
         case ObserverKind::BackEmf:
         default:
             return 0.0F;
@@ -277,11 +290,49 @@ class SwitchableObserver final {
         case ObserverKind::Blended:
             blended_.seed_flux(seed);
             break;
+        case ObserverKind::DualInductance:
+            dual_inductance_.seed_flux(seed);
+            break;
         case ObserverKind::Hfi:
         default:
             kind_ = next;
             return false; // nothing to seed: the carrier phase is not a flux estimate
         }
+        kind_ = next;
+        return true;
+    }
+
+    /**
+     * @brief [en] Hand over, seeding the incoming observer with the **stator** flux this instant actually has.
+     * @brief [zh] 交接，并用此刻真实的**定子**磁链给接手者播种。
+     * @param next [en] the observer to hand over to.
+     * @param next [zh] 要交接过去的观测器。
+     * @param i_ab [en] the current at the same instant as the angle being carried over, A.
+     * @param i_ab [zh] 与所携带角度同一时刻的电流，A。
+     * @return [en] The same answer as the one-argument form.
+     * @return [zh] 与单参数版本相同的返回值。
+     * @note [en] Why this exists: `DualInductanceObserver` integrates the stator flux and subtracts nothing at readout,
+     *            so handing it `psi_f*e^(j*theta)` is a seed that is missing the current's own flux -- and a pure
+     *            integrator never forgets, so the omission would be a **permanent** angle offset of about `atan(|L0*i|
+     *            / psi_f)`, not a transient. This overload gives that member `psi_f*e^(j*theta) + L0*i +
+     *            L1*conj(i)*e^(j*2*theta)`, which is the flux it holds. The other three are seeded exactly as before,
+     *            because their state is the rotor flux (or the blend's, which is one of those two) and, on the `i_d =
+     *            0` machines they are allowed on, `psi_f*e^(j*theta)` is that flux to the accuracy they claim.
+     * @note [zh] 为什么要有它：`DualInductanceObserver` 积分的是定子磁链、读数时什么都不减，所以交给它 `psi_f·e^(jθ)`
+     *            当种子，恰好漏掉了电流自身的磁链——而纯积分器不会遗忘，这个疏漏就是一个 **永久**的角度偏移（约
+     *            `atan(|L0·i|/psi_f)`），不是暂态。本重载给它的是它真正持有的磁链 `psi_f·e^(jθ) + L0·i +
+     *            L1·conj(i)·e^(j2θ)`。其余三个与之前完全一样：它们的状态是转子磁链（混合观测器是这两者之一），而在它们
+     *            被允许的 `i_d = 0` 机器上，`psi_f·e^(jθ)` 就是那磁链，误差在其主张之内。
+     * @since 0.1.11
+     */
+    auto hand_over_to(ObserverKind next, Ab<float> i_ab) noexcept -> bool {
+        if (next != ObserverKind::DualInductance) {
+            return hand_over_to(next);
+        }
+        if (next == kind_) {
+            return false;
+        }
+        dual_inductance_.seed_at(state().theta_e, i_ab);
         kind_ = next;
         return true;
     }
@@ -325,6 +376,7 @@ class SwitchableObserver final {
     void apply_params(const MachineParams& params) noexcept {
         back_emf_.apply_params(params);
         nonlinear_flux_.apply_params(params);
+        dual_inductance_.apply_params(params);
     }
 
   private:
@@ -335,6 +387,16 @@ class SwitchableObserver final {
      * @brief The blend owns its own two observers rather than borrowing the members above. Borrowing would tie the band's behaviour to whatever the standalone members last believed, and the wrapper's whole rule is that only the selected observer is stepped -- so a borrowed copy would be either frozen (and useless) or stealthily advanced (and a second carrier phase). The cost is a second copy of two small objects in a statically sized slot. 交接带持有**自己**的两个观测器，而不是借用上面的成员。借用会让交接带的行为取决于那两个成员上次相信了什么，而包装器的全部规则就是"只推进被选中的那个"——借来的副本要么被冻结（因而无用），要么被偷偷推进（于是多出一个载波相位）。代价是在一个静态定容的槽位里多存两个小对象。
      */
     BlendedObserver<HfiObserver, BackEmfObserver> blended_;
+    /**
+     * @brief The salient-machine observer, held here so that a caller can select it at run time.
+     *
+     *     It is the only member whose state is the **stator** flux rather than the rotor flux, which is why
+     *     `hand_over_to(next, i_ab)` exists: seeding it with `psi_f*e^(j*theta)` alone would leave the current's own
+     *     flux out of the integration constant, and a pure integrator never forgets. 凸极机观测器，放在这里好让调用方能
+     *     在运行时选中它。它是唯一一个状态为**定子**磁链而不是转子磁链的成员，这也是 `hand_over_to(next, i_ab)` 存在的
+     *     原因：只拿 `psi_f·e^(jθ)` 播种会把电流自身的磁链漏在积分常数之外，而纯积分器不会遗忘。
+     */
+    DualInductanceObserver dual_inductance_;
     ObserverKind kind_;
     /**
      * @brief The machine's flux linkage, taken from the one field that already states it (`nonlinear_flux.psi_f`) so a hand-over has a magnitude to place the incoming observer's vector at. Not a second definition of the machine. 这台机器的磁链，取自已经写明它的那**一个**字段（`nonlinear_flux.psi_f`），于是交接有幅值可用来安置接手者的矢量。这不是对这台机器的第二个定义。

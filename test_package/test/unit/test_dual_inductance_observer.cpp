@@ -312,6 +312,47 @@ TEST(DualInductanceObserver, InTheSurfaceMountedLimitItIsTheShippedAlgebra) {
   std::printf("[dual-L] surface-mounted algebra: shipped against dual-L, worst gap %.3e rad\n", static_cast<double>(worst));
 }
 
+TEST(DualInductanceObserver, SeedAtInstallsTheStatorFluxThisObserverHolds) {
+  // `seed_at(theta, i)` exists so a hand-over does not have to know that this observer's state is the **stator** flux.
+  // Checked the only way that means anything: seed from an angle and a current, then hand it a voltage that leaves the
+  // flux where it is (`v = Rs*i`) -- the answer must be that angle, at every current. Seeding with `psi_f*e^(j*theta)`
+  // instead leaves the current's own flux out of the integration constant, and a pure integrator never forgets.
+  // `seed_at(θ, i)` 存在的意义，是交接方不必知道本观测器的状态是**定子**磁链。只用一个有意义的方式检查：由角度和电流播种，
+  // 再交给它一个不改变磁链的电压（`v = Rs·i`）——答案必须是那个角度，在每个电流下都是。若改用 `psi_f·e^(jθ)` 播种，就把
+  // 电流自身的磁链漏在积分常数之外，而纯积分器不会遗忘。
+  const sil::MachineSpec spec = salient_spec();
+  core::DualInductanceObserver observer(
+      core::DualInductanceObserver::Config{spec.rs, spec.ld, spec.lq, psi_f_of(spec)});
+  float worst = 0.0F;
+  for (const float theta : {0.0F, 1.3F, 4.4F}) {
+    for (const float id : {0.0F, -2.5F, 2.0F}) {
+      for (const float iq : {0.5F, -1.5F}) {
+        const core::Ab<float> i_ab = core::inv_park(core::Dq<float>{id, iq}, theta);
+        observer.reset();
+        observer.seed_at(theta, i_ab);
+        const core::Ab<float> v_ab{spec.rs * i_ab.alpha, spec.rs * i_ab.beta};
+        const float error = std::fabs(wrap_pi(observer.update(v_ab, i_ab, kDt).theta_e - theta));
+        worst = std::max(worst, error);
+        EXPECT_LT(error, 1.0e-3F) << "theta " << theta << ", i_d " << id << ", i_q " << iq;
+      }
+    }
+  }
+  // And the seed it computes is not the rotor flux: at 2.5 A the difference is large enough to matter, which is why the
+  // one-argument hand-over was not good enough for this member.
+  // 而它算出的种子不是转子磁链：2.5 A 时差别大到足以算数，这就是单参数交接对这个成员不够用的原因。
+  const core::Ab<float> i_ab = core::inv_park(core::Dq<float>{-2.5F, 0.0F}, 0.0F);
+  observer.reset();
+  observer.seed_at(0.0F, i_ab);
+  const float stator = observer.flux().alpha;
+  const float rotor_only = psi_f_of(spec);
+  const float offset = std::atan2(stator - rotor_only, rotor_only);
+  std::printf("[dual-L] seed_at with i_d = -2.5 A: stator %.6e Wb against rotor-only %.6e Wb, offset %.4f rad\n",
+              static_cast<double>(stator), static_cast<double>(rotor_only), static_cast<double>(offset));
+  std::printf("[dual-L] seed_at: worst angle error %.3e rad over 18 (angle, i_d, i_q) combinations\n",
+              static_cast<double>(worst));
+  EXPECT_GT(std::fabs(offset), 0.02F) << "the current's own flux is not negligible at this current";
+}
+
 TEST(DualInductanceObserver, AnInvalidConfigurationHoldsAndANonPositiveStepIsRejected) {
   // The contract every other observer in this directory keeps, so a caller can treat them uniformly.
   // 本目录里每个观测器都守的契约，调用方才能一视同仁。

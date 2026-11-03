@@ -377,6 +377,7 @@ auto observer_status(const Setup& setup, const foc_motor_params_t& params) noexc
     switch (setup.observer) {
     case FOC_OBSERVER_BACK_EMF:
     case FOC_OBSERVER_NONLINEAR_FLUX:
+    case FOC_OBSERVER_DUAL_INDUCTANCE:
         return FOC_OK;
     case FOC_OBSERVER_HFI:
         // Four conditions, each a fact about the request or the machine rather than a preference:
@@ -791,6 +792,8 @@ constexpr auto observer_mode(core::ObserverKind kind) noexcept -> std::int32_t {
         return FOC_OBSERVER_HFI;
     case core::ObserverKind::Blended:
         return FOC_OBSERVER_BLENDED;
+    case core::ObserverKind::DualInductance:
+        return FOC_OBSERVER_DUAL_INDUCTANCE;
     case core::ObserverKind::BackEmf:
     default:
         return FOC_OBSERVER_BACK_EMF;
@@ -805,6 +808,8 @@ constexpr auto observer_kind(std::int32_t observer) noexcept -> core::ObserverKi
         return core::ObserverKind::Hfi;
     case FOC_OBSERVER_BLENDED:
         return core::ObserverKind::Blended;
+    case FOC_OBSERVER_DUAL_INDUCTANCE:
+        return core::ObserverKind::DualInductance;
     case FOC_OBSERVER_BACK_EMF:
     default:
         return core::ObserverKind::BackEmf;
@@ -863,6 +868,12 @@ inline auto make_observer(const foc_motor_params_t& p, const Setup& setup) noexc
     config.back_emf = core::BackEmfObserver::Config{machine.rs, machine.ld};
     config.nonlinear_flux =
         core::NonlinearFluxObserver::Config{machine.rs, machine.lq, psi_f, 0.3F, 3.0F, 0.5F * psi_f};
+    // The salient-machine observer, configured from the same nameplate and nothing else: it is the member whose model
+    // *wants* a salient machine, so `ld == lq` is a fine configuration rather than a refused one -- there it reduces to
+    // the back-EMF algebra bit for bit.
+    // 凸极机观测器，同样只用铭牌配置：它是那个**希望**有凸极的成员，所以 `ld == lq` 是可以的配置而不是被拒绝的——
+    // 那种情况下它逐位退化为反电势观测器的代数。
+    config.dual_inductance = core::DualInductanceObserver::Config{machine.rs, machine.ld, machine.lq, psi_f};
     // The injection half is configured exactly the way `test_sil_hfi.cpp` does, because those are the numbers that were
     // measured: the high-pass at 300 Hz (above any fundamental this machine can make, far below the 2 kHz carrier), the
     // demodulation filter at 200 Hz, damping 0.9, and the sensitivity is the observer's own `predicted_gain_a()` at

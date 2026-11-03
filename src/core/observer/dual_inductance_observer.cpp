@@ -172,6 +172,20 @@ void DualInductanceObserver::seed_flux(Ab<float> psi_ab) noexcept {
     seed_theta_ = arg(Cx{psi_ab.alpha, psi_ab.beta});
 }
 
+void DualInductanceObserver::seed_at(float theta_e, Ab<float> i_ab) noexcept {
+    // `psi_f*e^(j*theta) + L0*i + L1*conj(i)*e^(j*2*theta)`, the stator flux of a salient machine -- the same relation
+    // the quadratic in `update()` inverts, written forwards.
+    // `psi_f·e^(jθ) + L0·i + L1·conj(i)·e^(j2θ)`，凸极机的定子磁链——正是 `update()` 里那个二次方程所反解的关系，正向写一遍。
+    const float c1 = std::cos(theta_e);
+    const float s1 = std::sin(theta_e);
+    const float c2 = std::cos(2.0F * theta_e);
+    const float s2 = std::sin(2.0F * theta_e);
+    const float psi_f = config_.psi_f;
+    psi_.alpha = (psi_f * c1) + (l0_ * i_ab.alpha) + (l1_ * ((i_ab.alpha * c2) + (i_ab.beta * s2)));
+    psi_.beta = (psi_f * s1) + (l0_ * i_ab.beta) + (l1_ * ((i_ab.alpha * s2) - (i_ab.beta * c2)));
+    seed_theta_ = arg(Cx{psi_.alpha, psi_.beta});
+}
+
 void DualInductanceObserver::apply_params(const MachineParams& params) noexcept {
     config_.rs = params.rs;
     config_.ld = params.ld;

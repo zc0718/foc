@@ -57,16 +57,24 @@ typedef struct foc_motor_params {
 /**
  * @brief [en] Which observer the motor runs.
  * @brief [zh] 电机运行哪一个观测器。
- * @note [en] all four modes are wired, and each one is admitted on facts rather than on a switch: `NONLINEAR_FLUX`
- *            needs only the nameplate, `HFI` needs a stated carrier and a salient machine, `BLENDED` needs those plus
- *            an ordered handover band. A request that this machine cannot honour answers `FOC_ERR_PARAM`. A mode that
- *            is named but not wired answers the error rather than silently falling back to the default, because a
- *            silent fallback is indistinguishable from success. `foc_motor_status_t::observer` reports the mode that is
- *            actually running, so a caller never has to infer it from what it asked for.
- * @note [zh] `BACK_EMF`（出厂默认）与 `NONLINEAR_FLUX` 已接入；`HFI` 与 `BLENDED` 仍回答 `FOC_ERR_NOT_IMPL`。增加一种模
- *            式不应改变本头的含义，只改变哪些取值回答该错误。被命名却未接入的模式回答该错误，而不是静默退回默认值 ——因
- *            为静默退回与成功无法区分。`foc_motor_status_t::observer` 报出实际在跑的模式，调用方无需从自己请求了什么去
- *            推断。
+ * @note [en] all five modes are wired, and each one is admitted on facts rather than on a switch: `NONLINEAR_FLUX`
+ *            needs only the nameplate, `DUAL_INDUCTANCE` needs only the nameplate as well (it is the one that uses both
+ *            inductances, so a salient machine is its home rather than its condition), `HFI` needs a stated carrier and
+ *            a salient machine, `BLENDED` needs those plus an ordered handover band. A request that this machine cannot
+ *            honour answers `FOC_ERR_PARAM`. A mode that is named but not wired answers the error rather than silently
+ *            falling back to the default, because a silent fallback is indistinguishable from success.
+ *            `foc_motor_status_t::observer` reports the mode that is actually running, so a caller never has to infer
+ *            it from what it asked for. The previous zh note here said `HFI` and `BLENDED` still answer
+ *            `FOC_ERR_NOT_IMPL`, which contradicted the en note directly above it and had been false for several
+ *            releases. A bilingual pair that disagrees is worse than one language: the reader who needs the translation
+ *            most is the one who gets the stale half.
+ * @note [zh] 五种模式都已接入，每一种都是按事实而非按开关放行的：`NONLINEAR_FLUX` 只需要铭牌，`DUAL_INDUCTANCE` 也只需
+ *            要铭牌（它是那个把两个电感都用上的观测器，所以凸极机是它的主场而不是它的条件），`HFI` 需要一个明确给出的载
+ *            波和一台凸极机，`BLENDED` 还需要一条有序的交接带。这台机器满足不了的请求回答 `FOC_ERR_PARAM`。被命名却未接
+ *            入的模式回答错误，而不是静默退回默认值——因为静默退回与成功无法区分。 `foc_motor_status_t::observer` 报出实
+ *            际在跑的模式，调用方无需从自己请求了什么去推断。此处原来的中文注释说 `HFI` 与 `BLENDED` 仍回答
+ *            `FOC_ERR_NOT_IMPL`，与紧邻其上的英文注释直接矛盾，并且已经错了好几个版本。一对彼此不一致的双语注释比单语更
+ *            糟：最需要译文的那位读者，拿到的正是陈旧的那一半。
  * @since 0.1.4
  * @exporter
  */
@@ -75,7 +83,8 @@ typedef enum foc_observer {
     FOC_OBSERVER_BACK_EMF = 0,       /* back-EMF observer; the shipped default */
     FOC_OBSERVER_NONLINEAR_FLUX = 1, /* non-linear flux observer */
     FOC_OBSERVER_HFI = 2,            /* high-frequency injection, zero-speed */
-    FOC_OBSERVER_BLENDED = 3         /* the blend of the two across speed */
+    FOC_OBSERVER_BLENDED = 3,        /* the blend of the two across speed */
+    FOC_OBSERVER_DUAL_INDUCTANCE = 4 /* both inductances: no d-axis bias, for MTPA and IPM */
 } foc_observer_t;
 
 /**

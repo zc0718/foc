@@ -542,6 +542,21 @@
         }
       ],
       "no_effect": "Not wired into `SwitchableObserver` yet, so no C caller can select it: the header and its measurements exist, the runtime selector and the ABI are the next batch. `core/observer/switchable_observer.hpp` stays at L1 for that reason and not because its forwarding is untested."
+    },
+    {
+      "id": "O-39",
+      "date": "2026-11-03",
+      "leg": "model",
+      "capability": "The dual-inductance observer is reachable at run time and through C: a fifth selector member, a new `foc_observer_t` value, and a hand-over that can carry the current as well as the angle -- so an MTPA drive can be handed to the observer that tolerates its `i_d`.",
+      "source": "`test_switchable_observer.cpp` and `test_api_observer_selector.cpp`, one case each, plus `test_dual_inductance_observer.cpp`'s `seed_at` case. Hand-over A/B into the new member: the angle-only seed and the angle-plus-current seed end 0.005330 rad apart after 50 steps at 0.1 A, and a pure integrator never forgets, so that gap is permanent -- which is why `hand_over_to(kind, i_ab)` exists and why the one-argument form is not enough for the only member whose state is the stator flux. `seed_at` is checked by seeding from an angle and a current and then handing `v = Rs*i`, which leaves the flux where it is: the answer is that angle to 1e-3 rad at every current, while the current's own flux is worth more than 0.02 rad of offset at 2.5 A. Two defects flushed out by wiring it: `foc_motor_set_observer` refused the new mode because its upper bound was a second copy of the enumeration (`FOC_OBSERVER_BLENDED`), and `foc_types.h`'s Chinese note still claimed HFI and BLENDED answer `FOC_ERR_NOT_IMPL` while the English note above it said all four were wired.",
+      "reopened": [
+        {
+          "claim": "core/observer/switchable_observer.hpp",
+          "verdict": "still_short",
+          "missing": "a case for a wrong root: the dual-L member disambiguates its quadratic by continuity with the previous estimate, and nothing yet pins what it does when continuity is wrong (a seeded observer stepping backwards through the estimate)."
+        }
+      ],
+      "no_effect": ""
     }
   ]
 }
