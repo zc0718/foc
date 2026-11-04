@@ -106,8 +106,18 @@ struct Command final {
      */
     float max_current_a;
     /**
-     * @brief [en] iq added after the speed loop.
-     * @brief [zh] 速度环后叠加的 iq。
+     * @brief [en] iq added to the speed loop's output, in the speed and position modes. Ignored in torque mode, where
+     *             the command *is* the reference.
+     * @brief [zh] 加到速度环输出上的 iq，在速度与位置模式下生效。torque 模式下忽略——那里指令本身就是参考。
+     * @note [en] This is the slot a cogging, friction or gravity term goes into. It used to be honoured in position
+     *            mode only while the documentation said "after the speed loop", which meant a speed-mode host had no iq
+     *            offset at all and no way to find that out from the header. Torque mode is deliberately excluded:
+     *            `set_torque()` sets the reference directly, so a second additive field there would be two ways to say
+     *            the same thing.
+     * @note [zh] 齿槽、摩擦、重力项就走这个槽。它原先只在位置模式生效，而文档写的是「速度环后」，也就是说速度模式的宿主
+     *            根本没有 iq 偏置、而且从头上看不出来。torque 模式是有意排除的：`set_torque()` 直接设置参考，再加一个可
+     *            叠加字段就等于同一件事有两个说法。
+     * @since 0.1.0
      */
     float feedforward_current_a;
     /**
@@ -296,14 +306,43 @@ class Motor final {
      * @brief [zh] 带本次运动电流上限与前馈转矩的位置给定。
      * @param command [en] the move to execute.
      * @param command [zh] 要执行的运动。
-     * @note [en] `feedforward_current_a` is where a gravity or friction term goes: it is added after the speed loop, so
-     *            it does not fight the integrator, and it is clamped with everything else by the move's current
-     *            ceiling.
-     * @note [zh] `feedforward_current_a` 就是重力或摩擦项该去的地方：它加在速度环之后，所以不会和 积分器打架，并且和其
-     *            余量一起受本次运动的电流上限约束。
+     * @note [en] `feedforward_current_a` is where a gravity or friction term goes: it is added *after* the speed loop,
+     *            so it does not fight the integrator, and it is clamped with everything else by the move's current
+     *            ceiling. `set_command()` is the position-mode entry point, but the field itself is now honoured in
+     *            speed mode too -- see `Command`.
+     * @note [zh] `feedforward_current_a` 就是重力或摩擦项该去的地方：它加在速度环**之后**，所以不会和积分器打架，并且和
+     *            其余量一起受本次运动的电流上限约束。`set_command()` 是位置模式的入口，但这个字段现在在速度模式下也生效
+     *            ——见 `Command`。
      * @since 0.1.0
      */
     void set_command(const Command& command) noexcept;
+
+    /**
+     * @brief [en] Update the feedforward iq **without changing the mode**.
+     *
+     * @brief [zh] 更新前馈 iq，**不改变模式**。
+     *
+     *     `set_command()` switches the axis to position mode, which is why a speed-mode host had no way to use this
+     *     field at all: the only writer also changed what was being controlled. A cogging or friction compensator
+     *     updates its offset every period while the axis keeps doing whatever it was doing, so the setter is separate
+     *     from the command.
+     *
+     *     The value **persists** until it is written again -- the same rule the speed reference follows -- because a
+     *     compensator that has to re-state a constant gravity term every tick would be a worse interface than one that
+     *     says it once. It is deliberately *not* cleared by `set_speed()`: clearing it there would break the one-shot
+     *     usage.
+     *
+     *     `set_command()` 会把轴切到位置模式，这就是速度模式宿主完全没法用这个字段的原因：唯一的写入者也改变了被控对
+     *     象。齿槽或摩擦补偿器每个周期更新它的偏置，而轴继续做它原本在做的事，所以这个设置器与指令分开。
+     *
+     *     该值**保持**到下一次写入——与速度参考同一条规矩——因为一个必须每拍重述恒定重力项的补偿器，是比只说一次的接口更
+     *     差的接口。它有意**不**被 `set_speed()` 清零：在那里清零会破坏"设一次"的用法。
+     *
+     * @param iq_a [en] the offset in A; clamped with the reference by the current ceiling, not here.
+     * @param iq_a [zh] 偏置，A；它随参考一起被电流上限约束，不在这里约束。
+     * @since 0.1.9
+     */
+    void set_feedforward_current(float iq_a) noexcept;
 
     /**
    * @brief [en] Start a breakaway sequence: raise the torque on a known ramp, report the instant the rotor moves, and
@@ -854,6 +893,13 @@ void Motor<Observer, Modulator, Controller, HalPolicy, RefGenerator, FeedForward
 template <typename Observer, typename Modulator, typename Controller, typename HalPolicy, typename RefGenerator,
           typename FeedForward, typename PositionControl, typename Aligner, typename Trace>
 void Motor<Observer, Modulator, Controller, HalPolicy, RefGenerator, FeedForward, PositionControl, Aligner,
+           Trace>::set_feedforward_current(float iq_a) noexcept {
+    command_.feedforward_current_a = iq_a;
+}
+
+template <typename Observer, typename Modulator, typename Controller, typename HalPolicy, typename RefGenerator,
+          typename FeedForward, typename PositionControl, typename Aligner, typename Trace>
+void Motor<Observer, Modulator, Controller, HalPolicy, RefGenerator, FeedForward, PositionControl, Aligner,
            Trace>::set_position(float position_rad) noexcept {
     set_command(Command{position_rad, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F});
 }
@@ -1132,7 +1178,7 @@ auto Motor<Observer, Modulator, Controller, HalPolicy, RefGenerator, FeedForward
             if (speed_step_due_ || (speed_elapsed_s_ >= config_.speed_loop_period_s)) {
                 const bool position_mode = (mode_ == ReferenceMode::Position);
                 const float speed_setpoint = position_mode ? speed_ref_from_position_rad_s_ : speed_ref_rad_s_;
-                const float feedforward = position_mode ? command_.feedforward_current_a : 0.0F;
+                const float feedforward = command_.feedforward_current_a;
                 const float ceiling = (position_mode && (command_.max_current_a > 0.0F))
                                           ? std::min(command_.max_current_a, config_.i_max_a)
                                           : config_.i_max_a;

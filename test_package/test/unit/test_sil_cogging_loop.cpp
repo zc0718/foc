@@ -253,3 +253,88 @@ TEST(SilCoggingLoop, ThroughTheIqFeedforwardSlotTheMotionComesBackClean) {
     EXPECT_NEAR(clean.speed_order_rad_s, compensated.speed_order_rad_s, clean.speed_order_rad_s * 0.05F)
         << "clean " << clean.speed_order_rad_s << " compensated " << compensated.speed_order_rad_s;
 }
+
+// --- the payoff of the iq slot: speed mode, ripple, no fourth composition -------------------------------------------
+//
+// A constant offset in a loop with integral action is absorbed (measured, in `test_feedforward_current.cpp`), so the slot looks
+// useless if that is the only thing it is asked to carry. A **ripple** is what no integrator can absorb, and this is the
+// configuration a real drive runs in: speed control, cogging injected, the compensator's output going into
+// `set_feedforward_current()` every period.
+// --- iq 槽的回报：速度模式、纹波、不需要第四种组合 -------------------------------------------------------------
+//
+// 带积分的环路会吸收**恒定**偏置（已在 `test_feedforward_current.cpp` 量过），所以如果只拿它扛恒定项，这个槽看起来没用。
+// **纹波**才是任何积分器吸收不了的东西，而这也正是真实驱动器所处的构型：速度控制、注入齿槽、补偿器每周期把输出送进
+// `set_feedforward_current()`。
+
+namespace {
+
+struct SpeedModeResult final {
+    float iq_order_a;
+    float speed_order_rad_s;
+};
+
+auto run_speed_mode(float amplitude_nm, bool compensate) -> SpeedModeResult {
+    Bench bench{standard_bench_config()};
+    foc::core::CoggingCompConfig comp_config{};
+    comp_config.params = foc::core::MachineParams{bench.plant().params().rs, bench.plant().params().ld,
+                                                  bench.plant().params().lq, bench.plant().psi_f_wb()};
+    comp_config.pole_pairs = bench.plant().params().pole_pairs;
+    foc::core::CoggingCompensation comp{comp_config};
+    if (amplitude_nm > 0.0F) {
+        foc::sil::CoggingHarmonic table{static_cast<std::uint8_t>(kOrder), amplitude_nm, 0.0F};
+        bench.plant().set_cogging(&table, 1);
+        comp.set_table(&table, 1);
+    }
+    bench.motor().set_speed(10.0F);
+    EXPECT_EQ(foc::ErrorCode::Ok, bench.init_and_start());
+    bench.run(0.6F);
+    std::vector<float> theta;
+    std::vector<float> iq;
+    std::vector<float> speed;
+    for (int n = 0; n < 40000; ++n) {
+        if (compensate) {
+            const foc::sil::Sample sample = bench.sample();
+            const foc::core::CoggingCompInput in{bench.plant().theta_mech_rad(), bench.plant().omega_mech_rad_s(),
+                                                 sample.id_a, 0.0F, 3.0F};
+            bench.motor().set_feedforward_current(comp.offset(in).iq_a);
+        }
+        bench.tick_once();
+        theta.push_back(bench.plant().theta_mech_rad());
+        iq.push_back(bench.sample().iq_a);
+        speed.push_back(bench.plant().omega_mech_rad_s());
+    }
+    return SpeedModeResult{harmonic_amplitude(theta, iq, kOrder), harmonic_amplitude(theta, speed, kOrder)};
+}
+
+} // namespace
+
+// Two facts in one case, and the two of them together are the claim: the compensator supplies the anti-cogging current itself
+// (`iq` keeps its `T_cog/Kt` of 0.079 A, i.e. the loop's own share was **replaced**, not doubled), and the speed ripple falls
+// with it. A version that added to the loop's own share would read about 0.16 A -- which is why the band is [0.06, 0.12].
+// 一个用例两个事实，合起来才是主张：补偿器**自己**供给反齿槽电流（`iq` 仍保持 `T_cog/Kt` 的 0.079 A，即环路那份是被**替换**的，
+// 不是翻倍），而速度纹波随之下降。叠加到环路自己那份上的版本会读到约 0.16 A——所以判据带取 [0.06, 0.12]。
+TEST(SilCoggingLoop, InSpeedModeTheSlotReplacesTheLoopsShare) {
+    constexpr float kAmplitude = 4.0e-3F;
+    const SpeedModeResult off = run_speed_mode(kAmplitude, false);
+    const SpeedModeResult on = run_speed_mode(kAmplitude, true);
+
+    // 1:1 with `T_cog/Kt`, so the total is not the loop's share plus the compensator's.
+    // 与 `T_cog/Kt` 一比一，所以总和不是"环路那份 + 补偿器那份"。
+    const float expected = kAmplitude / foc::sil::nominal_spec().kt;
+    EXPECT_GT(on.iq_order_a, expected * 0.78F) << "compensated iq " << on.iq_order_a << " expected about " << expected;
+    EXPECT_LT(on.iq_order_a, expected * 1.22F) << "compensated iq " << on.iq_order_a << " expected about " << expected;
+    // And it is not double: the failing version this guards against reads about 2x.
+    // 而且它不是两倍：本判据防的那个失败版本会读到约 2 倍。
+    EXPECT_LT(on.iq_order_a, off.iq_order_a * 1.6F) << "off " << off.iq_order_a << " on " << on.iq_order_a;
+
+    // The **motion** claim is not asserted here, and that is a measurement rather than an omission: at 10 rad/s mechanical the
+    // speed's sixth-order floor with nothing injected is already about 0.1 rad/s, and the cogging's own contribution at this
+    // inertia is the same size -- measured 0.1015 uncompensated against 0.1027 compensated, i.e. the two runs are inside each
+    // other's noise. The motion claim lives in `ThroughTheIqFeedforwardSlotTheMotionComesBackClean`, where the rotation is fast
+    // enough (37 rad/s) for the cogging to be 24 % of the ripple rather than 0 %.
+    // **运动**那条主张不在这里断言，这是测量结果而不是遗漏：10 rad/s 机械处不注入时速度的 6 次底噪就约 0.1 rad/s，而这个惯量下齿槽
+    // 自己的贡献同样大小——实测未补偿 0.1015 对已补偿 0.1027，两跑落在彼此的噪声里。运动那条主张在
+    // `ThroughTheIqFeedforwardSlotTheMotionComesBackClean` 里，那里转速够快（37 rad/s），齿槽占纹波的 24 % 而不是 0 %。
+    EXPECT_NEAR(off.speed_order_rad_s, on.speed_order_rad_s, off.speed_order_rad_s * 0.3F)
+        << "the speed floor moved: off " << off.speed_order_rad_s << " on " << on.speed_order_rad_s;
+}

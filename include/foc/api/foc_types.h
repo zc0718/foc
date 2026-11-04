@@ -226,7 +226,8 @@ typedef enum foc_align_failure {
 typedef struct foc_motor_command {
     float position_rad;          /* target mechanical angle, rad */
     float max_current_a;         /* q-axis ceiling for this move, A; 0 = nameplate limit */
-    float feedforward_current_a; /* q-axis current added after the speed loop, A */
+    float feedforward_current_a; /* q-axis current added after the speed loop, A; speed and position modes
+                                    (ignored in torque mode, where the command is the reference) */
     float max_velocity_rad_s;    /* speed ceiling for this move, rad/s; 0 = the
                                 controller's own */
     float max_accel_rad_s2;      /* velocity rate limit for this move, rad/s^2; 0 = the
