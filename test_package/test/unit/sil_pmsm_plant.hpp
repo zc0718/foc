@@ -252,6 +252,79 @@ class PmsmPlant final {
     void set_winding_temperature(float temperature_c, float alpha_per_k) noexcept;
 
     /**
+     * @brief [en] Parameters of the lumped thermal model: how hot the winding actually gets, not how hot the caller
+     *             says it is.
+     * @brief [zh] 集总热模型的参数：绕组**实际**会有多热，而不是调用方说它多热。
+     * @note [en] `set_winding_temperature` above is the *constant* version of this -- a number, with no dynamics. A
+     *            derating scheduler cannot be argued with against a constant: the whole claim is about where the
+     *            temperature goes, so the plant has to be able to make it go somewhere.
+     * @note [zh] 上面的 `set_winding_temperature` 是它的**常数**版本——一个数，没有动力学。降额调度无法对着常数论证：那
+     *            条主张就是关于温度走向的，所以 plant 必须能让它走。
+     * @since 0.1.9
+     */
+    struct ThermalConfig final {
+        float rt_k_per_w{0.0F};   ///< [en] thermal resistance, K/W; <=0 = off. [zh] 热阻，K/W；<=0 = 关闭。
+        float ct_j_per_k{0.0F};   ///< [en] thermal capacitance, J/K; <=0 = off. [zh] 热容，J/K；<=0 = 关闭。
+        float t_ambient_c{20.0F}; ///< [en] ambient the heat leaks to, C. [zh] 散热到的环境温度，°C。
+    };
+
+    /**
+     * @brief [en] Turn on a one-node thermal model: `Ct*dT/dt = P_cu - (T - T_amb)/Rt`, off by default.
+     *
+     * @brief [zh] 打开单节点热模型：`Ct·dT/dt = P_cu − (T − T_amb)/Rt`，默认关闭。
+     *
+     *     `P_cu = 1.5*(id^2 + iq^2)*Rs(T)` -- the 1.5 is the same amplitude-invariant convention the torque uses, and
+     *     `Rs(T)` is this plant's own `effective_rs()`, so the model has the **positive feedback** a real winding has:
+     *     hotter means more loss means hotter. That feedback makes the steady state non-linear rather than a
+     *     proportionality, and above `Rt*P*alpha = 1` there is no steady state at all -- which is a property worth
+     *     being able to see in SIL rather than discovering on a bench.
+     *
+     *     The step is the **exact** solution of the one-node equation with the loss held at the step's own state (`T <-
+     *     T_eq + (T - T_eq)*exp(-dt/tau)`, `tau = Rt*Ct`), not an Euler step: a thermal time constant is seconds while
+     *     the electrical step is microseconds, so an explicit form would be stable only by luck.
+     *
+     *     **Off by default, and bit-identical when off**: with `rt <= 0` or `ct <= 0` nothing is integrated and
+     *     `temp_c_` stays exactly what `set_winding_temperature` put there.
+     *
+     *     `P_cu = 1.5·(id² + iq²)·Rs(T)`——那个 1.5 与转矩用的是同一个幅值不变约定，`Rs(T)` 就是本 plant 自己的
+     *     `effective_rs()`，于是模型具备真实绕组具备的**正反馈**：更热→损耗更大→更热。这个反馈让稳态是**非线性**的而不
+     *     是一个比例关系，而且当 `Rt·P·α = 1` 以上**根本不存在稳态**——这是一个应该在 SIL 里看得见、而不是在台架上才发现
+     *     的性质。
+     *
+     *     步进用单节点方程的**精确解**（损耗取该步自身状态）：`T ← T_eq + (T − T_eq)·exp(−dt/τ)`，`τ = Rt·Ct`，而不是欧
+     *     拉步：热时间常数是秒、电步长是微秒，显式格式只能靠运气稳定。
+     *
+     *     **默认关闭，关闭时逐位不变**：`rt <= 0` 或 `ct <= 0` 时什么都不积分，`temp_c_` 精确停在
+     *     `set_winding_temperature` 放进去的那个值。
+     *
+     * @param config [en] the three parameters above; any non-positive `rt` or `ct` turns the model off.
+     * @param config [zh] 上面三个参数；`rt` 或 `ct` 非正即关闭模型。
+     * @since 0.1.9
+     */
+    void set_thermal(ThermalConfig config) noexcept;
+
+    /**
+     * @brief [en] Winding temperature the plant is actually at, C -- what `effective_rs()` is using.
+     * @brief [zh] plant 实际所处的绕组温度，°C——也就是 `effective_rs()` 正在用的那个。
+     * @since 0.1.9
+     */
+    [[nodiscard]] auto winding_temperature_c() const noexcept -> float;
+
+    /**
+     * @brief [en] Copper loss at the current state, W: `1.5*(id^2 + iq^2)*Rs(T)`.
+     * @brief [zh] 当前状态下的铜损，W：`1.5·(id² + iq²)·Rs(T)`。
+     * @since 0.1.9
+     */
+    [[nodiscard]] auto copper_loss_w() const noexcept -> float;
+
+    /**
+     * @brief [en] Thermal time constant `Rt*Ct` in s; 0 when the model is off.
+     * @brief [zh] 热时间常数 `Rt·Ct`，s；模型关闭时为 0。
+     * @since 0.1.9
+     */
+    [[nodiscard]] auto thermal_time_constant_s() const noexcept -> float;
+
+    /**
      * @brief [en] Add sensor noise to the current readings: white, uniform in [-amplitude, +amplitude] amps, from a
      *             deterministic integer generator so a run is reproducible on any ISA. Off by default (amplitude 0).
      * @brief [zh] 给电流读数加传感器噪声：均匀分布在 [−amplitude, +amplitude] 安培，由确定性整数生成器 产生，使同一次运
@@ -428,9 +501,27 @@ class PmsmPlant final {
     float sat_depth_{
         0.0F}; ///< [en] fraction of Ld lost at heavy positive i_d; 0 = ideal. [zh] 强正 i_d 下 Ld 的损失比例；0 = 理想。
     float sat_current_a_{1.0F}; ///< [en] current at which that loss is engaged. [zh] 该损失生效的电流。
-    float temp_c_{20.0F};       ///< [en] winding temperature, C. [zh] 绕组温度，°C。
-    float temp_alpha_{0.0F}; ///< [en] Rs temperature coefficient, 1/K; 0 = no drift. [zh] Rs 温度系数，1/K；0 = 不漂。
-    float noise_a_{0.0F};    ///< [en] current-noise peak, A; 0 = ideal sensor. [zh] 电流噪声峰值，A；0 = 理想传感器。
+    /**
+     * @brief [en] Winding temperature, C -- carried in `double` **because of how the node is integrated**, not for
+     *             precision in general.
+     *
+     * @brief [zh] 绕组温度，°C——用 `double` **是因为节点的积分方式**，不是一般意义上的精度考虑。
+     *
+     *     The exact exponential step adds `(T_eq - T)*(1 - exp(-dt/tau))` per step, which for a seconds-long thermal
+     *     constant against a microsecond electrical step is about `1.25e-5` of the remaining gap. In `float`, one ulp
+     *     at 26 C is `1.9e-6`, so the update stops being representable while the gap is still **0.076 K** -- measured,
+     *     and the node then sits at 25.92 C forever against a `T_eq` of 26.00. Nothing about that stall looks like a
+     *     bug in a plot; it looks like a different (and plausible) steady state.
+     *
+     *     精确指数步每步加 `(T_eq − T)·(1 − exp(−dt/τ))`，对"秒级热时间常数配微秒级电学步长"来说约是剩余间隙的
+     *     `1.25e-5`。在 `float` 里 26 °C 处一个 ulp 是 `1.9e-6`，于是当间隙还剩 **0.076 K** 时这个增量就已经无法表示——
+     *     实测值，节点自此永远停在 25.92 °C，而 `T_eq` 是 26.00。这个停滞在图上完全不像 bug，它像一个不同的（而且合理
+     *     的）稳态。
+     */
+    double temp_c_{20.0};
+    float temp_alpha_{0.0F};  ///< [en] Rs temperature coefficient, 1/K; 0 = no drift. [zh] Rs 温度系数，1/K；0 = 不漂。
+    ThermalConfig thermal_{}; ///< [en] one-node thermal model; off by default. [zh] 单节点热模型；默认关闭。
+    float noise_a_{0.0F};     ///< [en] current-noise peak, A; 0 = ideal sensor. [zh] 电流噪声峰值，A；0 = 理想传感器。
     float qsat_depth_{
         0.0F}; ///< [en] fraction of Lq lost at heavy positive i_q; 0 = ideal. [zh] 强正 i_q 下 Lq 的损失比例；0 = 理想。
     float qsat_current_a_{1.0F}; ///< [en] current at which that loss is engaged. [zh] 该损失生效的电流。
@@ -539,6 +630,28 @@ inline void PmsmPlant::set_winding_temperature(float temperature_c, float alpha_
     temp_alpha_ = (alpha_per_k > 0.0F) ? alpha_per_k : 0.0F;
 }
 
+inline void PmsmPlant::set_thermal(ThermalConfig config) noexcept {
+    thermal_.rt_k_per_w = (config.rt_k_per_w > 0.0F) ? config.rt_k_per_w : 0.0F;
+    thermal_.ct_j_per_k = (config.ct_j_per_k > 0.0F) ? config.ct_j_per_k : 0.0F;
+    thermal_.t_ambient_c = config.t_ambient_c;
+}
+
+inline auto PmsmPlant::thermal_time_constant_s() const noexcept -> float {
+    if ((!(thermal_.rt_k_per_w > 0.0F)) || (!(thermal_.ct_j_per_k > 0.0F))) {
+        return 0.0F;
+    }
+    return thermal_.rt_k_per_w * thermal_.ct_j_per_k;
+}
+
+inline auto PmsmPlant::winding_temperature_c() const noexcept -> float { return static_cast<float>(temp_c_); }
+
+inline auto PmsmPlant::copper_loss_w() const noexcept -> float {
+    // `1.5` for the same reason the torque carries it: a d-q amplitude-invariant pair of currents whose three phase
+    // currents each carry that much loss. Dropping it would make the machine look 33 % cooler than it is.
+    // `1.5` 的理由与转矩相同：幅值不变的 d-q 电流对，三相各自带走这么多损耗。漏掉它会让机器看起来比实际凉 33 %。
+    return kOneAndHalf * (((state_.id_a * state_.id_a) + (state_.iq_a * state_.iq_a)) * effective_rs());
+}
+
 inline void PmsmPlant::set_stribeck_speed(float speed_rad_s) noexcept {
     params_.stribeck_speed_rad_s = (speed_rad_s > 0.0F) ? speed_rad_s : 0.0F;
 }
@@ -634,6 +747,18 @@ inline void PmsmPlant::advance(float dt_s) noexcept {
               static_cast<double>(k4.diq))));
     state_.omega_mech = state_.omega_mech + (w * ((k1.domega + (two * (k2.domega + k3.domega))) + k4.domega));
     state_.theta_mech = state_.theta_mech + (w * ((k1.dtheta + (two * (k2.dtheta + k3.dtheta))) + k4.dtheta));
+
+    // The thermal node is stepped by its exact solution rather than by RK4: a winding time constant is seconds against
+    // a microsecond electrical step, so the stiffness is in the ratio. The loss is evaluated once per step at the state
+    // the electrical integration has just produced, and `T_eq` is where this step's loss alone would settle.
+    // 热节点用精确解推进而不是 RK4：绕组时间常数是秒，电学步长是微秒，刚度全在这个比值里。损耗每步在电学积分刚产出的
+    // 状态上求一次，`T_eq` 是「只有这一步的损耗」会收敛到的温度。
+    const float tau = thermal_time_constant_s();
+    if (tau > 0.0F) {
+        const double t_eq = static_cast<double>(thermal_.t_ambient_c) +
+                            (static_cast<double>(thermal_.rt_k_per_w) * static_cast<double>(copper_loss_w()));
+        temp_c_ = t_eq + ((temp_c_ - t_eq) * std::exp(-static_cast<double>(dt_s) / static_cast<double>(tau)));
+    }
 }
 
 inline auto PmsmPlant::state() const noexcept -> PlantState { return state_; }

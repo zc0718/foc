@@ -409,6 +409,57 @@
         "test_package/test/unit/test_abc_plant.cpp",
         "test_package/test/unit/test_bode_sweep.cpp"
       ]
+    },
+    {
+      "id": "B-12",
+      "date": "2026-11-05",
+      "what_changed": "`PmsmPlant` gained a one-node thermal model: `set_thermal({rt, ct, t_ambient})`, `winding_temperature_c()`, `copper_loss_w()` and `thermal_time_constant_s()`. `Ct*dT/dt = P_cu - (T - T_amb)/Rt` with `P_cu = 1.5*(id^2+iq^2)*Rs(T)`, so the node carries the same positive feedback a real winding has; the step is the exact solution of that equation with the loss held at the step's own state, and the node is carried in `double` because the per-step increment is ~1e-5 of the remaining gap -- in `float` it stops being representable 0.076 K short of the settle (measured: 25.92 C against a `T_eq` of 26.00) and the model looks like it simply has a different steady state. Off by default and bit-identical when off: with `rt <= 0` or `ct <= 0` nothing is integrated, `temp_c_` is untouched and `effective_rs()` is unchanged. Nothing in the library reads a temperature -- `Protector` takes one as an input the caller supplies -- so no shipped behaviour can move.",
+      "seeds": [
+        "test_package/test/unit/sil_pmsm_plant.hpp"
+      ],
+      "affected": [
+        {
+          "row": "core/observer/back_emf_observer.hpp",
+          "verdict": "holds",
+          "why": "its numbers are functions of the plant's currents and speed, and the thermal node changes neither when it is off: `set_thermal` with `rt <= 0` or `ct <= 0` skips the update entirely, so `temp_c_` keeps exactly what `set_winding_temperature` put there and `effective_rs()` returns the same value, so the plant integrates the identical sequence of states; its angle and speed numbers are unchanged to the bit, and the new cases are the only ones that turn the node on"
+        },
+        {
+          "row": "core/observer/hfi_observer.hpp",
+          "verdict": "holds",
+          "why": "its numbers are functions of the plant's currents and speed, and the thermal node changes neither when it is off: `set_thermal` with `rt <= 0` or `ct <= 0` skips the update entirely, so `temp_c_` keeps exactly what `set_winding_temperature` put there and `effective_rs()` returns the same value, so the plant integrates the identical sequence of states; the saliency signal is measured with the rotor held and the node off, so `Rs` is the same number it was"
+        },
+        {
+          "row": "core/observer/nonlinear_flux_observer.hpp",
+          "verdict": "holds",
+          "why": "its numbers are functions of the plant's currents and speed, and the thermal node changes neither when it is off: `set_thermal` with `rt <= 0` or `ct <= 0` skips the update entirely, so `temp_c_` keeps exactly what `set_winding_temperature` put there and `effective_rs()` returns the same value, so the plant integrates the identical sequence of states; its flux estimate is a function of `v - Rs*i`, and with the node off `effective_rs()` returns `params_.rs` exactly"
+        },
+        {
+          "row": "motor/motor.hpp",
+          "verdict": "holds",
+          "why": "its numbers are functions of the plant's currents and speed, and the thermal node changes neither when it is off: `set_thermal` with `rt <= 0` or `ct <= 0` skips the update entirely, so `temp_c_` keeps exactly what `set_winding_temperature` put there and `effective_rs()` returns the same value, so the plant integrates the identical sequence of states; every closed-loop number in its row is measured through `PlantHal` on this plant with the node off, so the trajectories are identical and the row's numbers were not re-based"
+        },
+        {
+          "row": "core/observer/blended_observer.hpp",
+          "verdict": "holds",
+          "why": "its numbers are functions of the plant's currents and speed, and the thermal node changes neither when it is off: `set_thermal` with `rt <= 0` or `ct <= 0` skips the update entirely, so `temp_c_` keeps exactly what `set_winding_temperature` put there and `effective_rs()` returns the same value, so the plant integrates the identical sequence of states; its handover and blend numbers are the same trajectories, so they are identical bit for bit"
+        },
+        {
+          "row": "core/observer/switchable_observer.hpp",
+          "verdict": "holds",
+          "why": "its numbers are functions of the plant's currents and speed, and the thermal node changes neither when it is off: `set_thermal` with `rt <= 0` or `ct <= 0` skips the update entirely, so `temp_c_` keeps exactly what `set_winding_temperature` put there and `effective_rs()` returns the same value, so the plant integrates the identical sequence of states; it selects between observers on the same plant, and the trajectory it selects on is unchanged"
+        },
+        {
+          "row": "core/trace.hpp",
+          "verdict": "holds",
+          "why": "its numbers are functions of the plant's currents and speed, and the thermal node changes neither when it is off: `set_thermal` with `rt <= 0` or `ct <= 0` skips the update entirely, so `temp_c_` keeps exactly what `set_winding_temperature` put there and `effective_rs()` returns the same value, so the plant integrates the identical sequence of states; the trace it captures is a recording of that trajectory, so the recorded values are the same and the buffer fills at the same rate"
+        },
+        {
+          "row": "core/trace_parse.hpp",
+          "verdict": "holds",
+          "why": "its numbers are functions of the plant's currents and speed, and the thermal node changes neither when it is off: `set_thermal` with `rt <= 0` or `ct <= 0` skips the update entirely, so `temp_c_` keeps exactly what `set_winding_temperature` put there and `effective_rs()` returns the same value, so the plant integrates the identical sequence of states; the parser reads a trace of that trajectory, so the bytes it parses are identical and its acceptance/round-trip numbers cannot move"
+        }
+      ],
+      "no_effect": "No claim row was re-based: `set_thermal` is off unless a host calls it with a positive `rt` and `ct`, and the four rows above integrate bit-identical states. The suite moved only by the five new cases in `test_sil_thermal.cpp`."
     }
   ]
 }
