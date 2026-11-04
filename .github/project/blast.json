@@ -311,6 +311,19 @@
         "test_package/test/unit/test_single_shunt.cpp"
       ],
       "why_no_row": "no claim row rested on a header that did not exist an hour ago; the seats that could move are the new module's own suite, listed in `hand_rerun` (6/6), plus the whole-suite run that follows it. This entry is here so the next person can see that the reconstruction was added without touching a single existing line -- which is also why it cannot break one, and why a ledger entry claiming otherwise would be false."
+    },
+    {
+      "id": "B-08",
+      "date": "2026-11-04",
+      "what_changed": "F32's prerequisite, done first because it is shared: `sil_bench.hpp` gained `in_domain_spec()` -- the nominal machine with `Ld` x10 and a real saliency (`Ld = 4 mH`, `Lq = 8 mH`, same `psi_f`, same 3 A limit), which is the machine `core/field_weakening.hpp` already describes in prose. It exists because on the nominal machine the characteristic current is 11.9 A against a 3 A limit, so field weakening cannot null the flux and MTPV has no operating point at all. `domain.json` recomputes `lambda = 2.52` and `i_char = 1.19 A` for it and now reports 8 of 10 evaluations outside (the two new ones hold). `nominal_spec()` is byte-identical, so every existing SIL scenario sees the same plant.",
+      "seeds": [
+        "test_package/test/unit/sil_bench.hpp"
+      ],
+      "affected": [],
+      "hand_rerun": [
+        "test_package/test/unit/test_sil_deadtime.cpp"
+      ],
+      "why_no_row": "no claim row names the bench profile table; the seats this could move are the SIL cases, and the only mechanism that could move them is `nominal_spec()` changing -- it did not. Evidence: `test_sil_deadtime` compiles and the full suite is re-run before the commit; a second profile that nothing calls yet cannot change any trajectory."
     }
   ]
 }
