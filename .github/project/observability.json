@@ -652,6 +652,28 @@
         }
       ],
       "no_effect": "No existing row was re-opened: the injection is off by default and contributes exactly `0.0F` to the same torque expression, so every claim that rests on either plant reports the same numbers as before the port existed (the full suite moved 789 -> 796 only by the new cases)."
+    },
+    {
+      "id": "O-47",
+      "date": "2026-11-04",
+      "leg": "model",
+      "capability": "The repository can now **measure a machine's cogging table instead of being given one**: the q-axis current a speed loop supplies, projected on the mechanical angle at the orders asked for, is the anti-cogging current, and converting it back through `dT/diq` returns the torque the plant injected. Before this, every cogging claim rested on a table a test wrote by hand, so a compensator was only ever checked against the table its own author chose.",
+      "source": "`test_cogging_learn.cpp` (5 cases) closes the loop in both directions. An injected 4 mN*m sixth harmonic at phase 0.3 rad is learned back as 3.992 mN*m at 0.179 rad -- the 0.121 rad offset is the loop's measured lag at the learning speed (0.99 gain, -7.8 deg at 5 rad/s), which is why the phase criterion is stated against the lag rather than against zero. An order that was not injected comes back below 10 % of the injection, and a counterfactual (order 2 at 3 mN*m against order 6 at 1 mN*m) forbids a learner that always answers the same table. Then the learned table -- not the injected one -- drives a position ramp at ~37 rad/s, a speed it was never learned at: 0.04511 rad/s of sixth-order speed ripple with nothing injected, 0.05654 with it (+25.4 %) and 0.04528 with the learned table, i.e. 96.9 % of the excess taken back.",
+      "effect": "F33's compensator and F47's learner now meet: the compensator's residue claim has a table that was *measured* as its input rather than one written by the test, and the residual that remains (`2*sin(d/2)`, 13.6 % at 5 rad/s) is attributed to the loop's measured lag rather than left as unexplained error.",
+      "limit": "The residual is a property of the method, not a defect to be tuned out: the table carries the lag of the speed it was learned at, so a table learned at one speed and used at another keeps that fixed phase error. And the learner cannot tell cogging from any other ripple at the same order -- a dead-time or sensor error would be learned just as faithfully.",
+      "reopened": [
+        {
+          "claim": "core/cogging_comp.hpp",
+          "verdict": "still_short",
+          "missing": "the cross-speed end-to-end run is still a model trajectory rather than a cross-model check: the table the compensator receives is now measured, but both sides still speak the same `dT/diq` formula the plant integrates, and nothing has been measured through a live reference on hardware."
+        },
+        {
+          "claim": "core/cogging_learn.hpp",
+          "verdict": "still_short",
+          "missing": "the amplitude criterion is a band (10 %) around one injected amplitude, not a transfer function: nothing here shows the learned amplitude holding for a smaller or larger cogging, where quantization of the loop's answer could dominate."
+        }
+      ],
+      "no_effect": "No existing row was re-opened: the learner is new code with no caller in the library, and it is off unless a host constructs it and feeds it, so the full suite moved only by the five new cases."
     }
   ]
 }

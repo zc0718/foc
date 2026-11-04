@@ -319,6 +319,11 @@
       "class": "policy",
       "example": "test_package/test/unit/test_cogging_comp.cpp",
       "why": "a host that wants the ripple gone composes it next to its current reference, where the mechanical angle and the d-axis current are both known; it returns an offset and reports its own fade and clipping, because a compensator that hides either looks like one that works"
+    },
+    "core/cogging_learn.hpp": {
+      "class": "policy",
+      "example": "test_package/test/unit/test_cogging_learn.cpp",
+      "why": "a host that has no cogging data for its machine runs one learning pass with the compensator off and hands the table it gets back to `CoggingCompensation::set_table()` unchanged; it is a policy because the pass is a *run* the host schedules (spin, accumulate, finish), not something `Motor` should do inside a tick, and because its refusals are the host's to act on -- spin longer, slower, or steadier are three different actions"
     }
   }
 }

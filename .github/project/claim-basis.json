@@ -404,6 +404,12 @@
       "src/core/cogging_comp.cpp",
       "core/machine_params.hpp",
       "core/types.hpp"
+    ],
+    "core/cogging_learn.hpp": [
+      "src/core/cogging_learn.cpp",
+      "core/cogging_comp.hpp",
+      "core/machine_params.hpp",
+      "core/types.hpp"
     ]
   },
   "unmapped": []

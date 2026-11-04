@@ -209,6 +209,19 @@ coverage numbers at the time:
      - ``CoggingComp.ATableWithTheWrongPhaseCancelsNothingAtAll``
      - na -- stateless, one period at a time, and what it produces is an offset rather than an accumulated value.
      - --
+   * - ``core/cogging_learn.hpp``
+     - `CoggingLearnReport` reports `revolutions` and the speed band on **every** exit, including the refused ones: a
+       refusal that says nothing leaves the caller guessing whether to spin longer, slower, or steadier, and those are
+       three different actions. A table it never saw is absent from the output rather than extrapolated, because a
+       compensator acting on an invented harmonic injects a ripple of its own.
+     - `State` for fewer revolutions than configured, `|omega|` outside `[min, max]` either side, a window whose speed
+       spread exceeds `speed_tolerance`, a saturated sample anywhere in it, and a destination with no room for the table;
+       `Param` for order 0 (a constant torque is a load, not cogging), an inverted or non-finite band, a non-finite
+       tolerance, and unusable machine parameters. Nothing was written in any of those cases.
+     - ``CoggingLearn.TheLearnedTableCancelsTheInjectionItWasLearnedFrom``
+     - na -- the accumulators are sums over a finite window that is thrown away on `reset()`, and what leaves the class is
+       a table rather than a per-tick output.
+     - --
    * - ``comm/frame.hpp``
      - `FrameStatus` names which check failed (start / length / checksum) instead of one generic failure, and
        `SequenceChecker` reports `missing` / `duplicate` / `out_of_order` separately. `missing` counts the frames
