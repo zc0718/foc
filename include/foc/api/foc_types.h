@@ -662,11 +662,12 @@ typedef struct foc_protection_output {
 /**
  * @brief [en] The HAL operations a host supplies, as plain C function pointers.
  * @brief [zh] 主控方提供的 HAL 操作，以普通 C 函数指针给出。
- * @details [en] Four are required and are checked by the library: duties out, phase currents in, mechanical angle in,
- *               DC link voltage in. The rest are optional, and NULL means "this host has no such facility" rather than
- *               "assume a convenient value" -- no clock reports 0 instead of inventing a timebase.
- * @details [zh] 四个是必需的，由库检查：占空比送出、相电流读入、机械角读入、母线电压读入。其余是可选的， NULL 的含义是"
- *               这个主控方没有这个能力"，而不是"假定一个方便的值"——没有时钟就报 0，不编一个时基。
+ * @details [en] Five are required and are checked by the library: duties out, phase currents in, mechanical angle in,
+ *               DC link voltage in, and the power stage's fault output. The rest are optional, and NULL means "this
+ *               host has no such facility" rather than "assume a convenient value" -- no clock reports 0 instead of
+ *               inventing a timebase.
+ * @details [zh] 五个是必需的，由库检查：占空比送出、相电流读入、机械角读入、母线电压读入、以及功率级的故障输出。其余是
+ *               可选的，NULL 的含义是"这个主控方没有这个能力"，而不是"假定一个方便的值"——没有时钟就报 0，不编一个时基。
  * @since 0.1.2
  * @exporter
  */
@@ -710,6 +711,25 @@ typedef struct foc_hal_callbacks {
     /* 可选：**仅在**越过标记的那一拍为非零，绝不能是电平——电平会把一次经过数成很多次。追加字段，由
      struct_size 门控。 */
     int32_t (*position_index_pulse)(void *user);
+    /* Required: non-zero when the power stage's own nFAULT is asserted. Appended
+     and gated by struct_size like the two fields above, **but with the opposite
+     rule when it is missing**: a caller whose struct does not reach this field
+     is refused with FOC_ERR_NOT_IMPL instead of being given the default "no
+     fault". This is the first field in this header where an old caller is not
+     grandfathered, and the reason is that the grandfather clause *is* the
+     danger: a motor that never asked whether the bridge is desaturated is
+     indistinguishable, from the outside, from one that asked and was told all
+     clear. A host with no such pin returns 0 from its own function -- a line a
+     reviewer can see. Polarity is the host's: return the sense you mean, not
+     the pin level. */
+    /* 必需：功率级自己的 nFAULT 有效时返回非零。与上面两个字段一样是追加的、
+     由 struct_size 门控，**但缺失时的规矩相反**：结构够不到这个字段的调用方
+     会被 FOC_ERR_NOT_IMPL 拒绝，而不是被塞一个"无故障"的默认值。这是本头文件
+     里第一个不照顾旧调用方的字段，理由是那条照顾条款**本身就是**危险：一台从
+     没问过桥是否去饱和的电机，从外面看与一台问过并被告知一切正常的电机一样。
+     没有这根引脚的主控方从自己的函数里 return 0——一行评审看得见的话。极性归
+     主控方：返回你想表达的语义，不是引脚电平。 */
+    int32_t (*read_drive_fault)(void *user);
 } foc_hal_callbacks_t;
 
 /** @brief [en] Handle to a protector instance. [zh] 保护器实例的句柄。 @since 0.1.1 */

@@ -122,6 +122,19 @@ struct is_clock<T, std::void_t<decltype(std::declval<T&>().now_us())>>
                          noexcept(std::declval<T&>().now_us())> {};
 
 /**
+ * @brief [en] `T` satisfies the foc::hal::FaultInput contract.
+ * @brief [zh] `T` 满足 foc::hal::FaultInput 契约。
+ * @since 0.1.9
+ * @exporter
+ */
+template <typename T, typename = void> struct is_fault_input : std::false_type {};
+
+template <typename T>
+struct is_fault_input<T, std::void_t<decltype(std::declval<T&>().faulted())>>
+    : std::bool_constant<std::is_same_v<decltype(std::declval<T&>().faulted()), bool> &&
+                         noexcept(std::declval<T&>().faulted())> {};
+
+/**
  * @brief [en] Convenience variable templates, e.g. `static_assert(hal::concepts::is_pwm_v<MyPwm>, "MyPwm must satisfy
  *             foc::hal::Pwm");`.
  * @brief [zh] 便捷变量模板，例如 `static_assert(hal::concepts::is_pwm_v<MyPwm>, "MyPwm must satisfy foc::hal::Pwm");`。
@@ -137,6 +150,8 @@ template <typename T> inline constexpr bool is_position_sensor_v = is_position_s
 template <typename T> inline constexpr bool is_dc_link_v = is_dc_link<T>::value;
 
 template <typename T> inline constexpr bool is_clock_v = is_clock<T>::value;
+
+template <typename T> inline constexpr bool is_fault_input_v = is_fault_input<T>::value;
 
 } // namespace concepts
 
@@ -378,6 +393,36 @@ struct has_clock<T, std::void_t<decltype(std::declval<T&>().clock)>>
  * @exporter
  */
 template <typename T> inline constexpr bool has_clock_v = has_clock<T>::value;
+
+/**
+ * @brief [en] `T` (a HalPolicy) exposes a `fault_input` member satisfying `hal::FaultInput`.
+ *
+ *     Unlike `has_clock`, absence here is **not** silent: `Motor::start()` refuses with `NotImpl` when this is false,
+ *     because the only value a missing fault input could stand for is "the power stage is fine", and no library is
+ *     entitled to answer that on the drive's behalf. See `hal::FaultInput` for the full argument and for what a host
+ *     with no such pin is supposed to write instead.
+ *
+ * @brief [zh] `T`（HalPolicy）是否暴露了满足 `hal::FaultInput` 的 `fault_input` 成员。
+ *
+ *     与 `has_clock` 不同，这里的缺席**不是**静默的：它为 false 时 `Motor::start()` 以 `NotImpl` 拒绝，因为一个缺席的故
+ *     障输入唯一可能代表的值就是"功率级没事"，而没有哪个库有资格替驱动器回答这一句。完整论证、以及没有这根引脚的主控方
+ *     该写什么，见 `hal::FaultInput`。
+ * @since 0.1.9
+ * @exporter
+ */
+template <typename T, typename = void> struct has_fault_input : std::false_type {};
+
+template <typename T>
+struct has_fault_input<T, std::void_t<decltype(std::declval<T&>().fault_input)>>
+    : std::bool_constant<hal::concepts::is_fault_input_v<decltype(std::declval<T&>().fault_input)>> {};
+
+/**
+ * @brief [en] Convenience variable template for the required fault-input member.
+ * @brief [zh] 必需的故障输入成员的便捷变量模板。
+ * @since 0.1.9
+ * @exporter
+ */
+template <typename T> inline constexpr bool has_fault_input_v = has_fault_input<T>::value;
 
 /**
  * @brief [en] `T` satisfies the controller-slot contract: `step(setpoint, feedback, dt) noexcept -> float` plus

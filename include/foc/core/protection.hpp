@@ -46,6 +46,23 @@ enum class FaultCode : std::uint8_t {
      * @brief [zh] 观测器给不出可用的角度。
      */
     LostSync,
+    /**
+     * @brief [en] the power stage's own fault output is asserted.
+     * @brief [zh] 功率级自己的故障输出有效。
+     * @note [en] Last in the list, and it still wins: the pin is read at the top of the tick, before the protector
+     *            runs, so this code is chosen by control flow rather than by rank. Position in this enum only orders
+     *            the causes the *protector* can find in one step. Appended rather than inserted so that every existing
+     *            code keeps its number -- a stored or logged `fault` field must not silently change meaning across a
+     *            release. The pin carries no cause: `nFAULT` is one bit and the reason lives in the driver's register
+     *            map. This code therefore says "the power stage reports a fault" and does not pretend to choose between
+     *            desaturation, driver under-voltage and driver over-temperature.
+     * @note [zh] 排在最后，却仍然赢：引脚在 tick 的最前面被读取，早于保护器，所以这个码由控制流选定，而不是由排序选定。
+     *            本枚举中的位置只给**保护器**同一步里能发现的成因排序。选择追加而不是插入，是为了让每个既有码保持自己的
+     *            数字——一个被存下来或记进日志的 `fault` 字段，不得因为一次发版而静默改变含义。这根引脚不带成因：
+     *            `nFAULT` 是一位，理由在驱动器的寄存器里。所以这个码的意思是"功率级报故障"，不假装在去饱和、驱动欠压、
+     *            驱动过温之间选一个。
+     */
+    DriveFault,
 };
 
 /**
@@ -70,6 +87,7 @@ enum class FaultCode : std::uint8_t {
     case FaultCode::OverCurrent:
     case FaultCode::Stall:
     case FaultCode::LostSync:
+    case FaultCode::DriveFault:
         return true;
     default:
         return false;

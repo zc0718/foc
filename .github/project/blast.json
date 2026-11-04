@@ -125,6 +125,192 @@
           "why": "`covers()` is a new member: `at()`, `valid()`, `read_document()` and `write_document()` are byte-identical, and the text row's claim is about the round trip through those. measured on this tree: `test_machine_map` 6/6, `test_machine_map_text` 7/7 -- the L3 round-trip numbers did not move"
         }
       ]
+    },
+    {
+      "id": "B-05",
+      "date": "2026-11-04",
+      "what_changed": "F03: overmodulation became a **radial projection** instead of a per-phase clamp. `Svpwm::modulate` now scales the request vector onto the hexagon (`scale = v_bus / spread` when `spread > v_bus`) and then applies the same midpoint injection, so no phase is ever clamped against the command. `saturated` keeps its exact meaning (and its derivation: `v_max - v_min > v_bus`, which is what the two old limit comparisons reduced to), so the hexagon boundary the existing case bisects is unchanged to 1e-5. What changed is the applied vector above the boundary: it used to shrink *and rotate* -- measured on a 0.1-degree sweep, 0.412 rad (23.6 deg) at three times the bus, and the rotation keeps growing with the request (26.63 deg at ten times the inscribed circle, 29.60 deg at a hundred, converging on the 30-degree half-sector) -- and now shrinks along the commanded ray (1.8e-7 rad, the float resolution of the duty, measured on the same sweep).",
+      "seeds": [
+        "include/foc/core/svpwm.hpp",
+        "src/core/svpwm.cpp"
+      ],
+      "affected": [
+        {
+          "row": "core/svpwm.hpp",
+          "verdict": "holds",
+          "why": "this row is the one that moved, and only above the boundary. Below it `scale == 1.0F` and the emitted duty is bit-identical to the clamp's (the clamp never fired). At the boundary the condition is unchanged (`v_max - v_min > v_bus` is exactly what the two old limit comparisons reduced to), which is why the existing case that bisects it to 1e-5 still lands on the same voltage. Above it the applied vector used to shrink and rotate and now shrinks along the commanded ray -- measured on this tree: `test_svpwm` 18/18, worst angle error 1.8e-7 rad on the same 0.1-degree sweep (the float resolution of the duty, not zero), applied magnitude equal to `min(abs(v), r_hex)` to 1.5e-6 V, and the new falsifier that keeps the old law in the test reports 0.412 rad (23.6 deg) of rotation at three times the bus where the delivered law reports that same 1.8e-7 rad. That figure cost one correction: the coarse 5-degree grid in the same case reports 0.349 rad (20.0 deg) because the rotation peaks between grid points, and the first version of this ledger entry quoted the coarse number. Ceiling stated rather than hidden: 0.60570*v_bus = 95.14 % of the six-step fundamental, six-step itself not claimed."
+        },
+        {
+          "row": "core/deadtime.hpp",
+          "verdict": "holds",
+          "why": "dead-time compensation adds a per-phase delta to the duty *after* the modulator, so it moves only if the duty it receives moves. Every scenario in its suites runs at low modulation (`run_low_amplitude_sine`, low-amplitude compensated sines, currents well inside the linear range), so `scale` is 1.0F and the duty is the clamp's duty -- the compensation's own volt-second accounting cannot see the change. measured: `test_deadtime` 7/7, `test_sil_deadtime` 8/8, including the case that compares the injected `v_dead` against the fitted one."
+        },
+        {
+          "row": "core/observer/blended_observer.hpp",
+          "verdict": "holds",
+          "why": "the observer consumes the measured currents and the applied voltage; above the boundary the applied voltage is now the projected one, and this row is the one that would notice if the projection were wrong. It does not saturate in any of its scenarios, and its own estimate is compared against the plant's flux rather than against the request, so the change cannot flatter it. measured: `test_blended_observer` 10/10."
+        },
+        {
+          "row": "core/observer/switchable_observer.hpp",
+          "verdict": "holds",
+          "why": "same argument as the blended observer (shared hand-over machinery, same scenarios, same non-saturating operating points), and both were re-run together because they share `switchable_observer`'s hand-over check. measured: `test_switchable_observer` 9/9."
+        },
+        {
+          "row": "core/trace.hpp",
+          "verdict": "holds",
+          "why": "the trace records the duty the loop produced. In saturation that duty changes by design -- that is the fix, not a regression -- and the record's *format* is untouched (same channel types, same field order, same interval stamp). measured: `test_trace` 7/7, which includes the interval measurement that reads the HAL clock."
+        },
+        {
+          "row": "core/trace_parse.hpp",
+          "verdict": "holds",
+          "why": "the parser reads the format, and the format did not move: the modulator writes a `Uvw<float>` duty either way. A wrong duty would show up as a wrong number, not an unparsable record, and the round-trip case is green. measured: `test_trace_parse` 7/7."
+        },
+        {
+          "row": "core/traits.hpp",
+          "verdict": "holds",
+          "why": "this row is a dependency of the seed (the concepts `modulate` is written against), not a place the change is visible: nothing in `traits.hpp` changed in this batch. Re-run because the blast gate asks, and because a concept that had silently stopped admitting `Svpwm` would show up here first. measured: `test_traits_contract` 4/4."
+        },
+        {
+          "row": "motor/foc_loop.hpp",
+          "verdict": "holds",
+          "why": "the loop hands the modulator a reference and the modulator's error code to the axis; neither signature moved and neither semantic moved (`ErrorCode::Ok` in every branch, saturated or not). The loop's own cases run below the boundary, so their numbers are unchanged by construction. measured: `test_driver_stubs` 22/22 (the suite that exercises this loop with the stub drivers)."
+        },
+        {
+          "row": "motor/motor.hpp",
+          "verdict": "holds",
+          "why": "the motor's saturation behaviour is the one place where the change is supposed to show: what it applies above the boundary is now the projected vector. Its own suites are green at both ends of the working range -- `test_motor` 34/34, `test_sil_saturation_limit` 2/2 (the case that walks up to the limit and bisects the boundary, unchanged to 1e-5 because the `saturated` test is the same arithmetic). Whole-suite confirmation: 751/751 in the instrumented `conan create` on this tree."
+        }
+      ]
+    },
+    {
+      "id": "B-04",
+      "date": "2026-11-04",
+      "what_changed": "F39: the power stage's fault output became a **required** HAL input. `hal/fault_input.hpp` is new (`faulted()`, one bit, polarity owned by the adapter); `driver/stub_fault_input.hpp` is its reference and doubles as the injection seam; `core::concepts::has_fault_input_v` is the trait; `Motor::start()` answers `NotImpl` when the HalPolicy has none, and `tick()` latches `FaultCode::DriveFault` on the pin before anything else runs. `HalCallbacks` gained a **required** `read_drive_fault` (the first callback in that struct whose absence is not a capability answer), the C ABI appended the same field and refuses its absence with `FOC_ERR_NOT_IMPL`, and `FaultCode` appended `DriveFault` so every existing code keeps its number.",
+      "seeds": [
+        "include/foc/core/traits.hpp",
+        "include/foc/driver/callback_hal.hpp",
+        "include/foc/driver/stub_hal.hpp",
+        "include/foc/motor/motor.hpp",
+        "include/foc/core/protection.hpp"
+      ],
+      "affected": [
+        {
+          "row": "core/protection.hpp",
+          "verdict": "holds",
+          "why": "an enumerator was appended (`DriveFault`) and one case was added to `fault_is_latched`; no threshold, no ordering rule and no existing enumerator moved, which is the point of appending rather than inserting -- a stored `fault` field keeps its meaning across the release. The new code is reachable only from `Motor::tick()`, which reads the pin before the protector runs, so the protector's own ranking is untouched. measured on this tree: `test_protection` 20/20, `test_fault_input` 5/5 including `TheNewCauseIsLastAndStillLatched`"
+        },
+        {
+          "row": "motor/motor.hpp",
+          "verdict": "holds",
+          "why": "this row is the one that moved, and it moved in one direction: a drive that cannot answer whether its power stage is faulted no longer starts. Every HAL in the tree now answers (`StubHal`, `CallbackHal`, `sil::PlantHal` and the two hand-written test HALs gained the member), so no existing scenario changes behaviour -- measured rather than assumed, by re-running every suite that builds a motor: `test_motor` 34/34, `test_trace` 7/7, `test_sil_brake_chopper` 4/4, `test_sil_bus` 5/5, `test_rtos_bridge` 4/4 (its `ClockedPlantHal` forwards the fifth reference). The refusal and the mapping have their own 5 cases in `test_fault_input.cpp`."
+        },
+        {
+          "row": "core/trace.hpp",
+          "verdict": "holds",
+          "why": "the trace channel records the loop, and the loop's only change is a branch taken before a tick that used to proceed. With every HAL answering `faulted() == false` the branch is never taken, so the recorded sequence is identical -- `test_trace` 7/7, including the interval measurement that reads the HAL clock."
+        },
+        {
+          "row": "core/trace_parse.hpp",
+          "verdict": "holds",
+          "why": "a parser over `TraceSample`; it cannot see a fault code at all, and the samples it parses are unchanged by the previous row. measured on this tree: `test_trace_parse` 7/7"
+        },
+        {
+          "row": "core/observer/blended_observer.hpp",
+          "verdict": "holds",
+          "why": "the blend depends on `HalCallbacks`, which gained a required field, so this row is retested rather than reasoned about: `test_blended_observer` 10/10 and `test_sil_observer_blend` 7/7, with the bench's fault input quiet -- the same numbers the row claims. The new callback is read only by `CallbackFaultInput`, which no observer path reaches."
+        },
+        {
+          "row": "core/observer/switchable_observer.hpp",
+          "verdict": "holds",
+          "why": "same attachment through `StubHal`/`CallbackHal`; the switch admits and refuses modes on facts the fault input does not touch. measured on this tree: `test_switchable_observer` 9/9"
+        }
+      ]
+    },
+    {
+      "id": "B-03",
+      "date": "2026-11-04",
+      "what_changed": "The DC side got a **current port** (batch 2's precondition for F08, D-2/C-1). `sil_bus.hpp` is new: the node equation `C*dv/dt = i_source - i_dc - i_load - i_chopper`, an energy book kept with the trapezoid, and `bus_current_a()` holding the one place the amplitude-invariant `3/2` is written. `PlantHal` books `1.5*(v_d*i_d + v_q*i_q)/v_bus` at every integration sub-step of **both** paths (switching and mean-value), and `PlantDcLink::voltage_v()` reads the meter when one is attached. `PmsmPlant::voltage_dq()` is a read-out so that v and i can be taken at the same instant. Nothing is attached by default: with no meter the bus is the stiff constant it always was. The same seed then grew the fourth current through that node -- `PlantHal` now holds a `driver::StubBrakeSwitch` and books `duty*v/r` against the meter, so a `core::BrakeChopper` composed by the host can act on the bus instead of only reporting a duty. The switch is a member rather than an optional pointer because it is part of the power stage, and with nothing writing to it the duty is 0 and the trajectory is byte for byte what it was.",
+      "seeds": [
+        "test_package/test/unit/sil_plant_hal.hpp",
+        "test_package/test/unit/sil_pmsm_plant.hpp"
+      ],
+      "affected": [
+        {
+          "row": "core/observer/back_emf_observer.hpp",
+          "verdict": "holds",
+          "why": "the port attaches a meter and books a current; it changes no equation the observer is measured against. The bench has no meter unless a test attaches one, and `WithoutAMeterNothingChanges` asserts the trajectory is the same run either way. measured on this tree: `test_sil_bus` 5/5, and the L2/L3 observer rows were measured with the stiff bus this port leaves in place"
+        },
+        {
+          "row": "core/observer/blended_observer.hpp",
+          "verdict": "holds",
+          "why": "same: no meter attached means the DC-link voltage is the constant it was, so the operating point is unchanged and this row's numbers do not move. `test_sil_bus` 5/5"
+        },
+        {
+          "row": "core/observer/hfi_observer.hpp",
+          "verdict": "holds",
+          "why": "same attachment only; the injection amplitude is a fraction of the bus voltage, and the bus is the same constant until a test asks for the node equation. `test_sil_bus` 5/5"
+        },
+        {
+          "row": "core/observer/nonlinear_flux_observer.hpp",
+          "verdict": "holds",
+          "why": "same attachment only. The port's own numbers are new (they are the subject of `test_sil_bus`), and none of the existing observer rows were measured through it"
+        },
+        {
+          "row": "core/observer/switchable_observer.hpp",
+          "verdict": "holds",
+          "why": "same attachment only; selection logic does not read the bus"
+        },
+        {
+          "row": "core/trace.hpp",
+          "verdict": "holds",
+          "why": "the trace records what the loop believed, and the loop is unchanged when no meter is attached -- the counterfactual case asserts exactly that. `test_sil_bus` 5/5"
+        },
+        {
+          "row": "core/trace_parse.hpp",
+          "verdict": "holds",
+          "why": "a reader of the trace; it cannot see the bus at all"
+        },
+        {
+          "row": "motor/motor.hpp",
+          "verdict": "holds",
+          "why": "the port is below `HalPolicy`, so `Motor` sees one more `DcLink` implementation and no interface change. The claim that the loop does not care who calls it still holds: `test_rtos_bridge` 4/4 and the full suite is re-run at batch closure"
+        }
+      ]
+    },
+    {
+      "id": "B-06",
+      "date": "2026-11-04",
+      "what_changed": "F05: the switching plant gained the gate driver's minimum pulse (`InverterConfig::t_min_s`, default 0 = ideal, so every existing scenario is bit-identical), and the library gained `core/min_pulse.hpp` + `src/core/min_pulse.cpp`, which states the law and the volt-second loss and can carry the residue. The plant implements the rule independently -- it does not call the policy -- so the agreement in `test_sil_min_pulse.cpp` is a measurement rather than a restatement.",
+      "seeds": [
+        "test_package/test/unit/sil_discrete_inverter.hpp",
+        "include/foc/core/min_pulse.hpp",
+        "src/core/min_pulse.cpp"
+      ],
+      "affected": [],
+      "hand_rerun": [
+        "test_package/test/unit/test_min_pulse.cpp",
+        "test_package/test/unit/test_sil_min_pulse.cpp",
+        "test_package/test/unit/test_sil_inverter.cpp",
+        "test_package/test/unit/test_sil_deadtime.cpp",
+        "test_package/test/unit/test_sil_bus.cpp",
+        "test_package/test/unit/test_board_check.cpp",
+        "test_package/test/unit/test_commissioning.cpp"
+      ],
+      "why_no_row": "no claim row names the switching plant: it is a test-side model, so the seats this change could move are the seven suites that include it, and those are listed in `hand_rerun`. The wider check is the whole suite, because `sil_plant_hal.hpp` and `sil_switching_rig.hpp` pull the inverter into most of the SIL cases; run on this tree: test_min_pulse 5/5, test_sil_min_pulse 4/4, test_sil_inverter 7/7, test_sil_deadtime 8/8, test_sil_bus 5/5, test_board_check 9/9, test_commissioning 16/16 -- every one unchanged from before the field was added, which is the point of `t_min_s = 0` being the default."
+    },
+    {
+      "id": "B-07",
+      "date": "2026-11-04",
+      "what_changed": "F06: new `core/single_shunt.hpp` + `src/core/single_shunt.cpp` -- the single-shunt window rule (three intervals, all of them derived from the duty, the usable window being half the shorter active one), the two-reading reconstruction with no sector table, and a refusal that returns `valid == false` rather than a reading taken during a transition. No existing file changed: the module is additive, and nothing in `src/` includes it yet.",
+      "seeds": [
+        "include/foc/core/single_shunt.hpp",
+        "src/core/single_shunt.cpp"
+      ],
+      "affected": [],
+      "hand_rerun": [
+        "test_package/test/unit/test_single_shunt.cpp"
+      ],
+      "why_no_row": "no claim row rested on a header that did not exist an hour ago; the seats that could move are the new module's own suite, listed in `hand_rerun` (6/6), plus the whole-suite run that follows it. This entry is here so the next person can see that the reconstruction was added without touching a single existing line -- which is also why it cannot break one, and why a ledger entry claiming otherwise would be false."
     }
   ]
 }

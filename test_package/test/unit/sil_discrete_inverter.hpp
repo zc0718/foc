@@ -21,26 +21,39 @@ using core::Uvw;
  * @since 0.1.0
  */
 struct InverterConfig final {
-  /**
+    /**
    * @brief [en] switching frequency in Hz. Must divide the control rate exactly (see `set_control_period()`).
    * @brief [zh] 开关频率，Hz。必须整除控制频率（见 `set_control_period()`）。
    */
-  float f_sw_hz;
-  /**
+    float f_sw_hz;
+    /**
    * @brief [en] dead time per transition in s, applied to turn-on only.
    * @brief [zh] 每次换向的死区，s，只延迟开通。
    */
-  float t_dead_s;
-  /**
+    float t_dead_s;
+    /**
    * @brief [en] conduction drop per device in V; 0 = ideal switches.
    * @brief [zh] 每个器件的导通压降，V；0 = 理想开关。
    */
-  float v_fwd_v;
-  /**
+    float v_fwd_v;
+    /**
    * @brief [en] integration sub-steps per switching period; only limits how finely the ripple is drawn.
    * @brief [zh] 每个开关周期的积分子步数；只决定纹波画得多细。
    */
-  std::int32_t sub_per_switch;
+    std::int32_t sub_per_switch;
+    /**
+   * @brief [en] the gate driver's minimum transmissible pulse in s; `<= 0` = an ideal driver, which is the default.
+   * @brief [zh] 栅极驱动器能送出的最短脉冲，s；`<= 0` 表示理想驱动器，也就是默认值。
+   * @note [en] This is a **driver** limit, independent of the current: a commanded high window narrower than `t_min`
+   *            never happens, and a commanded *low* window narrower than `t_min` means the high side never turns off.
+   *            Unlike the dead time, the model does not take this from anywhere else and the library's `MinPulse` is
+   *            not consulted: the point is that the volt-seconds the policy *predicts* are then measured here.
+   * @note [zh] 这是**驱动器**的极限，与电流无关：比 `t_min` 窄的高侧窗口根本不会发生，而比 `t_min` 窄的**低**侧窗口意味
+   *            着高侧关不掉。与死区不同，这个模型不从别处取这个数、也不去问库里的 `MinPulse`：要点正是策略 **预测**的伏
+   *            秒随后在这里被量到。
+   * @since 0.1.9
+   */
+    float t_min_s;
 };
 
 /**
@@ -95,43 +108,37 @@ struct InverterConfig final {
  * @since 0.1.0
  */
 class DiscreteInverter final {
-public:
-  explicit DiscreteInverter(const InverterConfig &config) noexcept
-      : config_(config) {
-    t_sw_ = (config_.f_sw_hz > 0.0F) ? (1.0F / config_.f_sw_hz) : 0.0F;
-    sub_per_switch_ =
-        (config_.sub_per_switch >= 2) ? config_.sub_per_switch : 2;
-  }
+  public:
+    explicit DiscreteInverter(const InverterConfig& config) noexcept : config_(config) {
+        t_sw_ = (config_.f_sw_hz > 0.0F) ? (1.0F / config_.f_sw_hz) : 0.0F;
+        sub_per_switch_ = (config_.sub_per_switch >= 2) ? config_.sub_per_switch : 2;
+    }
 
-  DiscreteInverter(const DiscreteInverter &) = delete;
-  DiscreteInverter &operator=(const DiscreteInverter &) = delete;
-  DiscreteInverter(DiscreteInverter &&) = delete;
-  DiscreteInverter &operator=(DiscreteInverter &&) = delete;
+    DiscreteInverter(const DiscreteInverter&) = delete;
+    DiscreteInverter& operator=(const DiscreteInverter&) = delete;
+    DiscreteInverter(DiscreteInverter&&) = delete;
+    DiscreteInverter& operator=(DiscreteInverter&&) = delete;
 
-  /**
+    /**
    * @brief [en] True when the configuration can produce a switching period at all.
    * @brief [zh] 配置至少能产生一个开关周期。
    */
-  [[nodiscard]] auto valid() const noexcept -> bool { return t_sw_ > 0.0F; }
+    [[nodiscard]] auto valid() const noexcept -> bool { return t_sw_ > 0.0F; }
 
-  [[nodiscard]] auto switching_period_s() const noexcept -> float {
-    return t_sw_;
-  }
+    [[nodiscard]] auto switching_period_s() const noexcept -> float { return t_sw_; }
 
-  [[nodiscard]] auto deadtime_s() const noexcept -> float {
-    return config_.t_dead_s;
-  }
+    [[nodiscard]] auto deadtime_s() const noexcept -> float { return config_.t_dead_s; }
 
-  /**
+    /**
    * @brief [en] Rail-to-rail voltage loss the dead time injects per phase, `(t_dead/T)*v_bus`, V. This is the number
    *             the *verification* predicts; the model never uses it.
    * @brief [zh] 死区每相注入的电压损失，`(t_dead/T)·v_bus`，V。这是**验证**要预测的数；模型自己不用它。
    */
-  [[nodiscard]] auto deadtime_voltage(float v_bus) const noexcept -> float {
-    return (t_sw_ > 0.0F) ? ((config_.t_dead_s / t_sw_) * v_bus) : 0.0F;
-  }
+    [[nodiscard]] auto deadtime_voltage(float v_bus) const noexcept -> float {
+        return (t_sw_ > 0.0F) ? ((config_.t_dead_s / t_sw_) * v_bus) : 0.0F;
+    }
 
-  /**
+    /**
    * @brief [en] Latch one control period: the duties, the bus, and how many sub-steps it is worth.
    * @brief [zh] 锁存一个控制周期：占空比、母线电压，以及它值多少个子步。
    * @param duty [en] per-phase duty from the modulator. Clamped to [0, 1]; out-of-range is reported by `clamped()`.
@@ -145,57 +152,81 @@ public:
    * @return [zh] 要跑的子步数；请求被 拒绝时为 0。
    * @since 0.1.0
    */
-  [[nodiscard]] auto begin_period(Uvw<float> duty, float v_bus,
-                                  float dt_ctrl_s) noexcept -> std::int32_t {
-    clamped_ = false;
-    if (!valid() || !(v_bus > 0.0F) || !(dt_ctrl_s > 0.0F)) {
-      steps_ = 0;
-      return 0;
+    [[nodiscard]] auto begin_period(Uvw<float> duty, float v_bus, float dt_ctrl_s) noexcept -> std::int32_t {
+        clamped_ = false;
+        if (!valid() || !(v_bus > 0.0F) || !(dt_ctrl_s > 0.0F)) {
+            steps_ = 0;
+            return 0;
+        }
+
+        const float switches = dt_ctrl_s / t_sw_;
+        const float rounded = static_cast<float>(static_cast<std::int32_t>(switches + 0.5F));
+        if (!(rounded >= 1.0F) || !(std::fabs(switches - rounded) < 1.0e-3F)) {
+            steps_ = 0;
+            return 0;
+        }
+
+        duty_ = clamp_duty(duty);
+        // The driver's rule, applied to the clamped request. It runs before the dead time in the model because that is the
+        // order in hardware: the driver decides whether to send the pulse at all, and only the pulses it sends have edges for
+        // the dead time to sit on. 驱动器的规则作用在钳位后的请求上。它在模型里先于死区，因为硬件就是这个次序：驱动器先
+        // 决定送不送这个脉冲，而只有它送出去的脉冲才有边沿可供死区落在上面。
+        applied_ = Uvw<float>{min_pulse_rule(duty_.u), min_pulse_rule(duty_.v), min_pulse_rule(duty_.w)};
+        v_bus_ = v_bus;
+        steps_ = static_cast<std::int32_t>(rounded) * sub_per_switch_;
+        step_length_ = dt_ctrl_s / static_cast<float>(steps_);
+        time_in_period_ = 0.0F;
+        return steps_;
     }
 
-    const float switches = dt_ctrl_s / t_sw_;
-    const float rounded =
-        static_cast<float>(static_cast<std::int32_t>(switches + 0.5F));
-    if (!(rounded >= 1.0F) || !(std::fabs(switches - rounded) < 1.0e-3F)) {
-      steps_ = 0;
-      return 0;
-    }
-
-    duty_ = clamp_duty(duty);
-    v_bus_ = v_bus;
-    steps_ = static_cast<std::int32_t>(rounded) * sub_per_switch_;
-    step_length_ = dt_ctrl_s / static_cast<float>(steps_);
-    time_in_period_ = 0.0F;
-    return steps_;
-  }
-
-  /**
+    /**
    * @brief [en] Number of sub-steps the latched period asked for.
    * @brief [zh] 已锁存周期要求的子步数。
    */
-  [[nodiscard]] auto steps() const noexcept -> std::int32_t { return steps_; }
+    [[nodiscard]] auto steps() const noexcept -> std::int32_t { return steps_; }
 
-  /**
+    /**
    * @brief [en] Sub-step length in s.
    * @brief [zh] 子步长度，s。
    */
-  [[nodiscard]] auto step_length_s() const noexcept -> float {
-    return step_length_;
-  }
+    [[nodiscard]] auto step_length_s() const noexcept -> float { return step_length_; }
 
-  /**
+    /**
    * @brief [en] True if the request had to be clamped into [0, 1].
    * @brief [zh] 请求是否被钳进 [0, 1]。
    */
-  [[nodiscard]] auto clamped() const noexcept -> bool { return clamped_; }
+    [[nodiscard]] auto clamped() const noexcept -> bool { return clamped_; }
 
-  /**
+    /**
    * @brief [en] The duties actually used (after clamping).
    * @brief [zh] 实际使用的占空比（钳位之后）。
    */
-  [[nodiscard]] auto duty() const noexcept -> Uvw<float> { return duty_; }
+    [[nodiscard]] auto duty() const noexcept -> Uvw<float> { return duty_; }
 
-  /**
+    /**
+   * @brief [en] The duties the driver actually transmits (after clamping and after its minimum-pulse rule).
+   * @brief [zh] 驱动器真正送出的占空比（钳位之后、最小脉宽规则之后）。
+   * @note [en] Equal to `duty()` when `t_min_s <= 0`, so a plant with an ideal driver is bit-identical either way.
+   * @note [zh] `t_min_s <= 0` 时等于 `duty()`，于是理想驱动器的 plant 两种情况逐位相同。
+   */
+    [[nodiscard]] auto applied_duty() const noexcept -> Uvw<float> { return applied_; }
+
+    /**
+   * @brief [en] The three pole voltages the last `step()` produced, V. Kept because a per-phase volt-second account
+   *             needs them and `clarke()` throws the common mode away.
+   * @brief [zh] 上一次 `step()` 得到的三相极电压，V。留着是因为按相的伏秒账需要它们，而 `clarke()` 会把共模丢掉。
+   */
+    [[nodiscard]] auto pole_voltages() const noexcept -> Uvw<float> { return poles_; }
+
+    /**
+   * @brief [en] True when the driver did not transmit at least one phase's pulse as asked.
+   * @brief [zh] 至少有一相的脉冲没有按请求送出时为真。
+   */
+    [[nodiscard]] auto narrowed() const noexcept -> bool {
+        return (applied_.u != duty_.u) || (applied_.v != duty_.v) || (applied_.w != duty_.w);
+    }
+
+    /**
    * @brief [en] The stationary-frame voltage for the next sub-step, given the currents at its start.
    * @brief [zh] 下一个子步的静止系电压，电流取其起点处的值。
    * @param i_uvw [en] phase currents at the start of the sub-step, A; only their **sign** is used, and only during
@@ -205,150 +236,165 @@ public:
    * @return [zh] 三相极电压的 `clarke`，V。
    * @since 0.1.0
    */
-  [[nodiscard]] auto step(const Uvw<float> &i_uvw) noexcept -> Ab<float> {
-    if (steps_ <= 0) {
-      return Ab<float>{};
+    [[nodiscard]] auto step(const Uvw<float>& i_uvw) noexcept -> Ab<float> {
+        if (steps_ <= 0) {
+            return Ab<float>{};
+        }
+
+        const float window = step_length_;
+        const float from = time_in_period_;
+        const float to = from + window;
+
+        const float pole_u = pole_voltage(applied_.u, i_uvw.u, from, to);
+        const float pole_v = pole_voltage(applied_.v, i_uvw.v, from, to);
+        const float pole_w = pole_voltage(applied_.w, i_uvw.w, from, to);
+        poles_ = Uvw<float>{pole_u, pole_v, pole_w};
+
+        time_in_period_ += window;
+        while (time_in_period_ >= t_sw_) {
+            time_in_period_ -= t_sw_;
+        }
+        return core::clarke(Uvw<float>{pole_u, pole_v, pole_w});
     }
 
-    const float window = step_length_;
-    const float from = time_in_period_;
-    const float to = from + window;
-
-    const float pole_u = pole_voltage(duty_.u, i_uvw.u, from, to);
-    const float pole_v = pole_voltage(duty_.v, i_uvw.v, from, to);
-    const float pole_w = pole_voltage(duty_.w, i_uvw.w, from, to);
-
-    time_in_period_ += window;
-    while (time_in_period_ >= t_sw_) {
-      time_in_period_ -= t_sw_;
-    }
-    return core::clarke(Uvw<float>{pole_u, pole_v, pole_w});
-  }
-
-  /**
+    /**
    * @brief [en] Back to the power-on state.
    * @brief [zh] 回到上电状态。
    */
-  void reset() noexcept {
-    duty_ = Uvw<float>{};
-    time_in_period_ = 0.0F;
-    steps_ = 0;
-    clamped_ = false;
-  }
+    void reset() noexcept {
+        duty_ = Uvw<float>{};
+        applied_ = Uvw<float>{};
+        time_in_period_ = 0.0F;
+        steps_ = 0;
+        clamped_ = false;
+    }
 
-private:
-  [[nodiscard]] auto clamp_duty(Uvw<float> duty) noexcept -> Uvw<float> {
-    const auto one = [this](float d) noexcept -> float {
-      if (!(d >= 0.0F)) {
-        clamped_ = true;
-        return 0.0F;
-      }
-      if (d > 1.0F) {
-        clamped_ = true;
-        return 1.0F;
-      }
-      return d;
-    };
-    return Uvw<float>{one(duty.u), one(duty.v), one(duty.w)};
-  }
+  private:
+    /**
+   * @brief [en] The gate driver's two thresholds, in duty: below `m` the on-pulse does not exist, above `1-m` the
+   *             off-pulse does not exist.
+   * @brief [zh] 栅极驱动器的两个阈值，用占空比表示：低于 `m` 导通脉冲不存在，高于 `1−m` 关断脉冲不存在。
+   */
+    [[nodiscard]] auto min_pulse_rule(float duty) const noexcept -> float {
+        if (!(config_.t_min_s > 0.0F) || !(t_sw_ > 0.0F)) {
+            return duty;
+        }
+        const float m = config_.t_min_s / t_sw_;
+        if (duty < m) {
+            return 0.0F;
+        }
+        if ((1.0F - duty) < m) {
+            return 1.0F;
+        }
+        return duty;
+    }
+    [[nodiscard]] auto clamp_duty(Uvw<float> duty) noexcept -> Uvw<float> {
+        const auto one = [this](float d) noexcept -> float {
+            if (!(d >= 0.0F)) {
+                clamped_ = true;
+                return 0.0F;
+            }
+            if (d > 1.0F) {
+                clamped_ = true;
+                return 1.0F;
+            }
+            return d;
+        };
+        return Uvw<float>{one(duty.u), one(duty.v), one(duty.w)};
+    }
 
-  /**
+    /**
    * @brief [en] Length of the intersection of `[from, to)` with `[a, b)`, both taken modulo T.
    * @brief [zh] `[from, to)` 与 `[a, b)` 的交集长度，两者都按 T 取模。
    */
-  [[nodiscard]] auto overlap(float a, float b, float from,
-                             float to) const noexcept -> float {
-    const float span = to - from;
-    if (!(span > 0.0F)) {
-      return 0.0F;
+    [[nodiscard]] auto overlap(float a, float b, float from, float to) const noexcept -> float {
+        const float span = to - from;
+        if (!(span > 0.0F)) {
+            return 0.0F;
+        }
+        const auto mod = [this](float t) noexcept -> float {
+            while (t < 0.0F) {
+                t += t_sw_;
+            }
+            while (t >= t_sw_) {
+                t -= t_sw_;
+            }
+            return t;
+        };
+        // Walk the sub-step in at most two pieces so a window straddling T still
+        // counts. 把子步切成至多两段，跨 T 的窗口因此仍被计入。
+        float total = 0.0F;
+        float cursor = from;
+        float remaining = span;
+        while (remaining > 0.0F) {
+            const float piece = (mod(cursor) + remaining > t_sw_) ? (t_sw_ - mod(cursor)) : remaining;
+            const float lo = mod(cursor);
+            const float hi = lo + piece;
+            const float start = mod(a);
+            const float end = start + (b - a);
+            const float left = (lo > start) ? lo : start;
+            const float right = (hi < end) ? hi : end;
+            if (right > left) {
+                total += (right - left);
+            }
+            cursor += piece;
+            remaining -= piece;
+        }
+        return total;
     }
-    const auto mod = [this](float t) noexcept -> float {
-      while (t < 0.0F) {
-        t += t_sw_;
-      }
-      while (t >= t_sw_) {
-        t -= t_sw_;
-      }
-      return t;
-    };
-    // Walk the sub-step in at most two pieces so a window straddling T still
-    // counts. 把子步切成至多两段，跨 T 的窗口因此仍被计入。
-    float total = 0.0F;
-    float cursor = from;
-    float remaining = span;
-    while (remaining > 0.0F) {
-      const float piece =
-          (mod(cursor) + remaining > t_sw_) ? (t_sw_ - mod(cursor)) : remaining;
-      const float lo = mod(cursor);
-      const float hi = lo + piece;
-      const float start = mod(a);
-      const float end = start + (b - a);
-      const float left = (lo > start) ? lo : start;
-      const float right = (hi < end) ? hi : end;
-      if (right > left) {
-        total += (right - left);
-      }
-      cursor += piece;
-      remaining -= piece;
-    }
-    return total;
-  }
 
-  /**
+    /**
    * @brief [en] Average pole voltage over one sub-step for one leg.
    * @brief [zh] 一条桥臂在一个子步内的平均极电压。
    */
-  [[nodiscard]] auto pole_voltage(float duty, float current, float from,
-                                  float to) const noexcept -> float {
-    const float period = t_sw_;
-    const float dead = config_.t_dead_s;
-    const float half_low = 0.5F * (1.0F - duty) * period;  // commanded turn-on
-    const float half_high = 0.5F * (1.0F + duty) * period; // commanded turn-off
-    const float span = to - from;
+    [[nodiscard]] auto pole_voltage(float duty, float current, float from, float to) const noexcept -> float {
+        const float period = t_sw_;
+        const float dead = config_.t_dead_s;
+        const float half_low = 0.5F * (1.0F - duty) * period;  // commanded turn-on
+        const float half_high = 0.5F * (1.0F + duty) * period; // commanded turn-off
+        const float span = to - from;
 
-    // Turn-off is immediate at `half_high`; turn-on waits `dead` after
-    // `half_low`. What is left between those two windows is the high-side
-    // conducting time. 关断在 `half_high` 处立即生效；开通要等 `half_low` 之后
-    // `dead`。两个死区窗口之间的部分就是高侧 导通时间。
-    const float high_from = half_low + dead;
-    const float high_to = half_high;
-    const float rise_from = half_low;
-    const float rise_to = half_low + dead;
-    const float fall_from = half_high;
-    const float fall_to = half_high + dead;
+        // Turn-off is immediate at `half_high`; turn-on waits `dead` after
+        // `half_low`. What is left between those two windows is the high-side
+        // conducting time. 关断在 `half_high` 处立即生效；开通要等 `half_low` 之后
+        // `dead`。两个死区窗口之间的部分就是高侧 导通时间。
+        const float high_from = half_low + dead;
+        const float high_to = half_high;
+        const float rise_from = half_low;
+        const float rise_to = half_low + dead;
+        const float fall_from = half_high;
+        const float fall_to = half_high + dead;
 
-    const float f_high = (high_to > high_from)
-                             ? (overlap(high_from, high_to, from, to) / span)
-                             : 0.0F;
-    const float f_dead = (dead > 0.0F)
-                             ? ((overlap(rise_from, rise_to, from, to) +
-                                 overlap(fall_from, fall_to, from, to)) /
-                                span)
-                             : 0.0F;
-    const float f_low = 1.0F - f_high - f_dead;
+        const float f_high = (high_to > high_from) ? (overlap(high_from, high_to, from, to) / span) : 0.0F;
+        const float f_dead =
+            (dead > 0.0F) ? ((overlap(rise_from, rise_to, from, to) + overlap(fall_from, fall_to, from, to)) / span)
+                          : 0.0F;
+        const float f_low = 1.0F - f_high - f_dead;
 
-    // While both devices are off the phase is clamped to whichever rail its
-    // current is coming from: positive current freewheels through the lower
-    // diode, negative through the upper one. This single line is the entire
-    // dead-time effect.
-    // 两只器件都关断时，该相被钳位在电流来自的那条母线上：正电流经下管二极管续流，负电流经上管。
-    // 死区的全部效应就是这一行。
-    const float v_high = v_bus_ - config_.v_fwd_v;
-    const float v_low = config_.v_fwd_v;
-    const float v_dead_window = (current > 0.0F) ? v_low : v_high;
+        // While both devices are off the phase is clamped to whichever rail its
+        // current is coming from: positive current freewheels through the lower
+        // diode, negative through the upper one. This single line is the entire
+        // dead-time effect.
+        // 两只器件都关断时，该相被钳位在电流来自的那条母线上：正电流经下管二极管续流，负电流经上管。
+        // 死区的全部效应就是这一行。
+        const float v_high = v_bus_ - config_.v_fwd_v;
+        const float v_low = config_.v_fwd_v;
+        const float v_dead_window = (current > 0.0F) ? v_low : v_high;
 
-    return ((f_high * v_high) + (f_low * v_low)) + (f_dead * v_dead_window);
-  }
+        return ((f_high * v_high) + (f_low * v_low)) + (f_dead * v_dead_window);
+    }
 
-  InverterConfig config_{};
-  float t_sw_{0.0F};
-  std::int32_t sub_per_switch_{2};
-  Uvw<float> duty_{};
-  float v_bus_{0.0F};
-  std::int32_t steps_{0};
-  float step_length_{0.0F};
-  float time_in_period_{0.0F};
-  bool clamped_{false};
+    InverterConfig config_{};
+    float t_sw_{0.0F};
+    std::int32_t sub_per_switch_{2};
+    Uvw<float> duty_{};
+    Uvw<float> applied_{};
+    Uvw<float> poles_{};
+    float v_bus_{0.0F};
+    std::int32_t steps_{0};
+    float step_length_{0.0F};
+    float time_in_period_{0.0F};
+    bool clamped_{false};
 };
 
 } // namespace sil

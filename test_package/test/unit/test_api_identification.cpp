@@ -53,6 +53,13 @@ auto on_read_angle(void* user) -> float { return static_cast<CallbackPlant*>(use
 
 auto on_read_voltage(void* user) -> float { return static_cast<CallbackPlant*>(user)->hal.dc_link.voltage_v(); }
 
+// The power stage's fault output: this host models a healthy inverter. Required by the library (see
+// `foc_hal_callbacks_t::read_drive_fault`), so it is answered here, once, rather than left NULL.
+// 功率级的故障输出：本主控方建模的是一个健康逆变器。库要求它在（见 `foc_hal_callbacks_t::read_drive_fault`），
+// 所以在这里回答一次，而不是留成 NULL。
+auto on_read_drive_fault(void* /*user*/) -> int32_t { return 0; }
+
+
 auto on_read_velocity(void* user) -> float {
     return static_cast<CallbackPlant*>(user)->hal.position.velocity_rad_s();
 }
@@ -72,6 +79,7 @@ auto callbacks_for(CallbackPlant& plant) -> foc_hal_callbacks_t {
     callbacks.read_current = &on_read_current;
     callbacks.read_angle_mech_rad = &on_read_angle;
     callbacks.read_voltage_v = &on_read_voltage;
+    callbacks.read_drive_fault = &on_read_drive_fault;
     callbacks.read_velocity_rad_s = &on_read_velocity;
     callbacks.pwm_enable = &on_pwm_enable;
     callbacks.pwm_disable = &on_pwm_disable;

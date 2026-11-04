@@ -57,6 +57,12 @@ auto read_angle(void* user) -> float { return static_cast<Host*>(user)->angle_ra
 
 auto read_voltage(void* user) -> float { return static_cast<Host*>(user)->v_bus_v; }
 
+// Not a host capability but a host *statement*: this bench has no gate driver, so there is never a fault to report.
+// Required by the library, which refuses a host that cannot answer -- see `hal::FaultInput`.
+// 这不是一个宿主能力，而是一句宿主**陈述**：本台架没有栅极驱动器，所以永远没有故障可报。库要求它在，并拒绝一个答不上来
+// 的主控方——见 `hal::FaultInput`。
+auto read_drive_fault(void* /*user*/) -> std::int32_t { return 0; }
+
 auto full_callbacks(Host& host) -> driver::HalCallbacks {
     driver::HalCallbacks callbacks{};
     callbacks.user = &host;
@@ -64,6 +70,7 @@ auto full_callbacks(Host& host) -> driver::HalCallbacks {
     callbacks.read_current = &read_current;
     callbacks.read_angle_mech_rad = &read_angle;
     callbacks.read_voltage_v = &read_voltage;
+    callbacks.read_drive_fault = &read_drive_fault;
     return callbacks;
 }
 
@@ -79,78 +86,88 @@ auto policies(const motor::MotorConfig& mc) -> HostMotor::Policies {
 } // namespace
 
 TEST(HostHal, TheLoopAsksTheHostForMeasurementsAndGivesItDuties) {
-  // The criterion, written before the measurement: a host that supplies currents, an angle and a bus voltage must see
-  // its inverter driven. If `duty_calls` stays 0 the loop never reached the output stage, and if `current_calls` stays 0
-  // it never read the phase currents -- either way the HAL is not being used, whatever the status says.
-  // 先写下的判据：提供电流、角度与母线电压的主控方，必须看到自己的逆变器被驱动。若 `duty_calls` 恒为 0，说明环
-  // 没走到输出级；若 `current_calls` 恒为 0，说明它没读相电流——两种情况都意味着 HAL 没被用上，无论状态字怎么说。
-  Host host{};
-  const driver::HalCallbacks callbacks = full_callbacks(host);
-  EXPECT_TRUE(callbacks.valid());
+    // The criterion, written before the measurement: a host that supplies currents, an angle and a bus voltage must see
+    // its inverter driven. If `duty_calls` stays 0 the loop never reached the output stage, and if `current_calls` stays 0
+    // it never read the phase currents -- either way the HAL is not being used, whatever the status says.
+    // 先写下的判据：提供电流、角度与母线电压的主控方，必须看到自己的逆变器被驱动。若 `duty_calls` 恒为 0，说明环
+    // 没走到输出级；若 `current_calls` 恒为 0，说明它没读相电流——两种情况都意味着 HAL 没被用上，无论状态字怎么说。
+    Host host{};
+    const driver::HalCallbacks callbacks = full_callbacks(host);
+    EXPECT_TRUE(callbacks.valid());
 
-  driver::CallbackHal hal(callbacks);
-  const motor::MotorConfig mc = sil::nominal_motor_config();
-  HostMotor motor(mc, policies(mc), hal);
+    driver::CallbackHal hal(callbacks);
+    const motor::MotorConfig mc = sil::nominal_motor_config();
+    HostMotor motor(mc, policies(mc), hal);
 
-  ASSERT_EQ(motor.start(), ErrorCode::Ok);
-  for (int i = 0; i < 200; ++i) {
-    host.angle_rad = 0.1F * static_cast<float>(i);
-    (void)motor.tick(kDtS);
-  }
+    ASSERT_EQ(motor.start(), ErrorCode::Ok);
+    for (int i = 0; i < 200; ++i) {
+        host.angle_rad = 0.1F * static_cast<float>(i);
+        (void)motor.tick(kDtS);
+    }
 
-  std::printf("\n[host-hal] %d duty write(s), %d current read(s) over 200 ticks\n", host.duty_calls,
-              host.current_calls);
-  EXPECT_GT(host.current_calls, 0) << "the loop never read the host's phase currents";
-  EXPECT_GT(host.duty_calls, 0) << "the loop never wrote a duty cycle to the host";
-  for (int i = 0; i < 3; ++i) {
-    EXPECT_GE(host.last_duty[i], -1.0e-6F);
-    EXPECT_LE(host.last_duty[i], 1.0F + 1.0e-6F);
-  }
+    std::printf("\n[host-hal] %d duty write(s), %d current read(s) over 200 ticks\n", host.duty_calls,
+                host.current_calls);
+    EXPECT_GT(host.current_calls, 0) << "the loop never read the host's phase currents";
+    EXPECT_GT(host.duty_calls, 0) << "the loop never wrote a duty cycle to the host";
+    for (int i = 0; i < 3; ++i) {
+        EXPECT_GE(host.last_duty[i], -1.0e-6F);
+        EXPECT_LE(host.last_duty[i], 1.0F + 1.0e-6F);
+    }
 }
 
 TEST(HostHal, AHostWithoutTheRequiredCallbacksIsRejected) {
-  // A partially-filled callback set is a programming error, not a degraded mode: with no way to write a duty the loop
-  // would compute forever and never switch, and with no angle it would run on a constant. `valid()` is what lets the C
-  // ABI answer FOC_ERR_PARAM instead of pretending.
-  // 填了一半的回调集是编程错误，不是降级模式：没有占空比出口，环会永远计算却从不开关；没有角度，它就对着一个常数
-  // 跑。`valid()` 就是让 C ABI 能答 FOC_ERR_PARAM 而不是假装没事的东西。
-  Host host{};
-  driver::HalCallbacks callbacks = full_callbacks(host);
-  EXPECT_TRUE(callbacks.valid());
+    // A partially-filled callback set is a programming error, not a degraded mode: with no way to write a duty the loop
+    // would compute forever and never switch, and with no angle it would run on a constant. `valid()` is what lets the C
+    // ABI answer FOC_ERR_PARAM instead of pretending.
+    // 填了一半的回调集是编程错误，不是降级模式：没有占空比出口，环会永远计算却从不开关；没有角度，它就对着一个常数
+    // 跑。`valid()` 就是让 C ABI 能答 FOC_ERR_PARAM 而不是假装没事的东西。
+    Host host{};
+    driver::HalCallbacks callbacks = full_callbacks(host);
+    EXPECT_TRUE(callbacks.valid());
 
-  callbacks.pwm_write_duty = nullptr;
-  EXPECT_FALSE(callbacks.valid());
+    callbacks.pwm_write_duty = nullptr;
+    EXPECT_FALSE(callbacks.valid());
 
-  callbacks = full_callbacks(host);
-  callbacks.read_current = nullptr;
-  EXPECT_FALSE(callbacks.valid());
+    callbacks = full_callbacks(host);
+    callbacks.read_current = nullptr;
+    EXPECT_FALSE(callbacks.valid());
 
-  callbacks = full_callbacks(host);
-  callbacks.read_angle_mech_rad = nullptr;
-  EXPECT_FALSE(callbacks.valid());
+    callbacks = full_callbacks(host);
+    callbacks.read_angle_mech_rad = nullptr;
+    EXPECT_FALSE(callbacks.valid());
 
-  callbacks = full_callbacks(host);
-  callbacks.read_voltage_v = nullptr;
-  EXPECT_FALSE(callbacks.valid());
+    callbacks = full_callbacks(host);
+    callbacks.read_voltage_v = nullptr;
+    EXPECT_FALSE(callbacks.valid());
 
-  // Optional callbacks may be absent: no fault path, no speed measurement, no clock.
-  // 可选项可以缺席：没有故障通道、没有转速测量、没有时钟。
-  callbacks = full_callbacks(host);
-  EXPECT_TRUE(callbacks.valid());
+    // The power stage's fault output is required even though it looks optional, and that is the point of the case: a host
+    // that cannot say whether its bridge is desaturated would otherwise be indistinguishable from one that was told all
+    // clear. The dangerous default is refused here, not documented away.
+    // 功率级的故障输出看着可选，其实是必需的，而这个用例的意义就在这里：一个说不出自己的桥是否去饱和的主控方，否则就与
+    // 一个被告知"一切正常"的主控方无法区分。那个危险的默认值在这里被拒绝，而不是被写成文档。
+    callbacks = full_callbacks(host);
+    callbacks.read_drive_fault = nullptr;
+    EXPECT_FALSE(callbacks.valid());
+    EXPECT_FALSE(callbacks.valid_without_angle());
+
+    // Optional callbacks may be absent: no speed measurement, no clock.
+    // 可选项可以缺席：没有转速测量、没有时钟。
+    callbacks = full_callbacks(host);
+    EXPECT_TRUE(callbacks.valid());
 }
 
 TEST(HostHal, TheClockIsAbsentUnlessTheHostSuppliesOne) {
-  // Without `now_us` the clock reports 0 rather than inventing a timebase: a host with no clock must not be given the
-  // impression that the library measured an interval.
-  // 没有 `now_us` 时时钟报 0 而不是编一个时基：没有时钟的主控方不该产生"库量到了间隔"的印象。
-  Host host{};
-  driver::HalCallbacks callbacks = full_callbacks(host);
-  driver::CallbackClock clock(callbacks);
-  EXPECT_EQ(clock.now_us(), 0U);
+    // Without `now_us` the clock reports 0 rather than inventing a timebase: a host with no clock must not be given the
+    // impression that the library measured an interval.
+    // 没有 `now_us` 时时钟报 0 而不是编一个时基：没有时钟的主控方不该产生"库量到了间隔"的印象。
+    Host host{};
+    driver::HalCallbacks callbacks = full_callbacks(host);
+    driver::CallbackClock clock(callbacks);
+    EXPECT_EQ(clock.now_us(), 0U);
 
-  callbacks.now_us = [](void*) -> std::uint64_t { return 12345U; };
-  clock.bind(callbacks);
-  EXPECT_EQ(clock.now_us(), 12345U);
+    callbacks.now_us = [](void*) -> std::uint64_t { return 12345U; };
+    clock.bind(callbacks);
+    EXPECT_EQ(clock.now_us(), 12345U);
 }
 
 } // namespace foc

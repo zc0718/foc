@@ -1069,6 +1069,7 @@ auto to_hal_callbacks(const foc_hal_callbacks_t& c) noexcept -> driver::HalCallb
     if (declared >= sizeof(foc_hal_callbacks_t)) {
         callbacks.position_has_index = c.position_has_index;
         callbacks.position_index_pulse = c.position_index_pulse;
+        callbacks.read_drive_fault = c.read_drive_fault;
     }
     return callbacks;
 }
@@ -1180,6 +1181,19 @@ foc_err_t foc_bridge_create_host(const foc_motor_params_t* params, const foc_mot
     // current. Requiring it there would refuse the only configuration that can produce an absolute position.
     // 需要哪些回调取决于角度来自哪里，而这件事调用方已经在 setup 里说了：无感宿主本来就没有角度回调，因为观测器
     // 是用电压和电流算出角度的。在那里要求它，等于拒绝掉唯一能产生绝对位置的配置。
+    // The power stage's fault output is the one required callback whose absence gets its own answer, and the answer is
+    // not `FOC_ERR_PARAM`. A caller built against a header that predates the field never allocated it, so it arrives
+    // here as NULL through no fault of its own -- but "we did not ask" and "nothing is wrong" would then look the same,
+    // and the second is a claim only the drive can make. `FOC_ERR_NOT_IMPL` names the missing input instead of dressing
+    // it up as a malformed argument; `Motor::start()` gives the same answer on the C++ side.
+    // 功率级故障输出是唯一一个"缺失时单独回答"的必需回调，而且这个回答不是 `FOC_ERR_PARAM`。按旧头编译的调用方从未分配
+    // 过这个字段，于是它以 NULL 到达这里——错不在它；但那样一来"我们没问"与"什么都没坏"就长成一个样子，而第二句只有驱动
+    // 器有资格说。`FOC_ERR_NOT_IMPL` 说的是"缺了这个输入"，而不是把它打扮成一个参数错误；`Motor::start()` 在 C++ 侧
+    // 给的是同一个答案。
+    if (hal_callbacks.read_drive_fault == nullptr) {
+        return FOC_ERR_NOT_IMPL;
+    }
+
     const bool callbacks_ok =
         (resolved.use_observer_angle != 0) ? hal_callbacks.valid_without_angle() : hal_callbacks.valid();
     if (!callbacks_ok) {
@@ -1860,7 +1874,7 @@ const char* foc_bridge_fault_name(std::int32_t fault) {
     // Range-checked before the cast: an out-of-range int32 is not a valid enumerator.
     // 先查范围再转型：越界的 int32 不是合法枚举值。
     if ((fault < static_cast<std::int32_t>(foc::core::FaultCode::None)) ||
-        (fault > static_cast<std::int32_t>(foc::core::FaultCode::LostSync))) {
+        (fault > static_cast<std::int32_t>(foc::core::FaultCode::DriveFault))) {
         return "?";
     }
     switch (static_cast<foc::core::FaultCode>(fault)) {
@@ -1880,6 +1894,8 @@ const char* foc_bridge_fault_name(std::int32_t fault) {
         return "stall";
     case foc::core::FaultCode::LostSync:
         return "lost sync";
+    case foc::core::FaultCode::DriveFault:
+        return "drive fault";
     }
     return "?";
 }

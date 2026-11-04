@@ -86,6 +86,16 @@ static float on_read_voltage(void *user) { return (float)((Instance *)user)->v_b
 
 static float on_read_velocity(void *user) { return (float)((Instance *)user)->speed_mech_rad_s; }
 
+/* The power stage's fault output. The FMU models a healthy inverter: no gate driver, no desaturation, nothing to
+ * report. Required by the library rather than optional, so this function is the FMU *saying* that -- one line here
+ * instead of a NULL that would mean the same thing by accident. */
+/* 功率级的故障输出。FMU 建模的是一个健康逆变器：没有栅极驱动器、没有去饱和、没有东西可报。库把它当必需而不是可
+ * 选，所以这个函数就是 FMU 在**说**这件事——一行写在这里，而不是一个碰巧含义相同的 NULL。 */
+static int32_t on_read_drive_fault(void *user) {
+    (void)user;
+    return 0;
+}
+
 
 // ---------------------------------------------------------------- FMI plumbing
 #define INSTANCE(component) ((Instance *)(component))
@@ -139,6 +149,7 @@ fmi2Component fmi2Instantiate(fmi2String instanceName, fmi2Type fmuType, fmi2Str
     s->hal.read_angle_mech_rad = on_read_angle;
     s->hal.read_voltage_v = on_read_voltage;
     s->hal.read_velocity_rad_s = on_read_velocity;
+    s->hal.read_drive_fault = on_read_drive_fault;
     return s;
 }
 

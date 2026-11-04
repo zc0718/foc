@@ -49,12 +49,18 @@ class VirtualClock final {
 class ClockedPlantHal final {
   public:
     explicit ClockedPlantHal(PlantHal& base) noexcept
-        : pwm(base.pwm), current_sense(base.current_sense), position(base.position), dc_link(base.dc_link) {}
+        : pwm(base.pwm), current_sense(base.current_sense), position(base.position), dc_link(base.dc_link),
+          fault_input(base.fault_input) {}
 
     PlantPwm& pwm;
     PlantCurrentSense& current_sense;
     PlantPosition& position;
     PlantDcLink& dc_link;
+    // Forwarded rather than owned, for the same reason as the other four: it is a fifth reference into the one plant HAL,
+    // and a copy would be a second fault input that no injection would reach. Required by `Motor::start()`.
+    // 与其余四个同理是转发而不是持有：它是指向同一个 plant HAL 的第五个引用，而一份拷贝会是一个任何注入都到不了的第二个
+    // 故障输入。`Motor::start()` 要求它在。
+    driver::StubFaultInput& fault_input;
     VirtualClock clock;
 };
 

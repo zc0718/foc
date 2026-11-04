@@ -81,8 +81,8 @@ struct PlantParams final {
  * @since 0.1.0
  */
 struct PlantState final {
-    float id_a;         ///< [en] d-axis current in A. [zh] d 轴电流，A。
-    float iq_a;         ///< [en] q-axis current in A. [zh] q 轴电流，A。
+    float id_a;        ///< [en] d-axis current in A. [zh] d 轴电流，A。
+    float iq_a;        ///< [en] q-axis current in A. [zh] q 轴电流，A。
     double omega_mech; ///< [en] mechanical speed in rad/s. [zh] 机械转速，rad/s。
     double theta_mech; ///< [en] mechanical angle in rad. [zh] 机械角度，rad。
 };
@@ -336,6 +336,20 @@ class PmsmPlant final {
     [[nodiscard]] auto current_dq() const noexcept -> core::Dq<float>;
 
     /**
+     * @brief [en] The d-q voltage this plant is currently integrating, V.
+     * @brief [zh] 本 plant 当前正在积分的 d-q 电压，V。
+     * @note [en] A read-out, not an input: it is what the last `set_voltage_dq()` was given. It exists because the bus
+     *            current is `1.5*(v_d*i_d + v_q*i_q)/v_bus` and a caller that has to keep its own copy of the voltage
+     *            can pair it with a current from a different instant -- which is the one mistake that makes a power
+     *            measurement silently wrong instead of loudly wrong.
+     * @note [zh] 这是一个读数而不是输入：它就是上一次 `set_voltage_dq()` 被给到的值。它存在的理由是母线电流是
+     *            `1.5*(v_d*i_d + v_q*i_q)/v_bus`，而一个必须自己另存一份电压的调用方，可能把电压和**另一个时刻**的电流
+     *            配在一起——那正是让功率测量"悄悄错"而不是"明显错"的那个错误。
+     * @since 0.1.9
+     */
+    [[nodiscard]] auto voltage_dq() const noexcept -> core::Dq<float>;
+
+    /**
      * @brief [en] Electromagnetic torque in N*m.
      * @brief [zh] 电磁转矩，N·m。
      * @since 0.1.0
@@ -371,15 +385,18 @@ class PmsmPlant final {
     core::Dq<float> v_dq_;
     float load_nm_;
     float psi_f_;
-    float sat_depth_{0.0F};     ///< [en] fraction of Ld lost at heavy positive i_d; 0 = ideal. [zh] 强正 i_d 下 Ld 的损失比例；0 = 理想。
+    float sat_depth_{
+        0.0F}; ///< [en] fraction of Ld lost at heavy positive i_d; 0 = ideal. [zh] 强正 i_d 下 Ld 的损失比例；0 = 理想。
     float sat_current_a_{1.0F}; ///< [en] current at which that loss is engaged. [zh] 该损失生效的电流。
     float temp_c_{20.0F};       ///< [en] winding temperature, C. [zh] 绕组温度，°C。
-    float temp_alpha_{0.0F};    ///< [en] Rs temperature coefficient, 1/K; 0 = no drift. [zh] Rs 温度系数，1/K；0 = 不漂。
-    float noise_a_{0.0F};       ///< [en] current-noise peak, A; 0 = ideal sensor. [zh] 电流噪声峰值，A；0 = 理想传感器。
-    float qsat_depth_{0.0F};    ///< [en] fraction of Lq lost at heavy positive i_q; 0 = ideal. [zh] 强正 i_q 下 Lq 的损失比例；0 = 理想。
+    float temp_alpha_{0.0F}; ///< [en] Rs temperature coefficient, 1/K; 0 = no drift. [zh] Rs 温度系数，1/K；0 = 不漂。
+    float noise_a_{0.0F};    ///< [en] current-noise peak, A; 0 = ideal sensor. [zh] 电流噪声峰值，A；0 = 理想传感器。
+    float qsat_depth_{
+        0.0F}; ///< [en] fraction of Lq lost at heavy positive i_q; 0 = ideal. [zh] 强正 i_q 下 Lq 的损失比例；0 = 理想。
     float qsat_current_a_{1.0F}; ///< [en] current at which that loss is engaged. [zh] 该损失生效的电流。
-    float rm_ohm_{0.0F};        ///< [en] iron-loss shunt, ohm; 0 = no iron loss. [zh] 铁损并联电阻，Ω；0 = 无铁损。
-    mutable std::uint32_t noise_state_{0x9E3779B9U}; ///< [en] xorshift state; mutable because the noise belongs to the reading. [zh] xorshift 状态；mutable 因为噪声属于“读数”而非状态。
+    float rm_ohm_{0.0F};         ///< [en] iron-loss shunt, ohm; 0 = no iron loss. [zh] 铁损并联电阻，Ω；0 = 无铁损。
+    mutable std::uint32_t noise_state_{
+        0x9E3779B9U}; ///< [en] xorshift state; mutable because the noise belongs to the reading. [zh] xorshift 状态；mutable 因为噪声属于“读数”而非状态。
 };
 
 
@@ -462,9 +479,7 @@ inline auto PmsmPlant::effective_lq(float iq_a) const noexcept -> float {
     return static_cast<float>(params_.lq * (1.0F - (qsat_depth_ * std::tanh(iq_a / qsat_current_a_))));
 }
 
-inline void PmsmPlant::set_iron_loss(float rm_ohm) noexcept {
-    rm_ohm_ = (rm_ohm > 0.0F) ? rm_ohm : 0.0F;
-}
+inline void PmsmPlant::set_iron_loss(float rm_ohm) noexcept { rm_ohm_ = (rm_ohm > 0.0F) ? rm_ohm : 0.0F; }
 
 inline void PmsmPlant::set_winding_temperature(float temperature_c, float alpha_per_k) noexcept {
     temp_c_ = temperature_c;
@@ -514,15 +529,12 @@ inline auto PmsmPlant::derivative(const PlantState& s) const noexcept -> Derivat
     // d 上是 `−ω·lq·iq`，q 上是 `ω·(ld·id + ψf)`。若改成用 `v − Rs·i` 驱动，分子在稳态恒为零
     // ——电阻什么都不抽，模型静默失效。这个错犯过，并被本测试抓到。
     const float icd = (rm_ohm_ > 0.0F) ? ((-omega_e * lq * s.iq_a) / rm_ohm_) : 0.0F;
-    const float icq = (rm_ohm_ > 0.0F)
-                          ? (((omega_e * ld * s.id_a) + (omega_e * psi_f_)) / rm_ohm_)
-                          : 0.0F;
+    const float icq = (rm_ohm_ > 0.0F) ? (((omega_e * ld * s.id_a) + (omega_e * psi_f_)) / rm_ohm_) : 0.0F;
     const float itd = s.id_a + icd;
     const float itq = s.iq_a + icq;
 
     const float did = static_cast<float>((v_dq_.d - (rs * itd) + (omega_e * lq * s.iq_a)) / ld);
-    const float diq = static_cast<float>(
-        (v_dq_.q - (rs * itq) - (omega_e * ld * s.id_a) - (omega_e * psi_f_)) / lq);
+    const float diq = static_cast<float>((v_dq_.q - (rs * itq) - (omega_e * ld * s.id_a) - (omega_e * psi_f_)) / lq);
 
     const float torque = kOneAndHalf * poles * ((psi_f_ * s.iq_a) + ((ld - lq) * s.id_a * s.iq_a));
     const double domega =
@@ -552,8 +564,14 @@ inline void PmsmPlant::advance(float dt_s) noexcept {
 
     const double w = static_cast<double>(dt_s) / static_cast<double>(6);
     const double two = 2.0;
-    state_.id_a = static_cast<float>(static_cast<double>(state_.id_a) + (w * ((static_cast<double>(k1.did) + (two * (static_cast<double>(k2.did) + static_cast<double>(k3.did)))) + static_cast<double>(k4.did))));
-    state_.iq_a = static_cast<float>(static_cast<double>(state_.iq_a) + (w * ((static_cast<double>(k1.diq) + (two * (static_cast<double>(k2.diq) + static_cast<double>(k3.diq)))) + static_cast<double>(k4.diq))));
+    state_.id_a = static_cast<float>(
+        static_cast<double>(state_.id_a) +
+        (w * ((static_cast<double>(k1.did) + (two * (static_cast<double>(k2.did) + static_cast<double>(k3.did)))) +
+              static_cast<double>(k4.did))));
+    state_.iq_a = static_cast<float>(
+        static_cast<double>(state_.iq_a) +
+        (w * ((static_cast<double>(k1.diq) + (two * (static_cast<double>(k2.diq) + static_cast<double>(k3.diq)))) +
+              static_cast<double>(k4.diq))));
     state_.omega_mech = state_.omega_mech + (w * ((k1.domega + (two * (k2.domega + k3.domega))) + k4.domega));
     state_.theta_mech = state_.theta_mech + (w * ((k1.dtheta + (two * (k2.dtheta + k3.dtheta))) + k4.dtheta));
 }
@@ -579,6 +597,8 @@ inline auto PmsmPlant::core_loss_current_dq() const noexcept -> core::Dq<float> 
     return core::Dq<float>{(-omega_e * lq * state_.iq_a) / rm_ohm_,
                            ((omega_e * ld * state_.id_a) + (omega_e * psi_f_)) / rm_ohm_};
 }
+
+inline auto PmsmPlant::voltage_dq() const noexcept -> core::Dq<float> { return v_dq_; }
 
 inline auto PmsmPlant::current_dq() const noexcept -> core::Dq<float> {
     const core::Dq<float> core = core_loss_current_dq();

@@ -37,10 +37,10 @@ constexpr float kVBus = 24.0F;
 constexpr std::uint16_t kCapacity = 64;
 
 using NullMotor = foc::motor::Motor<foc::core::BackEmfObserver, foc::core::Svpwm, foc::core::Pi, foc::driver::StubHal>;
-using TracedMotor = foc::motor::Motor<foc::core::BackEmfObserver, foc::core::Svpwm, foc::core::Pi,
-                                      foc::driver::StubHal, foc::core::NullReferenceGenerator,
-                                      foc::core::NullFeedforward, foc::core::NullPositionControl,
-                                      foc::core::NullAlignment, foc::core::RingTrace<kCapacity>>;
+using TracedMotor =
+    foc::motor::Motor<foc::core::BackEmfObserver, foc::core::Svpwm, foc::core::Pi, foc::driver::StubHal,
+                      foc::core::NullReferenceGenerator, foc::core::NullFeedforward, foc::core::NullPositionControl,
+                      foc::core::NullAlignment, foc::core::RingTrace<kCapacity>>;
 
 static_assert(foc::core::concepts::is_trace_sink_v<foc::core::NullTrace>,
               "the null channel must satisfy the sink contract, or the loop would need two code paths");
@@ -82,21 +82,26 @@ struct HalWithClock final {
     using CurrentSense = foc::driver::ScriptedCurrent;
     using Position = foc::driver::SimPosition;
     using DcLink = foc::driver::StubDcLink;
+    using FaultInput = foc::driver::StubFaultInput;
 
     Pwm pwm;
     CurrentSense current_sense;
     Position position;
     DcLink dc_link;
     StepClock clock;
+    // This case is about the clock, so the fault input is present and quiet; `Motor::start()` refuses a HAL that cannot
+    // answer at all, and that refusal has its own case in `test_fault_input.cpp`.
+    // 本用例问的是时钟，所以故障输入在、且安静；`Motor::start()` 拒绝一个完全答不上来的 HAL，那个拒绝在
+    // `test_fault_input.cpp` 里有自己的用例。
+    FaultInput fault_input;
 };
 
-using ClockedTracedMotor = foc::motor::Motor<foc::core::BackEmfObserver, foc::core::Svpwm, foc::core::Pi, HalWithClock,
-                                             foc::core::NullReferenceGenerator, foc::core::NullFeedforward,
-                                             foc::core::NullPositionControl, foc::core::NullAlignment,
-                                             foc::core::RingTrace<8>>;
+using ClockedTracedMotor =
+    foc::motor::Motor<foc::core::BackEmfObserver, foc::core::Svpwm, foc::core::Pi, HalWithClock,
+                      foc::core::NullReferenceGenerator, foc::core::NullFeedforward, foc::core::NullPositionControl,
+                      foc::core::NullAlignment, foc::core::RingTrace<8>>;
 
-template <typename MotorType, typename HalType>
-auto run(MotorType& motor, HalType& hal, int steps, float iq) -> void {
+template <typename MotorType, typename HalType> auto run(MotorType& motor, HalType& hal, int steps, float iq) -> void {
     static_cast<void>(motor.init());
     static_cast<void>(motor.start());
     motor.set_torque(iq);
@@ -237,12 +242,10 @@ TEST(Trace, OffCostsNoMemoryAndNoBranch) {
     double off_best = 1e9;
     double on_best = 1e9;
     for (int round = 0; round < kRounds; ++round) {
-        const double off_ns = time_it([](foc::driver::StubHal& hal) {
-            return NullMotor(make_config(), make_policies<NullMotor>(), hal);
-        });
-        const double on_ns = time_it([](foc::driver::StubHal& hal) {
-            return TracedMotor(make_config(), make_policies<TracedMotor>(), hal);
-        });
+        const double off_ns = time_it(
+            [](foc::driver::StubHal& hal) { return NullMotor(make_config(), make_policies<NullMotor>(), hal); });
+        const double on_ns = time_it(
+            [](foc::driver::StubHal& hal) { return TracedMotor(make_config(), make_policies<TracedMotor>(), hal); });
         off_best = std::min(off_best, off_ns);
         on_best = std::min(on_best, on_ns);
         std::printf("[trace] round %d: %.1f ns/period off, %.1f ns/period on\n", round, off_ns, on_ns);
@@ -320,7 +323,7 @@ TEST(Trace, ASampleSurvivesTheTextRoundTripBitForBit) {
     original.i_q = 1.0F / 3.0F;
     original.i_ref_d = -123.456789F;
     original.i_ref_q = 1e-30F;
-    original.v_d = 3.4028235e38F; // FLT_MAX
+    original.v_d = 3.4028235e38F;  // FLT_MAX
     original.v_q = -5.877472e-39F; // a subnormal
     original.speed_mech = 0.1F;
     original.mode = 3U;
@@ -338,9 +341,9 @@ TEST(Trace, ASampleSurvivesTheTextRoundTripBitForBit) {
     foc::core::TraceSample parsed{};
     unsigned mode = 0U;
     unsigned status = 0U;
-    const int read = std::sscanf(line, "%u,%g,%g,%g,%g,%g,%g,%g,%u,%u", &parsed.t_us, &parsed.i_d, &parsed.i_q,
-                                 &parsed.i_ref_d, &parsed.i_ref_q, &parsed.v_d, &parsed.v_q, &parsed.speed_mech, &mode,
-                                 &status);
+    const int read =
+        std::sscanf(line, "%u,%g,%g,%g,%g,%g,%g,%g,%u,%u", &parsed.t_us, &parsed.i_d, &parsed.i_q, &parsed.i_ref_d,
+                    &parsed.i_ref_q, &parsed.v_d, &parsed.v_q, &parsed.speed_mech, &mode, &status);
     ASSERT_EQ(read, 10);
     parsed.mode = static_cast<std::uint8_t>(mode);
     parsed.status = static_cast<std::uint8_t>(status);
@@ -414,7 +417,8 @@ auto sample_of(std::uint32_t k) -> foc::core::TraceSample {
 auto same_sample(const foc::core::TraceSample& a, const foc::core::TraceSample& b) -> bool {
     return (a.t_us == b.t_us) && (std::memcmp(&a.i_d, &b.i_d, sizeof(float)) == 0) &&
            (std::memcmp(&a.i_q, &b.i_q, sizeof(float)) == 0) &&
-           (std::memcmp(&a.speed_mech, &b.speed_mech, sizeof(float)) == 0) && (a.mode == b.mode) && (a.status == b.status);
+           (std::memcmp(&a.speed_mech, &b.speed_mech, sizeof(float)) == 0) && (a.mode == b.mode) &&
+           (a.status == b.status);
 }
 
 } // namespace
@@ -575,5 +579,3 @@ TEST(Trace, ASpanOverNoStorageIsANullChannelRatherThanACrash) {
     EXPECT_FALSE(detached.push(sample_of(9U)));
     EXPECT_EQ(0U, detached.dropped()) << "attaching is a fresh ring, so its drop counter starts at zero";
 }
-
-

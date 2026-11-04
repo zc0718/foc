@@ -38,20 +38,45 @@ auto Svpwm::modulate(Ab<float> v_ab, float v_bus) noexcept -> SvpwmResult {
         return SvpwmResult{Uvw<float>{half(), half(), half()}, false, ErrorCode::Param};
     }
 
-    const Uvw<float> phase = inv_clarke(v_ab);
-    const float v_max =
-        (phase.u > phase.v) ? ((phase.u > phase.w) ? phase.u : phase.w) : ((phase.v > phase.w) ? phase.v : phase.w);
-    const float v_min =
-        (phase.u < phase.v) ? ((phase.u < phase.w) ? phase.u : phase.w) : ((phase.v < phase.w) ? phase.v : phase.w);
+    const Uvw<float> requested = inv_clarke(v_ab);
+    const float v_max = (requested.u > requested.v) ? ((requested.u > requested.w) ? requested.u : requested.w)
+                                                    : ((requested.v > requested.w) ? requested.v : requested.w);
+    const float v_min = (requested.u < requested.v) ? ((requested.u < requested.w) ? requested.u : requested.w)
+                                                    : ((requested.v < requested.w) ? requested.v : requested.w);
     const float offset = static_cast<float>(half() * (v_max + v_min));
+    // The whole linear-range condition, in one number: with the common-mode offset folded in, "a phase wants
+    // to leave [0, 1]" is exactly `(v_max - v_min) > v_bus`. Strict, so the boundary itself is legal.
+    // 整个线性区条件就是一个数：把共模偏置换进去后，"某一相想离开 [0,1]" 恰好等于 `(v_max - v_min) > v_bus`。
+    // 严格比较，所以边界本身是合法的。
+    const float spread = v_max - v_min;
+    const bool saturated = spread > v_bus;
 
-    const Uvw<float> duty{next_duty(phase.u, offset, v_bus), next_duty(phase.v, offset, v_bus),
-                          next_duty(phase.w, offset, v_bus)};
+    // Overmodulation: scale the **vector** onto the hexagon instead of clamping each phase to a rail.
+    // 过调制：把**矢量**缩放到六边形上，而不是把每一相各自夹到轨道上。
+    //
+    // The difference is not cosmetic and it is the whole reason this line exists. A per-phase clamp is one-sided:
+    // only the phase that wanted out gets corrected, so the correction is not a common-mode term, and Clarke does
+    // not remove it -- the applied vector both shrinks and **rotates** away from the command, and the rotation
+    // grows with the request instead of saturating: measured on the old law, 0.09 deg at 1.02x the inscribed
+    // circle, 18.90 deg at 3x, 23.30 deg at 5x, 26.63 deg at 10x and 29.60 deg at 100x -- it converges on 30 deg,
+    // the half-sector that separates a commanded ray from the vertex it is being dragged to. Scaling is a common
+    // factor on all three phases, so Clarke sees a pure magnitude change: the applied vector stays on the commanded
+    // ray and its tip lands on the hexagon, which makes the delivered magnitude the stated law
+    // `min(|v|, r_hex(theta))` rather than whatever the clamp happened to leave. It also keeps the asymptotic
+    // fundamental: as the request grows the duties become a two-level waveform and the fundamental reaches
+    // `2/pi*v_bus`, i.e. six-step, without a second algorithm.
+    // 差别不是美观问题，而是这一行的全部理由。逐相夹紧是**单边**的：只有想出去的那一相被修正，于是修正项不是共模量，
+    // Clarke 也消不掉它——实际施加的矢量既缩短又**旋转**，而且旋转量随请求**增大**、不会饱和：在老律上量到内切圆的
+    // 1.02 倍处 0.09 度、3 倍处 18.90 度、5 倍处 23.30 度、10 倍处 26.63 度、100 倍处 29.60 度——它收敛到 30 度，即指令方向
+    // 与被拖向的顶点之间的半个扇区。缩放是三相共同的比例因子，Clarke 看到的只是幅值变化：施加矢量仍**留在指令方向上**、
+    // 末端落在六边形上，于是交付幅值成为一条写下来的律 `min(|v|, r_hex(θ))`，而不是夹紧碰巧剩下的东西。它还保住了
+    // 渐近的基波：请求再大，占空比退化成两电平波形，基波到达 `2/π·v_bus`——即六步——**不需要第二套算法**。
+    const float scale = saturated ? (v_bus / spread) : 1.0F;
+    const Uvw<float> phase{requested.u * scale, requested.v * scale, requested.w * scale};
+    const float scaled_offset = offset * scale;
 
-    // Saturation means at least one phase wanted to leave [0, 1] before clamping.
-    const float limit_high = static_cast<float>(half() * v_bus) + offset;
-    const float limit_low = static_cast<float>(-half() * v_bus) + offset;
-    const bool saturated = (v_max > limit_high) || (v_min < limit_low);
+    const Uvw<float> duty{next_duty(phase.u, scaled_offset, v_bus), next_duty(phase.v, scaled_offset, v_bus),
+                          next_duty(phase.w, scaled_offset, v_bus)};
 
     return SvpwmResult{duty, saturated, ErrorCode::Ok};
 }

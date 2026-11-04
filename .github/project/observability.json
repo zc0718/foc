@@ -596,6 +596,45 @@
         }
       ],
       "no_effect": "The default is unchanged (`Integrator`), so no existing caller moves; `MtpaReference x DualInductanceObserver` stays `allow` on the same plant measurement."
+    },
+    {
+      "id": "O-43",
+      "date": "2026-11-04",
+      "leg": "model",
+      "capability": "The DC side became **observable**. Until now the bus was a constant in every model in this repository: `PlantDcLink` returned what it was given and `DiscreteInverter::begin_period()` latched it, so nothing could ask how much charge left the bus, and a brake chopper or a bus sag could not be seen at all. The port is the node equation `C*dv/dt = i_source - i_dc - i_load - i_chopper`, with the inverter's own draw booked at every integration sub-step of both plant paths.",
+      "source": "`test_sil_bus.cpp`, five cases. The energy book closes to **2.1e-14 J on 0.84 J of throughput (2.2e-14 relative)** -- and that is a derivation rather than a tolerance: inside a sub-step the current is constant, so `0.5*C*(v1^2-v0^2)` and `v_mean*i*h` are the *same expression*, which makes any residual above round-off a defect. The counterfactual is the interesting half: with no capacitance the report says `accountable=false`, the voltage does not move, and the 4.855 mJ the machine consumed appears as a residual rather than being explained -- an ideal source gives an account that **cannot** fail.",
+      "reopened": [],
+      "no_effect": "Nothing was re-opened, and nothing may be promoted: the port adds a quantity, it does not re-measure one. No existing row was measured through it (the bus was stiff for all of them), and `WithoutAMeterNothingChanges` asserts the bench's trajectory is unchanged when a meter is attached to an ideal source. The rows that used it are F08's, added the same day as O-44."
+    },
+    {
+      "id": "O-44",
+      "date": "2026-11-04",
+      "leg": "model",
+      "capability": "The brake chopper is now measured **on the bus instead of on its own return value**. `core::BrakeChopper` reports a duty, a period-average current and an I2t; until the bus node equation existed there was no second computation of any of them, so a policy that reported one thing and drove another would have passed every case it had.",
+      "source": "`test_sil_brake_chopper.cpp`, four cases. The identity that does the work: `r * i2t` and the energy the meter books against the resistor are two computations of one quantity, and they agree to **0.045 %** -- which is exactly the zero-order hold the policy works under, since it acts on the voltage at the start of a period while the meter integrates the sub-step mean. The counterfactual is the same fixture with one flag: no chopper, and the bus runs away 24.0 -> **35.571 V** with the regenerated energy showing up as stored energy to 1e-6; with one, it is held at **26.020 V** and the book closes to **4.4e-15 J** on 0.69 J. **This is how the integration defect was found**: the first version integrated `current_a^2` (the period average, squared) instead of `duty*(v/r)^2` (the mean square), which understates the resistor's heating by `1/duty_max` -- 2.9x at the 35 % duty this bench runs. The unit cases could not see it because `r*i2t` was never compared against a physical energy; they now derive their closed forms from the mean square (trip at 1477 periods against a predicted 1476, where the old law predicted 1680).",
+      "reopened": [
+        {
+          "claim": "core/brake_chopper.hpp",
+          "verdict": "still_short",
+          "missing": "the peak voltage and the ringing during clamping depend on parasitic inductance and ESR that the model does not have, so the row stays L2; what it now carries at bus level is whether the energy got where it should, not what the waveform looked like on the way"
+        }
+      ],
+      "no_effect": "No other row was re-opened: the chopper is not in `Motor`'s policy list, so no trajectory in any existing case contains one, and `WithoutAMeterNothingChanges` in `test_sil_bus.cpp` still asserts the bench is unchanged when the port is attached to an ideal source."
+    },
+    {
+      "id": "O-45",
+      "date": "2026-11-04",
+      "leg": "model",
+      "capability": "A pulse the gate driver refuses is now a measured quantity rather than an assumption. `core::MinPulse` states what the bridge will do (`applied`) and what that costs (`lost_vs`), and the switching plant implements the same driver rule **independently** -- it never calls the policy -- so the agreement in `test_sil_min_pulse.cpp` is a cross-check between two computations instead of one computation written twice.",
+      "source": "`test_sil_min_pulse.cpp`, four cases, plus `test_min_pulse.cpp`, five. The identity: the plant's mean pole voltages divided by the bus are the policy's `applied` duty to **1e-6 duty**, and `lost_vs/T` is the missing mean volts to **1e-5 V** -- on a request of (0.02, 0.50, 0.98) at `t_min = 10 %` the plant runs (0, 0.5, 1) and the two phases that straddle a rail are short **0.48 V** and long **0.48 V**. The falsifier: ten times the limit takes the delivered mean from **2.8800 V to 0.0000 V**, outside a 1 V bound written down first (`test_min_pulse` reports the same on the policy side, 0 -> 2.880e-4 V*s against a 2.400e-4 V*s bound). The carry, closed on the plant: over 100 periods at `d = 0.05` with `m = 0.10` the mean is **1.20000 V against 1.20000 V requested**, where the same class without a carry gives **0.00000 V**. And the correction this batch wrote down in advance -- 'if the volt-second difference cannot be separated from dead time, rewrite it as a ratio' -- was answered by measuring instead: with dead time on, a dropped pulse also removes the windows its edges carried, so the individual effects (**0.24 V** and **0.24 V**) double-count rather than add (**0.00 V** together), which is now the case's assertion.",
+      "reopened": [
+        {
+          "claim": "core/min_pulse.hpp",
+          "verdict": "still_short",
+          "missing": "the residue is exact only while `t_min` holds still: a driver whose limit moves with temperature or bus voltage breaks the equality and leaves only the bound, and the model has no such dependence -- so the row stays L2 and says so in its own header rather than promising an exactness it cannot keep."
+        }
+      ],
+      "no_effect": "No existing row was re-opened: `t_min_s` defaults to 0, which is an ideal driver, and the seven suites that include the plant report the same counts as before the field existed (`test_sil_inverter` 7/7, `test_sil_deadtime` 8/8, `test_sil_bus` 5/5, `test_board_check` 9/9, `test_commissioning` 16/16). The ledger entry for the plant change is `blast` B-06."
     }
   ]
 }

@@ -221,15 +221,17 @@ class FixedIdReference final {
     float last_v_bus{0.0F};
 };
 
-using MotorWithReference =
-    foc::motor::Motor<foc::core::BackEmfObserver, foc::core::Svpwm, foc::core::Pi, foc::driver::StubHal,
-                      FixedIdReference>;
+using MotorWithReference = foc::motor::Motor<foc::core::BackEmfObserver, foc::core::Svpwm, foc::core::Pi,
+                                             foc::driver::StubHal, FixedIdReference>;
 
 auto make_policies_with_reference() -> MotorWithReference::Policies {
     const foc::core::Pi::Config current{1.0F, 0.0F, -24.0F, 24.0F, -24.0F, 24.0F};
     const foc::core::Pi::Config speed{0.01F, 0.001F, -5.0F, 5.0F, -5.0F, 5.0F};
-    return MotorWithReference::Policies{foc::core::BackEmfObserver({0.5F, 4e-4F}), foc::core::Svpwm{},
-                                        foc::core::Pi{current}, foc::core::Pi{current}, foc::core::Pi{speed},
+    return MotorWithReference::Policies{foc::core::BackEmfObserver({0.5F, 4e-4F}),
+                                        foc::core::Svpwm{},
+                                        foc::core::Pi{current},
+                                        foc::core::Pi{current},
+                                        foc::core::Pi{speed},
                                         FixedIdReference{}};
 }
 
@@ -404,8 +406,11 @@ auto make_zero_gain_policies(const foc::motor::MotorConfig& config,
     const foc::core::Pi::Config zero{0.0F, 0.0F, -24.0F, 24.0F, -24.0F, 24.0F};
     foc::core::DecouplingFeedforward::Config ff = foc::feedforward_config(config);
     ff.terms = terms;
-    return MotorWithFeedforward::Policies{foc::core::BackEmfObserver({0.5F, 4e-4F}), foc::core::Svpwm{},
-                                          foc::core::Pi{zero}, foc::core::Pi{zero}, foc::core::Pi{zero},
+    return MotorWithFeedforward::Policies{foc::core::BackEmfObserver({0.5F, 4e-4F}),
+                                          foc::core::Svpwm{},
+                                          foc::core::Pi{zero},
+                                          foc::core::Pi{zero},
+                                          foc::core::Pi{zero},
                                           foc::core::NullReferenceGenerator{},
                                           foc::core::DecouplingFeedforward{ff}};
 }
@@ -430,9 +435,8 @@ TEST(Motor, FeedforwardAddsCrossCouplingAndBemfAfterThePi) {
     load_dq_current(hal, 1.0F, 2.0F);
 
     const foc::motor::MotorConfig config = make_config();
-    MotorWithFeedforward motor(config,
-                               make_zero_gain_policies(config, foc::core::DecouplingFeedforward::Terms::CrossAndBemf),
-                               hal);
+    MotorWithFeedforward motor(
+        config, make_zero_gain_policies(config, foc::core::DecouplingFeedforward::Terms::CrossAndBemf), hal);
     ASSERT_EQ(foc::ErrorCode::Ok, motor.init());
     ASSERT_EQ(foc::ErrorCode::Ok, motor.start());
     ASSERT_EQ(foc::ErrorCode::Ok, motor.tick(kDt));
@@ -471,8 +475,8 @@ TEST(Motor, EachFeedforwardTermCanBeSelectedOnItsOwn) {
         ASSERT_EQ(foc::ErrorCode::Ok, motor.start());
         ASSERT_EQ(foc::ErrorCode::Ok, motor.tick(kDt));
 
-        const foc::core::SvpwmResult expected = foc::core::Svpwm::modulate(
-            foc::core::Ab<float>{-omega_e * config.lq * 2.0F, 0.0F}, kVBus);
+        const foc::core::SvpwmResult expected =
+            foc::core::Svpwm::modulate(foc::core::Ab<float>{-omega_e * config.lq * 2.0F, 0.0F}, kVBus);
         EXPECT_NEAR(expected.duty.u, hal.pwm.last_duty().u, 1e-6F);
     }
 
@@ -483,8 +487,8 @@ TEST(Motor, EachFeedforwardTermCanBeSelectedOnItsOwn) {
         hal.position.set_velocity_rad_s(10.0F);
         load_dq_current(hal, 1.0F, 2.0F);
 
-        MotorWithFeedforward motor(
-            config, make_zero_gain_policies(config, foc::core::DecouplingFeedforward::Terms::Bemf), hal);
+        MotorWithFeedforward motor(config,
+                                   make_zero_gain_policies(config, foc::core::DecouplingFeedforward::Terms::Bemf), hal);
         ASSERT_EQ(foc::ErrorCode::Ok, motor.init());
         ASSERT_EQ(foc::ErrorCode::Ok, motor.start());
         ASSERT_EQ(foc::ErrorCode::Ok, motor.tick(kDt));
@@ -581,16 +585,21 @@ struct HalWithClock final {
     using CurrentSense = foc::driver::ScriptedCurrent;
     using Position = foc::driver::SimPosition;
     using DcLink = foc::driver::StubDcLink;
+    using FaultInput = foc::driver::StubFaultInput;
 
     Pwm pwm;
     CurrentSense current_sense;
     Position position;
     DcLink dc_link;
     StepClock clock;
+    // This case is about the clock, so the fault input is present and quiet; `Motor::start()` refuses a HAL that cannot
+    // answer at all, and that refusal has its own case in `test_fault_input.cpp`.
+    // 本用例问的是时钟，所以故障输入在、且安静；`Motor::start()` 拒绝一个完全答不上来的 HAL，那个拒绝在
+    // `test_fault_input.cpp` 里有自己的用例。
+    FaultInput fault_input;
 };
 
-using MotorWithClock =
-    foc::motor::Motor<foc::core::BackEmfObserver, foc::core::Svpwm, foc::core::Pi, HalWithClock>;
+using MotorWithClock = foc::motor::Motor<foc::core::BackEmfObserver, foc::core::Svpwm, foc::core::Pi, HalWithClock>;
 
 } // namespace
 
@@ -609,8 +618,7 @@ TEST(Motor, TickIntervalIsMeasuredOnlyWhenTheHalHasAClock) {
     const foc::core::Pi::Config speed{0.01F, 0.001F, -5.0F, 5.0F, -5.0F, 5.0F};
     MotorWithClock motor(make_config(),
                          MotorWithClock::Policies{foc::core::BackEmfObserver({0.5F, 4e-4F}), foc::core::Svpwm{},
-                                                  foc::core::Pi{current}, foc::core::Pi{current},
-                                                  foc::core::Pi{speed}},
+                                                  foc::core::Pi{current}, foc::core::Pi{current}, foc::core::Pi{speed}},
                          hal);
     ASSERT_EQ(foc::ErrorCode::Ok, motor.init());
     ASSERT_EQ(foc::ErrorCode::Ok, motor.start());
@@ -994,13 +1002,12 @@ TEST(Motor, AScalingRequestTheSlotCannotDeliverIsReportedNotIgnored) {
     make_hal(hal);
     hal.position.set_angle_mech_rad(0.0F);
 
-    MotorWithPlainSpeed motor(make_config(),
-                              MotorWithPlainSpeed::Policies{foc::core::BackEmfObserver({0.5F, 4e-4F}),
-                                                            foc::core::Svpwm{}, PlainController{}, PlainController{},
-                                                            PlainController{}, foc::core::NullReferenceGenerator{},
-                                                            foc::core::NullFeedforward{},
-                                                            foc::core::PositionP{{10.0F, 50.0F, 0.0F}}},
-                              hal);
+    MotorWithPlainSpeed motor(
+        make_config(),
+        MotorWithPlainSpeed::Policies{foc::core::BackEmfObserver({0.5F, 4e-4F}), foc::core::Svpwm{}, PlainController{},
+                                      PlainController{}, PlainController{}, foc::core::NullReferenceGenerator{},
+                                      foc::core::NullFeedforward{}, foc::core::PositionP{{10.0F, 50.0F, 0.0F}}},
+        hal);
     ASSERT_EQ(foc::ErrorCode::Ok, motor.init());
     ASSERT_EQ(foc::ErrorCode::Ok, motor.start());
 
@@ -1072,8 +1079,8 @@ auto speed_loop_gain(float bandwidth_rad_s, float j_true, float b_true, float j_
  *
  *     二分而不是扫描：增益对频率单调，所以穿越点能定位到任意精度，用例不必为"哪个栅格点最近"争论。
  */
-auto minus3db_over_requested(float bandwidth_rad_s, float j_true, float b_true, float j_hat, float b_hat, float kt)
-    -> double {
+auto minus3db_over_requested(float bandwidth_rad_s, float j_true, float b_true, float j_hat, float b_hat,
+                             float kt) -> double {
     const double target = 0.7071067811865476;
     double low = 0.05 * static_cast<double>(bandwidth_rad_s);
     double high = 8.0 * static_cast<double>(bandwidth_rad_s);

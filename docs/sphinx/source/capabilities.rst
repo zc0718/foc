@@ -87,9 +87,12 @@ coverage numbers at the time:
      - ``thermal_budget()``, ``derated_limit()``, ``fault_is_latched()`` -- "fine", "derating" and "stopped" are three
        readable numbers rather than one code. The split is by definition and not by accident: `output_allowed` is
        `active_mask == 0`, so a fault in this library *means* "authority removed", and derating -- the axis still
-       running at reduced authority -- is announced by `i_limit_a` falling below the configured `i_max_a`.
+       running at reduced authority -- is announced by `i_limit_a` falling below the configured `i_max_a`. `FaultCode`
+       names the mechanism, and the newest one (`DriveFault`) is the only cause that does not come from the protector at
+       all: it is the power stage telling on itself, read at the top of the tick and appended to the enum so every
+       existing number keeps its meaning.
      - na -- the configuration is a set of numbers; a nonsensical one is refused by the constructor that consumes it.
-     - ``Protection.TheTemperatureLadderIsGradedRatherThanACliff``
+     - ``FaultInjection.TheProtectorCodesReachTheFaultCodeThroughTheDocumentedHop``
      - na -- a supervisor over other capabilities, not an equation of its own.
      - --
    * - ``core/speed_from_angle.hpp``
@@ -148,6 +151,39 @@ coverage numbers at the time:
      - na -- a per-sample decoder; the only cross-frame state is the sector period, and a doubtful one is kept rather
        than taken.
      - F-10, F-11, F-12, F-13, C-8
+   * - ``core/brake_chopper.hpp``
+     - `BrakeChopperOutput`: `duty`, the **period-average** `current_a`, `i2t_a2s` (the integral of the **mean square**
+       current, which is not the square of that average -- they differ by `1/duty_max`), `on`, and the latched
+       `budget_exceeded`. In SIL the same quantities are readable a second way, from the bus: `r*i2t` and the energy the
+       meter books against the resistor agree to 0.045 %.
+     - `Param` for a chopper that cannot act (a zero resistor, an inverted band, a zero duty) and for a period
+       of zero, in both cases **without** changing any state; a spent budget latches rather than resuming.
+     - ``SilBrakeChopper.TheChopperHoldsTheBusAndTheBooksClose``
+     - na -- the bounds and the current law are asserted in the capability's own case, swept across the bus range with the wrong law computed alongside; the invariants suite is for statements that must hold whatever composition is selected, and a chopper is not on a composition axis.
+     - --
+   * - ``core/min_pulse.hpp``
+     - `MinPulseOutput` carries `duty` (what to command), `lost_vs` (the volt-seconds the bridge will not deliver,
+       signed and per phase) and `narrowed`; the residue is readable through `carry()`, which is what lets a trace
+       tell "the loop is asking for something the driver refuses" from "the loop is fine".
+     - `Param` for a limit that cannot *be* a limit (`2*t_min > T`, a negative limit, a zero period), for a bus
+       voltage that is not a voltage, and never by moving the residue: a refused call changes no state, so a bad
+       configuration cannot quietly bias the average it is supposed to correct.
+     - ``SilMinPulse.ThePlantTransmitsWhatTheDriverAllowsAndThePolicyKnowsThePrice``
+     - na -- a per-period policy whose only state is one residue, bounded by one minimum pulse and asserted as
+       such; it produces no continuous output for the invariants suite to hold.
+     - --
+   * - ``core/single_shunt.hpp``
+     - `ShuntVerdict` has three answers, not a boolean: `Measurable`, `WindowTooNarrow` (this period cannot be read, the
+       reference is near a sector boundary) and `NoActiveVector` (nothing flows through the shunt at all, so nothing is
+       missed), plus `ShuntWindow.window_s` / `needed_s`, which say how far from the edge the period was. A refused
+       reconstruction returns `valid == false` **and** zeros, so a caller that checks only the numbers sees a motor drawing
+       no current -- which is why the flag exists.
+     - `Param` for a configuration that can never read anything (`2*(t_settle+t_sample) >= T`), for a non-finite timing
+       and for a duty outside `[0, 1]`; a period outside the window is **not** a `Param` -- it is `Ok` with
+       `valid == false`, because a narrow window is the normal operating condition and not a configuration error.
+     - ``SingleShunt.TheBlindSpotIsLowModulationNotTheVoltageLimit``
+     - na -- stateless, one period at a time, and the thing it holds is a verdict rather than an accumulated value.
+     - --
    * - ``comm/frame.hpp``
      - `FrameStatus` names which check failed (start / length / checksum) instead of one generic failure, and
        `SequenceChecker` reports `missing` / `duplicate` / `out_of_order` separately. `missing` counts the frames

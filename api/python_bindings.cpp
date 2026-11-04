@@ -36,24 +36,24 @@ namespace {
 /**
  * @brief The module-level `FocError` type, published to the translator once the module is initialised. 模块级的 `FocError` 类型；模块初始化时交给异常翻译器。
  */
-PyObject *g_foc_error_type = nullptr;
+PyObject* g_foc_error_type = nullptr;
 
 /**
  *  [en] Raised when a C API call returns anything but FOC_OK; `code` is the raw foc_err_t.
  *  [zh] 任一 C API 调用返回非 FOC_OK 时抛出；`code` 是原始的 foc_err_t。
  */
 class FocError final : public std::runtime_error {
-public:
-    FocError(foc_err_t code, const std::string &what) : std::runtime_error(what), code_(code) {}
+  public:
+    FocError(foc_err_t code, const std::string& what) : std::runtime_error(what), code_(code) {}
 
     [[nodiscard]] auto code() const noexcept -> foc_err_t { return code_; }
 
-private:
+  private:
     foc_err_t code_;
 };
 
 
-auto error_name(foc_err_t code) -> const char * {
+auto error_name(foc_err_t code) -> const char* {
     switch (code) {
     case FOC_OK:
         return "FOC_OK";
@@ -75,7 +75,7 @@ auto error_name(foc_err_t code) -> const char * {
 /**
  * @brief Turn a return code into a Python-visible exception; the C call site stays one line. 把返回码变成 Python 可见的异常；C 调用点在源码里仍然只有一行。
  */
-auto check(foc_err_t code, const char *call) -> void {
+auto check(foc_err_t code, const char* call) -> void {
     if (code == FOC_OK) {
         return;
     }
@@ -107,11 +107,12 @@ struct PyHal final {
     py::object voltage;
     py::object velocity;
     py::object now_us;
+    py::object drive_fault;
     bool failed{false};
     std::string error;
 
     explicit PyHal(py::object plant) {
-        for (const char *name : {"write_duty", "read_current", "angle_mech_rad", "voltage_v"}) {
+        for (const char* name : {"write_duty", "read_current", "angle_mech_rad", "voltage_v"}) {
             if (!py::hasattr(plant, name)) {
                 throw py::attribute_error(std::string("the plant must provide ") + name + "()");
             }
@@ -122,9 +123,18 @@ struct PyHal final {
         voltage = plant.attr("voltage_v");
         velocity = py::getattr(plant, "velocity_rad_s", py::none());
         now_us = py::getattr(plant, "now_us", py::none());
+        // Optional on the Python side, **required** on the C side: the library refuses a host that cannot say whether the
+        // power stage is faulted, so this binding answers the question explicitly instead of leaving it blank. A Python
+        // plant is a simulation: it has no gate driver and therefore nothing to report, and that sentence is written
+        // here once rather than being implied by a NULL. A plant that does model a fault output just defines
+        // `drive_faulted()` and its answer is used instead.
+        // Python 侧可选，**C 侧必需**：库拒绝一个说不出功率级有没有故障的主控方，所以这个绑定显式地回答那个问题，而不是
+        // 把它留空。Python 的 plant 是仿真：它没有栅极驱动器，也就没有东西可报，这句话在这里写一次，而不是靠 NULL 暗示。
+        // 真的建模了故障输出的 plant 只要定义 `drive_faulted()`，它的答案就会被用上。
+        drive_fault = py::getattr(plant, "drive_faulted", py::none());
     }
 
-    void fail(const char *what) noexcept {
+    void fail(const char* what) noexcept {
         if (!failed) {
             failed = true;
             error = what;
@@ -141,26 +151,27 @@ struct PyHal final {
         out.read_voltage_v = &PyHal::on_read_voltage;
         out.read_velocity_rad_s = velocity.is_none() ? nullptr : &PyHal::on_read_velocity;
         out.now_us = now_us.is_none() ? nullptr : &PyHal::on_now_us;
+        out.read_drive_fault = &PyHal::on_read_drive_fault;
         return out;
     }
 
   private:
-    static void on_write_duty(void *user, const float duty_uvw[3]) {
-        auto *self = static_cast<PyHal *>(user);
+    static void on_write_duty(void* user, const float duty_uvw[3]) {
+        auto* self = static_cast<PyHal*>(user);
         if (self->failed) {
             return;
         }
         try {
             self->write_duty(duty_uvw[0], duty_uvw[1], duty_uvw[2]);
-        } catch (const py::error_already_set &e) {
+        } catch (const py::error_already_set& e) {
             self->fail(e.what());
-        } catch (const std::exception &e) {
+        } catch (const std::exception& e) {
             self->fail(e.what());
         }
     }
 
-    static void on_read_current(void *user, float uvw_a[3]) {
-        auto *self = static_cast<PyHal *>(user);
+    static void on_read_current(void* user, float uvw_a[3]) {
+        auto* self = static_cast<PyHal*>(user);
         if (self->failed) {
             uvw_a[0] = 0.0F;
             uvw_a[1] = 0.0F;
@@ -172,68 +183,86 @@ struct PyHal final {
             uvw_a[0] = py::cast<float>(values[0]);
             uvw_a[1] = py::cast<float>(values[1]);
             uvw_a[2] = py::cast<float>(values[2]);
-        } catch (const py::error_already_set &e) {
+        } catch (const py::error_already_set& e) {
             self->fail(e.what());
-        } catch (const std::exception &e) {
+        } catch (const std::exception& e) {
             self->fail(e.what());
         }
     }
 
-    static auto on_read_angle(void *user) -> float {
-        auto *self = static_cast<PyHal *>(user);
+    static auto on_read_angle(void* user) -> float {
+        auto* self = static_cast<PyHal*>(user);
         if (self->failed) {
             return 0.0F;
         }
         try {
             return py::cast<float>(self->angle());
-        } catch (const py::error_already_set &e) {
+        } catch (const py::error_already_set& e) {
             self->fail(e.what());
-        } catch (const std::exception &e) {
+        } catch (const std::exception& e) {
             self->fail(e.what());
         }
         return 0.0F;
     }
 
-    static auto on_read_voltage(void *user) -> float {
-        auto *self = static_cast<PyHal *>(user);
+    static auto on_read_voltage(void* user) -> float {
+        auto* self = static_cast<PyHal*>(user);
         if (self->failed) {
             return 0.0F;
         }
         try {
             return py::cast<float>(self->voltage());
-        } catch (const py::error_already_set &e) {
+        } catch (const py::error_already_set& e) {
             self->fail(e.what());
-        } catch (const std::exception &e) {
+        } catch (const std::exception& e) {
             self->fail(e.what());
         }
         return 0.0F;
     }
 
-    static auto on_read_velocity(void *user) -> float {
-        auto *self = static_cast<PyHal *>(user);
+    static auto on_read_velocity(void* user) -> float {
+        auto* self = static_cast<PyHal*>(user);
         if (self->failed) {
             return 0.0F;
         }
         try {
             return py::cast<float>(self->velocity());
-        } catch (const py::error_already_set &e) {
+        } catch (const py::error_already_set& e) {
             self->fail(e.what());
-        } catch (const std::exception &e) {
+        } catch (const std::exception& e) {
             self->fail(e.what());
         }
         return 0.0F;
     }
 
-    static auto on_now_us(void *user) -> std::uint64_t {
-        auto *self = static_cast<PyHal *>(user);
+    static auto on_read_drive_fault(void* user) -> std::int32_t {
+        auto* self = static_cast<PyHal*>(user);
+        if (self->failed) {
+            return 0;
+        }
+        if (self->drive_fault.is_none()) {
+            return 0; // a simulated plant: no gate driver, so nothing to report
+        }
+        try {
+            return py::cast<bool>(self->drive_fault()) ? 1 : 0;
+        } catch (const py::error_already_set& e) {
+            self->fail(e.what());
+        } catch (const std::exception& e) {
+            self->fail(e.what());
+        }
+        return 0;
+    }
+
+    static auto on_now_us(void* user) -> std::uint64_t {
+        auto* self = static_cast<PyHal*>(user);
         if (self->failed) {
             return 0U;
         }
         try {
             return py::cast<std::uint64_t>(self->now_us());
-        } catch (const py::error_already_set &e) {
+        } catch (const py::error_already_set& e) {
             self->fail(e.what());
-        } catch (const std::exception &e) {
+        } catch (const std::exception& e) {
             self->fail(e.what());
         }
         return 0U;
@@ -246,12 +275,10 @@ struct PyHal final {
 class Trace;
 
 class Motor final {
-public:
-    explicit Motor(const foc_motor_params_t &params) {
-        check(foc_motor_create(&params, &handle_), "foc_motor_create");
-    }
+  public:
+    explicit Motor(const foc_motor_params_t& params) { check(foc_motor_create(&params, &handle_), "foc_motor_create"); }
 
-    Motor(const foc_motor_params_t &params, const foc_motor_setup_t &setup) {
+    Motor(const foc_motor_params_t& params, const foc_motor_setup_t& setup) {
         check(foc_motor_create_ex(&params, &setup, &handle_), "foc_motor_create_ex");
     }
 
@@ -259,13 +286,13 @@ public:
      * @brief [en] A motor whose plant is this Python object.
      * @brief [zh] 被控对象为这个 Python 对象的电机。
      */
-    Motor(const foc_motor_params_t &params, py::object plant) { create_host(params, nullptr, std::move(plant)); }
+    Motor(const foc_motor_params_t& params, py::object plant) { create_host(params, nullptr, std::move(plant)); }
 
     /**
      * @brief [en] The same, with an explicit setup.
      * @brief [zh] 同上，但显式给出设置。
      */
-    Motor(const foc_motor_params_t &params, const foc_motor_setup_t &setup, py::object plant) {
+    Motor(const foc_motor_params_t& params, const foc_motor_setup_t& setup, py::object plant) {
         create_host(params, &setup, std::move(plant));
     }
 
@@ -281,14 +308,12 @@ public:
 
     ~Motor() { close(); }
 
-    Motor(const Motor &) = delete;
-    auto operator=(const Motor &) -> Motor & = delete;
+    Motor(const Motor&) = delete;
+    auto operator=(const Motor&) -> Motor& = delete;
 
-    Motor(Motor &&other) noexcept : handle_(other.handle_), plant_(std::move(other.plant_)) {
-        other.handle_ = nullptr;
-    }
+    Motor(Motor&& other) noexcept : handle_(other.handle_), plant_(std::move(other.plant_)) { other.handle_ = nullptr; }
 
-    auto operator=(Motor &&other) noexcept -> Motor & {
+    auto operator=(Motor&& other) noexcept -> Motor& {
         if (this != &other) {
             close();
             handle_ = other.handle_;
@@ -316,11 +341,9 @@ public:
 
     void set_torque(double iq_a) { check(foc_set_torque_f64(handle_, iq_a), "foc_set_torque"); }
 
-    void set_position(double position_rad) {
-        check(foc_set_position_f64(handle_, position_rad), "foc_set_position");
-    }
+    void set_position(double position_rad) { check(foc_set_position_f64(handle_, position_rad), "foc_set_position"); }
 
-    void set_command(const foc_motor_command_t &command) {
+    void set_command(const foc_motor_command_t& command) {
         check(foc_set_command(handle_, &command), "foc_set_command");
     }
 
@@ -352,7 +375,7 @@ public:
      * @brief [en] Attach a trace window (or detach with None). Defined after `Trace`, whose layout it needs.
      * @brief [zh] 挂上轨迹窗口（或用 None 拆除）。定义放在 `Trace` 之后，因为它需要后者的布局。
      */
-    void set_trace(const py::object &trace);
+    void set_trace(const py::object& trace);
 
     void tick(double dt_s) {
         check(foc_tick(handle_, static_cast<float>(dt_s)), "foc_tick");
@@ -392,7 +415,7 @@ public:
      */
     [[nodiscard]] auto handle() const noexcept -> foc_motor_t { return handle_; }
 
-private:
+  private:
     /**
      * @brief [en] Present only for a host-fed motor: it owns the Python object the callbacks point at.
      * @brief [zh] 仅主控电机有：它拥有回调所指向的那个 Python 对象。
@@ -405,7 +428,7 @@ private:
     std::unique_ptr<PyHal> plant_{};
     foc_motor_t handle_{nullptr};
 
-    void create_host(const foc_motor_params_t &params, const foc_motor_setup_t *setup, py::object plant) {
+    void create_host(const foc_motor_params_t& params, const foc_motor_setup_t* setup, py::object plant) {
         plant_ = std::make_unique<PyHal>(std::move(plant));
         const foc_hal_callbacks_t callbacks = plant_->callbacks();
         check(foc_motor_create_host(&params, setup, &callbacks, &handle_), "foc_motor_create_host");
@@ -427,17 +450,17 @@ private:
  * @since 0.1.8
  */
 class Trace final {
-public:
+  public:
     explicit Trace(std::size_t capacity) : samples_(capacity) {}
 
     [[nodiscard]] auto capacity() const -> std::size_t { return samples_.size(); }
-    [[nodiscard]] auto data() -> foc_trace_sample_t * { return samples_.data(); }
+    [[nodiscard]] auto data() -> foc_trace_sample_t* { return samples_.data(); }
 
     /**
      * @brief [en] The retained window as a list of dicts, oldest first.
      * @brief [zh] 保留窗口，以 dict 列表给出，最旧的在前面。
      */
-    [[nodiscard]] auto samples(const Motor &motor) const -> py::list {
+    [[nodiscard]] auto samples(const Motor& motor) const -> py::list {
         py::list out;
         const std::uint32_t size = foc_motor_trace_size(motor.handle());
         for (std::uint32_t index = 0; index < size; ++index) {
@@ -461,17 +484,17 @@ public:
         return out;
     }
 
-private:
+  private:
     std::vector<foc_trace_sample_t> samples_;
 };
 
-void Motor::set_trace(const py::object &trace) {
+void Motor::set_trace(const py::object& trace) {
     if (trace.is_none()) {
         check(foc_motor_set_trace(handle_, nullptr, 0U), "foc_motor_set_trace");
         attached_trace_ = py::object();
         return;
     }
-    Trace &owned = trace.cast<Trace &>();
+    Trace& owned = trace.cast<Trace&>();
     check(foc_motor_set_trace(handle_, owned.data(), static_cast<std::uint32_t>(owned.capacity())),
           "foc_motor_set_trace");
     attached_trace_ = trace;
@@ -481,14 +504,15 @@ void Motor::set_trace(const py::object &trace) {
  *  [en] RAII owner of one `foc_protector_t`, same discipline as `Motor`: destroyed exactly once.
  *  [zh] 一个 `foc_protector_t` 的 RAII 持有者，纪律与 `Motor` 相同：只销毁一次。
  */
-class Protector final {public:
+class Protector final {
+  public:
     explicit Protector(foc_protector_t handle) noexcept : handle_(handle) {}
     ~Protector() { close(); }
 
-    Protector(const Protector &) = delete;
-    auto operator=(const Protector &) -> Protector & = delete;
-    Protector(Protector &&other) noexcept : handle_(other.handle_) { other.handle_ = nullptr; }
-    auto operator=(Protector &&other) noexcept -> Protector & {
+    Protector(const Protector&) = delete;
+    auto operator=(const Protector&) -> Protector& = delete;
+    Protector(Protector&& other) noexcept : handle_(other.handle_) { other.handle_ = nullptr; }
+    auto operator=(Protector&& other) noexcept -> Protector& {
         if (this != &other) {
             close();
             handle_ = other.handle_;
@@ -502,8 +526,8 @@ class Protector final {public:
      *             the C output struct and a dict would invite name drift.
      * @brief [zh] 一个控制周期。返回元组而非 dict，因为这六个数在 C 输出结构里是有位置的，dict 会招来名字漂移。
      */
-    [[nodiscard]] auto step(float i_magnitude_a, float v_bus_v, float temperature_c, float omega_e_rad_s,
-                            float dt_s, float flux_error_ratio, bool flux_valid) const -> py::tuple {
+    [[nodiscard]] auto step(float i_magnitude_a, float v_bus_v, float temperature_c, float omega_e_rad_s, float dt_s,
+                            float flux_error_ratio, bool flux_valid) const -> py::tuple {
         foc_protection_input_t in{};
         in.struct_size = static_cast<std::uint32_t>(sizeof(in));
         in.i_magnitude_a = i_magnitude_a;
@@ -520,9 +544,9 @@ class Protector final {public:
         // The fault name comes from the same table the C users read, so the two Faces cannot
         // disagree about what fault 3 is called.
         // 故障名取自 C 用户读的同一张表，于是两个"面"不会对"3 号故障叫什么"产生分歧。
-        const char *name = foc_fault_name(out.fault);
-        return py::make_tuple(name, out.i_limit_a, out.output_allowed != 0, out.i2t_budget,
-                              out.latched_mask != 0U, out.active_mask);
+        const char* name = foc_fault_name(out.fault);
+        return py::make_tuple(name, out.i_limit_a, out.output_allowed != 0, out.i2t_budget, out.latched_mask != 0U,
+                              out.active_mask);
     }
 
     void reset(bool cold) const { check(foc_protector_reset(handle_, cold ? 1 : 0), "foc_protector_reset"); }
@@ -536,7 +560,7 @@ class Protector final {public:
 
     [[nodiscard]] auto alive() const noexcept -> bool { return handle_ != nullptr; }
 
-private:
+  private:
     foc_protector_t handle_{nullptr};
 };
 
@@ -562,8 +586,9 @@ PYBIND11_MODULE(foc_python, m) {
 
     m.attr("__version__") = foc_version_string();
 
-    py::enum_<foc_err_t>(m, "ErrorCode", "[en] Return codes, frozen and identical to the C side.\n"
-                                         "[zh] 返回码，与 C 侧完全一致且数值已冻结。")
+    py::enum_<foc_err_t>(m, "ErrorCode",
+                         "[en] Return codes, frozen and identical to the C side.\n"
+                         "[zh] 返回码，与 C 侧完全一致且数值已冻结。")
         .value("OK", FOC_OK)
         .value("PARAM", FOC_ERR_PARAM)
         .value("NO_RESOURCE", FOC_ERR_NO_RESOURCE)
@@ -602,8 +627,9 @@ PYBIND11_MODULE(foc_python, m) {
     // makes the caller believe a capability it does not have.
     // 电机真正在跑的模式。`MotorSetup.observer` 是请求，这个是回答；`foc_observer_t` 上的注释说明了为什么两者要分开：
     // 一个接受某模式却悄悄跑默认值的选择器，会让调用方相信自己拥有一个并不存在的能力。
-    py::enum_<foc_observer_t>(m, "Observer", "[en] The observer actually running.\n"
-                                            "[zh] 真正在跑的观测器。")
+    py::enum_<foc_observer_t>(m, "Observer",
+                              "[en] The observer actually running.\n"
+                              "[zh] 真正在跑的观测器。")
         .value("BACK_EMF", FOC_OBSERVER_BACK_EMF)
         .value("NONLINEAR_FLUX", FOC_OBSERVER_NONLINEAR_FLUX)
         .value("HFI", FOC_OBSERVER_HFI)
@@ -619,7 +645,7 @@ PYBIND11_MODULE(foc_python, m) {
             if (failure != nullptr) {
                 std::rethrow_exception(failure);
             }
-        } catch (const FocError &error) {
+        } catch (const FocError& error) {
             // hand the raw code to Python as well: `except FocError as e: e.code`
             py::object error_type = py::reinterpret_borrow<py::object>(g_foc_error_type);
             py::object instance = error_type(py::str(error.what()));
@@ -629,8 +655,8 @@ PYBIND11_MODULE(foc_python, m) {
     });
 
     py::class_<foc_motor_params_t>(m, "MotorParams",
-                                    "[en] Electrical / mechanical parameters, SI units.\n"
-                                    "[zh] 电气与机械参数，SI 单位。")
+                                   "[en] Electrical / mechanical parameters, SI units.\n"
+                                   "[zh] 电气与机械参数，SI 单位。")
         .def(py::init([](float rs, float ld, float lq, float kt, float j, float b, std::uint8_t pole_pairs) {
                  foc_motor_params_t params{};
                  params.rs = rs;
@@ -651,7 +677,7 @@ PYBIND11_MODULE(foc_python, m) {
         .def_readwrite("j", &foc_motor_params_t::j)
         .def_readwrite("b", &foc_motor_params_t::b)
         .def_readwrite("pole_pairs", &foc_motor_params_t::pole_pairs)
-        .def("__repr__", [](const foc_motor_params_t &p) {
+        .def("__repr__", [](const foc_motor_params_t& p) {
             return py::str("MotorParams(rs={}, ld={}, lq={}, kt={}, j={}, b={}, pole_pairs={})")
                 .format(p.rs, p.ld, p.lq, p.kt, p.j, p.b, p.pole_pairs);
         });
@@ -665,9 +691,8 @@ PYBIND11_MODULE(foc_python, m) {
         .def(py::init([](float i_max_a, float pwm_freq_hz, float deadtime_ns, float v_bus_v,
                          float current_bandwidth_rad_s, float speed_bandwidth_rad_s, float speed_loop_period_s,
                          float position_bandwidth_rad_s, float velocity_limit_rad_s, float position_loop_period_s,
-                         float position_accel_limit_rad_s2,
-                         float align_current_a, float align_ramp_s, float align_hold_s, float align_tolerance_rad,
-                         float align_verify_s, float align_angle_e_rad) {
+                         float position_accel_limit_rad_s2, float align_current_a, float align_ramp_s,
+                         float align_hold_s, float align_tolerance_rad, float align_verify_s, float align_angle_e_rad) {
                  foc_motor_setup_t setup{};
                  setup.struct_size = sizeof(foc_motor_setup_t);
                  setup.i_max_a = i_max_a;
@@ -694,20 +719,20 @@ PYBIND11_MODULE(foc_python, m) {
              py::arg("speed_bandwidth_rad_s") = 0.0F, py::arg("speed_loop_period_s") = 0.0F,
              py::arg("position_bandwidth_rad_s") = 0.0F, py::arg("velocity_limit_rad_s") = 0.0F,
              py::arg("position_loop_period_s") = 0.0F, py::arg("position_accel_limit_rad_s2") = 0.0F,
-             py::arg("align_current_a") = 0.0F,
-             py::arg("align_ramp_s") = 0.0F, py::arg("align_hold_s") = 0.0F,
+             py::arg("align_current_a") = 0.0F, py::arg("align_ramp_s") = 0.0F, py::arg("align_hold_s") = 0.0F,
              py::arg("align_tolerance_rad") = 0.0F, py::arg("align_verify_s") = 0.0F,
              py::arg("align_angle_e_rad") = 0.0F)
         .def_readonly("struct_size", &foc_motor_setup_t::struct_size)
-                // The requested observer mode, as the enum rather than the raw integer it is stored in: an author sets
+        // The requested observer mode, as the enum rather than the raw integer it is stored in: an author sets
         // `setup.observer = foc.Observer.HFI`, and the library answers with the mode it actually runs. Before this the
         // field was reachable from C and not from Python, which is the same gap as the status report had.
         // 请求的观测器模式，以枚举而不是它所存储的裸整数给出：作者写 `setup.observer = foc.Observer.HFI`，而库用它真正
         // 在跑的模式回答。在此之前这个字段从 C 可达、从 Python 不可达，与状态报告曾经的缺口是同一个。
         .def_property(
-            "observer",
-            [](const foc_motor_setup_t &setup) { return static_cast<foc_observer_t>(setup.observer); },
-            [](foc_motor_setup_t &setup, foc_observer_t observer) { setup.observer = static_cast<std::int32_t>(observer); })
+            "observer", [](const foc_motor_setup_t& setup) { return static_cast<foc_observer_t>(setup.observer); },
+            [](foc_motor_setup_t& setup, foc_observer_t observer) {
+                setup.observer = static_cast<std::int32_t>(observer);
+            })
         // The injection half of the setup, which was in the C struct and unreachable from Python: without these an author
         // could select `Observer.HFI` and then have no way to give it a carrier. `hfi_size()` answers what to put here.
         // 设置的注入那一半，本来在 C 结构里、从 Python 不可达：没有它们，作者能选 `Observer.HFI` 却没办法给它一个载波。
@@ -717,7 +742,7 @@ PYBIND11_MODULE(foc_python, m) {
         .def_readwrite("blend_start_rad_s", &foc_motor_setup_t::blend_start_rad_s)
         .def_readwrite("blend_end_rad_s", &foc_motor_setup_t::blend_end_rad_s)
         .def_readwrite("handover_lpf_hz", &foc_motor_setup_t::handover_lpf_hz)
-.def_readwrite("i_max_a", &foc_motor_setup_t::i_max_a)
+        .def_readwrite("i_max_a", &foc_motor_setup_t::i_max_a)
         .def_readwrite("pwm_freq_hz", &foc_motor_setup_t::pwm_freq_hz)
         .def_readwrite("deadtime_ns", &foc_motor_setup_t::deadtime_ns)
         .def_readwrite("v_bus_v", &foc_motor_setup_t::v_bus_v)
@@ -734,7 +759,7 @@ PYBIND11_MODULE(foc_python, m) {
         .def_readwrite("align_tolerance_rad", &foc_motor_setup_t::align_tolerance_rad)
         .def_readwrite("align_verify_s", &foc_motor_setup_t::align_verify_s)
         .def_readwrite("align_angle_e_rad", &foc_motor_setup_t::align_angle_e_rad)
-        .def("__repr__", [](const foc_motor_setup_t &s) {
+        .def("__repr__", [](const foc_motor_setup_t& s) {
             return py::str("MotorSetup(i_max_a={}, pwm_freq_hz={}, deadtime_ns={}, v_bus_v={}, "
                            "current_bandwidth_rad_s={}, speed_bandwidth_rad_s={}, speed_loop_period_s={}, "
                            "position_bandwidth_rad_s={}, velocity_limit_rad_s={}, position_loop_period_s={}, "
@@ -746,10 +771,10 @@ PYBIND11_MODULE(foc_python, m) {
         });
 
     py::class_<foc_motor_command_t>(m, "MotorCommand",
-                                      "[en] One position move: target, per-move current ceiling, feedforward torque.\n"
-                                      "[zh] 一次位置运动：目标、本次运动的电流上限、前馈转矩。")
-        .def(py::init([](float position_rad, float max_current_a, float feedforward_current_a,
-                         float max_velocity_rad_s, float max_accel_rad_s2) {
+                                    "[en] One position move: target, per-move current ceiling, feedforward torque.\n"
+                                    "[zh] 一次位置运动：目标、本次运动的电流上限、前馈转矩。")
+        .def(py::init([](float position_rad, float max_current_a, float feedforward_current_a, float max_velocity_rad_s,
+                         float max_accel_rad_s2) {
                  foc_motor_command_t command{};
                  command.position_rad = position_rad;
                  command.max_current_a = max_current_a;
@@ -758,33 +783,32 @@ PYBIND11_MODULE(foc_python, m) {
                  command.max_accel_rad_s2 = max_accel_rad_s2;
                  return command;
              }),
-             py::arg("position_rad") = 0.0F, py::arg("max_current_a") = 0.0F,
-             py::arg("feedforward_current_a") = 0.0F, py::arg("max_velocity_rad_s") = 0.0F,
-             py::arg("max_accel_rad_s2") = 0.0F)
+             py::arg("position_rad") = 0.0F, py::arg("max_current_a") = 0.0F, py::arg("feedforward_current_a") = 0.0F,
+             py::arg("max_velocity_rad_s") = 0.0F, py::arg("max_accel_rad_s2") = 0.0F)
         .def_readwrite("position_rad", &foc_motor_command_t::position_rad)
         .def_readwrite("max_current_a", &foc_motor_command_t::max_current_a)
         .def_readwrite("feedforward_current_a", &foc_motor_command_t::feedforward_current_a)
         .def_readwrite("max_velocity_rad_s", &foc_motor_command_t::max_velocity_rad_s)
         .def_readwrite("max_accel_rad_s2", &foc_motor_command_t::max_accel_rad_s2)
-        .def("__repr__", [](const foc_motor_command_t &c) {
+        .def("__repr__", [](const foc_motor_command_t& c) {
             return py::str("MotorCommand(position_rad={}, max_current_a={}, feedforward_current_a={})")
                 .format(c.position_rad, c.max_current_a, c.feedforward_current_a);
         });
 
     py::class_<Motor>(m, "Motor",
-                       "[en] One motor instance. Use it as a context manager: the handle is destroyed on\n"
-                       "exit. Every failure raises FocError instead of returning a code.\n"
-                       "[zh] 一个电机实例。建议用 with 语句：退出时销毁句柄。任何失败都抛 FocError，\n"
-                       "而不是返回错误码。")
-        .def(py::init<const foc_motor_params_t &>(), py::arg("params"))
-        .def(py::init<const foc_motor_params_t &, const foc_motor_setup_t &>(), py::arg("params"),
-             py::arg("setup"))
-        .def(py::init<const foc_motor_params_t &, py::object>(), py::arg("params"), py::arg("plant"),
-             "[en] Drive this Python object as the plant: it supplies currents, angle and bus voltage, and receives the\n"
+                      "[en] One motor instance. Use it as a context manager: the handle is destroyed on\n"
+                      "exit. Every failure raises FocError instead of returning a code.\n"
+                      "[zh] 一个电机实例。建议用 with 语句：退出时销毁句柄。任何失败都抛 FocError，\n"
+                      "而不是返回错误码。")
+        .def(py::init<const foc_motor_params_t&>(), py::arg("params"))
+        .def(py::init<const foc_motor_params_t&, const foc_motor_setup_t&>(), py::arg("params"), py::arg("setup"))
+        .def(py::init<const foc_motor_params_t&, py::object>(), py::arg("params"), py::arg("plant"),
+             "[en] Drive this Python object as the plant: it supplies currents, angle and bus voltage, and receives "
+             "the\n"
              "duties. Same control loop, measurements from outside the library.\n"
              "[zh] 把这个 Python 对象当作被控对象来驱动：它提供电流、角度与母线电压，接收占空比。同一个控制环，\n"
              "测量值来自库外。")
-        .def(py::init<const foc_motor_params_t &, const foc_motor_setup_t &, py::object>(), py::arg("params"),
+        .def(py::init<const foc_motor_params_t&, const foc_motor_setup_t&, py::object>(), py::arg("params"),
              py::arg("setup"), py::arg("plant"))
         .def("setup", &Motor::setup,
              "[en] The setup actually in force (defaults included). [zh] 实际生效的设置（含默认值）。")
@@ -805,9 +829,10 @@ PYBIND11_MODULE(foc_python, m) {
         // 运行时交接，本来从 C 可达、从 Python 不可达。它的拒绝是契约的一部分而非意外：不在 Run 状态时答 STATE（交接
         // 携带一个估计，而未被推进的观测器没有估计可交），当生效的设置支撑不了所请求的模式时答 PARAM。这两者在这里都
         // 以 FocError 到达，而不是"`status()["observer"]` 静默不变"。
-        .def("set_observer", &Motor::set_observer, py::arg("observer"),
-             "[en] Switch the observer while the motor runs (STATE outside Run, PARAM if the setup cannot support it).\n"
-             "[zh] 在电机运行时切换观测器（不在 Run 状态抛 STATE，设置支撑不了时抛 PARAM）。")
+        .def(
+            "set_observer", &Motor::set_observer, py::arg("observer"),
+            "[en] Switch the observer while the motor runs (STATE outside Run, PARAM if the setup cannot support it).\n"
+            "[zh] 在电机运行时切换观测器（不在 Run 状态抛 STATE，设置支撑不了时抛 PARAM）。")
         .def("set_speed", &Motor::set_speed, py::arg("rad_per_s"),
              "[en] Speed setpoint, mechanical rad/s. [zh] 速度给定，机械 rad/s。")
         .def("set_torque", &Motor::set_torque, py::arg("iq_a"),
@@ -821,8 +846,7 @@ PYBIND11_MODULE(foc_python, m) {
         .def("status", &Motor::status,
              "[en] Mode, sticky error and the alignment result in one dict.\n"
              "[zh] 一次读回模式、粘滞错误与对齐结果。")
-        .def("tick", &Motor::tick, py::arg("dt_s"),
-             "[en] Advance the control loop by one step. [zh] 推进一个控制步。")
+        .def("tick", &Motor::tick, py::arg("dt_s"), "[en] Advance the control loop by one step. [zh] 推进一个控制步。")
         .def("telemetry", &Motor::telemetry,
              "[en] Last step: {speed_mech_rad_s, id_a, iq_a}. [zh] 最近一步：{speed_mech_rad_s, id_a, iq_a}。")
         // The trace is attached by reference to a buffer Python owns, because that is the shape the C ABI takes.
@@ -831,20 +855,23 @@ PYBIND11_MODULE(foc_python, m) {
         // 轨迹按引用挂到 Python 持有的缓冲区上，因为 C ABI 就是这个形状。`None` 拆挂。这里保住了引用计数，使缓冲区不会在
         // 控制环往里写的时候被回收——那是 C 侧根本无法察觉的 use-after-free。
         .def("set_trace", &Motor::set_trace, py::arg("trace"),
-             "[en] Attach a Trace (or None to detach). The window is written by the loop itself, so it records what the\n"
+             "[en] Attach a Trace (or None to detach). The window is written by the loop itself, so it records what "
+             "the\n"
              "controller believed, one sample per period.\n"
              "[zh] 挂上一个 Trace（或 None 拆除）。窗口由控制环自己写入，因此它记录的是控制器相信的东西，每周期一条。")
-        .def("trace_size", [](const Motor &self) { return foc_motor_trace_size(self.handle()); },
-             "[en] Samples currently retained. [zh] 当前保留的样本数。")
-        .def("trace_dropped", [](const Motor &self) { return foc_motor_trace_dropped(self.handle()); },
-             "[en] Samples overwritten because the window was full. [zh] 因窗口写满而被覆盖的样本数。")
+        .def(
+            "trace_size", [](const Motor& self) { return foc_motor_trace_size(self.handle()); },
+            "[en] Samples currently retained. [zh] 当前保留的样本数。")
+        .def(
+            "trace_dropped", [](const Motor& self) { return foc_motor_trace_dropped(self.handle()); },
+            "[en] Samples overwritten because the window was full. [zh] 因窗口写满而被覆盖的样本数。")
         .def("close", &Motor::close, "[en] Destroy the handle now (idempotent). [zh] 立即销毁句柄（幂等）。")
         .def_property_readonly("alive", &Motor::alive,
                                "[en] False once the handle has been destroyed. [zh] 句柄销毁后为 False。")
-        .def("__enter__", [](Motor &self) -> Motor & { return self; }, py::return_value_policy::reference_internal)
-        .def("__exit__",
-             [](Motor &self, const py::object &, const py::object &, const py::object &) { self.close(); })
-        .def("__repr__", [](const Motor &self) { return py::str("Motor(alive={})").format(self.alive()); });
+        .def(
+            "__enter__", [](Motor& self) -> Motor& { return self; }, py::return_value_policy::reference_internal)
+        .def("__exit__", [](Motor& self, const py::object&, const py::object&, const py::object&) { self.close(); })
+        .def("__repr__", [](const Motor& self) { return py::str("Motor(alive={})").format(self.alive()); });
 
     // ------------------------------------------------------------------------------------------
     // ABI 0.1.1: the modules the C surface could not reach. Bound one for one, with no extra
@@ -853,19 +880,19 @@ PYBIND11_MODULE(foc_python, m) {
     // 绑定才不会与 C 契约漂移。
     // ------------------------------------------------------------------------------------------
 
-    m.def(
-        "axis_deadtime_v", &foc_axis_deadtime_v, py::arg("deadtime_s"), py::arg("switching_hz"),
-        py::arg("v_bus_v"), py::arg("angle_rad"),
-        "[en] Dead-time volts projected onto an axis; 0 on a non-finite argument.\n"
-        "[zh] 死区伏秒投影到某轴上的电压；参数非有限返回 0。");
+    m.def("axis_deadtime_v", &foc_axis_deadtime_v, py::arg("deadtime_s"), py::arg("switching_hz"), py::arg("v_bus_v"),
+          py::arg("angle_rad"),
+          "[en] Dead-time volts projected onto an axis; 0 on a non-finite argument.\n"
+          "[zh] 死区伏秒投影到某轴上的电压；参数非有限返回 0。");
     m.def("hfi_max_inject_hz", &foc_hfi_max_inject_hz, py::arg("pwm_freq_hz"),
           "[en] The highest injection carrier this control rate can resolve, in Hz. Ask it before choosing "
           "`MotorSetup.inject_hz`: past the ceiling the injection observer stops working silently.\n"
-          "[zh] 该控制率能分辨的最高注入载波，Hz。在选 `MotorSetup.inject_hz` 之前问它：越过天花板后注入观测器会静默失效。");
+          "[zh] 该控制率能分辨的最高注入载波，Hz。在选 `MotorSetup.inject_hz` "
+          "之前问它：越过天花板后注入观测器会静默失效。");
 
     m.def(
         "hfi_size",
-        [](const foc_motor_params_t &params, double pwm_freq_hz, double hf_current_a) {
+        [](const foc_motor_params_t& params, double pwm_freq_hz, double hf_current_a) {
             foc_hfi_sizing_t out{};
             out.struct_size = sizeof(out);
             if (foc_hfi_size(&params, static_cast<float>(pwm_freq_hz), static_cast<float>(hf_current_a), &out) !=
@@ -883,7 +910,8 @@ PYBIND11_MODULE(foc_python, m) {
         },
         py::arg("params"), py::arg("pwm_freq_hz") = 20000.0, py::arg("hf_current_a") = 0.5,
         "[en] Size an injection configuration from the machine and the control rate: the carrier the rate can resolve, "
-        "the volts that draw the HF current you budget, and the two measured cutoffs. The result is a configuration the "
+        "the volts that draw the HF current you budget, and the two measured cutoffs. The result is a configuration "
+        "the "
         "library accepts.\n"
         "[zh] 由机器与控制率定容一份注入配置：该控制率能分辨的载波、拉出你预算的高频电流所需的伏特、以及两个实测"
         "截止频率。结果是库会接受的配置。");
@@ -895,12 +923,11 @@ PYBIND11_MODULE(foc_python, m) {
     // 返回的来自同一份 C++——因此 Python 作者把自己的 numpy 拟合与它比对，比的是同一个指标的两份实现，而不是两个指标。
     m.def(
         "step_metrics",
-        [](const std::vector<float> &y, double dt_s, double target, double band) {
+        [](const std::vector<float>& y, double dt_s, double target, double band) {
             foc_step_metrics_t out{};
             out.struct_size = sizeof(out);
-            const foc_err_t rc =
-                ::foc_step_metrics(y.data(), static_cast<uint32_t>(y.size()), static_cast<float>(dt_s),
-                                   static_cast<float>(target), static_cast<float>(band), &out);
+            const foc_err_t rc = ::foc_step_metrics(y.data(), static_cast<uint32_t>(y.size()), static_cast<float>(dt_s),
+                                                    static_cast<float>(target), static_cast<float>(band), &out);
             if (rc == FOC_ERR_PARAM) {
                 throw std::runtime_error("foc_step_metrics rejected its arguments: fewer than three samples, a "
                                          "non-positive dt, a negative band, or a window that does not move");
@@ -915,7 +942,8 @@ PYBIND11_MODULE(foc_python, m) {
             return measured;
         },
         py::arg("y"), py::arg("dt_s"), py::arg("target"), py::arg("band"),
-        "[en] Measure a recorded step response: fit a first-order decay and report the loop's bandwidth, time constant, "
+        "[en] Measure a recorded step response: fit a first-order decay and report the loop's bandwidth, time "
+        "constant, "
         "settling time, overshoot and tail error. `status` is `ErrorCode.OK` when a decay was fitted, `STATE` when the "
         "window carried none (the settling numbers are still valid then), and arguments that cannot describe a step "
         "raise. The window must start at or before the step: `y[0]` is the pre-step value.\n"
@@ -938,14 +966,14 @@ PYBIND11_MODULE(foc_python, m) {
         .def_readonly("max_nm", &foc_torque_map_t::max_nm)
         .def(
             "estimate",
-            [](const foc_torque_map_t &self, double id_a, double iq_a) {
+            [](const foc_torque_map_t& self, double id_a, double iq_a) {
                 return ::foc_torque_estimate(&self, static_cast<float>(id_a), static_cast<float>(iq_a));
             },
             py::arg("id_a"), py::arg("iq_a"),
             "[en] Torque produced by a dq current pair, N*m.\n[zh] 一对 dq 电流产生的力矩，N·m。")
         .def(
             "command",
-            [](const foc_torque_map_t &self, double requested_nm, double id_a) {
+            [](const foc_torque_map_t& self, double requested_nm, double id_a) {
                 foc_torque_command_t out{};
                 out.struct_size = sizeof(out);
                 const foc_err_t rc =
@@ -967,7 +995,7 @@ PYBIND11_MODULE(foc_python, m) {
 
     m.def(
         "torque_map",
-        [](const foc_motor_params_t &params, double i_max_a, double min_nm, double max_nm) {
+        [](const foc_motor_params_t& params, double i_max_a, double min_nm, double max_nm) {
             foc_torque_map_t out{};
             out.struct_size = sizeof(out);
             if (::foc_torque_map_build(&params, static_cast<float>(i_max_a), static_cast<float>(min_nm),
@@ -981,19 +1009,20 @@ PYBIND11_MODULE(foc_python, m) {
         "[en] Build a torque map from the nameplate. Pass `min_nm = 0` with a positive maximum for a one-way command.\n"
         "[zh] 由铭牌建立力矩地图。`min_nm = 0` 配一个正的上限即单向指令。");
 
-    m.def("board_item_name", &foc_board_item_name, py::arg("item"),
-          "[en] Stable lowercase name of a board item. [zh] 检查项的稳定小写名。");    // The sweep's only moving part, next to the step-response metric: fit one tone at a known frequency out of a window.
+    m.def(
+        "board_item_name", &foc_board_item_name, py::arg("item"),
+        "[en] Stable lowercase name of a board item. [zh] 检查项的稳定小写名。"); // The sweep's only moving part, next to the step-response metric: fit one tone at a known frequency out of a window.
     // A sweep is the instrument that notices a gain law scaled wrongly, because a magnitude at a known frequency moves
     // with the error instead of carrying a comparable bias of its own.
     // 扫频唯一的运动部件，与阶跃指标并列：从一个窗口里拟合出已知频率上的单音。扫频是能发现"增益律比例错"的仪器，
     // 因为已知频率上的幅值随误差移动，而不是自带与之相当的偏差。
     m.def(
         "sinusoid_fit",
-        [](const std::vector<float> &y, double dt_s, double omega_rad_s) {
+        [](const std::vector<float>& y, double dt_s, double omega_rad_s) {
             foc_sinusoid_fit_t out{};
             out.struct_size = sizeof(out);
-            const foc_err_t rc = ::foc_sinusoid_fit(y.data(), static_cast<uint32_t>(y.size()),
-                                                    static_cast<float>(dt_s), static_cast<float>(omega_rad_s), &out);
+            const foc_err_t rc = ::foc_sinusoid_fit(y.data(), static_cast<uint32_t>(y.size()), static_cast<float>(dt_s),
+                                                    static_cast<float>(omega_rad_s), &out);
             if (rc == FOC_ERR_PARAM) {
                 throw std::runtime_error("foc_sinusoid_fit rejected its arguments: fewer than six samples, a "
                                          "non-positive dt or frequency, or a frequency at or above Nyquist");
@@ -1007,13 +1036,15 @@ PYBIND11_MODULE(foc_python, m) {
         py::arg("y"), py::arg("dt_s"), py::arg("omega_rad_s"),
         "[en] Fit one tone at a known frequency: returns amplitude and phase of `A*cos(w*t + phase)`. `status` is "
         "`ErrorCode.OK` when the fit is conditioned and `STATE` when the window is shorter than one period.\n"
-        "[zh] 在已知频率上拟合一个单音：返回 `A*cos(w*t + phase)` 的幅值与相位。`status` 为 `ErrorCode.OK` 表示拟合良态，"
+        "[zh] 在已知频率上拟合一个单音：返回 `A*cos(w*t + phase)` 的幅值与相位。`status` 为 `ErrorCode.OK` "
+        "表示拟合良态，"
         "`STATE` 表示窗口不足一个周期。");
 
     m.def("board_item_name", &foc_board_item_name, py::arg("item"),
           "[en] Stable lowercase name of a board item. [zh] 检查项的稳定小写名。");
-    m.def("board_cause_name", &foc_board_cause_name, py::arg("cause"),
-          "[en] Stable lowercase name of a board cause. [zh] 成因的稳定小写名。");    // The fault table, standalone. `Protector.step()` already returns a name, but only for the fault it just produced;
+    m.def(
+        "board_cause_name", &foc_board_cause_name, py::arg("cause"),
+        "[en] Stable lowercase name of a board cause. [zh] 成因的稳定小写名。"); // The fault table, standalone. `Protector.step()` already returns a name, but only for the fault it just produced;
     // an author who holds a code -- a bit position in `active_mask`, a line in a log, a number from another surface --
     // had no way to ask what it is called. It takes a plain `int` for the same reason `board_item_name` above does:
     // the argument an author has is a bit index or a raw code, and refusing that would make the binding usable only by
@@ -1029,7 +1060,7 @@ PYBIND11_MODULE(foc_python, m) {
         "[zh] FOC_FAULT_* 取值的稳定小写名；表外取值返回 \"?\"。取裸码，因此 `active_mask` 的比特下标可直接解码。");
     m.def(
         "field_weakening_worthwhile",
-        [](const foc_motor_params_t &params, float i_max_a) {
+        [](const foc_motor_params_t& params, float i_max_a) {
             foc_fw_verdict_t out{};
             out.struct_size = static_cast<std::uint32_t>(sizeof(out));
             const foc_err_t rc = foc_field_weakening_worthwhile(&params, i_max_a, &out);
@@ -1044,7 +1075,7 @@ PYBIND11_MODULE(foc_python, m) {
 
     m.def(
         "mtpa_reference",
-        [](const foc_motor_params_t &params, float i_max_a, float iq_command_a) {
+        [](const foc_motor_params_t& params, float i_max_a, float iq_command_a) {
             float id_a = 0.0F;
             float iq_a = 0.0F;
             const foc_err_t rc = foc_mtpa_reference(&params, i_max_a, iq_command_a, &id_a, &iq_a);
@@ -1059,29 +1090,29 @@ PYBIND11_MODULE(foc_python, m) {
     // ABI 0.1.3: the gains and the identification primitives. Bound one for one, because the whole point of a tuning
     // tool is that it reproduces the shipped loop rather than re-deriving it.
     // ABI 0.1.3：增益与辨识原语。一对一绑定，因为整定工具的意义就在于复现出厂环路，而不是另推一遍。
-    const auto gains_to_tuple = [](const foc_pi_gains_t &g) {
+    const auto gains_to_tuple = [](const foc_pi_gains_t& g) {
         return py::make_tuple(g.kp, g.ki, g.out_min, g.out_max, g.integral_min, g.integral_max);
     };
-    const auto call_gains = [](const foc_motor_params_t &params, const py::object &setup,
-                               foc_err_t (*query)(const foc_motor_params_t *, const foc_motor_setup_t *,
-                                                  foc_pi_gains_t *)) {
-        foc_pi_gains_t out{};
-        out.struct_size = sizeof(out);
-        foc_motor_setup_t requested{};
-        const foc_motor_setup_t *raw = nullptr;
-        if (!setup.is_none()) {
-            requested = py::cast<foc_motor_setup_t>(setup);
-            raw = &requested;
-        }
-        if (query(&params, raw, &out) != FOC_OK) {
-            throw std::runtime_error("the gain query rejected its arguments");
-        }
-        return out;
-    };
+    const auto call_gains =
+        [](const foc_motor_params_t& params, const py::object& setup,
+           foc_err_t (*query)(const foc_motor_params_t*, const foc_motor_setup_t*, foc_pi_gains_t*)) {
+            foc_pi_gains_t out{};
+            out.struct_size = sizeof(out);
+            foc_motor_setup_t requested{};
+            const foc_motor_setup_t* raw = nullptr;
+            if (!setup.is_none()) {
+                requested = py::cast<foc_motor_setup_t>(setup);
+                raw = &requested;
+            }
+            if (query(&params, raw, &out) != FOC_OK) {
+                throw std::runtime_error("the gain query rejected its arguments");
+            }
+            return out;
+        };
 
     m.def(
         "current_pi_gains",
-        [call_gains, gains_to_tuple](const foc_motor_params_t &params, const py::object &setup) {
+        [call_gains, gains_to_tuple](const foc_motor_params_t& params, const py::object& setup) {
             return gains_to_tuple(call_gains(params, setup, &foc_current_pi_gains));
         },
         py::arg("params"), py::arg("setup") = py::none(),
@@ -1089,7 +1120,7 @@ PYBIND11_MODULE(foc_python, m) {
         "[zh] 库会运行的电流环的 (kp, ki, out_min, out_max, integral_min, integral_max)。");
     m.def(
         "speed_pi_gains",
-        [call_gains, gains_to_tuple](const foc_motor_params_t &params, const py::object &setup) {
+        [call_gains, gains_to_tuple](const foc_motor_params_t& params, const py::object& setup) {
             return gains_to_tuple(call_gains(params, setup, &foc_speed_pi_gains));
         },
         py::arg("params"), py::arg("setup") = py::none(),
@@ -1097,15 +1128,14 @@ PYBIND11_MODULE(foc_python, m) {
 
     m.def(
         "rs_estimate",
-        [](const foc_motor_params_t &params, const std::vector<float> &v_command,
-           const std::vector<float> &i_current) {
+        [](const foc_motor_params_t& params, const std::vector<float>& v_command, const std::vector<float>& i_current) {
             if (v_command.size() != i_current.size()) {
                 throw py::value_error("v_command and i_current must have the same length");
             }
             foc_identify_result_t out{};
             out.struct_size = sizeof(out);
-            if (foc_rs_estimate(&params, v_command.data(), i_current.data(), static_cast<std::uint32_t>(v_command.size()),
-                                &out) != FOC_OK) {
+            if (foc_rs_estimate(&params, v_command.data(), i_current.data(),
+                                static_cast<std::uint32_t>(v_command.size()), &out) != FOC_OK) {
                 throw std::runtime_error("foc_rs_estimate failed");
             }
             return py::make_tuple(out.value, out.offset, out.residual, out.valid != 0, out.samples);
@@ -1115,8 +1145,8 @@ PYBIND11_MODULE(foc_python, m) {
         "[zh] 堵转扫描得到的 (rs, loss_v, residual_v, valid, samples)。用 `rs` 之前先看 `valid`。");
     m.def(
         "flux_estimate",
-        [](const foc_motor_params_t &params, const std::vector<float> &omega_e, const std::vector<float> &v_magnitude,
-           const std::vector<float> &i_magnitude) {
+        [](const foc_motor_params_t& params, const std::vector<float>& omega_e, const std::vector<float>& v_magnitude,
+           const std::vector<float>& i_magnitude) {
             if ((omega_e.size() != v_magnitude.size()) || (omega_e.size() != i_magnitude.size())) {
                 throw py::value_error("the three arrays must have the same length");
             }
@@ -1151,15 +1181,13 @@ PYBIND11_MODULE(foc_python, m) {
         .def_readwrite("psi_f_wb", &foc_board_measurements_t::psi_f_wb)
         .def_readwrite("psi_f_nameplate_wb", &foc_board_measurements_t::psi_f_nameplate_wb)
         .def_readwrite("observer_error_rad", &foc_board_measurements_t::observer_error_rad)
-        .def("set_offset", [](foc_board_measurements_t &self, int phase, float value) {
-            self.offset_a[phase] = value;
-        })
-        .def("set_response_sign", [](foc_board_measurements_t &self, int phase, float value) {
-            self.response_sign[phase] = value;
-        });
+        .def("set_offset", [](foc_board_measurements_t& self, int phase, float value) { self.offset_a[phase] = value; })
+        .def("set_response_sign",
+             [](foc_board_measurements_t& self, int phase, float value) { self.response_sign[phase] = value; });
 
-    py::class_<foc_board_limits_t>(m, "BoardLimits", "[en] The board-check tolerances.\n"
-                                                     "[zh] 板级检查的容差。")
+    py::class_<foc_board_limits_t>(m, "BoardLimits",
+                                   "[en] The board-check tolerances.\n"
+                                   "[zh] 板级检查的容差。")
         .def(py::init([]() {
             foc_board_limits_t out{};
             out.struct_size = static_cast<std::uint32_t>(sizeof(out));
@@ -1182,7 +1210,7 @@ PYBIND11_MODULE(foc_python, m) {
 
     m.def(
         "board_check",
-        [](const foc_board_measurements_t &m_in, const foc_board_limits_t &l_in) {
+        [](const foc_board_measurements_t& m_in, const foc_board_limits_t& l_in) {
             foc_board_report_t report{};
             report.struct_size = static_cast<std::uint32_t>(sizeof(report));
             const foc_err_t rc = foc_board_check(&m_in, &l_in, &report);
@@ -1191,22 +1219,21 @@ PYBIND11_MODULE(foc_python, m) {
             }
             py::list rows;
             for (int k = 0; k < report.count; ++k) {
-                const foc_board_reading_t &r = report.items[k];
-                rows.append(py::make_tuple(foc_board_item_name(r.item), r.value, r.limit,
-                                           r.pass != 0, r.phase));
+                const foc_board_reading_t& r = report.items[k];
+                rows.append(py::make_tuple(foc_board_item_name(r.item), r.value, r.limit, r.pass != 0, r.phase));
             }
-            return py::make_tuple(rows, report.failures, foc_board_cause_name(report.cause),
-                                  report.cause_phase);
+            return py::make_tuple(rows, report.failures, foc_board_cause_name(report.cause), report.cause_phase);
         },
         py::arg("measurements"), py::arg("limits"),
         "[en] (rows, failures, cause_name, cause_phase); each row is (name, value, limit, pass, "
         "phase).\n"
         "[zh] (rows, failures, cause_name, cause_phase)；每行是 (名称, 值, 限值, 通过, 相)。");
 
-    py::class_<Trace>(m, "Trace",
-                      "[en] A window of recorded control periods. Create it with a capacity, hand it to a motor, read it\n"
-                      "back as a list of dicts.\n"
-                      "[zh] 一段被记录下来的控制周期窗口。给定容量创建、交给电机、再以 dict 列表读回。")
+    py::class_<Trace>(
+        m, "Trace",
+        "[en] A window of recorded control periods. Create it with a capacity, hand it to a motor, read it\n"
+        "back as a list of dicts.\n"
+        "[zh] 一段被记录下来的控制周期窗口。给定容量创建、交给电机、再以 dict 列表读回。")
         .def(py::init<std::size_t>(), py::arg("capacity"),
              "[en] Samples to retain; the storage is allocated once, here, and never grows.\n"
              "[zh] 保留的样本数；存储在此时一次分配，之后不再增长。")
@@ -1216,7 +1243,7 @@ PYBIND11_MODULE(foc_python, m) {
              "[en] The retained window, oldest first: t_us, i_d, i_q, i_ref_d, i_ref_q, v_d, v_q, speed_mech, mode,\n"
              "status_byte.\n"
              "[zh] 保留窗口，最旧在前的 t_us、i_d、i_q、i_ref_d、i_ref_q、v_d、v_q、speed_mech、mode、status_byte。")
-        .def("__len__", [](const Trace &self) { return self.capacity(); });
+        .def("__len__", [](const Trace& self) { return self.capacity(); });
 
     py::class_<Protector>(m, "Protector",
                           "[en] The supervisory protection layer, stepped once per control period.\n"
@@ -1229,9 +1256,9 @@ PYBIND11_MODULE(foc_python, m) {
             }
             return Protector{handle};
         }))
-        .def("step", &Protector::step, py::arg("i_magnitude_a"), py::arg("v_bus_v"),
-             py::arg("temperature_c"), py::arg("omega_e_rad_s"), py::arg("dt_s"),
-             py::arg("flux_error_ratio") = 0.0F, py::arg("flux_valid") = true,
+        .def("step", &Protector::step, py::arg("i_magnitude_a"), py::arg("v_bus_v"), py::arg("temperature_c"),
+             py::arg("omega_e_rad_s"), py::arg("dt_s"), py::arg("flux_error_ratio") = 0.0F,
+             py::arg("flux_valid") = true,
              "[en] One period: returns (fault_name, i_limit_a, output_allowed, i2t_budget, "
              "latched).\n"
              "[zh] 一个周期：返回 (故障名, 电流限幅, 是否允许输出, I²t 预算, 是否锁存)。")
@@ -1239,12 +1266,10 @@ PYBIND11_MODULE(foc_python, m) {
              "[en] Clear the faults; cold also clears the I^2t memory.\n"
              "[zh] 清故障；cold 同时清 I²t 记忆。")
         .def("close", &Protector::close, "[en] Destroy the handle (idempotent). [zh] 销毁句柄（幂等）。")
-        .def_property_readonly("alive", &Protector::alive,
-                               "[en] False once destroyed. [zh] 销毁后为 False。")
-        .def("__enter__", [](Protector &self) -> Protector & { return self; },
-             py::return_value_policy::reference_internal)
+        .def_property_readonly("alive", &Protector::alive, "[en] False once destroyed. [zh] 销毁后为 False。")
+        .def(
+            "__enter__", [](Protector& self) -> Protector& { return self; },
+            py::return_value_policy::reference_internal)
         .def("__exit__",
-             [](Protector &self, const py::object &, const py::object &, const py::object &) {
-                 self.close();
-             });
+             [](Protector& self, const py::object&, const py::object&, const py::object&) { self.close(); });
 }

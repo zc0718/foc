@@ -278,6 +278,37 @@
       "class": "policy",
       "example": "test_package/test/unit/test_register_map.cpp",
       "why": "the protocol's view of the C surface: a host asks, the firmware answers, nothing in the loop calls it"
+    },
+    "core/min_pulse.hpp": {
+      "class": "policy",
+      "example": "test_package/test/unit/test_min_pulse.cpp",
+      "why": "the loss is what a caller must know *before* it commands: `Motor` has no slot for a driver limit, and only the plant can say what the driver actually did"
+    },
+    "core/brake_chopper.hpp": {
+      "class": "policy",
+      "example": "test_package/test/unit/test_brake_chopper.cpp",
+      "why": "composed by the host into its own fault/supervisor path; the loop itself does not drive a chopper"
+    },
+    "hal/brake_switch.hpp": {
+      "class": "contract",
+      "stub": "driver/stub_brake_switch.hpp"
+    },
+    "driver/stub_brake_switch.hpp": {
+      "class": "reference",
+      "of": "hal/brake_switch.hpp"
+    },
+    "hal/fault_input.hpp": {
+      "class": "contract",
+      "stub": "driver/stub_fault_input.hpp"
+    },
+    "driver/stub_fault_input.hpp": {
+      "class": "reference",
+      "of": "hal/fault_input.hpp"
+    },
+    "core/single_shunt.hpp": {
+      "class": "policy",
+      "example": "test_package/test/unit/test_single_shunt.cpp",
+      "why": "a host whose current sense is one DC-link shunt composes it between the modulator and the loop; `Motor` has no slot for a reconstruction scheme, and the topology's blind spot is the host's problem to solve"
     }
   }
 }

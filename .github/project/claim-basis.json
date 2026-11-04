@@ -369,6 +369,31 @@
     ],
     "comm/register_map.hpp": [
       "api/foc_api.h"
+    ],
+    "core/min_pulse.hpp": [
+      "core/limits.hpp",
+      "core/types.hpp"
+    ],
+    "core/brake_chopper.hpp": [
+      "core/limits.hpp",
+      "core/types.hpp"
+    ],
+    "hal/brake_switch.hpp": [
+      "core/types.hpp",
+      "hal/pwm.hpp"
+    ],
+    "driver/stub_brake_switch.hpp": [
+      "hal/brake_switch.hpp"
+    ],
+    "hal/fault_input.hpp": [
+      "core/types.hpp"
+    ],
+    "driver/stub_fault_input.hpp": [
+      "hal/fault_input.hpp"
+    ],
+    "core/single_shunt.hpp": [
+      "core/limits.hpp",
+      "core/types.hpp"
     ]
   },
   "unmapped": []

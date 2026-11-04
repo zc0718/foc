@@ -45,6 +45,10 @@ ENTRY = 'benchmark/pil/pil_main.cpp'
 # The library's non-template translation units. Listed explicitly on purpose: version.cpp and
 # motor_inst.cpp pull in the driver stubs and the C version symbol, which PIL does not need.
 SOURCES = [
+    # `StubBrakeSwitch` is out-of-line and the SIL bench holds one as the plant's brake output stage, so the scenario
+    # entry needs it even though it never writes a duty. It is the one driver stub PIL does need: everything else in
+    # `src/driver/` is reached only by `version.cpp` / `motor_inst.cpp`, which this leg does not build.
+    'src/driver/stub_brake_switch.cpp',
     'src/core/pi.cpp',
     'src/core/svpwm.cpp',
     'src/core/sm.cpp',

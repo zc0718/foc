@@ -74,6 +74,24 @@ class Svpwm final {
      * @return [zh] 限幅到 [0, 1] 的占空比；`v_bus <= 0` 时输出 50% 且状态为 Param（不崩溃、不产生 NaN）。
      * @post [en] Linear modulation up to |v_ab| = v_bus / sqrt(3); beyond that `saturated` is true.
      * @post [zh] 在 |v_ab| = v_bus / sqrt(3) 以内为线性调制；超出后 `saturated` 为 true。
+     * @note [en] **Overmodulation is a radial projection, not a phase clamp.** Above the hexagon the request vector is
+     *            scaled as a whole onto the boundary, so the applied vector stays on the commanded ray and its tip
+     *            lands on the hexagon: `|v_applied| = min(|v|, r_hex(theta))`, with `r_hex` the hexagon's own closed
+     *            form. The clamp this replaced corrected only the phase that wanted out, which is not a common-mode
+     *            correction, so Clarke did not remove it -- measured at three times the bus it rotated the applied
+     *            vector by up to **20 degrees**, which for a d-q drive is the flux axis itself. What the projection
+     *            costs is stated rather than discovered later: the fundamental rises monotonically from `v_bus/sqrt(3)`
+     *            and **stops at 0.6057*v_bus** (95.1 % of the six-step fundamental `2/pi*v_bus`), because the remaining
+     *            4.9 % is only available by holding the vector at a vertex, i.e. by lying about its angle.
+     *            `test_svpwm.cpp` measures both laws on the same grid so the trade-off can be re-opened with evidence
+     *            instead of taste.
+     * @note [zh] **过调制是径向投影，不是逐相夹紧。** 越过六边形后，请求矢量被**整体**缩放到边界上，于是施加矢量留在指
+     *            令方向上、末端落在六边形上：`|v_applied| = min(|v|, r_hex(θ))`，`r_hex` 是六边形自己的闭式。被替换掉的
+     *            那个夹紧律只修正想出去的那一相，那不是共模修正，所以 Clarke 消不掉它——在三倍母线处实测，它把施加矢量**
+     *            旋转了最多 20 度**，而对 d-q 驱动来说那正是磁链轴本身。投影的代价是写下来的、不是以后才发现的：基波从
+     *            `v_bus/√3` 起单调上升，并**停在 0.6057·v_bus**（六步基波 `2/π·v_bus` 的 95.1 %），因为剩下的 4.9 % 只
+     *            能靠把矢量按在顶点上得到，即靠谎报它的角度。`test_svpwm.cpp` 在同一张网格上量两种律，于是这个取舍可以
+     *            用证据重新打开，而不是凭口味。
      * @since 0.1.0
      */
     [[nodiscard]] static auto modulate(Ab<float> v_ab, float v_bus) noexcept -> SvpwmResult;

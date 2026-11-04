@@ -24,6 +24,14 @@ The allow list exists because two shapes are legitimately float and are *not* cl
 Both are bounded by construction, so `ulp(t)` never leaves the range where a float add of `dt` is exact. An entry here
 is a claim about that bound, and the entry carries the reason so the next reader can check it.
 
+**Known limit, measured 2026-11-04 (batch 2).** The classifier is a heuristic on *syntax*, not on meaning: it matches
+`+= <expr> dt`. A float accumulator written as `q_ = static_cast<float>(q_ + (... dt ...))` is the same defect and is
+not seen -- `core/protection.hpp`'s I2t integral has exactly that shape and passes today. `core/brake_chopper.hpp`'s
+heat accumulator was caught only because it was written with `+=`, and it was then made a `double` (an integral, not a
+duration: no nanoseconds, but more than 24 bits of mantissa). Widening the pattern would flag `protection.hpp`, whose
+row is L3, so that is its own change with its own measurement -- recorded here rather than quietly fixed, because a
+gate whose blind spot is undocumented is a gate that will be trusted where it cannot see.
+
 `--selftest` classifies four snippets (growing float, bounded float, integer clock, and the allow-listed names) so a
 classifier that has stopped finding anything cannot pass by having nothing to find.
 """

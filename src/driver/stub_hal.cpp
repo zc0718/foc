@@ -21,6 +21,11 @@ void StubHal::reset() noexcept {
     position.set_velocity_rad_s(0.0F);
     position.set_sensor_present(true);
     dc_link.set_voltage_v(0.0F);
+    // Back to "the power stage is not reporting a fault", which is the state a stub power stage is in: a reset that left
+    // an injected fault asserted would make `reset()` look like it worked while the drive still refused to run.
+    // 回到"功率级没在报故障"，也就是桩功率级所处的状态：一次把注入的故障留在有效状态的 reset，会让 `reset()` 看起来
+    // 生效了，而驱动仍然拒绝运行。
+    fault_input.reset();
 }
 
 } // namespace driver

@@ -7,6 +7,7 @@
 #include <foc/core/types.hpp>
 #include <foc/driver/scripted_current.hpp>
 #include <foc/driver/sim_position.hpp>
+#include <foc/driver/stub_brake_switch.hpp>
 #include <foc/driver/stub_dc_link.hpp>
 #include <foc/driver/stub_hal.hpp>
 #include <foc/driver/stub_pwm.hpp>
@@ -249,6 +250,50 @@ TEST(StubDcLink, ReportsTheSettableVoltage) {
 }
 
 
+
+
+
+TEST(StubBrakeSwitch, RecordsWhatItWasGivenAndNotWhatItWouldHavePreferred) {
+    foc::driver::StubBrakeSwitch brake;
+
+    EXPECT_FLOAT_EQ(0.0F, brake.duty());
+    EXPECT_FALSE(brake.enabled());
+    // A stub that clamped would hide exactly the defect it exists to expose: `duty` is the caller's promise.
+    brake.write_duty(1.4F);
+    EXPECT_FLOAT_EQ(1.4F, brake.duty());
+    EXPECT_TRUE(brake.enabled());
+    brake.write_duty(0.0F);
+    EXPECT_FALSE(brake.enabled()) << "zero duty is the safe state, not a held non-zero one";
+    EXPECT_EQ(2U, brake.write_count());
+}
+
+
+
+TEST(StubBrakeSwitch, RefusesAFrequencyItCannotChopAt) {
+    foc::driver::StubBrakeSwitch brake;
+
+    EXPECT_EQ(foc::ErrorCode::Param, brake.configure(0.0F));
+    EXPECT_EQ(foc::ErrorCode::Param, brake.configure(-1000.0F));
+    EXPECT_EQ(foc::ErrorCode::Param, brake.configure(std::nanf("")));
+    EXPECT_FLOAT_EQ(0.0F, brake.freq_hz()) << "a refused configuration must not be half applied";
+    ASSERT_EQ(foc::ErrorCode::Ok, brake.configure(8000.0F));
+    EXPECT_FLOAT_EQ(8000.0F, brake.freq_hz());
+}
+
+
+
+TEST(StubBrakeSwitch, DisableOpensTheSwitchAndKeepsTheRecordedFrequency) {
+    foc::driver::StubBrakeSwitch brake;
+    ASSERT_EQ(foc::ErrorCode::Ok, brake.configure(8000.0F));
+    brake.write_duty(0.5F);
+    ASSERT_TRUE(brake.enabled());
+
+    brake.disable();
+
+    EXPECT_FLOAT_EQ(0.0F, brake.duty());
+    EXPECT_FALSE(brake.enabled());
+    EXPECT_FLOAT_EQ(8000.0F, brake.freq_hz()) << "opening the switch is not a reconfiguration";
+}
 
 TEST(StubHal, ResetRestoresEveryMember) {
     foc::driver::StubHal hal;

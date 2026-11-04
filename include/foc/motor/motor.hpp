@@ -709,6 +709,24 @@ auto Motor<Observer, Modulator, Controller, HalPolicy, RefGenerator, FeedForward
         return status_;
     }
 
+    // Refuse to assemble a drive that cannot say whether its power stage is faulted.
+    // 拒绝装配一个说不出自己功率级有没有故障的驱动。
+    //
+    // This is the one capability in the HAL whose *absence* is not allowed to be silent, and it is refused here rather
+    // than documented at the call site because the failure mode is invisible: a motor that never asks is
+    // indistinguishable, from the outside, from one that asked and was told "all clear". The only value a missing
+    // fault input could stand for is the dangerous one, so it stands for nothing and the axis does not start. A host
+    // with no such pin says so with `driver::StubFaultInput` and never raises it -- one line, in the integrator's own
+    // code, where a reviewer can see it. See `hal::FaultInput`.
+    // 这是 HAL 里唯一一个**缺席也不许静默**的能力，而且在这里拒绝而不是在调用点写文档，是因为失效是看不见的：一台从不
+    // 提问的电机，从外面看与一台问过并被告知"一切正常"的电机是一样的。一个缺席的故障输入唯一可能代表的值恰好是危险的
+    // 那一个，所以它什么也不代表，轴不会启动。没有这根引脚的主控方用 `driver::StubFaultInput` 明说这件事、并且从不拉高
+    // ——一行，写在集成方自己的代码里，评审看得见。见 `hal::FaultInput`。
+    if constexpr (!core::concepts::has_fault_input_v<HalPolicy>) {
+        status_ = ErrorCode::NotImpl;
+        return status_;
+    }
+
     ErrorCode rc = sm_.request(core::MotorState::Align);
     if (rc != ErrorCode::Ok) {
         return rc;
@@ -942,6 +960,21 @@ auto Motor<Observer, Modulator, Controller, HalPolicy, RefGenerator, FeedForward
         fault();
         status_ = ErrorCode::Fault;
         return status_;
+    }
+
+    // The power stage's own fault output, next to the inverter's flag and for the same reason. It carries a cause the
+    // inverter flag does not: `DriveFault` says the *driver* tripped, which is hardware telling on itself rather than
+    // the protector inferring from currents. The member is guaranteed to exist by the refusal in `start()`; the
+    // `if constexpr` is what keeps this compilable for a HalPolicy that never got that far.
+    // 功率级自己的故障输出，与逆变器标志并列、理由相同。它带着逆变器标志没有的成因：`DriveFault` 说的是**驱动器**跳了，
+    // 即硬件自己开口，而不是保护器从电流里推出来。这个成员由 `start()` 里的拒绝保证存在；`if constexpr` 只是让一个还没
+    // 走到那一步的 HalPolicy 仍然能编译。
+    if constexpr (core::concepts::has_fault_input_v<HalPolicy>) {
+        if (hal_->fault_input.faulted()) {
+            fault(core::FaultCode::DriveFault);
+            status_ = ErrorCode::Fault;
+            return status_;
+        }
     }
 
     if (status_ != ErrorCode::Ok) {

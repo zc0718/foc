@@ -118,6 +118,13 @@ auto on_read_current(void* user, float uvw_a[3]) -> void {
 
 auto on_read_voltage(void* user) -> float { return static_cast<PlantHost*>(user)->v_bus; }
 
+// The power stage's fault output: this host models a healthy inverter. Required by the library (see
+// `foc_hal_callbacks_t::read_drive_fault`), so it is answered here, once, rather than left NULL.
+// 功率级的故障输出：本主控方建模的是一个健康逆变器。库要求它在（见 `foc_hal_callbacks_t::read_drive_fault`），
+// 所以在这里回答一次，而不是留成 NULL。
+auto on_read_drive_fault(void* /*user*/) -> int32_t { return 0; }
+
+
 auto on_has_index(void* /*user*/) -> int32_t { return 1; }
 
 auto on_index_pulse(void* user) -> int32_t {
@@ -134,6 +141,7 @@ auto sensorless_callbacks(PlantHost& host) -> foc_hal_callbacks_t {
     callbacks.pwm_write_duty = &on_write_duty;
     callbacks.read_current = &on_read_current;
     callbacks.read_voltage_v = &on_read_voltage;
+    callbacks.read_drive_fault = &on_read_drive_fault;
     // Deliberately no `read_angle_mech_rad` and no `read_velocity_rad_s`: this host has no encoder. The angle has to
     // come from the observer, which is the only path on which an origin can exist.
     // 故意不给 `read_angle_mech_rad` 与 `read_velocity_rad_s`：这台主控方没有编码器。角度必须来自观测器，而那是

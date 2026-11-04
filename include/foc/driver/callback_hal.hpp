@@ -5,6 +5,7 @@
 #include <foc/hal/clock.hpp>
 #include <foc/hal/current_sense.hpp>
 #include <foc/hal/dc_link.hpp>
+#include <foc/hal/fault_input.hpp>
 #include <foc/hal/position.hpp>
 #include <foc/hal/pwm.hpp>
 // Conan::ImportEnd
@@ -87,6 +88,23 @@ struct HalCallbacks final {
     int32_t (*pwm_fault)(void* user);
 
     /**
+     * @brief [en] Non-zero when the power stage's own `nFAULT` is asserted. **Required**, unlike `pwm_fault`.
+     * @brief [zh] 功率级自己的 `nFAULT` 有效时返回非零。**必需**，与 `pwm_fault` 不同。
+     * @note [en] The one required input in this struct whose absence is not a capability answer. A host that cannot say
+     *            whether its power stage is faulted is a host that might drive a desaturated bridge, and "we did not
+     *            wire it" and "nothing is wrong" arrive here as the same silence. So silence is refused (`valid()` is
+     *            false and no motor can be created) and a host with no such pin writes `return 0;` in its own code --
+     *            one line, visible to a reviewer, instead of a default nobody chose. Polarity is the host's: return the
+     *            sense you mean, not the pin level.
+     * @note [zh] 本结构里唯一一个**缺席不是能力答复**的必需输入。一个说不出自己功率级有没有故障的主控方，就是一个可能去
+     *            驱动一个已去饱和的桥的主控方；而"我们没接"和"什么都没坏"在这里表现为同一个沉默。所以沉默被拒绝（
+     *            `valid()` 为假、电机创建不出来），而一个确实没有这根引脚的主控方在自己代码里写 `return 0;`——一行，评审
+     *            看得见，而不是一个没人选过的默认值。极性归主控方：返回你**想表达**的语义，而不是引脚电平。
+     * @since 0.1.9
+     */
+    std::int32_t (*read_drive_fault)(void* user);
+
+    /**
      * @brief [en] Enable the output stage; 0 = ok. NULL = nothing to enable.
      * @brief [zh] 使能输出级；0 = 成功。NULL = 无需使能。
      */
@@ -128,7 +146,7 @@ struct HalCallbacks final {
      */
     [[nodiscard]] auto valid() const noexcept -> bool {
         return (pwm_write_duty != nullptr) && (read_current != nullptr) && (read_angle_mech_rad != nullptr) &&
-               (read_voltage_v != nullptr);
+               (read_voltage_v != nullptr) && (read_drive_fault != nullptr);
     }
 
     /**
@@ -142,7 +160,8 @@ struct HalCallbacks final {
      *            形，因为观测器用电压和电流算出角度。用一个带标志的判据会让这个错误和正常情形写成同一个样子。
      */
     [[nodiscard]] auto valid_without_angle() const noexcept -> bool {
-        return (pwm_write_duty != nullptr) && (read_current != nullptr) && (read_voltage_v != nullptr);
+        return (pwm_write_duty != nullptr) && (read_current != nullptr) && (read_voltage_v != nullptr) &&
+               (read_drive_fault != nullptr);
     }
 };
 
@@ -400,23 +419,57 @@ class CallbackClock final : public hal::Clock {
  * @since 0.1.2
  * @exporter
  */
+/**
+ * @brief [en] The power stage's fault output, read from a host callback.
+ * @brief [zh] 功率级的故障输出，从主控方回调读取。
+ * @note [en] `faulted()` answering false when the callback is NULL is *not* the dangerous default:
+ *            `HalCallbacks::valid()` refuses a set without this callback, so a `CallbackHal` that reaches a motor has
+ *            already been told, in writing, that this host has no fault path.
+ * @note [zh] 回调为 NULL 时 `faulted()` 答 false **不是**那个危险的默认值：`HalCallbacks::valid()` 拒绝缺这个回调的集
+ *            合，所以一个真正到达电机的 `CallbackHal` 早已被书面告知：本主控方没有故障通路。
+ * @since 0.1.9
+ * @exporter
+ */
+class CallbackFaultInput final : public hal::FaultInput {
+  public:
+    CallbackFaultInput() noexcept = default;
+
+    explicit CallbackFaultInput(const HalCallbacks& callbacks) noexcept : callbacks_(callbacks) {}
+
+    void bind(const HalCallbacks& callbacks) noexcept { callbacks_ = callbacks; }
+
+    [[nodiscard]] auto faulted() noexcept -> bool override {
+        if (callbacks_.read_drive_fault == nullptr) {
+            return false;
+        }
+        return callbacks_.read_drive_fault(callbacks_.user) != 0;
+    }
+
+  private:
+    HalCallbacks callbacks_{};
+};
+
+
 struct CallbackHal final {
     using Pwm = CallbackPwm;
     using CurrentSense = CallbackCurrent;
     using Position = CallbackPosition;
     using DcLink = CallbackDcLink;
     using Clock = CallbackClock;
+    using FaultInput = CallbackFaultInput;
 
     CallbackPwm pwm{};
     CallbackCurrent current_sense{};
     CallbackPosition position{};
     CallbackDcLink dc_link{};
     CallbackClock clock{};
+    CallbackFaultInput fault_input{};
 
     CallbackHal() noexcept = default;
 
     explicit CallbackHal(const HalCallbacks& callbacks) noexcept
-        : pwm(callbacks), current_sense(callbacks), position(callbacks), dc_link(callbacks), clock(callbacks) {}
+        : pwm(callbacks), current_sense(callbacks), position(callbacks), dc_link(callbacks), clock(callbacks),
+          fault_input(callbacks) {}
 
     /**
      * @brief [en] Point every interface at the same callback set.
@@ -430,6 +483,7 @@ struct CallbackHal final {
         position.bind(callbacks);
         dc_link.bind(callbacks);
         clock.bind(callbacks);
+        fault_input.bind(callbacks);
     }
 
     /**
