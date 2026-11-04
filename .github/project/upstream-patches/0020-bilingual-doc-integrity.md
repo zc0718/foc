@@ -1,3 +1,9 @@
+> **MERGED -- do not apply.** Upstream shipped this in `fcpp` v0.3.4: `88f796b3 fix(:bug:): stop the bilingual
+> filter from deleting whole doc paragraphs` (plus `2f17bedd`, which states the three shapes). Verified after the
+> merge by running both versions' `_language_filter` over all 61 public headers in both languages: **122/122
+> byte-identical outputs**, so the adoption changed no documentation content. The file below is kept as the record
+> of what was asked for; `scaffold.json` is pinned to v0.3.4 with `tolerated` empty.
+
 # 0020 · 双语文档流水线：重组可以搬字，不能删字
 
 **一句话**：`docs/build.py` 把双语文档块重新分组时，**没有任何机制证明文字没丢** ——

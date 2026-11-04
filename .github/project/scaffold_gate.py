@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 """The zero-modification contract, checked instead of remembered.
 
-The promise was: this library enters a project on the *unmodified* v0.3.3 scaffold, so that the next scaffold
+The promise was: this library enters a project on the *unmodified* pinned scaffold
+release, so that the next scaffold
 release can be merged without replaying private code by hand. A promise like that survives only if something
 fails when it is broken -- and it is broken by the ordinary act of fixing a bug in place, which never looks
-like a decision at the time.
+like a decision at the time. (The version is read from `scaffold.json` rather than written here: this sentence
+used to name a release, and a literal in a docstring goes stale the first time the pin moves.)
 
 What is checked is `scaffold.json`'s `checked` list: the build and CI plumbing upstream ships (`.github/misc/**`,
 `.github/workflows/**`, `conanfile.py`, `conandata.yml`, `conan_provider.cmake`, the two `CMakeLists.txt`, the

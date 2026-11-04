@@ -9,7 +9,6 @@
     "Not in this tier, with reasons: `.include-guard.txt` (the scaffold's own docstring says a derived project states its",
     "layering in that file), `.github/skills/**` (agent guidance, project-specific by design), and every content path --",
     "README, metadata.json, include/, src/, api/, benchmark/, docs sources, tests, editor settings.",
-    "The two tolerated forks cannot be removed from the private side, and that is structural rather than a judgement:",
     "each one is in a file that an upstream caller names **by path** -- .mega-linter.yml is named by",
     ".github/workflows/security-linters.yml:118 and :138 (MEGALINTER_CONFIG) and by run-megalinter.sh, and",
     "docs/build.py is named by .github/workflows/docs-build.yml:35 -- while all five of those files are themselves in",
@@ -19,12 +18,19 @@
     "exist -- splitting the eleven functions that trip cppcheck's analysis limit would let upstream's bytes pass, at",
     "the cost of real code churn -- and for docs/build.py it does not: those 109 lines fix three defects (lost block",
     "closers, swallowed lead text on continuation lines, a selection that outlives its comment), so reverting means",
-    "accepting silent loss of published text."
+    "accepting silent loss of published text.",
+    "Closed on 2026-11-04 by upstream v0.3.4 (701a2452): `f2519753` and `98ea19a1` took the cppcheck argument for",
+    "both the C and the CPP descriptor (more than the 0019 patch asked for), and `88f796b3` took the bilingual",
+    "filter fixes. `tolerated` is now empty and `baseline_divergences` is 0; the two proposed patches under",
+    "upstream-patches/ are kept as the record of what was asked for, marked merged. The paragraph that used to",
+    "argue the forks could not be closed privately was correct only while upstream had not shipped a release --",
+    "which is the argument for keeping an exit plan executable rather than a sentence."
   ],
   "pinned": {
     "project": "fcpp",
-    "version": "0.3.3",
-    "commit": "6d69c85"
+    "version": "0.3.4",
+    "commit": "701a2452",
+    "reviewed": "2026-11-04"
   },
   "checked": [
     ".github/misc/.checkov.yml",
@@ -61,26 +67,15 @@
     "test_package/CMakeLists.txt",
     "test_package/conanfile.py"
   ],
-  "tolerated": {
-    ".github/misc/.mega-linter.yml": {
-      "why": "one added linter argument: cppcheck `--check-level=exhaustive`, because 2.14 answers `too many branches` with an informational diagnostic and MegaLinter runs it with --error-exitcode=1",
-      "exit": "proposed upstream: .github/project/upstream-patches/0019-cppcheck-exhaustive.{md,patch} (1 file, +5/-0); verified to apply on 6d69c85 and to reproduce this file byte for byte",
-      "patch": ".github/project/upstream-patches/0019-cppcheck-exhaustive.patch"
-    },
-    "docs/build.py": {
-      "why": "this project is AHEAD of the pinned release here: a `closes` parameter and comment-structure recognition so the bilingual pipeline accepts all three doc shapes",
-      "exit": "proposed upstream: .github/project/upstream-patches/0020-bilingual-doc-integrity.{md,patch} (1 file, +109/-11); verified to apply on 6d69c85 and to reproduce this file byte for byte",
-      "patch": ".github/project/upstream-patches/0020-bilingual-doc-integrity.patch"
-    }
-  },
-  "baseline_divergences": 2,
+  "tolerated": {},
+  "baseline_divergences": 0,
   "sha256": {
     ".github/misc/.checkov.yml": "ff9d84399876a7ccb5bc3bf7acd15dda2cc26cd4005e9196eabc8e928eb8f651",
     ".github/misc/.clang-format-c": "412c3b92a6063fa5f92380b4499fe148edfc156eea9c2a9ae1b97ab6ecb79148",
     ".github/misc/.clang-format-cpp": "4680d77ed9bf6e0bfbbd450c3605badc523eebbf12873db3011f73a01dbcd483",
     ".github/misc/.clang-tidy": "806d861207938894f26ba330cbefee89b0e680e1383138cc4dbf6599af99668f",
     ".github/misc/.gitleaks.toml": "76584aa80618d9e384b36820dcec8d131be0b393a5185293966692b38a11e831",
-    ".github/misc/.mega-linter.yml": "65a67325dfce87949f10e1d24a87bda91be6eb55a6e02dccb73b6c83eac8e4a9",
+    ".github/misc/.mega-linter.yml": "f43f4b09178ab3d13a32764ca4239d911d822652d5d70557d02a3bb12d960248",
     ".github/misc/.pre-commit-config.yaml": "fa2f4fb3bdaf5198cccd30c3017502a1e5f4f61d3039fcdafc3d3027aeb85462",
     ".github/misc/.releaserc.json": "ada533b236db881012813ab6fd0f994a5c3f097da8c1f70ef13e033e20365cce",
     ".github/misc/Codegen-Starter.txt": "c18f1a185e1d85e865b384f62fa4dd312052b8410691febc1a000d0e0687f328",
@@ -106,7 +101,7 @@
     "conan_provider.cmake": "5595fd3c0653bf8e631f7e939164dc614f5dcbe57f99e39458976050a82e0994",
     "conandata.yml": "5e30b4764b118f14a7fb63df04837d194b1a8e3240251808c6f29d51d664e2c5",
     "conanfile.py": "1562f096d84dc5dc935df50dcbd9610fee4a7d76c665c2ad467d225aa22033f2",
-    "docs/build.py": "d6d0f8bafc3e099b3a42c57b99796f622d7f4031ff42eba016643c6de5b11821",
+    "docs/build.py": "216fd88a4b74abd434378e7ffa20a17c339d5a50070e795db615aaf8a0ed9862",
     "test_package/CMakeLists.txt": "35a2dcc681698e4db3da07a6d5e07ac9ec6af161fc727ee763dd41fe940b74e1",
     "test_package/conanfile.py": "6b9afce9b5d2e333a7da6f0a1b3740b3cb60df3a38234ad7aced1397be3073c2"
   },

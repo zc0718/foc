@@ -34,13 +34,10 @@ def _inherit_root_metadata():
     return _meta
 
 
-# Doc comments in this repo are written in three bilingual shapes, and the filters below must
-# accept all of them or a language silently leaks into (or vanishes from) the build:
-#   compact       ///< [en] gain. [zh] 增益。          member docs on one line
-#   indented          * @param x [en] gain.           doc blocks nested inside a class
-#   continuation      *        [zh] 增益。             the second language on its own line
-# Markers are normalized onto their own tag line by _normalize_bilingual() before filtering;
-# the matchers stay indentation-agnostic because doc blocks live at any nesting depth.
+# The filters below must accept all three bilingual shapes or a language leaks into (or vanishes from)
+# the build: compact `///< [en] gain. [zh] 增益。`, an indented block whose `[zh]` sits on its own line,
+# and a wrapped sentence whose marker lands on the second line. `_normalize_bilingual()` moves markers
+# onto tag lines first; the matchers stay indentation-agnostic because doc blocks live at any depth.
 _hit_com_tag = re.compile(r"\s*\* @")
 _hit_lang_tag = re.compile(rf"(\s*\* @[a-z]+).*\[({'|'.join(_inherit_root_metadata().get('doc_languages'))})] ")
 _hit_free_tag = re.compile(r"\s*\* [^@]+")
@@ -81,17 +78,13 @@ def _no_recursive_clean_img(x: str):
             os.remove(x + sep + f)
 
 
-def _idx_slicer(x: np.ndarray, closes: list[bool]) -> list[list[int]]:
+def _idx_slicer(x: np.ndarray, _closes: list[bool]) -> list[list[int]]:
     res, _in_selection = [], False
     for i, v in enumerate(x):
-        if closes[i]:
-            # A block comment ended here. Whatever follows is code, and code has no language: it
-            # must not inherit the selection that happened to be open. Without this the declaration
-            # right after a documented member is absorbed into the last language group and
-            # disappears from the other language's build.
-            # 块注释在这一行结束。后面是代码，代码没有语言：它不能继承恰好打开的那个选择集。没有
-            # 这一条，紧跟在一个有文档的成员后面的声明会被吸进最后一个语言组，在另一种语言的
-            # 构建里消失。
+        if _closes[i]:
+            # A block comment ended here, so what follows is code -- and code has no language. It must not
+            # inherit the selection that happened to be open, or the declaration after a documented member
+            # is absorbed into the last language group and disappears from the other language's build.
             _in_selection = False
             continue
         if not (v[0] == True and v[1] == True and v[2] == False):
@@ -115,11 +108,9 @@ def _determine_sub_groups(x: list[list[int]], languages: list[str],
 
 
 _lang_marker_re = re.compile(r"\[(en|zh|jp)\]\s?")
-# Lines that open or close a block comment. They carry no language, and a block whose last entry is
-# a tagged line would otherwise ship without its closer in the other language's build -- which
-# Doxygen reports only as "file ended in the middle of a comment block" and then documents nothing.
-# 开/闭块注释的行。它们不带语言；否则一个以标签行结尾的块，在另一种语言的构建里会少了闭合符——
-# Doxygen 对此只报 "file ended in the middle of a comment block"，然后什么都不文档化。
+# Lines that only open or close a block comment. They carry no language; dropping the closer makes the file
+# end inside a comment, which Doxygen reports as "file ended in the middle of a comment block" and then
+# documents nothing at all.
 _comment_structure_re = re.compile(r"^\s*(?:/\*\*?<?|/\*!|\*/)\s*$")
 _tag_line_re = re.compile(r"^(\s*\*\s*)@([A-Za-z_][A-Za-z0-9_]*)(.*?)(\r?\n)?$")
 _inline_doc_re = re.compile(r"^(.*?(?:///<?|\*\*<)\s*)(.*?)(\r?\n)?$")
@@ -142,8 +133,8 @@ def _split_lang_segments(text: str):
 
 
 def _chunk_characters(text: str) -> dict:
-    """The characters that carry meaning: no whitespace, no line-stars, no language tags."""
-    _clean = re.sub(r"\[(?:en|zh)\]", "", text)
+    """The characters that carry meaning: no whitespace, no line-stars, no language markers."""
+    _clean = _lang_marker_re.sub("", text)
     _counts: dict = {}
     for _c in _clean:
         if _c.isspace() or _c == '*':
@@ -155,11 +146,8 @@ def _chunk_characters(text: str) -> dict:
 def _assert_no_loss(ch: dict, out: list[str]) -> list[str]:
     """A regrouping may move text between lines. It may not delete any of it.
 
-    This runs on every chunk of every doc build, because the failure it guards against is silent:
-    a block simply renders shorter, and nobody notices until a paragraph is missing from a
-    published page.
-    重新分组可以搬动文字，但不能删掉任何一个字符。这段检查在每次构建的每个块上运行，因为它
-    防的是一种静默失败：某页少了一段话，而没有人察觉。
+    Runs on every chunk of every doc build, because the failure it guards against is silent: a block simply
+    renders shorter, and nobody notices until a paragraph is missing from a published page.
     """
     _before = _chunk_characters(ch['raw'] + ''.join(ch['lines']))
     _after = _chunk_characters(''.join(out))
@@ -175,13 +163,9 @@ def _rewrite_chunk(ch: dict) -> list[str]:
     _lead, _segs = _split_lang_segments(ch['rest'])
     _body_has_marker = any(_lang_marker_re.search(_l) for _l in ch['lines'])
     if not _segs or (len(_segs) == 1 and not _body_has_marker):
-        # Nothing to split, but the chunk's own body lines still belong to it. Returning the tag
-        # line alone used to delete every untagged paragraph -- invisible while bilingual blocks
-        # kept both languages on one tag line, fatal once each language got its own line, which
-        # is the shape the source uses now.
-        # 不需要拆分，但这一块自己的正文行仍然属于它。只返回标签行会删掉所有无标记段落——
-        # 当两种语言挤在一行时看不出来；一旦每种语言各占一行（也就是现在源码的形状），
-        # 就是致命的内容丢失。
+        # Nothing to split, but the chunk's own body lines still belong to it. Returning the tag line alone
+        # deleted every untagged paragraph -- invisible while both languages shared a tag line, fatal once
+        # each language got its own, which is the shape the sources use.
         return _assert_no_loss(ch, [ch['raw'], *ch['lines']])
 
     _primary = _segs[0][0]
@@ -204,25 +188,22 @@ def _rewrite_chunk(ch: dict) -> list[str]:
             continue
         _c_lead, _c_segs = _split_lang_segments(_content)
         if _c_segs:
-            # Text in front of the first marker on a *body* line continues the language that is
-            # already open. A wrapped sentence carries its `[zh]` at the end of the second line,
-            # so skipping the lead erases half of every such sentence.
-            # 正文行里首个标记之前的文字，属于**已经打开**的那个语言组。一句话折行时 `[zh]`
-            # 落在第二行末尾，跳过这段前导文字就等于把每句这种话抹掉一半。
+            # Text in front of the first marker on a *body* line continues the language already open: a
+            # wrapped sentence carries its `[zh]` at the end of the second line, so skipping the lead
+            # erases half of every such sentence.
             if _c_lead.strip():
                 _push(_primary, _c_lead)
             for _lang, _text in _c_segs:
                 _push(_lang, _text)
             continue
-        # Body paragraphs carry no marker: CJK belongs to the Chinese group, the rest to the
-        # language that opened the chunk.
+        # Body paragraphs carry no marker: CJK belongs to the Chinese group, the rest to the language
+        # that opened the chunk.
         _push('zh' if _cjk_re.search(_content) else _primary, _content)
 
     _indent = ch['prefix']
     _eol = ch['eol'] or '\n'
-    # Whatever sits between the tag and the first marker belongs to every language: it is the
-    # documented name for @param/@tparam, and dropping it makes Doxygen read the first word of the
-    # description as the parameter name.
+    # Whatever sits between the tag and the first marker belongs to every language: it is the documented
+    # name for @param/@tparam, and dropping it makes Doxygen read the first word of the description as it.
     _head = (ch['tag'] + _lead).rstrip() + ' '
     _out = []
     _written = [k for k in _order if _buckets[k]]
@@ -294,16 +275,13 @@ def _inline_lang_pick(line: str, lang_tag: Language) -> str:
         return line
     _lead, _segs = _split_lang_segments(_m.group(2))
     if not _segs:
-        # No tag at all: the template says such text belongs to every language, so it stays.
-        # 完全没有标签：按模板规则这段文字属于每个语言版本，保留。
+        # No tag at all: such text belongs to every language, so it stays.
         return line
     for _lang, _text in _segs:
         if _lang == lang_tag:
             return f"{_m.group(1)}{_text.strip()}{_m.group(3) or ''}"
-    # Tagged, but not in this language. A `[zh]`-only field description in the English build is not
-    # a translation gap to paper over, it is text the source says the English reader must not see.
-    # 有标签，但不是这个语言。英文版里只有 `[zh]` 的字段说明不是要遮掩的翻译缺口，而是源码明确说
-    # 英文读者不该看到的内容。
+    # Tagged, but not in this language: an `[zh]`-only field description in the English build is not a
+    # translation gap to paper over, it is text the source says the English reader must not see.
     return ''
 
 
@@ -325,7 +303,6 @@ def _language_filter(lines: list[str], langs: list[str], lang_tag: Language) -> 
 
     for i, l in enumerate(lines):
         # A comment's opening and closing lines are never language-specific.
-        # 注释的开、闭行从不属于某个语言。
         if _comment_structure_re.match(l) or i not in _all_lang_involved_lines:
             container.append(l)
         else:
@@ -337,16 +314,14 @@ def _language_filter(lines: list[str], langs: list[str], lang_tag: Language) -> 
                 else:
                     container.append(l)
 
-    # A build that ships an unclosed comment documents nothing from that file, and Doxygen says so
-    # only in a warning nobody reads. Fail here instead.
-    # 构建出未闭合注释时，那个文件什么都不会被文档化，而 Doxygen 只在没人看的 warning 里说一声。
-    # 在这里直接失败。
+    # A build that ships an unclosed comment documents nothing from that file, and Doxygen only says so in a
+    # warning nobody reads. Count doc-block openers against closers and fail here instead.
     _depth = 0
     for _l in container:
         _s = _l.strip()
-        if (_s.startswith('/**') or _s.startswith('/*!')) and '*/' not in _s:
+        if (_s.startswith('/**') or _s.startswith('/*!')) and '*/' not in _s[2:]:
             _depth += 1
-        elif _s.endswith('*/') and _depth > 0:
+        elif _depth > 0 and _s.startswith('*') and _s.endswith('*/'):
             _depth -= 1
     if _depth:
         raise RuntimeError(
@@ -616,12 +591,8 @@ class AutomationDoc:
                 subprocess.run(["make", "-C", _path, "-e", f"SPHINXOPTS=-D language={lang_tag_map[_]}", "html"])
         subprocess.run(["make", "-C", _path, "clean"])
         subprocess.run(["make", "-C", _path, "html"])
-        # `make html` renders whatever `language` conf.py pins, so every other language — the
-        # source language (msgid text) included — had no output at all. Emit one tree per
-        # remaining language as `build/html_<code>`, and take both the language list and the
-        # directory names from metadata instead of naming one language here.
-        # 每个未“钉住”的语言各出一份 `build/html_<code>`；语言列表与目录名都来自 metadata，
-        # 不在本函数里写死某个语言。
+        # `make html` renders whatever `language` conf.py pins, so every other language -- the source
+        # language included -- would get no tree at all: emit one per language as `build/html_<code>`.
         _pinned = self._sphinx_pinned_language(_path)
         _sphinx = shutil.which('sphinx-build')
         if _sphinx is None:
@@ -635,8 +606,7 @@ class AutomationDoc:
                                       _path + sep + "source",
                                       _path + sep + "build" + sep + f"html_{_lang}"])
             if _result.returncode != 0:
-                # never fatal: the site this file publishes is the pinned one, and a broken
-                # translated tree must not take the whole documentation job down
+                # Never fatal: the published site is the pinned tree, so a broken translation must not fail the job.
                 print(f'warning: sphinx build for language "{_tag}" failed '
                       f'(exit {_result.returncode}); build/html_{_lang} is incomplete')
 

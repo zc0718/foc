@@ -1,3 +1,9 @@
+> **MERGED -- do not apply.** Upstream shipped this in `fcpp` v0.3.4: `f2519753 fix(:shield:): let cppcheck finish
+> its analysis instead of going red`, and `98ea19a1 fix(:shield:): cover the C cppcheck axis too` went further than
+> this patch asked (it also set `C_CPPCHECK_ARGUMENTS`, which `.h`/`.c` need because they are linted by the C
+> descriptor). The file below is kept as the record of what was asked for; `scaffold.json` is pinned to v0.3.4 with
+> `tolerated` empty.
+
 # 0019 · cppcheck 用 `--check-level=exhaustive`，而不是让"分析受限"变成红
 
 **一句话**：cppcheck 2.14 遇到分支多的函数会输出 `too many branches, analysis limited`

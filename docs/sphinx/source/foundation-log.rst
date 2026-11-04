@@ -3092,6 +3092,30 @@ The log
 
 
 
+   * - A-111
+     - A
+     - **Upstream shipped both scaffold proposals, and nothing here would have noticed.** `fcpp` v0.3.4
+       (`701a2452`) took the cppcheck argument (`f2519753`, extended by `98ea19a1` to the C descriptor as
+       well -- `.h`/`.c` are linted by C, so the patch I proposed was incomplete) and the bilingual filter
+       fixes (`88f796b3`, plus `2f17bedd` stating the three shapes). Our tree sat on v0.3.3 for two releases
+       with two tolerated forks that no longer had anything to tolerate.
+     - Surfaced by the user reading upstream's release, **not** by this repository: the `scaffold` gate compares
+       the working tree against the *pinned* bytes, so a newer upstream release is invisible to it. That is the
+       right design -- a gate that needs the network is not a gate -- but it means the pin is a manual fact, and
+       three artefacts had already gone stale behind it: the `_comment` paragraph arguing the two forks "cannot
+       be removed from the private side" (true only while upstream had not shipped), a `v0.3.3` literal in
+       `scaffold_gate.py`'s own docstring, and a `scaffold-baseline/docs/build.py` copy of v0.3.3 bytes that
+       nothing referenced once the tolerance disappeared.
+     - Pin moved to v0.3.4 with all 33 checked files re-hashed from the release tree, `tolerated` emptied,
+       `baseline_divergences` 2 -> **0**, the stale baseline copy deleted, and the docstring made
+       version-agnostic. The adoption was verified rather than assumed: both `docs/build.py` versions were run
+       over all 61 public headers in both languages and produce **122/122 identical** filtered outputs, so the
+       merge changed no documentation content. The rule this adds: **a pinned byte-check detects drift from the
+       pin, never the existence of a newer release** -- so the pin carries the date it was last reviewed, and a
+       scaffold release is a scheduled task, not something a gate will remind anyone about.
+     - ``pending``
+
+
 What ``pending`` means in the commit column
 -------------------------------------------
 
