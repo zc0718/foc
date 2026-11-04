@@ -22,7 +22,8 @@
   ],
   "files": [
     "test_package/test/unit/sil_pmsm_plant.hpp",
-    "test_package/test/unit/sil_plant_hal.hpp"
+    "test_package/test/unit/sil_plant_hal.hpp",
+    "test_package/test/unit/sil_abc_plant.hpp"
   ],
   "covered_by": "test_package/test/unit/test_sil_startup.cpp",
   "covered": {
@@ -36,7 +37,8 @@
     "set_mount_error_rad": "mount_error_rad",
     "set_deadtime_voltage": "v_dead",
     "set_resolution_rad": "resolution_rad",
-    "set_stribeck_speed": "stribeck_speed_rad_s"
+    "set_stribeck_speed": "stribeck_speed_rad_s",
+    "set_cogging": "ripple_p2p_rad_s"
   },
   "not_an_error_source": {
     "set_voltage_dq": "the drive input, not an imperfection: it is what the controller commands.",
@@ -51,10 +53,12 @@
     "set_deadtime_transition": "shapes the same dead-time source rather than adding one: the table covers its magnitude with the ideal sign() model, which is the larger of the two because a smooth transition reduces the clamp.",
     "set_inverter": "attaches a different voltage path (switching model instead of mean value); the dead-time row covers that source, and two sources for one effect would make the number unreadable.",
     "set_bus": "attaches the bus meter: a *measurement port*, not an imperfection, and off by default. With no meter the DC-link voltage is the stiff constant it has always been, so no existing claim's sensitivity table can move.",
-    "set_meter": "the same attachment, reached from the DC-link adapter instead of the plant HAL; it exists so that `voltage_v()` can read the node equation, and it is the same no-op-by-default as `set_bus`."
+    "set_meter": "the same attachment, reached from the DC-link adapter instead of the plant HAL; it exists so that `voltage_v()` can read the node equation, and it is the same no-op-by-default as `set_bus`.",
+    "enable_mechanics": "the rotor's inertia and damping are properties of the machine being modelled, not imperfections of the model, so the claim is stated over them rather than corrected for them. Swept where it matters: the 2J repeat in test_sil_motion_profile.cpp and the coast in test_sil_cogging.cpp."
   },
   "covered_in": {
     "set_resolution_rad": "test_package/test/unit/test_sil_position_budget.cpp",
-    "set_stribeck_speed": "test_package/test/unit/test_friction_comp.cpp"
+    "set_stribeck_speed": "test_package/test/unit/test_friction_comp.cpp",
+    "set_cogging": "test_package/test/unit/test_sil_cogging.cpp"
   }
 }

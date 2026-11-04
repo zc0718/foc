@@ -338,6 +338,21 @@
         "test_package/test/unit/test_mtpv.cpp"
       ],
       "why_no_row": "the new claim row in README names only `test_mtpv.cpp`, which is the seat this change moves; every other seat is untouched because the module has no caller and no shared state. Evidence: `test_mtpv` is 14 cases and the full suite is re-run before the commit (766 -> 780)."
+    },
+    {
+      "id": "B-10",
+      "date": "2026-11-04",
+      "what_changed": "F33 prerequisite: `AbcPlant` gained a cogging-torque injection (`CoggingHarmonic` table + `set_cogging()`, at most six harmonics, order per MECHANICAL revolution), added to the mechanical equation as `J*w' = Te - b*w - load + Tcog`, plus `cogging_torque_nm()` so a compensator has a truth to be measured against. Default: no harmonics, and off is bit-identical to a build without the port (asserted, not asserted-by-eye: two runs compared with `EXPECT_EQ` on the raw floats). `torque_at()` is untouched -- the injected torque must NOT be folded into the electromagnetic torque, which is what both the M-01 cross-check and a future compensator are measured against.",
+      "seeds": [
+        "test_package/test/unit/sil_abc_plant.hpp"
+      ],
+      "affected": [],
+      "hand_rerun": [
+        "test_package/test/unit/test_sil_cogging.cpp",
+        "test_package/test/unit/test_abc_plant.cpp",
+        "test_package/test/unit/test_sil_startup.cpp"
+      ],
+      "why_no_row": "`claims --impact` reports that no declared claim row rests on this file, so there is no row to re-state; the seats that could move are the ones that read the plant, and they are re-run by hand: `test_abc_plant` (the M-01 six-point cross-check, whose six points are unaffected because cogging is off there), `test_sil_startup` (the C2 slip law, same reason) and the new `test_sil_cogging`. Evidence before the commit: the full suite, and the two zero-amplitude runs being bit-identical is the direct proof that a scenario without injection cannot have moved."
     }
   ]
 }

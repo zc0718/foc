@@ -39,7 +39,7 @@ namespace sil {
  * @since 0.1.0
  */
 class AbcPlant final {
-public:
+  public:
     /**
      * @brief [en] The machine, plus the leakage/mutual split.
      * @brief [zh] 机器，外加漏感/互感的分法。
@@ -49,13 +49,13 @@ public:
      * @since 0.1.0
      */
     struct Params final {
-        float rs;         ///< [en] stator resistance, ohm. [zh] 定子电阻，Ω。
+        float rs; ///< [en] stator resistance, ohm. [zh] 定子电阻，Ω。
         /**
          * @brief [en] synchronous inductance `Ls - M`, H.
          * @brief [zh] 同步电感 `Ls − M`，H。
          */
         float ls_minus_m;
-        float lambda_m;   ///< [en] rotor flux linkage, Wb. [zh] 转子磁链，Wb。
+        float lambda_m;          ///< [en] rotor flux linkage, Wb. [zh] 转子磁链，Wb。
         std::uint8_t pole_pairs; ///< [en] pole pairs. [zh] 极对数。
     };
 
@@ -94,6 +94,82 @@ public:
 
     /** @brief [en] Load torque opposing positive rotation, N*m. [zh] 阻碍正向旋转的负载转矩，N·m。 */
     void set_load_torque(float torque_nm) noexcept { load_nm_ = torque_nm; }
+
+    /**
+     * @brief [en] One harmonic of the cogging torque: `amplitude * sin(order*theta_mech + phase)`, in N*m.
+     *
+     * @brief [zh] 齿槽转矩的一个谐波：`amplitude · sin(order·θ_mech + phase)`，N·m。
+     *
+     *     `order` is **per mechanical revolution** -- the quantity a designer reads off `lcm(slots, poles)`, and the
+     *     quantity a compensator's table is indexed by. It is not an electrical order: mixing the two is a factor of
+     *     `pole_pairs`, which is exactly the kind of error that makes a compensation look like it does not work.
+     *     `order` 是**每机械转**的次数——设计师从 `lcm(slots, poles)` 读到的那个量，也是补偿器表被索引的那个量。它不是电
+     *     次数：两者混用会差一个极对数，而那正是让补偿「看起来没生效」的那类错误。
+     * @since 0.1.9
+     */
+    struct CoggingHarmonic final {
+        std::uint8_t order; ///< [en] per mechanical revolution. [zh] 每机械转的次数。
+        float amplitude_nm; ///< [en] peak of this harmonic, N*m. [zh] 该谐波的峰值，N·m。
+        float phase_rad;    ///< [en] phase at `theta_mech = 0`, rad. [zh] `θ_mech = 0` 处的相位，rad。
+    };
+
+    /**
+     * @brief [en] Inject a cogging torque: a rotor torque that exists with no current, is periodic in the
+     *             **mechanical** angle, and averages to zero over a revolution.
+     *
+     * @brief [zh] 注入齿槽转矩：一个**不通电流也存在**、随**机械**角周期变化、一转平均为零的转子转矩。
+     *
+     *     It enters the mechanical equation **additively** (`J*w' = Te - b*w - load + Tcog`), which fixes the sign a
+     *     compensator must produce: to cancel it, a controller has to make `Te` carry `-Tcog`. Writing it as a load
+     *     that happens to depend on angle would work arithmetically and would leave that sign to be rediscovered by
+     *     whoever writes the compensator.
+     *
+     *     **Off by default (no harmonics), and bit-identical when off** -- the same rule the other injection ports
+     *     follow: an error source that changes the frozen scenarios cannot be told apart from a regression. `count`
+     *     above `kMaxCogging` is clamped rather than refused: this is a test instrument, and silently using the first
+     *     six is visible in `cogging_harmonics()`. 它**加性**进入机械方程（`J·ω' = Te − b·ω − load + Tcog`），这就固定
+     *     了补偿器必须产出的符号：要抵消它，控制器得让 `Te` 带上 `-Tcog`。若把它写成"恰好随角度变化的负载"，算术上等
+     *     价，却把那个符号留给写补偿的人重新发现一遍。
+     *
+     *     **默认关闭（无谐波），关闭时逐位不变**——与其它注入端口同一条规矩：会改变冻结场景的误差源无法与回归区分。
+     *     `count` 超过 `kMaxCogging` 时截断而不是拒绝：这是测试仪器，而且用了前六个这件事在 `cogging_harmonics()` 里看
+     *     得见。
+     *
+     * @param harmonics [en] the table, at most `kMaxCogging` entries.
+     * @param harmonics [zh] 谐波表，最多 `kMaxCogging` 条。
+     * @param count [en] how many entries are valid.
+     * @param count [zh] 有效条数。
+     * @since 0.1.9
+     */
+    /** @brief [en] How many harmonics the injection can hold. [zh] 注入最多能装几条谐波。 */
+    static constexpr int kMaxCogging = 6;
+
+    void set_cogging(const CoggingHarmonic* harmonics, int count) noexcept {
+        cogging_count_ = 0;
+        if (harmonics == nullptr || count <= 0) {
+            return;
+        }
+        const int usable = (count < kMaxCogging) ? count : kMaxCogging;
+        for (int k = 0; k < usable; ++k) {
+            // Order 0 is a constant torque, which is `set_load_torque`'s job, not cogging's.
+            // 0 次是恒定转矩，那是 `set_load_torque` 的活，不是齿槽的。
+            if (harmonics[k].order == 0U) {
+                continue;
+            }
+            cogging_[cogging_count_] = harmonics[k];
+            ++cogging_count_;
+        }
+    }
+
+    /** @brief [en] How many harmonics are active. [zh] 当前生效的谐波条数。 */
+    [[nodiscard]] auto cogging_harmonics() const noexcept -> int { return cogging_count_; }
+
+    /**
+     * @brief [en] The injected torque at the current mechanical angle, N*m -- the truth a compensator is measured
+     *             against.
+     * @brief [zh] 当前机械角处的注入转矩，N·m——补偿器被对照的那把尺。
+     */
+    [[nodiscard]] auto cogging_torque_nm() const noexcept -> float { return cogging_at(theta_mech_rad()); }
 
     /** @brief [en] Rotor angle in mechanical radians. [zh] 转子机械角，rad。 */
     [[nodiscard]] auto theta_mech_rad() const noexcept -> float {
@@ -158,28 +234,30 @@ public:
                 // comes out the same here, the derivation has a witness that never mentions that product.
                 // 同一子步的机械半：磁共能转矩进，转速与角度出。它不使用 `Kt`、也不做 Park 变换，这正是本模型存在的理由
                 // —— 若一条带 `p*Kt` 的规律在这里得到同样的结果，那个推导就有了一个根本不提这个乘积的证人。
+                //
+                // The injected cogging torque is added here and nowhere else: it is a rotor torque, so it belongs in the
+                // mechanical equation and must NOT be folded into `torque_at()`, which is the electromagnetic torque the
+                // cross-check and the compensation are both measured against.
+                // 注入的齿槽转矩只加在这里，不加别处：它是转子转矩，属于机械方程，**不能**并进 `torque_at()`——后者是对拍与
+                // 补偿共同对照的那个电磁转矩。
                 const float te = torque_at(iu, iv, theta);
-                omega_m_ = static_cast<float>(
-                    omega_m_ + (h * (((te - (mech_.b * omega_m_)) - load_nm_) / mech_.j)));
+                const float tcog = cogging_at(static_cast<float>(theta) / static_cast<float>(params_.pole_pairs));
+                omega_m_ =
+                    static_cast<float>(omega_m_ + (h * ((((te + tcog) - (mech_.b * omega_m_)) - load_nm_) / mech_.j)));
                 omega_e_ = static_cast<float>(params_.pole_pairs) * omega_m_;
             }
             const Derivatives k1 = derivative(iu, iv, theta);
-            const Derivatives k2 = derivative(
-                static_cast<float>(iu + (0.5F * h * k1.du)),
-                static_cast<float>(iv + (0.5F * h * k1.dv)),
-                static_cast<float>(theta + (0.5F * h * omega_e_)));
-            const Derivatives k3 = derivative(
-                static_cast<float>(iu + (0.5F * h * k2.du)),
-                static_cast<float>(iv + (0.5F * h * k2.dv)),
-                static_cast<float>(theta + (0.5F * h * omega_e_)));
-            const Derivatives k4 = derivative(
-                static_cast<float>(iu + (h * k3.du)),
-                static_cast<float>(iv + (h * k3.dv)),
-                static_cast<float>(theta + (h * omega_e_)));
-            iu = static_cast<float>(iu + ((h / 6.0F) * ((k1.du + (2.0F * k2.du)) +
-                                                        ((2.0F * k3.du) + k4.du))));
-            iv = static_cast<float>(iv + ((h / 6.0F) * ((k1.dv + (2.0F * k2.dv)) +
-                                                        ((2.0F * k3.dv) + k4.dv))));
+            const Derivatives k2 =
+                derivative(static_cast<float>(iu + (0.5F * h * k1.du)), static_cast<float>(iv + (0.5F * h * k1.dv)),
+                           static_cast<float>(theta + (0.5F * h * omega_e_)));
+            const Derivatives k3 =
+                derivative(static_cast<float>(iu + (0.5F * h * k2.du)), static_cast<float>(iv + (0.5F * h * k2.dv)),
+                           static_cast<float>(theta + (0.5F * h * omega_e_)));
+            const Derivatives k4 =
+                derivative(static_cast<float>(iu + (h * k3.du)), static_cast<float>(iv + (h * k3.dv)),
+                           static_cast<float>(theta + (h * omega_e_)));
+            iu = static_cast<float>(iu + ((h / 6.0F) * ((k1.du + (2.0F * k2.du)) + ((2.0F * k3.du) + k4.du))));
+            iv = static_cast<float>(iv + ((h / 6.0F) * ((k1.dv + (2.0F * k2.dv)) + ((2.0F * k3.dv) + k4.dv))));
             theta = static_cast<float>(theta + (h * omega_e_));
         }
         theta_e_ = theta;
@@ -199,9 +277,7 @@ public:
      * @brief [en] Electromagnetic torque from magnetic co-energy, **without Park**: N*m.
      * @brief [zh] 由磁共能给出的电磁转矩，**不经 Park**：N·m。
      */
-    [[nodiscard]] auto torque() const noexcept -> float {
-        return torque_at(i_u_, i_v_, theta_e_);
-    }
+    [[nodiscard]] auto torque() const noexcept -> float { return torque_at(i_u_, i_v_, theta_e_); }
 
     /**
      * @brief [en] Mechanical power balance: `Te*omega_m = v.i - Rs*|i|^2` at steady state. Reported so the test can
@@ -219,7 +295,7 @@ public:
      */
     [[nodiscard]] auto omega_e() const noexcept -> float { return omega_e_; }
 
-private:
+  private:
     struct Derivatives final {
         float du;
         float dv;
@@ -247,19 +323,35 @@ private:
      *             differentiated by hand: `d/dt cos(theta) = -omega*sin(theta)`.
      * @brief [zh] 每相的 `di/dt`，来自 `v = Rs·i + (Ls−M)·di/dt + dλm/dt`，磁钢项手写求导： `d/dt cos θ = −ω·sin θ`。
      */
-    [[nodiscard]] auto derivative(float iu, float iv, float theta) const noexcept
-        -> Derivatives {
+    [[nodiscard]] auto derivative(float iu, float iv, float theta) const noexcept -> Derivatives {
         const float back_u = params_.lambda_m * std::sin(theta);
         const float back_v = params_.lambda_m * std::sin(theta - kTwoThirdPi);
         const float scale = 1.0F / params_.ls_minus_m;
-        return Derivatives{
-            static_cast<float>((v_.u - (params_.rs * iu) + (omega_e_ * back_u)) * scale),
-            static_cast<float>((v_.v - (params_.rs * iv) + (omega_e_ * back_v)) * scale)};
+        return Derivatives{static_cast<float>((v_.u - (params_.rs * iu) + (omega_e_ * back_u)) * scale),
+                           static_cast<float>((v_.v - (params_.rs * iv) + (omega_e_ * back_v)) * scale)};
+    }
+
+    /**
+     * @brief [en] The injected cogging torque at a mechanical angle: the sum of the table, in N*m.
+     * @brief [zh] 给定机械角处的注入齿槽转矩：整张表之和，N·m。
+     * @note [en] Deliberately not expressed with `Kt` or with a d-q quantity -- the point of this plant is to be a
+     *            witness that never mentions either, and that has to hold for the injected term too.
+     * @note [zh] 有意不写成 `Kt` 或任何 d-q 量——本被控对象的意义就是当个两者都不提的证人，注入项也必须守这一条。
+     */
+    [[nodiscard]] auto cogging_at(float theta_mech) const noexcept -> float {
+        float sum = 0.0F;
+        for (int k = 0; k < cogging_count_; ++k) {
+            const float angle = (static_cast<float>(cogging_[k].order) * theta_mech) + cogging_[k].phase_rad;
+            sum = static_cast<float>(sum + (cogging_[k].amplitude_nm * std::sin(angle)));
+        }
+        return sum;
     }
 
     Params params_{};
     Mechanics mech_{0.0F, 0.0F};
     core::Uvw<float> v_{0.0F, 0.0F, 0.0F};
+    CoggingHarmonic cogging_[kMaxCogging]{};
+    int cogging_count_{0};
     float i_u_{0.0F};
     float i_v_{0.0F};
     float theta_e_{0.0F};

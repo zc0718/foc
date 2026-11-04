@@ -326,8 +326,10 @@ TEST(Mtpv, TheReferenceHasNoStepAcrossTheRegionBoundaries) {
         previous_iq = point.iq_a;
     }
     // A 1 % step of the base speed moves the point by at most a tenth of an amp; a branch would show up as an order of
-    // magnitude more. Measured worst on this machine is 0.021 A, at the knee. 基速 1 %
-    // 的步长最多把点挪动十分之一安培；分支会表现为再大一个量级。这台机器实测最差 0.021 A，在拐点处。
+    // magnitude more. Measured worst on this machine is 0.0423 A, at omega = 732.4 rad/s -- 1.01x base, i.e. exactly
+    // where the knee starts and where a two-region implementation would step by the width of the band it left out. 基速
+    // 1 % 的步长最多把点挪动十分之一安培；分支会表现为再大一个量级。这台机器实测最差 0.0423 A，在 732.4 rad/s
+    // ——1.01 倍基速，正是拐点开始处，也正是两区间实现会跳出它漏掉的那段宽度的地方。
     EXPECT_LT(worst, 0.10F) << "worst step " << worst << " A at omega " << worst_at;
 }
 
