@@ -194,7 +194,16 @@ inline auto state_read(foc_motor_t motor, std::uint32_t* raw, int which) noexcep
     // through an integer would be a different number that happens to round to the
     // same decimal.
     // 逐位搬运而不是数值转换：寄存器承载的是那个字，而经整数中转会得到一个只是凑巧修约到同一个小数的另一个数。
+    //
+    // `memcpy` here is the well-defined way to do it and there is no `memcpy_s` to prefer: Annex K is optional, glibc
+    // does not implement it, and the bare-metal targets this library ships to do not have it at all. The sizes are
+    // equal by the `static_assert` above and the destination is the caller's own word, so the hazard the rule warns
+    // about is already excluded by the type. Suppressed with that reason rather than silently ignored.
+    // 这里的 `memcpy` 是定义良好的做法，而且没有 `memcpy_s` 可优先：Annex K 是可选的，glibc 不实现它，本库要上的裸机目标
+    // 根本没有。尺寸由上面的 `static_assert` 保证相等，目的地是调用方自己的那个字，所以这条规则警告的危险已经被类型排除。
+    // 带着这个理由抑制，而不是悄悄无视。
     static_assert(sizeof(float) == sizeof(std::uint32_t), "a register word is 32 bits and so is a float");
+    // devskim:ignore DS121708
     std::memcpy(raw, &value, sizeof(value));
     return FOC_OK;
 }

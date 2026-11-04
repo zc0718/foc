@@ -3,6 +3,7 @@
 // F05 - 栅极驱动器的最小脉宽。窄于 `t_min` 的脉冲传不出去；它的代价是调用方**在它发生之前**就能写下的一个数，而且可以
 // 把余量带过去，让平均值不必为它付账。
 
+#include <algorithm>
 #include <cmath>
 #include <vector>
 
