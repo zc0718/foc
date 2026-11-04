@@ -1,0 +1,255 @@
+{
+  "_comment": [
+    "Which consumer each public capability must reach, so that \"implemented\" and \"shipped\" stop being the same word.",
+    "每个 public 能力必须到达哪一类消费者——这样「实现了」和「出货了」才不是同一句话。",
+    "",
+    "Four classes, because they fail differently:",
+    "  * `motor-owned` -- the library's own loop must contain it, so it has to be reachable from a production",
+    "    translation unit under `src/`. Unreachable is a defect: the header exists, the tests are green, and a",
+    "    user of the released package cannot get at it (`stall_start.hpp` was exactly this);",
+    "  * `diagnostic` -- only useful if something can read it out, so each `abi` name must exist in the C surface;",
+    "  * `contract` -- a port is a promise, and `stub` names the reference implementation that proves the promise",
+    "    is implementable;",
+    "  * `policy` -- composed by the host, so reachability from `src/` is *not* expected; what it owes instead is a",
+    "    runnable example. `example: null` is allowed and counted, because \"no example yet\" and \"we did not think",
+    "    about it\" must not look the same in a file;",
+    "  * `todo` -- not decided yet. Counted every run against `todo_baseline`, which may only fall.",
+    "",
+    "`known_unshipped` is the honest debt list: a `motor-owned` header that nothing in `src/` reaches, with the batch",
+    "that fixes it. It is a ratchet in both directions -- an entry whose header has become reachable is itself a",
+    "failure, because a stale exception hides the next real one.",
+    "",
+    "This gate is the STATIC half of the rule. The dynamic half (\"switch the thing off and the output must move\")",
+    "is a test convention, not a gate: `blast` and `wired` both answer \"is the wire there\", neither answers \"is the",
+    "thing on the other end right\"."
+  ],
+  "todo_baseline": 0,
+  "known_unshipped": {
+    "core/stall_start.hpp": "batch 1 wires it into `Motor` and the C ABI (F18)"
+  },
+  "catalogue": {
+    "core/alignment.hpp": {
+      "class": "motor-owned"
+    },
+    "core/board_check.hpp": {
+      "class": "motor-owned"
+    },
+    "core/commissioning.hpp": {
+      "class": "motor-owned"
+    },
+    "core/deadtime.hpp": {
+      "class": "policy",
+      "example": null,
+      "why": "the loss model is applied by the caller before modulating: `Svpwm` sees no phase currents, so this release has no production slot for it"
+    },
+    "core/feedforward.hpp": {
+      "class": "motor-owned"
+    },
+    "core/field_weakening.hpp": {
+      "class": "motor-owned"
+    },
+    "core/filters.hpp": {
+      "class": "motor-owned"
+    },
+    "core/friction_comp.hpp": {
+      "class": "policy",
+      "example": null,
+      "why": "a feed-forward the caller adds to its torque command; `Motor` has no compensation slot, which is why nothing in `src/` includes it"
+    },
+    "core/gear_ratio.hpp": {
+      "class": "policy",
+      "example": null,
+      "why": "a coordinate transform between the caller's units and the axis; by design it lives on the caller's side of the boundary"
+    },
+    "core/hall.hpp": {
+      "class": "policy",
+      "example": null,
+      "why": "there is no HAL input for the three pins yet (batch 1 adds one), so a host has to write its own reader even though the decoder ships"
+    },
+    "core/homing.hpp": {
+      "class": "motor-owned"
+    },
+    "core/limits.hpp": {
+      "class": "motor-owned"
+    },
+    "core/machine_map.hpp": {
+      "class": "policy",
+      "example": null,
+      "why": "a parameter interpolator the caller feeds from its own data; batch 1 adds the working example, without which the capability is only a header"
+    },
+    "core/machine_map_text.hpp": {
+      "class": "policy",
+      "example": null,
+      "why": "same capability through a text file; it shares batch 1's example"
+    },
+    "core/machine_params.hpp": {
+      "class": "motor-owned"
+    },
+    "core/motion_profile.hpp": {
+      "class": "motor-owned"
+    },
+    "core/observer/back_emf_observer.hpp": {
+      "class": "motor-owned"
+    },
+    "core/observer/blended_observer.hpp": {
+      "class": "motor-owned"
+    },
+    "core/observer/dual_inductance_observer.hpp": {
+      "class": "motor-owned"
+    },
+    "core/observer/hfi_observer.hpp": {
+      "class": "motor-owned"
+    },
+    "core/observer/ideal_observer.hpp": {
+      "class": "motor-owned"
+    },
+    "core/observer/nonlinear_flux_observer.hpp": {
+      "class": "motor-owned"
+    },
+    "core/observer/observer_policy.hpp": {
+      "class": "motor-owned"
+    },
+    "core/observer/switchable_observer.hpp": {
+      "class": "motor-owned"
+    },
+    "core/pi.hpp": {
+      "class": "motor-owned"
+    },
+    "core/polarity.hpp": {
+      "class": "motor-owned"
+    },
+    "core/position.hpp": {
+      "class": "motor-owned"
+    },
+    "core/position_reference.hpp": {
+      "class": "motor-owned"
+    },
+    "core/protection.hpp": {
+      "class": "motor-owned"
+    },
+    "core/reference.hpp": {
+      "class": "motor-owned"
+    },
+    "core/sinusoid_fit.hpp": {
+      "class": "motor-owned"
+    },
+    "core/sm.hpp": {
+      "class": "motor-owned"
+    },
+    "core/soft_limit.hpp": {
+      "class": "policy",
+      "example": null,
+      "why": "a limiter the caller applies to its own position commands; `Motor` takes commands already limited"
+    },
+    "core/speed_from_angle.hpp": {
+      "class": "motor-owned"
+    },
+    "core/stall_start.hpp": {
+      "class": "motor-owned"
+    },
+    "core/startup.hpp": {
+      "class": "motor-owned"
+    },
+    "core/step_metrics.hpp": {
+      "class": "motor-owned"
+    },
+    "core/svpwm.hpp": {
+      "class": "motor-owned"
+    },
+    "core/trace.hpp": {
+      "class": "diagnostic",
+      "abi": [
+        "foc_motor_trace_read",
+        "foc_motor_trace_reset",
+        "foc_motor_trace_size",
+        "foc_motor_trace_dropped"
+      ],
+      "why": "the recorder is only useful if something can read it out, so its reachability is the C ABI shape of it"
+    },
+    "core/traits.hpp": {
+      "class": "motor-owned"
+    },
+    "core/transforms.hpp": {
+      "class": "motor-owned"
+    },
+    "core/types.hpp": {
+      "class": "motor-owned"
+    },
+    "core/version.hpp": {
+      "class": "motor-owned"
+    },
+    "motor/foc_loop.hpp": {
+      "class": "motor-owned"
+    },
+    "motor/motor.hpp": {
+      "class": "motor-owned"
+    },
+    "motor/motor_config.hpp": {
+      "class": "motor-owned"
+    },
+    "motor/torque_map.hpp": {
+      "class": "motor-owned"
+    },
+    "hal/clock.hpp": {
+      "class": "contract",
+      "stub": "callback_hal.hpp",
+      "why": "a port is only a contract until something implements it; the stub is what proves the shape is implementable"
+    },
+    "hal/current_sense.hpp": {
+      "class": "contract",
+      "stub": "scripted_current.hpp + callback_hal.hpp",
+      "why": "a port is only a contract until something implements it; the stub is what proves the shape is implementable"
+    },
+    "hal/dc_link.hpp": {
+      "class": "contract",
+      "stub": "stub_dc_link.hpp + callback_hal.hpp",
+      "why": "a port is only a contract until something implements it; the stub is what proves the shape is implementable"
+    },
+    "hal/position.hpp": {
+      "class": "contract",
+      "stub": "sim_position.hpp + callback_hal.hpp",
+      "why": "a port is only a contract until something implements it; the stub is what proves the shape is implementable"
+    },
+    "hal/pwm.hpp": {
+      "class": "contract",
+      "stub": "stub_pwm.hpp + callback_hal.hpp",
+      "why": "a port is only a contract until something implements it; the stub is what proves the shape is implementable"
+    },
+    "api/foc_api.h": {
+      "class": "motor-owned",
+      "why": "the C surface is the product path: a capability that is not reachable here is not shipped at all"
+    },
+    "api/foc_types.h": {
+      "class": "motor-owned",
+      "why": "same surface, the type half"
+    },
+    "version.h": {
+      "class": "motor-owned",
+      "why": "the one string C and C++ share, on the same path"
+    },
+    "driver/callback_hal.hpp": {
+      "class": "reference",
+      "why": "a reference implementation of a contract: it is the example, so it owes being exercised rather than being documented"
+    },
+    "driver/scripted_current.hpp": {
+      "class": "reference",
+      "why": "a reference implementation of a contract: it is the example, so it owes being exercised rather than being documented"
+    },
+    "driver/sim_position.hpp": {
+      "class": "reference",
+      "why": "a reference implementation of a contract: it is the example, so it owes being exercised rather than being documented"
+    },
+    "driver/stub_dc_link.hpp": {
+      "class": "reference",
+      "why": "a reference implementation of a contract: it is the example, so it owes being exercised rather than being documented"
+    },
+    "driver/stub_hal.hpp": {
+      "class": "reference",
+      "why": "a reference implementation of a contract: it is the example, so it owes being exercised rather than being documented"
+    },
+    "driver/stub_pwm.hpp": {
+      "class": "reference",
+      "why": "a reference implementation of a contract: it is the example, so it owes being exercised rather than being documented"
+    }
+  }
+}

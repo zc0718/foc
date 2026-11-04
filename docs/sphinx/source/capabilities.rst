@@ -25,6 +25,26 @@ The `capabilities` gate checks every cell: a header under `core/` or `motor/` mu
 L3 claim; every reason must actually be a reason. A row that cannot be filled honestly fails the build, which is the
 point -- the alternative is a library that grows algorithms and forgets how they fail.
 
+The three questions a criterion has to survive before it is written down
+----------------------------------------------------------------------
+
+Not every one of them can be checked by a machine, which is why they live here as prose rather than
+as a gate. Each is a defect this repository has actually shipped, and each was invisible to the
+coverage numbers at the time:
+
+1. **Is it vacuously true on the rig I am actually using?** The sharpest example: "after hand-over,
+   the angle error is within 0.05 rad in 20 ms" was asserted on a *sensored* bench, where the loop
+   uses the sensor's angle -- so the error against that sensor is identically zero. The criterion was
+   green, the number was a statement about the bench rather than the capability, and the fix was to
+   delete it and state one that can fail.
+2. **Does it only have an upper bound?** "must be better than X" alone pushes the next reader to tune
+   until it passes; the honest form also records where a design is *expected* to be worse. The
+   dead-band ramp is the example: it is worse than a plain ``sign()`` step on an ideal step, and that
+   has to be written into the table rather than quietly avoided when tuning.
+3. **Does the probe point distinguish the competing formula?** Before claiming that a case can reject
+   a wrong formula, evaluate both at that point. ``sqrt(2ae)`` against ``sqrt(ae)`` was probed at the
+   one place where the two coincide, so the case had no teeth and nothing said so.
+
 .. list-table:: capability matrix
    :header-rows: 1
    :widths: 20 22 20 24 8 6

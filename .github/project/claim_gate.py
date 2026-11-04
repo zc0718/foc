@@ -107,6 +107,41 @@ def load_basis() -> tuple[dict[str, list[str]], set[str]]:
     return mapped, unmapped
 
 
+def closure(seeds, mapped: dict[str, list[str]] | None = None) -> set[str]:
+    """Every claim row that rests on any of `seeds`, followed transitively.
+
+    A change to `core/types.hpp` does not merely touch the rows that list it: a row that quotes
+    `core/pi.hpp`'s numbers rests on `core/types.hpp` too, through an edge it never names. That is
+    the difference between "which claims name this file" and "which conclusions were measured
+    against it", and only the second one is a blast radius.
+
+    `report_impact` (`claims --impact`) deliberately asks the *direct* question -- it answers "who
+    names this file", so the caller can see the immediate edge. This function answers the transitive
+    one. One graph, two questions, and `blast_gate.py` is the only caller of this one.
+
+    A seed that no row mentions contributes nothing, which is how an instrument header with no claim
+    row of its own (`sil_abc_plant.hpp`) gets an empty radius -- the ledger then has to carry a
+    hand-written re-run list instead of accepting an empty ritual.
+    """
+    if mapped is None:
+        mapped, _unmapped = load_basis()
+    resting_on: dict[str, set[str]] = {}
+    for module, items in mapped.items():
+        for item in items:
+            resting_on.setdefault(item, set()).add(module)
+    seen: set[str] = set()
+    frontier = {str(seed) for seed in seeds}
+    while frontier:
+        nxt: set[str] = set()
+        for item in frontier:
+            for module in resting_on.get(item, ()):
+                if module not in seen:
+                    seen.add(module)
+                    nxt.add(module)
+        frontier = nxt
+    return seen
+
+
 _SCAN_TEXT: str | None = None
 
 

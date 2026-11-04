@@ -1,0 +1,82 @@
+{
+  "_comment": [
+    "Every script that can run long, and whether it can be smoked before it is allowed to.",
+    "每一支可能跑很久的脚本，以及它能不能在正式跑之前先过一个便宜的通路检查。",
+    "",
+    "The rule (plan §2.2.1): a run expected to exceed 30 minutes may not start until a cheap end-to-end",
+    "smoke has passed. The smoke judges the PATHWAY, never the accuracy: FEMM's five silent failures were",
+    "all 'exit 0 and nothing happened', and none of them would have been caught by a longer run of the",
+    "same thing.",
+    "",
+    "Three tiers, and only tier 0 lives in this gate:",
+    "  * tier 0 -- preflight state, cheap: the test binaries are newer than the sources they were built",
+    "    from, and the conan cache holds no cross-built package (a leftover aarch64 `foc` makes any later",
+    "    link take whichever archive prints first, with an error that looks nothing like the cause).",
+    "    Run with `gates.py smoke --preflight`; it is deliberately NOT part of the aggregate `all`,",
+    "    because CI builds fresh and has nothing stale to find.",
+    "  * tier 1 -- a minimal scenario whose answer is closed-form, finished in seconds. Owned by the",
+    "    script, exposed as `--tier 1`.",
+    "  * tier 2 -- the counterfactual: switch the thing under test off and the output must move. Owned by",
+    "    the script, exposed as `--tier 2`.",
+    "",
+    "`tier: null` means 'this script cannot be smoked yet'. That is the honest state of every script here",
+    "today, and it is a ratchet: the count is compared against `no_tier_baseline` on every run and may",
+    "only fall. A new script that appears without a `tier` decision fails the gate, because the failure",
+    "this prevents is not a wrong smoke -- it is a long scan that was never smokeable arriving quietly."
+  ],
+  "no_tier_baseline": 13,
+  "scans": {
+    "benchmark/script/analyze.py": {
+      "why": "post-processes a bench capture; reads files and plots, so its cost is the capture's size",
+      "tier": null
+    },
+    "benchmark/script/autotune_current_loop.py": {
+      "why": "searches current-loop gains against the plant; the search space is the runtime",
+      "tier": null
+    },
+    "benchmark/script/commission.py": {
+      "why": "drives the whole commissioning chain, so it is the longest end-to-end script here",
+      "tier": null
+    },
+    "benchmark/script/download.py": {
+      "why": "fetches bench material; bounded by the network, not by the model",
+      "tier": null
+    },
+    "benchmark/script/foc_sil_plant.py": {
+      "why": "the plant model other scripts import; it can also be run standalone over a grid",
+      "tier": null
+    },
+    "benchmark/script/golden.py": {
+      "why": "regenerates or compares the golden traces",
+      "tier": null
+    },
+    "benchmark/script/identify_parameters.py": {
+      "why": "parameter identification over several sweeps, plus an independent least-squares fit",
+      "tier": null
+    },
+    "benchmark/script/montecarlo.py": {
+      "why": "scatter over machine parameters and operating points; the sample count is the runtime",
+      "tier": null
+    },
+    "benchmark/script/official_cvc_check.py": {
+      "why": "replays the published CVC example against our loop",
+      "tier": null
+    },
+    "benchmark/script/reconcile_controller.py": {
+      "why": "drives motulator's controller and ours over five phases; needs the third-party package",
+      "tier": null
+    },
+    "benchmark/script/reconcile_model.py": {
+      "why": "drives motulator's machine and ours over 400 steps; needs the third-party package",
+      "tier": null
+    },
+    "benchmark/script/run_bench.py": {
+      "why": "builds and runs the on-target benchmark; minutes per configuration",
+      "tier": null
+    },
+    "benchmark/script/run_pil.py": {
+      "why": "runs the scenario on the target ISA under qemu and compares with the host",
+      "tier": null
+    }
+  }
+}

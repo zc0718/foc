@@ -357,7 +357,7 @@ def cmd_ci_policy(_explicit):
 
 PROJECT_GATES = ('license', 'strict', 'claims', 'docs', 'boundaries', 'capabilities', 'ci-policy', 'assume', 'anchor',
                  'scaffold', 'budget', 'clocks', 'observability', 'combinations', 'domain', 'mutants', 'plantref', 'fmu',
-                 'pil', 'mcdc')
+                 'pil', 'mcdc', 'blast', 'wired', 'smoke')
 
 
 def cmd_observability(_explicit):
@@ -375,9 +375,78 @@ def cmd_observability(_explicit):
     return done.returncode
 
 
+def cmd_blast(_explicit):
+    """When the foundation moves, every conclusion that rested on it is re-read before the commit lands.
+
+    The blast-radius column in `foundation-log.rst` has always been written by hand, and `claims --impact`
+    asks the graph one edge deep, so the mechanism asked the right question and never insisted on an
+    answer. `claim-basis.json` already holds the graph; what was missing is the half that recomputes the
+    radius instead of trusting the entry, and refuses a diff that changes the foundation and walks away.
+
+    The shape this prevents is A-110: a rig whose `config.dual_inductance` was never filled in, a member
+    running on an all-zero configuration, a reading that was a constant -- and a conclusion drawn from it
+    that looked exactly like a conclusion. Nothing went red, because the ledger was open and the account
+    was empty. So the selftest runs nine shapes against the real checker first, that one included.
+    """
+    script = ROOT / '.github' / 'project' / 'blast_gate.py'
+    for _args in (['--selftest'], []):
+        _rc = subprocess.run([sys.executable, str(script), *_args], cwd=ROOT, text=True).returncode
+        if _rc:
+            return _rc
+    return 0
+
+
+def cmd_wired(_explicit):
+    """Does the released package contain the capability, or only the header?
+
+    A capability can be finished, documented, covered and mutation-tested and still be unreachable from
+    the thing a user links against. This repository has produced that shape repeatedly -- the v8 audit
+    named it once ("implemented is not shipped"), it was true, then it stopped being true for four
+    modules, then it became true again for three others. A fact that turns over three times is not a
+    fact anybody should be asked to remember.
+
+    So each installed header declares which consumer it must reach (`motor-owned` -> something under
+    `src/`, `diagnostic` -> a C ABI function, `contract` -> an implementation under `driver/`, `policy`
+    -> an example, `reference` -> a test that exercises it), and the debt is a ratchet: a header that
+    is `motor-owned` and unreached must be listed with the batch that will wire it, and the day it
+    becomes reachable that note has to go. The selftest runs eleven shapes first, including both
+    ratchets in the stale direction.
+    """
+    script = ROOT / '.github' / 'project' / 'wired_gate.py'
+    for _args in (['--selftest'], []):
+        _rc = subprocess.run([sys.executable, str(script), *_args], cwd=ROOT, text=True).returncode
+        if _rc:
+            return _rc
+    return 0
+
+
+def cmd_smoke(_explicit):
+    """Before a long run, prove the pathway is alive -- with an artefact, not an exit code.
+
+    FEMM cost five runs of about 44 minutes each and not one of them failed: a B-H curve attached
+    before its material was silently discarded, an inert parameter carried the current direction, a
+    shadowed `--tag` wrote to a file called `-.fem`, and after a reboot `wine` returned 0 while doing
+    nothing. All of them looked like success, and a longer run of the same thing would have looked
+    like it too. The rule that came out is one sentence -- an exit code and a job number are not
+    evidence, only an artefact with a new timestamp is -- and this is where it has an implementation.
+
+    Two halves, and they are deliberately split: the static half (every bench script has a decision
+    about whether it can be smoked, and a claimed `--tier` is actually parsed) runs in the aggregate;
+    tier 0 (stale binaries, a cross-built package in the cache) only runs on `--preflight`, because CI
+    builds from clean and a check that cannot fail there is worse than no check. Tiers 1 and 2 belong
+    to the scripts, exposed as `--tier`: a closed-form scenario in seconds, and the counterfactual
+    where switching the thing off must move the output.
+    """
+    script = ROOT / '.github' / 'project' / 'smoke_gate.py'
+    for _args in (['--selftest'], list(_explicit)):
+        _rc = subprocess.run([sys.executable, str(script), *_args], cwd=ROOT, text=True).returncode
+        if _rc:
+            return _rc
+    return 0
+
+
 def cmd_domain(explicit):
     """The domain in which C7 and C8 hold, as a table the gate recomputes.
-
     Section 0 of the plan splits "high" into the capability existing, the number being credible, and the **domain**
     being known. The first two have gates. The third was prose in five places, which is why two L3 capabilities still
     read as "low": nobody could see at a glance that no machine in this repository is inside either domain.
@@ -549,6 +618,12 @@ def main():
         'domain': 'the domain in which C7 and C8 hold is a table the gate recomputes, not prose in five places',
         'mcdc': 'every multi-condition decision in the safety subset has all of its independence pairs covered, and the '
                 'subset is big enough for that to mean something',
+        'blast': 'a change to the foundation is settled: every claim row that rests on it carries a verdict, and a '
+                 'refuted claim is not left holding up a dependent',
+        'wired': 'every installed header reaches the consumer its class promises (motor-owned / diagnostic / contract / '
+                 'policy / reference), so "implemented" and "shipped" stop being the same word',
+        'smoke': 'every bench script has a decision about whether it can be smoked; `--preflight` also checks tier 0 '
+                 '(stale binaries, a cross-built package in the cache)',
         'fmu': 'build the FMU and load it in a standard FMI master (FMPy); SKIPPED when its material is absent',
         'pil': 'run the speed-step scenario on the target ISA under qemu and compare with the host; SKIPPED when its '
                'material is absent',
@@ -560,6 +635,9 @@ def main():
         if name == 'claims':
             leaf.add_argument('--impact', metavar='TERM',
                               help='list the claims that rest on this path or identifier, with the cases to re-run')
+        if name == 'smoke':
+            leaf.add_argument('--preflight', action='store_true',
+                              help='also run tier 0: stale binaries and a cross-built package in the cache')
     args = parser.parse_args()
 
     if args.gate == 'license':
@@ -604,6 +682,12 @@ def main():
         return cmd_combinations(args.files)
     if args.gate == 'mcdc':
         return cmd_mcdc(args.files)
+    if args.gate == 'blast':
+        return cmd_blast(args.files)
+    if args.gate == 'wired':
+        return cmd_wired(args.files)
+    if args.gate == 'smoke':
+        return cmd_smoke(['--preflight'] if getattr(args, 'preflight', False) else [])
     if args.gate == 'domain':
         return cmd_domain([])
     # The chain above is the only thing standing between a single-gate invocation and the aggregate below, and it
@@ -624,6 +708,9 @@ def main():
                   'plantref': cmd_plantref, 'observability': cmd_observability, 'combinations': cmd_combinations,
                   'domain': cmd_domain,
                   'mcdc': cmd_mcdc,
+                  'blast': cmd_blast,
+                  'wired': cmd_wired,
+                  'smoke': cmd_smoke,
                   'fmu': lambda _f: cmd_fmu([], tolerant=True),
                   'pil': lambda _f: cmd_pil([], tolerant=True)}[name]([]) ]
     if failed:
