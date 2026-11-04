@@ -132,48 +132,124 @@ TEST(SilCoggingLoop, TheInjectionMovesTheRippleAndNotTheAverage) {
     EXPECT_NEAR(off.iq_mean_a, on.iq_mean_a, std::fabs(off.iq_mean_a) * 0.1F + 1.0e-3F);
 }
 
-// --- why there is no end-to-end case here yet, and what was measured -----------------------------------------------
+// --- end to end: the fourth composition -----------------------------------------------------------------------------
 //
-// The compensator's own criteria live in `test_cogging_comp.cpp`; the two cases above measure where the cogging *goes* under
-// closed-loop control. What is missing is the third leg: the compensator wired into a live reference, with the ripple at the
-// output falling. It was attempted here and the attempt failed for a reason worth writing down rather than hiding.
+// `feedforward_current_a` is honoured only in position mode, and `Bench::MotorT` has `NullPositionControl`, so the bench cannot
+// reach it at all: every tick in position mode returns `NotImpl`. This block instantiates the fourth composition -- the bench's
+// motor with `core::PositionP` -- and drives a slow position ramp with the compensator's output as the iq feedforward.
 //
-// With the loop in torque mode (the only command path that exposes the iq reference at all: `Motor::set_torque()`) and a
-// physical damper to hold about 20 rad/s mechanical, the speed spectrum over 12 revolutions is **identical in all three
-// configurations** -- no injection, injection, injection plus compensation -- and looks like `0.21/k` at order `k`:
+// The observable is the **speed** ripple, not the current: at the ripple frequency this rotation produces, the loops cannot
+// follow, so what the compensator buys shows up in the motion. The window is asserted to cover ten revolutions, because a
+// projection over a non-integer number of revolutions leaks DC as `1/k` and can be larger than the effect being measured --
+// measured the hard way before this case was written.
+// --- 端到端：第四种组合 -----------------------------------------------------------------------------------------------
 //
-//     nothing injected : order 6 = 0.1656 rad/s
-//     injected         : order 6 = 0.1669 rad/s
-//     injected + comp  : order 6 = 0.1656 rad/s      (the compensator returns the clean value, to four digits)
+// `feedforward_current_a` 只在位置模式生效，而 `Bench::MotorT` 的位置控制器是 `NullPositionControl`，所以台架根本够不到它：位置模式下
+// 每个 tick 都返回 `NotImpl`。本段实例化第四种组合——台架那台 motor 换成带 `core::PositionP` 的——并用补偿器的输出作为 iq 前馈驱动一条
+// 慢速位置斜坡。
 //
-// That `1/k` shape is the signature of **leakage from a non-integer number of revolutions in the window** (11.94 here), and it
-// is two orders larger than the cogging's own signature (`2*A/(J*k*Omega)` = 0.33 rad/s of peak-to-peak, i.e. 0.17 of
-// amplitude, buried in 0.1656 of leakage). The compensator *does* restore the clean value, which is the effect that was being
-// looked for, but a criterion whose signal is 1 % of its artefact is not a criterion.
-//
-// The rig that would fix it is `feedforward_current_a`, which `Motor` honours in **position** mode ("iq added after the speed
-// loop") -- a position axis following a slow ramp would have both an iq offset slot and the iq channel as its observable, and
-// that channel is where the signal was clean (0.079 A against a 2e-4 A floor, in the cases above). That was tried too, and it
-// is **unreachable from this bench**: `Bench::MotorT` is `Motor<BackEmfObserver, Svpwm, Pi, PlantHal>`, whose remaining slots
-// take their defaults, so its position controller is `NullPositionControl` and every tick in position mode returns
-// `NotImpl` (`-4`) -- measured, with `hal().position.set_sensor_present(true)` as well, so the missing sensor was not the
-// reason. An end-to-end case therefore needs a fourth composition (a `Motor` with `core::PositionP`), not a different rig
-// around this one.
-// --- 为什么这里还没有端到端用例，以及量到了什么 ---------------------------------------------------------------
-//
-// 补偿器自己的判据在 `test_cogging_comp.cpp`；上面两条用例量的是齿槽在闭环里**去了哪里**。缺的是第三条腿：补偿器接进活的参考、
-// 输出处纹波下降。这里试过，失败的原因值得写下来而不是藏起来。
-//
-// 用 torque 模式（唯一暴露 iq 参考的通路：`Motor::set_torque()`）加物理阻尼守住约 20 rad/s 机械，12 转上的速度谱在**三种配置
-// 下完全相同**——不注入、注入、注入+补偿——形状是 `0.21/k`：
-//
-//     不注入      : 6 次 = 0.1656 rad/s
-//     注入        : 6 次 = 0.1669 rad/s
-//     注入+补偿   : 6 次 = 0.1656 rad/s      （补偿器把干净的数值还回来了，到四位有效数字）
-//
-// 那个 `1/k` 的形状是**窗口里转数不是整数**（这里是 11.94 转）造成的泄漏，比齿槽自己的签名（`2·A/(J·k·Ω)` 峰峰 0.33 rad/s，
-// 幅值 0.17）大两个量级。补偿器**确实**把干净值还回来了，那正是要找的效应，但信号只有伪影 1 % 的判据不叫判据。
-//
-// 能修的台架是已知的：`Motor` 的 `feedforward_current_a` 在**位置**模式下生效（「速度环后叠加的 iq」），所以一台跟随慢斜坡的位置
-// 轴同时拥有 iq 偏置槽和 iq 通道作为观测量——而 iq 通道正是信号干净的那个（上面用例里 0.079 A 对 2e-4 A 底噪）。把它记在这里，
-// 而不是写一条会因错的原因通过的用例，正是这段注释的意义。
+// 观测量取**速度**纹波而不是电流：在这个转速产生的纹波频率上环路跟不上，于是补偿器买到的东西出现在运动里。窗口断言覆盖**十转**，
+// 因为非整数转的投影会把直流按 `1/k` 泄漏进来、可能比待测效应还大——这条弯路在写这个用例之前已经量过了。
+
+using PositionMotor = foc::motor::Motor<foc::core::BackEmfObserver, foc::core::Svpwm, foc::core::Pi, foc::sil::PlantHal,
+                                        foc::core::NullReferenceGenerator, foc::core::NullFeedforward,
+                                        foc::core::PositionP, foc::core::NullAlignment, foc::core::NullTrace>;
+
+namespace {
+
+struct RampResult final {
+    float speed_order_rad_s;
+    float revolutions;
+};
+
+constexpr float kRampRadS = 10.0F;
+
+auto run_ramp(float amplitude_nm, bool compensate) -> RampResult {
+    const foc::sil::BenchConfig cfg = standard_bench_config();
+    foc::sil::PmsmPlant plant{foc::sil::nominal_plant_params()};
+    foc::sil::PlantHal hal{plant, cfg.v_bus_v};
+    hal.position.set_sensor_present(true); // position mode needs an absolute angle 位置模式需要绝对角
+    const auto mc = foc::sil::nominal_motor_config();
+    PositionMotor motor{
+        mc,
+        PositionMotor::Policies{
+            foc::core::BackEmfObserver{foc::core::BackEmfObserver::Config{mc.rs, mc.ld}}, foc::core::Svpwm{},
+            foc::core::Pi{foc::current_pi_config(mc, cfg.omega_current_rad_s, cfg.v_bus_v)},
+            foc::core::Pi{foc::current_pi_config(mc, cfg.omega_current_rad_s, cfg.v_bus_v)},
+            foc::core::Pi{foc::speed_pi_config(mc, cfg.omega_speed_rad_s)}, foc::core::NullReferenceGenerator{},
+            foc::core::NullFeedforward{}, foc::core::PositionP{foc::core::PositionP::Config{20.0F, 200.0F, 2000.0F}},
+            foc::core::NullAlignment{}, foc::core::NullTrace{}},
+        hal};
+
+    foc::core::CoggingCompConfig comp_config{};
+    comp_config.params =
+        foc::core::MachineParams{plant.params().rs, plant.params().ld, plant.params().lq, plant.psi_f_wb()};
+    comp_config.pole_pairs = plant.params().pole_pairs;
+    foc::core::CoggingCompensation comp{comp_config};
+    if (amplitude_nm > 0.0F) {
+        foc::sil::CoggingHarmonic table{static_cast<std::uint8_t>(kOrder), amplitude_nm, 0.0F};
+        plant.set_cogging(&table, 1);
+        comp.set_table(&table, 1);
+    }
+    EXPECT_EQ(foc::ErrorCode::Ok, motor.init());
+    EXPECT_EQ(foc::ErrorCode::Ok, motor.start());
+
+    float target = 0.0F;
+    auto step = [&](float ramp_target) {
+        float feed_forward = 0.0F;
+        if (compensate) {
+            const foc::core::CoggingCompInput in{plant.theta_mech_rad(), plant.omega_mech_rad_s(), plant.current_dq().d,
+                                                 0.0F, 3.0F};
+            feed_forward = comp.offset(in).iq_a;
+        }
+        motor.set_command(foc::motor::Command{ramp_target, 0.0F, feed_forward, 40.0F, 2000.0F, 0.0F, 0.0F, 0.0F});
+        static_cast<void>(motor.tick(cfg.dt_ctrl_s));
+        hal.advance(cfg.dt_ctrl_s, cfg.substeps);
+    };
+
+    for (int n = 0; n < 10000; ++n) { // settle 先建立
+        target += kRampRadS * cfg.dt_ctrl_s;
+        step(target);
+    }
+    std::vector<float> theta;
+    std::vector<float> speed;
+    for (int n = 0; n < 40000; ++n) {
+        target += kRampRadS * cfg.dt_ctrl_s;
+        step(target);
+        theta.push_back(plant.theta_mech_rad());
+        speed.push_back(plant.omega_mech_rad_s());
+    }
+    return RampResult{harmonic_amplitude(theta, speed, kOrder), (theta.back() - theta.front()) / 6.2831853F};
+}
+
+} // namespace
+
+// The whole chain: the table goes into the plant, the compensator's output goes into the iq reference through the slot that
+// exists, and the motion comes back clean. Without the compensator the injected cogging makes the speed ripple measurably
+// larger; with it, the ripple returns to what it is with **nothing injected at all** -- which is the only comparison that
+// cannot be satisfied by a compensator that merely perturbs the drive in some other way.
+// 整条链：表进 plant，补偿器的输出经**真实存在的那个槽**进 iq 参考，运动干净地回来。没有补偿器时注入的齿槽让速度纹波明显变大；有它时，
+// 纹波回到**完全不注入**时的数值——这是唯一一种"只是用别的方式扰动驱动器"的补偿器无法满足的比较。
+TEST(SilCoggingLoop, ThroughTheIqFeedforwardSlotTheMotionComesBackClean) {
+    constexpr float kAmplitude = 4.0e-3F;
+    const RampResult clean = run_ramp(0.0F, false);
+    const RampResult injected = run_ramp(kAmplitude, false);
+    const RampResult compensated = run_ramp(kAmplitude, true);
+
+    // The window has to be several revolutions or the projection leaks DC as `1/k` and the numbers below mean nothing.
+    // 窗口必须覆盖数转，否则投影会按 `1/k` 泄漏直流，下面的数字就没有意义。
+    EXPECT_GT(clean.revolutions, 10.0F);
+    EXPECT_GT(injected.revolutions, 10.0F);
+    EXPECT_GT(compensated.revolutions, 10.0F);
+
+    // The injection is visible: this is the precondition for the rest of the case.
+    // 注入看得见：这是本用例其余部分的前提。
+    EXPECT_GT(injected.speed_order_rad_s, clean.speed_order_rad_s * 1.15F)
+        << "clean " << clean.speed_order_rad_s << " injected " << injected.speed_order_rad_s;
+
+    // And with the compensator the motion is back to the clean value, to 5 % -- while the uncompensated run was more than 15 %
+    // above it, so the two runs are on opposite sides of the same line.
+    // 而带上补偿器后运动回到干净值，误差 5 % 以内——未补偿那一跑比它高 15 % 以上，于是两跑落在同一条线的两侧。
+    EXPECT_NEAR(clean.speed_order_rad_s, compensated.speed_order_rad_s, clean.speed_order_rad_s * 0.05F)
+        << "clean " << clean.speed_order_rad_s << " compensated " << compensated.speed_order_rad_s;
+}
