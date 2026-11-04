@@ -17,8 +17,12 @@ capability work: 地基一变就清账.
 The rule, in five steps (plan §2.2.2):
 
   1. TRIGGER. A changed file under `include/foc/`, `src/` or the SIL instruments needs a ledger entry
-     when at least `fan_in_threshold` claim rows rest on it, or when the file is listed in `watched`.
-     A brand-new feature header rests on nothing yet and therefore needs no entry.
+     when at least `fan_in_threshold` claim rows rest on it, when it is listed in `watched`, or when it
+     itself rests on at least `fan_out_threshold` other modules. The third clause is not decoration: the
+     first version of this gate keyed only on fan-in and therefore let a change to `motor.hpp` through --
+     `motor.hpp` consumes seventeen modules and is consumed by one, and it is exactly where the loop's
+     ordering, the reference path and the fault checks live. A module that rests on many others is
+     upstream of all of them.
   2. RADIUS. The affected set is the transitive closure of `claim-basis.json` from the entry's seeds.
      It is recomputed here every time and never read from the entry: a hand-written radius that
      disagrees with the graph is exactly the failure this gate is for.
@@ -88,6 +92,7 @@ def evaluate(mapped: dict[str, list[str]], register: dict, levels: dict[str, str
     problems: list[str] = []
     watched: dict[str, str] = register.get("watched", {}) or {}
     threshold = int(register.get("fan_in_threshold", 2))
+    fan_out = int(register.get("fan_out_threshold", 3))
     entries: list[dict] = register.get("entries", []) or []
 
     for rel in sorted(watched):
@@ -159,6 +164,10 @@ def evaluate(mapped: dict[str, list[str]], register: dict, levels: dict[str, str
         fan = len(resting_on.get(key_of(path), ()))
         if fan >= threshold:
             required.append((path, f"{fan} claim row(s) rest on it"))
+            continue
+        rests_on = len([item for item in mapped.get(key_of(path), ()) if item in mapped])
+        if rests_on >= fan_out:
+            required.append((path, f"it rests on {rests_on} other claim modules, so it is upstream of them"))
 
     covered: set[str] = set()
     in_play = []

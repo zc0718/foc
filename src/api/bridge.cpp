@@ -1,12 +1,12 @@
 // Conan::ImportStart
 #include "bridge.h"
 
-#include <cmath>
-#include <limits>
-#include <cstddef>
 #include <algorithm>
-#include <cstring>
+#include <cmath>
+#include <cstddef>
 #include <cstdint>
+#include <cstring>
+#include <limits>
 #include <new>
 
 #include <foc/core/alignment.hpp>
@@ -14,12 +14,12 @@
 #include <foc/core/commissioning.hpp>
 #include <foc/core/field_weakening.hpp>
 #include <foc/core/observer/back_emf_observer.hpp>
-#include <foc/core/sinusoid_fit.hpp>
-#include <foc/core/step_metrics.hpp>
 #include <foc/core/observer/switchable_observer.hpp>
+#include <foc/core/pi.hpp>
 #include <foc/core/protection.hpp>
 #include <foc/core/reference.hpp>
-#include <foc/core/pi.hpp>
+#include <foc/core/sinusoid_fit.hpp>
+#include <foc/core/step_metrics.hpp>
 #include <foc/core/svpwm.hpp>
 #include <foc/driver/callback_hal.hpp>
 #include <foc/driver/stub_hal.hpp>
@@ -102,42 +102,94 @@ constexpr std::size_t kMaxMotors = 4U;
  * @since 0.1.0
  */
 struct Setup final {
-    float i_max_a;                  ///< [en] per-axis current limit in A. [zh] 每轴电流限幅，A。
-    float pwm_freq_hz;              ///< [en] carrier frequency in Hz. [zh] 载波频率，Hz。
-    float deadtime_ns;              ///< [en] inverter dead time in ns. [zh] 逆变器死区时间，ns。
-    float v_bus_v;                  ///< [en] nominal DC link voltage in V. [zh] 母线电压，V。
-    float current_bandwidth_rad_s;  ///< [en] current-loop bandwidth, rad/s. [zh] 电流环带宽，rad/s。
-    float speed_bandwidth_rad_s;    ///< [en] speed-loop bandwidth, rad/s. [zh] 速度环带宽，rad/s。
-    float speed_loop_period_s;      ///< [en] speed-loop period, s (0 = every tick). [zh] 速度环周期，s（0 = 每 tick）。
-    float position_bandwidth_rad_s; ///< [en] position-loop bandwidth, rad/s. [zh] 位置环带宽，rad/s。
-    float velocity_limit_rad_s;     ///< [en] speed ceiling for position moves, rad/s. [zh] 位置运动的速度上限，rad/s。
+    float i_max_a;     ///< [en] per-axis current limit in A. [zh] 每轴电流限幅，A。
+    float pwm_freq_hz; ///< [en] carrier frequency in Hz. [zh] 载波频率，Hz。
+    float deadtime_ns; ///< [en] inverter dead time in ns. [zh] 逆变器死区时间，ns。
+    float v_bus_v;     ///< [en] nominal DC link voltage in V. [zh] 母线电压，V。
     /**
      * @brief [en] position-loop period, s (0 = every tick).
      * @brief [zh] 位置环周期，s（0 = 每 tick）。
      */
-    float position_loop_period_s;
+    float current_bandwidth_rad_s;
     /**
      * @brief [en] position velocity rate limit (0 = none).
      * @brief [zh] 位置速度指令的加速度上限（0 = 不限）。
      */
+    float speed_bandwidth_rad_s;
+    /**
+     * @brief [en] speed-loop period, s (0 = every tick).
+     * @brief [zh] 速度环周期，s（0 = 每 tick）。
+     */
+    float speed_loop_period_s;
+    /**
+     * @brief [en] position-loop bandwidth, rad/s.
+     * @brief [zh] 位置环带宽，rad/s。
+     */
+    float position_bandwidth_rad_s;
+    /**
+     * @brief [en] speed ceiling for position moves, rad/s.
+     * @brief [zh] 位置运动的速度上限，rad/s。
+     */
+    float velocity_limit_rad_s;
+    /**
+   * @brief [en] position-loop period, s (0 = every tick).
+   * @brief [zh] 位置环周期，s（0 = 每 tick）。
+   */
+    float position_loop_period_s;
+    /**
+   * @brief [en] position velocity rate limit (0 = none).
+   * @brief [zh] 位置速度指令的加速度上限（0 = 不限）。
+   */
     float position_accel_limit_rad_s2;
-    float align_current_a;     ///< [en] alignment current, A (0 = do not align). [zh] 对齐电流，A（0 = 不对齐）。
-    float align_ramp_s;        ///< [en] alignment ramp, s. [zh] 对齐爬升，s。
-    float align_hold_s;        ///< [en] alignment hold window, s. [zh] 对齐保持窗口，s。
-    float align_tolerance_rad; ///< [en] accepted spread, rad. [zh] 允许离散度，rad。
-    float align_verify_s;      ///< [en] direction check hold, s. [zh] 方向校验保持，s。
-    float align_angle_e_rad;   ///< [en] forced electrical angle, rad. [zh] 强制电角度，rad。
+    /**
+     * @brief [en] alignment current, A (0 = do not align).
+     * @brief [zh] 对齐电流，A（0 = 不对齐）。
+     */
+    float align_current_a;
+    float align_ramp_s; ///< [en] alignment ramp, s. [zh] 对齐爬升，s。
+    float align_hold_s; ///< [en] alignment hold window, s. [zh] 对齐保持窗口，s。
+    /**
+     * @brief [en] accepted spread, rad.
+     * @brief [zh] 允许离散度，rad。
+     */
+    float align_tolerance_rad;
+    float align_verify_s; ///< [en] direction check hold, s. [zh] 方向校验保持，s。
     /**
      * @brief [en] which observer to run, as a `foc_observer_t`; 0 is the shipped default.
      * @brief [zh] 运行哪个观测器，取 `foc_observer_t`；0 是出厂默认。
      */
+    float align_angle_e_rad;
+    /**
+   * @brief [en] which observer to run, as a `foc_observer_t`; 0 is the shipped default.
+   * @brief [zh] 运行哪个观测器，取 `foc_observer_t`；0 是出厂默认。
+   */
     int32_t observer;
-    float inject_v;             ///< [en] HFI carrier amplitude, peak V. [zh] HFI 载波幅值，峰值 V。
-    float inject_hz;            ///< [en] HFI carrier frequency, Hz. [zh] HFI 载波频率，Hz。
-    float blend_start_rad_s;    ///< [en] below this only the injection observer runs. [zh] 低于此值只用注入观测器。
-    float blend_end_rad_s;      ///< [en] above this only the back-EMF observer runs. [zh] 高于此值只用反电势观测器。
-    float handover_lpf_hz;      ///< [en] smoothing of the handover speed, Hz. [zh] 交接判据转速的平滑，Hz。
-    int32_t use_observer_angle; ///< [en] 1 = the commutation angle comes from the observer. [zh] 1 = 换相角来自观测器。
+    /**
+     * @brief [en] HFI carrier amplitude, peak V.
+     * @brief [zh] HFI 载波幅值，峰值 V。
+     */
+    float inject_v;
+    float inject_hz; ///< [en] HFI carrier frequency, Hz. [zh] HFI 载波频率，Hz。
+    /**
+     * @brief [en] below this only the injection observer runs.
+     * @brief [zh] 低于此值只用注入观测器。
+     */
+    float blend_start_rad_s;
+    /**
+     * @brief [en] above this only the back-EMF observer runs.
+     * @brief [zh] 高于此值只用反电势观测器。
+     */
+    float blend_end_rad_s;
+    /**
+     * @brief [en] smoothing of the handover speed, Hz.
+     * @brief [zh] 交接判据转速的平滑，Hz。
+     */
+    float handover_lpf_hz;
+    /**
+     * @brief [en] 1 = the commutation angle comes from the observer.
+     * @brief [zh] 1 = 换相角来自观测器。
+     */
+    int32_t use_observer_angle;
 };
 
 
@@ -586,7 +638,8 @@ auto resolve_in(foc_motor_t handle, SlotType (&pool)[N], std::uintptr_t magic) n
     // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast, performance-no-int-to-ptr)
     const auto raw = reinterpret_cast<std::uintptr_t>(handle);
     if ((raw >> 32U) != magic) {
-        return nullptr; // not minted by this pool (or a garbage pointer): no dereference, no fault
+        return nullptr; // not minted by this pool (or a garbage pointer): no
+                        // dereference, no fault
     }
 
     const auto slot_index = static_cast<std::uint32_t>(raw & 0xFFU);
@@ -597,7 +650,8 @@ auto resolve_in(foc_motor_t handle, SlotType (&pool)[N], std::uintptr_t magic) n
 
     SlotType& slot = pool[slot_index];
     if (!slot.alive || (slot.generation != generation)) {
-        return nullptr; // destroyed, or the slot has been occupied again since (ABA)
+        return nullptr; // destroyed, or the slot has been occupied again since
+                        // (ABA)
     }
     return &slot;
 }
@@ -1332,7 +1386,8 @@ foc_err_t foc_bridge_destroy(foc_motor_t motor) {
     return foc::api::on_slot(motor, [](auto& slot) {
         foc::api::destroy_motor(slot);
         slot.alive = false;
-        ++slot.generation; // invalidates every handle taken from this occupation of the slot
+        ++slot.generation; // invalidates every handle taken from this occupation of
+                           // the slot
         return foc::ErrorCode::Ok;
     });
 }
@@ -1409,6 +1464,43 @@ foc_err_t foc_bridge_set_command(foc_motor_t motor, const foc_motor_command_t* c
     });
 }
 
+foc_err_t foc_bridge_begin_stall_start(foc_motor_t motor, const foc_stall_start_config_t* recipe) {
+    if ((recipe == nullptr) || !foc::api::size_ok(*recipe)) {
+        return FOC_ERR_PARAM;
+    }
+    // Field by field, not a byte copy: the two layouts differ by the
+    // `struct_size` header, and an accidental match today would be a silent
+    // misread tomorrow. 逐字段而不是整块拷贝：两个布局差一个 `struct_size`
+    // 头，今天的偶然对齐就是明天的静默误读。
+    foc::core::StallStartConfig config{};
+    config.breakaway_nm = recipe->breakaway_nm;
+    config.max_torque_nm = recipe->max_torque_nm;
+    config.ramp_nm_per_s = recipe->ramp_nm_per_s;
+    config.release_speed_rad_s = recipe->release_speed_rad_s;
+    config.give_up_s = recipe->give_up_s;
+    return foc::api::on_slot(motor,
+                             [config](auto& slot) { return foc::api::motor_of(slot).begin_stall_start(config); });
+}
+
+foc_err_t foc_bridge_get_stall_start(foc_motor_t motor, foc_stall_start_status_t* out) {
+    if ((out == nullptr) || !foc::api::size_ok(*out)) {
+        return FOC_ERR_PARAM;
+    }
+    return foc::api::on_slot(motor, [out](auto& slot) {
+        auto& instance = foc::api::motor_of(slot);
+        out->phase = static_cast<std::int32_t>(instance.stall_start_phase());
+        out->torque_nm = instance.stall_start_torque_nm();
+        out->limited = instance.stall_start_limited() ? 1 : 0;
+        return foc::ErrorCode::Ok;
+    });
+}
+
+foc_err_t foc_bridge_cancel_stall_start(foc_motor_t motor) {
+    return foc::api::on_slot(motor, [](auto& slot) {
+        foc::api::motor_of(slot).cancel_stall_start();
+        return foc::ErrorCode::Ok;
+    });
+}
 
 foc_err_t foc_bridge_get_status(foc_motor_t motor, foc_motor_status_t* out) {
     if (out == nullptr) {

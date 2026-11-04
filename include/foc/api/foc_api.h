@@ -176,6 +176,71 @@ foc_err_t foc_motor_disable(foc_motor_t motor);
  */
 foc_err_t foc_motor_clear_fault(foc_motor_t motor);
 
+/**
+ * @brief [en] Start a breakaway sequence: raise the torque on a known ramp and report the instant the rotor moves.
+ * @brief [zh] 开始一条起步序列：以已知斜率抬升力矩，并报告转子动起来的那一刻。
+ * @param motor [en] a running motor handle. @param motor
+ * @param motor [zh] 正在运行的电机句柄。
+ * @param recipe [en] the machine's breakaway estimate and the drive's limits; see `foc_stall_start_config_t`.
+ * @param recipe [zh] 机器的起动点估计与驱动限幅；见 `foc_stall_start_config_t`。
+ * @return [en] `FOC_OK`; `FOC_ERR_PARAM` when the recipe cannot work (ceiling not above the breakaway point, or a
+ *              non-positive rate, release speed or grace period); `FOC_ERR_STATE` when the motor is not running or is
+ *              still aligning. Both refusals leave the phase `FOC_STALL_IDLE`.
+ * @return [zh] `FOC_OK`；配方不可能成立时 `FOC_ERR_PARAM`（上限不高于起动点，或速率/释放转速/宽限非正）；电机未运行或仍
+ *              在对齐时 `FOC_ERR_STATE`。两种拒绝都把阶段留在 `FOC_STALL_IDLE`。
+ * @note [en] Why not "let the speed loop do it": a speed PI *does* break a stuck axis loose, by winding its integral up
+ *            until the torque passes the breakaway point -- and that stored torque is what drives the rotor past the
+ *            setpoint the instant it lets go. This sequence does the same thing on purpose and reports where it
+ *            happened, so the speed loop can start from a known current. The axis is in torque mode while it ramps, so
+ *            `foc_motor_get_stall_start()` is how a caller learns whether the torque is the sequence's or its own. From
+ *            `FOC_STALL_RELEASED` the caller owns the axis again: call `foc_set_speed()` (or `foc_set_torque()`) in the
+ *            same control period, or the breakaway torque keeps being applied. `FOC_STALL_FAILED` latches
+ *            `FOC_FAULT_STALL`.
+ * @note [zh] 为什么不是“让速度环自己干”：速度 PI 确实能把卡住的轴弄动，办法是把积分顶到力矩越过起动点 ——而转子一松脱，
+ *            正是这份存下来的力矩把它推过给定。本序列把同一件事有意地做，并报告它发生在哪里，于是速度环可以从一个已知电
+ *            流起步。爬升期间轴处于转矩模式，因此调用方要靠 `foc_motor_get_stall_start()` 才知道当前转矩是序列的还是自
+ *            己的。从 `FOC_STALL_RELEASED` 起控制权回到调用方：必须在同一控制周期内调 `foc_set_speed()`（或
+ *            `foc_set_torque()`），否则起动转矩会继续施加。`FOC_STALL_FAILED` 会锁存 `FOC_FAULT_STALL`。
+ * @context [en] Control context or a task that is not ticking at the same time; not ISR-safe against `foc_tick()`.
+ * @context [zh] 控制上下文，或一个不与 `foc_tick()` 并发运行的任务；不可与 `foc_tick()` 并发。
+ * @since 0.1.9
+ * @exporter
+ */
+foc_err_t foc_motor_begin_stall_start(foc_motor_t motor, const foc_stall_start_config_t *recipe);
+
+/**
+ * @brief [en] Where the breakaway sequence is, and the torque it last commanded.
+ * @brief [zh] 起步序列处在哪一步，以及它上一次下发的力矩。
+ * @param motor [en] a motor handle. @param motor
+ * @param motor [zh] 电机句柄。
+ * @param out [en] receives the phase, the torque and the ceiling flag; `struct_size` must be set.
+ * @param out [zh] 接收阶段、力矩与限幅标志；必须设置 `struct_size`。
+ * @return [en] `FOC_OK`, or `FOC_ERR_PARAM` for a bad handle or an uncovered `struct_size`.
+ * @return [zh] `FOC_OK`；句柄无效或 `struct_size` 不匹配时为 `FOC_ERR_PARAM`。
+ * @note [en] Read the two together: the phase says whether the torque beside it is still the sequence's or the caller's
+ *            again. An idle sequence reports `FOC_STALL_IDLE` and zero torque rather than the last value it happened to
+ *            hold.
+ * @note [zh] 两个要一起读：阶段说明它旁边的力矩是否仍归序列所有。空闲的序列报 `FOC_STALL_IDLE` 与零力矩，而不是它碰巧保
+ *            持过的上一个值。
+ * @since 0.1.9
+ * @exporter
+ */
+foc_err_t foc_motor_get_stall_start(foc_motor_t motor, foc_stall_start_status_t *out);
+
+/**
+ * @brief [en] Abandon the sequence and zero the torque command; the mode is left as the caller had it.
+ * @brief [zh] 放弃序列并把指令力矩清零；模式保持调用方当前的样子。
+ * @param motor [en] a motor handle. @param motor
+ * @param motor [zh] 电机句柄。
+ * @return [en] `FOC_OK`, or `FOC_ERR_PARAM` for a handle of the wrong kind.
+ * @return [zh] `FOC_OK`；句柄种类不对时为 `FOC_ERR_PARAM`。
+ * @context [en] Control context or a task that is not ticking at the same time; not ISR-safe against `foc_tick()`.
+ * @context [zh] 控制上下文，或一个不与 `foc_tick()` 并发运行的任务；不可与 `foc_tick()` 并发。
+ * @since 0.1.9
+ * @exporter
+ */
+foc_err_t foc_motor_cancel_stall_start(foc_motor_t motor);
+
 
 /**
  * @brief [en] Set the speed setpoint.

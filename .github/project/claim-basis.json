@@ -342,6 +342,33 @@
       "core/observer/observer_policy.hpp",
       "core/types.hpp",
       "core/transforms.hpp"
+    ],
+    "core/command_source.hpp": [
+      "core/command_source.hpp",
+      "core/types.hpp",
+      "test_package/test/unit/test_command_source.cpp"
+    ],
+    "hal/hall.hpp": [
+      "hal/hall.hpp"
+    ],
+    "driver/stub_hall.hpp": [
+      "driver/stub_hall.hpp",
+      "hal/hall.hpp"
+    ],
+    "core/six_step.hpp": [
+      "core/six_step.hpp",
+      "core/hall.hpp",
+      "core/transforms.hpp",
+      "test_package/test/unit/test_six_step.cpp"
+    ],
+    "core/trace_parse.hpp": [
+      "core/trace.hpp"
+    ],
+    "comm/frame.hpp": [
+      "comm/frame.hpp"
+    ],
+    "comm/register_map.hpp": [
+      "api/foc_api.h"
     ]
   },
   "unmapped": []

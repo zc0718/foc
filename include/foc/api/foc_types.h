@@ -33,7 +33,8 @@ typedef enum foc_err {
     FOC_ERR_NO_RESOURCE = -2,
     FOC_ERR_STATE = -3,
     FOC_ERR_NOT_IMPL = -4,
-    FOC_ERR_FAULT = -5 /* the inverter reported a hardware fault; clear with foc_motor_clear_fault() */
+    FOC_ERR_FAULT = -5 /* the inverter reported a hardware fault; clear with
+                        foc_motor_clear_fault() */
 } foc_err_t;
 
 
@@ -120,35 +121,50 @@ typedef struct foc_motor_setup {
     float pwm_freq_hz;                 /* carrier frequency, Hz; 0 = library default */
     float deadtime_ns;                 /* inverter dead time, ns; taken literally */
     float v_bus_v;                     /* nominal DC link voltage, V; 0 = library default */
-    float current_bandwidth_rad_s;     /* current-loop bandwidth, rad/s; 0 = library default */
-    float speed_bandwidth_rad_s;       /* speed-loop bandwidth, rad/s; 0 = library default */
+    float current_bandwidth_rad_s;     /* current-loop bandwidth, rad/s; 0 = library
+                                     default */
+    float speed_bandwidth_rad_s;       /* speed-loop bandwidth, rad/s; 0 = library
+                                     default */
     float speed_loop_period_s;         /* speed-loop period, s; 0 = every tick */
-    float position_bandwidth_rad_s;    /* position-loop bandwidth, rad/s; 0 = library default */
-    float velocity_limit_rad_s;        /* speed setpoint ceiling for moves, rad/s; 0 = library default */
+    float position_bandwidth_rad_s;    /* position-loop bandwidth, rad/s; 0 = library
+                                     default */
+    float velocity_limit_rad_s;        /* speed setpoint ceiling for moves, rad/s; 0 =
+                                   library default */
     float position_loop_period_s;      /* position-loop period, s; 0 = every tick */
-    float position_accel_limit_rad_s2; /* position velocity-command rate limit, rad/s^2; 0 = none */
+    float position_accel_limit_rad_s2; /* position velocity-command rate limit,
+                                        rad/s^2; 0 = none */
     float align_current_a;             /* alignment current, A; 0 = do not align */
     float align_ramp_s;                /* alignment ramp time, s; 0 = apply at once */
     float align_hold_s;                /* alignment hold window, s; required when aligning */
-    float align_tolerance_rad;         /* accepted spread during the hold, rad; required when aligning */
+    float align_tolerance_rad;         /* accepted spread during the hold, rad; required
+                                when aligning */
     float align_verify_s;              /* direction-check hold, s; 0 = skip the check */
     float align_angle_e_rad;           /* forced electrical angle, rad; 0 = the usual zero */
-    int32_t observer;                  /* foc_observer_t; 0 = FOC_OBSERVER_BACK_EMF, the shipped default */
-    float inject_v;                    /* HFI carrier amplitude, peak V; required for FOC_OBSERVER_HFI */
+    int32_t observer;                  /* foc_observer_t; 0 = FOC_OBSERVER_BACK_EMF, the shipped
+                       default */
+    float inject_v;                    /* HFI carrier amplitude, peak V; required for
+                       FOC_OBSERVER_HFI */
     float inject_hz;                   /* HFI carrier frequency, Hz; required for FOC_OBSERVER_HFI */
-    float blend_start_rad_s;           /* below this speed only the injection observer runs; required for BLENDED */
-    float blend_end_rad_s;             /* above this speed only the back-EMF observer runs; required for BLENDED */
-    float handover_lpf_hz;             /* smoothing of the speed the handover is decided on, Hz; required for BLENDED */
-    /* 1 when the commutation angle comes from the selected observer instead of the position callbacks. Appended and
-       gated by struct_size. Default 0 leaves every existing caller where it is: an axis whose angle callbacks are the
-       truth. Setting it is what makes an absolute position reachable through this ABI at all, because `PositionReference`
-       is only advanced while the angle is observer-derived; with a sensor present the library uses the sensor and keeps
-       no origin. When set, `read_angle_mech_rad` may be NULL: commutation does not consult it, and the observer needs
-       voltage and current, not an angle. */
-    /* 换相角来自选中的观测器、而不是位置回调时为 1。追加字段，由 struct_size 门控。默认 0 把每个现有调用方留在
-       原地：它的角度回调就是真值。置 1 才是「通过本 ABI 得到绝对位置」的前提，因为 `PositionReference` 只在角度
-       来自观测器时才被推进；有传感器时库用传感器、不维护原点。置 1 时 `read_angle_mech_rad` 可为 NULL：换相不看
-       它，观测器需要的是电压与电流。 */
+    float blend_start_rad_s;           /* below this speed only the injection observer runs;
+                              required for BLENDED */
+    float blend_end_rad_s;             /* above this speed only the back-EMF observer runs;
+                              required for BLENDED */
+    float handover_lpf_hz;             /* smoothing of the speed the handover is decided on,
+                              Hz; required for BLENDED */
+    /* 1 when the commutation angle comes from the selected observer instead of
+     the position callbacks. Appended and gated by struct_size. Default 0 leaves
+     every existing caller where it is: an axis whose angle callbacks are the
+     truth. Setting it is what makes an absolute position reachable through this
+     ABI at all, because `PositionReference` is only advanced while the angle is
+     observer-derived; with a sensor present the library uses the sensor and
+     keeps no origin. When set, `read_angle_mech_rad` may be NULL: commutation
+     does not consult it, and the observer needs voltage and current, not an
+     angle. */
+    /* 换相角来自选中的观测器、而不是位置回调时为 1。追加字段，由 struct_size
+     门控。默认 0 把每个现有调用方留在 原地：它的角度回调就是真值。置 1
+     才是「通过本 ABI 得到绝对位置」的前提，因为 `PositionReference` 只在角度
+     来自观测器时才被推进；有传感器时库用传感器、不维护原点。置 1 时
+     `read_angle_mech_rad` 可为 NULL：换相不看 它，观测器需要的是电压与电流。 */
     int32_t use_observer_angle;
 } foc_motor_setup_t;
 
@@ -211,11 +227,15 @@ typedef struct foc_motor_command {
     float position_rad;          /* target mechanical angle, rad */
     float max_current_a;         /* q-axis ceiling for this move, A; 0 = nameplate limit */
     float feedforward_current_a; /* q-axis current added after the speed loop, A */
-    float max_velocity_rad_s;    /* speed ceiling for this move, rad/s; 0 = the controller's own */
-    float max_accel_rad_s2;      /* velocity rate limit for this move, rad/s^2; 0 = the controller's */
+    float max_velocity_rad_s;    /* speed ceiling for this move, rad/s; 0 = the
+                                controller's own */
+    float max_accel_rad_s2;      /* velocity rate limit for this move, rad/s^2; 0 = the
+                             controller's */
     float kp_scale;              /* stiffness scale, 1 = configured, 0 = leave it configured */
-    float kd_scale;              /* speed-loop gain scale, 1 = configured, 0 = leave it configured */
-    float ilimit_scale;          /* speed-loop integral-limit scale, 1 = configured, 0 = leave it */
+    float kd_scale;              /* speed-loop gain scale, 1 = configured, 0 = leave it
+                     configured */
+    float ilimit_scale;          /* speed-loop integral-limit scale, 1 = configured, 0 =
+                         leave it */
 } foc_motor_command_t;
 
 
@@ -252,7 +272,8 @@ typedef struct foc_motor_command {
 typedef struct foc_hfi_sizing {
     uint32_t struct_size; /* sizeof(foc_hfi_sizing_t) */
     float inject_hz;      /* the carrier this control rate can resolve, Hz */
-    float inject_v;       /* peak volts that draw `hf_current_a` on this machine's d axis, V */
+    float inject_v;       /* peak volts that draw `hf_current_a` on this machine's d
+                         axis, V */
     float demod_lpf_hz;   /* demodulation cutoff, Hz */
     float speed_lpf_hz;   /* cutoff on the published speed, Hz */
     float hf_current_a;   /* the peak HF current `inject_v` draws, A */
@@ -264,41 +285,60 @@ typedef struct foc_motor_status {
     int32_t error;          /* last sticky error, a foc_err_t value */
     int32_t align_state;    /* foc_align_state_t */
     int32_t align_failure;  /* foc_align_failure_t */
-    float align_offset_rad; /* captured mechanical offset, rad in [0, 2*pi); valid once DONE */
+    float align_offset_rad; /* captured mechanical offset, rad in [0, 2*pi); valid
+                             once DONE */
     float align_spread_rad; /* spread of the accepted capture, rad */
-    uint32_t max_period_us; /* worst control-tick interval seen, us; 0 without a clock */
-    int32_t observer;       /* the observer actually running (a foc_observer_t); appended, gated by struct_size */
-    /* 1 when the selected observer says it is producing a measurement, 0 when it is holding the last angle. Appended;
-       gated by struct_size. The distinction matters because a holding observer is indistinguishable from a stopped
-       machine by its angle alone -- the injection observer past what the control rate can resolve freezes exactly this
-       way. Observers without a lock detector (back-EMF) answer 1: they have no channel that could withhold a verdict. */
-    /* 选中的观测器表示自己正在产出测量时为 1，正在保持上一个角度时为 0。追加字段，由 struct_size 门控。这个区分重要，
-       因为一个正在保持的观测器仅凭它的角度与一台停住的机器无法区分——超出控制率分辨能力的注入观测器正是这样冻结的。
-       没有锁定判据的观测器（反电势）答 1：它们不存在能扣住结论的通道。 */
+    uint32_t max_period_us; /* worst control-tick interval seen, us; 0 without a
+                             clock */
+    int32_t observer;       /* the observer actually running (a foc_observer_t);
+                             appended, gated by struct_size */
+    /* 1 when the selected observer says it is producing a measurement, 0 when it
+     is holding the last angle. Appended; gated by struct_size. The distinction
+     matters because a holding observer is indistinguishable from a stopped
+     machine by its angle alone -- the injection observer past what the control
+     rate can resolve freezes exactly this way. Observers without a lock
+     detector (back-EMF) answer 1: they have no channel that could withhold a
+     verdict. */
+    /* 选中的观测器表示自己正在产出测量时为 1，正在保持上一个角度时为
+     0。追加字段，由 struct_size 门控。这个区分重要，
+     因为一个正在保持的观测器仅凭它的角度与一台停住的机器无法区分——超出控制率分辨能力的注入观测器正是这样冻结的。
+     没有锁定判据的观测器（反电势）答 1：它们不存在能扣住结论的通道。 */
     int32_t observer_locked;
-    /* the selected observer's normalised error signal, about -sin(2*angle_error) for the injection observer and 0.0
-       where that observer publishes none. Appended; gated by struct_size. Zero is ambiguous on purpose: a locked
-       injection observer also sits near zero, so read `observer_locked` alongside it. */
-    /* 选中观测器归一化的误差信号，注入观测器约为 -sin(2·角度误差)，不发布该信号的观测器为 0.0。追加字段，由
-       struct_size 门控。零是有意保留歧义的：锁定的注入观测器同样停在零附近，因此要与 `observer_locked` 一起读。 */
+    /* the selected observer's normalised error signal, about -sin(2*angle_error)
+     for the injection observer and 0.0 where that observer publishes none.
+     Appended; gated by struct_size. Zero is ambiguous on purpose: a locked
+     injection observer also sits near zero, so read `observer_locked` alongside
+     it. */
+    /* 选中观测器归一化的误差信号，注入观测器约为
+     -sin(2·角度误差)，不发布该信号的观测器为 0.0。追加字段，由 struct_size
+     门控。零是有意保留歧义的：锁定的注入观测器同样停在零附近，因此要与
+     `observer_locked` 一起读。 */
     float observer_error;
-    /* 1 when an index mark has been seen since the motor was created or reset, 0 before that. Appended and gated by
-       struct_size. This flag decides whether an *absolute* position means anything: alignment resolves the electrical
-       offset only, and only modulo one pole pitch. */
-    /* 自构造或复位以来是否见过索引标记，见过为 1。追加字段，由 struct_size 门控。这个标志决定**绝对**位置是否有
-       意义：对齐只解决电角度偏置，而且只能定到一个极距的模。 */
+    /* 1 when an index mark has been seen since the motor was created or reset, 0
+     before that. Appended and gated by struct_size. This flag decides whether
+     an *absolute* position means anything: alignment resolves the electrical
+     offset only, and only modulo one pole pitch. */
+    /* 自构造或复位以来是否见过索引标记，见过为 1。追加字段，由 struct_size
+     门控。这个标志决定**绝对**位置是否有
+     意义：对齐只解决电角度偏置，而且只能定到一个极距的模。 */
     int32_t homed;
-    /* 1 when the reconstruction has seen a step too large to unwrap and is therefore untrustworthy. Appended and
-       gated by struct_size. Sticky until the origin is re-established. */
-    /* 重建遇到过无法解开折返的跳变、因而不可信任时为 1。追加字段，由 struct_size 门控。一直保持到原点重建为止。 */
+    /* 1 when the reconstruction has seen a step too large to unwrap and is
+     therefore untrustworthy. Appended and gated by struct_size. Sticky until
+     the origin is re-established. */
+    /* 重建遇到过无法解开折返的跳变、因而不可信任时为 1。追加字段，由 struct_size
+   * 门控。一直保持到原点重建为止。 */
     int32_t lost_count;
-    /* The mechanical angle referred to the index mark, rad. Appended and gated by struct_size. **Valid only when
-       `homed` is 1 and `lost_count` is 0** -- before the first mark it reads 0, and 0 is a legal mechanical angle, so
-       the value alone cannot tell a homed axis parked at the origin from one that was never homed. Prefer
-       `foc_motor_get_position_absolute()`, which refuses instead of returning that 0. */
-    /* 以索引标记为基准的机械角，rad。追加字段，由 struct_size 门控。**仅在 `homed` 为 1 且 `lost_count` 为 0 时
-       有效**——第一次索引之前它读 0，而 0 是合法机械角，所以单看这个值分不出「回零后停在原点」与「从未回过零」。
-       请优先用 `foc_motor_get_position_absolute()`，它在那种情形拒绝而不是返回那个 0。 */
+    /* The mechanical angle referred to the index mark, rad. Appended and gated by
+     struct_size. **Valid only when `homed` is 1 and `lost_count` is 0** --
+     before the first mark it reads 0, and 0 is a legal mechanical angle, so the
+     value alone cannot tell a homed axis parked at the origin from one that was
+     never homed. Prefer `foc_motor_get_position_absolute()`, which refuses
+     instead of returning that 0. */
+    /* 以索引标记为基准的机械角，rad。追加字段，由 struct_size 门控。**仅在
+     `homed` 为 1 且 `lost_count` 为 0 时 有效**——第一次索引之前它读 0，而 0
+     是合法机械角，所以单看这个值分不出「回零后停在原点」与「从未回过零」。
+     请优先用
+     `foc_motor_get_position_absolute()`，它在那种情形拒绝而不是返回那个 0。 */
     float referenced_mech_rad;
 } foc_motor_status_t;
 
@@ -466,6 +506,65 @@ typedef struct foc_fw_verdict {
 } foc_fw_verdict_t;
 
 /**
+ * @brief [en] Where a breakaway sequence is.
+ * @brief [zh] 起步序列处在哪一步。
+ * @note [en] `RAMPING` means the sequence owns the torque command; `RELEASED` and `FAILED` mean it has handed the axis
+ *            back. There is no state that means "the torque is half mine": the caller reads the phase and the torque
+ *            together, and the phase says which one is in charge.
+ * @note [zh] `RAMPING` 表示转矩指令归序列所有；`RELEASED` 与 `FAILED` 表示它已把轴交回。不存在 “转矩一半是我的”这种状
+ *            态：调用方要把阶段与转矩一起读，阶段说明哪个在管。
+ * @since 0.1.9
+ * @exporter
+ */
+// The base type stays `int` for the same reason as the others: a C99 enum has no fixed underlying type, and this
+// one crosses the same frozen ABI.
+// 基类型保持 `int`，理由与其余几个相同：C99 的 enum 没有固定底层类型，而它跨的是同一个已冻结的 ABI。
+// NOLINTNEXTLINE(performance-enum-size)
+typedef enum foc_stall_phase {
+    FOC_STALL_IDLE = 0,     /* not started, or cancelled */
+    FOC_STALL_RAMPING = 1,  /* the sequence owns the torque command */
+    FOC_STALL_RELEASED = 2, /* the rotor moved; the hand-over torque is the value
+                             to take over on */
+    FOC_STALL_FAILED = 3    /* the ceiling was held and the rotor never moved */
+} foc_stall_phase_t;
+
+/**
+ * @brief [en] The recipe for breaking a stuck rotor loose.
+ * @brief [zh] 把卡住的转子挣脱所用的配方。
+ * @note [en] These are physical numbers, and the one that matters is `max_torque_nm`: a recipe whose ceiling is not
+ *            above `breakaway_nm` can only ever produce `FOC_STALL_FAILED`, so it is refused rather than ramped into a
+ *            wall.
+ * @note [zh] 这些都是物理量，其中要紧的是 `max_torque_nm`：上限不高于 `breakaway_nm` 的配方只可能产出
+ *            `FOC_STALL_FAILED`，因此它会被拒绝，而不是朝墙上顶。
+ * @since 0.1.9
+ * @exporter
+ */
+typedef struct foc_stall_start_config {
+    uint32_t struct_size;
+    float breakaway_nm;        /* stiction plus load the rotor must beat, N*m */
+    float max_torque_nm;       /* the ceiling the drive may command, N*m; must exceed
+                          breakaway_nm */
+    float ramp_nm_per_s;       /* how fast the torque is raised, N*m/s */
+    float release_speed_rad_s; /* mechanical speed that counts as "it moved",
+                                rad/s */
+    float give_up_s;           /* how long the ceiling may be held without motion, s */
+} foc_stall_start_config_t;
+
+/**
+ * @brief [en] Where the sequence is and what it last commanded.
+ * @brief [zh] 序列处在哪一步，以及它上一次下发了多少力矩。
+ * @since 0.1.9
+ * @exporter
+ */
+typedef struct foc_stall_start_status {
+    uint32_t struct_size;
+    int32_t phase;   /* FOC_STALL_* */
+    float torque_nm; /* the torque the sequence last commanded; after RELEASED
+                      this is the hand-over */
+    int32_t limited; /* the ramp is at its ceiling */
+} foc_stall_start_status_t;
+
+/**
  * @brief [en] A PI loop's gains and clamps, as the library itself would set them.
  * @brief [zh] 一个 PI 环的增益与限幅，按库自己会设的值给出。
  * @note [en] All six numbers, not just `kp`/`ki`: a caller reproducing the loop outside the library needs the clamps
@@ -594,18 +693,22 @@ typedef struct foc_hal_callbacks {
     void (*pwm_disable)(void *user);
     /* Optional: monotonic microseconds; NULL = trust the dt given to each tick. */
     uint64_t (*now_us)(void *user);
-    /* Optional: non-zero when this position source has an index mark at all; NULL = no mark. Appended and gated by
-       struct_size, because this is an *input* struct: a caller built against the previous header never allocated these
-       two pointers, and reading them anyway would read their stack. Without a mark the axis can never be homed, which
-       is a fact rather than an error and comes back as `homed == 0`. */
-    /* 可选：这个位置源是否有索引标记，有为非零；NULL 表示没有。追加字段，由 struct_size 门控，因为这是**输入**
-       结构：按旧头编译的调用方从未分配这两个指针，照旧去读就是读它的栈。没有标记时轴永远无法回零——那是一个事实
-       而不是错误，并以 `homed == 0` 回到调用方。 */
+    /* Optional: non-zero when this position source has an index mark at all; NULL
+     = no mark. Appended and gated by struct_size, because this is an *input*
+     struct: a caller built against the previous header never allocated these
+     two pointers, and reading them anyway would read their stack. Without a
+     mark the axis can never be homed, which is a fact rather than an error and
+     comes back as `homed == 0`. */
+    /* 可选：这个位置源是否有索引标记，有为非零；NULL 表示没有。追加字段，由
+     struct_size 门控，因为这是**输入**
+     结构：按旧头编译的调用方从未分配这两个指针，照旧去读就是读它的栈。没有标记时轴永远无法回零——那是一个事实
+     而不是错误，并以 `homed == 0` 回到调用方。 */
     int32_t (*position_has_index)(void *user);
-    /* Optional: non-zero **only** on the tick the mark was crossed, never as a level -- a level is counted once per
-       tick spent near the mark. Appended and gated by struct_size. */
-    /* 可选：**仅在**越过标记的那一拍为非零，绝不能是电平——电平会把一次经过数成很多次。追加字段，由 struct_size
-       门控。 */
+    /* Optional: non-zero **only** on the tick the mark was crossed, never as a
+     level -- a level is counted once per tick spent near the mark. Appended and
+     gated by struct_size. */
+    /* 可选：**仅在**越过标记的那一拍为非零，绝不能是电平——电平会把一次经过数成很多次。追加字段，由
+     struct_size 门控。 */
     int32_t (*position_index_pulse)(void *user);
 } foc_hal_callbacks_t;
 
@@ -656,11 +759,15 @@ typedef struct foc_trace_sample {
 typedef struct foc_step_metrics {
     uint32_t struct_size;      /* sizeof(foc_step_metrics_t) */
     int32_t status;            /* foc_err_t of the measurement itself */
-    float bandwidth_rad_s;     /* -3 dB of the fitted first-order loop, rad/s; 0 unless status is FOC_OK */
+    float bandwidth_rad_s;     /* -3 dB of the fitted first-order loop, rad/s; 0
+                            unless status is FOC_OK */
     float tau_s;               /* fitted time constant, s; 1 / bandwidth_rad_s */
-    float settling_s;          /* s from the first sample until it stays inside the band; -1 = never */
-    float overshoot_fraction;  /* peak beyond the target, as a fraction of the step */
-    float tail_error_fraction; /* mean of the last tenth minus the target, as a fraction of the step */
+    float settling_s;          /* s from the first sample until it stays inside the band;
+                       -1 = never */
+    float overshoot_fraction;  /* peak beyond the target, as a fraction of the step
+                             */
+    float tail_error_fraction; /* mean of the last tenth minus the target, as a
+                                fraction of the step */
 } foc_step_metrics_t;
 
 
@@ -681,7 +788,8 @@ typedef struct foc_step_metrics {
 typedef struct foc_sinusoid_fit {
     uint32_t struct_size; /* sizeof(foc_sinusoid_fit_t) */
     int32_t status;       /* foc_err_t of the fit itself */
-    float amplitude;      /* peak amplitude of the fitted tone, same unit as the samples */
+    float amplitude;      /* peak amplitude of the fitted tone, same unit as the
+                           samples */
     float phase_rad;      /* phase of +A*cos(w*t + phase), rad */
 } foc_sinusoid_fit_t;
 

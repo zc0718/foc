@@ -198,6 +198,21 @@ def check_replay(traj: Trajectory, v_uvw: np.ndarray | None = None) -> tuple[flo
     return worst_current, worst_mech, len(picks)
 
 
+def trapezoid(y, x) -> float:
+    """The trapezoid rule, on whichever name this numpy has.
+
+    `np.trapezoid` arrived in numpy 2.0 and `np.trapz` was removed in 2.4, so a gate written against either name is red
+    on half the machines that run it -- and red for a reason that has nothing to do with what it measures. The dev box
+    has 1.26.4, where this was an `AttributeError` inside `check_energy` that the caller reported as "the C++ plant
+    disagrees with an independent float64 reference": a crash in the arithmetic was being attributed to the code under
+    test. The arithmetic is the same either way, so the only thing worth pinning is that it runs.
+    """
+    fn = getattr(np, "trapezoid", None)
+    if fn is None:
+        fn = np.trapz
+    return float(fn(y, x))
+
+
 def check_kinematics(traj: Trajectory) -> float:
     """C: does the angle advance by what the speed says it advanced by, over the whole run?
 
@@ -210,7 +225,7 @@ def check_kinematics(traj: Trajectory) -> float:
     """
     omega = traj.state[:, 2]
     delta = float(traj.state[-1, 3] - traj.state[0, 3])
-    travelled = float(np.trapezoid(omega, traj.t))
+    travelled = trapezoid(omega, traj.t)
     # Returned in **radians**, not as a ratio of the travel, and that choice is the substance of the check. Relative to a
     # one-radian move, F-40's 200 urad of lost motion is 2e-4 -- inside any sane ratio bound, and yet twenty times the
     # finest claim that rests on this trajectory. A ratio hides the defect precisely because the trajectory is long.
@@ -234,11 +249,11 @@ def check_energy(traj: Trajectory) -> float:
     stored = 0.75 * (m.ld * i_d**2 + m.lq * i_q**2) + 0.5 * m.j * omega**2
     power = 1.5 * (v_d * i_d + v_q * i_q) - 1.5 * m.rs * (i_d**2 + i_q**2) - m.b * omega**2
     delta = float(stored[-1] - stored[0])
-    supplied = float(np.trapezoid(power, traj.t))
+    supplied = trapezoid(power, traj.t)
     # Normalised by the energy that actually flowed, not by the endpoint difference. In a settled run the endpoints have
     # nearly the same energy, so a difference-based ratio divides a small residue by an even smaller number and reports
     # nonsense -- the throughput is the scale a conservation law is measured against.
-    gross = float(np.trapezoid(np.abs(power), traj.t))
+    gross = trapezoid(np.abs(power), traj.t)
     return abs(delta - supplied) / max(gross, abs(delta), 1e-12)
 
 

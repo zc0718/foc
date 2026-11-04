@@ -24,9 +24,7 @@
     "thing on the other end right\"."
   ],
   "todo_baseline": 0,
-  "known_unshipped": {
-    "core/stall_start.hpp": "batch 1 wires it into `Motor` and the C ABI (F18)"
-  },
+  "known_unshipped": {},
   "catalogue": {
     "core/alignment.hpp": {
       "class": "motor-owned"
@@ -74,13 +72,11 @@
     },
     "core/machine_map.hpp": {
       "class": "policy",
-      "example": null,
-      "why": "a parameter interpolator the caller feeds from its own data; batch 1 adds the working example, without which the capability is only a header"
+      "example": "test_package/test/unit/test_machine_map_example.cpp"
     },
     "core/machine_map_text.hpp": {
       "class": "policy",
-      "example": null,
-      "why": "same capability through a text file; it shares batch 1's example"
+      "example": "test_package/test/unit/test_machine_map_example.cpp"
     },
     "core/machine_params.hpp": {
       "class": "motor-owned"
@@ -250,6 +246,38 @@
     "driver/stub_pwm.hpp": {
       "class": "reference",
       "why": "a reference implementation of a contract: it is the example, so it owes being exercised rather than being documented"
+    },
+    "core/command_source.hpp": {
+      "class": "policy",
+      "example": "test_package/test/unit/test_command_source.cpp"
+    },
+    "hal/hall.hpp": {
+      "class": "contract",
+      "stub": "stub_hall.hpp",
+      "why": "three bits is the whole interface a hall set offers; the decoder and the sequencing rule are ours, reading the pins is the host's"
+    },
+    "driver/stub_hall.hpp": {
+      "class": "reference",
+      "why": "a settable code so the policy can be exercised without a board, and it deliberately does not validate -- an illegal code reaching the policy is the policy's case"
+    },
+    "core/six_step.hpp": {
+      "class": "policy",
+      "example": "test_package/test/unit/test_six_step.cpp"
+    },
+    "core/trace_parse.hpp": {
+      "class": "policy",
+      "example": "test_package/test/unit/test_trace_parse.cpp",
+      "why": "a host-side reader of the trace channel: the firmware never parses its own ring"
+    },
+    "comm/frame.hpp": {
+      "class": "policy",
+      "example": "test_package/test/unit/test_frame.cpp",
+      "why": "a link layer the host drives; the firmware's control path never frames anything"
+    },
+    "comm/register_map.hpp": {
+      "class": "policy",
+      "example": "test_package/test/unit/test_register_map.cpp",
+      "why": "the protocol's view of the C surface: a host asks, the firmware answers, nothing in the loop calls it"
     }
   }
 }

@@ -110,6 +110,32 @@ struct MachineMap final {
     }
 
     /**
+     * @brief [en] Whether the table actually measured this current, as opposed to answering from an end row.
+     * @brief [zh] 这张表是否真的在这个电流上测过，而不是拿端行来回答。
+     * @param i_a [en] current magnitude in A; the sign does not matter, as in `at`.
+     * @param i_a [zh] 电流幅值，A；与 `at` 一样与符号无关。
+     * @return [en] true when `|i_a|` lies inside the measured range and the map is valid; false outside it.
+     * @return [zh] `|i_a|` 落在实测范围内且表合法时为 true；范围之外为 false。
+     * @note [en] `at()` clamps, and a clamped answer is arithmetically indistinguishable from a measurement -- which is
+     *            exactly the confusion this type exists to prevent. So the clamping has to be *askable*: a caller that
+     *            wants to know whether it is extrapolating asks first, and one that does not ask has made a decision
+     *            rather than been misled. Reporting the clamp through the returned point would have changed what `at()`
+     *            returns for every existing caller; a second question costs one comparison.
+     * @note [zh] `at()` 会钳位，而钳位后的答案在算术上与一次实测无法区分——这正是这个类型存在的目的所要防的那种混淆。所
+     *            以钳位必须是**可以问的**：想知道自己是不是在外推的调用方先问一句，而不问的调用方是做了决定，不是被骗
+     *            了。把钳位塞进返回的点里会改变 `at()` 对所有既有调用方的返回值；多问一句只花一次比较。
+     * @since 0.1.9
+     * @exporter
+     */
+    [[nodiscard]] auto covers(float i_a) const noexcept -> bool {
+        if (!valid()) {
+            return false;
+        }
+        const float x = std::fabs(std::isfinite(i_a) ? i_a : 0.0F);
+        return (x >= rows[0].i_a) && (x <= rows[count - 1U].i_a);
+    }
+
+    /**
      * @brief [en] The machine at that current magnitude.
      * @brief [zh] 该电流幅值处的机器。
      * @param i_a [en] current magnitude in A; the sign does not matter, the map is even in current.

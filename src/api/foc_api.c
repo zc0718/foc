@@ -178,6 +178,30 @@ foc_err_t foc_motor_get_status(foc_motor_t motor, foc_motor_status_t *out) {
     return foc_bridge_get_status(motor, out);
 }
 
+foc_err_t foc_motor_begin_stall_start(foc_motor_t motor, const foc_stall_start_config_t *recipe) {
+    // The pointer checks live here, where the C types are declared; the `struct_size` check lives in the
+    // bridge, because only it knows the size the library was compiled against.
+    // 指针检查在这里，因为 C 类型在这里声明；`struct_size` 的检查在 bridge，因为只有它知道库编译时的大小。
+    if ((motor == NULL) || (recipe == NULL)) {
+        return FOC_ERR_PARAM;
+    }
+    return foc_bridge_begin_stall_start(motor, recipe);
+}
+
+foc_err_t foc_motor_get_stall_start(foc_motor_t motor, foc_stall_start_status_t *out) {
+    if ((motor == NULL) || (out == NULL)) {
+        return FOC_ERR_PARAM;
+    }
+    return foc_bridge_get_stall_start(motor, out);
+}
+
+foc_err_t foc_motor_cancel_stall_start(foc_motor_t motor) {
+    if (motor == NULL) {
+        return FOC_ERR_PARAM;
+    }
+    return foc_bridge_cancel_stall_start(motor);
+}
+
 foc_err_t foc_motor_get_position_absolute(foc_motor_t motor, float *position_mech_rad) {
     if ((motor == NULL) || (position_mech_rad == NULL)) {
         return FOC_ERR_PARAM;

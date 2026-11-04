@@ -3,21 +3,22 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
-#include <type_traits>
 #include <foc/core/alignment.hpp>
-#include <foc/core/limits.hpp>
 #include <foc/core/feedforward.hpp>
+#include <foc/core/limits.hpp>
 #include <foc/core/observer/observer_policy.hpp>
-#include <foc/core/position_reference.hpp>
 #include <foc/core/position.hpp>
+#include <foc/core/position_reference.hpp>
 #include <foc/core/protection.hpp>
 #include <foc/core/reference.hpp>
 #include <foc/core/sm.hpp>
+#include <foc/core/stall_start.hpp>
 #include <foc/core/traits.hpp>
 #include <foc/core/transforms.hpp>
 #include <foc/core/types.hpp>
 #include <foc/motor/foc_loop.hpp>
 #include <foc/motor/motor_config.hpp>
+#include <type_traits>
 // Conan::ImportEnd
 
 namespace foc {
@@ -41,10 +42,18 @@ using core::Uvw;
  * @exporter
  */
 struct Telemetry final {
-    float speed_mech_rad_s;      ///< [en] mechanical speed in rad/s. [zh] 机械速度，rad/s。
-    float id_a;                  ///< [en] measured d-axis current in A. [zh] 实测 d 轴电流，A。
-    float iq_a;                  ///< [en] measured q-axis current in A. [zh] 实测 q 轴电流，A。
-    std::uint32_t max_period_us; ///< [en] worst tick interval, us. [zh] 最差 tick 间隔，us。
+    /**
+     * @brief [en] mechanical speed in rad/s.
+     * @brief [zh] 机械速度，rad/s。
+     */
+    float speed_mech_rad_s;
+    float id_a; ///< [en] measured d-axis current in A. [zh] 实测 d 轴电流，A。
+    float iq_a; ///< [en] measured q-axis current in A. [zh] 实测 q 轴电流，A。
+    /**
+     * @brief [en] worst tick interval, us.
+     * @brief [zh] 最差 tick 间隔，us。
+     */
+    std::uint32_t max_period_us;
 };
 
 
@@ -55,9 +64,13 @@ struct Telemetry final {
  * @exporter
  */
 enum class ReferenceMode : std::uint8_t {
-    Torque = 0,   ///< [en] iq is commanded directly. [zh] 直接给定 iq。
-    Speed = 1,    ///< [en] the speed controller produces iq. [zh] 由速度环产生 iq。
-    Position = 2, ///< [en] the position loop produces the speed setpoint. [zh] 由位置环产生速度给定。
+    Torque = 0, ///< [en] iq is commanded directly. [zh] 直接给定 iq。
+    Speed = 1,  ///< [en] the speed controller produces iq. [zh] 由速度环产生 iq。
+    /**
+     * @brief [en] the position loop produces the speed setpoint.
+     * @brief [zh] 由位置环产生速度给定。
+     */
+    Position = 2,
 };
 
 
@@ -82,14 +95,46 @@ enum class ReferenceMode : std::uint8_t {
  * @exporter
  */
 struct Command final {
-    float position_rad;          ///< [en] target mechanical angle in rad. [zh] 目标机械角，rad。
-    float max_current_a;         ///< [en] iq ceiling, 0 = nameplate. [zh] 本次 iq 上限，0 = 铭牌值。
-    float feedforward_current_a; ///< [en] iq added after the speed loop. [zh] 速度环后叠加的 iq。
-    float max_velocity_rad_s; ///< [en] per-move speed ceiling, 0 = controller's. [zh] 本次速度上限，0 = 用控制器配置。
-    float max_accel_rad_s2;   ///< [en] per-move rate limit, 0 = controller's. [zh] 本次加速度上限，0 = 用控制器配置。
-    float kp_scale;           ///< [en] stiffness scale, 0 = configured. [zh] 刚度缩放，0 = 用配置值。
-    float kd_scale;           ///< [en] speed-loop gain scale, 0 = configured. [zh] 速度环增益缩放，0 = 用配置值。
-    float ilimit_scale;       ///< [en] speed integral scale, 0 = configured. [zh] 速度环积分缩放，0 = 用配置值。
+    /**
+     * @brief [en] target mechanical angle in rad.
+     * @brief [zh] 目标机械角，rad。
+     */
+    float position_rad;
+    /**
+     * @brief [en] iq ceiling, 0 = nameplate.
+     * @brief [zh] 本次 iq 上限，0 = 铭牌值。
+     */
+    float max_current_a;
+    /**
+     * @brief [en] iq added after the speed loop.
+     * @brief [zh] 速度环后叠加的 iq。
+     */
+    float feedforward_current_a;
+    /**
+     * @brief [en] per-move speed ceiling, 0 = controller's.
+     * @brief [zh] 本次速度上限，0 = 用控制器配置。
+     */
+    float max_velocity_rad_s;
+    /**
+     * @brief [en] per-move rate limit, 0 = controller's.
+     * @brief [zh] 本次加速度上限，0 = 用控制器配置。
+     */
+    float max_accel_rad_s2;
+    /**
+     * @brief [en] stiffness scale, 0 = configured.
+     * @brief [zh] 刚度缩放，0 = 用配置值。
+     */
+    float kp_scale;
+    /**
+     * @brief [en] speed-loop gain scale, 0 = configured.
+     * @brief [zh] 速度环增益缩放，0 = 用配置值。
+     */
+    float kd_scale;
+    /**
+     * @brief [en] speed integral scale, 0 = configured.
+     * @brief [zh] 速度环积分缩放，0 = 用配置值。
+     */
+    float ilimit_scale;
 };
 
 
@@ -261,14 +306,77 @@ class Motor final {
     void set_command(const Command& command) noexcept;
 
     /**
-     * @brief [en] One current-loop step: sense -> Clarke -> angle -> Park -> PI -> InvPark -> SVPWM.
-     * @brief [zh] 一步电流环：采样 -> Clarke -> 角度 -> Park -> PI -> InvPark -> SVPWM。
-     * @param dt_s [en] step length in s; <= 0 is rejected (status Param).
-     * @param dt_s [zh] 步长，s；<= 0 被拒绝（状态置 Param）。
-     * @return [en] Ok, Param, or State (not running).
-     * @return [zh] Ok、Param 或 State（未运行）。
-     * @since 0.1.0
-     */
+   * @brief [en] Start a breakaway sequence: raise the torque on a known ramp, report the instant the rotor moves, and
+   *             leave that hand-over torque readable, so the speed loop starts from a known current instead of a
+   *             wound-up integrator.
+   * @brief [zh] 开始一条起步序列：以已知斜率抬升力矩，报告转子动起来的那一刻，并把交接力矩留在可读处，于是速度环从一个
+   *             已知电流起步，而不是从一个饱和的积分起步。
+   * @param recipe [en] the machine's breakaway estimate and the drive's limits.
+   * @param recipe [zh] 机器的起动点估计与驱动的限幅。
+   * @return [en] Ok; Param when the recipe cannot work (`max_torque_nm <= breakaway_nm`); State when the axis is
+   *              aligning, faulted or not running. The phase stays `Idle` on both refusals.
+   * @return [zh] Ok；配方不可能成立时为 Param（`max_torque_nm <= breakaway_nm`）；正在对齐、已故障或未运行时为 State。
+   *              两种拒绝都会让阶段停在 `Idle`。
+   * @note [en] Why this is not "let the speed loop do it": a speed PI *does* break a stuck axis loose -- by winding its
+   *            integral up until the torque passes the breakaway point -- and that stored torque is exactly what drives
+   *            the rotor past the setpoint the instant it lets go. This sequence does the same thing on purpose and
+   *            reports where it happened. The axis is in torque mode while the sequence runs, so `stall_start_phase()`
+   *            is the only thing that says whether the commanded torque is the sequence's or the caller's. When it
+   *            reaches `Released` the caller owns the axis again: call `set_speed()` (or `set_torque()`) in the same
+   *            control period, or the breakaway torque keeps being applied. `Failed` latches `FaultCode::Stall` -- a
+   *            load the drive cannot move at its limit is a fact about the machine, and it outlives the call that found
+   *            it.
+   * @note [zh] 为什么这不是“让速度环自己干”：速度 PI 确实能把卡住的轴弄动，办法是把积分顶到力矩越过起动点—— 而转子一松
+   *            脱，正是这份存下来的力矩把它推过给定。本序列把同一件事有意地做，并报告它发生在哪里。序列运行期间轴处于转
+   *            矩模式，因此只有 `stall_start_phase()` 能说明当前指令力矩是序列的还是调用方的。到达 `Released` 后控制权
+   *            回到调用方：必须在同一控制周期内调 `set_speed()`（或 `set_torque()`），否则起动转矩会继续施加。 `Failed`
+   *            会锁存 `FaultCode::Stall`——驱动在限幅内搬不动的负载是关于这台机器的事实，它比发现它的那次调用活得更久。
+   * @since 0.1.9
+   */
+    auto begin_stall_start(const core::StallStartConfig& recipe) noexcept -> ErrorCode;
+
+    /**
+   * @brief [en] Where the breakaway sequence is, and what it last commanded.
+   * @brief [zh] 起步序列处在哪一步，以及它上一次下发了多少力矩。
+   * @note [en] Read them together: the phase says whether the torque below is still owned by the sequence.
+   * @note [zh] 两个要一起读：阶段说明它下面那个力矩是否仍归序列所有。
+   * @since 0.1.9
+   */
+    [[nodiscard]] auto stall_start_phase() const noexcept -> core::StallStartPhase;
+
+    /**
+   * @brief [en] The torque the sequence last commanded, N*m. After `Released` this is the hand-over value.
+   * @brief [zh] 序列上一次下发的力矩，N·m。进入 `Released` 之后它就是交接值。
+   * @since 0.1.9
+   */
+    [[nodiscard]] auto stall_start_torque_nm() const noexcept -> float;
+
+    /**
+   * @brief [en] Whether the breakaway ramp is sitting at its ceiling, N*m.
+   * @brief [zh] 起步斜坡是否已经贴在它的上限上。
+   * @note [en] It is the difference between "climbing" and "climbing and out of authority": at the ceiling the only
+   *            outcomes left are motion or `Failed`.
+   * @note [zh] 它是“还在爬”与“爬到顶、没有余地”的区别：贴在上限上时，剩下的结局只有动起来或 `Failed`。
+   * @since 0.1.9
+   */
+    [[nodiscard]] auto stall_start_limited() const noexcept -> bool;
+
+    /**
+   * @brief [en] Abandon the sequence and zero the torque command; the mode is left as the caller had it.
+   * @brief [zh] 放弃序列并把指令力矩清零；模式保持调用方当前的样子。
+   * @since 0.1.9
+   */
+    void cancel_stall_start() noexcept;
+
+    /**
+   * @brief [en] One current-loop step: sense -> Clarke -> angle -> Park -> PI -> InvPark -> SVPWM.
+   * @brief [zh] 一步电流环：采样 -> Clarke -> 角度 -> Park -> PI -> InvPark -> SVPWM。
+   * @param dt_s [en] step length in s; <= 0 is rejected (status Param).
+   * @param dt_s [zh] 步长，s；<= 0 被拒绝（状态置 Param）。
+   * @return [en] Ok, Param, or State (not running).
+   * @return [zh] Ok、Param 或 State（未运行）。
+   * @since 0.1.0
+   */
     auto tick(float dt_s) noexcept -> ErrorCode;
 
     /**
@@ -539,6 +647,20 @@ class Motor final {
     // seconds for the same reason as the hand-over window -- a tick count means nothing across control rates.
     // 堵转检测：环路顶在满电流，而机器没有按指令方向运动。用秒计数，理由与交接窗口相同——tick 数跨控制频率没有意义。
     float stall_elapsed_s_{0.0F};
+    // Breakaway sequence. A concrete member rather than an eleventh policy slot:
+    // the sequence is stateful, it needs `dt` and the measured speed every
+    // period, and it is the *torque source* for a while -- which is what the mode
+    // already expresses. An eleventh template parameter would have churned every
+    // instantiation in `src/` and every test that names one, for a policy nobody
+    // would ever substitute.
+    // 起步序列。具体成员而不是第十一个策略槽：序列是有状态的，每周期都要 `dt`
+    // 与实测转速，且它在一段时间内就是
+    // **转矩来源**——而这正是模式已经表达的事。加第十一个模板参数会弄脏 `src/`
+    // 里每个实例化与每个点名它的用例， 而那个策略没有人会去替换。
+    core::StallStart stall_start_{};
+    core::StallStartPhase stall_phase_{core::StallStartPhase::Idle};
+    float stall_torque_nm_{0.0F};
+    bool stall_limited_{false};
 };
 
 template <typename Observer, typename Modulator, typename Controller, typename HalPolicy, typename RefGenerator,
@@ -681,6 +803,16 @@ auto Motor<Observer, Modulator, Controller, HalPolicy, RefGenerator, FeedForward
         fault_code_ = core::FaultCode::None;
         handover_check_s_ = 0.0F;
         stall_elapsed_s_ = 0.0F;
+        // The sequence is reset with everything else: a recipe half-way up a ramp
+        // describes a torque that was applied to an axis the fault has already
+        // switched off, and resuming it after `clear_fault()` would apply the rest
+        // of that ramp to a rotor that may have moved.
+        // 序列与其余状态一起复位：爬到一半的配方描述的是施加在一个已被故障关断的轴上的力矩，`clear_fault()`
+        // 之后 接着爬，会把剩下的斜坡施加到一个可能已经动过的转子上。
+        stall_start_.reset();
+        stall_phase_ = core::StallStartPhase::Idle;
+        stall_torque_nm_ = 0.0F;
+        stall_limited_ = false;
     }
     return rc;
 }
@@ -715,6 +847,65 @@ void Motor<Observer, Modulator, Controller, HalPolicy, RefGenerator, FeedForward
     mode_ = ReferenceMode::Position;
     command_ = command;
     position_ref_rad_ = command.position_rad;
+}
+
+template <typename Observer, typename Modulator, typename Controller, typename HalPolicy, typename RefGenerator,
+          typename FeedForward, typename PositionControl, typename Aligner, typename Trace>
+auto Motor<Observer, Modulator, Controller, HalPolicy, RefGenerator, FeedForward, PositionControl, Aligner,
+           Trace>::begin_stall_start(const core::StallStartConfig& recipe) noexcept -> ErrorCode {
+    // Admission, not validation of the numbers alone: the sequence commands a
+    // torque, so it can only run on an axis that is running and not being
+    // aligned. Both refusals leave the phase `Idle` -- a refusal that leaves the
+    // old state standing is the failure mode the aligner had (F-35).
+    // 准入，而不只是数字校验：序列下发的是转矩，所以只能在一个正在运行、且不在对齐的轴上跑。两种拒绝都把阶段留在
+    // `Idle`——拒绝却把旧状态留着，正是对齐器修掉的那个失效形态（F-35）。
+    if (sm_.state() != core::MotorState::Run) {
+        stall_phase_ = core::StallStartPhase::Idle;
+        return ErrorCode::State;
+    }
+    stall_start_.set_config(recipe);
+    if (!stall_start_.begin()) {
+        stall_phase_ = core::StallStartPhase::Idle;
+        return ErrorCode::Param;
+    }
+    stall_phase_ = core::StallStartPhase::Ramping;
+    stall_torque_nm_ = 0.0F;
+    stall_limited_ = false;
+    mode_ = ReferenceMode::Torque;
+    iq_ref_a_ = 0.0F;
+    return ErrorCode::Ok;
+}
+
+template <typename Observer, typename Modulator, typename Controller, typename HalPolicy, typename RefGenerator,
+          typename FeedForward, typename PositionControl, typename Aligner, typename Trace>
+auto Motor<Observer, Modulator, Controller, HalPolicy, RefGenerator, FeedForward, PositionControl, Aligner,
+           Trace>::stall_start_phase() const noexcept -> core::StallStartPhase {
+    return stall_phase_;
+}
+
+template <typename Observer, typename Modulator, typename Controller, typename HalPolicy, typename RefGenerator,
+          typename FeedForward, typename PositionControl, typename Aligner, typename Trace>
+auto Motor<Observer, Modulator, Controller, HalPolicy, RefGenerator, FeedForward, PositionControl, Aligner,
+           Trace>::stall_start_torque_nm() const noexcept -> float {
+    return stall_torque_nm_;
+}
+
+template <typename Observer, typename Modulator, typename Controller, typename HalPolicy, typename RefGenerator,
+          typename FeedForward, typename PositionControl, typename Aligner, typename Trace>
+auto Motor<Observer, Modulator, Controller, HalPolicy, RefGenerator, FeedForward, PositionControl, Aligner,
+           Trace>::stall_start_limited() const noexcept -> bool {
+    return stall_limited_;
+}
+
+template <typename Observer, typename Modulator, typename Controller, typename HalPolicy, typename RefGenerator,
+          typename FeedForward, typename PositionControl, typename Aligner, typename Trace>
+void Motor<Observer, Modulator, Controller, HalPolicy, RefGenerator, FeedForward, PositionControl, Aligner,
+           Trace>::cancel_stall_start() noexcept {
+    stall_start_.reset();
+    stall_phase_ = core::StallStartPhase::Idle;
+    stall_torque_nm_ = 0.0F;
+    stall_limited_ = false;
+    iq_ref_a_ = 0.0F;
 }
 
 template <typename Observer, typename Modulator, typename Controller, typename HalPolicy, typename RefGenerator,
@@ -936,6 +1127,32 @@ auto Motor<Observer, Modulator, Controller, HalPolicy, RefGenerator, FeedForward
             }
         }
 
+        // A breakaway sequence owns the torque command while it ramps, and it
+        // *replaces* whatever the torque mode was holding: the point of the
+        // sequence is that the commanded torque is known at every instant, which a
+        // value the caller set by hand is not.
+        // 起步序列在爬升期间拥有转矩指令，并**替换**转矩模式原本保持的值：序列的意义在于每一刻的指令力矩都是
+        // 已知的，而调用方手设的值不是。
+        if (stall_phase_ == core::StallStartPhase::Ramping) {
+            const core::StallStartOutput out = stall_start_.step(dt_s, speed_mech);
+            stall_phase_ = out.phase;
+            stall_torque_nm_ = out.torque_nm;
+            stall_limited_ = out.limited;
+            if (out.phase == core::StallStartPhase::Failed) {
+                iq_ref_a_ = 0.0F;
+                fault(core::FaultCode::Stall);
+                status_ = ErrorCode::Fault;
+                return status_;
+            }
+            // Torque to current through the nameplate constant, clamped like any
+            // other torque command. A machine with no `kt` cannot be given a torque,
+            // and inventing one would be a number nobody measured.
+            // 由铭牌常数把力矩换成电流，并像其他转矩指令一样限幅。没有 `kt`
+            // 的机器给不出力矩，编一个就是没人测过的数。
+            iq_ref_a_ =
+                (config_.kt > 0.0F) ? core::clamp(out.torque_nm / config_.kt, -config_.i_max_a, config_.i_max_a) : 0.0F;
+        }
+
         const float omega_e = speed_mech * static_cast<float>(config_.pole_pairs);
         i_dq = measure_dq(i_uvw, theta_e);
         const core::ReferenceInput ref_in{iq_ref_a_, omega_e, v_bus_v, i_dq};
@@ -1113,6 +1330,28 @@ template <typename Observer, typename Modulator, typename Controller, typename H
 auto Motor<Observer, Modulator, Controller, HalPolicy, RefGenerator, FeedForward, PositionControl, Aligner,
            Trace>::observer() noexcept -> Observer& {
     return policies_.observer;
+}
+
+template <typename Observer, typename Modulator, typename Controller, typename HalPolicy, typename RefGenerator,
+          typename FeedForward, typename PositionControl, typename Aligner, typename Trace>
+void Motor<Observer, Modulator, Controller, HalPolicy, RefGenerator, FeedForward, PositionControl, Aligner,
+           Trace>::apply_params(const core::MachineParams& params) noexcept {
+    // Every slot that can take the numbers gets them; every slot that cannot is
+    // left as it was built. Three explicit `if constexpr`s rather than a fold
+    // over the policy tuple, because the slots are named members and a generic
+    // walk would have to invent an ordering for a set of calls that has none.
+    // 能接受这些数字的槽位都拿到它们；不能的保持构造时的样子。三个显式 `if
+    // constexpr` 而不是对策略元组做折叠，因为
+    // 槽位是有名字的成员，而通用遍历必须给一组本来没有次序的调用发明一个次序。
+    if constexpr (core::concepts::has_apply_params_v<Observer>) {
+        policies_.observer.apply_params(params);
+    }
+    if constexpr (core::concepts::has_apply_params_v<Controller>) {
+        policies_.controller.apply_params(params);
+    }
+    if constexpr (core::concepts::has_apply_params_v<FeedForward>) {
+        policies_.feed_forward.apply_params(params);
+    }
 }
 
 template <typename Observer, typename Modulator, typename Controller, typename HalPolicy, typename RefGenerator,

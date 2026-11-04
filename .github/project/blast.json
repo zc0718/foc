@@ -29,9 +29,11 @@
     "",
     "Known boundary, second half: the trigger needs a diff. In a shallow CI checkout the default base yields",
     "nothing to inspect, and the gate says so in its own output instead of reporting a clean pass as if the",
-    "trigger had been checked."
+    "trigger had been checked.",
+    "Known limit, found by the first entry: the trigger keys on fan-out as well as fan-in, because `motor.hpp` consumes seventeen modules and is consumed by one -- but the RADIUS is still the fan-in closure, so a fan-out-triggered change can name very few rows (the first entry settled exactly one). That is not a bug in the closure: the graph records 'this claim rests on that module', and a row whose numbers merely travel *through* a file it never names is invisible here. The entry's `what_changed` sentence is what carries that half, which is why it is not optional."
   ],
   "fan_in_threshold": 2,
+  "fan_out_threshold": 3,
   "watched": {
     "test_package/test/unit/sil_abc_plant.hpp": "the phase-variable plant: the second model every dq number is cross-checked against (M-01)",
     "test_package/test/unit/sil_bench.hpp": "the scenario harness every SIL number is measured through",
@@ -43,5 +45,86 @@
     "test_package/test/unit/sil_speed_step_case.hpp": "the speed-step scenario shared by the loop claims",
     "test_package/test/unit/sil_switching_rig.hpp": "the duty-replay rig used wherever a real PWM train is needed"
   },
-  "entries": []
+  "entries": [
+    {
+      "id": "B-01",
+      "date": "2026-11-04",
+      "what_changed": "`Motor` gained a breakaway sequence (`begin_stall_start()`, the three read-outs, and a tick branch that derives `iq` from it while its phase is `Ramping`), and the same capability reached the C surface (`foc_motor_begin_stall_start` / `_get_` / `_cancel_`). Nothing else about the loop moved.",
+      "seeds": [
+        "include/foc/motor/motor.hpp",
+        "include/foc/api/foc_api.h",
+        "include/foc/api/foc_types.h",
+        "src/api/bridge.cpp",
+        "src/api/foc_api.c"
+      ],
+      "affected": [
+        {
+          "row": "api/foc_api.h",
+          "verdict": "holds",
+          "why": "additive: the new branch is gated on `stall_phase_ == Ramping` (starts `Idle`, only `begin_stall_start()` sets it) and the C entry points are new symbols, so no existing call path changes; measured on this tree: `test_field_weakening_motor` 4/4 and `test_sil_startup` 7/7 still green"
+        },
+        {
+          "row": "api/foc_types.h",
+          "verdict": "holds",
+          "why": "additive: the new branch is gated on `stall_phase_ == Ramping` (starts `Idle`, only `begin_stall_start()` sets it) and the C entry points are new symbols, so no existing call path changes; measured on this tree: `test_field_weakening_motor` 4/4 and `test_sil_startup` 7/7 still green"
+        },
+        {
+          "row": "core/sinusoid_fit.hpp",
+          "verdict": "holds",
+          "why": "additive: the new branch is gated on `stall_phase_ == Ramping` (starts `Idle`, only `begin_stall_start()` sets it) and the C entry points are new symbols, so no existing call path changes; measured on this tree: `test_field_weakening_motor` 4/4 and `test_sil_startup` 7/7 still green"
+        },
+        {
+          "row": "core/step_metrics.hpp",
+          "verdict": "holds",
+          "why": "additive: the new branch is gated on `stall_phase_ == Ramping` (starts `Idle`, only `begin_stall_start()` sets it) and the C entry points are new symbols, so no existing call path changes; measured on this tree: `test_field_weakening_motor` 4/4 and `test_sil_startup` 7/7 still green"
+        },
+        {
+          "row": "core/trace.hpp",
+          "verdict": "holds",
+          "why": "additive: the new branch is gated on `stall_phase_ == Ramping` (starts `Idle`, only `begin_stall_start()` sets it) and the C entry points are new symbols, so no existing call path changes; measured on this tree: `test_field_weakening_motor` 4/4 and `test_sil_startup` 7/7 still green"
+        },
+        {
+          "row": "motor/torque_map.hpp",
+          "verdict": "holds",
+          "why": "additive: the new branch is gated on `stall_phase_ == Ramping` (starts `Idle`, only `begin_stall_start()` sets it) and the C entry points are new symbols, so no existing call path changes; measured on this tree: `test_field_weakening_motor` 4/4 and `test_sil_startup` 7/7 still green"
+        },
+        {
+          "row": "core/trace_parse.hpp",
+          "verdict": "holds",
+          "why": "the row did not exist when B-01 was written; it is inside this entry's radius because `core/trace.hpp` names `motor/motor.hpp` as its basis, so every reader of the trace inherits the loop's seeds. `trace_parse.hpp` includes `trace.hpp` and `types.hpp` only -- it neither includes nor calls the loop, so the breakaway branch cannot reach it. measured on this tree: `test_trace_parse` 7/7"
+        },
+        {
+          "row": "comm/register_map.hpp",
+          "verdict": "holds",
+          "why": "new in this batch, and it sits in the radius because its basis names `api/foc_api.h`, which is one of this entry's seeds -- a protocol reader of the C surface inherits whatever the C surface inherits. The breakaway branch cannot reach it: it calls `foc_motor_get_status`, `foc_get_state`, `foc_motor_trace_size` and `foc_motor_trace_dropped`, and none of them enters the stall sequence. measured on this tree: `test_register_map` 3/3, including a real motor read that agrees with the C entry point bit for bit"
+        }
+      ]
+    },
+    {
+      "id": "B-02",
+      "date": "2026-11-04",
+      "what_changed": "Two layer-S edits made to ship F45 and F52. (1) `Motor::apply_params()` gained the definition it never had: it has been declared and documented since 0.1.0, `machine_params.hpp` describes the hook in prose, and `has_apply_params_v` exists to find it -- but there was no definition anywhere in the tree, so it could not link. Nothing called it, which is why nothing noticed; the first caller was the F45 example. (2) `core::MachineMap` gained `covers()` so that the clamp it has always performed is askable instead of silent; `at()` is untouched. `core/trace_parse.hpp` is new and reads `TraceSample` only. `core/machine_map.hpp` is not a seed by the fan-in rule -- it is listed because a layer-S edit was made to it and an entry that skips the file it edited is not a ledger.",
+      "seeds": [
+        "include/foc/motor/motor.hpp",
+        "include/foc/core/machine_map.hpp"
+      ],
+      "affected": [
+        {
+          "row": "core/trace.hpp",
+          "verdict": "holds",
+          "why": "`apply_params()` forwards to the policies and stores nothing -- `config_` is not touched -- so the numbers the loop records are unchanged, and the new definition cannot run on any path that existed before because no caller could link to it. measured on this tree: `test_trace` 7/7"
+        },
+        {
+          "row": "core/trace_parse.hpp",
+          "verdict": "holds",
+          "why": "a new row, measured on the post-change tree rather than assumed: the header reads `TraceSample` and holds no state between calls, so neither edit can reach it. `test_trace_parse` 7/7, including the 32-bit wrap case and the injected interior gap"
+        },
+        {
+          "row": "core/machine_map_text.hpp",
+          "verdict": "holds",
+          "why": "`covers()` is a new member: `at()`, `valid()`, `read_document()` and `write_document()` are byte-identical, and the text row's claim is about the round trip through those. measured on this tree: `test_machine_map` 6/6, `test_machine_map_text` 7/7 -- the L3 round-trip numbers did not move"
+        }
+      ]
+    }
+  ]
 }

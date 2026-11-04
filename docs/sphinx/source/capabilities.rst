@@ -148,6 +148,53 @@ coverage numbers at the time:
      - na -- a per-sample decoder; the only cross-frame state is the sector period, and a doubtful one is kept rather
        than taken.
      - F-10, F-11, F-12, F-13, C-8
+   * - ``comm/frame.hpp``
+     - `FrameStatus` names which check failed (start / length / checksum) instead of one generic failure, and
+       `SequenceChecker` reports `missing` / `duplicate` / `out_of_order` separately. `missing` counts the frames
+       between the one expected and the one that arrived, so a single skipped frame reports 1.
+     - `encode_frame` returns 0 and writes nothing when the frame does not fit; `decode_frame` refuses a short
+       buffer, a late start byte and an over-long length before touching the receiver.
+     - ``Frame.NoSingleByteCorruptionIsAccepted``
+     - na -- the codec holds no state; `SequenceChecker` holds one byte and one flag, and neither is a
+       continuous-output invariant.
+     - --
+   * - ``comm/register_map.hpp``
+     - `read_register()` answers one 32-bit word per register; `RegisterKind` says whether to read it as an
+       unsigned count, a signed code, or IEEE-754 bits.
+     - a NULL receiver, an id with no row, and any register whose C function refuses all return `false`
+       **with the word untouched** -- except the two count registers, whose C functions document NULL as 0.
+     - ``RegisterMap.ARefusedReadLeavesTheWordAloneAndTheTwoKindsOfAnswerStayDifferent``
+     - na -- read-only and idempotent; nothing here accumulates.
+     - --
+   * - ``core/trace_parse.hpp``
+     - `missing` (inferred inside the window), `lost` (declared before it), `gaps`, `reversals`, `segments`, and
+       `complete` only when nothing is missing either way. `consistent` is the parser's own check: `missing` is
+       counted twice, by summing the per-pair skips and from the two endpoint timestamps.
+     - `Param` for a zero period or a span whose samples pointer does not match its size; a window with no clock
+       reports `timed == false` rather than a fabricated consistency.
+     - ``TraceParse.AWrapIsOnePeriodAndNotAHole``
+     - na -- a host-side tool, not a control-path component; it holds no state between calls.
+     - --
+   * - ``core/six_step.hpp``
+     - `sector`, `changed`, `holding` and `skipped`, plus `rejected()`/`illegal()` counters. `holding` and
+       `skipped` are different things and the duty alone cannot tell them apart: one means the pins named no
+       position, the other means they named one the rotor cannot have reached.
+     - `Param` for an amplitude outside `(0, 1]` or a step allowance outside `1..5` -- a table driven at zero
+       amplitude produces no torque while looking like it is running.
+     - ``SixStep.WalkingTheSectorsTurnsTheVectorSixtyDegreesEach``
+     - na -- each call maps a code to a vector; the state it keeps is the last accepted sector, which is the
+       boundary case above rather than a continuous-output invariant.
+     - --
+   * - ``core/command_source.hpp``
+     - `analog`: `in_deadband`; `ppm`: `valid`; `step`: `pulses`, `delta_rad` and `jump`. A command source whose only
+       output is a number cannot be told apart from a dead link, and `jump` is the difference between "the axis moved"
+       and "the axis moved further than one period of motion allows, so a count was lost".
+     - `Param` when the interface cannot be mapped exactly (`pulses_per_rev == 0`), when the analogue band is not below
+       full scale, or when the pulse-width window is empty or inverted. An interface that cannot be mapped exactly is
+       refused rather than approximated, because the approximation is a position error that never goes away.
+     - ``CommandSource.AWholeTurnIsExactlyAWholeTurn``
+     - na -- each call is a pure map from its input to a command; there is no state to hold invariant across time.
+     - --
    * - ``core/step_metrics.hpp``
      - ``status``, and it carries weight: ``Ok`` means a first-order decay was fitted, ``State`` means the window carried
        none -- and the settling numbers stay valid in that case, because a response can settle without being fittable.
@@ -178,10 +225,15 @@ coverage numbers at the time:
    * - ``core/stall_start.hpp``
      - ``phase()`` and `limited`. "starting", "released" and "cannot start" are three states rather than one number, and
        `Failed` is a first-class answer: a load the drive cannot move is a fact about the machine, and a sequence that
-       ramps forever instead of saying so leaves the operator watching a silent axis.
+       ramps forever instead of saying so leaves the operator watching a silent axis. Through `Motor` the same two
+       facts are `stall_start_phase()` and `stall_start_torque_nm()`, and they have to be read together: the phase says
+       whether the torque beside it is still the sequence's or the caller's again.
      - ``Param`` from `validate()`/`begin()` when the limit is not above the breakaway point -- a sequence whose ceiling
        is under the breakaway can only ever produce `Failed`, so accepting it would accept a recipe known in advance
-       not to work -- and when the ramp, release speed or grace period is not positive.
+       not to work -- and when the ramp, release speed or grace period is not positive. `Motor::begin_stall_start()`
+       adds the admission the sequence cannot make for itself: `State` when the axis is not running or is still
+       aligning, because a torque source has no business running during a forced angle. Both refusals leave the phase
+       `Idle` rather than half-way into a ramp.
      - ``StallStart.AStuckAxisSaysFailedInsteadOfRampingForever``
      - na -- a sequencer over other capabilities, not an equation of its own.
      - C-5

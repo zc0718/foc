@@ -16,7 +16,8 @@
   ],
   "covered_roots": [
     "core",
-    "motor"
+    "motor",
+    "comm"
   ],
   "unlisted": [
     "core/alignment.hpp",

@@ -401,7 +401,7 @@
         },
         {
           "file": "include/foc/core/protection.hpp",
-          "line": 270,
+          "line": 277,
           "col": 22,
           "original": ">",
           "replacement": ">=",
@@ -409,7 +409,7 @@
         },
         {
           "file": "include/foc/core/protection.hpp",
-          "line": 278,
+          "line": 285,
           "col": 60,
           "original": ">",
           "replacement": ">=",
@@ -417,7 +417,7 @@
         },
         {
           "file": "include/foc/core/protection.hpp",
-          "line": 286,
+          "line": 293,
           "col": 51,
           "original": ">",
           "replacement": ">=",
@@ -425,7 +425,7 @@
         },
         {
           "file": "include/foc/core/protection.hpp",
-          "line": 292,
+          "line": 299,
           "col": 82,
           "original": "1.0",
           "replacement": "1.001",
@@ -433,7 +433,7 @@
         },
         {
           "file": "include/foc/core/protection.hpp",
-          "line": 293,
+          "line": 300,
           "col": 84,
           "original": "<",
           "replacement": "<=",
@@ -441,7 +441,7 @@
         },
         {
           "file": "include/foc/core/protection.hpp",
-          "line": 293,
+          "line": 300,
           "col": 106,
           "original": "1.0",
           "replacement": "1.001",
@@ -449,7 +449,7 @@
         },
         {
           "file": "include/foc/core/protection.hpp",
-          "line": 304,
+          "line": 311,
           "col": 26,
           "original": "8",
           "replacement": "9",
@@ -457,7 +457,7 @@
         },
         {
           "file": "include/foc/core/protection.hpp",
-          "line": 346,
+          "line": 353,
           "col": 31,
           "original": ">",
           "replacement": ">=",
@@ -465,7 +465,7 @@
         },
         {
           "file": "include/foc/core/protection.hpp",
-          "line": 349,
+          "line": 356,
           "col": 27,
           "original": "<=",
           "replacement": "<",
@@ -473,7 +473,7 @@
         },
         {
           "file": "include/foc/core/protection.hpp",
-          "line": 353,
+          "line": 360,
           "col": 20,
           "original": ">",
           "replacement": ">=",
@@ -481,7 +481,7 @@
         },
         {
           "file": "include/foc/core/protection.hpp",
-          "line": 357,
+          "line": 364,
           "col": 18,
           "original": ">=",
           "replacement": ">",
@@ -489,7 +489,7 @@
         },
         {
           "file": "include/foc/core/protection.hpp",
-          "line": 384,
+          "line": 391,
           "col": 42,
           "original": "<",
           "replacement": "<=",
@@ -497,7 +497,7 @@
         },
         {
           "file": "include/foc/core/protection.hpp",
-          "line": 384,
+          "line": 391,
           "col": 44,
           "original": "8",
           "replacement": "9",
@@ -505,7 +505,7 @@
         },
         {
           "file": "include/foc/core/protection.hpp",
-          "line": 398,
+          "line": 405,
           "col": 22,
           "original": "0",
           "replacement": "1",
@@ -529,7 +529,7 @@
         },
         {
           "file": "include/foc/core/protection.hpp",
-          "line": 270,
+          "line": 277,
           "col": 22,
           "original": ">",
           "replacement": ">=",
@@ -538,7 +538,7 @@
         },
         {
           "file": "include/foc/core/protection.hpp",
-          "line": 278,
+          "line": 285,
           "col": 60,
           "original": ">",
           "replacement": ">=",
@@ -547,7 +547,7 @@
         },
         {
           "file": "include/foc/core/protection.hpp",
-          "line": 286,
+          "line": 293,
           "col": 51,
           "original": ">",
           "replacement": ">=",
@@ -556,7 +556,7 @@
         },
         {
           "file": "include/foc/core/protection.hpp",
-          "line": 292,
+          "line": 299,
           "col": 82,
           "original": "1.0",
           "replacement": "1.001",
@@ -565,7 +565,7 @@
         },
         {
           "file": "include/foc/core/protection.hpp",
-          "line": 293,
+          "line": 300,
           "col": 84,
           "original": "<",
           "replacement": "<=",
@@ -574,7 +574,7 @@
         },
         {
           "file": "include/foc/core/protection.hpp",
-          "line": 293,
+          "line": 300,
           "col": 106,
           "original": "1.0",
           "replacement": "1.001",
@@ -583,7 +583,7 @@
         },
         {
           "file": "include/foc/core/protection.hpp",
-          "line": 304,
+          "line": 311,
           "col": 26,
           "original": "8",
           "replacement": "9",
@@ -592,7 +592,7 @@
         },
         {
           "file": "include/foc/core/protection.hpp",
-          "line": 346,
+          "line": 353,
           "col": 31,
           "original": ">",
           "replacement": ">=",
@@ -601,7 +601,7 @@
         },
         {
           "file": "include/foc/core/protection.hpp",
-          "line": 349,
+          "line": 356,
           "col": 27,
           "original": "<=",
           "replacement": "<",
@@ -610,7 +610,7 @@
         },
         {
           "file": "include/foc/core/protection.hpp",
-          "line": 353,
+          "line": 360,
           "col": 20,
           "original": ">",
           "replacement": ">=",
@@ -619,7 +619,7 @@
         },
         {
           "file": "include/foc/core/protection.hpp",
-          "line": 357,
+          "line": 364,
           "col": 18,
           "original": ">=",
           "replacement": ">",
@@ -628,7 +628,7 @@
         },
         {
           "file": "include/foc/core/protection.hpp",
-          "line": 384,
+          "line": 391,
           "col": 42,
           "original": "<",
           "replacement": "<=",
@@ -637,7 +637,7 @@
         },
         {
           "file": "include/foc/core/protection.hpp",
-          "line": 384,
+          "line": 391,
           "col": 44,
           "original": "8",
           "replacement": "9",
@@ -646,7 +646,7 @@
         },
         {
           "file": "include/foc/core/protection.hpp",
-          "line": 398,
+          "line": 405,
           "col": 22,
           "original": "0",
           "replacement": "1",
@@ -654,7 +654,7 @@
           "why": "Starting the clear loop at 1 leaves `tripped_[0]` alone, and index 0 is `FaultCode::None`, never set."
         }
       ],
-      "notes": "15 of 15 survivor(s) classified (equivalent: 12, equivalent_by_overspecification: 2, unreachable: 1); none requires a memory checker any more",
+      "notes": "15 of 15 survivor(s) classified (equivalent: 12, equivalent_by_overspecification: 2, unreachable: 1); none requires a memory checker any more; re-keyed 2026-11-04: protection.hpp grew 7-31 lines after this record was taken and the record identifies a survivor by file:line:col, so 14 of the 15 classifications no longer matched anything and the gate reported them as unclassified. Every entry was re-pointed index for index against a fresh --list, with the mutation text (\">\" -> \">=\" etc.) asserted equal at every index before the position changed. The classifications themselves are the 2026-10-31 ones, unchanged.",
       "recorded": "2026-10-31"
     }
   },

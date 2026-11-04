@@ -29,18 +29,61 @@
     "(2 conditions), limits.hpp and limits.cpp none. Six conditions in the whole subset is why the plan's",
     "'>=' 90 %' threshold was replaced by per-decision 100 %."
   ],
-  "cxx": ["/usr/bin/clang++-18", "clang++-18", "clang++"],
-  "cc": ["/usr/bin/clang-18", "clang-18", "clang"],
-  "profdata": ["/usr/bin/llvm-profdata-18", "llvm-profdata-18", "llvm-profdata"],
-  "cov": ["/usr/bin/llvm-cov-18", "llvm-cov-18", "llvm-cov"],
-  "cxx_flags": ["-std=c++17", "-O1", "-fprofile-instr-generate", "-fcoverage-mapping", "-fcoverage-mcdc"],
-  "c_flags": ["-std=c11", "-O1", "-fprofile-instr-generate", "-fcoverage-mapping", "-fcoverage-mcdc"],
-  "defines": ["RESOURCES_PATH=\"test_package/resources\""],
-  "include_dirs": ["include", "test_package/test/unit"],
-  "link_flags": ["-fprofile-instr-generate", "-Wl,--allow-multiple-definition"],
-  "sources_cxx": ["src/**/*.cpp", "src/version.c"],
-  "sources_c": ["src/api/foc_api.c"],
-  "tests": ["test_package/test/unit/*.cpp"],
+  "cxx": [
+    "/usr/bin/clang++-18",
+    "clang++-18",
+    "clang++"
+  ],
+  "cc": [
+    "/usr/bin/clang-18",
+    "clang-18",
+    "clang"
+  ],
+  "profdata": [
+    "/usr/bin/llvm-profdata-18",
+    "llvm-profdata-18",
+    "llvm-profdata"
+  ],
+  "cov": [
+    "/usr/bin/llvm-cov-18",
+    "llvm-cov-18",
+    "llvm-cov"
+  ],
+  "cxx_flags": [
+    "-std=c++17",
+    "-O1",
+    "-fprofile-instr-generate",
+    "-fcoverage-mapping",
+    "-fcoverage-mcdc"
+  ],
+  "c_flags": [
+    "-std=c11",
+    "-O1",
+    "-fprofile-instr-generate",
+    "-fcoverage-mapping",
+    "-fcoverage-mcdc"
+  ],
+  "defines": [
+    "RESOURCES_PATH=\"test_package/resources\""
+  ],
+  "include_dirs": [
+    "include",
+    "test_package/test/unit"
+  ],
+  "link_flags": [
+    "-fprofile-instr-generate",
+    "-Wl,--allow-multiple-definition"
+  ],
+  "sources_cxx": [
+    "src/**/*.cpp",
+    "src/version.c"
+  ],
+  "sources_c": [
+    "src/api/foc_api.c"
+  ],
+  "tests": [
+    "test_package/test/unit/*.cpp"
+  ],
   "run_filter": "*",
   "excluded_tests": {
     "test_api_c_smoke.cpp": "C ABI from C++, declared without extern \"C\" in the test",
@@ -49,7 +92,8 @@
     "test_api_observer_selector.cpp": "C ABI from C++, declared without extern \"C\" in the test",
     "test_api_position_absolute.cpp": "C ABI from C++, declared without extern \"C\" in the test",
     "test_invariants.cpp": "uses the same non-extern-C ABI declarations for its driver harness",
-    "test_sil_api_equivalence.cpp": "compares the ABI against the C++ API, so it needs the ABI"
+    "test_sil_api_equivalence.cpp": "compares the ABI against the C++ API, so it needs the ABI",
+    "test_register_map.cpp": "C ABI from C++, declared without extern \"C\" in the test"
   },
   "min_multi_condition_decisions": 3,
   "subset": [

@@ -357,7 +357,7 @@ def cmd_ci_policy(_explicit):
 
 PROJECT_GATES = ('license', 'strict', 'claims', 'docs', 'boundaries', 'capabilities', 'ci-policy', 'assume', 'anchor',
                  'scaffold', 'budget', 'clocks', 'observability', 'combinations', 'domain', 'mutants', 'plantref', 'fmu',
-                 'pil', 'mcdc', 'blast', 'wired', 'smoke')
+                 'pil', 'mcdc', 'blast', 'wired', 'smoke', 'regmap')
 
 
 def cmd_observability(_explicit):
@@ -389,6 +389,29 @@ def cmd_blast(_explicit):
     was empty. So the selftest runs nine shapes against the real checker first, that one included.
     """
     script = ROOT / '.github' / 'project' / 'blast_gate.py'
+    for _args in (['--selftest'], []):
+        _rc = subprocess.run([sys.executable, str(script), *_args], cwd=ROOT, text=True).returncode
+        if _rc:
+            return _rc
+    return 0
+
+
+def cmd_regmap(_explicit):
+    """Is the protocol's register table the same set of numbers the C ABI actually answers?
+
+    Two directions, and they fail differently. A register pointing at a C function that does not exist is a protocol
+    that answers with a number nobody computed -- and since `register_table()` stores the function's *address*, that
+    direction is a compile error as well; the gate is what makes the rename visible in a diff review and in CI when
+    nobody builds. A readable C function missing from the table is the other direction and no compiler can see it: the
+    host reads what the table says while the firmware computes more, and the two drift until somebody measures one
+    against the other.
+
+    "Readable" is computed from `foc_api.h` -- a `foc_*` function returning a scalar from a motor handle -- not listed
+    by hand, because a hand-written list of what to check is a list that quietly stops covering the new one. The
+    selftest runs seven shapes first, including a table with a register removed from both the table and the enum, which
+    must stay green: the gate is about agreement, not about a fixed count.
+    """
+    script = ROOT / '.github' / 'project' / 'regmap_gate.py'
     for _args in (['--selftest'], []):
         _rc = subprocess.run([sys.executable, str(script), *_args], cwd=ROOT, text=True).returncode
         if _rc:
@@ -624,6 +647,8 @@ def main():
                  'policy / reference), so "implemented" and "shipped" stop being the same word',
         'smoke': 'every bench script has a decision about whether it can be smoked; `--preflight` also checks tier 0 '
                  '(stale binaries, a cross-built package in the cache)',
+        'regmap': 'every register in the protocol table is backed by a declaration in foc_api.h, and every readable C '
+                  'function is in the table -- so the protocol cannot grow a second vocabulary',
         'fmu': 'build the FMU and load it in a standard FMI master (FMPy); SKIPPED when its material is absent',
         'pil': 'run the speed-step scenario on the target ISA under qemu and compare with the host; SKIPPED when its '
                'material is absent',
@@ -688,6 +713,8 @@ def main():
         return cmd_wired(args.files)
     if args.gate == 'smoke':
         return cmd_smoke(['--preflight'] if getattr(args, 'preflight', False) else [])
+    if args.gate == 'regmap':
+        return cmd_regmap([])
     if args.gate == 'domain':
         return cmd_domain([])
     # The chain above is the only thing standing between a single-gate invocation and the aggregate below, and it
@@ -711,6 +738,7 @@ def main():
                   'blast': cmd_blast,
                   'wired': cmd_wired,
                   'smoke': cmd_smoke,
+                  'regmap': cmd_regmap,
                   'fmu': lambda _f: cmd_fmu([], tolerant=True),
                   'pil': lambda _f: cmd_pil([], tolerant=True)}[name]([]) ]
     if failed:
