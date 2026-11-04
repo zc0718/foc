@@ -7,6 +7,8 @@
 #include <foc/core/types.hpp>
 // Conan::ImportEnd
 
+#include "sil_cogging_table.hpp"
+
 namespace foc {
 
 namespace sil {
@@ -270,6 +272,44 @@ class PmsmPlant final {
     void set_stribeck_speed(float speed_rad_s) noexcept;
 
     /**
+     * @brief [en] Inject a cogging torque into the mechanical equation, as a table of harmonics (order per
+     *             **mechanical** revolution, `amplitude * sin(order*theta_mech + phase)`, N*m).
+     *
+     * @brief [zh] 把齿槽转矩以谐波表注入机械方程（次数按**每机械转**，`amplitude · sin(order·θ_mech + phase)`，N·m）。
+     *
+     *     Additive on the rotor: `J*dwm/dt = (Te + Tcog - B*wm - friction - load) / J`, and it is handed to the
+     *     friction model as part of the driving torque because that is what a detent is -- at rest, cogging alone can
+     *     move the rotor. Writing it as a load would have been the same arithmetic with the sign left to the
+     *     compensator's author to rediscover.
+     *
+     *     **Off by default, and bit-identical when off**: no table means no term at all, so every scenario that
+     *     predates this port integrates exactly what it integrated before. The mechanism is shared with `AbcPlant`
+     *     through `sil_cogging_table.hpp`, so the two models cannot disagree about what a given table means. 加性作用在
+     *     转子上：`J·dωm/dt = (Te + Tcog − B·ωm − friction − load)/J`，并且它作为驱动力矩的一部分交给摩擦模型 —— 因为定
+     *     位点本来就是这样：静止时齿槽单独就能推动转子。写成"负载"是同一份算术，只是把符号留给写补偿的人重新发现。 **默
+     *     认关闭，关闭时逐位不变**：没有表就完全没有这一项，所以本端口之前的所有场景积分的仍是原来那个东西。机制经
+     *     `sil_cogging_table.hpp` 与 `AbcPlant` 共享，因此两台模型对同一张表的含义不可能分歧。
+     *
+     * @param harmonics [en] table, at most `kMaxCoggingHarmonics` entries; null clears.
+     * @param harmonics [zh] 表，最多 `kMaxCoggingHarmonics` 条；空指针表示清空。
+     * @param count [en] how many entries are valid.
+     * @param count [zh] 有效条数。
+     * @since 0.1.9
+     */
+    void set_cogging(const CoggingHarmonic* harmonics, int count) noexcept;
+
+    /**
+     * @brief [en] The injected cogging torque at the current mechanical angle, N*m -- the truth a compensator is
+     *             measured against, and the only number that says what an injection of zero should have done.
+     * @brief [zh] 当前机械角处的注入齿槽转矩，N·m——补偿器被对照的那把尺，也是"注入为零时应当如何"的唯一答案。
+     * @since 0.1.9
+     */
+    [[nodiscard]] auto cogging_torque_nm() const noexcept -> float;
+
+    /** @brief [en] How many harmonics are active. [zh] 当前生效的谐波条数。 */
+    [[nodiscard]] auto cogging_harmonics() const noexcept -> int;
+
+    /**
      * @brief [en] Stator resistance the plant is actually using, ohm (includes the temperature model).
      * @brief [zh] plant 实际使用的定子电阻，Ω（含温度模型）。
      * @since 0.1.0
@@ -395,6 +435,9 @@ class PmsmPlant final {
         0.0F}; ///< [en] fraction of Lq lost at heavy positive i_q; 0 = ideal. [zh] 强正 i_q 下 Lq 的损失比例；0 = 理想。
     float qsat_current_a_{1.0F}; ///< [en] current at which that loss is engaged. [zh] 该损失生效的电流。
     float rm_ohm_{0.0F};         ///< [en] iron-loss shunt, ohm; 0 = no iron loss. [zh] 铁损并联电阻，Ω；0 = 无铁损。
+    CoggingHarmonic
+        cogging_[kMaxCoggingHarmonics]{}; ///< [en] injected cogging, empty = off. [zh] 注入齿槽，空 = 关闭。
+    int cogging_count_{0};                ///< [en] how many are active. [zh] 生效条数。
     mutable std::uint32_t noise_state_{
         0x9E3779B9U}; ///< [en] xorshift state; mutable because the noise belongs to the reading. [zh] xorshift 状态；mutable 因为噪声属于“读数”而非状态。
 };
@@ -421,6 +464,16 @@ inline void PmsmPlant::reset(PlantState initial) noexcept {
 inline void PmsmPlant::set_voltage_dq(core::Dq<float> v_dq) noexcept { v_dq_ = v_dq; }
 
 inline void PmsmPlant::set_load_torque(float torque_nm) noexcept { load_nm_ = torque_nm; }
+
+inline void PmsmPlant::set_cogging(const CoggingHarmonic* harmonics, int count) noexcept {
+    cogging_count_ = store_cogging(cogging_, kMaxCoggingHarmonics, harmonics, count);
+}
+
+inline auto PmsmPlant::cogging_torque_nm() const noexcept -> float {
+    return evaluate_cogging(cogging_, cogging_count_, state_.theta_mech);
+}
+
+inline auto PmsmPlant::cogging_harmonics() const noexcept -> int { return cogging_count_; }
 
 
 auto PmsmPlant::friction_nm(float omega_mech, float driving_nm) const noexcept -> float {
@@ -537,9 +590,16 @@ inline auto PmsmPlant::derivative(const PlantState& s) const noexcept -> Derivat
     const float diq = static_cast<float>((v_dq_.q - (rs * itq) - (omega_e * ld * s.id_a) - (omega_e * psi_f_)) / lq);
 
     const float torque = kOneAndHalf * poles * ((psi_f_ * s.iq_a) + ((ld - lq) * s.id_a * s.iq_a));
+    // The injected cogging torque, evaluated at the RK4 stage's own angle so the integrator sees its slope rather than a
+    // value frozen at the start of the step. `friction_nm` receives the *driving* torque including cogging, because at
+    // rest it is cogging that decides whether the rotor is held or moves -- that is what a detent is.
+    // 注入的齿槽转矩在 RK4 各阶**各自的**角度上求值，好让积分器看到它的斜率而不是一步步冻结的值。`friction_nm` 收到的是
+    // **含齿槽**的驱动力矩，因为静止时决定转子被卡住还是动起来的正是齿槽——定位点就是这个意思。
+    const float tcog = evaluate_cogging(cogging_, cogging_count_, static_cast<float>(s.theta_mech));
+    const float driving = torque + tcog;
     const double domega =
-        (static_cast<double>(torque) - (static_cast<double>(params_.b) * s.omega_mech) -
-         static_cast<double>(friction_nm(static_cast<float>(s.omega_mech), torque)) - static_cast<double>(load_nm_)) /
+        (static_cast<double>(driving) - (static_cast<double>(params_.b) * s.omega_mech) -
+         static_cast<double>(friction_nm(static_cast<float>(s.omega_mech), driving)) - static_cast<double>(load_nm_)) /
         static_cast<double>(params_.j);
 
     return Derivative{did, diq, domega, s.omega_mech};

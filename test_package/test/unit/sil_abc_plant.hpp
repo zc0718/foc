@@ -5,6 +5,8 @@
 #include <foc/core/types.hpp>
 // Conan::ImportEnd
 
+#include "sil_cogging_table.hpp"
+
 namespace foc {
 
 namespace sil {
@@ -96,22 +98,16 @@ class AbcPlant final {
     void set_load_torque(float torque_nm) noexcept { load_nm_ = torque_nm; }
 
     /**
-     * @brief [en] One harmonic of the cogging torque: `amplitude * sin(order*theta_mech + phase)`, in N*m.
-     *
-     * @brief [zh] 齿槽转矩的一个谐波：`amplitude · sin(order·θ_mech + phase)`，N·m。
-     *
-     *     `order` is **per mechanical revolution** -- the quantity a designer reads off `lcm(slots, poles)`, and the
-     *     quantity a compensator's table is indexed by. It is not an electrical order: mixing the two is a factor of
-     *     `pole_pairs`, which is exactly the kind of error that makes a compensation look like it does not work.
-     *     `order` 是**每机械转**的次数——设计师从 `lcm(slots, poles)` 读到的那个量，也是补偿器表被索引的那个量。它不是电
-     *     次数：两者混用会差一个极对数，而那正是让补偿「看起来没生效」的那类错误。
+     * @brief [en] The shared harmonic type, so `AbcPlant::CoggingHarmonic` keeps naming the same thing both plants
+     *             inject. See `sil_cogging_table.hpp` for what an order means.
+     * @brief [zh] 共享的谐波类型，于是 `AbcPlant::CoggingHarmonic` 仍然指两台 plant 注入的同一个东西。次数的含义见
+     *             `sil_cogging_table.hpp`。
      * @since 0.1.9
      */
-    struct CoggingHarmonic final {
-        std::uint8_t order; ///< [en] per mechanical revolution. [zh] 每机械转的次数。
-        float amplitude_nm; ///< [en] peak of this harmonic, N*m. [zh] 该谐波的峰值，N·m。
-        float phase_rad;    ///< [en] phase at `theta_mech = 0`, rad. [zh] `θ_mech = 0` 处的相位，rad。
-    };
+    using CoggingHarmonic = ::foc::sil::CoggingHarmonic;
+
+    /** @brief [en] How many harmonics the injection can hold. [zh] 注入最多能装几条谐波。 */
+    static constexpr int kMaxCogging = ::foc::sil::kMaxCoggingHarmonics;
 
     /**
      * @brief [en] Inject a cogging torque: a rotor torque that exists with no current, is periodic in the
@@ -125,15 +121,10 @@ class AbcPlant final {
      *     whoever writes the compensator.
      *
      *     **Off by default (no harmonics), and bit-identical when off** -- the same rule the other injection ports
-     *     follow: an error source that changes the frozen scenarios cannot be told apart from a regression. `count`
-     *     above `kMaxCogging` is clamped rather than refused: this is a test instrument, and silently using the first
-     *     six is visible in `cogging_harmonics()`. 它**加性**进入机械方程（`J·ω' = Te − b·ω − load + Tcog`），这就固定
-     *     了补偿器必须产出的符号：要抵消它，控制器得让 `Te` 带上 `-Tcog`。若把它写成"恰好随角度变化的负载"，算术上等
-     *     价，却把那个符号留给写补偿的人重新发现一遍。
-     *
-     *     **默认关闭（无谐波），关闭时逐位不变**——与其它注入端口同一条规矩：会改变冻结场景的误差源无法与回归区分。
-     *     `count` 超过 `kMaxCogging` 时截断而不是拒绝：这是测试仪器，而且用了前六个这件事在 `cogging_harmonics()` 里看
-     *     得见。
+     *     follow: an error source that changes the frozen scenarios cannot be told apart from a regression. 它**加性**
+     *     进入机械方程（`J·ω' = Te − b·ω − load + Tcog`），这就固定了补偿器必须产出的符号：要抵消它，控制器得让 `Te` 带
+     *     上 `-Tcog`。若把它写成「恰好随角度变化的负载」，算术上等价，却把那个符号留给写补偿的人重新发现一遍。 **默认关
+     *     闭（无谐波），关闭时逐位不变**——与其它注入端口同一条规矩：会改变冻结场景的误差源无法与回归区分。
      *
      * @param harmonics [en] the table, at most `kMaxCogging` entries.
      * @param harmonics [zh] 谐波表，最多 `kMaxCogging` 条。
@@ -141,24 +132,8 @@ class AbcPlant final {
      * @param count [zh] 有效条数。
      * @since 0.1.9
      */
-    /** @brief [en] How many harmonics the injection can hold. [zh] 注入最多能装几条谐波。 */
-    static constexpr int kMaxCogging = 6;
-
     void set_cogging(const CoggingHarmonic* harmonics, int count) noexcept {
-        cogging_count_ = 0;
-        if (harmonics == nullptr || count <= 0) {
-            return;
-        }
-        const int usable = (count < kMaxCogging) ? count : kMaxCogging;
-        for (int k = 0; k < usable; ++k) {
-            // Order 0 is a constant torque, which is `set_load_torque`'s job, not cogging's.
-            // 0 次是恒定转矩，那是 `set_load_torque` 的活，不是齿槽的。
-            if (harmonics[k].order == 0U) {
-                continue;
-            }
-            cogging_[cogging_count_] = harmonics[k];
-            ++cogging_count_;
-        }
+        cogging_count_ = ::foc::sil::store_cogging(cogging_, kMaxCogging, harmonics, count);
     }
 
     /** @brief [en] How many harmonics are active. [zh] 当前生效的谐波条数。 */
@@ -168,8 +143,11 @@ class AbcPlant final {
      * @brief [en] The injected torque at the current mechanical angle, N*m -- the truth a compensator is measured
      *             against.
      * @brief [zh] 当前机械角处的注入转矩，N·m——补偿器被对照的那把尺。
+     * @since 0.1.9
      */
-    [[nodiscard]] auto cogging_torque_nm() const noexcept -> float { return cogging_at(theta_mech_rad()); }
+    [[nodiscard]] auto cogging_torque_nm() const noexcept -> float {
+        return ::foc::sil::evaluate_cogging(cogging_, cogging_count_, theta_mech_rad());
+    }
 
     /** @brief [en] Rotor angle in mechanical radians. [zh] 转子机械角，rad。 */
     [[nodiscard]] auto theta_mech_rad() const noexcept -> float {
@@ -241,7 +219,8 @@ class AbcPlant final {
                 // 注入的齿槽转矩只加在这里，不加别处：它是转子转矩，属于机械方程，**不能**并进 `torque_at()`——后者是对拍与
                 // 补偿共同对照的那个电磁转矩。
                 const float te = torque_at(iu, iv, theta);
-                const float tcog = cogging_at(static_cast<float>(theta) / static_cast<float>(params_.pole_pairs));
+                const float tcog = ::foc::sil::evaluate_cogging(
+                    cogging_, cogging_count_, static_cast<float>(theta) / static_cast<float>(params_.pole_pairs));
                 omega_m_ =
                     static_cast<float>(omega_m_ + (h * ((((te + tcog) - (mech_.b * omega_m_)) - load_nm_) / mech_.j)));
                 omega_e_ = static_cast<float>(params_.pole_pairs) * omega_m_;
@@ -329,22 +308,6 @@ class AbcPlant final {
         const float scale = 1.0F / params_.ls_minus_m;
         return Derivatives{static_cast<float>((v_.u - (params_.rs * iu) + (omega_e_ * back_u)) * scale),
                            static_cast<float>((v_.v - (params_.rs * iv) + (omega_e_ * back_v)) * scale)};
-    }
-
-    /**
-     * @brief [en] The injected cogging torque at a mechanical angle: the sum of the table, in N*m.
-     * @brief [zh] 给定机械角处的注入齿槽转矩：整张表之和，N·m。
-     * @note [en] Deliberately not expressed with `Kt` or with a d-q quantity -- the point of this plant is to be a
-     *            witness that never mentions either, and that has to hold for the injected term too.
-     * @note [zh] 有意不写成 `Kt` 或任何 d-q 量——本被控对象的意义就是当个两者都不提的证人，注入项也必须守这一条。
-     */
-    [[nodiscard]] auto cogging_at(float theta_mech) const noexcept -> float {
-        float sum = 0.0F;
-        for (int k = 0; k < cogging_count_; ++k) {
-            const float angle = (static_cast<float>(cogging_[k].order) * theta_mech) + cogging_[k].phase_rad;
-            sum = static_cast<float>(sum + (cogging_[k].amplitude_nm * std::sin(angle)));
-        }
-        return sum;
     }
 
     Params params_{};

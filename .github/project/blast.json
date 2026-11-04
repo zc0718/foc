@@ -353,6 +353,62 @@
         "test_package/test/unit/test_sil_startup.cpp"
       ],
       "why_no_row": "`claims --impact` reports that no declared claim row rests on this file, so there is no row to re-state; the seats that could move are the ones that read the plant, and they are re-run by hand: `test_abc_plant` (the M-01 six-point cross-check, whose six points are unaffected because cogging is off there), `test_sil_startup` (the C2 slip law, same reason) and the new `test_sil_cogging`. Evidence before the commit: the full suite, and the two zero-amplitude runs being bit-identical is the direct proof that a scenario without injection cannot have moved."
+    },
+    {
+      "id": "B-11",
+      "date": "2026-11-04",
+      "what_changed": "The same cogging injection reached the d-q plant (`PmsmPlant::set_cogging()`, `cogging_torque_nm()`, `cogging_harmonics()`), which is the plant `PlantHal` wraps and therefore the one the closed loop runs on. The arithmetic moved to a shared header (`sil_cogging_table.hpp`: `CoggingHarmonic`, `evaluate_cogging()`, `store_cogging()`) so the two plants cannot disagree about what a table means; `AbcPlant` keeps the name `AbcPlant::CoggingHarmonic` as an alias. The term is added inside `derivative()`, i.e. at every RK4 stage on that stage's own angle, and it is part of the driving torque handed to `friction_nm` because at rest cogging is what decides whether the rotor is held. Default off, and off contributes exactly `0.0F`, so every scenario that predates the port integrates what it integrated before.",
+      "seeds": [
+        "test_package/test/unit/sil_pmsm_plant.hpp"
+      ],
+      "affected": [
+        {
+          "row": "core/observer/back_emf_observer.hpp",
+          "verdict": "holds",
+          "why": "its angle and speed numbers are functions of the plant's currents, and with no table set the injected term is exactly `0.0F` and is added to the same `torque` before the same `friction_nm`, so the plant integrates the identical sequence of states"
+        },
+        {
+          "row": "core/observer/blended_observer.hpp",
+          "verdict": "holds",
+          "why": "its handover and blend numbers are functions of the same trajectories, and with no table set the injected term is exactly `0.0F` and is added to the same `torque` before the same `friction_nm`, so the plant integrates the identical sequence of states"
+        },
+        {
+          "row": "core/observer/hfi_observer.hpp",
+          "verdict": "holds",
+          "why": "the saliency signal is measured with the rotor held, where the mechanics are inert, and with no table set the injected term is exactly `0.0F` and is added to the same `torque` before the same `friction_nm`, so the plant integrates the identical sequence of states"
+        },
+        {
+          "row": "core/observer/nonlinear_flux_observer.hpp",
+          "verdict": "holds",
+          "why": "its convergence numbers are recorded against the same current and voltage sequences, and with no table set the injected term is exactly `0.0F` and is added to the same `torque` before the same `friction_nm`, so the plant integrates the identical sequence of states"
+        },
+        {
+          "row": "core/observer/switchable_observer.hpp",
+          "verdict": "holds",
+          "why": "it selects between the observers above and adds no plant interaction of its own, and with no table set the injected term is exactly `0.0F` and is added to the same `torque` before the same `friction_nm`, so the plant integrates the identical sequence of states"
+        },
+        {
+          "row": "core/trace.hpp",
+          "verdict": "holds",
+          "why": "the recorded fields are the same fields filled from the same states -- nothing was added to or removed from the trace"
+        },
+        {
+          "row": "core/trace_parse.hpp",
+          "verdict": "holds",
+          "why": "it parses what `trace.hpp` wrote, and that format did not move"
+        },
+        {
+          "row": "motor/motor.hpp",
+          "verdict": "holds",
+          "why": "no signature, default or policy slot changed: the injection lives in the plant behind the HAL, so the shipped generic code cannot see it"
+        }
+      ],
+      "hand_rerun": [
+        "test_package/test/unit/test_sil_cogging.cpp",
+        "test_package/test/unit/test_sil_cogging_loop.cpp",
+        "test_package/test/unit/test_abc_plant.cpp",
+        "test_package/test/unit/test_bode_sweep.cpp"
+      ]
     }
   ]
 }
