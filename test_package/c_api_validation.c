@@ -296,8 +296,15 @@ int main(void) {
          * 原先是用 `motor` 写的，`c_api_validation` 恰好在这两行上失败。一个失效句柄也会产生的拒绝，不是关于 API 的
          * 证据。 */
         foc_motor_t seq = NULL;
-        foc_stall_start_config_t recipe;
-        foc_stall_start_status_t status;
+        /* Zero-initialised at the declaration, and that is not defensive tidiness: AppleClang's
+         * -Wuninitialized-const-pointer rejects passing an uninitialised object's address even when the callee is
+         * required to refuse it, and the first call below passes `&recipe` before the memset that used to follow. The
+         * case being made -- "struct_size of zero is refused" -- is unchanged, since zero is exactly the value it is
+         * asserting on. 在声明处零初始化，这不是防御性的整洁：AppleClang 的 -Wuninitialized-const-pointer 拒绝把未初始化
+         * 对象的地址传出去，即使被调方必须拒绝它；而下面第一个调用在原先那次 memset 之前就传了 `&recipe`。要断言的
+         * 「struct_size 为 0 被拒绝」一点没变，因为 0 正是它断言的值。 */
+        foc_stall_start_config_t recipe = {0};
+        foc_stall_start_status_t status = {0};
         CHECK(foc_motor_create(&params, &seq) == FOC_OK);
         CHECK(foc_motor_begin_stall_start(NULL, &recipe) == FOC_ERR_PARAM);
         CHECK(foc_motor_begin_stall_start(seq, NULL) == FOC_ERR_PARAM);
