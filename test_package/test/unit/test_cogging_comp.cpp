@@ -254,7 +254,17 @@ TEST(CoggingComp, RefusesWhatItCannotAnswer) {
     // 削磁：`ψf + (Ld−Lq)·id = 0` 解出 `id = −ψf/(Ld−Lq)`，在 `lq > ld` 时它是**正的**。
     const float null_id = -good.params.psi_f / (good.params.ld - good.params.lq);
     EXPECT_GT(null_id, 0.0F);
-    EXPECT_NEAR(0.0F, torque_per_amp(good, null_id), 1.0e-9F);
+    // The residue is a *cancellation*, so its floor is the rounding of the two terms rather than zero: measured 1.3e-9 N*m/A --
+    // 6e-9 of the machine's own scale -- and it moves by one bit between build flags, which is how a bare absolute bound of
+    // 1e-9 fell over under the MC/DC-instrumented build while passing in the normal one. Stated against the scale instead:
+    // a millionth of `1.5*p*psi_f`, which the measured residue clears by two orders and a `null_id` that did not null would
+    // miss by six.
+    // 残差是**相消**的结果，所以它的地板是两项的舍入而不是零：实测 1.3e-9 N·m/A——机器自身尺度的 6e-9——而且它在不同编译开关
+    // 间会差一位，这正是写死的 1e-9 绝对界在 MC/DC 插桩构建下翻车、在普通构建下通过的原因。改成对着尺度写：`1.5·p·ψf` 的百万
+    // 分之一，实测残差有两倍余量穿过，而不削磁的 `null_id` 会差六个数量级。
+    const float torque_scale = 1.5F * static_cast<float>(good.pole_pairs) * good.params.psi_f;
+    EXPECT_LT(std::fabs(torque_per_amp(good, null_id)), torque_scale * 1.0e-6F)
+        << "residue " << torque_per_amp(good, null_id) << " against scale " << torque_scale;
     EXPECT_EQ(ErrorCode::Param, comp.offset(command(good, 0.1F, null_id)).status);
 
     // And the configuration refusals.
