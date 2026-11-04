@@ -203,8 +203,7 @@ inline auto state_read(foc_motor_t motor, std::uint32_t* raw, int which) noexcep
     // 根本没有。尺寸由上面的 `static_assert` 保证相等，目的地是调用方自己的那个字，所以这条规则警告的危险已经被类型排除。
     // 带着这个理由抑制，而不是悄悄无视。
     static_assert(sizeof(float) == sizeof(std::uint32_t), "a register word is 32 bits and so is a float");
-    // devskim: ignore DS121708
-    std::memcpy(raw, &value, sizeof(value));
+    std::memcpy(raw, &value, sizeof(value)); // devskim: ignore DS121708
     return FOC_OK;
 }
 

@@ -67,8 +67,14 @@
     "test_package/CMakeLists.txt",
     "test_package/conanfile.py"
   ],
-  "tolerated": {},
-  "baseline_divergences": 0,
+  "tolerated": {
+    "test_package/conanfile.py": {
+      "patch": ".github/project/upstream-patches/0021-lcov-extract-ignore-errors.patch",
+      "why": "macOS coverage export dies inside `lcov --extract`: lcov 2.x treats a function gcov reports as never entered while one of its lines ran as an `inconsistent` **error**, and a template instantiated in an anonymous namespace hits exactly that (measured: `bridge.cpp:1496` never entered, line 1497 hit). Every other lcov call in this file already passes `_lcov_ignore_errors()`; the `--extract` call was the one that did not, which is why Linux was green and macOS was red -- and why this is an upstream defect rather than a preference.",
+      "exit": "upstream takes patch 0021 (one flag on one command); when it lands, re-pin, take upstream's bytes and delete both this entry and the baseline copy. `scaffold-baseline/test_package/conanfile.py` is v0.3.4's file, and the patch reproduces this tree's file from it byte for byte, so the fork cannot drift away from its own description."
+    }
+  },
+  "baseline_divergences": 1,
   "sha256": {
     ".github/misc/.checkov.yml": "ff9d84399876a7ccb5bc3bf7acd15dda2cc26cd4005e9196eabc8e928eb8f651",
     ".github/misc/.clang-format-c": "412c3b92a6063fa5f92380b4499fe148edfc156eea9c2a9ae1b97ab6ecb79148",

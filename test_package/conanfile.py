@@ -453,7 +453,15 @@ class PackageTestConan(ConanFile):
         what downstream parses.
         """
         # scope the report to this package's derived cache root; a non-matching filter makes lcov 2.x abort
-        cmd2 = ['lcov', '--extract', info_file,
+        # `--ignore-errors` is not optional here either: lcov 2.x treats a function that gcov says was never entered
+        # while one of its lines was as an `inconsistent` **error**, and a template instantiated in an anonymous
+        # namespace hits exactly that (measured on macOS: `bridge.cpp:1496` never entered, line 1497 hit). The other
+        # lcov calls in this file already pass the same list; this one was the one that did not, which is why Linux
+        # was green and macOS was red.
+        # 这里也不能省 `--ignore-errors`：lcov 2.x 把「gcov 说某个函数从未进入、而它某一行被执行过」当成 `inconsistent`
+        # **错误**，而匿名命名空间里的模板实例化恰好就是这种情形（macOS 实测：`bridge.cpp:1496` 未进入、1497 行被执行）。
+        # 本文件其它 lcov 调用早就传了同一份清单，只有这一个没传——这也正是 Linux 绿、macOS 红的原因。
+        cmd2 = ['lcov', '--ignore-errors', _lcov_ignore_errors(), '--extract', info_file,
                 pkg_root.replace(sep, '/') + '/*', '--output-file',
                 os.path.join(coverage_folder, 'coverage_test.filtered.info')]
         subprocess.run(cmd2, check=True)
