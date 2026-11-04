@@ -314,6 +314,11 @@
       "class": "policy",
       "example": "test_package/test/unit/test_mtpv.cpp",
       "why": "a host that wants to run above the base speed composes it where it builds its current reference: it needs the voltage ceiling and the current ceiling, neither of which `Motor` owns, and it reports which of the two decided the point so the host can tell \"the voltage is what limits me\" from \"the current is\""
+    },
+    "core/cogging_comp.hpp": {
+      "class": "policy",
+      "example": "test_package/test/unit/test_cogging_comp.cpp",
+      "why": "a host that wants the ripple gone composes it next to its current reference, where the mechanical angle and the d-axis current are both known; it returns an offset and reports its own fade and clipping, because a compensator that hides either looks like one that works"
     }
   }
 }

@@ -4,35 +4,29 @@
 #include <cstdint>
 // Conan::ImportEnd
 
+// The type the library's compensator cancels with, so the plants and the compensator share one convention.
+// 库里的补偿器用来抵消的类型，于是被控对象与补偿器共用一套约定。
+#include <foc/core/cogging_comp.hpp>
+
 namespace foc {
 
 namespace sil {
 
 /**
- * @brief [en] One harmonic of a cogging torque: `amplitude * sin(order*theta_mech + phase)`, in N*m.
+ * @brief [en] The harmonic type, taken from the library rather than declared again here.
  *
- * @brief [zh] 齿槽转矩的一个谐波：`amplitude · sin(order·θ_mech + phase)`，N·m。
+ * @brief [zh] 谐波类型，取自库而不是在这里重新声明一遍。
  *
- *     `order` is **per mechanical revolution** -- the quantity a designer reads off `lcm(slots, poles)`, and the
- *     quantity a compensator's table is indexed by. It is not an electrical order: mixing the two is a factor of
- *     `pole_pairs`, which is exactly the kind of error that makes a compensation look like it does not work. `order` 是
- *     **每机械转**的次数——设计师从 `lcm(slots, poles)` 读到的那个量，也是补偿器表被索引的那个量。它不是电次数：两者混用
- *     会差一个极对数，而那正是让补偿「看起来没生效」的那类错误。
- *
- * @note [en] This type and the two functions below live in their own header because **two** plants inject it: the d-q
- *            plant, which is the one the closed loop runs on, and the phase-variable plant, which is the independent
- *            witness. Two copies of this arithmetic would be two places for a factor of `pole_pairs` to hide, and the
- *            whole point of the second plant is that it does not share the first one's mistakes.
- * @note [zh] 这个类型与下面两个函数单独成一个头文件，是因为**两台**被控对象都注入它：dq plant（闭环跑的那台）与相变量
- *            plant（独立证人）。这份算术若有两份拷贝，就多两个地方可以藏住一个极对数；而第二台 plant 存在的全部意义，正
- *            是它不共享第一台的错误。
+ *     One type for the whole chain -- planted, injected and cancelled -- so a table cannot be written by one part and
+ *     read by another under a different convention. The `order` is **per mechanical revolution**, the quantity a
+ *     designer reads off `lcm(slots, poles)`; mixing it with an electrical order is a factor of `pole_pairs`, which is
+ *     exactly the kind of error that makes a compensation look like it does not work. 整条链——被控对象注入的、以及补偿
+ *     器抵消的——共用这一个类型，于是一张表不可能由一方按一种约定写出、由另一方按另一种约定读入。`order` 是**每机械转**
+ *     的次数，即设计师从 `lcm(slots, poles)` 读到的那个量；把它与电次数混用会差一个极对数，而那正是让补偿「看起来没生
+ *     效」的那类错误。
  * @since 0.1.9
  */
-struct CoggingHarmonic final {
-    std::uint8_t order; ///< [en] per mechanical revolution. [zh] 每机械转的次数。
-    float amplitude_nm; ///< [en] peak of this harmonic, N*m. [zh] 该谐波的峰值，N·m。
-    float phase_rad;    ///< [en] phase at `theta_mech = 0`, rad. [zh] `θ_mech = 0` 处的相位，rad。
-};
+using CoggingHarmonic = ::foc::core::CoggingCompHarmonic;
 
 /** @brief [en] How many harmonics a table may hold. [zh] 一张表最多能装多少条谐波。 */
 inline constexpr int kMaxCoggingHarmonics = 6;

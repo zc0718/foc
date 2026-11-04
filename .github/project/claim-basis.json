@@ -399,6 +399,11 @@
       "src/core/mtpv.cpp",
       "core/machine_params.hpp",
       "core/types.hpp"
+    ],
+    "core/cogging_comp.hpp": [
+      "src/core/cogging_comp.cpp",
+      "core/machine_params.hpp",
+      "core/types.hpp"
     ]
   },
   "unmapped": []

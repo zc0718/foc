@@ -198,6 +198,17 @@ coverage numbers at the time:
      - ``Mtpv.StayingOnTheCurrentLimitThereWouldOvervoltTheDrive``
      - na -- stateless, one speed at a time, and what it produces is an operating point rather than an accumulated value.
      - --
+   * - ``core/cogging_comp.hpp``
+     - `CoggingCompOutput` separates the two ways a compensator can stop working: `gain` is the frequency fade ("we
+       chose not to ask for this ripple") and `clipped` is the current ceiling ("we asked and it was refused"), with
+       `torque_nm` carrying the cancelled torque before either limit. A compensator that reports only its output current
+       cannot be told apart from one that is silently doing nothing.
+     - `Param` for a machine that cannot produce torque at the `id` it is given (`dT/diq = 0` at the flux-nulling
+       current, where no current can cancel a torque), for any non-finite input, and for a fade band that is inverted or
+       non-finite. A table of nothing is `Ok` with a zero offset -- there is no table, so there is no decision to report.
+     - ``CoggingComp.ATableWithTheWrongPhaseCancelsNothingAtAll``
+     - na -- stateless, one period at a time, and what it produces is an offset rather than an accumulated value.
+     - --
    * - ``comm/frame.hpp``
      - `FrameStatus` names which check failed (start / length / checksum) instead of one generic failure, and
        `SequenceChecker` reports `missing` / `duplicate` / `out_of_order` separately. `missing` counts the frames

@@ -635,6 +635,23 @@
         }
       ],
       "no_effect": "No existing row was re-opened: `t_min_s` defaults to 0, which is an ideal driver, and the seven suites that include the plant report the same counts as before the field existed (`test_sil_inverter` 7/7, `test_sil_deadtime` 8/8, `test_sil_bus` 5/5, `test_board_check` 9/9, `test_commissioning` 16/16). The ledger entry for the plant change is `blast` B-06."
+    },
+    {
+      "id": "O-46",
+      "date": "2026-11-04",
+      "leg": "model",
+      "capability": "A cogging torque is now something the plant can produce, so \"the compensation works\" has a truth to be measured against instead of a plausible-looking absence of ripple. `AbcPlant` and `PmsmPlant` both inject the same shared table (`sil_cogging_table.hpp`, type taken from `core::CoggingCompHarmonic` so one convention covers planted, injected and cancelled), additively on the rotor, off by default and bit-identical when off.",
+      "source": "`test_sil_cogging.cpp` (6 cases) pins the port three ways: the accessor against the closed form, one tiny step from rest read back through the whole mechanical half (`domega*J/dt`, so the sign is measured rather than assumed), and a coasting rotor whose speed ripple is `2A/(J*k*Omega)` peak-to-peak to 2 % with the conservative energy constant to 3.0e-5 -- a perturbation no number in this repository supplied. `test_sil_cogging_loop.cpp` (3 cases) then measures where it goes under closed-loop control: 0.079 A of q-axis current against the 0.080 A that `T_cog/Kt` predicts, falling to 49 % of that at a 76 Hz ripple. `test_cogging_comp.cpp` (7 cases) turns that into a feedforward whose residue is 0 to 1e-9 over a revolution.",
+      "effect": "F33/F47 can be argued with numbers: the compensator has a measured gain, a measured frequency boundary and two named failure modes (fade vs clipping), and the self-learning piece will have an injected table to compare a learned one against.",
+      "limit": "The injection is a table, not a physics model: it does not saturate, does not depend on current, and the compensator has no composition slot in `Motor` yet, so nothing here has been measured through a live reference.",
+      "reopened": [
+        {
+          "claim": "core/cogging_comp.hpp",
+          "verdict": "still_short",
+          "missing": "a second model: the compensator's residue is checked against the same `dT/diq` formula the plant uses, not against an independent derivation of the torque ripple, and nothing has been measured through a live reference -- so the leg is a model trajectory, not a cross-model one"
+        }
+      ],
+      "no_effect": "No existing row was re-opened: the injection is off by default and contributes exactly `0.0F` to the same torque expression, so every claim that rests on either plant reports the same numbers as before the port existed (the full suite moved 789 -> 796 only by the new cases)."
     }
   ]
 }
