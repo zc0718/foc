@@ -10,7 +10,10 @@
 
 #include <gtest/gtest.h>
 
+#include <foc/core/cogging_comp.hpp>
+
 #include "sil_bench.hpp"
+#include "sil_cogging_table.hpp"
 
 namespace {
 
@@ -128,3 +131,45 @@ TEST(SilCoggingLoop, TheInjectionMovesTheRippleAndNotTheAverage) {
     const LoopResult on = run_loop(20.0F, kAmplitude);
     EXPECT_NEAR(off.iq_mean_a, on.iq_mean_a, std::fabs(off.iq_mean_a) * 0.1F + 1.0e-3F);
 }
+
+// --- why there is no end-to-end case here yet, and what was measured -----------------------------------------------
+//
+// The compensator's own criteria live in `test_cogging_comp.cpp`; the two cases above measure where the cogging *goes* under
+// closed-loop control. What is missing is the third leg: the compensator wired into a live reference, with the ripple at the
+// output falling. It was attempted here and the attempt failed for a reason worth writing down rather than hiding.
+//
+// With the loop in torque mode (the only command path that exposes the iq reference at all: `Motor::set_torque()`) and a
+// physical damper to hold about 20 rad/s mechanical, the speed spectrum over 12 revolutions is **identical in all three
+// configurations** -- no injection, injection, injection plus compensation -- and looks like `0.21/k` at order `k`:
+//
+//     nothing injected : order 6 = 0.1656 rad/s
+//     injected         : order 6 = 0.1669 rad/s
+//     injected + comp  : order 6 = 0.1656 rad/s      (the compensator returns the clean value, to four digits)
+//
+// That `1/k` shape is the signature of **leakage from a non-integer number of revolutions in the window** (11.94 here), and it
+// is two orders larger than the cogging's own signature (`2*A/(J*k*Omega)` = 0.33 rad/s of peak-to-peak, i.e. 0.17 of
+// amplitude, buried in 0.1656 of leakage). The compensator *does* restore the clean value, which is the effect that was being
+// looked for, but a criterion whose signal is 1 % of its artefact is not a criterion.
+//
+// The rig that would fix it is known: `Motor`'s `feedforward_current_a` is honoured in **position** mode ("iq added after the
+// speed loop"), so a position-mode axis following a slow ramp has both an iq offset slot and the iq channel as its observable
+// -- and that channel is the one where the signal was clean (0.079 A against a 2e-4 A floor, in the cases above). Recording it
+// here rather than writing a case that would pass for the wrong reason is the point of this comment.
+// --- 为什么这里还没有端到端用例，以及量到了什么 ---------------------------------------------------------------
+//
+// 补偿器自己的判据在 `test_cogging_comp.cpp`；上面两条用例量的是齿槽在闭环里**去了哪里**。缺的是第三条腿：补偿器接进活的参考、
+// 输出处纹波下降。这里试过，失败的原因值得写下来而不是藏起来。
+//
+// 用 torque 模式（唯一暴露 iq 参考的通路：`Motor::set_torque()`）加物理阻尼守住约 20 rad/s 机械，12 转上的速度谱在**三种配置
+// 下完全相同**——不注入、注入、注入+补偿——形状是 `0.21/k`：
+//
+//     不注入      : 6 次 = 0.1656 rad/s
+//     注入        : 6 次 = 0.1669 rad/s
+//     注入+补偿   : 6 次 = 0.1656 rad/s      （补偿器把干净的数值还回来了，到四位有效数字）
+//
+// 那个 `1/k` 的形状是**窗口里转数不是整数**（这里是 11.94 转）造成的泄漏，比齿槽自己的签名（`2·A/(J·k·Ω)` 峰峰 0.33 rad/s，
+// 幅值 0.17）大两个量级。补偿器**确实**把干净值还回来了，那正是要找的效应，但信号只有伪影 1 % 的判据不叫判据。
+//
+// 能修的台架是已知的：`Motor` 的 `feedforward_current_a` 在**位置**模式下生效（「速度环后叠加的 iq」），所以一台跟随慢斜坡的位置
+// 轴同时拥有 iq 偏置槽和 iq 通道作为观测量——而 iq 通道正是信号干净的那个（上面用例里 0.079 A 对 2e-4 A 底噪）。把它记在这里，
+// 而不是写一条会因错的原因通过的用例，正是这段注释的意义。
