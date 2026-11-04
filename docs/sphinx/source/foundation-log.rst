@@ -3143,6 +3143,28 @@ The log
      - ``pending``
 
 
+   * - A-113
+     - A
+     - **The same "count the file set" check was applied to one upstream directory and not the other.** The
+       scaffold gate has compared the *set* of `.github/misc` since it was written -- "a byte-check of the files
+       upstream ships cannot see a directory that has quietly grown extras" -- but `.github/workflows` got only the
+       byte comparison of the ten files upstream ships. This project adds an eleventh, `project-gates.yml`, so for
+       the whole life of the private gate suite there has been a CI file in the template's directory that nothing
+       checked and nothing named. The claim itself was honest ("the scaffold's build and CI files are byte-identical
+       to the pinned release"), which is exactly why nobody looked: a scoped claim that is true hides the unscoped
+       question next to it.
+     - Surfaced while answering "is this repository really 0-IaC-change on the template": the answer needed the
+       inventory rather than the claim, and the inventory took one `ls` against the release tree. Nothing was
+       misbehaving -- the private workflow is deliberate -- so the defect is entirely in what was *recorded*.
+     - `.github/workflows` joined `owned_dirs` with `project-gates.yml` as a declared addition, and the check was
+       shown to bite before being trusted: adding a stray `stray-test.yml` turns the gate red, removing it turns it
+       green. `.github/skills` is still outside the byte check (agent guidance is project-specific by design) but its
+       count is now recorded rather than implied: 39 upstream files, 39 tracked, **15 of them rewritten** here.
+       The general form: **"zero modifications" is a claim about files upstream ships; the question next to it is
+       "zero additions to directories upstream ships", and only a set comparison answers that.**
+     - ``pending``
+
+
 What ``pending`` means in the commit column
 -------------------------------------------
 

@@ -130,10 +130,29 @@
         ".license-guard.txt": "rule data for this project's licence gate, in the same class as .include-guard.txt, which the scaffold's own cmd_guard docstring says a derived project states itself"
       },
       "why_checked": "eight project scripts had collected here (claim/capability/coverage/docfmt/number-sheet/arbiter/assume/anchor) and a byte-check of the files upstream ships cannot see a directory that has grown extras -- which is precisely how the private code got in. The file set is compared, not only the contents."
+    },
+    ".github/workflows": {
+      "upstream_file_set": [
+        "ci-build-test.yml",
+        "ci-orchestrator.yml",
+        "cross-compile.yml",
+        "docs-build.yml",
+        "full-test-automation.yml",
+        "hetai-package-matrix.yml",
+        "metadata-controller.yml",
+        "security-linters.yml",
+        "semver-release.yml",
+        "sync-template.yml"
+      ],
+      "declared_additions": {
+        "project-gates.yml": "the private gates' CI entry point: the project's own 20 gates are not upstream's, so their workflow is not either. Declared here because it lives in the same directory the template ships -- the same reason .github/misc is checked as a *set*, and the reason it went unrecorded until 2026-11-04: the byte check cannot see a file upstream does not have"
+      },
+      "why_checked": "ten upstream workflows are byte-compared one by one, but a byte check of files upstream ships cannot see an *added* workflow -- and the project adds exactly one. Comparing the set turns that addition from invisible into declared, which is the difference between 'zero modifications' and 'zero unrecorded modifications'"
     }
   },
   "not_checked": {
     "conandata.yml": "the project's own dependency list (gtest / etl / pybind11 here). The template's metadata-contract describes this file as the place a project states its requirements, so a different content is the intended state, not a fork.",
-    ".include-guard.txt": "the scaffold's cmd_guard docstring says a derived project states its own layering in this file, so editing it is the sanctioned mechanism."
+    ".include-guard.txt": "the scaffold's cmd_guard docstring says a derived project states its own layering in this file, so editing it is the sanctioned mechanism.",
+    "skills (15 of the 39 upstream files)": "`.github/skills/**` is agent guidance and is project-specific by design, so it is outside the byte check -- but not outside the count: 39 files are shipped upstream, 39 are tracked here, and 15 of them are rewritten for this project (plus one generated `_shared/.skillkit/views.json`, untracked). Recorded so the number is visible rather than implied; a future rewrite of the other 24 has to update this line"
   }
 }
