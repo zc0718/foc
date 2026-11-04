@@ -3116,6 +3116,33 @@ The log
      - ``pending``
 
 
+   * - A-112
+     - A
+     - **A constant that had never been executed was wrong by 18 %, and it was the one the plan was about to
+       trust.** `oracle_ornl.py` carried `LOCKED_ROTOR = [(75, 140), (150, 260), (250, 400)]`, transcribed from
+       ORNL/TM-2006/423's *summary* Table 6.3, and nothing in the repository ever read it. The primary data is
+       Table 3.2 (p.19): 7 currents x 23 shaft angles, whose column peaks are **74.0 / 117.7 / 158.0 / 199.0 /
+       229.0 / 286.6 / 339.0 N.m** at 50..250 A. Every summary value is **1.14 to 1.19x** the primary peak at the
+       same current (1.189 / 1.135 / 1.180), i.e. a constant normalisation difference rather than a transcription
+       slip -- and using it as "the measurement" would have reported an 18 % error in a parameter set that is
+       within 3 %.
+     - Surfaced by finally using it, as the cheap pre-check for B-2's charter. The 1.80x gap between a 75 A
+       point and an 82 N.m prediction was too large to be physics, so the table was re-read from the PDF with
+       `-layout`: that also settled the unit -- the currents are **per-phase rms** (peak = sqrt(2) I), proved by
+       the 50 A point landing at **+0.7 %** and 125 A at **+0.2 %** under that convention, against **-42 %** if
+       the column value were taken as a peak.
+     - No kernel claim moves: this is `IPMSM_A`, which A-91 already says is not this library's machine. What
+       changes is the tool and the statement of what the data can do. `--torque` now carries Table 3.2, a
+       transcription self-check (peaks monotone, mean below peak, the 6.3/3.2 ratio constant), and a
+       **sensitivity scan printed on every run**: these seven points pin `psi_f` to **[0.93, 1.02]x** the ORNL
+       value -- which rejects the FEMM route (0.18826 Wb, **1.089x**, out of band at 150 A) on a measurement that
+       does not share its assumptions -- and pin `Lq - Ld` to essentially **nothing** (`k` in [0, 1.1] passes, and
+       `k = 0` passes, because the reluctance term is a small share of the torque at these currents). The first
+       version of this check claimed to validate `Lq - Ld`; its own sensitivity scan is what forced that sentence
+       to be withdrawn, and it is printed every run so the same claim cannot creep back.
+     - ``pending``
+
+
 What ``pending`` means in the commit column
 -------------------------------------------
 
