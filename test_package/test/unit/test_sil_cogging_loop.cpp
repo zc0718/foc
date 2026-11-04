@@ -151,10 +151,14 @@ TEST(SilCoggingLoop, TheInjectionMovesTheRippleAndNotTheAverage) {
 // amplitude, buried in 0.1656 of leakage). The compensator *does* restore the clean value, which is the effect that was being
 // looked for, but a criterion whose signal is 1 % of its artefact is not a criterion.
 //
-// The rig that would fix it is known: `Motor`'s `feedforward_current_a` is honoured in **position** mode ("iq added after the
-// speed loop"), so a position-mode axis following a slow ramp has both an iq offset slot and the iq channel as its observable
-// -- and that channel is the one where the signal was clean (0.079 A against a 2e-4 A floor, in the cases above). Recording it
-// here rather than writing a case that would pass for the wrong reason is the point of this comment.
+// The rig that would fix it is `feedforward_current_a`, which `Motor` honours in **position** mode ("iq added after the speed
+// loop") -- a position axis following a slow ramp would have both an iq offset slot and the iq channel as its observable, and
+// that channel is where the signal was clean (0.079 A against a 2e-4 A floor, in the cases above). That was tried too, and it
+// is **unreachable from this bench**: `Bench::MotorT` is `Motor<BackEmfObserver, Svpwm, Pi, PlantHal>`, whose remaining slots
+// take their defaults, so its position controller is `NullPositionControl` and every tick in position mode returns
+// `NotImpl` (`-4`) -- measured, with `hal().position.set_sensor_present(true)` as well, so the missing sensor was not the
+// reason. An end-to-end case therefore needs a fourth composition (a `Motor` with `core::PositionP`), not a different rig
+// around this one.
 // --- 为什么这里还没有端到端用例，以及量到了什么 ---------------------------------------------------------------
 //
 // 补偿器自己的判据在 `test_cogging_comp.cpp`；上面两条用例量的是齿槽在闭环里**去了哪里**。缺的是第三条腿：补偿器接进活的参考、
