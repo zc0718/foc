@@ -184,6 +184,20 @@ coverage numbers at the time:
      - ``SingleShunt.TheBlindSpotIsLowModulationNotTheVoltageLimit``
      - na -- stateless, one period at a time, and the thing it holds is a verdict rather than an accumulated value.
      - --
+   * - ``core/mtpv.hpp``
+     - `MtpvPoint` names which ceiling decided the point: `voltage_limited` is true only when the voltage ellipse moved the
+       answer, and `current_a` is the margin to the current ceiling, so a host can tell "the voltage is what limits me"
+       from "the current is". `base_speed_rad_s()` is derived (`v_max` over the flux magnitude at the current-limited
+       point), not `v_max/psi_f` -- on the in-domain profile the two differ by 4x, 725 against 2520 rad/s. The
+       boundary case is the band where *both* ceilings are active at once (725 to 1191 rad/s there): a
+       single-constraint law reports that band as 30 % over the voltage ceiling, which is what the case asserts.
+     - `Param` for a ceiling that is not positive, a non-positive inductance, a negative flux linkage, zero pole pairs and
+       anything non-finite, and `Param` from `at_speed()` for a speed that is not finite. There is no "no answer" case
+       above zero speed: the `i_q = 0` point on the ellipse is always inside the current circle, so the candidate set is
+       never empty and a zero-torque point is returned rather than a failure.
+     - ``Mtpv.StayingOnTheCurrentLimitThereWouldOvervoltTheDrive``
+     - na -- stateless, one speed at a time, and what it produces is an operating point rather than an accumulated value.
+     - --
    * - ``comm/frame.hpp``
      - `FrameStatus` names which check failed (start / length / checksum) instead of one generic failure, and
        `SequenceChecker` reports `missing` / `duplicate` / `out_of_order` separately. `missing` counts the frames

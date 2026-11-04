@@ -324,6 +324,20 @@
         "test_package/test/unit/test_sil_deadtime.cpp"
       ],
       "why_no_row": "no claim row names the bench profile table; the seats this could move are the SIL cases, and the only mechanism that could move them is `nominal_spec()` changing -- it did not. Evidence: `test_sil_deadtime` compiles and the full suite is re-run before the commit; a second profile that nothing calls yet cannot change any trajectory."
+    },
+    {
+      "id": "B-09",
+      "date": "2026-11-04",
+      "what_changed": "F32 adds `core/mtpv.hpp` + `src/core/mtpv.cpp`: the maximum-torque point at a speed, from two closed forms (a quadratic in `cos t` on the voltage ellipse, and the same quadratic on the current circle for MTPA). It is a new header and a new source; it changes no existing trajectory, because nothing in `Motor` calls it yet -- the composition that uses it is F33's work.",
+      "seeds": [
+        "include/foc/core/mtpv.hpp",
+        "src/core/mtpv.cpp"
+      ],
+      "affected": [],
+      "hand_rerun": [
+        "test_package/test/unit/test_mtpv.cpp"
+      ],
+      "why_no_row": "the new claim row in README names only `test_mtpv.cpp`, which is the seat this change moves; every other seat is untouched because the module has no caller and no shared state. Evidence: `test_mtpv` is 14 cases and the full suite is re-run before the commit (766 -> 780)."
     }
   ]
 }

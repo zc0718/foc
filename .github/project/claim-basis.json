@@ -394,6 +394,11 @@
     "core/single_shunt.hpp": [
       "core/limits.hpp",
       "core/types.hpp"
+    ],
+    "core/mtpv.hpp": [
+      "src/core/mtpv.cpp",
+      "core/machine_params.hpp",
+      "core/types.hpp"
     ]
   },
   "unmapped": []
