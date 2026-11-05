@@ -255,13 +255,15 @@ TEST(CoggingComp, RefusesWhatItCannotAnswer) {
     const float null_id = -good.params.psi_f / (good.params.ld - good.params.lq);
     EXPECT_GT(null_id, 0.0F);
     // The residue is a *cancellation*, so its floor is the rounding of the two terms rather than zero: measured 1.3e-9 N*m/A --
-    // 6e-9 of the machine's own scale -- and it moves by one bit between build flags, which is how a bare absolute bound of
-    // 1e-9 fell over under the MC/DC-instrumented build while passing in the normal one. Stated against the scale instead:
-    // a millionth of `1.5*p*psi_f`, which the measured residue clears by two orders and a `null_id` that did not null would
-    // miss by six.
-    // 残差是**相消**的结果，所以它的地板是两项的舍入而不是零：实测 1.3e-9 N·m/A——机器自身尺度的 6e-9——而且它在不同编译开关
-    // 间会差一位，这正是写死的 1e-9 绝对界在 MC/DC 插桩构建下翻车、在普通构建下通过的原因。改成对着尺度写：`1.5·p·ψf` 的百万
-    // 分之一，实测残差有两倍余量穿过，而不削磁的 `null_id` 会差六个数量级。
+    // 2.6e-8 of the machine's own scale -- and it moves by a bit between compilers. It broke a build twice: a bare absolute
+    // `1e-9` fell over under the MC/DC-instrumented build, and then the same absolute bound made the *library* answer `Ok`
+    // instead of `Param` on macOS, where clang landed the residue at 1.1e-9. Both the bound here and the library's own refusal
+    // threshold are now a millionth of `1.5*p*psi_f`, which is above every rounding and below any real torque per amp by
+    // orders of magnitude.
+    // 残差是**相消**的结果，所以它的地板是两项的舍入而不是零：实测 1.3e-9 N·m/A——机器自身尺度的 2.6e-8——而它在不同编译器之间会
+    // 差一位。它两次弄坏过构建：写死的 `1e-9` 先在 MC/DC 插桩构建下翻车，随后同一个绝对界让**库**在 macOS 上答了 `Ok` 而不是
+    // `Param`（clang 的残差落在 1.1e-9）。现在这里的界与库自己的拒绝阈值都是 `1.5·p·ψf` 的百万分之一，高于任何舍入、又低于任何
+    // 真实的每安培转矩好几个数量级。
     const float torque_scale = 1.5F * static_cast<float>(good.pole_pairs) * good.params.psi_f;
     EXPECT_LT(std::fabs(torque_per_amp(good, null_id)), torque_scale * 1.0e-6F)
         << "residue " << torque_per_amp(good, null_id) << " against scale " << torque_scale;
