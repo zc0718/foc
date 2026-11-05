@@ -389,3 +389,73 @@ TEST(CoggingLearn, TheLearnedTableCancelsTheInjectionItWasLearnedFrom) {
         << "clean " << clean.speed_order_rad_s << " compensated " << compensated.speed_order_rad_s
         << " (learned amplitude " << learned.amplitude_nm << " Nm, phase " << learned.phase_rad << " rad)";
 }
+
+// The learner is a *resource* a commissioning tool uses more than once, and its refusal set has to cover the configurations that
+// can never work -- otherwise a caller gets `State` ("spin longer") for a machine whose numbers are simply wrong, and spins
+// forever. Each branch is asserted separately because they call for different actions: a bad machine description is fixed in
+// the configuration, and a NaN sample is not a sample at all.
+// 学习器是调试工具会用**不止一次**的资源，而它的拒绝集合必须覆盖那些永远不可能成立的配置——否则调用方会为一份本身就是错的机器参数
+// 拿到 `State`（"再转久一点"），然后一直转下去。每个分支单独断言，因为它们要的动作不同：错的机器描述在配置里改，而 NaN 样本根本
+// 不是样本。
+TEST(CoggingLearn, RefusesImpossibleConfigurationsAndForgetsEverythingOnReset) {
+    // Every configuration that could never produce a table, one line each.
+    // 每一种永远产不出表的配置，各一行。
+    auto broken = [](int which) {
+        CoggingLearnConfig config = learn_config(6U);
+        switch (which) {
+        case 0:
+            config.params.psi_f = NAN;
+            break;
+        case 1:
+            config.params.ld = 0.0F;
+            break;
+        case 2:
+            config.params.lq = -1.0F;
+            break;
+        case 3:
+            config.pole_pairs = 0U;
+            break;
+        case 4:
+            config.min_speed_rad_s = 20.0F;
+            break; // inverted band 倒置的带
+        case 5:
+            config.max_speed_rad_s = NAN;
+            break;
+        default:
+            config.speed_tolerance = 0.0F;
+            break;
+        }
+        return config;
+    };
+    for (int which = 0; which < 7; ++which) {
+        const CoggingLearner learner{broken(which)};
+        CoggingCompHarmonic out[1]{};
+        EXPECT_EQ(ErrorCode::Param, learner.validate()) << "case " << which;
+        EXPECT_EQ(ErrorCode::Param, learner.finish(out, 1).status) << "case " << which;
+    }
+
+    // `reset()` has to throw the window away, because the sums are what the table is made of: a stale one would mix two passes
+    // into one table and nothing downstream could tell.
+    // `reset()` 必须丢掉窗口，因为表就是由这些和构成的：残留的和会把两次整定混成一张表，而下游无从分辨。
+    CoggingLearner learner{learn_config(6U)};
+    for (int n = 0; n < 2000; ++n) {
+        learner.accumulate(static_cast<float>(n) * 0.004F, 0.05F, 0.0F, 5.0F, false);
+    }
+    ASSERT_GT(learner.revolutions(), 1.0F);
+    learner.reset();
+    EXPECT_FLOAT_EQ(0.0F, learner.revolutions());
+    EXPECT_FALSE(learner.ready());
+    CoggingCompHarmonic out[1]{};
+    EXPECT_EQ(ErrorCode::State, learner.finish(out, 1).status) << "an empty window is not a table";
+
+    // A sample that is not a number is not a sample: it must not enter the projection, where it would poison every harmonic at
+    // once and leave no trace in the table's shape.
+    // 非数值样本不是样本：它不能进入投影，否则会一次污染每一个谐波，而且在表的形状上留不下痕迹。
+    CoggingLearner careful{learn_config(6U)};
+    careful.accumulate(NAN, 0.05F, 0.0F, 5.0F, false);
+    careful.accumulate(0.1F, NAN, 0.0F, 5.0F, false);
+    careful.accumulate(0.1F, 0.05F, NAN, 5.0F, false);
+    careful.accumulate(0.1F, 0.05F, 0.0F, NAN, false);
+    EXPECT_FLOAT_EQ(0.0F, careful.revolutions());
+    EXPECT_FALSE(careful.ready());
+}
