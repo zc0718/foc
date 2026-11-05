@@ -256,8 +256,8 @@
         "test_package/test/unit/test_limits.cpp"
       ],
       "limit_per_file": 200,
-      "killed": 2,
-      "survived": 5,
+      "killed": 4,
+      "survived": 3,
       "invalid": 2,
       "timeout": 0,
       "survivors": [
@@ -284,29 +284,13 @@
           "original": ">",
           "replacement": ">=",
           "operator": "swap"
-        },
-        {
-          "file": "src/core/limits.cpp",
-          "line": 29,
-          "col": 19,
-          "original": ">",
-          "replacement": ">=",
-          "operator": "swap"
-        },
-        {
-          "file": "src/core/limits.cpp",
-          "line": 31,
-          "col": 26,
-          "original": "<",
-          "replacement": "<=",
-          "operator": "swap"
         }
       ],
       "invalid_sites": 2,
       "truncated": [],
       "judged": 7,
-      "score": 28.6,
-      "seconds": 11.7,
+      "score": 57.1,
+      "seconds": 17.3,
       "equivalents": [
         {
           "file": "include/foc/core/limits.hpp",
@@ -334,28 +318,10 @@
           "replacement": ">=",
           "kind": "equivalent",
           "why": "A zero period makes `max_delta` zero; every branch then leaves the output where it was, or assigns it the target it already equals."
-        },
-        {
-          "file": "src/core/limits.cpp",
-          "line": 29,
-          "col": 19,
-          "original": ">",
-          "replacement": ">=",
-          "kind": "equivalent",
-          "why": "At `delta == max_delta` the two forms differ only in whether the output is computed as `value + max_delta` or assigned the target -- and `delta == max_delta` means those are the same number."
-        },
-        {
-          "file": "src/core/limits.cpp",
-          "line": 31,
-          "col": 26,
-          "original": "<",
-          "replacement": "<=",
-          "kind": "equivalent",
-          "why": "The mirror of 29:19 on the negative side."
         }
       ],
-      "notes": "5 of 5 survivor(s) classified. equivalent: 5; equivalent_by_overspecification: 0; unreachable: 0; invisible_without_memory_checker: 0",
-      "recorded": "2026-10-31"
+      "notes": "5 of 5 survivor(s) classified. equivalent: 5; equivalent_by_overspecification: 0; unreachable: 0; invisible_without_memory_checker: 0 | 2026-11-05: two of the five classified survivors were NOT equivalent and the classification was wrong. `limits.cpp:29:19` and `:31:26` (the `delta > max_delta` / `delta < -max_delta` boundary) were recorded as \"the two forms are the same number\", which is true only while `value + max_delta` rounds to `target` -- i.e. at every magnitude the old cases used (0.05 + 0.1 vs 0.15). It is false when the subtraction that produced `delta` cancels, and then the branch that accumulates throws the target away: from -1e8, target 1.0, one 1e8 step, `value = target` answers 1.0 and `value += max_delta` answers 0.0. `SlewLimiter.AtExactlyOneStepTheTargetIsAssignedAndNotAccumulated` now pins both sides, so those two mutants are killed rather than excused, and the module goes 2/7 (28.6 %) -> 4/7 (57.1 %). The three that remain are the proveable ones: both `clamp` boundaries and the zero-period guard.",
+      "recorded": "2026-11-05"
     },
     "sm": {
       "mutate": [
@@ -626,13 +592,10 @@
   },
   "_comment": [
     "Mutation scores as measured by mutate.py, one entry per module, with the exact file set and limit used.",
-    "Stage 2 of the maturity plan records these numbers without setting a target: a threshold chosen before the first",
-    "measurement is a number picked to be met. The gate refuses a drop of more than 5 points, refuses a module with no",
-    "entry at all, and (for modules marked `classify`) refuses a survivor that is not listed in `equivalents`.",
-    "The instrument includes AddressSanitizer and UndefinedBehaviorSanitizer with recovery disabled: an overrun of a",
-    "standalone array is caught by ASan, an overrun of a member array only by UBSan's array-bounds (measured with a",
-    "one-line probe: 0 reports vs 1). A score is only comparable across the same instrument.",
-    "`survivors` is the work list: each one is either a blind spot in the tests or an equivalent mutant, and only a",
-    "human can say which -- a survivor classified as equivalent is not deleted, it is explained."
+    "Stage 2 of the maturity plan records these numbers without setting a target: a threshold chosen before",
+    "the first measurement is a number picked to be met. The gate refuses a drop of more than",
+    "5 points and refuses a module with no entry at all.",
+    "`survivors` is the work list: each one is either a blind spot in the tests or an equivalent mutant, and",
+    "only a human can say which -- a survivor classified as equivalent is not deleted, it is explained."
   ]
 }
