@@ -45,6 +45,27 @@ coverage numbers at the time:
    a wrong formula, evaluate both at that point. ``sqrt(2ae)`` against ``sqrt(ae)`` was probed at the
    one place where the two coincide, so the case had no teeth and nothing said so.
 
+Capabilities that are a procedure rather than a formula
+---------------------------------------------------------
+
+Some of what this library offers is not a law but a *procedure*: identification of the machine
+(``commissioning.hpp``), speed-loop tuning (``auto_tune.hpp``), learning the cogging table
+(``cogging_learn.hpp``). Their criterion is not a constant that could be written into an assertion, so the row records
+what the procedure owes instead:
+
+1. **It says when it cannot answer.** ``valid == false`` plus a reason, never a number produced from data that does not
+   describe this machine. A procedure that only answers on good data cannot be claimed for any data.
+2. **It states the band it is valid in**, in the units the caller measures -- a speed band, a window length, a number of
+   revolutions -- and the band is pinned by a case rather than described in prose.
+3. **Its objective is a held-out margin, never accuracy.** A procedure optimised for "smaller error" produces a
+   criterion fitted to the model it was scored on; the number worth publishing is the distance to failure, measured on
+   machines that took no part in the fit.
+
+Such a capability reaches **L2** when the procedure is reproducible and its refusals are reachable, and that is the
+whole of what "a procedure" buys. **L3** still needs the same two things every other row needs -- item-by-item
+sensitivity and an independent cross-check, e.g. the same procedure replayed on a second plant -- so a procedure is not
+a shortcut past the evidence levels, and it never reaches L4 without hardware.
+
 .. list-table:: capability matrix
    :header-rows: 1
    :widths: 20 22 20 24 8 6
