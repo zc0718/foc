@@ -635,7 +635,7 @@ auto params_ok(const foc_motor_params_t& p) noexcept -> bool {
  */
 template <typename SlotType, std::size_t N>
 auto resolve_in(foc_motor_t handle, SlotType (&pool)[N], std::uintptr_t magic) noexcept -> SlotType* {
-    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast, performance-no-int-to-ptr)
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast, performance-no-int-to-ptr) -- the handle is a token, not an address: it is never dereferenced, and the cast only recovers the magic from the high half.
     const auto raw = reinterpret_cast<std::uintptr_t>(handle);
     if ((raw >> 32U) != magic) {
         return nullptr; // not minted by this pool (or a garbage pointer): no
@@ -784,7 +784,7 @@ auto mint_protector(std::uint32_t slot, std::uint32_t generation) noexcept -> fo
  * @brief [zh] 解析保护器句柄；不是本池签发的返回 nullptr。
  */
 auto resolve_protector(foc_protector_t handle) noexcept -> ProtectorSlot* {
-    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast, performance-no-int-to-ptr)
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast, performance-no-int-to-ptr) -- same as `resolve_in`: the token is compared, never dereferenced.
     const auto raw = reinterpret_cast<std::uintptr_t>(handle);
     if ((raw >> 32U) != kProtectorMagic) {
         return nullptr;

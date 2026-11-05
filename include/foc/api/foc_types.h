@@ -175,7 +175,7 @@ typedef struct foc_motor_setup {
  * @since 0.1.0
  * @exporter
  */
-// NOLINTNEXTLINE(performance-enum-size)
+// NOLINTNEXTLINE(performance-enum-size) -- a C ABI enum cannot carry a C++ base type, and this one is frozen: `foc::MotorState` mirrors these numbers.
 typedef enum foc_motor_state {
     FOC_MOTOR_IDLE = 0, /* outputs off */
     FOC_MOTOR_ALIGN = 1,
@@ -190,7 +190,7 @@ typedef enum foc_motor_state {
  * @since 0.1.0
  * @exporter
  */
-// NOLINTNEXTLINE(performance-enum-size)
+// NOLINTNEXTLINE(performance-enum-size) -- same reason as `foc_motor_state`: C has no underlying type to give, and `foc::AlignState` mirrors these numbers.
 typedef enum foc_align_state {
     FOC_ALIGN_IDLE = 0,
     FOC_ALIGN_RAMP = 1,
@@ -207,7 +207,7 @@ typedef enum foc_align_state {
  * @since 0.1.0
  * @exporter
  */
-// NOLINTNEXTLINE(performance-enum-size)
+// NOLINTNEXTLINE(performance-enum-size) -- and again: the enumerator values are the C ABI's, so the base type is not this header's to choose.
 typedef enum foc_align_failure {
     FOC_ALIGN_NO_FAILURE = 0,
     FOC_ALIGN_NOT_CONFIGURED = 1,
