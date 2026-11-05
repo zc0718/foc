@@ -393,7 +393,7 @@
       "survivors": [
         {
           "file": "include/foc/core/protection.hpp",
-          "line": 285,
+          "line": 305,
           "col": 18,
           "original": ">",
           "replacement": ">=",
@@ -401,7 +401,7 @@
         },
         {
           "file": "include/foc/core/protection.hpp",
-          "line": 295,
+          "line": 315,
           "col": 22,
           "original": ">",
           "replacement": ">=",
@@ -409,7 +409,7 @@
         },
         {
           "file": "include/foc/core/protection.hpp",
-          "line": 303,
+          "line": 323,
           "col": 60,
           "original": ">",
           "replacement": ">=",
@@ -417,7 +417,7 @@
         },
         {
           "file": "include/foc/core/protection.hpp",
-          "line": 311,
+          "line": 331,
           "col": 51,
           "original": ">",
           "replacement": ">=",
@@ -425,7 +425,7 @@
         },
         {
           "file": "include/foc/core/protection.hpp",
-          "line": 317,
+          "line": 337,
           "col": 82,
           "original": "1.0",
           "replacement": "1.001",
@@ -433,7 +433,7 @@
         },
         {
           "file": "include/foc/core/protection.hpp",
-          "line": 318,
+          "line": 338,
           "col": 84,
           "original": "<",
           "replacement": "<=",
@@ -441,7 +441,7 @@
         },
         {
           "file": "include/foc/core/protection.hpp",
-          "line": 318,
+          "line": 338,
           "col": 106,
           "original": "1.0",
           "replacement": "1.001",
@@ -449,7 +449,7 @@
         },
         {
           "file": "include/foc/core/protection.hpp",
-          "line": 329,
+          "line": 349,
           "col": 26,
           "original": "8",
           "replacement": "9",
@@ -457,7 +457,7 @@
         },
         {
           "file": "include/foc/core/protection.hpp",
-          "line": 371,
+          "line": 391,
           "col": 31,
           "original": ">",
           "replacement": ">=",
@@ -465,7 +465,7 @@
         },
         {
           "file": "include/foc/core/protection.hpp",
-          "line": 374,
+          "line": 394,
           "col": 27,
           "original": "<=",
           "replacement": "<",
@@ -473,7 +473,7 @@
         },
         {
           "file": "include/foc/core/protection.hpp",
-          "line": 378,
+          "line": 398,
           "col": 20,
           "original": ">",
           "replacement": ">=",
@@ -481,7 +481,7 @@
         },
         {
           "file": "include/foc/core/protection.hpp",
-          "line": 382,
+          "line": 402,
           "col": 18,
           "original": ">=",
           "replacement": ">",
@@ -489,7 +489,7 @@
         },
         {
           "file": "include/foc/core/protection.hpp",
-          "line": 423,
+          "line": 443,
           "col": 22,
           "original": "0",
           "replacement": "1",
@@ -504,7 +504,7 @@
       "equivalents": [
         {
           "file": "include/foc/core/protection.hpp",
-          "line": 285,
+          "line": 305,
           "col": 18,
           "original": ">",
           "replacement": ">=",
@@ -513,7 +513,7 @@
         },
         {
           "file": "include/foc/core/protection.hpp",
-          "line": 295,
+          "line": 315,
           "col": 22,
           "original": ">",
           "replacement": ">=",
@@ -522,7 +522,7 @@
         },
         {
           "file": "include/foc/core/protection.hpp",
-          "line": 303,
+          "line": 323,
           "col": 60,
           "original": ">",
           "replacement": ">=",
@@ -531,7 +531,7 @@
         },
         {
           "file": "include/foc/core/protection.hpp",
-          "line": 311,
+          "line": 331,
           "col": 51,
           "original": ">",
           "replacement": ">=",
@@ -540,7 +540,7 @@
         },
         {
           "file": "include/foc/core/protection.hpp",
-          "line": 317,
+          "line": 337,
           "col": 82,
           "original": "1.0",
           "replacement": "1.001",
@@ -549,7 +549,7 @@
         },
         {
           "file": "include/foc/core/protection.hpp",
-          "line": 318,
+          "line": 338,
           "col": 84,
           "original": "<",
           "replacement": "<=",
@@ -558,7 +558,7 @@
         },
         {
           "file": "include/foc/core/protection.hpp",
-          "line": 318,
+          "line": 338,
           "col": 106,
           "original": "1.0",
           "replacement": "1.001",
@@ -567,7 +567,7 @@
         },
         {
           "file": "include/foc/core/protection.hpp",
-          "line": 329,
+          "line": 349,
           "col": 26,
           "original": "8",
           "replacement": "9",
@@ -576,7 +576,7 @@
         },
         {
           "file": "include/foc/core/protection.hpp",
-          "line": 371,
+          "line": 391,
           "col": 31,
           "original": ">",
           "replacement": ">=",
@@ -585,7 +585,7 @@
         },
         {
           "file": "include/foc/core/protection.hpp",
-          "line": 374,
+          "line": 394,
           "col": 27,
           "original": "<=",
           "replacement": "<",
@@ -594,7 +594,7 @@
         },
         {
           "file": "include/foc/core/protection.hpp",
-          "line": 378,
+          "line": 398,
           "col": 20,
           "original": ">",
           "replacement": ">=",
@@ -603,7 +603,7 @@
         },
         {
           "file": "include/foc/core/protection.hpp",
-          "line": 382,
+          "line": 402,
           "col": 18,
           "original": ">=",
           "replacement": ">",
@@ -612,7 +612,7 @@
         },
         {
           "file": "include/foc/core/protection.hpp",
-          "line": 423,
+          "line": 443,
           "col": 22,
           "original": "0",
           "replacement": "1",
@@ -620,7 +620,7 @@
           "why": "Starting the clear loop at 1 leaves `tripped_[0]` alone, and index 0 is `FaultCode::None`, never set."
         }
       ],
-      "notes": "13 of 13 survivor(s) classified (equivalent: 10, equivalent_by_overspecification: 2, unreachable: 1). Re-keyed 2026-11-04, second time: F39 appended `FaultCode::DriveFault` and its latch line, which inserted 18 lines above this whole region, so the record's `file:line:col` identities stopped matching. The shift was verified rather than assumed -- for every entry, HEAD's line L and the working file's line L+18 both carry the recorded token at the recorded column -- and then the positions were moved with the classifications untouched. Two entries were NOT re-keyed because they are no longer survivors: `reset()`'s `<`->`<=` and `8`->`9` are now killed, and the reason is the same change that caused the shift. The loop `for (code = 1; code < 8; ++code)` used to be unable to tell `<` from `<=` because code 8 was not an enumerator; appending `DriveFault` made code 8 a real code and `test_fault_input`'s latch-outlives-the-pin / clear-then-idle case now sees the difference. F39 therefore bought coverage here: 52/67 = 77.6 % -> 54/67 = 80.6 %. Earlier re-key (same day): protection.hpp had grown 7-31 lines after the 2026-10-31 record and 14 of 15 classifications no longer matched anything; every entry was re-pointed index for index against a fresh --list with the mutation text asserted equal at every index.",
+      "notes": "13 of 13 survivor(s) classified (equivalent: 10, equivalent_by_overspecification: 2, unreachable: 1). Re-keyed 2026-11-04, second time: F39 appended `FaultCode::DriveFault` and its latch line, which inserted 18 lines above this whole region, so the record's `file:line:col` identities stopped matching. The shift was verified rather than assumed -- for every entry, HEAD's line L and the working file's line L+18 both carry the recorded token at the recorded column -- and then the positions were moved with the classifications untouched. Two entries were NOT re-keyed because they are no longer survivors: `reset()`'s `<`->`<=` and `8`->`9` are now killed, and the reason is the same change that caused the shift. The loop `for (code = 1; code < 8; ++code)` used to be unable to tell `<` from `<=` because code 8 was not an enumerator; appending `DriveFault` made code 8 a real code and `test_fault_input`'s latch-outlives-the-pin / clear-then-idle case now sees the difference. F39 therefore bought coverage here: 52/67 = 77.6 % -> 54/67 = 80.6 %. Earlier re-key (same day): protection.hpp had grown 7-31 lines after the 2026-10-31 record and 14 of 15 classifications no longer matched anything; every entry was re-pointed index for index against a fresh --list with the mutation text asserted equal at every index. | 2026-11-05: every line number above was shifted by 20 because `FaultCode` appended `Watchdog` and `ClockLost` right after `DriveFault`, moving every survivor below the enum down by exactly 20 lines. The mutants are the same 13 (identical operators, columns and text), so no classification changed -- only the addresses did. Verified against the gate's own report: the 13 keys it names are these 13 plus 20.",
       "recorded": "2026-11-04"
     }
   },

@@ -63,6 +63,26 @@ enum class FaultCode : std::uint8_t {
      *            驱动过温之间选一个。
      */
     DriveFault,
+    /**
+     * @brief [en] the feeder did not kick within the watchdog's window.
+     * @brief [zh] 喂狗方没有在看门狗的窗口内喂狗。
+     * @note [en] Appended after `DriveFault` for the same reason `DriveFault` was appended: every earlier code keeps
+     *            its number. The cause is found by `core::Watchdog`, which reports it and does not raise it -- the
+     *            drive belongs to the caller, so `Motor::fault(watchdog.fault_code())` is the host's line.
+     * @note [zh] 与 `DriveFault` 一样追加在末尾，理由也相同：每个既有码保持自己的数字。成因由 `core::Watchdog` 发现，它
+     *            报出它而不抛出它——驱动器属于调用方，`Motor::fault(watchdog.fault_code())` 是宿主的那一行。
+     */
+    Watchdog,
+    /**
+     * @brief [en] the timestamp the drive judges time by went backwards.
+     * @brief [zh] 驱动器用来判时间的时间戳倒退了。
+     * @note [en] A separate code from `Watchdog` on purpose: the verdict is the same (stop the bridge) and the
+     *            diagnosis is not. A feeder that starved is a scheduling problem; a clock that jumped backwards means
+     *            the host's notion of time is broken, and every other timeout in the drive is now suspect.
+     * @note [zh] 故意与 `Watchdog` 分开：判决相同（关桥），诊断不同。喂狗方饿死是调度问题；时钟倒退意味着宿主对时间的观
+     *            念坏了，驱动器里其余每一个超时现在都可疑。
+     */
+    ClockLost,
 };
 
 /**

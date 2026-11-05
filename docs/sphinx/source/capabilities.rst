@@ -234,6 +234,20 @@ coverage numbers at the time:
      - ``ThermalLimit.TheNaiveLawReadsFifteenPercentHighAndThePlantSaysSo``
      - na -- stateless: every answer is a closed form of the configuration and its arguments, and nothing is accumulated.
      - --
+   * - ``core/watchdog.hpp``
+     - `WatchdogState` separates the four answers a feeder can leave behind: `Feeding` (inside the window), `Expired` (the
+       window passed), `ClockLost` (the stamp went backwards) and `Unarmed` (nothing measured yet). The last two are the
+       point: `Unarmed` is reported as a `State` error and never as `Ok`, because a watchdog nobody feeds protects nothing,
+       and `ClockLost` is a separate state from `Expired` because the verdict is the same (stop) and the diagnosis is not. A
+       latched report repeats the numbers that caused the latch instead of growing with the clock.
+     - `Param` for a zero window (it would trip on every feeder and stop a drive for a reason nobody can act on) and for a
+       kick before any window was accepted -- and a refused window changes nothing, including a latch. `State` for a poll
+       or kick before the first kick, and for a kick after a latch (it does not re-arm and is not counted as a feed).
+       `Fault` once expired or clock-lost.
+     - ``Watchdog.TheDeadlineIsExactForEveryWholeNumberOfControlPeriods``
+     - na -- it holds one timestamp and one latch, neither of which is a continuous-output invariant; the latch is pinned
+       by `Watchdog.AFeederThatComesBackDoesNotClearTheTrip`, which is a sequence rather than a per-tick property.
+     - --
    * - ``core/auto_tune.hpp``
      - `SpeedTuneResult` separates "here are gains measured from this machine" from "I could not measure this machine":
        `valid` is the bit, and on a refusal the gains it carries are the **nameplate** ones, so a caller that applies

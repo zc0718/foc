@@ -184,8 +184,8 @@
     },
     {
       "id": "B-04",
-      "date": "2026-11-04",
-      "what_changed": "F39: the power stage's fault output became a **required** HAL input. `hal/fault_input.hpp` is new (`faulted()`, one bit, polarity owned by the adapter); `driver/stub_fault_input.hpp` is its reference and doubles as the injection seam; `core::concepts::has_fault_input_v` is the trait; `Motor::start()` answers `NotImpl` when the HalPolicy has none, and `tick()` latches `FaultCode::DriveFault` on the pin before anything else runs. `HalCallbacks` gained a **required** `read_drive_fault` (the first callback in that struct whose absence is not a capability answer), the C ABI appended the same field and refuses its absence with `FOC_ERR_NOT_IMPL`, and `FaultCode` appended `DriveFault` so every existing code keeps its number.",
+      "date": "2026-11-05",
+      "what_changed": "F39: the power stage's fault output became a **required** HAL input. `hal/fault_input.hpp` is new (`faulted()`, one bit, polarity owned by the adapter); `driver/stub_fault_input.hpp` is its reference and doubles as the injection seam; `core::concepts::has_fault_input_v` is the trait; `Motor::start()` answers `NotImpl` when the HalPolicy has none, and `tick()` latches `FaultCode::DriveFault` on the pin before anything else runs. `HalCallbacks` gained a **required** `read_drive_fault` (the first callback in that struct whose absence is not a capability answer), the C ABI appended the same field and refuses its absence with `FOC_ERR_NOT_IMPL`, and `FaultCode` appended `DriveFault` so every existing code keeps its number. | 2026-11-05 (F41): `FaultCode` appended `Watchdog` and `ClockLost` after `DriveFault`, so every code that already existed keeps its number and `fault_is_latched` is untouched; `foc_bridge_fault_name()` grew two cases and its range check moved with the last enumerator. The rows below are re-adjudicated against that append, and `core/watchdog.hpp` joins them because it is the header that answers those two codes.",
       "seeds": [
         "include/foc/core/traits.hpp",
         "include/foc/driver/callback_hal.hpp",
@@ -223,6 +223,11 @@
           "row": "core/observer/switchable_observer.hpp",
           "verdict": "holds",
           "why": "same attachment through `StubHal`/`CallbackHal`; the switch admits and refuses modes on facts the fault input does not touch. measured on this tree: `test_switchable_observer` 9/9"
+        },
+        {
+          "row": "core/watchdog.hpp",
+          "verdict": "holds",
+          "why": "it is new today and its whole surface is one subtraction and one latch: `elapsed = now - last_kick` against a window in whole nanoseconds, with the window's own value carried through `ElapsedClock::to_nanos` so a whole number of 25 us periods lands exactly (asserted for k = 1..40 in `test_watchdog.cpp`, and 1 ms, 20 ms, 512 s and 520 s land exactly too). It reads no clock it does not own -- the timestamp is the caller's -- so nothing in it can move an existing number; the two enumerators it answers are appended, so `None`..`DriveFault` keep their values, and the drive-reachable half is measured by the two new rows of `test_fault_injection.cpp` (expiry and a backwards clock, each raising the motor's fault word and stopping the bridge)"
         }
       ]
     },

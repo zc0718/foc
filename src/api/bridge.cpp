@@ -1874,7 +1874,7 @@ const char* foc_bridge_fault_name(std::int32_t fault) {
     // Range-checked before the cast: an out-of-range int32 is not a valid enumerator.
     // 先查范围再转型：越界的 int32 不是合法枚举值。
     if ((fault < static_cast<std::int32_t>(foc::core::FaultCode::None)) ||
-        (fault > static_cast<std::int32_t>(foc::core::FaultCode::DriveFault))) {
+        (fault > static_cast<std::int32_t>(foc::core::FaultCode::ClockLost))) {
         return "?";
     }
     switch (static_cast<foc::core::FaultCode>(fault)) {
@@ -1896,6 +1896,10 @@ const char* foc_bridge_fault_name(std::int32_t fault) {
         return "lost sync";
     case foc::core::FaultCode::DriveFault:
         return "drive fault";
+    case foc::core::FaultCode::Watchdog:
+        return "watchdog";
+    case foc::core::FaultCode::ClockLost:
+        return "clock lost";
     }
     return "?";
 }

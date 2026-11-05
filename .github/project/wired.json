@@ -339,6 +339,11 @@
       "class": "policy",
       "example": "test_package/test/unit/test_encoder_stream.cpp",
       "why": "a host that clocks an SSI/BiSS-style absolute encoder writes its own shift-register driver (the pin timing is the HAL's) and hands the collected bits here for interpretation; it is a policy because the framing -- start/ACK, stop, clock rate -- is the host's and this module must not pretend to own it, and because the multi-turn assembler needs the axis's maximum travel per frame, which only the application knows"
+    },
+    "core/watchdog.hpp": {
+      "class": "policy",
+      "example": "test_package/test/unit/test_watchdog.cpp",
+      "why": "a host that has to stop a drive when its own feeder stalls asks it whether the silence is past the deadline and which cause it was; it is a policy rather than a `Motor` concern because the timestamp belongs to the host -- the library never reads a clock it does not own -- and because the host is what decides when to poll and which line raises the fault, so the module answers the cause and does not reach into the drive"
     }
   }
 }

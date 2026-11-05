@@ -423,6 +423,11 @@
     "comm/encoder_stream.hpp": [
       "src/comm/encoder_stream.cpp",
       "core/types.hpp"
+    ],
+    "core/watchdog.hpp": [
+      "src/core/watchdog.cpp",
+      "core/protection.hpp",
+      "core/types.hpp"
     ]
   },
   "unmapped": []

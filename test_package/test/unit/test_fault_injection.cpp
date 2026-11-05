@@ -6,6 +6,7 @@
 
 #include <foc/core/protection.hpp>
 #include <foc/core/startup.hpp>
+#include <foc/core/watchdog.hpp>
 #include <foc/driver/sim_position.hpp>
 #include <foc/driver/stub_dc_link.hpp>
 #include <foc/driver/stub_fault_input.hpp>
@@ -134,6 +135,12 @@ enum class Seam : std::uint8_t {
      */
     HalInput,
     /**
+     * @brief [en] the host's own feeder and clock block: the library judges the timestamp, the host hands the verdict
+     *             to the motor.
+     * @brief [zh] 宿主自己的喂狗与时钟模块：库判时间戳，宿主把结论交给电机。
+     */
+    HostClock,
+    /**
      * @brief [en] not a fault: the absence of all of them.
      * @brief [zh] 不是故障：其余全部缺席。
      */
@@ -161,16 +168,18 @@ constexpr CodeRow kRows[] = {
     {FaultCode::Stall, "full authority demanded, no motion, `kStallWindowS`", Seam::MotorsOwn},
     {FaultCode::LostSync, "handover speed not reached after a forced-angle start", Seam::MotorsOwn},
     {FaultCode::DriveFault, "the power stage's `nFAULT` pin", Seam::HalInput},
+    {FaultCode::Watchdog, "no kick within `Watchdog`'s window", Seam::HostClock},
+    {FaultCode::ClockLost, "the host's timestamp going backwards", Seam::HostClock},
 };
 
 // The count check that makes this file a gate rather than a table: a new enumerator without a row is a code nobody can
 // produce, which is exactly what this item exists to prevent.
 // 让这个文件成为门禁而不是表格的计数检查：新加一个枚举值却没有一行，就是一个没人能产生的码，而那正是本项要防的东西。
 constexpr std::size_t kEnumerators =
-    static_cast<std::size_t>(FaultCode::DriveFault) - static_cast<std::size_t>(FaultCode::None) + 1U;
+    static_cast<std::size_t>(FaultCode::ClockLost) - static_cast<std::size_t>(FaultCode::None) + 1U;
 static_assert(sizeof(kRows) / sizeof(kRows[0]) == kEnumerators,
               "every FaultCode needs a row here: a code with no producer is a word in an enum, not a protection");
-static_assert(static_cast<std::size_t>(FaultCode::DriveFault) + 1U == kEnumerators,
+static_assert(static_cast<std::size_t>(FaultCode::ClockLost) + 1U == kEnumerators,
               "and the enumerators must stay dense from None to the last one, or the count check above is meaningless");
 
 // 1. The five codes that the protector classifies. The library documents this hop and does not perform it -- `Protector`
@@ -370,6 +379,66 @@ TEST(FaultInjection, TheHalPinIsItsOwnRow) {
     hal.fault_input.set_faulted(true);
     EXPECT_EQ(ErrorCode::Fault, motor.tick(kDt));
     EXPECT_EQ(FaultCode::DriveFault, motor.fault_code());
+}
+
+// 3b. The two codes the host's own feeder produces. `core::Watchdog` judges the timestamp and answers the cause; the hop
+//     from its verdict to the drive's fault word is the host's two lines, exactly as the protector's five are. Written
+//     as a case rather than a comment because the table's rule is that a row either injects its condition here or names
+//     the case that does -- and "names a case" is only worth anything if the case exists.
+// 3b. 宿主自己的喂狗方产生的两个码。`core::Watchdog` 判时间戳并回答成因；从它的结论到驱动器故障字的那一步是宿主的两行，
+//     与保护器那五个码完全一样。写成用例而不是注释，因为这张表的规矩是：每一行要么在这里真的注入那个条件、要么点名量它
+//     的用例——而「点名一个用例」只有在那个用例真的存在时才有价值。
+TEST(FaultInjection, TheWatchdogsTwoCausesReachTheFaultCodeThroughTheSameHop) {
+    constexpr std::uint64_t kWindowNs = 25000U; // one control period, so the deadline is a number a reader can check
+                                                // 一个控制周期，于是截止时刻是读者能核对的数
+
+    // (a) No kick past the window.
+    // (a) 超过窗口没有喂狗。
+    {
+        StubRig hal{};
+        arm(hal);
+        StubMotor motor(motor_config(), stub_policies(), hal);
+        ASSERT_EQ(foc::ErrorCode::Ok, motor.init());
+        ASSERT_EQ(foc::ErrorCode::Ok, motor.start());
+        EXPECT_TRUE(hal.pwm.enabled()) << "it starts modulating, so 'stops' is a change and not the initial value";
+
+        foc::core::Watchdog dog;
+        ASSERT_EQ(foc::ErrorCode::Ok, dog.setup(foc::core::WatchdogConfig{kWindowNs}));
+        ASSERT_EQ(foc::ErrorCode::Ok, dog.kick(0U).status);
+        const auto report = dog.poll(kWindowNs + 1U);
+        ASSERT_EQ(ErrorCode::Fault, report.status) << "one nanosecond past the deadline is a trip";
+
+        motor.fault(dog.fault_code()); // the documented hop, and the only line here the library does not own
+                                       // 文档里那一步，也是这里唯一一行库自己不负责的代码
+        EXPECT_EQ(FaultCode::Watchdog, motor.fault_code());
+        EXPECT_EQ(foc::core::MotorState::Fault, motor.state());
+        EXPECT_FALSE(hal.pwm.enabled()) << "a watchdog that speaks has to stop the bridge, not just the state machine";
+    }
+
+    // (b) The timestamp goes backwards. The verdict is the same and the cause is not, which is the whole reason the two
+    //     are separate enumerators: a starved feeder is a scheduling problem, a backwards clock makes every other
+    //     timeout in the drive suspect.
+    // (b) 时间戳倒退。判决相同而成因不同，而这正是两个枚举值分开的全部理由：喂狗方饿死是调度问题，而时钟倒退会让驱动器里
+    //     其余每一个超时都可疑。
+    {
+        StubRig hal{};
+        arm(hal);
+        StubMotor motor(motor_config(), stub_policies(), hal);
+        ASSERT_EQ(foc::ErrorCode::Ok, motor.init());
+        ASSERT_EQ(foc::ErrorCode::Ok, motor.start());
+
+        foc::core::Watchdog dog;
+        ASSERT_EQ(foc::ErrorCode::Ok, dog.setup(foc::core::WatchdogConfig{kWindowNs}));
+        ASSERT_EQ(foc::ErrorCode::Ok, dog.kick(1000000U).status);
+        const auto report = dog.poll(1000000U - 1U);
+        ASSERT_EQ(foc::core::WatchdogState::ClockLost, report.state)
+            << "a backwards step is a clock fault, not a silence";
+
+        motor.fault(dog.fault_code());
+        EXPECT_EQ(FaultCode::ClockLost, motor.fault_code()) << "the cause has to say 'clock', not 'starved'";
+        EXPECT_EQ(foc::core::MotorState::Fault, motor.state());
+        EXPECT_FALSE(hal.pwm.enabled());
+    }
 }
 
 // 4. The table, checked as a table: `None` is reachable by doing nothing (and must not be confused with "no answer"),
