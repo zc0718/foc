@@ -59,7 +59,7 @@ int main(void) {
     /* The trace channel from a pure C caller: caller-owned storage, no allocation, and the two
      * half-attached shapes refused instead of guessed at. */
     static foc_trace_sample_t window[16];
-    CHECK(foc_motor_trace_size(motor) == 0U);      /* nothing attached yet */
+    CHECK(foc_motor_trace_size(motor) == 0U); /* nothing attached yet */
     CHECK(foc_motor_set_trace(motor, NULL, 4U) == FOC_ERR_PARAM);
     CHECK(foc_motor_set_trace(motor, window, 0U) == FOC_ERR_PARAM);
     CHECK(foc_motor_set_trace(motor, window, 16U) == FOC_OK);
@@ -67,7 +67,7 @@ int main(void) {
         CHECK(foc_tick(motor, 1e-4F) == FOC_OK);
     }
     CHECK(foc_motor_trace_size(motor) == 16U);
-    CHECK(foc_motor_trace_dropped(motor) == 4U);   /* 20 periods into a 16-deep ring */
+    CHECK(foc_motor_trace_dropped(motor) == 4U); /* 20 periods into a 16-deep ring */
 
     foc_trace_sample_t first = {0};
     foc_trace_sample_t last = {0};
@@ -83,7 +83,7 @@ int main(void) {
     CHECK(foc_motor_trace_read(motor, 0U, NULL) == FOC_ERR_PARAM);
     CHECK(foc_motor_trace_reset(motor) == FOC_OK);
     CHECK(foc_motor_trace_size(motor) == 0U);
-    CHECK(foc_motor_trace_dropped(motor) == 4U);   /* already lost is still on the record */
+    CHECK(foc_motor_trace_dropped(motor) == 4U);           /* already lost is still on the record */
     CHECK(foc_motor_set_trace(motor, NULL, 0U) == FOC_OK); /* detach */
     CHECK(foc_motor_trace_size(motor) == 0U);
 
@@ -117,8 +117,8 @@ int main(void) {
     foc_motor_t mover = NULL;
 
     CHECK(foc_motor_create(&params, &mover) == FOC_OK);
-    CHECK(foc_set_position_g(mover, 0.1) == FOC_OK);       /* routed to the double entry point */
-    CHECK(foc_set_position_g(mover, 0.2F) == FOC_OK);      /* routed to the float one */
+    CHECK(foc_set_position_g(mover, 0.1) == FOC_OK);  /* routed to the double entry point */
+    CHECK(foc_set_position_g(mover, 0.2F) == FOC_OK); /* routed to the float one */
     CHECK(foc_set_position(mover, 0.3F) == FOC_OK);
 
     command.position_rad = 0.4F;
@@ -131,7 +131,7 @@ int main(void) {
 
     CHECK(foc_motor_get_status(mover, &status) == FOC_OK);
     CHECK(status.struct_size == (uint32_t)sizeof(foc_motor_status_t));
-    CHECK(status.mode_state == (int32_t)FOC_MOTOR_IDLE); /* created but not enabled yet */
+    CHECK(status.mode_state == (int32_t)FOC_MOTOR_IDLE);  /* created but not enabled yet */
     CHECK(status.align_state == (int32_t)FOC_ALIGN_IDLE); /* alignment was never requested */
     CHECK(status.error == (int32_t)FOC_OK);
 
@@ -320,6 +320,84 @@ int main(void) {
         CHECK(foc_motor_cancel_stall_start(seq) == FOC_OK);
         CHECK(foc_motor_cancel_stall_start(NULL) == FOC_ERR_PARAM);
         CHECK(foc_motor_destroy(seq) == FOC_OK);
+    }
+
+    /*
+     * The tuner's C surface: a session is a *procedure*, so the C side proves both halves -- that it refuses what it
+     * cannot do, and that a window generated from a known machine comes back with that machine's ratios. The second
+     * half needs no plant: `d(omega)/dt = a*iq - d*omega` is stepped in closed form, so the answer is checkable.
+     */
+    {
+        foc_autotune_config_t tc;
+        foc_autotune_t tune = NULL;
+        foc_autotune_result_t tr;
+        foc_autotune_t first = NULL;
+        foc_autotune_t second = NULL;
+        const float a_expected = 500.0F; /* kt/J */
+        const float d_expected = 1.0F;   /* b/J  */
+        const float step_s = 1.0e-3F;
+
+        memset(&tc, 0, sizeof(tc));
+        tc.struct_size = (uint32_t)sizeof(tc);
+        tc.kt_nm_per_a = 0.05F;
+        tc.j_expected_kg_m2 = 1.0e-4F;
+        tc.b_expected_nm_s = 1.0e-4F;
+        tc.bandwidth_rad_s = 200.0F;
+        tc.i_max_a = 3.0F;
+        tc.tolerance = 0.25F;
+        tc.min_current_a = 0.05F;
+        tc.max_residual = 0.35F;
+        tc.min_samples = 100;
+
+        /* --- the refusal half ------------------------------------------------------------------------- */
+        CHECK(foc_autotune_create(NULL, &tune) == FOC_ERR_PARAM);
+        CHECK(foc_autotune_create(&tc, NULL) == FOC_ERR_PARAM);
+        {
+            foc_autotune_config_t uncovered = tc;
+            uncovered.struct_size = 0U; /* an older caller that never filled the field */
+            CHECK(foc_autotune_create(&uncovered, &tune) == FOC_ERR_PARAM);
+        }
+        {
+            foc_autotune_config_t hopeless = tc;
+            hopeless.bandwidth_rad_s = 0.0F; /* no bandwidth, no gains: the library's own predicate refuses it */
+            CHECK(foc_autotune_create(&hopeless, &tune) == FOC_ERR_PARAM);
+        }
+        /* Every slot, then one more: the third create has nowhere to live and says so. */
+        CHECK(foc_autotune_create(&tc, &first) == FOC_OK);
+        CHECK(foc_autotune_create(&tc, &second) == FOC_OK);
+        CHECK(foc_autotune_create(&tc, &tune) == FOC_ERR_NO_RESOURCE);
+        /* A stale handle is a state error, not a crash and not a silent success. */
+        CHECK(foc_autotune_destroy(second) == FOC_OK);
+        CHECK(foc_autotune_accumulate(second, step_s, 1.0F, 0.0F, 0) == FOC_ERR_STATE);
+        CHECK(foc_autotune_destroy(first) == FOC_OK);
+
+        /* --- the measurement half --------------------------------------------------------------------- */
+        CHECK(foc_autotune_create(&tc, &tune) == FOC_OK);
+        {
+            float omega = 0.0F;
+            int k;
+            for (k = 0; k < 600; ++k) {
+                /* A current that alternates so the fit has a slope to identify, and a speed that follows the model. */
+                const float iq = ((k / 100) % 2 == 0) ? 1.0F : 1.5F;
+                const float next = omega + ((a_expected * iq) - (d_expected * omega)) * step_s;
+                CHECK(foc_autotune_accumulate(tune, step_s, iq, omega, 0) == FOC_OK);
+                omega = next;
+            }
+        }
+        memset(&tr, 0, sizeof(tr));
+        tr.struct_size = (uint32_t)sizeof(tr);
+        CHECK(foc_autotune_finish(tune, &tr) == FOC_OK);
+        CHECK(tr.status == (int32_t)FOC_OK);
+        CHECK(tr.valid == 1);
+        CHECK(fabsf(tr.kt_over_j - a_expected) < 0.01F * a_expected);
+        CHECK(fabsf(tr.b_over_j - d_expected) < 0.05F * d_expected);
+        CHECK(fabsf(tr.j_kg_m2 - 1.0e-4F) < 0.01F * 1.0e-4F);
+        /* kp = bandwidth/(kt/J): the ratio the fit produced, not the nameplate's. */
+        CHECK(fabsf(tr.kp_a_per_rad_s - (200.0F / a_expected)) < 0.01F * (200.0F / a_expected));
+        CHECK(tr.reason != NULL);
+        CHECK(foc_autotune_reset(tune) == FOC_OK);
+        CHECK(foc_autotune_destroy(tune) == FOC_OK);
+        CHECK(foc_autotune_destroy(tune) == FOC_ERR_STATE); /* twice: the second is a stale token */
     }
 
     if (failures != 0) {

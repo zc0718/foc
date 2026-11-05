@@ -10,6 +10,7 @@
 #include <new>
 
 #include <foc/core/alignment.hpp>
+#include <foc/core/auto_tune.hpp>
 #include <foc/core/board_check.hpp>
 #include <foc/core/commissioning.hpp>
 #include <foc/core/field_weakening.hpp>
@@ -799,6 +800,81 @@ auto resolve_protector(foc_protector_t handle) noexcept -> ProtectorSlot* {
         return nullptr;
     }
     return &slot;
+}
+
+constexpr std::uintptr_t kAutoTuneMagic = 0x464F4354U; // "FOCT": a tuning token, not a motor or protector one
+
+/**
+ * @brief [en] Two tuning sessions: commissioning runs one at a time, and a second slot is what lets a caller start the
+ *             next machine before it has released the last one.
+ * @brief [zh] 两个整定会话：调试一次只跑一个，第二个槽位让调用方在释放上一个之前就能开下一台机器。
+ */
+constexpr std::size_t kMaxAutoTunes = 2U;
+
+/**
+ * @brief [en] One tuning slot.
+ * @brief [zh] 一个整定槽位。
+ * @note [en] Same reasoning as `ProtectorSlot`: `SpeedTuner` holds two dozen floats and no owned resource, so placement
+ *            new into inline bytes is enough and no destructor is called. If it ever grows something that needs
+ *            releasing, this note is what makes the omission a bug rather than an oversight.
+ * @note [zh] 与 `ProtectorSlot` 同理：`SpeedTuner` 只有二十几个浮点、不持有任何资源，所以内联字节上 placement new 就
+ *            够、不调析构。若它将来长了需要释放的东西，这段注释会让那次遗漏成为 bug 而不是疏忽。
+ */
+struct AutoTuneSlot final {
+    alignas(core::SpeedTuner) unsigned char storage[sizeof(core::SpeedTuner)]{};
+    core::SpeedTuner* instance{nullptr};
+    std::uint32_t generation{0U};
+    bool alive{false};
+};
+
+AutoTuneSlot g_autotunes[kMaxAutoTunes];
+
+auto mint_autotune(std::uint32_t slot, std::uint32_t generation) noexcept -> foc_autotune_t {
+    // Same token discipline as `mint_protector`: an integer that is never dereferenced, carrying a magic, a generation
+    // and a slot index. The cast is the encoding, not an escape from the type system.
+    // 与 `mint_protector` 同一套 token 纪律：一个从不解引用的整数，装着 magic、generation 与槽位号。那次转型就是编码
+    // 本身，不是绕开类型系统。
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast, performance-no-int-to-ptr)
+    return reinterpret_cast<foc_autotune_t>((kAutoTuneMagic << 32U) |
+                                            (static_cast<std::uintptr_t>(generation) << kSlotBits) |
+                                            static_cast<std::uintptr_t>(slot));
+}
+
+/**
+ * @brief [en] The slot a handle names, or nullptr when the handle is stale or not a tuning token at all.
+ * @brief [zh] 句柄指名的槽位；句柄过期或根本不是整定 token 时为 nullptr。
+ */
+auto resolve_autotune(foc_autotune_t handle) noexcept -> AutoTuneSlot* {
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast, performance-no-int-to-ptr) -- the token is compared, never dereferenced.
+    const auto raw = reinterpret_cast<std::uintptr_t>(handle);
+    if ((raw >> 32U) != kAutoTuneMagic) {
+        return nullptr;
+    }
+    const auto slot_index = static_cast<std::uint32_t>(raw & 0xFFU);
+    const auto generation = static_cast<std::uint32_t>((raw >> kSlotBits) & 0xFFFFFFU);
+    if (slot_index >= kMaxAutoTunes) {
+        return nullptr;
+    }
+    AutoTuneSlot& slot = g_autotunes[slot_index];
+    if (!slot.alive || (slot.generation != generation)) {
+        return nullptr;
+    }
+    return &slot;
+}
+
+/** @brief [en] Field by field: the C struct carries a `struct_size` header the C++ config does not. [zh] 逐字段：C 结构多一个 `struct_size` 头。 */
+auto autotune_config(const foc_autotune_config_t& in) noexcept -> core::SpeedTuneConfig {
+    core::SpeedTuneConfig out{};
+    out.kt_nm_per_a = in.kt_nm_per_a;
+    out.j_expected_kg_m2 = in.j_expected_kg_m2;
+    out.b_expected_nm_s = in.b_expected_nm_s;
+    out.bandwidth_rad_s = in.bandwidth_rad_s;
+    out.i_max_a = in.i_max_a;
+    out.tolerance = in.tolerance;
+    out.min_current_a = in.min_current_a;
+    out.max_residual = in.max_residual;
+    out.min_samples = static_cast<int>(in.min_samples);
+    return out;
 }
 
 /**
@@ -2094,3 +2170,86 @@ foc_err_t foc_bridge_torque_command(const foc_torque_map_t* map, float requested
 }
 
 } // extern "C"
+
+
+foc_err_t foc_bridge_autotune_create(const foc_autotune_config_t* config, foc_autotune_t* out) {
+    if ((config == nullptr) || (out == nullptr) || !foc::api::size_ok(*config)) {
+        return FOC_ERR_PARAM;
+    }
+    const foc::core::SpeedTuneConfig cfg = foc::api::autotune_config(*config);
+    // The configuration is evaluated through the library's own predicate rather than re-derived here: a second copy of
+    // "what makes a tuneable machine" is the way the two drift apart.
+    // 配置用库自己的判据评估，而不是在这里重推一遍：第二份"什么才算可整定"正是两者走偏的方式。
+    if (foc::core::SpeedTuner(cfg).validate() != foc::ErrorCode::Ok) {
+        return FOC_ERR_PARAM;
+    }
+    std::size_t index = foc::api::kMaxAutoTunes;
+    for (std::size_t k = 0; k < foc::api::kMaxAutoTunes; ++k) {
+        if (!foc::api::g_autotunes[k].alive) {
+            index = k;
+            break;
+        }
+    }
+    if (index >= foc::api::kMaxAutoTunes) {
+        return FOC_ERR_NO_RESOURCE;
+    }
+    foc::api::AutoTuneSlot& slot = foc::api::g_autotunes[index];
+    slot.instance = new (slot.storage) foc::core::SpeedTuner(cfg);
+    slot.alive = true;
+    slot.generation = (slot.generation + 1U) & 0xFFFFFFU;
+    *out = foc::api::mint_autotune(static_cast<std::uint32_t>(index), slot.generation);
+    return FOC_OK;
+}
+
+foc_err_t foc_bridge_autotune_accumulate(foc_autotune_t handle, float dt_s, float iq_a, float omega_mech_rad_s,
+                                         std::int32_t saturated) {
+    foc::api::AutoTuneSlot* slot = foc::api::resolve_autotune(handle);
+    if (slot == nullptr) {
+        return FOC_ERR_STATE;
+    }
+    slot->instance->accumulate(dt_s, iq_a, omega_mech_rad_s, saturated != 0);
+    return FOC_OK;
+}
+
+foc_err_t foc_bridge_autotune_finish(foc_autotune_t handle, foc_autotune_result_t* out) {
+    if ((out == nullptr) || !foc::api::size_ok(*out)) {
+        return FOC_ERR_PARAM;
+    }
+    foc::api::AutoTuneSlot* slot = foc::api::resolve_autotune(handle);
+    if (slot == nullptr) {
+        return FOC_ERR_STATE;
+    }
+    const foc::core::SpeedTuneResult result = slot->instance->finish();
+    out->status = static_cast<std::int32_t>(result.status);
+    out->valid = result.valid ? 1 : 0;
+    out->kt_over_j = result.kt_over_j;
+    out->b_over_j = result.b_over_j;
+    out->j_kg_m2 = result.j_kg_m2;
+    out->kp_a_per_rad_s = result.kp_a_per_rad_s;
+    out->ki_a_per_rad_s2 = result.ki_a_per_rad_s2;
+    out->residual = result.residual;
+    out->reason = result.reason;
+    out->samples = static_cast<std::int32_t>(result.samples);
+    return FOC_OK;
+}
+
+foc_err_t foc_bridge_autotune_reset(foc_autotune_t handle) {
+    foc::api::AutoTuneSlot* slot = foc::api::resolve_autotune(handle);
+    if (slot == nullptr) {
+        return FOC_ERR_STATE;
+    }
+    slot->instance->reset();
+    return FOC_OK;
+}
+
+foc_err_t foc_bridge_autotune_destroy(foc_autotune_t handle) {
+    foc::api::AutoTuneSlot* slot = foc::api::resolve_autotune(handle);
+    if (slot == nullptr) {
+        return FOC_ERR_STATE;
+    }
+    using TunerT = foc::core::SpeedTuner;
+    slot->instance->~TunerT();
+    slot->instance = nullptr;
+    slot->alive = false;
+    return FOC_OK;
+}

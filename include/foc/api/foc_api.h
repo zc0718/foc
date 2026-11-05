@@ -1036,3 +1036,70 @@ float foc_torque_estimate(const foc_torque_map_t *map, float id_a, float iq_a);
  * @exporter
  */
 foc_err_t foc_torque_command(const foc_torque_map_t *map, float requested_nm, float id_a, foc_torque_command_t *out);
+
+
+foc_err_t foc_autotune_create(const foc_autotune_config_t *config, foc_autotune_t *out);
+
+/**
+ * @brief [en] Feed one control period of the torque-step window.
+ * @brief [zh] 喂入转矩阶跃窗口的一个控制周期。
+ * @param handle [en] a live session.
+ * @param handle [zh] 活着的会话。
+ * @param dt_s [en] the period, s; must be finite and positive, else nothing is accumulated.
+ * @param dt_s [zh] 周期，s；须有限且为正，否则不累加。
+ * @param iq_a [en] measured q-axis current in A (not the reference).
+ * @param iq_a [zh] 实测 q 轴电流，A（不是参考值）。
+ * @param omega_mech_rad_s [en] mechanical speed, rad/s.
+ * @param omega_mech_rad_s [zh] 机械转速，rad/s。
+ * @param saturated [en] non-zero when the current loop was railing this period.
+ * @param saturated [zh] 本周期电流环撞限时非零。
+ * @return [en] FOC_OK, or FOC_ERR_STATE on a stale handle.
+ * @return [zh] FOC_OK；过期句柄时为 FOC_ERR_STATE。
+ * @since 0.1.9
+ * @exporter
+ */
+foc_err_t foc_autotune_accumulate(foc_autotune_t handle, float dt_s, float iq_a, float omega_mech_rad_s,
+                                  int32_t saturated);
+
+/**
+ * @brief [en] Turn the window into gains, or into a refusal.
+ * @brief [zh] 把窗口变成增益，或变成一个拒绝。
+ * @param handle [en] a live session.
+ * @param handle [zh] 活着的会话。
+ * @param out [en] non-NULL receiver; `struct_size` must be set by the caller.
+ * @param out [zh] 非 NULL 接收者；`struct_size` 须由调用方填好。
+ * @return [en] FOC_OK (which does **not** mean `valid`), FOC_ERR_PARAM, or FOC_ERR_STATE on a stale handle.
+ * @return [zh] FOC_OK（**不**表示 `valid`）、FOC_ERR_PARAM，或过期句柄时的 FOC_ERR_STATE。
+ * @note [en] A refusal is an answer: `status` stays FOC_OK, `valid` is 0 and `reason` says which of the refusals fired.
+ *            Returning an error code instead would make "this is not the machine you described" indistinguishable from
+ *            "you called me wrong", and those are different actions for the caller.
+ * @note [zh] 拒绝也是答案：`status` 仍是 FOC_OK、`valid` 为 0、`reason` 说明是哪一种拒绝。改成返回错误码会让"这不是你描
+ *            述的那台机器"与"你调用错了"无法区分，而那两件事对调用方意味着不同的动作。
+ * @since 0.1.9
+ * @exporter
+ */
+foc_err_t foc_autotune_finish(foc_autotune_t handle, foc_autotune_result_t *out);
+
+/**
+ * @brief [en] Throw away the window, keeping the configuration.
+ * @brief [zh] 丢弃当前窗口，保留配置。
+ * @param handle [en] a live session.
+ * @param handle [zh] 活着的会话。
+ * @return [en] FOC_OK, or FOC_ERR_STATE on a stale handle.
+ * @return [zh] FOC_OK；过期句柄时为 FOC_ERR_STATE。
+ * @since 0.1.9
+ * @exporter
+ */
+foc_err_t foc_autotune_reset(foc_autotune_t handle);
+
+/**
+ * @brief [en] Release the session slot.
+ * @brief [zh] 释放会话槽。
+ * @param handle [en] a handle from `foc_autotune_create()`; a stale handle answers FOC_ERR_STATE.
+ * @param handle [zh] 来自 `foc_autotune_create()` 的句柄；过期句柄答 FOC_ERR_STATE。
+ * @return [en] FOC_OK, or FOC_ERR_STATE on a stale handle.
+ * @return [zh] FOC_OK；过期句柄时为 FOC_ERR_STATE。
+ * @since 0.1.9
+ * @exporter
+ */
+foc_err_t foc_autotune_destroy(foc_autotune_t handle);

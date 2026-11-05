@@ -93,6 +93,12 @@ foc_err_t foc_bridge_torque_map_build(const foc_motor_params_t *params, float i_
 float foc_bridge_torque_estimate(const foc_torque_map_t *map, float id_a, float iq_a);
 foc_err_t foc_bridge_torque_command(const foc_torque_map_t *map, float requested_nm, float id_a,
                                     foc_torque_command_t *out);
+foc_err_t foc_bridge_autotune_create(const foc_autotune_config_t *config, foc_autotune_t *out);
+foc_err_t foc_bridge_autotune_accumulate(foc_autotune_t handle, float dt_s, float iq_a, float omega_mech_rad_s,
+                                         int32_t saturated);
+foc_err_t foc_bridge_autotune_finish(foc_autotune_t handle, foc_autotune_result_t *out);
+foc_err_t foc_bridge_autotune_reset(foc_autotune_t handle);
+foc_err_t foc_bridge_autotune_destroy(foc_autotune_t handle);
 #ifdef __cplusplus
 }
 #endif

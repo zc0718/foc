@@ -370,3 +370,32 @@ foc_err_t foc_torque_command(const foc_torque_map_t *map, float requested_nm, fl
     }
     return foc_bridge_torque_command(map, requested_nm, id_a, out);
 }
+
+
+foc_err_t foc_autotune_create(const foc_autotune_config_t *config, foc_autotune_t *out) {
+    if ((config == NULL) || (out == NULL) || !isfinite(config->kt_nm_per_a) || !isfinite(config->j_expected_kg_m2) ||
+        !isfinite(config->b_expected_nm_s) || !isfinite(config->bandwidth_rad_s) || !isfinite(config->i_max_a) ||
+        !isfinite(config->tolerance) || !isfinite(config->min_current_a) || !isfinite(config->max_residual)) {
+        return FOC_ERR_PARAM;
+    }
+    return foc_bridge_autotune_create(config, out);
+}
+
+foc_err_t foc_autotune_accumulate(foc_autotune_t handle, float dt_s, float iq_a, float omega_mech_rad_s,
+                                  int32_t saturated) {
+    if (!isfinite(dt_s) || !isfinite(iq_a) || !isfinite(omega_mech_rad_s)) {
+        return FOC_ERR_PARAM;
+    }
+    return foc_bridge_autotune_accumulate(handle, dt_s, iq_a, omega_mech_rad_s, saturated);
+}
+
+foc_err_t foc_autotune_finish(foc_autotune_t handle, foc_autotune_result_t *out) {
+    if (out == NULL) {
+        return FOC_ERR_PARAM;
+    }
+    return foc_bridge_autotune_finish(handle, out);
+}
+
+foc_err_t foc_autotune_reset(foc_autotune_t handle) { return foc_bridge_autotune_reset(handle); }
+
+foc_err_t foc_autotune_destroy(foc_autotune_t handle) { return foc_bridge_autotune_destroy(handle); }

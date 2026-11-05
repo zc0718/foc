@@ -736,6 +736,87 @@ typedef struct foc_hal_callbacks {
 /** @brief [en] Handle to a protector instance. [zh] 保护器实例的句柄。 @since 0.1.1 */
 typedef struct foc_protector_s *foc_protector_t;
 
+/**
+ * @brief [en] Handle to a speed-tuning session.
+ * @brief [zh] 一次转速整定会话的句柄。
+ * @note [en] Marked **experimental**: the procedure is stable, the struct layout is not promised across releases. A
+ *            session is a *procedure*, not a register -- there is no way to read it tick by tick, only to feed it a
+ *            window and ask for an answer, which is why it is a handle of its own rather than a motor register.
+ * @note [zh] 标记为 **experimental**：流程是稳定的，结构布局不承诺跨版本不变。一次会话是一个**过程**而不是一个寄存器——
+ *            没法逐拍读它，只能喂一段窗口再要一个答案，所以它是自己的句柄而不是电机寄存器。
+ * @since 0.1.9
+ * @exporter
+ */
+typedef struct foc_autotune_s *foc_autotune_t;
+
+/**
+ * @brief [en] What the caller believes about the machine, and how far the measurement may differ.
+ * @brief [zh] 调用方对这台机器的认知，以及测量结果允许偏离多少。
+ * @note [en] `kt_nm_per_a` is used only for the fallback gains and for `j_kg_m2`; the fit identifies two **ratios**, so
+ *            a wrong nameplate cannot move the gains -- it can only make `valid` come back false, which is the point.
+ * @note [zh] `kt_nm_per_a` 只用于回退增益与 `j_kg_m2`；拟合辨识的是两个**比值**，所以铭牌错了不会移动增益——它只会让
+ *            `valid` 变假，而这正是它的用途。
+ * @since 0.1.9
+ * @exporter
+ */
+typedef struct foc_autotune_config {
+    uint32_t struct_size;   /* sizeof(foc_autotune_config_t) */
+    float kt_nm_per_a;      /* nameplate torque constant, N*m/A */
+    float j_expected_kg_m2; /* the inertia the caller believes in, kg*m^2 */
+    float b_expected_nm_s;  /* the viscous coefficient believed in, N*m*s */
+    float bandwidth_rad_s;  /* requested closed-loop bandwidth, rad/s */
+    float i_max_a;          /* current ceiling for the produced gains, A */
+    float tolerance;        /* relative distance the measured inertia may sit from j_expected */
+    float min_current_a;    /* below this peak current the window carries no information */
+    float max_residual;     /* largest normalised fit residual still called a measurement */
+    int32_t min_samples;    /* shortest window that can be called one */
+} foc_autotune_config_t;
+
+/**
+ * @brief [en] A tuning pass's answer, including whether it is an answer at all.
+ * @brief [zh] 一次整定的答案，包括它到底算不算答案。
+ * @note [en] When `valid` is 0 the gains are the **nameplate** ones -- exactly what `foc_speed_pi_config()` would have
+ *            produced -- so a caller that applies whatever it gets applies nothing new. A fallback of zero would be a
+ *            drive that cannot produce torque; a fallback of the measured value would be a silent re-tune to a machine
+ *            nobody described.
+ * @note [zh] `valid` 为 0 时携带的是**铭牌**增益——正是 `foc_speed_pi_config()` 会产出的那些——于是"拿到什么就用什么" 的
+ *            调用方什么都没换。回退成零是一台出不了力矩的驱动器；回退成实测值则是悄悄把驱动器整到一台没人描述过的机器
+ *            上。
+ * @since 0.1.9
+ * @exporter
+ */
+typedef struct foc_autotune_result {
+    uint32_t struct_size;  /* sizeof(foc_autotune_result_t) */
+    int32_t status;        /* foc_err_t of the configuration itself */
+    int32_t valid;         /* 1 only when the window is a measurement of THIS machine */
+    float kt_over_j;       /* identified acceleration per amp, rad/s^2 per A */
+    float b_over_j;        /* identified mechanical pole, 1/s */
+    float j_kg_m2;         /* kt / (kt/J) from the nameplate kt; 0 when kt was not given */
+    float kp_a_per_rad_s;  /* proportional gain to apply */
+    float ki_a_per_rad_s2; /* integral gain to apply */
+    float residual;        /* normalised RMS residual of the fit; 0 = the model explains the window exactly */
+    const char *reason;    /* why valid is 0, for a log; "" when valid */
+    int32_t samples;       /* periods judged */
+} foc_autotune_result_t;
+
+/**
+ * @brief [en] Start a tuning session.
+ * @brief [zh] 开始一次整定会话。
+ * @param config [en] non-NULL; `struct_size` must be set by the caller.
+ * @param config [zh] 非 NULL；`struct_size` 须由调用方填好。
+ * @param out [en] non-NULL receiver of the handle.
+ * @param out [zh] 非 NULL 的句柄接收者。
+ * @return [en] FOC_OK, FOC_ERR_PARAM for a NULL argument, an uncovered `struct_size` or a configuration that could
+ *              never produce an answer, and FOC_ERR_NO_RESOURCE when every session slot is in use.
+ * @return [zh] FOC_OK；空指针、`struct_size` 覆盖不住、或配置永远给不出答案时为 FOC_ERR_PARAM；会话槽用尽时为
+ *              FOC_ERR_NO_RESOURCE。
+ * @post [en] `*out` is owned by the caller until `foc_autotune_destroy()`.
+ * @post [zh] `*out` 归调用方所有，直到 `foc_autotune_destroy()`。
+ * @since 0.1.9
+ * @exporter
+ */
+
+
 
 /**
  * @brief [en] One period of the control loop, copied out of the C++ trace channel.

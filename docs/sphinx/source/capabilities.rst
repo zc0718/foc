@@ -275,6 +275,10 @@ a shortcut past the evidence levels, and it never reaches L4 without hardware.
        whatever it gets applies nothing new. `reason` names which of seven refusals fired, because "spin with a varying
        current" and "something is pulling on the axis" are different actions. The fit keeps an **intercept** so a constant
        unknown load cannot be attributed to the current.
+       **Reachable from C since 0.1.9** (five `experimental` entries: `foc_autotune_create/accumulate/finish/reset/destroy`),
+       so a C or Python consumer can run the procedure. A session is its own opaque handle rather than a motor register --
+       nothing is readable tick by tick, only a window to feed and an answer to ask for -- and `finish()` answering
+       `FOC_OK` with `valid == 0` is a refusal, not a failure.
      - `Param` for a non-positive `kt`, `j_expected`, `bandwidth` or `i_max`, a negative `b_expected`, a non-positive
        tolerance or residual bound, and a window shorter than three samples. `State`-shaped refusals arrive as
        `valid == false` with a reason: too short a window, a saturated period, a current that never varied, a residual above
