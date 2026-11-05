@@ -469,6 +469,16 @@ What the table settles:
   on the other branch (1.5 rad mean error against the pure integrator's 0.20, at every current from 0.2 to 3 A with an
   exact `Rs`). This is also the correction to A-110: the pi-sized error first recorded here was the rig never filling in
   `config.dual_inductance`, which leaves the member on `Param` and its output a constant.
+* **Below 50 rad/s the floor is the inverter's, not the observer's.** `test_sil_sensorless_floor.cpp` asks the question
+  on an **ideal** SPM (`lq == ld`, no dead time, no sensor noise, the observer given the plant's own parameters) and the
+  answer refutes the premise it was built on: the closed loop holds **0.0019 rad at 5 rad/s** and **0.0152 rad at 40**,
+  so there is no low-speed floor in the observer at all -- what is left is transport delay, since `error/omega_mech` is a
+  constant **3.8e-4 s**, i.e. 1.1 control periods per electrical cycle over a 70x speed range. Adding one real
+  non-ideality changes everything: with 1 us of dead time (0.48 V at this bus) 20 rad/s loses the machine outright
+  (3.14 rad, estimate inverted) and 40 rad/s reads 1.03 rad, while at 200 rad/s the same distortion costs nothing (0.041
+  against 0.073 clean). The boundary is therefore `omega*psi_f ~ V_dead`, which is **101 rad/s** on this machine -- the
+  measured content of "no claim below 50 rad/s", and the reason it is a claim about hardware rather than about the
+  algorithm.
 * **The recorded 0.5079 rad is `NLFO`'s**, reproduced here to four digits, which is also what confirms this rig matches
   the one those records came from. The plan notes that quote observer limits were describing the non-shipping observer.
 
