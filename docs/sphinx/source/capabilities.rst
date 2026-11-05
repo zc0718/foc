@@ -66,6 +66,16 @@ whole of what "a procedure" buys. **L3** still needs the same two things every o
 sensitivity and an independent cross-check, e.g. the same procedure replayed on a second plant -- so a procedure is not
 a shortcut past the evidence levels, and it never reaches L4 without hardware.
 
+**The three obligations are executable rather than aspirational.** ``test_sop_outer_loop.cpp`` drives the outer-loop
+procedure end to end -- identify, propose, measure, held-out acceptance -- on two machines of different inertia, and
+records the objective as a **distance to failure** (``tolerance - |j_identified/j_nameplate - 1|``), a number that
+changes sign exactly where the library refuses. A gain fitted on the wrong machine is caught in both directions by a
+band whose two edges are themselves measured (the gain law's own residual, and the smallest nameplate error the repo
+calls actionable). The three red proofs were run and are recorded with the numbers: replacing the held-out machine with
+a copy of the fitted one, deleting the refusal path, and collapsing the parameter search to a single setting each turn
+exactly the expected case red. With that, the replay-on-a-second-machine half of **L3** is in place for this procedure;
+the sensitivity half is not, so the row stays **L2**.
+
 .. list-table:: capability matrix
    :header-rows: 1
    :widths: 20 22 20 24 8 6

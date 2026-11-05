@@ -4,6 +4,8 @@
 
 #include <gtest/gtest.h>
 
+#include "sil_sop_bench.hpp"
+
 #include <foc/core/observer/back_emf_observer.hpp>
 #include <foc/core/feedforward.hpp>
 #include <foc/core/pi.hpp>
@@ -401,8 +403,8 @@ using MotorWithFeedforward =
  * @brief [en] Zero-gain PI, so whatever reaches the modulator is the feedforward alone.
  * @brief [zh] 零增益 PI，于是送到调制器的只有前馈项。
  */
-auto make_zero_gain_policies(const foc::motor::MotorConfig& config,
-                             foc::core::DecouplingFeedforward::Terms terms) -> MotorWithFeedforward::Policies {
+auto make_zero_gain_policies(const foc::motor::MotorConfig& config, foc::core::DecouplingFeedforward::Terms terms)
+    -> MotorWithFeedforward::Policies {
     const foc::core::Pi::Config zero{0.0F, 0.0F, -24.0F, 24.0F, -24.0F, 24.0F};
     foc::core::DecouplingFeedforward::Config ff = foc::feedforward_config(config);
     ff.terms = terms;
@@ -1027,73 +1029,13 @@ TEST(Motor, AScalingRequestTheSlotCannotDeliverIsReportedNotIgnored) {
 
 namespace {
 
-constexpr float kGainDt = 5e-5F; ///< 20 kHz, the rate the tuning is used at
-
-/**
- * @brief [en] Amplitude gain of the sampled speed loop at frequency `f`, with an ideal current loop.
- *
- * @brief [zh] 采样速度环在频率 `f` 处的幅值增益，电流环视为理想。
- *
- *     `j_hat`/`b_hat` go into the gains and `j_true`/`b_true` into the machine, which is the whole point: a nameplate
- *     error is exactly the difference between those two pairs. The current loop is skipped (torque = kt*i in the same
- *     period), so whatever this measures belongs to the **speed** law and not to a cascade.
- *
- *     `j_hat`/`b_hat` 进增益、`j_true`/`b_true` 进机器，这正是要点：铭牌误差就是这两对参数之差。电流环被跳过（力矩在同
- *     一周期内就是 kt·i），所以这里量到的一切属于**速度**律而不属于任何级联。
- */
-auto speed_loop_gain(float bandwidth_rad_s, float j_true, float b_true, float j_hat, float b_hat, float kt, double f_hz,
-                     bool with_ki) -> double {
-    foc::motor::MotorConfig config{0.5F, 4.0e-4F, 8.0e-4F, kt, j_hat, b_hat, 4U, 3.0F, 20000.0F, 500.0F};
-    foc::core::Pi::Config pi_config = foc::speed_pi_config(config, bandwidth_rad_s);
-    if (!with_ki) {
-        pi_config.ki = 0.0F;
-    }
-    foc::core::Pi pi(pi_config);
-    const auto settle = static_cast<int>((40.0 / f_hz) / kGainDt);
-    const auto measure = static_cast<int>((20.0 / f_hz) / kGainDt);
-    float omega = 0.0F;
-    double sum_squares = 0.0;
-    int counted = 0;
-    for (int k = 0; k < (settle + measure); ++k) {
-        const auto t = static_cast<float>(k) * kGainDt;
-        const auto command = static_cast<float>(std::sin(f_hz * static_cast<double>(t)));
-        const float current = pi.step(command, omega, kGainDt);
-        omega += (((kt * current) - (b_true * omega)) / j_true) * kGainDt;
-        if (k >= settle) {
-            sum_squares += static_cast<double>(omega) * omega;
-            ++counted;
-        }
-    }
-    const double rms_out = std::sqrt(sum_squares / static_cast<double>(counted));
-    return rms_out / 0.7071067811865476; // the command is a unit sine
-}
-
-/**
- * @brief [en] The frequency where the loop's amplitude gain crosses `1/sqrt(2)`, as a multiple of the requested
- *             bandwidth.
- *
- * @brief [zh] 环路幅值增益越过 `1/√2` 的频率，以请求带宽的倍数表示。
- *
- *     Bisection, not a sweep: the gain is monotone in frequency, so the crossing can be located to any precision and
- *     the case does not have to argue about which grid point was closest.
- *
- *     二分而不是扫描：增益对频率单调，所以穿越点能定位到任意精度，用例不必为"哪个栅格点最近"争论。
- */
-auto minus3db_over_requested(float bandwidth_rad_s, float j_true, float b_true, float j_hat, float b_hat,
-                             float kt) -> double {
-    const double target = 0.7071067811865476;
-    double low = 0.05 * static_cast<double>(bandwidth_rad_s);
-    double high = 8.0 * static_cast<double>(bandwidth_rad_s);
-    for (int i = 0; i < 40; ++i) {
-        const double mid = std::sqrt(low * high);
-        if (speed_loop_gain(bandwidth_rad_s, j_true, b_true, j_hat, b_hat, kt, mid, true) >= target) {
-            low = mid;
-        } else {
-            high = mid;
-        }
-    }
-    return std::sqrt(low * high) / static_cast<double>(bandwidth_rad_s);
-}
+// The two measurements live in `sil_sop_bench.hpp` because the SOP driver replays them on a second machine: one copy,
+// two consumers. Moving them changed no number here -- same code, same inputs.
+// 这两项测量放在 `sil_sop_bench.hpp`，因为 SOP 驱动要在第二台机器上重放它们：一份实现、两个使用方。搬动没有改动这里的
+// 任何数字——同样的代码、同样的输入。
+using foc::sil::kSopGainDt;
+using foc::sil::minus3db_over_requested;
+using foc::sil::speed_loop_gain;
 
 } // namespace
 
@@ -1148,7 +1090,7 @@ TEST(MotorConfig, TheInertiaEstimateIsTheBandwidthAndTheFrictionEstimateIsNot) {
     for (const float bandwidth : {50.0F, 100.0F, 200.0F, 400.0F}) {
         const double ratio = minus3db_over_requested(bandwidth, kJ, kB, kJ, kB, kKt);
         std::printf("\n[motor-config] wb %3.0f rad/s (wb*dt %.4f): closed loop -3 dB / wb = %.5f\n",
-                    static_cast<double>(bandwidth), static_cast<double>(bandwidth * kGainDt), ratio);
+                    static_cast<double>(bandwidth), static_cast<double>(bandwidth * kSopGainDt), ratio);
         EXPECT_GT(ratio, 1.0) << "wb " << bandwidth;
         EXPECT_LT(ratio, 1.05) << "the gain law was expected to land within 5 % at wb " << bandwidth;
     }
