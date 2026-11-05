@@ -12,6 +12,7 @@
 #include <foc/core/alignment.hpp>
 #include <foc/core/auto_tune.hpp>
 #include <foc/core/board_check.hpp>
+#include <foc/core/cogging_learn.hpp>
 #include <foc/core/commissioning.hpp>
 #include <foc/core/field_weakening.hpp>
 #include <foc/core/observer/back_emf_observer.hpp>
@@ -874,6 +875,84 @@ auto autotune_config(const foc_autotune_config_t& in) noexcept -> core::SpeedTun
     out.min_current_a = in.min_current_a;
     out.max_residual = in.max_residual;
     out.min_samples = static_cast<int>(in.min_samples);
+    return out;
+}
+
+constexpr std::uintptr_t kCoggingLearnMagic = 0x464F4347U; // "FOCG": a learning token of its own
+
+/**
+ * @brief [en] Two learning sessions: commissioning learns one machine at a time, and a second slot is what lets a
+ *             caller start the next window before releasing the last table.
+ * @brief [zh] 两个学习会话：调试一次学一台，第二个槽位让调用方在释放上一张表之前就能开下一段窗口。
+ */
+constexpr std::size_t kMaxCoggingLearns = 2U;
+
+/**
+ * @brief [en] One learning slot, plus the `required` count the C side has to echo even when it writes no table.
+ * @brief [zh] 一个学习槽位，外加 C 侧即使什么都不写也必须报出的 `required` 条数。
+ * @note [en] `required` is cached here because `CoggingLearner` does not expose its configuration: the C contract says
+ *            a refused call still reports how many entries the answer needs, and re-deriving that from the config the
+ *            caller passed is exactly the second copy of a rule this layer keeps refusing to make.
+ * @note [zh] `required` 缓存在这里，因为 `CoggingLearner` 不暴露自己的配置：C 契约要求被拒绝的调用也要报出答案需要几
+ *            条，而"从调用方传进来的配置里重推一遍"正是这一层一直在拒绝做的第二份规则。
+ */
+struct CoggingLearnSlot final {
+    alignas(core::CoggingLearner) unsigned char storage[sizeof(core::CoggingLearner)]{};
+    core::CoggingLearner* instance{nullptr};
+    std::int32_t required{0};
+    std::uint32_t generation{0U};
+    bool alive{false};
+};
+
+CoggingLearnSlot g_cogging_learns[kMaxCoggingLearns];
+
+auto mint_cogging_learn(std::uint32_t slot, std::uint32_t generation) noexcept -> foc_cogging_learn_t {
+    // Same token discipline as `mint_protector`: an integer that is never dereferenced, carrying a magic, a generation
+    // and a slot index. The cast is the encoding, not an escape from the type system.
+    // 与 `mint_protector` 同一套 token 纪律：一个从不解引用的整数，装着 magic、generation 与槽位号。那次转型就是编码
+    // 本身，不是绕开类型系统。
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast, performance-no-int-to-ptr)
+    return reinterpret_cast<foc_cogging_learn_t>((kCoggingLearnMagic << 32U) |
+                                                 (static_cast<std::uintptr_t>(generation) << kSlotBits) |
+                                                 static_cast<std::uintptr_t>(slot));
+}
+
+/**
+ * @brief [en] The slot a handle names, or nullptr when the handle is stale or not a learning token at all.
+ * @brief [zh] 句柄指名的槽位；句柄过期或根本不是学习 token 时为 nullptr。
+ */
+auto resolve_cogging_learn(foc_cogging_learn_t handle) noexcept -> CoggingLearnSlot* {
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast, performance-no-int-to-ptr) -- the token is compared, never dereferenced.
+    const auto raw = reinterpret_cast<std::uintptr_t>(handle);
+    if ((raw >> 32U) != kCoggingLearnMagic) {
+        return nullptr;
+    }
+    const auto slot_index = static_cast<std::uint32_t>(raw & 0xFFU);
+    const auto generation = static_cast<std::uint32_t>((raw >> kSlotBits) & 0xFFFFFFU);
+    if (slot_index >= kMaxCoggingLearns) {
+        return nullptr;
+    }
+    CoggingLearnSlot& slot = g_cogging_learns[slot_index];
+    if (!slot.alive || (slot.generation != generation)) {
+        return nullptr;
+    }
+    return &slot;
+}
+
+/** @brief [en] Field by field, as everywhere else: the C struct carries a `struct_size` header the C++ config has not.</brief> */
+/** @brief [zh] 逐字段，处处如此：C 结构多一个 C++ 配置没有的 `struct_size` 头。 */
+auto cogging_config(const foc_cogging_learn_config_t& in) noexcept -> core::CoggingLearnConfig {
+    core::CoggingLearnConfig out{};
+    out.params = core::MachineParams{0.0F, in.ld, in.lq, in.psi_f};
+    out.pole_pairs = static_cast<std::uint8_t>(in.pole_pairs);
+    for (std::size_t k = 0; k < 6U; ++k) {
+        out.orders[k] = in.orders[k];
+    }
+    out.count = static_cast<int>(in.count);
+    out.revolutions = static_cast<int>(in.revolutions);
+    out.min_speed_rad_s = in.min_speed_rad_s;
+    out.max_speed_rad_s = in.max_speed_rad_s;
+    out.speed_tolerance = in.speed_tolerance;
     return out;
 }
 
@@ -2250,6 +2329,123 @@ foc_err_t foc_bridge_autotune_destroy(foc_autotune_t handle) {
     using TunerT = foc::core::SpeedTuner;
     slot->instance->~TunerT();
     slot->instance = nullptr;
+    slot->alive = false;
+    return FOC_OK;
+}
+
+foc_err_t foc_bridge_cogging_learn_create(const foc_cogging_learn_config_t* config, foc_cogging_learn_t* out) {
+    if ((config == nullptr) || (out == nullptr) || !foc::api::size_ok(*config)) {
+        return FOC_ERR_PARAM;
+    }
+    const foc::core::CoggingLearnConfig cfg = foc::api::cogging_config(*config);
+    // Same discipline as the tuning session: the configuration is judged by the library's own predicate, never by a
+    // second copy of it written here.
+    // 与整定会话同一套纪律：配置由库自己的判据裁定，绝不在这里再写一份。
+    if (foc::core::CoggingLearner(cfg).validate() != foc::ErrorCode::Ok) {
+        return FOC_ERR_PARAM;
+    }
+    std::size_t index = foc::api::kMaxCoggingLearns;
+    for (std::size_t k = 0; k < foc::api::kMaxCoggingLearns; ++k) {
+        if (!foc::api::g_cogging_learns[k].alive) {
+            index = k;
+            break;
+        }
+    }
+    if (index >= foc::api::kMaxCoggingLearns) {
+        return FOC_ERR_NO_RESOURCE;
+    }
+    foc::api::CoggingLearnSlot& slot = foc::api::g_cogging_learns[index];
+    slot.instance = new (slot.storage) foc::core::CoggingLearner(cfg);
+    slot.required = static_cast<std::int32_t>(cfg.count);
+    slot.alive = true;
+    slot.generation = (slot.generation + 1U) & 0xFFFFFFU;
+    *out = foc::api::mint_cogging_learn(static_cast<std::uint32_t>(index), slot.generation);
+    return FOC_OK;
+}
+
+foc_err_t foc_bridge_cogging_learn_accumulate(foc_cogging_learn_t handle, float theta_mech_rad, float iq_a, float id_a,
+                                              float omega_mech_rad_s, std::int32_t saturated) {
+    foc::api::CoggingLearnSlot* slot = foc::api::resolve_cogging_learn(handle);
+    if (slot == nullptr) {
+        return FOC_ERR_STATE;
+    }
+    slot->instance->accumulate(theta_mech_rad, iq_a, id_a, omega_mech_rad_s, saturated != 0);
+    return FOC_OK;
+}
+
+foc_err_t foc_bridge_cogging_learn_ready(foc_cogging_learn_t handle, std::int32_t* out_ready) {
+    if (out_ready == nullptr) {
+        return FOC_ERR_PARAM;
+    }
+    foc::api::CoggingLearnSlot* slot = foc::api::resolve_cogging_learn(handle);
+    if (slot == nullptr) {
+        return FOC_ERR_STATE;
+    }
+    *out_ready = slot->instance->ready() ? 1 : 0;
+    return FOC_OK;
+}
+
+foc_err_t foc_bridge_cogging_learn_finish(foc_cogging_learn_t handle, foc_cogging_harmonic_t* out_table,
+                                          std::int32_t capacity, foc_cogging_learn_result_t* out_result) {
+    if ((out_result == nullptr) || !foc::api::size_ok(*out_result)) {
+        return FOC_ERR_PARAM;
+    }
+    foc::api::CoggingLearnSlot* slot = foc::api::resolve_cogging_learn(handle);
+    if (slot == nullptr) {
+        return FOC_ERR_STATE;
+    }
+    const std::int32_t required = slot->required;
+    // The window is always evaluated, on a stack scratch table when the caller offered none. Skipping the evaluation on
+    // the short-buffer path would make the two refusals ("your buffer" and "your window") the same answer, and the
+    // caller would have to fix the buffer before it could learn that the window was also bad.
+    // 窗口总是被评估，调用方没给缓冲区时就用栈上的草稿表。若在短缓冲区那条路径上跳过评估，"你的缓冲区"与"你的窗口"这
+    // 两条拒绝就会变成同一个答案，而调用方得先修好缓冲区才能知道窗口也是坏的。
+    foc::core::CoggingCompHarmonic scratch[6]{};
+    const foc::core::CoggingLearnReport report = slot->instance->finish(scratch, required);
+    out_result->status = static_cast<std::int32_t>(report.status);
+    out_result->count = 0;
+    out_result->required = required;
+    out_result->capacity = (out_table != nullptr) ? capacity : 0;
+    out_result->revolutions = report.revolutions;
+    out_result->speed_min_rad_s = report.speed_min;
+    out_result->speed_max_rad_s = report.speed_max;
+    if (out_table != nullptr) {
+        if (capacity < required) {
+            // Never truncate: a table shorter than `required` makes the caller believe it asked for fewer orders, and
+            // the harmonics it is missing are the ones it has no record of.
+            // 从不截断：比 `required` 短的表会让调用方以为它只要了这么几次，而缺掉的那些正是它没有记录的。
+            return FOC_ERR_PARAM;
+        }
+        if (report.status == foc::ErrorCode::Ok) {
+            for (std::int32_t k = 0; k < required; ++k) {
+                out_table[k].order = static_cast<std::uint32_t>(scratch[k].order);
+                out_table[k].amplitude_nm = scratch[k].amplitude_nm;
+                out_table[k].phase_rad = scratch[k].phase_rad;
+            }
+            out_result->count = required;
+        }
+    }
+    return foc::api::to_c(report.status);
+}
+
+foc_err_t foc_bridge_cogging_learn_reset(foc_cogging_learn_t handle) {
+    foc::api::CoggingLearnSlot* slot = foc::api::resolve_cogging_learn(handle);
+    if (slot == nullptr) {
+        return FOC_ERR_STATE;
+    }
+    slot->instance->reset();
+    return FOC_OK;
+}
+
+foc_err_t foc_bridge_cogging_learn_destroy(foc_cogging_learn_t handle) {
+    foc::api::CoggingLearnSlot* slot = foc::api::resolve_cogging_learn(handle);
+    if (slot == nullptr) {
+        return FOC_ERR_STATE;
+    }
+    using LearnerT = foc::core::CoggingLearner;
+    slot->instance->~LearnerT();
+    slot->instance = nullptr;
+    slot->required = 0;
     slot->alive = false;
     return FOC_OK;
 }

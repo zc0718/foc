@@ -1103,3 +1103,115 @@ foc_err_t foc_autotune_reset(foc_autotune_t handle);
  * @exporter
  */
 foc_err_t foc_autotune_destroy(foc_autotune_t handle);
+
+/**
+ * @brief [en] Open a cogging-learning session for one machine and one window shape.
+ * @brief [zh] 为一台机器、一种窗口形状开一次齿槽学习会话。
+ * @param config [en] what to learn and where the window may sit.
+ * @param config [zh] 学什么，以及窗口可以落在哪里。
+ * @param out [en] receives the session handle.
+ * @param out [zh] 接收会话句柄。
+ * @return [en] FOC_OK; FOC_ERR_PARAM when the configuration cannot work (rejected by the library's own predicate, not
+ *              by a second copy of it here); FOC_ERR_NO_RESOURCE when both session slots are in use.
+ * @return [zh] FOC_OK；配置本身不成立时 FOC_ERR_PARAM（由库自己的判据驳回，而不是这里的一份拷贝）；两个会话槽都被占用时
+ *              为 FOC_ERR_NO_RESOURCE。
+ * @note [en] **Experimental**: the procedure is stable, the layout is not promised across releases.
+ * @note [zh] **experimental**：流程稳定，布局不承诺跨版本不变。
+ * @since 0.1.9
+ * @exporter
+ */
+foc_err_t foc_cogging_learn_create(const foc_cogging_learn_config_t *config, foc_cogging_learn_t *out);
+
+/**
+ * @brief [en] Feed one control period of the speed loop's answer.
+ * @brief [zh] 喂一个控制周期的"速度环的回答"。
+ * @param handle [en] a live session.
+ * @param handle [zh] 活着的会话。
+ * @param theta_mech_rad [en] mechanical angle, unwrapped.
+ * @param theta_mech_rad [zh] 机械角，不做归一化。
+ * @param iq_a [en] the q-axis current the loop supplied, A.
+ * @param iq_a [zh] 环路供给的 q 轴电流，A。
+ * @param id_a [en] the d-axis current at the same instant, A (used for dT/diq).
+ * @param id_a [zh] 同一时刻的 d 轴电流，A（用于 dT/diq）。
+ * @param omega_mech_rad_s [en] mechanical speed, rad/s.
+ * @param omega_mech_rad_s [zh] 机械转速，rad/s。
+ * @param saturated [en] non-zero when the current loop was railing this period.
+ * @param saturated [zh] 本周期电流环撞限时非零。
+ * @return [en] FOC_OK; FOC_ERR_PARAM when a sample is not finite (**the sample is not taken**, and saying so beats a
+ *              window that silently grew); FOC_ERR_STATE on a stale handle.
+ * @return [zh] FOC_OK；样本非有限时 FOC_ERR_PARAM（**该样本不被采信**——说出来胜过让窗口悄悄长大）；过期句柄时为
+ *              FOC_ERR_STATE。
+ * @since 0.1.9
+ * @exporter
+ */
+foc_err_t foc_cogging_learn_accumulate(foc_cogging_learn_t handle, float theta_mech_rad, float iq_a, float id_a,
+                                       float omega_mech_rad_s, int32_t saturated);
+
+/**
+ * @brief [en] Whether the window already holds the revolutions the configuration asked for.
+ * @brief [zh] 窗口是否已跨过配置要求的转数。
+ * @param handle [en] a live session.
+ * @param handle [zh] 活着的会话。
+ * @param out_ready [en] 1 when a `finish()` may be attempted, 0 otherwise.
+ * @param out_ready [zh] 可以尝试 `finish()` 时为 1，否则 0。
+ * @return [en] FOC_OK, FOC_ERR_PARAM on a null pointer, or FOC_ERR_STATE on a stale handle.
+ * @return [zh] FOC_OK；空指针时 FOC_ERR_PARAM；过期句柄时为 FOC_ERR_STATE。
+ * @since 0.1.9
+ * @exporter
+ */
+foc_err_t foc_cogging_learn_ready(foc_cogging_learn_t handle, int32_t *out_ready);
+
+/**
+ * @brief [en] Turn the window into a table, or into the reasons it is not one.
+ * @brief [zh] 把窗口变成一张表，或者变成"它为什么不是表"的理由。
+ * @param handle [en] a live session.
+ * @param handle [zh] 活着的会话。
+ * @param out_table [en] destination for `required` entries, or null to ask for the report alone.
+ * @param out_table [zh] `required` 条的目标，或传空指针只问报告。
+ * @param capacity [en] how many entries `out_table` holds; ignored when `out_table` is null.
+ * @param capacity [zh] `out_table` 能装几条；`out_table` 为空时忽略。
+ * @param out_result [en] the report, on every return path.
+ * @param out_result [zh] 报告，每一条返回路径上都写。
+ * @return [en] FOC_OK with `count == required` (a table) or `count == 0` (the report-only call, meaning *the window was
+ *              good*); FOC_ERR_STATE when the window is not a measurement, with `result.status` naming which of the
+ *              four refusals fired; FOC_ERR_PARAM when `capacity` is smaller than `required` (**the window is not
+ *              evaluated in that case** — fix the buffer first, otherwise a small buffer and a bad window are the same
+ *              answer). FOC_ERR_PARAM also covers an `out_result` whose `struct_size` does not match this build, and a
+ *              null `out_result`.
+ * @return [zh] `struct_size` 与本构建不符的 `out_result`、以及空的 `out_result`，同样答 FOC_ERR_PARAM。 FOC_OK：`count
+ *              == required`（一张表）或 `count == 0`（只要报告的那次调用，意思是**窗口是好的**）；窗口不是一次测量时
+ *              FOC_ERR_STATE，`result.status` 指明是四条拒绝里的哪一条；`capacity` 小于 `required` 时 FOC_ERR_PARAM（**
+ *              此时不评估窗口**——先修缓冲区，否则"缓冲区太小"与"窗口不好"会是同一个答案）。
+ * @note [en] **Never truncates.** A table shorter than `required` would make the caller believe it asked for fewer
+ *            orders, and a compensator built from it would be missing exactly the harmonics nobody kept a record of.
+ * @note [zh] **从不截断。** 比 `required` 短的表会让调用方以为它只要了这么几次，而用它造出的补偿器恰好缺掉那些没人记录
+ *            过的谐波。
+ * @since 0.1.9
+ * @exporter
+ */
+foc_err_t foc_cogging_learn_finish(foc_cogging_learn_t handle, foc_cogging_harmonic_t *out_table, int32_t capacity,
+                                   foc_cogging_learn_result_t *out_result);
+
+/**
+ * @brief [en] Throw away the window, keeping the configuration.
+ * @brief [zh] 丢弃当前窗口，保留配置。
+ * @param handle [en] a live session.
+ * @param handle [zh] 活着的会话。
+ * @return [en] FOC_OK, or FOC_ERR_STATE on a stale handle.
+ * @return [zh] FOC_OK；过期句柄时为 FOC_ERR_STATE。
+ * @since 0.1.9
+ * @exporter
+ */
+foc_err_t foc_cogging_learn_reset(foc_cogging_learn_t handle);
+
+/**
+ * @brief [en] Release the session slot.
+ * @brief [zh] 释放会话槽。
+ * @param handle [en] a handle from `foc_cogging_learn_create()`; a stale handle answers FOC_ERR_STATE.
+ * @param handle [zh] 来自 `foc_cogging_learn_create()` 的句柄；过期句柄答 FOC_ERR_STATE。
+ * @return [en] FOC_OK, or FOC_ERR_STATE on a stale handle.
+ * @return [zh] FOC_OK；过期句柄时为 FOC_ERR_STATE。
+ * @since 0.1.9
+ * @exporter
+ */
+foc_err_t foc_cogging_learn_destroy(foc_cogging_learn_t handle);

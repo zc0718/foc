@@ -936,3 +936,82 @@ typedef struct foc_torque_command {
     uint8_t limited;      /* 1 when the request was clipped */
     uint8_t reserved[3];  /* fixed layout; written as 0 */
 } foc_torque_command_t;
+
+
+/**
+ * @brief [en] One harmonic of a learned cogging table: a torque, not a current.
+ * @brief [zh] 学到的一条齿槽谐波：是转矩，不是电流。
+ * @note [en] `amplitude_nm` is always positive and `phase_rad` is the phase at `theta_mech = 0`, so the wheel's shape
+ *            is `amplitude_nm * sin(order * theta + phase_rad)`. That is the same type the compensator consumes, which
+ *            is what makes a learned table usable without a units conversion in the caller.
+ * @note [zh] `amplitude_nm` 恒为正，`phase_rad` 是 `theta_mech = 0` 处的相位，于是轮的形状是 `amplitude_nm·sin(order·θ
+ *            + phase_rad)`。它与补偿器消费的是同一类型，这正是学到的表能被调用方不经单位换算直接使用的原因。
+ * @since 0.1.9
+ * @exporter
+ */
+typedef struct foc_cogging_harmonic {
+    uint32_t order;     /* per mechanical revolution */
+    float amplitude_nm; /* peak of this harmonic, N*m; always >= 0 */
+    float phase_rad;    /* phase at theta_mech = 0, rad, wrapped into (-pi, pi] */
+} foc_cogging_harmonic_t;
+
+/**
+ * @brief [en] Handle to a cogging-learning session.
+ * @brief [zh] 一次齿槽学习会话的句柄。
+ * @note [en] Marked **experimental**, like `foc_autotune_t`: the procedure is stable, the layout is not promised across
+ *            releases. A session exists because learning is a *window* rather than a value.
+ * @note [zh] 与 `foc_autotune_t` 一样标记为 **experimental**：流程稳定，布局不承诺跨版本不变。会话之所以存在，是因为学
+ *            习是一段**窗口**而不是一个值。
+ * @since 0.1.9
+ * @exporter
+ */
+typedef struct foc_cogging_learn_s *foc_cogging_learn_t;
+
+/**
+ * @brief [en] What to learn, from which machine, over which window.
+ * @brief [zh] 学什么、学哪台机器、跨哪个窗口。
+ * @note [en] The speed band is not a safety check bolted on: the learner reads the current a *speed loop* supplies, so
+ *            what it learns carries that loop's gain and lag. Inside the band the lag is a few degrees; above it the
+ *            table bakes in a phase error no averaging removes.
+ * @note [zh] 转速带不是外挂的安全检查：学习器读的是**速度环**供给的电流，所以它学到的带着那个环路的增益与滞后。带内滞后
+ *            只有几度；带外则把一个再怎么平均也去不掉的相位误差烘进表里。
+ * @since 0.1.9
+ * @exporter
+ */
+typedef struct foc_cogging_learn_config {
+    uint32_t struct_size;  /* sizeof(foc_cogging_learn_config_t) */
+    float psi_f;           /* permanent-magnet flux linkage, Wb */
+    float ld;              /* d-axis inductance, H; > 0 */
+    float lq;              /* q-axis inductance, H; > 0 */
+    uint32_t pole_pairs;   /* pole pairs; 0 is rejected */
+    uint8_t orders[6];     /* which mechanical orders to learn; 0 is rejected */
+    uint32_t count;        /* how many entries of `orders` are valid, 1..6 */
+    int32_t revolutions;   /* how many mechanical revolutions the window must hold, >= 1 */
+    float min_speed_rad_s; /* below this the loop's share is not measurable; refuse */
+    float max_speed_rad_s; /* above this the lag is baked in; refuse; must exceed min_speed_rad_s */
+    float speed_tolerance; /* allowed relative spread of |omega| over the window; > 0 */
+} foc_cogging_learn_config_t;
+
+/**
+ * @brief [en] What a finished learning pass says about itself, and whether the caller's table had room for it.
+ * @brief [zh] 一次学习结束时对自己的交代，以及调用方那张表装不装得下。
+ * @note [en] `required` and `capacity` are both echoed on **every** return, including the ones that wrote nothing. That
+ *            is the whole capacity contract: a caller that offered too few slots is told how many the answer needs
+ *            instead of being handed a shorter table that looks complete, and a caller that asked for a report only
+ *            (`out == NULL`) learns the same numbers without owning a buffer.
+ * @note [zh] `required` 与 `capacity` 在**每一次**返回时都报出，包括什么都没写的那些。这就是完整的容量契约：槽位给少了
+ *            的调用方会被告知答案需要几条，而不是拿到一张看起来完整的短表；只要报告（`out == NULL`）的调用方则不必持有
+ *            缓冲区也能拿到同样的数。
+ * @since 0.1.9
+ * @exporter
+ */
+typedef struct foc_cogging_learn_result {
+    uint32_t struct_size;  /* sizeof(foc_cogging_learn_result_t) */
+    int32_t status;        /* foc_err_t: the library's own verdict on the window */
+    int32_t count;         /* how many harmonics were written; 0 when nothing was */
+    int32_t required;      /* how many entries the answer needs (the config's `count`) */
+    int32_t capacity;      /* how many entries the caller offered */
+    float revolutions;     /* mechanical revolutions the window covered */
+    float speed_min_rad_s; /* smallest |omega| seen, rad/s */
+    float speed_max_rad_s; /* largest |omega| seen, rad/s */
+} foc_cogging_learn_result_t;

@@ -235,6 +235,18 @@ a shortcut past the evidence levels, and it never reaches L4 without hardware.
        refusal that says nothing leaves the caller guessing whether to spin longer, slower, or steadier, and those are
        three different actions. A table it never saw is absent from the output rather than extrapolated, because a
        compensator acting on an invented harmonic injects a ripple of its own.
+       **Reachable from C since 0.1.9** (six `experimental` entries:
+       `foc_cogging_learn_create/accumulate/ready/finish/reset/destroy`), so a script can learn a machine's table. What
+       this answer is, is a **table**, so the C contract carries a capacity clause the C++ one does not need: `finish()`
+       echoes `required` (how many entries the answer needs) and `capacity` (how many the caller offered) on **every**
+       return, and given too few slots it refuses with `FOC_ERR_PARAM` instead of writing a shorter table -- a truncated
+       table tells the caller it asked for fewer orders, and the harmonics it is missing are exactly the ones nobody kept
+       a record of. Passing `out_table == NULL` asks for the report alone: `FOC_OK` with `count == 0` then means *the
+       window is a measurement and there was nowhere to put it*, which the C++ signature cannot say, because there
+       `nullptr` with `capacity == 0` is just another refusal. A short buffer is the caller's defect and answers
+       `FOC_ERR_PARAM`; the window's own refusals stay `FOC_ERR_STATE`, and both are reported: the buffer verdict wins
+       the return code because it is the one the caller can fix without changing the physics, and `result.status` still
+       names the window's verdict underneath.
      - `State` for fewer revolutions than configured, `|omega|` outside `[min, max]` either side, a window whose speed
        spread exceeds `speed_tolerance`, a saturated sample anywhere in it, and a destination with no room for the table;
        `Param` for order 0 (a constant torque is a load, not cogging), an inverted or non-finite band, a non-finite

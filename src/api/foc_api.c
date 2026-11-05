@@ -399,3 +399,39 @@ foc_err_t foc_autotune_finish(foc_autotune_t handle, foc_autotune_result_t *out)
 foc_err_t foc_autotune_reset(foc_autotune_t handle) { return foc_bridge_autotune_reset(handle); }
 
 foc_err_t foc_autotune_destroy(foc_autotune_t handle) { return foc_bridge_autotune_destroy(handle); }
+
+foc_err_t foc_cogging_learn_create(const foc_cogging_learn_config_t *config, foc_cogging_learn_t *out) {
+    if ((config == NULL) || (out == NULL) || !isfinite(config->psi_f) || !isfinite(config->ld) ||
+        !isfinite(config->lq) || !isfinite(config->min_speed_rad_s) || !isfinite(config->max_speed_rad_s) ||
+        !isfinite(config->speed_tolerance)) {
+        return FOC_ERR_PARAM;
+    }
+    return foc_bridge_cogging_learn_create(config, out);
+}
+
+foc_err_t foc_cogging_learn_accumulate(foc_cogging_learn_t handle, float theta_mech_rad, float iq_a, float id_a,
+                                       float omega_mech_rad_s, int32_t saturated) {
+    if (!isfinite(theta_mech_rad) || !isfinite(iq_a) || !isfinite(id_a) || !isfinite(omega_mech_rad_s)) {
+        return FOC_ERR_PARAM;
+    }
+    return foc_bridge_cogging_learn_accumulate(handle, theta_mech_rad, iq_a, id_a, omega_mech_rad_s, saturated);
+}
+
+foc_err_t foc_cogging_learn_ready(foc_cogging_learn_t handle, int32_t *out_ready) {
+    if (out_ready == NULL) {
+        return FOC_ERR_PARAM;
+    }
+    return foc_bridge_cogging_learn_ready(handle, out_ready);
+}
+
+foc_err_t foc_cogging_learn_finish(foc_cogging_learn_t handle, foc_cogging_harmonic_t *out_table, int32_t capacity,
+                                   foc_cogging_learn_result_t *out_result) {
+    if (out_result == NULL) {
+        return FOC_ERR_PARAM;
+    }
+    return foc_bridge_cogging_learn_finish(handle, out_table, capacity, out_result);
+}
+
+foc_err_t foc_cogging_learn_reset(foc_cogging_learn_t handle) { return foc_bridge_cogging_learn_reset(handle); }
+
+foc_err_t foc_cogging_learn_destroy(foc_cogging_learn_t handle) { return foc_bridge_cogging_learn_destroy(handle); }

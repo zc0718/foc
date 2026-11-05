@@ -400,6 +400,144 @@ int main(void) {
         CHECK(foc_autotune_destroy(tune) == FOC_ERR_STATE); /* twice: the second is a stale token */
     }
 
+    /* --- cogging learning: a procedure whose answer is a TABLE ---------------- */
+    {
+        foc_cogging_learn_config_t cc;
+        foc_cogging_learn_t learn = NULL;
+        foc_cogging_learn_t first = NULL;
+        foc_cogging_learn_t second = NULL;
+        foc_cogging_learn_result_t cr;
+        foc_cogging_harmonic_t table[2];
+        int32_t ready = -1;
+        /* One harmonic a compensator could cancel: order 6, 4 mN*m at 0.3 rad, on a machine whose
+         * kt_eff = 1.5*p*psi_f = 1.5*4*0.1 = 0.6 N*m/A. */
+        const uint8_t order = 6U;
+        const float amplitude_nm = 0.004F;
+        const float phase_rad = 0.3F;
+        const float kt_eff = 0.6F;
+        const float omega = 5.0F; /* inside [0.5, 10] */
+        const int periods = 6000; /* 3 revolutions at 2000 samples per revolution */
+
+        memset(&cc, 0, sizeof(cc));
+        cc.struct_size = (uint32_t)sizeof(cc);
+        cc.psi_f = 0.1F;
+        cc.ld = 1.0e-3F;
+        cc.lq = 1.0e-3F;
+        cc.pole_pairs = 4U;
+        cc.orders[0] = order;
+        cc.count = 1U;
+        cc.revolutions = 2;
+        cc.min_speed_rad_s = 0.5F;
+        cc.max_speed_rad_s = 10.0F;
+        cc.speed_tolerance = 0.10F;
+
+        /* --- the refusal half ------------------------------------------------------ */
+        CHECK(foc_cogging_learn_create(NULL, &learn) == FOC_ERR_PARAM);
+        CHECK(foc_cogging_learn_create(&cc, NULL) == FOC_ERR_PARAM);
+        {
+            foc_cogging_learn_config_t uncovered = cc;
+            uncovered.struct_size = 0U;
+            CHECK(foc_cogging_learn_create(&uncovered, &learn) == FOC_ERR_PARAM);
+        }
+        {
+            foc_cogging_learn_config_t empty = cc;
+            empty.count = 0U; /* no orders asked for: nothing to learn */
+            CHECK(foc_cogging_learn_create(&empty, &learn) == FOC_ERR_PARAM);
+        }
+        {
+            foc_cogging_learn_config_t dc = cc;
+            dc.orders[0] = 0U; /* order 0 is a load, not cogging */
+            CHECK(foc_cogging_learn_create(&dc, &learn) == FOC_ERR_PARAM);
+        }
+        {
+            foc_cogging_learn_config_t inverted = cc;
+            inverted.max_speed_rad_s = inverted.min_speed_rad_s; /* an empty band */
+            CHECK(foc_cogging_learn_create(&inverted, &learn) == FOC_ERR_PARAM);
+        }
+        /* Every slot, then one more. */
+        CHECK(foc_cogging_learn_create(&cc, &first) == FOC_OK);
+        CHECK(foc_cogging_learn_create(&cc, &second) == FOC_OK);
+        CHECK(foc_cogging_learn_create(&cc, &learn) == FOC_ERR_NO_RESOURCE);
+        CHECK(foc_cogging_learn_destroy(second) == FOC_OK);
+        /* A stale handle is a state error on every entry, not a crash. The result struct is filled in first:
+         * `struct_size` is the caller's promise about its own header, and an unwritten one is a caller bug that
+         * answers FOC_ERR_PARAM no matter what the handle is. */
+        memset(&cr, 0, sizeof(cr));
+        cr.struct_size = (uint32_t)sizeof(cr);
+        CHECK(foc_cogging_learn_accumulate(second, 0.0F, 0.0F, 0.0F, omega, 0) == FOC_ERR_STATE);
+        CHECK(foc_cogging_learn_ready(second, &ready) == FOC_ERR_STATE);
+        CHECK(foc_cogging_learn_finish(second, table, 2, &cr) == FOC_ERR_STATE);
+        {
+            /* The other way round: an uncovered struct_size is a param error even on a live handle. */
+            foc_cogging_learn_result_t uncovered;
+            memset(&uncovered, 0, sizeof(uncovered));
+            uncovered.struct_size = 0U;
+            CHECK(foc_cogging_learn_finish(first, table, 2, &uncovered) == FOC_ERR_PARAM);
+        }
+        CHECK(foc_cogging_learn_reset(second) == FOC_ERR_STATE);
+        CHECK(foc_cogging_learn_destroy(second) == FOC_ERR_STATE);
+
+        /* A report-only call on an empty window: the report comes back complete and says the window is
+         * the problem, not the (absent) buffer. */
+        CHECK(foc_cogging_learn_finish(first, NULL, 0, &cr) == FOC_ERR_STATE);
+        CHECK(cr.status == (int32_t)FOC_ERR_STATE);
+        CHECK(cr.count == 0);
+        CHECK(cr.required == 1);
+        CHECK(cr.capacity == 0);
+        /* A sample that is not a number is not taken, and says so. */
+        CHECK(foc_cogging_learn_accumulate(first, 0.0F, (float)NAN, 0.0F, omega, 0) == FOC_ERR_PARAM);
+        CHECK(foc_cogging_learn_ready(first, &ready) == FOC_OK);
+        CHECK(ready == 0); /* the NaN did not grow the window */
+        CHECK(foc_cogging_learn_destroy(first) == FOC_OK);
+
+        /* --- the measurement half -------------------------------------------------- */
+        CHECK(foc_cogging_learn_create(&cc, &learn) == FOC_OK);
+        {
+            int k;
+            for (k = 0; k < periods; ++k) {
+                const float theta = (6.28318530718F * 3.0F) * ((float)k / (float)periods);
+                /* The loop supplies the current that produces -T_cog, so the q-axis current runs a
+                 * half period behind the torque and scaled by kt_eff. */
+                const float iq = (amplitude_nm / kt_eff) * sinf((((float)order) * theta) + phase_rad + 3.14159265358979323846F);
+                CHECK(foc_cogging_learn_accumulate(learn, theta, iq, 0.0F, omega, 0) == FOC_OK);
+            }
+        }
+        CHECK(foc_cogging_learn_ready(learn, &ready) == FOC_OK);
+        CHECK(ready == 1);
+        /* Report only: the window is good, and `count == 0` says "nothing was written", not "refused". */
+        memset(&cr, 0, sizeof(cr));
+        cr.struct_size = (uint32_t)sizeof(cr);
+        CHECK(foc_cogging_learn_finish(learn, NULL, 0, &cr) == FOC_OK);
+        CHECK(cr.status == (int32_t)FOC_OK);
+        CHECK(cr.count == 0);
+        CHECK(cr.required == 1);
+        CHECK(cr.capacity == 0);
+        CHECK(cr.revolutions >= 2.0F);
+        CHECK(cr.speed_min_rad_s > 4.9F && cr.speed_max_rad_s < 5.1F);
+        /* A buffer too small is the CALLER's problem, and the window is still reported honestly. */
+        CHECK(foc_cogging_learn_finish(learn, table, 0, &cr) == FOC_ERR_PARAM);
+        CHECK(cr.count == 0);
+        CHECK(cr.required == 1);
+        CHECK(cr.capacity == 0);
+        /* The table itself: the learned harmonic must come back as the torque that was injected, with the
+         * compensator's sign, i.e. a positive amplitude at the phase it was injected with. */
+        memset(table, 0, sizeof(table));
+        CHECK(foc_cogging_learn_finish(learn, table, 2, &cr) == FOC_OK);
+        CHECK(cr.status == (int32_t)FOC_OK);
+        CHECK(cr.count == 1);
+        CHECK(cr.required == 1);
+        CHECK(cr.capacity == 2);
+        CHECK(table[0].order == (uint32_t)order);
+        CHECK(fabsf(table[0].amplitude_nm - amplitude_nm) < 0.01F * amplitude_nm);
+        CHECK(fabsf(table[0].phase_rad - phase_rad) < 0.01F);
+        /* A second window answers the same question, so a re-learn is not a new answer. */
+        CHECK(foc_cogging_learn_reset(learn) == FOC_OK);
+        CHECK(foc_cogging_learn_ready(learn, &ready) == FOC_OK);
+        CHECK(ready == 0);
+        CHECK(foc_cogging_learn_destroy(learn) == FOC_OK);
+        CHECK(foc_cogging_learn_destroy(learn) == FOC_ERR_STATE); /* twice */
+    }
+
     if (failures != 0) {
         (void)fprintf(stderr, "C11 consumer: %d failure(s)\n", failures);
         return 1;
