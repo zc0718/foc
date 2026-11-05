@@ -36,165 +36,30 @@
 
 #include <gtest/gtest.h>
 
-#include <foc/core/observer/switchable_observer.hpp>
-#include <foc/core/pi.hpp>
-#include <foc/core/svpwm.hpp>
-#include <foc/core/transforms.hpp>
-#include <foc/motor/motor.hpp>
-#include <foc/motor/motor_config.hpp>
-
-#include "sil_pmsm_plant.hpp"
-#include "sil_plant_hal.hpp"
+#include "sil_sensorless_bench.hpp"
 
 namespace {
 
 namespace core = foc::core;
-namespace motor = foc::motor;
 namespace sil = foc::sil;
 
-constexpr float kPiFloat = 3.14159265358979F;
+// The rig moved to `sil_sensorless_bench.hpp` so that the SOP replay can drive **the same** measurement on a second
+// machine: one rig, two questions. The defaults there reproduce this file's numbers exactly -- the twelve `[f19]` lines
+// this test prints were diffed before and after the move and are identical.
+// 台架搬到 `sil_sensorless_bench.hpp`，好让 SOP 重放能在第二台机器上驱动**同一个**测量：一份台架，两个问题。那边的默认值
+// 逐字复现本文件的数字——本用例打印的十二行 `[f19]` 在搬动前后逐行 diff 过，完全相同。
+constexpr float kEdgeRadS = 50.0F; // the edge the plan names 计划点名的边缘
+constexpr float kGateRad = sil::kSopGateRad;
+const foc::sil::SopMachine kMachine{}; // machine A: the nameplate as it is 机器 A：原样铭牌
 
-// The nameplate `test_sil_fusion_chain.cpp` uses, with one deliberate change: `lq == ld`. That single equality is what
-// makes the plant an SPM, and it is why the injection observer cannot be a way out of this measurement.
-// `test_sil_fusion_chain.cpp` 用的铭牌，只改一处：`lq == ld`。这一个等号就是 plant 成为 SPM 的原因，也是注入观测器
-// 无法成为这次测量出路的原因。
-constexpr float kRs = 0.35F;
-constexpr float kLd = 2.0e-4F;
-constexpr float kLq = kLd;
-constexpr float kKt = 0.05F;
-constexpr float kJ = 1.0e-5F;
-constexpr float kB = 1.0e-4F;
-constexpr std::uint8_t kPoles = 7U;
-
-constexpr float kCtrlHz = 20000.0F;
-constexpr float kDt = 1.0F / kCtrlHz;
-constexpr int kSubsteps = 8;
-constexpr float kVBus = 24.0F;
-
-// The 50 rad/s edge the plan names: the injection observer's own floor, which is also the hand-over speed the fusion
-// chain measures at.
-// 计划点名的 50 rad/s 边缘：注入观测器自己的地板，也是混合链在交接处量到的转速。
-constexpr float kEdgeRadS = 50.0F;
-// The criterion that was withdrawn for being vacuous on a sensored rig, reused here as the gate it was always meant to
-// be: "within 20 ms of hand-over the angle error is at most 0.05 rad".
-// 那条因为"在有传感器台架上空真"而被撤回的判据，在这里用作它本来就该是的那道闸："交接后 20 ms 内角度误差 ≤ 0.05 rad"。
-constexpr float kGateRad = 0.05F;
-
-using MotorT = motor::Motor<core::SwitchableObserver, core::Svpwm, core::Pi, sil::PlantHal>;
-
-/** @brief [en] Wrap to (-pi, pi]. [zh] 折到 (-pi, pi]。 */
-auto wrap_pi_local(float angle) noexcept -> float {
-    while (angle <= -kPiFloat) {
-        angle += 2.0F * kPiFloat;
-    }
-    while (angle > kPiFloat) {
-        angle -= 2.0F * kPiFloat;
-    }
-    return angle;
-}
-
-auto plant_params() -> sil::PlantParams { return sil::PlantParams{kRs, kLd, kLq, kKt, kJ, kB, kPoles}; }
-
-auto motor_config() -> motor::MotorConfig {
-    return motor::MotorConfig{kRs, kLd, kLq, kKt, kJ, kB, kPoles, 3.0F, kCtrlHz, 0.0F, 0.0F, 0.0F};
-}
-
-// Only the model observer is configured as a candidate: the injection member is present but its gain is computed from
-// `lq - ld`, which is zero here, so `predicted_gain_a` returns 0 and the carrier would carry no position information.
-// The run asks the selection for the back-EMF member explicitly, and the HFI member's own status is asserted below
-// rather than assumed -- "no saliency" is the premise of the whole measurement.
-// 只把模型观测器作为候选配置：注入成员虽然在，但它的增益由 `lq − ld` 算出，这里为零，于是 `predicted_gain_a` 返回 0、
-// 载波不携带任何位置信息。运行显式向选择器要反电势成员，而注入成员自己的状态在下面被断言而不是被假设——"无凸极"是整次
-// 测量的前提。
-auto observer_config() -> core::SwitchableObserver::Config {
-    const motor::MotorConfig cfg = motor_config();
-    const float psi_f = foc::psi_f_wb(cfg);
-    core::SwitchableObserver::Config config{};
-    config.back_emf = core::BackEmfObserver::Config{cfg.rs, cfg.ld};
-    config.nonlinear_flux = core::NonlinearFluxObserver::Config{cfg.rs, cfg.lq, psi_f, 0.3F, 3.0F, 0.5F * psi_f};
-    config.hfi.inject_v = 12.0F;
-    config.hfi.inject_hz = 2000.0F;
-    config.hfi.current_hp_hz = 300.0F;
-    config.hfi.demod_lpf_hz = 200.0F;
-    config.hfi.pll_bandwidth_hz = 40.0F;
-    config.hfi.pll_zeta = 0.9F;
-    config.hfi.demod_gain_a = core::HfiObserver::predicted_gain_a(config.hfi.inject_v, config.hfi.inject_hz, kLd, kLq);
-    config.hfi.min_hf_current_a = 0.05F;
-    config.dual_inductance = core::DualInductanceObserver::Config{cfg.rs, cfg.ld, cfg.lq, psi_f};
-    config.kind = core::ObserverKind::NonlinearFlux;
-    return config;
-}
-
-/** @brief [en] One speed's worth of measurement. [zh] 一个转速下的测量结果。 */
-struct Row final {
-    float target_rad_s{0.0F};
-    float max_error_rad{0.0F};    ///< [en] the worst error over the settled window. [zh] 稳态窗口内的最坏误差。
-    float end_error_rad{0.0F};    ///< [en] the error on the last tick. [zh] 最后一拍的误差。
-    float true_speed_rad_s{0.0F}; ///< [en] the plant's own speed at the end. [zh] 结束时 plant 自己的转速。
-    bool faulted{false};
-    float load_nm{0.0F};
-};
-
-/**
- * @brief [en] Run one speed: the rotor is already turning, the sensor is already gone, the observer starts blind.
- * @brief [zh] 跑一个转速：转子已经在转、传感器已经不在了、观测器从零开始。
- */
-auto run_at(float target_rad_s, float load_nm, float dead_v) -> Row {
-    Row row{};
-    row.target_rad_s = target_rad_s;
-    row.load_nm = load_nm;
-
-    sil::PmsmPlant plant(plant_params());
-    sil::PlantHal hal(plant, kVBus);
-    // The run-up: the rotor is already at the speed under test, which is the state a real sensorless drive hands over
-    // into. `hal.reset` also puts the inverter back to its power-on state.
-    // 升速：转子已经在被测转速上，这正是真实无感驱动器接手时的状态。`hal.reset` 还会把逆变器复位到上电态。
-    hal.reset(sil::PlantState{0.0F, 0.0F, static_cast<double>(target_rad_s), 0.0});
-    hal.position.set_sensor_present(false);
-    plant.set_load_torque(load_nm);
-    hal.set_deadtime_voltage(dead_v);
-
-    const motor::MotorConfig cfg = motor_config();
-    MotorT motor(cfg,
-                 MotorT::Policies{core::SwitchableObserver{observer_config()}, core::Svpwm{},
-                                  core::Pi{foc::current_pi_config(cfg, 2000.0F, kVBus)},
-                                  core::Pi{foc::current_pi_config(cfg, 2000.0F, kVBus)},
-                                  core::Pi{foc::speed_pi_config(cfg, 200.0F)}},
-                 hal);
-    if (motor.init() != foc::ErrorCode::Ok) {
-        return row;
-    }
-    if (motor.start() != foc::ErrorCode::Ok) {
-        return row;
-    }
-    motor.set_speed(target_rad_s);
-
-    auto true_angle = [&plant]() { return static_cast<float>(kPoles) * plant.theta_mech_rad(); };
-    auto error = [&motor, &true_angle]() {
-        return std::fabs(wrap_pi_local(static_cast<float>(motor.observer().state().theta_e - true_angle())));
-    };
-
-    const int total = static_cast<int>(1.5F / kDt);
-    const int settled_from = static_cast<int>(1.0F / kDt); // the last 0.5 s is the window 最后 0.5 s 是窗口
-    for (int i = 0; i < total; ++i) {
-        static_cast<void>(motor.tick(kDt));
-        hal.advance(kDt, kSubsteps);
-        if (motor.state() == core::MotorState::Fault) {
-            row.faulted = true;
-            break;
-        }
-        const float magnitude = error();
-        if (i >= settled_from) {
-            row.max_error_rad = std::max(row.max_error_rad, magnitude);
-        }
-        row.end_error_rad = magnitude;
-    }
-    row.true_speed_rad_s = plant.omega_mech_rad_s();
-    std::printf(
-        "[f19] target %6.1f rad/s load %5.3f Nm dead %4.2f V -> max %.4f rad, end %.4f rad, true w %7.2f, state %d\n",
-        static_cast<double>(target_rad_s), static_cast<double>(load_nm), static_cast<double>(dead_v),
-        static_cast<double>(row.max_error_rad), static_cast<double>(row.end_error_rad),
-        static_cast<double>(row.true_speed_rad_s), static_cast<int>(motor.state()));
+/** @brief [en] One speed, on machine A. [zh] 一个转速，机器 A。 */
+auto run_at(float target_rad_s, float load_nm, float dead_v) -> sil::SensorlessRow {
+    const sil::SensorlessRow row = sil::run_sensorless(target_rad_s, load_nm, dead_v, kMachine, /*quiet=*/true);
+    std::printf("[f19] target %6.1f rad/s load %5.3f Nm dead %4.2f V -> max %.4f rad, end %.4f rad, true w %7.2f, "
+                "state %d\n",
+                static_cast<double>(row.target_rad_s), static_cast<double>(row.load_nm), static_cast<double>(dead_v),
+                static_cast<double>(row.max_error_rad), static_cast<double>(row.end_error_rad),
+                static_cast<double>(row.true_speed_rad_s), row.faulted ? 4 : 2);
     return row;
 }
 
@@ -217,7 +82,7 @@ TEST(SilSensorlessFloor, AnIdealPlantHasNoLowSpeedFloorAndWhatIsLeftIsOneTickOfD
     const float targets[] = {5.0F, 10.0F, 20.0F, 40.0F};
     float ratios[4] = {0.0F, 0.0F, 0.0F, 0.0F};
     for (std::size_t i = 0; i < 4U; ++i) {
-        const Row run = run_at(targets[i], 0.0F, 0.0F);
+        const sil::SensorlessRow run = run_at(targets[i], 0.0F, 0.0F);
         EXPECT_FALSE(run.faulted) << "target " << targets[i];
         EXPECT_LT(run.max_error_rad, kGateRad)
             << "target " << targets[i] << " rad/s with no dead time: the ideal plant holds the gate";
@@ -231,7 +96,7 @@ TEST(SilSensorlessFloor, AnIdealPlantHasNoLowSpeedFloorAndWhatIsLeftIsOneTickOfD
     for (std::size_t i = 1; i < 4U; ++i) {
         EXPECT_NEAR(ratios[0], ratios[i], 0.10F * ratios[0]) << "target " << targets[i];
     }
-    const float ticks = ratios[0] * static_cast<float>(kPoles) / kDt;
+    const float ticks = ratios[0] * static_cast<float>(sil::kSopPoles) / sil::kSopDt;
     std::printf("[f19] ideal plant: error/omega_mech = %.2e s = %.2f control tick(s) per electrical cycle\n",
                 static_cast<double>(ratios[0]), static_cast<double>(ticks));
 }
@@ -253,12 +118,12 @@ TEST(SilSensorlessFloor, AnIdealPlantHasNoLowSpeedFloorAndWhatIsLeftIsOneTickOfD
 TEST(SilSensorlessFloor, TheFloorIsTheDeadTimeVoltageAgainstTheBackEmfAndNotTheObserversStructure) {
     constexpr float kDeadV = 0.48F; // 1 us of dead time at 24 V 24 V 下 1 µs 死区
 
-    const Row ideal20 = run_at(20.0F, 0.0F, 0.0F);
-    const Row dead20 = run_at(20.0F, 0.0F, kDeadV);
-    const Row ideal40 = run_at(40.0F, 0.0F, 0.0F);
-    const Row dead40 = run_at(40.0F, 0.0F, kDeadV);
-    const Row ideal200 = run_at(200.0F, 0.0F, 0.0F);
-    const Row dead200 = run_at(200.0F, 0.0F, kDeadV);
+    const sil::SensorlessRow ideal20 = run_at(20.0F, 0.0F, 0.0F);
+    const sil::SensorlessRow dead20 = run_at(20.0F, 0.0F, kDeadV);
+    const sil::SensorlessRow ideal40 = run_at(40.0F, 0.0F, 0.0F);
+    const sil::SensorlessRow dead40 = run_at(40.0F, 0.0F, kDeadV);
+    const sil::SensorlessRow ideal200 = run_at(200.0F, 0.0F, 0.0F);
+    const sil::SensorlessRow dead200 = run_at(200.0F, 0.0F, kDeadV);
 
     // Below the crossing the distortion decides the answer, and the answer is "no angle".
     // 在交点以下，畸变决定答案，而答案是"没有角度"。
@@ -279,7 +144,7 @@ TEST(SilSensorlessFloor, TheFloorIsTheDeadTimeVoltageAgainstTheBackEmfAndNotTheO
     // number, so a change in psi_f moves the prediction with the machine instead of invalidating a constant.
     // 交点本身作为**预测**而不是观测：`ω·ψf == kDeadV` 给出两者可比的那个转速。用例断言的是**量级**（100 rad/s 处比值约 1），
     // 而不是一个调出来的常数，于是 ψf 变化时预测随机器一起移动，而不是让一个常数失效。
-    const float psi_f = foc::psi_f_wb(motor_config());
+    const float psi_f = foc::psi_f_wb(sil::sop_motor_config(kMachine));
     const float crossing_rad_s = kDeadV / psi_f;
     RecordProperty("crossing_rad_s", crossing_rad_s);
     EXPECT_GT(crossing_rad_s, 50.0F)
