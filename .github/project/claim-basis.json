@@ -415,6 +415,10 @@
       "src/core/thermal_limit.cpp",
       "core/machine_params.hpp",
       "core/types.hpp"
+    ],
+    "core/auto_tune.hpp": [
+      "src/core/auto_tune.cpp",
+      "core/types.hpp"
     ]
   },
   "unmapped": []

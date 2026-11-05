@@ -234,6 +234,20 @@ coverage numbers at the time:
      - ``ThermalLimit.TheNaiveLawReadsFifteenPercentHighAndThePlantSaysSo``
      - na -- stateless: every answer is a closed form of the configuration and its arguments, and nothing is accumulated.
      - --
+   * - ``core/auto_tune.hpp``
+     - `SpeedTuneResult` separates "here are gains measured from this machine" from "I could not measure this machine":
+       `valid` is the bit, and on a refusal the gains it carries are the **nameplate** ones, so a caller that applies
+       whatever it gets applies nothing new. `reason` names which of seven refusals fired, because "spin with a varying
+       current" and "something is pulling on the axis" are different actions. The fit keeps an **intercept** so a constant
+       unknown load cannot be attributed to the current.
+     - `Param` for a non-positive `kt`, `j_expected`, `bandwidth` or `i_max`, a negative `b_expected`, a non-positive
+       tolerance or residual bound, and a window shorter than three samples. `State`-shaped refusals arrive as
+       `valid == false` with a reason: too short a window, a saturated period, a current that never varied, a residual above
+       the bound, a negative mechanical pole, and a measured inertia outside the tolerance.
+     - ``AutoTune.ADoubledInertiaIsRefusedAndTheGainsComeBackUntouched``
+     - na -- the window is a finite sum that is thrown away on `reset()`, and what leaves the class is a `Pi` config rather
+       than a per-tick output.
+     - --
    * - ``comm/frame.hpp``
      - `FrameStatus` names which check failed (start / length / checksum) instead of one generic failure, and
        `SequenceChecker` reports `missing` / `duplicate` / `out_of_order` separately. `missing` counts the frames

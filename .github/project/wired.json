@@ -329,6 +329,11 @@
       "class": "policy",
       "example": "test_package/test/unit/test_thermal_limit.cpp",
       "why": "a host that has to promise a duty asks it what current can be held forever and how long any other current may be held; it is a policy rather than a `Motor` concern because the answer depends on how the machine is mounted and cooled -- numbers the caller has and the drive does not -- and because the host is what decides what to do when the budget is short"
+    },
+    "core/auto_tune.hpp": {
+      "class": "policy",
+      "example": "test_package/test/unit/test_auto_tune.cpp",
+      "why": "a commissioning tool composes it, runs one torque-step window and applies the `Pi` config it gets back -- or applies it and gets nothing new when the pass refuses, because the gains it hands back are the nameplate ones. It is a policy because the pass is a *run* the host schedules and its refusals (spin with a varying current, stop if it saturates) are the host's to act on"
     }
   }
 }
