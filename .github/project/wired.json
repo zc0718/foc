@@ -334,6 +334,11 @@
       "class": "policy",
       "example": "test_package/test/unit/test_auto_tune.cpp",
       "why": "a commissioning tool composes it, runs one torque-step window and applies the `Pi` config it gets back -- or applies it and gets nothing new when the pass refuses, because the gains it hands back are the nameplate ones. It is a policy because the pass is a *run* the host schedules and its refusals (spin with a varying current, stop if it saturates) are the host's to act on"
+    },
+    "comm/encoder_stream.hpp": {
+      "class": "policy",
+      "example": "test_package/test/unit/test_encoder_stream.cpp",
+      "why": "a host that clocks an SSI/BiSS-style absolute encoder writes its own shift-register driver (the pin timing is the HAL's) and hands the collected bits here for interpretation; it is a policy because the framing -- start/ACK, stop, clock rate -- is the host's and this module must not pretend to own it, and because the multi-turn assembler needs the axis's maximum travel per frame, which only the application knows"
     }
   }
 }

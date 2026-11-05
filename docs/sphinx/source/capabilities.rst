@@ -258,6 +258,19 @@ coverage numbers at the time:
      - na -- the codec holds no state; `SequenceChecker` holds one byte and one flag, and neither is a
        continuous-output invariant.
      - --
+   * - ``comm/encoder_stream.hpp``
+     - `EncoderFrame` separates "this frame arrived and is not trustworthy" (`State` plus `crc_ok == false`, with the counts
+       still filled in so a log has something to show) from "this buffer cannot be read at all" (`Param`, with no value
+       handed back). `TurnAssembler::Step` separates a wrap from a gap: `jumped == true` means the travel was unknowable, and
+       then `unwrapped` does **not** move.
+     - `Param` for a null buffer, a stream whose length is not `frame_bits()`, a layout with 0 single-turn bits, more than 31
+       single-turn bits, more than 32 data bits, or negative multi-turn bits; and for an assembler whose single-turn bits are
+       outside `1..31` or whose declared maximum step is 0 or above half a turn (above which the wrap question is
+       undecidable). `State` for a CRC mismatch, a failed-CRC frame fed to the assembler, or a gap.
+     - ``EncoderStream.TheLengthIsRefusedAndAShiftIsTheFramingLayersProblemNotTheCrc``
+     - na -- the decoder is a pure function of one frame, and the assembler holds one previous count and one origin, neither of
+       which is a continuous-output invariant.
+     - --
    * - ``comm/register_map.hpp``
      - `read_register()` answers one 32-bit word per register; `RegisterKind` says whether to read it as an
        unsigned count, a signed code, or IEEE-754 bits.

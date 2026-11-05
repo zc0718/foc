@@ -419,6 +419,10 @@
     "core/auto_tune.hpp": [
       "src/core/auto_tune.cpp",
       "core/types.hpp"
+    ],
+    "comm/encoder_stream.hpp": [
+      "src/comm/encoder_stream.cpp",
+      "core/types.hpp"
     ]
   },
   "unmapped": []
