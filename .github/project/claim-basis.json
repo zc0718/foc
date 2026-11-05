@@ -410,6 +410,11 @@
       "core/cogging_comp.hpp",
       "core/machine_params.hpp",
       "core/types.hpp"
+    ],
+    "core/thermal_limit.hpp": [
+      "src/core/thermal_limit.cpp",
+      "core/machine_params.hpp",
+      "core/types.hpp"
     ]
   },
   "unmapped": []

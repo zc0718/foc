@@ -222,6 +222,18 @@ coverage numbers at the time:
      - na -- the accumulators are sums over a finite window that is thrown away on `reset()`, and what leaves the class is
        a table rather than a per-tick output.
      - --
+   * - ``core/thermal_limit.hpp``
+     - `ThermalBudget` separates "this current can be held forever" from "this current can be held for five more seconds"
+       instead of reporting one number for both: `crosses == false` with `seconds` infinite is the sustainable answer, and
+       collapsing the two is how a scheduler throttles a machine that was never in trouble. `ThermalLimitReport` reports
+       `settle_at_cont_c` so the assumption behind the continuous current is visible rather than implied.
+     - `Param` for `rt <= 0` (no cooling path), `rs <= 0` (no copper to heat), a negative `alpha` (a winding that cools as
+       it heats is not a model), and a reserve that is not above ambient (no current can heat the winding down to it). A
+       missing `Ct` is *not* an error: the continuous current does not need it, and only the budget then reports that it
+       cannot name a time.
+     - ``ThermalLimit.TheNaiveLawReadsFifteenPercentHighAndThePlantSaysSo``
+     - na -- stateless: every answer is a closed form of the configuration and its arguments, and nothing is accumulated.
+     - --
    * - ``comm/frame.hpp``
      - `FrameStatus` names which check failed (start / length / checksum) instead of one generic failure, and
        `SequenceChecker` reports `missing` / `duplicate` / `out_of_order` separately. `missing` counts the frames
