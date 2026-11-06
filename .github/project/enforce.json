@@ -36,8 +36,8 @@
       "id": "cppcoreguidelines",
       "checks": "cppcoreguidelines-*",
       "why": {
-        "en": "Not here yet, and the number is not known: a config-less sweep reports 670 diagnostics while the pinned-config sweep over `src/` reports none, and two measurements that disagree by 670 mean at least one of them is measuring something other than what the gate would see. Enabling a family on an unverified count is how a gate becomes decoration, so the count comes first.",
-        "zh": "还不在表里，而且**数还不知道**：无配置扫出 670 条，而被钉住配置下扫 `src/` 是 0 条；两个数差 670，说明至少有一个测的不是门禁会看到的东西。拿一个没验证过的计数去启用一个族，正是把门禁变成装饰的做法——所以先出数，再启用。"
+        "en": "The two measurements that disagreed by 670 have been reconciled, and the answer is that the pinned config enables **nothing**: its `Checks:` is a folded scalar with `#` comment lines inside, so `clang-tidy --dump-config` resolves it to `clang-diagnostic-*,-*,# Generic bugprone-*, …` and drops everything after the first `#`. The family sweep (125 targets) reports 1365 diagnostics in 15 checks -- 670 in `include/`, 695 in `src/` -- and with the comment lines removed the same 42 sources report 383, of which 73 are `bugprone-*` and 310 are `cppcoreguidelines-avoid-magic-numbers`. So the count is no longer the blocker: the blocker is that `.clang-tidy` is pinned byte-for-byte by `scaffold`, and correcting it means moving it into `tolerated` with what removes it written down.",
+        "zh": "差 670 的两个测量对上了，答案是钉住的配置**什么都没启用**：它的 `Checks:` 是折叠标量、里面夹着 `#` 注释行，于是 `clang-tidy --dump-config` 解析成 `clang-diagnostic-*,-*,# Generic bugprone-*, …`，第一个 `#` 之后全被丢掉。整族扫 125 个目标得 1365 条 / 15 个检查（`include/` 670、`src/` 695）；把注释行去掉后同样 42 个源文件 383 条，其中 `bugprone-*` 73 条、`cppcoreguidelines-avoid-magic-numbers` 310 条。所以计数不再是阻塞点——阻塞点是 `.clang-tidy` 被 `scaffold` 逐字节钉住，改它就要把它移进 `tolerated` 并写明什么能把它移出来。"
       }
     }
   ]
