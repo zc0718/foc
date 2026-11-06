@@ -1,0 +1,28 @@
+@startuml faces
+skinparam shadowing false
+skinparam defaultFontSize 13
+skinparam componentStyle rectangle
+skinparam linetype ortho
+top to bottom direction
+
+package "callers" {
+  [C++17 application\nwith its own HAL policy] as cpp
+  [C host\nstable ABI] as c
+  [Python script\nhost-side work] as py
+}
+
+package "faces" {
+  [templates,\nno allocation] as hpp
+  [frozen surface,\nreturned codes] as abi
+  [binds the C ABI,\nnot the templates] as mod
+}
+
+[core:\ntransforms, modulator, regulators,\nobservers, reference policies] as core
+
+cpp --> hpp
+c --> abi
+py --> mod
+hpp --> core
+abi --> core
+mod --> abi
+@enduml

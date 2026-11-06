@@ -1,0 +1,40 @@
+@startuml evidence
+skinparam shadowing false
+skinparam defaultFontSize 11
+skinparam componentStyle rectangle
+left to right direction
+
+package "Registries (one home per fact)" {
+  [verification-numbers.json] as nums
+  [equations.json] as eqs
+  [symbols.json] as syms
+  [metadata.json\nswitches + version] as meta
+  [claim table\nREADME] as claims
+  [claim-basis.json\nwhat would invalidate it] as basis
+}
+
+package "Generated artifacts" {
+  [documentation pages\nand this manual] as docs
+  [package options\nand dependency metadata] as pkg
+}
+
+package "Gates (what would notice)" {
+  [numbers\ndocumented numbers vs artifacts] as g1
+  [equations + symbols\nboth directions] as g2
+  [claims\nevery claim has a case,\nevery case has a claim] as g3
+  [basis\nno dead entries] as g4
+}
+
+nums --> docs
+eqs --> docs
+syms --> docs
+meta --> pkg
+meta --> docs
+claims --> docs : evidence column
+basis --> g4
+
+g1 --> nums
+g2 --> eqs
+g2 --> syms
+g3 --> claims
+@enduml

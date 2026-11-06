@@ -1,0 +1,42 @@
+@startuml layers
+skinparam shadowing false
+skinparam defaultFontSize 11
+skinparam componentStyle rectangle
+top to bottom direction
+
+package "api (the C face)" {
+  [foc_api.h\nC entry] as api
+  [foc_types.h\nC types, versioned structs] as apit
+}
+
+package "motor (composition)" {
+  [motor.hpp\npolicy composition] as motor
+  [motor_config.hpp\nnameplate to gains] as cfg
+}
+
+package "driver (sequences)" {
+  [alignment, polarity,\nstartup, commutation] as driver
+}
+
+package "core (arithmetic)" {
+  [transforms · svpwm · min_pulse · pi · limits] as core
+  [reference · mtpv · field_weakening] as refpol
+  [observers · protection · thermal · watchdog] as core2
+  [types.hpp\nvalue layer] as types
+}
+
+package "hal (contract)" {
+  [policy contract\n(no implementation)] as hal
+}
+
+api --> motor
+api --> apit : includes
+motor --> driver
+motor --> core
+motor --> hal
+driver --> core
+core --> types
+refpol --> types
+core2 --> types
+
+@enduml

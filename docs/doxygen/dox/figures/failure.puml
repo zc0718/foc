@@ -1,0 +1,20 @@
+@startmindmap
+skinparam defaultFontSize 12
+* what went wrong
+** you asked wrong
+*** ErrorCode::Param
+**** a value the library can see is impossible
+** this build cannot
+*** ErrorCode::NotImpl
+**** a field appended to a struct was not provided
+**** a feature compiled out
+** not now
+*** ErrorCode::State
+**** legal call, illegal state
+** a resource ran out
+*** ErrorCode::NoResource
+**** the library refuses to allocate
+** the drive has a fault
+*** ErrorCode::Fault
+**** the latched FaultCode is the real answer
+@endmindmap

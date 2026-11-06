@@ -1,0 +1,25 @@
+@startuml loop
+skinparam shadowing false
+skinparam defaultFontSize 13
+skinparam componentStyle rectangle
+skinparam linetype ortho
+top to bottom direction
+
+[reference policy\nminimum loss, or direct dq] as ref
+[current regulators\nd and q, limits in the constructor] as pi
+[cross-coupling and back EMF] as ff
+[limits: the modulator's linear range] as lim
+[modulator: duties, and a saturation flag] as mod
+[minimum pulse and dead time:\nvolt-seconds not delivered] as pulse
+[HAL policy: ADC, PWM, bus, angle] as hal
+[observer: flux, or saliency] as obs
+
+ref --> pi
+pi --> ff
+ff --> lim
+lim --> mod
+mod --> pulse
+pulse --> hal
+hal --> obs
+obs --> ref : angle and speed
+@enduml

@@ -130,6 +130,7 @@ _`Detailed settings`
    :numbered:
 
    Quick start <quickstart>
+   Architecture <architecture>
    Task slices <guides/index>
    Outer-loop self-tuning <sop>
    What this library does not do <boundaries>

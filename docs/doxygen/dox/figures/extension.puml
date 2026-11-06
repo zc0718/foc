@@ -1,0 +1,30 @@
+@startuml extension
+skinparam shadowing false
+skinparam defaultFontSize 12
+skinparam componentStyle rectangle
+skinparam linetype ortho
+top to bottom direction
+
+package "You write one of these" {
+  [HAL policy\nADC, PWM, bus, angle] as hal
+  [modulator\nduties from a request] as mod
+  [reference policy\ncommand to a current pair] as ref
+  [observer\nangle and speed] as obs
+}
+
+package "The library names the contract" {
+  [hal/*.hpp\nstructs of function pointers\nor member functions] as ch
+  [observer_policy.hpp\nupdate() returns ObsState] as co
+  [traits.hpp\nis_observer_v and friends] as ct
+}
+
+[composition point:\nMotor<Hal, Modulator, Pi, Observer>] as comp
+
+hal --> ch
+mod --> comp
+ref --> comp
+obs --> co
+co --> ct
+ct --> comp
+ch --> comp
+@enduml
