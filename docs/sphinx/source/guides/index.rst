@@ -82,8 +82,8 @@ The slices
      - Know when it has failed, and where the parameters came from
      - ``protection`` ``watchdog`` ``thermal_limit`` ``brake_chopper``
        ``auto_tune`` ``commissioning``
-     - planned
-     - planned
+     - :doc:`slice-s8-protection`
+     - written
    * - S9
      - Consume the library from C, Python or a simulation master
      - ``api/foc_api.h`` ``comm/frame`` ``comm/register_map``
@@ -92,9 +92,9 @@ The slices
      - written
 
 A slice is ``written`` when its page carries all seven parts and its example
-compiles. The last one is listed with its pieces so the boundary of what this
-section promises stays visible: a task page that does not exist yet is a plan,
-not a gap to be discovered by a reader.
+compiles. **All nine are written**, which makes the list above the boundary of
+what this section promises rather than a forecast: a task that is not in it is
+not covered here, and the pieces column says what it would take to add it.
 
 .. toctree::
    :maxdepth: 1
@@ -108,6 +108,7 @@ not a gap to be discovered by a reader.
    Consuming the library from outside C++ <slice-s9-c-abi>
    Positioning an axis <slice-s6-position>
    Sampling and the power stage <slice-s7-sampling>
+   Health and protection <slice-s8-protection>
 
 The figures already on the site
 -------------------------------

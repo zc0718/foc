@@ -474,6 +474,65 @@ def plot_slice_s2(rows: list[dict[str, str]]) -> None:
     save(fig, "slice_s2_zero_speed")
 
 
+def plot_slice_s8(rows: list[dict[str, str]]) -> None:
+    """Protection: how long an overload is allowed to last, and the two numbers
+    that look like one decision but are not.
+
+    Left: the i2t budget against current -- infinite at the continuous rating,
+    finite above it, and it never reaches the hard trip because the hard trip
+    answers first. Right: the continuous limit against temperature, with the trip
+    threshold drawn on top of it, where the limit is still not zero.
+    左：i2t 预算随电流——额定处为无穷，往上有限，而且永远到不了硬跳闸，因为硬跳闸先回答。
+    右：连续限幅随温度，跳闸阈值画在它上面，而那里限幅还不为零。
+    """
+    fig, (left, right) = plt.subplots(1, 2, figsize=(9.6, 3.9))
+
+    series = [row for row in rows if row["kind"] == "i2t" and row["flag"] == "1"]
+    if series:
+        current = [float(r["x"]) for r in series]
+        seconds = [float(r["value"]) for r in series]
+        left.plot(current, seconds, color=COLORS["measured"], linewidth=1.8)
+        # The curve is read, not drawn: the shortest and longest times in the run
+        # are annotated, and neither is a constant typed here.
+        left.annotate(f"{seconds[0]:.2f} s", xy=(current[0], seconds[0]), xytext=(current[0] + 0.05, seconds[0]),
+                      fontsize=8, va="center")
+        left.annotate(f"{seconds[-1]:.2f} s", xy=(current[-1], seconds[-1]), xytext=(current[-1] - 0.02, seconds[-1] * 1.25),
+                      fontsize=8, ha="right")
+        left.set_ylabel("time to the i2t trip (s)")
+        left.set_xlabel("steady current (A)")
+        left.set_yscale("log")
+        left.grid(True, alpha=0.3)
+        left.set_title("how long an overload lasts")
+
+    series = [row for row in rows if row["kind"] == "derate"]
+    if series:
+        temperature = [float(r["x"]) for r in series]
+        limit = [float(r["value"]) for r in series]
+        right.plot(temperature, limit, color=COLORS["measured"], linewidth=1.8, label="continuous limit")
+        # The trip is a separate number, and it comes from its own row -- drawing it
+        # where the curve reaches zero would show the derating curve's end instead of
+        # the threshold, and those are two different temperatures.
+        # 跳闸是另一个数，来自它自己那一行——画在曲线到零的地方，画出来的会是降额曲线的终点而
+        # 不是阈值，而那是两个不同的温度。
+        trip = next((r for r in rows if r["kind"] == "trip"), None)
+        if trip is not None:
+            trip_c = float(trip["x"])
+            right.axvline(trip_c, color=COLORS["reference"], linestyle="--", linewidth=1.2)
+            right.plot([trip_c], [float(trip["value"])], "o", color="black", markersize=4)
+            right.annotate(f"trip above {trip_c:.0f} C,\nlimit still {float(trip['value']):.2f} A",
+                           xy=(trip_c, float(trip["value"])),
+                           xytext=(trip_c - 58.0, float(trip["value"]) + 0.32), fontsize=8,
+                           arrowprops={"arrowstyle": "->", "linewidth": 0.8})
+        right.set_xlabel("winding temperature (C)")
+        right.set_ylabel("allowed current (A)")
+        right.set_ylim(bottom=0.0)
+        right.grid(True, alpha=0.3)
+        right.set_title("the limit and the trip")
+
+    fig.tight_layout()
+    save(fig, "slice_s8_protection")
+
+
 def run_slice(name: str, workdir: pathlib.Path, plotter) -> None:
     """Build one slice example, run it in CSV mode, plot it.
 
@@ -530,6 +589,7 @@ def main() -> int:
         run_slice("slice-s4-field-weakening", pathlib.Path(workdir), plot_slice_s4)
         run_slice("slice-s7-sampling", pathlib.Path(workdir), plot_slice_s7)
         run_slice("slice-s2-zero-speed", pathlib.Path(workdir), plot_slice_s2)
+        run_slice("slice-s8-protection", pathlib.Path(workdir), plot_slice_s8)
     print("done: figures in docs/images/OUT_demo_*.png, tables in docs/sphinx/source/demos/")
     return 0
 

@@ -1,0 +1,39 @@
+/**
+ * @example slice-s8-protection.cxx
+ *
+ * @brief [en] Health and protection: durations, latches, and the two mechanisms that look like one.
+ * @brief [zh] 健康与保护：时长、闩锁，以及那两个看起来像一个的机理。
+ *
+ * @section s8_budget [en] The budget is a duration [zh] 预算是一个时长
+ * @par [en] The i2t budget is `i_cont^2 * tau`, so the continuous rating sits at the limit forever and only the
+ *      excess spends the margin. Swept below the hard trip, the answer to an overload is therefore a time that goes to
+ *      infinity as the current approaches the rating -- not a yes/no, and not a threshold.
+ * @par [zh] i2t 预算是 `i_cont²·τ`，所以连续额定永远坐在限值上，只有超出的部分花掉余量。在硬跳闸以下扫描，
+ *      过载的答案因此是一个在电流逼近额定时趋于无穷的**时长**——不是是/否，也不是一个阈值。
+ *
+ * @section s8_derate [en] Derating and tripping are two numbers [zh] 降额与跳闸是两个数
+ * @par [en] The continuous limit is a curve in temperature and the trip is a threshold, and the threshold is below
+ *      the temperature where the curve reaches zero. A controller that only reads the curve never trips; one that only
+ *      reads the trip runs at full current up to it. The figure draws both, and the trip line is taken from its own
+ *      data row rather than from where the curve ends.
+ * @par [zh] 连续限幅是温度上的曲线，跳闸是阈值，而阈值低于曲线到零的那个温度。只读曲线的控制器永不跳闸；只读
+ *      跳闸的那一个会把满电流一直用到阈值上。图把两者都画出来，而跳闸线取自它自己那一行数据，不是曲线终点。
+ *
+ * @section s8_latch [en] Latching, silence, and a resistor's thermal mass [zh] 闩锁、沉默，与电阻的热容
+ * @par [en] An over-current trip stays set when the current comes back: the reason it tripped has not been looked at
+ *      yet, and `reset()` is the caller's decision. The watchdog measures silence rather than progress, and `poll()` is
+ *      how a supervisor asks without moving the deadline. The brake chopper holds a thermal budget, so a chopper that
+ *      only follows the bus voltage can keep the bus perfect while it burns out.
+ * @par [zh] 过流跳闸在电流回落后仍然保持：跳闸的原因还没有人看过，而 `reset()` 是调用方的决定。看门狗量的是
+ *      **沉默**而不是进展，`poll()` 是监督者在不移动截止时间的前提下发问的方式。制动斩波器带着一份热预算，所以
+ *      一个只看母线电压的斩波器可以把母线守得完美，同时把自己烧掉。
+ *
+ * @include slice-s8-protection.cxx
+ *
+ * @note [en] Link the aggregate target `foc::foc`; the command on the first line links the one translation unit this
+ *            demo needs (`protection` and `brake_chopper` are header-only).
+ * @note [zh] 链接聚合目标 `foc::foc`；第一行的命令只链了本演示需要的那个翻译单元（`protection` 与
+ *            `brake_chopper` 是纯头文件）。
+ *
+ * @since 0.1.12
+ */
