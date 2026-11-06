@@ -18,10 +18,11 @@ The rule table
 **generated**, from two inputs:
 
 - ``.github/project/compliance/tool-checks.txt`` -- a snapshot of the check names the
-  pinned ``.github/misc/.clang-tidy`` enables (101 of them: ``bugprone-*``,
-  ``performance-*`` and two ``cppcoreguidelines-*``). The snapshot exists
-  because a glob quietly matching one more check adds a rule to the subset with
-  nobody deciding to.
+  pinned ``.github/misc/.clang-tidy`` **names** in its ``Checks:`` block. The
+  snapshot exists because a glob quietly matching one more check adds a rule to
+  the subset with nobody deciding to. It records what that block names, not what
+  the tool resolves it to -- see the next section for why those are two different
+  questions.
 - ``.github/project/compliance/rules-manual.json`` -- everything a tool cannot decide:
   what the compiler flags enforce, what this repository's own gates and tests
   enforce, which units have no behaviour to check, which rules are deviated and
@@ -29,6 +30,55 @@ The rule table
 
 Regenerate with ``python3 .github/project/compliance/gen_subset.py``; ``--check`` reports
 drift instead of writing.
+
+The two lists, and why neither can answer alone
+-----------------------------------------------
+
+The pinned ``.github/misc/.clang-tidy`` is a **loose baseline of intent, by
+design**. Its ``Checks:`` value is a folded scalar whose ``#`` lines are
+literal, so ``clang-tidy --dump-config`` resolves the list to ``-*``: the
+scaffold's own ``tidy`` gate compiles every source in ``src/`` and constrains
+nothing. That is the template's posture rather than a defect, and it is not a
+patch this project sends upstream: the private-domain syntax of this
+repository (``// Conan::ImportStart`` and the rest) is governed by the IaC
+layer -- the shared conventions, the codegen starter and the skills -- so the
+linter is deliberately kept out of that argument and stays compatible with
+whatever an instance decides.
+
+What follows from that is the part that matters to a reader of this page:
+**the pinned file cannot be the answer to "what is enforced".** Two facts are
+true at once, and the page would be misleading if it stated either alone:
+
+- the pinned configuration **names** ``bugprone-*``, ``performance-*``,
+  ``cert-*`` and two ``cppcoreguidelines-*`` checks, which is what
+  ``tool-checks.txt`` records;
+- the pinned configuration **runs** none of them, which is why ``enforce``
+  exists.
+
+``.github/project/enforce.json`` is where this project declares its own
+strictness. The gate composes a check set from **outside** the pinned file --
+``clang-tidy --checks`` overrides the config's ``Checks`` key while its
+``CheckOptions`` and ``HeaderFilterRegex`` still apply -- so the pinned file
+stays byte-identical and the families still run over every target. The same
+file carries three things a reader needs: the families that run, the checks
+exempted from a family (each with a signed deviation permit, or the gate
+fails), and the checks this project has looked at and decided **not** to run.
+That third list is a record with a count and a reason per entry; an entry with
+no reason or no evidence fails the gate, because an omission and a decision
+are otherwise indistinguishable.
+
+Two consequences worth stating plainly:
+
+- **``implemented`` in the rule table means "a named mechanism runs it", and the
+  mechanism for a lint rule is now the family table.** A check that the pinned
+  file names while nothing executes it is not an implemented rule; it is a
+  sentence about a file. The ``tidy:`` rows therefore describe the pinned
+  intent, and the rows whose enforcement comes from ``enforce`` say so.
+- **"This check is on" is a claim about a run, not about a configuration.** The
+  witness is ``python3 .github/project/gates.py enforce``, which fails if any
+  target does not compile, reports any diagnostic from the extra families, and
+  runs a positive control: a scratch file that must be diagnosed with the
+  families on and must be clean with them off.
 
 The four counts, and what each one means
 ----------------------------------------
@@ -100,7 +150,13 @@ Two sentences that follow directly, because each has a re-runnable witness:
 - **The rule set cannot drift from the pinned tool configuration.** The witness
   is ``python3 .github/project/gates.py subset``, which compares the enabled
   check set against ``tool-checks.txt`` and refuses a row that names a check the
-  config no longer enables.
+  block does not name.
+- **The CERT C++ family runs, and the pinned file did not need to change.** The
+  witness is ``python3 .github/project/gates.py enforce``, which composes the
+  check set from that block and from the family table and requires every target
+  to compile and to produce no diagnostic from the extra families. The family
+  was measured at zero on the source before it was switched on; the three sites
+  it found on the way were fixed rather than suppressed.
 
 What cannot be said yet
 -----------------------
@@ -123,16 +179,16 @@ What cannot be said yet
        goals. A library has no such context, so it can supply evidence about its
        own behaviour and nothing about the level of the system it lands in. See
        :ref:`honest limits <honest-limits>`.
-   * - "CERT C++ rules are implemented"
-     - The family is not enabled. Enablement lives in ``.github/misc/.clang-tidy``,
-       which the ``scaffold`` gate byte-pins, so the change is an upstream patch
-       rather than a local one. Measured when it was tried: zero hits on the
-       current source, so the patch is cheap -- but it has not been made, and an
-       unenabled rule is not an implemented one.
    * - "Independently verified"
      - One author plus tooling can produce reproducibility, which is what this
        repository does produce: a third party who clones it and runs the gates
        gets the same numbers. It cannot produce independence.
+   * - "Every check in the pinned configuration is enforced"
+     - The configuration states an intent and the resolver discards it, so the
+       two are separate questions and only the second one is evidence. What this
+       repo enforces is in the family table, and the family table is not the
+       whole of that block: the checks it names but no gate executes are recorded
+       as ``open`` in the rule table, not as ``implemented``.
 
 Where the evidence lives
 ------------------------
@@ -153,9 +209,38 @@ Where the evidence lives
    * - ``.github/project/compliance/subset-baseline.json``
      - ``python3 .github/project/compliance/subset_gate.py --baseline`` (a review event,
        not a reflex)
+   * - ``.github/project/enforce.json``
+     - ``python3 .github/project/gates.py enforce`` (every target compiles, no
+       diagnostic from a family, and the positive control still fires) and
+       ``python3 .github/project/enforce_gate.py --selftest`` (the families are
+       really switched on)
+   * - ``.github/project/compliance/tool-checks.txt``
+     - ``python3 .github/project/compliance/gen_subset.py --check``; the snapshot
+       and the pinned block are compared by the ``subset`` gate
    * - The materials the citations come from
      - ``workspace/compliance/`` -- the ledger, the sha256 of every copy, and
        which tier each one unlocks
+
+Known gaps
+----------
+
+Three things are unresolved on purpose, and each costs the sentence it blocks:
+
+- **The snapshot can age.** ``tool-checks.txt`` is a copy, and the tool
+  installed here resolves more check names than the copy lists. Re-snapshotting
+  would file rows for checks no gate runs, which is the defect this page exists
+  to prevent, so the enforced set is read from the family table and the
+  snapshot keeps its older meaning. The decision to re-snapshot is open.
+- **No mapping from a check to a MISRA rule number.** Every count on this page
+  is a count of checks or of units, not of rules in a named standard. The rule
+  numbers are the ``misra-rule-mapping`` row of the ``open`` register.
+- **Two delivery forms exist and are not claimed.** ``.github/project/forms.json``
+  registers the FMU and the Python module with ``claim_status: gap`` and writes
+  the gap out: no claim row describes the FMU (it has a runnable demonstration --
+  a standard master loads it and drives the loop -- but no level, no boundary
+  statement and no "what it does not claim"), and Python appears only as an
+  evidence path on three rows, never as a claim that the binding behaves. The
+  page therefore says "a form exists" and not "a form is supported".
 
 .. note::
 
