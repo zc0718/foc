@@ -135,7 +135,7 @@ template <typename Modulator> class DeadTimeCompensator final {
    * @return [zh] 占空比与饱和/状态， 来自被包装的调制器。
    * @since 0.1.0
    */
-    [[nodiscard]] auto modulate(const ModulatorInput& request) noexcept -> SvpwmResult {
+    [[nodiscard]] auto modulate(const ModulatorInput& request) const noexcept -> SvpwmResult {
         if (!(config_.deadtime_v > 0.0F)) {
             return Modulator::modulate(request);
         }
