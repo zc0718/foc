@@ -7,7 +7,7 @@
     "2026-11-06: the first freeze. All five are blocked by facts outside the code --",
     "three by a byte-pinned config file, one by a 254-page mapping that has not been",
     "done, one by a standard that has not been bought.",
-    "2026-11-06 第二次：`cppcoreguidelines-avoid-magic-numbers` 从 `implemented` 收回为 `open`。它不是新发现的规则，而是一条**被执行过却从未生效**的规则：钉住的 `.clang-tidy` 把 `Checks:` 写成折叠标量、其中夹着 `#` 注释，clang-tidy 解析后只剩 `-*`，于是 `tidy` 门 42 个文件全绿而一个检查都没开。这条记录的是「我们声称想要的规则被证明没有在跑」，属于 review event 里更严重的那一类。"
+    "2026-11-06 第二次：`cppcoreguidelines-avoid-magic-numbers` 从 `implemented` 收回为 `open`。它不是新发现的规则，而是**表把钉住配置的意图读成了强制**：配置的口径刻意是松的（理由见 `enforce.json`，zc 已拍板不报上游），所以「实现与否」只能由本仓库的 `enforce.json` 声明。属于 review event 里「我们声称想要的规则其实没在跑」那一类。"
   ],
   "recorded": "2026-11-06",
   "open": 4,
