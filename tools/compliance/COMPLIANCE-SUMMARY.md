@@ -7,8 +7,8 @@
 | 状态 | 条数 | 含义 |
 |---|---|---|
 | `implemented` | **115** | 有机器执行的机制，`check` 列指名它是谁 |
-| `not-applicable` | **29** | 接口/表/测试替身（`delta: none`），或该语言特性被编译期关掉（`delta: vacuous`） |
-| `deviation` | **3** | 有 `deviation/<rule>.md`，五要素齐全 |
+| `not-applicable` | **28** | 接口/表/测试替身（`delta: none`），或该语言特性被编译期关掉（`delta: vacuous`） |
+| `deviation` | **4** | 有 `deviation/<rule>.md`，五要素齐全 |
 | `open` | **5** | 已知缺口，只减不增（基线 5） |
 | **合计** | **152** | = `rules.tsv` 的行数（这条等式由门禁强制） |
 
@@ -36,7 +36,7 @@
 | T0-language-subset.md §四（两个小洞之一） | 0 | 0 | 0 | 1 |
 | api/fmu/fmu_wrapper.c + api/fmu/smoke.py | 1 | 0 | 0 | 0 |
 | clang-tidy (pinned config) | 98 | 0 | 3 | 0 |
-| clang-tidy（未启用）+ src/api/bridge.cpp | 0 | 1 | 0 | 0 |
+| clang-tidy（未启用）+ src/api/bridge.cpp | 0 | 0 | 1 | 0 |
 | include/foc/api/foc_types.h FOC_WARN_UNUSED + .github/project/negative_compile.py | 1 | 0 | 0 | 0 |
 | include/foc/core/trace.hpp + test_trace.cpp | 1 | 0 | 0 | 0 |
 | metadata.json build_cppstd + .github/project/gates.py strict | 2 | 0 | 0 | 0 |
@@ -49,7 +49,7 @@
 
 能写：
 
-- "语言基线 C++17 / C11，由 `strict` 门逐头强制；子集登记的 152 条规则里 115 条有机器执行，3 条以偏差许可提交，29 条不适用并附理由。"
+- "语言基线 C++17 / C11，由 `strict` 门逐头强制；子集登记的 152 条规则里 115 条有机器执行，4 条以偏差许可提交，28 条不适用并附理由。"
 
 不能写（在补齐之前）：
 

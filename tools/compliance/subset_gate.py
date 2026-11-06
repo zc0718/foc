@@ -282,6 +282,59 @@ def evaluate(rows: list[dict[str, str]], ctx: dict) -> list[str]:
         problems.append(f'open rose to {counts["open"]} from a baseline of {ctx["baseline"]}; '
                         f'closing an item is free, opening one is a review event (--baseline)')
 
+    problems += not_applicable_is_earned(rows, ctx)
+    return problems
+
+
+def not_applicable_is_earned(rows: list[dict[str, str]], ctx: dict) -> list[str]:
+    """`not-applicable` must be a statement about the **code**, and it must carry evidence that can be re-run.
+
+    Why this is a separate leg. The three other statuses each name something that exists -- a mechanism, a record,
+    a defect -- so a wrong one is caught by resolving it. `not-applicable` named nothing at all, so it was the one
+    status a misjudgement could hide in, and it already had: a rule with eight real violations sat here because
+    "the check is not enabled". That sentence is about the tool, not about the code, and it is the shape of every
+    future laundering -- move a row here and the count goes down without anything improving.
+    三个另外的状态都指向一个真实存在的东西（机制/记录/缺陷），因此写错了会被解析出来；`not-applicable` 什么都不指向，
+    于是它是错判藏身的地方，而它已经藏过一个：一条有 8 处真实违规的规则因为“检查没启用”坐在了这里。那句话是关于工具的，
+    不是关于代码的——这正是每一次洗白的形状：把一行挪到这里，计数下降而什么都没变好。
+    """
+    problems: list[str] = []
+    flags = (GATES_PY.read_text(encoding='utf-8') if GATES_PY.is_file() else '')
+    units = ctx.get('claimed_l1') or set()
+    for row in rows:
+        if row.get('status') != 'not-applicable':
+            continue
+        rid, check = row.get('rule', ''), row.get('check', '')
+        if check.startswith('tidy:'):
+            problems.append(f'{rid}: `not-applicable` with {check} — "the check is not enabled" is a '
+                            f'statement about the tool, not about the code. A rule the code violates is a '
+                            f'`deviation` (with its permit) or `open`; only "this rule has no operand here" '
+                            f'is `not-applicable`')
+            continue
+        if check == 'gate:strict':
+            named = [flag for flag in ('-fno-exceptions', '-fno-rtti') if flag in row.get('why', '')]
+            if not named:
+                problems.append(f'{rid}: vacuous by a compiler flag but the reason names none of '
+                                f'{", ".join(["-fno-exceptions", "-fno-rtti"])}, so nobody can re-check it')
+            for flag in named:
+                if flag not in flags:
+                    problems.append(f'{rid}: says {flag} makes the rule vacuous, but the strict gate does '
+                                    f'not pass {flag} any more — the vacuity was never free')
+            continue
+        if rid.startswith('unit:'):
+            module = rid[len('unit:'):]
+            path = ROOT / 'include' / 'foc' / module
+            if not path.is_file():
+                problems.append(f'{rid}: names a module that does not exist at include/foc/{module}')
+                continue
+            stem = path.stem
+            justified = (module in units
+                         or module.startswith('hal/')
+                         or (module.startswith('driver/') and stem.startswith(('stub_', 'sim_', 'scripted_'))))
+            if not justified:
+                problems.append(f'{rid}: recorded `not-applicable` as an interface, a HAL contract or a test '
+                                f'double, but include/foc/{module} is none of those by the claim table and by '
+                                f'its path')
     return problems
 
 
@@ -403,6 +456,19 @@ def selftest() -> int:
         ('a status outside the vocabulary',
          [dict(good_row, status='todo')], {},
          ['is not one of']),
+        ('a rule that is merely unchecked recorded as not-applicable',
+         [dict(good_row, rule='r-na', check='tidy:cert-something', status='not-applicable', delta='vacuous')],
+         {},
+         ['is a statement about the tool, not about the code']),
+        ('a vacuity claim whose flag nobody re-checks',
+         [dict(good_row, rule='FOC-NA-X', check='gate:strict', status='not-applicable',
+               delta='vacuous', why='this rule has no operand')],
+         {},
+         ['the reason names none of']),
+        ('a unit recorded as not-applicable that is neither an interface nor a double',
+         [dict(good_row, rule='unit:core/deadtime.hpp', check='-', status='not-applicable')],
+         {},
+         ['is none of those by the claim table']),
     ]
     failures = 0
     for name, rows, patch, expected in cases:

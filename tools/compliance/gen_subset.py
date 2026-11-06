@@ -12,7 +12,11 @@ maintained by hand.
 Three states are possible for a tidy rule, and they are not interchangeable:
   * enabled by the pinned config and not suppressed  -> `implemented`
   * enabled and suppressed with `// NOLINT...`      -> `deviation` (a record must exist)
-  * named in a NOLINT but **not** enabled           -> `not-applicable` / `delta: vacuous`
+  * **not** enabled but suppressed with `// NOLINT...` -> `deviation` as well: the rule applies to
+    this code (there is a real site and a signed permit), and "the check is off" is a statement
+    about the tool, not about the operand. It used to be filed as `not-applicable`, which is the
+    one status a misjudgement could hide in -- the count went down and nothing improved.
+  * not enabled and not suppressed                   -> absent from this table
     (a suppression for a rule that is not in force is harmless and worth keeping: it means the day
     somebody enables that family, no code has to change. The record explains why the cast is
     legitimate, so the suppression is not silently load-bearing later.)

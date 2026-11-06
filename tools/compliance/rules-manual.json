@@ -215,10 +215,10 @@
     {
       "rule": "cppcoreguidelines-pro-type-reinterpret-cast",
       "check": "tidy:cppcoreguidelines-pro-type-reinterpret-cast",
-      "status": "not-applicable",
+      "status": "deviation",
       "lang": "c++17",
-      "delta": "vacuous",
-      "why": "该检查**不在**钉住的族集合里（只启用了两条 cppcoreguidelines），所以今天没有规则可违反；但 `src/api/bridge.cpp` 里已经放着 8 处 `NOLINT` 预留，理由记在 deviation/cppcoreguidelines-pro-type-reinterpret-cast.md。将来谁启用这一族，代码不用改，而理由那时仍然成立。",
+      "delta": "none",
+      "why": "规则**适用**：`src/api/bridge.cpp` 里有 8 处真实的 `reinterpret_cast`，每一处都已签偏差，理由写在 deviation/cppcoreguidelines-pro-type-reinterpret-cast.md。这一行原记 `not-applicable`，理由是「该检查没启用，所以没有规则可违反」——那是关于**工具**的陈述，不是关于**代码**的陈述：检查没开不等于规则没有宾语。启用与否不改变「这 8 处违反该规则」这个事实，所以它一直是偏差，只是没人把它记成偏差。",
       "owner": "zc",
       "source": "clang-tidy（未启用）+ src/api/bridge.cpp"
     },
