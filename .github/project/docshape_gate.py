@@ -37,7 +37,7 @@ What it checks now
    blank lines survives the reflow, so that is what the tree uses, and a `- ` marker in the middle
    of a body line is red.
 
-What it deliberately does not check: which fields a block carries. A type with nothing to warn about should not hold an
+What it deliberately does not check: which fields a block carries, with one exception -- a prohibition\naimed at the next editor is a `@warning`, because a rule buried in a paragraph is a rule somebody edits\naway. That leg is narrowed to phrases like *never renumber* and *must not be changed*; descriptive uses of\nthe same word (*the integrator never forgets*) do not trip it. A type with nothing to warn about should not hold an
 empty `@warning`, so "which sections exist" is a judgement rather than a rule. `docfmt` already enforces the shape the
 docs pipeline depends on (one tag per language group, untagged bodies, alignment, wrapping) and `docvoice` already
 enforces the register. What is left here is the four things neither of those can see.
@@ -75,6 +75,15 @@ LANG_TAG = re.compile(r"^\s*\*\s*@\w+.*\[(?:en|zh|jp)\]")
 # A list marker in the middle of a body line: either a `-` list that docfmt has already flattened, or
 # an item that never got its own paragraph. Either way the reader sees one run-on sentence.
 JOINED_ITEM = re.compile(r"[^\s]\s-\s\*\*")
+# A prohibition aimed at whoever edits this file next: strong enough that burying it in a paragraph is
+# how it gets edited away. Deliberately narrow -- "the integrator never forgets" describes behaviour and
+# must not trip this.
+PROHIBITION = re.compile(r"(never (?:renumber|be changed|be reordered|be edited|edit|remove|delete)"
+                         r"|must not (?:be changed|change|depend|be edited)"
+                         r"|(?:do not|don't) (?:change|edit|add|remove)"
+                         r"|cannot be changed"
+                         r"|不得(?:重新编号|修改|改动)|不许改|不可修改)", re.I)
+WARNING_TAG = re.compile(r"^\s*\*\s*@warning")
 
 
 def _english_words(text: str) -> int:
@@ -142,7 +151,15 @@ def scan_text(text: str) -> tuple[list[str], int]:
     invented: list[str] = []
     long_briefs = 0
     for start, block in blocks(text):
-        for offset, line in enumerate(block.splitlines()):
+        lines = block.splitlines()
+        if not any(WARNING_TAG.match(line) for line in lines):
+            body = " ".join(_plain(line) for line in lines
+                            if _plain(line) and not _plain(line).startswith("@"))
+            rule = PROHIBITION.search(body)
+            if rule:
+                invented.append(f"{start}: a prohibition ({rule.group(1)!r}) sits in a body paragraph -- "
+                                f"write it as `@warning`, where the next editor will see it")
+        for offset, line in enumerate(lines):
             if INVENTED.match(line):
                 invented.append(f"{start + offset}: invented section marker: {line.strip().lstrip('* ')}")
             if JOINED_ITEM.search(line):
@@ -239,6 +256,12 @@ def selftest() -> int:
         ("both briefs first, both bodies after them",
          "/**\n * @brief [en] one line\n *\n * @brief [zh] 一行\n *\n *     " + body_en.strip()
          + "\n *\n *     " + body_zh.strip() + "\n */\nclass X {};\n", False, True),
+        ("a prohibition buried in a paragraph",
+         "/**\n * @brief [en] x\n *\n *     The values are the contract; never renumber them.\n */\nclass X {};\n",
+         True, False),
+        ("the same prohibition as a `@warning`",
+         "/**\n * @brief [en] x\n *\n * @warning [en] The values are the contract; never renumber them.\n */\n"
+         "class X {};\n", False, False),
         ("a list flattened into a paragraph",
          "/**\n * @brief [en] x\n *\n *     Intro. - **Item one.** text\n */\nclass X {};\n", True, False),
         ("a list written as `\\li` items",
@@ -292,8 +315,9 @@ def main(argv: list[str] | None = None) -> int:
     if problems:
         print(f"[docshape] FAIL ({len(problems)} problem(s))", file=sys.stderr)
         return 1
-    print(f"[docshape] OK (no invented section markers; lists intact; every body paragraph reaches the build "
-          f"of its own language; {sum(measured['long_briefs'].values())} over-long brief(s) at or below baseline)")
+    print(f"[docshape] OK (no invented section markers; lists intact; prohibitions are @warnings; every body "
+          f"paragraph reaches the build of its own language; "
+          f"{sum(measured['long_briefs'].values())} over-long brief(s) at or below baseline)")
     return 0
 
 
