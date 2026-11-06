@@ -402,6 +402,78 @@ def plot_slice_s7(rows: list[dict[str, str]]) -> None:
     save(fig, "slice_s7_sampling")
 
 
+def plot_slice_s2(rows: list[dict[str, str]]) -> None:
+    """Zero speed: whether the estimate moves at all, and why a surface-mount
+    rotor never gets one.
+
+    The left panel is the angle error against time for the three runs the example
+    makes; the right panel is the library's own sensitivity function, whose zero
+    at a saliency ratio of one is the whole reason the first run is flat.
+    左：三次运行的角度误差随时间；右：库自己的灵敏度函数——它在凸极比为一时恰为零，
+    这正是第一次运行那条平线的原因。
+    """
+    fig, (left, right) = plt.subplots(1, 2, figsize=(9.6, 3.9))
+
+    # A run that never locks and a run that never started look the same on this
+    # axis, so the lock flag decides the line style rather than the shape.
+    # 从不锁定的运行与从未开始的运行在这条轴上看起来一样，所以用锁定标志决定线型，
+    # 而不是靠形状。
+    for kind, colour, style, label in (("spm", COLORS["reference"], "--", "surface-mount rotor"),
+                                       ("slow-control", COLORS["aux"], "--", "carrier the rate cannot resolve"),
+                                       ("ipm", COLORS["measured"], "-", "interior rotor")):
+        series = [row for row in rows if row["kind"] == kind]
+        if not series:
+            continue
+        locked = any(row["flag"] == "1" for row in series)
+        # On a linear axis the decay is over before the first tick, so the panel is
+        # capped at the window where something happens and the error is plotted on a
+        # log axis. Zero is clipped to the floor: a perfect lock has no error to plot.
+        # 线性轴上衰减在第一个刻度之前就结束了，所以横轴截到有事发生的窗口，纵轴取对数。
+        # 零被裁剪到下限：完美锁定本身没有误差可画。
+        # The two runs that never lock sit on exactly the same value for the whole
+        # window -- they are the same line, which is the point: "no signal" and "the
+        # rate cannot resolve the carrier" are indistinguishable from the outside. The
+        # first is drawn wide and pale so the second is visible on top of it.
+        # 两条从不锁定的运行在整个窗口上落在完全相同的值上——它们是同一条线，而这正是要点：
+        # “没有信号”与“控制率分辨不了载波”从外面看分不开。第一条画粗画淡，好让第二条压在它
+        # 上面仍然可见。
+        width = 1.7 if locked else (3.2 if kind == "spm" else 1.1)
+        alpha = 1.0 if locked else (0.35 if kind == "spm" else 1.0)
+        left.plot([float(r["x"]) for r in series],
+                  [max(float(r["value"]), 1e-6) for r in series], style, color=colour, linewidth=width,
+                  alpha=alpha, label=f"{label}" + ("" if locked else " (never locks)"))
+    left.set_xlabel("time (ms)")
+    left.set_ylabel("|angle estimate - truth| (rad)")
+    left.set_xlim(0.0, 100.0)
+    left.set_yscale("log")
+    left.set_ylim(1e-6, 1.5)
+    left.grid(True, alpha=0.3)
+    left.annotate("flat: the estimate never moved", xy=(70.0, 0.72), xytext=(34.0, 2.0e-3), fontsize=8,
+                  arrowprops={"arrowstyle": "->", "linewidth": 0.8})
+    left.legend(loc="upper right", fontsize=7)
+    left.set_title("standstill: does the estimate move at all")
+
+    # Which carrier a control rate can resolve, straight from the library.
+    # 一个控制率能分辨多高的载波，直接问库。
+    series = [row for row in rows if row["kind"] == "gain"]
+    if series:
+        ratio = [float(r["x"]) for r in series]
+        gain = [float(r["value"]) for r in series]
+        right.plot(ratio, gain, color=COLORS["measured"], linewidth=1.8)
+        crossing = next((r for r, g in zip(ratio, gain) if g != 0.0), None)
+        if crossing is not None:
+            right.axvline(crossing, color=COLORS["reference"], linestyle=":", linewidth=1.0)
+            right.annotate("no saliency, no signal", xy=(crossing, min(gain) * 0.98), xytext=(crossing + 0.03, min(gain) * 0.98),
+                           fontsize=8, color=COLORS["reference"], rotation=90, va="bottom")
+        right.set_xlabel("Lq / Ld")
+        right.set_ylabel("demodulation sensitivity (A)")
+        right.grid(True, alpha=0.3)
+        right.set_title("what the method has to measure")
+
+    fig.tight_layout()
+    save(fig, "slice_s2_zero_speed")
+
+
 def run_slice(name: str, workdir: pathlib.Path, plotter) -> None:
     """Build one slice example, run it in CSV mode, plot it.
 
@@ -457,6 +529,7 @@ def main() -> int:
         run_slice("slice-s9-c-abi", pathlib.Path(workdir), plot_slice_s9)
         run_slice("slice-s4-field-weakening", pathlib.Path(workdir), plot_slice_s4)
         run_slice("slice-s7-sampling", pathlib.Path(workdir), plot_slice_s7)
+        run_slice("slice-s2-zero-speed", pathlib.Path(workdir), plot_slice_s2)
     print("done: figures in docs/images/OUT_demo_*.png, tables in docs/sphinx/source/demos/")
     return 0
 

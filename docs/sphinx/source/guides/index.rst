@@ -50,8 +50,8 @@ The slices
    * - S2
      - Produce torque at zero and low speed, and know when this machine cannot
      - ``observer/hfi_observer`` ``observer/dual_inductance_observer``
-     - planned
-     - planned
+     - :doc:`slice-s2-zero-speed`
+     - written
    * - S3
      - Turn a torque request into a dq current reference and close both axes
      - ``reference`` ``limits`` ``pi`` ``feedforward``
@@ -92,15 +92,16 @@ The slices
      - written
 
 A slice is ``written`` when its page carries all seven parts and its example
-compiles. The remaining two are listed with their pieces so the boundary of
-what this section promises stays visible: a task page that does not exist yet is
-a plan, not a gap to be discovered by a reader.
+compiles. The last one is listed with its pieces so the boundary of what this
+section promises stays visible: a task page that does not exist yet is a plan,
+not a gap to be discovered by a reader.
 
 .. toctree::
    :maxdepth: 1
    :hidden:
 
    Bringing a sensorless machine up <slice-s1-startup>
+   Torque at zero speed <slice-s2-zero-speed>
    Torque below base speed <slice-s3-torque>
    Above base speed <slice-s4-field-weakening>
    High speed and modulation <slice-s5-modulation>
