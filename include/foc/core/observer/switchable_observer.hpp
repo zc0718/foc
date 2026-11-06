@@ -421,13 +421,16 @@ class SwitchableObserver final {
      */
     BlendedObserver<HfiObserver, BackEmfObserver> blended_;
     /**
-     * @brief The salient-machine observer, held here so that a caller can select it at run time.
+     * @brief [en] The salient-machine observer, held here so that a caller can select it at run time.
      *
      *     It is the only member whose state is the **stator** flux rather than the rotor flux, which is why
      *     `hand_over_to(next, i_ab)` exists: seeding it with `psi_f*e^(j*theta)` alone would leave the current's own
-     *     flux out of the integration constant, and a pure integrator never forgets. 凸极机观测器，放在这里好让调用方能
-     *     在运行时选中它。它是唯一一个状态为**定子**磁链而不是转子磁链的成员，这也是 `hand_over_to(next, i_ab)` 存在的
-     *     原因：只拿 `psi_f·e^(jθ)` 播种会把电流自身的磁链漏在积分常数之外，而纯积分器不会遗忘。
+     *     flux out of the integration constant, and a pure integrator never forgets.
+     *
+     * @brief [zh] 凸极机观测器，放在这里好让调用方能在运行时选中它。
+     *
+     *     它是唯一一个状态为**定子**磁链而不是转子磁链的成员，这也是 `hand_over_to(next, i_ab)` 存在的原因：只拿
+     *     `psi_f·e^(jθ)` 播种会把电流自身的磁链漏在积分常数之外，而纯积分器不会遗忘。
      */
     DualInductanceObserver dual_inductance_;
     ObserverKind kind_;

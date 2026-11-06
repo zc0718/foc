@@ -24,15 +24,23 @@ What it checks now
    underneath it. This leg has a ratchet, because the tree has long briefs today; the over-long count is frozen per
    file and may only fall.
 
+3. **Each body paragraph reaches the build of its own language.** `docs/build.py` decides an untagged
+   paragraph's language by script -- CJK goes to `zh`, everything else to the language that opened the
+   chunk -- so a block that writes both briefs first and both bodies after them files the English body
+   under `zh`: the English build loses it and the Chinese build shows it in English. This leg runs that
+   same filter over every block and asks it for both languages, so the rule it enforces is the pipeline's
+   own, not a second opinion about it. Measured before the repair: 88 blocks in 38 files.
+
 What it deliberately does not check: which fields a block carries. A type with nothing to warn about should not hold an
 empty `@warning`, so "which sections exist" is a judgement rather than a rule. `docfmt` already enforces the shape the
 docs pipeline depends on (one tag per language group, untagged bodies, alignment, wrapping) and `docvoice` already
-enforces the register. What is left here is the two things neither of those can see.
+enforces the register. What is left here is the three things neither of those can see.
 """
 
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import json
 import re
 import sys
@@ -53,12 +61,61 @@ INVENTED = re.compile(r"^\s*\*\s+\*\*(Model|Equation|Notation|Guarantees|Refusal
 BRIEF = re.compile(r"^\s*\*\s*@brief (?:\[en\])?\s*(.*)$")
 BRIEF_COLUMNS = 100
 
+# The language leg has to classify paragraphs the way `docs/build.py` does, so its two constants are copied
+# from there: a different CJK range or a different word test would disagree with the pipeline it is checking.
+CJK = re.compile(r"[\u3000-\u303f\u4e00-\u9fff\uff01-\uff60]")
+LANG_MARKER = re.compile(r"\[(?:en|zh|jp)\]")
+LANG_TAG = re.compile(r"^\s*\*\s*@\w+.*\[(?:en|zh|jp)\]")
+
+
+def _english_words(text: str) -> int:
+    """Words that are prose rather than LaTeX (`\\leftarrow` is not a word)."""
+    text = re.sub(r"\\f\[.*?\\f\]", " ", text, flags=re.S)
+    text = re.sub(r"\\f\$.*?\\f\$", " ", text, flags=re.S)
+    text = re.sub(r"\\[A-Za-z]+", " ", text)
+    return len(re.findall(r"[A-Za-z]{3,}", text))
+
+
+def _plain(line: str) -> str:
+    text = LANG_MARKER.sub(" ", line.strip().lstrip("*"))
+    # A one-line block (`/** @brief x */`) puts the opener on the same line as the tag; without
+    # stripping it the line reads as prose and the leg reports its own input.
+    text = re.sub(r"^\s*/\*\*?<?|\*/\s*$", " ", text)
+    return " ".join(text.split())
+
+
+def _prose(lines: list[str]) -> list[str]:
+    return [line for line in lines if _plain(line) and not _plain(line).startswith("@")]
+
+
+def _load_pipeline():
+    """The docs build's own language filter, imported rather than reimplemented."""
+    spec = importlib.util.spec_from_file_location("foc_docs_build", ROOT / "docs" / "build.py")
+    if spec is None or spec.loader is None:  # pragma: no cover - environment failure
+        raise RuntimeError("docs/build.py is not loadable; the language leg cannot judge without it")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
 
 def blocks(text: str) -> list[tuple[int, str]]:
     out = []
     for match in re.finditer(r"/\*\*.*?\*/", text, re.DOTALL):
         out.append((text.count("\n", 0, match.start()) + 1, match.group(0)))
     return out
+
+
+def documented_files():
+    """The files the docs pipeline stages, taken from the pipeline's own configuration."""
+    meta = json.loads((ROOT / "metadata.json").read_text(encoding="utf-8"))
+    suffixes = {"." + suffix for suffix in meta["doc_doxygen_suffix"]}
+    for folder in meta["doc_doxygen_folders"]:
+        root = ROOT / folder
+        if not root.is_dir():
+            continue
+        for path in sorted(root.rglob("*")):
+            if path.suffix in suffixes and path.is_file() and not (SKIP_PARTS & set(path.parts)):
+                yield path
 
 
 def files():
@@ -85,16 +142,58 @@ def scan_text(text: str) -> tuple[list[str], int]:
     return invented, long_briefs
 
 
+def scan_language(text: str, pipeline) -> list[str]:
+    """Blocks whose English body does not reach the English build, or does reach the Chinese one.
+
+    Only the files the pipeline actually documents are judged: the folder list is read from
+    `metadata.json` (`doc_doxygen_folders`) rather than repeated here, so a tree this leg skips
+    is a tree the docs do not build either.
+    """
+    problems: list[str] = []
+    for start, block in blocks(text):
+        lines = block.splitlines()
+        # The compact form `/** [en] x [zh] y */` carries no tag at all, so there is no tag line for a
+        # body to belong to and both builds necessarily show the whole line. `docs/build.py` names that
+        # shape as supported; this leg only judges blocks that do have per-language tags.
+        if not any(LANG_TAG.match(line) for line in lines):
+            continue
+        source = _prose(lines)
+        if len(source) < 2:
+            continue
+        english = [line for line in source if not CJK.search(line) and _english_words(line) >= 8]
+        if not english:
+            continue
+        en = " ".join(_plain(line) for line in _prose(pipeline._language_filter(lines, ["en", "zh"], "en")))
+        zh = " ".join(_plain(line) for line in _prose(pipeline._language_filter(lines, ["en", "zh"], "zh")))
+        lost = [line for line in english if _plain(line) not in en]
+        leak = [line for line in english if _plain(line) in zh]
+        if lost:
+            problems.append(f"{start}: the English build loses {len(lost)} body line(s), e.g. "
+                            f"{_plain(lost[0])[:60]!r} -- a body paragraph belongs under the brief of its "
+                            f"own language")
+        if leak:
+            problems.append(f"{start}: {len(leak)} English body line(s) also appear in the Chinese build, "
+                            f"e.g. {_plain(leak[0])[:60]!r}")
+    return problems
+
+
 def measure() -> dict:
     invented: list[str] = []
+    language: list[str] = []
     per_file: dict[str, int] = {}
+    pipeline = _load_pipeline()
     for path in files():
         rel = path.relative_to(ROOT).as_posix()
-        found, long_briefs = scan_text(path.read_text(encoding="utf-8", errors="replace"))
+        text = path.read_text(encoding="utf-8", errors="replace")
+        found, long_briefs = scan_text(text)
         invented.extend(f"{rel}:{line}" for line in found)
         if long_briefs:
             per_file[rel] = long_briefs
-    return {"invented": invented, "long_briefs": per_file}
+    for path in documented_files():
+        rel = path.relative_to(ROOT).as_posix()
+        text = path.read_text(encoding="utf-8", errors="replace")
+        language.extend(f"{rel}:{line}" for line in scan_language(text, pipeline))
+    return {"invented": invented, "language": language, "long_briefs": per_file}
 
 
 def read_baseline() -> dict:
@@ -104,7 +203,7 @@ def read_baseline() -> dict:
 
 
 def evaluate(measured: dict, baseline: dict) -> list[str]:
-    problems = list(measured["invented"])
+    problems = list(measured["invented"]) + list(measured["language"])
     frozen = baseline.get("long_briefs", {})
     for rel, count in measured["long_briefs"].items():
         ceiling = frozen.get(rel, 0)
@@ -115,20 +214,34 @@ def evaluate(measured: dict, baseline: dict) -> list[str]:
 
 
 def selftest() -> int:
+    pipeline = _load_pipeline()
+    body_en = "    The integral clamp is the anti-windup mechanism and the step never sees what the actuator did.\n"
+    body_zh = "    积分钳位就是抗饱和机制，这一步从不去看执行器实际做了什么。\n"
     cases = [
         ("an invented section marker", "/**\n * @brief [en] x\n *\n *     **Equation.** e = mc^2\n */\nclass X {};\n",
-         True),
+         True, False),
         ("a brief that is a paragraph",
-         "/**\n * @brief [en] " + ("word " * 30) + "\n */\nclass X {};\n", True),
+         "/**\n * @brief [en] " + ("word " * 30) + "\n */\nclass X {};\n", True, False),
         ("the house shape", "/**\n * @brief [en] vector add\n *\n *     Body paragraph, no tag.\n */\nclass X {};\n",
-         False),
+         False, False),
+        ("both briefs first, both bodies after them",
+         "/**\n * @brief [en] one line\n *\n * @brief [zh] 一行\n *\n *     " + body_en.strip()
+         + "\n *\n *     " + body_zh.strip() + "\n */\nclass X {};\n", False, True),
+        ("the compact one-line form",
+         "/** [en] Rows in the report. Fixed so the report has no growth path to negotiate. [zh] "
+         "报告的行数。固定，于是这份报告不需要为增长再谈一次。 */\nclass X {};\n", False, False),
+        ("each body under its own brief",
+         "/**\n * @brief [en] one line\n *\n *     " + body_en.strip()
+         + "\n *\n * @brief [zh] 一行\n *\n *     " + body_zh.strip() + "\n */\nclass X {};\n", False, False),
     ]
     caught = 0
-    for label, text, expected in cases:
+    for label, text, invented_expected, language_expected in cases:
         invented, long_briefs = scan_text(text)
-        got = bool(invented) or long_briefs > 0
-        ok = got == expected
-        print(f"[docshape-selftest] {'OK  ' if ok else 'MISS'} {label}: {'flagged' if got else 'clean'}")
+        language = scan_language(text, pipeline)
+        got = "invented" if (invented or long_briefs) else ("language" if language else "clean")
+        want = "invented" if invented_expected else ("language" if language_expected else "clean")
+        ok = got == want
+        print(f"[docshape-selftest] {'OK  ' if ok else 'MISS'} {label}: {got} (expected {want})")
         caught += 1 if ok else 0
     print(f"[docshape-selftest] {caught} / {len(cases)} judgement(s) as expected")
     return 0 if caught == len(cases) else 1
@@ -162,8 +275,8 @@ def main(argv: list[str] | None = None) -> int:
     if problems:
         print(f"[docshape] FAIL ({len(problems)} problem(s))", file=sys.stderr)
         return 1
-    print(f"[docshape] OK (no invented section markers; "
-          f"{sum(measured['long_briefs'].values())} over-long brief(s) at or below baseline)")
+    print(f"[docshape] OK (no invented section markers; every body paragraph reaches the build of its "
+          f"own language; {sum(measured['long_briefs'].values())} over-long brief(s) at or below baseline)")
     return 0
 
 

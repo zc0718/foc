@@ -11,9 +11,8 @@ namespace comm {
 /**
  * @brief [en] Wire layout of one frame on a byte-oriented link.
  * @brief [zh] 面向字节的链路上，一帧的线上布局。
- * @details [en]
  *
- *     `A5 | seq | type | len | payload[len] | crc_hi | crc_lo`
+ * @details [en] `A5 | seq | type | len | payload[len] | crc_hi | crc_lo`
  *
  *     Six bytes of overhead plus the payload, and every one of them earns its place. The start byte is what a receiver
  *     resynchronises on after a corrupt frame -- without it, one bad byte shifts every following frame by one position
