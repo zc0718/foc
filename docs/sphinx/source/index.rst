@@ -131,6 +131,7 @@ _`Detailed settings`
 
    Quick start <quickstart>
    Task slices <guides/index>
+   Outer-loop self-tuning <sop>
    What this library does not do <boundaries>
    What each capability offers <capabilities>
    Usage and verification <usage>
