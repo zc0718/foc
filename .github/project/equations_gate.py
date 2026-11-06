@@ -221,6 +221,13 @@ def evaluate(ledger: dict, root: Path = ROOT) -> list[str]:
             problems.append(f"{row_id}: impl names no symbol, so it points at a file rather than at the law")
         elif impl["symbol"] not in path.read_text(encoding="utf-8", errors="replace"):
             problems.append(f"{row_id}: impl symbol '{impl['symbol']}' is not in '{impl['file']}'")
+        elif not any(line.lstrip().startswith("*") and row_id in line
+                     for line in path.read_text(encoding="utf-8", errors="replace").splitlines()):
+            # The registry exists so that a formula in the docs is a claim about the code rather than an
+            # opinion; that only holds if the file the reader is in points at the row. The id has to be in a
+            # doc-comment line, not merely somewhere in the file.
+            problems.append(f"{row_id}: '{impl['file']}' never cites the row in a doc comment, so the reader of "
+                            f"that code has no pointer to the law, its case or its worked evaluation")
         case = row.get("case")
         if not case:
             problems.append(f"{row_id}: names no case")
@@ -289,6 +296,12 @@ def selftest(ledger: dict) -> int:
     if ghost_case["rows"]:
         ghost_case["rows"][0]["case"] = "Transforms.ACaseNobodyWrote"
     trials.append(("a case that does not exist", ghost_case))
+
+    uncited = copy.deepcopy(ledger)
+    if uncited["rows"]:
+        uncited["rows"][0]["id"] = "E-NOBODY-CITES-THIS"
+        uncited["rows"][0]["check"]["expect"] = ledger["rows"][0]["check"]["expect"]
+    trials.append(("a row whose implementing file never cites it", uncited))
 
     ghost_symbol = copy.deepcopy(ledger)
     if ghost_symbol["rows"]:

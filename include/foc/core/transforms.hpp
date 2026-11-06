@@ -42,6 +42,7 @@ template <typename T> inline constexpr T kSqrt3Over2 = static_cast<T>(0.86602540
  * @return [zh] 同一单位的 alpha-beta 矢量。
  * @context [en] Current-loop ISR: noexcept, no allocation, no function pointer.
  * @context [zh] 电流环 ISR：noexcept、不分配、无函数指针。
+ * @see `test_transforms` case `Transforms.ClarkeIsAmplitudeInvariant`, ledger `E-CLARKE-1`
  * @since 0.1.0
  * @exporter
  */
@@ -62,6 +63,7 @@ template <typename T> auto clarke(Uvw<T> uvw) noexcept -> Ab<T> {
  * @return [zh] 平衡三相量。
  * @context [en] Current-loop ISR: noexcept, no allocation.
  * @context [zh] 电流环 ISR：noexcept、不分配。
+ * @see `test_transforms` case `Transforms.InverseClarkeRoundTrips`, ledger `E-CLARKE-2`
  * @since 0.1.0
  * @exporter
  */
@@ -84,6 +86,7 @@ template <typename T> auto inv_clarke(Ab<T> ab) noexcept -> Uvw<T> {
  * @return [zh] d-q 矢量。
  * @context [en] Current-loop ISR: noexcept, no allocation.
  * @context [zh] 电流环 ISR：noexcept、不分配。
+ * @see `test_transforms` case `Transforms.ParkAtNinetyDegreesSwapsAxes`, ledger `E-PARK-1`
  * @since 0.1.0
  * @exporter
  */
@@ -106,6 +109,7 @@ template <typename T> auto park(Ab<T> ab, T theta_rad) noexcept -> Dq<T> {
  * @return [zh] alpha-beta 矢量。
  * @context [en] Current-loop ISR: noexcept, no allocation.
  * @context [zh] 电流环 ISR：noexcept、不分配。
+ * @see `test_transforms` case `Transforms.InverseParkRoundTrips`, ledger `E-PARK-2`
  * @since 0.1.0
  * @exporter
  */

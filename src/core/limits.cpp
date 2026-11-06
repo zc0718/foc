@@ -20,6 +20,7 @@ SlewLimiter::SlewLimiter(float rate_per_s) noexcept : rate_per_s_(rate_per_s), v
  * @brief [en] Implements SlewLimiter::step(); the contract is documented on its declaration.
  * @brief [zh] 实现 SlewLimiter::step()；契约文档在对应的声明处。
  * @attacher
+ * @see `the case named below` case `SlewLimiter.RampsTowardsTargetAtConfiguredRate`, ledger `E-SLEW-1`
  * @since 0.1.0
  */
 auto SlewLimiter::step(float target, float dt_s) noexcept -> float {

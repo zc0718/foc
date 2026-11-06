@@ -54,6 +54,7 @@ auto Pi::step(const SpeedInput& request, float feedback, float dt_s) noexcept ->
 /**
  * @brief [en] The step itself, parameterised by the gains in force for this call.
  * @brief [zh] 步骤本体，其参数是本次调用生效的增益。
+ * @see `test_pi` case `Pi.IntegralAccumulatesKiTimesErrorTimesDt`, ledger `E-PI-1`
  * @since 0.1.0
  */
 auto Pi::run(float setpoint, float feedback, float dt_s, float kp, float integral_min, float integral_max) noexcept
