@@ -553,8 +553,10 @@ typedef struct foc_board_report {
  */
 typedef struct foc_fw_verdict {
     uint32_t struct_size;
-    float i_char_a;   /* psi_f / Ld, A: where reluctance and magnet terms match */
-    float ratio;      /* i_char / i_max; below 0.6 the region is worth having */
+    float i_char_a;   /* psi_f / Ld, A: where reluctance and magnet terms match
+                       */
+    float ratio;      /* i_char / i_max: the region is worth having when <= 1,
+                       i.e. the current limit can null the flux */
     float speed_gain; /* speed multiple the flux can buy */
     int32_t worthwhile;
 } foc_fw_verdict_t;
