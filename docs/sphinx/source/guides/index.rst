@@ -45,8 +45,8 @@ The slices
      - Bring a sensorless machine up, and know when to trust the observer
      - ``alignment`` ``polarity`` ``startup`` ``stall_start``
        ``observer/blended_observer``
-     - planned
-     - planned
+     - :doc:`slice-s1-startup`
+     - written
    * - S2
      - Produce torque at zero and low speed, and know when this machine cannot
      - ``observer/hfi_observer`` ``observer/dual_inductance_observer``
@@ -71,8 +71,8 @@ The slices
      - Build a position loop, home the axis, stay inside soft limits
      - ``position`` ``position_reference`` ``motion_profile`` ``homing``
        ``soft_limit`` ``gear_ratio``
-     - planned
-     - planned
+     - :doc:`slice-s6-position`
+     - written
    * - S7
      - Sample current accurately: dead time, one shunt, the sampling instant
      - ``deadtime`` ``single_shunt`` ``trace`` ``board_check``
@@ -92,7 +92,7 @@ The slices
      - planned
 
 A slice is ``written`` when its page carries all seven parts and its example
-compiles. The remaining eight are listed with their pieces so the boundary of
+compiles. The remaining six are listed with their pieces so the boundary of
 what this section promises stays visible: a task page that does not exist yet is
 a plan, not a gap to be discovered by a reader.
 
@@ -100,7 +100,9 @@ a plan, not a gap to be discovered by a reader.
    :maxdepth: 1
    :hidden:
 
+   Bringing a sensorless machine up <slice-s1-startup>
    Torque below base speed <slice-s3-torque>
+   Positioning an axis <slice-s6-position>
 
 The figures already on the site
 -------------------------------

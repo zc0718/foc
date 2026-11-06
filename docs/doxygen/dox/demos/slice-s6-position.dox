@@ -1,0 +1,35 @@
+/**
+ * @example slice-s6-position.cxx
+ *
+ * @brief [en] Positioning: admit a target, shape a velocity for it, and know where the axis may go.
+ * @brief [zh] 定位：接纳一个目标、为它塑造速度、并知道轴能去哪。
+ *
+ * @section s6_shows [en] What the example shows [zh] 这个例子展示了什么
+ * @par [en] The soft limit refusing a target outside the window, the same limit accepting one exactly on the wall, a
+ *      gear producing both a slave target and the velocity reference that keeps a moving pair in sync, and one move
+ *      shaped by an acceleration limit.
+ * @par [zh] 软限位拒绝窗口外的目标、同一个限位接受正好在墙上的目标，一个齿轮同时给出从轴目标与让移动中的一对
+ *      保持同步的速度参考，以及一次由加速度限值塑造的运动。
+ *
+ * @section s6_plant [en] The axis is an integrator, and that is deliberate [zh] 轴是个积分器，这是故意的
+ * @par [en] `theta += v * dt` is the definition of velocity for a rigid axis, not a machine model: the point of this
+ *      program is the shape of the velocity command and the limits' refusals. A reader who wants to see a motor
+ *      closed on this profile should look at the SIL demos, which carry the plant.
+ * @par [zh] `theta += v * dt` 是刚性轴对速度的定义，不是电机模型：这个程序的重点是速度指令的形状与限位的拒绝。
+ *      想看到"电机闭在这条轮廓上"的读者应该去看 SIL 演示，那里才有被控对象。
+ *
+ * @section s6_refusal [en] A refusal is not an error to retry [zh] 拒绝不是可以重试的错误
+ * @par [en] An out-of-range target comes back as `Param` **and** the previous target. The trap: a caller that ignores
+ *      the status keeps commanding the old position and looks like it is working -- the axis holds still and nothing
+ *      reports a problem. Check the status, not the target.
+ * @par [zh] 越界目标回来时带 `Param`，**且**回来的是上一个目标。坑在于：忽略状态的调用方会一直命令旧位置，
+ *      看起来一切正常——轴不动，也没有任何东西报错。要看状态，不要看目标。
+ *
+ * @include slice-s6-position.cxx
+ *
+ * @note [en] Link the aggregate target `foc::foc`; the command on the first line links the one translation unit this
+ *            demo needs.
+ * @note [zh] 链接聚合目标 `foc::foc`；第一行的命令只链了本演示需要的那一个翻译单元。
+ *
+ * @since 0.1.12
+ */

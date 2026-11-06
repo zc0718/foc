@@ -40,15 +40,27 @@ SKIP_SOURCES = {"version.cpp"}
 COLORS = {"measured": "#1f77b4", "reference": "#d62728", "aux": "#2ca02c"}
 
 
-def compile_exporter(target: pathlib.Path) -> None:
+def build(source: pathlib.Path, target: pathlib.Path) -> None:
+    """Compile one demo program against the repository sources.
+
+    The slice examples under `docs/doxygen/dox/demos/` are built by this same
+    function, so a figure cannot come from code the reader is not shown: the
+    snippet in the docs and the curve in the figure are one translation unit.
+    切片示例用同一个函数编译，所以图不可能来自读者看不到的代码：文档里的片段与图里的曲线
+    是同一个翻译单元。
+    """
     sources = [str(p) for p in sorted((ROOT / "src").rglob("*.cpp")) if p.name not in SKIP_SOURCES]
     command = [
         "g++", "-std=c++17", "-O2",
         f"-I{ROOT / 'include'}", f"-I{ROOT / 'test_package' / 'test' / 'unit'}",
-        str(ROOT / "docs" / "demos" / "sil_export.cpp"), *sources,
+        str(source), *sources,
         "-o", str(target),
     ]
     subprocess.run(command, check=True)
+
+
+def compile_exporter(target: pathlib.Path) -> None:
+    build(ROOT / "docs" / "demos" / "sil_export.cpp", target)
 
 
 def read_trace(path: pathlib.Path) -> dict[str, list[dict[str, float]]]:
@@ -121,6 +133,92 @@ def plot_sine(rows: list[dict[str, float]]) -> None:
     save(fig, "demo_sine_tracking")
 
 
+def read_csv(path: pathlib.Path) -> list[dict[str, str]]:
+    """Rows as strings: one slice CSV carries a text column (`state`), so the
+    cast has to happen per column in the plotter that knows what it asked for.
+    行按字符串读：其中一片的 CSV 带文本列（`state`），所以转换必须发生在知道列含义的那个
+    绘图函数里。"""
+    with path.open(encoding="utf-8") as handle:
+        return list(csv.DictReader(handle))
+
+
+def plot_slice_s1(rows: list[dict[str, str]]) -> None:
+    """Hold, ramp, hand over: the two currents and the forced angle."""
+    stride = max(1, len(rows) // 4000)
+    sample = rows[::stride]
+    t = [1000.0 * float(row["t_s"]) for row in sample]
+    fig, (top, bottom) = plt.subplots(2, 1, sharex=True, figsize=(7.2, 4.4))
+    # The routine reports the angle inside [0, 2*pi). Plotted as-is that reads as a
+    # sawtooth, and "the vector keeps jumping back to zero" is the opposite of what
+    # the ramp does -- so unwrap it, for display only.
+    # 例行把角度报在 [0, 2*pi) 内。照原样画出来像锯齿，而"矢量不断跳回零"与斜坡实际在做的
+    # 事恰好相反——所以只在显示上做展开。
+    unwrapped: list[float] = []
+    total = 0.0
+    previous: float | None = None
+    for row in sample:
+        value = float(row["theta_e_rad"])
+        if previous is not None:
+            step = value - previous
+            step -= 6.28318530718 * round(step / 6.28318530718)
+            total += step
+        unwrapped.append(total)
+        previous = value
+    top.plot(t, unwrapped, color=COLORS["measured"], label="forced theta_e (unwrapped)")
+    top.set_ylabel("theta_e (rad)")
+    top.legend(loc="lower right")
+    bottom.plot(t, [float(row["id_a"]) for row in sample], color=COLORS["aux"], label="i_d command")
+    bottom.set_ylabel("i_d (A)")
+    bottom.set_xlabel("time (ms)")
+    bottom.legend(loc="lower right")
+    for axis in (top, bottom):
+        axis.grid(True, which="both", alpha=0.3)
+    # The two decisions the routine makes, marked rather than described.
+    states = [row["state"] for row in sample]
+    for index in range(1, len(states)):
+        if states[index] != states[index - 1]:
+            for axis in (top, bottom):
+                axis.axvline(t[index], color="black", linewidth=0.8, alpha=0.5, linestyle="--")
+    top.set_title("Open-loop start: hold 1.5 A, ramp the vector, hand over at 60 rad/s elec")
+    save(fig, "slice_s1_startup")
+
+
+def plot_slice_s6(rows: list[dict[str, str]]) -> None:
+    """One position move: the velocity the profile allows, and where it lands."""
+    stride = max(1, len(rows) // 4000)
+    sample = rows[::stride]
+    t = [1000.0 * float(row["t_s"]) for row in sample]
+    fig, (top, bottom) = plt.subplots(2, 1, sharex=True, figsize=(7.2, 4.4))
+    top.plot(t, [float(row["velocity_rad_s"]) for row in sample], color=COLORS["aux"], label="velocity command")
+    top.set_ylabel("velocity (rad/s)")
+    top.legend(loc="upper right")
+    bottom.plot(t, [float(row["position_rad"]) for row in sample], color=COLORS["measured"], label="position")
+    bottom.plot(t, [float(row["target_rad"]) for row in sample], "--", color=COLORS["reference"], label="target")
+    bottom.set_ylabel("position (rad)")
+    bottom.set_xlabel("time (ms)")
+    bottom.legend(loc="lower right")
+    for axis in (top, bottom):
+        axis.grid(True, which="both", alpha=0.3)
+    top.set_title("One move, shaped: accel limit sets the ramp, the gain sets the tail")
+    save(fig, "slice_s6_position")
+
+
+def run_slice(name: str, workdir: pathlib.Path, plotter) -> None:
+    """Build one slice example, run it in CSV mode, plot it.
+
+    The examples live where the docs include them, so there is exactly one copy
+    of the code that produces the figure and the snippet.
+    切片示例就住在文档引入它们的地方，所以"产生图的代码"与"片段"只有一份。
+    """
+    source = ROOT / "docs" / "doxygen" / "dox" / "demos" / f"{name}.cxx"
+    binary = workdir / name
+    out = workdir / f"{name}.csv"
+    print(f"building the slice example {source.name} ...")
+    build(source, binary)
+    subprocess.run([str(binary), "--csv", str(out)], check=True, stdout=subprocess.DEVNULL)
+    plotter(read_csv(out))
+
+
 def write_tables(metrics_path: pathlib.Path) -> None:
     DEMOS.mkdir(parents=True, exist_ok=True)
     grouped: dict[str, list[dict[str, str]]] = {}
@@ -153,6 +251,9 @@ def main() -> int:
         plot_sine(series["sine_tracking"])
         print("writing tables ...")
         write_tables(metrics_path)
+        print("slice figures ...")
+        run_slice("slice-s1-startup", pathlib.Path(workdir), plot_slice_s1)
+        run_slice("slice-s6-position", pathlib.Path(workdir), plot_slice_s6)
     print("done: figures in docs/images/OUT_demo_*.png, tables in docs/sphinx/source/demos/")
     return 0
 
