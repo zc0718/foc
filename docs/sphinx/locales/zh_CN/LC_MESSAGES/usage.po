@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: foc 0.1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-06 18:39+0800\n"
+"POT-Creation-Date: 2026-10-23 17:40+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: zh_CN\n"
@@ -18,94 +18,63 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.17.0\n"
 
-#: ../../source/usage.rst:2 7e53ed47101343618ff2444fcbb1236a
+#: ../../source/usage.rst:2 33c9e7ca8f124032b5a98c8cac4cf66c
 msgid "_`Usage and verification`"
 msgstr "_`用法与验证`"
 
-#: ../../source/usage.rst:4 662aade47df54f6e9a7f5ed4af4f4b48
-msgid ""
-"This page is the part a user actually needs: the three faces of the "
-"library, the model behind them, and the evidence that they work."
+#: ../../source/usage.rst:4 ee5ca7616b474af18d22ca59ae92131a
+msgid "This page is the part a user actually needs: the three faces of the library, the model behind them, and the evidence that they work."
 msgstr "本页是使用者真正需要的部分：库的三个使用面、它们背后的模型，以及它们确实可用的证据。"
 
-#: ../../source/usage.rst:8 d03af15c4a394ffbb77aec63dc55031c
+#: ../../source/usage.rst:8 ec36e7d59c4a4b68a9dd732099b957a0
 msgid "_`C++ path (recommended for board-level work)`"
 msgstr "_`C++ 路径（上板首选）`"
 
-#: ../../source/usage.rst:10 fb34327d801d46bf9b52fa0eeb3c791b
-msgid ""
-"Every policy is a template parameter: the observer, the modulator, the "
-"controllers and the HAL. Nothing is virtual, and swapping a policy costs "
-"nothing at run time."
+#: ../../source/usage.rst:10 c69780bb6cbb4f78a72a0cfe953adb7d
+msgid "Every policy is a template parameter: the observer, the modulator, the controllers and the HAL. Nothing is virtual, and swapping a policy costs nothing at run time."
 msgstr "所有策略都是模板参数：观测器、调制器、控制器与 HAL。没有虚函数，换策略不付运行时代价。"
 
-#: ../../source/usage.rst:13 878e371d21cc40b8815d1b90bdf5616f
+#: ../../source/usage.rst:13 d6f384ce69064f0181732248c476c7a2
 msgid "one motor, one control step"
 msgstr "一个电机，一个控制步"
 
-#: ../../source/usage.rst:42 cf0aa8ca1290465582e7f2e6c933c35c
-msgid ""
-":code:`tick()` is noexcept, allocates nothing and does no I/O — it is the"
-" ISR entry point. The tuning helpers (:code:`current_pi_config`, "
-":code:`speed_pi_config`) live in the library so the C path and the SIL "
-"bench use exactly the same numbers."
-msgstr ""
-":code:`tick()` 是 noexcept、不分配、不做 I/O——它就是 ISR "
-"入口。整定辅助函数（:code:`current_pi_config`、:code:`speed_pi_config`）放在库里，保证 C 路径与"
-" SIL 台架用的是同一组数。"
+#: ../../source/usage.rst:42 f6adcc0f5bb9441eb5051a4a8c6a491e
+msgid ":code:`tick()` is noexcept, allocates nothing and does no I/O — it is the ISR entry point. The tuning helpers (:code:`current_pi_config`, :code:`speed_pi_config`) live in the library so the C path and the SIL bench use exactly the same numbers."
+msgstr ":code:`tick()` 是 noexcept、不分配、不做 I/O——它就是 ISR 入口。整定辅助函数（:code:`current_pi_config`、:code:`speed_pi_config`）放在库里，保证 C 路径与 SIL 台架用的是同一组数。"
 
-#: ../../source/usage.rst:47 dbd8e835d8334122b5f79ee5599e8ad0
+#: ../../source/usage.rst:47 e27a2f3015eb4636a67a198044a82c3d
 msgid "_`C path (non-C++ projects, glue code)`"
 msgstr "_`C 路径（非 C++ 工程、胶水层）`"
 
-#: ../../source/usage.rst:49 1b3571567e7d458da1012debb54ffa70
+#: ../../source/usage.rst:49 f81561b42b594ce5be7a003390f45eb6
 msgid "the same motor through the frozen ABI"
 msgstr "同一个电机，走冻结的 ABI"
 
-#: ../../source/usage.rst:68 3925d376488d4d62a19e93f2ec186c6e
-msgid ""
-"Handles are opaque tokens carrying a generation counter: after "
-":code:`foc_motor_destroy()` an old handle answers :code:`FOC_ERR_PARAM` "
-"instead of touching freed memory. The C path runs on the stub HAL with "
-"library defaults (20 kHz, 500 ns dead time, 5 A limit, 24 V bus); for "
-"real hardware use the C++ path."
-msgstr ""
-"句柄是带代际计数的不透明令牌：调用 :code:`foc_motor_destroy()` 之后，旧句柄返回 "
-":code:`FOC_ERR_PARAM`，而不是去碰已释放的内存。C 路径跑在桩 HAL 与库内默认值上（20 kHz、500 ns 死区、5 "
-"A 限流、24 V 母线）；上真实硬件请走 C++ 路径。"
+#: ../../source/usage.rst:68 684d915c8c8d498c89b1f9348d81f9ce
+msgid "Handles are opaque tokens carrying a generation counter: after :code:`foc_motor_destroy()` an old handle answers :code:`FOC_ERR_PARAM` instead of touching freed memory. The C path runs on the stub HAL with library defaults (20 kHz, 500 ns dead time, 5 A limit, 24 V bus); for real hardware use the C++ path."
+msgstr "句柄是带代际计数的不透明令牌：调用 :code:`foc_motor_destroy()` 之后，旧句柄返回 :code:`FOC_ERR_PARAM`，而不是去碰已释放的内存。C 路径跑在桩 HAL 与库内默认值上（20 kHz、500 ns 死区、5 A 限流、24 V 母线）；上真实硬件请走 C++ 路径。"
 
-#: ../../source/usage.rst:74 4e78afd021684ec9976b2b206a12922c
+#: ../../source/usage.rst:74 46ea2024720a4c82bfd90f6eeb2e2133
 msgid "_`Python path (host-side scripts)`"
 msgstr "_`Python 路径（上位机脚本）`"
 
-#: ../../source/usage.rst:76 70fe34ba9c634078b52c2f2924ee369a
+#: ../../source/usage.rst:76 8f9a1fd63c4f4635bd4e2d53579a61f4
 msgid "the same motor from Python"
 msgstr "同一个电机，从 Python 驱动"
 
-#: ../../source/usage.rst:89 dbe069cc364243d48c7b5918f7d45a14
-msgid ""
-"The module binds the **C API**. Failures raise "
-":code:`foc_python.FocError` whose :code:`code` attribute is the very "
-":code:`ErrorCode` the C function returned — Python gets exceptions, you "
-"keep the raw code."
-msgstr ""
-"模块绑定的是 **C API**。失败抛 :code:`foc_python.FocError`，其 :code:`code` 属性就是 C "
-"函数返回的那个 :code:`ErrorCode`——Python 拿到异常，你仍保留原始错误码。"
+#: ../../source/usage.rst:89 79b09ee4716c458f85fae9b5b303d01e
+msgid "The module binds the **C API**. Failures raise :code:`foc_python.FocError` whose :code:`code` attribute is the very :code:`ErrorCode` the C function returned — Python gets exceptions, you keep the raw code."
+msgstr "模块绑定的是 **C API**。失败抛 :code:`foc_python.FocError`，其 :code:`code` 属性就是 C 函数返回的那个 :code:`ErrorCode`——Python 拿到异常，你仍保留原始错误码。"
 
-#: ../../source/usage.rst:94 d73c3c76dd8247b7a855647133984852
+#: ../../source/usage.rst:94 22e2b2cd60ac48838981763c1f260168
 msgid "_`The model behind the loop`"
 msgstr "_`控制环背后的模型`"
 
-#: ../../source/usage.rst:96 cb97007ff2ae411085f454f66e5ae3d8
-msgid ""
-"The controller sees a dq-frame PMSM. The plant used by the SIL tests "
-"integrates exactly this, with fixed-step RK4 at 10 µs against a 100 µs "
-"control step:"
-msgstr ""
-"控制器看到的是 dq 轴 PMSM。SIL 测试用的 plant 就按下面这组方程积分：固定步长 RK4，10 µs 积分步长对 100 µs "
-"控制步长："
+#: ../../source/usage.rst:96 96136e187fef47fba929172ddd4cbf4a
+msgid "The controller sees a dq-frame PMSM. The plant used by the SIL tests integrates exactly this, with fixed-step RK4 at 10 µs against a 100 µs control step:"
+msgstr "控制器看到的是 dq 轴 PMSM。SIL 测试用的 plant 就按下面这组方程积分：固定步长 RK4，10 µs 积分步长对 100 µs 控制步长："
 
-#: ../../source/usage.rst:99 819155184a314816844ba5f69ff5b634
+#: ../../source/usage.rst:99 ac77b07afd91496d95d3792ba1f7008d
 msgid ""
 "\\begin{aligned}\n"
 "\\frac{di_d}{dt} &= \\frac{v_d - R_s i_d + \\omega_e L_q i_q}{L_d} \\\\\n"
@@ -117,889 +86,95 @@ msgid ""
 "\\end{aligned}"
 msgstr ""
 
-#: ../../source/usage.rst:109 9ffc7e15d21a4350846acc4541b6a80c
-msgid ""
-"with :math:`\\psi_f = K_t / (1.5 p)` and :math:`\\omega_e = "
-"p\\,\\omega_m`. The torque constant is *knot* the back-EMF constant: "
-"conflating them is the classic way to be wrong by 1.5 p."
-msgstr ""
-"其中 :math:`\\psi_f = K_t / (1.5 p)`、:math:`\\omega_e = "
-"p\\,\\omega_m`。转矩常数**不是**反电动势常数：把两者混为一谈，正是差 1.5 p 的经典错法。"
-
-#: ../../source/usage.rst:112 3b59ebcb9fff46feb8fdfa3eb8063165
-msgid ""
-"**How that model earns its place.** Everything else in this documentation"
-" is measured against it, so it is the one thing that cannot be taken on "
-"trust. Four checks, none of which is a comparison with itself:"
-msgstr ""
-
-#: ../../source/usage.rst:115 9c2b5690f36f47a796b27ad07a04f92b
-msgid ""
-"**The equations above are the equations the plant integrates** -- same "
-"terms, same `psi_f = Kt/(1.5p)` substitution, and the header block states"
-" them next to the code that computes them."
-msgstr ""
-
-#: ../../source/usage.rst:117 fe3e1ec521694a3fad071ca310df1440
-msgid ""
-"**An independent formulation agrees.** `sil_abc_plant.hpp` integrates the"
-" three phase fluxes directly from `v = Rs*i + d(lambda)/dt` with "
-"`lambda_p = (Ls - M)*i_p + lambda_m*cos(theta_p)` and derives torque from"
-" co-energy, without Clarke, Park or `psi_f`. The two models agree on "
-"`i_d`/`i_q` to 2 % and on torque, and on the electrical time constant: "
-"two different formulations of the same physics is the strongest evidence "
-"available without a bench."
-msgstr ""
-
-#: ../../source/usage.rst:121 5e9c6b8dba7b4a4489e9ba4fbdae9573
-msgid ""
-"**Analytic anchors.** An `RL` step matches the closed-form solution; the "
-"mechanical steady state satisfies the torque balance; positive torque at "
-"positive speed delivers mechanical power; phase currents round-trip back "
-"to the dq frame; `psi_f` follows the torque constant."
-msgstr ""
-
-#: ../../source/usage.rst:124 4b5a8727ed4342dbbd85e816c05f11d3
-msgid ""
-"**A conservation law at the frequency it is used at.** `P_elec = P_copper"
-" + dW/dt + P_mech`, with `W = 1.5*(Ld*id^2/2 + Lq*iq^2/2 + psi_f*id)`, "
-"run at **900 rad/s electrical**: 11313.95 J in, 11302.81 J out as copper "
-"plus mechanical work over 0.1 s (**0.098 %**), and the worst single "
-"period within **0.37 %**. One invariant catches a wrong factor of 1.5, a "
-"wrong `psi_f` and a cross-coupling sign at the same time."
-msgstr ""
-
-#: ../../source/usage.rst:129 abb7e25cc9cc4e3998fe3f9f1b10f0af
-msgid ""
-"What none of the four do is say the *parameters* describe a real motor. "
-"Saturation, iron loss and winding temperature are modelled and **off by "
-"default**; the plant is exact for the machine it describes and says "
-"nothing about a specific one. That is why every claim in this library is "
-"of the form \"this algorithm does X on a machine described by these "
-"equations\" -- falsifiable, and true -- and none of them is of the form "
-"\"this will work on your motor\", which would need a bench."
-msgstr ""
-
-#: ../../source/usage.rst:135 5b28ba24dcf2490198102a9bfe141258
-msgid "_`Sizing the injection (HFI)`"
-msgstr ""
-
-#: ../../source/usage.rst:137 bdf2e052ddfd4a13bc0f048ecc06418d
-msgid ""
-"The injection observer buys an angle where back-EMF has nothing to say, "
-"and it is not free. Every number below was measured on the SIL envelope "
-"fixture — a loaded machine held at a given speed on a dyno, the observer "
-"as a passenger, so a cell is a property of the observer and not of a loop"
-" closing on it."
-msgstr ""
-
-#: ../../source/usage.rst:141 6cac0d82371d4f7fa879bcfd1206e8fd
-msgid ""
-"**The carrier has a ceiling set by the control rate.** Ask for it rather "
-"than guess:"
-msgstr ""
-
-#: ../../source/usage.rst:150 328f446aea6345d5a9ad4f283847e546
-msgid ""
-"The same question from C is :code:`foc_hfi_max_inject_hz(pwm_freq_hz)`. "
-"Past the ceiling the observer does not get noisy, it stops: the "
-"demodulated amplitude collapses, the lock detector drops out, the angle "
-"freezes and the speed reads zero, which a loop cannot tell from a stalled"
-" rotor — measured as a -19.5 rad/s speed bias before the failure was "
-"understood. :code:`foc_motor_create_ex()` refuses such a request, and the"
-" cases it cannot catch are reported by :code:`observer_locked`."
-msgstr ""
-
-#: ../../source/usage.rst:156 90b337157616407d805501b26b476d3a
-msgid ""
-"The same admission test runs when the observer is changed on a running "
-"motor: :code:`Motor.set_observer()` -- :code:`foc_motor_set_observer()` "
-"from C -- validates the request against the setup already in force, so a "
-"motor built without a carrier can run on back-EMF but cannot be handed "
-"over to HFI later. Outside the Run state it answers :code:`STATE` "
-"instead, because a hand-over carries an estimate and an observer that has"
-" not been stepped has none to carry. Both refusals arrive as "
-":code:`FocError`, never as a silently unchanged "
-":code:`status()[\"observer\"]`."
-msgstr ""
-
-#: ../../source/usage.rst:162 58a3dc302e764a0ba3578cecf3924592
-msgid ""
-"Within the ceiling, higher is better on both axes at once, because the "
-"angle bias falls faster than the injected current:"
-msgstr ""
-
-#: ../../source/usage.rst:164 62fcffb1645a4b3d96849f7dac0d369d
-msgid "20 rad/s mechanical, 200 Hz demodulation, 12 V"
-msgstr ""
-
-#: ../../source/usage.rst:167 12abb75c75e64e34921813d6afada8d6
-msgid "carrier"
-msgstr ""
-
-#: ../../source/usage.rst:168 8f123bdf5aeb439980ade5c2bdd11082
-msgid "angle bias"
-msgstr ""
-
-#: ../../source/usage.rst:169 81004deb32d1450ba59a94f400d177c8
-msgid "HF current"
-msgstr ""
-
-#: ../../source/usage.rst:170 641f320261f34e988c587004e565c4b7
-msgid "2000 Hz"
-msgstr ""
-
-#: ../../source/usage.rst:171 a2887368092b43c7acf6d152472d6f1b
-msgid "0.0060 rad"
-msgstr ""
-
-#: ../../source/usage.rst:172 9a5bfb8d34a842dea5d6985fe6efe14b
-msgid "4.04 A"
-msgstr ""
-
-#: ../../source/usage.rst:173 6d451f65dceb4f4190fe3f02acf0cbe5
-msgid "4000 Hz"
-msgstr ""
-
-#: ../../source/usage.rst:174 c7ec7006871048d49a185bf0bd969f4c
-msgid "0.0012 rad"
-msgstr ""
-
-#: ../../source/usage.rst:175 2e85c6d859664a6fbdc44046893a8ff6
-msgid "1.89 A"
-msgstr ""
-
-#: ../../source/usage.rst:176 68d82f3d6649479c976f993688bbc6e1
-msgid "8000 Hz"
-msgstr ""
-
-#: ../../source/usage.rst:177 c322486fe4b643ad86f36cc7cc8b44b4
-msgid "0.00018 rad"
-msgstr ""
-
-#: ../../source/usage.rst:178 6c5af6c7de4442e2a0414980d1c01fe0
-msgid "0.38 A"
-msgstr ""
-
-#: ../../source/usage.rst:180 2cbb9c6167ea40de87227551b7e5b9e5
-msgid ""
-"**Ask for the whole configuration, rather than assembling it.** "
-":code:`foc.hfi_size()` -- :code:`foc_hfi_size()` from C -- takes the "
-"machine and the control rate and returns the carrier, the amplitude, and "
-"both cutoffs:"
-msgstr ""
-
-#: ../../source/usage.rst:188 46a71668144d43f3b934d75c7b0946c6
-#, python-brace-format
-msgid ""
-"The amplitude is the volts that draw the HF current *you* budget ($V = "
-"I_{hf}\\,\\omega_h L_d$), so the injection becomes a decision about "
-"current -- which is what sizes the torque ripple and the extra losses -- "
-"instead of a voltage copied from an example. And the result is a "
-"configuration the library accepts: that is what the tests assert, because"
-" a sizing tool that recommends something the library then refuses would "
-"be worse than no tool."
-msgstr ""
-
-#: ../../source/usage.rst:193 94d79fd7dcce46a48e558fe1d7fed35b
-msgid ""
-"**The demodulation window is a fixed choice, not a scheduled one.** "
-"Across standstill to 50 rad/s mechanical it changes the angle error by "
-"under 0.5 %, and at standstill the *narrowest* window is best by 14x. "
-"What looked like \"a narrow window breaks at speed\" is a start-up "
-"transient, which is what the blanking time is for."
-msgstr ""
-
-#: ../../source/usage.rst:197 84ebb1e63f60465a890cc157cecd48ce
-msgid ""
-"**What is left at low speed is the injection's own price.** In a closed "
-"servo at 20 rad/s the steady bias is 0.0039 rad/s — 0.02 % — and the "
-"remainder is a ripple at the carrier frequency. It is not the estimator, "
-"the angle, the window, the rotor's inertia or the demodulator's clamp: it"
-" scales with the injected current (a third of the volts, 0.36 of the "
-"tone) and with speed (4.0x the speed, 4.0x the tone), and it is "
-"indifferent to the saliency. It is the injected current cross-coupling "
-"into torque on a turning machine, and :code:`inject_v` is the knob that "
-"sizes it."
-msgstr ""
-
-#: ../../source/usage.rst:203 98de36f3750b4371b6090efac2c46881
-msgid ""
-"**Watch it rather than assume it.** :code:`status()` carries the "
-"observer's own verdict:"
-msgstr ""
-
-#: ../../source/usage.rst:212 6406fb3c549944c5a7fc259f1c7d60f4
-msgid ""
-":code:`observer_error` is exactly zero for observers that publish no "
-"error signal, so read it together with :code:`observer_locked` and "
-":code:`observer`."
-msgstr ""
-
-#: ../../source/usage.rst:215 7ff52c3a37e34f018e412e2605c3c922
-msgid ""
-"**Record the window, rather than watching a scalar.** A status report "
-"answers \"what is true now\"; a fault is usually a question about the "
-"last few milliseconds. The trace channel is a ninth policy on the motor, "
-"so it is chosen at compile time and costs nothing when it is not chosen:"
-msgstr ""
-
-#: ../../source/usage.rst:231 4563f02258a2489498d44762a2dead8f
-msgid ""
-"One sample per period, six numbers and two states: the measured currents "
-"the PI acted on, the currents it was asked for, the voltage it applied, "
-"the mechanical speed, and the mode and status the period ended in. With "
-"the default :code:`foc::core::NullTrace` the type is empty -- no member, "
-"no branch, no pointer check -- so \"off costs nothing\" is a property of "
-"the type system rather than a promise about the optimiser."
-msgstr ""
-
-#: ../../source/usage.rst:236 35f776ea467d4086963fbc6e18527962
-msgid ""
-"A full ring keeps recording and counts what it overwrote, because "
-"forgetting with a counter is reversible and stopping is not: a trace that"
-" freezes when it fills loses exactly the window a fault is interesting "
-"in. Timestamps come from the platform clock, truncated to 32 bits (71.6 "
-"minutes); with no clock every :code:`t_us` is zero, which means \"no "
-"timestamp\" rather than \"everything happened at once\"."
-msgstr ""
-
-#: ../../source/usage.rst:241 0f81ea5060fd4846ab9d5078a7cf9f26
-msgid ""
-"From C the same window is caller-owned storage and a run-time capacity, "
-"because the ABI is one type for every caller:"
-msgstr ""
-
-#: ../../source/usage.rst:253 b8ae67aaff8f4e60b0356ccd67826e71
-msgid ""
-"and from Python the storage belongs to the object, so there is nothing to"
-" keep alive by hand:"
-msgstr ""
-
-#: ../../source/usage.rst:263 92dd3b8d5d9844d5a68a306a028276d9
-msgid ""
-"The C path pays one null check per period for that run-time capacity -- "
-"predictable, and nothing when detached. The compiled-in C++ path pays "
-"nothing because the capacity is the type. Measured cost of the whole "
-"feature where it lands: the Debug archive grew 8.6 KB (56.9 to 65.6 KB), "
-"of which the code is 1.5 KB and the ten new functions themselves about "
-"0.65 KB; the rest is DWARF for two new types, which a Release artifact "
-"does not carry. A Release ROM figure has **not** been measured, and is "
-"not claimed."
-msgstr ""
-
-#: ../../source/usage.rst:269 1a9ffb9e398d4b43b5433c889b78d08e
-#, python-format
-msgid ""
-"Three things this channel is measured to do, and one it cannot. Measured:"
-" a sample agrees with "
-":code:`telemetry()`/:code:`state()`/:code:`status()` **bit for bit** in "
-"the same period; the null channel adds no storage and no branch (host, "
-"best of three rounds: 158.0 ns/period off against 161.9 on over 20 000 "
-"periods -- the +3.9 ns difference is at the resolution of that "
-"measurement, and one round of it reported recording as *faster*, which is"
-" how a noise figure announces itself); and a sample survives a "
-":code:`%.9g` text round trip bit for bit, so a trace written to a file is"
-" still the same numbers when it is read back. What it cannot do is tell "
-"you what the *hardware* did -- it records what the loop believed, so a "
-"perfect-looking trace is entirely consistent with a miscalibrated current"
-" sensor. Per-period cost on a target is also unmeasured here: the host "
-"figure above says nothing about a 100 MHz core, and a budget for that is "
-"a claim somebody would have to take with a scope."
-msgstr ""
-
-#: ../../source/usage.rst:277 f7f07bddbcac465499b7086dc3d14e46
-msgid ""
-"**Compare a window instead of remembering a number.** A status report "
-"answers \"what is true now\" and a trace answers \"what the loop did\"; "
-"neither answers \"did this change\". Three recorded windows do, and they "
-"are compared on demand:"
-msgstr ""
-
-#: ../../source/usage.rst:285 353354a0318c4b5ba6e743afe05bc3e1
-msgid ""
-"Each window is plain text: a header naming the scenario and the module "
-"hash it came from, then one line per sample. It is readable in a diff, "
-"which is the only reason a stored number can be reviewed instead of "
-"trusted. The report names the **trace**, the **quantity** and the "
-"**difference**, and classifies it:"
-msgstr ""
-
-#: ../../source/usage.rst:289 3183918ff20d4b6cba8bad943d731636
-msgid "what a difference means"
-msgstr ""
-
-#: ../../source/usage.rst:293 b37671cd3e5d4e25a9895c24d3762ce9
-msgid "band"
-msgstr ""
-
-#: ../../source/usage.rst:294 3884d188e6b04a41baffe454a5393eef
-msgid "reading"
-msgstr ""
-
-#: ../../source/usage.rst:295 9809c96e204946e09ebab6b149465690
-msgid "``<= 1e-5``"
-msgstr ""
-
-#: ../../source/usage.rst:296 982144b23029439c968c14bca8e89b27
-msgid "same -- arithmetic noise between builds, not a behaviour change"
-msgstr ""
-
-#: ../../source/usage.rst:297 460f4b6a59da45ceb55cf1bead8fde56
-msgid "``<= 30 %``"
-msgstr ""
-
-#: ../../source/usage.rst:298 1311e905467242db8fcabf5482c8ae5a
-msgid "drift -- worth a look, not evidence of anything by itself"
-msgstr ""
-
-#: ../../source/usage.rst:299 c08d0ee4a2b547fb9acc524110e2483c
-msgid "``1.3x .. 2.0x``"
-msgstr ""
-
-#: ../../source/usage.rst:300 d8893bd7506349a4afd884e588cafab9
-msgid ""
-"**attribute** -- the signature of a missing term rather than of noise; "
-"this is where the W7-c investigation landed (0.1356 predicted against "
-"0.0900 measured, 1.51x) and the term that explained it was real"
-msgstr ""
-
-#: ../../source/usage.rst:302 8243c82ee9a24e2c93086ae01010c87e
-msgid "``> 2.0x`` or a sign flip"
-msgstr ""
-
-#: ../../source/usage.rst:303 c16b77ed61b14524a94e36be962d79cc
-msgid "changed -- expected after an algorithm change, a surprise otherwise"
-msgstr ""
-
-#: ../../source/usage.rst:305 a8e467666c444270986fe5a9598b779d
-msgid ""
-"The ledger **reports and does not block**, deliberately: a ledger that "
-"gates a build gets its tolerance widened the first time it is "
-"inconvenient, and then the reference value means nothing. ``--strict`` "
-"exists for a release gate, where a human has already decided that this "
-"build and this baseline are comparable."
-msgstr ""
-
-#: ../../source/usage.rst:309 22085ef850e7429e913be11fae60b693
-msgid ""
-"A golden is a recording from one machine and one build, not a "
-"specification: a different compiler produces different floats in the last"
-" digits. The header carries the module hash so the report can say when a "
-"baseline came from another build, and the bands above are what keep that "
-"honest -- a foreign baseline shows up as drift, not as a silent pass."
-msgstr ""
-
-#: ../../source/usage.rst:313 25a72f0302b741d690ca4278833afb8d
-msgid ""
-"**Measure the loop instead of eyeballing the plot.** A window tells you "
-"what happened; `foc/core/step_metrics.hpp` turns it into the numbers a "
-"tuning decision rests on. The library's own speed loop is designed as a "
-"first-order closed loop with time constant `1 / wb` (`speed_pi_config()` "
-"cancels the mechanical pole `B/J` and leaves `wb / s`), so the bandwidth "
-"it reports can be checked against the bandwidth that was *asked for* -- a"
-" measurement of the gain law, not of the fit."
-msgstr ""
-
-#: ../../source/usage.rst:335 c2c81dfd06244b449b81882c365cec5a
-msgid ""
-"Three criteria, each of which was watched going red before it was "
-"believed:"
-msgstr ""
-
-#: ../../source/usage.rst:337 c9fbc298de414474ba66d60c4226f00b
-#, python-format
-msgid ""
-"**fitted vs analytic, <= 10 %.** A 10 rad/s step on the SIL bench fits to"
-" **243.57 rad/s against the 250 rad/s requested (-2.57 %)** through the "
-"Python plant, and **+9.15 %** through the C++ bench. This band is weak "
-"and the weakness is measured: a 20 % error in the gain law moves the "
-"reading only to -9.88 %, still inside it, because the estimator's bias is"
-" the same size as the defect. The companion criterion -- request 125 and "
-"250 rad/s and demand the measurements move by the same factor (134.66 and"
-" 272.87 rad/s, ratio 2.026) -- is what notices a loop that ignores the "
-"request it was given. Attribution, one knob at a time: raising that "
-"bench's inner current bandwidth 2000 to 4000 rad/s moves the number from "
-"+9.4 % to +5.8 %, halving the control period moves it 0.07 points, and "
-"giving the window its pre-step sample moves it 0.30. The inner loop is "
-"the story; the rest is a first-order model applied to a cascade."
-msgstr ""
-
-#: ../../source/usage.rst:346 c1b0673734164df9873e093d2b70f6e8
-msgid ""
-"**C++ vs Python on the same samples, <= 1 %.** Two implementations of one"
-" definition, compared in one process -- measured agreement is 0.003 % at "
-"400 rad/s, so the band is a tripwire for drift rather than a tolerance."
-msgstr ""
-
-#: ../../source/usage.rst:348 7d6b252c54914636a8e601dc8a2f824d
-msgid ""
-"**replay, error 0.** The settling time is an *index* decision, not a "
-"fitted number, so both sides must pick the same sample: the analysis "
-"layer recomputes it from the window and the comparison is on the index, "
-"exactly."
-msgstr ""
-
-#: ../../source/usage.rst:351 b85f16b475a244a1892563bdd10cd582
-#, python-format
-msgid ""
-"A sweep closes the gap the band above leaves open. Drive the reference "
-"with `A*cos(w t)`, fit both the command and the response at that "
-"frequency (`foc/core/sinusoid_fit.hpp`), divide: the -3 dB point needs no"
-" model and moves *with* an error instead of carrying a bias of its own. "
-"Measured: **234.91 rad/s against 250 requested (-6.04 %)** on the C++ "
-"bench, **236.18 rad/s (-5.53 %)** through the Python plant, two "
-"independent machines agreeing to 0.5 %. The same 20 % gain error that the"
-" step band could not see moves this crossing to **210.79 rad/s (-15.68 "
-"%)**, outside the band."
-msgstr ""
-
-#: ../../source/usage.rst:357 e18212b4d9ce4e5a8e2fc94e43330a8d
-msgid "the same defect, two instruments"
-msgstr ""
-
-#: ../../source/usage.rst:361 f1f451940adb44ab8f2ffdeef05c2c71
-msgid "criterion"
-msgstr ""
-
-#: ../../source/usage.rst:362 a42289c52ae94536aee3a25861251bb5
-msgid "no defect"
-msgstr ""
-
-#: ../../source/usage.rst:363 bd5176c14435403384852d147314619a
-msgid "gain law x0.8"
-msgstr ""
-
-#: ../../source/usage.rst:364 0aa7810819cf49dab9f4d2cabca47c2b
-msgid "verdict"
-msgstr ""
-
-#: ../../source/usage.rst:365 ad850b0d9dfb4001ac98a3f72f0c17bd
-msgid "step fit vs analytic, 10 % band"
-msgstr ""
-
-#: ../../source/usage.rst:366 cdddf1abf04a463e8b2926cdaff282ae
-msgid "+9.15 %"
-msgstr ""
-
-#: ../../source/usage.rst:367 eb6ec185e30345b9af910eaec236b897
-msgid "-9.88 %"
-msgstr ""
-
-#: ../../source/usage.rst:368 26b056864f1c40d3b39a2f49400152b7
-msgid "blind: passes either way"
-msgstr ""
-
-#: ../../source/usage.rst:369 523823b3898f4777ad8a1c5ce6ef591e
-msgid "step fit ratio 125 / 250"
-msgstr ""
-
-#: ../../source/usage.rst:370 ../../source/usage.rst:371
-#: 32899edadcae4c1d834c74a16720f13b d2dd415cd52340278c65309acc8493d2
-msgid "2.026"
-msgstr ""
-
-#: ../../source/usage.rst:372 0666f2b0b5344239bb083321fcde9fe1
-msgid "blind: a ratio cannot see a scale error"
-msgstr ""
-
-#: ../../source/usage.rst:373 e38b1c2e64c34268b3ae7cb6d6d0c242
-msgid "sweep -3 dB, 10 % band"
-msgstr ""
-
-#: ../../source/usage.rst:374 7fcb2ed9efd544b886729fbec2d447fb
-msgid "-6.04 %"
-msgstr ""
-
-#: ../../source/usage.rst:375 3aa2abb6a7174c22ad496ad26b2f7e00
-msgid "**-15.68 %**"
-msgstr ""
-
-#: ../../source/usage.rst:376 915f45f5ed6a46fab6d78e4f19ea7469
-msgid "fails, as it should"
-msgstr ""
-
-#: ../../source/usage.rst:378 7c08b0021e0c44ef99bd23da2a47ca8d
-#, python-format
-msgid ""
-"The analysis layer also carries a spectrum and a THD (`analyze.spectrum`,"
-" `analyze.thd`), checked against a signal whose answer is arithmetic "
-"rather than a modelling opinion: a unit tone reads 1.000 under a Hann "
-"window with the usual 2/sum correction, and a known 11.2 % distortion "
-"made of a 10 % third harmonic and a 5 % fifth reads 0.1118 with each "
-"harmonic in its own bin. Neither has a C-side counterpart, and neither "
-"needs one: they measure the window, not the loop."
-msgstr ""
-
-#: ../../source/usage.rst:383 30a41227d9a9406a9b84c28b068f1fd5
-msgid ""
-"**Break a stuck axis loose on purpose.** A speed PI does eventually break"
-" a stuck axis free -- its integral ramps the current until the torque "
-"passes the breakaway point -- and that is the problem: by then the "
-"integral has stored the whole windup, so the moment the rotor lets go the"
-" stored torque drives it past the setpoint. `core/stall_start.hpp` does "
-"the same thing deliberately: a known torque ramp, a report the instant "
-"the rotor moves, and the torque it moved on as the handover value."
-msgstr ""
-
-#: ../../source/usage.rst:398 4b91f758f89c4f4f977467ca3012f98f
-msgid ""
-"Measured: 0.030 N*m of breakaway at 0.5 N*m/s is reached and released at "
-"**60.1 ms**; against a real stuck plant (stiction 0.020 N*m, load 0.010 "
-"N*m) the sequence releases at **0.0307 N*m after 61.3 ms**, and a 0.9x "
-"torque -- a sequence asking for less than it believes -- moves that to "
-"68.0 ms and the case fails. A jam at the limit reports `Failed` with zero"
-" torque after 400 ms of ramp plus a 200 ms grace."
-msgstr ""
-
-#: ../../source/usage.rst:403 0c3e02f96e4d4c549401e91883bb6aa0
-msgid ""
-"**Turn a standing error into arithmetic.** A proportional position loop "
-"on a machine with friction has a *dead band*, not a residual: below a "
-"certain error the torque it can still ask for is under the breakaway and "
-"the axis does not move at all. `core/friction_comp.hpp` adds the Coulomb "
-"term that moves that wall, and refuses the estimates that would turn it "
-"into a motor."
-msgstr ""
-
-#: ../../source/usage.rst:414 0d8ba21e229a4f7e9a13111fda98a6ee
-#, python-format
-msgid ""
-"The numbers are the capability. The band is `static / kp` -- **4.003 mrad"
-" measured against 4.0 predicted** at `kp = 5 N*m/rad` -- and with the "
-"compensation it is `(static - coulomb) / kp`, **2.021 against 2.0**. It "
-"follows the estimate, which is why the estimate has to come from a "
-"measurement: 1.007 mrad with a 50 % over-estimate, and above the "
-"breakaway there is no band at all -- a `(0.030, 0.030)` estimate walks "
-"the axis **5.625 mrad with the reference held at zero and no command at "
-"all**."
-msgstr ""
-
-#: ../../source/usage.rst:420 294a56e4ac434c67a16f1e1514bfe69b
-msgid ""
-"The latch is not decoration. At rest the measured speed is zero-mean "
-"noise, so a Coulomb term on `sign(speed)` is a square wave of amplitude "
-"twice the term: measured with +-0.01 rad/s of encoder noise, the naive "
-"law ripples **20.03 mN*m** peak to peak and the latched one **0.036**, "
-"550 times quieter, while both park the axis in the same place."
-msgstr ""
-
-#: ../../source/usage.rst:424 b3cf6b51bfcd46a4a1713cac9b5475ed
-msgid ""
-"**Keep an axis out of a wall, and gear two axes together.** Two small "
-"stages for the shapes an AGV or a winder needs. `core/soft_limit.hpp` "
-"refuses a target outside the window (status, not a clamp -- a clamp makes"
-" a programming fault look plausible) and caps the velocity on the way in:"
-msgstr ""
-
-#: ../../source/usage.rst:434 6ebf93774d7b4e9d98aefa04f75899c7
-msgid ""
-"The ceiling is `v^2 <= 2*a*(d - v*dt)`, and the `v*dt` term is what makes"
-" it work: at 20 rad/s toward a wall the axis crosses by **19 mm** without"
-" it and stops **1.04 mm short** with it, where 19 mm is exactly the 1 ms "
-"this drive takes to deliver a braking current. `core/gear_ratio.hpp` is "
-"the other half of an AGV:"
-msgstr ""
-
-#: ../../source/usage.rst:445 4fd4f9a991d34d469cb4944db84962fe
-msgid ""
-"The unwrap is not a detail: three wrapped revolutions become 18.85 rad of"
-" continuous reference instead of two 6.28 rad jumps. And the "
-"synchronisation error of a *perfectly geared* pair is `v*kd/kp` -- **25.6"
-" mrad measured against 25.0 predicted**, linear in the rate and inverse "
-"in the gain -- which the velocity output removes (1.3 mrad). A gear that "
-"emits only a position is a lag generator with a ratio."
-msgstr ""
-
-#: ../../source/usage.rst:450 22c0424713394174900d96557ecab836
-msgid ""
-"**Run a motor from three Hall sensors.** `core/hall.hpp` carries the two "
-"things a Hall drive needs and nothing else: the six-step table, and an "
-"electrical angle interpolated from edge timing."
-msgstr ""
-
-#: ../../source/usage.rst:461 889f6b1008444c4e86fd72f1495faf7f
-msgid ""
-"The numbers that decide whether that is enough. Held at one commutation "
-"state, the torque is the cosine of where the rotor sits in the sector: "
-"maximum at the centre, **0.866 at both edges, never negative** -- a 14.0 "
-"% peak-to-peak ripple that six-step cannot avoid, and the argument for "
-"interpolating an angle at all. Interpolating buys a factor of **52 at 120"
-" rad/s electrical** (0.338 degrees RMS against the sector centre's "
-"17.52), and the factor shrinks to 7.5 at 900 rad/s because what is left "
-"is one *sampling period* of rotation (2.30 degrees at 62.5 us) rather "
-"than the 60-degree sector."
-msgstr ""
-
-#: ../../source/usage.rst:467 eff0f52463884d11be13b9fe6b3cef12
-#, python-format
-msgid ""
-"What it cannot do is in the same header: with a sensor stuck, `Fault` "
-"covers 15.5 % of a revolution and `State` another 53.9 %, and **8.4 % "
-"still reads `Ok` while wrong by up to 59 degrees**. The status is the "
-"whole admission story -- an estimate that is not being measured says so "
-"rather than reporting a sector centre as if it were a measurement."
-msgstr ""
-
-#: ../../source/usage.rst:471 4f6dbb04e02a4cfca666199e7d5dc626
-msgid ""
-"**A fault is not a temperature.** Protection is graded -- derate, then "
-"trip -- and the two decisions are separate fields rather than one code: "
-"`output_allowed` is defined as `active_mask == 0`, so a **fault means "
-"authority was removed**, while a **derating** drive is still running and "
-"says so through `i_limit_a` falling below the `i_max_a` the caller "
-"configured. Measured on the ladder case: 3.00 A at 45 C, **1.80 A at 80 C"
-" with output still allowed and no fault**, then 0 A and no output at 105 "
-"C. When two faults are active at once the lower-ranked one is reported "
-"and both bits stay visible in `active_mask` (0x006 for current plus "
-"voltage, 0x018 for voltage plus heat)."
-msgstr ""
-
-#: ../../source/usage.rst:478 ac3d4bfbfb27462eaa3117cf6df9c2cb
-msgid ""
-"**Command a torque, not an amperage.** `set_torque()` takes amps and "
-"leaves the N*m conversion to the caller -- the same arithmetic, with the "
-"same sign convention and the same limit, in every product. "
-"`foc/motor/torque_map.hpp` is that arithmetic once:"
-msgstr ""
-
-#: ../../source/usage.rst:489 37293e8f34be48df85f9d82699958fed
-msgid ""
-"The estimate is `kt*iq + 1.5*pp*(ld-lq)*id*iq`, which is the expression "
-"the plant integrates -- so it is checked against something that shares no"
-" line with it: the mechanical torque `J*dw/dt + B*w` from the recorded "
-"speed. The two agree to **+0.006 % at 2 A** and **+0.007 % at 20 A**, "
-"where the loop is saturated; the plan's 5 % band is three orders of "
-"magnitude wider than the measured residual, which is the forward-"
-"difference error in `dw/dt`. Scaling the map's gain by 10 % moves the "
-"same measurement to **-9.994 %**, so the band is a gate rather than "
-"decoration."
-msgstr ""
-
-#: ../../source/usage.rst:495 a5122b48302046759dbe0f72dd69b99c
-msgid ""
-"**Ask what a wrong nameplate costs.** Every gain here is derived from the"
-" nameplate, so the design question is how wrong it can be before the "
-"claim stops holding. `benchmark/script/montecarlo.py` draws machines, "
-"runs the loop on each and reports the spread:"
-msgstr ""
-
-#: ../../source/usage.rst:504 4b2a44b5cd5b432593997b3f9b523688
-#, python-format
-msgid ""
-"With a 10 % standard deviation on six nameplate parameters, a **matched**"
-" family -- every drawn machine described correctly by its own nameplate "
-"-- spreads **2.92 %** in bandwidth and 97.5 % of it stays inside the 10 %"
-" band, while the **mismatched** family spreads **19.18 %** and 42.5 % of "
-"it does. At 20 % the same pair reads 6.21 % against 29.74 % (yields 92.5 "
-"% and 12.5 %). That factor of about six and a half is what deriving every"
-" gain from the nameplate buys, and it is the only number on this page "
-"that states it as a quantity rather than a design intention. All four "
-"figures are `--trials 40 --seed 11`, the seed the suite uses."
-msgstr ""
-
-#: ../../source/usage.rst:511 f26eac8507524276a6dea0fb047c6849
-#, python-format
-msgid ""
-"A single parameter moves predictably, which is the arithmetic behind `kp "
-"= wb*J/Kt`: a nameplate `J` 10 % high raises the bandwidth 8.46 % (the "
-"1.40 % shortfall is the mechanical pole `B/J` only partly cancelled, "
-"since `ki = wb*B/Kt` does not move with `J`), and a nameplate `kt` 10 % "
-"high lowers it 9.28 % (prediction 9.09 %, within 0.2 %)."
-msgstr ""
-
-#: ../../source/usage.rst:515 a7b785aeac0c4913a89c41332886de88
-msgid ""
-"Read back through the CLI, the ledger's own `speed_step_100` window "
-"measures **197.59 rad/s** against the 200 rad/s the library defaults to "
-"(-1.2 %) -- on a window decimated to one sample per millisecond against a"
-" four-millisecond time constant. That is the analysis layer replaying a "
-"stored file rather than the object that produced it."
-msgstr ""
-
-#: ../../source/usage.rst:519 7682501888e243fbb50d52fb2c9bf5e7
-msgid ""
-"What it cannot do: a first-order fit on a response that is not first-"
-"order reports the first-order *equivalent*, which is a real number and "
-"not the system's bandwidth -- which is why the band above is 10 % and is "
-"attributed rather than assumed."
-msgstr ""
-
-#: ../../source/usage.rst:524 5c8edad4a0f94ab59b8d67dc0c74de37
+#: ../../source/usage.rst:109 cdaa72329c4348b5a3589088f1578872
+msgid "with :math:`\\psi_f = K_t / (1.5 p)` and :math:`\\omega_e = p\\,\\omega_m`. The torque constant is *knot* the back-EMF constant: conflating them is the classic way to be wrong by 1.5 p."
+msgstr "其中 :math:`\\psi_f = K_t / (1.5 p)`、:math:`\\omega_e = p\\,\\omega_m`。转矩常数**不是**反电动势常数：把两者混为一谈，正是差 1.5 p 的经典错法。"
+
+#: ../../source/usage.rst:113 761c76b03e6442c6a22ed0b775356754
 msgid "_`Verification: what is actually checked`"
 msgstr "_`验证：到底检查了什么`"
 
-#: ../../source/usage.rst:526 fea47cd4d72f4da38b996267106ad2e8
-msgid ""
-"Every number below is produced by the commands in the same column, on the"
-" same commit."
+#: ../../source/usage.rst:115 5294d264d8df4ae2b50177e6ade8a36e
+msgid "Every number below is produced by the commands in the same column, on the same commit."
 msgstr "下面每个数字都由同一行的命令、在同一 commit 上产出。"
 
-#: ../../source/usage.rst:528 8802305b1de84b86bf34913e4b4ecdc7
-msgid ""
-"The rightmost column is the **evidence level** (defined in the project "
-"README): L1 is enforced by construction, L2 is measured against the model"
-" in this repository with the criterion written first, L3 adds a measured "
-"sensitivity to the model being wrong, L4 would be measured on real "
-"hardware. **There are no L4 claims** -- no motor has been attached to any"
-" of this. Read every number below as \"true of the documented model\", "
-"and use :code:`BoardSelfTest` / :code:`check_board()` to find out whether"
-" your hardware matches that model."
-msgstr ""
-
-#: ../../source/usage.rst:535 e87e724640d64aee943a37e24faf994d
+#: ../../source/usage.rst:117 b209a148924842a193c3c250ad8fbaa5
 msgid "evidence, not adjectives"
 msgstr "证据，不是形容词"
 
-#: ../../source/usage.rst:539 5040b41dcd9c4d1ba8cbec5d65387787
+#: ../../source/usage.rst:121 4efee64eee6445c29fb61d2b8cb10a79
 msgid "What"
 msgstr "项目"
 
-#: ../../source/usage.rst:540 c5f7b56515ae4aafbf96e22cdde698ac
+#: ../../source/usage.rst:122 e5dfcc43ab984f9984ecc8aef456eb60
 msgid "How"
 msgstr "怎么跑"
 
-#: ../../source/usage.rst:541 4e405a71d1b14553bd6af480f643431c
+#: ../../source/usage.rst:123 0a119066768d463c8c3b879670280fc2
 msgid "Result"
 msgstr "结果"
 
-#: ../../source/usage.rst:542 1f47ad9ac8a442bcbd75dbf5f0f8af4b
-msgid "Level"
-msgstr ""
-
-#: ../../source/usage.rst:543 d1d9ebab694f4fe78776e5a0b0dfaaa0
+#: ../../source/usage.rst:124 4c2772b930794be0a8878768615d4cfc
 msgid "Unit, SIL and stress cases"
 msgstr "单元、SIL 与 stress 用例"
 
-#: ../../source/usage.rst:544 db561a61054f46f0a328e91cbffff2ea
+#: ../../source/usage.rst:125 b8758566c13c40229d5501a7aac39f79
 msgid ":code:`conan create . -s build_type=Debug --build=missing`"
 msgstr ""
 
-#: ../../source/usage.rst:545 15456819b0ef4f7e9e544fa0a87e5e1e
-#, fuzzy
-msgid "857 cases, 0 failed"
+#: ../../source/usage.rst:126 0beedbf051f94d8f82a8ffafd2eae1c0
+msgid "131 cases, 0 failed"
 msgstr "131 个用例，0 失败"
 
-#: ../../source/usage.rst:546 173e462c0ffa4b819a278bd7d03210a4
-msgid "L1/L2"
-msgstr ""
-
-#: ../../source/usage.rst:547 5cba82bae95d4030820f41b59d087d90
+#: ../../source/usage.rst:127 98e8e1ed87044f0b89a44d9962ccf647
 msgid "Line coverage"
 msgstr "行覆盖率"
 
-#: ../../source/usage.rst:548 238c46a69511484da9bf0862b4ba332b
-msgid ":code:`python3 .github/project/coverage_gate.py`"
+#: ../../source/usage.rst:128 e26e3cfd8f8b4af7ad5c6f3a58d83185
+msgid ":code:`python3 .github/misc/coverage_gate.py`"
 msgstr ""
 
-#: ../../source/usage.rst:549 8326d1abea104b1083cc3cc6fcd39291
-#, fuzzy, python-format
-msgid "94.67 % overall, 96.56 % in :code:`core/`"
+#: ../../source/usage.rst:129 2f1528706bb64f70bad95978ec8bbe6a
+#, python-format
+msgid "96.23 % overall, 99.46 % in :code:`core/`"
 msgstr "整体 96.23 %，:code:`core/` 99.46 %"
 
-#: ../../source/usage.rst:550 ../../source/usage.rst:554
-#: ../../source/usage.rst:558 ../../source/usage.rst:570
-#: 1443fb0512bf48e0a1f99705b779b77a 27b42cf747fe437897a5dc998684251f
-#: 7d8a72c27d714bcebbd2c8f3707eca83 fcf7273524ee4fa29b5664dfdb43286b
-msgid "L1"
-msgstr ""
-
-#: ../../source/usage.rst:551 e3dbd3f8cc624e0ba1e817f5d5f79111
+#: ../../source/usage.rst:130 aeb4c34af6cf4ce2a4d65b5728efd5c6
 msgid "Layering and standalone headers"
 msgstr "分层与头文件独立编译"
 
-#: ../../source/usage.rst:552 a366cb5929814e43b4b70b0bbdef2577
+#: ../../source/usage.rst:131 75452e4b81a4443e8bb88b9eb6454d38
 msgid ":code:`gates.py guard` / :code:`gates.py strict`"
 msgstr ""
 
-#: ../../source/usage.rst:553 149fc465d68f43f59ff72d36d898d6fa
+#: ../../source/usage.rst:132 0c0e22f4c6534d95b6f5d15be8499bc4
 msgid "0 violations"
 msgstr "0 违规"
 
-#: ../../source/usage.rst:555 fcd0a9e6c67f4a5e9072fd6f2a4b387f
+#: ../../source/usage.rst:133 75187462024d4727913f0aee32d84021
 msgid "Negative compilation (fake HAL must not compile)"
 msgstr "负向编译（伪 HAL 必须编译失败）"
 
-#: ../../source/usage.rst:556 051db9b72b3c41efa8370bf4ca9f9e92
-msgid ":code:`python3 .github/project/negative_compile.py`"
+#: ../../source/usage.rst:134 3829948a82c747bdb23dca42e9d4ec51
+msgid ":code:`python3 .github/misc/negative_compile.py`"
 msgstr ""
 
-#: ../../source/usage.rst:557 f0f6f56926a0424c9e11f0e833c5d541
-#, fuzzy
-msgid "28 / 28 cases behave as specified"
+#: ../../source/usage.rst:135 37b56a8371f9421aa133b6f14c7da918
+msgid "10 / 10 cases behave as specified"
 msgstr "10 / 10 用例行为符合约定"
 
-#: ../../source/usage.rst:559 43745526bd1447ecbe99282012b26361
-msgid "The dq model itself"
-msgstr ""
-
-#: ../../source/usage.rst:560 985f38a454ba4e4bb160fd7a30f155db
-msgid ""
-":code:`test_abc_plant.cpp` -- an independently derived phase-variable "
-"plant"
-msgstr ""
-
-#: ../../source/usage.rst:561 2407437f4bce48efa449617db256eb53
-msgid ""
-"6 operating points agree on :math:`(i_d, i_q)` within 0.02 A, torque "
-"within 0.3 %"
-msgstr ""
-
-#: ../../source/usage.rst:562 ../../source/usage.rst:566
-#: 7579e599b8834f5bb9f4a43eb6fdc15b c65ce555826249fa84beaad001f07cb7
-msgid "L3"
-msgstr ""
-
-#: ../../source/usage.rst:563 b64598562def4f6593b8261de38c6b3f
-msgid "Unmodelled effects (q-axis saturation, iron loss, sensor gain/offset)"
-msgstr ""
-
-#: ../../source/usage.rst:564 becbdf398cb14b16bc1c0dd52955a47a
-msgid ":code:`test_sil_sensitivity.cpp`"
-msgstr ""
-
-#: ../../source/usage.rst:565 712d189362de41f1ae04f8754ae3b8ab
-msgid ""
-"8 rows; the worst single effect doubles the angle error, all stay inside "
-"the ceiling"
-msgstr ""
-
-#: ../../source/usage.rst:567 e364c9ff98a442c684dd983c3e96bf69
+#: ../../source/usage.rst:136 70458ca2952945d9bc61a002a157a6f8
 msgid "Three hosts and two cross targets"
 msgstr "三平台 + 两个交叉目标"
 
-#: ../../source/usage.rst:568 7436d8c021ee4381afa18812814fe823
+#: ../../source/usage.rst:137 d20583c9f26d442bb66a8ed0cdbe6e32
 msgid "CI (ubuntu / macOS / Windows; arm-linux-a53, mcu-m4)"
 msgstr "CI（ubuntu / macOS / Windows；arm-linux-a53、mcu-m4）"
 
-#: ../../source/usage.rst:569 32d3edf2b6c94e329f5e5b639006b4db
+#: ../../source/usage.rst:138 afdff8ac31124cc49d8d5857f80bf46a
 msgid "17 / 17 jobs green"
 msgstr "17 / 17 个 job 全绿"
 
-#: ../../source/usage.rst:572 c0767fec5cd84d5584a782274e42186c
-msgid ""
-"Two things this table deliberately does *not* say. First, \"0 failed\" is"
-" a statement about the scenarios someone wrote, not a proof of "
-"correctness. Second, the SIL bench's own validity rests on the phase-"
-"variable cross-check above -- which is why that cross-check exists: with "
-"no motor expert to review the derivation, a second derivation is the only"
-" thing that can disagree."
-msgstr ""
-
-#: ../../source/usage.rst:578 05497704ec594153ae13e6de488fdb0b
-#, fuzzy
-msgid ""
-"The SIL bench is layered on purpose: an analytic reference (L1), an "
-"independent offline arbiter (L2), and the scenario tests (current step, "
-"speed step, sine tracking, saturation limit, parameter perturbation). The"
-" SguanFOC project is a *third* reference, not the judge."
-msgstr ""
-"SIL 台架是分层设计的：解析解参考（L1）、独立的离线仲裁器（L2）、以及场景测试 "
-"S1–S5（电流阶跃、速度阶跃、正弦跟踪、饱和限幅、参数摄动）。SguanFOC 只是**第三**参考，不是裁判。"
-
-#~ msgid ":code:`python3 .github/misc/coverage_gate.py`"
-#~ msgstr ""
-
-#~ msgid ":code:`python3 .github/misc/negative_compile.py`"
-#~ msgstr ""
-
+#: ../../source/usage.rst:140 9343639e74f44ec2b0d7b080a3b96488
+msgid "The SIL bench is layered on purpose: an analytic reference (L1), an independent offline arbiter (L2), and scenario tests S1–S5 (current step, speed step, sine tracking, saturation limit, parameter perturbation). The SguanFOC project is a *third* reference, not the judge."
+msgstr "SIL 台架是分层设计的：解析解参考（L1）、独立的离线仲裁器（L2）、以及场景测试 S1–S5（电流阶跃、速度阶跃、正弦跟踪、饱和限幅、参数摄动）。SguanFOC 只是**第三**参考，不是裁判。"
