@@ -133,6 +133,7 @@ _`Detailed settings`
    What this library does not do <boundaries>
    What each capability offers <capabilities>
    Usage and verification <usage>
+   Language compliance: what can be claimed today <compliance>
    Foundation corrections <foundation-log>
    Demos <demos/index>
 
