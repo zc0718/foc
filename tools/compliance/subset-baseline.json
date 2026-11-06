@@ -1,0 +1,20 @@
+{
+  "_comment": [
+    "The `open` count freezes here. Closing an open item is free and expected; opening",
+    "one is a review event, because it means a rule we claimed to want was dropped or",
+    "a new one was discovered. Re-run with --baseline in the same commit that changes it,",
+    "so the number in the diff is the number somebody decided on.",
+    "2026-11-06: the first freeze. All five are blocked by facts outside the code --",
+    "three by a byte-pinned config file, one by a 254-page mapping that has not been",
+    "done, one by a standard that has not been bought."
+  ],
+  "recorded": "2026-11-06",
+  "open": 5,
+  "detail": [
+    "cert-cpp-family",
+    "cppcoreguidelines-family",
+    "conversion-warnings",
+    "cppcheck-misra-addon",
+    "misra-rule-mapping"
+  ]
+}
