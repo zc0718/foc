@@ -405,7 +405,8 @@ def cmd_ci_policy(_explicit):
 
 PROJECT_GATES = ('license', 'strict', 'claims', 'docs', 'deps', 'form', 'boundaries', 'capabilities', 'ci-policy',
                  'assume', 'anchor', 'scaffold', 'budget', 'clocks', 'observability', 'combinations', 'domain',
-                 'mutants', 'plantref', 'fmu', 'pil', 'mcdc', 'blast', 'wired', 'smoke', 'regmap', 'subset')
+                 'mutants', 'plantref', 'fmu', 'pil', 'mcdc', 'blast', 'wired', 'smoke', 'regmap', 'subset',
+                 'docvoice')
 
 
 def cmd_subset(_explicit):
@@ -420,6 +421,23 @@ def cmd_subset(_explicit):
     script = ROOT / 'tools' / 'compliance' / 'subset_gate.py'
     for _args in (['--selftest'], []):
         _rc = subprocess.run([sys.executable, str(script), *_args], cwd=ROOT, text=True).returncode
+        if _rc:
+            return _rc
+    return 0
+
+
+def cmd_docvoice(_explicit):
+    """A spec docstring is not a diary: the two registers must not absorb the ledger's voice.
+
+    Three registers share this repository and they were being written into each other -- `spec`
+    (include/, src/), `guide` (the Sphinx pages) and `ledger` (foundation-log.rst). A date in a spec
+    says "this fact has a shelf life" where the fact is supposed to be timeless; "the third time this
+    happened" is addressed to whoever was in the room. The gate delegates to `docvoice_gate.py` so the
+    rule has one implementation, runs `--selftest` first (a checker that cannot fire is decoration),
+    and keeps a per-file ratchet so an existing sentence cannot be joined by a new one."""
+    script = str(ROOT / '.github' / 'project' / 'docvoice_gate.py')
+    for _args in (['--selftest'], []):
+        _rc = subprocess.run([sys.executable, script, *_args], cwd=ROOT, text=True).returncode
         if _rc:
             return _rc
     return 0
@@ -721,6 +739,8 @@ def main():
         'fmu': 'build the FMU and load it in a standard FMI master (FMPy); SKIPPED when its material is absent',
         'subset': 'the language-subset rule table: every implemented rule names a mechanism that exists, every '
                   'deviation has its five elements, every NOLINT has a record, and the open count did not rise',
+        'docvoice': 'the spec and guide registers carry no diary sentences: no dates of record, no "the 3rd '
+                    'time", no "we stepped in it" -- the ledger may, and is exempt by name',
         'pil': 'run the speed-step scenario on the target ISA under qemu and compare with the host; SKIPPED when its '
                'material is absent',
         'all': ' + '.join(PROJECT_GATES),
@@ -794,6 +814,8 @@ def main():
         return cmd_domain([])
     if args.gate == 'subset':
         return cmd_subset([])
+    if args.gate == 'docvoice':
+        return cmd_docvoice([])
     # The chain above is the only thing standing between a single-gate invocation and the aggregate below, and it
     # has now been forgotten twice (`plantref` before, `combinations` and `mcdc` this time). A missing branch does
     # not fail: it runs *every* gate and prints "all N", which reads as success. So the fall-through is refused
@@ -819,6 +841,7 @@ def main():
                   'regmap': cmd_regmap,
                   'fmu': lambda _f: cmd_fmu([], tolerant=True),
                   'subset': cmd_subset,
+                  'docvoice': cmd_docvoice,
                   'pil': lambda _f: cmd_pil([], tolerant=True)}[name]([]) ]
     if failed:
         print(f'[project-gates] FAIL: {", ".join(failed)}', flush=True)

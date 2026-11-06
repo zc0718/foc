@@ -1,0 +1,10 @@
+{
+  "_comment": [
+    "Per-file count of diary sentences in the spec and guide registers. The ratchet runs one",
+    "way: a file may fall below its number freely, and may not rise. Re-run with --baseline in",
+    "the same commit that changes a number, so the number in the diff is one somebody decided on.",
+    "The ledger (foundation-log.rst) is exempt by EXEMPT in docvoice_gate.py, not by absence here."
+  ],
+  "recorded": "2026-11-06",
+  "per_file": {}
+}

@@ -35,14 +35,14 @@
  *            Dropping a code on purpose still has to say so: `(void)foc_set_speed(m, v);` does **not** silence this on
  *            GCC, because `__attribute__((warn_unused_result))` ignores the void cast (unlike `[[nodiscard]]`). The
  *            escape route that does work is to bind it first -- `foc_err_t e = foc_set_speed(m, v); (void)e;` -- and it
- *            is deliberately not the cheapest one to type. Measured 2026-11-06 with `gcc -std=c11 -Wall -Wextra`: the
- *            void-cast form warns, the bind-then-void form is silent.
+ *            is deliberately not the cheapest one to type. Reproduce with `gcc -std=c11 -Wall -Wextra`: the void-cast
+ *            form warns, the bind-then-void form is silent.
  * @note [zh] 在这个存在之前，`foc_motor_create()` 的 `foc_err_t` 可以被无声丢掉：句柄保持空，之后每个调用都答
  *            `FOC_ERR_PARAM`，而调用方的构建里一个字都不说。这正是本库拒绝接受的那类缺陷的特征——一个看起来像对的错误答
  *            案。有意丢掉返回码必须**写出来**：`(void)foc_set_speed(m, v);` 在 GCC 上**并不能**消除这个告警——
  *            `__attribute__((warn_unused_result))` 不认这个 void 转换（`[[nodiscard]]` 才认）。真正能过的写法是先绑一个
- *            变量：`foc_err_t e = foc_set_speed(m, v); (void)e;`——而且它**故意**不是最省事的那种写法。 2026-11-06 用
- *            `gcc -std=c11 -Wall -Wextra` 实测：转 void 那种告警，绑变量那种静默。
+ *            变量：`foc_err_t e = foc_set_speed(m, v); (void)e;`——而且它**故意**不是最省事的那种写法。用 `gcc -std=c11
+ *            -Wall -Wextra` 即可复现：转 void 那种告警，绑变量那种静默。
  * @since 0.1.12
  */
 #if defined(__cplusplus) && (__cplusplus >= 201703L)
