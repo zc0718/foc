@@ -12,13 +12,13 @@ namespace comm {
 /**
  * @brief [en] How many bits an absolute encoder puts where, on a bit-oriented link.
  *
- * @brief [zh] 在面向位的链路上，绝对编码器把各字段放在哪几位。
- *
  *     **Why the layout is a parameter and not a constant.** `multi_turn_bits` is zero for a single-turn encoder and
  *     positive for one that reports revolutions, and the two are electrically identical -- which is why a decoder that
  *     assumed one of them would answer a plausible angle for the other's frames. The frame length is derived from these
  *     numbers, so a stream that does not have exactly this many bits is *refused*, not re-aligned: a decoder that
  *     shifts until something checks out will eventually shift a valid frame into a wrong value.
+ *
+ * @brief [zh] 在面向位的链路上，绝对编码器把各字段放在哪几位。
  *
  *     **为什么布局是参数而不是常数。** 多圈位对单圈编码器是零、对报转数的编码器是正数，而两者在电气上完全一样——这正是 "
  *     假定其中一种"的解码器会对另一种的帧给出一个看起来合理的角度的原因。帧长由这些数推出来，于是位数不是恰好这么多的码
@@ -44,12 +44,12 @@ struct EncoderLayout final {
 /**
  * @brief [en] One decoded frame, including whether it is a reading at all.
  *
- * @brief [zh] 一帧解码结果，包括它到底算不算一次读数。
- *
  *     `status == State` means the frame *arrived* and is not trustworthy (CRC, encoder error bit, warning). The
  *     position and turns are still filled in, because a caller that logs a bad frame needs to know what it said -- but
  *     nothing in this library will act on them: `TurnAssembler` refuses a frame whose `crc_ok` is false and does not
  *     need to look at the status to do it.
+ *
+ * @brief [zh] 一帧解码结果，包括它到底算不算一次读数。
  *
  *     `status == State` 的意思是这一帧**到了**但不可信（CRC、编码器错误位、警告）。位置与转数仍然填好，因为记录坏帧的调
  *     用方需要知道它说了什么——但本库里没有任何东西会拿它们去动作：`TurnAssembler` 拒绝 `crc_ok` 为假的帧，而且它不需要
@@ -87,8 +87,6 @@ struct EncoderFrame final {
 /**
  * @brief [en] Decode one BiSS-C style frame from a bit-oriented stream.
  *
- * @brief [zh] 从面向位的码流中解出一帧 BiSS-C 风格的数据。
- *
  *     The stream is MSB first: `turns | position | error | warning | crc[6]`. The caller owns the *framing* (clocking
  *     the bits out of the shift register, including the protocol's start/ACK and stop bits); this function owns the
  *     interpretation and the refusals: a length that is not the layout's, a CRC that does not match, and a layout that
@@ -100,6 +98,8 @@ struct EncoderFrame final {
  *     alignment can only be caught by *framing*: the length check here, and the protocol's start and stop bits, which
  *     the caller owns. A decoder that "shifts until something checks out" would therefore eventually shift a valid
  *     frame into a wrong value; this one does not shift at all.
+ *
+ * @brief [zh] 从面向位的码流中解出一帧 BiSS-C 风格的数据。
  *
  *     码流高位在前：`turns | position | error | warning | crc[6]`。调用方拥有**成帧**（把位从移位寄存器里打出来，包括协
  *     议的起始/ACK 与停止位），本函数拥有解释与拒绝：长度不等于布局给定的、CRC 不符、布局描述不了任何编码器。
@@ -124,8 +124,6 @@ struct EncoderFrame final {
 /**
  * @brief [en] Turn a sequence of single-turn counts into one unwrapped count, and refuse to guess across a gap.
  *
- * @brief [zh] 把一串转内计数拼成一个不回绕的计数，并在缺口处拒绝猜测。
- *
  *     **A bit stream has no sequence number, so "a frame was lost" can only be said one way**: the next reading is
  *     further from the last one than the axis can travel between two frames. That distance is the *caller's* knowledge
  *     -- the readout rate and the axis's top speed -- and it is a construction parameter for that reason: a raw count
@@ -137,6 +135,8 @@ struct EncoderFrame final {
  *     the travel in between is unknown and inventing it (by advancing one turn, or by the shortest arc) is how a
  *     position controller ends up commanding a move that never happened. A **wrap** is not a gap: `4090 -> 5` on a
  *     4096-count turn is +11 counts, and that is arithmetic, not inference.
+ *
+ * @brief [zh] 把一串转内计数拼成一个不回绕的计数，并在缺口处拒绝猜测。
  *
  *     **位流没有序号，所以"丢了一帧"只有一种说法**：下一次读数与上一次之间，比轴在两帧之间能走的距离更远。那个距离是**
  *     调用方的知识**——读数率与轴的最高速——它因此是一个构造参数：单凭两个计数分不清正向回绕与反向跳变（`4090 -> 5` 正向

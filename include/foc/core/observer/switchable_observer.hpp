@@ -37,14 +37,16 @@ enum class ObserverKind : std::uint8_t {
 /**
  * @brief [en] One observer slot that holds two and forwards to the selected one.
  *
- * @brief [zh] 一个观测器槽位，持有两个并按选择转发。
- *
  *     Why it exists: `Motor` composes its observers statically, so without this every choice of observer would be
  *     another `Motor` instantiation and another object pool -- and the bridge's handles, magics and dispatch are all
  *     built for a fixed set of pools. Choosing a member instead of a type keeps one motor type for every choice, which
- *     is what makes a runtime selector possible without touching any of that. 存在的理由：`Motor` 静态组合观测器，没有
- *     它的话每次选择观测器都会变成又一次 `Motor` 实例化和另一个对象池——而 bridge 的句柄、magic 与派发都是围绕固定的池集
- *     合构造的。把选择做成成员而不是类型，所有选择就共用一个电机类型，这正是"不碰那些东西也能有运行时选择器"的前提。
+ *     is what makes a runtime selector possible without touching any of that.
+ *
+ * @brief [zh] 一个观测器槽位，持有两个并按选择转发。
+ *
+ *     存在的理由：`Motor` 静态组合观测器，没有它的话每次选择观测器都会变成又一次 `Motor` 实例化和另一个对象池——而
+ *     bridge 的句柄、magic 与派发都是围绕固定的池集合构造的。把选择做成成员而不是类型，所有选择就共用一个电机类型，这正
+ *     是"不碰那些东西也能有运行时选择器"的前提。
  *
  * @note [en] The slot does **not** hold `DualInductanceObserver` (0.1.11), and that is a statement about this class
  *            rather than about the library: the four members here are the ones whose hand-over has been measured, and

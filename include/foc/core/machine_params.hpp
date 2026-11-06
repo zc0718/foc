@@ -11,15 +11,16 @@ namespace core {
  * @brief [en] The electrical facts about a machine that its algorithms need: resistance, the two inductances, and the
  *             rotor flux linkage.
  *
- * @brief [zh] 算法所需的电机电气事实：电阻、两个电感、转子磁链。
- *
  *     Why this type exists instead of every observer having its own numbers: parameter identification produces exactly
  *     these four, and without a shared value type the result has nowhere to go -- each policy would keep its own copy
  *     of a number that is supposed to describe the same machine. Observers implement `apply_params(const
- *     MachineParams&)` when they can take an update, and `has_apply_params_v` is how the motor layer finds out. 为什么
- *     要有这个类型，而不是让每个观测器自带一套数字：参数辨识产出的正是这四个，没有共享的值类型， 结果就无处可去——每个策
- *     略会各存一份本该描述**同一台**机器的数字。观测器若能接受更新就实现 `apply_params(const MachineParams&)`，电机层用
- *     `has_apply_params_v` 来发现。
+ *     MachineParams&)` when they can take an update, and `has_apply_params_v` is how the motor layer finds out.
+ *
+ * @brief [zh] 算法所需的电机电气事实：电阻、两个电感、转子磁链。
+ *
+ *     为什么要有这个类型，而不是让每个观测器自带一套数字：参数辨识产出的正是这四个，没有共享的值类型， 结果就无处可去——
+ *     每个策略会各存一份本该描述**同一台**机器的数字。观测器若能接受更新就实现 `apply_params(const MachineParams&)`，电
+ *     机层用 `has_apply_params_v` 来发现。
  *
  * @note [en] Units are SI and, more importantly, they are *the same units everywhere*: `rs` is at whatever temperature
  *            the caller means (the plant does not tell you what it is), and `psi_f` is the flux linkage, not the torque

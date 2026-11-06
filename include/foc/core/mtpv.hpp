@@ -14,14 +14,15 @@ namespace core {
  * @brief [en] The machine and the two ceilings that bound its operating point: the voltage the drive can put on the
  *             terminals and the current it is allowed to push through them.
  *
- * @brief [zh] 机器，以及限制其工作点的两个上限：驱动器能加到端子上的电压，和允许推过去的电流。
- *
  *     `pole_pairs` is here because torque is not the quantity this module is about -- the *locus* is -- but the caller
  *     needs torque to decide whether a point is worth going to, and a torque in N.m requires the pair count. The
  *     voltage ceiling is a magnitude at the terminals, not a bus ratio: whoever builds this from a bus voltage owns the
- *     modulation limit, and this module does not guess it. `pole_pairs` 在这里是因为转矩不是本模块的主题（**轨迹**才
- *     是），但调用方需要转矩来判断一个点值不值得去，而 N·m 的转矩需要极对数。电压上限是端子上的幅值而不是母线比例：从母
- *     线电压构造它的人拥有调制上限，本模块不去猜它。
+ *     modulation limit, and this module does not guess it. `pole_pairs`
+ *
+ * @brief [zh] 机器，以及限制其工作点的两个上限：驱动器能加到端子上的电压，和允许推过去的电流。
+ *
+ *     在这里是因为转矩不是本模块的主题（**轨迹**才是），但调用方需要转矩来判断一个点值不值得去，而 N·m 的转矩需要极对
+ *     数。电压上限是端子上的幅值而不是母线比例：从母线电压构造它的人拥有调制上限，本模块不去猜它。
  * @since 0.1.9
  * @exporter
  */
@@ -60,8 +61,6 @@ struct MtpvPoint final {
  * @brief [en] Maximum torque per volt, and the base speed that says where it begins -- both as closed forms on the
  *             voltage ellipse.
  *
- * @brief [zh] 每伏最大转矩，以及说明它从哪开始的基速——两者都是电压椭圆上的闭式解。
- *
  *     **The law.** With `Rs` dropped (verified against the full equation elsewhere, and the error is `Rs*i` against
  *     `omega*L*i` in the region that matters) the steady-state voltage ceiling is the ellipse `(Ld*i_d + psi_f)^2 +
  *     (Lq*i_q)^2 = V^2` with `V = v_max/w`. Parametrising it by the angle `t` -- `i_d = (V*cos t - psi_f)/Ld`, `i_q =
@@ -85,6 +84,8 @@ struct MtpvPoint final {
  *     base speed the ellipse passes through that point, so the two branches agree and the reference is continuous in
  *     speed -- which is the property field weakening also had to have, for the same reason: an integrator upstream of a
  *     step pays for it in overshoot.
+ *
+ * @brief [zh] 每伏最大转矩，以及说明它从哪开始的基速——两者都是电压椭圆上的闭式解。
  *
  *     **规律。** 丢掉 `Rs`（别处已对着完整方程验证过，且在真正要紧的区域 `Rs·i` 相对 `ω·L·i` 很小），稳态电压上限就是椭
  *     圆 `(Ld·i_d + ψf)² + (Lq·i_q)² = V²`，`V = v_max/ω`。用角度 `t` 参数化—— `i_d = (V·cos t − ψf)/Ld`、`i_q = V·sin

@@ -13,17 +13,19 @@ namespace core {
 /**
  * @brief [en] A continuous mechanical angle built from an electrical estimate, with an index mark to fix its origin.
  *
- * @brief [zh] 由电角度估计构造的连续机械角度，并用索引标记把它的原点钉住。
- *
  *     Why this exists: position control needs two things an observer cannot give on its own -- a *continuous* angle
  *     (turn counting, not a single-turn value) and an *absolute* one (a known zero). The observer supplies an
  *     electrical angle that wraps every `2*pi/pole_pairs` mechanically and starts wherever it happens to start.
  *     Unwrapping the wraps turns it into a continuous relative angle; an index pulse then fixes where zero is. Neither
  *     half alone is enough: an unwrapped angle cannot say which turn it is on, and an index without unwrapping says
- *     nothing about travel between two passes of the mark. 存在的理由：位置控制需要两样观测器自己给不了的东西——**连续**
- *     角度（能数圈，而不是单圈值）和**绝对**角度（已知的零点）。观测器给出的是每 `2*pi/极对数` 就折一次的机械角度，而且
- *     从哪里开始就从哪里开始。把折返解开，就得到连续的相对角度；再由索引脉冲把零点钉住。两半缺一不可：解开折返的角度说
- *     不出自己在第几圈，而没有解折返的索引对两次经过标记之间的行程一无所知。
+ *     nothing about travel between two passes of the mark.
+ *
+ * @brief [zh] 由电角度估计构造的连续机械角度，并用索引标记把它的原点钉住。
+ *
+ *     存在的理由：位置控制需要两样观测器自己给不了的东西——**连续** 角度（能数圈，而不是单圈值）和**绝对**角度（已知的零
+ *     点）。观测器给出的是每 `2*pi/极对数` 就折一次的机械角度，而且从哪里开始就从哪里开始。把折返解开，就得到连续的相对
+ *     角度；再由索引脉冲把零点钉住。两半缺一不可：解开折返的角度说不出自己在第几圈，而没有解折返的索引对两次经过标记之
+ *     间的行程一无所知。
  *
  * @note [en] The reconstruction assumes the electrical angle advances by less than `pi` between samples. That is a
  *            constraint on the caller (control period x electrical speed), not a tuning knob, and `update()` reports

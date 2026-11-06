@@ -12,8 +12,6 @@ namespace core {
 /**
  * @brief [en] The one number a watchdog is sized by: how long the feeder may be silent.
  *
- * @brief [zh] 看门狗只由这一个数来定尺寸：喂狗方可以沉默多久。
- *
  *     `window_ns` is in **nanoseconds**, not seconds, and that is the whole point of the type. A window expressed in
  *     seconds is a float, a float deadline compared against a float elapsed time is two roundings meeting, and the
  *     repository already carries the receipt for that mistake: the float timer this library used to have ran **12.8 %
@@ -21,6 +19,8 @@ namespace core {
  *     that never fired (`ElapsedClock`'s note). A watchdog is the last thing that may inherit that class of error --
  *     its job is to stop the drive when a number stops moving, so a deadline that drifts is a deadline that stops
  *     protecting in a way nobody can see.
+ *
+ * @brief [zh] 看门狗只由这一个数来定尺寸：喂狗方可以沉默多久。
  *
  *     `window_ns` 用**纳秒**而不是秒，这正是本类型存在的理由。用秒表达的窗口是一个浮点数，浮点截止时刻去比浮点已用时间
  *     就是两次舍入相遇，而本仓库已经收着那次错误的收据：这个库原先的浮点计时器**在 512 s 处快 12.8 %、并从那里开始完全
@@ -38,12 +38,12 @@ struct WatchdogConfig final {
 /**
  * @brief [en] Where a watchdog stands: the four states a feeder can leave it in.
  *
- * @brief [zh] 看门狗处在什么位置：喂狗方能把它留在的四个状态。
- *
  *     `Unarmed` is not the healthy state and must not read as one. A watchdog that was never started is protecting
  *     nothing, and the failure it invites is the quiet kind: the host forgets one `kick()` at bring-up, the drive runs
  *     forever, and every report says `Ok` because nothing was ever measured. It is therefore reported as `State` -- the
  *     caller is in the wrong state -- and not as `Feeding`.
+ *
+ * @brief [zh] 看门狗处在什么位置：喂狗方能把它留在的四个状态。
  *
  *     `Unarmed` 不是健康状态，也不许读成健康状态。一个从未启动的看门狗没有保护任何东西，而它招来的失效是最安静的那种：
  *     主控方在调试时漏了一个 `kick()`，驱动器就一直跑下去，而所有报告都说 `Ok`，因为从来没有量过任何东西。所以它报
@@ -61,8 +61,6 @@ enum class WatchdogState : std::uint8_t {
 /**
  * @brief [en] What one answer says: the state, the step of the clock that decided it, and the time left.
  *
- * @brief [zh] 一次回答说了什么：状态、决定它的那一跳时钟、以及剩余时间。
- *
  *     `step_ns` is the **signed** step of the clock, carried in an unsigned field with its direction named by the
  *     state: forward steps are how long the feeder was silent, and a backwards step is how far the clock went back. One
  *     field rather than two, because a report where only one of two numbers is meaningful is a report whose other half
@@ -71,6 +69,8 @@ enum class WatchdogState : std::uint8_t {
  *     A latched report repeats **the numbers that caused the latch**, not a growing timer. A caller that polls an
  *     already-tripped watchdog an hour later must see the trip, not an hour -- otherwise the first question ("how late
  *     was the feeder") has an answer that changes with when it is asked.
+ *
+ * @brief [zh] 一次回答说了什么：状态、决定它的那一跳时钟、以及剩余时间。
  *
  *     `step_ns` 是时钟那一跳的**带符号**步长，用无符号字段承载，方向由状态命名：正步长是喂狗方沉默了多久，负步长是时钟
  *     倒退了多远。一个字段而不是两个，因为一个"两个数里只有一个有意义"的报告，另一半照样会被读。
@@ -92,8 +92,6 @@ struct WatchdogReport final {
 
 /**
  * @brief [en] Judge one timestamp against a window, and latch the first answer that says the drive must stop.
- *
- * @brief [zh] 把一个时间戳对窗口判一次，并把第一个"驱动器必须停"的答案锁存下来。
  *
  *     **The law is one subtraction.** `elapsed = now - last_kick`, and the verdict is `elapsed > window`. The
  *     comparison is *strict*, so a kick that arrives exactly on the deadline is on time: a window of `k * 25 us` is
@@ -122,6 +120,8 @@ struct WatchdogReport final {
  *     two-line chain is the host's: `if (watchdog.poll(now).status == ErrorCode::Fault) {
  *     motor.fault(watchdog.fault_code()); }`. It does not arm a hardware watchdog, does not read a register, and does
  *     not decide how often it should be polled.
+ *
+ * @brief [zh] 把一个时间戳对窗口判一次，并把第一个"驱动器必须停"的答案锁存下来。
  *
  *     **律只有一次减法。** `elapsed = now - last_kick`，判定是 `elapsed > window`。比较是**严格**的，所以在截止时刻上恰
  *     好到达的一次喂狗算准时：`k × 25 µs` 的窗口在 `k × 25 µs + 1 ns` 处被判为过期，迟一纳秒而不是迟一个控制周期；而时

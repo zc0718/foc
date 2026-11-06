@@ -11,8 +11,6 @@ namespace core {
 /**
  * @brief [en] What a speed-loop tuning pass is asked for, and what it is allowed to trust.
  *
- * @brief [zh] 一次速度环整定被要求什么，以及它被允许相信什么。
- *
  *     **The two numbers a speed loop actually needs are both measurable ratios**, and neither is `kt` or `J` on its
  *     own. From `J*dw/dt = kt*iq - b*w` the acceleration per amp is `kt/J` and the mechanical pole is `b/J`. The
  *     library's own `speed_pi_config()` cancels that pole and lands at `kp = bandwidth*J/kt`, `ki = bandwidth*b/kt` --
@@ -20,6 +18,8 @@ namespace core {
  *     to know `kt` or `J` to produce the right gains; it has to *measure the two ratios*. The nameplate enters only
  *     through `j_expected`, whose job is to answer a different question: is this the machine the caller thinks it is
  *     tuning?
+ *
+ * @brief [zh] 一次速度环整定被要求什么，以及它被允许相信什么。
  *
  *     **速度环真正需要的两个数都是可测的比值**，而且都不是单独的 `kt` 或 `J`。由 `J·dω/dt = kt·iq − b·ω` 得，每安培加速
  *     度是 `kt/J`、机械极点是 `b/J`。库自己的 `speed_pi_config()` 抵消那个极点后落在 `kp = bandwidth·J/kt`、 `ki =
@@ -81,8 +81,6 @@ struct SpeedTuneResult final {
  * @brief [en] Identify the two ratios a speed loop needs from a torque-step window, and refuse when the window is not a
  *             measurement.
  *
- * @brief [zh] 从一个转矩阶跃窗口辨识速度环需要的两个比值，并在窗口不构成测量时拒绝。
- *
  *     **The fit.** `dw/dt = (kt/J)*iq - (b/J)*w` is linear in `(iq, w)`, so a two-parameter least squares over the
  *     window gives both ratios without ever assuming the speed held still: `kt/J` is the slope on `iq` and `b/J` is the
  *     slope on `w`, and the fit carries an **intercept** on purpose -- an unknown constant load lands there, which is
@@ -94,6 +92,8 @@ struct SpeedTuneResult final {
  *     implausible mechanical pole, and a measured inertia further than `tolerance` from `j_expected`. In every one of
  *     those the result carries the **nameplate** gains and `valid == false`, so a caller that applies what it gets
  *     applies nothing new.
+ *
+ * @brief [zh] 从一个转矩阶跃窗口辨识速度环需要的两个比值，并在窗口不构成测量时拒绝。
  *
  *     **拟合。** `dω/dt = (kt/J)·iq − (b/J)·ω` 对 `(iq, ω)` 是线性的，所以窗口上的两参数最小二乘同时给出两个比值，而不
  *     需要假设转速不变：`kt/J` 是对 `iq` 的斜率，`b/J` 是对 `ω` 的斜率。拟合**刻意带截距**——一个未知的恒定负载会落在那

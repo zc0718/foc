@@ -14,8 +14,6 @@ namespace core {
 /**
  * @brief [en] What the learner is asked for: which orders, over how many revolutions, and at what speed.
  *
- * @brief [zh] 向学习器要什么：学哪几次、跨多少转、在什么转速下。
- *
  *     **The speed band is the whole point, and it is measured rather than assumed.** The learner reads the q-axis
  *     current the speed loop supplies, so what it learns is the loop's *answer* to the cogging, and that answer has the
  *     loop's own frequency response in it. Measured on the SIL bench, sixth order, injected phase 0.3 rad (negative lag
@@ -26,6 +24,8 @@ namespace core {
  *     at 10, 46 % at 20, 78 % at 40. So learning above `max_speed_rad_s` is not "a bit worse" -- it is baking a phase
  *     error into the table that no amount of averaging removes. The residual is not zero even inside the band, and that
  *     is a property of the method rather than a defect: the table carries the lag of where it was learned.
+ *
+ * @brief [zh] 向学习器要什么：学哪几次、跨多少转、在什么转速下。
  *
  *     **转速带是全部要点，而且是量出来的、不是假设的。** 学习器读的是速度环供给的 q 轴电流，所以它学到的是环路对齿槽的
  *     **回答**，而那个回答里带着环路自己的频率响应。SIL 台架实测（6 次，注入相位 0.3 rad；负号表示环路答得晚）：2 rad/s
@@ -75,8 +75,6 @@ struct CoggingLearnReport final {
  * @brief [en] Learn a cogging table from the current a speed loop already supplies, so a compensator can be built for a
  *             machine nobody has data for.
  *
- * @brief [zh] 从速度环本来就在供给的电流里学出一张齿槽表，于是没有数据的机器也能造出补偿器。
- *
  *     **The law, and why the sign is self-consistent.** With the compensator off and at steady speed, the loop's q-axis
  *     current *is* the anti-cogging current. Projecting it on the mechanical angle at order `k` gives `re =
  *     A*sin(phi)`, `im = A*cos(phi)` for `y = A*sin(k*theta + phi)`; converting that current back through `dT/diq`
@@ -95,6 +93,8 @@ struct CoggingLearnReport final {
  *     its own. It learns the loop's response, so it is faithful only inside the band above. And it does not know
  *     whether the ripple it found is cogging at all -- a dead-time or sensor ripple at the same order would be learned
  *     just as happily.
+ *
+ * @brief [zh] 从速度环本来就在供给的电流里学出一张齿槽表，于是没有数据的机器也能造出补偿器。
  *
  *     **律，以及符号为何自洽。** 补偿器关闭、稳态转速下，环路的 q 轴电流**就是**反齿槽电流。把它按机械角投影到 `k` 次
  *     上，对 `y = A·sin(k·θ + φ)` 得到 `re = A·sin(φ)`、`im = A·cos(φ)`；把这个电流经 `dT/diq` 换回转矩会得到**相反**的

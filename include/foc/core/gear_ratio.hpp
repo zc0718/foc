@@ -96,8 +96,6 @@ struct GearOutput final {
 /**
  * @brief [en] Electronic gearing with the master's wrapping removed, so a slave does not lose a revolution per turn.
  *
- * @brief [zh] 电子齿轮，并去掉主轴的卷绕，使从轴不会每次旋转丢掉一圈。
- *
  *     The whole difficulty is in one word: *unwrapped*. An encoder hands over an angle in `[0, 2*pi)`, so a master that
  *     turns three times reads 0, then 2*pi, then 0 again -- and a gear that multiplies what it is given hands the slave
  *     a reference that walks backwards twice per three revolutions. The fix is to accumulate the shortest arc between
@@ -107,6 +105,8 @@ struct GearOutput final {
  *     Why it is a separate stage rather than a line in the caller: the unwrapped master is also the *synchronisation
  *     error's* reference. Measuring the slave against a wrapped master is how a perfectly synchronised pair reports a
  *     6.28 rad error once a revolution, and the measurement is the point of the capability.
+ *
+ * @brief [zh] 电子齿轮，并去掉主轴的卷绕，使从轴不会每次旋转丢掉一圈。
  *
  *     全部难点在一个词里：**去卷绕**。编码器给出的角度在 `[0, 2π)` 内，所以转三圈的主轴读出 0、2π、0——而一个直接乘下去
  *     的齿轮会给从轴一个每三圈倒退两次的参考。修法是对相邻采样之间的最短弧做累加，只要采样率能分辨主轴的运动就精确（这

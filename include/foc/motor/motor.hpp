@@ -152,8 +152,6 @@ struct Command final {
  * @brief [en] Policy-composed motor: no globals, no allocation, no virtual calls in the loop. All state lives in this
  *             object, so multiple instances are independent by construction.
  *
- * @brief [zh] 策略组合的电机：无全局状态、不分配、控制环内无虚函数调用。状态全在对象内， 因此多实例天然相互独立。
- *
  *     Binding contract:
  *
  *     - `Observer` provides `update(Ab<float>, Ab<float>, float) noexcept -> ObsState` (and optionally
@@ -166,8 +164,11 @@ struct Command final {
  *     makes position mode answer `ErrorCode::NotImpl` instead of pretending. - `Aligner` provides `validate()`,
  *     `begin(pole_pairs) -> bool`, `step(dt, angle_mech) noexcept -> AlignOutput` and `reset()`; the default
  *     `core::NullAlignment` answers `false` from `begin()`, so `start()` goes straight from Align to Run. - `HalPolicy`
- *     exposes members `pwm`, `current_sense`, `position`, `dc_link`. 绑定契约：见上（Observer 可选 seed_flux，HalPolicy
- *     的成员名固定）。
+ *     exposes members `pwm`, `current_sense`, `position`, `dc_link`.
+ *
+ * @brief [zh] 策略组合的电机：无全局状态、不分配、控制环内无虚函数调用。状态全在对象内， 因此多实例天然相互独立。
+ *
+ *     绑定契约：见上（Observer 可选 seed_flux，HalPolicy 的成员名固定）。
  *
  * @context [en] tick() is the ISR entry: noexcept, no allocation, no I/O.
  * @context [zh] tick() 是 ISR 入口：noexcept、不分配、无 I/O。
@@ -320,8 +321,6 @@ class Motor final {
     /**
      * @brief [en] Update the feedforward iq **without changing the mode**.
      *
-     * @brief [zh] 更新前馈 iq，**不改变模式**。
-     *
      *     `set_command()` switches the axis to position mode, which is why a speed-mode host had no way to use this
      *     field at all: the only writer also changed what was being controlled. A cogging or friction compensator
      *     updates its offset every period while the axis keeps doing whatever it was doing, so the setter is separate
@@ -331,6 +330,8 @@ class Motor final {
      *     compensator that has to re-state a constant gravity term every tick would be a worse interface than one that
      *     says it once. It is deliberately *not* cleared by `set_speed()`: clearing it there would break the one-shot
      *     usage.
+     *
+     * @brief [zh] 更新前馈 iq，**不改变模式**。
      *
      *     `set_command()` 会把轴切到位置模式，这就是速度模式宿主完全没法用这个字段的原因：唯一的写入者也改变了被控对
      *     象。齿槽或摩擦补偿器每个周期更新它的偏置，而轴继续做它原本在做的事，所以这个设置器与指令分开。

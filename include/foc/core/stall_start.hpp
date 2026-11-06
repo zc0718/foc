@@ -86,8 +86,6 @@ struct StallStartOutput final {
 /**
  * @brief [en] Break a stuck rotor loose on purpose, then hand it to the speed loop with the integral still clean.
  *
- * @brief [zh] 主动把卡住的转子挣脱，然后在积分仍然干净的情况下交给速度环。
- *
  *     Why this is not just "let the speed loop do it". A speed PI *does* eventually break a stuck axis loose -- its
  *     integral ramps the current until the torque passes the breakaway point -- and that is the problem: by the time it
  *     happens the integral has stored the whole windup, so the moment the rotor lets go, the stored torque drives it
@@ -97,6 +95,8 @@ struct StallStartOutput final {
  *
  *     `Failed` is a first-class answer, not an error path. A load the drive cannot move at its limit is a fact about
  *     the machine, and a sequence that ramps forever instead of saying so leaves the operator watching a silent axis.
+ *
+ * @brief [zh] 主动把卡住的转子挣脱，然后在积分仍然干净的情况下交给速度环。
  *
  *     为什么这不是"让速度环自己干"。速度 PI 确实**最终**能把卡住的轴弄动——它的积分把电流顶到力矩超过起动点 ——而这正是问
  *     题所在：等它发生时，积分已经存下了整个饱和量，于是转子一松脱，存下的力矩就把它推过给定，环路要用同样长的时间收回

@@ -56,14 +56,16 @@ struct StartupConfig final {
 /**
  * @brief [en] Open-loop start: hold, then drag the rotor up to a speed, then hand over.
  *
- * @brief [zh] 开环起动：先按住，再把转子拖到某个转速，然后交接。
- *
  *     Satisfies the aligner interface `Motor` uses, so it is a drop-in for the alignment slot rather than a second
  *     control path. `finished` is reported once the forced vector reaches `handover_speed_rad_s`, and that is the tick
  *     `Motor` leaves its Align state -- so the hand-over instant is a single well-defined tick, which is what makes "no
- *     jump at hand-over" a measurable claim rather than a wish. 满足 `Motor` 使用的对齐器接口，因此它是**对齐槽位**的一
- *     个实现，而不是第二条控制路径。强制矢量到达 `handover_speed_rad_s` 时报 `finished`，那一刻正是 `Motor` 离开 Align
- *     状态的 tick——于是交接瞬间是一个明确定义的 tick，"交接处无跳变"才成为可测量的断言而不是愿望。
+ *     jump at hand-over" a measurable claim rather than a wish.
+ *
+ * @brief [zh] 开环起动：先按住，再把转子拖到某个转速，然后交接。
+ *
+ *     满足 `Motor` 使用的对齐器接口，因此它是**对齐槽位**的一个实现，而不是第二条控制路径。强制矢量到达
+ *     `handover_speed_rad_s` 时报 `finished`，那一刻正是 `Motor` 离开 Align 状态的 tick——于是交接瞬间是一个明确定义的
+ *     tick，"交接处无跳变"才成为可测量的断言而不是愿望。
  *
  * @context [en] Start-up only. Once the sequence is Done the routine stays inert until reset().
  * @context [zh] 仅起动阶段。序列进入 Done 后本类保持静默，直到 reset()。

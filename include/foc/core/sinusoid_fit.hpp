@@ -14,12 +14,12 @@ namespace core {
  * @brief [en] One tone measured out of a recorded window: amplitude, phase, and the status that says whether there was
  *             a tone to measure.
  *
- * @brief [zh] 从一段录制窗口里测出的一个单音：幅值、相位，以及"到底有没有音可测"的状态。
- *
  *     Two sine quantities and a status. `status` is the diagnostic channel and not decoration: `Ok` means the fit is
  *     conditioned, `State` means the window is shorter than one period of the frequency asked about (a fit over a
  *     fraction of a cycle is a number, but not the tone's amplitude), `Param` means the arguments cannot describe a
  *     sinusoid at all.
+ *
+ * @brief [zh] 从一段录制窗口里测出的一个单音：幅值、相位，以及"到底有没有音可测"的状态。
  *
  *     两个正弦量与一个状态。`status` 是诊断通道，不是装饰：`Ok` 表示拟合良态，`State` 表示窗口短于所问频率的一个周期（
  *     在不足一个周期的窗口上拟合也能出数，但那不是这个音的幅值），`Param` 表示参数根本不是一段正弦的描述。
@@ -38,8 +38,6 @@ struct SinusoidFit {
 /**
  * @brief [en] Least-squares fit of one sinusoid at a known frequency to a recorded window.
  *
- * @brief [zh] 在已知频率上，对一段录制窗口做单音最小二乘拟合。
- *
  *     Why this exists. The step-response bandwidth in `step_metrics.hpp` is an *estimate*: it fits a first-order model
  *     to a response that is not quite first-order, and it carries a bias of the same size as the defects it is meant to
  *     catch (measured: a 20 % error in the speed loop's gain law moved it by 9.9 %, inside its own 10 % band). The
@@ -54,6 +52,8 @@ struct SinusoidFit {
  *     cycle": a bin is also exact on half cycles, and pays only on the other fractions. Measured on a 3 V tone at 10
  *     kHz (A-101): 2.00, 2.50, 3.00 and 3.50 cycles give a bin error of 0.0000 %, while 3.20 and 3.40 give +4.09 % and
  *     +2.01 % -- against 0.0000 % (1.2e-7) for the fit at every one of those lengths.
+ *
+ * @brief [zh] 在已知频率上，对一段录制窗口做单音最小二乘拟合。
  *
  *     为什么有这个函数。`step_metrics.hpp` 里的阶跃带宽是一个**估计**：它把一阶模型套在一个并不完全是一阶的响应上，其偏
  *     差与被测缺陷同样大小（实测：速度环增益律 20% 的错误只让它挪动 9.9%，仍在自己 10% 的带内）。而在已知频率上的频域幅

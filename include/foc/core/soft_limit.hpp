@@ -51,8 +51,6 @@ struct SoftLimitOutput final {
 /**
  * @brief [en] Keep an axis inside a window: refuse the targets outside it, and cap the speed near the walls.
  *
- * @brief [zh] 把轴留在窗口内：拒绝窗口外的目标，并在靠近墙时限制速度。
- *
  *     The two halves answer two different failures, and mixing them up is how soft limits get a bad name. Refusing a
  *     target outside the window fixes a *programming* fault -- a move that was never meant to be commanded -- and it is
  *     answered by status, not by clamping, because a clamp turns an impossible command into a plausible one and the
@@ -75,6 +73,8 @@ struct SoftLimitOutput final {
  *     as strong working over twice the distance is exactly twice as fast rather than `sqrt(2)` times, and each error
  *     source has a plain coefficient: `a/(v+a*tau)` per radian of wall error, `v^2/(2*a*(v+a*tau))` per rad/s^2 of
  *     braking capability, and `-a*v/(v+a*tau)` per second of delay.
+ *
+ * @brief [zh] 把轴留在窗口内：拒绝窗口外的目标，并在靠近墙时限制速度。
  *
  *     两半回答两种不同的失效，把它们混在一起正是软限位名声不好的原因。拒绝窗口外的目标修的是**编程**错误——一次本就不该
  *     下发的运动——而它用状态回答而不是钳位，因为钳位会把一条不可能的命令变成一条看起来合理的命令，调用方永远学不到。靠

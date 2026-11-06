@@ -698,6 +698,110 @@
           "why": "it parses recorded samples and never recomputes a reference value, so a docstring on `MtpaReference` cannot reach it."
         }
       ]
+    },
+    {
+      "id": "B-18",
+      "date": "2026-11-06",
+      "what_changed": "The `@brief [zh]` line was moved below the English body paragraph in 75 Doxygen blocks across 23 headers, so each body sits under the brief of its own language (`docs/build.py` files an untagged paragraph by script, and by the tag that opened the chunk when it has no CJK). Before this, the English build received only the one-line brief and the Chinese build received the English paragraph followed by the Chinese one; measured with the pipeline's own `_language_filter`, 88 blocks in 38 files were losing English body text, and 13 remain (they need a per-block decision because the English and Chinese sentences are welded into one paragraph and the Chinese sits between two English ones). Two welded paragraphs were also cut in two at the CJK boundary; that moves punctuation and whitespace only.",
+      "seeds": [
+        "include/foc/core/cogging_learn.hpp",
+        "include/foc/core/machine_params.hpp",
+        "include/foc/core/observer/nonlinear_flux_observer.hpp",
+        "include/foc/core/observer/switchable_observer.hpp",
+        "include/foc/core/position_reference.hpp"
+      ],
+      "affected": [
+        {
+          "row": "core/cogging_comp.hpp",
+          "verdict": "holds",
+          "why": "publishes the learned-table behaviour it shares with `cogging_learn.hpp`; the whole diff is comment text: every changed line in these 23 headers starts with `*` (`git diff -U0 -- include | grep -E '^[+-]' | grep -vE '^[+-]\\s*\\*'` is empty), so no declaration, member, default, formula or arithmetic in this header changed."
+        },
+        {
+          "row": "core/cogging_learn.hpp",
+          "verdict": "holds",
+          "why": "publishes the speed-band numbers and the lag it leaves behind; the whole diff is comment text: every changed line in these 23 headers starts with `*` (`git diff -U0 -- include | grep -E '^[+-]' | grep -vE '^[+-]\\s*\\*'` is empty), so no declaration, member, default, formula or arithmetic in this header changed."
+        },
+        {
+          "row": "core/field_weakening.hpp",
+          "verdict": "holds",
+          "why": "publishes the go/no-go rule and the `speed_gain` closed form; the whole diff is comment text: every changed line in these 23 headers starts with `*` (`git diff -U0 -- include | grep -E '^[+-]' | grep -vE '^[+-]\\s*\\*'` is empty), so no declaration, member, default, formula or arithmetic in this header changed."
+        },
+        {
+          "row": "core/homing.hpp",
+          "verdict": "holds",
+          "why": "publishes the homing search's settle and overshoot; the whole diff is comment text: every changed line in these 23 headers starts with `*` (`git diff -U0 -- include | grep -E '^[+-]' | grep -vE '^[+-]\\s*\\*'` is empty), so no declaration, member, default, formula or arithmetic in this header changed."
+        },
+        {
+          "row": "core/machine_map.hpp",
+          "verdict": "holds",
+          "why": "publishes the map built from `MachineParams`; the whole diff is comment text: every changed line in these 23 headers starts with `*` (`git diff -U0 -- include | grep -E '^[+-]' | grep -vE '^[+-]\\s*\\*'` is empty), so no declaration, member, default, formula or arithmetic in this header changed."
+        },
+        {
+          "row": "core/machine_params.hpp",
+          "verdict": "holds",
+          "why": "publishes the identified parameters and their units; the whole diff is comment text: every changed line in these 23 headers starts with `*` (`git diff -U0 -- include | grep -E '^[+-]' | grep -vE '^[+-]\\s*\\*'` is empty), so no declaration, member, default, formula or arithmetic in this header changed."
+        },
+        {
+          "row": "core/mtpv.hpp",
+          "verdict": "holds",
+          "why": "publishes the MTPV boundary and its guard; the whole diff is comment text: every changed line in these 23 headers starts with `*` (`git diff -U0 -- include | grep -E '^[+-]' | grep -vE '^[+-]\\s*\\*'` is empty), so no declaration, member, default, formula or arithmetic in this header changed."
+        },
+        {
+          "row": "core/observer/back_emf_observer.hpp",
+          "verdict": "holds",
+          "why": "publishes the back-EMF angle and speed error; the whole diff is comment text: every changed line in these 23 headers starts with `*` (`git diff -U0 -- include | grep -E '^[+-]' | grep -vE '^[+-]\\s*\\*'` is empty), so no declaration, member, default, formula or arithmetic in this header changed."
+        },
+        {
+          "row": "core/observer/blended_observer.hpp",
+          "verdict": "holds",
+          "why": "publishes the blend's angle error across the speed range; the whole diff is comment text: every changed line in these 23 headers starts with `*` (`git diff -U0 -- include | grep -E '^[+-]' | grep -vE '^[+-]\\s*\\*'` is empty), so no declaration, member, default, formula or arithmetic in this header changed."
+        },
+        {
+          "row": "core/observer/hfi_observer.hpp",
+          "verdict": "holds",
+          "why": "publishes the saliency-tracking angle error at standstill; the whole diff is comment text: every changed line in these 23 headers starts with `*` (`git diff -U0 -- include | grep -E '^[+-]' | grep -vE '^[+-]\\s*\\*'` is empty), so no declaration, member, default, formula or arithmetic in this header changed."
+        },
+        {
+          "row": "core/observer/nonlinear_flux_observer.hpp",
+          "verdict": "holds",
+          "why": "publishes the flux observer's angle error; the whole diff is comment text: every changed line in these 23 headers starts with `*` (`git diff -U0 -- include | grep -E '^[+-]' | grep -vE '^[+-]\\s*\\*'` is empty), so no declaration, member, default, formula or arithmetic in this header changed."
+        },
+        {
+          "row": "core/observer/switchable_observer.hpp",
+          "verdict": "holds",
+          "why": "publishes the hand-over between the two observers; the whole diff is comment text: every changed line in these 23 headers starts with `*` (`git diff -U0 -- include | grep -E '^[+-]' | grep -vE '^[+-]\\s*\\*'` is empty), so no declaration, member, default, formula or arithmetic in this header changed."
+        },
+        {
+          "row": "core/thermal_limit.hpp",
+          "verdict": "holds",
+          "why": "publishes the sustainable current and the time to the limit; the whole diff is comment text: every changed line in these 23 headers starts with `*` (`git diff -U0 -- include | grep -E '^[+-]' | grep -vE '^[+-]\\s*\\*'` is empty), so no declaration, member, default, formula or arithmetic in this header changed."
+        },
+        {
+          "row": "core/traits.hpp",
+          "verdict": "holds",
+          "why": "publishes the policy-shape deductions every one of those modules relies on; the whole diff is comment text: every changed line in these 23 headers starts with `*` (`git diff -U0 -- include | grep -E '^[+-]' | grep -vE '^[+-]\\s*\\*'` is empty), so no declaration, member, default, formula or arithmetic in this header changed."
+        },
+        {
+          "row": "motor/motor.hpp",
+          "verdict": "holds",
+          "why": "publishes the end-to-end stack numbers those modules are composed into; the whole diff is comment text: every changed line in these 23 headers starts with `*` (`git diff -U0 -- include | grep -E '^[+-]' | grep -vE '^[+-]\\s*\\*'` is empty), so no declaration, member, default, formula or arithmetic in this header changed."
+        },
+        {
+          "row": "core/machine_map_text.hpp",
+          "verdict": "holds",
+          "why": "publishes the machine map's text round trip; it reads `MachineParams`, whose text was untouched; the whole diff is comment text: every changed line in these 23 headers starts with `*` (`git diff -U0 -- include | grep -E '^[+-]' | grep -vE '^[+-]\\s*\\*'` is empty), so no declaration, member, default, formula or arithmetic changed."
+        },
+        {
+          "row": "core/trace.hpp",
+          "verdict": "holds",
+          "why": "publishes the trace record's layout and the null channel's cost, both properties of its own types; the whole diff is comment text: every changed line in these 23 headers starts with `*` (`git diff -U0 -- include | grep -E '^[+-]' | grep -vE '^[+-]\\s*\\*'` is empty), so no declaration, member, default, formula or arithmetic changed."
+        },
+        {
+          "row": "core/trace_parse.hpp",
+          "verdict": "holds",
+          "why": "publishes the sample parse; it never recomputes a value from these headers; the whole diff is comment text: every changed line in these 23 headers starts with `*` (`git diff -U0 -- include | grep -E '^[+-]' | grep -vE '^[+-]\\s*\\*'` is empty), so no declaration, member, default, formula or arithmetic changed."
+        }
+      ]
     }
   ]
 }

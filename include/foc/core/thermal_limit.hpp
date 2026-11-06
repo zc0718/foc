@@ -13,13 +13,13 @@ namespace core {
  * @brief [en] The thermal facts a current limit is derived from: the winding's resistance at 20 C, its copper
  *             coefficient, how well it is cooled, and the temperature the caller refuses to exceed.
  *
- * @brief [zh] 电流限幅所依据的热事实：绕组 20 °C 时的电阻、铜的温度系数、散热好坏，以及调用方拒绝超过的温度。
- *
  *     `Protector` already derates against a temperature -- and it says in its own header that it does not know what
  *     that temperature is, because `t_derate_*` are numbers the caller supplies. This type answers the question that
  *     comes *before* the protector: with this cooling, what current can be held **forever** without the winding
  *     arriving at `t_allowed_c`? That is a property of the machine and its mounting, it does not change tick to tick,
  *     and getting it wrong is not a tuning error -- it is a promise the drive cannot keep.
+ *
+ * @brief [zh] 电流限幅所依据的热事实：绕组 20 °C 时的电阻、铜的温度系数、散热好坏，以及调用方拒绝超过的温度。
  *
  *     `Protector` 已经会按温度降额——而它自己的头文件里就说了它不知道那个温度是多少，因为 `t_derate_*` 是调用方给的数。
  *     本类型回答保护器**之前**的那个问题：以这样的散热，**一直**跑下去而不让绕组到达 `t_allowed_c`，电流能有多大？那是
@@ -59,11 +59,11 @@ struct ThermalLimitReport final {
  * @brief [en] What a given current does to the winding: where it settles, and how long it may be run before the limit
  *             is reached.
  *
- * @brief [zh] 某个电流对绕组做了什么：它收敛到哪里，以及在触及限值之前还能跑多久。
- *
  *     `crosses == false` means the answer is **not** "a long time" but "never": the settle is at or below
  *     `t_allowed_c`, so the current is sustainable and the seconds field is `infinity`. Collapsing those two into one
  *     large number is how a scheduler ends up throttling a machine that was never in trouble.
+ *
+ * @brief [zh] 某个电流对绕组做了什么：它收敛到哪里，以及在触及限值之前还能跑多久。
  *
  *     `crosses == false` 的意思**不是**"很久"，而是"永远不会"：稳态等于或低于 `t_allowed_c`，于是这个电流是可持续的、秒
  *     数字段是 `infinity`。把这两种情况折成一个大数字，正是调度去压一台本来毫无危险的机器的方式。
@@ -82,8 +82,6 @@ struct ThermalBudget final {
 /**
  * @brief [en] Turn a thermal description into a current the drive may promise, and into the time budget at any other
  *             current.
- *
- * @brief [zh] 把一份热描述换成一个驱动器可以承诺的电流，以及任意其它电流下的时间预算。
  *
  *     **The law.** A current-fed winding's loss grows with its own temperature, `P = 1.5*i^2*rs20*(1 + alpha*(T-20))`,
  *     so the settle is the root of `T = Ta + Rt*P(T)` rather than a product:
@@ -104,6 +102,8 @@ struct ThermalBudget final {
  *     **What this is not.** It is not a measurement of `Rt`/`Ct` -- those are the caller's numbers, and this repository
  *     has never measured a winding's cooling. It is also not a controller: it answers "may I hold this, and for how
  *     long", and the host decides what to do when the answer is "not for long enough".
+ *
+ * @brief [zh] 把一份热描述换成一个驱动器可以承诺的电流，以及任意其它电流下的时间预算。
  *
  *     **律。** 电流供电的绕组，其损耗随自身温度增长，`P = 1.5·i²·rs20·(1 + α·(T−20))`，所以稳态是 `T = Ta + Rt·P(T)` 的
  *     根而不是一个乘积：`T(i) = (Ta + A·i²)/(1 − B·i²)`，其中 `A = Rt·1.5·rs20·(1−20α)`、`B = Rt·1.5·rs20·α`；在 `T =

@@ -58,8 +58,6 @@ struct FrictionOutput final {
 /**
  * @brief [en] Cancel the friction the loop has to fight, without becoming a motor.
  *
- * @brief [zh] 抵消环路不得不对抗的摩擦，同时不让自己变成电机。
- *
  *     Why this is a separate stage and not part of the current PI. Friction is a torque, and the PI regulates a
  *     current; adding a Coulomb term inside it would make the integrator's own state depend on which way the axis last
  *     moved. It does not fit the `FeedForward` slot either: that slot emits a *voltage* from `(omega_e, i_meas)` and
@@ -77,9 +75,13 @@ struct FrictionOutput final {
  *     error of `static / kp` and no amount of gain removes it (raising the gain only scales the same dead band down).
  *     With a latched Coulomb term the loop stops when `|kp * error + coulomb| <= static`, i.e. at `(static - coulomb) /
  *     kp` on the arrival side. Those two numbers are arithmetic, not tuning, and the case that ships with this header
- *     measures both of them on the SIL plant. 为什么这是独立一级而不是电流 PI 的一部分。摩擦是力矩，而 PI 调节的是电
- *     流；把库仑项塞进去会让积分器的状态取决于轴上一次往哪边动。它也不适配 `FeedForward` 槽：那个槽从 `(omega_e,
- *     i_meas)` 发出**电压**，永远看不到给定方向，而那正是库仑项唯一干净的信号。
+ *     measures both of them on the SIL plant.
+ *
+ * @brief [zh] 抵消环路不得不对抗的摩擦，同时不让自己变成电机。
+ *
+ *     为什么这是独立一级而不是电流 PI 的一部分。摩擦是力矩，而 PI 调节的是电流；把库仑项塞进去会让积分器的状态取决于轴
+ *     上一次往哪边动。它也不适配 `FeedForward` 槽：那个槽从 `(omega_e, i_meas)` 发出**电压**，永远看不到给定方向，而那
+ *     正是库仑项唯一干净的信号。
  *
  *     规律是两项加一个锁存：`coulomb_nm * sign + viscous_nm_per_rad_s * omega_meas`。没有 `dt`，因为没有东西在积分 ——这
  *     正是要点。用 `sign(omega_meas)` 的库仑项在静止处会抖，那里的实测速度是零均值噪声，而抖动是幅度 `2 * coulomb_nm`

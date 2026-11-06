@@ -59,15 +59,16 @@ struct HomingConfig final {
 /**
  * @brief [en] Decides how fast to turn while looking for the index mark; it does not actuate anything.
  *
- * @brief [zh] 决定找索引标记期间以多快转动；它不驱动任何东西。
- *
  *     Why it is separate from `Motor`: `Motor` composes its policies statically and has no homing slot, and adding one
  *     would make every motor instantiation carry a search it may never run. The decision itself is small and worth
  *     testing on its own -- the caller reads `speed_ref_rad_s` out of `step()` and applies it, which is also what lets
- *     the same routine drive a real drive, a SIL rig or a bench without any of them being special. `Motor` 静态组合策略
- *     且没有回零槽位，加一个会让每个电机实例都携带一次可能永远不会用的搜索。这个决策本身很小，值得单独测试——调用方从
- *     `step()` 读出 `speed_ref_rad_s` 并施加，这也让同一个流程能驱动真实驱动、SIL 台架或试验台，而不需要其中任何一个"特
- *     殊"。
+ *     the same routine drive a real drive, a SIL rig or a bench without any of them being special. `Motor`
+ *
+ * @brief [zh] 决定找索引标记期间以多快转动；它不驱动任何东西。
+ *
+ *     静态组合策略且没有回零槽位，加一个会让每个电机实例都携带一次可能永远不会用的搜索。这个决策本身很小，值得单独测试
+ *     ——调用方从 `step()` 读出 `speed_ref_rad_s` 并施加，这也让同一个流程能驱动真实驱动、SIL 台架或试验台，而不需要其中
+ *     任何一个"特殊"。
  *
  * @note [en] The only failure it reports is the timeout. Losing the turn count while searching is **not** a failure
  *            here: the search exists precisely because the origin is unknown, and the mark is what restores the count

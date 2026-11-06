@@ -13,8 +13,6 @@ namespace core {
 /**
  * @brief [en] What a recorded step response actually did, in numbers a tuning decision can rest on.
  *
- * @brief [zh] 一段记录下来的阶跃响应到底做了什么，用可直接据以整定的数说出来。
- *
  *     Exists so the loop can measure itself instead of asking a human to eyeball a plot. The two quantities that carry
  *     a tuning decision are `bandwidth_rad_s` -- the -3 dB point of the first-order model fitted to the approach, which
  *     the gain law in `motor_config.hpp` claims to place at the requested bandwidth -- and `settling_s`, which is the
@@ -25,6 +23,8 @@ namespace core {
  *     means the arguments cannot describe a step at all. A bandwidth of 0 with status `Ok` is impossible by
  *     construction, so "zero" cannot be mistaken for "not measured" -- which is the failure mode the capability matrix
  *     exists to prevent.
+ *
+ * @brief [zh] 一段记录下来的阶跃响应到底做了什么，用可直接据以整定的数说出来。
  *
  *     存在的意义是让环路自己测自己，而不是让人去看图。承载整定决策的两个量是 `bandwidth_rad_s`——拟合到逼近段的一阶模型
  *     的 -3 dB 点，`motor_config.hpp` 的增益律声称把它放在请求的带宽上——和 `settling_s`，后者正是客户真正会说的话（"70
@@ -66,8 +66,6 @@ struct StepMetrics {
 /**
  * @brief [en] Measure a recorded step response: fit a first-order decay to the approach and report the loop's numbers.
  *
- * @brief [zh] 测量一段记录下来的阶跃响应：对逼近段拟合一个一阶衰减，并给出环路的几个数。
- *
  *     The window must start at (or before) the step: `y[0]` is taken as the pre-step value and `target` as the
  *     post-step one, so a window that begins mid-transient measures the transient, not the step. That is a documented
  *     precondition rather than a guess about the caller's data.
@@ -83,6 +81,8 @@ struct StepMetrics {
  *     cancels the mechanical pole `B/J` and leaves `wb / s`, a first-order loop with time constant `1 / wb`, whose -3
  *     dB point is `wb`. Fitting `tau` from the trace and comparing it with the requested `wb` is therefore a
  *     measurement of whether the gain law did what its documentation says.
+ *
+ * @brief [zh] 测量一段记录下来的阶跃响应：对逼近段拟合一个一阶衰减，并给出环路的几个数。
  *
  *     窗口必须从阶跃之前（或正好在阶跃处）开始：`y[0]` 被当作阶跃前的值、`target` 被当作阶跃后的值，因此从暂态中间开始
  *     的窗口测到的是暂态，不是阶跃。这是写下来的前提条件，不是对调用方数据的猜测。

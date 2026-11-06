@@ -14,13 +14,14 @@ namespace core {
  * @brief [en] One harmonic of the cogging torque a compensator will cancel: `amplitude * sin(order*theta_mech +
  *             phase)`.
  *
- * @brief [zh] 补偿器要抵消的齿槽转矩的一个谐波：`amplitude · sin(order·θ_mech + phase)`。
- *
  *     `order` is **per mechanical revolution**. The compensator and the plant that injects it must speak the same
  *     indexing or the compensation silently cancels nothing -- and a factor of `pole_pairs` is the natural way to get
- *     that wrong, so the type is shared with the SIL injection rather than re-declared here. `order` 是**每机械转**的次
- *     数。补偿器与注入它的被控对象必须用同一套索引，否则补偿会悄无声息地什么都不抵消——而 "错一个极对数"是弄错它的最自然
- *     方式，所以这个类型与 SIL 注入共用，而不是在这里重新声明一遍。
+ *     that wrong, so the type is shared with the SIL injection rather than re-declared here. `order`
+ *
+ * @brief [zh] 补偿器要抵消的齿槽转矩的一个谐波：`amplitude · sin(order·θ_mech + phase)`。
+ *
+ *     是**每机械转**的次数。补偿器与注入它的被控对象必须用同一套索引，否则补偿会悄无声息地什么都不抵消——而 "错一个极对
+ *     数"是弄错它的最自然方式，所以这个类型与 SIL 注入共用，而不是在这里重新声明一遍。
  * @since 0.1.9
  * @exporter
  */
@@ -56,13 +57,14 @@ struct CoggingCompConfig final {
 /**
  * @brief [en] One control period's worth of compensation, and which of the limits bound it.
  *
- * @brief [zh] 一个控制周期的补偿量，以及是哪个上限限制住了它。
- *
  *     `gain` is reported separately from `iq_a` because the two failure modes are different and a trace has to tell
  *     them apart: `gain` is "the frequency fade decided not to ask for this", `clipped` is "the current ceiling refused
- *     it". A compensator that hides either one looks like a compensator that works. `gain` 与 `iq_a` 分开报告，是因为两
- *     种失效不同、轨迹必须能分开：`gain` 是「频率淡出决定不要这个」，`clipped` 是「电流上限不让」。把任一藏起来的补偿
- *     器，看起来都像一个能用的补偿器。
+ *     it". A compensator that hides either one looks like a compensator that works. `gain`
+ *
+ * @brief [zh] 一个控制周期的补偿量，以及是哪个上限限制住了它。
+ *
+ *     与 `iq_a` 分开报告，是因为两种失效不同、轨迹必须能分开：`gain` 是「频率淡出决定不要这个」，`clipped` 是「电流上限
+ *     不让」。把任一藏起来的补偿器，看起来都像一个能用的补偿器。
  * @since 0.1.9
  * @exporter
  */
@@ -92,8 +94,6 @@ struct CoggingCompInput final {
  * @brief [en] Torque-ripple feedforward: cancel a cogging table by asking for the current that would produce its
  *             negative, from the angle, **without waiting for a speed error**.
  *
- * @brief [zh] 转矩纹波前馈：由角度算出能产生齿槽**负值**的电流，从参考侧抵消一张齿槽表，**不等速度误差**。
- *
  *     **Why feedforward and not a correction.** Measured on the closed loop (25 % of a revolution's worth of samples,
  *     projected on the mechanical angle): a 4 mN*m sixth harmonic injected at 10 rad/s reappears in the measured q-axis
  *     current at 0.079 A against the 0.080 A that `T_cog/Kt` predicts. The loops therefore *do* answer cogging -- but
@@ -117,6 +117,8 @@ struct CoggingCompInput final {
  *     it does not correct for a table whose phase is wrong (a wrong phase cancels *nothing* -- the falsifier in the
  *     test), and at the flux-nulling current `psi_f + (ld-lq)*id = 0` the machine cannot produce torque at all, so the
  *     offset is refused rather than divided by.
+ *
+ * @brief [zh] 转矩纹波前馈：由角度算出能产生齿槽**负值**的电流，从参考侧抵消一张齿槽表，**不等速度误差**。
  *
  *     **为什么是前馈而不是修正。** 闭环实测（一整转的采样按机械角投影）：10 rad/s 处注入 4 mN·m 的 6 次分量，实测 q 轴
  *     电流里重现 **0.079 A**，而 `T_cog/Kt` 预测 **0.080 A**。所以环路**确实**会回答齿槽——但只在转子已经被推动之后，代
