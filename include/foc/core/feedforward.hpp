@@ -63,9 +63,13 @@ class NullFeedforward final {
 class DecouplingFeedforward final {
   public:
     /**
-     * @brief [en] Which terms to include. Kept as a value, not as `#ifdef`s, so one build can compare the terms against
-     *             each other in the same SIL run.
-     * @brief [zh] 包含哪些项。它是取值而不是 `#ifdef`，因此同一次 SIL 运行里就能互相比较。
+     * @brief [en] Which terms to include.
+     *
+     *     Kept as a value, not as `#ifdef`s, so one build can compare the terms against each other in the same SIL run.
+     *
+     * @brief [zh] 包含哪些项。
+     *
+     *     它是取值而不是 `#ifdef`，因此同一次 SIL 运行里就能互相比较。
      * @since 0.1.0
      */
     enum class Terms : std::uint8_t {

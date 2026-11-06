@@ -28,9 +28,14 @@ template <typename T> inline constexpr T kSqrt3Over2 = static_cast<T>(0.86602540
 
 
 /**
- * @brief [en] Clarke transform: three-phase (abc) to stationary two-phase (alpha-beta). Amplitude invariant: a balanced
- *             set of amplitude A maps to a vector of amplitude A.
- * @brief [zh] Clarke 变换：三相 abc 到静止两相 alpha-beta。幅值不变式：幅值 A 的平衡三相映射为 幅值 A 的矢量。
+ * @brief [en] Clarke transform: three-phase (abc) to stationary two-phase (alpha-beta).
+ *
+ *     Amplitude invariant: a balanced set of amplitude A maps to a vector of amplitude A.
+ *
+ * @brief [zh] Clarke 变换：三相 abc 到静止两相 alpha-beta。
+ *
+ *     幅值不变式：幅值 A 的平衡三相映射为幅值 A 的矢量。
+ *
  * @param uvw [en] phase quantities in SI units.
  * @param uvw [zh] 三相量，SI 单位。
  * @return [en] alpha-beta vector in the same unit.

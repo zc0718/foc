@@ -7,10 +7,12 @@ namespace foc {
 
 
 /**
- * @brief [en] Error codes shared by the C++ and the C path. The numeric values are the contract mirrored by foc_err_t
- *             in <foc/api/foc_types.h>; never renumber them. New codes are only ever appended.
- * @brief [zh] C++ 与 C 路径共用的错误码。数值是与 <foc/api/foc_types.h> 中 foc_err_t 对齐的契约， 不得重新编号；新增错
- *             误码只能追加。
+ * @brief [en] Error codes shared by the C++ and the C path.
+ * @warning [en] The numeric values are the contract: they mirror `foc_err_t` in `<foc/api/foc_types.h>`. Never renumber
+ *               them, and only ever append a new code.
+ * @brief [zh] C++ 与 C 路径共用的错误码。
+ * @warning [zh] 数值本身就是契约：与 `<foc/api/foc_types.h>` 中的 `foc_err_t` 一一对应。不得重新编号，新增错误码只能追
+ *               加。
  * @since 0.1.0
  * @exporter
  */
@@ -25,10 +27,14 @@ enum class ErrorCode : std::int8_t {
 
 
 /**
- * @brief [en] Core math types shared by both paths: fixed layout, trivially copyable, no allocation. Units follow the
- *             project-wide SI rule (A, V, rad, rad/s, s, N*m).
- * @brief [zh] 两条路径共享的核心数学类型：布局固定、可平凡复制、无内存分配。 单位遵循全项目 SI 约定（A、V、rad、rad/s、
- *             s、N·m）。
+ * @brief [en] Core math types shared by both paths.
+ *
+ *     Fixed layout, trivially copyable, no allocation. Units follow the project-wide SI rule (A, V, rad, rad/s, s,
+ *     N*m).
+ *
+ * @brief [zh] 两条路径共享的核心数学类型。
+ *
+ *     布局固定、可平凡复制、无内存分配。单位遵循全项目 SI 约定（A、V、rad、rad/s、s、N·m）。
  * @since 0.1.0
  */
 namespace core {
@@ -127,8 +133,14 @@ class ElapsedClock final {
     [[nodiscard]] auto reached(float limit_s) const noexcept -> bool { return nanos_ >= to_nanos(limit_s); }
 
     /**
-     * @brief [en] Seconds to whole nanoseconds: nearest, saturating, and zero for anything not positive (NaN included).
-     * @brief [zh] 秒转整纳秒：四舍五入、饱和；非正值（含 NaN）返回零。
+     * @brief [en] Seconds to whole nanoseconds: nearest and saturating.
+     *
+     *     Anything not positive converts to zero rather than wrapping, NaN included.
+     *
+     * @brief [zh] 秒转整纳秒：四舍五入、饱和。
+     *
+     *     非正的一律转为零而不是回绕，NaN 也在内。
+     *
      * @param seconds [en] a duration in s.
      * @param seconds [zh] 以秒计的时长。
      * @return [en] the equivalent count.

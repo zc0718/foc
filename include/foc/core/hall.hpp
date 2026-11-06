@@ -200,8 +200,7 @@ class HallTracker final {
     [[nodiscard]] auto sector() const noexcept -> std::uint8_t;
 
     /**
-     * @brief [en] `Ok`, `Fault` when the last sample was illegal, or `State` before the first edge or while waiting too
-     *             long for one.
+     * @brief [en] `Ok`; `Fault` after an illegal sample; `State` before the first edge or when one is overdue.
      * @brief [zh] `Ok`；最近一次采样非法时为 `Fault`；在第一个边沿之前或等边沿等得太久时为 `State`。
      * @since 0.1.9
      */

@@ -11,9 +11,18 @@ namespace core {
 
 
 /**
- * @brief [en] First-order low-pass filter, forward Euler discretisation. `alpha = 2*pi*fc*dt / (1 + 2*pi*fc*dt)`; one
- *             multiply-add per step.
- * @brief [zh] 一阶低通滤波器，前向欧拉离散化。 `alpha = 2*pi*fc*dt / (1 + 2*pi*fc*dt)`；每步一次乘加。
+ * @brief [en] First-order low-pass filter, forward Euler discretisation.
+ *
+ *     \f[ \alpha = \frac{2\pi f_c \Delta t}{1 + 2\pi f_c \Delta t} \f]
+ *
+ *     One multiply-add per step.
+ *
+ * @brief [zh] 一阶低通滤波器，前向欧拉离散化。
+ *
+ *     \f[ \alpha = \frac{2\pi f_c \Delta t}{1 + 2\pi f_c \Delta t} \f]
+ *
+ *     每步一次乘加。
+ *
  * @context [en] Current-loop ISR after configure(): noexcept, no allocation.
  * @context [zh] configure() 之后的电流环 ISR：noexcept、不分配。
  * @since 0.1.0

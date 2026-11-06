@@ -887,6 +887,329 @@
           "why": "publishes the nameplate-to-loop period rounding that its own fields decide; the diff is comment text only (no non-`*` line changed in this header), so no declaration, member, default, formula or arithmetic moved."
         }
       ]
+    },
+    {
+      "id": "B-20",
+      "date": "2026-11-06",
+      "what_changed": "Z3 prose pass on nine headers: every over-long `@brief` was split into a one-line brief and the detail underneath it, two formulas moved from backticked text into `\\f[...\\f]`, the unmarked member doc in `brake_chopper.hpp` got its language markers, and `motor.hpp`'s binding contract became a `\\li` list on both sides -- it had been flattened into one run-on paragraph, and the Chinese side pointed at 'the list above' with no list in its own build. The over-long brief ratchet fell from 74 to 57 as a result.",
+      "seeds": [
+        "include/foc/core/types.hpp",
+        "include/foc/core/transforms.hpp",
+        "include/foc/core/filters.hpp",
+        "include/foc/core/feedforward.hpp"
+      ],
+      "affected": [
+        {
+          "row": "comm/encoder_stream.hpp",
+          "verdict": "holds",
+          "why": "`comm/encoder_stream.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/core/types.hpp include/foc/core/transforms.hpp include/foc/core/filters.hpp include/foc/core/feedforward.hpp include/foc/core/traits.hpp include/foc/core/gear_ratio.hpp include/foc/core/hall.hpp include/foc/core/brake_chopper.hpp include/foc/motor/motor.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "core/alignment.hpp",
+          "verdict": "holds",
+          "why": "`core/alignment.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/core/types.hpp include/foc/core/transforms.hpp include/foc/core/filters.hpp include/foc/core/feedforward.hpp include/foc/core/traits.hpp include/foc/core/gear_ratio.hpp include/foc/core/hall.hpp include/foc/core/brake_chopper.hpp include/foc/motor/motor.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "core/auto_tune.hpp",
+          "verdict": "holds",
+          "why": "`core/auto_tune.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/core/types.hpp include/foc/core/transforms.hpp include/foc/core/filters.hpp include/foc/core/feedforward.hpp include/foc/core/traits.hpp include/foc/core/gear_ratio.hpp include/foc/core/hall.hpp include/foc/core/brake_chopper.hpp include/foc/motor/motor.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "core/board_check.hpp",
+          "verdict": "holds",
+          "why": "`core/board_check.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/core/types.hpp include/foc/core/transforms.hpp include/foc/core/filters.hpp include/foc/core/feedforward.hpp include/foc/core/traits.hpp include/foc/core/gear_ratio.hpp include/foc/core/hall.hpp include/foc/core/brake_chopper.hpp include/foc/motor/motor.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "core/brake_chopper.hpp",
+          "verdict": "holds",
+          "why": "`core/brake_chopper.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/core/types.hpp include/foc/core/transforms.hpp include/foc/core/filters.hpp include/foc/core/feedforward.hpp include/foc/core/traits.hpp include/foc/core/gear_ratio.hpp include/foc/core/hall.hpp include/foc/core/brake_chopper.hpp include/foc/motor/motor.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "core/cogging_comp.hpp",
+          "verdict": "holds",
+          "why": "`core/cogging_comp.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/core/types.hpp include/foc/core/transforms.hpp include/foc/core/filters.hpp include/foc/core/feedforward.hpp include/foc/core/traits.hpp include/foc/core/gear_ratio.hpp include/foc/core/hall.hpp include/foc/core/brake_chopper.hpp include/foc/motor/motor.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "core/cogging_learn.hpp",
+          "verdict": "holds",
+          "why": "`core/cogging_learn.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/core/types.hpp include/foc/core/transforms.hpp include/foc/core/filters.hpp include/foc/core/feedforward.hpp include/foc/core/traits.hpp include/foc/core/gear_ratio.hpp include/foc/core/hall.hpp include/foc/core/brake_chopper.hpp include/foc/motor/motor.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "core/command_source.hpp",
+          "verdict": "holds",
+          "why": "`core/command_source.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/core/types.hpp include/foc/core/transforms.hpp include/foc/core/filters.hpp include/foc/core/feedforward.hpp include/foc/core/traits.hpp include/foc/core/gear_ratio.hpp include/foc/core/hall.hpp include/foc/core/brake_chopper.hpp include/foc/motor/motor.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "core/deadtime.hpp",
+          "verdict": "holds",
+          "why": "`core/deadtime.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/core/types.hpp include/foc/core/transforms.hpp include/foc/core/filters.hpp include/foc/core/feedforward.hpp include/foc/core/traits.hpp include/foc/core/gear_ratio.hpp include/foc/core/hall.hpp include/foc/core/brake_chopper.hpp include/foc/motor/motor.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "core/feedforward.hpp",
+          "verdict": "holds",
+          "why": "`core/feedforward.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/core/types.hpp include/foc/core/transforms.hpp include/foc/core/filters.hpp include/foc/core/feedforward.hpp include/foc/core/traits.hpp include/foc/core/gear_ratio.hpp include/foc/core/hall.hpp include/foc/core/brake_chopper.hpp include/foc/motor/motor.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "core/field_weakening.hpp",
+          "verdict": "holds",
+          "why": "`core/field_weakening.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/core/types.hpp include/foc/core/transforms.hpp include/foc/core/filters.hpp include/foc/core/feedforward.hpp include/foc/core/traits.hpp include/foc/core/gear_ratio.hpp include/foc/core/hall.hpp include/foc/core/brake_chopper.hpp include/foc/motor/motor.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "core/filters.hpp",
+          "verdict": "holds",
+          "why": "`core/filters.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/core/types.hpp include/foc/core/transforms.hpp include/foc/core/filters.hpp include/foc/core/feedforward.hpp include/foc/core/traits.hpp include/foc/core/gear_ratio.hpp include/foc/core/hall.hpp include/foc/core/brake_chopper.hpp include/foc/motor/motor.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "core/friction_comp.hpp",
+          "verdict": "holds",
+          "why": "`core/friction_comp.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/core/types.hpp include/foc/core/transforms.hpp include/foc/core/filters.hpp include/foc/core/feedforward.hpp include/foc/core/traits.hpp include/foc/core/gear_ratio.hpp include/foc/core/hall.hpp include/foc/core/brake_chopper.hpp include/foc/motor/motor.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "core/gear_ratio.hpp",
+          "verdict": "holds",
+          "why": "`core/gear_ratio.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/core/types.hpp include/foc/core/transforms.hpp include/foc/core/filters.hpp include/foc/core/feedforward.hpp include/foc/core/traits.hpp include/foc/core/gear_ratio.hpp include/foc/core/hall.hpp include/foc/core/brake_chopper.hpp include/foc/motor/motor.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "core/hall.hpp",
+          "verdict": "holds",
+          "why": "`core/hall.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/core/types.hpp include/foc/core/transforms.hpp include/foc/core/filters.hpp include/foc/core/feedforward.hpp include/foc/core/traits.hpp include/foc/core/gear_ratio.hpp include/foc/core/hall.hpp include/foc/core/brake_chopper.hpp include/foc/motor/motor.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "core/homing.hpp",
+          "verdict": "holds",
+          "why": "`core/homing.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/core/types.hpp include/foc/core/transforms.hpp include/foc/core/filters.hpp include/foc/core/feedforward.hpp include/foc/core/traits.hpp include/foc/core/gear_ratio.hpp include/foc/core/hall.hpp include/foc/core/brake_chopper.hpp include/foc/motor/motor.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "core/limits.hpp",
+          "verdict": "holds",
+          "why": "`core/limits.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/core/types.hpp include/foc/core/transforms.hpp include/foc/core/filters.hpp include/foc/core/feedforward.hpp include/foc/core/traits.hpp include/foc/core/gear_ratio.hpp include/foc/core/hall.hpp include/foc/core/brake_chopper.hpp include/foc/motor/motor.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "core/min_pulse.hpp",
+          "verdict": "holds",
+          "why": "`core/min_pulse.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/core/types.hpp include/foc/core/transforms.hpp include/foc/core/filters.hpp include/foc/core/feedforward.hpp include/foc/core/traits.hpp include/foc/core/gear_ratio.hpp include/foc/core/hall.hpp include/foc/core/brake_chopper.hpp include/foc/motor/motor.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "core/mtpv.hpp",
+          "verdict": "holds",
+          "why": "`core/mtpv.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/core/types.hpp include/foc/core/transforms.hpp include/foc/core/filters.hpp include/foc/core/feedforward.hpp include/foc/core/traits.hpp include/foc/core/gear_ratio.hpp include/foc/core/hall.hpp include/foc/core/brake_chopper.hpp include/foc/motor/motor.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "core/observer/back_emf_observer.hpp",
+          "verdict": "holds",
+          "why": "`core/observer/back_emf_observer.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/core/types.hpp include/foc/core/transforms.hpp include/foc/core/filters.hpp include/foc/core/feedforward.hpp include/foc/core/traits.hpp include/foc/core/gear_ratio.hpp include/foc/core/hall.hpp include/foc/core/brake_chopper.hpp include/foc/motor/motor.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "core/observer/blended_observer.hpp",
+          "verdict": "holds",
+          "why": "`core/observer/blended_observer.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/core/types.hpp include/foc/core/transforms.hpp include/foc/core/filters.hpp include/foc/core/feedforward.hpp include/foc/core/traits.hpp include/foc/core/gear_ratio.hpp include/foc/core/hall.hpp include/foc/core/brake_chopper.hpp include/foc/motor/motor.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "core/observer/dual_inductance_observer.hpp",
+          "verdict": "holds",
+          "why": "`core/observer/dual_inductance_observer.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/core/types.hpp include/foc/core/transforms.hpp include/foc/core/filters.hpp include/foc/core/feedforward.hpp include/foc/core/traits.hpp include/foc/core/gear_ratio.hpp include/foc/core/hall.hpp include/foc/core/brake_chopper.hpp include/foc/motor/motor.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "core/observer/hfi_observer.hpp",
+          "verdict": "holds",
+          "why": "`core/observer/hfi_observer.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/core/types.hpp include/foc/core/transforms.hpp include/foc/core/filters.hpp include/foc/core/feedforward.hpp include/foc/core/traits.hpp include/foc/core/gear_ratio.hpp include/foc/core/hall.hpp include/foc/core/brake_chopper.hpp include/foc/motor/motor.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "core/observer/ideal_observer.hpp",
+          "verdict": "holds",
+          "why": "`core/observer/ideal_observer.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/core/types.hpp include/foc/core/transforms.hpp include/foc/core/filters.hpp include/foc/core/feedforward.hpp include/foc/core/traits.hpp include/foc/core/gear_ratio.hpp include/foc/core/hall.hpp include/foc/core/brake_chopper.hpp include/foc/motor/motor.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "core/observer/nonlinear_flux_observer.hpp",
+          "verdict": "holds",
+          "why": "`core/observer/nonlinear_flux_observer.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/core/types.hpp include/foc/core/transforms.hpp include/foc/core/filters.hpp include/foc/core/feedforward.hpp include/foc/core/traits.hpp include/foc/core/gear_ratio.hpp include/foc/core/hall.hpp include/foc/core/brake_chopper.hpp include/foc/motor/motor.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "core/observer/observer_policy.hpp",
+          "verdict": "holds",
+          "why": "`core/observer/observer_policy.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/core/types.hpp include/foc/core/transforms.hpp include/foc/core/filters.hpp include/foc/core/feedforward.hpp include/foc/core/traits.hpp include/foc/core/gear_ratio.hpp include/foc/core/hall.hpp include/foc/core/brake_chopper.hpp include/foc/motor/motor.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "core/observer/switchable_observer.hpp",
+          "verdict": "holds",
+          "why": "`core/observer/switchable_observer.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/core/types.hpp include/foc/core/transforms.hpp include/foc/core/filters.hpp include/foc/core/feedforward.hpp include/foc/core/traits.hpp include/foc/core/gear_ratio.hpp include/foc/core/hall.hpp include/foc/core/brake_chopper.hpp include/foc/motor/motor.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "core/pi.hpp",
+          "verdict": "holds",
+          "why": "`core/pi.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/core/types.hpp include/foc/core/transforms.hpp include/foc/core/filters.hpp include/foc/core/feedforward.hpp include/foc/core/traits.hpp include/foc/core/gear_ratio.hpp include/foc/core/hall.hpp include/foc/core/brake_chopper.hpp include/foc/motor/motor.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "core/polarity.hpp",
+          "verdict": "holds",
+          "why": "`core/polarity.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/core/types.hpp include/foc/core/transforms.hpp include/foc/core/filters.hpp include/foc/core/feedforward.hpp include/foc/core/traits.hpp include/foc/core/gear_ratio.hpp include/foc/core/hall.hpp include/foc/core/brake_chopper.hpp include/foc/motor/motor.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "core/position_reference.hpp",
+          "verdict": "holds",
+          "why": "`core/position_reference.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/core/types.hpp include/foc/core/transforms.hpp include/foc/core/filters.hpp include/foc/core/feedforward.hpp include/foc/core/traits.hpp include/foc/core/gear_ratio.hpp include/foc/core/hall.hpp include/foc/core/brake_chopper.hpp include/foc/motor/motor.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "core/reference.hpp",
+          "verdict": "holds",
+          "why": "`core/reference.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/core/types.hpp include/foc/core/transforms.hpp include/foc/core/filters.hpp include/foc/core/feedforward.hpp include/foc/core/traits.hpp include/foc/core/gear_ratio.hpp include/foc/core/hall.hpp include/foc/core/brake_chopper.hpp include/foc/motor/motor.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "core/single_shunt.hpp",
+          "verdict": "holds",
+          "why": "`core/single_shunt.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/core/types.hpp include/foc/core/transforms.hpp include/foc/core/filters.hpp include/foc/core/feedforward.hpp include/foc/core/traits.hpp include/foc/core/gear_ratio.hpp include/foc/core/hall.hpp include/foc/core/brake_chopper.hpp include/foc/motor/motor.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "core/sinusoid_fit.hpp",
+          "verdict": "holds",
+          "why": "`core/sinusoid_fit.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/core/types.hpp include/foc/core/transforms.hpp include/foc/core/filters.hpp include/foc/core/feedforward.hpp include/foc/core/traits.hpp include/foc/core/gear_ratio.hpp include/foc/core/hall.hpp include/foc/core/brake_chopper.hpp include/foc/motor/motor.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "core/six_step.hpp",
+          "verdict": "holds",
+          "why": "`core/six_step.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/core/types.hpp include/foc/core/transforms.hpp include/foc/core/filters.hpp include/foc/core/feedforward.hpp include/foc/core/traits.hpp include/foc/core/gear_ratio.hpp include/foc/core/hall.hpp include/foc/core/brake_chopper.hpp include/foc/motor/motor.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "core/sm.hpp",
+          "verdict": "holds",
+          "why": "`core/sm.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/core/types.hpp include/foc/core/transforms.hpp include/foc/core/filters.hpp include/foc/core/feedforward.hpp include/foc/core/traits.hpp include/foc/core/gear_ratio.hpp include/foc/core/hall.hpp include/foc/core/brake_chopper.hpp include/foc/motor/motor.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "core/soft_limit.hpp",
+          "verdict": "holds",
+          "why": "`core/soft_limit.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/core/types.hpp include/foc/core/transforms.hpp include/foc/core/filters.hpp include/foc/core/feedforward.hpp include/foc/core/traits.hpp include/foc/core/gear_ratio.hpp include/foc/core/hall.hpp include/foc/core/brake_chopper.hpp include/foc/motor/motor.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "core/speed_from_angle.hpp",
+          "verdict": "holds",
+          "why": "`core/speed_from_angle.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/core/types.hpp include/foc/core/transforms.hpp include/foc/core/filters.hpp include/foc/core/feedforward.hpp include/foc/core/traits.hpp include/foc/core/gear_ratio.hpp include/foc/core/hall.hpp include/foc/core/brake_chopper.hpp include/foc/motor/motor.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "core/stall_start.hpp",
+          "verdict": "holds",
+          "why": "`core/stall_start.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/core/types.hpp include/foc/core/transforms.hpp include/foc/core/filters.hpp include/foc/core/feedforward.hpp include/foc/core/traits.hpp include/foc/core/gear_ratio.hpp include/foc/core/hall.hpp include/foc/core/brake_chopper.hpp include/foc/motor/motor.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "core/startup.hpp",
+          "verdict": "holds",
+          "why": "`core/startup.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/core/types.hpp include/foc/core/transforms.hpp include/foc/core/filters.hpp include/foc/core/feedforward.hpp include/foc/core/traits.hpp include/foc/core/gear_ratio.hpp include/foc/core/hall.hpp include/foc/core/brake_chopper.hpp include/foc/motor/motor.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "core/step_metrics.hpp",
+          "verdict": "holds",
+          "why": "`core/step_metrics.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/core/types.hpp include/foc/core/transforms.hpp include/foc/core/filters.hpp include/foc/core/feedforward.hpp include/foc/core/traits.hpp include/foc/core/gear_ratio.hpp include/foc/core/hall.hpp include/foc/core/brake_chopper.hpp include/foc/motor/motor.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "core/svpwm.hpp",
+          "verdict": "holds",
+          "why": "`core/svpwm.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/core/types.hpp include/foc/core/transforms.hpp include/foc/core/filters.hpp include/foc/core/feedforward.hpp include/foc/core/traits.hpp include/foc/core/gear_ratio.hpp include/foc/core/hall.hpp include/foc/core/brake_chopper.hpp include/foc/motor/motor.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "core/thermal_limit.hpp",
+          "verdict": "holds",
+          "why": "`core/thermal_limit.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/core/types.hpp include/foc/core/transforms.hpp include/foc/core/filters.hpp include/foc/core/feedforward.hpp include/foc/core/traits.hpp include/foc/core/gear_ratio.hpp include/foc/core/hall.hpp include/foc/core/brake_chopper.hpp include/foc/motor/motor.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "core/traits.hpp",
+          "verdict": "holds",
+          "why": "`core/traits.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/core/types.hpp include/foc/core/transforms.hpp include/foc/core/filters.hpp include/foc/core/feedforward.hpp include/foc/core/traits.hpp include/foc/core/gear_ratio.hpp include/foc/core/hall.hpp include/foc/core/brake_chopper.hpp include/foc/motor/motor.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "core/transforms.hpp",
+          "verdict": "holds",
+          "why": "`core/transforms.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/core/types.hpp include/foc/core/transforms.hpp include/foc/core/filters.hpp include/foc/core/feedforward.hpp include/foc/core/traits.hpp include/foc/core/gear_ratio.hpp include/foc/core/hall.hpp include/foc/core/brake_chopper.hpp include/foc/motor/motor.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "core/types.hpp",
+          "verdict": "holds",
+          "why": "`core/types.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/core/types.hpp include/foc/core/transforms.hpp include/foc/core/filters.hpp include/foc/core/feedforward.hpp include/foc/core/traits.hpp include/foc/core/gear_ratio.hpp include/foc/core/hall.hpp include/foc/core/brake_chopper.hpp include/foc/motor/motor.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "core/watchdog.hpp",
+          "verdict": "holds",
+          "why": "`core/watchdog.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/core/types.hpp include/foc/core/transforms.hpp include/foc/core/filters.hpp include/foc/core/feedforward.hpp include/foc/core/traits.hpp include/foc/core/gear_ratio.hpp include/foc/core/hall.hpp include/foc/core/brake_chopper.hpp include/foc/motor/motor.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "driver/callback_hal.hpp",
+          "verdict": "holds",
+          "why": "`driver/callback_hal.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/core/types.hpp include/foc/core/transforms.hpp include/foc/core/filters.hpp include/foc/core/feedforward.hpp include/foc/core/traits.hpp include/foc/core/gear_ratio.hpp include/foc/core/hall.hpp include/foc/core/brake_chopper.hpp include/foc/motor/motor.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "driver/scripted_current.hpp",
+          "verdict": "holds",
+          "why": "`driver/scripted_current.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/core/types.hpp include/foc/core/transforms.hpp include/foc/core/filters.hpp include/foc/core/feedforward.hpp include/foc/core/traits.hpp include/foc/core/gear_ratio.hpp include/foc/core/hall.hpp include/foc/core/brake_chopper.hpp include/foc/motor/motor.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "driver/stub_pwm.hpp",
+          "verdict": "holds",
+          "why": "`driver/stub_pwm.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/core/types.hpp include/foc/core/transforms.hpp include/foc/core/filters.hpp include/foc/core/feedforward.hpp include/foc/core/traits.hpp include/foc/core/gear_ratio.hpp include/foc/core/hall.hpp include/foc/core/brake_chopper.hpp include/foc/motor/motor.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "hal/brake_switch.hpp",
+          "verdict": "holds",
+          "why": "`hal/brake_switch.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/core/types.hpp include/foc/core/transforms.hpp include/foc/core/filters.hpp include/foc/core/feedforward.hpp include/foc/core/traits.hpp include/foc/core/gear_ratio.hpp include/foc/core/hall.hpp include/foc/core/brake_chopper.hpp include/foc/motor/motor.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "hal/current_sense.hpp",
+          "verdict": "holds",
+          "why": "`hal/current_sense.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/core/types.hpp include/foc/core/transforms.hpp include/foc/core/filters.hpp include/foc/core/feedforward.hpp include/foc/core/traits.hpp include/foc/core/gear_ratio.hpp include/foc/core/hall.hpp include/foc/core/brake_chopper.hpp include/foc/motor/motor.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "hal/fault_input.hpp",
+          "verdict": "holds",
+          "why": "`hal/fault_input.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/core/types.hpp include/foc/core/transforms.hpp include/foc/core/filters.hpp include/foc/core/feedforward.hpp include/foc/core/traits.hpp include/foc/core/gear_ratio.hpp include/foc/core/hall.hpp include/foc/core/brake_chopper.hpp include/foc/motor/motor.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "hal/pwm.hpp",
+          "verdict": "holds",
+          "why": "`hal/pwm.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/core/types.hpp include/foc/core/transforms.hpp include/foc/core/filters.hpp include/foc/core/feedforward.hpp include/foc/core/traits.hpp include/foc/core/gear_ratio.hpp include/foc/core/hall.hpp include/foc/core/brake_chopper.hpp include/foc/motor/motor.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "motor/foc_loop.hpp",
+          "verdict": "holds",
+          "why": "`motor/foc_loop.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/core/types.hpp include/foc/core/transforms.hpp include/foc/core/filters.hpp include/foc/core/feedforward.hpp include/foc/core/traits.hpp include/foc/core/gear_ratio.hpp include/foc/core/hall.hpp include/foc/core/brake_chopper.hpp include/foc/motor/motor.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "motor/motor.hpp",
+          "verdict": "holds",
+          "why": "`motor/motor.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/core/types.hpp include/foc/core/transforms.hpp include/foc/core/filters.hpp include/foc/core/feedforward.hpp include/foc/core/traits.hpp include/foc/core/gear_ratio.hpp include/foc/core/hall.hpp include/foc/core/brake_chopper.hpp include/foc/motor/motor.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "motor/motor_config.hpp",
+          "verdict": "holds",
+          "why": "`motor/motor_config.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/core/types.hpp include/foc/core/transforms.hpp include/foc/core/filters.hpp include/foc/core/feedforward.hpp include/foc/core/traits.hpp include/foc/core/gear_ratio.hpp include/foc/core/hall.hpp include/foc/core/brake_chopper.hpp include/foc/motor/motor.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "core/trace.hpp",
+          "verdict": "holds",
+          "why": "`core/trace.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/core/types.hpp include/foc/core/transforms.hpp include/foc/core/filters.hpp include/foc/core/feedforward.hpp include/foc/core/traits.hpp include/foc/core/gear_ratio.hpp include/foc/core/hall.hpp include/foc/core/brake_chopper.hpp include/foc/motor/motor.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "core/trace_parse.hpp",
+          "verdict": "holds",
+          "why": "`core/trace_parse.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/core/types.hpp include/foc/core/transforms.hpp include/foc/core/filters.hpp include/foc/core/feedforward.hpp include/foc/core/traits.hpp include/foc/core/gear_ratio.hpp include/foc/core/hall.hpp include/foc/core/brake_chopper.hpp include/foc/motor/motor.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "driver/stub_brake_switch.hpp",
+          "verdict": "holds",
+          "why": "`driver/stub_brake_switch.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/core/types.hpp include/foc/core/transforms.hpp include/foc/core/filters.hpp include/foc/core/feedforward.hpp include/foc/core/traits.hpp include/foc/core/gear_ratio.hpp include/foc/core/hall.hpp include/foc/core/brake_chopper.hpp include/foc/motor/motor.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "driver/stub_fault_input.hpp",
+          "verdict": "holds",
+          "why": "`driver/stub_fault_input.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/core/types.hpp include/foc/core/transforms.hpp include/foc/core/filters.hpp include/foc/core/feedforward.hpp include/foc/core/traits.hpp include/foc/core/gear_ratio.hpp include/foc/core/hall.hpp include/foc/core/brake_chopper.hpp include/foc/motor/motor.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "driver/stub_hal.hpp",
+          "verdict": "holds",
+          "why": "`driver/stub_hal.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/core/types.hpp include/foc/core/transforms.hpp include/foc/core/filters.hpp include/foc/core/feedforward.hpp include/foc/core/traits.hpp include/foc/core/gear_ratio.hpp include/foc/core/hall.hpp include/foc/core/brake_chopper.hpp include/foc/motor/motor.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "motor/torque_map.hpp",
+          "verdict": "holds",
+          "why": "`motor/torque_map.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/core/types.hpp include/foc/core/transforms.hpp include/foc/core/filters.hpp include/foc/core/feedforward.hpp include/foc/core/traits.hpp include/foc/core/gear_ratio.hpp include/foc/core/hall.hpp include/foc/core/brake_chopper.hpp include/foc/motor/motor.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        }
+      ]
     }
   ]
 }

@@ -94,7 +94,7 @@ struct GearOutput final {
 
 
 /**
- * @brief [en] Electronic gearing with the master's wrapping removed, so a slave does not lose a revolution per turn.
+ * @brief [en] Electronic gearing with the master unwrapped, so a slave does not lose a revolution per turn.
  *
  *     The whole difficulty is in one word: *unwrapped*. An encoder hands over an angle in `[0, 2*pi)`, so a master that
  *     turns three times reads 0, then 2*pi, then 0 again -- and a gear that multiplies what it is given hands the slave

@@ -137,9 +137,13 @@ struct is_fault_input<T, std::void_t<decltype(std::declval<T&>().faulted())>>
                          noexcept(std::declval<T&>().faulted())> {};
 
 /**
- * @brief [en] Convenience variable templates, e.g. `static_assert(hal::concepts::is_pwm_v<MyPwm>, "MyPwm must satisfy
- *             foc::hal::Pwm");`.
- * @brief [zh] 便捷变量模板，例如 `static_assert(hal::concepts::is_pwm_v<MyPwm>, "MyPwm must satisfy foc::hal::Pwm");`。
+ * @brief [en] Convenience variable templates.
+ *
+ *     For example `static_assert(hal::concepts::is_pwm_v<MyPwm>, "MyPwm must satisfy foc::hal::Pwm");`.
+ *
+ * @brief [zh] 便捷变量模板。
+ *
+ *     例如 `static_assert(hal::concepts::is_pwm_v<MyPwm>, "MyPwm must satisfy foc::hal::Pwm");`。
  * @since 0.1.0
  * @exporter
  */
@@ -164,10 +168,13 @@ namespace core {
 namespace concepts {
 
 /**
- * @brief [en] `T` exposes the optional `seed_flux(Ab<float>)` hook of a flux-linkage observer. Motor uses it during
- *             start(): a sensorless setup seeds the flux from the nameplate.
- * @brief [zh] `T` 是否提供磁链观测器可选的 `seed_flux(Ab<float>)` 钩子。 Motor 在 start() 中使用它：无感场景用铭牌参数
- *             播种磁链。
+ * @brief [en] `T` exposes the flux-linkage observer's optional `seed_flux(Ab<float>)` hook.
+ *
+ *     Motor uses it during `start()`: a sensorless setup seeds the flux from the nameplate.
+ *
+ * @brief [zh] `T` 是否提供磁链观测器可选的 `seed_flux(Ab<float>)` 钩子。
+ *
+ *     Motor 在 `start()` 中使用它：无感场景用铭牌参数播种磁链。
  * @since 0.1.0
  * @exporter
  */
@@ -186,8 +193,10 @@ struct has_seed_flux<T, std::void_t<decltype(std::declval<T&>().seed_flux(std::d
 template <typename T> inline constexpr bool has_seed_flux_v = has_seed_flux<T>::value;
 
 /**
- * @brief [en] `T` (an observer) asks for a voltage of its own: a high-frequency injection that Motor has to add to the
- *             command on its behalf.
+ * @brief [en] `T` asks for a voltage of its own.
+ *
+ *     An observer with a high-frequency injection needs Motor to add it to the command on its behalf.
+ *
  * @brief [zh] `T`（观测器）要自己的一份电压：Motor 需代它把高频注入叠加到指令上。
  * @note [en] Detection is capability, not configuration. An observer that needs no injection is simply a type that does
  *            not have the method, so there is no flag to leave in the wrong state -- the same rule the modulator slot
@@ -293,10 +302,13 @@ struct has_apply_params<T, std::void_t<decltype(std::declval<T&>().apply_params(
 template <typename T> inline constexpr bool has_apply_params_v = has_apply_params<T>::value;
 
 /**
- * @brief [en] `T` satisfies the observer policy contract (see observer_policy.hpp): it must expose `update(Ab<float>,
- *             Ab<float>, float) noexcept -> ObsState`.
- * @brief [zh] `T` 满足观测器策略契约（见 observer_policy.hpp）：必须提供 `update(Ab<float>, Ab<float>, float) noexcept
- *             -> ObsState`。
+ * @brief [en] `T` satisfies the observer policy contract.
+ *
+ *     See observer_policy.hpp: it must expose `update(Ab<float>, Ab<float>, float) noexcept -> ObsState`.
+ *
+ * @brief [zh] `T` 满足观测器策略契约。
+ *
+ *     见 observer_policy.hpp：必须提供 `update(Ab<float>, Ab<float>, float) noexcept -> ObsState`。
  * @since 0.1.0
  * @exporter
  */
@@ -321,10 +333,13 @@ struct is_observer<T, std::void_t<decltype(std::declval<T&>().update(
 template <typename T> inline constexpr bool is_observer_v = is_observer<T>::value;
 
 /**
- * @brief [en] `T` satisfies the reference-generator policy contract (see reference.hpp): it must expose `generate(const
- *             ReferenceInput&) noexcept -> Dq<float>`.
- * @brief [zh] `T` 满足参考生成器策略契约（见 reference.hpp）：必须提供 `generate(const ReferenceInput&) noexcept ->
- *             Dq<float>`。
+ * @brief [en] `T` satisfies the reference-generator policy contract.
+ *
+ *     See reference.hpp: it must expose `generate(const ReferenceInput&) noexcept -> Dq<float>`.
+ *
+ * @brief [zh] `T` 满足参考生成器策略契约。
+ *
+ *     见 reference.hpp：必须提供 `generate(const ReferenceInput&) noexcept -> Dq<float>`。
  * @since 0.1.0
  * @exporter
  */
@@ -511,9 +526,14 @@ struct is_speed_control<T, std::void_t<decltype(std::declval<T&>().step(std::dec
 template <typename T> inline constexpr bool is_speed_control_v = is_speed_control<T>::value;
 
 /**
- * @brief [en] `T` satisfies the *position* slot contract: `step(const PositionInput&, float, float) noexcept -> float`
- *             plus `reset()`.
- * @brief [zh] `T` 满足**位置**槽位契约：`step(const PositionInput&, float, float) noexcept -> float` 与 `reset()`。
+ * @brief [en] `T` satisfies the *position* slot contract.
+ *
+ *     `step(const PositionInput&, float, float) noexcept -> float` plus `reset()`.
+ *
+ * @brief [zh] `T` 满足**位置**槽位契约。
+ *
+ *     `step(const PositionInput&, float, float) noexcept -> float` 与 `reset()`。
+ *
  * @note [en] Deliberately *not* the same shape as the current and speed slots. Those three are regulators: a setpoint,
  *            a measurement, a step. The position slot is a trajectory shaper too, and a move has a velocity and an
  *            acceleration, not just an endpoint. Widening this one slot is what makes per-move limits possible without
@@ -542,10 +562,16 @@ struct is_position_control<T, std::void_t<decltype(std::declval<T&>().step(std::
 template <typename T> inline constexpr bool is_position_control_v = is_position_control<T>::value;
 
 /**
- * @brief [en] `T` satisfies the aligner-slot contract (see alignment.hpp): `validate()`, `begin(pole_pairs) -> bool`,
- *             `step(dt, angle) noexcept -> AlignOutput`, `reset()`.
- * @brief [zh] `T` 满足对齐槽位契约（见 alignment.hpp）：`validate()`、 `begin(pole_pairs) -> bool`、`step(dt, angle)
- *             noexcept -> AlignOutput`、`reset()`。
+ * @brief [en] `T` satisfies the aligner-slot contract.
+ *
+ *     See alignment.hpp: `validate()`, `begin(pole_pairs) -> bool`, `step(dt, angle) noexcept -> AlignOutput`,
+ *     `reset()`.
+ *
+ * @brief [zh] `T` 满足对齐槽位契约。
+ *
+ *     见 alignment.hpp：`validate()`、`begin(pole_pairs) -> bool`、`step(dt, angle) noexcept -> AlignOutput`、
+ *     `reset()`。
+ *
  * @note [en] `begin()` returns `bool` rather than `ErrorCode` on purpose: "nothing to do" is a normal answer (a build
  *            with a stored offset), while "your recipe is invalid" is a configuration error reported by `validate()`
  *            before the sequence starts. Folding both into one return value would let a typo in the recipe look like a

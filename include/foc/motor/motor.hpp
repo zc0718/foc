@@ -149,26 +149,58 @@ struct Command final {
 
 
 /**
- * @brief [en] Policy-composed motor: no globals, no allocation, no virtual calls in the loop. All state lives in this
- *             object, so multiple instances are independent by construction.
+ * @brief [en] Policy-composed motor: no globals, no allocation, no virtual calls in the loop.
  *
- *     Binding contract:
+ *     All state lives in this object, so multiple instances are independent by construction. The contract a member
+ *     policy has to meet:
  *
- *     - `Observer` provides `update(Ab<float>, Ab<float>, float) noexcept -> ObsState` (and optionally
- *     `seed_flux(Ab<float>)`, used at start()). - `Modulator` provides `modulate(Ab<float>, float) noexcept ->
- *     SvpwmResult`. - `Controller` provides `step(float, float, float) noexcept -> float` and `reset()`. -
- *     `RefGenerator` provides `generate(const ReferenceInput&) noexcept -> Dq<float>` (default
- *     `core::NullReferenceGenerator` = d axis at zero). - `FeedForward` provides `generate(const FeedforwardInput&)
- *     noexcept -> Dq<float>` (default `core::NullFeedforward` = no term). - `PositionControl` provides `step(setpoint,
- *     feedback, dt) noexcept -> float` + `reset()` and commands a *velocity*; the default `core::NullPositionControl`
- *     makes position mode answer `ErrorCode::NotImpl` instead of pretending. - `Aligner` provides `validate()`,
- *     `begin(pole_pairs) -> bool`, `step(dt, angle_mech) noexcept -> AlignOutput` and `reset()`; the default
- *     `core::NullAlignment` answers `false` from `begin()`, so `start()` goes straight from Align to Run. - `HalPolicy`
- *     exposes members `pwm`, `current_sense`, `position`, `dc_link`.
+ *     \li `Observer` provides `update(Ab<float>, Ab<float>, float) noexcept -> ObsState`, and optionally
+ *     `seed_flux(Ab<float>)` which `start()` uses.
  *
- * @brief [zh] 策略组合的电机：无全局状态、不分配、控制环内无虚函数调用。状态全在对象内， 因此多实例天然相互独立。
+ *     \li `Modulator` provides `modulate(Ab<float>, float) noexcept -> SvpwmResult`.
  *
- *     绑定契约：见上（Observer 可选 seed_flux，HalPolicy 的成员名固定）。
+ *     \li `Controller` provides `step(float, float, float) noexcept -> float` and `reset()`.
+ *
+ *     \li `RefGenerator` provides `generate(const ReferenceInput&) noexcept -> Dq<float>`; the default
+ *     `core::NullReferenceGenerator` holds the d axis at zero.
+ *
+ *     \li `FeedForward` provides `generate(const FeedforwardInput&) noexcept -> Dq<float>`; the default
+ *     `core::NullFeedforward` contributes no term.
+ *
+ *     \li `PositionControl` provides `step(setpoint, feedback, dt) noexcept -> float` and `reset()`, and commands a
+ *     *velocity*; the default `core::NullPositionControl` makes position mode answer `ErrorCode::NotImpl` instead of
+ *     pretending.
+ *
+ *     \li `Aligner` provides `validate()`, `begin(pole_pairs) -> bool`, `step(dt, angle_mech) noexcept -> AlignOutput`
+ *     and `reset()`; the default `core::NullAlignment` answers `false` from `begin()`, so `start()` goes straight from
+ *     Align to Run.
+ *
+ *     \li `HalPolicy` exposes the members `pwm`, `current_sense`, `position` and `dc_link`.
+ *
+ * @brief [zh] 策略组合的电机：无全局状态、不分配、控制环内无虚函数调用。
+ *
+ *     状态全在对象内，因此多实例天然相互独立。成员策略须满足的契约：
+ *
+ *     \li `Observer` 提供 `update(Ab<float>, Ab<float>, float) noexcept -> ObsState`，并可选提供 `seed_flux(Ab<float>)`
+ *     供 `start()` 使用。
+ *
+ *     \li `Modulator` 提供 `modulate(Ab<float>, float) noexcept -> SvpwmResult`。
+ *
+ *     \li `Controller` 提供 `step(float, float, float) noexcept -> float` 与 `reset()`。
+ *
+ *     \li `RefGenerator` 提供 `generate(const ReferenceInput&) noexcept -> Dq<float>`；默认的
+ *     `core::NullReferenceGenerator` 把 d 轴恒置零。
+ *
+ *     \li `FeedForward` 提供 `generate(const FeedforwardInput&) noexcept -> Dq<float>`；默认的 `core::NullFeedforward`
+ *     不贡献任何项。
+ *
+ *     \li `PositionControl` 提供 `step(setpoint, feedback, dt) noexcept -> float` 与 `reset()`，且下发的是**速度**；默
+ *     认的 `core::NullPositionControl` 让位置模式回 `ErrorCode::NotImpl`，而不是假装成功。
+ *
+ *     \li `Aligner` 提供 `validate()`、`begin(pole_pairs) -> bool`、`step(dt, angle_mech) noexcept -> AlignOutput` 与
+ *     `reset()`；默认的 `core::NullAlignment` 的 `begin()` 回 `false`，于是 `start()` 直接从 Align 进 Run。
+ *
+ *     \li `HalPolicy` 暴露成员 `pwm`、`current_sense`、`position`、`dc_link`。
  *
  * @context [en] tick() is the ISR entry: noexcept, no allocation, no I/O.
  * @context [zh] tick() 是 ISR 入口：noexcept、不分配、无 I/O。

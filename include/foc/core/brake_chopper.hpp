@@ -218,7 +218,8 @@ class BrakeChopper final {
 
   private:
     /**
-     * @brief Exponential cooling toward zero, applied whether or not the resistor is being driven. 指数冷却至零，无论电阻是否在被驱动都施加。
+     * @brief [en] Exponential cooling toward zero, applied whether or not the resistor is being driven.
+     * @brief [zh] 指数冷却至零，无论电阻是否在被驱动都施加。
      */
     void cool(float dt_s) noexcept {
         if (config_.i2t_cool_tau_s > 0.0F) {
