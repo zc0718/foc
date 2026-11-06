@@ -5,8 +5,10 @@
 // 所以下面每条判据都是关于"拒绝且不产生任何值"的，而 CRC 的牙齿靠**逐位翻转**证明，不靠抽查一位。
 
 #include <cmath>
+#include <cstring>
 #include <vector>
 
+#include <etl/bit_stream.h>
 #include <gtest/gtest.h>
 
 #include <foc/comm/encoder_stream.hpp>
@@ -285,4 +287,66 @@ TEST(EncoderStream, RefusesLayoutsAndBuffersThatCannotDescribeAFrame) {
     const std::vector<std::uint8_t> one_turn =
         pack(0U, 0U); // packed with the 24-bit layout, used only for the length check
     EXPECT_EQ(ErrorCode::Param, decode_biss(one_turn.data(), 24, single).status) << "17 + 2 + 6 = 25 bits, not 24";
+}
+
+// The wire, checked against a writer nobody in this repository wrote.
+//
+// Every case above pins the MSB-first convention **against itself**: `pack()` shifts bits out with its own lambda and
+// `decode_biss()` reads them back through `bit_at()`, so a consistent-but-different convention -- LSB-first, say --
+// would keep all of them green, because both sides would have moved together. That is not a hypothetical risk for a
+// bit-oriented protocol: the convention is the interface, and it is the one thing a caller on the other end of a cable
+// cannot renegotiate.
+//
+// So this case packs the same frame with `etl::bit_stream_writer` -- a fielded implementation by people who never saw
+// this file -- and demands the **bytes** are identical, not merely that both round-trip. ETL is a witness here, not a
+// dependency: it lives in the test tree only, because measured, `etl/bit_stream.h` costs a consumer TU 348 headers and
+// 391 ms (`.github/project/deps.json`). The CRC bits still come from our `crc6`: what this case witnesses is the bit
+// *layout*, and pretending otherwise would make it a second test of the CRC instead of a first test of the stream.
+//
+// 线上格式，用一个本仓库没人写过的写端核对。
+//
+// 上面所有用例都是**对着自己**钉 MSB-first 约定的：`pack()` 用自己的 lambda 移位写出、`decode_biss()` 经 `bit_at()`
+// 读回，于是一个"自洽但与世界不同"的约定——比如 LSB-first——会让它们全部保持绿色，因为两侧一起挪了。对面向位的协议
+// 来说这不是假想风险：约定就是接口，而它恰恰是电缆另一端的调用方**无法重新协商**的那件东西。
+//
+// 所以这条用例用 `etl::bit_stream_writer`——一个没见过本文件的人写的、实装过的实现——拼同一帧，并要求**字节**相同，
+// 而不只是双方各自往返一次。ETL 在这里是证人不是依赖：它只活在测试树里，因为实测 `etl/bit_stream.h` 会让一个消费者
+// TU 多拉 348 个头、多花 391 ms（`.github/project/deps.json`）。CRC 位仍由我们的 `crc6` 给出：这条用例见证的是位的
+// *布局*，假装不是，它就变成了第二个 CRC 测试而不是第一个码流测试。
+TEST(EncoderStream, TheWireIsTheMsbFirstStreamAForeignWriterProduces) {
+    const EncoderLayout shape = layout();
+    const auto bytes = static_cast<std::size_t>((shape.frame_bits() + 7) / 8);
+    int compared = 0;
+    for (const std::uint32_t turns : {0U, 1U, 7U, 15U}) {
+        for (const std::uint32_t position : {0U, 1U, 2047U, 4095U}) {
+            for (const bool error_bit : {false, true}) {
+                const std::vector<std::uint8_t> ours = pack(turns, position, error_bit, true);
+
+                std::vector<char> foreign(bytes, 0);
+                etl::bit_stream_writer writer(etl::span<char>(foreign.data(), foreign.size()), etl::endian::big);
+                writer.write_unchecked(turns, kMt);
+                writer.write_unchecked(position, kSt);
+                writer.write_unchecked(error_bit ? 1U : 0U, 1);
+                writer.write_unchecked(1U, 1); // the warning bit
+                writer.write_unchecked(crc6(ours.data(), shape.data_bits() + 2), EncoderLayout::kCrcBits);
+
+                ASSERT_EQ(0, std::memcmp(ours.data(), foreign.data(), bytes))
+                    << "turns " << turns << " position " << position << " error " << error_bit
+                    << ": our packing and a foreign MSB-first writer disagree about the wire";
+
+                const auto* foreign_bits = reinterpret_cast<const std::uint8_t*>(foreign.data());
+                const EncoderFrame mine = decode_biss(ours.data(), shape.frame_bits(), shape);
+                const EncoderFrame theirs = decode_biss(foreign_bits, shape.frame_bits(), shape);
+                EXPECT_EQ(ErrorCode::Ok, theirs.status);
+                EXPECT_TRUE(theirs.crc_ok);
+                EXPECT_EQ(mine.position, theirs.position);
+                EXPECT_EQ(mine.turns, theirs.turns);
+                EXPECT_EQ(mine.raw_data, theirs.raw_data);
+                EXPECT_EQ(error_bit, theirs.error_bit);
+                EXPECT_TRUE(theirs.warning);
+                ++compared;
+            }
+        }
+    }
+    std::printf("\n[encoder] %d frames packed by ETL's bit_stream_writer: byte-identical to ours\n", compared);
 }

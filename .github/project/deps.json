@@ -1,0 +1,149 @@
+{
+  "_what": "Which third-party code may appear where, and what it costs a consumer. One file because the two questions have one owner: a dependency is allowed only at a price we measured, and the price is what decides the place.",
+  "_who_reads_it": "deps_gate.py (X2) enforces `allowed_paths`; the numbers are the evidence behind `verdict` and are re-measured by workspace/tools/x0_compile_cost.py, never typed by hand into prose.",
+  "budget": {
+    "max_public_header_delta_pct": 10.0,
+    "why": "A public header is paid for by every consumer TU in their own build, on every platform, forever. 10% is the line above which 'we use library X internally' turns into 'we made the consumer's build 4x slower', and the plan says such a component may not appear on the public face.",
+    "measurement": {
+      "tool": "workspace/tools/x0_compile_cost.py",
+      "compiler": "g++ (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0",
+      "flags": "-std=c++17 -fno-exceptions -fno-rtti -Wall -Wextra -Werror -O2 -fsyntax-only",
+      "runs": 7,
+      "statistic": "median wall clock, first run discarded (cold page cache)",
+      "baseline": "#include <foc/...> + main(), which is the same TU shape the `strict` gate compiles",
+      "date": "2026-11-06"
+    }
+  },
+  "dependencies": {
+    "etl": {
+      "bucket": "cpp",
+      "version": "20.47.1",
+      "licence": "MIT",
+      "why_declared": "Provenance for the parts of a motor controller that are easy to get subtly wrong and cheap to get from a tested, fielded embedded library: CRC (a wrong polynomial is silent), bit-stream packing for non-byte-aligned encoder frames, byte order, and fixed-capacity text formatting without allocation.",
+      "what_it_buys": "A second, independently written implementation to compare against our own on every push (the cross-check cases), and a tested bit manipulator behind the compiled face. It is evidence, not convenience: 'our CRC agrees with ETL byte for byte over 0..64 byte frames' is a sentence a reviewer can check.",
+      "verdict": "INTERNAL ONLY. Every candidate header costs a consumer 7x-34x the price of the whole foc include face, so ETL may not appear on any public header. It is a `cpp` bucket (conan) dependency, which is visible to the recipe, while `include/**` stays free of it: the include face is what a consumer actually pays for.",
+      "allowed_paths": [
+        "src/**",
+        "test_package/test/**"
+      ],
+      "forbidden_paths": [
+        "include/**"
+      ],
+      "include_prefixes": [
+        "etl/"
+      ],
+      "measured": {
+        "frame_crc": {
+          "etl_header": "etl/crc16_ccitt.h",
+          "target_header": "foc/comm/frame.hpp",
+          "baseline_ms": 13.7,
+          "with_etl_ms": 255.8,
+          "delta_ms": 242.1,
+          "factor": 18.7,
+          "delta_pct": 1758.1,
+          "etl_alone_ms": 243.0,
+          "headers_pulled": 277,
+          "within_budget": false
+        },
+        "encoder_bits": {
+          "etl_header": "etl/bit_stream.h",
+          "target_header": "foc/comm/encoder_stream.hpp",
+          "baseline_ms": 11.8,
+          "with_etl_ms": 402.9,
+          "delta_ms": 391.1,
+          "factor": 34.2,
+          "delta_pct": 3342.4,
+          "etl_alone_ms": 393.0,
+          "headers_pulled": 348,
+          "within_budget": false
+        },
+        "mtext_format": {
+          "etl_header": "etl/to_string.h",
+          "target_header": "foc/core/machine_map_text.hpp",
+          "baseline_ms": 98.7,
+          "with_etl_ms": 434.1,
+          "delta_ms": 335.4,
+          "factor": 4.4,
+          "delta_pct": 339.8,
+          "etl_alone_ms": 420.0,
+          "headers_pulled": 355,
+          "within_budget": false
+        },
+        "regmap_endian": {
+          "etl_header": "etl/endianness.h",
+          "target_header": "foc/comm/register_map.hpp",
+          "baseline_ms": 15.3,
+          "with_etl_ms": 115.1,
+          "delta_ms": 99.8,
+          "factor": 7.5,
+          "delta_pct": 652.3,
+          "etl_alone_ms": 103.0,
+          "headers_pulled": 149,
+          "within_budget": false
+        },
+        "all_four": {
+          "etl_header": "crc16_ccitt + bit_stream + to_string + endianness",
+          "target_header": "comm + core face",
+          "baseline_ms": 102.4,
+          "with_etl_ms": 479.4,
+          "delta_ms": 377.0,
+          "factor": 4.7,
+          "delta_pct": 368.2,
+          "headers_pulled": null,
+          "within_budget": false
+        }
+      },
+      "code_size": {
+        "_what": ".text bytes for the same job done twice, -O2, same TU shape",
+        "crc16_ccitt": {
+          "ours": 72,
+          "etl": 62,
+          "delta": -10,
+          "note": "ETL is 10 bytes smaller: it is table driven, ours is bitwise. Neither is a reason on its own at this size; the cross-check is."
+        },
+        "hex_format": {
+          "ours": 44,
+          "etl": 254,
+          "delta": 210,
+          "note": "A general format engine against `std::snprintf`, which lives in the C library either way. This is the one component whose size cost is real, and it is why nothing on the public face needs it."
+        }
+      }
+    },
+    "gtest": {
+      "bucket": "infra",
+      "version": "1.16.0",
+      "licence": "BSD-3-Clause",
+      "why_declared": "The test framework. Every case in test_package is written against it.",
+      "allowed_paths": [
+        "test_package/test/**",
+        "test_package/main.cpp",
+        "test_package/c_api_validation.c"
+      ],
+      "forbidden_paths": [
+        "include/**",
+        "src/**"
+      ],
+      "include_prefixes": [
+        "gtest/",
+        "gmock/"
+      ]
+    },
+    "pybind11": {
+      "bucket": "infra",
+      "version": "3.0.1",
+      "licence": "BSD-3-Clause",
+      "why_declared": "The Python consumer face (api/python_bindings.cpp). Optional: off unless enable_python_bindings.",
+      "allowed_paths": [
+        "api/**",
+        "test_package/test/python/**"
+      ],
+      "forbidden_paths": [
+        "include/**",
+        "src/**"
+      ],
+      "include_prefixes": [
+        "pybind11/"
+      ]
+    }
+  }
+}

@@ -24,6 +24,7 @@
 #include <cstdio>
 #include <cstring>
 
+#include <etl/crc16_ccitt.h>
 #include <gtest/gtest.h>
 
 #include <foc/comm/frame.hpp>
@@ -47,6 +48,71 @@ TEST(Frame, TheCrcIsTheStandardsVariantNotJustSomeCrc) {
     const char* check = "123456789";
     const auto crc = comm::crc16_ccitt(reinterpret_cast<const std::uint8_t*>(check), std::strlen(check));
     EXPECT_EQ(crc, 0x29B1U) << "CRC-16/CCITT-FALSE of \"123456789\" is 0x29B1; any other value is another variant";
+}
+
+// 1b. The same standard, implemented a second time by people who never saw this code, over every length and every
+//     single-bit flip. The check value above pins which variant we *think* we implement; this pins whether we
+//     implement it, and it is the one number in the file that was not produced by the code under test.
+//
+//     ETL is a fielded embedded library (MIT, ~10k of its own tests). It is an include-only witness here: it never
+//     appears in `include/`, because measured, `etl/crc16_ccitt.h` costs a consumer TU 277 headers and 242 ms -- see
+//     `.github/project/deps.json`. Keep it out of the shipped headers; in a test TU nothing else pays.
+//
+//     同一个标准、第二次实现，写它的人没见过这段代码；覆盖每个长度与每一个单比特翻转。上面那个检查值钉的是"我们
+//     以为是哪个变体"，这条钉的是"我们真的实现了它"，而且它是本文件里唯一一个不是被测代码自己算出来的数。
+//
+//     ETL 是一个实装过的嵌入式库（MIT，自带约一万条测试）。它在这里只是**只读证人**：它不出现在 `include/` 里，
+//     因为实测 `etl/crc16_ccitt.h` 会让一个消费者 TU 多拉 277 个头、多花 242 ms——见
+//     `.github/project/deps.json`。让它留在测试 TU 里，别人一分钱不付。
+TEST(Frame, TheCrcAgreesWithAnIndependentImplementationByteForByte) {
+    using EtlCrc = etl::crc16_ccitt_t<256>;
+
+    // The witness must first agree on the standard's own vector, or the comparison below compares two wrongs.
+    // 证人先要在标准向量上同意，否则下面的比较是在比两个错。
+    {
+        const char* check = "123456789";
+        EtlCrc etl_crc(check, check + std::strlen(check));
+        EXPECT_EQ(etl_crc.value(), 0x29B1U) << "the witness is not CRC-16/CCITT-FALSE, so it cannot witness anything";
+    }
+
+    // Deterministic data: a fixed LCG, so a failure is reproducible from the seed alone.
+    // 确定性数据：固定 LCG，于是失败可以只凭种子复现。
+    std::array<std::uint8_t, 96> buffer{};
+    std::uint32_t state = 0x12345678U;
+    for (auto& byte : buffer) {
+        state = (state * 1103515245U) + 12345U;
+        byte = static_cast<std::uint8_t>(state >> 16U);
+    }
+
+    // Every length the frame payload allows, plus the empty buffer: a CRC over nothing is a real case (a frame with
+    // no payload still carries its CRC), and an implementation that special-cases it wrongly will disagree here.
+    // 帧载荷允许的每个长度，加上空缓冲：对"什么也没有"算 CRC 是真用例（无载荷的帧仍然带 CRC），把这一格特例错的
+    // 实现会在这里对不上。
+    std::size_t compared = 0U;
+    for (std::size_t n = 0U; n <= buffer.size(); ++n) {
+        EtlCrc etl_crc(buffer.data(), buffer.data() + n);
+        ASSERT_EQ(comm::crc16_ccitt(buffer.data(), n), etl_crc.value())
+            << "length " << n << " disagrees with the independent implementation";
+        ++compared;
+    }
+
+    // And every single-bit flip: 96 bytes x 8 bits = 768 inputs. A CRC that agrees on random data but not on
+    // one-bit differences is a checksum with a table that is nearly right, which is the failure mode that survives
+    // random testing and dies in the field.
+    // 以及每一个单比特翻转：96 字节 × 8 位 = 768 个输入。随机数据对得上、单比特差却对不上的 CRC，是一张"差不多对"
+    // 的表——这种失败能活过随机测试，然后在现场死掉。
+    for (std::size_t i = 0U; i < buffer.size(); ++i) {
+        for (unsigned bit = 0U; bit < 8U; ++bit) {
+            buffer[i] = static_cast<std::uint8_t>(buffer[i] ^ (1U << bit));
+            EtlCrc etl_crc(buffer.data(), buffer.data() + buffer.size());
+            ASSERT_EQ(comm::crc16_ccitt(buffer.data(), buffer.size()), etl_crc.value())
+                << "byte " << i << " bit " << bit << " disagrees with the independent implementation";
+            buffer[i] = static_cast<std::uint8_t>(buffer[i] ^ (1U << bit));
+            ++compared;
+        }
+    }
+
+    std::printf("\n[frame] %zu inputs compared against ETL's crc16_ccitt_t<256>: no disagreement\n", compared);
 }
 
 // 2. A round trip keeps every field and leaves the payload where the sender put it.

@@ -37,3 +37,25 @@ For full license terms, see: https://creativecommons.org/licenses/by-nc/4.0/
 
 If this project includes a NOTICE file, you must retain all attribution notices therein in accordance 
 with Section 4(d) of the Apache License 2.0.
+
+---
+
+## Third-party components
+
+This library is built with, and links into its test suite, components that are **not** part of it and
+carry their own copyright and permissive licences. None of them is copied into `include/` or `src/`:
+all of them arrive through the package manager, so the shipped sources stay entirely ours.
+本库的构建与测试使用了一些**不属于本库**的组件，它们有各自的版权与宽松许可。它们**没有**被复制进
+`include/` 或 `src/`：全部经包管理器获得，因此交付的源码完全是我们自己的。
+
+| Component | Version | Licence | Where it appears |
+|---|---|---|---|
+| ETL (Embedded Template Library), © John Wellbelove and contributors | 20.47.1 | MIT | `src/**` and `test_package/test/**` only — its cost was measured before it was allowed anywhere (`docs/THIRD-PARTY.md`, `.github/project/deps.json`) |
+| GoogleTest, © Google Inc. | 1.16.0 | BSD-3-Clause | `test_package/**` only |
+| pybind11, © Wenzel Jakob | 3.0.1 | BSD-3-Clause | `api/**` only, and only when the Python bindings are enabled |
+
+`docs/THIRD-PARTY.md` states, per component, why it is here, where it may appear, and what evidence shows
+it does what we think it does. `conandata.yml` is the authoritative list; this table must never name a
+package that file does not.
+`docs/THIRD-PARTY.md` 逐个说明每个组件为什么在这里、允许出现在哪、以及凭什么相信它做对了。
+`conandata.yml` 才是权威清单；本表不得列出那个文件里没有的包。
