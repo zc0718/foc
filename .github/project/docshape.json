@@ -18,8 +18,27 @@
     "",
     "**It checks slots, not sentences.** A block can pass with six sentences of nothing. Content quality is sampling",
     "review (plan section 9), and this file does not pretend to be that.",
-    "**它查格子，不查句子。** 六句空话也能过。内容质量靠抽样评审（计划 §9），本文件不假装那是它能做的事。"
+    "**它查格子，不查句子。** 六句空话也能过。内容质量靠抽样评审（计划 §9），本文件不假装那是它能做的事。",
+    "",
+    "**Why `excluded` exists, and why it is not a loophole.** The biggest debt file by block count is `core/traits.hpp`,",
+    "with 27 public types -- all of them compile-time predicates (`struct is_pwm : std::false_type {};` and 52 like it).",
+    "Forcing six sections onto those would produce the exact artefact this whole line exists to prevent: a `Refusals`",
+    "section for a type that can refuse nothing, an `Equation` section with no equation. So a file whose every public",
+    "type is a trait, a tag or an empty aggregate is excluded -- with a reason, and the exclusion count is printed on",
+    "every run so it shows up in a diff. An exclusion is a review decision, not a mechanism; the one thing it may not",
+    "be is silent.",
+    "**为什么要有 `excluded`，以及它为什么不是后门。** 按块数算欠账最大的文件是 `core/traits.hpp`，27 个 public 类型——全",
+    "是编译期谓词（`struct is_pwm : std::false_type {};` 加上 52 个同类）。给它们硬套六段，恰好会产出这条线存在的目的要阻止",
+    "的那种东西：给一个无权拒绝的类型写 `Refusals`，给一条没有式子的规则写 `Equation`。所以一个文件里全部 public 类型都是",
+    "trait / 标签 / 空聚合时，它被排除——必须写理由，且排除数每次运行都会打印，因此它会出现在 diff 里。排除是一个评审决定，",
+    "不是机制；它唯一不能做的事是悄悄进行。"
   ],
   "scope": ["core", "motor"],
-  "migrated": ["core/pi.hpp"]
+  "excluded": [
+    {
+      "path": "core/traits.hpp",
+      "why": "Every public type in this header is a compile-time predicate with an empty body (53 specialisations of `is_pwm`, `is_current_sense`, `is_position_sensor`, `is_dc_link` and their siblings). They hold no state, compute nothing at run time and refuse nothing: a `Guarantees` section would say \"it is a trait\", and a `Refusals` section would have no operand. The plan asks for the skeleton on classes that model a physical problem; these model no problem, they answer a question about a type."
+    }
+  ],
+  "migrated": ["core/pi.hpp", "core/limits.hpp"]
 }

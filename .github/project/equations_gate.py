@@ -140,6 +140,21 @@ def law_pi_step(inputs: dict) -> dict:
     return {"integral": integral, "output": min(max(raw, inputs["out_min"]), inputs["out_max"])}
 
 
+def law_slew_step(inputs: dict) -> dict:
+    """One slew step: `y <- clamp(target, y - rate*dt, y + rate*dt)`, and `y` holds when `dt <= 0`.
+
+    The budget `rate * dt` is applied to the **state**, not to the error, which is what makes this a rate limit and not
+    a first-order lag: the limiter keeps no memory of how far behind it was. 预算作用在**状态**上而非误差上，因此这是速率
+    限制而不是一阶滞后：限制器不记得自己落后多少。
+    """
+    value, target, rate, dt = inputs["value"], inputs["target"], inputs["rate_per_s"], inputs["dt_s"]
+    if dt <= 0.0:
+        return {"value": value}
+    delta = target - value
+    budget = rate * dt
+    return {"value": value + min(max(delta, -budget), budget)}
+
+
 LAWS = {
     "clarke": (law_clarke, "alpha = 2/3 (u - (v+w)/2), beta = (v - w)/sqrt(3)"),
     "inv_clarke": (law_inv_clarke, "u = alpha, v = -alpha/2 + sqrt3/2 beta, w = -alpha/2 - sqrt3/2 beta"),
@@ -150,6 +165,7 @@ LAWS = {
     "mtpa": (law_mtpa, "i_d = (psi_f - sqrt(psi_f^2 + 8 (Lq-Ld)^2 iq^2)) / (4 (Lq-Ld))"),
     "mtpa_surface": (law_mtpa_surface, "Lq == Ld -> i_d = 0"),
     "pi_step": (law_pi_step, "i <- clamp(i + ki e dt), u = clamp(kp e + i)"),
+    "slew_step": (law_slew_step, "y <- clamp(target, y - rate dt, y + rate dt)"),
 }
 
 

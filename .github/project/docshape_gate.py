@@ -98,8 +98,11 @@ def scope_files(table: dict) -> list[Path]:
 def measure(table: dict) -> dict:
     debt = 0
     per_file: dict[str, int] = {}
+    excluded = {entry.get("path") for entry in table.get("excluded", [])}
     for path in scope_files(table):
         rel = path.relative_to(INCLUDE).as_posix()
+        if rel in excluded:
+            continue
         bad = sum(1 for _line, block in type_blocks(path) if missing_markers(block))
         per_file[rel] = bad
         debt += bad
@@ -117,6 +120,15 @@ def evaluate(table: dict, baseline: dict) -> list[str]:
     migrated = table.get("migrated", [])
     if not migrated:
         problems.append("`migrated` is empty: the six-section skeleton is documented and enforced on nothing")
+    excluded = {entry.get("path"): entry for entry in table.get("excluded", [])}
+    for path, entry in excluded.items():
+        if not (entry.get("why") or "").strip():
+            problems.append(f"{path}: excluded without a reason — an unexplained exclusion is indistinguishable from "
+                            f"a file somebody did not want to touch")
+        if not (INCLUDE / str(path)).is_file():
+            problems.append(f"{path}: excluded but does not exist")
+        if path in migrated:
+            problems.append(f"{path}: both excluded and migrated — one of the two is wrong")
     for rel in migrated:
         path = INCLUDE / rel
         if not path.is_file():
@@ -174,8 +186,14 @@ def selftest(table: dict) -> int:
         caught += 1
     else:
         print("[docshape-selftest] MISS a migrated file that does not exist", file=sys.stderr)
-    print(f"[docshape-selftest] {caught} / {len(trials) + 1} judgement(s) as expected")
-    return 0 if caught == len(trials) + 1 else 1
+    silent_exclusion = dict(table, excluded=[{"path": "core/pi.hpp", "why": ""}])
+    if evaluate(silent_exclusion, read_baseline()):
+        print("[docshape-selftest] OK   an exclusion with no reason: caught")
+        caught += 1
+    else:
+        print("[docshape-selftest] MISS an exclusion with no reason", file=sys.stderr)
+    print(f"[docshape-selftest] {caught} / {len(trials) + 2} judgement(s) as expected")
+    return 0 if caught == len(trials) + 2 else 1
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -208,8 +226,8 @@ def main(argv: list[str] | None = None) -> int:
     if problems:
         print(f"[docshape] FAIL ({len(problems)} problem(s))", file=sys.stderr)
         return 1
-    print(f"[docshape] OK ({len(table['migrated'])} migrated file(s), {measured['debt']} block(s) still to migrate, "
-          f"at or below baseline)")
+    print(f"[docshape] OK ({len(table['migrated'])} migrated file(s), {len(table.get('excluded', []))} excluded "
+          f"with a reason, {measured['debt']} block(s) still to migrate, at or below baseline)")
     return 0
 
 

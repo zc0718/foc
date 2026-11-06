@@ -541,6 +541,96 @@
           "why": "the torque map produces the current reference the PI then regulates -- a data dependency one direction only. The map's own arithmetic and the `Pi::Config` it is paired with are unchanged, and its row publishes torque-per-amp numbers computed from the map, not from the controller's docstring. Measured: `test_torque_map.cpp` passes inside the 857/857 run."
         }
       ]
+    },
+    {
+      "id": "B-15",
+      "date": "2026-11-06",
+      "what_changed": "`core/limits.hpp`'s `SlewLimiter` docstring was rewritten into the six-section skeleton and now cites ledger row `E-SLEW-1`. No code, no signature, no member and no default changed: `SlewLimiter`, `clamp` and every other declaration are byte-identical, and the diff inside `SlewLimiter`'s block is a docstring. The one substantive addition is a statement that was true before the change but nowhere written down: a non-positive `rate` freezes the output rather than being rejected, because `step()` only ever multiplies the rate and never validates it.",
+      "seeds": [
+        "include/foc/core/limits.hpp"
+      ],
+      "affected": [
+        {
+          "row": "core/pi.hpp",
+          "verdict": "holds",
+          "why": "`Pi` uses `core::clamp` for its output and integral clamps, so this row rests on `limits.hpp` through one function template. `clamp`'s body, its `constexpr`-ness and its `@pre low <= high` contract are untouched, so every clamp inside `Pi::run()` resolves to the same code. `test_pi.cpp` passes in the same 857/857 run."
+        },
+        {
+          "row": "core/svpwm.hpp",
+          "verdict": "holds",
+          "why": "the modulator clamps its duty through the same `clamp`, and its row publishes modulation behaviour (the amplitude convention, the linear range, what happens past it) that no docstring can move. Its cases pass unchanged in the same run."
+        },
+        {
+          "row": "core/observer/hfi_observer.hpp",
+          "verdict": "holds",
+          "why": "its dependency is `clamp` on the demodulated error, not `SlewLimiter`. The clamp is byte-identical, so the loop gain and the measured error-to-angle proportionality (4 % over 0.02..0.5 rad) are unmoved; `test_sil_hfi.cpp` passes in the same run."
+        },
+        {
+          "row": "core/min_pulse.hpp",
+          "verdict": "holds",
+          "why": "it rests on `clamp` when it widens a short pulse, and on nothing else here. `SlewLimiter` is not in its path, and the clamp is unchanged; `test_min_pulse.cpp` passes in the same run."
+        },
+        {
+          "row": "core/brake_chopper.hpp",
+          "verdict": "holds",
+          "why": "it clamps the chopper's duty and its energy accounting with the same function; `SlewLimiter` is not involved. Both the clamp and the I-squared-t accounting are untouched, and `test_brake_chopper.cpp` passes in the same run."
+        },
+        {
+          "row": "core/single_shunt.hpp",
+          "verdict": "holds",
+          "why": "it clamps reconstructed phase currents through the same function; `SlewLimiter` is not in its path. `test_single_shunt.cpp` passes in the same run."
+        },
+        {
+          "row": "motor/motor.hpp",
+          "verdict": "holds",
+          "why": "the motor instantiates `SlewLimiter` for its speed and position ramp limits and clamps elsewhere through `clamp`. Both declarations are unchanged -- same class, same constructor, same `step`/`reset` signatures -- so every instantiation resolves to the same code. Measured: `test_motor.cpp`, `test_rtos_bridge.cpp` and `test_field_weakening_motor.cpp` pass inside the 857/857 run."
+        },
+        {
+          "row": "motor/motor_config.hpp",
+          "verdict": "holds",
+          "why": "its rows rest on `limits.hpp` through `clamp` (the current-loop gain floor is a clamp), not through `SlewLimiter`. The gain formulas and every published number are therefore bit-identical; `test_api_identification.cpp`'s design-rule check passes in the same run."
+        },
+        {
+          "row": "core/deadtime.hpp",
+          "verdict": "holds",
+          "why": "it reaches `limits.hpp` only through `core::clamp` on the compensated voltage; `SlewLimiter` is not in the dead-time path. The clamp is byte-identical, so the phase-domain correction and its measured near-zero over-correction are unmoved; `test_deadtime.cpp` passes in the same run."
+        },
+        {
+          "row": "core/observer/blended_observer.hpp",
+          "verdict": "holds",
+          "why": "it rests on `limits.hpp` transitively, through the same `Motor` instantiation that owns a `SlewLimiter`, plus a `clamp` on the blend weight. Neither declaration changed and the weight arithmetic is untouched, so the 0.042 rad blend bound and the 3.14/0.82 single-observer numbers are unchanged; its cases pass in the same run."
+        },
+        {
+          "row": "core/observer/switchable_observer.hpp",
+          "verdict": "holds",
+          "why": "same transitive shape: it forwards to one of two observers inside a `Motor` that owns a `SlewLimiter`. No declaration it uses moved, so every forwarding path resolves to the same code; `test_api_observer_selector.cpp` passes in the same run."
+        },
+        {
+          "row": "core/trace.hpp",
+          "verdict": "holds",
+          "why": "the trace records the loop's telemetry, and the loop's ramp limits are `SlewLimiter`s. The recorded fields, the ring layout, the null channel's cost and the text round trip are properties of `trace.hpp` itself and none of them was touched; `test_trace.cpp` passes in the same run."
+        },
+        {
+          "row": "core/trace_parse.hpp",
+          "verdict": "holds",
+          "why": "it parses recorded samples and never recomputes a control value, so a limiter docstring cannot reach it. Its cases drive stored samples and pass unchanged in the same run."
+        },
+        {
+          "row": "core/traits.hpp",
+          "verdict": "holds",
+          "why": "its dependency is the `Controller`/`Modulator` policy shape, and what it deduces about `SlewLimiter` is only that the type exists with the members it needs -- all of which are byte-identical. It is the one row here that is also *excluded* from the six-section skeleton (`docshape.json`), for the reason recorded there: every type in the file is a compile-time predicate. Exclusion from a documentation ratchet does not change what it deduces, so the verdict is unaffected either way."
+        },
+        {
+          "row": "motor/foc_loop.hpp",
+          "verdict": "holds",
+          "why": "the multi-rate loop schedules the `SlewLimiter`s and `clamp`s that live in the motor, so it rests on them through the `Motor` instantiation. The declarations are unchanged, so the decimation arithmetic and the tick alignment its row publishes are untouched; `test_sil_multirate.cpp` passes in the same run."
+        },
+        {
+          "row": "motor/torque_map.hpp",
+          "verdict": "holds",
+          "why": "it clamps the mapped torque through `core::clamp`; `SlewLimiter` is not in its path. Its torque-per-amp numbers are computed from the map's own arithmetic, which did not change, and `test_torque_map.cpp` passes in the same run."
+        }
+      ]
     }
   ]
 }

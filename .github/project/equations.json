@@ -190,6 +190,23 @@
         "en": "The integral is re-clamped against the **current** window every step, which is what lets a shrunken window release stored output at once instead of leaking it out over many steps. That re-clamp is the anti-windup mechanism: there is no back-calculation and `step()` never sees the actuator's actual output.",
         "zh": "积分每一步都按**当前**窗口重新夹紧，这正是窗口收窄时已存输出能立刻释放、而不是花很多步漏掉的原因。这次重夹就是抗饱和机制：没有 back-calculation，`step()` 也拿不到执行器实际施加的输出。"
       }
+    },
+    {
+      "id": "E-SLEW-1",
+      "name": "One slew-limited step, both directions symmetric",
+      "latex": "y \\leftarrow \\mathrm{clamp}(r,\\, y - \\rho\\Delta t,\\, y + \\rho\\Delta t) \\;\\text{for}\\; \\Delta t > 0;\\quad y \\text{held otherwise}",
+      "symbols": [],
+      "impl": {"file": "src/core/limits.cpp", "symbol": "SlewLimiter::step"},
+      "case": "SlewLimiter.RampsTowardsTargetAtConfiguredRate",
+      "witness": "case:SlewLimiter.RampsTowardsTargetAtConfiguredRate",
+      "law": "slew_step",
+      "check": {"kind": "numeric",
+                "inputs": {"value": 0.0, "target": 10.0, "rate_per_s": 4.0, "dt_s": 0.5},
+                "expect": {"value": 2.0}},
+      "note": {
+        "en": "`rate * dt` is the whole budget for one step, and it is applied to the **state** rather than to the error: the limiter therefore carries no memory of how far behind it was, which is what makes it a rate limit instead of a first-order lag. A non-positive `dt` is not an error, it is a step in which no time passed, so the value holds.",
+        "zh": "`rate · dt` 是一步的全部预算，而且它作用在**状态**上而不是误差上：于是限制器不记得自己落后多少，这正是它是一个速率限制而不是一阶滞后的原因。非正的 `dt` 不是错误，只是这一步没有时间经过，所以值保持不变。"
+      }
     }
   ]
 }
