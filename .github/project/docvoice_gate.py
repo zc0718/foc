@@ -74,6 +74,21 @@ PATTERNS = (
     ('ordinal', re.compile(r'第\s*\d+\s*次')),
     ('ordinal', re.compile(r'\bthe \d+(?:st|nd|rd|th) time\b', re.IGNORECASE)),
     ('colloquial', re.compile(r'踩(?:了|过)')),
+    # The marker below was selected by measurement, not by taste. Six candidates were run over 1310
+    # doc blocks by `tools/docvoice/accretion.py`; five were rejected and the numbers are why:
+    #   * "而不是 / rather than / instead of"      -> 435 hits: it is the vocabulary of precision.
+    #   * "——…但/其实…" (corrects itself)          -> 20 hits, all of them ordinary argument.
+    #   * a paragraph opening with a connector      -> 2 hits.
+    #   * first person (we / our / 我们)            -> 18 hits, and half are the normative "we" of a
+    #     policy statement or a quotation of the caller ("we did not wire the fault pin"), not an author.
+    #   * "tried / 试过 / turned out"               -> matched "the widest cutoff tried" and
+    #     "不是以后才发现的" (a negation), i.e. technical prose.
+    # What survives is the one marker whose meaning cannot be anything else: the text says what **it**
+    # used to say. `used to` is restricted to a following state verb, because "used to seed it" is a
+    # purpose and matched on the first pass.
+    ('history', re.compile(r'早先|原先|上一版|此前|曾经|\ban earlier version\b|\bpreviously\b|'
+                           r'\bused to (?:be|have|say|point|read|honour|work|return|do|stop|mean|'
+                           r'claim)\b|\boriginally\b|\bthe line above\b', re.IGNORECASE)),
 )
 
 # The one escape hatch, and it has to be visible in the block itself.
@@ -204,6 +219,10 @@ def selftest() -> int:
         ('a month-year is not a date of record', 'include/x.hpp', '/**\n * since 2026-11\n */', False),
         ('the escape hatch', 'include/x.hpp',
          '/**\n * @note History: measured 2026-11-06, wrong before\n */', False),
+        ('a spec that says what it used to say', 'include/x.hpp',
+         '/**\n * the line above used to claim the opposite\n */', True),
+        ('"used to" as a purpose is not history', 'include/x.hpp',
+         '/**\n * this accessor is used to seed the observer before a run\n */', False),
         ('a paragraph without a date', 'docs/sphinx/source/x.rst', 'Just prose.\n', False),
     ]
     failures = 0

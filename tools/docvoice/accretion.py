@@ -221,8 +221,14 @@ _TAG = re.compile(r'^@(?:brief|note|param|return|retval|tparam|throws|post|pre|w
 
 
 def _norm(line: str) -> str:
-    """One normalisation for both sides: the patch carries the leading `*`, the parsed block does not."""
-    return line.strip().lstrip('*').strip()
+    """One normalisation for both sides.
+
+    Both the comment lead-in and the tag have to go: the patch side writes ` * text`, a `///` block
+    writes `/// text`, and the parsed block has neither. Stripping only `*` made the `/// becomes a
+    block` sweep look like new content on both sides of the comparison, which is why the three real
+    sweeps were not recognised as mechanical.
+    """
+    return line.strip().lstrip('*/!<').strip()
 
 
 def _interesting(line: str) -> bool:
@@ -313,8 +319,52 @@ def provenance() -> dict[str, list[tuple[int, str, str, str]]]:
     return out
 
 
-def track_c(per_file_hist: dict[str, dict]) -> list[dict]:
+def mechanical_commits(prov: dict) -> tuple[set[int], dict[int, str]]:
+    """Commits that moved the prose around rather than adding any.
+
+    Two earlier attempts at this are recorded because both failed in the same way -- they measured the
+    wrong quantity and looked convincing:
+
+      1. "Did this commit add a line that survives in this block?" With no filter, two sweeps
+         (`one tag line per language group`, 2392 added / 2365 removed; `one doc form -- /// becomes a
+         block`) added a line to *every* block, so 200 blocks looked accreted.
+      2. "Do its added lines share a 20-character head with its removed lines?" Zero hits on a reflow:
+         the sweep merged `@brief [en]`/`@brief [zh]` pairs and re-broke every sentence, so no line
+         survives verbatim even though nothing new was said.
+
+    What separates them is the **volume ratio**, and the distribution has a gap: measured over the
+    commits that touch >= 40 comment lines, the sweeps sit at removed/added 1.32, 1.00, 0.99 and 0.76,
+    while every feature and fix commit is at 0.69 or below (the 0.69 one rewrote a whole section
+    about observer selection -- a rewrite, and treating it as ordinary work is the conservative
+    choice). So: a commit that deleted 70 % as many lines as it added replaced prose; one that deleted
+    a tenth of them added to it.
+
+    Deliberately not keyed on the commit subject: a title is a claim, the ratio is a measurement.
+    """
+    added: dict[int, int] = {}
+    removed: dict[int, int] = {}
+    subjects: dict[int, str] = {}
+    for events in prov.values():
+        for ordinal, subject, add, rem in events:
+            subjects[ordinal] = subject
+            if add and _interesting(add):
+                added[ordinal] = added.get(ordinal, 0) + 1
+            if rem and _interesting(rem):
+                removed[ordinal] = removed.get(ordinal, 0) + 1
+    mechanical = set()
+    for ordinal, adds in added.items():
+        rems = removed.get(ordinal, 0)
+        if adds + rems < 40:
+            continue
+        if rems / adds >= 0.7:
+            mechanical.add(ordinal)
+    return mechanical, subjects
+
+
+def track_c(per_file_hist: dict[str, dict], skip: set[int] | None = None) -> list[dict]:
     prov = provenance()
+    mechanical, _subjects = mechanical_commits(prov)
+    skip = mechanical if skip is None else skip
     rows = []
     for name in SPEC_DIRS:
         base = ROOT / name
@@ -333,6 +383,8 @@ def track_c(per_file_hist: dict[str, dict]) -> list[dict]:
                     continue
                 built, corrected = set(), set()
                 for ordinal, subject, added, removed in events:
+                    if ordinal in skip:
+                        continue
                     if added and added in current:
                         built.add((ordinal, subject))
                     elif removed:
