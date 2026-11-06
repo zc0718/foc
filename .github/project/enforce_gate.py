@@ -151,17 +151,32 @@ def targets() -> list[Path]:
 
 
 def run_one(checks: str, work: Path, target: Path) -> list[str]:
-    """Diagnostics for one target, read from **stdout** -- see the module docstring."""
-    include_root = ROOT / "include"
-    if target.suffix in (".h", ".hpp") and target.is_relative_to(include_root):
-        # A public header is compiled through a synthetic TU that includes it, so self-containment is part of the
-        # check. A private header (`src/api/bridge.h`) is not on the include path and is compiled as itself.
-        tu = work / (target.stem + ".cpp")
-        tu.write_text(f'#include "{target.relative_to(include_root).as_posix()}"\n', encoding="utf-8")
-    else:
-        tu = target
-    std = "-std=c11" if target.suffix == ".c" else "-std=c++17"
-    cxx = [] if target.suffix == ".c" else ["-fno-exceptions", "-fno-rtti"]
+    """Diagnostics for one target, read from **stdout** -- see the module docstring.
+
+    A `.h` header here is a **C** header (`C_SUFFIXES` in `.github/misc/gates.py` is `('.c', '.h')`), and this
+    tree has at least one that must compile as *both* languages: `foc_types.h` is included by the C++ core and by
+    the C ABI, and its own deviation record says so. So a `.h` is compiled twice, once as each language, and the
+    two diagnostic lists are concatenated. Treating every `.h` as C++ made `src/api/bridge.h` fail to compile, and
+    because the family matcher only reports `cert-*`/`bugprone-*`, that failure was filtered out -- the gate
+    reported a clean sweep over 124 targets while quietly skipping this one. A target that does not compile is now
+    a failure in its own right, not an absence of findings.
+    """
+    if target.suffix not in (".h", ".hpp"):
+        return _tidy(checks, work, target, "-std=c11" if target.suffix == ".c" else "-std=c++17",
+                     [] if target.suffix == ".c" else ["-fno-exceptions", "-fno-rtti"])
+    # Absolute, because a quoted include is searched next to the synthetic TU first: a private header
+    # (`src/api/bridge.h`) is not on `-Iinclude` and would not be found by its relative path.
+    lines: list[str] = []
+    languages = ((".c", "-std=c11", []), (".cpp", "-std=c++17", ["-fno-exceptions", "-fno-rtti"]))
+    for suffix, std, cxx in (languages if target.suffix == ".h" else languages[1:]):
+        tu = work / f"{target.stem}_{target.parent.name}{suffix}"
+        tu.write_text(f'#include "{target.resolve().as_posix()}"\n', encoding="utf-8")
+        lines.extend(_tidy(checks, work, tu, std, cxx))
+    return lines
+
+
+def _tidy(checks: str, work: Path, tu: Path, std: str, cxx: list[str]) -> list[str]:
+    del work
     cmd = ["clang-tidy", f"--config-file={PINNED.relative_to(ROOT).as_posix()}", f"--checks={checks}",
            str(tu), "--", std, *cxx, "-Iinclude"]
     done = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True)
@@ -276,7 +291,14 @@ def main(argv: list[str] | None = None) -> int:
     with tempfile.TemporaryDirectory(prefix="enforce-") as work:
         work_path = Path(work)
         for target in files:
-            diagnostics = [line for line in run_one(checks, work_path, target)
+            lines = run_one(checks, work_path, target)
+            broken = [line for line in lines if "clang-diagnostic-error" in line]
+            if broken:
+                failures += 1
+                print(f"--- {target.relative_to(ROOT).as_posix()} does not compile")
+                for line in broken[:3]:
+                    print(f"    {line.strip()}")
+            diagnostics = [line for line in lines
                            if matcher.search(line) and not is_excepted(line, excepted)]
             if diagnostics:
                 failures += 1
@@ -286,7 +308,8 @@ def main(argv: list[str] | None = None) -> int:
     if failures:
         print(f"[enforce] FAIL ({failures}/{len(files)} target(s))", file=sys.stderr)
         return 1
-    print(f"[enforce] OK ({len(files)} target(s), {families} on top of the pinned set)")
+    print(f"[enforce] OK ({len(files)} target(s) -- every `.h` compiled as C and as C++ -- {families} on top "
+          f"of the pinned set)")
     return 0
 
 
