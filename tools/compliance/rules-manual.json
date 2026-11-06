@@ -191,7 +191,6 @@
       "owner": "zc",
       "source": "tools/compliance/subset_gate.py + deviation/"
     },
-
     {
       "rule": "FOC-NA-EXC",
       "check": "gate:strict",
@@ -222,7 +221,6 @@
       "owner": "zc",
       "source": "clang-tidy（未启用）+ src/api/bridge.cpp"
     },
-
     {
       "rule": "unit:core/version.hpp",
       "check": "-",
@@ -483,7 +481,6 @@
       "owner": "zc",
       "source": "README claim 行 L1（终态）"
     },
-
     {
       "rule": "cert-cpp-family",
       "check": "gate:enforce",
@@ -500,7 +497,7 @@
       "status": "open",
       "lang": "c++17",
       "delta": "none",
-      "why": "Core Guidelines 在本机 clang-tidy 上共 40 条可机械判定的检查，只启用了 2 条（`avoid-magic-numbers`、`macro-usage`）。同一条阻塞：启用点在钉住的配置文件里。§Step 1 实测整个族 63 处命中、其中 73 % 是两类成员初始化风格，是\"可批量修\"的量级。",
+      "why": "Core Guidelines 的 43 条检查里只点名了 2 条。2026-11-06 实测：钉住的 `.clang-tidy` 里 `Checks:` 是多行折叠标量，**其中的 `#` 注释行是字面量**，`clang-tidy --dump-config` 解析出的真实集合是 `clang-diagnostic-*,-*, # Generic bugprone-*, …`——**第一个 `#` 之后全被忽略**。所以 `tidy` 门对 42 个源文件报 OK 是因为它一个检查都没开。把注释行去掉后同样的文件 **37/42 有诊断、共 383 条**（310 magic-numbers、36 incorrect-roundings、26 easily-swappable-parameters、10 signed-bitwise、1 branch-clone）。整族（`-*,cppcoreguidelines-*` 覆盖 125 个目标）实测 **1365 条 / 15 个检查**，其中三块是设计决策而不是疏漏：C ABI（`use-enum-class` 50、`avoid-c-arrays` 123、`pro-bounds-*` 309）、本库既有的值类型风格（`use-default-member-init` 92、`pro-type-member-init` 64、`special-member-functions` 47）、以及 `avoid-magic-numbers` 664。在配置本身不生效的前提下讨论「要不要收整族」没有意义，所以这条保持 `open`，先解决上一行的阻塞。",
       "owner": "zc",
       "source": "A10 C++ Core Guidelines（免费）"
     },
@@ -533,6 +530,16 @@
       "why": "C 侧目前只有 `A3` CERT C 做叙述，没有一个**独立的第二实现**去交叉验证 MISRA 面。cppcheck 的 MISRA addon 是最便宜的候选，但它要对着一份权威规则原文才能算数，而 `A5`（MISRA C:2023 合并版）本轮未买。",
       "owner": "zc",
       "source": "A9 cppcheck 手册（dl/ 已存）+ A5（未买）"
+    },
+    {
+      "rule": "cppcoreguidelines-avoid-magic-numbers",
+      "check": "tidy:cppcoreguidelines-avoid-magic-numbers",
+      "status": "open",
+      "lang": "any",
+      "delta": "none",
+      "why": "这一行原本由生成器写成 `implemented`，那是**洗衣**：检查名确实在钉住的配置里，但它没有生效。2026-11-06 实测：钉住的 `.clang-tidy` 里 `Checks:` 是多行折叠标量，**其中的 `#` 注释行是字面量**，`clang-tidy --dump-config` 解析出的真实集合是 `clang-diagnostic-*,-*, # Generic bugprone-*, …`——第一个 `#` 之后全被忽略。所以 `tidy` 门对 42 个源文件报 OK，是因为它一个检查都没开。把注释行去掉后同样的文件 **37/42 有诊断、共 383 条**（310 magic-numbers、36 incorrect-roundings、26 easily-swappable-parameters、10 signed-bitwise、1 branch-clone）。改成 `open` 才是实情——这条规则既没有被执行，也没有被签偏差。三条修法都要一次显式决定：① 改 `.clang-tidy` 并把该文件移进 `scaffold` 的 `tolerated`（先要清 310 处魔数，或把 `IgnoredIntegerValues` 调宽并写明理由）；② 报给上游模板；③ 保持 `open`。",
+      "owner": "zc",
+      "source": "clang-tidy（钉住配置，但未生效）"
     }
   ]
 }
