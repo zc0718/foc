@@ -486,6 +486,61 @@
           "why": "it reads the declared loss from `foc_motor_trace_dropped()` and says so in its own comment -- it never recomputes it -- so a counter that stops at 65 535 instead of returning to 0 changes nothing in the parser: the value is a number it copies through, and its cases drive losses of 0 and 500, both far below saturation. Its radii are unaffected too: the declared loss makes a window partial with no interior gap, which is a statement about the window's completeness and is unchanged by the counter's floor. Measured on this tree: `test_trace_parse` 7/7"
         }
       ]
+    },
+    {
+      "id": "B-14",
+      "date": "2026-11-06",
+      "what_changed": "`core/pi.hpp`'s three public type docstrings were rewritten into the six-section skeleton (model / equation / notation / guarantees / refusals / evidence). No code, no signature, no member, no default and no return value changed: the diff is docstrings plus the two `constexpr float` lines that the surrounding blocks needed to keep their place. Two statements moved from a `@note` into a named section (`the integral clamp IS the anti-windup mechanism`, and the sizing guidance for the integral window) with the same wording; three statements are new because a section had nothing to fill it, and each of those was read off the implementation rather than written from memory: the scale rule `s = (scale > 0) ? scale : 1` from `Pi::step(const SpeedInput&)`, the validity predicate from `valid_config()`, and the fact that a latched `Param` keeps returning the held output from `Pi::run()`.",
+      "seeds": [
+        "include/foc/core/pi.hpp"
+      ],
+      "affected": [
+        {
+          "row": "core/pi.hpp",
+          "verdict": "holds",
+          "why": "this is the seed's own claim row, and everything it publishes is measured from `Pi::step`'s behaviour: the exact droop `d/kp` at `ki = 0`, the zero at `-ki/kp` and the 16.3 %/29.8 % and 0 %/13.5 % overshoot comparison against the textbook second-order law, and the 1.0415/1.0166/0.9793/0.9627 peak-time ratios. None of those comes from the docstring, and the arithmetic that produces them (`run()`, the clamps, the step order) is untouched. The rewritten block now *states* the equation those numbers belong to, which is the point of the skeleton: the row and the block finally say the same thing."
+        },
+        {
+          "row": "core/traits.hpp",
+          "verdict": "holds",
+          "why": "its dependency on `core/pi.hpp` is a *type* dependency (the `Controller` policy slot has to be a PI-shaped thing), and not one declaration in `pi.hpp` moved: `Pi`, `Pi::Config` and `SpeedInput` keep their names, members, order and defaults, so every deduction `traits.hpp` performs on them is unchanged. A docstring is not visible to the compiler, and the whole suite agrees: 857 cases, 0 failed on this tree (52.5 s), the same count as before the rewrite."
+        },
+        {
+          "row": "motor/motor_config.hpp",
+          "verdict": "holds",
+          "why": "`current_pi_config()` and `speed_pi_config()` return a `core::Pi::Config`, so this row rests on the same type. The struct's fields, their order and their meaning are untouched -- only the doc block above the struct changed -- and the gains it computes are therefore bit-identical. Measured rather than assumed: the full suite is 857/857, which includes `test_api_identification.cpp`'s design-rule check and `test_auto_tune.cpp`'s nameplate comparison, i.e. both cases that would move first if the type had shifted. The README row publishes gain formulas, not docstring text, so no number moves."
+        },
+        {
+          "row": "motor/motor.hpp",
+          "verdict": "holds",
+          "why": "`Motor` names `Pi` as its `Controller` template argument in every instantiation, so this is the row with the widest exposure and therefore the one worth stating precisely: the instantiation depends on `Pi`'s *declarations*, and none of them changed -- same class name, same `Config`, same three member functions, same signatures. `motor.hpp` also passes `core::Pi::Config` through `current_pi_config()`, covered above. Measured: 857/857, including `test_motor.cpp`, `test_rtos_bridge.cpp` and `test_field_weakening_motor.cpp`."
+        },
+        {
+          "row": "core/observer/blended_observer.hpp",
+          "verdict": "holds",
+          "why": "its relation to `pi.hpp` is that both sit inside one `Motor` instantiation -- the blend produces the angle the PI regulates. Nothing in `pi.hpp` that the blend can observe changed: the blend reads an angle and reports a weight, and the PI's declarations and members are byte-identical. Its own cases (0.042 rad across 0..800 in the blend, 3.14 above 200 for HFI alone, 0.82 at rest for the flux observer) are far downstream of a comment edit and are unchanged in the run: 857/857."
+        },
+        {
+          "row": "core/observer/switchable_observer.hpp",
+          "verdict": "holds",
+          "why": "same shape as the blend: it forwards to one of two observers inside the same instantiation, and its dependency on `pi.hpp` is that both are policy slots of the same `Motor`. No declaration, member or default in `pi.hpp` moved, so every forwarding path resolves exactly as before; `test_api_observer_selector.cpp` passes in the same 857/857 run."
+        },
+        {
+          "row": "core/trace.hpp",
+          "verdict": "holds",
+          "why": "the trace records the loop's telemetry, and the telemetry's `id`/`iq`/`speed_est` values are produced by the PI's `step()`. The law that produces them is untouched (the diff is a docstring); the record's layout, the null channel's cost and the text round trip are properties of `trace.hpp` itself and were not part of this change. Measured: `test_trace.cpp` 9/9 within the same 857/857 run."
+        },
+        {
+          "row": "core/trace_parse.hpp",
+          "verdict": "holds",
+          "why": "it parses the trace that the PI's outputs were recorded into; it never recomputes a control value, so a docstring on the controller is invisible to it. Its cases drive recorded samples, not live control, and they pass unchanged in the same 857/857 run."
+        },
+        {
+          "row": "motor/torque_map.hpp",
+          "verdict": "holds",
+          "why": "the torque map produces the current reference the PI then regulates -- a data dependency one direction only. The map's own arithmetic and the `Pi::Config` it is paired with are unchanged, and its row publishes torque-per-amp numbers computed from the map, not from the controller's docstring. Measured: `test_torque_map.cpp` passes inside the 857/857 run."
+        }
+      ]
     }
   ]
 }

@@ -171,6 +171,25 @@
         "en": "The branch exists so the denominator is never applied to a saliency of one ulp: dividing by it produces a huge `i_d` whose sign is noise, and the case asserts the zero rather than an epsilon because an epsilon is an opinion about how small a saliency is.",
         "zh": "这个分支存在的意义是让分母永远不去除一个只有 1 ulp 的凸极：除下去会得到一个巨大的 `i_d`，其符号是噪声。用例断言的是恰好为零而不是一个极小量，因为“极小”只是对“凸极有多小”的一种看法。"
       }
+    },
+    {
+      "id": "E-PI-1",
+      "name": "One discrete PI step with both clamps",
+      "latex": "e = r - y,\\quad i \\leftarrow \\mathrm{clamp}(i + k_i e \\Delta t,\\, i_{min}, i_{max}),\\quad u = \\mathrm{clamp}(k_p e + i,\\, u_{min}, u_{max})",
+      "symbols": [],
+      "impl": {"file": "src/core/pi.cpp", "symbol": "Pi::run"},
+      "case": "Pi.IntegralAccumulatesKiTimesErrorTimesDt",
+      "witness": "case:Pi.IntegralAccumulatesKiTimesErrorTimesDt",
+      "law": "pi_step",
+      "check": {"kind": "numeric",
+                "inputs": {"setpoint": 1.0, "feedback": 0.0, "dt_s": 0.5, "kp": 2.0, "ki": 3.0,
+                           "integral": 0.0, "integral_min": -10.0, "integral_max": 10.0,
+                           "out_min": -10.0, "out_max": 10.0},
+                "expect": {"integral": 1.5, "output": 3.5}},
+      "note": {
+        "en": "The integral is re-clamped against the **current** window every step, which is what lets a shrunken window release stored output at once instead of leaking it out over many steps. That re-clamp is the anti-windup mechanism: there is no back-calculation and `step()` never sees the actuator's actual output.",
+        "zh": "积分每一步都按**当前**窗口重新夹紧，这正是窗口收窄时已存输出能立刻释放、而不是花很多步漏掉的原因。这次重夹就是抗饱和机制：没有 back-calculation，`step()` 也拿不到执行器实际施加的输出。"
+      }
     }
   ]
 }

@@ -1,0 +1,25 @@
+{
+  "_comment": [
+    "The six-section docstring skeleton, as a ratchet. `migrated` only grows; the debt only falls.",
+    "docstring 六段骨架，做成棘轮：`migrated` 只增，欠账只降。",
+    "",
+    "**Where the form comes from: it was measured.** Six Doxygen `@par` headings -- the obvious encoding -- are impossible",
+    "in this pipeline. `docfmt` repairs a body line that starts with a tag (the docs pipeline would assign it to the wrong",
+    "language group), so it strips the `@` and merges the six sections into one paragraph. Three other shapes were tried",
+    "and rewritten the same way. What survives is the shape this project already uses: one tag line per language group,",
+    "body paragraphs untagged. So section 1 is the `@brief` sentence and sections 2..6 are untagged paragraphs that open",
+    "with a bold marker, English group first, then Chinese. Migrating fifty headers to a form the formatter destroys",
+    "would have been a rewrite done twice; the pilot exists to make that impossible.",
+    "**这个形状是量出来的。** 六个 Doxygen `@par` 标题——最显然的写法——在这条流水线上不可能：`docfmt` 会把以标签开头的",
+    "正文行当成缺陷修复（文档流水线会把它归到错误的语言组），于是抹掉 `@` 并把六段并成一段。另外三种写法都被同样地重写了。",
+    "活下来的是本仓库已经在用的形状：每个语言组一个标签行，正文段落不带标签。于是第 1 段是 `@brief` 那句，第 2–6 段是不带",
+    "标签、以粗体记号开头的段落，先英文组后中文组。把五十个头迁移到一个会被格式化器毁掉的形状上，等于同一件事做两遍；试点就是",
+    "为了排除这个。",
+    "",
+    "**It checks slots, not sentences.** A block can pass with six sentences of nothing. Content quality is sampling",
+    "review (plan section 9), and this file does not pretend to be that.",
+    "**它查格子，不查句子。** 六句空话也能过。内容质量靠抽样评审（计划 §9），本文件不假装那是它能做的事。"
+  ],
+  "scope": ["core", "motor"],
+  "migrated": ["core/pi.hpp"]
+}

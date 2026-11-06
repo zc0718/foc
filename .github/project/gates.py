@@ -426,7 +426,7 @@ def cmd_ci_policy(_explicit):
 PROJECT_GATES = ('license', 'strict', 'claims', 'docs', 'deps', 'form', 'boundaries', 'capabilities', 'ci-policy',
                  'assume', 'anchor', 'scaffold', 'budget', 'clocks', 'observability', 'combinations', 'domain',
                  'mutants', 'plantref', 'fmu', 'pil', 'mcdc', 'blast', 'wired', 'smoke', 'regmap', 'subset',
-                 'docvoice', 'symbols', 'equations', 'enforce')
+                 'docvoice', 'symbols', 'equations', 'enforce', 'docshape')
 
 
 def cmd_subset(_explicit):
@@ -454,6 +454,22 @@ def cmd_equations(_explicit):
     a docstring migration cannot invalidate it), a real `TEST()`, a witness pointer or the word `math`, and a worked
     evaluation this gate redoes. `--selftest` first: seven mutations, each of which must be caught."""
     script = str(ROOT / '.github' / 'project' / 'equations_gate.py')
+    for _args in (['--selftest'], []):
+        _rc = subprocess.run([sys.executable, script, *_args], cwd=ROOT, text=True).returncode
+        if _rc:
+            return _rc
+    return 0
+
+
+def cmd_docshape(_explicit):
+    """A public type's docstring answers the same six questions, in the same order, in both languages.
+
+    The form was measured, not invented: six Doxygen `@par` headings are impossible in this pipeline (`docfmt` repairs
+    a body line that starts with a tag by stripping the `@`, which merges the six sections into one paragraph). What
+    survives is one tag line per language group and untagged body paragraphs, so section 1 is the `@brief` sentence
+    and sections 2..6 open with a bold marker. Ratcheted both ways: `migrated` only grows, the debt only falls.
+    `--selftest` first -- five mutations, including a misspelled marker."""
+    script = str(ROOT / '.github' / 'project' / 'docshape_gate.py')
     for _args in (['--selftest'], []):
         _rc = subprocess.run([sys.executable, script, *_args], cwd=ROOT, text=True).returncode
         if _rc:
@@ -816,6 +832,8 @@ def main():
                      'the worked evaluation in the ledger is recomputed rather than trusted',
         'enforce': 'the check families the pinned clang-tidy config does not enable (CERT today) are still enforced, '
                    'by adding them with --checks so the byte-pinned config is untouched',
+        'docshape': 'every public type in a migrated file answers the six questions (model, equation, notation, '
+                    'guarantees, refusals, evidence) in both languages, and the remaining debt only falls',
         'pil': 'run the speed-step scenario on the target ISA under qemu and compare with the host; SKIPPED when its '
                'material is absent',
         'all': ' + '.join(PROJECT_GATES),
@@ -897,6 +915,8 @@ def main():
         return cmd_equations([])
     if args.gate == 'enforce':
         return cmd_enforce([])
+    if args.gate == 'docshape':
+        return cmd_docshape([])
     # The chain above is the only thing standing between a single-gate invocation and the aggregate below, and it
     # has now been forgotten twice (`plantref` before, `combinations` and `mcdc` this time). A missing branch does
     # not fail: it runs *every* gate and prints "all N", which reads as success. So the fall-through is refused
@@ -926,6 +946,7 @@ def main():
                   'symbols': cmd_symbols,
                   'equations': cmd_equations,
                   'enforce': cmd_enforce,
+                  'docshape': cmd_docshape,
                   'pil': lambda _f: cmd_pil([], tolerant=True)}[name]([]) ]
     if failed:
         print(f'[project-gates] FAIL: {", ".join(failed)}', flush=True)

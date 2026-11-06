@@ -126,6 +126,20 @@ def law_mtpa_surface(inputs: dict) -> dict:
     return {"i_d": 0.0}
 
 
+def law_pi_step(inputs: dict) -> dict:
+    """One discrete PI step: integrate, re-clamp the integral against the current window, then clamp the output.
+
+    The order matters and is the law: the integral is clamped **before** it is added to the proportional term, so a
+    shrunken window releases stored output immediately rather than after the output clamp has already absorbed it.
+    顺序就是定律：积分在**加到比例项之前**先被夹紧，于是窗口收窄时已存输出会立即释放，而不是等输出限幅先吸掉。
+    """
+    error = inputs["setpoint"] - inputs["feedback"]
+    integral = inputs["integral"] + (inputs["ki"] * error * inputs["dt_s"])
+    integral = min(max(integral, inputs["integral_min"]), inputs["integral_max"])
+    raw = (inputs["kp"] * error) + integral
+    return {"integral": integral, "output": min(max(raw, inputs["out_min"]), inputs["out_max"])}
+
+
 LAWS = {
     "clarke": (law_clarke, "alpha = 2/3 (u - (v+w)/2), beta = (v - w)/sqrt(3)"),
     "inv_clarke": (law_inv_clarke, "u = alpha, v = -alpha/2 + sqrt3/2 beta, w = -alpha/2 - sqrt3/2 beta"),
@@ -135,6 +149,7 @@ LAWS = {
     "speed_pi": (law_speed_pi, "kp = wb J / Kt, ki = wb B / Kt"),
     "mtpa": (law_mtpa, "i_d = (psi_f - sqrt(psi_f^2 + 8 (Lq-Ld)^2 iq^2)) / (4 (Lq-Ld))"),
     "mtpa_surface": (law_mtpa_surface, "Lq == Ld -> i_d = 0"),
+    "pi_step": (law_pi_step, "i <- clamp(i + ki e dt), u = clamp(kp e + i)"),
 }
 
 
