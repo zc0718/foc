@@ -743,6 +743,18 @@ namespace foc {
 
 namespace api {
 
+// Internal linkage, stated rather than implied. Everything between here and the matching close is a helper of
+// this translation unit: slot types, their pools, the mint/resolve pairs and the field translators. None of it is
+// in the ABI, and leaving it at namespace scope exported those names from the library -- a C++ caller could link
+// against `foc::api::mint_protector`, which is not a promise this project makes. `misc-use-internal-linkage` names
+// 24 of them; the anonymous namespace covers the rest of the block by construction instead of one attribute at a
+// time.
+// 内部链接，写出来而不是靠默认。从这行到配对的右括号都是本翻译单元的辅助物：槽位类型、它们的池子、mint/resolve
+// 成对函数、各字段的转换器。它们都不在 ABI 里，而放在命名空间作用域等于把这些名字从库里导出去了——一个 C++ 调用方
+// 能链接到 `foc::api::mint_protector`，而那不是本项目的承诺。`misc-use-internal-linkage` 点了其中 24 个的名字；
+// 无名命名空间靠构造覆盖整块，而不是一处一个属性。
+namespace {
+
 // ---------------------------------------------------------------------------------------------
 // ABI 0.1.1: commissioning, protection and the reference policies.
 // ABI 0.1.1：整定、保护与参考策略。
@@ -1263,6 +1275,7 @@ auto to_hal_callbacks(const foc_hal_callbacks_t& c) noexcept -> driver::HalCallb
     return callbacks;
 }
 
+} // namespace
 
 } // namespace api
 
@@ -1690,7 +1703,7 @@ foc_err_t foc_bridge_get_stall_start(foc_motor_t motor, foc_stall_start_status_t
         return FOC_ERR_PARAM;
     }
     return foc::api::on_slot(motor, [out](auto& slot) {
-        auto& instance = foc::api::motor_of(slot);
+        const auto& instance = foc::api::motor_of(slot);
         out->phase = static_cast<std::int32_t>(instance.stall_start_phase());
         out->torque_nm = instance.stall_start_torque_nm();
         out->limited = instance.stall_start_limited() ? 1 : 0;
@@ -1881,7 +1894,7 @@ foc_err_t foc_bridge_mtpa_reference(const foc_motor_params_t* params, float i_ma
     // 这个入口没有转速参数，所以施加不了 `MtpaReference` 用转速施加的那道 d 轴许可——它回答的是 MTPA
     // **曲线**，这正是它的名字与稳定 ABI 文档所承诺的。无限比率就是“不带上限地问曲线”的写法；想要那道
     // 门的调用方去问知道转速的 C++ 策略。
-    foc::core::MtpaReference reference(
+    const foc::core::MtpaReference reference(
         foc::core::MtpaReference::Config{m.ld, m.lq, m.psi_f, i_max_a, std::numeric_limits<float>::infinity()});
     foc::core::ReferenceInput in{};
     in.iq_command_a = iq_command_a;
@@ -2126,7 +2139,7 @@ foc_err_t foc_bridge_protector_step(foc_protector_t protector, const foc_protect
         !std::isfinite(dt_s)) {
         return FOC_ERR_PARAM;
     }
-    foc::api::ProtectorSlot* slot = foc::api::resolve_protector(protector);
+    const foc::api::ProtectorSlot* slot = foc::api::resolve_protector(protector);
     if (slot == nullptr) {
         return FOC_ERR_STATE;
     }
@@ -2149,7 +2162,7 @@ foc_err_t foc_bridge_protector_step(foc_protector_t protector, const foc_protect
 }
 
 foc_err_t foc_bridge_protector_reset(foc_protector_t protector, std::int32_t cold) {
-    foc::api::ProtectorSlot* slot = foc::api::resolve_protector(protector);
+    const foc::api::ProtectorSlot* slot = foc::api::resolve_protector(protector);
     if (slot == nullptr) {
         return FOC_ERR_STATE;
     }
@@ -2316,7 +2329,7 @@ foc_err_t foc_bridge_autotune_create(const foc_autotune_config_t* config, foc_au
 
 foc_err_t foc_bridge_autotune_accumulate(foc_autotune_t handle, float dt_s, float iq_a, float omega_mech_rad_s,
                                          std::int32_t saturated) {
-    foc::api::AutoTuneSlot* slot = foc::api::resolve_autotune(handle);
+    const foc::api::AutoTuneSlot* slot = foc::api::resolve_autotune(handle);
     if (slot == nullptr) {
         return FOC_ERR_STATE;
     }
@@ -2328,7 +2341,7 @@ foc_err_t foc_bridge_autotune_finish(foc_autotune_t handle, foc_autotune_result_
     if ((out == nullptr) || !foc::api::size_ok(*out)) {
         return FOC_ERR_PARAM;
     }
-    foc::api::AutoTuneSlot* slot = foc::api::resolve_autotune(handle);
+    const foc::api::AutoTuneSlot* slot = foc::api::resolve_autotune(handle);
     if (slot == nullptr) {
         return FOC_ERR_STATE;
     }
@@ -2347,7 +2360,7 @@ foc_err_t foc_bridge_autotune_finish(foc_autotune_t handle, foc_autotune_result_
 }
 
 foc_err_t foc_bridge_autotune_reset(foc_autotune_t handle) {
-    foc::api::AutoTuneSlot* slot = foc::api::resolve_autotune(handle);
+    const foc::api::AutoTuneSlot* slot = foc::api::resolve_autotune(handle);
     if (slot == nullptr) {
         return FOC_ERR_STATE;
     }
@@ -2399,7 +2412,7 @@ foc_err_t foc_bridge_cogging_learn_create(const foc_cogging_learn_config_t* conf
 
 foc_err_t foc_bridge_cogging_learn_accumulate(foc_cogging_learn_t handle, float theta_mech_rad, float iq_a, float id_a,
                                               float omega_mech_rad_s, std::int32_t saturated) {
-    foc::api::CoggingLearnSlot* slot = foc::api::resolve_cogging_learn(handle);
+    const foc::api::CoggingLearnSlot* slot = foc::api::resolve_cogging_learn(handle);
     if (slot == nullptr) {
         return FOC_ERR_STATE;
     }
@@ -2411,7 +2424,7 @@ foc_err_t foc_bridge_cogging_learn_ready(foc_cogging_learn_t handle, std::int32_
     if (out_ready == nullptr) {
         return FOC_ERR_PARAM;
     }
-    foc::api::CoggingLearnSlot* slot = foc::api::resolve_cogging_learn(handle);
+    const foc::api::CoggingLearnSlot* slot = foc::api::resolve_cogging_learn(handle);
     if (slot == nullptr) {
         return FOC_ERR_STATE;
     }
@@ -2424,7 +2437,7 @@ foc_err_t foc_bridge_cogging_learn_finish(foc_cogging_learn_t handle, foc_coggin
     if ((out_result == nullptr) || !foc::api::size_ok(*out_result)) {
         return FOC_ERR_PARAM;
     }
-    foc::api::CoggingLearnSlot* slot = foc::api::resolve_cogging_learn(handle);
+    const foc::api::CoggingLearnSlot* slot = foc::api::resolve_cogging_learn(handle);
     if (slot == nullptr) {
         return FOC_ERR_STATE;
     }
@@ -2463,7 +2476,7 @@ foc_err_t foc_bridge_cogging_learn_finish(foc_cogging_learn_t handle, foc_coggin
 }
 
 foc_err_t foc_bridge_cogging_learn_reset(foc_cogging_learn_t handle) {
-    foc::api::CoggingLearnSlot* slot = foc::api::resolve_cogging_learn(handle);
+    const foc::api::CoggingLearnSlot* slot = foc::api::resolve_cogging_learn(handle);
     if (slot == nullptr) {
         return FOC_ERR_STATE;
     }

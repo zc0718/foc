@@ -260,7 +260,7 @@ class FieldWeakeningReference final {
         const float a = (config_.rs * config_.rs) + (x * x);
         const float b = 2.0F * x * e;
         const float rs = config_.rs;
-        auto i_d_needed = [a, b, x, e, v_max, i_limit, rs](float i_q) noexcept -> float {
+        const auto i_d_needed = [a, b, x, e, v_max, i_limit, rs](float i_q) noexcept -> float {
             const float g = (rs * i_q) + e;
             const float c = ((x * i_q) * (x * i_q)) + (g * g) - (v_max * v_max);
             const float discriminant = (b * b) - (4.0F * a * c);
@@ -271,7 +271,7 @@ class FieldWeakeningReference final {
             }
             return ((-b) + std::sqrt(discriminant)) / (2.0F * a);
         };
-        auto fits = [&](float i_q, float i_d) noexcept -> bool {
+        const auto fits = [&](float i_q, float i_d) noexcept -> bool {
             return (i_d * i_d) + (i_q * i_q) <= (i_limit * i_limit) * 1.0001F;
         };
 

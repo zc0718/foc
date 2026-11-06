@@ -575,6 +575,38 @@ class Motor final {
 
   private:
     /**
+     * @brief [en] The voltage to modulate: the loop's request plus the observer's carrier.
+     * @brief [zh] 待调制的电压：电流环的要求加上观测器的载波。
+     * @note [en] A named function so the result can be a single `const` value at the call site. Written inline, the
+     *            variable had to be mutable for the instantiation whose observer injects and read-only for the one that
+     *            does not (`if constexpr` discards the whole assignment), and `misc-const-correctness` judges one
+     *            instantiation at a time -- so it asked for a `const` that the injecting instantiation cannot compile.
+     *            The gate stays at the call site: whether the observer is stepped this period is a fact about the loop,
+     *            not about this arithmetic.
+     * @note [zh] 写成具名函数，调用点才可能是一个 `const` 值。写在原地的话，对观测器在注入的那个实例化它必须是可变的，
+     *            对不注入的那个又可以是只读的（`if constexpr` 把整支赋值丢掉），而 `misc-const-correctness` 一次只看一
+     *            个实例化——于是它要求的那个 `const` 在注入的实例化上编译不过。门控留在调用点：观测器本周期是否在被推进
+     *            是关于环的事实，不是关于这段算术的事实。
+     * @param base [en] the voltage the current loop asked for.
+     * @param base [zh] 电流环要求的电压。
+     * @param inject [en] whether the observer is stepped this period and so owns the applied voltage.
+     * @param inject [zh] 观测器本周期是否在被推进、因而拥有施加电压。
+     * @return [en] `base` plus the carrier, or `base` alone when there is none.
+     * @return [zh] `base` 加载波；没有载波时就是它。
+     * @since 0.1.2
+     */
+    [[nodiscard]] auto applied_voltage(const Ab<float>& base, bool inject) const noexcept -> Ab<float> {
+        if constexpr (core::concepts::has_injection_v<Observer>) {
+            if (inject) {
+                const Ab<float> injected = policies_.observer.injection_ab();
+                return Ab<float>{static_cast<float>(base.alpha + injected.alpha),
+                                 static_cast<float>(base.beta + injected.beta)};
+            }
+        }
+        return base;
+    }
+
+    /**
      * @brief [en] How long after a forced-angle hand-over the observer gets before its speed is compared with the
      *             commanded one. 20 ms is the window the hand-over case already measured convergence in.
      * @brief [zh] 强制角交接之后留给观测器的时间，之后才把它的转速与命令值比较。20 ms 是交接用例已经实测过收敛的窗口。
@@ -1297,7 +1329,6 @@ auto Motor<Observer, Modulator, Controller, HalPolicy, RefGenerator, FeedForward
     const float v_d = policies_.current_d.step(i_ref.d, i_dq.d, dt_s) + v_ff.d;
     const float v_q = policies_.current_q.step(i_ref.q, i_dq.q, dt_s) + v_ff.q;
     const Dq<float> v_dq{v_d, v_q};
-    Ab<float> v_ab = core::inv_park(v_dq, theta_e);
 
     // An observer that injects a carrier owns the voltage it injects: adding it here, as the last
     // thing before modulation, is the only place where "what is applied this period" and "what the
@@ -1310,24 +1341,19 @@ auto Motor<Observer, Modulator, Controller, HalPolicy, RefGenerator, FeedForward
     // would be a DC bias on the alignment current.
     // 与观测器本身同一个门控条件。对齐期间角度被强制、不调用 update()，注入相位就不再推进，冻结的载波
     // 会变成对齐电流上的直流偏置。
-    if constexpr (core::concepts::has_injection_v<Observer>) {
-        // Gated on the observer being *stepped*, not on the motor merely lacking a sensor. An observer that is not updated
-        // does not advance its carrier phase and a frozen phase sits at a zero crossing, so `injection_ab()` returns
-        // exactly zero -- silently disarming a mode the caller asked for. Measured: with the step gate reverted and this
-        // gate left open, the swing on a sensored axis is 0.0000. `speed_from_observer` alone is the wrong test: the
-        // observer is now stepped whenever it injects (`injecting_now()`), including on a sensored axis where the sensor
-        // keeps the commutation angle, so the carrier must be added on exactly the same condition.
-        // 门控在"观测器是否在被推进"上，而不只是"电机没有传感器"。没有被推进的观测器不会推进载波相位，因此它的
-        // `injection_ab()` 要么是零——静默解除了调用方要求的模式——要么从某个非零初相给出一个常矢量：电流上的直流偏置，
-        // 与上面注释里对齐期间的那个隐患完全相同。单看 `speed_from_observer` 是错的判据：观测器只要在注入就会被推进
-        // （`injecting_now()`），包括传感器保留换相角的带传感器轴，因此载波必须加在完全相同的条件上。实测：把推进
-        // 门控回退、这个门控保持敞开，带传感器轴上的摆幅为 0.0000。
-        if ((speed_from_observer || injecting_now()) && !aligning) {
-            const Ab<float> injected = policies_.observer.injection_ab();
-            v_ab = Ab<float>{static_cast<float>(v_ab.alpha + injected.alpha),
-                             static_cast<float>(v_ab.beta + injected.beta)};
-        }
-    }
+    // Gated on the observer being *stepped*, not on the motor merely lacking a sensor. An observer that is not updated
+    // does not advance its carrier phase and a frozen phase sits at a zero crossing, so `injection_ab()` returns
+    // exactly zero -- silently disarming a mode the caller asked for. Measured: with the step gate reverted and this
+    // gate left open, the swing on a sensored axis is 0.0000. `speed_from_observer` alone is the wrong test: the
+    // observer is now stepped whenever it injects (`injecting_now()`), including on a sensored axis where the sensor
+    // keeps the commutation angle, so the carrier must be added on exactly the same condition.
+    // 门控在"观测器是否在被推进"上，而不只是"电机没有传感器"。没有被推进的观测器不会推进载波相位，因此它的
+    // `injection_ab()` 要么是零——静默解除了调用方要求的模式——要么从某个非零初相给出一个常矢量：电流上的直流偏置，
+    // 与上面注释里对齐期间的那个隐患完全相同。单看 `speed_from_observer` 是错的判据：观测器只要在注入就会被推进
+    // （`injecting_now()`），包括传感器保留换相角的带传感器轴，因此载波必须加在完全相同的条件上。实测：把推进
+    // 门控回退、这个门控保持敞开，带传感器轴上的摆幅为 0.0000。
+    const Ab<float> v_ab =
+        applied_voltage(core::inv_park(v_dq, theta_e), (speed_from_observer || injecting_now()) && !aligning);
     // The window after a forced-angle hand-over, checked on the speed the loop *publishes* -- from the sensor or from
     // the observer, whichever owns the angle -- because the open-loop start cannot see the rotor at all. A ramp that
     // outran the rotor still reaches its hand-over speed: the routine only knows the angle it commands. Half the

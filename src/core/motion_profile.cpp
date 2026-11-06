@@ -66,10 +66,10 @@ auto MotionProfile::step(const PositionInput& request, float feedback, float dt_
  * @brief [zh] 塑造律本体，其参数是本次调用生效的限值。
  * @since 0.1.0
  */
-auto MotionProfile::shape(float setpoint, float feedback, float dt_s, float velocity_limit_rad_s,
+auto MotionProfile::shape(float target_rad, float feedback, float dt_s, float velocity_limit_rad_s,
                           float accel_limit_rad_s2, float shaping_gain_rad_s) noexcept -> float {
     const Config effective{shaping_gain_rad_s, velocity_limit_rad_s, accel_limit_rad_s2};
-    if (!(dt_s > 0.0F) || !std::isfinite(setpoint) || !std::isfinite(feedback) || !valid_config(effective)) {
+    if (!(dt_s > 0.0F) || !std::isfinite(target_rad) || !std::isfinite(feedback) || !valid_config(effective)) {
         // Hold what we had: refusing to move is the only safe answer to an input we cannot use.
         // 保持原样：对无法使用的输入，“不动”是唯一安全的答案。
         return valid_config(effective) ? velocity_rad_s_ : 0.0F;
@@ -84,7 +84,7 @@ auto MotionProfile::shape(float setpoint, float feedback, float dt_s, float velo
     // 需求速度上有三个上限，取最小：比例项、物理制动曲线、速度上限。少了第二条，速度限幅生效的运动
     // 会冲过目标整整一个制动距离——因为比例项要等误差已经很小才开始回落。
     const float two = 2.0F;
-    const float error = setpoint - feedback;
+    const float error = target_rad - feedback;
     const float magnitude_error = std::fabs(error);
     const float proportional = effective.shaping_gain_rad_s * magnitude_error;
     const float braking = std::sqrt(two * effective.accel_limit_rad_s2 * magnitude_error);

@@ -102,10 +102,19 @@ def family_matcher(patterns: list[str]) -> re.Pattern[str]:
     """
     names = []
     for pattern in patterns:
-        if pattern.endswith("*"):
-            names.append(re.escape(pattern[:-1]))
-        else:
-            names.append(re.escape(pattern))
+        # A family may name several patterns, because "one family, one check" is not how clang-tidy groups
+        # things: `misc-*` minus one noisy member and "three readability checks worth having" are both
+        # single decisions, and recording them as one entry keeps the reason next to the whole of it.
+        # 一个族可以点名多个模式，因为 clang-tidy 的分组不是「一族一检查」：`misc-*` 去掉一个噪声成员、
+        # 「值得要的三条 readability」，各自都是一个决定；写成一条记录，理由才跟着整件事走。
+        for part in pattern.split(","):
+            part = part.strip()
+            # A `-glob` removes checks from the set; it diagnoses nothing, so it is not a thing this gate
+            # can report. Skipping it is what makes "enable the family, minus one member" expressible.
+            # `-glob` 是从集合里移除，不会产生诊断，本门无从报它。跳过它，「开整族、去掉一个成员」才写得出来。
+            if not part or part.startswith("-"):
+                continue
+            names.append(re.escape(part[:-1]) if part.endswith("*") else re.escape(part))
     # Alternation, not a character class: `[cert-]` would match any single character of `cert-`, so every
     # `bugprone-` and `cppcoreguidelines-` diagnostic contains an `e` and would be reported by this gate.
     # 用择一而不是字符类：`[cert-]` 会匹配 `cert-` 里任意一个单字符，于是每条 `bugprone-` /
@@ -213,8 +222,9 @@ def evaluate(table: dict) -> list[str]:
             problems.append(f"{name}: enabled without a reason — that is how a family gets deleted by the next "
                             f"person who finds it inconvenient")
         for excepted in entry.get("except", []):
-            pattern = entry.get("checks", "")
-            covered = (excepted.startswith(pattern[:-1]) if pattern.endswith("*") else excepted == pattern)
+            covered = any(excepted.startswith(part[:-1]) if part.endswith("*") else excepted == part
+                          for part in (p.strip() for p in entry.get("checks", "").split(","))
+                          if part and not part.startswith("-"))
             if not covered:
                 problems.append(f"{name}: exempts '{excepted}', which its own pattern '{pattern}' does not enable — "
                                 f"an exemption for a check nobody runs is a note to nobody")
@@ -225,6 +235,40 @@ def evaluate(table: dict) -> list[str]:
     for entry in table.get("pending", []):
         if not (entry.get("why") or {}).get("en"):
             problems.append(f"pending {entry.get('id', '?')}: no reason, which is indistinguishable from an oversight")
+    problems.extend(relaxed_problems(table))
+    return problems
+
+
+def relaxed_problems(table: dict) -> list[str]:
+    """The checks this project looked at and decided **not** to run, each with a reason and a count.
+
+    Turning a check off is a decision with a price -- the defect it would have caught is not caught -- and a
+    decision written only in a commit message is gone by the third refactor. So it lives here: what was
+    relaxed, why its advice cannot indicate a defect in this domain, and the number that was measured before
+    the decision. The `evidence` field is required for the same reason a deviation record is: a reason without
+    a measurement is a preference, and the next person is entitled to overrule a preference silently.
+    关掉一条检查是有代价的决定——它本该抓到的缺陷就没人抓了——只写在提交信息里的决定活不过第三次重构。
+    所以它落在这里：关了哪条、为什么它的建议在本域内指不出缺陷、做决定前量到的数。`evidence` 是必填，
+    理由和偏差单一样：没有测量的理由只是偏好，而偏好下一个人有权悄悄推翻。
+    """
+    problems: list[str] = []
+    enabled = {part.strip() for entry in table.get("families", [])
+               for part in entry.get("checks", "").split(",") if part.strip()}
+    for entry in table.get("relaxed", []):
+        checks = entry.get("checks", "")
+        if not checks:
+            problems.append("relaxed: an entry with no `checks` says nothing about what was turned off")
+        if not (entry.get("why") or {}).get("en"):
+            problems.append(f"relaxed {checks or '?'}: turned off without a reason — an omission is not a "
+                            f"decision, and the next reader cannot tell them apart")
+        if not entry.get("evidence"):
+            problems.append(f"relaxed {checks or '?'}: no `evidence` — the count that justified the decision is "
+                            f"the only thing that can reopen it")
+        if checks in enabled:
+            problems.append(f"relaxed {checks}: also enabled by a family — a check cannot be on and off")
+        for family in table.get("families", []):
+            if family.get("checks") == checks:
+                problems.append(f"relaxed {checks}: identical to family '{family.get('id')}'")
     return problems
 
 
@@ -316,8 +360,9 @@ def main(argv: list[str] | None = None) -> int:
     if failures:
         print(f"[enforce] FAIL ({failures}/{len(files)} target(s))", file=sys.stderr)
         return 1
+    relaxed = len(table.get("relaxed", []))
     print(f"[enforce] OK ({len(files)} target(s), `.c`/`.h` as C and `.cpp`/`.hpp` as C++; {families} on top "
-          f"of the pinned set)")
+          f"of the pinned set; {relaxed} check(s) deliberately relaxed to 0, see enforce.json)")
     return 0
 
 

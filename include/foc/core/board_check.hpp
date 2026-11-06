@@ -338,7 +338,7 @@ struct movable_trigger<Bench, std::void_t<decltype(std::declval<Bench&>().set_sa
  */
 [[nodiscard]] inline auto check_board(const BoardMeasurements& m, const BoardLimits& limits) noexcept -> BoardReport {
     BoardReport report{};
-    auto add = [&report](BoardItem item, float value, float limit, bool pass, std::uint8_t phase) {
+    const auto add = [&report](BoardItem item, float value, float limit, bool pass, std::uint8_t phase) {
         if (report.count >= BoardReport::kMaxItems) {
             return;
         }
@@ -424,7 +424,7 @@ struct movable_trigger<Bench, std::void_t<decltype(std::declval<Bench&>().set_sa
         int score;
     };
     Candidate best{BoardCause::None, 0};
-    auto consider = [&best](BoardCause cause, int score) {
+    const auto consider = [&best](BoardCause cause, int score) {
         if (score > best.score) {
             best = Candidate{cause, score};
         }

@@ -40,7 +40,7 @@ auto max_torque_angle(float p, float q) noexcept -> float {
     float best_value = -INFINITY;
     float best_c = 0.0F;
     float best_s = 1.0F;
-    auto consider = [&](float c, float s) noexcept -> void {
+    const auto consider = [&](float c, float s) noexcept -> void {
         const float value = (p * s) + (2.0F * q * s * c);
         if (value > best_value) {
             best_value = value;
@@ -173,7 +173,7 @@ auto Mtpv::at_speed(float omega_e_rad_s) const noexcept -> MtpvPoint {
     const MtpvPoint mtpa = mtpa_point();
     MtpvPoint best = kInvalidPoint;
     float best_torque = -INFINITY;
-    auto consider = [&](float id, float iq, bool on_voltage_limit) noexcept -> void {
+    const auto consider = [&](float id, float iq, bool on_voltage_limit) noexcept -> void {
         const float flux_d = (m.ld * id) + m.psi_f;
         const float flux_q = m.lq * iq;
         const bool fits_current = ((id * id) + (iq * iq)) <= (i_sq * (1.0F + kSlack));

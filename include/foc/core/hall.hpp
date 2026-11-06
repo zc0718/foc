@@ -271,12 +271,17 @@ namespace detail {
  * @note [en] A named scope, not an unnamed one: an unnamed namespace in a header gives every translation unit its own
  *            internal-linkage copy of the function, so a header-only library ships one body per TU and the address of
  *            the helper differs between them. `cert-dcl59-cpp` says exactly this, and it is the family this project now
- *            enforces.
+ *            enforces. `inline`, and that is not a detail: a named namespace still gives the definition **external**
+ *            linkage, so two translation units that include this header produce two definitions of the same symbol and
+ *            the linker refuses. `misc-definitions-in-headers` reported exactly one function in this tree, this one.
+ *            Keeping the name and the single address across TUs both work out only with `inline`.
  * @note [zh] 具名作用域而不是无名命名空间：头文件里的无名命名空间会给每个 TU 各生成一份内部链接的函数，于是这个头文件式
  *            库在每个 TU 里都带一份函数体，且辅助函数的地址在不同 TU 间不相等。`cert-dcl59-cpp` 说的就是这件事，也正是
- *            本项目现在开始强制的那个族。
+ *            本项目现在开始强制的那个族。 `inline`，而这不是细节：具名命名空间仍然让定义具备**外部**链接，于是两个包含
+ *            此头的翻译单元会产生同一个符号的两份定义，链接器直接拒绝。`misc-definitions-in-headers` 在这棵树里只报了一
+ *            个函数，就是它。既要保住名字、又要让各 TU 看到同一个地址，只有 `inline` 能同时成立。
  */
-auto hall_wrap(float angle_rad) noexcept -> float {
+inline auto hall_wrap(float angle_rad) noexcept -> float {
     float wrapped = std::fmod(angle_rad, kHallTwoPiRad);
     if (wrapped < 0.0F) {
         wrapped += kHallTwoPiRad;

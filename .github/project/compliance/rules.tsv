@@ -99,7 +99,7 @@ performance-inefficient-vector-operation	tidy:performance-inefficient-vector-ope
 performance-move-const-arg	tidy:performance-move-const-arg	implemented	any	none	-	zc	clang-tidy (pinned config)
 performance-move-constructor-init	tidy:performance-move-constructor-init	implemented	any	none	-	zc	clang-tidy (pinned config)
 performance-no-automatic-move	tidy:performance-no-automatic-move	implemented	any	none	-	zc	clang-tidy (pinned config)
-performance-no-int-to-ptr	tidy:performance-no-int-to-ptr	deviation	any	none	deviation/performance-no-int-to-ptr.md -- suppressed at src/api/bridge.cpp:609, src/api/bridge.cpp:659, src/api/bridge.cpp:797, src/api/bridge.cpp:808, src/api/bridge.cpp:862, src/api/bridge.cpp:873, src/api/bridge.cpp:938, src/api/bridge.cpp:949	zc	clang-tidy (pinned config)
+performance-no-int-to-ptr	tidy:performance-no-int-to-ptr	deviation	any	none	deviation/performance-no-int-to-ptr.md -- suppressed at src/api/bridge.cpp:609, src/api/bridge.cpp:659, src/api/bridge.cpp:809, src/api/bridge.cpp:820, src/api/bridge.cpp:874, src/api/bridge.cpp:885, src/api/bridge.cpp:950, src/api/bridge.cpp:961	zc	clang-tidy (pinned config)
 performance-noexcept-destructor	tidy:performance-noexcept-destructor	implemented	any	none	-	zc	clang-tidy (pinned config)
 performance-noexcept-move-constructor	tidy:performance-noexcept-move-constructor	implemented	any	none	-	zc	clang-tidy (pinned config)
 performance-noexcept-swap	tidy:performance-noexcept-swap	implemented	any	none	-	zc	clang-tidy (pinned config)
