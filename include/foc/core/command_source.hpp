@@ -233,9 +233,13 @@ struct AnalogCommandOutput final {
 };
 
 /**
- * @brief [en] Map an analogue voltage onto a command, with a dead band that is subtracted rather than a threshold that
- *             switches.
- * @brief [zh] 把一个模拟电压映射成指令，死区是被减掉的而不是一个开关阈值。
+ * @brief [en] Map an analogue voltage onto a command.
+ *
+ *     The dead band is subtracted rather than written as a threshold that switches.
+ *
+ * @brief [zh] 把一个模拟电压映射成指令。
+ *
+ *     死区是被减掉的，而不是一个开关阈值。
  * @since 0.1.9
  * @exporter
  */
@@ -336,7 +340,7 @@ struct PpmCommandOutput final {
 };
 
 /**
- * @brief [en] Map a pulse width onto a command, with both ends refused and silence timed out in integer nanoseconds.
+ * @brief [en] Map a pulse width onto a command, refusing both ends and timing silence in integer nanoseconds.
  * @brief [zh] 把脉宽映射成指令：两端之外的帧一律拒绝，静默超时用整数纳秒计。
  * @note [en] An out-of-window frame is not a small command, it is a broken link: `min_us`/`max_us` exist to detect
  *            that, so a frame outside them commands exactly zero and says `valid = false` rather than being clamped

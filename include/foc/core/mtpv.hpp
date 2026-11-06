@@ -11,18 +11,19 @@ namespace foc {
 namespace core {
 
 /**
- * @brief [en] The machine and the two ceilings that bound its operating point: the voltage the drive can put on the
- *             terminals and the current it is allowed to push through them.
+ * @brief [en] The machine and the two ceilings that bound its operating point.
  *
- *     `pole_pairs` is here because torque is not the quantity this module is about -- the *locus* is -- but the caller
- *     needs torque to decide whether a point is worth going to, and a torque in N.m requires the pair count. The
- *     voltage ceiling is a magnitude at the terminals, not a bus ratio: whoever builds this from a bus voltage owns the
- *     modulation limit, and this module does not guess it. `pole_pairs`
+ *     The voltage the drive can put on the terminals, and the current it is allowed to push through them. `pole_pairs`
+ *     is here because torque is not the quantity this module is about -- the *locus* is -- but the caller needs torque
+ *     to decide whether a point is worth going to, and a torque in N.m requires the pair count. The voltage ceiling is
+ *     a magnitude at the terminals, not a bus ratio: whoever builds this from a bus voltage owns the modulation limit,
+ *     and this module does not guess it.
  *
- * @brief [zh] 机器，以及限制其工作点的两个上限：驱动器能加到端子上的电压，和允许推过去的电流。
+ * @brief [zh] 机器，以及限制其工作点的两个上限。
  *
- *     在这里是因为转矩不是本模块的主题（**轨迹**才是），但调用方需要转矩来判断一个点值不值得去，而 N·m 的转矩需要极对
- *     数。电压上限是端子上的幅值而不是母线比例：从母线电压构造它的人拥有调制上限，本模块不去猜它。
+ *     驱动器能加到端子上的电压，和允许推过去的电流。`pole_pairs` 在这里是因为转矩不是本模块的主题（**轨迹**才是），但调
+ *     用方需要转矩来判断一个点值不值得去，而 N·m 的转矩需要极对数。电压上限是端子上的幅值而不是母线比例：从母线电压构造
+ *     它的人拥有调制上限，本模块不去猜它。
  * @since 0.1.9
  * @exporter
  */
@@ -34,18 +35,19 @@ struct MtpvConfig final {
 };
 
 /**
- * @brief [en] One point on the maximum-torque map: what the drive should hold at this speed, and whether the voltage or
- *             the current is what decided it.
+ * @brief [en] One point on the maximum-torque map.
  *
- *     `voltage_limited` is the honest half of the answer. Below the base speed the optimum is the current-limited MTPA
+ *     What the drive should hold at this speed, and whether the voltage or the current is what decided it.
+ *     `voltage_limited` is the honest half of the answer: below the base speed the optimum is the current-limited MTPA
  *     point and the voltage ceiling is not what stops the drive -- reporting an MTPV point there would be reporting a
  *     number computed from a constraint that is not active, which is how a policy ends up "working" on a machine it
- *     does not describe. `voltage_limited`
+ *     does not describe.
  *
- * @brief [zh] 最大转矩地图上的一个点：这个转速下驱动器该守住什么，以及是电压还是电流决定了它。
+ * @brief [zh] 最大转矩地图上的一个点。
  *
- *     是这个答案里诚实的那一半。基速以下最优点是被电流限幅的 MTPA 点，电压上限并非拦住驱动器的东西——在那里报一个 MTPV
- *     点，就是用一条**没有生效**的约束算出来的数，而那正是一条策略"在一台它并不描述的机器上也能跑通"的来路。
+ *     这个转速下驱动器该守住什么，以及是电压还是电流决定了它。`voltage_limited` 是这个答案里诚实的那一半：基速以下最优
+ *     点是被电流限幅的 MTPA 点，电压上限并非拦住驱动器的东西——在那里报一个 MTPV 点，就是用一条**没有生效**的约束算出来
+ *     的数，而那正是一条策略"在一台它并不描述的机器上也能跑通"的来路。
  * @since 0.1.9
  * @exporter
  */

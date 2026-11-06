@@ -45,8 +45,7 @@ struct StepMetrics {
     float bandwidth_rad_s;
     float tau_s; ///< [en] fitted time constant, s; `1 / bandwidth_rad_s`. [zh] 拟合时间常数，s。
     /**
-     * @brief [en] seconds from the first sample until the response stays inside the band; -1 when it never does, 0 when
-     *             it starts inside.
+     * @brief [en] Seconds from the first sample until the response stays in the band; -1 never, 0 if it starts there.
      * @brief [zh] 从首个样本起，响应此后一直落在带内所需时间；永不进入为 -1，一开始就在带内为 0。
      */
     float settling_s;
@@ -64,7 +63,7 @@ struct StepMetrics {
 
 
 /**
- * @brief [en] Measure a recorded step response: fit a first-order decay to the approach and report the loop's numbers.
+ * @brief [en] Measure a recorded step response: fit the approach and report the loop's numbers.
  *
  *     The window must start at (or before) the step: `y[0]` is taken as the pre-step value and `target` as the
  *     post-step one, so a window that begins mid-transient measures the transient, not the step. That is a documented

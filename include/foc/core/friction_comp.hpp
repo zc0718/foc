@@ -100,11 +100,14 @@ class FrictionComp final {
     explicit FrictionComp(const FrictionConfig& config) noexcept : config_(config) {}
 
     /**
-     * @brief [en] Replace the estimate. The latched direction survives: changing a friction estimate says nothing about
-     *             which way the axis last moved, and restarting the latch would make the first period after a re-tune
-     *             chatter.
-     * @brief [zh] 换估计值。锁存的方向保留：改一个摩擦估计并不说明轴上次往哪边动，而重启锁存会让重新整定后的第一个周期
-     *             抖动。
+     * @brief [en] Replace the estimate.
+     *
+     *     The latched direction survives: changing a friction estimate says nothing about which way the axis last
+     *     moved, and restarting the latch would make the first period after a re-tune chatter.
+     *
+     * @brief [zh] 换估计值。
+     *
+     *     锁存的方向保留：改一个摩擦估计并不说明轴上次往哪边动，而重启锁存会让重新整定后的第一个周期抖动。
      */
     void set_config(const FrictionConfig& config) noexcept { config_ = config; }
 
@@ -134,9 +137,13 @@ class FrictionComp final {
     }
 
     /**
-     * @brief [en] Forget the latched direction (not the estimate): the next period takes its sign from the reference or
-     *             the demand, or starts pushing the positive way.
-     * @brief [zh] 忘掉锁存的方向（不忘记估计值）：下一个周期的符号取自给定或指令，否则从正向开始。
+     * @brief [en] Forget the latched direction, keeping the estimate.
+     *
+     *     The next period takes its sign from the reference or the demand, or starts pushing the positive way.
+     *
+     * @brief [zh] 忘掉锁存的方向，估计值保留。
+     *
+     *     下一个周期的符号取自给定或指令，都没有则从正向开始。
      */
     void reset() noexcept { sign_ = 1.0F; }
 

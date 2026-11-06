@@ -417,7 +417,17 @@ class SwitchableObserver final {
     NonlinearFluxObserver nonlinear_flux_;
     HfiObserver hfi_;
     /**
-     * @brief The blend owns its own two observers rather than borrowing the members above. Borrowing would tie the band's behaviour to whatever the standalone members last believed, and the wrapper's whole rule is that only the selected observer is stepped -- so a borrowed copy would be either frozen (and useless) or stealthily advanced (and a second carrier phase). The cost is a second copy of two small objects in a statically sized slot. 交接带持有**自己**的两个观测器，而不是借用上面的成员。借用会让交接带的行为取决于那两个成员上次相信了什么，而包装器的全部规则就是"只推进被选中的那个"——借来的副本要么被冻结（因而无用），要么被偷偷推进（于是多出一个载波相位）。代价是在一个静态定容的槽位里多存两个小对象。
+     * @brief [en] The blend owns its own two observers rather than borrowing the members above.
+     *
+     *     Borrowing would tie the band's behaviour to whatever the standalone members last believed, and the wrapper's
+     *     whole rule is that only the selected observer is stepped -- so a borrowed copy would be either frozen (and
+     *     useless) or stealthily advanced (and a second carrier phase). The cost is a second copy of two small objects
+     *     in a statically sized slot.
+     *
+     * @brief [zh] 交接带持有**自己**的两个观测器，而不是借用上面的成员。
+     *
+     *     借用会让交接带的行为取决于那两个成员上次相信了什么，而包装器的全部规则就是"只推进被选中的那个"——借来的副本要
+     *     么被冻结（因而无用），要么被偷偷推进（于是多出一个载波相位）。代价是在一个静态定容的槽位里多存两个小对象。
      */
     BlendedObserver<HfiObserver, BackEmfObserver> blended_;
     /**
@@ -435,7 +445,14 @@ class SwitchableObserver final {
     DualInductanceObserver dual_inductance_;
     ObserverKind kind_;
     /**
-     * @brief The machine's flux linkage, taken from the one field that already states it (`nonlinear_flux.psi_f`) so a hand-over has a magnitude to place the incoming observer's vector at. Not a second definition of the machine. 这台机器的磁链，取自已经写明它的那**一个**字段（`nonlinear_flux.psi_f`），于是交接有幅值可用来安置接手者的矢量。这不是对这台机器的第二个定义。
+     * @brief [en] The machine's flux linkage, taken from the one field that already states it.
+     *
+     *     `nonlinear_flux.psi_f`, so a hand-over has a magnitude to place the incoming observer's vector at. Not a
+     *     second definition of the machine.
+     *
+     * @brief [zh] 这台机器的磁链，取自已经写明它的那**一个**字段。
+     *
+     *     `nonlinear_flux.psi_f`，于是交接有幅值可用来安置接手者的矢量。这不是对这台机器的第二个定义。
      */
     float psi_f_wb_;
 };

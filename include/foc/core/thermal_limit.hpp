@@ -56,17 +56,18 @@ struct ThermalLimitReport final {
 };
 
 /**
- * @brief [en] What a given current does to the winding: where it settles, and how long it may be run before the limit
- *             is reached.
+ * @brief [en] What a given current does to the winding.
  *
- *     `crosses == false` means the answer is **not** "a long time" but "never": the settle is at or below
- *     `t_allowed_c`, so the current is sustainable and the seconds field is `infinity`. Collapsing those two into one
- *     large number is how a scheduler ends up throttling a machine that was never in trouble.
+ *     Where it settles, and how long it may be run before the limit is reached. `crosses == false` means the answer is
+ *     **not** "a long time" but "never": the settle is at or below `t_allowed_c`, so the current is sustainable and the
+ *     seconds field is `infinity`. Collapsing those two into one large number is how a scheduler ends up throttling a
+ *     machine that was never in trouble.
  *
- * @brief [zh] 某个电流对绕组做了什么：它收敛到哪里，以及在触及限值之前还能跑多久。
+ * @brief [zh] 某个电流对绕组做了什么。
  *
- *     `crosses == false` 的意思**不是**"很久"，而是"永远不会"：稳态等于或低于 `t_allowed_c`，于是这个电流是可持续的、秒
- *     数字段是 `infinity`。把这两种情况折成一个大数字，正是调度去压一台本来毫无危险的机器的方式。
+ *     它收敛到哪里，以及在触及限值之前还能跑多久。`crosses == false` 的意思**不是**"很久"，而是"永远不会"：稳态等于或低
+ *     于 `t_allowed_c`，于是这个电流是可持续的、秒数字段是 `infinity`。把这两种情况折成一个大数字，正是调度去压一台本来
+ *     毫无危险的机器的方式。
  * @since 0.1.9
  * @exporter
  */
@@ -80,24 +81,27 @@ struct ThermalBudget final {
 };
 
 /**
- * @brief [en] Turn a thermal description into a current the drive may promise, and into the time budget at any other
- *             current.
+ * @brief [en] Turn a thermal description into a current the drive may promise.
+ *
+ *     And into the time budget at any other current.
  *
  *     **The law.** A current-fed winding's loss grows with its own temperature, `P = 1.5*i^2*rs20*(1 + alpha*(T-20))`,
- *     so the settle is the root of `T = Ta + Rt*P(T)` rather than a product:
+ *     so the settle is the root of `T = Ta + Rt*P(T)` rather than a product: `T(i) = (Ta + A*i^2) / (1 - B*i^2)`, with
+ *     `A = Rt*1.5*rs20*(1-20*alpha)` and `B = Rt*1.5*rs20*alpha`, and inverting it at `T = t_allowed` gives the
+ *     continuous current
  *
- *     `T(i) = (Ta + A*i^2) / (1 - B*i^2)`, with `A = Rt*1.5*rs20*(1-20*alpha)` and `B = Rt*1.5*rs20*alpha`,
+ *     \f[ i_{cont} = \sqrt{\frac{t_{allowed} - T_a}{R_t\,1.5\,r_{s20}\,(1 + \alpha\,(t_{allowed} - 20))}} \f]
  *
- *     and inverting it at `T = t_allowed` gives the continuous current `i_cont = sqrt((t_allowed - Ta) /
- *     (Rt*1.5*rs20*(1 + alpha*(t_allowed - 20))))`. The factor `(1 + alpha*(t_allowed-20))` is the whole content of the
- *     feedback: dropping it is the naive `sqrt((T-Ta)/(1.5*Rt*rs20))`, which at 105 C on copper is **15.5 % too high**,
- *     and a drive built on it settles *above* the limit it thinks it is respecting. The test asserts both numbers, not
- *     just the right one.
+ *     The factor `(1 + alpha*(t_allowed-20))` is the whole content of the feedback: dropping it is the naive
+ *     `sqrt((T-Ta)/(1.5*Rt*rs20))`, which at 105 C on copper is **15.5 % too high**, and a drive built on it settles
+ *     *above* the limit it thinks it is respecting. The test asserts both numbers, not just the right one.
  *
- *     **The time budget.** From a winding already at `t_now`, the exact solution of the same equation gives `t =
- *     -tau*ln((T_eq - t_allowed)/(T_eq - t_now))`, so no integration is needed and no step size can change the answer.
- *     `tau = Rt*Ct` is the caller's, which is why `Ct` enters through the config even though the continuous current
- *     does not need it.
+ *     **The time budget.** From a winding already at `t_now`, the exact solution of the same equation gives
+ *
+ *     \f[ t = -\tau\,\ln\frac{T_{eq} - t_{allowed}}{T_{eq} - t_{now}} \f]
+ *
+ *     so no integration is needed and no step size can change the answer. `tau = Rt*Ct` is the caller's, which is why
+ *     `Ct` enters through the config even though the continuous current does not need it.
  *
  *     **What this is not.** It is not a measurement of `Rt`/`Ct` -- those are the caller's numbers, and this repository
  *     has never measured a winding's cooling. It is also not a controller: it answers "may I hold this, and for how

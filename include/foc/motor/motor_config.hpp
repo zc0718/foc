@@ -57,9 +57,18 @@ struct MotorConfig final {
 
 
 /**
- * @brief [en] Rotor flux linkage implied by the torque constant: `psi_f = Kt / (1.5 * pole_pairs)`. Needed to seed a
- *             flux-linkage observer during the align phase.
- * @brief [zh] 由转矩常数反推的转子磁链：`psi_f = Kt / (1.5 * pole_pairs)`。用于在对齐阶段为 磁链观测器播种。
+ * @brief [en] Rotor flux linkage implied by the torque constant.
+ *
+ *     \f[ \psi_f = \frac{K_t}{1.5\,p} \f]
+ *
+ *     Needed to seed a flux-linkage observer during the align phase.
+ *
+ * @brief [zh] 由转矩常数反推的转子磁链。
+ *
+ *     \f[ \psi_f = \frac{K_t}{1.5\,p} \f]
+ *
+ *     用于在对齐阶段为磁链观测器播种。
+ *
  * @return [en] flux linkage in Wb, or 0 when pole_pairs is 0.
  * @return [zh] 磁链，Wb；极对数为 0 时返回 0。
  * @since 0.1.0
@@ -70,11 +79,19 @@ auto psi_f_wb(const motor::MotorConfig& config) noexcept -> float;
 
 
 /**
- * @brief [en] Current-loop PI for a critically damped bandwidth: `ki = wb^2 * L`, `kp = 2*wb*L - R`. Substituting the
- *             plant pole again gives `s^2 + 2*wb*s + wb^2`, so the closed loop has no overshoot at all; every gain is
- *             derived from the nameplate, never hand-tuned.
- * @brief [zh] 按临界阻尼带宽给出的电流环 PI：`ki = wb^2 * L`、`kp = 2*wb*L - R`。代回被控对象 极点后正好得到 `s^2 +
- *             2*wb*s + wb^2`，因此闭环无超调；全部增益由铭牌参数推导，不手调。
+ * @brief [en] Current-loop PI for a critically damped bandwidth.
+ *
+ *     \f[ k_i = \omega_b^2 L,\qquad k_p = 2\,\omega_b L - R \f]
+ *
+ *     Substituting the plant pole again gives `s^2 + 2*wb*s + wb^2`, so the closed loop has no overshoot at all; every
+ *     gain is derived from the nameplate, never hand-tuned.
+ *
+ * @brief [zh] 按临界阻尼带宽给出的电流环 PI。
+ *
+ *     \f[ k_i = \omega_b^2 L,\qquad k_p = 2\,\omega_b L - R \f]
+ *
+ *     代回被控对象极点后正好得到 `s^2 + 2*wb*s + wb^2`，因此闭环无超调；全部增益由铭牌参数推导，不手调。
+ *
  * @param config [en] nameplate parameters.
  * @param config [zh] 铭牌参数。
  * @param bandwidth_rad_s [en] target closed-loop bandwidth (> 0).

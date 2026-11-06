@@ -11,7 +11,7 @@ namespace core {
 
 
 /**
- * @brief [en] A continuous mechanical angle built from an electrical estimate, with an index mark to fix its origin.
+ * @brief [en] A continuous mechanical angle from an electrical estimate, with an index mark to fix its origin.
  *
  *     Why this exists: position control needs two things an observer cannot give on its own -- a *continuous* angle
  *     (turn counting, not a single-turn value) and an *absolute* one (a known zero). The observer supplies an
@@ -123,7 +123,13 @@ class PositionReference final {
   private:
     Config config_;
     /**
-     * @brief How far the unwrapped angle has to be shifted to read `index_mech_rad` at the mark. Corrected, never redefined. 把解开折返的角度平移多少才在标记处读到 `index_mech_rad`。只被修正，不被重新定义。
+     * @brief [en] The shift that makes the unwrapped angle read `index_mech_rad` at the mark.
+     *
+     *     It is only ever corrected, never redefined.
+     *
+     * @brief [zh] 把解开折返的角度平移多少才在标记处读到 `index_mech_rad`。
+     *
+     *     它只会被修正，不会被重新定义。
      */
     float index_offset_rad_;
     float previous_theta_e_rad_;

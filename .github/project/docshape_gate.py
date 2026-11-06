@@ -33,7 +33,7 @@ What it checks now
 
 4. **A list stays a list.** `docfmt` joins consecutive body lines into one paragraph, so a `- ` item
    marker written on its own line comes back as a run-on sentence -- and an item that shares a line
-   with the sentence before it was never a list at all. Doxygen's own `\li` command separated by
+   with the sentence before it was never a list at all. Doxygen's own ``\\li`` command separated by
    blank lines survives the reflow, so that is what the tree uses, and a `- ` marker in the middle
    of a body line is red.
 
