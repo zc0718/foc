@@ -2721,7 +2721,7 @@ The log
        one screen: `injected None -> I2t WRONG` (a healthy input producing a fault) and
        `injected Stall -> I2t WRONG` (a *different* mechanism's code winning the ranking because I2t also
        tripped). That second row is the instructive one -- the observable symptom was two wrong cells out of
-       eight, but only one mechanism was broken, and the ranking hid it. A chain of `else if`s would have
+       eight, but only one mechanism was broken, and the ranking hid it. A chain of ``else if`` checks would have
        shown "Stall does not work"; the independent-flag matrix showed "I2t fires when nothing is wrong",
        which is the actual defect.
      - **The criterion already existed and was never executed against.** The test's own comment states the

@@ -130,6 +130,7 @@ _`Detailed settings`
    :numbered:
 
    Quick start <quickstart>
+   Task slices <guides/index>
    What this library does not do <boundaries>
    What each capability offers <capabilities>
    Usage and verification <usage>

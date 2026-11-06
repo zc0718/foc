@@ -1,0 +1,394 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2026, HeT-FTI
+# This file is distributed under the same license as the foc package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: foc 0.1.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-11-06 18:39+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: zh_CN\n"
+"Language-Team: zh_CN <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.17.0\n"
+
+#: ../../source/symbols.rst:2 743224f44a014e6691551191bf7502fb
+msgid "Symbols and units"
+msgstr ""
+
+#: ../../source/symbols.rst:4 ac8154c8c483456bb738a6faf10c7036
+msgid ""
+"Every symbol this library's documentation is allowed to use, with the "
+"four things that make a symbol usable: what it means, its unit, the frame"
+" it lives in, and which direction is positive."
+msgstr ""
+
+#: ../../source/symbols.rst:7 a04716cc725a462490b15f83590b49f6
+msgid "本库文档允许使用的全部符号，连同让一个符号可用的四件事：含义、单位、所在的参考系、哪个方向为正。"
+msgstr ""
+
+#: ../../source/symbols.rst:9 eb4b8174aae74fc385cfaadfc218c85e
+msgid ""
+"The page is generated from `.github/project/symbols.json` by "
+"`symbols_gate.py --render`; a symbol that is not on it cannot appear in a"
+" docstring, because the gate reads the same file. 本页由 `symbols_gate.py "
+"--render` 从 `.github/project/symbols.json` 生成；不在表上的符号不能出现在 docstring 里， "
+"因为门禁读的是同一个文件。"
+msgstr ""
+
+#: ../../source/symbols.rst:14 b80782d8386b4b229da28560eb09e3d8
+msgid "θ  ``theta_e``"
+msgstr ""
+
+#: ../../source/symbols.rst:15 0d1122a95aac427fbfb5717e0d6315d0
+msgid ""
+"**Meaning.** electrical rotor angle: the rotor position in the rotating "
+"frame, i.e. the angle `park` is handed. 电角度：旋转坐标系下的转子位置，也就是交给 `park` "
+"的那个角。 **Unit.** rad  **Frame.** electrical rotor (the dq frame rotates "
+"with it) **Positive.** not fixed by this library: it is whatever the "
+"caller's angle source counts up as positive. `park` applies the angle it "
+"is given and never re-references it. **Defined by.** "
+"``include/foc/core/transforms.hpp`` (``auto park(Ab<T> ab, T "
+"theta_rad)``)"
+msgstr ""
+
+#: ../../source/symbols.rst:21 6b559bafabc34950b5dcbfc832e6164d
+msgid "θ_mech  ``theta_mech``"
+msgstr ""
+
+#: ../../source/symbols.rst:22 4d6115bc58214854b83ea30696b41410
+msgid ""
+"**Meaning.** mechanical rotor angle, the quantity a cogging harmonic is "
+"phased against. 机械角，齿槽谐波的相位所对的量。 **Unit.** rad  **Frame.** mechanical "
+"rotor **Positive.** same direction as `theta_e`, divided by `pole_pairs`."
+" **Defined by.** ``include/foc/core/cogging_comp.hpp`` (``float "
+"phase_rad;``)"
+msgstr ""
+
+#: ../../source/symbols.rst:28 2f98fa1520304406b1818cf28d018c8f
+msgid "ω_m  ``omega_m``"
+msgstr ""
+
+#: ../../source/symbols.rst:29 2e32d18ddada4789ab5bbe0dffc41af7
+msgid ""
+"**Meaning.** mechanical angular speed of the shaft. 轴上的机械角速度。 **Unit.** "
+"rad/s  **Frame.** mechanical rotor **Positive.** positive = the direction"
+" the angle source counts up; a speed loop that needs the other direction "
+"inverts at its own input, never here. **Defined by.** "
+"``include/foc/motor/motor.hpp`` (``speed_mech * "
+"static_cast<float>(config_.pole_pairs)``)"
+msgstr ""
+
+#: ../../source/symbols.rst:35 8522af8433aa4ff5830b4f542de3f5db
+msgid "ω_e  ``omega_e``"
+msgstr ""
+
+#: ../../source/symbols.rst:36 d5889f1c5416403086c59eb95c92edd1
+msgid ""
+"**Meaning.** electrical angular speed, `omega_e = omega_m * pole_pairs`. "
+"Entering this one where the mechanical one belongs is the whole class of "
+"error the table exists for. 电角速度，`omega_e = omega_m * "
+"pole_pairs`。把电角速度用在需要机械角速度的地方，正是这张表存在的整类错误。 **Unit.** rad/s  **Frame.** "
+"electrical rotor **Positive.** same sign as `omega_m`. **Defined by.** "
+"``include/foc/motor/motor.hpp`` (``speed_mech * "
+"static_cast<float>(config_.pole_pairs)``)"
+msgstr ""
+
+#: ../../source/symbols.rst:42 f1f71f2424f04d94bb87b588821aa6fa
+msgid "p  ``pole_pairs``"
+msgstr ""
+
+#: ../../source/symbols.rst:43 0b8e97b01463430f8aafe697c3b5d10f
+msgid ""
+"**Meaning.** number of pole pairs, `>= 1`; the ratio between electrical "
+"and mechanical quantities. 极对数，`>= 1`；电与机械之间所有量的换算比。 **Unit.** 1 (a "
+"count)  **Frame.** machine **Positive.** not applicable: it is a positive"
+" count. **Defined by.** ``include/foc/motor/motor_config.hpp`` "
+"(``std::uint8_t pole_pairs;``)"
+msgstr ""
+
+#: ../../source/symbols.rst:49 b2fac797804b41acb8fbb7c6ece89f0f
+msgid "ψf  ``psi_f``"
+msgstr ""
+
+#: ../../source/symbols.rst:50 29aa345afa5141ccae6576a618061e2c
+msgid ""
+"**Meaning.** rotor (permanent-magnet) flux linkage. Not the torque "
+"constant: `psi_f = Kt / (1.5 * pole_pairs)`. 转子（永磁）磁链。不是转矩常数：`psi_f = Kt "
+"/ (1.5 * pole_pairs)`。 **Unit.** Wb  **Frame.** rotor **Positive.** "
+"positive along the rotor's north axis (the d axis). **Defined by.** "
+"``include/foc/core/machine_params.hpp`` (``float psi_f;``)"
+msgstr ""
+
+#: ../../source/symbols.rst:56 f50109934d744bf49f10870cfe33e191
+msgid "Kt  ``kt``"
+msgstr ""
+
+#: ../../source/symbols.rst:57 baccd9e1e2874111b9b88835181f533a
+msgid ""
+"**Meaning.** torque constant, the nameplate number, `psi_f * 1.5 * "
+"pole_pairs`. 转矩常数，铭牌数字，`psi_f * 1.5 * pole_pairs`。 **Unit.** N*m/A  "
+"**Frame.** machine **Positive.** positive for positive q-axis current. "
+"**Defined by.** ``include/foc/motor/motor_config.hpp`` (``float kt;``)"
+msgstr ""
+
+#: ../../source/symbols.rst:63 4aebf64c17ca4053bacae1343d95e19e
+msgid "Ld  ``ld``"
+msgstr ""
+
+#: ../../source/symbols.rst:64 2edc3afa5c93484fbed8f8f8c70cbe0a
+msgid ""
+"**Meaning.** d-axis (rotor flux axis) inductance. d 轴（转子磁链轴）电感。 **Unit.**"
+" H  **Frame.** dq, d axis **Positive.** not applicable: an inductance. "
+"**Defined by.** ``include/foc/motor/motor_config.hpp`` (``float ld;``)"
+msgstr ""
+
+#: ../../source/symbols.rst:70 8ecffdf6177c40b6a20fc87e8cdd5dc8
+msgid "Lq  ``lq``"
+msgstr ""
+
+#: ../../source/symbols.rst:71 903e09a0953642c6ba9cd12b4b3c50e1
+msgid ""
+"**Meaning.** q-axis (torque axis) inductance. A surface machine has `Lq "
+"== Ld`. q 轴（转矩轴）电感。表贴机 `Lq == Ld`。 **Unit.** H  **Frame.** dq, q axis "
+"**Positive.** not applicable: an inductance. **Defined by.** "
+"``include/foc/motor/motor_config.hpp`` (``float lq;``)"
+msgstr ""
+
+#: ../../source/symbols.rst:77 d4941962d4ef438aaea3b34041de864a
+msgid "Rs  ``rs``"
+msgstr ""
+
+#: ../../source/symbols.rst:78 ed614eceb2a84d718751959fa28a3df6
+msgid ""
+"**Meaning.** stator resistance, at whatever temperature the caller means "
+"-- the plant does not report temperature. 定子电阻，取调用方所指温度下的值——被控对象不会报告温度。 "
+"**Unit.** ohm  **Frame.** stator **Positive.** not applicable: a "
+"resistance. **Defined by.** ``include/foc/motor/motor_config.hpp`` "
+"(``float rs;``)"
+msgstr ""
+
+#: ../../source/symbols.rst:84 bfd3c277023748d5b1410069cb95f5ed
+msgid "i_d  ``i_d``"
+msgstr ""
+
+#: ../../source/symbols.rst:85 efcb95cc44bd466ea20d65765349bf20
+#, python-brace-format
+msgid ""
+"**Meaning.** d-axis (flux-producing) current. d 轴（产生磁链的）电流。 **Unit.** A  "
+"**Frame.** dq, d axis **Positive.** positive into the machine, producing "
+"flux along the d axis; field weakening is the negative direction. "
+"**Defined by.** ``include/foc/core/types.hpp`` (``T d{};``)"
+msgstr ""
+
+#: ../../source/symbols.rst:91 7926a7ee87214407b8c303eccc1d0c53
+msgid "i_q  ``i_q``"
+msgstr ""
+
+#: ../../source/symbols.rst:92 4ff0dc77c8e541408a7414aefbcd4091
+#, python-brace-format
+msgid ""
+"**Meaning.** q-axis (torque-producing) current. q 轴（产生转矩的）电流。 **Unit.** A"
+"  **Frame.** dq, q axis **Positive.** positive = motoring in the "
+"direction `omega_m` is positive. **Defined by.** "
+"``include/foc/core/types.hpp`` (``T q{};``)"
+msgstr ""
+
+#: ../../source/symbols.rst:98 d02799d88d7c4df78997d10912ea9e57
+msgid "v_bus  ``v_bus``"
+msgstr ""
+
+#: ../../source/symbols.rst:99 04d8212156c142f6849c806c17ccb589
+msgid ""
+"**Meaning.** DC link voltage. The available phase voltage is bounded by "
+"`v_bus`, and the current loop's output clamp is `+-v_bus/2`. 母线电压。可用相电压受 "
+"`v_bus` 约束，电流环输出限幅是 `±v_bus/2`。 **Unit.** V  **Frame.** DC link "
+"**Positive.** positive. **Defined by.** "
+"``include/foc/motor/motor_config.hpp`` (``float bandwidth_rad_s, float "
+"v_bus``)"
+msgstr ""
+
+#: ../../source/symbols.rst:105 337b00131a8c4134a213073ba6b483a5
+msgid "λ  ``lambda``"
+msgstr ""
+
+#: ../../source/symbols.rst:106 9d5b069b20574cccaecde4db5d652756
+msgid ""
+"**Meaning.** field-weakening closure ratio, `lambda = Ld*i_max/psi_f = "
+"1/ratio`, i.e. the reciprocal of the `ratio` field the C API returns. "
+"Field weakening can hold the envelope only when `lambda >= 1`, which is "
+"the same statement as `i_char <= i_max`. 弱磁闭合比，`lambda = Ld·i_max/psi_f ="
+" 1/ratio`，即 C API 返回的 `ratio` 字段的倒数。只有 `lambda >= 1` 时弱磁才守得住包络，这与 `i_char"
+" <= i_max` 是同一句话。 **Unit.** 1 (dimensionless)  **Frame.** machine "
+"**Positive.** positive. **Defined by.** "
+"``include/foc/core/field_weakening.hpp`` (``i_char <= i_max``) **Note.** "
+"Two spellings of one quantity live in the tree, and one of them is "
+"inverted. `lambda` (this table, `domain.json`) and `ratio` "
+"(`foc_fw_verdict_t.ratio`, `psi_f/Ld / i_max`) are reciprocals, so a "
+"threshold written as `lambda >= 1` and one written as `ratio <= 1` are "
+"the same rule -- but a reader who takes `ratio` for `lambda` reads the "
+"rule backwards. The table states the reciprocal relation rather than "
+"picking a winner, because both spellings are already in the public API. "
+"同一个量在树里有两个写法，而其中一个是倒数。`lambda`（本表、`domain.json`）与 "
+"`ratio`（`foc_fw_verdict_t.ratio`，`psi_f/Ld / i_max`）互为倒数，所以写成 `lambda >= "
+"1` 和写成 `ratio <= 1` 是同一条规则——但把 `ratio` 当成 `lambda` "
+"的读者会把规则读反。本表只陈述这个倒数关系，不裁定哪个写法胜出，因为两种写法都已经在公开 API 里。"
+msgstr ""
+
+#: ../../source/symbols.rst:114 2fd8af0c5d334f4d81eaf2eca7e868a3
+msgid "i_char  ``i_char``"
+msgstr ""
+
+#: ../../source/symbols.rst:115 40d46ff11a864cfab33d026a44c02c0a
+msgid ""
+"**Meaning.** characteristic current, `i_char = psi_f/Ld`: the d-axis "
+"current that would null the rotor flux. 特征电流，`i_char = ψf/Ld`：把转子磁链削到零所需的"
+" d 轴电流。 **Unit.** A  **Frame.** dq, d axis **Positive.** reported as a "
+"positive magnitude; the current that achieves it is negative. **Defined "
+"by.** ``include/foc/api/foc_types.h`` (``float i_char_a;``)"
+msgstr ""
+
+#: ../../source/symbols.rst:121 8284ec49595c433b979a4efba8aafa97
+msgid "δ  ``delta`` *(reserved -- defined for readers, not used by the code yet)*"
+msgstr ""
+
+#: ../../source/symbols.rst:122 f1e643fe07464aecbefa2426b3a32970
+msgid ""
+"**Meaning.** power angle (load angle) between the rotor flux and the "
+"stator flux linkage. 功角：转子磁链与定子磁链之间的夹角。 **Unit.** rad  **Frame.** rotor "
+"vs stator flux **Positive.** positive when the stator flux leads the "
+"rotor flux."
+msgstr ""
+
+#: ../../source/symbols.rst:127 557f716f1b424aeb9734335537c6a3b4
+msgid "α, β  ``alpha_beta``"
+msgstr ""
+
+#: ../../source/symbols.rst:128 023f41f0d4be4247959cb50fd14faa2a
+msgid ""
+"**Meaning.** the stationary two-phase frame: `alpha` is the phase-u axis,"
+" `beta` is 90 deg ahead of it. 静止两相坐标系：`alpha` 是 u 相轴，`beta` 领先它 90 度。 "
+"**Unit.** 1 (a frame label, not a quantity)  **Frame.** stationary "
+"(Clarke output) **Positive.** not applicable: these name axes. **Defined "
+"by.** ``include/foc/core/transforms.hpp`` (``auto clarke(Uvw<T> uvw)``)"
+msgstr ""
+
+#: ../../source/symbols.rst:134 1e874e63a6ae4cfa99a7456e1c3c57ef
+msgid "τ  ``tau``"
+msgstr ""
+
+#: ../../source/symbols.rst:135 4c6a2d9db7434d5caf43f9e1a5289c93
+msgid ""
+"**Meaning.** a time constant, always the one named in the same sentence "
+"(observer pole, filter window, thermal lag). "
+"时间常数，始终是同句里点名的那个（观测器极点、滤波窗、热滞后）。 **Unit.** s  **Frame.** the subsystem "
+"that owns it **Positive.** positive. **Defined by.** "
+"``include/foc/core/thermal_limit.hpp`` (``τ = Rt·Ct``)"
+msgstr ""
+
+#: ../../source/symbols.rst:141 20fa251b8a1c4f029c6c0fcc23fc951a
+msgid "ω_h  ``omega_h``"
+msgstr ""
+
+#: ../../source/symbols.rst:142 5c34ed63e9ca474ca058f989b46911b0
+msgid ""
+"**Meaning.** HFI injection angular frequency: the carrier the high-"
+"frequency injection puts on the d axis. The reactance that sets the "
+"injected current is `omega_h * Ld`. 高频注入的角频率：注入在 d 轴上的那个载波。决定注入电流的电抗是 "
+"`omega_h · Ld`。 **Unit.** rad/s  **Frame.** electrical **Positive.** "
+"positive. **Defined by.** ``src/api/bridge.cpp`` (``ω_h·Ld``)"
+msgstr ""
+
+#: ../../source/symbols.rst:148 1d3dd66fd05740a2baed2552c457e17c
+msgid "φ_inj  ``phi_inj``"
+msgstr ""
+
+#: ../../source/symbols.rst:149 d99044cda879451c9689b5e71b905a65
+msgid ""
+"**Meaning.** injection phase, the phase at which a cogging harmonic is "
+"injected into the current command. 注入相位，即把一个齿槽谐波注入电流指令时所用的相位。 **Unit.** "
+"rad  **Frame.** the harmonic's own phase reference **Positive.** positive"
+" leads. **Defined by.** ``src/core/cogging_learn.cpp`` (``k·θ + φ_inj``)"
+msgstr ""
+
+#: ../../source/symbols.rst:155 ed3b1dabd93b4bb38d89f51f3290a039
+msgid "θ_p  ``theta_p``"
+msgstr ""
+
+#: ../../source/symbols.rst:156 01903e3d451a45a794c2f0cfa78171cc
+msgid ""
+"**Meaning.** the angle of one phase current in the commissioning "
+"projection, `i_p` proportional to `cos(theta_p - angle)`. "
+"调试投影里某一相电流的相位角，`i_p` 正比于 `cos(θ_p − angle)`。 **Unit.** rad  **Frame.** "
+"phase (stationary) **Positive.** positive leads. **Defined by.** "
+"``include/foc/core/commissioning.hpp`` (``cos(θ_p − angle)``)"
+msgstr ""
+
+#: ../../source/symbols.rst:162 02c1ebc0f032406d964f87c8bb1bd4a3
+msgid "σ  ``sigma``"
+msgstr ""
+
+#: ../../source/symbols.rst:163 374131b519be4304b60c113e60b08f86
+msgid ""
+"**Meaning.** a standard deviation of a noise source, with the subscript "
+"naming which one: `sigma_theta` the angle, `sigma_v` the speed derived "
+"from it. 某个噪声源的标准差，下标说明是哪一个：`σ_θ` 是角度，`σ_v` 是由它导出的转速。 **Unit.** the unit "
+"of the subscribed quantity  **Frame.** n/a **Positive.** non-negative. "
+"**Defined by.** ``include/foc/core/speed_from_angle.hpp`` (``σ_v = "
+"σ_θ·√2/(window_ticks·dt)``)"
+msgstr ""
+
+#: ../../source/symbols.rst:169 d0aa5524b4434756807aa4f4f54bf32a
+msgid "η  ``eta_flux``"
+msgstr ""
+
+#: ../../source/symbols.rst:170 d605f9611e1e4bc98d12da75d99ec77b
+msgid ""
+"**Meaning.** the nonlinear flux observer's correction vector: the part of"
+" the estimated linkage that is not the current's own flux. "
+"非线性磁链观测器的修正矢量：估计磁链里不属于电流自身磁链的那一部分。 **Unit.** Wb  **Frame.** stationary "
+"(alpha-beta) **Positive.** a vector, no sign. **Defined by.** "
+"``include/foc/core/observer/nonlinear_flux_observer.hpp`` (``(ψf² − "
+"|η|²)·η``)"
+msgstr ""
+
+#: ../../source/symbols.rst:176 856683a4f006413da462e8eb1a390621
+msgid "ωL  ``omega_l``"
+msgstr ""
+
+#: ../../source/symbols.rst:177 e57bff7febfc4555848d38dd43ade282
+msgid ""
+"**Meaning.** an impedance term, `omega * L`, written as one token where "
+"the reactance is what the sentence is about. Not a symbol of its own and "
+"not a frequency. 阻抗项 `ω·L`，在句子讲的就是电抗时写成一个记号。它不是独立符号，也不是频率。 **Unit.** ohm"
+"  **Frame.** depends on which L the sentence names **Positive.** "
+"positive. **Defined by.** ``include/foc/core/deadtime.hpp`` (```ωL```)"
+msgstr ""
+
+#: ../../source/symbols.rst:183 c8597ce1553c4f19af53d75c032afa32
+msgid "ψ_ab  ``psi_ab``"
+msgstr ""
+
+#: ../../source/symbols.rst:184 aad50253c4d54fa68e20ce779248cdbf
+msgid ""
+"**Meaning.** stator flux linkage vector in the stationary frame -- the "
+"integrator state of a flux observer. Distinct from the rotor flux `ψf`, "
+"which is a constant of the machine. 静止坐标系下的定子磁链矢量——磁链观测器的积分器状态。与机器常数转子磁链 "
+"`ψf` 不同。 **Unit.** Wb  **Frame.** alpha-beta (stationary), as a vector "
+"**Positive.** positive along the winding's own flux direction; a vector, "
+"so it carries two components. **Defined by.** "
+"``include/foc/core/observer/dual_inductance_observer.hpp`` (``Ab<float> "
+"psi_; ///< [en] stator flux estimate in Wb (the integrator state).``) "
+"**Note.** Registered when the bare `ψ` in this observer's prose turned "
+"out to be the last unregistered glyph: the sentence was naming the stator"
+" estimate while the table only knew the rotor constant `ψf`. "
+"登记它的原因：这个观测器的散文里那个裸 `ψ` 是最后一个未登记字形——句子说的是定子估计，而表里只有转子常数 `ψf`。"
+msgstr ""
+

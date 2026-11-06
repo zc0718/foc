@@ -1,0 +1,1507 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2026, HeT-FTI
+# This file is distributed under the same license as the foc package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: foc 0.1.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-11-06 18:39+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: zh_CN\n"
+"Language-Team: zh_CN <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.17.0\n"
+
+#: ../../source/capabilities.rst:2 7ab5b86914964d0c9274b1421b0e2cae
+msgid "_`What each capability offers, and what it costs`"
+msgstr ""
+
+#: ../../source/capabilities.rst:4 f19ac17dcf80415fa98bafe35a6a051f
+msgid ""
+"The :ref:`boundaries page <What this library does not do>` says what this"
+" library cannot do. The README's claim table says what is measured and "
+"how it is checked. Neither answers the question the person adding an "
+"algorithm actually has: *what does a capability have to come with?*"
+msgstr ""
+
+#: ../../source/capabilities.rst:8 68a78a059a4e4c2f9bf5be9a831881f2
+msgid ""
+"This page is that answer, one row per capability. Six columns: the four "
+"things a new capability owes, plus the two links that let the row be "
+"audited."
+msgstr ""
+
+#: ../../source/capabilities.rst:11 2fba3e37947b4b74b6d32504b63dd1b4
+msgid ""
+"**Diagnostic channel** -- how the capability says \"I am not measuring\","
+" \"I have not converged\", \"I am holding\". A capability whose only "
+"output is a number cannot be debugged in the field, because zero and \"no"
+" idea\" look the same."
+msgstr ""
+
+#: ../../source/capabilities.rst:13 45e9e4a95a8c4754a86c2bca8bf2a8f5
+msgid ""
+"**Admission** -- where a contradictory configuration is refused: at "
+"construction or at the first step, never by silently falling back to a "
+"default."
+msgstr ""
+
+#: ../../source/capabilities.rst:15 6e685d5954ae421495e45c834918da98
+msgid ""
+"**Boundary** -- the limit, pinned by a case. The cell grammar is fixed "
+"and the gate enforces it: a case name in double backticks; or ``none -- "
+"<reason>`` for \"no limit is known\", which therefore requires an **L3** "
+"claim behind it; or ``na -- <reason>`` for \"this dimension does not "
+"apply\"; or ``todo -- <reason>`` for a hole that is written down instead "
+"of papered over. The gate counts the `todo` rows on every run."
+msgstr ""
+
+#: ../../source/capabilities.rst:19 c3745c71351e4b05845a6c1d61d9f48c
+msgid ""
+"**Invariant participation** -- which case in `test_invariants.cpp` this "
+"capability must obey. ``na -- <reason>`` is allowed and the reason is "
+"required."
+msgstr ""
+
+#: ../../source/capabilities.rst:21 b12e114773f94fb29c5a70613bc45b4c
+msgid ""
+"**Ledger row** -- when a capability forced a foundation correction, "
+"`foundation-log.rst` says which and what it cost."
+msgstr ""
+
+#: ../../source/capabilities.rst:23 0ac60bf61a284c77ae530dd6a21a73b2
+msgid ""
+"The `capabilities` gate checks every cell: a header under `core/` or "
+"`motor/` must be listed here or named in `capability-scope.json` as "
+"deliberately unlisted; every case name must exist as a `TEST()`; every "
+"``none`` must have an L3 claim; every reason must actually be a reason. A"
+" row that cannot be filled honestly fails the build, which is the point "
+"-- the alternative is a library that grows algorithms and forgets how "
+"they fail."
+msgstr ""
+
+#: ../../source/capabilities.rst:29 e0764ffaeec44f89ba125766bf2faa01
+msgid "The three questions a criterion has to survive before it is written down"
+msgstr ""
+
+#: ../../source/capabilities.rst:31 07a0b3a3460e42bfacf1b297b073e236
+msgid ""
+"Not every one of them can be checked by a machine, which is why they live"
+" here as prose rather than as a gate. Each is a defect this repository "
+"has actually shipped, and each was invisible to the coverage numbers at "
+"the time:"
+msgstr ""
+
+#: ../../source/capabilities.rst:35 d0e8d0a90324449a9f66c7aed64fd4b9
+msgid ""
+"**Is it vacuously true on the rig I am actually using?** The sharpest "
+"example: \"after hand-over, the angle error is within 0.05 rad in 20 ms\""
+" was asserted on a *sensored* bench, where the loop uses the sensor's "
+"angle -- so the error against that sensor is identically zero. The "
+"criterion was green, the number was a statement about the bench rather "
+"than the capability, and the fix was to delete it and state one that can "
+"fail."
+msgstr ""
+
+#: ../../source/capabilities.rst:40 64a16a56a02d43f68601726cbe2dc813
+msgid ""
+"**Does it only have an upper bound?** \"must be better than X\" alone "
+"pushes the next reader to tune until it passes; the honest form also "
+"records where a design is *expected* to be worse. The dead-band ramp is "
+"the example: it is worse than a plain ``sign()`` step on an ideal step, "
+"and that has to be written into the table rather than quietly avoided "
+"when tuning."
+msgstr ""
+
+#: ../../source/capabilities.rst:44 1c8e89d1e2d249c782661a0692c85a3d
+msgid ""
+"**Does the probe point distinguish the competing formula?** Before "
+"claiming that a case can reject a wrong formula, evaluate both at that "
+"point. ``sqrt(2ae)`` against ``sqrt(ae)`` was probed at the one place "
+"where the two coincide, so the case had no teeth and nothing said so."
+msgstr ""
+
+#: ../../source/capabilities.rst:49 59c511a39a08459a803972fb88ae4eeb
+msgid "Capabilities that are a procedure rather than a formula"
+msgstr ""
+
+#: ../../source/capabilities.rst:51 67fb064fe7a949839f12dfb3960170a5
+msgid ""
+"Some of what this library offers is not a law but a *procedure*: "
+"identification of the machine (``commissioning.hpp``), speed-loop tuning "
+"(``auto_tune.hpp``), learning the cogging table (``cogging_learn.hpp``). "
+"Their criterion is not a constant that could be written into an "
+"assertion, so the row records what the procedure owes instead:"
+msgstr ""
+
+#: ../../source/capabilities.rst:56 65cbfe22791948c8aeefdf80e5a51c10
+msgid ""
+"**It says when it cannot answer.** ``valid == false`` plus a reason, "
+"never a number produced from data that does not describe this machine. A "
+"procedure that only answers on good data cannot be claimed for any data."
+msgstr ""
+
+#: ../../source/capabilities.rst:58 e08979d37d6145e18f8ce09e63db9804
+msgid ""
+"**It states the band it is valid in**, in the units the caller measures "
+"-- a speed band, a window length, a number of revolutions -- and the band"
+" is pinned by a case rather than described in prose."
+msgstr ""
+
+#: ../../source/capabilities.rst:60 9c526d14991f421db3253f8c775da390
+msgid ""
+"**Its objective is a held-out margin, never accuracy.** A procedure "
+"optimised for \"smaller error\" produces a criterion fitted to the model "
+"it was scored on; the number worth publishing is the distance to failure,"
+" measured on machines that took no part in the fit."
+msgstr ""
+
+#: ../../source/capabilities.rst:64 ad6b191741784447b63197e0efc0f249
+msgid ""
+"Such a capability reaches **L2** when the procedure is reproducible and "
+"its refusals are reachable, and that is the whole of what \"a procedure\""
+" buys. **L3** still needs the same two things every other row needs -- "
+"item-by-item sensitivity and an independent cross-check, e.g. the same "
+"procedure replayed on a second plant -- so a procedure is not a shortcut "
+"past the evidence levels, and it never reaches L4 without hardware."
+msgstr ""
+
+#: ../../source/capabilities.rst:69 3a63705ba800497fbf709b47106ff5ba
+msgid ""
+"**The three obligations are executable rather than aspirational.** "
+"``test_sop_outer_loop.cpp`` drives the outer-loop procedure end to end --"
+" identify, propose, measure, held-out acceptance -- on two machines of "
+"different inertia, and records the objective as a **distance to failure**"
+" (``tolerance - |j_identified/j_nameplate - 1|``), a number that changes "
+"sign exactly where the library refuses. A gain fitted on the wrong "
+"machine is caught in both directions by a band whose two edges are "
+"themselves measured (the gain law's own residual, and the smallest "
+"nameplate error the repo calls actionable). The three red proofs were run"
+" and are recorded with the numbers: replacing the held-out machine with a"
+" copy of the fitted one, deleting the refusal path, and collapsing the "
+"parameter search to a single setting each turn exactly the expected case "
+"red. With that, the replay-on-a-second-machine half of **L3** is in place"
+" for this procedure; the sensitivity half is not, so the row stays "
+"**L2**."
+msgstr ""
+
+#: ../../source/capabilities.rst:79 c96311e4239a4255b950a799171be800
+msgid "capability matrix"
+msgstr ""
+
+#: ../../source/capabilities.rst:83 82f2826f269c4dc3a6aa03ab0c8aac89
+msgid "Capability"
+msgstr ""
+
+#: ../../source/capabilities.rst:84 e3f677e541154b8b97574217a1b64f67
+msgid "Diagnostic channel"
+msgstr ""
+
+#: ../../source/capabilities.rst:85 b0c18a1718fd4936bbbda6da610e519a
+msgid "Admission"
+msgstr ""
+
+#: ../../source/capabilities.rst:86 8d05e4cdcbbe4d338e8cd623c96bf306
+msgid "Boundary"
+msgstr ""
+
+#: ../../source/capabilities.rst:87 eccae3d68fb2405cb34f440afa0df48e
+msgid "Invariant"
+msgstr ""
+
+#: ../../source/capabilities.rst:88 20752ccbb6c04a5eb8db44e1d6f40997
+msgid "Ledger"
+msgstr ""
+
+#: ../../source/capabilities.rst:89 dc4200f7a1ed4c49af6cdcf3ab7e244d
+msgid "``core/transforms.hpp``"
+msgstr ""
+
+#: ../../source/capabilities.rst:90 b1890212ca35400e854d852a7fd35560
+msgid ""
+"na -- stateless: there is no state that could hold a stale angle, and the"
+" caller owns the angle."
+msgstr ""
+
+#: ../../source/capabilities.rst:91 abbf61fae1a340d4a1bb00bf67173b1c
+msgid ""
+"na -- no configuration; a wrong argument is a wrong answer, which the "
+"invariance case catches."
+msgstr ""
+
+#: ../../source/capabilities.rst:92 9182864da6f84f4ca05a197ce6ba605f
+msgid ""
+"none -- Clarke is blind to the zero sequence, which is stated and "
+"asserted rather than corrected; nothing else is known to break."
+msgstr ""
+
+#: ../../source/capabilities.rst:94 48badd5e329a4adbbaf578764ae6b239
+msgid ""
+"TheAmplitudeConventionHoldsAndTheZeroSequenceIsLost, "
+"ARotationAndItsFrameComposeExactly"
+msgstr ""
+
+#: ../../source/capabilities.rst:95 ../../source/capabilities.rst:101
+#: ../../source/capabilities.rst:109 ../../source/capabilities.rst:116
+#: ../../source/capabilities.rst:128 ../../source/capabilities.rst:194
+#: ../../source/capabilities.rst:205 ../../source/capabilities.rst:217
+#: ../../source/capabilities.rst:231 ../../source/capabilities.rst:242
+#: ../../source/capabilities.rst:267 ../../source/capabilities.rst:279
+#: ../../source/capabilities.rst:293 ../../source/capabilities.rst:311
+#: ../../source/capabilities.rst:321 ../../source/capabilities.rst:334
+#: ../../source/capabilities.rst:342 ../../source/capabilities.rst:351
+#: ../../source/capabilities.rst:361 ../../source/capabilities.rst:371
+#: ../../source/capabilities.rst:419 ../../source/capabilities.rst:425
+#: ../../source/capabilities.rst:433 ../../source/capabilities.rst:445
+#: ../../source/capabilities.rst:452 ../../source/capabilities.rst:467
+#: 00516d468ea14937a6782ba622d57a9a 024bfd0a4f754e6d94b31c6f36c4187f
+#: 0bd9082f65e44cea8d4d6eab09ff9d4b 2105a68849c7423d825efede423a8406
+#: 21cdbcd20ec443218ec3a8043ffe301c 22982dd216884361b7fa68d97f228bef
+#: 2311190ce55a46dbbd466bb2fd7ede22 45535b13d5e14f1ca108a91de8907896
+#: 54e695c7effb4666bd379e73e447868a 59cd195ca3224f14bb9d215046ceae6b
+#: 5d140a4f3bf84591a133b4e06ad69d27 61438152ead04781844f6d54d994a797
+#: 64b5306334dc4af58c40072951425635 717cb900302c46119bc487ef2cde00c7
+#: 91bc5a1fd7b446279d816cd19b6baab0 a78be50d73ad4ffeb27a44336dc20ca3
+#: a7b1518ae42b4b399ebb02f579c34d28 ad9002add7e94721b634a779a80da458
+#: c0c9f0d7b3494b0d976c8c22a419ae43 c5d973bcba394792a4899447d1778e34
+#: d92f75d34c284b398673dbc9dd377fb9 dabf7e871f1240dc9bb4b92a9cf45d27
+#: ea4a8b6f5e2b4eada17c9ef148a4a008 efa120b79ff9450aa793fd00409fb375
+#: f296af1bcaec4e988570017d1e9aabf8 ff872ffcee0d4900ba5dde12ebc2c2c6
+msgid "--"
+msgstr ""
+
+#: ../../source/capabilities.rst:96 98d20b3a13734c32b1a26080a9e22627
+msgid "``core/limits.hpp``"
+msgstr ""
+
+#: ../../source/capabilities.rst:97 ccbe512930454375b827a7f0063e57e5
+msgid ""
+"na -- stateless: a clamp with no memory has nothing to report about "
+"itself."
+msgstr ""
+
+#: ../../source/capabilities.rst:98 c0d804fd615d46fdacf98f592dd66302
+msgid ""
+"na -- no configuration; a limit wider than the signal is a caller "
+"decision, not a contradiction."
+msgstr ""
+
+#: ../../source/capabilities.rst:99 a66a37ef1d5c48e9b295b5e39fa99aff
+msgid "``Invariants.TheClampIsContinuousAndAJumpWouldShow``"
+msgstr ""
+
+#: ../../source/capabilities.rst:100 3cd69d9aea464c268afbc72a310b0d97
+msgid "TheClampIsContinuousAndAJumpWouldShow"
+msgstr ""
+
+#: ../../source/capabilities.rst:102 8afbd5bbfff243beaa864ac78ab5af3d
+msgid "``core/pi.hpp``"
+msgstr ""
+
+#: ../../source/capabilities.rst:103 4f928ee3d0c54fcb8f46440ef574bef6
+msgid ""
+"``status()``, ``integral()``, ``output()`` -- the integrator state is "
+"readable because a wound-up integrator is the failure mode that looks "
+"like a tuning problem."
+msgstr ""
+
+#: ../../source/capabilities.rst:105 4d65a4c1575941a69975bf3f7e6c2230
+msgid ""
+"``status() == ErrorCode::Param`` on a negative gain, an inverted clamp or"
+" a non-positive ``dt_s``; the output holds instead of moving."
+msgstr ""
+
+#: ../../source/capabilities.rst:107 0f7012e7388d4016bd6cc8153b5ef520
+msgid ""
+"na -- the loop is linear and every limit on it is a clamp or a gain; the "
+"limits that matter are the plant's."
+msgstr ""
+
+#: ../../source/capabilities.rst:108 01031fd0d37d4825acb240a324bf2074
+msgid ""
+"ElapsedTimeDecidesTheIntegralNotTheCallCount, "
+"TheClampIsContinuousAndAJumpWouldShow"
+msgstr ""
+
+#: ../../source/capabilities.rst:110 2f9ff14e251e4c18a666d8869c57b5aa
+msgid "``core/filters.hpp``"
+msgstr ""
+
+#: ../../source/capabilities.rst:111 ca2e4ec96a8c45cdb28cbbc3c0785648
+msgid ""
+"``configured()``, ``size()`` -- an unconfigured filter says so instead of"
+" passing its input through untouched."
+msgstr ""
+
+#: ../../source/capabilities.rst:112 bd2b341dcfd945dd8a8caded3e816b06
+msgid "``configure()`` refuses a non-positive cutoff or step."
+msgstr ""
+
+#: ../../source/capabilities.rst:113 63ce85544ba74be6ad0f0e2465225370
+msgid ""
+"na -- a first-order filter is exact for its stated cutoff; the limit that"
+" matters belongs to the loop around it, not to the filter."
+msgstr ""
+
+#: ../../source/capabilities.rst:115 01a80409fd0648bb984cc3fc1f67254d
+msgid ""
+"na -- linear and time-invariant; the invariants that bite are on the loop"
+" around it, not on it."
+msgstr ""
+
+#: ../../source/capabilities.rst:117 450dfa4504394d4ba90a47f1a42ad6bf
+msgid "``core/protection.hpp``"
+msgstr ""
+
+#: ../../source/capabilities.rst:118 ce80b20e6d1446369f3e0eff2ed5a40b
+msgid ""
+"``thermal_budget()``, ``derated_limit()``, ``fault_is_latched()`` -- "
+"\"fine\", \"derating\" and \"stopped\" are three readable numbers rather "
+"than one code. The split is by definition and not by accident: "
+"`output_allowed` is `active_mask == 0`, so a fault in this library "
+"*means* \"authority removed\", and derating -- the axis still running at "
+"reduced authority -- is announced by `i_limit_a` falling below the "
+"configured `i_max_a`. `FaultCode` names the mechanism, and the newest one"
+" (`DriveFault`) is the only cause that does not come from the protector "
+"at all: it is the power stage telling on itself, read at the top of the "
+"tick and appended to the enum so every existing number keeps its meaning."
+msgstr ""
+
+#: ../../source/capabilities.rst:125 f20e0271903c4f7898838dbc1c446eb9
+msgid ""
+"na -- the configuration is a set of numbers; a nonsensical one is refused"
+" by the constructor that consumes it."
+msgstr ""
+
+#: ../../source/capabilities.rst:126 cf254057fb894d90b6f03c8bb3dc74fd
+msgid "``FaultInjection.TheProtectorCodesReachTheFaultCodeThroughTheDocumentedHop``"
+msgstr ""
+
+#: ../../source/capabilities.rst:127 91ad2d8ca66644dfb85618823bfed256
+msgid "na -- a supervisor over other capabilities, not an equation of its own."
+msgstr ""
+
+#: ../../source/capabilities.rst:129 02f9a2db60c74367847953b1c254f456
+msgid "``core/speed_from_angle.hpp``"
+msgstr ""
+
+#: ../../source/capabilities.rst:130 ea8dc52e8c3a4524acd6983a7a45fe99
+msgid ""
+"``ready()``, ``lost_count()`` -- differentiates an angle and says when "
+"the angle stopped arriving."
+msgstr ""
+
+#: ../../source/capabilities.rst:131 bf3459ae7cef429bbce998c3e486a5e4
+msgid ""
+"``reset()`` is mandatory after a gap: the module will not publish a speed"
+" across one."
+msgstr ""
+
+#: ../../source/capabilities.rst:132 d4c2e27b77b84800a68c187b6c7cb3e5
+msgid "``SilSpeedFromAngleClosedLoop.AWindowShortEnoughToBeOnTimeIsTheOnlyWayThisRouteWins``"
+msgstr ""
+
+#: ../../source/capabilities.rst:133 ed5f6fc38a3c4de9a8ef707dcbbf066c
+msgid "ElapsedTimeDecidesTheIntegralNotTheCallCount"
+msgstr ""
+
+#: ../../source/capabilities.rst:134 276639cff5364130977b29937e3e266c
+msgid "A-3"
+msgstr ""
+
+#: ../../source/capabilities.rst:135 41dc5512125b4124b831d4f715d29d09
+msgid "``core/trace.hpp``"
+msgstr ""
+
+#: ../../source/capabilities.rst:136 c5de8957ba6d479d97b7a9004210bc75
+msgid ""
+"``size()``, ``dropped()``, ``latest()`` -- a full ring keeps recording "
+"and counts what it overwrote, so \\\"I lost the window\\\" is a number "
+"rather than an absence. ``t_us == 0`` on every sample means the platform "
+"has no clock, which is a fact about the HAL and not a claim that "
+"everything happened at once."
+msgstr ""
+
+#: ../../source/capabilities.rst:139 52bcafa2b72a40419aae955e6cebe655
+msgid ""
+"``n/a`` -- nothing to configure: the capacity is the type, and reading "
+"past the retained window returns a zeroed sample instead of reaching out "
+"of bounds."
+msgstr ""
+
+#: ../../source/capabilities.rst:141 90339dabb2e5431086e5b86b5433edcf
+msgid "``Trace.TheRecordAgreesWithTheScalarReadBitForBit``"
+msgstr ""
+
+#: ../../source/capabilities.rst:142 da6714f0d6b3424eb0035a4a989dfe31
+msgid "na -- a recorder of other capabilities' arithmetic, with none of its own."
+msgstr ""
+
+#: ../../source/capabilities.rst:143 1f97cf3e02db4f5985b2eca2ab4da914
+msgid "A-8"
+msgstr ""
+
+#: ../../source/capabilities.rst:144 0f9e028cf35c47519a5ab043aee98719
+msgid "``core/soft_limit.hpp``"
+msgstr ""
+
+#: ../../source/capabilities.rst:145 b4e92ecf4403467d9aa2955e5bc098e3
+msgid ""
+"`at_wall`, and the `Param` that a refused target returns. A clamp would "
+"make an impossible command look plausible and the caller would never "
+"learn; the status is the only channel a programming fault has."
+msgstr ""
+
+#: ../../source/capabilities.rst:147 f8b1cdc5b718471ba7b91d04faf9faef
+msgid ""
+"`Param` for a target outside the window (the previous one comes back), "
+"and for an inverted or non-finite window. A wall is *inclusive*: \"move "
+"to the limit\" is the one command a soft limit exists to make safe."
+msgstr ""
+
+#: ../../source/capabilities.rst:149 1d8fe09fc7dd4b0da60ae6d6e8cef2cf
+msgid "``SoftLimit.TheDelayTermIsTheDifferenceBetweenNineteenMillimetresPastAndOneShort``"
+msgstr ""
+
+#: ../../source/capabilities.rst:150 66529d69185a402cbef27b5f3edd0421
+msgid "na -- no integration; the remembered target is the whole state."
+msgstr ""
+
+#: ../../source/capabilities.rst:151 3cdee3d56b564881aaa4486e3d4bfdfa
+msgid "A-20"
+msgstr ""
+
+#: ../../source/capabilities.rst:152 19eb364669ab4ab29c6e0f56cf979f57
+msgid "``core/gear_ratio.hpp``"
+msgstr ""
+
+#: ../../source/capabilities.rst:153 7976d8c00b124284bc9fe8120d813fb3
+msgid ""
+"`master_unwrapped_rad` and `slave_velocity_rad_s`. The unwrapped master "
+"is the synchronisation error's reference -- comparing against the wrapped"
+" one is how a perfect pair reports 6.28 rad once a revolution -- and the "
+"velocity is what makes the `v*kd/kp` lag removable at all."
+msgstr ""
+
+#: ../../source/capabilities.rst:156 4c27013d442b4d41aaf72433d887eb9f
+msgid ""
+"`Param` for a zero, negative-infinite or NaN ratio, and for a non-finite "
+"master sample (the unwrap state is then untouched). A zero ratio is "
+"refused because a decoupled slave and a stuck slave look identical."
+msgstr ""
+
+#: ../../source/capabilities.rst:158 6a7cddab5201484d84e1e6a5f3155e77
+msgid "``ElectronicGear.TheSyncErrorIsTheRampLagInBothOfItsTerms``"
+msgstr ""
+
+#: ../../source/capabilities.rst:159 77771fad522d4f56a44bb282b8a43754
+msgid ""
+"na -- one state variable (the accumulated master angle); the cases check "
+"that a ratio change does not move it."
+msgstr ""
+
+#: ../../source/capabilities.rst:160 c3c6ebfd16df4ebdbcba4a7eae02630a
+msgid "A-21, C-10"
+msgstr ""
+
+#: ../../source/capabilities.rst:161 52d56e40edf641e8a958be8ad4403810
+msgid "``core/friction_comp.hpp``"
+msgstr ""
+
+#: ../../source/capabilities.rst:162 e08ee175b4134ff99b0259fe91da94c9
+msgid ""
+"``at_rest`` and `stalled` -- and the fact that the output is a *constant*"
+" at rest rather than a square wave. A Coulomb term on `sign(measured "
+"speed)` ripples by twice the term where the stage is needed most; the "
+"latch is what turns that into a number an axis can hold. `stalled` "
+"separates \"holding a load\" from \"going nowhere\", which the position "
+"signal cannot."
+msgstr ""
+
+#: ../../source/capabilities.rst:166 dcbd5fce619640e9aaa75907fd407734
+msgid ""
+"`Param` when the estimate describes a machine that cannot exist -- "
+"kinetic friction above breakaway, a negative coefficient, a non-finite "
+"value -- and in that case nothing is added at all, rather than a smaller "
+"guess."
+msgstr ""
+
+#: ../../source/capabilities.rst:168 2f539e6585d9461e8d2dec79dc11ada5
+msgid "``FrictionComp.AnEstimateAboveTheBreakawayWalksTheAxisWithNoCommandAtAll``"
+msgstr ""
+
+#: ../../source/capabilities.rst:169 4b4cfb3ecba14c20bc3745210e70632b
+msgid ""
+"na -- no time constant and no integration; the only state is the latched "
+"direction, and the cases check that it survives a re-tune."
+msgstr ""
+
+#: ../../source/capabilities.rst:171 4a4114e32cd44ebebcdc7b1512be014a
+msgid "A-18, A-19, C-9"
+msgstr ""
+
+#: ../../source/capabilities.rst:172 061bc85ecdfa46a5b917764008e798dc
+msgid "``core/hall.hpp``"
+msgstr ""
+
+#: ../../source/capabilities.rst:173 1034a42ee96f450d8fe937ac85a66cf8
+msgid ""
+"``status()`` -- three answers rather than one number: `Fault` when the "
+"code is 0 or 7 (the two a three-bit field leaves over), `State` when the "
+"interval between edges stopped looking like a sector, `Ok` otherwise -- "
+"plus `illegal_reads()`/`stale_reads()`, which say which channel fired. A "
+"code-only decoder cannot know how wrong it is; these say whether it is "
+"measuring at all."
+msgstr ""
+
+#: ../../source/capabilities.rst:177 cade8ef8395a4b39bad6bab74123dc14
+#, python-format
+msgid ""
+"`Param` on a non-finite timestamp; an illegal code answers a zero vector "
+"and `Fault` rather than a guessed vector, and an interval that leaves "
+"`[period/1.5, period*1.5]` is refused rather than adopted as the new "
+"reference -- adopting it is what a dead sensor needs to stay hidden "
+"(measured: 36 % of a revolution reporting `Ok` with a 120-degree error, "
+"against 8.4 % once refused)."
+msgstr ""
+
+#: ../../source/capabilities.rst:181 9c20defd2e2c4c8f95a36f330903f952
+msgid "``HallTracker.AStuckSensorIsCoveredByTwoChannelsAndNeitherAloneIsEnough``"
+msgstr ""
+
+#: ../../source/capabilities.rst:182 820eecd4f7bb48e19d6fc473afabdab7
+msgid ""
+"na -- a per-sample decoder; the only cross-frame state is the sector "
+"period, and a doubtful one is kept rather than taken."
+msgstr ""
+
+#: ../../source/capabilities.rst:184 03b1c759532b423cb36ca27ef44bb64d
+msgid "F-10, F-11, F-12, F-13, C-8"
+msgstr ""
+
+#: ../../source/capabilities.rst:185 d47dd99d26e44f529d8171753ab30505
+msgid "``core/brake_chopper.hpp``"
+msgstr ""
+
+#: ../../source/capabilities.rst:186 c42784af8e874b5eb15833cfa6044102
+msgid ""
+"`BrakeChopperOutput`: `duty`, the **period-average** `current_a`, "
+"`i2t_a2s` (the integral of the **mean square** current, which is not the "
+"square of that average -- they differ by `1/duty_max`), `on`, and the "
+"latched `budget_exceeded`. In SIL the same quantities are readable a "
+"second way, from the bus: `r*i2t` and the energy the meter books against "
+"the resistor agree to 0.045 %."
+msgstr ""
+
+#: ../../source/capabilities.rst:190 6a4372b42e0f46e786188f72234892c1
+msgid ""
+"`Param` for a chopper that cannot act (a zero resistor, an inverted band,"
+" a zero duty) and for a period of zero, in both cases **without** "
+"changing any state; a spent budget latches rather than resuming."
+msgstr ""
+
+#: ../../source/capabilities.rst:192 d6f61edd9ede41cc90835d59cc5d72c5
+msgid "``SilBrakeChopper.TheChopperHoldsTheBusAndTheBooksClose``"
+msgstr ""
+
+#: ../../source/capabilities.rst:193 851696c139ee4c38b14177dcc54c00e1
+msgid ""
+"na -- the bounds and the current law are asserted in the capability's own"
+" case, swept across the bus range with the wrong law computed alongside; "
+"the invariants suite is for statements that must hold whatever "
+"composition is selected, and a chopper is not on a composition axis."
+msgstr ""
+
+#: ../../source/capabilities.rst:195 19044294a48a4e40876e316bf5b62804
+msgid "``core/min_pulse.hpp``"
+msgstr ""
+
+#: ../../source/capabilities.rst:196 14740f99a8474cd58030afefe47d1b83
+msgid ""
+"`MinPulseOutput` carries `duty` (what to command), `lost_vs` (the volt-"
+"seconds the bridge will not deliver, signed and per phase) and "
+"`narrowed`; the residue is readable through `carry()`, which is what lets"
+" a trace tell \"the loop is asking for something the driver refuses\" "
+"from \"the loop is fine\"."
+msgstr ""
+
+#: ../../source/capabilities.rst:199 08a44619af6248ba97a3c0bfa5d256ed
+msgid ""
+"`Param` for a limit that cannot *be* a limit (`2*t_min > T`, a negative "
+"limit, a zero period), for a bus voltage that is not a voltage, and never"
+" by moving the residue: a refused call changes no state, so a bad "
+"configuration cannot quietly bias the average it is supposed to correct."
+msgstr ""
+
+#: ../../source/capabilities.rst:202 c9cb19c552d9491dae0bcf6b94aa28bd
+msgid "``SilMinPulse.ThePlantTransmitsWhatTheDriverAllowsAndThePolicyKnowsThePrice``"
+msgstr ""
+
+#: ../../source/capabilities.rst:203 454baeb0ef9e4629a27f704384deafba
+msgid ""
+"na -- a per-period policy whose only state is one residue, bounded by one"
+" minimum pulse and asserted as such; it produces no continuous output for"
+" the invariants suite to hold."
+msgstr ""
+
+#: ../../source/capabilities.rst:206 e20b6d006ac04323946d37abd3fa1e44
+msgid "``core/single_shunt.hpp``"
+msgstr ""
+
+#: ../../source/capabilities.rst:207 9c414605276644f4a44d1535c75026b4
+msgid ""
+"`ShuntVerdict` has three answers, not a boolean: `Measurable`, "
+"`WindowTooNarrow` (this period cannot be read, the reference is near a "
+"sector boundary) and `NoActiveVector` (nothing flows through the shunt at"
+" all, so nothing is missed), plus `ShuntWindow.window_s` / `needed_s`, "
+"which say how far from the edge the period was. A refused reconstruction "
+"returns `valid == false` **and** zeros, so a caller that checks only the "
+"numbers sees a motor drawing no current -- which is why the flag exists."
+msgstr ""
+
+#: ../../source/capabilities.rst:212 9ca3c9413aae43368b24ba14d69f7a6e
+msgid ""
+"`Param` for a configuration that can never read anything "
+"(`2*(t_settle+t_sample) >= T`), for a non-finite timing and for a duty "
+"outside `[0, 1]`; a period outside the window is **not** a `Param` -- it "
+"is `Ok` with `valid == false`, because a narrow window is the normal "
+"operating condition and not a configuration error."
+msgstr ""
+
+#: ../../source/capabilities.rst:215 4dbcb91b8ff444e296dc900a173b78f6
+msgid "``SingleShunt.TheBlindSpotIsLowModulationNotTheVoltageLimit``"
+msgstr ""
+
+#: ../../source/capabilities.rst:216 7ba182eaf218439cb106032f4977abdc
+msgid ""
+"na -- stateless, one period at a time, and the thing it holds is a "
+"verdict rather than an accumulated value."
+msgstr ""
+
+#: ../../source/capabilities.rst:218 1f7289d252f54711853e3e88f1ee2e85
+msgid "``core/mtpv.hpp``"
+msgstr ""
+
+#: ../../source/capabilities.rst:219 df4cf6712fa94d688c762ada65a9369d
+#, python-format
+msgid ""
+"`MtpvPoint` names which ceiling decided the point: `voltage_limited` is "
+"true only when the voltage ellipse moved the answer, and `current_a` is "
+"the margin to the current ceiling, so a host can tell \"the voltage is "
+"what limits me\" from \"the current is\". `base_speed_rad_s()` is derived"
+" (`v_max` over the flux magnitude at the current-limited point), not "
+"`v_max/psi_f` -- on the in-domain profile the two differ by 4x, 725 "
+"against 2520 rad/s. The boundary case is the band where *both* ceilings "
+"are active at once (725 to 1191 rad/s there): a single-constraint law "
+"reports that band as 30 % over the voltage ceiling, which is what the "
+"case asserts."
+msgstr ""
+
+#: ../../source/capabilities.rst:225 48cd7f4b952945cdb0d23978e2f64dc1
+msgid ""
+"`Param` for a ceiling that is not positive, a non-positive inductance, a "
+"negative flux linkage, zero pole pairs and anything non-finite, and "
+"`Param` from `at_speed()` for a speed that is not finite. There is no "
+"\"no answer\" case above zero speed: the `i_q = 0` point on the ellipse "
+"is always inside the current circle, so the candidate set is never empty "
+"and a zero-torque point is returned rather than a failure."
+msgstr ""
+
+#: ../../source/capabilities.rst:229 f3d47385b13a4c529d17219da7971db3
+msgid "``Mtpv.StayingOnTheCurrentLimitThereWouldOvervoltTheDrive``"
+msgstr ""
+
+#: ../../source/capabilities.rst:230 1a6c1339ddc8474da290f51f84b934d4
+msgid ""
+"na -- stateless, one speed at a time, and what it produces is an "
+"operating point rather than an accumulated value."
+msgstr ""
+
+#: ../../source/capabilities.rst:232 5288b94d80a2459390f97477859a1805
+msgid "``core/cogging_comp.hpp``"
+msgstr ""
+
+#: ../../source/capabilities.rst:233 ecb90ec75269407b9868648f0bb16de7
+msgid ""
+"`CoggingCompOutput` separates the two ways a compensator can stop "
+"working: `gain` is the frequency fade (\"we chose not to ask for this "
+"ripple\") and `clipped` is the current ceiling (\"we asked and it was "
+"refused\"), with `torque_nm` carrying the cancelled torque before either "
+"limit. A compensator that reports only its output current cannot be told "
+"apart from one that is silently doing nothing."
+msgstr ""
+
+#: ../../source/capabilities.rst:237 9e3733a7708f4e95908cbee798f928fa
+msgid ""
+"`Param` for a machine that cannot produce torque at the `id` it is given "
+"(`dT/diq = 0` at the flux-nulling current, where no current can cancel a "
+"torque), for any non-finite input, and for a fade band that is inverted "
+"or non-finite. A table of nothing is `Ok` with a zero offset -- there is "
+"no table, so there is no decision to report."
+msgstr ""
+
+#: ../../source/capabilities.rst:240 e5965c037fac4fc4985ed03093126b02
+msgid "``CoggingComp.ATableWithTheWrongPhaseCancelsNothingAtAll``"
+msgstr ""
+
+#: ../../source/capabilities.rst:241 ff46de03bd4c44b2893038154e6535a1
+msgid ""
+"na -- stateless, one period at a time, and what it produces is an offset "
+"rather than an accumulated value."
+msgstr ""
+
+#: ../../source/capabilities.rst:243 f747f304097e4b9fa7b7f256dc156f9b
+msgid "``core/cogging_learn.hpp``"
+msgstr ""
+
+#: ../../source/capabilities.rst:244 0862fa4a38fc426789d077e0a4fc81d6
+msgid ""
+"`CoggingLearnReport` reports `revolutions` and the speed band on "
+"**every** exit, including the refused ones: a refusal that says nothing "
+"leaves the caller guessing whether to spin longer, slower, or steadier, "
+"and those are three different actions. A table it never saw is absent "
+"from the output rather than extrapolated, because a compensator acting on"
+" an invented harmonic injects a ripple of its own. **Reachable from C "
+"since 0.1.9** (six `experimental` entries: "
+"`foc_cogging_learn_create/accumulate/ready/finish/reset/destroy`), so a "
+"script can learn a machine's table. What this answer is, is a **table**, "
+"so the C contract carries a capacity clause the C++ one does not need: "
+"`finish()` echoes `required` (how many entries the answer needs) and "
+"`capacity` (how many the caller offered) on **every** return, and given "
+"too few slots it refuses with `FOC_ERR_PARAM` instead of writing a "
+"shorter table -- a truncated table tells the caller it asked for fewer "
+"orders, and the harmonics it is missing are exactly the ones nobody kept "
+"a record of. Passing `out_table == NULL` asks for the report alone: "
+"`FOC_OK` with `count == 0` then means *the window is a measurement and "
+"there was nowhere to put it*, which the C++ signature cannot say, because"
+" there `nullptr` with `capacity == 0` is just another refusal. A short "
+"buffer is the caller's defect and answers `FOC_ERR_PARAM`; the window's "
+"own refusals stay `FOC_ERR_STATE`, and both are reported: the buffer "
+"verdict wins the return code because it is the one the caller can fix "
+"without changing the physics, and `result.status` still names the "
+"window's verdict underneath."
+msgstr ""
+
+#: ../../source/capabilities.rst:260 4f3e715b768c40098b4ce6d18319a700
+msgid ""
+"`State` for fewer revolutions than configured, `|omega|` outside `[min, "
+"max]` either side, a window whose speed spread exceeds `speed_tolerance`,"
+" a saturated sample anywhere in it, and a destination with no room for "
+"the table; `Param` for order 0 (a constant torque is a load, not "
+"cogging), an inverted or non-finite band, a non-finite tolerance, and "
+"unusable machine parameters. Nothing was written in any of those cases."
+msgstr ""
+
+#: ../../source/capabilities.rst:264 f7d74b774bc64afc80296aca888cd8dd
+msgid "``CoggingLearn.TheLearnedTableCancelsTheInjectionItWasLearnedFrom``"
+msgstr ""
+
+#: ../../source/capabilities.rst:265 afab095286244775bbebc4eddaf55749
+msgid ""
+"na -- the accumulators are sums over a finite window that is thrown away "
+"on `reset()`, and what leaves the class is a table rather than a per-tick"
+" output."
+msgstr ""
+
+#: ../../source/capabilities.rst:268 c23d6f08fb6d48c784b380aedc4d98ee
+msgid "``core/thermal_limit.hpp``"
+msgstr ""
+
+#: ../../source/capabilities.rst:269 bea05722cda342d2b4f34040b6672aef
+msgid ""
+"`ThermalBudget` separates \"this current can be held forever\" from "
+"\"this current can be held for five more seconds\" instead of reporting "
+"one number for both: `crosses == false` with `seconds` infinite is the "
+"sustainable answer, and collapsing the two is how a scheduler throttles a"
+" machine that was never in trouble. `ThermalLimitReport` reports "
+"`settle_at_cont_c` so the assumption behind the continuous current is "
+"visible rather than implied."
+msgstr ""
+
+#: ../../source/capabilities.rst:273 35a01a59427b4174ba2aebb5a79c287c
+msgid ""
+"`Param` for `rt <= 0` (no cooling path), `rs <= 0` (no copper to heat), a"
+" negative `alpha` (a winding that cools as it heats is not a model), and "
+"a reserve that is not above ambient (no current can heat the winding down"
+" to it). A missing `Ct` is *not* an error: the continuous current does "
+"not need it, and only the budget then reports that it cannot name a time."
+msgstr ""
+
+#: ../../source/capabilities.rst:277 dad1c5ab3c704be7af0bb1158457fa26
+msgid "``ThermalLimit.TheNaiveLawReadsFifteenPercentHighAndThePlantSaysSo``"
+msgstr ""
+
+#: ../../source/capabilities.rst:278 c7ae7a73ae6944e4b05eb7b971c8efbf
+msgid ""
+"na -- stateless: every answer is a closed form of the configuration and "
+"its arguments, and nothing is accumulated."
+msgstr ""
+
+#: ../../source/capabilities.rst:280 1f579abed289400390becd1fde1db196
+msgid "``core/watchdog.hpp``"
+msgstr ""
+
+#: ../../source/capabilities.rst:281 9eafa9fff22948488f73c1b0a798bc06
+msgid ""
+"`WatchdogState` separates the four answers a feeder can leave behind: "
+"`Feeding` (inside the window), `Expired` (the window passed), `ClockLost`"
+" (the stamp went backwards) and `Unarmed` (nothing measured yet). The "
+"last two are the point: `Unarmed` is reported as a `State` error and "
+"never as `Ok`, because a watchdog nobody feeds protects nothing, and "
+"`ClockLost` is a separate state from `Expired` because the verdict is the"
+" same (stop) and the diagnosis is not. A latched report repeats the "
+"numbers that caused the latch instead of growing with the clock."
+msgstr ""
+
+#: ../../source/capabilities.rst:286 a42f8b466d3c46618cea8b070b182d1f
+msgid ""
+"`Param` for a zero window (it would trip on every feeder and stop a drive"
+" for a reason nobody can act on) and for a kick before any window was "
+"accepted -- and a refused window changes nothing, including a latch. "
+"`State` for a poll or kick before the first kick, and for a kick after a "
+"latch (it does not re-arm and is not counted as a feed). `Fault` once "
+"expired or clock-lost."
+msgstr ""
+
+#: ../../source/capabilities.rst:290 df1ec0a08279474aa7b54a42f94222df
+msgid "``Watchdog.TheDeadlineIsExactForEveryWholeNumberOfControlPeriods``"
+msgstr ""
+
+#: ../../source/capabilities.rst:291 2691d10c3b2748599f421585f5e919a8
+msgid ""
+"na -- it holds one timestamp and one latch, neither of which is a "
+"continuous-output invariant; the latch is pinned by "
+"`Watchdog.AFeederThatComesBackDoesNotClearTheTrip`, which is a sequence "
+"rather than a per-tick property."
+msgstr ""
+
+#: ../../source/capabilities.rst:294 a4fd4861f8eb4d5a8de555d32502633d
+msgid "``core/auto_tune.hpp``"
+msgstr ""
+
+#: ../../source/capabilities.rst:295 2c7d150a36424bfa8ae0575e911cb855
+msgid ""
+"`SpeedTuneResult` separates \"here are gains measured from this machine\""
+" from \"I could not measure this machine\": `valid` is the bit, and on a "
+"refusal the gains it carries are the **nameplate** ones, so a caller that"
+" applies whatever it gets applies nothing new. `reason` names which of "
+"seven refusals fired, because \"spin with a varying current\" and "
+"\"something is pulling on the axis\" are different actions. The fit keeps"
+" an **intercept** so a constant unknown load cannot be attributed to the "
+"current. **Reachable from C since 0.1.9** (five `experimental` entries: "
+"`foc_autotune_create/accumulate/finish/reset/destroy`), so a C or Python "
+"consumer can run the procedure. A session is its own opaque handle rather"
+" than a motor register -- nothing is readable tick by tick, only a window"
+" to feed and an answer to ask for -- and `finish()` answering `FOC_OK` "
+"with `valid == 0` is a refusal, not a failure."
+msgstr ""
+
+#: ../../source/capabilities.rst:304 787e482ca0004abe9feea08acbc692ed
+msgid ""
+"`Param` for a non-positive `kt`, `j_expected`, `bandwidth` or `i_max`, a "
+"negative `b_expected`, a non-positive tolerance or residual bound, and a "
+"window shorter than three samples. `State`-shaped refusals arrive as "
+"`valid == false` with a reason: too short a window, a saturated period, a"
+" current that never varied, a residual above the bound, a negative "
+"mechanical pole, and a measured inertia outside the tolerance."
+msgstr ""
+
+#: ../../source/capabilities.rst:308 b340e0fe155048baa6f89c15e123ceb4
+msgid "``AutoTune.ADoubledInertiaIsRefusedAndTheGainsComeBackUntouched``"
+msgstr ""
+
+#: ../../source/capabilities.rst:309 e222798cdcbb47578fbb6d1abec3562d
+msgid ""
+"na -- the window is a finite sum that is thrown away on `reset()`, and "
+"what leaves the class is a `Pi` config rather than a per-tick output."
+msgstr ""
+
+#: ../../source/capabilities.rst:312 aa34281d23db4a7db4e31bfeeabbec5b
+msgid "``comm/frame.hpp``"
+msgstr ""
+
+#: ../../source/capabilities.rst:313 a880346b25dd46a39e6b528d0e58cd38
+msgid ""
+"`FrameStatus` names which check failed (start / length / checksum) "
+"instead of one generic failure, and `SequenceChecker` reports `missing` /"
+" `duplicate` / `out_of_order` separately. `missing` counts the frames "
+"between the one expected and the one that arrived, so a single skipped "
+"frame reports 1."
+msgstr ""
+
+#: ../../source/capabilities.rst:316 498d2dbed23b4d039aaa57eee8c10660
+msgid ""
+"`encode_frame` returns 0 and writes nothing when the frame does not fit; "
+"`decode_frame` refuses a short buffer, a late start byte and an over-long"
+" length before touching the receiver."
+msgstr ""
+
+#: ../../source/capabilities.rst:318 3128eddfaad44ab6986dc146bc5e3367
+msgid "``Frame.NoSingleByteCorruptionIsAccepted``"
+msgstr ""
+
+#: ../../source/capabilities.rst:319 7faaebcb45984ebe8acd66ab6ee69e96
+msgid ""
+"na -- the codec holds no state; `SequenceChecker` holds one byte and one "
+"flag, and neither is a continuous-output invariant."
+msgstr ""
+
+#: ../../source/capabilities.rst:322 a9743e64a701431e935d0ee472a9963a
+msgid "``comm/encoder_stream.hpp``"
+msgstr ""
+
+#: ../../source/capabilities.rst:323 b262cb4943e1439291a52f07a670f1d2
+msgid ""
+"`EncoderFrame` separates \"this frame arrived and is not trustworthy\" "
+"(`State` plus `crc_ok == false`, with the counts still filled in so a log"
+" has something to show) from \"this buffer cannot be read at all\" "
+"(`Param`, with no value handed back). `TurnAssembler::Step` separates a "
+"wrap from a gap: `jumped == true` means the travel was unknowable, and "
+"then `unwrapped` does **not** move."
+msgstr ""
+
+#: ../../source/capabilities.rst:327 e5ce1dd0762f4dec8ed35a000e9b2661
+msgid ""
+"`Param` for a null buffer, a stream whose length is not `frame_bits()`, a"
+" layout with 0 single-turn bits, more than 31 single-turn bits, more than"
+" 32 data bits, or negative multi-turn bits; and for an assembler whose "
+"single-turn bits are outside `1..31` or whose declared maximum step is 0 "
+"or above half a turn (above which the wrap question is undecidable). "
+"`State` for a CRC mismatch, a failed-CRC frame fed to the assembler, or a"
+" gap."
+msgstr ""
+
+#: ../../source/capabilities.rst:331 c593646eaec04833b27531e2138de00c
+msgid "``EncoderStream.TheLengthIsRefusedAndAShiftIsTheFramingLayersProblemNotTheCrc``"
+msgstr ""
+
+#: ../../source/capabilities.rst:332 218d4610f734408782b2fa9ed6808afd
+msgid ""
+"na -- the decoder is a pure function of one frame, and the assembler "
+"holds one previous count and one origin, neither of which is a "
+"continuous-output invariant."
+msgstr ""
+
+#: ../../source/capabilities.rst:335 96e62e3374f34722b8c35ea4d32978ef
+msgid "``comm/register_map.hpp``"
+msgstr ""
+
+#: ../../source/capabilities.rst:336 457f5bed695b49539a4e3f76201cb710
+msgid ""
+"`read_register()` answers one 32-bit word per register; `RegisterKind` "
+"says whether to read it as an unsigned count, a signed code, or IEEE-754 "
+"bits."
+msgstr ""
+
+#: ../../source/capabilities.rst:338 27444db8d41445b68c37c63f2383f224
+msgid ""
+"a NULL receiver, an id with no row, and any register whose C function "
+"refuses all return `false` **with the word untouched** -- except the two "
+"count registers, whose C functions document NULL as 0."
+msgstr ""
+
+#: ../../source/capabilities.rst:340 f6bd019f56fc4d13aeea566a8ec6b2b6
+msgid "``RegisterMap.ARefusedReadLeavesTheWordAloneAndTheTwoKindsOfAnswerStayDifferent``"
+msgstr ""
+
+#: ../../source/capabilities.rst:341 47b47824f31940d4871925603f185e1e
+msgid "na -- read-only and idempotent; nothing here accumulates."
+msgstr ""
+
+#: ../../source/capabilities.rst:343 321f5ec27b214d699b42c3e7cd2ebdb1
+msgid "``core/trace_parse.hpp``"
+msgstr ""
+
+#: ../../source/capabilities.rst:344 a16619d066904a1fa7abc5c87802db97
+msgid ""
+"`missing` (inferred inside the window), `lost` (declared before it), "
+"`gaps`, `reversals`, `segments`, and `complete` only when nothing is "
+"missing either way. `consistent` is the parser's own check: `missing` is "
+"counted twice, by summing the per-pair skips and from the two endpoint "
+"timestamps."
+msgstr ""
+
+#: ../../source/capabilities.rst:347 1be6843df98b45cc87feaafb9ad51120
+msgid ""
+"`Param` for a zero period or a span whose samples pointer does not match "
+"its size; a window with no clock reports `timed == false` rather than a "
+"fabricated consistency."
+msgstr ""
+
+#: ../../source/capabilities.rst:349 10921ad5266843769888152674e17fb4
+msgid "``TraceParse.AWrapIsOnePeriodAndNotAHole``"
+msgstr ""
+
+#: ../../source/capabilities.rst:350 1b88c165a9364128bd776763047f80aa
+msgid ""
+"na -- a host-side tool, not a control-path component; it holds no state "
+"between calls."
+msgstr ""
+
+#: ../../source/capabilities.rst:352 eff1fcd74d544716ac6d714b7ee81c4b
+msgid "``core/six_step.hpp``"
+msgstr ""
+
+#: ../../source/capabilities.rst:353 11d0179962d040f08b45e25450bb2aa4
+msgid ""
+"`sector`, `changed`, `holding` and `skipped`, plus "
+"`rejected()`/`illegal()` counters. `holding` and `skipped` are different "
+"things and the duty alone cannot tell them apart: one means the pins "
+"named no position, the other means they named one the rotor cannot have "
+"reached."
+msgstr ""
+
+#: ../../source/capabilities.rst:356 babd4a7ee3824a9783e89e0646134d73
+msgid ""
+"`Param` for an amplitude outside `(0, 1]` or a step allowance outside "
+"`1..5` -- a table driven at zero amplitude produces no torque while "
+"looking like it is running."
+msgstr ""
+
+#: ../../source/capabilities.rst:358 4eb4f9082d7f4d29a40cba0eda289811
+msgid "``SixStep.WalkingTheSectorsTurnsTheVectorSixtyDegreesEach``"
+msgstr ""
+
+#: ../../source/capabilities.rst:359 7c33409067134daa875b05e4f0c89193
+msgid ""
+"na -- each call maps a code to a vector; the state it keeps is the last "
+"accepted sector, which is the boundary case above rather than a "
+"continuous-output invariant."
+msgstr ""
+
+#: ../../source/capabilities.rst:362 598a76b95ddf41d2bfb032fa6ba60188
+msgid "``core/command_source.hpp``"
+msgstr ""
+
+#: ../../source/capabilities.rst:363 77ffa061fc5647f885516ce01555d4af
+msgid ""
+"`analog`: `in_deadband`; `ppm`: `valid`; `step`: `pulses`, `delta_rad` "
+"and `jump`. A command source whose only output is a number cannot be told"
+" apart from a dead link, and `jump` is the difference between \"the axis "
+"moved\" and \"the axis moved further than one period of motion allows, so"
+" a count was lost\"."
+msgstr ""
+
+#: ../../source/capabilities.rst:366 c540412a53d840ebbc6ce9d39d868175
+msgid ""
+"`Param` when the interface cannot be mapped exactly (`pulses_per_rev == "
+"0`), when the analogue band is not below full scale, or when the pulse-"
+"width window is empty or inverted. An interface that cannot be mapped "
+"exactly is refused rather than approximated, because the approximation is"
+" a position error that never goes away."
+msgstr ""
+
+#: ../../source/capabilities.rst:369 1dac6add7e0f41eaae040955886ea9fa
+msgid "``CommandSource.AWholeTurnIsExactlyAWholeTurn``"
+msgstr ""
+
+#: ../../source/capabilities.rst:370 5bc6d8d8b47c470cb331c282b05ac797
+msgid ""
+"na -- each call is a pure map from its input to a command; there is no "
+"state to hold invariant across time."
+msgstr ""
+
+#: ../../source/capabilities.rst:372 d53c18a2f4614c25b5c36be1269b5515
+msgid "``core/step_metrics.hpp``"
+msgstr ""
+
+#: ../../source/capabilities.rst:373 d21195a31d914761adbf45bd5610402d
+msgid ""
+"``status``, and it carries weight: ``Ok`` means a first-order decay was "
+"fitted, ``State`` means the window carried none -- and the settling "
+"numbers stay valid in that case, because a response can settle without "
+"being fittable. A bandwidth of 0 is impossible under ``Ok``, so zero "
+"cannot be mistaken for \"not measured\"."
+msgstr ""
+
+#: ../../source/capabilities.rst:376 a10cadfc1d8047a0a8d14ae515d1e397
+msgid ""
+"``Param`` for a window that cannot describe a step: fewer than three "
+"samples, a non-positive ``dt_s``, a negative band, or a window that does "
+"not move at all (``y[0] == target``)."
+msgstr ""
+
+#: ../../source/capabilities.rst:378 176cb0e1c73844169aa36314e1c45353
+msgid "``StepMetrics.AWindowWithoutADecayReportsStateRatherThanAConfidentNumber``"
+msgstr ""
+
+#: ../../source/capabilities.rst:379 ../../source/capabilities.rst:387
+#: 1db9615fba37473f9767f900f3562884 9a7e06a2c1184e3f8273fcb8315ca8e5
+msgid "na -- it measures other capabilities' arithmetic and owns none of its own."
+msgstr ""
+
+#: ../../source/capabilities.rst:380 587f41eae5f046d1948bce99362d46a0
+msgid "F-8, F-9"
+msgstr ""
+
+#: ../../source/capabilities.rst:381 454e5afd334e41708ed870da2812e975
+msgid "``core/sinusoid_fit.hpp``"
+msgstr ""
+
+#: ../../source/capabilities.rst:382 24f318e5f58445669c5b049d51efcd81
+msgid ""
+"``status``: ``Ok`` for a conditioned fit, ``State`` when the window is "
+"shorter than one period of the frequency asked about -- where a number "
+"would be produced but would not be the tone's amplitude."
+msgstr ""
+
+#: ../../source/capabilities.rst:384 c16ed3d26eee46fa995cd210db02346c
+msgid ""
+"``Param`` for fewer than six samples, a non-positive ``dt_s`` or "
+"frequency, or a frequency at or above Nyquist, where the projection "
+"aliases and reports the tone at a frequency the signal does not have."
+msgstr ""
+
+#: ../../source/capabilities.rst:386 e24428eabd704118ab5f6ab4ceb070af
+msgid "``BodeSweep.TheThreeDecibelPointIsTheBandwidthTheGainLawWasAskedFor``"
+msgstr ""
+
+#: ../../source/capabilities.rst:388 89980f4d2fab416daedcc62e8d604927
+msgid "A-12"
+msgstr ""
+
+#: ../../source/capabilities.rst:389 f330d4e62afc4f2e8b7b4410bfe53bb3
+msgid "``motor/torque_map.hpp``"
+msgstr ""
+
+#: ../../source/capabilities.rst:390 d3e3f53948dc49168ca68521119bd2c4
+msgid ""
+"``status`` for the map and ``limited`` for every command. The second one "
+"is the point: a clipped command and an obeyed one are otherwise "
+"identical, and a caller who cannot tell them apart reports a saturating "
+"tensioner as holding."
+msgstr ""
+
+#: ../../source/capabilities.rst:393 552d4063a544404aad8f14672c588aed
+msgid ""
+"``Param`` when the nameplate produces no torque per amp (`kt <= 0`), has "
+"no pole pairs, or when the limits do not describe an interval; and "
+"``Param`` from `torque_command` when the d-axis current cancels the "
+"torque constant and no current can deliver the request -- a refusal, "
+"because clamping would report a torque that cannot be produced."
+msgstr ""
+
+#: ../../source/capabilities.rst:396 eb745568d9dc416396dcad6057559f08
+msgid "``TorqueMap.TheLimitsAreNarrowedToWhatTheInverterCanDeliver``"
+msgstr ""
+
+#: ../../source/capabilities.rst:397 ce89c055123e4fd8b84ed898f9081455
+msgid "na -- algebraic, no state to keep invariant across frames or time scales."
+msgstr ""
+
+#: ../../source/capabilities.rst:398 0730d77574f04b27816775d47ac7cedc
+msgid "A-14"
+msgstr ""
+
+#: ../../source/capabilities.rst:399 eb3ecee8adb44e1d8524ecc07c2e256e
+msgid "``core/stall_start.hpp``"
+msgstr ""
+
+#: ../../source/capabilities.rst:400 5e1d5ee422a44a319b4d182a0f15d410
+msgid ""
+"``phase()`` and `limited`. \"starting\", \"released\" and \"cannot "
+"start\" are three states rather than one number, and `Failed` is a first-"
+"class answer: a load the drive cannot move is a fact about the machine, "
+"and a sequence that ramps forever instead of saying so leaves the "
+"operator watching a silent axis. Through `Motor` the same two facts are "
+"`stall_start_phase()` and `stall_start_torque_nm()`, and they have to be "
+"read together: the phase says whether the torque beside it is still the "
+"sequence's or the caller's again."
+msgstr ""
+
+#: ../../source/capabilities.rst:405 b2dd5223dc264240b277d6612c9ca99e
+msgid ""
+"``Param`` from `validate()`/`begin()` when the limit is not above the "
+"breakaway point -- a sequence whose ceiling is under the breakaway can "
+"only ever produce `Failed`, so accepting it would accept a recipe known "
+"in advance not to work -- and when the ramp, release speed or grace "
+"period is not positive. `Motor::begin_stall_start()` adds the admission "
+"the sequence cannot make for itself: `State` when the axis is not running"
+" or is still aligning, because a torque source has no business running "
+"during a forced angle. Both refusals leave the phase `Idle` rather than "
+"half-way into a ramp."
+msgstr ""
+
+#: ../../source/capabilities.rst:411 b293213f43a743958a753f9569a71633
+msgid "``StallStart.AStuckAxisSaysFailedInsteadOfRampingForever``"
+msgstr ""
+
+#: ../../source/capabilities.rst:412 36bc60d3c8c24e319d813a1fee7a8354
+msgid "na -- a sequencer over other capabilities, not an equation of its own."
+msgstr ""
+
+#: ../../source/capabilities.rst:413 62af5dc245c442e091312016a38ff9d9
+msgid "C-5"
+msgstr ""
+
+#: ../../source/capabilities.rst:414 a88a8e63934c4515be944d688fd0c675
+msgid "``core/observer/observer_policy.hpp``"
+msgstr ""
+
+#: ../../source/capabilities.rst:415 40c84770430c4d26a186b602b1cc4050
+msgid ""
+"na -- concepts: it names what an observer must provide and provides "
+"nothing itself."
+msgstr ""
+
+#: ../../source/capabilities.rst:416 fe02ec6a69c8447d9bfa2befe507e201
+msgid ""
+"na -- a type either satisfies the concept or fails to compile, which is "
+"the strongest admission there is."
+msgstr ""
+
+#: ../../source/capabilities.rst:417 28cbc14964044edf808f2b18ea326b38
+msgid "na -- there is no runtime behaviour to bound."
+msgstr ""
+
+#: ../../source/capabilities.rst:418 ad4b69a236004ef0818e03e9d46dd6fe
+msgid "na -- there is no arithmetic here to be invariant about."
+msgstr ""
+
+#: ../../source/capabilities.rst:420 12a7582be5e54ecba8a3073c440ea82d
+msgid "``core/observer/ideal_observer.hpp``"
+msgstr ""
+
+#: ../../source/capabilities.rst:421 46dff6965958418f9662a65a1532bef8
+msgid ""
+"``reset()``, ``set_truth()`` -- a test double told the answer; it has no "
+"failure mode to report."
+msgstr ""
+
+#: ../../source/capabilities.rst:422 66f1446674c74a3bbe6342d3b48b24ed
+msgid ""
+"na -- it accepts whatever truth it is given, which is the whole point of "
+"it."
+msgstr ""
+
+#: ../../source/capabilities.rst:423 968f43aad60147ee8524da58d43fd4ae
+msgid ""
+"na -- only the SIL harness uses it; the harness is not part of the "
+"shipped library."
+msgstr ""
+
+#: ../../source/capabilities.rst:424 53e1454271d9465e9c0ab01da7446365
+msgid "na -- no arithmetic beyond assigning the truth it was handed."
+msgstr ""
+
+#: ../../source/capabilities.rst:426 13c5ce19327744718b481c6707252ec7
+msgid "``core/observer/back_emf_observer.hpp``"
+msgstr ""
+
+#: ../../source/capabilities.rst:427 9d38653a736545c79fd9747ad23c8013
+msgid ""
+"``state()``, ``flux()`` -- and deliberately no ``locked()``: there is no "
+"channel that could withhold a verdict, so reporting one would be a "
+"fiction."
+msgstr ""
+
+#: ../../source/capabilities.rst:429 b017aeebfec04ae9b3adb3aed788fe0a
+msgid ""
+"na -- parameters arrive through ``apply_params()``; there is no "
+"configuration to contradict."
+msgstr ""
+
+#: ../../source/capabilities.rst:430 becf13a6a8014b6984e64c4612afe244
+msgid ""
+"todo -- standstill is the obvious limit: there is no signal there. No "
+"case pins it yet, and writing the row without the case is the folklore "
+"the boundaries gate exists to prevent."
+msgstr ""
+
+#: ../../source/capabilities.rst:432 33168a97317e4e09a9a31ef50b933b23
+msgid "na -- a flux integration, not an algebraic identity."
+msgstr ""
+
+#: ../../source/capabilities.rst:434 8315ab2e40704afe90fa2b77c6aff63a
+msgid "``core/observer/dual_inductance_observer.hpp``"
+msgstr ""
+
+#: ../../source/capabilities.rst:435 da3d97b12bea441a9078f249e2c9eaf5
+msgid ""
+"``state()``, ``flux()``, ``root_gap_rad()`` -- the last is a diagnostic "
+"and not an estimate: it says how far apart the two rotor positions "
+"consistent with the measured flux and current are."
+msgstr ""
+
+#: ../../source/capabilities.rst:437 33492f786e894a60b8a392f5d6d664e3
+msgid ""
+"``FluxSource::Corrected`` is admitted only with ``correction_gain`` in "
+"(0, 1]; ``Integrator`` never reads the gain, so leaving it at zero is not"
+" refused for a value it does not use."
+msgstr ""
+
+#: ../../source/capabilities.rst:439 8014e38c04c44c6fbc3fda649de8efa3
+msgid ""
+"none -- measured, and the hole closes the other way round: the second "
+"root of the quadratic is never a rotor position (modulus 20 to 68 against"
+" 1 across `i_d` = -0.5 to -2.5 A, its angle pi away), so there is no "
+"physical branch for continuity to pick wrongly; and a seed no angle "
+"explains is *not* corrected -- 0.1128 rad after one step and 0.1128 after"
+" 200 -- which is why `seed_at()` takes an angle rather than a guess. See "
+"``DualInductanceObserver.TheSecondRootIsNotARotorPositionAndAWrongSeedIsPermanent``."
+msgstr ""
+
+#: ../../source/capabilities.rst:444 2dcd1028b1aa4794a04a50bd831b82cb
+msgid "na -- one complex square root and one quadratic, evaluated pointwise."
+msgstr ""
+
+#: ../../source/capabilities.rst:446 cdd7b3af333149ae91e20b4e631720b0
+msgid "``core/observer/nonlinear_flux_observer.hpp``"
+msgstr ""
+
+#: ../../source/capabilities.rst:447 9b2c7a63112e4f818346c545e1aa49a2
+msgid "``locked()``, ``state()``, ``flux()``"
+msgstr ""
+
+#: ../../source/capabilities.rst:448 8583f1c4d1c54748bb718e2bace9e4ff
+msgid ""
+"na -- parameters arrive through ``apply_params()``; saliency enters the "
+"flux law, not a switch."
+msgstr ""
+
+#: ../../source/capabilities.rst:449 6cc4fe0dcad04287912797bb676c04ac
+msgid ""
+"none -- the mode is admitted on facts about the machine, and its "
+"estimate's sensitivity to those facts is measured rather than assumed."
+msgstr ""
+
+#: ../../source/capabilities.rst:451 0e3faaa1a06649aeb083cf766307a798
+msgid "na -- a flux law with a saturation term, evaluated pointwise."
+msgstr ""
+
+#: ../../source/capabilities.rst:453 da6084f3bcd94275af752f4f2c012600
+msgid "``core/observer/hfi_observer.hpp``"
+msgstr ""
+
+#: ../../source/capabilities.rst:454 73feed2779b2428a83292df13286fcca
+msgid ""
+"``locked()``, ``error()``, ``hf_current_a()``, ``status()`` -- the error "
+"signal is the demodulated quantity, so \"no measurement\" and \"zero "
+"error\" are distinguishable numbers."
+msgstr ""
+
+#: ../../source/capabilities.rst:456 95a5047f90614c65ba26df59b3b76774
+msgid ""
+"``status() == ErrorCode::Param`` for a surface machine, an absent "
+"carrier, or a carrier the control rate cannot resolve; ``update()`` "
+"refuses the last one too, on the path that bypasses the bridge."
+msgstr ""
+
+#: ../../source/capabilities.rst:458 48343ad7c0b34a46995232733536573e
+msgid "``HfiObserver.ACarrierThisControlRateCannotResolveIsRefusedNotFrozen``"
+msgstr ""
+
+#: ../../source/capabilities.rst:459 10b952abf025427897116c0e2ed80c24
+msgid ""
+"na -- a demodulation with a carrier; its algebra is the PLL's, which is "
+"stateful and nonlinear."
+msgstr ""
+
+#: ../../source/capabilities.rst:460 b53200bcae844be38826046770786c65
+msgid "F-2"
+msgstr ""
+
+#: ../../source/capabilities.rst:461 ae2ad1d7a18c4ba09a81a5f7bbfdf006
+msgid "``core/observer/blended_observer.hpp``"
+msgstr ""
+
+#: ../../source/capabilities.rst:462 272979db43c0410abea729c59f9178af
+msgid ""
+"``locked()``, ``blend()`` -- the mix is readable, so \"which observer is "
+"carrying the estimate right now\" is a number rather than an inference."
+msgstr ""
+
+#: ../../source/capabilities.rst:464 86d5a06208ee41e7b9ececeeaa6f778e
+msgid "``ErrorCode::Param`` when the hand-over band is inverted or empty."
+msgstr ""
+
+#: ../../source/capabilities.rst:465 edf90eda1fb94d07a893ea204ac5c884
+msgid "``SilHfiEnvelope.AcquiringARotorAlreadyRunningNeedsASeed``"
+msgstr ""
+
+#: ../../source/capabilities.rst:466 fb976cda1939415da9aec1ea48012c2a
+msgid "na -- a schedule over two stateful observers."
+msgstr ""
+
+#: ../../source/capabilities.rst:468 f7d69015f0524581bc65e54c91c24a27
+msgid "``core/observer/switchable_observer.hpp``"
+msgstr ""
+
+#: ../../source/capabilities.rst:469 ce8161819f0d41f8b8682284ab2d8a1b
+msgid ""
+"``kind()``, ``locked()``, ``error()``, ``injection_ab()`` -- the slot "
+"reports which mode is really running and what that mode is measuring, so "
+"a refused request cannot masquerade as a switch."
+msgstr ""
+
+#: ../../source/capabilities.rst:471 81457ed638e847f59320ab66a9782941
+msgid ""
+"``hand_over_to()`` answers ``ErrorCode::State`` outside ``Run``, and "
+"``ErrorCode::Param`` when the setup in force cannot support the requested"
+" mode; ``set_kind()`` is the compile-time-only path."
+msgstr ""
+
+#: ../../source/capabilities.rst:473 92a7f272d0834edba2292217c84ea32c
+msgid "``SwitchableObserver.TheSelectedObserversLockVerdictIsReachableThroughTheSlot``"
+msgstr ""
+
+#: ../../source/capabilities.rst:474 8efd75f547554599baae58869747d7bd
+msgid "na -- a dispatcher; the invariants belong to the modes it dispatches to."
+msgstr ""
+
+#: ../../source/capabilities.rst:475 06ddf5330b8a4804b2d00582c8affd71
+msgid "F-1"
+msgstr ""
+
+#: ../../source/capabilities.rst:476 607c53b82d094ffdb49947c1d5db0017
+msgid "``motor/motor.hpp``"
+msgstr ""
+
+#: ../../source/capabilities.rst:477 f88fb2c34d1a4dc0a93987ea9832841c
+msgid ""
+"``status()`` (mode, fault, observer, locked), ``error()``, ``trace()`` --"
+" the composed loop answers \"is it running, what is it commutating on, "
+"what has it recorded\", so a wrong angle is a named mode rather than a "
+"symptom. ``trace()`` is what makes the loop's own decisions auditable "
+"after the fact."
+msgstr ""
+
+#: ../../source/capabilities.rst:480 3cf40c4d64d740edb2a8c23638981443
+msgid ""
+"``init()`` answers ``ErrorCode::Param`` on a contradictory configuration "
+"and ``set_observer()`` refuses a mode the setup in force cannot support "
+"-- on facts (no carrier, no saliency), not on a switch."
+msgstr ""
+
+#: ../../source/capabilities.rst:482 b548d28570184032b505f8013422f927
+msgid "``MotorInjection.ASensoredAxisInjectsWithoutSurrenderingTheAngle``"
+msgstr ""
+
+#: ../../source/capabilities.rst:483 9bf2483982fe44b29fba0005f042a2dc
+msgid ""
+"ScalingImpedanceAndVoltageTogetherChangesNothing, "
+"TheClampIsContinuousAndAJumpWouldShow"
+msgstr ""
+
+#: ../../source/capabilities.rst:484 3e093ffae3ec417691f8bca8debc3d23
+msgid "F-6, F-7"
+msgstr ""
+
+#: ../../source/capabilities.rst:486 63fcd3de882a468abb2dc286e74e1646
+msgid ""
+"Twenty-three headers under ``core/`` and ``motor/`` are not listed yet: "
+"alignment, board_check, commissioning, deadtime, feedforward, "
+"field_weakening, homing, machine_map, machine_map_text, machine_params, "
+"motion_profile, polarity, position, position_reference, reference, sm, "
+"startup, svpwm, traits, types, version, and the two remaining ``motor/`` "
+"headers. They are named in ``capability-scope.json`` so the count is "
+"visible, and so that a *new* header cannot join them silently."
+msgstr ""
+

@@ -26,7 +26,7 @@ L3 claim; every reason must actually be a reason. A row that cannot be filled ho
 point -- the alternative is a library that grows algorithms and forgets how they fail.
 
 The three questions a criterion has to survive before it is written down
-----------------------------------------------------------------------
+--------------------------------------------------------------------------
 
 Not every one of them can be checked by a machine, which is why they live here as prose rather than
 as a gate. Each is a defect this repository has actually shipped, and each was invisible to the
