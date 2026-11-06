@@ -17,7 +17,7 @@
 
   <CoSimulation
       modelIdentifier="foc_controller"
-      canHandleVariableCommunicationStepSize="true"
+      canHandleVariableCommunicationStepSize="false"
       canInterpolateInputs="false"
       maxOutputDerivativeOrder="0"
       canRunAsynchronuously="false"

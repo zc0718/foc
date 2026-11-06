@@ -1,0 +1,62 @@
+{
+  "_what": "Every shape this library can be consumed in, what demonstrates it, and whether its claim is made or is a recorded gap. One file because a form that nobody registered is a form nobody promised anything about -- it can appear, be half-finished, and no gate notices, which is how 'implemented' and 'shipped' became the same word here once before.",
+  "_who_reads_it": "form_gate.py. A face found in the tree that is not registered here fails; a registered face whose entry or evidence is missing fails; a face with neither a claim nor a stated gap fails. Nothing reads it to make a promise -- it records which promises exist.",
+  "forms": [
+    {
+      "id": "cpp_headers",
+      "what": "The template library: headers under include/foc/, consumed by a C++17 compiler.",
+      "entry": "include/foc/motor/motor.hpp",
+      "evidence": [
+        "test_package/test/unit/test_motor.cpp",
+        "test_package/test/unit/test_sil_multirate.cpp"
+      ],
+      "supports_claim": true,
+      "claim_status": "claimed",
+      "claimed_by": "all_hpp_rows",
+      "note": "The form the whole evidence system was built for: L1-L3 rows, sensitivity tables and phase-variable witnesses all describe it."
+    },
+    {
+      "id": "c_abi",
+      "what": "The frozen C11 surface: foc/api/foc_api.h over the same core, with generation-checked opaque handles.",
+      "entry": "include/foc/api/foc_api.h",
+      "evidence": [
+        "test_package/c_api_validation.c",
+        "test_package/test/unit/test_api_c_smoke.cpp"
+      ],
+      "supports_claim": true,
+      "claim_status": "claimed",
+      "claimed_by": [
+        "api/foc_api.h",
+        "api/foc_types.h"
+      ],
+      "note": "L2 on closed-form anchors: the C consumer identifies kt/J and a cogging harmonic through the autotune entries rather than merely exercising the surface."
+    },
+    {
+      "id": "fmu",
+      "what": "FMI 2.0 Co-Simulation: api/fmu/modelDescription.xml plus the shared object, loaded by a third-party master.",
+      "entry": "api/fmu/modelDescription.xml",
+      "evidence": [
+        "api/fmu/smoke.py",
+        "api/fmu/fmu_wrapper.c"
+      ],
+      "supports_claim": true,
+      "claim_status": "gap",
+      "claimed_by": null,
+      "gap": "No README claim row describes the FMU. The FMU has a runnable demonstration (a standard FMPy master loads it and drives the loop, and since 0.1.12 the fixed-step refusal is observed) but no level, no boundary statement and no 'what it does not claim'. The gap is recorded rather than papered over: a row would have to say which claims survive the hand-over (the control loop, not the HAL; 50 us fixed step only) and name the run.",
+      "note": "This is the form the 2026-11-05 audit called 'shipped but unclaimed'. The gate's job is to keep that visible, not to hide it behind a green light."
+    },
+    {
+      "id": "python",
+      "what": "The pybind11 module foc_python over the C API, off unless enable_python_bindings.",
+      "entry": "api/python_bindings.cpp",
+      "evidence": [
+        "test_package/test/python/test_python_bindings.py"
+      ],
+      "supports_claim": true,
+      "claim_status": "gap",
+      "claimed_by": null,
+      "gap": "Python appears only as an *evidence path* on three rows (trace, sinusoid_fit, torque_map), never as a claim that the binding itself behaves. A row would have to state what the module promises -- that it is a thin wrapper over the C ABI, so anything it gets wrong is a translation defect -- and name the case that would catch a translation defect.",
+      "note": "Deliberately not claimed rather than half-claimed: the three rows above use Python as a second machine, which is a stronger use of it than a claim about the binding."
+    }
+  ]
+}

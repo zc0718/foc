@@ -1,0 +1,24 @@
+{
+  "_what": "The FMU's variable table, as data. A value reference is the only thing that ties a modelDescription entry to a line of C, and a mismatch is silent in both directions: the master sets 'angle' and the wrapper reads a duty. So the table lives here once, and two independent readers are checked against it -- the XML a master parses, and the enum the wrapper switches on.",
+  "_who_reads_it": "api/fmu/modelDescription.xml_check.py, run by `.github/project/gates.py fmu` before it builds anything. Adding a variable means adding it here first; the check then refuses an XML or a wrapper that disagrees.",
+  "step_s": 5e-05,
+  "step_source": "1 / pwm_freq_hz of the motor the wrapper creates: the fixed communication step is the loop's own period, read back from the motor rather than written twice (fmu_wrapper.c, exitInitializationMode).",
+  "variables": [
+    {"name": "iq_command_a", "value_reference": 1, "causality": "input", "variability": "continuous", "type": "Real", "cpp_enum": "kIqCommandA", "start": 0.0},
+    {"name": "enable", "value_reference": 2, "causality": "input", "variability": "discrete", "type": "Boolean", "cpp_enum": "kEnable", "start": false},
+    {"name": "v_bus_v", "value_reference": 3, "causality": "input", "variability": "continuous", "type": "Real", "cpp_enum": "kVbusV", "start": 24.0},
+    {"name": "i_u_a", "value_reference": 4, "causality": "input", "variability": "continuous", "type": "Real", "cpp_enum": "kIuA", "start": 0.0},
+    {"name": "i_v_a", "value_reference": 5, "causality": "input", "variability": "continuous", "type": "Real", "cpp_enum": "kIvA", "start": 0.0},
+    {"name": "i_w_a", "value_reference": 6, "causality": "input", "variability": "continuous", "type": "Real", "cpp_enum": "kIwA", "start": 0.0},
+    {"name": "angle_mech_rad", "value_reference": 7, "causality": "input", "variability": "continuous", "type": "Real", "cpp_enum": "kAngleMechRad", "start": 0.0},
+    {"name": "speed_mech_rad_s", "value_reference": 8, "causality": "input", "variability": "continuous", "type": "Real", "cpp_enum": "kSpeedMechRadS", "start": 0.0},
+    {"name": "duty_u", "value_reference": 9, "causality": "output", "variability": "continuous", "type": "Real", "cpp_enum": "kDutyU", "start": null},
+    {"name": "duty_v", "value_reference": 10, "causality": "output", "variability": "continuous", "type": "Real", "cpp_enum": "kDutyV", "start": null},
+    {"name": "duty_w", "value_reference": 11, "causality": "output", "variability": "continuous", "type": "Real", "cpp_enum": "kDutyW", "start": null},
+    {"name": "state", "value_reference": 12, "causality": "output", "variability": "discrete", "type": "Integer", "cpp_enum": "kState", "start": null},
+    {"name": "error", "value_reference": 13, "causality": "output", "variability": "discrete", "type": "Integer", "cpp_enum": "kError", "start": null},
+    {"name": "id_a", "value_reference": 14, "causality": "output", "variability": "continuous", "type": "Real", "cpp_enum": "kIdA", "start": null},
+    {"name": "iq_a", "value_reference": 15, "causality": "output", "variability": "continuous", "type": "Real", "cpp_enum": "kIqA", "start": null},
+    {"name": "speed_est_rad_s", "value_reference": 16, "causality": "output", "variability": "continuous", "type": "Real", "cpp_enum": "kSpeedEstRadS", "start": null}
+  ]
+}

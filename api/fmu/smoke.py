@@ -102,6 +102,34 @@ def main() -> int:
 
     state = fmu.getInteger([vr["state"]])[0]
     error = fmu.getInteger([vr["error"]])[0]
+
+    # F-1, the defect this leg exists for: the description used to say the slave could take a variable step while the
+    # step was fed straight into `foc_tick`, so a master that changed the rate silently ran a *differently tuned*
+    # controller. The declaration is now `false` and the wrapper enforces it, which only counts if something observes
+    # the refusal -- so: a doubled step must be refused at the same timeline point where a correct step is accepted.
+    # Doing both, in that order, is what separates "refuses what it should" from "refuses everything".
+    # F-1，本腿存在的缺陷：描述文件曾说这个 slave 能接受变步长，而步长被直接喂进 `foc_tick`，于是一个改变了速率的主控
+    # 会**掠静地**开动一台重新调过参的控制器。现在声明是 `false` 且包装器强制执行，而这只在**有东西观察到那次拒绝**时才
+    # 算数——所以：在同一个时间点上，双倍步长必须被拒、正确步长必须被接受。两个都做，且按这个顺序，才能把"拒绝它该拒
+    # 绝的"与"什么都拒绝"分开。
+    FMI2_ERROR = 3
+    FMI2_OK = 0
+    # FMPy raises instead of returning a non-OK status, and the raise carries the status -- so the assertion is
+    # written against the number the FMU returned, not against "something went wrong". A blanket `except` would
+    # pass for a crash, and a crash is not a refusal.
+    # FMPy 遇到非 OK 状态是抛异常而不是返回，而异常里带着那个状态码——所以判据写的是 FMU 返回的那个数，而不是
+    # "出了点事"。笼统的 `except` 会为一次崩溃而变绿，而崩溃不是拒绝。
+    try:
+        fmu.fmi2DoStep(fmu.component, time, DT * 2.0, True)
+        wrong_step_status = 0
+    except Exception as exc:  # noqa: BLE001 - the status is what is being asserted
+        wrong_step_status = getattr(exc, "status", -1)
+    try:
+        fmu.fmi2DoStep(fmu.component, time, DT, True)
+        right_step_status = 0
+    except Exception as exc:  # noqa: BLE001
+        right_step_status = getattr(exc, "status", -1)
+
     fmu.terminate()
     fmu.freeInstance()
 
@@ -118,6 +146,13 @@ def main() -> int:
         failures.append(f"a duty left [0, 1]: {duty}")
     if not any(abs(d - 0.5) > 1e-3 for d in duty):
         failures.append(f"every duty stayed at 0.5, so the loop never modulated: {duty}")
+    if wrong_step_status != FMI2_ERROR:
+        failures.append(f"a doubled step was not refused (status {wrong_step_status}), so the fixed-step "
+                        f"declaration is still a claim nobody enforces")
+    if right_step_status != FMI2_OK:
+        failures.append(f"a correct step was refused (status {right_step_status}), so the refusal above proves nothing")
+    print(f"[fmu] step enforcement: doubled step -> {wrong_step_status} (want {FMI2_ERROR}), "
+          f"correct step -> {right_step_status} (want {FMI2_OK})")
     for failure in failures:
         print(f"[fmu] FAIL {failure}", file=sys.stderr)
 

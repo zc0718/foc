@@ -62,6 +62,14 @@ typedef struct {
     fmi2Real speed_est_rad_s;
 
     fmi2Boolean enabled;
+
+    // The step this slave *is*: one control period of the motor it just created, read back from the motor rather
+    // than written here twice. A gains tuning belongs to a period, so a master that changes the period is not
+    // driving the same controller -- see `fmi2DoStep`.
+    // 这个 slave **就是**的步长：它所创建的那台电机的一个控制周期，从电机里读回来而不是在这里再写一遍。
+    // 一套增益属于一个周期，所以改变周期的主控开动的已经不是同一个控制器了——见 `fmi2DoStep`。
+    fmi2Real fixed_step_s;
+    fmi2Real expected_point_s;
 } Instance;
 
 
@@ -192,6 +200,19 @@ fmi2Status fmi2ExitInitializationMode(fmi2Component c) {
             return fmi2Error;
         }
     }
+    // Ask the motor what a control period is instead of assuming one: `pwm_freq_hz` is the number the loop's gains
+    // were computed against, so it is the only honest source for "this slave is a fixed-step 50 us block".
+    // 去问电机一个控制周期是多长，而不是自己假定：`pwm_freq_hz` 就是环路增益据以计算的那个数，所以它是"这个
+    // slave 是一个定步 50 µs 的块"这件事唯一诚实的来源。
+    {
+        foc_motor_setup_t setup;
+        memset(&setup, 0, sizeof(setup));
+        setup.struct_size = (uint32_t)sizeof(setup);
+        if (foc_motor_get_setup(s->motor, &setup) == FOC_OK && setup.pwm_freq_hz > 0.0F) {
+            s->fixed_step_s = 1.0 / (fmi2Real)setup.pwm_freq_hz;
+        }
+        s->expected_point_s = 0.0;
+    }
     return fmi2OK;
 }
 
@@ -205,16 +226,39 @@ fmi2Status fmi2Reset(fmi2Component c) {
     s->enabled = fmi2False;
     s->state = 0;
     s->error = 0;
+    s->expected_point_s = 0.0;
     return fmi2OK;
 }
 
 fmi2Status fmi2DoStep(fmi2Component c, fmi2Real currentCommunicationPoint, fmi2Real communicationStepSize,
                       fmi2Boolean noSetFMUStatePriorToCurrentPoint) {
-    (void)currentCommunicationPoint;
     (void)noSetFMUStatePriorToCurrentPoint;
     Instance *s = INSTANCE(c);
     if (s == NULL || s->motor == NULL) {
         return fmi2Error;
+    }
+
+    // This slave declares `canHandleVariableCommunicationStepSize="false"`, and a declaration nobody enforces is
+    // the defect this check exists to remove: until 0.1.12 the XML said `true` while the step was fed straight to
+    // `foc_tick`, so a variable-step master silently re-tuned the controller -- the gains belong to the period they
+    // were computed for. The refusal is what makes the declaration true, and it is deliberately loud (an error, not
+    // a warning): a master that needs a different rate must be told, not accommodated with a different controller.
+    // 这个 slave 声明了 `canHandleVariableCommunicationStepSize="false"`，而一个没人执行的声明正是本检查要消除的
+    // 缺陷：0.1.12 之前 XML 说 `true`，而步长被直接喂给 `foc_tick`，于是一个变步长主控会**掠静地**重新调参控制器
+    // ——增益属于它们当初计算时用的那个周期。让声明成真的是那次拒绝，而它故意是大声的（错误而不是警告）：需要别的
+    // 速率的主控应该被告知，而不是被一个不同的控制器迎过去。
+    if (s->fixed_step_s > 0.0) {
+        const fmi2Real tolerance = 1e-9 + (1e-6 * s->fixed_step_s);
+        if (fabs(communicationStepSize - s->fixed_step_s) > tolerance) {
+            return fmi2Error;
+        }
+        // The same for the timeline: a master that skips a point is asking for a longer step disguised as several
+        // short ones, and the loop would integrate a gap it was never told about.
+        // 时间轴同理：跳过一格的主控，是在用几个短步伪装成一个长步，而环路会积入一段从未被告知的空白。
+        if (fabs(currentCommunicationPoint - s->expected_point_s) > tolerance) {
+            return fmi2Error;
+        }
+        s->expected_point_s += communicationStepSize;
     }
 
     // Enable is edge-triggered because that is what the C ABI offers; a level-triggered call every step would
