@@ -506,11 +506,11 @@
     },
     {
       "rule": "conversion-warnings",
-      "check": "flag:-Wconversion",
-      "status": "open",
+      "check": "gate:strict",
+      "status": "implemented",
       "lang": "c++17",
-      "delta": "gap",
-      "why": "静默收窄（float↔double↔int）这一整类**没有门禁**。`-Wconversion` 对数值库性价比最高，但在一个 float 密集的库上命中量未知，所以先测再决定\"加进 strict\"还是\"记偏差\"。今天它既不在门禁里，也不在偏差目录里——那正是 open 的含义。",
+      "delta": "none",
+      "why": "静默收窄（float↔double↔int）这一整类原先是**没有门禁**的。先量后定：`-Wconversion` 与 `-Wsign-conversion` 在 82 个公开头与 42 个实现文件上的命中量都是 **0**，所以它不是一个待还的债，而是一条现在就能生效的性质。已加进 `strict` 门，并且把门的范围从「只编译 `include/`」扩到「`include/` + `src/`」——算术只发生在后者，而后者此前不在任何编译告警门里。扩范围时冒出的 11 条存量警告（9 条 `-Wreorder`、2 条 `-Wmissing-field-initializers`）已修：前者写的是与声明顺序不符的初始化列表，后者是「漏写才正确」的默认值，两处都改成了显式写法。",
       "owner": "zc",
       "source": "T0-language-subset.md §四（两个小洞之一）"
     },

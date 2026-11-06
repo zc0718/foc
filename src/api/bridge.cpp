@@ -198,11 +198,18 @@ struct Setup final {
 /**
  * @brief [en] What `foc_motor_create()` has always used.
  * @brief [zh] `foc_motor_create()` 一直使用的取值。
+ * @note [en] `use_observer_angle` is written out as `0` rather than left off the end of the list. Leaving it off
+ *            produced the same value, because an omitted aggregate member is value-initialised -- but it did so
+ *            silently, so the next field appended to `Setup` would also have been absorbed by the omission. A default
+ *            that is correct only because something was forgotten is a default nobody can review.
+ * @note [zh] `use_observer_angle` 写成显式的 `0`，而不是从列表末尾省掉。省掉得到的是同一个值（聚合体未写的成员会被值初
+ *            始化）——但那是**静默**得到的：下一个加到 `Setup` 末尾的字段也会被这个漏写吞掉。一个"只是因为忘了写才正确"
+ *            的默认值，是没人能审的默认值。
  */
 constexpr Setup kDefaultSetup{5.0F, 20000.0F, 500.0F, 24.0F, 2000.0F, 200.0F,
                               0.0F, 20.0F,    50.0F,  0.0F,  0.0F,    0.0F,
                               0.0F, 0.0F,     0.0F,   0.0F,  0.0F,    static_cast<std::int32_t>(FOC_OBSERVER_BACK_EMF),
-                              0.0F, 0.0F,     0.0F,   0.0F,  0.0F};
+                              0.0F, 0.0F,     0.0F,   0.0F,  0.0F,    static_cast<std::int32_t>(0)};
 
 /**
  * @brief [en] The demodulation filter's cutoff in Hz: the value `test_sil_hfi.cpp` fixes for every case, so that a

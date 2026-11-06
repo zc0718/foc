@@ -9,11 +9,10 @@
     "done, one by a standard that has not been bought."
   ],
   "recorded": "2026-11-06",
-  "open": 5,
+  "open": 4,
   "detail": [
     "cert-cpp-family",
     "cppcoreguidelines-family",
-    "conversion-warnings",
     "cppcheck-misra-addon",
     "misra-rule-mapping"
   ]

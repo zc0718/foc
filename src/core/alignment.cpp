@@ -147,7 +147,7 @@ auto AlignRoutine::begin(std::uint32_t pole_pairs) noexcept -> bool {
  * @since 0.1.0
  */
 auto AlignRoutine::step(float dt_s, float angle_mech_rad) noexcept -> AlignOutput {
-    AlignOutput out{0.0F, config_.align_angle_e_rad, false, false};
+    AlignOutput out{0.0F, config_.align_angle_e_rad, 0.0F, false, false};
 
     if ((state_ == AlignState::Idle) || (state_ == AlignState::Done)) {
         return out;

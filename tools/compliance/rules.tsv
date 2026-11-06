@@ -100,7 +100,7 @@ performance-inefficient-vector-operation	tidy:performance-inefficient-vector-ope
 performance-move-const-arg	tidy:performance-move-const-arg	implemented	any	none	-	zc	clang-tidy (pinned config)
 performance-move-constructor-init	tidy:performance-move-constructor-init	implemented	any	none	-	zc	clang-tidy (pinned config)
 performance-no-automatic-move	tidy:performance-no-automatic-move	implemented	any	none	-	zc	clang-tidy (pinned config)
-performance-no-int-to-ptr	tidy:performance-no-int-to-ptr	deviation	any	none	deviation/performance-no-int-to-ptr.md -- suppressed at src/api/bridge.cpp:590, src/api/bridge.cpp:640, src/api/bridge.cpp:778, src/api/bridge.cpp:789, src/api/bridge.cpp:838, src/api/bridge.cpp:849, src/api/bridge.cpp:914, src/api/bridge.cpp:925	zc	clang-tidy (pinned config)
+performance-no-int-to-ptr	tidy:performance-no-int-to-ptr	deviation	any	none	deviation/performance-no-int-to-ptr.md -- suppressed at src/api/bridge.cpp:597, src/api/bridge.cpp:647, src/api/bridge.cpp:785, src/api/bridge.cpp:796, src/api/bridge.cpp:845, src/api/bridge.cpp:856, src/api/bridge.cpp:921, src/api/bridge.cpp:932	zc	clang-tidy (pinned config)
 performance-noexcept-destructor	tidy:performance-noexcept-destructor	implemented	any	none	-	zc	clang-tidy (pinned config)
 performance-noexcept-move-constructor	tidy:performance-noexcept-move-constructor	implemented	any	none	-	zc	clang-tidy (pinned config)
 performance-noexcept-swap	tidy:performance-noexcept-swap	implemented	any	none	-	zc	clang-tidy (pinned config)
@@ -127,7 +127,7 @@ FOC-NOLINT-REC	gate:subset	implemented	any	none	代码里每一个 `// NOLINT(..
 FOC-SAFE-MCDC	gate:mcdc	implemented	c++17	none	安全子集里每个多条件判定都必须有全部独立性对（逐判定 100 %，而不是整子集百分比），并且子集本身的判定数有下限——测量不到东西的子集不许报满分。	zc	.github/project/mcdc.json + mcdc_gate.py
 FOC-TIDY-WAE	gate:tidy	implemented	any	none	被封装的 clang-tidy 以 `WarningsAsErrors: '*'` 运行；命中即失败，没有"先记下来以后修"这一档。	zc	.github/misc/.clang-tidy
 FOC-TRACE-SAT	test:test_trace.cpp	implemented	c++17	none	"丢了多少帧"这个计数饱和而不回绕：灌满之后停在 max，且每一步都断言单调。回绕会把"丢了 65536 帧"报成"丢了 0 帧"。	zc	include/foc/core/trace.hpp + test_trace.cpp
-conversion-warnings	flag:-Wconversion	open	c++17	gap	静默收窄（float↔double↔int）这一整类**没有门禁**。`-Wconversion` 对数值库性价比最高，但在一个 float 密集的库上命中量未知，所以先测再决定"加进 strict"还是"记偏差"。今天它既不在门禁里，也不在偏差目录里——那正是 open 的含义。	zc	T0-language-subset.md §四（两个小洞之一）
+conversion-warnings	gate:strict	implemented	c++17	none	静默收窄（float↔double↔int）这一整类原先是**没有门禁**的。先量后定：`-Wconversion` 与 `-Wsign-conversion` 在 82 个公开头与 42 个实现文件上的命中量都是 **0**，所以它不是一个待还的债，而是一条现在就能生效的性质。已加进 `strict` 门，并且把门的范围从「只编译 `include/`」扩到「`include/` + `src/`」——算术只发生在后者，而后者此前不在任何编译告警门里。扩范围时冒出的 11 条存量警告（9 条 `-Wreorder`、2 条 `-Wmissing-field-initializers`）已修：前者写的是与声明顺序不符的初始化列表，后者是「漏写才正确」的默认值，两处都改成了显式写法。	zc	T0-language-subset.md §四（两个小洞之一）
 cppcheck-misra-addon	tool:cppcheck --addon=misra	open	c11	none	C 侧目前只有 `A3` CERT C 做叙述，没有一个**独立的第二实现**去交叉验证 MISRA 面。cppcheck 的 MISRA addon 是最便宜的候选，但它要对着一份权威规则原文才能算数，而 `A5`（MISRA C:2023 合并版）本轮未买。	zc	A9 cppcheck 手册（dl/ 已存）+ A5（未买）
 misra-rule-mapping	hand:mapping-table	open	c++17	none	**这是 T1 的实质缺口，不是 T0 的**：`A4` MISRA C++:2023 已到手，但"clang-tidy 检查项 → MISRA 规则编号"的映射表还没有，所以"按 MISRA C++:2023 组织：实施 N / 不适用 M / 偏离 K"这句话今天**填不上数**。工作量在 254 页 / 约 200 条规则这一侧，不在代码侧。在它完成之前，任何引用只许引"结构"不引"合规"。	zc	A4 MISRA C++:2023（dl/ 已存，2023-10）
 unit:comm/register_map.hpp	-	not-applicable	any	none	接口/管道头：寄存器编号表；编解码规则在 comm/frame.hpp，本文件是地址枚举。	zc	README claim 行 L1（终态）

@@ -137,37 +137,57 @@ def cmd_license(explicit):
 
 
 def cmd_strict(explicit):
-    """Every public header must compile standalone under the project's hard constraints
-    (-fno-exceptions -fno-rtti for C++, -pedantic for C). ADR-level promises become testable here."""
+    """Every public header compiles standalone, and every translation unit compiles warning-free,
+    under the project's hard constraints (-fno-exceptions -fno-rtti for C++, -pedantic for C,
+    -Wconversion -Wsign-conversion for both). ADR-level promises become testable here.
+
+    Why `src/` joined. `strict` used to compile `include/` only, so the translation units -- the
+    only place where arithmetic actually happens -- were covered by no warning gate at all. Eleven
+    warnings were living there, nine of them `-Wreorder` in one constructor: an initialiser list
+    whose written order disagreed with the declaration order, which reads as correct and initialises
+    in another order. The two conversion flags turn the "silent narrowing" family into a build
+    failure instead of a review habit; measured at zero on both trees before they were switched on,
+    so they enforce a property rather than invent a backlog.
+    """
     headers = _gated_files(explicit, ('include',))
-    if not headers:
-        return _empty(explicit, 'strict', ('include',))
+    sources = [path for path in _gated_files(explicit, ('src',)) if path.suffix in ('.c', '.cpp')]
+    if not headers and not sources:
+        return _empty(explicit, 'strict', ('include', 'src'))
     cstd, cppstd = _standards()
     compilers = {
         '.h': (_require('gcc', 'install it with `apt-get install gcc`'), [f'-std=c{cstd}', '-pedantic']),
+        '.c': (_require('gcc', 'install it with `apt-get install gcc`'), [f'-std=c{cstd}', '-pedantic']),
         '.hpp': (_require('g++', 'install it with `apt-get install g++`'),
                  [f'-std=c++{cppstd}', '-fno-exceptions', '-fno-rtti']),
+        '.cpp': (_require('g++', 'install it with `apt-get install g++`'),
+                 [f'-std=c++{cppstd}', '-fno-exceptions', '-fno-rtti']),
     }
-    print(f'[gates] strict: {len(headers)} header(s), -std=c{cstd} / -std=c++{cppstd} '
-          f'-fno-exceptions -fno-rtti', flush=True)
+    print(f'[gates] strict: {len(headers)} header(s) + {len(sources)} source(s), '
+          f'-std=c{cstd} / -std=c++{cppstd} -fno-exceptions -fno-rtti -Wconversion', flush=True)
     failed = []
     with tempfile.TemporaryDirectory(prefix='gates-strict-') as workdir:
-        for header in headers:
-            exe, flags = compilers[header.suffix]
-            tu = Path(workdir) / (header.stem + ('.c' if header.suffix == '.h' else '.cpp'))
-            tu.write_text(f'#include "{header.relative_to(ROOT / "include").as_posix()}"\n'
-                          '\nint main(void) { return 0; }\n', encoding='utf-8')
-            cmd = [exe, *flags, '-Wall', '-Wextra', '-Werror', '-I', str(ROOT / 'include'),
-                   '-fsyntax-only', str(tu)]
+        # A header is compiled through a synthetic TU that includes it, so self-containment is part
+        # of the check; a source file is compiled as itself, because that is what the build does.
+        targets = [(header, None) for header in headers] + [(source, source) for source in sources]
+        for target, direct in targets:
+            exe, flags = compilers[target.suffix]
+            if direct is None:
+                tu = Path(workdir) / (target.stem + ('.c' if target.suffix == '.h' else '.cpp'))
+                tu.write_text(f'#include "{target.relative_to(ROOT / "include").as_posix()}"\n'
+                              '\nint main(void) { return 0; }\n', encoding='utf-8')
+            else:
+                tu = direct
+            cmd = [exe, *flags, '-Wall', '-Wextra', '-Wconversion', '-Wsign-conversion', '-Werror',
+                   '-I', str(ROOT / 'include'), '-fsyntax-only', str(tu)]
             done = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True)
             if done.returncode != 0:
-                failed.append(header)
-                print(f'--- {_rel(header)}', flush=True)
+                failed.append(target)
+                print(f'--- {_rel(target)}', flush=True)
                 print((done.stdout + done.stderr).strip(), flush=True)
     if failed:
-        print(f'[gates] strict: FAIL ({len(failed)}/{len(headers)} header(s))', flush=True)
+        print(f'[gates] strict: FAIL ({len(failed)}/{len(targets)} target(s))', flush=True)
         return 1
-    print(f'[gates] strict: OK ({len(headers)} header(s))', flush=True)
+    print(f'[gates] strict: OK ({len(headers)} header(s), {len(sources)} source(s))', flush=True)
     return 0
 
 
@@ -734,7 +754,9 @@ def main():
     sub = parser.add_subparsers(dest='gate', required=True)
     helps = {
         'license': 'copyleft / non-free licence markers, scoped rules from .github/misc/.license-guard.txt',
-        'strict': 'every public header compiles standalone with -fno-exceptions -fno-rtti (C: -pedantic)',
+        'strict': 'every public header compiles standalone and every translation unit compiles '
+                  'warning-free with -fno-exceptions -fno-rtti (C: -pedantic) -Wconversion '
+                  '-Wsign-conversion',
         'claims': 'every installed header has a README claim row with a level and existing evidence; '
                   '`claims --impact <path|name>` lists what rests on it',
         'docs': 'Doxygen blocks: star alignment, continuation indent, 120 columns, no mid-CJK breaks',
