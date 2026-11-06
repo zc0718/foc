@@ -131,7 +131,7 @@ constexpr auto conj(Cx a) noexcept -> Cx { return Cx{a.re, -a.im}; }
 
 /**
  * @brief [en] Principal square root of a complex number, `sqrt(r) * (cos(phi/2) + j*sin(phi/2))`.
- * @brief [zh] 复数的主平方根，`sqrt(r)·(cos(φ/2) + j·sin(φ/2))`。
+ * @brief [zh] 复数的主平方根，`sqrt(r)·(cos(arg/2) + j·sin(arg/2))`。
  * @since 0.1.11
  */
 auto sqrt_cx(Cx a) noexcept -> Cx {

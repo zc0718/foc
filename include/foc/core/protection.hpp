@@ -135,7 +135,7 @@ struct ProtectionInput final {
     float omega_e_rad_s;
     /**
      * @brief [en] |psi_est - psi_f| / psi_f, 0 = healthy.
-     * @brief [zh] |ψ估计 − ψf|/ψf，0 = 正常。
+     * @brief [zh] |估计磁链 − ψf|/ψf，0 = 正常。
      */
     float flux_error_ratio;
     /**

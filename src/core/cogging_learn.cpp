@@ -137,7 +137,7 @@ auto CoggingLearner::finish(CoggingCompHarmonic* out, int capacity) const noexce
         const float im = im_[k] * normalise;
         const float amplitude_current = std::hypot(re, im);
         // `y = A*sin(k*theta + phi)` projects to `re = A*sin(phi)`, `im = A*cos(phi)`, so the phase is `atan2(re, im)`.
-        // `y = A·sin(k·θ + φ)` 投影得到 `re = A·sin(φ)`、`im = A·cos(φ)`，所以相位是 `atan2(re, im)`。
+        // `y = A·sin(k·θ + φ_inj)` 投影得到 `re = A·sin(φ_inj)`、`im = A·cos(φ_inj)`，所以相位是 `atan2(re, im)`。
         float phase = static_cast<float>(std::atan2(re, im) + 3.14159265358979323846F);
         // Wrapped into (-pi, pi] so two tables learned from the same machine print the same number.
         // 归一化到 (−π, π]，好让同一台机器学出的两张表打印出同一个数。

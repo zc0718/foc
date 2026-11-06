@@ -179,3 +179,12 @@ i_char  ``i_char``
     **Unit.** ohm  **Frame.** depends on which L the sentence names
     **Positive.** positive.
     **Defined by.** ``include/foc/core/deadtime.hpp`` (```ωL```)
+
+ψ_ab  ``psi_ab``
+    **Meaning.** stator flux linkage vector in the stationary frame -- the integrator state of a flux observer. Distinct from the rotor flux `ψf`, which is a constant of the machine.
+    静止坐标系下的定子磁链矢量——磁链观测器的积分器状态。与机器常数转子磁链 `ψf` 不同。
+    **Unit.** Wb  **Frame.** alpha-beta (stationary), as a vector
+    **Positive.** positive along the winding's own flux direction; a vector, so it carries two components.
+    **Defined by.** ``include/foc/core/observer/dual_inductance_observer.hpp`` (``Ab<float> psi_; ///< [en] stator flux estimate in Wb (the integrator state).``)
+    **Note.** Registered when the bare `ψ` in this observer's prose turned out to be the last unregistered glyph: the sentence was naming the stator estimate while the table only knew the rotor constant `ψf`.
+    登记它的原因：这个观测器的散文里那个裸 `ψ` 是最后一个未登记字形——句子说的是定子估计，而表里只有转子常数 `ψf`。

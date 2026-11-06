@@ -90,9 +90,9 @@ struct MtpvPoint final {
  *
  * @brief [zh] 每伏最大转矩，以及说明它从哪开始的基速——两者都是电压椭圆上的闭式解。
  *
- *     **规律。** 丢掉 `Rs`（别处已对着完整方程验证过，且在真正要紧的区域 `Rs·i` 相对 `ω·L·i` 很小），稳态电压上限就是椭
- *     圆 `(Ld·i_d + ψf)² + (Lq·i_q)² = V²`，`V = v_max/ω`。用角度 `t` 参数化—— `i_d = (V·cos t − ψf)/Ld`、`i_q = V·sin
- *     t/Lq`——椭圆上的转矩变成
+ *     **规律。** 丢掉 `Rs`（别处已对着完整方程验证过，且在真正要紧的区域 `Rs·i` 相对 `ω_e·L·i` 很小），稳态电压上限就是
+ *     椭圆 `(Ld·i_d + ψf)² + (Lq·i_q)² = V²`，`V = v_max/ω_e`。用角度 `t` 参数化—— `i_d = (V·cos t − ψf)/Ld`、`i_q =
+ *     V·sin t/Lq`——椭圆上的转矩变成
  *
  *     `T(t) / (1.5·p) = (V/Lq) · [ p_r·sin t + q_r·sin 2t ]`，`p_r = ψf·Lq/Ld`、`q_r = (Ld−Lq)·V/(2·Ld)`，
  *
@@ -103,8 +103,8 @@ struct MtpvPoint final {
  *     椭圆上 `T` 的极大值**就是**转矩双曲线与椭圆的切点，所以"两梯度平行"这条判据不是外加的检查：它正是那个二次方程在解
  *     的东西。`test_mtpv.cpp` 拿独立算出的梯度去验证它，也拿暴力扫描去验证它。
  *
- *     **为什么基速以下返回 MTPA 而不是 MTPV 点。** `ω → 0` 时椭圆无界增长，其内部极大值跑到 `i_d → −∞`。基速以下真正生
- *     效的是电流圆，最优点是 MTPA 点，本类返回它并置 `voltage_limited = false`。恰在基速处椭圆穿过那个点，于是两支重
+ *     **为什么基速以下返回 MTPA 而不是 MTPV 点。** `ω_e → 0` 时椭圆无界增长，其内部极大值跑到 `i_d → −∞`。基速以下真正
+ *     生效的是电流圆，最优点是 MTPA 点，本类返回它并置 `voltage_limited = false`。恰在基速处椭圆穿过那个点，于是两支重
  *     合、参考对转速连续——这也是弱磁当初必须具备的性质，理由相同：积分器上游的一个台阶，要用过冲来偿还。
  *
  * @note [en] `psi_f = 0` is a supported machine (synchronous reluctance): the magnet term vanishes and the quadratic

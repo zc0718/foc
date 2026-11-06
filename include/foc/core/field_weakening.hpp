@@ -247,7 +247,7 @@ class FieldWeakeningReference final {
         // ellipse, where the voltage is in phase with the current and the drive is
         // over-excited for no reason.
         // 含 `Rs` 的电压椭圆，写成 `i_d` 的精确二次方程：`A·i_d² + B·i_d + C = 0`，
-        // `A = Rs² + x²`、`B = 2·x·ωψf`、`C = (x·i_q)² + (Rs·i_q + ωψf)² − v_max²`。
+        // `A = Rs² + x²`、`B = 2·x·ω_e·ψf`、`C = (x·i_q)² + (Rs·i_q + ω_e·ψf)² − v_max²`。
         // 离零近的那个根才是驱动器该待的地方；另一个是椭圆远端，那里电压与电流同相，白白过励。
         //
         // Including `Rs` is not pedantry: at 24 V and 3200 rad/s, dropping it lets the

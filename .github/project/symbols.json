@@ -58,7 +58,11 @@
     {
       "id": "theta_e",
       "glyph": "θ",
-      "aliases": ["θ", "theta_e", "theta_rad"],
+      "aliases": [
+        "θ",
+        "theta_e",
+        "theta_rad"
+      ],
       "meaning": {
         "en": "electrical rotor angle: the rotor position in the rotating frame, i.e. the angle `park` is handed.",
         "zh": "电角度：旋转坐标系下的转子位置，也就是交给 `park` 的那个角。"
@@ -66,12 +70,18 @@
       "unit": "rad",
       "frame": "electrical rotor (the dq frame rotates with it)",
       "sign": "not fixed by this library: it is whatever the caller's angle source counts up as positive. `park` applies the angle it is given and never re-references it.",
-      "anchor": {"file": "include/foc/core/transforms.hpp", "code": "auto park(Ab<T> ab, T theta_rad)"}
+      "anchor": {
+        "file": "include/foc/core/transforms.hpp",
+        "code": "auto park(Ab<T> ab, T theta_rad)"
+      }
     },
     {
       "id": "theta_mech",
       "glyph": "θ_mech",
-      "aliases": ["θ_mech", "theta_mech"],
+      "aliases": [
+        "θ_mech",
+        "theta_mech"
+      ],
       "meaning": {
         "en": "mechanical rotor angle, the quantity a cogging harmonic is phased against.",
         "zh": "机械角，齿槽谐波的相位所对的量。"
@@ -79,12 +89,19 @@
       "unit": "rad",
       "frame": "mechanical rotor",
       "sign": "same direction as `theta_e`, divided by `pole_pairs`.",
-      "anchor": {"file": "include/foc/core/cogging_comp.hpp", "code": "float phase_rad;"}
+      "anchor": {
+        "file": "include/foc/core/cogging_comp.hpp",
+        "code": "float phase_rad;"
+      }
     },
     {
       "id": "omega_m",
       "glyph": "ω_m",
-      "aliases": ["ω_m", "omega_mech", "omega_m"],
+      "aliases": [
+        "ω_m",
+        "omega_mech",
+        "omega_m"
+      ],
       "meaning": {
         "en": "mechanical angular speed of the shaft.",
         "zh": "轴上的机械角速度。"
@@ -92,12 +109,18 @@
       "unit": "rad/s",
       "frame": "mechanical rotor",
       "sign": "positive = the direction the angle source counts up; a speed loop that needs the other direction inverts at its own input, never here.",
-      "anchor": {"file": "include/foc/motor/motor.hpp", "code": "speed_mech * static_cast<float>(config_.pole_pairs)"}
+      "anchor": {
+        "file": "include/foc/motor/motor.hpp",
+        "code": "speed_mech * static_cast<float>(config_.pole_pairs)"
+      }
     },
     {
       "id": "omega_e",
       "glyph": "ω_e",
-      "aliases": ["ω_e", "omega_e"],
+      "aliases": [
+        "ω_e",
+        "omega_e"
+      ],
       "meaning": {
         "en": "electrical angular speed, `omega_e = omega_m * pole_pairs`. Entering this one where the mechanical one belongs is the whole class of error the table exists for.",
         "zh": "电角速度，`omega_e = omega_m * pole_pairs`。把电角速度用在需要机械角速度的地方，正是这张表存在的整类错误。"
@@ -105,12 +128,17 @@
       "unit": "rad/s",
       "frame": "electrical rotor",
       "sign": "same sign as `omega_m`.",
-      "anchor": {"file": "include/foc/motor/motor.hpp", "code": "speed_mech * static_cast<float>(config_.pole_pairs)"}
+      "anchor": {
+        "file": "include/foc/motor/motor.hpp",
+        "code": "speed_mech * static_cast<float>(config_.pole_pairs)"
+      }
     },
     {
       "id": "pole_pairs",
       "glyph": "p",
-      "aliases": ["pole_pairs"],
+      "aliases": [
+        "pole_pairs"
+      ],
       "meaning": {
         "en": "number of pole pairs, `>= 1`; the ratio between electrical and mechanical quantities.",
         "zh": "极对数，`>= 1`；电与机械之间所有量的换算比。"
@@ -118,12 +146,19 @@
       "unit": "1 (a count)",
       "frame": "machine",
       "sign": "not applicable: it is a positive count.",
-      "anchor": {"file": "include/foc/motor/motor_config.hpp", "code": "std::uint8_t pole_pairs;"}
+      "anchor": {
+        "file": "include/foc/motor/motor_config.hpp",
+        "code": "std::uint8_t pole_pairs;"
+      }
     },
     {
       "id": "psi_f",
       "glyph": "ψf",
-      "aliases": ["ψf", "ψ_f", "psi_f"],
+      "aliases": [
+        "ψf",
+        "ψ_f",
+        "psi_f"
+      ],
       "meaning": {
         "en": "rotor (permanent-magnet) flux linkage. Not the torque constant: `psi_f = Kt / (1.5 * pole_pairs)`.",
         "zh": "转子（永磁）磁链。不是转矩常数：`psi_f = Kt / (1.5 * pole_pairs)`。"
@@ -131,12 +166,18 @@
       "unit": "Wb",
       "frame": "rotor",
       "sign": "positive along the rotor's north axis (the d axis).",
-      "anchor": {"file": "include/foc/core/machine_params.hpp", "code": "float psi_f;"}
+      "anchor": {
+        "file": "include/foc/core/machine_params.hpp",
+        "code": "float psi_f;"
+      }
     },
     {
       "id": "kt",
       "glyph": "Kt",
-      "aliases": ["kt", "K_t"],
+      "aliases": [
+        "kt",
+        "K_t"
+      ],
       "meaning": {
         "en": "torque constant, the nameplate number, `psi_f * 1.5 * pole_pairs`.",
         "zh": "转矩常数，铭牌数字，`psi_f * 1.5 * pole_pairs`。"
@@ -144,12 +185,18 @@
       "unit": "N*m/A",
       "frame": "machine",
       "sign": "positive for positive q-axis current.",
-      "anchor": {"file": "include/foc/motor/motor_config.hpp", "code": "float kt;"}
+      "anchor": {
+        "file": "include/foc/motor/motor_config.hpp",
+        "code": "float kt;"
+      }
     },
     {
       "id": "ld",
       "glyph": "Ld",
-      "aliases": ["Ld", "L_d"],
+      "aliases": [
+        "Ld",
+        "L_d"
+      ],
       "meaning": {
         "en": "d-axis (rotor flux axis) inductance.",
         "zh": "d 轴（转子磁链轴）电感。"
@@ -157,12 +204,18 @@
       "unit": "H",
       "frame": "dq, d axis",
       "sign": "not applicable: an inductance.",
-      "anchor": {"file": "include/foc/motor/motor_config.hpp", "code": "float ld;"}
+      "anchor": {
+        "file": "include/foc/motor/motor_config.hpp",
+        "code": "float ld;"
+      }
     },
     {
       "id": "lq",
       "glyph": "Lq",
-      "aliases": ["Lq", "L_q"],
+      "aliases": [
+        "Lq",
+        "L_q"
+      ],
       "meaning": {
         "en": "q-axis (torque axis) inductance. A surface machine has `Lq == Ld`.",
         "zh": "q 轴（转矩轴）电感。表贴机 `Lq == Ld`。"
@@ -170,12 +223,18 @@
       "unit": "H",
       "frame": "dq, q axis",
       "sign": "not applicable: an inductance.",
-      "anchor": {"file": "include/foc/motor/motor_config.hpp", "code": "float lq;"}
+      "anchor": {
+        "file": "include/foc/motor/motor_config.hpp",
+        "code": "float lq;"
+      }
     },
     {
       "id": "rs",
       "glyph": "Rs",
-      "aliases": ["Rs", "R_s"],
+      "aliases": [
+        "Rs",
+        "R_s"
+      ],
       "meaning": {
         "en": "stator resistance, at whatever temperature the caller means -- the plant does not report temperature.",
         "zh": "定子电阻，取调用方所指温度下的值——被控对象不会报告温度。"
@@ -183,12 +242,17 @@
       "unit": "ohm",
       "frame": "stator",
       "sign": "not applicable: a resistance.",
-      "anchor": {"file": "include/foc/motor/motor_config.hpp", "code": "float rs;"}
+      "anchor": {
+        "file": "include/foc/motor/motor_config.hpp",
+        "code": "float rs;"
+      }
     },
     {
       "id": "i_d",
       "glyph": "i_d",
-      "aliases": ["i_d"],
+      "aliases": [
+        "i_d"
+      ],
       "meaning": {
         "en": "d-axis (flux-producing) current.",
         "zh": "d 轴（产生磁链的）电流。"
@@ -196,12 +260,17 @@
       "unit": "A",
       "frame": "dq, d axis",
       "sign": "positive into the machine, producing flux along the d axis; field weakening is the negative direction.",
-      "anchor": {"file": "include/foc/core/types.hpp", "code": "T d{};"}
+      "anchor": {
+        "file": "include/foc/core/types.hpp",
+        "code": "T d{};"
+      }
     },
     {
       "id": "i_q",
       "glyph": "i_q",
-      "aliases": ["i_q"],
+      "aliases": [
+        "i_q"
+      ],
       "meaning": {
         "en": "q-axis (torque-producing) current.",
         "zh": "q 轴（产生转矩的）电流。"
@@ -209,12 +278,17 @@
       "unit": "A",
       "frame": "dq, q axis",
       "sign": "positive = motoring in the direction `omega_m` is positive.",
-      "anchor": {"file": "include/foc/core/types.hpp", "code": "T q{};"}
+      "anchor": {
+        "file": "include/foc/core/types.hpp",
+        "code": "T q{};"
+      }
     },
     {
       "id": "v_bus",
       "glyph": "v_bus",
-      "aliases": ["v_bus"],
+      "aliases": [
+        "v_bus"
+      ],
       "meaning": {
         "en": "DC link voltage. The available phase voltage is bounded by `v_bus`, and the current loop's output clamp is `+-v_bus/2`.",
         "zh": "母线电压。可用相电压受 `v_bus` 约束，电流环输出限幅是 `±v_bus/2`。"
@@ -222,12 +296,18 @@
       "unit": "V",
       "frame": "DC link",
       "sign": "positive.",
-      "anchor": {"file": "include/foc/motor/motor_config.hpp", "code": "float bandwidth_rad_s, float v_bus"}
+      "anchor": {
+        "file": "include/foc/motor/motor_config.hpp",
+        "code": "float bandwidth_rad_s, float v_bus"
+      }
     },
     {
       "id": "lambda",
       "glyph": "λ",
-      "aliases": ["λ", "lambda"],
+      "aliases": [
+        "λ",
+        "lambda"
+      ],
       "meaning": {
         "en": "field-weakening closure ratio, `lambda = Ld*i_max/psi_f = 1/ratio`, i.e. the reciprocal of the `ratio` field the C API returns. Field weakening can hold the envelope only when `lambda >= 1`, which is the same statement as `i_char <= i_max`.",
         "zh": "弱磁闭合比，`lambda = Ld·i_max/psi_f = 1/ratio`，即 C API 返回的 `ratio` 字段的倒数。只有 `lambda >= 1` 时弱磁才守得住包络，这与 `i_char <= i_max` 是同一句话。"
@@ -235,7 +315,10 @@
       "unit": "1 (dimensionless)",
       "frame": "machine",
       "sign": "positive.",
-      "anchor": {"file": "include/foc/core/field_weakening.hpp", "code": "i_char <= i_max"},
+      "anchor": {
+        "file": "include/foc/core/field_weakening.hpp",
+        "code": "i_char <= i_max"
+      },
       "note": {
         "en": "Two spellings of one quantity live in the tree, and one of them is inverted. `lambda` (this table, `domain.json`) and `ratio` (`foc_fw_verdict_t.ratio`, `psi_f/Ld / i_max`) are reciprocals, so a threshold written as `lambda >= 1` and one written as `ratio <= 1` are the same rule -- but a reader who takes `ratio` for `lambda` reads the rule backwards. The table states the reciprocal relation rather than picking a winner, because both spellings are already in the public API.",
         "zh": "同一个量在树里有两个写法，而其中一个是倒数。`lambda`（本表、`domain.json`）与 `ratio`（`foc_fw_verdict_t.ratio`，`psi_f/Ld / i_max`）互为倒数，所以写成 `lambda >= 1` 和写成 `ratio <= 1` 是同一条规则——但把 `ratio` 当成 `lambda` 的读者会把规则读反。本表只陈述这个倒数关系，不裁定哪个写法胜出，因为两种写法都已经在公开 API 里。"
@@ -244,7 +327,9 @@
     {
       "id": "i_char",
       "glyph": "i_char",
-      "aliases": ["i_char"],
+      "aliases": [
+        "i_char"
+      ],
       "meaning": {
         "en": "characteristic current, `i_char = psi_f/Ld`: the d-axis current that would null the rotor flux.",
         "zh": "特征电流，`i_char = ψf/Ld`：把转子磁链削到零所需的 d 轴电流。"
@@ -252,12 +337,17 @@
       "unit": "A",
       "frame": "dq, d axis",
       "sign": "reported as a positive magnitude; the current that achieves it is negative.",
-      "anchor": {"file": "include/foc/api/foc_types.h", "code": "float i_char_a;"}
+      "anchor": {
+        "file": "include/foc/api/foc_types.h",
+        "code": "float i_char_a;"
+      }
     },
     {
       "id": "delta",
       "glyph": "δ",
-      "aliases": ["δ"],
+      "aliases": [
+        "δ"
+      ],
       "meaning": {
         "en": "power angle (load angle) between the rotor flux and the stator flux linkage.",
         "zh": "功角：转子磁链与定子磁链之间的夹角。"
@@ -274,7 +364,10 @@
     {
       "id": "alpha_beta",
       "glyph": "α, β",
-      "aliases": ["α", "β"],
+      "aliases": [
+        "α",
+        "β"
+      ],
       "meaning": {
         "en": "the stationary two-phase frame: `alpha` is the phase-u axis, `beta` is 90 deg ahead of it.",
         "zh": "静止两相坐标系：`alpha` 是 u 相轴，`beta` 领先它 90 度。"
@@ -282,12 +375,17 @@
       "unit": "1 (a frame label, not a quantity)",
       "frame": "stationary (Clarke output)",
       "sign": "not applicable: these name axes.",
-      "anchor": {"file": "include/foc/core/transforms.hpp", "code": "auto clarke(Uvw<T> uvw)"}
+      "anchor": {
+        "file": "include/foc/core/transforms.hpp",
+        "code": "auto clarke(Uvw<T> uvw)"
+      }
     },
     {
       "id": "tau",
       "glyph": "τ",
-      "aliases": ["τ"],
+      "aliases": [
+        "τ"
+      ],
       "meaning": {
         "en": "a time constant, always the one named in the same sentence (observer pole, filter window, thermal lag).",
         "zh": "时间常数，始终是同句里点名的那个（观测器极点、滤波窗、热滞后）。"
@@ -295,12 +393,18 @@
       "unit": "s",
       "frame": "the subsystem that owns it",
       "sign": "positive.",
-      "anchor": {"file": "include/foc/core/thermal_limit.hpp", "code": "τ = Rt·Ct"}
+      "anchor": {
+        "file": "include/foc/core/thermal_limit.hpp",
+        "code": "τ = Rt·Ct"
+      }
     },
     {
       "id": "omega_h",
       "glyph": "ω_h",
-      "aliases": ["ω_h", "omega_h"],
+      "aliases": [
+        "ω_h",
+        "omega_h"
+      ],
       "meaning": {
         "en": "HFI injection angular frequency: the carrier the high-frequency injection puts on the d axis. The reactance that sets the injected current is `omega_h * Ld`.",
         "zh": "高频注入的角频率：注入在 d 轴上的那个载波。决定注入电流的电抗是 `omega_h · Ld`。"
@@ -308,12 +412,17 @@
       "unit": "rad/s",
       "frame": "electrical",
       "sign": "positive.",
-      "anchor": {"file": "src/api/bridge.cpp", "code": "ω_h·Ld"}
+      "anchor": {
+        "file": "src/api/bridge.cpp",
+        "code": "ω_h·Ld"
+      }
     },
     {
       "id": "phi_inj",
       "glyph": "φ_inj",
-      "aliases": ["φ_inj"],
+      "aliases": [
+        "φ_inj"
+      ],
       "meaning": {
         "en": "injection phase, the phase at which a cogging harmonic is injected into the current command.",
         "zh": "注入相位，即把一个齿槽谐波注入电流指令时所用的相位。"
@@ -321,12 +430,17 @@
       "unit": "rad",
       "frame": "the harmonic's own phase reference",
       "sign": "positive leads.",
-      "anchor": {"file": "src/core/cogging_learn.cpp", "code": "k·θ + φ_inj"}
+      "anchor": {
+        "file": "src/core/cogging_learn.cpp",
+        "code": "k·θ + φ_inj"
+      }
     },
     {
       "id": "theta_p",
       "glyph": "θ_p",
-      "aliases": ["θ_p"],
+      "aliases": [
+        "θ_p"
+      ],
       "meaning": {
         "en": "the angle of one phase current in the commissioning projection, `i_p` proportional to `cos(theta_p - angle)`.",
         "zh": "调试投影里某一相电流的相位角，`i_p` 正比于 `cos(θ_p − angle)`。"
@@ -334,12 +448,19 @@
       "unit": "rad",
       "frame": "phase (stationary)",
       "sign": "positive leads.",
-      "anchor": {"file": "include/foc/core/commissioning.hpp", "code": "cos(θ_p − angle)"}
+      "anchor": {
+        "file": "include/foc/core/commissioning.hpp",
+        "code": "cos(θ_p − angle)"
+      }
     },
     {
       "id": "sigma",
       "glyph": "σ",
-      "aliases": ["σ_v", "σ_θ", "σ"],
+      "aliases": [
+        "σ_v",
+        "σ_θ",
+        "σ"
+      ],
       "meaning": {
         "en": "a standard deviation of a noise source, with the subscript naming which one: `sigma_theta` the angle, `sigma_v` the speed derived from it.",
         "zh": "某个噪声源的标准差，下标说明是哪一个：`σ_θ` 是角度，`σ_v` 是由它导出的转速。"
@@ -347,12 +468,17 @@
       "unit": "the unit of the subscribed quantity",
       "frame": "n/a",
       "sign": "non-negative.",
-      "anchor": {"file": "include/foc/core/speed_from_angle.hpp", "code": "σ_v = σ_θ·√2/(window_ticks·dt)"}
+      "anchor": {
+        "file": "include/foc/core/speed_from_angle.hpp",
+        "code": "σ_v = σ_θ·√2/(window_ticks·dt)"
+      }
     },
     {
       "id": "eta_flux",
       "glyph": "η",
-      "aliases": ["η"],
+      "aliases": [
+        "η"
+      ],
       "meaning": {
         "en": "the nonlinear flux observer's correction vector: the part of the estimated linkage that is not the current's own flux.",
         "zh": "非线性磁链观测器的修正矢量：估计磁链里不属于电流自身磁链的那一部分。"
@@ -360,12 +486,17 @@
       "unit": "Wb",
       "frame": "stationary (alpha-beta)",
       "sign": "a vector, no sign.",
-      "anchor": {"file": "include/foc/core/observer/nonlinear_flux_observer.hpp", "code": "(ψf² − |η|²)·η"}
+      "anchor": {
+        "file": "include/foc/core/observer/nonlinear_flux_observer.hpp",
+        "code": "(ψf² − |η|²)·η"
+      }
     },
     {
       "id": "omega_l",
       "glyph": "ωL",
-      "aliases": ["ωL"],
+      "aliases": [
+        "ωL"
+      ],
       "meaning": {
         "en": "an impedance term, `omega * L`, written as one token where the reactance is what the sentence is about. Not a symbol of its own and not a frequency.",
         "zh": "阻抗项 `ω·L`，在句子讲的就是电抗时写成一个记号。它不是独立符号，也不是频率。"
@@ -373,7 +504,35 @@
       "unit": "ohm",
       "frame": "depends on which L the sentence names",
       "sign": "positive.",
-      "anchor": {"file": "include/foc/core/deadtime.hpp", "code": "`ωL`"}
+      "anchor": {
+        "file": "include/foc/core/deadtime.hpp",
+        "code": "`ωL`"
+      }
+    },
+    {
+      "id": "psi_ab",
+      "glyph": "ψ_ab",
+      "aliases": [
+        "ψ_ab",
+        "psi_ab",
+        "ψ",
+        "ψ_s"
+      ],
+      "meaning": {
+        "en": "stator flux linkage vector in the stationary frame -- the integrator state of a flux observer. Distinct from the rotor flux `ψf`, which is a constant of the machine.",
+        "zh": "静止坐标系下的定子磁链矢量——磁链观测器的积分器状态。与机器常数转子磁链 `ψf` 不同。"
+      },
+      "unit": "Wb",
+      "frame": "alpha-beta (stationary), as a vector",
+      "sign": "positive along the winding's own flux direction; a vector, so it carries two components.",
+      "anchor": {
+        "file": "include/foc/core/observer/dual_inductance_observer.hpp",
+        "code": "Ab<float> psi_; ///< [en] stator flux estimate in Wb (the integrator state)."
+      },
+      "note": {
+        "en": "Registered when the bare `ψ` in this observer's prose turned out to be the last unregistered glyph: the sentence was naming the stator estimate while the table only knew the rotor constant `ψf`.",
+        "zh": "登记它的原因：这个观测器的散文里那个裸 `ψ` 是最后一个未登记字形——句子说的是定子估计，而表里只有转子常数 `ψf`。"
+      }
     }
   ]
 }

@@ -128,8 +128,8 @@ inline auto torque_map(const motor::MotorConfig& config, float min_nm, float max
  *
  * @brief [zh] 一对实测（或指令）dq 电流正在产生的力矩：`kt·iq + 1.5·pp·(ld − lq)·id·iq`。
  *
- *     这与 SIL plant 积分的是同一个表达式，也正因如此它可以对着力学被检验：由电流得到的估计与由 `J·dω/dt + B·ω` 得到的
- *     估计相比，是两个独立测量相比，而不是同一个公式的两次复述。
+ *     这与 SIL plant 积分的是同一个表达式，也正因如此它可以对着力学被检验：由电流得到的估计与由 `J·dω_m/dt + B·ω_m` 得
+ *     到的估计相比，是两个独立测量相比，而不是同一个公式的两次复述。
  *
  * @param map [en] a map with status `Ok`; an unusable map estimates 0.
  * @param map [zh] 状态为 `Ok` 的地图；不可用的地图估计出 0。
