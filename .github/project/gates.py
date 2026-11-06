@@ -213,6 +213,41 @@ def cmd_docs(_explicit):
     return numbers.returncode
 
 
+def cmd_deps(_explicit):
+    """Where a third-party package may appear, and whether the ones we declare are used at all.
+
+    Two failures with one implementation because they are one question: a dependency is a cost, and a cost
+    is only acceptable where it was measured to be worth paying. Measured 2026-11-06, every `etl` header
+    that could reach a public header costs a consumer 4x-34x the whole `foc` include face, so `include/**`
+    allows none of them; and the reason this gate exists at all is that `etl` sat in `conandata.yml` with
+    zero references, which no other gate could see. `--selftest` runs first, so a classifier that has lost
+    the ability to say "violation" cannot pass by finding nothing."""
+    script = ROOT / '.github' / 'project' / 'deps_gate.py'
+    for _args in (['--selftest'], []):
+        _rc = subprocess.run([sys.executable, str(script), *_args], cwd=ROOT, text=True).returncode
+        if _rc:
+            return _rc
+    return 0
+
+
+def cmd_form(_explicit):
+    """Which shapes ship, and does each one carry an obligation?
+
+    The FMU was built and tested while no claim row described it: 'we ship an FMU' was true and 'what does
+    the FMU promise' had no answer, and no gate could see the difference because an absent row is not an
+    error. The same hole lets a face appear with no obligation at all. So faces are derived from the tree,
+    a face that is not in `forms.json` fails, and a form states either which README rows claim it or why it
+    is a gap -- the gap being a recorded, passing state, because a red light for a written-down debt is a
+    light people learn to ignore. `--selftest` runs first, so a checker that stopped being able to fail
+    cannot pass by finding nothing."""
+    script = ROOT / '.github' / 'project' / 'form_gate.py'
+    for _args in (['--selftest'], []):
+        _rc = subprocess.run([sys.executable, str(script), *_args], cwd=ROOT, text=True).returncode
+        if _rc:
+            return _rc
+    return 0
+
+
 def cmd_boundaries(_explicit):
     """Every statement on the boundaries page names the case that pins it, and that case exists.
 
@@ -270,6 +305,19 @@ def cmd_fmu(_explicit, tolerant=False):
     back. Both halves need optional material -- a Python that can import fmpy, and the C archives a `conan create`
     produced. When they are absent this prints one SKIPPED line and stops: loudly, because a silent skip would turn
     "the FMU loads in a standard master" into a claim nobody has checked."""
+    # The variable table first, and before anything needs FMPy: a value reference that disagrees between the
+    # XML a master parses and the enum the wrapper switches on is silent in both directions, and no compiler
+    # can see it. This half needs no optional material, so it runs even where the rest of the check skips.
+    # 先查变量表，而且在任何需要 FMPy 的步骤之前：主控解析的 XML 与包装器 switch 的枚举之间对不上的 value
+    # reference 是两个方向都静默的，而编译器看不见它。这一半不需要可选材料，所以在其余部分 SKIP 的地方也照跑。
+    registry = ROOT / 'api' / 'fmu' / 'modelDescription.xml_check.py'
+    done = subprocess.run([sys.executable, str(registry), '--selftest'], cwd=ROOT, text=True)
+    if done.returncode != 0:
+        return done.returncode
+    done = subprocess.run([sys.executable, str(registry)], cwd=ROOT, text=True)
+    if done.returncode != 0:
+        return done.returncode
+
     python = _fmpy_python()
     # CONAN_HOME first: CI sets it explicitly, and assuming `~/.conan2` there would work by accident until
     # somebody moves the cache and the gate reports "no archive" instead of a real answer.
@@ -355,9 +403,26 @@ def cmd_ci_policy(_explicit):
     return 0
 
 
-PROJECT_GATES = ('license', 'strict', 'claims', 'docs', 'boundaries', 'capabilities', 'ci-policy', 'assume', 'anchor',
-                 'scaffold', 'budget', 'clocks', 'observability', 'combinations', 'domain', 'mutants', 'plantref', 'fmu',
-                 'pil', 'mcdc', 'blast', 'wired', 'smoke', 'regmap')
+PROJECT_GATES = ('license', 'strict', 'claims', 'docs', 'deps', 'form', 'boundaries', 'capabilities', 'ci-policy',
+                 'assume', 'anchor', 'scaffold', 'budget', 'clocks', 'observability', 'combinations', 'domain',
+                 'mutants', 'plantref', 'fmu', 'pil', 'mcdc', 'blast', 'wired', 'smoke', 'regmap', 'subset')
+
+
+def cmd_subset(_explicit):
+    """The language-subset rule table, from `tools/compliance/`.
+
+    Why the code lives outside `.github/`: the rule table, the deviation records and the compliance
+    summary are *deliverables* — they go into a customer's package — while `.github/project/` is
+    this repository's own gate layer. The gate is registered here so `gates.py all` and the CI
+    policy see it like any other; only the bodies are elsewhere. `--selftest` runs first, because a
+    checker that has never said no is a checker nobody has a reason to trust.
+    """
+    script = ROOT / 'tools' / 'compliance' / 'subset_gate.py'
+    for _args in (['--selftest'], []):
+        _rc = subprocess.run([sys.executable, str(script), *_args], cwd=ROOT, text=True).returncode
+        if _rc:
+            return _rc
+    return 0
 
 
 def cmd_observability(_explicit):
@@ -625,6 +690,10 @@ def main():
         'claims': 'every installed header has a README claim row with a level and existing evidence; '
                   '`claims --impact <path|name>` lists what rests on it',
         'docs': 'Doxygen blocks: star alignment, continuation indent, 120 columns, no mid-CJK breaks',
+        'deps': 'a third-party package appears only on the paths deps.json allows, and a declared package that '
+                'nothing includes fails -- the debt that started this line',
+        'form': 'every shape the library ships in is registered in forms.json and its claim is either made '
+                '(pointing at README rows) or a recorded gap with a reason',
         'boundaries': 'every statement on the boundaries page names a test case that exists',
         'capabilities': 'every capability states its diagnostic channel, admission, boundary and invariant participation',
         'ci-policy': 'no workflow calls a gate whose cost belongs on a developer machine (pil, fmu)',
@@ -650,6 +719,8 @@ def main():
         'regmap': 'every register in the protocol table is backed by a declaration in foc_api.h, and every readable C '
                   'function is in the table -- so the protocol cannot grow a second vocabulary',
         'fmu': 'build the FMU and load it in a standard FMI master (FMPy); SKIPPED when its material is absent',
+        'subset': 'the language-subset rule table: every implemented rule names a mechanism that exists, every '
+                  'deviation has its five elements, every NOLINT has a record, and the open count did not rise',
         'pil': 'run the speed-step scenario on the target ISA under qemu and compare with the host; SKIPPED when its '
                'material is absent',
         'all': ' + '.join(PROJECT_GATES),
@@ -673,6 +744,10 @@ def main():
         return cmd_claims([*args.files, *(['--impact', args.impact] if args.impact else [])])
     if args.gate == 'docs':
         return cmd_docs(args.files)
+    if args.gate == 'deps':
+        return cmd_deps(args.files)
+    if args.gate == 'form':
+        return cmd_form(args.files)
     if args.gate == 'boundaries':
         return cmd_boundaries(args.files)
     if args.gate == 'capabilities':
@@ -717,6 +792,8 @@ def main():
         return cmd_regmap([])
     if args.gate == 'domain':
         return cmd_domain([])
+    if args.gate == 'subset':
+        return cmd_subset([])
     # The chain above is the only thing standing between a single-gate invocation and the aggregate below, and it
     # has now been forgotten twice (`plantref` before, `combinations` and `mcdc` this time). A missing branch does
     # not fail: it runs *every* gate and prints "all N", which reads as success. So the fall-through is refused
@@ -729,7 +806,8 @@ def main():
         return 1
     failed = [name for name in PROJECT_GATES
               if {'license': cmd_license, 'strict': cmd_strict, 'claims': lambda _f: cmd_claims([]),
-                  'docs': cmd_docs, 'boundaries': cmd_boundaries, 'capabilities': cmd_capabilities,
+                  'docs': cmd_docs, 'deps': cmd_deps, 'form': cmd_form, 'boundaries': cmd_boundaries,
+                  'capabilities': cmd_capabilities,
                   'ci-policy': cmd_ci_policy, 'assume': cmd_assume, 'anchor': cmd_anchor,
                   'scaffold': cmd_scaffold, 'budget': cmd_budget, 'clocks': cmd_clocks, 'mutants': cmd_mutants,
                   'plantref': cmd_plantref, 'observability': cmd_observability, 'combinations': cmd_combinations,
@@ -740,6 +818,7 @@ def main():
                   'smoke': cmd_smoke,
                   'regmap': cmd_regmap,
                   'fmu': lambda _f: cmd_fmu([], tolerant=True),
+                  'subset': cmd_subset,
                   'pil': lambda _f: cmd_pil([], tolerant=True)}[name]([]) ]
     if failed:
         print(f'[project-gates] FAIL: {", ".join(failed)}', flush=True)
