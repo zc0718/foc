@@ -8,8 +8,9 @@ namespace foc {
 namespace core {
 
 /**
- * @brief [en] The dead-time voltage an **axis** sees, from the per-phase step and the angle of the current in the rotor
- *             frame.
+ * @brief [en] The dead-time voltage an **axis** sees.
+ *
+ *     From the per-phase step and the angle of the current in the rotor frame.
  *
  *     Why this is not the per-phase number. The inverter takes `deadtime_v * sign(i_phase)` from each phase, and
  *     projecting three of those onto an axis depends on where the current is: with the current on the d axis the phases
@@ -62,8 +63,9 @@ namespace core {
 }
 
 /**
- * @brief [en] Recovers stator resistance **and** the inverter's dead-time voltage from a settled DC current sweep, by
- *             separating the two terms the voltage equation contains.
+ * @brief [en] Recovers stator resistance **and** the inverter's dead-time voltage from a settled DC current sweep.
+ *
+ *     By separating the two terms the voltage equation contains.
  *
  *     Why two unknowns and not one. At standstill with a settled current, the command obeys `v = rs*i + deadtime_v`:
  *     the winding drops `rs*i` and the inverter eats `deadtime_v` regardless of current. Measuring at a single current
@@ -76,7 +78,9 @@ namespace core {
  *     `rs` downwards. (2) **One polarity**: `sign(i)` has to be constant across the sweep, or the intercept flips sign
  *     half way through and the fit means nothing.
  *
- * @brief [zh] 从一个稳定的直流电流扫描里同时把定子电阻**和**逆变器死区电压辨识出来——办法是把 电压方程里那两项分开。
+ * @brief [zh] 从一个稳定的直流电流扫描里同时把定子电阻**和**逆变器死区电压辨识出来。
+ *
+ *     办法是把电压方程里那两项分开。
  *
  *     为什么是两个未知数而不是一个。堵转、电流稳定时，指令满足 `v = rs·i + deadtime_v`：绕组吃掉 `rs·i`，逆变器不管电流
  *     大小都吃掉 `deadtime_v`。 在**一个**电流上测是分不开这两项的——死区电压差 10 % 和在那个点上 `rs` 差 10 % 完全等
@@ -256,7 +260,9 @@ class RsEstimator final {
 };
 
 /**
- * @brief [en] Recovers the rotor flux linkage from the voltage a **zero-current** spin needs, at two or more speeds.
+ * @brief [en] Recovers the rotor flux linkage from the voltage a **zero-current** spin needs.
+ *
+ *     At two or more speeds.
  *
  *     Why zero current, and why two speeds. With the current held at zero the voltage equation collapses to `v =
  *     we*psi_f` -- there is no `rs*i` term and no dead-time term, because a leg carrying no current has no loss to

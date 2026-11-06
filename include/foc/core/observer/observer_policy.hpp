@@ -21,14 +21,18 @@ struct ObsState final {
 
 
 /**
- * @brief [en] Observer policy contract. Every observer exposes `auto update(Ab<float> v_ab, Ab<float> i_ab, float dt_s)
- *             noexcept -> ObsState` and is checked by `hal::concepts::is_observer_v` (or by a static_assert at the
- *             assembly point).
+ * @brief [en] Observer policy contract.
+ *
+ *     Every observer exposes `auto update(Ab<float> v_ab, Ab<float> i_ab, float dt_s) noexcept -> ObsState` and is
+ *     checked by `hal::concepts::is_observer_v` (or by a static_assert at the assembly point).
  *
  *     Why alpha-beta and not d-q: the whole point of an observer is to produce the angle that the d-q transform needs,
  *     so its inputs cannot already be in the rotating frame.
  *
- * @brief [zh] 观测器策略契约。每个观测器都提供 `auto update(Ab<float> v_ab, Ab<float> i_ab, float dt_s) noexcept ->
+ * @brief [zh] 观测器策略契约。
+ *
+ *     每个观测器都提供 `auto update(Ab<float> v_ab, Ab<float> i_ab, float dt_s) noexcept -> ObsState`，并由
+ *     `is_observer_v`（或组装点的 static_assert）检查。
  *
  *     ObsState`， 并由 `is_observer_v`（或组装点的 static_assert）检查。
  *

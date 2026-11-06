@@ -111,9 +111,13 @@ enum class BoardCause : std::uint8_t {
 };
 
 /**
- * @brief [en] Everything the checks measure, in one place. Every field is a **number**, which is the point: the report
- *             has to say "0.041 A" and not "fail".
- * @brief [zh] 检查量到的全部东西，放在一处。每个字段都是一个**数**，这正是要点：报告要说"0.041 A"， 不是"失败"。
+ * @brief [en] Everything the checks measure, in one place.
+ *
+ *     Every field is a **number**, which is the point: the report has to say "0.041 A" and not "fail".
+ *
+ * @brief [zh] 检查量到的全部东西，放在一处。
+ *
+ *     每个字段都是一个**数**，这正是要点：报告要说"0.041 A"，不是"失败"。
  * @since 0.1.0
  * @exporter
  */

@@ -24,7 +24,9 @@ template <typename T> constexpr auto clamp(T value, T low, T high) noexcept -> T
 
 
 /**
- * @brief [en] Moves its output towards a target no faster than a configured rate, symmetrically in both directions.
+ * @brief [en] Moves its output towards a target no faster than a configured rate.
+ *
+ *     Symmetrically in both directions.
  *
  *     The budget for one step, \f$\rho\,\Delta t\f$, is applied to the **state** rather than to the error:
  *

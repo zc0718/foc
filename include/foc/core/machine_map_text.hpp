@@ -43,8 +43,14 @@ struct TextError final {
 
 
 /**
- * @brief [en] A machine description as it travels: the parameters, the current map, and how many keys were ignored.
- * @brief [zh] 会旅行的机器描述：参数、电流表，以及被忽略的键的数量。
+ * @brief [en] A machine description as it travels.
+ *
+ *     The parameters, the current map, and how many keys were ignored.
+ *
+ * @brief [zh] 会旅行的机器描述。
+ *
+ *     参数、电流表，以及被忽略的键的数量。
+ *
  * @details [en] `ignored` is not an error and not a warning: a reader must accept keys it does not know, or the format
  *               can never grow. Counting them is what lets a caller notice that the file says more than this build
  *               understood -- without the library having to know what any of it means.

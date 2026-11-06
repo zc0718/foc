@@ -445,11 +445,17 @@ FOC_WARN_UNUSED foc_err_t foc_get_state(foc_motor_t motor, float *speed_rad_s, f
 
 
 /**
- * @brief [en] `_Generic` dispatch for the setpoints, so `foc_set_speed_g(m, 50)` and `foc_set_speed_g(m, 50.0f)` both
- *             work without an explicit cast. The `default:` branch routes every other arithmetic type to the double
- *             entry point, which means passing a pointer or a struct is a compile error instead of a silent conversion.
- * @brief [zh] 给定值的 `_Generic` 分发：`foc_set_speed_g(m, 50)` 与 `foc_set_speed_g(m, 50.0f)` 都无需显式转换。
- *             `default:` 分支把其余算术类型送到 double 入口，因此传指针或结构体会 直接编译失败，而不是被静默转换。
+ * @brief [en] `_Generic` dispatch for the setpoints.
+ *
+ *     So `foc_set_speed_g(m, 50)` and `foc_set_speed_g(m, 50.0f)` both work without an explicit cast. The `default:`
+ *     branch routes every other arithmetic type to the double entry point, which means passing a pointer or a struct is
+ *     a compile error instead of a silent conversion.
+ *
+ * @brief [zh] 给定值的 `_Generic` 分发。
+ *
+ *     于是 `foc_set_speed_g(m, 50)` 与 `foc_set_speed_g(m, 50.0f)` 都无需显式转换。`default:` 分支把其余所有算术类型导
+ *     向 double 入口，因此传指针或结构体会是编译错误，而不是静默转换。
+ *
  * @note [en] Only defined for C11 and later; C++ callers pick the float or the _f64 function themselves (there is no
  *            `_Generic` in C++).
  * @note [zh] 只在 C11 及以后定义；C++ 调用方自己选 float 或 _f64 版本（C++ 没有 `_Generic`）。
@@ -915,8 +921,14 @@ FOC_WARN_UNUSED foc_err_t foc_motor_trace_reset(foc_motor_t motor);
 
 
 /**
- * @brief [en] Measure a recorded step response: fit a first-order decay to the approach and report the loop's numbers.
- * @brief [zh] 测量一段记录下来的阶跃响应：对逼近段拟合一个一阶衰减，并给出环路的几个数。
+ * @brief [en] Measure a recorded step response.
+ *
+ *     Fit a first-order decay to the approach and report the loop's numbers.
+ *
+ * @brief [zh] 测量一段记录下来的阶跃响应。
+ *
+ *     对逼近段拟合一个一阶衰减，并给出环路的几个数。
+ *
  * @param y [en] response samples, oldest first, at least three; a caller gets them from a trace window or from an
  *               oscilloscope export.
  * @param y [zh] 响应样本，最早的在前，至少三个；调用方从轨迹窗口或示波器导出里拿到它们。

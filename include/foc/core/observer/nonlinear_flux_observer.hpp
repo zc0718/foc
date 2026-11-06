@@ -11,8 +11,10 @@ namespace core {
 
 
 /**
- * @brief [en] Nonlinear flux observer: the same integral as `BackEmfObserver`, plus a term that pulls the estimated
- *             permanent-magnet flux magnitude back to the nameplate value.
+ * @brief [en] Nonlinear flux observer.
+ *
+ *     The same integral as `BackEmfObserver`, plus a term that pulls the estimated permanent-magnet flux magnitude back
+ *     to the nameplate value.
  *
  *     The one line that differs, in words: the open-loop observer integrates `v - Rs*i` and hopes the result stays a
  *     circle of radius `psi_f`. Nothing makes it -- a wrong `Rs` tilts and stretches that circle, an injected carrier

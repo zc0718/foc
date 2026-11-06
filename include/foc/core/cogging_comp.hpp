@@ -32,8 +32,14 @@ struct CoggingCompHarmonic final {
 };
 
 /**
- * @brief [en] The compensator's machine and its two limits: how much current it may add, and where it stops asking.
- * @brief [zh] 补偿器的机器与两个限制：能加多少电流，以及从哪里开始不再要求。
+ * @brief [en] The compensator's machine and its two limits.
+ *
+ *     How much current it may add, and where it stops asking.
+ *
+ * @brief [zh] 补偿器的机器与两个限制。
+ *
+ *     能加多少电流，以及从哪里开始不再要求。
+ *
  * @note [en] `fade_from_hz` / `fade_to_hz` are the frequency boundary the SIL measurement puts a number on: with the
  *            speed loop holding 10 rad/s mechanical, an injected 4 mN*m reappears in the q-axis current at `T_cog/Kt`
  *            (0.079 A measured against 0.080 A predicted), but at 80 rad/s -- a 76 Hz sixth harmonic, well above the

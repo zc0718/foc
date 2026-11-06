@@ -12,9 +12,10 @@ namespace core {
 
 
 /**
- * @brief [en] Saliency-tracking observer: injects a high-frequency voltage on the estimated d axis and reads the rotor
- *             angle out of the current response. Works at standstill, where a back-EMF observer has nothing to
- *             integrate.
+ * @brief [en] Saliency-tracking observer.
+ *
+ *     It injects a high-frequency voltage on the estimated d axis and reads the rotor angle out of the current
+ *     response. Works at standstill, where a back-EMF observer has nothing to integrate.
  *
  *     Why this cannot be a back-EMF variant: back-EMF scales with speed, so at zero speed it is zero and the angle is
  *     unobservable. Saliency does not scale with speed at all -- it is a property of the magnetic circuit. That is why

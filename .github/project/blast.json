@@ -647,9 +647,79 @@
           "why": "the claim row publishes the droop law, the zero at `-ki/kp`, the overshoot comparison and the peak-time ratios -- all measured from `Pi::run()`'s arithmetic, which is byte-identical. The rewrite touched only the doc block and `\\(f\\)`-formatted LaTeX inside it. Measured on this tree: 857/857 cases."
         },
         {
-          "row": "core/limits.hpp",
+          "row": "core/brake_chopper.hpp",
           "verdict": "holds",
-          "why": "the row publishes clamp and slew behaviour produced by `clamp` and `SlewLimiter::step`, neither of which changed. The rewrite is inside the class doc block. Measured on this tree: 857/857 cases, `test_limits.cpp` included."
+          "why": "`core/brake_chopper.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/core/pi.hpp include/foc/core/limits.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "core/deadtime.hpp",
+          "verdict": "holds",
+          "why": "`core/deadtime.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/core/pi.hpp include/foc/core/limits.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "core/min_pulse.hpp",
+          "verdict": "holds",
+          "why": "`core/min_pulse.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/core/pi.hpp include/foc/core/limits.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "core/observer/blended_observer.hpp",
+          "verdict": "holds",
+          "why": "`core/observer/blended_observer.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/core/pi.hpp include/foc/core/limits.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "core/observer/hfi_observer.hpp",
+          "verdict": "holds",
+          "why": "`core/observer/hfi_observer.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/core/pi.hpp include/foc/core/limits.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "core/observer/switchable_observer.hpp",
+          "verdict": "holds",
+          "why": "`core/observer/switchable_observer.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/core/pi.hpp include/foc/core/limits.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "core/single_shunt.hpp",
+          "verdict": "holds",
+          "why": "`core/single_shunt.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/core/pi.hpp include/foc/core/limits.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "core/svpwm.hpp",
+          "verdict": "holds",
+          "why": "`core/svpwm.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/core/pi.hpp include/foc/core/limits.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "core/trace.hpp",
+          "verdict": "holds",
+          "why": "`core/trace.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/core/pi.hpp include/foc/core/limits.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "core/trace_parse.hpp",
+          "verdict": "holds",
+          "why": "`core/trace_parse.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/core/pi.hpp include/foc/core/limits.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "core/traits.hpp",
+          "verdict": "holds",
+          "why": "`core/traits.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/core/pi.hpp include/foc/core/limits.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "motor/foc_loop.hpp",
+          "verdict": "holds",
+          "why": "`motor/foc_loop.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/core/pi.hpp include/foc/core/limits.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "motor/motor.hpp",
+          "verdict": "holds",
+          "why": "`motor/motor.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/core/pi.hpp include/foc/core/limits.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "motor/motor_config.hpp",
+          "verdict": "holds",
+          "why": "`motor/motor_config.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/core/pi.hpp include/foc/core/limits.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "motor/torque_map.hpp",
+          "verdict": "holds",
+          "why": "`motor/torque_map.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/core/pi.hpp include/foc/core/limits.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
         }
       ]
     },
@@ -1208,6 +1278,217 @@
           "row": "motor/torque_map.hpp",
           "verdict": "holds",
           "why": "`motor/torque_map.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/core/types.hpp include/foc/core/transforms.hpp include/foc/core/filters.hpp include/foc/core/feedforward.hpp include/foc/core/traits.hpp include/foc/core/gear_ratio.hpp include/foc/core/hall.hpp include/foc/core/brake_chopper.hpp include/foc/motor/motor.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        }
+      ]
+    },
+    {
+      "id": "B-21",
+      "date": "2026-11-06",
+      "what_changed": "Third and last brief pass: every remaining `@brief` in the tree that ran past 100 columns was split into a one-line brief plus the sentence or measurement that made it long. The over-long brief ratchet reached **0** (74 when Z3's first pass began), so the leg is now a hard rule rather than a ratchet. Includes `bridge.cpp`'s six constants and `foc_api.c`/`min_pulse.cpp`/`mtpv.cpp`/`single_shunt.cpp`, whose briefs are what a reader of the C path sees first.",
+      "seeds": [
+        "include/foc/api/foc_api.h",
+        "include/foc/api/foc_types.h",
+        "include/foc/comm/register_map.hpp",
+        "include/foc/core/auto_tune.hpp",
+        "include/foc/core/board_check.hpp",
+        "include/foc/core/cogging_comp.hpp",
+        "include/foc/core/cogging_learn.hpp",
+        "include/foc/core/commissioning.hpp",
+        "include/foc/core/field_weakening.hpp",
+        "include/foc/core/limits.hpp",
+        "include/foc/core/machine_map_text.hpp",
+        "include/foc/core/machine_params.hpp",
+        "include/foc/core/observer/dual_inductance_observer.hpp",
+        "include/foc/core/observer/hfi_observer.hpp",
+        "include/foc/core/observer/nonlinear_flux_observer.hpp",
+        "include/foc/core/observer/observer_policy.hpp",
+        "include/foc/core/polarity.hpp",
+        "include/foc/core/sinusoid_fit.hpp",
+        "include/foc/core/speed_from_angle.hpp",
+        "include/foc/driver/stub_hal.hpp",
+        "include/foc/driver/stub_pwm.hpp",
+        "include/foc/motor/motor.hpp"
+      ],
+      "affected": [
+        {
+          "row": "api/foc_api.h",
+          "verdict": "holds",
+          "why": "`api/foc_api.h` is recorded as resting on these headers, and `git diff -U0 -- include/foc/api/foc_api.h include/foc/api/foc_types.h include/foc/comm/register_map.hpp include/foc/core/auto_tune.hpp include/foc/core/board_check.hpp include/foc/core/cogging_comp.hpp include/foc/core/cogging_learn.hpp include/foc/core/commissioning.hpp include/foc/core/field_weakening.hpp include/foc/core/limits.hpp include/foc/core/machine_map_text.hpp include/foc/core/machine_params.hpp include/foc/core/observer/dual_inductance_observer.hpp include/foc/core/observer/hfi_observer.hpp include/foc/core/observer/nonlinear_flux_observer.hpp include/foc/core/observer/observer_policy.hpp include/foc/core/polarity.hpp include/foc/core/sinusoid_fit.hpp include/foc/core/speed_from_angle.hpp include/foc/driver/stub_hal.hpp include/foc/driver/stub_pwm.hpp include/foc/motor/motor.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "api/foc_types.h",
+          "verdict": "holds",
+          "why": "`api/foc_types.h` is recorded as resting on these headers, and `git diff -U0 -- include/foc/api/foc_api.h include/foc/api/foc_types.h include/foc/comm/register_map.hpp include/foc/core/auto_tune.hpp include/foc/core/board_check.hpp include/foc/core/cogging_comp.hpp include/foc/core/cogging_learn.hpp include/foc/core/commissioning.hpp include/foc/core/field_weakening.hpp include/foc/core/limits.hpp include/foc/core/machine_map_text.hpp include/foc/core/machine_params.hpp include/foc/core/observer/dual_inductance_observer.hpp include/foc/core/observer/hfi_observer.hpp include/foc/core/observer/nonlinear_flux_observer.hpp include/foc/core/observer/observer_policy.hpp include/foc/core/polarity.hpp include/foc/core/sinusoid_fit.hpp include/foc/core/speed_from_angle.hpp include/foc/driver/stub_hal.hpp include/foc/driver/stub_pwm.hpp include/foc/motor/motor.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "comm/register_map.hpp",
+          "verdict": "holds",
+          "why": "`comm/register_map.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/api/foc_api.h include/foc/api/foc_types.h include/foc/comm/register_map.hpp include/foc/core/auto_tune.hpp include/foc/core/board_check.hpp include/foc/core/cogging_comp.hpp include/foc/core/cogging_learn.hpp include/foc/core/commissioning.hpp include/foc/core/field_weakening.hpp include/foc/core/limits.hpp include/foc/core/machine_map_text.hpp include/foc/core/machine_params.hpp include/foc/core/observer/dual_inductance_observer.hpp include/foc/core/observer/hfi_observer.hpp include/foc/core/observer/nonlinear_flux_observer.hpp include/foc/core/observer/observer_policy.hpp include/foc/core/polarity.hpp include/foc/core/sinusoid_fit.hpp include/foc/core/speed_from_angle.hpp include/foc/driver/stub_hal.hpp include/foc/driver/stub_pwm.hpp include/foc/motor/motor.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "core/board_check.hpp",
+          "verdict": "holds",
+          "why": "`core/board_check.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/api/foc_api.h include/foc/api/foc_types.h include/foc/comm/register_map.hpp include/foc/core/auto_tune.hpp include/foc/core/board_check.hpp include/foc/core/cogging_comp.hpp include/foc/core/cogging_learn.hpp include/foc/core/commissioning.hpp include/foc/core/field_weakening.hpp include/foc/core/limits.hpp include/foc/core/machine_map_text.hpp include/foc/core/machine_params.hpp include/foc/core/observer/dual_inductance_observer.hpp include/foc/core/observer/hfi_observer.hpp include/foc/core/observer/nonlinear_flux_observer.hpp include/foc/core/observer/observer_policy.hpp include/foc/core/polarity.hpp include/foc/core/sinusoid_fit.hpp include/foc/core/speed_from_angle.hpp include/foc/driver/stub_hal.hpp include/foc/driver/stub_pwm.hpp include/foc/motor/motor.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "core/brake_chopper.hpp",
+          "verdict": "holds",
+          "why": "`core/brake_chopper.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/api/foc_api.h include/foc/api/foc_types.h include/foc/comm/register_map.hpp include/foc/core/auto_tune.hpp include/foc/core/board_check.hpp include/foc/core/cogging_comp.hpp include/foc/core/cogging_learn.hpp include/foc/core/commissioning.hpp include/foc/core/field_weakening.hpp include/foc/core/limits.hpp include/foc/core/machine_map_text.hpp include/foc/core/machine_params.hpp include/foc/core/observer/dual_inductance_observer.hpp include/foc/core/observer/hfi_observer.hpp include/foc/core/observer/nonlinear_flux_observer.hpp include/foc/core/observer/observer_policy.hpp include/foc/core/polarity.hpp include/foc/core/sinusoid_fit.hpp include/foc/core/speed_from_angle.hpp include/foc/driver/stub_hal.hpp include/foc/driver/stub_pwm.hpp include/foc/motor/motor.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "core/cogging_comp.hpp",
+          "verdict": "holds",
+          "why": "`core/cogging_comp.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/api/foc_api.h include/foc/api/foc_types.h include/foc/comm/register_map.hpp include/foc/core/auto_tune.hpp include/foc/core/board_check.hpp include/foc/core/cogging_comp.hpp include/foc/core/cogging_learn.hpp include/foc/core/commissioning.hpp include/foc/core/field_weakening.hpp include/foc/core/limits.hpp include/foc/core/machine_map_text.hpp include/foc/core/machine_params.hpp include/foc/core/observer/dual_inductance_observer.hpp include/foc/core/observer/hfi_observer.hpp include/foc/core/observer/nonlinear_flux_observer.hpp include/foc/core/observer/observer_policy.hpp include/foc/core/polarity.hpp include/foc/core/sinusoid_fit.hpp include/foc/core/speed_from_angle.hpp include/foc/driver/stub_hal.hpp include/foc/driver/stub_pwm.hpp include/foc/motor/motor.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "core/cogging_learn.hpp",
+          "verdict": "holds",
+          "why": "`core/cogging_learn.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/api/foc_api.h include/foc/api/foc_types.h include/foc/comm/register_map.hpp include/foc/core/auto_tune.hpp include/foc/core/board_check.hpp include/foc/core/cogging_comp.hpp include/foc/core/cogging_learn.hpp include/foc/core/commissioning.hpp include/foc/core/field_weakening.hpp include/foc/core/limits.hpp include/foc/core/machine_map_text.hpp include/foc/core/machine_params.hpp include/foc/core/observer/dual_inductance_observer.hpp include/foc/core/observer/hfi_observer.hpp include/foc/core/observer/nonlinear_flux_observer.hpp include/foc/core/observer/observer_policy.hpp include/foc/core/polarity.hpp include/foc/core/sinusoid_fit.hpp include/foc/core/speed_from_angle.hpp include/foc/driver/stub_hal.hpp include/foc/driver/stub_pwm.hpp include/foc/motor/motor.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "core/commissioning.hpp",
+          "verdict": "holds",
+          "why": "`core/commissioning.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/api/foc_api.h include/foc/api/foc_types.h include/foc/comm/register_map.hpp include/foc/core/auto_tune.hpp include/foc/core/board_check.hpp include/foc/core/cogging_comp.hpp include/foc/core/cogging_learn.hpp include/foc/core/commissioning.hpp include/foc/core/field_weakening.hpp include/foc/core/limits.hpp include/foc/core/machine_map_text.hpp include/foc/core/machine_params.hpp include/foc/core/observer/dual_inductance_observer.hpp include/foc/core/observer/hfi_observer.hpp include/foc/core/observer/nonlinear_flux_observer.hpp include/foc/core/observer/observer_policy.hpp include/foc/core/polarity.hpp include/foc/core/sinusoid_fit.hpp include/foc/core/speed_from_angle.hpp include/foc/driver/stub_hal.hpp include/foc/driver/stub_pwm.hpp include/foc/motor/motor.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "core/field_weakening.hpp",
+          "verdict": "holds",
+          "why": "`core/field_weakening.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/api/foc_api.h include/foc/api/foc_types.h include/foc/comm/register_map.hpp include/foc/core/auto_tune.hpp include/foc/core/board_check.hpp include/foc/core/cogging_comp.hpp include/foc/core/cogging_learn.hpp include/foc/core/commissioning.hpp include/foc/core/field_weakening.hpp include/foc/core/limits.hpp include/foc/core/machine_map_text.hpp include/foc/core/machine_params.hpp include/foc/core/observer/dual_inductance_observer.hpp include/foc/core/observer/hfi_observer.hpp include/foc/core/observer/nonlinear_flux_observer.hpp include/foc/core/observer/observer_policy.hpp include/foc/core/polarity.hpp include/foc/core/sinusoid_fit.hpp include/foc/core/speed_from_angle.hpp include/foc/driver/stub_hal.hpp include/foc/driver/stub_pwm.hpp include/foc/motor/motor.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "core/machine_map.hpp",
+          "verdict": "holds",
+          "why": "`core/machine_map.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/api/foc_api.h include/foc/api/foc_types.h include/foc/comm/register_map.hpp include/foc/core/auto_tune.hpp include/foc/core/board_check.hpp include/foc/core/cogging_comp.hpp include/foc/core/cogging_learn.hpp include/foc/core/commissioning.hpp include/foc/core/field_weakening.hpp include/foc/core/limits.hpp include/foc/core/machine_map_text.hpp include/foc/core/machine_params.hpp include/foc/core/observer/dual_inductance_observer.hpp include/foc/core/observer/hfi_observer.hpp include/foc/core/observer/nonlinear_flux_observer.hpp include/foc/core/observer/observer_policy.hpp include/foc/core/polarity.hpp include/foc/core/sinusoid_fit.hpp include/foc/core/speed_from_angle.hpp include/foc/driver/stub_hal.hpp include/foc/driver/stub_pwm.hpp include/foc/motor/motor.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "core/machine_params.hpp",
+          "verdict": "holds",
+          "why": "`core/machine_params.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/api/foc_api.h include/foc/api/foc_types.h include/foc/comm/register_map.hpp include/foc/core/auto_tune.hpp include/foc/core/board_check.hpp include/foc/core/cogging_comp.hpp include/foc/core/cogging_learn.hpp include/foc/core/commissioning.hpp include/foc/core/field_weakening.hpp include/foc/core/limits.hpp include/foc/core/machine_map_text.hpp include/foc/core/machine_params.hpp include/foc/core/observer/dual_inductance_observer.hpp include/foc/core/observer/hfi_observer.hpp include/foc/core/observer/nonlinear_flux_observer.hpp include/foc/core/observer/observer_policy.hpp include/foc/core/polarity.hpp include/foc/core/sinusoid_fit.hpp include/foc/core/speed_from_angle.hpp include/foc/driver/stub_hal.hpp include/foc/driver/stub_pwm.hpp include/foc/motor/motor.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "core/min_pulse.hpp",
+          "verdict": "holds",
+          "why": "`core/min_pulse.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/api/foc_api.h include/foc/api/foc_types.h include/foc/comm/register_map.hpp include/foc/core/auto_tune.hpp include/foc/core/board_check.hpp include/foc/core/cogging_comp.hpp include/foc/core/cogging_learn.hpp include/foc/core/commissioning.hpp include/foc/core/field_weakening.hpp include/foc/core/limits.hpp include/foc/core/machine_map_text.hpp include/foc/core/machine_params.hpp include/foc/core/observer/dual_inductance_observer.hpp include/foc/core/observer/hfi_observer.hpp include/foc/core/observer/nonlinear_flux_observer.hpp include/foc/core/observer/observer_policy.hpp include/foc/core/polarity.hpp include/foc/core/sinusoid_fit.hpp include/foc/core/speed_from_angle.hpp include/foc/driver/stub_hal.hpp include/foc/driver/stub_pwm.hpp include/foc/motor/motor.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "core/mtpv.hpp",
+          "verdict": "holds",
+          "why": "`core/mtpv.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/api/foc_api.h include/foc/api/foc_types.h include/foc/comm/register_map.hpp include/foc/core/auto_tune.hpp include/foc/core/board_check.hpp include/foc/core/cogging_comp.hpp include/foc/core/cogging_learn.hpp include/foc/core/commissioning.hpp include/foc/core/field_weakening.hpp include/foc/core/limits.hpp include/foc/core/machine_map_text.hpp include/foc/core/machine_params.hpp include/foc/core/observer/dual_inductance_observer.hpp include/foc/core/observer/hfi_observer.hpp include/foc/core/observer/nonlinear_flux_observer.hpp include/foc/core/observer/observer_policy.hpp include/foc/core/polarity.hpp include/foc/core/sinusoid_fit.hpp include/foc/core/speed_from_angle.hpp include/foc/driver/stub_hal.hpp include/foc/driver/stub_pwm.hpp include/foc/motor/motor.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "core/observer/back_emf_observer.hpp",
+          "verdict": "holds",
+          "why": "`core/observer/back_emf_observer.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/api/foc_api.h include/foc/api/foc_types.h include/foc/comm/register_map.hpp include/foc/core/auto_tune.hpp include/foc/core/board_check.hpp include/foc/core/cogging_comp.hpp include/foc/core/cogging_learn.hpp include/foc/core/commissioning.hpp include/foc/core/field_weakening.hpp include/foc/core/limits.hpp include/foc/core/machine_map_text.hpp include/foc/core/machine_params.hpp include/foc/core/observer/dual_inductance_observer.hpp include/foc/core/observer/hfi_observer.hpp include/foc/core/observer/nonlinear_flux_observer.hpp include/foc/core/observer/observer_policy.hpp include/foc/core/polarity.hpp include/foc/core/sinusoid_fit.hpp include/foc/core/speed_from_angle.hpp include/foc/driver/stub_hal.hpp include/foc/driver/stub_pwm.hpp include/foc/motor/motor.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "core/observer/blended_observer.hpp",
+          "verdict": "holds",
+          "why": "`core/observer/blended_observer.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/api/foc_api.h include/foc/api/foc_types.h include/foc/comm/register_map.hpp include/foc/core/auto_tune.hpp include/foc/core/board_check.hpp include/foc/core/cogging_comp.hpp include/foc/core/cogging_learn.hpp include/foc/core/commissioning.hpp include/foc/core/field_weakening.hpp include/foc/core/limits.hpp include/foc/core/machine_map_text.hpp include/foc/core/machine_params.hpp include/foc/core/observer/dual_inductance_observer.hpp include/foc/core/observer/hfi_observer.hpp include/foc/core/observer/nonlinear_flux_observer.hpp include/foc/core/observer/observer_policy.hpp include/foc/core/polarity.hpp include/foc/core/sinusoid_fit.hpp include/foc/core/speed_from_angle.hpp include/foc/driver/stub_hal.hpp include/foc/driver/stub_pwm.hpp include/foc/motor/motor.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "core/observer/dual_inductance_observer.hpp",
+          "verdict": "holds",
+          "why": "`core/observer/dual_inductance_observer.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/api/foc_api.h include/foc/api/foc_types.h include/foc/comm/register_map.hpp include/foc/core/auto_tune.hpp include/foc/core/board_check.hpp include/foc/core/cogging_comp.hpp include/foc/core/cogging_learn.hpp include/foc/core/commissioning.hpp include/foc/core/field_weakening.hpp include/foc/core/limits.hpp include/foc/core/machine_map_text.hpp include/foc/core/machine_params.hpp include/foc/core/observer/dual_inductance_observer.hpp include/foc/core/observer/hfi_observer.hpp include/foc/core/observer/nonlinear_flux_observer.hpp include/foc/core/observer/observer_policy.hpp include/foc/core/polarity.hpp include/foc/core/sinusoid_fit.hpp include/foc/core/speed_from_angle.hpp include/foc/driver/stub_hal.hpp include/foc/driver/stub_pwm.hpp include/foc/motor/motor.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "core/observer/hfi_observer.hpp",
+          "verdict": "holds",
+          "why": "`core/observer/hfi_observer.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/api/foc_api.h include/foc/api/foc_types.h include/foc/comm/register_map.hpp include/foc/core/auto_tune.hpp include/foc/core/board_check.hpp include/foc/core/cogging_comp.hpp include/foc/core/cogging_learn.hpp include/foc/core/commissioning.hpp include/foc/core/field_weakening.hpp include/foc/core/limits.hpp include/foc/core/machine_map_text.hpp include/foc/core/machine_params.hpp include/foc/core/observer/dual_inductance_observer.hpp include/foc/core/observer/hfi_observer.hpp include/foc/core/observer/nonlinear_flux_observer.hpp include/foc/core/observer/observer_policy.hpp include/foc/core/polarity.hpp include/foc/core/sinusoid_fit.hpp include/foc/core/speed_from_angle.hpp include/foc/driver/stub_hal.hpp include/foc/driver/stub_pwm.hpp include/foc/motor/motor.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "core/observer/ideal_observer.hpp",
+          "verdict": "holds",
+          "why": "`core/observer/ideal_observer.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/api/foc_api.h include/foc/api/foc_types.h include/foc/comm/register_map.hpp include/foc/core/auto_tune.hpp include/foc/core/board_check.hpp include/foc/core/cogging_comp.hpp include/foc/core/cogging_learn.hpp include/foc/core/commissioning.hpp include/foc/core/field_weakening.hpp include/foc/core/limits.hpp include/foc/core/machine_map_text.hpp include/foc/core/machine_params.hpp include/foc/core/observer/dual_inductance_observer.hpp include/foc/core/observer/hfi_observer.hpp include/foc/core/observer/nonlinear_flux_observer.hpp include/foc/core/observer/observer_policy.hpp include/foc/core/polarity.hpp include/foc/core/sinusoid_fit.hpp include/foc/core/speed_from_angle.hpp include/foc/driver/stub_hal.hpp include/foc/driver/stub_pwm.hpp include/foc/motor/motor.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "core/observer/nonlinear_flux_observer.hpp",
+          "verdict": "holds",
+          "why": "`core/observer/nonlinear_flux_observer.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/api/foc_api.h include/foc/api/foc_types.h include/foc/comm/register_map.hpp include/foc/core/auto_tune.hpp include/foc/core/board_check.hpp include/foc/core/cogging_comp.hpp include/foc/core/cogging_learn.hpp include/foc/core/commissioning.hpp include/foc/core/field_weakening.hpp include/foc/core/limits.hpp include/foc/core/machine_map_text.hpp include/foc/core/machine_params.hpp include/foc/core/observer/dual_inductance_observer.hpp include/foc/core/observer/hfi_observer.hpp include/foc/core/observer/nonlinear_flux_observer.hpp include/foc/core/observer/observer_policy.hpp include/foc/core/polarity.hpp include/foc/core/sinusoid_fit.hpp include/foc/core/speed_from_angle.hpp include/foc/driver/stub_hal.hpp include/foc/driver/stub_pwm.hpp include/foc/motor/motor.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "core/observer/switchable_observer.hpp",
+          "verdict": "holds",
+          "why": "`core/observer/switchable_observer.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/api/foc_api.h include/foc/api/foc_types.h include/foc/comm/register_map.hpp include/foc/core/auto_tune.hpp include/foc/core/board_check.hpp include/foc/core/cogging_comp.hpp include/foc/core/cogging_learn.hpp include/foc/core/commissioning.hpp include/foc/core/field_weakening.hpp include/foc/core/limits.hpp include/foc/core/machine_map_text.hpp include/foc/core/machine_params.hpp include/foc/core/observer/dual_inductance_observer.hpp include/foc/core/observer/hfi_observer.hpp include/foc/core/observer/nonlinear_flux_observer.hpp include/foc/core/observer/observer_policy.hpp include/foc/core/polarity.hpp include/foc/core/sinusoid_fit.hpp include/foc/core/speed_from_angle.hpp include/foc/driver/stub_hal.hpp include/foc/driver/stub_pwm.hpp include/foc/motor/motor.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "core/pi.hpp",
+          "verdict": "holds",
+          "why": "`core/pi.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/api/foc_api.h include/foc/api/foc_types.h include/foc/comm/register_map.hpp include/foc/core/auto_tune.hpp include/foc/core/board_check.hpp include/foc/core/cogging_comp.hpp include/foc/core/cogging_learn.hpp include/foc/core/commissioning.hpp include/foc/core/field_weakening.hpp include/foc/core/limits.hpp include/foc/core/machine_map_text.hpp include/foc/core/machine_params.hpp include/foc/core/observer/dual_inductance_observer.hpp include/foc/core/observer/hfi_observer.hpp include/foc/core/observer/nonlinear_flux_observer.hpp include/foc/core/observer/observer_policy.hpp include/foc/core/polarity.hpp include/foc/core/sinusoid_fit.hpp include/foc/core/speed_from_angle.hpp include/foc/driver/stub_hal.hpp include/foc/driver/stub_pwm.hpp include/foc/motor/motor.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "core/single_shunt.hpp",
+          "verdict": "holds",
+          "why": "`core/single_shunt.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/api/foc_api.h include/foc/api/foc_types.h include/foc/comm/register_map.hpp include/foc/core/auto_tune.hpp include/foc/core/board_check.hpp include/foc/core/cogging_comp.hpp include/foc/core/cogging_learn.hpp include/foc/core/commissioning.hpp include/foc/core/field_weakening.hpp include/foc/core/limits.hpp include/foc/core/machine_map_text.hpp include/foc/core/machine_params.hpp include/foc/core/observer/dual_inductance_observer.hpp include/foc/core/observer/hfi_observer.hpp include/foc/core/observer/nonlinear_flux_observer.hpp include/foc/core/observer/observer_policy.hpp include/foc/core/polarity.hpp include/foc/core/sinusoid_fit.hpp include/foc/core/speed_from_angle.hpp include/foc/driver/stub_hal.hpp include/foc/driver/stub_pwm.hpp include/foc/motor/motor.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "core/sinusoid_fit.hpp",
+          "verdict": "holds",
+          "why": "`core/sinusoid_fit.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/api/foc_api.h include/foc/api/foc_types.h include/foc/comm/register_map.hpp include/foc/core/auto_tune.hpp include/foc/core/board_check.hpp include/foc/core/cogging_comp.hpp include/foc/core/cogging_learn.hpp include/foc/core/commissioning.hpp include/foc/core/field_weakening.hpp include/foc/core/limits.hpp include/foc/core/machine_map_text.hpp include/foc/core/machine_params.hpp include/foc/core/observer/dual_inductance_observer.hpp include/foc/core/observer/hfi_observer.hpp include/foc/core/observer/nonlinear_flux_observer.hpp include/foc/core/observer/observer_policy.hpp include/foc/core/polarity.hpp include/foc/core/sinusoid_fit.hpp include/foc/core/speed_from_angle.hpp include/foc/driver/stub_hal.hpp include/foc/driver/stub_pwm.hpp include/foc/motor/motor.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "core/step_metrics.hpp",
+          "verdict": "holds",
+          "why": "`core/step_metrics.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/api/foc_api.h include/foc/api/foc_types.h include/foc/comm/register_map.hpp include/foc/core/auto_tune.hpp include/foc/core/board_check.hpp include/foc/core/cogging_comp.hpp include/foc/core/cogging_learn.hpp include/foc/core/commissioning.hpp include/foc/core/field_weakening.hpp include/foc/core/limits.hpp include/foc/core/machine_map_text.hpp include/foc/core/machine_params.hpp include/foc/core/observer/dual_inductance_observer.hpp include/foc/core/observer/hfi_observer.hpp include/foc/core/observer/nonlinear_flux_observer.hpp include/foc/core/observer/observer_policy.hpp include/foc/core/polarity.hpp include/foc/core/sinusoid_fit.hpp include/foc/core/speed_from_angle.hpp include/foc/driver/stub_hal.hpp include/foc/driver/stub_pwm.hpp include/foc/motor/motor.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "core/svpwm.hpp",
+          "verdict": "holds",
+          "why": "`core/svpwm.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/api/foc_api.h include/foc/api/foc_types.h include/foc/comm/register_map.hpp include/foc/core/auto_tune.hpp include/foc/core/board_check.hpp include/foc/core/cogging_comp.hpp include/foc/core/cogging_learn.hpp include/foc/core/commissioning.hpp include/foc/core/field_weakening.hpp include/foc/core/limits.hpp include/foc/core/machine_map_text.hpp include/foc/core/machine_params.hpp include/foc/core/observer/dual_inductance_observer.hpp include/foc/core/observer/hfi_observer.hpp include/foc/core/observer/nonlinear_flux_observer.hpp include/foc/core/observer/observer_policy.hpp include/foc/core/polarity.hpp include/foc/core/sinusoid_fit.hpp include/foc/core/speed_from_angle.hpp include/foc/driver/stub_hal.hpp include/foc/driver/stub_pwm.hpp include/foc/motor/motor.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "core/thermal_limit.hpp",
+          "verdict": "holds",
+          "why": "`core/thermal_limit.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/api/foc_api.h include/foc/api/foc_types.h include/foc/comm/register_map.hpp include/foc/core/auto_tune.hpp include/foc/core/board_check.hpp include/foc/core/cogging_comp.hpp include/foc/core/cogging_learn.hpp include/foc/core/commissioning.hpp include/foc/core/field_weakening.hpp include/foc/core/limits.hpp include/foc/core/machine_map_text.hpp include/foc/core/machine_params.hpp include/foc/core/observer/dual_inductance_observer.hpp include/foc/core/observer/hfi_observer.hpp include/foc/core/observer/nonlinear_flux_observer.hpp include/foc/core/observer/observer_policy.hpp include/foc/core/polarity.hpp include/foc/core/sinusoid_fit.hpp include/foc/core/speed_from_angle.hpp include/foc/driver/stub_hal.hpp include/foc/driver/stub_pwm.hpp include/foc/motor/motor.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "core/trace.hpp",
+          "verdict": "holds",
+          "why": "`core/trace.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/api/foc_api.h include/foc/api/foc_types.h include/foc/comm/register_map.hpp include/foc/core/auto_tune.hpp include/foc/core/board_check.hpp include/foc/core/cogging_comp.hpp include/foc/core/cogging_learn.hpp include/foc/core/commissioning.hpp include/foc/core/field_weakening.hpp include/foc/core/limits.hpp include/foc/core/machine_map_text.hpp include/foc/core/machine_params.hpp include/foc/core/observer/dual_inductance_observer.hpp include/foc/core/observer/hfi_observer.hpp include/foc/core/observer/nonlinear_flux_observer.hpp include/foc/core/observer/observer_policy.hpp include/foc/core/polarity.hpp include/foc/core/sinusoid_fit.hpp include/foc/core/speed_from_angle.hpp include/foc/driver/stub_hal.hpp include/foc/driver/stub_pwm.hpp include/foc/motor/motor.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "core/traits.hpp",
+          "verdict": "holds",
+          "why": "`core/traits.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/api/foc_api.h include/foc/api/foc_types.h include/foc/comm/register_map.hpp include/foc/core/auto_tune.hpp include/foc/core/board_check.hpp include/foc/core/cogging_comp.hpp include/foc/core/cogging_learn.hpp include/foc/core/commissioning.hpp include/foc/core/field_weakening.hpp include/foc/core/limits.hpp include/foc/core/machine_map_text.hpp include/foc/core/machine_params.hpp include/foc/core/observer/dual_inductance_observer.hpp include/foc/core/observer/hfi_observer.hpp include/foc/core/observer/nonlinear_flux_observer.hpp include/foc/core/observer/observer_policy.hpp include/foc/core/polarity.hpp include/foc/core/sinusoid_fit.hpp include/foc/core/speed_from_angle.hpp include/foc/driver/stub_hal.hpp include/foc/driver/stub_pwm.hpp include/foc/motor/motor.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "driver/stub_hal.hpp",
+          "verdict": "holds",
+          "why": "`driver/stub_hal.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/api/foc_api.h include/foc/api/foc_types.h include/foc/comm/register_map.hpp include/foc/core/auto_tune.hpp include/foc/core/board_check.hpp include/foc/core/cogging_comp.hpp include/foc/core/cogging_learn.hpp include/foc/core/commissioning.hpp include/foc/core/field_weakening.hpp include/foc/core/limits.hpp include/foc/core/machine_map_text.hpp include/foc/core/machine_params.hpp include/foc/core/observer/dual_inductance_observer.hpp include/foc/core/observer/hfi_observer.hpp include/foc/core/observer/nonlinear_flux_observer.hpp include/foc/core/observer/observer_policy.hpp include/foc/core/polarity.hpp include/foc/core/sinusoid_fit.hpp include/foc/core/speed_from_angle.hpp include/foc/driver/stub_hal.hpp include/foc/driver/stub_pwm.hpp include/foc/motor/motor.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "motor/motor.hpp",
+          "verdict": "holds",
+          "why": "`motor/motor.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/api/foc_api.h include/foc/api/foc_types.h include/foc/comm/register_map.hpp include/foc/core/auto_tune.hpp include/foc/core/board_check.hpp include/foc/core/cogging_comp.hpp include/foc/core/cogging_learn.hpp include/foc/core/commissioning.hpp include/foc/core/field_weakening.hpp include/foc/core/limits.hpp include/foc/core/machine_map_text.hpp include/foc/core/machine_params.hpp include/foc/core/observer/dual_inductance_observer.hpp include/foc/core/observer/hfi_observer.hpp include/foc/core/observer/nonlinear_flux_observer.hpp include/foc/core/observer/observer_policy.hpp include/foc/core/polarity.hpp include/foc/core/sinusoid_fit.hpp include/foc/core/speed_from_angle.hpp include/foc/driver/stub_hal.hpp include/foc/driver/stub_pwm.hpp include/foc/motor/motor.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "motor/motor_config.hpp",
+          "verdict": "holds",
+          "why": "`motor/motor_config.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/api/foc_api.h include/foc/api/foc_types.h include/foc/comm/register_map.hpp include/foc/core/auto_tune.hpp include/foc/core/board_check.hpp include/foc/core/cogging_comp.hpp include/foc/core/cogging_learn.hpp include/foc/core/commissioning.hpp include/foc/core/field_weakening.hpp include/foc/core/limits.hpp include/foc/core/machine_map_text.hpp include/foc/core/machine_params.hpp include/foc/core/observer/dual_inductance_observer.hpp include/foc/core/observer/hfi_observer.hpp include/foc/core/observer/nonlinear_flux_observer.hpp include/foc/core/observer/observer_policy.hpp include/foc/core/polarity.hpp include/foc/core/sinusoid_fit.hpp include/foc/core/speed_from_angle.hpp include/foc/driver/stub_hal.hpp include/foc/driver/stub_pwm.hpp include/foc/motor/motor.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "motor/torque_map.hpp",
+          "verdict": "holds",
+          "why": "`motor/torque_map.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/api/foc_api.h include/foc/api/foc_types.h include/foc/comm/register_map.hpp include/foc/core/auto_tune.hpp include/foc/core/board_check.hpp include/foc/core/cogging_comp.hpp include/foc/core/cogging_learn.hpp include/foc/core/commissioning.hpp include/foc/core/field_weakening.hpp include/foc/core/limits.hpp include/foc/core/machine_map_text.hpp include/foc/core/machine_params.hpp include/foc/core/observer/dual_inductance_observer.hpp include/foc/core/observer/hfi_observer.hpp include/foc/core/observer/nonlinear_flux_observer.hpp include/foc/core/observer/observer_policy.hpp include/foc/core/polarity.hpp include/foc/core/sinusoid_fit.hpp include/foc/core/speed_from_angle.hpp include/foc/driver/stub_hal.hpp include/foc/driver/stub_pwm.hpp include/foc/motor/motor.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "core/deadtime.hpp",
+          "verdict": "holds",
+          "why": "`core/deadtime.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/api/foc_api.h include/foc/api/foc_types.h include/foc/comm/register_map.hpp include/foc/core/auto_tune.hpp include/foc/core/board_check.hpp include/foc/core/cogging_comp.hpp include/foc/core/cogging_learn.hpp include/foc/core/commissioning.hpp include/foc/core/field_weakening.hpp include/foc/core/limits.hpp include/foc/core/machine_map_text.hpp include/foc/core/machine_params.hpp include/foc/core/observer/dual_inductance_observer.hpp include/foc/core/observer/hfi_observer.hpp include/foc/core/observer/nonlinear_flux_observer.hpp include/foc/core/observer/observer_policy.hpp include/foc/core/polarity.hpp include/foc/core/sinusoid_fit.hpp include/foc/core/speed_from_angle.hpp include/foc/driver/stub_hal.hpp include/foc/driver/stub_pwm.hpp include/foc/motor/motor.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "core/machine_map_text.hpp",
+          "verdict": "holds",
+          "why": "`core/machine_map_text.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/api/foc_api.h include/foc/api/foc_types.h include/foc/comm/register_map.hpp include/foc/core/auto_tune.hpp include/foc/core/board_check.hpp include/foc/core/cogging_comp.hpp include/foc/core/cogging_learn.hpp include/foc/core/commissioning.hpp include/foc/core/field_weakening.hpp include/foc/core/limits.hpp include/foc/core/machine_map_text.hpp include/foc/core/machine_params.hpp include/foc/core/observer/dual_inductance_observer.hpp include/foc/core/observer/hfi_observer.hpp include/foc/core/observer/nonlinear_flux_observer.hpp include/foc/core/observer/observer_policy.hpp include/foc/core/polarity.hpp include/foc/core/sinusoid_fit.hpp include/foc/core/speed_from_angle.hpp include/foc/driver/stub_hal.hpp include/foc/driver/stub_pwm.hpp include/foc/motor/motor.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "core/trace_parse.hpp",
+          "verdict": "holds",
+          "why": "`core/trace_parse.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/api/foc_api.h include/foc/api/foc_types.h include/foc/comm/register_map.hpp include/foc/core/auto_tune.hpp include/foc/core/board_check.hpp include/foc/core/cogging_comp.hpp include/foc/core/cogging_learn.hpp include/foc/core/commissioning.hpp include/foc/core/field_weakening.hpp include/foc/core/limits.hpp include/foc/core/machine_map_text.hpp include/foc/core/machine_params.hpp include/foc/core/observer/dual_inductance_observer.hpp include/foc/core/observer/hfi_observer.hpp include/foc/core/observer/nonlinear_flux_observer.hpp include/foc/core/observer/observer_policy.hpp include/foc/core/polarity.hpp include/foc/core/sinusoid_fit.hpp include/foc/core/speed_from_angle.hpp include/foc/driver/stub_hal.hpp include/foc/driver/stub_pwm.hpp include/foc/motor/motor.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "motor/foc_loop.hpp",
+          "verdict": "holds",
+          "why": "`motor/foc_loop.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/api/foc_api.h include/foc/api/foc_types.h include/foc/comm/register_map.hpp include/foc/core/auto_tune.hpp include/foc/core/board_check.hpp include/foc/core/cogging_comp.hpp include/foc/core/cogging_learn.hpp include/foc/core/commissioning.hpp include/foc/core/field_weakening.hpp include/foc/core/limits.hpp include/foc/core/machine_map_text.hpp include/foc/core/machine_params.hpp include/foc/core/observer/dual_inductance_observer.hpp include/foc/core/observer/hfi_observer.hpp include/foc/core/observer/nonlinear_flux_observer.hpp include/foc/core/observer/observer_policy.hpp include/foc/core/polarity.hpp include/foc/core/sinusoid_fit.hpp include/foc/core/speed_from_angle.hpp include/foc/driver/stub_hal.hpp include/foc/driver/stub_pwm.hpp include/foc/motor/motor.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
         }
       ]
     }

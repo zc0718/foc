@@ -72,8 +72,9 @@ struct CoggingLearnReport final {
 };
 
 /**
- * @brief [en] Learn a cogging table from the current a speed loop already supplies, so a compensator can be built for a
- *             machine nobody has data for.
+ * @brief [en] Learn a cogging table from the current a speed loop already supplies.
+ *
+ *     So a compensator can be built for a machine nobody has data for.
  *
  *     **The law, and why the sign is self-consistent.** With the compensator off and at steady speed, the loop's q-axis
  *     current *is* the anti-cogging current. Projecting it on the mechanical angle at order `k` gives `re =

@@ -11,8 +11,9 @@ namespace core {
 
 
 /**
- * @brief [en] One tone measured out of a recorded window: amplitude, phase, and the status that says whether there was
- *             a tone to measure.
+ * @brief [en] One tone measured out of a recorded window.
+ *
+ *     Amplitude, phase, and the status that says whether there was a tone to measure.
  *
  *     Two sine quantities and a status. `status` is the diagnostic channel and not decoration: `Ok` means the fit is
  *     conditioned, `State` means the window is shorter than one period of the frequency asked about (a fit over a

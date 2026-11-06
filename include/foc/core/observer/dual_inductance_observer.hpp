@@ -13,8 +13,10 @@ namespace core {
 
 
 /**
- * @brief [en] Dual-inductance flux observer: the same integrator as `BackEmfObserver`, but the rotor angle is recovered
- *             from the saliency instead of from a single `L`.
+ * @brief [en] Dual-inductance flux observer.
+ *
+ *     The same integrator as `BackEmfObserver`, but the rotor angle is recovered from the saliency instead of from a
+ *     single `L`.
  *
  *     The stator flux of a salient machine is a **position-dependent** quantity, not "rotor flux plus `L*i`":
  *

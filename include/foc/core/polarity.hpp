@@ -166,9 +166,13 @@ class MagnetPolarityTest final {
     ElapsedClock stage_clock_; ///< [en] time in the current stage, as an integer clock. [zh] 当前阶段已用时间，整数钟。
     float i_before_a_; ///< [en] current along d at the end of the preceding settle. [zh] 前一段松弛结束时的 d 轴电流。
     /**
-     * @brief [en] The same value captured before the *positive* pulse, kept so `decide()` can check that the two pulses
-     *             really started from one operating point.
-     * @brief [zh] 在**正**脉冲之前记下的同一个量，留着让 `decide()` 能检查两个脉冲确实从同一个工作点出发。
+ * @brief [en] The same value captured before the *positive* pulse.
+ *
+ *     Kept so `decide()` can check that the two pulses really started from one operating point.
+ *
+ * @brief [zh] 在**正**脉冲之前记下的同一个量。
+ *
+ *     留着让 `decide()` 能检查两个脉冲确实从同一个工作点出发。
      */
     float i_before_positive_a_;
     float delta_positive_a_;

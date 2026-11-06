@@ -78,8 +78,9 @@ struct SpeedTuneResult final {
 };
 
 /**
- * @brief [en] Identify the two ratios a speed loop needs from a torque-step window, and refuse when the window is not a
- *             measurement.
+ * @brief [en] Identify the two ratios a speed loop needs from a torque-step window.
+ *
+ *     And refuse when the window is not a measurement.
  *
  *     **The fit.** `dw/dt = (kt/J)*iq - (b/J)*w` is linear in `(iq, w)`, so a two-parameter least squares over the
  *     window gives both ratios without ever assuming the speed held still: `kt/J` is the slope on `iq` and `b/J` is the

@@ -8,8 +8,9 @@ namespace core {
 
 
 /**
- * @brief [en] The electrical facts about a machine that its algorithms need: resistance, the two inductances, and the
- *             rotor flux linkage.
+ * @brief [en] The electrical facts about a machine that its algorithms need.
+ *
+ *     Resistance, the two inductances, and the rotor flux linkage.
  *
  *     Why this type exists instead of every observer having its own numbers: parameter identification produces exactly
  *     these four, and without a shared value type the result has nowhere to go -- each policy would keep its own copy

@@ -157,8 +157,9 @@ struct FieldWeakeningAdvice final {
 }
 
 /**
- * @brief [en] The d-axis reference that keeps the drive inside its voltage ceiling by spending current on flux instead
- *             of on torque.
+ * @brief [en] The d-axis reference that stays inside the voltage ceiling.
+ *
+ *     It spends current on flux instead of on torque.
  *
  *     Drop-in for `NullReferenceGenerator`: same shape, same call site, which is the point -- `ReferenceInput` already
  *     carries `omega_e`, `v_bus` and the measured current, so field weakening needs **no change to `Motor`, no new

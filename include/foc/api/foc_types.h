@@ -55,10 +55,14 @@
 
 
 /**
- * @brief [en] Opaque motor handle of the C path. Created by foc_motor_create(), invalidated by foc_motor_destroy(); a
- *             stale handle is detected through an internal generation counter.
- * @brief [zh] C 路径的不透明电机句柄。由 foc_motor_create() 创建、foc_motor_destroy() 失效； 内部用代际计数识别失效句
- *             柄。
+ * @brief [en] Opaque motor handle of the C path.
+ *
+ *     Created by `foc_motor_create()`, invalidated by `foc_motor_destroy()`; a stale handle is detected through an
+ *     internal generation counter.
+ *
+ * @brief [zh] C 路径的不透明电机句柄。
+ *
+ *     由 `foc_motor_create()` 创建、`foc_motor_destroy()` 失效；内部用代际计数识别失效句柄。
  * @since 0.1.0
  * @exporter
  */

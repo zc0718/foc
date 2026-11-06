@@ -4,34 +4,5 @@
     "paragraph: the house example is `@brief vector add`.",
     "过长的 `@brief` 按文件冻结，只许下降。`@brief` 是一行，不是一段：本仓库的例子是 `@brief vector add`。"
   ],
-  "long_briefs": {
-    "include/foc/api/foc_api.h": 2,
-    "include/foc/api/foc_types.h": 1,
-    "include/foc/comm/register_map.hpp": 2,
-    "include/foc/core/auto_tune.hpp": 1,
-    "include/foc/core/board_check.hpp": 1,
-    "include/foc/core/cogging_comp.hpp": 1,
-    "include/foc/core/cogging_learn.hpp": 1,
-    "include/foc/core/commissioning.hpp": 3,
-    "include/foc/core/field_weakening.hpp": 1,
-    "include/foc/core/limits.hpp": 1,
-    "include/foc/core/machine_map_text.hpp": 1,
-    "include/foc/core/machine_params.hpp": 1,
-    "include/foc/core/observer/dual_inductance_observer.hpp": 1,
-    "include/foc/core/observer/hfi_observer.hpp": 1,
-    "include/foc/core/observer/nonlinear_flux_observer.hpp": 1,
-    "include/foc/core/observer/observer_policy.hpp": 1,
-    "include/foc/core/polarity.hpp": 1,
-    "include/foc/core/sinusoid_fit.hpp": 1,
-    "include/foc/core/speed_from_angle.hpp": 1,
-    "include/foc/driver/stub_hal.hpp": 1,
-    "include/foc/driver/stub_pwm.hpp": 1,
-    "include/foc/motor/motor.hpp": 3,
-    "src/api/bridge.cpp": 6,
-    "src/api/foc_api.c": 1,
-    "src/core/min_pulse.cpp": 1,
-    "src/core/mtpv.cpp": 1,
-    "src/core/single_shunt.cpp": 1,
-    "api/python_bindings.cpp": 3
-  }
+  "long_briefs": {}
 }

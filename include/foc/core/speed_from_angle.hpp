@@ -58,7 +58,8 @@ class SpeedFromAngle final {
     };
 
     /**
-     * @brief The largest window; the buffer is fixed so that nothing here can allocate. 最大窗口；缓冲区是固定的，于是这里任何东西都不会分配。
+     * @brief [en] The largest window; the buffer is fixed so that nothing here can allocate.
+     * @brief [zh] 最大窗口；缓冲区是固定的，于是这里任何东西都不会分配。
      */
     static constexpr std::uint16_t kMaxWindowTicks = 512U;
 

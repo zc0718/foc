@@ -378,11 +378,15 @@ class Motor final {
     void set_feedforward_current(float iq_a) noexcept;
 
     /**
-   * @brief [en] Start a breakaway sequence: raise the torque on a known ramp, report the instant the rotor moves, and
-   *             leave that hand-over torque readable, so the speed loop starts from a known current instead of a
-   *             wound-up integrator.
-   * @brief [zh] 开始一条起步序列：以已知斜率抬升力矩，报告转子动起来的那一刻，并把交接力矩留在可读处，于是速度环从一个
-   *             已知电流起步，而不是从一个饱和的积分起步。
+   * @brief [en] Start a breakaway sequence on a known torque ramp.
+   *
+   *     It reports the instant the rotor moves and leaves that hand-over torque readable, so the speed loop starts from
+   *     a known current instead of a wound-up integrator.
+   *
+   * @brief [zh] 开始一条起步序列：以已知斜率抬升力矩。
+   *
+   *     它报告转子动起来的那一刻，并把交接力矩留在可读处，于是速度环从一个已知电流起步，而不是从一个饱和的积分起步。
+   *
    * @param recipe [en] the machine's breakaway estimate and the drive's limits.
    * @param recipe [zh] 机器的起动点估计与驱动的限幅。
    * @return [en] Ok; Param when the recipe cannot work (`max_torque_nm <= breakaway_nm`); State when the axis is
@@ -586,11 +590,14 @@ class Motor final {
     static constexpr float kLostSyncSpeedFraction = 0.5F;
 
     /**
-     * @brief [en] Below this forced rate the hand-over is a *hold*, not a pull, and there is nothing to lose sync with:
-     *             a plain alignment hands over at zero speed by design and must not be judged against a fraction of
-     *             zero.
-     * @brief [zh] 低于这个强制速率时，交接是"按住"而不是"拖动"，没有同步可失：纯对齐按设计就在零速交接，不能用零的几分
-     *             之几去判它。
+     * @brief [en] Below this rate the hand-over is a *hold*, not a pull.
+     *
+     *     There is nothing to lose sync with: a plain alignment hands over at zero speed by design and must not be
+     *     judged against a fraction of zero.
+     *
+     * @brief [zh] 低于这个强制速率时，交接是"按住"而不是"拖动"。
+     *
+     *     没有同步可失：纯对齐按设计就在零速交接，不能用零的几分之一去评判它。
      */
     static constexpr float kLostSyncMinHandoverRadS = 1.0F;
 
@@ -701,7 +708,14 @@ class Motor final {
     float position_elapsed_s_;
     bool position_step_due_;
     /**
-     * @brief Kept always, not only in the sensor-less case: a position command may arrive at any time, and building the counter lazily would mean the turn count starts from wherever the first position command happened to land. 始终保留，而不只是无感时才建：位置指令随时可能到来，懒建会让圈计数从"第一条位置指令恰好落在哪里"开始。
+     * @brief [en] Kept always, not only in the sensor-less case.
+     *
+     *     A position command may arrive at any time, and building the counter lazily would mean the turn count starts
+     *     from wherever the first position command happened to land.
+     *
+     * @brief [zh] 始终保留，而不只是无感时才建。
+     *
+     *     位置指令随时可能到来，懒建会让圈计数从"第一条位置指令恰好落在哪里"开始。
      */
     core::PositionReference position_reference_;
     std::uint32_t max_period_us_;

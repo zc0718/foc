@@ -13,9 +13,14 @@ namespace driver {
 
 
 /**
- * @brief [en] Reference `foc::hal::Pwm` implementation: records what was written instead of driving hardware. Used by
- *             SIL and by the unit tests as the default HalPolicy member.
- * @brief [zh] `foc::hal::Pwm` 的参考实现：不驱动硬件，只记录写入内容。SIL 与单元测试的默认 HalPolicy 成员。
+ * @brief [en] Reference `foc::hal::Pwm` implementation: records what was written instead of driving hardware.
+ *
+ *     Used by SIL and by the unit tests as the default HalPolicy member.
+ *
+ * @brief [zh] `foc::hal::Pwm` 的参考实现：不驱动硬件，只记录写入内容。
+ *
+ *     SIL 与单元测试的默认 HalPolicy 成员。
+ *
  * @context [en] Same context as the contract it implements.
  * @context [zh] 与其实现的契约同上下文。
  * @since 0.1.0
