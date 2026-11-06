@@ -203,6 +203,39 @@ def plot_slice_s6(rows: list[dict[str, str]]) -> None:
     save(fig, "slice_s6_position")
 
 
+def plot_slice_s5(rows: list[dict[str, str]]) -> None:
+    """Duty span against the requested voltage, at two angles.
+
+    The modulator's limit is a hexagon, not a circle, so the two sweeps clamp at
+    two different amplitudes. The clamp point is *read from the data* (the first
+    row where the modulator reports saturation) rather than asserted here.
+    调制器的边界是六边形而不是圆，所以两条扫描钳位在两个不同幅值。钳位点是**从数据里读**
+    （调制器第一次报饱和的那一行），不在这里断言。
+    """
+    fig, axis = plt.subplots(figsize=(7.2, 3.8))
+    for angle, colour in ((0.0, COLORS["measured"]), (30.0, COLORS["reference"])):
+        series = [row for row in rows if float(row["angle_deg"]) == angle]
+        if not series:
+            continue
+        inside = [(float(r["v_pu"]), float(r["duty_span"])) for r in series if r["saturated"] == "0"]
+        outside = [(float(r["v_pu"]), float(r["duty_span"])) for r in series if r["saturated"] != "0"]
+        axis.plot([p[0] for p in inside], [p[1] for p in inside], color=colour, label=f"request at {angle} deg")
+        axis.plot([p[0] for p in outside], [p[1] for p in outside], "--", color=colour, alpha=0.6,
+                  label=f"{angle} deg, clamped")
+        if outside:
+            edge = min(p[0] for p in outside)
+            axis.axvline(edge, color=colour, linewidth=0.8, alpha=0.4)
+            axis.annotate(f"clamp at |v|/v_bus = {edge:.2f}", xy=(edge, 0.55), xytext=(edge - 0.005, 0.55),
+                          rotation=90, fontsize=8, color=colour, ha="right", va="center")
+    axis.set_xlabel("|v| / v_bus")
+    axis.set_ylabel("max duty - min duty")
+    axis.set_ylim(0.0, 1.08)
+    axis.grid(True, alpha=0.3)
+    axis.legend(loc="lower right", fontsize=8)
+    axis.set_title("SVPWM: one requested amplitude, two limits -- sector centre vs sector face")
+    save(fig, "slice_s5_modulation")
+
+
 def run_slice(name: str, workdir: pathlib.Path, plotter) -> None:
     """Build one slice example, run it in CSV mode, plot it.
 
@@ -254,6 +287,7 @@ def main() -> int:
         print("slice figures ...")
         run_slice("slice-s1-startup", pathlib.Path(workdir), plot_slice_s1)
         run_slice("slice-s6-position", pathlib.Path(workdir), plot_slice_s6)
+        run_slice("slice-s5-modulation", pathlib.Path(workdir), plot_slice_s5)
     print("done: figures in docs/images/OUT_demo_*.png, tables in docs/sphinx/source/demos/")
     return 0
 

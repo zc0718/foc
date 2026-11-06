@@ -65,8 +65,8 @@ The slices
    * - S5
      - Modulate the voltage: overmodulation, minimum pulse, six-step
      - ``svpwm`` ``min_pulse`` ``six_step``
-     - planned
-     - planned
+     - :doc:`slice-s5-modulation`
+     - written
    * - S6
      - Build a position loop, home the axis, stay inside soft limits
      - ``position`` ``position_reference`` ``motion_profile`` ``homing``
@@ -92,7 +92,7 @@ The slices
      - planned
 
 A slice is ``written`` when its page carries all seven parts and its example
-compiles. The remaining six are listed with their pieces so the boundary of
+compiles. The remaining five are listed with their pieces so the boundary of
 what this section promises stays visible: a task page that does not exist yet is
 a plan, not a gap to be discovered by a reader.
 
@@ -102,6 +102,7 @@ a plan, not a gap to be discovered by a reader.
 
    Bringing a sensorless machine up <slice-s1-startup>
    Torque below base speed <slice-s3-torque>
+   High speed and modulation <slice-s5-modulation>
    Positioning an axis <slice-s6-position>
 
 The figures already on the site
