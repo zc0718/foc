@@ -53,6 +53,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 TABLE = Path(__file__).resolve().parent / "enforce.json"
 PINNED = ROOT / ".github" / "misc" / ".clang-tidy"
+DEVIATION_DIR = ROOT / "tools" / "compliance" / "deviation"
 SCAN_DIRS = ("include", "src")
 SUFFIXES = {".h", ".hpp", ".c", ".cpp"}
 SKIP_PARTS = {"build", "CMakeFiles", ".git"}
@@ -112,6 +113,30 @@ def family_matcher(patterns: list[str]) -> re.Pattern[str]:
     return re.compile("|".join(f"(?:{name})" for name in names))
 
 
+def excepted_checks(table: dict) -> list[str]:
+    """Checks a family enables but does not report here, each with a signed deviation record.
+
+    A family glob is coarse: `bugprone-*` is 41 checks and one of them asks every function with two
+    adjacent floats to restructure its signature, which is the shape of this library's whole API.
+    Turning the family off to avoid that one would trade 40 useful checks for tidiness; turning it
+    on and ignoring the noise would trade the gate for a habit. So the family runs, the one check is
+    named here, and `evaluate()` refuses unless a `deviation/<name>.md` exists for it -- the same
+    rule the tree applies to `NOLINT`.
+    """
+    names = []
+    for entry in table.get("families", []):
+        names.extend(entry.get("except", []))
+    return names
+
+
+def is_excepted(line: str, excepted: list[str]) -> bool:
+    match = re.search(r"\[([^\]]+)\]\s*$", line.strip())
+    if match is None:
+        return False
+    tags = {tag.strip() for tag in match.group(1).split(",")}
+    return any(name in tags for name in excepted)
+
+
 def compose(table: dict) -> str:
     return ",".join([*pinned_checks(), *extra_families(table)])
 
@@ -164,6 +189,16 @@ def evaluate(table: dict) -> list[str]:
         if not (entry.get("why") or {}).get("en"):
             problems.append(f"{name}: enabled without a reason — that is how a family gets deleted by the next "
                             f"person who finds it inconvenient")
+        for excepted in entry.get("except", []):
+            pattern = entry.get("checks", "")
+            covered = (excepted.startswith(pattern[:-1]) if pattern.endswith("*") else excepted == pattern)
+            if not covered:
+                problems.append(f"{name}: exempts '{excepted}', which its own pattern '{pattern}' does not enable — "
+                                f"an exemption for a check nobody runs is a note to nobody")
+            record = DEVIATION_DIR / f"{excepted}.md"
+            if not record.is_file():
+                problems.append(f"{name}: exempts '{excepted}' with no {record.relative_to(ROOT).as_posix()} — a "
+                                f"suppression without a record is not a deviation, it is a habit")
     for entry in table.get("pending", []):
         if not (entry.get("why") or {}).get("en"):
             problems.append(f"pending {entry.get('id', '?')}: no reason, which is indistinguishable from an oversight")
@@ -234,11 +269,15 @@ def main(argv: list[str] | None = None) -> int:
         return 1
     families = ", ".join(extra_families(table))
     matcher = family_matcher(extra_families(table))
+    excepted = excepted_checks(table)
+    if excepted:
+        families += " (exempt: " + ", ".join(excepted) + ")"
     failures = 0
     with tempfile.TemporaryDirectory(prefix="enforce-") as work:
         work_path = Path(work)
         for target in files:
-            diagnostics = [line for line in run_one(checks, work_path, target) if matcher.search(line)]
+            diagnostics = [line for line in run_one(checks, work_path, target)
+                           if matcher.search(line) and not is_excepted(line, excepted)]
             if diagnostics:
                 failures += 1
                 print(f"--- {target.relative_to(ROOT).as_posix()}")

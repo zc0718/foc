@@ -148,6 +148,28 @@ def suppressions() -> dict[str, list[str]]:
     return found
 
 
+def excepted_by_gate() -> set[str]:
+    """Checks suppressed by a gate rather than by a `NOLINT` at the site.
+
+    `.github/project/enforce.json` can name a check inside an enabled family and exempt it, so the
+    suppression lives in one place and applies to 31 signatures at once. The record is the same
+    record: what makes a deviation a deviation is the five elements, not where the filter sits.
+    压制可以来自门禁自己（`enforce.json` 的 `except`），而不必在每个站点写 `NOLINT`。判定一张偏差单
+    是否成立，靠的是那五要素，不是过滤器写在哪一行。
+    """
+    table = ROOT / '.github' / 'project' / 'enforce.json'
+    if not table.is_file():
+        return set()
+    try:
+        data = json.loads(table.read_text(encoding='utf-8'))
+    except json.JSONDecodeError:
+        return set()
+    names: set[str] = set()
+    for entry in data.get('families', []):
+        names.update(entry.get('except', []))
+    return names
+
+
 def deviation_records() -> dict[str, Path]:
     if not DEVIATIONS.is_dir():
         return {}
@@ -258,11 +280,14 @@ def evaluate(rows: list[dict[str, str]], ctx: dict) -> list[str]:
         if missing:
             problems.append(f'{rid}: deviation/{rid}.md is missing {missing}')
 
+    for rule in sorted(ctx.get('excepted', set()) - set(ctx['records'])):
+        problems.append(f'{rule}: exempted by .github/project/enforce.json with no deviation/{rule}.md')
+
     for rule, sites in sorted(ctx['nolint'].items()):
         if rule not in ctx['records']:
             problems.append(f'{rule}: suppressed at {", ".join(sites[:3])} '
                             f'({len(sites)} site(s)) with no deviation/{rule}.md')
-    for name in sorted(set(ctx['records']) - set(ctx['nolint'])):
+    for name in sorted(set(ctx['records']) - set(ctx['nolint']) - ctx.get('excepted', set())):
         problems.append(f'deviation/{name}.md exists but nothing suppresses it — a stale record '
                         f'makes an old argument look current')
 
@@ -353,6 +378,7 @@ def collect() -> tuple[list[dict[str, str]], dict, list[str]]:
         'cases': negative_cases(),
         'nolint': suppressions(),
         'records': deviation_records(),
+        'excepted': excepted_by_gate(),
         'claimed_l1': units,
         'baseline': baseline,
     }
@@ -427,6 +453,7 @@ def selftest() -> int:
         'cases': {'c1'},
         'nolint': {},
         'records': {},
+        'excepted': set(),
         'claimed_l1': set(),
         'baseline': 0,
     }

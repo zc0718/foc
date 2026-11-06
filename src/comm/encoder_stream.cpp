@@ -22,8 +22,8 @@ constexpr int kBitsPerByte = 8;
 /** @brief One bit of an MSB-first stream, or 0 past the end (the caller has already checked the length). */
 auto bit_at(const std::uint8_t* bits, int index) noexcept -> std::uint8_t {
     const int byte = index / kBitsPerByte;
-    const int shift = (kBitsPerByte - 1) - (index % kBitsPerByte);
-    return static_cast<std::uint8_t>((bits[byte] >> shift) & 0x01U);
+    const auto shift = static_cast<unsigned>((kBitsPerByte - 1) - (index % kBitsPerByte));
+    return static_cast<std::uint8_t>((static_cast<unsigned>(bits[byte]) >> shift) & 0x01U);
 }
 
 } // namespace
@@ -40,8 +40,8 @@ auto crc6(const std::uint8_t* bits, int bit_count, int bit_offset) noexcept -> s
     std::uint8_t reg = 0U;
     for (int n = 0; n < bit_count; ++n) {
         const std::uint8_t incoming = bit_at(bits, bit_offset + n);
-        const std::uint8_t top = static_cast<std::uint8_t>((reg >> 5) & 0x01U);
-        reg = static_cast<std::uint8_t>(((reg << 1) | incoming) & 0x3FU);
+        const std::uint8_t top = static_cast<std::uint8_t>((static_cast<unsigned>(reg) >> 5U) & 0x01U);
+        reg = static_cast<std::uint8_t>(((static_cast<unsigned>(reg) << 1U) | static_cast<unsigned>(incoming)) & 0x3FU);
         if (top != 0U) {
             reg = static_cast<std::uint8_t>(reg ^ kCrcPoly);
         }
@@ -69,13 +69,14 @@ auto decode_biss(const std::uint8_t* bits, int bit_count, const EncoderLayout& l
     const int data = layout.data_bits();
     std::uint32_t payload = 0U;
     for (int n = 0; n < data; ++n) {
-        payload = (payload << 1) | static_cast<std::uint32_t>(bit_at(bits, n));
+        payload = (payload << 1U) | static_cast<std::uint32_t>(bit_at(bits, n));
     }
     const bool error_bit = bit_at(bits, data) != 0U;
     const bool warning = bit_at(bits, data + 1) != 0U;
     std::uint8_t transmitted = 0U;
     for (int n = 0; n < EncoderLayout::kCrcBits; ++n) {
-        transmitted = static_cast<std::uint8_t>((transmitted << 1) | bit_at(bits, data + 2 + n));
+        transmitted =
+            static_cast<std::uint8_t>((static_cast<unsigned>(transmitted) << 1U) | bit_at(bits, data + 2 + n));
     }
     const std::uint8_t computed = crc6(bits, data + 2);
 

@@ -132,12 +132,12 @@ struct Frame final {
         return crc;
     }
     for (std::size_t i = 0U; i < length; ++i) {
-        crc = static_cast<std::uint16_t>(crc ^ (static_cast<std::uint16_t>(data[i]) << 8U));
+        crc = static_cast<std::uint16_t>(static_cast<unsigned>(crc) ^ (static_cast<unsigned>(data[i]) << 8U));
         for (std::uint8_t bit = 0U; bit < 8U; ++bit) {
-            const bool msb = (crc & 0x8000U) != 0U;
-            crc = static_cast<std::uint16_t>(crc << 1U);
+            const bool msb = (static_cast<unsigned>(crc) & 0x8000U) != 0U;
+            crc = static_cast<std::uint16_t>(static_cast<unsigned>(crc) << 1U);
             if (msb) {
-                crc = static_cast<std::uint16_t>(crc ^ 0x1021U);
+                crc = static_cast<std::uint16_t>(static_cast<unsigned>(crc) ^ 0x1021U);
             }
         }
     }
@@ -228,8 +228,8 @@ struct Frame final {
     }
     const std::size_t covered = 3U + payload_length;
     const std::uint16_t want = crc16_ccitt(&in[1], covered);
-    const std::uint16_t got = static_cast<std::uint16_t>((static_cast<std::uint16_t>(in[4U + payload_length]) << 8U) |
-                                                         static_cast<std::uint16_t>(in[5U + payload_length]));
+    const std::uint16_t got = static_cast<std::uint16_t>((static_cast<unsigned>(in[4U + payload_length]) << 8U) |
+                                                         static_cast<unsigned>(in[5U + payload_length]));
     if (want != got) {
         return FrameStatus::BadChecksum;
     }

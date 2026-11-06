@@ -1491,6 +1491,334 @@
           "why": "`motor/foc_loop.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/api/foc_api.h include/foc/api/foc_types.h include/foc/comm/register_map.hpp include/foc/core/auto_tune.hpp include/foc/core/board_check.hpp include/foc/core/cogging_comp.hpp include/foc/core/cogging_learn.hpp include/foc/core/commissioning.hpp include/foc/core/field_weakening.hpp include/foc/core/limits.hpp include/foc/core/machine_map_text.hpp include/foc/core/machine_params.hpp include/foc/core/observer/dual_inductance_observer.hpp include/foc/core/observer/hfi_observer.hpp include/foc/core/observer/nonlinear_flux_observer.hpp include/foc/core/observer/observer_policy.hpp include/foc/core/polarity.hpp include/foc/core/sinusoid_fit.hpp include/foc/core/speed_from_angle.hpp include/foc/driver/stub_hal.hpp include/foc/driver/stub_pwm.hpp include/foc/motor/motor.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
         }
       ]
+    },
+    {
+      "id": "B-22",
+      "date": "2026-11-06",
+      "what_changed": "Not a docstring pass: the `bugprone-*` family was switched on (through `enforce`, which runs outside the byte-pinned config) and these are the classes it reported that were worth fixing. 15 unique diagnostics: 12 `signed-bitwise` (integer promotion making a bitwise op signed -- shift literals gained `U`, operands gained a `static_cast<unsigned>`), 2 `incorrect-roundings` (the `cast(x + 0.5F)` idiom restated as truncate-then-compare), 1 `branch-clone` (two case labels with the same answer merged). No signature, member, default or formula changed; the arithmetic is the same arithmetic.",
+      "seeds": [
+        "include/foc/core/types.hpp",
+        "include/foc/core/board_check.hpp",
+        "include/foc/comm/frame.hpp",
+        "include/foc/core/observer/switchable_observer.hpp"
+      ],
+      "affected": [
+        {
+          "row": "comm/encoder_stream.hpp",
+          "verdict": "holds",
+          "why": "`to_nanos` restates its rounding instead of casting `scaled + 0.5F`: truncate, then add one when the remainder is at least 0.5. For every input that reaches it (the early return takes NaN and anything not positive) the two forms give the same integer, so the 520 s / 16 us story the row quotes is unchanged; 857 cases pass."
+        },
+        {
+          "row": "comm/frame.hpp",
+          "verdict": "holds",
+          "why": "the CRC-16 and the received-checksum assembly now cast their operands to `unsigned` before `^` and `<<`. The operands were already unsigned 16-bit values; only the promoted type changed, so every CRC the row relies on is bit-identical, and the frame round-trip cases pass."
+        },
+        {
+          "row": "core/alignment.hpp",
+          "verdict": "holds",
+          "why": "`to_nanos` restates its rounding instead of casting `scaled + 0.5F`: truncate, then add one when the remainder is at least 0.5. For every input that reaches it (the early return takes NaN and anything not positive) the two forms give the same integer, so the 520 s / 16 us story the row quotes is unchanged; 857 cases pass."
+        },
+        {
+          "row": "core/auto_tune.hpp",
+          "verdict": "holds",
+          "why": "`to_nanos` restates its rounding instead of casting `scaled + 0.5F`: truncate, then add one when the remainder is at least 0.5. For every input that reaches it (the early return takes NaN and anything not positive) the two forms give the same integer, so the 520 s / 16 us story the row quotes is unchanged; 857 cases pass."
+        },
+        {
+          "row": "core/board_check.hpp",
+          "verdict": "holds",
+          "why": "`to_nanos` restates its rounding instead of casting `scaled + 0.5F`: truncate, then add one when the remainder is at least 0.5. For every input that reaches it (the early return takes NaN and anything not positive) the two forms give the same integer, so the 520 s / 16 us story the row quotes is unchanged; 857 cases pass."
+        },
+        {
+          "row": "core/brake_chopper.hpp",
+          "verdict": "holds",
+          "why": "`to_nanos` restates its rounding instead of casting `scaled + 0.5F`: truncate, then add one when the remainder is at least 0.5. For every input that reaches it (the early return takes NaN and anything not positive) the two forms give the same integer, so the 520 s / 16 us story the row quotes is unchanged; 857 cases pass."
+        },
+        {
+          "row": "core/cogging_comp.hpp",
+          "verdict": "holds",
+          "why": "`to_nanos` restates its rounding instead of casting `scaled + 0.5F`: truncate, then add one when the remainder is at least 0.5. For every input that reaches it (the early return takes NaN and anything not positive) the two forms give the same integer, so the 520 s / 16 us story the row quotes is unchanged; 857 cases pass."
+        },
+        {
+          "row": "core/cogging_learn.hpp",
+          "verdict": "holds",
+          "why": "`to_nanos` restates its rounding instead of casting `scaled + 0.5F`: truncate, then add one when the remainder is at least 0.5. For every input that reaches it (the early return takes NaN and anything not positive) the two forms give the same integer, so the 520 s / 16 us story the row quotes is unchanged; 857 cases pass."
+        },
+        {
+          "row": "core/command_source.hpp",
+          "verdict": "holds",
+          "why": "`to_nanos` restates its rounding instead of casting `scaled + 0.5F`: truncate, then add one when the remainder is at least 0.5. For every input that reaches it (the early return takes NaN and anything not positive) the two forms give the same integer, so the 520 s / 16 us story the row quotes is unchanged; 857 cases pass."
+        },
+        {
+          "row": "core/deadtime.hpp",
+          "verdict": "holds",
+          "why": "`to_nanos` restates its rounding instead of casting `scaled + 0.5F`: truncate, then add one when the remainder is at least 0.5. For every input that reaches it (the early return takes NaN and anything not positive) the two forms give the same integer, so the 520 s / 16 us story the row quotes is unchanged; 857 cases pass."
+        },
+        {
+          "row": "core/feedforward.hpp",
+          "verdict": "holds",
+          "why": "`to_nanos` restates its rounding instead of casting `scaled + 0.5F`: truncate, then add one when the remainder is at least 0.5. For every input that reaches it (the early return takes NaN and anything not positive) the two forms give the same integer, so the 520 s / 16 us story the row quotes is unchanged; 857 cases pass."
+        },
+        {
+          "row": "core/field_weakening.hpp",
+          "verdict": "holds",
+          "why": "`to_nanos` restates its rounding instead of casting `scaled + 0.5F`: truncate, then add one when the remainder is at least 0.5. For every input that reaches it (the early return takes NaN and anything not positive) the two forms give the same integer, so the 520 s / 16 us story the row quotes is unchanged; 857 cases pass."
+        },
+        {
+          "row": "core/filters.hpp",
+          "verdict": "holds",
+          "why": "`to_nanos` restates its rounding instead of casting `scaled + 0.5F`: truncate, then add one when the remainder is at least 0.5. For every input that reaches it (the early return takes NaN and anything not positive) the two forms give the same integer, so the 520 s / 16 us story the row quotes is unchanged; 857 cases pass."
+        },
+        {
+          "row": "core/friction_comp.hpp",
+          "verdict": "holds",
+          "why": "`to_nanos` restates its rounding instead of casting `scaled + 0.5F`: truncate, then add one when the remainder is at least 0.5. For every input that reaches it (the early return takes NaN and anything not positive) the two forms give the same integer, so the 520 s / 16 us story the row quotes is unchanged; 857 cases pass."
+        },
+        {
+          "row": "core/gear_ratio.hpp",
+          "verdict": "holds",
+          "why": "`to_nanos` restates its rounding instead of casting `scaled + 0.5F`: truncate, then add one when the remainder is at least 0.5. For every input that reaches it (the early return takes NaN and anything not positive) the two forms give the same integer, so the 520 s / 16 us story the row quotes is unchanged; 857 cases pass."
+        },
+        {
+          "row": "core/hall.hpp",
+          "verdict": "holds",
+          "why": "`to_nanos` restates its rounding instead of casting `scaled + 0.5F`: truncate, then add one when the remainder is at least 0.5. For every input that reaches it (the early return takes NaN and anything not positive) the two forms give the same integer, so the 520 s / 16 us story the row quotes is unchanged; 857 cases pass."
+        },
+        {
+          "row": "core/homing.hpp",
+          "verdict": "holds",
+          "why": "`to_nanos` restates its rounding instead of casting `scaled + 0.5F`: truncate, then add one when the remainder is at least 0.5. For every input that reaches it (the early return takes NaN and anything not positive) the two forms give the same integer, so the 520 s / 16 us story the row quotes is unchanged; 857 cases pass."
+        },
+        {
+          "row": "core/limits.hpp",
+          "verdict": "holds",
+          "why": "`to_nanos` restates its rounding instead of casting `scaled + 0.5F`: truncate, then add one when the remainder is at least 0.5. For every input that reaches it (the early return takes NaN and anything not positive) the two forms give the same integer, so the 520 s / 16 us story the row quotes is unchanged; 857 cases pass."
+        },
+        {
+          "row": "core/min_pulse.hpp",
+          "verdict": "holds",
+          "why": "`to_nanos` restates its rounding instead of casting `scaled + 0.5F`: truncate, then add one when the remainder is at least 0.5. For every input that reaches it (the early return takes NaN and anything not positive) the two forms give the same integer, so the 520 s / 16 us story the row quotes is unchanged; 857 cases pass."
+        },
+        {
+          "row": "core/mtpv.hpp",
+          "verdict": "holds",
+          "why": "`to_nanos` restates its rounding instead of casting `scaled + 0.5F`: truncate, then add one when the remainder is at least 0.5. For every input that reaches it (the early return takes NaN and anything not positive) the two forms give the same integer, so the 520 s / 16 us story the row quotes is unchanged; 857 cases pass."
+        },
+        {
+          "row": "core/observer/back_emf_observer.hpp",
+          "verdict": "holds",
+          "why": "`to_nanos` restates its rounding instead of casting `scaled + 0.5F`: truncate, then add one when the remainder is at least 0.5. For every input that reaches it (the early return takes NaN and anything not positive) the two forms give the same integer, so the 520 s / 16 us story the row quotes is unchanged; 857 cases pass."
+        },
+        {
+          "row": "core/observer/blended_observer.hpp",
+          "verdict": "holds",
+          "why": "`to_nanos` restates its rounding instead of casting `scaled + 0.5F`: truncate, then add one when the remainder is at least 0.5. For every input that reaches it (the early return takes NaN and anything not positive) the two forms give the same integer, so the 520 s / 16 us story the row quotes is unchanged; 857 cases pass."
+        },
+        {
+          "row": "core/observer/dual_inductance_observer.hpp",
+          "verdict": "holds",
+          "why": "`to_nanos` restates its rounding instead of casting `scaled + 0.5F`: truncate, then add one when the remainder is at least 0.5. For every input that reaches it (the early return takes NaN and anything not positive) the two forms give the same integer, so the 520 s / 16 us story the row quotes is unchanged; 857 cases pass."
+        },
+        {
+          "row": "core/observer/hfi_observer.hpp",
+          "verdict": "holds",
+          "why": "`to_nanos` restates its rounding instead of casting `scaled + 0.5F`: truncate, then add one when the remainder is at least 0.5. For every input that reaches it (the early return takes NaN and anything not positive) the two forms give the same integer, so the 520 s / 16 us story the row quotes is unchanged; 857 cases pass."
+        },
+        {
+          "row": "core/observer/ideal_observer.hpp",
+          "verdict": "holds",
+          "why": "`to_nanos` restates its rounding instead of casting `scaled + 0.5F`: truncate, then add one when the remainder is at least 0.5. For every input that reaches it (the early return takes NaN and anything not positive) the two forms give the same integer, so the 520 s / 16 us story the row quotes is unchanged; 857 cases pass."
+        },
+        {
+          "row": "core/observer/nonlinear_flux_observer.hpp",
+          "verdict": "holds",
+          "why": "`to_nanos` restates its rounding instead of casting `scaled + 0.5F`: truncate, then add one when the remainder is at least 0.5. For every input that reaches it (the early return takes NaN and anything not positive) the two forms give the same integer, so the 520 s / 16 us story the row quotes is unchanged; 857 cases pass."
+        },
+        {
+          "row": "core/observer/observer_policy.hpp",
+          "verdict": "holds",
+          "why": "`to_nanos` restates its rounding instead of casting `scaled + 0.5F`: truncate, then add one when the remainder is at least 0.5. For every input that reaches it (the early return takes NaN and anything not positive) the two forms give the same integer, so the 520 s / 16 us story the row quotes is unchanged; 857 cases pass."
+        },
+        {
+          "row": "core/observer/switchable_observer.hpp",
+          "verdict": "holds",
+          "why": "`to_nanos` restates its rounding instead of casting `scaled + 0.5F`: truncate, then add one when the remainder is at least 0.5. For every input that reaches it (the early return takes NaN and anything not positive) the two forms give the same integer, so the 520 s / 16 us story the row quotes is unchanged; 857 cases pass."
+        },
+        {
+          "row": "core/pi.hpp",
+          "verdict": "holds",
+          "why": "`to_nanos` restates its rounding instead of casting `scaled + 0.5F`: truncate, then add one when the remainder is at least 0.5. For every input that reaches it (the early return takes NaN and anything not positive) the two forms give the same integer, so the 520 s / 16 us story the row quotes is unchanged; 857 cases pass."
+        },
+        {
+          "row": "core/polarity.hpp",
+          "verdict": "holds",
+          "why": "`to_nanos` restates its rounding instead of casting `scaled + 0.5F`: truncate, then add one when the remainder is at least 0.5. For every input that reaches it (the early return takes NaN and anything not positive) the two forms give the same integer, so the 520 s / 16 us story the row quotes is unchanged; 857 cases pass."
+        },
+        {
+          "row": "core/position_reference.hpp",
+          "verdict": "holds",
+          "why": "`to_nanos` restates its rounding instead of casting `scaled + 0.5F`: truncate, then add one when the remainder is at least 0.5. For every input that reaches it (the early return takes NaN and anything not positive) the two forms give the same integer, so the 520 s / 16 us story the row quotes is unchanged; 857 cases pass."
+        },
+        {
+          "row": "core/reference.hpp",
+          "verdict": "holds",
+          "why": "`to_nanos` restates its rounding instead of casting `scaled + 0.5F`: truncate, then add one when the remainder is at least 0.5. For every input that reaches it (the early return takes NaN and anything not positive) the two forms give the same integer, so the 520 s / 16 us story the row quotes is unchanged; 857 cases pass."
+        },
+        {
+          "row": "core/single_shunt.hpp",
+          "verdict": "holds",
+          "why": "`to_nanos` restates its rounding instead of casting `scaled + 0.5F`: truncate, then add one when the remainder is at least 0.5. For every input that reaches it (the early return takes NaN and anything not positive) the two forms give the same integer, so the 520 s / 16 us story the row quotes is unchanged; 857 cases pass."
+        },
+        {
+          "row": "core/sinusoid_fit.hpp",
+          "verdict": "holds",
+          "why": "`to_nanos` restates its rounding instead of casting `scaled + 0.5F`: truncate, then add one when the remainder is at least 0.5. For every input that reaches it (the early return takes NaN and anything not positive) the two forms give the same integer, so the 520 s / 16 us story the row quotes is unchanged; 857 cases pass."
+        },
+        {
+          "row": "core/sm.hpp",
+          "verdict": "holds",
+          "why": "`to_nanos` restates its rounding instead of casting `scaled + 0.5F`: truncate, then add one when the remainder is at least 0.5. For every input that reaches it (the early return takes NaN and anything not positive) the two forms give the same integer, so the 520 s / 16 us story the row quotes is unchanged; 857 cases pass."
+        },
+        {
+          "row": "core/soft_limit.hpp",
+          "verdict": "holds",
+          "why": "`to_nanos` restates its rounding instead of casting `scaled + 0.5F`: truncate, then add one when the remainder is at least 0.5. For every input that reaches it (the early return takes NaN and anything not positive) the two forms give the same integer, so the 520 s / 16 us story the row quotes is unchanged; 857 cases pass."
+        },
+        {
+          "row": "core/speed_from_angle.hpp",
+          "verdict": "holds",
+          "why": "`to_nanos` restates its rounding instead of casting `scaled + 0.5F`: truncate, then add one when the remainder is at least 0.5. For every input that reaches it (the early return takes NaN and anything not positive) the two forms give the same integer, so the 520 s / 16 us story the row quotes is unchanged; 857 cases pass."
+        },
+        {
+          "row": "core/stall_start.hpp",
+          "verdict": "holds",
+          "why": "`to_nanos` restates its rounding instead of casting `scaled + 0.5F`: truncate, then add one when the remainder is at least 0.5. For every input that reaches it (the early return takes NaN and anything not positive) the two forms give the same integer, so the 520 s / 16 us story the row quotes is unchanged; 857 cases pass."
+        },
+        {
+          "row": "core/startup.hpp",
+          "verdict": "holds",
+          "why": "`to_nanos` restates its rounding instead of casting `scaled + 0.5F`: truncate, then add one when the remainder is at least 0.5. For every input that reaches it (the early return takes NaN and anything not positive) the two forms give the same integer, so the 520 s / 16 us story the row quotes is unchanged; 857 cases pass."
+        },
+        {
+          "row": "core/step_metrics.hpp",
+          "verdict": "holds",
+          "why": "`to_nanos` restates its rounding instead of casting `scaled + 0.5F`: truncate, then add one when the remainder is at least 0.5. For every input that reaches it (the early return takes NaN and anything not positive) the two forms give the same integer, so the 520 s / 16 us story the row quotes is unchanged; 857 cases pass."
+        },
+        {
+          "row": "core/svpwm.hpp",
+          "verdict": "holds",
+          "why": "`to_nanos` restates its rounding instead of casting `scaled + 0.5F`: truncate, then add one when the remainder is at least 0.5. For every input that reaches it (the early return takes NaN and anything not positive) the two forms give the same integer, so the 520 s / 16 us story the row quotes is unchanged; 857 cases pass."
+        },
+        {
+          "row": "core/thermal_limit.hpp",
+          "verdict": "holds",
+          "why": "`to_nanos` restates its rounding instead of casting `scaled + 0.5F`: truncate, then add one when the remainder is at least 0.5. For every input that reaches it (the early return takes NaN and anything not positive) the two forms give the same integer, so the 520 s / 16 us story the row quotes is unchanged; 857 cases pass."
+        },
+        {
+          "row": "core/traits.hpp",
+          "verdict": "holds",
+          "why": "`to_nanos` restates its rounding instead of casting `scaled + 0.5F`: truncate, then add one when the remainder is at least 0.5. For every input that reaches it (the early return takes NaN and anything not positive) the two forms give the same integer, so the 520 s / 16 us story the row quotes is unchanged; 857 cases pass."
+        },
+        {
+          "row": "core/transforms.hpp",
+          "verdict": "holds",
+          "why": "`to_nanos` restates its rounding instead of casting `scaled + 0.5F`: truncate, then add one when the remainder is at least 0.5. For every input that reaches it (the early return takes NaN and anything not positive) the two forms give the same integer, so the 520 s / 16 us story the row quotes is unchanged; 857 cases pass."
+        },
+        {
+          "row": "core/types.hpp",
+          "verdict": "holds",
+          "why": "`to_nanos` restates its rounding instead of casting `scaled + 0.5F`: truncate, then add one when the remainder is at least 0.5. For every input that reaches it (the early return takes NaN and anything not positive) the two forms give the same integer, so the 520 s / 16 us story the row quotes is unchanged; 857 cases pass."
+        },
+        {
+          "row": "core/watchdog.hpp",
+          "verdict": "holds",
+          "why": "`to_nanos` restates its rounding instead of casting `scaled + 0.5F`: truncate, then add one when the remainder is at least 0.5. For every input that reaches it (the early return takes NaN and anything not positive) the two forms give the same integer, so the 520 s / 16 us story the row quotes is unchanged; 857 cases pass."
+        },
+        {
+          "row": "driver/callback_hal.hpp",
+          "verdict": "holds",
+          "why": "`to_nanos` restates its rounding instead of casting `scaled + 0.5F`: truncate, then add one when the remainder is at least 0.5. For every input that reaches it (the early return takes NaN and anything not positive) the two forms give the same integer, so the 520 s / 16 us story the row quotes is unchanged; 857 cases pass."
+        },
+        {
+          "row": "driver/scripted_current.hpp",
+          "verdict": "holds",
+          "why": "`to_nanos` restates its rounding instead of casting `scaled + 0.5F`: truncate, then add one when the remainder is at least 0.5. For every input that reaches it (the early return takes NaN and anything not positive) the two forms give the same integer, so the 520 s / 16 us story the row quotes is unchanged; 857 cases pass."
+        },
+        {
+          "row": "driver/stub_pwm.hpp",
+          "verdict": "holds",
+          "why": "`to_nanos` restates its rounding instead of casting `scaled + 0.5F`: truncate, then add one when the remainder is at least 0.5. For every input that reaches it (the early return takes NaN and anything not positive) the two forms give the same integer, so the 520 s / 16 us story the row quotes is unchanged; 857 cases pass."
+        },
+        {
+          "row": "hal/brake_switch.hpp",
+          "verdict": "holds",
+          "why": "`to_nanos` restates its rounding instead of casting `scaled + 0.5F`: truncate, then add one when the remainder is at least 0.5. For every input that reaches it (the early return takes NaN and anything not positive) the two forms give the same integer, so the 520 s / 16 us story the row quotes is unchanged; 857 cases pass."
+        },
+        {
+          "row": "hal/current_sense.hpp",
+          "verdict": "holds",
+          "why": "`to_nanos` restates its rounding instead of casting `scaled + 0.5F`: truncate, then add one when the remainder is at least 0.5. For every input that reaches it (the early return takes NaN and anything not positive) the two forms give the same integer, so the 520 s / 16 us story the row quotes is unchanged; 857 cases pass."
+        },
+        {
+          "row": "hal/fault_input.hpp",
+          "verdict": "holds",
+          "why": "`to_nanos` restates its rounding instead of casting `scaled + 0.5F`: truncate, then add one when the remainder is at least 0.5. For every input that reaches it (the early return takes NaN and anything not positive) the two forms give the same integer, so the 520 s / 16 us story the row quotes is unchanged; 857 cases pass."
+        },
+        {
+          "row": "hal/pwm.hpp",
+          "verdict": "holds",
+          "why": "`to_nanos` restates its rounding instead of casting `scaled + 0.5F`: truncate, then add one when the remainder is at least 0.5. For every input that reaches it (the early return takes NaN and anything not positive) the two forms give the same integer, so the 520 s / 16 us story the row quotes is unchanged; 857 cases pass."
+        },
+        {
+          "row": "motor/foc_loop.hpp",
+          "verdict": "holds",
+          "why": "`to_nanos` restates its rounding instead of casting `scaled + 0.5F`: truncate, then add one when the remainder is at least 0.5. For every input that reaches it (the early return takes NaN and anything not positive) the two forms give the same integer, so the 520 s / 16 us story the row quotes is unchanged; 857 cases pass."
+        },
+        {
+          "row": "motor/motor.hpp",
+          "verdict": "holds",
+          "why": "`to_nanos` restates its rounding instead of casting `scaled + 0.5F`: truncate, then add one when the remainder is at least 0.5. For every input that reaches it (the early return takes NaN and anything not positive) the two forms give the same integer, so the 520 s / 16 us story the row quotes is unchanged; 857 cases pass."
+        },
+        {
+          "row": "core/six_step.hpp",
+          "verdict": "holds",
+          "why": "`core/six_step.hpp` rests on these headers; the changes are the bugprone fixes described in this entry (bitwise/signedness and rounding restated, one switch label merged), which leave every value the row quotes unchanged."
+        },
+        {
+          "row": "core/trace.hpp",
+          "verdict": "holds",
+          "why": "`core/trace.hpp` rests on these headers; the changes are the bugprone fixes described in this entry (bitwise/signedness and rounding restated, one switch label merged), which leave every value the row quotes unchanged."
+        },
+        {
+          "row": "core/trace_parse.hpp",
+          "verdict": "holds",
+          "why": "`core/trace_parse.hpp` rests on these headers; the changes are the bugprone fixes described in this entry (bitwise/signedness and rounding restated, one switch label merged), which leave every value the row quotes unchanged."
+        },
+        {
+          "row": "driver/stub_brake_switch.hpp",
+          "verdict": "holds",
+          "why": "`driver/stub_brake_switch.hpp` rests on these headers; the changes are the bugprone fixes described in this entry (bitwise/signedness and rounding restated, one switch label merged), which leave every value the row quotes unchanged."
+        },
+        {
+          "row": "driver/stub_fault_input.hpp",
+          "verdict": "holds",
+          "why": "`driver/stub_fault_input.hpp` rests on these headers; the changes are the bugprone fixes described in this entry (bitwise/signedness and rounding restated, one switch label merged), which leave every value the row quotes unchanged."
+        },
+        {
+          "row": "driver/stub_hal.hpp",
+          "verdict": "holds",
+          "why": "`driver/stub_hal.hpp` rests on these headers; the changes are the bugprone fixes described in this entry (bitwise/signedness and rounding restated, one switch label merged), which leave every value the row quotes unchanged."
+        },
+        {
+          "row": "motor/motor_config.hpp",
+          "verdict": "holds",
+          "why": "`motor/motor_config.hpp` rests on these headers; the changes are the bugprone fixes described in this entry (bitwise/signedness and rounding restated, one switch label merged), which leave every value the row quotes unchanged."
+        },
+        {
+          "row": "motor/torque_map.hpp",
+          "verdict": "holds",
+          "why": "`motor/torque_map.hpp` rests on these headers; the changes are the bugprone fixes described in this entry (bitwise/signedness and rounding restated, one switch label merged), which leave every value the row quotes unchanged."
+        }
+      ]
     }
   ]
 }

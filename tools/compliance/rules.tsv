@@ -16,7 +16,7 @@ bugprone-compare-pointer-to-member-virtual-function	tidy:bugprone-compare-pointe
 bugprone-copy-constructor-init	tidy:bugprone-copy-constructor-init	implemented	any	none	-	zc	clang-tidy (pinned config)
 bugprone-dangling-handle	tidy:bugprone-dangling-handle	implemented	any	none	-	zc	clang-tidy (pinned config)
 bugprone-dynamic-static-initializers	tidy:bugprone-dynamic-static-initializers	implemented	any	none	-	zc	clang-tidy (pinned config)
-bugprone-easily-swappable-parameters	tidy:bugprone-easily-swappable-parameters	implemented	any	none	-	zc	clang-tidy (pinned config)
+bugprone-easily-swappable-parameters	tidy:bugprone-easily-swappable-parameters	deviation	any	none	规则**适用**（两个相邻同型参数确实可能被写反），但本库 31 处签名刻意如此，理由写在 deviation/bugprone-easily-swappable-parameters.md：它的建议是把每对参数包成结构体或强类型，而那与本库 `-fno-exceptions -fno-rtti`、无分配、控制环内无虚调用、标量逐寄存器传递的形状相反。**它此前既不在表里也不算数**：`bugprone-*` 在钉住的配置里被点名却从未生效（见 `cppcoreguidelines-avoid-magic-numbers` 那一行），所以「合规」在这条上一直是空的。现在 `enforce` 门在钉住文件之外真正跑这一族，31 处由 `.github/project/enforce.json` 的 `except` 按名单豁免，且**没有上述偏差单即红**。	zc	clang-tidy（由 enforce 门在钉住配置之外启用）
 bugprone-empty-catch	tidy:bugprone-empty-catch	implemented	any	none	-	zc	clang-tidy (pinned config)
 bugprone-exception-escape	tidy:bugprone-exception-escape	implemented	any	none	-	zc	clang-tidy (pinned config)
 bugprone-fold-init-type	tidy:bugprone-fold-init-type	implemented	any	none	-	zc	clang-tidy (pinned config)

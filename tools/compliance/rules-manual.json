@@ -540,6 +540,16 @@
       "why": "这一行原本由生成器写成 `implemented`，那是**洗衣**：检查名确实在钉住的配置里，但它没有生效。2026-11-06 实测：钉住的 `.clang-tidy` 里 `Checks:` 是多行折叠标量，**其中的 `#` 注释行是字面量**，`clang-tidy --dump-config` 解析出的真实集合是 `clang-diagnostic-*,-*, # Generic bugprone-*, …`——第一个 `#` 之后全被忽略。所以 `tidy` 门对 42 个源文件报 OK，是因为它一个检查都没开。把注释行去掉后同样的文件 **37/42 有诊断、共 383 条**（310 magic-numbers、36 incorrect-roundings、26 easily-swappable-parameters、10 signed-bitwise、1 branch-clone）。改成 `open` 才是实情——这条规则既没有被执行，也没有被签偏差。三条修法都要一次显式决定：① 改 `.clang-tidy` 并把该文件移进 `scaffold` 的 `tolerated`（先要清 310 处魔数，或把 `IgnoredIntegerValues` 调宽并写明理由）；② 报给上游模板；③ 保持 `open`。",
       "owner": "zc",
       "source": "clang-tidy（钉住配置，但未生效）"
+    },
+    {
+      "rule": "bugprone-easily-swappable-parameters",
+      "check": "clang-tidy:bugprone-easily-swappable-parameters",
+      "status": "deviation",
+      "lang": "any",
+      "delta": "none",
+      "why": "规则**适用**（两个相邻同型参数确实可能被写反），但本库 31 处签名刻意如此，理由写在 deviation/bugprone-easily-swappable-parameters.md：它的建议是把每对参数包成结构体或强类型，而那与本库 `-fno-exceptions -fno-rtti`、无分配、控制环内无虚调用、标量逐寄存器传递的形状相反。**它此前既不在表里也不算数**：`bugprone-*` 在钉住的配置里被点名却从未生效（见 `cppcoreguidelines-avoid-magic-numbers` 那一行），所以「合规」在这条上一直是空的。现在 `enforce` 门在钉住文件之外真正跑这一族，31 处由 `.github/project/enforce.json` 的 `except` 按名单豁免，且**没有上述偏差单即红**。",
+      "owner": "zc",
+      "source": "clang-tidy（由 enforce 门在钉住配置之外启用）"
     }
   ]
 }

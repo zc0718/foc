@@ -29,6 +29,17 @@
         "en": "The CERT C++ secure-coding rules. Measured at zero on both trees before being switched on, and the three sites it found on the way are fixed rather than suppressed.",
         "zh": "CERT C++ 安全编码规则。启用前在两棵树上都量到 0；沿途发现的 3 处已修掉而不是抑制掉。"
       }
+    },
+    {
+      "id": "bugprone",
+      "checks": "bugprone-*",
+      "except": [
+        "bugprone-easily-swappable-parameters"
+      ],
+      "why": {
+        "en": "The pinned config names `bugprone-*` but, because of the folded-scalar bug in its `Checks:` key, clang-tidy resolves the list to nothing and the `tidy` gate has never run a single check. This gate supplies the family from outside the pinned file (which `scaffold` pins, so it is not ours to edit) and runs it over all 125 targets. It found 46 unique diagnostics: 12 signed-bitwise, 2 incorrect-roundings, 1 branch-clone and 31 easily-swappable-parameters. The first three classes are fixed; the last is exempted with a record, because its advice is to restructure every signature that takes two adjacent floats -- `step(dt, angle)`, `park(alpha, beta)`, `reconstruct(a, b)` -- which is the shape of this library's API, not a defect in it.",
+        "zh": "钉住的配置点名了 `bugprone-*`，但因为 `Checks:` 那个折叠标量的 bug，clang-tidy 解析出的集合是空的，`tidy` 门从未跑过任何一条检查。本门在钉住文件之外补上这一族并扫全部 125 个目标——钉住文件被 `scaffold` 逐字节锁定，不归我们改。实测 46 条去重诊断：12 条 signed-bitwise、2 条 incorrect-roundings、1 条 branch-clone、31 条 easily-swappable-parameters。前三类已修；最后一类带偏差单豁免，因为它要求把所有接受两个相邻 `float` 的函数签名重构（`step(dt, angle)`、`park(alpha, beta)`、`reconstruct(a, b)`），那是本库 API 的形状，不是缺陷。"
+      }
     }
   ],
   "pending": [

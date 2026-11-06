@@ -164,7 +164,10 @@ class ElapsedClock final {
         }
         const auto whole = static_cast<std::uint64_t>(seconds);
         const float fraction = seconds - static_cast<float>(whole);
-        const auto sub = static_cast<std::uint64_t>((fraction * kNanosPerSecond) + 0.5F);
+        const float scaled = fraction * kNanosPerSecond;
+        const auto truncated = static_cast<std::uint64_t>(scaled);
+        const bool round_up = (scaled - static_cast<float>(truncated)) >= 0.5F;
+        const auto sub = truncated + (round_up ? 1U : 0U);
         return (whole * 1000000000ULL) + ((sub < 1000000000ULL) ? sub : 999999999ULL);
     }
 

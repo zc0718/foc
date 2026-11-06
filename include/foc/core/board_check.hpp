@@ -807,7 +807,9 @@ class BoardSelfTest final {
             // the board's own setting is what it has to live with.
             // 误差按板子**实际**用的那个设置读，不是按最好的那个：扫描用来弄清正确设置是什么，
             // 而板子得过日子的是它自己的设置。
-            const int at = static_cast<int>((saved * static_cast<float>(points)) + 0.5F);
+            const float scaled = saved * static_cast<float>(points);
+            const int truncated = static_cast<int>(scaled);
+            const int at = truncated + (((scaled - static_cast<float>(truncated)) >= 0.5F) ? 1 : 0);
             const int clamped = (at < 0) ? 0 : ((at >= points) ? (points - 1) : at);
             result.sample_error_a = std::fabs(readings[clamped] - period_mean);
             bench.set_sample_delay(saved);

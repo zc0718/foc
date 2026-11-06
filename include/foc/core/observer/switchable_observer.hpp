@@ -214,11 +214,13 @@ class SwitchableObserver final {
             return blended_.locked();
         case ObserverKind::NonlinearFlux:
             return nonlinear_flux_.locked();
+        // No detector in either kind: `DualInductance` reports a declined step as a `Param` status
+        // rather than withholding a measurement, `BackEmf` withholds nothing, and a future kind
+        // defaults to the same answer.
         case ObserverKind::DualInductance:
-            return true; // no detector: a declined step is a Param status, not a withheld measurement
         case ObserverKind::BackEmf:
         default:
-            return true; // no detector: nothing is being withheld
+            return true;
         }
     }
 
