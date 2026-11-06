@@ -652,6 +652,52 @@
           "why": "the row publishes clamp and slew behaviour produced by `clamp` and `SlewLimiter::step`, neither of which changed. The rewrite is inside the class doc block. Measured on this tree: 857/857 cases, `test_limits.cpp` included."
         }
       ]
+    },
+    {
+      "id": "B-17",
+      "date": "2026-11-06",
+      "what_changed": "Both headers' public type docstrings were rewritten into Doxygen's own vocabulary: the MTPA law is now real LaTeX inside `\\f[...\\f]` instead of backticks, what the policy refuses is an `@warning` instead of a `@note`, and the evidence is an `@see` pointer to the claim row, the cases, ledger `E-MTPA-1`/`E-MTPA-2` and `domain.json` rows C7/C8. While rewriting `MtpaReference` one pre-existing defect was fixed rather than carried over: two English paragraphs sat *below* `@brief [zh]`, so the docs pipeline filed them under the Chinese group (a body paragraph takes the language of the tag above it -- code-conventions.md rule 2). No code, signature, member, default or arithmetic changed in either header.",
+      "seeds": [
+        "include/foc/core/reference.hpp",
+        "include/foc/core/field_weakening.hpp"
+      ],
+      "affected": [
+        {
+          "row": "core/field_weakening.hpp",
+          "verdict": "holds",
+          "why": "the row publishes the go/no-go rule `i_char <= i_max`, the `speed_gain` closed form and the measured envelope numbers, all produced by `is_field_weakening_worthwhile()` -- byte-identical. Only the doc block above `FieldWeakeningAdvice` changed, plus an `@see` line."
+        },
+        {
+          "row": "core/traits.hpp",
+          "verdict": "holds",
+          "why": "it deduces the policy shape of `MtpaReference` (a `reference()` returning `Dq<float>`); no declaration moved, so every deduction is unchanged."
+        },
+        {
+          "row": "motor/motor.hpp",
+          "verdict": "holds",
+          "why": "it instantiates `MtpaReference` as its `RefGenerator` policy; the class name, `Config` and both member functions are untouched, so every instantiation resolves to the same code."
+        },
+        {
+          "row": "core/observer/blended_observer.hpp",
+          "verdict": "holds",
+          "why": "it reaches these headers through the same `Motor` instantiation: the blend produces the angle the MTPA reference consumes. What it deduces from `reference.hpp`/`field_weakening.hpp` is only the policy shape, and no declaration in either header moved; its own published numbers (0.042 rad across 0..800, 3.14 above 200 for HFI alone, 0.82 at rest) come from the observer arithmetic, untouched."
+        },
+        {
+          "row": "core/observer/switchable_observer.hpp",
+          "verdict": "holds",
+          "why": "same shape: it forwards to one of two observers inside a `Motor` whose reference generator is this class. Only doc blocks changed, so every forwarding path resolves to the same code."
+        },
+        {
+          "row": "core/trace.hpp",
+          "verdict": "holds",
+          "why": "the trace records the telemetry the reference feeds; the record's layout, the null channel's cost and the text round trip are properties of `trace.hpp` itself and were not touched. The reference's arithmetic is byte-identical."
+        },
+        {
+          "row": "core/trace_parse.hpp",
+          "verdict": "holds",
+          "why": "it parses recorded samples and never recomputes a reference value, so a docstring on `MtpaReference` cannot reach it."
+        }
+      ]
     }
   ]
 }

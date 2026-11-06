@@ -13,25 +13,34 @@ namespace core {
 /**
  * @brief [en] Whether field weakening is worth building for *this* machine, as numbers rather than an opinion.
  *
- *     The number that decides it is the **characteristic current** `i_char = psi_f/Ld`: the d-axis current that would
- *     null the rotor flux. If `i_char` is far above the current limit, the drive cannot null the flux, and field
- *     weakening buys only the sliver `i_max/i_char` of it -- measured on the SIL machine as 2910 -> 3850 rad/s (**+32
- *     %**) with torque collapsing to zero at the top. If `i_char` is below the current limit the machine has a real
+ *     The number that decides it is the characteristic current \f$i_{char} = \psi_f / L_d\f$: the d-axis current that
+ *     would null the rotor flux. If it sits far above the current limit the drive cannot null the flux, and field
+ *     weakening buys only the sliver \f$i_{max}/i_{char}\f$ of it -- measured on the SIL machine as 2910 -> 3850 rad/s
+ *     (**+32 %**) with torque collapsing to zero at the top. If it sits below the limit the machine has a real
  *     constant-power region: the same machine with ten times the inductance holds 36 % of its base torque at 8000
  *     rad/s.
  *
+ *     The go/no-go rule is the single comparison \f$i_{char} \le i_{max}\f$, i.e. \f$L_d\,i_{max} \ge \psi_f\f$; once
+ *     it passes, the ceiling it reports is the \f$i_q = 0\f$ closed form
+ *
+ *     \f[ \frac{\omega_{max}}{\omega_{base}} = \frac{\psi_f}{\psi_f - L_d\,i_{max}} \f]
+ *
  * @brief [zh] 对**这台**机器来说弱磁值不值得做，用数说话，不用观点。
  *
- *     决定它的是**特征电流** `i_char = ψf/Ld`：把转子磁链削到零所需的 d 轴电流。 如果 `i_char` 远高于电流限幅，驱动器根
- *     本削不动磁链，弱磁只买到 `i_max/i_char` 那一点点—— SIL 标称机上实测是 2910 → 3850 rad/s（**+32 %**），顶端转矩塌
- *     到零。如果 `i_char` 低于电流 限幅，这台机器就有真正的恒功率区：同一台机器把电感放大十倍，8000 rad/s 处仍有基速转
- *     矩的 36 %。
+ *     决定它的是**特征电流** \f$i_{char} = \psi_f / L_d\f$：把转子磁链削到零所需的 d 轴电流。如果它远高于电流限幅，驱动
+ *     器根本削不动磁链，弱磁只买到 \f$i_{max}/i_{char}\f$ 那一点点——SIL 标称机上实测是 2910 → 3850 rad/s （**+32 %**
+ *     ），顶端转矩塌到零。如果它低于电流限幅，这台机器就有真正的恒功率区：同一台机器把电感放大十倍， 8000 rad/s 处仍有
+ *     基速转矩的 36 %。
  *
- * @note [en] The `speed_gain` here is the closed-form ceiling at `i_q = 0`: `psi_f/(psi_f - Ld*i_max)`. It is an upper
- *            bound -- carrying torque needs more voltage, so the measured envelope sits slightly below it -- which is
- *            exactly why it is safe to use as a *go/no-go* number and not as a target.
- * @note [zh] 这里的 `speed_gain` 是 `i_q = 0` 处的闭式上限： `ψf/(ψf − Ld·i_max)`。它是上界——带转矩要更多电压，所以实测
- *            包络略低于它——这正是它可以用来 做"做/不做"的门槛而不能当目标值的原因。
+ *     做/不做的判据就是单一比较 \f$i_{char} \le i_{max}\f$，即 \f$L_d\,i_{max} \ge \psi_f\f$；过闸后它报告的转速上限是
+ *     \f$i_q = 0\f$ 处的闭式：
+ *
+ *     \f[ \frac{\omega_{max}}{\omega_{base}} = \frac{\psi_f}{\psi_f - L_d\,i_{max}} \f]
+ *
+ * @note [en] That ceiling is an upper bound: carrying torque needs more voltage, so the measured envelope sits below
+ *            it. That is why it is safe as a *go/no-go* number and wrong as a target.
+ * @note [zh] 这个上限是上界：带转矩要更多电压，实测包络低于它。所以它只能当"做/不做"的门槛，不能当目标值。
+ * @see `foc/core/field_weakening.hpp` claim row, `test_field_weakening.cpp`, `domain.json` rows C7 / C8
  * @since 0.1.0
  * @exporter
  */

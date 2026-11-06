@@ -75,45 +75,54 @@ class NullReferenceGenerator final {
 /**
  * @brief [en] MTPA: the d-axis current that gets the most torque per amp.
  *
- *     Why a policy and not a constant. For a surface-mounted machine `i_d = 0` *is* MTPA, so the whole saliency story
- *     looks like a detail. For an interior-PM machine it is not a detail: the reluctance torque is worth a third of the
- *     total, and every amp spent on the wrong `i_d` is an amp not making torque. The gap between the two is the
- *     difference between needing a bigger drive and not.
+ *     Why a policy and not a constant. On a surface-mounted machine \f$i_d = 0\f$ *is* MTPA, so the whole saliency
+ *     story looks like a detail; on an interior-PM machine it is not: reluctance torque is worth a third of the total,
+ *     and every amp spent on the wrong \f$i_d\f$ is an amp not making torque. The distance between those two machines
+ *     is the difference between needing a bigger drive and not.
  *
- *     The curve. Setting `dT/di_d = 0` on `T = 1.5*p*(psi_f*i_q + (Ld-Lq)*i_d*i_q)` subject to `i_d^2+i_q^2 = |i|^2`
- *     gives `i_d = (psi_f - sqrt(psi_f^2 + 8*(Lq-Ld)^2*i_q^2)) / (4*(Lq-Ld))`, which is negative for `Lq > Ld` and
- *     degenerate at `Lq = Ld` -- the degenerate case is handled as `i_d = 0` rather than by a tiny epsilon, because an
- *     epsilon would produce an `i_d` of order `psi_f/eps` and destroy the loop.
+ *     Setting \f$dT/di_d = 0\f$ on \f$T = 1.5\,p\,(\psi_f i_q + (L_d - L_q)\,i_d i_q)\f$ subject to \f$i_d^2 + i_q^2 =
+ *     |i|^2\f$ gives the curve
+ *
+ *     \f[ i_d = \frac{\psi_f - \sqrt{\psi_f^2 + 8\,(L_q - L_d)^2\,i_q^2}}{4\,(L_q - L_d)} \f]
+ *
+ *     which is negative for \f$L_q > L_d\f$ and degenerate at \f$L_q = L_d\f$. The degenerate case is \f$i_d = 0\f$
+ *     rather than a tiny epsilon, because an epsilon produces an \f$i_d\f$ of order \f$\psi_f/\epsilon\f$ and destroys
+ *     the loop. Ledger `E-MTPA-1` and `E-MTPA-2`; whether the capability is worth having on a given machine at all is
+ *     `domain.json` row C8, not this block.
+ *
+ *     The d-axis amount is capped at \f$k\,|\omega_e|\f$ with \f$k\f$ = `i_d_per_speed_a_s_per_rad`, defaulting to
+ *     \f$0\f$. The reason is stated where the field is declared and it is a measured one: on the shipped single-\f$L\f$
+ *     observer, \f$i_d = -1\f$ A reads 0.5079 rad of angle error at 200 rad/s against a published 0.15 rad ceiling,
+ *     while the same current is harmless at 3200 rad/s. So the allowance scales with speed, and zero -- no d-axis
+ *     current, therefore the plain curve -- is what this class does until the caller says how the angle is measured.
  *
  * @brief [zh] MTPA：每安培转矩最大的那个 d 轴电流。
  *
- *     为什么是策略而不是常数。表贴机上 `i_d = 0` **就是** MTPA，于是整个凸极性故事看起来像个细节。内嵌机上它不是 细节：
- *     磁阻转矩占总量的三分之一，花在错误 `i_d` 上的每一安培都是没在做转矩的安培。两者之差就是"需要换更大驱动器" 与"不需
- *     要"之差。
+ *     为什么是策略而不是常数。表贴机上 \f$i_d = 0\f$ **就是** MTPA，于是整个凸极性故事看起来像个细节；内嵌机上它不是细
+ *     节：磁阻转矩占总量的三分之一，花在错误 \f$i_d\f$ 上的每一安培都是没在做转矩的安培。两台机器之间的这段距离，就是"
+ *     需要换更大驱动器"与"不需要"之差。
  *
- *     曲线。在 `i_d²+i_q² = |i|²` 约束下对 `T = 1.5·p·(ψf·iq + (Ld−Lq)·id·iq)` 令 `dT/di_d = 0`，得上式；`Lq > Ld` 时为
- *     负，`Lq = Ld` 时退化——退化情形按 `i_d = 0` 处理而不是用一个极小量，因为极小量会给出量级 `ψf/eps` 的 `i_d`，把环直
- *     接毁掉。
+ *     在 \f$i_d^2 + i_q^2 = |i|^2\f$ 约束下对 \f$T = 1.5\,p\,(\psi_f i_q + (L_d - L_q)\,i_d i_q)\f$ 令 \f$dT/di_d =
+ *     0\f$，得到曲线
  *
- *     **This policy refuses to apply a d-axis current nobody can see.** The shipped single-`L` observer's flux target
- *     is a constant `psi_f`, so any `i_d` moves the flux it believes it is tracking, and at low speed the back-EMF is
- *     too small to outvote the error: measured on the nominal machine, `i_d = -1 A` reads 0.5079 rad at 200 rad/s
- *     against the published 0.15 rad ceiling, while the same current is harmless at 3200 rad/s. The allowance therefore
- *     scales with speed (`i_d_per_speed_a_s_per_rad`) and defaults to **zero**, which is the only rate that is safe
- *     with no further knowledge. A machine with a position sensor can raise it without limit; a sensorless one cannot.
+ *     \f[ i_d = \frac{\psi_f - \sqrt{\psi_f^2 + 8\,(L_q - L_d)^2\,i_q^2}}{4\,(L_q - L_d)} \f]
  *
- *     **这个策略拒绝施加没人看得见的 d 轴电流。** 出厂单 `L` 观测器的磁链目标是常数 `ψf`，所以任何 `i_d` 都会挪动 它以
- *     为自己 在跟踪的那个磁链，而低速下反电势压不住这个误差：标称机上实测，`i_d = −1 A` 在 200 rad/s 读到 0.5079 rad，
- *     而公开天花板 是 0.15 rad；同一个电流在 3200 rad/s 却无害。因此许可量随转速线性放大 （
- *     `i_d_per_speed_a_s_per_rad`），默认**为零**——在没有任何其他知识时，零是唯一安全的比率。带位置传感器的 机器可以放
- *     开，无感的机器不行。
+ *     \f$L_q > L_d\f$ 时为负，\f$L_q = L_d\f$ 时退化。退化情形按 \f$i_d = 0\f$ 处理而不是用一个极小量，因为极小量会给出
+ *     量级 \f$\psi_f/\epsilon\f$ 的 \f$i_d\f$，把环直接毁掉。台账 `E-MTPA-1`、`E-MTPA-2`；至于这个能力在某台机器上值不
+ *     值得做，看 `domain.json` 的 C8 行，不在本段。
  *
- * @note [en] The cost of the guard is torque, and it is stated rather than hidden: clipping `i_d` toward zero leaves
- *            the MTPA curve, so the policy returns fewer newton-metres than the curve says. That is the trade: an
- *            accurate angle, or the reluctance torque, not both -- below the speed where the back-EMF carries the
- *            observer.
- * @note [zh] 这道门的代价是转矩，而且是被写明而不是被隐藏的：把 `i_d` 往零夹就是离开 MTPA 曲线，所以策略返回的 牛顿米少
- *            于曲线给出的值。这就是取舍：准确的角度，或磁阻转矩，二者不能兼得——在反电势撑起观测器的那个 转速以下。
+ *     d 轴用量被 \f$k\,|\omega_e|\f$ 封顶，\f$k\f$ 即 `i_d_per_speed_a_s_per_rad`，默认 \f$0\f$。理由写在字段声明处，而
+ *     且是量出来的：出厂单 \f$L\f$ 观测器下，\f$i_d = -1\f$ A 在 200 rad/s 读到 0.5079 rad 角度误差，而公开天花板是
+ *     0.15 rad；同一个电流在 3200 rad/s 却无害。所以许可量随转速放大，而零——不施加 d 轴电流、于是走原曲线——就是本类在调
+ *     用方声明角度怎么测之前的全部行为。
+ *
+ * @warning [en] The guard costs torque and that is stated rather than hidden: clipping \f$i_d\f$ toward zero leaves the
+ *               MTPA curve, so the reference returns fewer newton-metres than the curve promises. With the default \f$k
+ *               = 0\f$ it returns none of the reluctance torque at all, which is the price of not lying about an angle
+ *               the observer cannot see.
+ * @warning [zh] 这道门的代价是转矩，而且是被写明而不是被隐藏的：把 \f$i_d\f$ 往零夹就是离开 MTPA 曲线，于是参考给出的牛
+ *               顿米少于曲线承诺的值。默认 \f$k = 0\f$ 时它一点磁阻转矩都不给——这是不对"观测器看不见的角度"说谎的代价。
+ * @see `foc/core/reference.hpp` claim row, `test_mtpa.cpp`, ledger `E-MTPA-1` / `E-MTPA-2`, `domain.json` C8
  * @context [en] Current-loop ISR, on the reference-generation path.
  * @context [zh] 电流环 ISR，位于参考生成路径上。
  * @since 0.1.0
