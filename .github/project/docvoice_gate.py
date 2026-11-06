@@ -75,7 +75,7 @@ PATTERNS = (
     ('ordinal', re.compile(r'\bthe \d+(?:st|nd|rd|th) time\b', re.IGNORECASE)),
     ('colloquial', re.compile(r'踩(?:了|过)')),
     # The marker below was selected by measurement, not by taste. Six candidates were run over 1310
-    # doc blocks by `tools/docvoice/accretion.py`; five were rejected and the numbers are why:
+    # doc blocks by `.github/project/docvoice/accretion.py`; five were rejected and the numbers are why:
     #   * "而不是 / rather than / instead of"      -> 435 hits: it is the vocabulary of precision.
     #   * "——…但/其实…" (corrects itself)          -> 20 hits, all of them ordinary argument.
     #   * a paragraph opening with a connector      -> 2 hits.

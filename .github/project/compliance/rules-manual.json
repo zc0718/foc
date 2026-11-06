@@ -1,6 +1,6 @@
 {
   "_comment": [
-    "The hand-maintained half of the language-subset rule table. tools/compliance/gen_subset.py",
+    "The hand-maintained half of the language-subset rule table. .github/project/compliance/gen_subset.py",
     "merges this with tool-checks.txt (the pinned clang-tidy expansion) into rules.tsv, which is",
     "what the gate reads and what a reviewer opens.",
     "",
@@ -189,7 +189,7 @@
       "delta": "none",
       "why": "代码里每一个 `// NOLINT(...)` 都必须有 `deviation/<rule>.md`，反之亦然。压制是偏差，偏差要有五要素记录；这条规则由本门自己执行（自指但可查）。",
       "owner": "zc",
-      "source": "tools/compliance/subset_gate.py + deviation/"
+      "source": ".github/project/compliance/subset_gate.py + deviation/"
     },
     {
       "rule": "FOC-NA-EXC",

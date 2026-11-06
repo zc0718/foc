@@ -35,10 +35,10 @@ chosen to be met (the `mutation-baseline.json` comment says the same thing about
 
 Usage
 -----
-  python3 tools/docvoice/accretion.py                  # summary + top files on both tracks
-  python3 tools/docvoice/accretion.py --top 12         # longer lists
-  python3 tools/docvoice/accretion.py --blocks         # every block with a non-zero A score
-  python3 tools/docvoice/accretion.py --file <path>    # one file in full, with its commit history
+  python3 .github/project/docvoice/accretion.py                  # summary + top files on both tracks
+  python3 .github/project/docvoice/accretion.py --top 12         # longer lists
+  python3 .github/project/docvoice/accretion.py --blocks         # every block with a non-zero A score
+  python3 .github/project/docvoice/accretion.py --file <path>    # one file in full, with its commit history
 """
 from __future__ import annotations
 
@@ -48,7 +48,8 @@ import subprocess
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[3]
+assert (ROOT / 'metadata.json').is_file(), f'the root went wrong after the move: {ROOT}'
 SPEC_DIRS = ('include', 'src')
 SPEC_SUFFIXES = ('.h', '.hpp', '.c', '.cpp')
 # The ledger is not a spec and is not measured here; it is *supposed* to look like this.

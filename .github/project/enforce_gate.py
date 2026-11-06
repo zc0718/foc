@@ -53,7 +53,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 TABLE = Path(__file__).resolve().parent / "enforce.json"
 PINNED = ROOT / ".github" / "misc" / ".clang-tidy"
-DEVIATION_DIR = ROOT / "tools" / "compliance" / "deviation"
+DEVIATION_DIR = ROOT / ".github" / "project" / "compliance" / "deviation"
 SCAN_DIRS = ("include", "src")
 SUFFIXES = {".h", ".hpp", ".c", ".cpp"}
 SKIP_PARTS = {"build", "CMakeFiles", ".git"}
@@ -167,8 +167,16 @@ def run_one(checks: str, work: Path, target: Path) -> list[str]:
     # Absolute, because a quoted include is searched next to the synthetic TU first: a private header
     # (`src/api/bridge.h`) is not on `-Iinclude` and would not be found by its relative path.
     lines: list[str] = []
+    # **By language, not by directory**: `.c`/`.h` are the C family and are seen only as C; `.cpp`/`.hpp` only as
+    # C++. That is the infrastructure layer's own rule (`C_SUFFIXES = ('.c', '.h')`), and it is also why a C header
+    # must never be handed to the C++ view: measured on `foc_api.h`, the C++ view adds 17 diagnostics of exactly the
+    # kind the project's scoping decision exists to avoid (`use-enum-class` 10, `avoid-c-arrays` 7 -- neither
+    # construct exists in C11), and 0 in the families this gate enforces.
+    # 按语言而不是按目录：`.c`/`.h` 只按 C 看，`.cpp`/`.hpp` 只按 C++ 看。这也是「C 头绝不交给 C++ 视图」的原因：
+    # `foc_api.h` 的 C++ 视图多出 17 条诊断（`use-enum-class` 10、`avoid-c-arrays` 7——C11 里都不存在），
+    # 而本门强制的两族一条都没多。
     languages = ((".c", "-std=c11", []), (".cpp", "-std=c++17", ["-fno-exceptions", "-fno-rtti"]))
-    for suffix, std, cxx in (languages if target.suffix == ".h" else languages[1:]):
+    for suffix, std, cxx in (languages[:1] if target.suffix == ".h" else languages[1:]):
         tu = work / f"{target.stem}_{target.parent.name}{suffix}"
         tu.write_text(f'#include "{target.resolve().as_posix()}"\n', encoding="utf-8")
         lines.extend(_tidy(checks, work, tu, std, cxx))
@@ -308,7 +316,7 @@ def main(argv: list[str] | None = None) -> int:
     if failures:
         print(f"[enforce] FAIL ({failures}/{len(files)} target(s))", file=sys.stderr)
         return 1
-    print(f"[enforce] OK ({len(files)} target(s) -- every `.h` compiled as C and as C++ -- {families} on top "
+    print(f"[enforce] OK ({len(files)} target(s), `.c`/`.h` as C and `.cpp`/`.hpp` as C++; {families} on top "
           f"of the pinned set)")
     return 0
 

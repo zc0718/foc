@@ -1,4 +1,4 @@
-# tools/compliance — the language-subset evidence package
+# .github/project/compliance — the language-subset evidence package
 
 **What this directory is.** Three deliverables plus the gate that keeps them honest. Unlike the rest
 of `tools/`, the files here are meant to leave the repository: a customer's software-quality
@@ -19,12 +19,12 @@ may be put in front of a customer today and which may not.
 ## Commands
 
 ```bash
-python3 tools/compliance/gen_subset.py --snapshot   # re-derive the tool snapshot, then rewrite rules.tsv
-python3 tools/compliance/gen_subset.py --check      # is rules.tsv stale?
-python3 tools/compliance/subset_gate.py             # the whole check, plus the four counts
-python3 tools/compliance/subset_gate.py --selftest  # prove each leg can go red
-python3 tools/compliance/subset_gate.py --summary   # rewrite COMPLIANCE-SUMMARY.md
-python3 tools/compliance/subset_gate.py --baseline  # re-freeze the open count (a review event)
+python3 .github/project/compliance/gen_subset.py --snapshot   # re-derive the tool snapshot, then rewrite rules.tsv
+python3 .github/project/compliance/gen_subset.py --check      # is rules.tsv stale?
+python3 .github/project/compliance/subset_gate.py             # the whole check, plus the four counts
+python3 .github/project/compliance/subset_gate.py --selftest  # prove each leg can go red
+python3 .github/project/compliance/subset_gate.py --summary   # rewrite COMPLIANCE-SUMMARY.md
+python3 .github/project/compliance/subset_gate.py --baseline  # re-freeze the open count (a review event)
 python3 .github/project/gates.py subset             # the same gate, through the project runner
 ```
 

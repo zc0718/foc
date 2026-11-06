@@ -684,7 +684,7 @@ evidence that only changes when the control loop does. `project/gates.py all` ru
 `ci-policy` fails the build if a workflow ever calls a local-only one.
 
 The language-subset evidence does not live under `.github/` at all, because it is a *deliverable* rather
-than a gate: `tools/compliance/` holds the rule table (`rules.tsv`, generated from the pinned
+than a gate: `.github/project/compliance/` holds the rule table (`rules.tsv`, generated from the pinned
 `.clang-tidy` plus `rules-manual.json`), the deviation permits, and `COMPLIANCE-SUMMARY.md`. The `subset`
 gate is registered in `project/gates.py` so it runs with the others, and it refuses a rule whose `check`
 names nothing that exists, a deviation without its five elements, a `NOLINT` without a permit, and any rise

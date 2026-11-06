@@ -37,10 +37,10 @@ has never said no is a gate nobody has a reason to trust.
 
 Usage
 -----
-  python3 tools/compliance/subset_gate.py              # check, print the compliance summary
-  python3 tools/compliance/subset_gate.py --selftest   # prove the checks can fail
-  python3 tools/compliance/subset_gate.py --baseline   # re-freeze the open count (review event)
-  python3 tools/compliance/subset_gate.py --summary    # rewrite COMPLIANCE-SUMMARY.md
+  python3 .github/project/compliance/subset_gate.py              # check, print the compliance summary
+  python3 .github/project/compliance/subset_gate.py --selftest   # prove the checks can fail
+  python3 .github/project/compliance/subset_gate.py --baseline   # re-freeze the open count (review event)
+  python3 .github/project/compliance/subset_gate.py --summary    # rewrite COMPLIANCE-SUMMARY.md
 """
 from __future__ import annotations
 
@@ -50,7 +50,8 @@ import re
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[3]
+assert (ROOT / 'metadata.json').is_file(), f'the root went wrong after the move: {ROOT}'
 HERE = Path(__file__).resolve().parent
 RULES = HERE / 'rules.tsv'
 MANUAL = HERE / 'rules-manual.json'
@@ -77,7 +78,7 @@ _HEADING = re.compile(r'^#{2,3}\s*(.+?)\s*$', re.MULTILINE)
 # ---------------------------------------------------------------------------- inputs
 def read_rules(path: Path = RULES) -> tuple[list[dict[str, str]], list[str]]:
     if not path.is_file():
-        return [], [f'{path.name} is missing; run tools/compliance/gen_subset.py']
+        return [], [f'{path.name} is missing; run .github/project/compliance/gen_subset.py']
     lines = [line for line in path.read_text(encoding='utf-8').splitlines()
              if line.strip() and not line.startswith('#')]
     if not lines:
@@ -394,7 +395,7 @@ def summary_text(rows: list[dict[str, str]], ctx: dict) -> str:
     out = [
         '# 语言子集合规摘要',
         '',
-        '本文件由 `tools/compliance/subset_gate.py --summary` 从 `rules.tsv` 生成，请勿手改。',
+        '本文件由 `.github/project/compliance/subset_gate.py --summary` 从 `rules.tsv` 生成，请勿手改。',
         '',
         '## 四个计数',
         '',

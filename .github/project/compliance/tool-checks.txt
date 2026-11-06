@@ -1,5 +1,5 @@
 # Snapshot of the checks the pinned .github/misc/.clang-tidy enables.
-# Regenerate with: python3 tools/compliance/gen_subset.py --snapshot
+# Regenerate with: python3 .github/project/compliance/gen_subset.py --snapshot
 # tool: Ubuntu LLVM version 18.1.3   Optimized build.
 # config: -* bugprone-* performance-* cppcoreguidelines-avoid-magic-numbers cppcoreguidelines-macro-usage
 #

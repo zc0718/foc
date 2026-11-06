@@ -430,7 +430,7 @@ PROJECT_GATES = ('license', 'strict', 'claims', 'docs', 'deps', 'form', 'boundar
 
 
 def cmd_subset(_explicit):
-    """The language-subset rule table, from `tools/compliance/`.
+    """The language-subset rule table, from `.github/project/compliance/`.
 
     Why the code lives outside `.github/`: the rule table, the deviation records and the compliance
     summary are *deliverables* — they go into a customer's package — while `.github/project/` is
@@ -438,7 +438,7 @@ def cmd_subset(_explicit):
     policy see it like any other; only the bodies are elsewhere. `--selftest` runs first, because a
     checker that has never said no is a checker nobody has a reason to trust.
     """
-    script = ROOT / 'tools' / 'compliance' / 'subset_gate.py'
+    script = ROOT / '.github' / 'project' / 'compliance' / 'subset_gate.py'
     for _args in (['--selftest'], []):
         _rc = subprocess.run([sys.executable, str(script), *_args], cwd=ROOT, text=True).returncode
         if _rc:

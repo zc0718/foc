@@ -1,6 +1,6 @@
 # 语言子集合规摘要
 
-本文件由 `tools/compliance/subset_gate.py --summary` 从 `rules.tsv` 生成，请勿手改。
+本文件由 `.github/project/compliance/subset_gate.py --summary` 从 `rules.tsv` 生成，请勿手改。
 
 ## 四个计数
 
@@ -19,6 +19,7 @@
 | .github/misc/.clang-format-c / -cpp | 1 | 0 | 0 | 0 |
 | .github/misc/.clang-tidy | 1 | 0 | 0 | 0 |
 | .github/misc/.include-guard.txt | 1 | 0 | 0 | 0 |
+| .github/project/compliance/subset_gate.py + deviation/ | 1 | 0 | 0 | 0 |
 | .github/project/deps.json + deps_gate.py | 1 | 0 | 0 | 0 |
 | .github/project/forms.json + form_gate.py | 1 | 0 | 0 | 0 |
 | .github/project/mcdc.json + mcdc_gate.py | 1 | 0 | 0 | 0 |
@@ -45,7 +46,6 @@
 | test_package/test/unit/test_encoder_stream.cpp | 1 | 0 | 0 | 0 |
 | test_package/test/unit/test_enum_names.cpp | 1 | 0 | 0 | 0 |
 | test_package/test/unit/test_frame.cpp | 1 | 0 | 0 | 0 |
-| tools/compliance/subset_gate.py + deviation/ | 1 | 0 | 0 | 0 |
 
 ## 能说的话与不能说的话
 

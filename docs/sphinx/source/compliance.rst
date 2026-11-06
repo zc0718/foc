@@ -14,20 +14,20 @@ recollection -- and the whole point of the report is that the two differ.
 The rule table
 --------------
 
-``tools/compliance/rules.tsv`` is the claim, one rule per line. It is
+``.github/project/compliance/rules.tsv`` is the claim, one rule per line. It is
 **generated**, from two inputs:
 
-- ``tools/compliance/tool-checks.txt`` -- a snapshot of the check names the
+- ``.github/project/compliance/tool-checks.txt`` -- a snapshot of the check names the
   pinned ``.github/misc/.clang-tidy`` enables (101 of them: ``bugprone-*``,
   ``performance-*`` and two ``cppcoreguidelines-*``). The snapshot exists
   because a glob quietly matching one more check adds a rule to the subset with
   nobody deciding to.
-- ``tools/compliance/rules-manual.json`` -- everything a tool cannot decide:
+- ``.github/project/compliance/rules-manual.json`` -- everything a tool cannot decide:
   what the compiler flags enforce, what this repository's own gates and tests
   enforce, which units have no behaviour to check, which rules are deviated and
   which are open.
 
-Regenerate with ``python3 tools/compliance/gen_subset.py``; ``--check`` reports
+Regenerate with ``python3 .github/project/compliance/gen_subset.py``; ``--check`` reports
 drift instead of writing.
 
 The four counts, and what each one means
@@ -62,17 +62,17 @@ as a line nobody notices is missing.
        operand.
    * - ``deviation``
      - we do not follow it, on purpose
-     - ``tools/compliance/deviation/<rule>.md`` exists and carries all five
+     - ``.github/project/compliance/deviation/<rule>.md`` exists and carries all five
        elements: reason, impact, compensating control, approver, review date.
        Missing one element fails the build, and so does a ``NOLINT`` in the
        shipped tree with no record -- and a record with no suppression.
    * - ``open``
      - we intend to have it and do not
-     - this count may only fall. ``tools/compliance/subset-baseline.json``
+     - this count may only fall. ``.github/project/compliance/subset-baseline.json``
        freezes it; raising it means re-freezing the baseline in the same
        commit, which is a review event rather than an accident.
 
-``tools/compliance/COMPLIANCE-SUMMARY.md`` renders the same four counts for a
+``.github/project/compliance/COMPLIANCE-SUMMARY.md`` renders the same four counts for a
 delivery package, plus the per-source breakdown.
 
 What can be said today
@@ -143,15 +143,15 @@ Where the evidence lives
 
    * - Artefact
      - Re-run with
-   * - ``tools/compliance/rules.tsv``
-     - ``python3 tools/compliance/gen_subset.py --check`` (stale means exit 1)
-   * - ``tools/compliance/COMPLIANCE-SUMMARY.md``
-     - ``python3 tools/compliance/subset_gate.py --summary``
-   * - ``tools/compliance/deviation/*.md``
+   * - ``.github/project/compliance/rules.tsv``
+     - ``python3 .github/project/compliance/gen_subset.py --check`` (stale means exit 1)
+   * - ``.github/project/compliance/COMPLIANCE-SUMMARY.md``
+     - ``python3 .github/project/compliance/subset_gate.py --summary``
+   * - ``.github/project/compliance/deviation/*.md``
      - ``python3 .github/project/gates.py subset`` (five elements, and the
        NOLINT bijection)
-   * - ``tools/compliance/subset-baseline.json``
-     - ``python3 tools/compliance/subset_gate.py --baseline`` (a review event,
+   * - ``.github/project/compliance/subset-baseline.json``
+     - ``python3 .github/project/compliance/subset_gate.py --baseline`` (a review event,
        not a reflex)
    * - The materials the citations come from
      - ``workspace/compliance/`` -- the ledger, the sha256 of every copy, and
@@ -162,4 +162,4 @@ Where the evidence lives
    ``workspace/`` is not in version control by design: it holds internal
    material. The consequence is that the ledger is not part of what a customer
    receives -- but the rule table, the deviation permits and the summary are,
-   because they live in ``tools/compliance/``.
+   because they live in ``.github/project/compliance/``.
