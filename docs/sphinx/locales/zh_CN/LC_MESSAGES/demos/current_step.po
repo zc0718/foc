@@ -38,61 +38,73 @@ msgstr "在 +1 A 半段上测得"
 #: 9563c3d6b79a47dc83441ef72c919e68
 msgid "metric"
 msgstr ""
+"指标"
 
 #: ../../source/demos/metrics_current_step.csv:1
 #: 4ba1c07d318246178bb3b0f93f146897
 msgid "value"
 msgstr ""
+"数值"
 
 #: ../../source/demos/metrics_current_step.csv:1
 #: eb626e05aefe4221bebfe93f08981d19
 msgid "unit"
 msgstr ""
+"单位"
 
 #: ../../source/demos/metrics_current_step.csv:1
 #: 320fc8a022c64d6fa5f026b3dd6ee2d1
 msgid "settling_time_5pct"
 msgstr ""
+"调节时间（5 % 误差带）"
 
 #: ../../source/demos/metrics_current_step.csv:1
 #: 3cc2599c32b94d66b7cfa0bf83312b6f
 msgid "0.0009"
 msgstr ""
+"0.0009"
 
 #: ../../source/demos/metrics_current_step.csv:1
 #: c25d11ede7fb416b9f4f0d20134e1b61
 msgid "s"
 msgstr ""
+"s"
 
 #: ../../source/demos/metrics_current_step.csv:1
 #: 7d6bc7e96c9d464488c0a92b3b4e7bff
 msgid "overshoot"
 msgstr ""
+"超调"
 
 #: ../../source/demos/metrics_current_step.csv:1
 #: a3ad441f3fd04025adc4af8115159110
 msgid "0.00"
 msgstr ""
+"0.00"
 
 #: ../../source/demos/metrics_current_step.csv:1
 #: ef53866adcef42db93d5b2857101f03e
 msgid "%"
 msgstr ""
+"%"
 
 #: ../../source/demos/metrics_current_step.csv:1
 #: dbbd684c6cde4e0ba13c8aa6ce488da7
 msgid "steady_state_error"
 msgstr ""
+"稳态误差"
 
 #: ../../source/demos/metrics_current_step.csv:1
 #: 33a2e9aa693a41bfb09dd9c6ad9ee3f5
 msgid "0.0101"
 msgstr ""
+"0.0101"
 
 #: ../../source/demos/metrics_current_step.csv:1
 #: f04cf6cea7154fa9a3666a52cec3a3df
 msgid "A"
 msgstr ""
+"A"
 
 #: ../../source/demos/current_step.rst:19 660edc819af2493381b2099b91e0ae64
 msgid "What to look for: no overshoot, no integrator wind-up at the reversal (the second step settles as cleanly as the first), and a d-axis disturbance that stays two orders of magnitude below the q-axis setpoint."

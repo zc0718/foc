@@ -38,46 +38,55 @@ msgstr "两个周期上的测量"
 #: b5b80c192a3f4b828090bd95260eff8e
 msgid "metric"
 msgstr ""
+"指标"
 
 #: ../../source/demos/metrics_sine_tracking.csv:1
 #: ba3b09264485467d83fd57b0881033ce
 msgid "value"
 msgstr ""
+"数值"
 
 #: ../../source/demos/metrics_sine_tracking.csv:1
 #: bf492426be954eb8a6eaa7322230a033
 msgid "unit"
 msgstr ""
+"单位"
 
 #: ../../source/demos/metrics_sine_tracking.csv:1
 #: 56027b6f2cdc4b248592591e1ad40981
 msgid "worst_error_pct_of_amplitude"
 msgstr ""
+"最大误差（占幅值百分比）"
 
 #: ../../source/demos/metrics_sine_tracking.csv:1
 #: 1c1042f80d9a4d28878035523eb584e2
 msgid "2.54"
 msgstr ""
+"2.54"
 
 #: ../../source/demos/metrics_sine_tracking.csv:1
 #: 327fa4c17cda4d3fb767e6a5dd5cc76c
 msgid "%"
 msgstr ""
+"%"
 
 #: ../../source/demos/metrics_sine_tracking.csv:1
 #: a54197ef50cd43ab92ca5c5d1896973b
 msgid "peak_to_peak_speed"
 msgstr ""
+"速度峰峰值"
 
 #: ../../source/demos/metrics_sine_tracking.csv:1
 #: 1ed82797bab04c40811a470a8e5b5bd1
 msgid "99.98"
 msgstr ""
+"99.98"
 
 #: ../../source/demos/metrics_sine_tracking.csv:1
 #: 879431140f4246f18691c38316707fe6
 msgid "rad/s"
 msgstr ""
+"rad/s"
 
 #: ../../source/demos/sine_tracking.rst:18 1cc9e079cccc4378be639ffce6f40296
 msgid "What to look for: the peak-to-peak swing stays at the reference amplitude (no collapse) and the worst error stays a few percent — the phase lag is visible but small, which is what a 250 rad/s speed loop buys you at 1 Hz."

@@ -1,0 +1,277 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2026, HeT-FTI
+# This file is distributed under the same license as the foc package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: foc 0.1.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-11-06 23:08+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: zh_CN\n"
+"Language-Team: zh_CN <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.17.0\n"
+
+#: ../../source/guides/slice-s2-zero-speed.rst:2
+#: 7224062ad1b24be19f23293623c5f88e
+msgid "_`Zero and low speed`"
+msgstr ""
+"_`零速与低速`"
+
+#: ../../source/guides/slice-s2-zero-speed.rst:4
+#: 035e023b44454748a1aadf7b4ded5450
+msgid ""
+"The task: produce torque with no back EMF to observe, and find out before"
+" the commissioning session whether this machine can be observed at "
+"standstill at all."
+msgstr ""
+"任务：在没有反电动势可供观测的情况下产生转矩，并在投运调试之前就弄清楚："
+"这台电机静止时到底能不能被观测。"
+
+#: ../../source/guides/slice-s2-zero-speed.rst:8
+#: 47214087d37f410ebf8af76de91eeccf
+msgid "What you need"
+msgstr ""
+"所需部件"
+
+#: ../../source/guides/slice-s2-zero-speed.rst:10
+#: 8cce90e19ce54bd39c871d50506ce452
+msgid ""
+"``foc/core/observer/hfi_observer.hpp`` -- saliency tracking by high-"
+"frequency injection: the carrier, the demodulator, the PLL, and the two "
+"refusals."
+msgstr ""
+"``foc/core/observer/hfi_observer.hpp`` ——用高频注入跟踪凸极：载波、解调"
+"器、PLL，以及两处拒绝。"
+
+#: ../../source/guides/slice-s2-zero-speed.rst:12
+#: 89c04951016d4e519a3fd5d47c0f5eeb
+msgid ""
+"``foc/core/observer/dual_inductance_observer.hpp`` -- the same flux "
+"integrator with the angle recovered from two inductances instead of one. "
+"It needs no injection, and on a machine with equal inductances it "
+"degenerates to the single-inductance answer -- so it is not a way around "
+"the first failure mode below, it is a way to stop paying the bias that a "
+"single inductance brings."
+msgstr ""
+"``foc/core/observer/dual_inductance_observer.hpp`` ——同一个磁链积分器，"
+"角度由两个电感恢复，而不是一个。它不需要注入；在两电感相等的电机上，它退"
+"化为单电感的答案——因此它不是绕开下面第一条失效方式的办法，而是不再为单电"
+"感带来的偏置付账的办法。"
+
+#: ../../source/guides/slice-s2-zero-speed.rst:17
+#: 383097a4a7e34bea9c95d7a0a9283182
+msgid ""
+"``foc/core/observer/blended_observer.hpp`` -- the hand-over between the "
+"two as speed rises, so the slice does not end at the point where the low-"
+"speed method stops working."
+msgstr ""
+"``foc/core/observer/blended_observer.hpp`` ——转速上升时在两者之间交接，"
+"使本切片不至于止步于低速方法失效之处。"
+
+#: ../../source/guides/slice-s2-zero-speed.rst:22
+#: 9d5ccd9879604b3f95cacff30ba1b0e3
+msgid "A minimal program"
+msgstr ""
+"最小程序"
+
+#: ../../source/guides/slice-s2-zero-speed.rst:24
+#: aecc0ed3ed2d4953a65919b37cf7c878
+msgid ""
+"``docs/doxygen/dox/demos/slice-s2-zero-speed.cxx`` holds a salient "
+"machine at standstill, drives it with the observer's own injection, and "
+"runs the loop three times: a surface-mount rotor, an interior rotor, and "
+"an interior rotor observed by a controller that cannot resolve the "
+"carrier. The same file produces this slice's figure."
+msgstr ""
+"``docs/doxygen/dox/demos/slice-s2-zero-speed.cxx`` 让一台凸极电机保持静"
+"止，用观测器自己的注入去驱动它，并把环跑三次：表贴式转子、内置式转子，以"
+"及由分辨不出载波的控制器观测的内置式转子。本切片的图也由同一个文件产生。"
+
+#: ../../source/guides/slice-s2-zero-speed.rst:38
+#: 02a6de98a74d4d4cb5baca5c01042a02
+msgid "Where the numbers come from"
+msgstr ""
+"数字的来源"
+
+#: ../../source/guides/slice-s2-zero-speed.rst:40
+#: 49c98f9ffce1472085ca0b09f115adce
+msgid ""
+"**The demodulation sensitivity** is not a tuning knob: "
+"``predicted_gain_a()`` computes it from the injection amplitude, the "
+"carrier frequency and the machine's two inductances. Taking it from the "
+"machine is what turns \"HFI does not work here\" into a number that is "
+"zero for a reason."
+msgstr ""
+"**解调灵敏度** 不是一个可调旋钮： ``predicted_gain_a()`` 由注入幅值、载"
+"波频率和电机的两个电感算出它。从电机取这个数，才能把“HFI 在这里不工作”变"
+"成一个说得清为什么是零的数字。"
+
+#: ../../source/guides/slice-s2-zero-speed.rst:44
+#: 9c6b69d905fb4cd78ebde879656fa2c8
+msgid ""
+"**The carrier frequency** is bounded above by the control rate -- the "
+"library's ``max_inject_hz()`` is the bound, and it is a ratio of samples "
+"per carrier rather than a frequency, so it moves with your ISR period."
+msgstr ""
+"**载波频率** 的上界受控制频率约束——库里的 ``max_inject_hz()`` 就是这个界"
+"，它是“每个载波周期的采样数”之比而不是一个频率，因此会随中断服务程序的周"
+"期移动。"
+
+#: ../../source/guides/slice-s2-zero-speed.rst:47
+#: fdd838b4224e4b9b971719ec7f329244
+msgid ""
+"**The injection amplitude** is a trade with a formula: a carrier that "
+"another observer cannot distinguish from back EMF leaves a flux residue "
+"of ``inject_v / (2*pi*inject_hz)`` behind, because an integrator has no "
+"reset."
+msgstr ""
+"**注入幅值** 是一笔有公式的取舍：另一个观测器分辨不出与反电动势之别的载"
+"波，会留下 ``inject_v / (2*pi*inject_hz)`` 的磁链残渣，因为积分器没有复"
+"位。"
+
+#: ../../source/guides/slice-s2-zero-speed.rst:50
+#: b1647ee34ed7403783a3e83471a8acee
+msgid ""
+"**The current high-pass** is set above the highest electrical frequency "
+"HFI is meant to work at and well below the carrier, because the "
+"demodulator multiplies by the carrier and anything DC in the current "
+"leaks straight through it."
+msgstr ""
+"**电流高通** 设在 HFI 所针对的最高电频率之上、并远低于载波，因为解调器是"
+"乘以载波，电流里的任何直流成分都会直接漏过去。"
+
+#: ../../source/guides/slice-s2-zero-speed.rst:55
+#: eea1b39d86af42d6ab2c2039bf2ec2a8
+msgid "How it goes wrong"
+msgstr ""
+"失效方式"
+
+#: ../../source/guides/slice-s2-zero-speed.rst:57
+#: 45e75012972d41648541808658c08eae
+msgid ""
+"**A surface-mount rotor attempted anyway.** The sensitivity is exactly "
+"zero, so there is nothing to demodulate; the configuration is refused "
+"rather than run. The figure's left panel is what \"attempted anyway\" "
+"looks like: the estimate never moves, and it never moves for the whole "
+"window rather than converging late."
+msgstr ""
+"**硬拿表贴式转子去试。** 灵敏度恰好为零，没有东西可解调；配置会被拒绝，"
+"而不是被运行。图的左栏就是“硬去试”的样子：估计值始终不动，而且是整个窗口"
+"都不动，不是收敛得晚。"
+
+#: ../../source/guides/slice-s2-zero-speed.rst:62
+#: cb0d6e4892ef4dac80c7677842905cfa
+msgid ""
+"**``error()`` read as the angle error.** It is the demodulator's "
+"residual, and it is zero both when the lock is perfect and when there is "
+"no signal at all -- the two cases a start-up most needs to tell apart. "
+"``locked()`` is the answer; the example prints both next to the true "
+"angle error so the difference is visible rather than described."
+msgstr ""
+"**把 ``error()`` 读成角度误差。** 它是解调器的残差，在锁定完美时为零，在"
+"完全没有信号时也为零——而这两者恰恰是起动最需要分开的。答案在 ``locked()`"
+"` ；示例把两者连同真实角度误差一起打印，好让差别可见，而不是靠文字描述。"
+
+#: ../../source/guides/slice-s2-zero-speed.rst:67
+#: bf7d636e5d2542d2b623ceaefbd4fdc5
+msgid ""
+"**A carrier the control rate cannot resolve.** Past the boundary the "
+"amplitude collapses, the lock drops out, the angle freezes and the speed "
+"reads zero: a loop closing on that runs away with nothing reported as a "
+"fault. ``update()`` refuses the configuration instead, which is why the "
+"example's third run reports a status rather than a wrong answer."
+msgstr ""
+"**控制频率分辨不出的载波。** 越过边界后幅值塌陷、锁定丢失、角度冻结、转"
+"速读成零：在这样的信号上闭合的环会失控，而没有任何东西被报成故障。 ``"
+"update()`` 改为拒绝该配置，这就是示例第三次运行报告一个状态、而不是一个"
+"错误答案的原因。"
+
+#: ../../source/guides/slice-s2-zero-speed.rst:72
+#: 90f51fe72abc43f3a14c72693be7c448
+msgid ""
+"**A load step at standstill.** The dc content it puts into the current "
+"reaches the demodulator and becomes a standing bias in the error signal "
+"-- enough, at the wrong amplitude, to push a start-up across the half-"
+"turn boundary and lock the estimate to the mirror image of the rotor."
+msgstr ""
+"**静止时的负载阶跃。** 它注入电流的直流成分会到达解调器，并在误差信号里"
+"变成一个常驻偏置——在幅值不对时，足以把一次起动推过半圈边界，把估计锁定到"
+"转子的镜像上。"
+
+#: ../../source/guides/slice-s2-zero-speed.rst:76
+#: 242632ba8edc4228bd8853be593579a7
+msgid ""
+"**A second observer left running alongside.** A back-EMF flux integrator "
+"cannot tell the carrier from real back EMF, and it has no reset: whatever"
+" the carrier deposits stays. The residue is computable from the carrier "
+"alone, so the amplitude is chosen against it before the run, not after."
+msgstr ""
+"**让第二个观测器在旁同时跑。** 反电动势磁链积分器分不出载波与真正的反电"
+"动势，而且它没有复位：载波存进去多少就留多少。这份残渣单从载波就能算出来"
+"，因此幅值是在运行之前按它选定的，不是在运行之后。"
+
+#: ../../source/guides/slice-s2-zero-speed.rst:82
+#: f87281c2bbc744b993283fb943e80a1c
+msgid "Evidence"
+msgstr ""
+"证据"
+
+#: ../../source/guides/slice-s2-zero-speed.rst:84
+#: 199ec1e193644a5b9141b87ce973bef1
+msgid ""
+"Two claim rows cover this slice -- ``foc/core/observer/hfi_observer.hpp``"
+" and ``foc/core/observer/dual_inductance_observer.hpp`` -- and the level "
+"this page may state is the minimum of those two. Every measured number "
+"this page would otherwise want to quote -- the angle bias the residue "
+"leaves, the carrier ratio at which the lock fails, the bias a load step "
+"injects, the speed a runaway loop settles at -- lives in the header's own"
+" measured notes and in those claim rows."
+msgstr ""
+"两条主张行覆盖本切片—— ``foc/core/observer/hfi_observer.hpp`` 和 ``"
+"foc/core/observer/dual_inductance_observer.hpp`` ——本页可以陈述的等级是"
+"这两条中的最小值。本页本来会想引用的每一个实测数字——残渣留下的角度偏置、"
+"锁定失效处的载波比、负载阶跃注入的偏置、失控环最终稳定到的转速——都住在头"
+"文件自己的实测注释和那两条主张行里。"
+
+#: ../../source/guides/slice-s2-zero-speed.rst:92
+#: ef8d9558472a4ccda5f02887d6aa99fe
+msgid "Figure"
+msgstr ""
+"图"
+
+#: ../../source/guides/slice-s2-zero-speed.rst:99
+#: c7b6df5eab544409abf049a353cd0d07
+msgid ""
+"left: the angle error against time for the three runs, on a log axis "
+"because the decay is over inside the first division; right: the library's"
+" own sensitivity function, zero at a saliency ratio of one"
+msgstr ""
+"左：三次运行的角度误差对时间，用对数轴，因为衰减在第一个刻度之内就已结束"
+"；右：库自己的灵敏度函数，在凸极比为一时取零"
+
+#: ../../source/guides/slice-s2-zero-speed.rst:103
+#: 6182fb19f4584f19ad1b02599d895c8d
+msgid ""
+"Both panels come from this page's example, and the right one is the "
+"library's function rather than a fitted curve. What the figure does not "
+"show is the hardware: the plant is two ideal axes with no noise, no "
+"saturation and no cross-coupling, so the decay it shows is the observer's"
+" own settling and not a prediction for a real machine. The costs that "
+"decide whether HFI is usable on *your* machine -- angle bias, injected "
+"current, and what the carrier does to the observer running beside it -- "
+"are the header's measured notes, and they are not visible here."
+msgstr ""
+"两幅子图都来自本页的示例，右图是库自己的函数，而不是拟合曲线。图没有展示"
+"的是硬件：被控对象是两个理想轴，没有噪声、没有饱和、没有交叉耦合，因此它"
+"展示的衰减是观测器自身的稳定过程，而不是对真实电机的预测。决定 HFI 在 *"
+"自己的* 机器上是否可用的那些代价——角度偏置、注入电流，以及载波对旁边那个"
+"观测器做了什么——都在头文件的实测注释里，在这里看不到。"
+

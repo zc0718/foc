@@ -1,0 +1,647 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2026, HeT-FTI
+# This file is distributed under the same license as the foc package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: foc 0.1.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-11-06 23:08+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: zh_CN\n"
+"Language-Team: zh_CN <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.17.0\n"
+
+#: ../../source/compliance.rst:2 d5cdd4f0e85f4c2fa3a8686a46766ca1
+msgid "_`Language compliance: what can be claimed today`"
+msgstr ""
+"_`语言合规：今天可以主张什么`"
+
+#: ../../source/compliance.rst:4 f81603ee6d1f41acbdd883651b841b3e
+msgid ""
+"This page answers one question honestly: **which sentence about language "
+"compliance may this project put in front of a customer today, and which "
+"may it not put in front of anybody yet.**"
+msgstr ""
+"本页诚实地回答一个问题： **关于语言合规的哪一句话，本项目今天可以放到客"
+"户面前，哪一句还不能放到任何人面前。**"
+
+#: ../../source/compliance.rst:8 1e52cfdb27f2492db0d646988a883101
+msgid ""
+"It is deliberately short, and every claim on it points at a file or a "
+"gate that can be re-run. A claim that cannot be re-run is not evidence, "
+"it is a recollection -- and the whole point of the report is that the two"
+" differ."
+msgstr ""
+"本页刻意写得短，页上的每条主张都指向一个文件或一道可以重跑的门禁。不能重"
+"跑的主张不是证据，而是回忆——而这份报告的要点正在于两者并不相同。"
+
+#: ../../source/compliance.rst:15 c3c4e278c5524e3dac7e0b90a5e75878
+msgid "The rule table"
+msgstr ""
+"规则表"
+
+#: ../../source/compliance.rst:17 7d81cc99367e4a82a38db532f2d3c89c
+msgid ""
+"``.github/project/compliance/rules.tsv`` is the claim, one rule per line."
+" It is **generated**, from two inputs:"
+msgstr ""
+"``.github/project/compliance/rules.tsv`` 就是那份主张，一行一条规则。它"
+"由两个输入 **生成** ："
+
+#: ../../source/compliance.rst:20 7b14b7a2e8654568b91c7682294e0310
+msgid ""
+"``.github/project/compliance/tool-checks.txt`` -- a snapshot of the check"
+" names the pinned ``.github/misc/.clang-tidy`` **names** in its "
+"``Checks:`` block. The snapshot exists because a glob quietly matching "
+"one more check adds a rule to the subset with nobody deciding to. It "
+"records what that block names, not what the tool resolves it to -- see "
+"the next section for why those are two different questions."
+msgstr ""
+"``.github/project/compliance/tool-checks.txt`` ——钉住的 ``"
+".github/misc/.clang-tidy`` 在其 ``Checks:`` 块里 **点名** 的检查名的快照"
+"。之所以需要这份快照，是因为一个通配符悄悄多匹配一条检查，就会在无人决定"
+"的情况下给子集加一条规则。它记录的是那个块点了什么名，不是工具把它解析成"
+"什么——这两种为什么是两个不同的问题，见下一节。"
+
+#: ../../source/compliance.rst:26 a9da3d7201394a3798ac6dd4322e0e46
+msgid ""
+"``.github/project/compliance/rules-manual.json`` -- everything a tool "
+"cannot decide: what the compiler flags enforce, what this repository's "
+"own gates and tests enforce, which units have no behaviour to check, "
+"which rules are deviated and which are open."
+msgstr ""
+"``.github/project/compliance/rules-manual.json`` ——工具决定不了的一切："
+"编译器选项强制了什么，本仓库自己的门禁与测试强制了什么，哪些单元没有行为"
+"可查，哪些规则是偏离的、哪些是敞开的。"
+
+#: ../../source/compliance.rst:31 7e327404a7844eb5a90016cb644df7d6
+msgid ""
+"Regenerate with ``python3 .github/project/compliance/gen_subset.py``; "
+"``--check`` reports drift instead of writing."
+msgstr ""
+"用 ``python3 .github/project/compliance/gen_subset.py`` 重新生成； ``"
+"--check`` 报告漂移而不写文件。"
+
+#: ../../source/compliance.rst:35 a5e438f40bd644cdba264dd0cc8e61d2
+msgid "The two lists, and why neither can answer alone"
+msgstr ""
+"两份清单，以及为何单靠任何一份都答不了"
+
+#: ../../source/compliance.rst:37 5f768bb4e73d45fa86fe16ee36d3c202
+msgid ""
+"The pinned ``.github/misc/.clang-tidy`` is a **loose baseline of intent, "
+"by design**. Its ``Checks:`` value is a folded scalar whose ``#`` lines "
+"are literal, so ``clang-tidy --dump-config`` resolves the list to ``-*``:"
+" the scaffold's own ``tidy`` gate compiles every source in ``src/`` and "
+"constrains nothing. That is the template's posture rather than a defect, "
+"and it is not a patch this project sends upstream: the private-domain "
+"syntax of this repository (``// Conan::ImportStart`` and the rest) is "
+"governed by the IaC layer -- the shared conventions, the codegen starter "
+"and the skills -- so the linter is deliberately kept out of that argument"
+" and stays compatible with whatever an instance decides."
+msgstr ""
+"钉住的 ``.github/misc/.clang-tidy`` **按设计是一份宽松的意图基线** 。它"
+"的 ``Checks:`` 值是一个折叠标量，其中的 ``#`` 行是字面内容，所以 ``"
+"clang-tidy --dump-config`` 把清单解析成 ``-*`` ：脚手架自己的 ``tidy`` "
+"门禁编译 ``src/`` 下的每个源文件，却什么也不约束。这是模板的姿态而不是缺"
+"陷，也不是本项目向上游送的补丁：本仓库的私有域语法（ ``"
+"//Conan::ImportStart`` 及其余标记）由 IaC 层治理——共享约定、代码生成起点"
+"与技能——所以 linter 被刻意排除在那场争论之外，并与任何实例的决定保持相容"
+"。"
+
+#: ../../source/compliance.rst:48 4c72c11d54c945789d1ac2b866eb5db1
+msgid ""
+"What follows from that is the part that matters to a reader of this page:"
+" **the pinned file cannot be the answer to \"what is enforced\".** Two "
+"facts are true at once, and the page would be misleading if it stated "
+"either alone:"
+msgstr ""
+"由此得出的、对本页读者重要的部分是这一点： **钉住的文件不可能是“什么被强"
+"制了”的答案。** 两条事实同时成立，只说出其中一条，本页就会误导："
+
+#: ../../source/compliance.rst:52 b61178fe77fd46ffb5b6b4501e089b1d
+msgid ""
+"the pinned configuration **names** ``bugprone-*``, ``performance-*``, "
+"``cert-*`` and two ``cppcoreguidelines-*`` checks, which is what ``tool-"
+"checks.txt`` records;"
+msgstr ""
+"钉住的配置 **点名** 了 ``bugprone-*`` 、 ``performance-*`` 、 ``cert-*``"
+" 和两条 ``cppcoreguidelines-*`` 检查，这正是 ``tool-checks.txt`` 记录的"
+"东西；"
+
+#: ../../source/compliance.rst:55 04050863db124c15ae1aea2f69ac35ce
+msgid ""
+"the pinned configuration **runs** none of them, which is why ``enforce`` "
+"exists."
+msgstr ""
+"钉住的配置一条也 **不运行** ，这就是 ``enforce`` 存在的原因。"
+
+#: ../../source/compliance.rst:58 1781541d0fc142fc93154ecf9aa1c8cb
+msgid ""
+"``.github/project/enforce.json`` is where this project declares its own "
+"strictness. The gate composes a check set from **outside** the pinned "
+"file -- ``clang-tidy --checks`` overrides the config's ``Checks`` key "
+"while its ``CheckOptions`` and ``HeaderFilterRegex`` still apply -- so "
+"the pinned file stays byte-identical and the families still run over "
+"every target. The same file carries three things a reader needs: the "
+"families that run, the checks exempted from a family (each with a signed "
+"deviation permit, or the gate fails), and the checks this project has "
+"looked at and decided **not** to run. That third list is a record with a "
+"count and a reason per entry; an entry with no reason or no evidence "
+"fails the gate, because an omission and a decision are otherwise "
+"indistinguishable."
+msgstr ""
+"``.github/project/enforce.json`` 是本项目声明自身严格程度的地方。门禁从"
+"钉住文件 **之外** 组装检查集—— ``clang-tidy --checks`` 覆盖配置的 ``"
+"Checks`` 键，而其 ``CheckOptions`` 与 ``HeaderFilterRegex`` 仍然生效——所"
+"以钉住文件保持逐字节不变，各检查族仍然跑遍每个目标。同一个文件载着读者需"
+"要知道的三件事：运行的检查族、某族中被豁免的检查（每条都要有已签署的偏离"
+"许可，否则门禁失败），以及本项目看过并决定 **不** 运行的检查。第三份清单"
+"是逐条带计数和理由的记录；缺理由或缺证据的条目会让门禁失败，因为否则一个"
+"遗漏和一个决定无法区分。"
+
+#: ../../source/compliance.rst:70 0917c5363a564862b5d25f98895a86da
+msgid "Two consequences worth stating plainly:"
+msgstr ""
+"两条值得直说的后果："
+
+#: ../../source/compliance.rst:72 4c26736de1dd4448b6dabf7c30954c1f
+msgid ""
+"**``implemented`` in the rule table means \"a named mechanism runs it\", "
+"and the mechanism for a lint rule is now the family table.** A check that"
+" the pinned file names while nothing executes it is not an implemented "
+"rule; it is a sentence about a file. The ``tidy:`` rows therefore "
+"describe the pinned intent, and the rows whose enforcement comes from "
+"``enforce`` say so."
+msgstr ""
+"**规则表里的 ``implemented`` 意思是“有一个点名的机制在运行它”，而 lint规"
+"则的机制现在是族表。** 钉住文件点了名、却没有任何东西执行它的检查，不是"
+"已实现的规则，而是一句关于某个文件的话。因此 ``tidy:`` 行描述的是钉住的"
+"意图，而强制来自 ``enforce`` 的行会写明这一点。"
+
+#: ../../source/compliance.rst:77 30a92ed7b3794d0a81d89356952e2bbd
+msgid ""
+"**\"This check is on\" is a claim about a run, not about a "
+"configuration.** The witness is ``python3 .github/project/gates.py "
+"enforce``, which fails if any target does not compile, reports any "
+"diagnostic from the extra families, and runs a positive control: a "
+"scratch file that must be diagnosed with the families on and must be "
+"clean with them off."
+msgstr ""
+"**“这条检查是开着的”是关于一次运行的主张，不是关于一份配置的主张。** 证"
+"人是 ``python3 .github/project/gates.py enforce`` ：只要有目标编译不过、"
+"或额外检查族报出任何诊断，它就失败；它还运行一个阳性对照——一个草稿文件，"
+"在族打开时必须被诊断出来，在族关闭时必须干净。"
+
+#: ../../source/compliance.rst:84 d99ff4f8382f4da5a7621657ca593f58
+msgid "The four counts, and what each one means"
+msgstr ""
+"四个计数，以及各自含义"
+
+#: ../../source/compliance.rst:86 b52c44bd3d6341fdaf8ceb623380747d
+msgid ""
+"The ``subset`` gate (``python3 .github/project/gates.py subset``) prints "
+"the same four numbers and refuses to pass unless they add up to the "
+"number of rows, so a rule that matched no status surfaces as an "
+"arithmetic failure rather than as a line nobody notices is missing."
+msgstr ""
+"``subset`` 门禁（ ``python3 .github/project/gates.py subset`` ）打印同样"
+"四个数，并且除非它们加起来等于行数就不肯通过，于是一条没匹配任何状态的规"
+"则会以算术失败的方式浮出来，而不是变成一行没人注意到缺失的记录。"
+
+#: ../../source/compliance.rst:95 d64bd401fe514260a5a2af7b924b327f
+msgid "Status"
+msgstr ""
+"状态"
+
+#: ../../source/compliance.rst:96 72690ef18429491e802d97c3533df41a
+msgid "Means"
+msgstr ""
+"含义"
+
+#: ../../source/compliance.rst:97 fbfdea33f43a4e0780a0863958d86c43
+msgid "What makes it legal"
+msgstr ""
+"成立条件"
+
+#: ../../source/compliance.rst:98 5a7e6b10aa3b4d95b19ed2bf59c7da59
+msgid "``implemented``"
+msgstr ""
+"``implemented``"
+
+#: ../../source/compliance.rst:99 9a59722676ac42038718461bd8fbbb73
+msgid "something enforces it"
+msgstr ""
+"有机制在强制它"
+
+#: ../../source/compliance.rst:100 4a9adc46246a40c2b86b7ad028525a0e
+msgid ""
+"the ``check`` column names the mechanism, in one of four forms: "
+"``tidy:<check>`` (a check the pinned config enables), ``gate:<name>`` (a "
+"gate that exists), ``test:<file>`` (a test file that exists) or "
+"``case:<id>`` (a case in the negative-compilation set). A row whose "
+"``check`` names nothing that exists fails the build."
+msgstr ""
+"``check`` 列点名机制，形式有四： ``tidy:<check>`` （钉住配置启用的检查）"
+"、 ``gate:<name>`` （存在的门禁）、 ``test:<file>`` （存在的测试文件）、"
+" ``case:<id>`` （负向编译集里的一个用例）。 ``check`` 点名之物不存在的行"
+"会让构建失败。"
+
+#: ../../source/compliance.rst:105 f2fab73aea594923a7ebe9b5cbcb603f
+msgid "``not-applicable``"
+msgstr ""
+"``not-applicable``"
+
+#: ../../source/compliance.rst:106 879443d818f14500894fd84afe0ac9bc
+msgid "there is nothing to enforce"
+msgstr ""
+"没有可强制的对象"
+
+#: ../../source/compliance.rst:107 2886ed18f422423dad487ec4cb4bd312
+msgid ""
+"two sub-cases, told apart by the ``delta`` column. ``delta: none`` means "
+"the unit has no behaviour: an interface, a lookup table or a test double "
+"-- the thirteen terminal ``L1`` modules of the claim table in the project"
+" ``README.md``. ``delta: vacuous`` means the language feature is rejected"
+" by the build (exceptions, RTTI), so a rule about it has no operand."
+msgstr ""
+"两个子情形，由 ``delta`` 列区分。 ``delta: none`` 表示该单元没有行为：一"
+"个接口、一张查找表或一个测试替身——项目 ``README.md`` 中主张表的十三个终"
+"端 ``L1`` 模块。 ``delta: vacuous`` 表示该语言特性被构建拒绝（异常、RTTI"
+"），因此关于它的规则没有操作数。"
+
+#: ../../source/compliance.rst:113 ccff16e6a602495dae87819d961200dd
+msgid "``deviation``"
+msgstr ""
+"``deviation``"
+
+#: ../../source/compliance.rst:114 52553732810a4a4b8710a16f4c3c76a1
+msgid "we do not follow it, on purpose"
+msgstr ""
+"有意不遵循"
+
+#: ../../source/compliance.rst:115 02e1707707cb41ed8e54aeece606af16
+msgid ""
+"``.github/project/compliance/deviation/<rule>.md`` exists and carries all"
+" five elements: reason, impact, compensating control, approver, review "
+"date. Missing one element fails the build, and so does a ``NOLINT`` in "
+"the shipped tree with no record -- and a record with no suppression."
+msgstr ""
+"``.github/project/compliance/deviation/<rule>.md`` 存在，并载齐五个要素"
+"：理由、影响、补偿控制、批准人、复查日期。缺一个要素会让构建失败；出厂树"
+"里有一处没有记录的 ``NOLINT`` 同样失败——有记录却没有对应的抑制也一样。"
+
+#: ../../source/compliance.rst:119 0afe4927bca2424d83bbfe976d4e1d6e
+msgid "``open``"
+msgstr ""
+"``open``"
+
+#: ../../source/compliance.rst:120 52669f47485a45829528a0390b5145f2
+msgid "we intend to have it and do not"
+msgstr ""
+"打算有，但还没有"
+
+#: ../../source/compliance.rst:121 f2afa41c99ea407fa348081e14485b01
+msgid ""
+"this count may only fall. ``.github/project/compliance/subset-"
+"baseline.json`` freezes it; raising it means re-freezing the baseline in "
+"the same commit, which is a review event rather than an accident."
+msgstr ""
+"这个计数只允许下降。 ``.github/project/compliance/subset-baseline.json``"
+" 把它冻住；抬高它意味着在同一个提交里重新冻结基线，那是一次评审事件，不"
+"是一次意外。"
+
+#: ../../source/compliance.rst:125 6d9ec8524ac54e4aa903b626b1187d84
+msgid ""
+"``.github/project/compliance/COMPLIANCE-SUMMARY.md`` renders the same "
+"four counts for a delivery package, plus the per-source breakdown."
+msgstr ""
+"``.github/project/compliance/COMPLIANCE-SUMMARY.md`` 为交付包渲染同样四"
+"个计数，外加逐源文件的分解。"
+
+#: ../../source/compliance.rst:129 06b7a3cbc23c4e7b953ae505f9b373ea
+msgid "What can be said today"
+msgstr ""
+"今天可以说的"
+
+#: ../../source/compliance.rst:138 f6f35a0dade141589ac83a980a17003f
+msgid ""
+"The numbers are not written here on purpose: they are the output of the "
+"gate and of ``COMPLIANCE-SUMMARY.md``, and a number copied into prose is "
+"a second source of truth with a shelf life. Read them from the gate."
+msgstr ""
+"这些数刻意不写在这里：它们是门禁与 ``COMPLIANCE-SUMMARY.md`` 的输出，而"
+"抄进散文里的数就是第二个真相来源，还带保质期。从门禁去读。"
+
+#: ../../source/compliance.rst:142 c42c43880a0b448c8f393bba0f87e0f9
+msgid ""
+"Two sentences that follow directly, because each has a re-runnable "
+"witness:"
+msgstr ""
+"两条直接成立的句子，因为每一条都有可重跑的证人："
+
+#: ../../source/compliance.rst:144 33571e14ef1b4f95b2d219ee1461e6af
+msgid ""
+"**Ignoring a C ABI error code is a build failure.** The witness is a real"
+" compilation, not a syntax check: ``python3 "
+".github/project/negative_compile.py`` runs ``c_abi_dropped_error_code`` "
+"with ``-Werror`` and requires the diagnostic. It also pins the counter-"
+"intuitive part: a ``(void)`` cast does **not** silence "
+"``warn_unused_result`` on GCC, while binding the value first does."
+msgstr ""
+"**忽略一个 C ABI 错误码就是构建失败。** 证人是真实编译，不是语法检查： `"
+"`python3 .github/project/negative_compile.py`` 带 ``-Werror`` 运行 ``"
+"c_abi_dropped_error_code`` ，并要求出现该诊断。它还钉住那个反直觉的部分"
+"：在 GCC 上， ``(void)`` 强制转换并 **不能** 让 ``warn_unused_result`` "
+"沉默，先把值绑定下来才可以。"
+
+#: ../../source/compliance.rst:150 05f371bc9e0b458c85f069fbd039905d
+msgid ""
+"**The rule set cannot drift from the pinned tool configuration.** The "
+"witness is ``python3 .github/project/gates.py subset``, which compares "
+"the enabled check set against ``tool-checks.txt`` and refuses a row that "
+"names a check the block does not name."
+msgstr ""
+"**规则集不可能偏离钉住的工具配置。** 证人是 ``"
+"python3.github/project/gates.py subset`` ：它把启用的检查集与 ``"
+"tool-checks.txt`` 比对，并拒绝点名了该块里没有的检查的行。"
+
+#: ../../source/compliance.rst:154 47d447db84f44c0aac5d1a73db80cfd7
+msgid ""
+"**The CERT C++ family runs, and the pinned file did not need to change.**"
+" The witness is ``python3 .github/project/gates.py enforce``, which "
+"composes the check set from that block and from the family table and "
+"requires every target to compile and to produce no diagnostic from the "
+"extra families. The family was measured at zero on the source before it "
+"was switched on; the three sites it found on the way were fixed rather "
+"than suppressed."
+msgstr ""
+"**CERT C++ 族在运行，而钉住文件不需要改动。** 证人是 ``"
+"python3.github/project/gates.py enforce`` ：它从那个块与族表组装检查集，"
+"要求每个目标都能编译，且不产生额外族的任何诊断。在打开之前，这个族在源码"
+"上的计数是零；途中它找到的三处被修掉，而不是被抑制。"
+
+#: ../../source/compliance.rst:162 a98486b6166547b1b7640475920a69ad
+msgid "What cannot be said yet"
+msgstr ""
+"还不能说的"
+
+#: ../../source/compliance.rst:168 dd9a28597ba744beb747924ae0aa69dd
+msgid "Sentence"
+msgstr ""
+"句子"
+
+#: ../../source/compliance.rst:169 d274fa3b88764ec6b2667fad9a0db8c3
+msgid "Why not, and what would close it"
+msgstr ""
+"为什么不能，以及什么能补上"
+
+#: ../../source/compliance.rst:170 2fe302c65f784bf4a12fc4306492bee0
+msgid ""
+"\"Organised per MISRA C++:2023: N implemented / M not applicable / K "
+"deviated\""
+msgstr ""
+"“按 MISRA C++:2023 组织：N 条已实现 / M 条不适用 / K 条偏离”"
+
+#: ../../source/compliance.rst:172 003c2c7ea0b347abaa9624d781cd9b90
+msgid ""
+"The four categories are exactly the ones MISRA Compliance:2020 asks for, "
+"and the deviation permits already carry its five elements -- but the "
+"mapping from tool check to MISRA rule number does not exist, so N/M/K "
+"cannot be filled in. That is the ``misra-rule-mapping`` row of the "
+"``open`` register, and it is the difference between T0 and T1."
+msgstr ""
+"这四个类别正是 MISRA Compliance:2020 所要求的，偏离许可也已经载齐它的五"
+"个要素——但从工具检查到 MISRA 规则号的映射并不存在，所以 N/M/K 填不出来。"
+"那是 ``open`` 登记册里的 ``misra-rule-mapping`` 行，也是 T0 与 T1 之间的"
+"距离。"
+
+#: ../../source/compliance.rst:177 1fcccded31dc443bb2a2972891636d2a
+msgid "\"Compliant with MISRA C++:2023\", or any ASIL / SIL / Class B level"
+msgstr ""
+"“符合 MISRA C++:2023”，或任何 ASIL / SIL / Class B 等级"
+
+#: ../../source/compliance.rst:178 159b27b5e3164cdeb613a101c27c4c1e
+msgid ""
+"Levels are derived from the whole machine's hazard analysis and safety "
+"goals. A library has no such context, so it can supply evidence about its"
+" own behaviour and nothing about the level of the system it lands in. See"
+" :ref:`honest limits <honest-limits>`."
+msgstr ""
+"等级是从整机的危害分析与安全目标推导出来的。库没有这样的上下文，所以它能"
+"提供关于自身行为的证据，而对它最终落进的那个系统的等级一无所有。见 :ref:"
+"`诚实边界 <honest-limits>` 。"
+
+#: ../../source/compliance.rst:182 9d38dcf391c24ab187aac79ca2efaf5b
+msgid "\"Independently verified\""
+msgstr ""
+"“独立验证过”"
+
+#: ../../source/compliance.rst:183 f299583f8dca469eb811dd002fd0c1a1
+msgid ""
+"One author plus tooling can produce reproducibility, which is what this "
+"repository does produce: a third party who clones it and runs the gates "
+"gets the same numbers. It cannot produce independence."
+msgstr ""
+"一位作者加工具链可以产出可复现性，这也正是本仓库确实产出的东西：第三方克"
+"隆它、跑同样的门禁，得到同样的数。它产不出独立性。"
+
+#: ../../source/compliance.rst:186 e3d1941d14fe44a5a5d242565df28082
+msgid "\"Every check in the pinned configuration is enforced\""
+msgstr ""
+"“钉住配置里的每条检查都已被强制”"
+
+#: ../../source/compliance.rst:187 7e5e75ec9f364e17970ee62da8386045
+msgid ""
+"The configuration states an intent and the resolver discards it, so the "
+"two are separate questions and only the second one is evidence. What this"
+" repo enforces is in the family table, and the family table is not the "
+"whole of that block: the checks it names but no gate executes are "
+"recorded as ``open`` in the rule table, not as ``implemented``."
+msgstr ""
+"配置表达的是一份意图，而解析器把它丢掉，所以这是两个不同的问题，只有第二"
+"个是证据。本仓库强制的东西在族表里，而族表并不等于那个块的全部：块里点了"
+"名但没有门禁执行的检查，在规则表里记为 ``open`` ，而不是 ``implemented``"
+" 。"
+
+#: ../../source/compliance.rst:194 163d21084a0948f0814dfc793b6d5aa3
+msgid "Where the evidence lives"
+msgstr ""
+"证据在哪里"
+
+#: ../../source/compliance.rst:200 dc435cd17b76416c903c56448f83187b
+msgid "Artefact"
+msgstr ""
+"产物"
+
+#: ../../source/compliance.rst:201 a8ffbb37339f48b1b347ff7322061ab1
+msgid "Re-run with"
+msgstr ""
+"重跑方式"
+
+#: ../../source/compliance.rst:202 dc2339fce0b2403b9edd61c364983d0c
+msgid "``.github/project/compliance/rules.tsv``"
+msgstr ""
+"规则表 ``.github/project/compliance/rules.tsv``"
+
+#: ../../source/compliance.rst:203 bec9053ac2354a999a2e1a84c28772ac
+msgid ""
+"``python3 .github/project/compliance/gen_subset.py --check`` (stale means"
+" exit 1)"
+msgstr ""
+"``python3 .github/project/compliance/gen_subset.py --check`` （陈旧即以"
+"1退出）"
+
+#: ../../source/compliance.rst:204 e6e8a53571a14f4aa4a7e79763edce12
+msgid "``.github/project/compliance/COMPLIANCE-SUMMARY.md``"
+msgstr ""
+"交付摘要 ``.github/project/compliance/COMPLIANCE-SUMMARY.md``"
+
+#: ../../source/compliance.rst:205 7bda11d2adb1436a8a5a2482431c48be
+msgid "``python3 .github/project/compliance/subset_gate.py --summary``"
+msgstr ""
+"``python3 .github/project/compliance/subset_gate.py --summary`` （交付摘"
+"要）"
+
+#: ../../source/compliance.rst:206 b635b89ef43a4ea8a8b832e789b6a906
+msgid "``.github/project/compliance/deviation/*.md``"
+msgstr ""
+"偏离许可 ``.github/project/compliance/deviation/*.md``"
+
+#: ../../source/compliance.rst:207 0785c189607c430ebc9e4215e6b3c7a7
+msgid ""
+"``python3 .github/project/gates.py subset`` (five elements, and the "
+"NOLINT bijection)"
+msgstr ""
+"``python3 .github/project/gates.py subset`` （五个要素，以及 NOLINT 的一"
+"一对应）"
+
+#: ../../source/compliance.rst:209 40bf778b6b9940a3ab5b5f892c8b422c
+msgid "``.github/project/compliance/subset-baseline.json``"
+msgstr ""
+"基线 ``.github/project/compliance/subset-baseline.json``"
+
+#: ../../source/compliance.rst:210 8538d29a17ff431b845df2970e1198b4
+msgid ""
+"``python3 .github/project/compliance/subset_gate.py --baseline`` (a "
+"review event, not a reflex)"
+msgstr ""
+"``python3 .github/project/compliance/subset_gate.py --baseline`` （一次"
+"评审事件，不是条件反射）"
+
+#: ../../source/compliance.rst:212 3605fa22352c4fe09e48eeeae120a11e
+msgid "``.github/project/enforce.json``"
+msgstr ""
+"检查族声明 ``.github/project/enforce.json``"
+
+#: ../../source/compliance.rst:213 a4cf0398ee1a441e8ce48496244dba79
+msgid ""
+"``python3 .github/project/gates.py enforce`` (every target compiles, no "
+"diagnostic from a family, and the positive control still fires) and "
+"``python3 .github/project/enforce_gate.py --selftest`` (the families are "
+"really switched on)"
+msgstr ""
+"``python3 .github/project/gates.py enforce`` （每个目标都能编译、任何族"
+"都不出诊断、阳性对照仍然触发）与 ``python3"
+".github/project/enforce_gate.py--selftest`` （各检查族确实被打开）"
+
+#: ../../source/compliance.rst:217 b71968c1b3ef45f4a87858a4a39f6c86
+msgid "``.github/project/compliance/tool-checks.txt``"
+msgstr ""
+"检查名快照 ``.github/project/compliance/tool-checks.txt``"
+
+#: ../../source/compliance.rst:218 bb99d6b8af5f4a5c9466a5d3be21c84a
+msgid ""
+"``python3 .github/project/compliance/gen_subset.py --check``; the "
+"snapshot and the pinned block are compared by the ``subset`` gate"
+msgstr ""
+"``python3 .github/project/compliance/gen_subset.py --check`` ；快照与钉"
+"住的块由 ``subset`` 门禁比对"
+
+#: ../../source/compliance.rst:220 7435c28442c143ea9da472db801460bc
+msgid "The materials the citations come from"
+msgstr ""
+"引文所出自的材料"
+
+#: ../../source/compliance.rst:221 4df9c42742044c6aaf7d1a8c46f1680d
+msgid ""
+"``workspace/compliance/`` -- the ledger, the sha256 of every copy, and "
+"which tier each one unlocks"
+msgstr ""
+"``workspace/compliance/`` ——台账、每份副本的 sha256，以及每一份解锁哪一"
+"个层级"
+
+#: ../../source/compliance.rst:225 22e753688d8c441fada40a3d5cdb64d3
+msgid "Known gaps"
+msgstr ""
+"已知缺口"
+
+#: ../../source/compliance.rst:227 ad1c5c483e3644c1af52773cbdf4133d
+msgid ""
+"Three things are unresolved on purpose, and each costs the sentence it "
+"blocks:"
+msgstr ""
+"有三件事是被刻意留作未决的，每一件都要付掉它所挡住的那句话："
+
+#: ../../source/compliance.rst:229 809e69eb8da94151868d50aee2aa1572
+msgid ""
+"**The snapshot can age.** ``tool-checks.txt`` is a copy, and the tool "
+"installed here resolves more check names than the copy lists. Re-"
+"snapshotting would file rows for checks no gate runs, which is the defect"
+" this page exists to prevent, so the enforced set is read from the family"
+" table and the snapshot keeps its older meaning. The decision to re-"
+"snapshot is open."
+msgstr ""
+"**快照会变旧。** ``tool-checks.txt`` 是一份副本，而这里安装的工具解析出"
+"的检查名比副本列出的更多。重新快照会为没有门禁运行的检查记下行，那正是本"
+"页存在的目的所要防的缺陷，所以被强制的集合从族表读，快照保留它较早的含义"
+"。是否重新快照这一决定仍然敞开。"
+
+#: ../../source/compliance.rst:234 b94e40286d1e46c0adc39a60b673eb47
+msgid ""
+"**No mapping from a check to a MISRA rule number.** Every count on this "
+"page is a count of checks or of units, not of rules in a named standard. "
+"The rule numbers are the ``misra-rule-mapping`` row of the ``open`` "
+"register."
+msgstr ""
+"**没有从检查到 MISRA 规则号的映射。** 本页上的每个计数都是检查或单元的计"
+"数，不是具名标准里规则的计数。规则号是 ``open`` 登记册里的 ``"
+"misra-rule-mapping`` 行。"
+
+#: ../../source/compliance.rst:237 9367c536d5e949d9a3d6391f96bb92ca
+msgid ""
+"**Two delivery forms exist and are not claimed.** "
+"``.github/project/forms.json`` registers the FMU and the Python module "
+"with ``claim_status: gap`` and writes the gap out: no claim row describes"
+" the FMU (it has a runnable demonstration -- a standard master loads it "
+"and drives the loop -- but no level, no boundary statement and no \"what "
+"it does not claim\"), and Python appears only as an evidence path on "
+"three rows, never as a claim that the binding behaves. The page therefore"
+" says \"a form exists\" and not \"a form is supported\"."
+msgstr ""
+"**存在两种交付形态，且未被主张。** ``.github/project/forms.json`` 以 ``"
+"claim_status: gap`` 登记 FMU 与 Python 模块，并把缺口写出来：没有主张行"
+"描述 FMU（它有一个可运行的演示——一个标准主站加载它并驱动该环——但没有等级"
+"、没有边界声明、也没有“它不主张什么”），而 Python 只作为三行上的证据路径"
+"出现，从未作为“该绑定行为正确”的主张出现。因此本页说的是“有一种形态存在”"
+"，而不是“有一种形态被支持”。"
+
+#: ../../source/compliance.rst:247 10c3d35a23d5459fa902deac19f87430
+msgid ""
+"``workspace/`` is not in version control by design: it holds internal "
+"material. The consequence is that the ledger is not part of what a "
+"customer receives -- but the rule table, the deviation permits and the "
+"summary are, because they live in ``.github/project/compliance/``."
+msgstr ""
+"``workspace/`` 按设计不在版本控制里：它存放内部材料。后果是台账不属于客"
+"户收到的东西——但规则表、偏离许可与汇总属于，因为它们住在 ``"
+".github/project/compliance/`` 里。"
+

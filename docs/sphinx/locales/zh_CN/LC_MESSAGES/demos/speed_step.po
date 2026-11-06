@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: foc 0.1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-23 17:59+0800\n"
+"POT-Creation-Date: 2026-11-06 23:08+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: zh_CN\n"
@@ -18,70 +18,97 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.17.0\n"
 
-#: ../../source/demos/speed_step.rst:2 96e18713cef9461698bdfb95a65aa9b3
+#: ../../source/demos/speed_step.rst:2 300a121ed9364c7c94e91e369708c792
 msgid "_`Speed step`"
 msgstr "_`速度阶跃`"
 
-#: ../../source/demos/speed_step.rst:4 e8ea9973db514f98ab74664450c6bbe9
-msgid "The speed reference steps 0 → 100 rad/s while the current loop stays at 20 kHz. The outer loop saturates iq, the plant accelerates, and the loop pulls back before the reference is reached — the classic cascade behaviour."
-msgstr "速度给定从 0 阶跃到 100 rad/s，电流环保持在 20 kHz。外环把 iq 顶到饱和，plant 加速，环在到达给定前收回——典型的级联行为。"
+#: ../../source/demos/speed_step.rst:4 1884f9f1534847fa8549bdfd69ccf825
+msgid ""
+"The speed reference steps 0 → 100 rad/s while the current loop stays at "
+"20 kHz. The outer loop saturates iq, the plant accelerates, and the loop "
+"pulls back before the reference is reached — the classic cascade "
+"behaviour."
+msgstr ""
+"速度给定从 0 阶跃到 100 rad/s，电流环保持在 20 kHz。外环把 iq 顶到饱和，plant "
+"加速，环在到达给定前收回——典型的级联行为。"
 
-#: ../../source/demos/speed_step.rst:13 bf53d2c6f2584e1b87d10d78483971c1
-msgid "Speed reaches the setpoint in about 70 ms; iq saturates during the ramp and collapses to the friction-compensating value once the speed settles"
+#: ../../source/demos/speed_step.rst:13 faea711e03104071a71947f3d7e27e05
+msgid ""
+"Speed reaches the setpoint in about 70 ms; iq saturates during the ramp "
+"and collapses to the friction-compensating value once the speed settles"
 msgstr "速度在约 70 ms 内到达给定；iq 在爬升段饱和，速度稳定后跌落到抵消摩擦的值"
 
-#: ../../source/demos/speed_step.rst:16 83803a363de340ca8e5a8032de185595
+#: ../../source/demos/speed_step.rst:16 d33fd21facc94391bfe4cf161edc2a10
 msgid "measured on the step"
 msgstr "阶跃段测得"
 
-#: ../../source/demos/metrics_speed_step.csv:1 d1e73c23da8043b5a30ee067ca3c85e9
+#: ../../source/demos/metrics_speed_step.csv:1 c7cee197c4964829ac0b389d38af5ddb
 msgid "metric"
 msgstr ""
+"指标"
 
-#: ../../source/demos/metrics_speed_step.csv:1 54dd101237b1421b85da392cf51d3774
+#: ../../source/demos/metrics_speed_step.csv:1 9d75b37a98bc450f9b81f578382827ba
 msgid "value"
 msgstr ""
+"数值"
 
-#: ../../source/demos/metrics_speed_step.csv:1 43e9f390f45a4b7080c1b94bd0bc38df
+#: ../../source/demos/metrics_speed_step.csv:1 6d2f912de0ed4533bee27091ededc08a
 msgid "unit"
 msgstr ""
+"单位"
 
-#: ../../source/demos/metrics_speed_step.csv:1 6914d0ef6d9f46428ae2dff42e49d679
+#: ../../source/demos/metrics_speed_step.csv:1 5fdd8a9d705b4539803f48decc3a2ebe
 msgid "settling_time_2pct"
 msgstr ""
+"调节时间（2 % 误差带）"
 
-#: ../../source/demos/metrics_speed_step.csv:1 fe0e3f9eb078411788321bbceac0c91c
+#: ../../source/demos/metrics_speed_step.csv:1 e2d7fa8f8e6742edb7d49b07c3f96149
 msgid "0.0690"
 msgstr ""
+"0.0690"
 
-#: ../../source/demos/metrics_speed_step.csv:1 f5ecb2b6cd9c4bd89bca662a57891a1c
+#: ../../source/demos/metrics_speed_step.csv:1 0585dd5d41fe4ecdbd6709fdcd7cf0d1
 msgid "s"
 msgstr ""
+"s"
 
-#: ../../source/demos/metrics_speed_step.csv:1 d9d81ad1524d4a39896b93048f44402e
+#: ../../source/demos/metrics_speed_step.csv:1 cae0560f4bec4d98af1076cb0824ebd9
 msgid "overshoot"
 msgstr ""
+"超调"
 
-#: ../../source/demos/metrics_speed_step.csv:1 970cfed6e71f4648b906a68e00290c0c
+#: ../../source/demos/metrics_speed_step.csv:1 34c75b97ca9244e092fdae6061f14263
 msgid "1.08"
 msgstr ""
+"1.08"
 
-#: ../../source/demos/metrics_speed_step.csv:1 5041c15f76934b96a208c76d5bd57596
+#: ../../source/demos/metrics_speed_step.csv:1 fc51d19f0fa5496cb381f9db23e25aae
 msgid "%"
 msgstr ""
+"%"
 
-#: ../../source/demos/metrics_speed_step.csv:1 ce94f41e63564b668e831de6e6a966c3
+#: ../../source/demos/metrics_speed_step.csv:1 ae8a544612de47cc9da6c6ad61218efb
 msgid "steady_state_error"
 msgstr ""
+"稳态误差"
 
-#: ../../source/demos/metrics_speed_step.csv:1 18dbbbdfb154479fa239063e626377e8
-msgid "-0.9068"
+#: ../../source/demos/metrics_speed_step.csv:1 00bbf9a3e64a452d86697228a8229738
+msgid "-0.9067"
 msgstr ""
+"-0.9067"
 
-#: ../../source/demos/metrics_speed_step.csv:1 85723c88afaa42b2a4279730ab7820f2
+#: ../../source/demos/metrics_speed_step.csv:1 4041df33d6c145c583a47632c5a67fd8
 msgid "rad/s"
 msgstr ""
+"rad/s"
 
-#: ../../source/demos/speed_step.rst:20 789d67836e194b7bb14f06840e5f52be
-msgid "What to look for: iq hits its limit during the ramp (the loop is doing the right thing, not fighting itself), a small overshoot, and a steady-state error well inside one percent."
+#: ../../source/demos/speed_step.rst:20 53e17619ac9c44bc8c39c4883dc4d0b8
+msgid ""
+"What to look for: iq hits its limit during the ramp (the loop is doing "
+"the right thing, not fighting itself), a small overshoot, and a steady-"
+"state error well inside one percent."
 msgstr "看点：爬升时 iq 打到限幅（说明环在做对的事，而不是自己跟自己较劲）、超调很小、稳态误差远小于百分之一。"
+
+#~ msgid "-0.9068"
+#~ msgstr ""
+

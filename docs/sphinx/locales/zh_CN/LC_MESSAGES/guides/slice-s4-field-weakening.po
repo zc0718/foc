@@ -1,0 +1,262 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2026, HeT-FTI
+# This file is distributed under the same license as the foc package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: foc 0.1.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-11-06 23:08+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: zh_CN\n"
+"Language-Team: zh_CN <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.17.0\n"
+
+#: ../../source/guides/slice-s4-field-weakening.rst:2
+#: 2936ec3a54754d4e9854f3ddf7cdcc39
+msgid "_`Above base speed`"
+msgstr ""
+"_`基速以上`"
+
+#: ../../source/guides/slice-s4-field-weakening.rst:4
+#: 4b365e36385e4ae58bef1ce74337dd86
+msgid ""
+"The task: the axis has to keep producing torque past the speed where the "
+"voltage ceiling stops it. Decide whether it is worth implementing, and if"
+" it is, know what the currents have to do."
+msgstr ""
+"任务：轴必须在电压上限把它拦下的转速之外继续产生转矩。判断值不值得实现；"
+"若值得，就弄清楚电流必须怎么走。"
+
+#: ../../source/guides/slice-s4-field-weakening.rst:9
+#: 37c909f6b90c4acca61124a7264dcfb8
+msgid "What you need"
+msgstr ""
+"所需部件"
+
+#: ../../source/guides/slice-s4-field-weakening.rst:11
+#: d5e02b8a16284b029938a219df9e8054
+msgid ""
+"``foc/core/mtpv.hpp`` -- the operating-region solver: the MTPA point, the"
+" base speed, and where the voltage ellipse and the current circle each "
+"bind."
+msgstr ""
+"``foc/core/mtpv.hpp`` ——工作区求解器：MTPA 点、基速，以及电压椭圆与电流"
+"圆各自在哪里开始起约束。"
+
+#: ../../source/guides/slice-s4-field-weakening.rst:13
+#: 149c89f95b344db4a21ddc2256a5a34c
+msgid ""
+"``foc/core/field_weakening.hpp`` -- the running policy, which produces "
+"the dq reference at whatever speed the axis is actually at, plus its "
+"refusal semantics."
+msgstr ""
+"``foc/core/field_weakening.hpp`` ——运行时的策略，在轴实际所处的任意转速"
+"下产生 dq 参考，以及它的拒绝语义。"
+
+#: ../../source/guides/slice-s4-field-weakening.rst:15
+#: 9460db84ddcc438886be422b4bfad93e
+msgid ""
+"``foc/core/machine_map.hpp`` -- the nameplate as a function of current, "
+"for a machine whose inductance saturates. Optional: without it the solver"
+" uses the linear nameplate, which is what this page's example does."
+msgstr ""
+"``foc/core/machine_map.hpp`` ——把铭牌写成电流的函数，用于电感会饱和的电"
+"机。可选：不给它时求解器使用线性铭牌，本页的示例就是这样做的。"
+
+#: ../../source/guides/slice-s4-field-weakening.rst:20
+#: 06cec41176b344b78905a26535c80368
+msgid "A minimal program"
+msgstr ""
+"最小程序"
+
+#: ../../source/guides/slice-s4-field-weakening.rst:22
+#: cb8b32b2874642a4a7c2522c1d16a743
+msgid ""
+"``docs/doxygen/dox/demos/slice-s4-field-weakening.cxx`` sweeps the "
+"electrical speed through the solver and prints where each ceiling starts "
+"to bind:"
+msgstr ""
+"``docs/doxygen/dox/demos/slice-s4-field-weakening.cxx`` 把电角速度扫过求"
+"解器，并打印每个上限从何处开始起约束："
+
+#: ../../source/guides/slice-s4-field-weakening.rst:31
+#: 60190006379b44f79ce4e1c6776721ca
+msgid "Three numbers in its output are the whole decision:"
+msgstr ""
+"它输出里有三个数字构成整个决定："
+
+#: ../../source/guides/slice-s4-field-weakening.rst:33
+#: 9445b5ac14e943c1b7d7653243b15d5b
+msgid ""
+"**`lambda = Ld * i_max / psi_f`** -- above 1 the characteristic current "
+"sits beyond the current ceiling, so there is headroom to trade away; "
+"below 1 the machine cannot be weakened into a useful region at all. It is"
+" the same ratio the project's own domain check uses."
+msgstr ""
+"**`lambda = Ld * i_max / psi_f`** ——大于 1 时特征电流位于电流上限之外，"
+"有可以交易的余量；小于 1 时，这台电机根本弱不到有用的区域。项目自己的定"
+"义域检查用的也是同一个比值。"
+
+#: ../../source/guides/slice-s4-field-weakening.rst:37
+#: 288f0e9dbccf4b94936b29beb35901ad
+msgid ""
+"**base speed** -- computed from the flux *at the MTPA point*, not from "
+"`psi_f`. `psi_f` alone overstates it several-fold on a salient machine, "
+"and a drive sized on that number finds the real ceiling when its current "
+"loop saturates."
+msgstr ""
+"**基速** ——由 *MTPA 点处* 的磁链算出，而不是由 `psi_f` 算出。单用 `psi_f"
+"` 在凸极电机会把它高估数倍；按这个数选型的驱动器，要等电流环饱和时才发现"
+"真正的上限。"
+
+#: ../../source/guides/slice-s4-field-weakening.rst:40
+#: 3bf0317610024253aea4e5b54b044576
+msgid ""
+"**the voltage binds at ...** -- the ratio where the ellipse takes over. "
+"Below it the answer is constant; above it the currents move every step."
+msgstr ""
+"**电压在……处开始起约束** ——椭圆接管的那个比值。低于它时答案是常数；高于"
+"它时电流每一步都在移动。"
+
+#: ../../source/guides/slice-s4-field-weakening.rst:44
+#: 83ee767268e0476896b0aa7fada62757
+msgid "Where the numbers come from"
+msgstr ""
+"数字的来源"
+
+#: ../../source/guides/slice-s4-field-weakening.rst:46
+#: 7e468f2be3b84be689e8fdfa09e346aa
+msgid ""
+"**The voltage ceiling is the modulator's inscribed circle, not the "
+"rail.** Slice S5 shows why those differ and by how much; using the rail "
+"here makes the whole region look wider than it is."
+msgstr ""
+"**电压上限是调制器的内切圆，不是母线。** 切片 S5 说明两者为何不同、差多"
+"少；在这里用母线会让整个工作区看起来比实际更宽。"
+
+#: ../../source/guides/slice-s4-field-weakening.rst:49
+#: 2d0fe146ff1d486e9878ff4ad07dd146
+msgid ""
+"**The current ceiling is per axis in the nameplate and per vector here.**"
+" `|i|` is what the solver bounds."
+msgstr ""
+"**电流上限在铭牌里是按轴的，这里是按矢量的。** 求解器所限的是 `|i|` 。"
+
+#: ../../source/guides/slice-s4-field-weakening.rst:51
+#: ad6edfa1f9d04dd38443405a7d38e9d9
+msgid ""
+"**The nameplate is linear unless a machine map is supplied.** Saturation "
+"moves the real boundary, and `machine_map` is the library's way of saying"
+" so."
+msgstr ""
+"**除非提供电机映射，铭牌是线性的。** 饱和会移动真实的边界， `machine_map"
+"` 就是库里说明这一点的方式。"
+
+#: ../../source/guides/slice-s4-field-weakening.rst:55
+#: 624665981f074abe81f557ce8b8caa80
+msgid "How it goes wrong"
+msgstr ""
+"失效方式"
+
+#: ../../source/guides/slice-s4-field-weakening.rst:57
+#: aee70de2b6b54d238b499eeeec237fd1
+msgid ""
+"**Base speed taken from `psi_f`.** Too high by the amount MTPA already "
+"spends on the d axis, and the error is largest exactly on the salient "
+"machines this slice exists for."
+msgstr ""
+"**基速取自 `psi_f`。** 偏高量正好是 MTPA 已经在 d 轴上花掉的那部分；而误"
+"差最大的，恰恰是本切片为之存在的凸极电机。"
+
+#: ../../source/guides/slice-s4-field-weakening.rst:60
+#: d44bb1a5edd8428a81de598e5dbdd289
+msgid ""
+"**The voltage ceiling taken as the rail.** The rail is only reachable at "
+"six angles of the rotation; a request sized to it clips five times a "
+"revolution and arrives as a sixth-order torque ripple rather than a "
+"fault."
+msgstr ""
+"**把电压上限当成母线。** 母线只在一圈里的六个角度上可达；按它定幅值的请"
+"求，每转会被削顶五次，并以六次转矩纹波的形式到达，而不是以一个故障的形式"
+"到达。"
+
+#: ../../source/guides/slice-s4-field-weakening.rst:63
+#: 42e974ec81ca4f628b5bf58754221920
+msgid ""
+"**Field weakening commanded without a speed.** The d current it asks for "
+"is a function of speed; a caller that applies the above-base answer below"
+" base speed gives away torque per amp for nothing."
+msgstr ""
+"**没有转速就下令弱磁。** 它索取的 d 电流是转速的函数；在基速以下套用基速"
+"以上答案的调用者，白白送出每安培转矩。"
+
+#: ../../source/guides/slice-s4-field-weakening.rst:66
+#: 518a84962f8c4115a767bd94bab980bf
+msgid ""
+"**A machine outside the domain, treated as if inside.** When `lambda` is "
+"below 1 the honest answer is \"this machine cannot be weakened "
+"usefully\", which is a sentence the page and the solver both say -- not a"
+" number pulled out of a solver that had to extrapolate."
+msgstr ""
+"**定义域外的电机，被当作域内的处理。** 当 `lambda` 小于 1 时，诚实的答案"
+"是“这台电机无法被有效弱磁”，这句话页面和求解器都会说——而不是从一个不得不"
+"外推的求解器里拽出来的数字。"
+
+#: ../../source/guides/slice-s4-field-weakening.rst:72
+#: 248113ca86af4adc8cc55a7574706200
+msgid "Evidence"
+msgstr ""
+"证据"
+
+#: ../../source/guides/slice-s4-field-weakening.rst:74
+#: c0a6fddf963847fb8dde8291f7741c94
+msgid ""
+"Three claim rows cover this slice -- ``foc/core/field_weakening.hpp``, "
+"``foc/core/mtpv.hpp`` and ``foc/core/machine_map.hpp`` -- and the level "
+"this page may state is the minimum of those three. The numbers behind the"
+" boundaries are in those rows and in ``test_mtpv.cpp``, not on this page."
+msgstr ""
+"三条主张行覆盖本切片—— ``foc/core/field_weakening.hpp`` 、 ``"
+"foc/core/mtpv.hpp`` 和 ``foc/core/machine_map.hpp`` ——本页可以陈述的等级"
+"是这三条中的最小值。边界背后的数字在那几行和 ``test_mtpv.cpp`` 里，不在"
+"本页。"
+
+#: ../../source/guides/slice-s4-field-weakening.rst:80
+#: 01c038ad94ff4cab8d14235c6248ea91
+msgid "Figure"
+msgstr ""
+"图"
+
+#: ../../source/guides/slice-s4-field-weakening.rst:87
+#: d727c8be25b94ce2811de15889d8686b
+msgid ""
+"left: the current path, from the MTPA point at the current ceiling, past "
+"the base-speed marker, along the voltage ellipse towards the "
+"characteristic current. right: the torque that is left as the speed rises"
+msgstr ""
+"左：电流路径，从电流上限上的 MTPA 点出发，经过基速标记，沿电压椭圆朝特征"
+"电流走。右：转速升高时剩下的转矩"
+
+#: ../../source/guides/slice-s4-field-weakening.rst:91
+#: ddb47f760b704f5a9ba086a1916f1891
+msgid ""
+"The figure is produced by ``docs/demos/make_figures.py`` from this page's"
+" own example; the base-speed marker and the asymptote are both **read "
+"from the run**, not written into the plot. What it does not show is the "
+"machine: the nameplate here is linear and the currents are the solver's "
+"answer, so a real machine's path on this plane will bow where its "
+"inductances saturate."
+msgstr ""
+"图由 ``docs/demos/make_figures.py`` 从本页自己的示例生成；基速标记和渐近"
+"线都是 **从运行中读出的** ，不是写进图里的。它没有展示的是电机：这里的铭"
+"牌是线性的，电流是求解器的答案；因此真实电机在这个平面上的路径会在电感饱"
+"和处弯折。"
+

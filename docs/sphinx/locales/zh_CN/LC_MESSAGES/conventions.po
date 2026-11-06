@@ -194,6 +194,7 @@ msgstr "位置式（并联）： :code:`I += ki·e·dt` （前向欧拉）→ �
 #: ../../source/conventions.rst:68 ca260d26c4ec4f189981669c06a57497
 msgid ":code:`core::Pi::step()`"
 msgstr ""
+":code:`core::Pi::step()`"
 
 #: ../../source/conventions.rst:69 0eedec0b36d045d78201fa4348407523
 msgid "Loop rates"
@@ -225,7 +226,9 @@ msgstr "比对切面"
 
 #: ../../source/conventions.rst:79 8cdafa67a9684a12a900d625dd1e6505
 msgid "mechanical speed (rad/s), :math:`i_d` / :math:`i_q` (A), time measured from the step instant; samples aligned to the control period (the L2 reference keeps every fifth row)"
-msgstr "机械转速（rad/s）、 :math:`i_d`/:math:`i_q` （A），时间从阶跃时刻起算；采样按控制周期对齐（L2 参考轨迹每 5 个周期抽稀一行）"
+msgstr ""
+"机械转速（rad/s）、 :math:`i_d` /:math:`i_q` （A），时间从阶跃时刻起算；"
+"采样按控制周期对齐（L2 参考轨迹每 5 个周期抽稀一行）"
 
 #: ../../source/conventions.rst:81 4ce3fea8164e47bea885116fd3b616a6
 msgid ":code:`test_sil_l2_reference.cpp`"

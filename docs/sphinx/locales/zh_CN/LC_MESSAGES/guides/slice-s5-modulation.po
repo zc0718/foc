@@ -1,0 +1,233 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2026, HeT-FTI
+# This file is distributed under the same license as the foc package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: foc 0.1.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-11-06 23:08+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: zh_CN\n"
+"Language-Team: zh_CN <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.17.0\n"
+
+#: ../../source/guides/slice-s5-modulation.rst:2
+#: d668f886958e4a5d8d4dbe5d04babb6c
+msgid "_`High speed and modulation`"
+msgstr ""
+"_`高速与调制`"
+
+#: ../../source/guides/slice-s5-modulation.rst:4
+#: 6982390871f14be298ae561d149a8e83
+msgid ""
+"The task: turn the current loop's voltage request into three duties, know"
+" how much voltage the bridge can actually deliver, and stop lying about "
+"what it delivered when the pulses get short."
+msgstr ""
+"任务：把电流环的电压请求变成三路占空比，弄清楚桥实际能交付多少电压，并在"
+"脉冲变短时不再谎报它交付了多少。"
+
+#: ../../source/guides/slice-s5-modulation.rst:9
+#: e4e08ff400e04c83b97c9949c36df211
+msgid "What you need"
+msgstr ""
+"所需部件"
+
+#: ../../source/guides/slice-s5-modulation.rst:11
+#: d29a32eba69642a7a514babc78f15718
+msgid ""
+"``foc/core/svpwm.hpp`` -- the space-vector modulator. One request in, "
+"three duties and a `saturated` flag out."
+msgstr ""
+"``foc/core/svpwm.hpp`` ——空间矢量调制器。进去一个请求，出来三路占空比和"
+"一个 `saturated` 标志。"
+
+#: ../../source/guides/slice-s5-modulation.rst:13
+#: 89d1c1cd582f4f3aa21332c79e2a9442
+msgid ""
+"``foc/core/min_pulse.hpp`` -- what a real gate driver does to a pulse it "
+"cannot transmit, and the volt-seconds that costs."
+msgstr ""
+"``foc/core/min_pulse.hpp`` ——真实的栅极驱动器对一个发不出去的脉冲做了什"
+"么，以及这要付出多少伏秒。"
+
+#: ../../source/guides/slice-s5-modulation.rst:15
+#: 8365da251ed24462a5276b322b04278f
+msgid ""
+"``foc/core/six_step.hpp`` -- the block-commutation alternative, from a "
+"hall code with a rate limit on the table."
+msgstr ""
+"``foc/core/six_step.hpp`` ——另一种做法，块换相：从霍尔码出发，并对换相表"
+"设了跳变速率限制。"
+
+#: ../../source/guides/slice-s5-modulation.rst:19
+#: 5f4d75d7edc04d3eb073dcb52661c363
+msgid "A minimal program"
+msgstr ""
+"最小程序"
+
+#: ../../source/guides/slice-s5-modulation.rst:21
+#: ffd2985b012d4d82ba8e3ea7b2da6ad3
+msgid ""
+"``docs/doxygen/dox/demos/slice-s5-modulation.cxx`` sweeps a requested "
+"amplitude at two electrical angles, shapes a narrow pulse, and walks the "
+"six-step table twice. The same file produces this slice's figure."
+msgstr ""
+"``docs/doxygen/dox/demos/slice-s5-modulation.cxx`` 在两个电角度上扫请求"
+"幅值，把一个窄脉冲整形，并把六步表走两遍。本切片的图也由同一个文件产生。"
+
+#: ../../source/guides/slice-s5-modulation.rst:32
+#: 17486a7583af4e3996eeb7022a348592
+msgid "Where the numbers come from"
+msgstr ""
+"数字的来源"
+
+#: ../../source/guides/slice-s5-modulation.rst:34
+#: 5dcbe2fa51cc494bbd1338650af1c7c5
+#, python-format
+msgid ""
+"**The DC link voltage** sets everything. The modulator divides by it, so "
+"a sagging bus is a scaling error in every duty -- and the modulator "
+"answers `Param` with 50 % duties rather than producing NaNs when the bus "
+"is not positive."
+msgstr ""
+"**母线电压** 决定一切。调制器要除以它，因此母线跌落就是每一路占空比上的"
+"比例误差——而当母线不为正时，调制器返回 `Param` 并给出 50 % 的占空比，而"
+"不是产生 NaN。"
+
+#: ../../source/guides/slice-s5-modulation.rst:38
+#: 86a044590d1343dfb7473fec4401f252
+msgid ""
+"**The switching period** and the driver's **minimum pulse** come from the"
+" gate driver's datasheet, not from the controller. They are the two "
+"numbers that make \"commanded voltage\" and \"delivered voltage\" differ "
+"at low duty."
+msgstr ""
+"**开关周期** 和驱动器的 **最小脉宽** 来自栅极驱动器的数据手册，不是来自"
+"控制器。正是这两个数字，使得低占空比下“指令电压”与“交付电压”不同。"
+
+#: ../../source/guides/slice-s5-modulation.rst:41
+#: d4420fedaa054a7fb1688ae95f965674
+msgid ""
+"**The dead time** belongs to the same datasheet and is the reason the "
+"modulator's input struct carries the measured currents at all: a dead-"
+"time term has the sign of the phase current, so a modulator that cannot "
+"see the current cannot compensate it."
+msgstr ""
+"**死区** 属于同一份数据手册，它也是调制器输入结构体要带上实测电流的原因"
+"：死区项的符号取自相电流，所以看不见电流的调制器无法补偿它。"
+
+#: ../../source/guides/slice-s5-modulation.rst:47
+#: 1d9da0f09a904faba890335068eb39b7
+msgid "How it goes wrong"
+msgstr ""
+"失效方式"
+
+#: ../../source/guides/slice-s5-modulation.rst:49
+#: b37dd06034cb4a4783667249bb9caf56
+msgid ""
+"**One radius assumed for the whole rotation.** The reachable set is a "
+"hexagon. A request that fits at a sector centre does not fit at a sector "
+"face, so an amplitude chosen from the best case clips once per revolution"
+" -- and the clipped region arrives as a sixth-order torque ripple rather "
+"than as a fault."
+msgstr ""
+"**整圈都假设同一个半径。** 可达集是一个六边形。在扇区中心装得下的请求，"
+"在扇区面上装不下；因此按最好情形选的幅值每转会被削顶一次——而削顶的那一段"
+"以六次转矩纹波的形式出现，而不是以一个故障的形式出现。"
+
+#: ../../source/guides/slice-s5-modulation.rst:53
+#: 7284216c108d4c51a1e0bceb85c881eb
+msgid ""
+"**The clamp attributed to the controller.** When the modulator clamps, "
+"the current loop keeps integrating against a voltage it did not get. "
+"Anti-windup belongs where the request is actually reduced, which is "
+"inside the modulator's caller, not in the PI's own limit."
+msgstr ""
+"**把削顶记在控制器账上。** 调制器削顶时，电流环仍然对着一个它并没有拿到"
+"的电压继续积分。抗饱和应放在请求真正被削减的地方，也就是调制器的调用方里"
+"，而不是 PI 自己的限幅里。"
+
+#: ../../source/guides/slice-s5-modulation.rst:57
+#: 5d9cdded5e744dcfa61f2207945fdd4d
+msgid ""
+"**Short pulses ignored.** Below the driver's minimum pulse a phase either"
+" fires for the full period or not at all; the average voltage the loop "
+"believes it applied is then simply wrong. `MinPulse` reports the "
+"difference per phase, signed, so a caller can compensate or at least "
+"know."
+msgstr ""
+"**忽略短脉冲。** 低于驱动器最小脉宽时，某一相要么整周期导通，要么完全不"
+"导通；此时环以为自己施加的那个平均电压就是错的。 `MinPulse` 按相报告带符"
+"号的差值，调用方据此补偿，或者至少知情。"
+
+#: ../../source/guides/slice-s5-modulation.rst:61
+#: 1ec8b67c68914d7b958811b5f7335c8f
+msgid ""
+"**An unrate-limited six-step table.** A single false hall edge moves the "
+"vector 120 electrical degrees. `max_step_sectors` turns that into a "
+"refused step, and the rejections are counted where a telemetry channel "
+"can see them."
+msgstr ""
+"**未限速的六步表。** 一个错误的霍尔边沿就让矢量跳 120 电角度。 `"
+"max_step_sectors` 把它变成一次被拒绝的跳变，被拒绝的次数记在遥测通道看得"
+"见的地方。"
+
+#: ../../source/guides/slice-s5-modulation.rst:66
+#: 4afa1bc4a39a4276ac0853ea1ce40787
+msgid "Evidence"
+msgstr ""
+"证据"
+
+#: ../../source/guides/slice-s5-modulation.rst:68
+#: daa6537904ca4895a8047e753446d39d
+msgid ""
+"Three claim rows cover this slice -- ``foc/core/svpwm.hpp``, "
+"``foc/core/min_pulse.hpp`` and ``foc/core/six_step.hpp`` -- and the level"
+" this page may state is the minimum of those three. The numbers behind "
+"the two clamp amplitudes live in those rows and in ``test_svpwm.cpp``, "
+"not on this page."
+msgstr ""
+"三条主张行覆盖本切片—— ``foc/core/svpwm.hpp`` 、 ``"
+"foc/core/min_pulse.hpp`` 和 ``foc/core/six_step.hpp`` ——本页可以陈述的等"
+"级是这三条中的最小值。两个削顶幅值背后的数字在那几行和 ``test_svpwm.cpp`"
+"` 里，不在本页。"
+
+#: ../../source/guides/slice-s5-modulation.rst:74
+#: 924fdf46842f4e8cbecd236faa9faf21
+msgid "Figure"
+msgstr ""
+"图"
+
+#: ../../source/guides/slice-s5-modulation.rst:81
+#: 3d7f2c0d568c4038ac08ac75272a1ade
+msgid ""
+"the same amplitude sweep at 0 and at 30 electrical degrees: both grow "
+"linearly with the request, and they clamp at two different amplitudes"
+msgstr ""
+"同一次幅值扫描在 0 和 30 电角度下的结果：两者都随请求线性增长，并在两个"
+"不同的幅值处削顶"
+
+#: ../../source/guides/slice-s5-modulation.rst:84
+#: e890cee161504690819871223284b1ff
+msgid ""
+"The figure is produced by ``docs/demos/make_figures.py`` from this page's"
+" own example, and the clamp points are read from the run rather than "
+"printed from a constant. What it does not show is the overmodulated "
+"fundamental: past the clamp the modulator projects the request onto the "
+"hexagon, and what that does to the *output* voltage needs a spectrum, "
+"which is what the claim row's cases measure."
+msgstr ""
+"图由 ``docs/demos/make_figures.py`` 从本页自己的示例生成，削顶点是从运行"
+"中读出的，而不是由一个常数打印出来的。它没有展示的是过调制后的基波：越过"
+"削顶点后，调制器把请求投影到六边形上，而这对 *输出* 电压做了什么需要一个"
+"频谱才看得见，那正是主张行的用例所测的东西。"
+

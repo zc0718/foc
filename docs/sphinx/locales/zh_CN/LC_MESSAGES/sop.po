@@ -1,0 +1,395 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2026, HeT-FTI
+# This file is distributed under the same license as the foc package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: foc 0.1.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-11-06 23:08+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: zh_CN\n"
+"Language-Team: zh_CN <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.17.0\n"
+
+#: ../../source/sop.rst:2 53e3dbd1fe6840f79d68214b372704ff
+msgid "_`Outer-loop self-tuning`"
+msgstr ""
+"_`外环自整定`"
+
+#: ../../source/sop.rst:4 b8ac81a0edc846da8437dbc115695c80
+msgid ""
+"This page is the standard operating procedure for one process-shaped "
+"capability: tuning a speed loop on a machine the library has never seen. "
+"It is not a tutorial on how to tune a motor. It is the answer to two "
+"other questions -- **what makes this procedure valid on the next "
+"machine**, and **when it must refuse to hand back a number** -- and it is"
+" written down because a procedure that exists only in someone's habits "
+"cannot be replayed, reviewed, or contradicted."
+msgstr ""
+"本页是一项流程型能力的标准作业规程：在一台本库从未见过的电机上整定速度环"
+"。它不是如何调电机的教程。它回答的是另外两个问题—— **这个规程凭什么在下"
+"一台电机上仍然成立** ，以及 **它什么时候必须拒绝交出一个数字** ——之所以"
+"写下来，是因为只存在于某个人习惯里的规程无法重放、无法评审，也无法被反驳"
+"。"
+
+#: ../../source/sop.rst:11 837ad641d0db42829eb4f9c313d5b1a1
+msgid ""
+"The executable form of everything below is "
+"``test_package/test/unit/test_sop_outer_loop.cpp``, with the shared "
+"measurement bench in ``sil_sop_bench.hpp``. Where this page and that "
+"driver disagree, the driver is right and the page is a bug."
+msgstr ""
+"下面全部内容可执行的形式是 ``"
+"test_package/test/unit/test_sop_outer_loop.cpp`` ，共享的测量台架在 ``"
+"sil_sop_bench.hpp`` 。本页与该驱动不一致时，以驱动为准，本页是缺陷。"
+
+#: ../../source/sop.rst:17 a87f8b924bd645f19f7499871e711708
+msgid "Why a procedure rather than an instance"
+msgstr ""
+"为何写规程而不是写实例"
+
+#: ../../source/sop.rst:19 d526e2b0a8a84812aa29b6a21ba6f1a0
+msgid ""
+"The library cannot ship gains for your machine, and shipping a table of "
+"gains for *one* machine would be worse than shipping none: it would look "
+"like coverage. What it can ship is a sequence of steps in which every "
+"number comes from the machine in front of you, plus the refusal semantics"
+" for the case where the data does not describe that machine at all."
+msgstr ""
+"本库无法为使用者的电机附带增益，而附带一张只针对 *一台* 电机的增益表比不"
+"附带更糟：那看起来像覆盖率。本库能附带的是一个步骤序列，其中每个数字都来"
+"自眼前的这台电机，外加一种拒绝语义——数据完全不描述这台电机时该如何拒绝。"
+
+#: ../../source/sop.rst:26 7026bb245c6143909d8008ea0c34c3ca
+msgid "Four phases, in one order"
+msgstr ""
+"四个阶段，一个顺序"
+
+#: ../../source/sop.rst:32 3670ca8678534cd88810d81cbe3d8f1a
+msgid "Phase"
+msgstr ""
+"阶段"
+
+#: ../../source/sop.rst:33 c3ae6dcc224f4a29830eec942bdb954c
+msgid "What happens"
+msgstr ""
+"具体内容"
+
+#: ../../source/sop.rst:34 b84fe2d0819643b290a1f23cce21c61e
+msgid "Library entry point"
+msgstr ""
+"库入口"
+
+#: ../../source/sop.rst:35 426459acde95482dbbcc0ab726eec6ac
+msgid "**identify**"
+msgstr ""
+"**辨识**"
+
+#: ../../source/sop.rst:36 04115346a2b64e7797326c0f4456d342
+msgid ""
+"Run a current staircase on *this* machine and feed the drive's own ``(dt,"
+" iq, omega)`` into an accumulator; identify the two ratios the speed loop"
+" needs -- torque constant over inertia, and damping over inertia."
+msgstr ""
+"在 *这台* 电机上跑一段电流阶梯，把驱动器自己的 ``(dt, iq, omega)`` 喂进"
+"累加器；辨识速度环需要的两个比值——转矩常数与惯量之比、阻尼与惯量之比。"
+
+#: ../../source/sop.rst:39 89f682ef5a1748a0a1adc66419e6414d
+msgid "``SpeedTuner::accumulate()``, ``SpeedTuner::finish()``"
+msgstr ""
+"``SpeedTuner::accumulate()`` 、 ``SpeedTuner::finish()`` （累加与收尾）"
+
+#: ../../source/sop.rst:40 68467a1670b045afb5d2bec902a4ccde
+msgid "**propose**"
+msgstr ""
+"**提出**"
+
+#: ../../source/sop.rst:41 65b2091a7e814be79852138ff8484058
+msgid ""
+"Turn the ratios into gains with the same law the shipped configuration "
+"uses, so a tuned loop and a configured loop are the same kind of object."
+msgstr ""
+"按出货配置所用的同一条律把比值换成增益，使整定得到的环与配置得到的环属于"
+"同一类对象。"
+
+#: ../../source/sop.rst:43 b6cb9acd2591483383a813696aca8a33
+msgid "``SpeedTuneResult::kp_a_per_rad_s``, ``ki_a_per_rad_s2``"
+msgstr ""
+"``SpeedTuneResult::kp_a_per_rad_s`` 、 ``ki_a_per_rad_s2`` （比例与积分"
+"增益）"
+
+#: ../../source/sop.rst:44 fe638e2c7e804f73b1aa17ea799c020d
+msgid "**measure**"
+msgstr ""
+"**测量**"
+
+#: ../../source/sop.rst:45 42d21a4f3f80455ebc7d32170d3b9cb3
+msgid ""
+"Under those gains, *measure* the closed-loop -3 dB point (sine injection "
+"plus bisection) and report the delivered ratio: measured over requested."
+msgstr ""
+"在该组增益下， *测量* 闭环的 -3 dB 点（正弦注入加二分法），并报告交付比"
+"：实测值比请求值。"
+
+#: ../../source/sop.rst:47 8a33f4f28ad7449580e8fa669b798950
+msgid "``sil_sop_bench.hpp::minus3db_over_requested()``"
+msgstr ""
+"``sil_sop_bench.hpp::minus3db_over_requested()`` （交付比测量函数）"
+
+#: ../../source/sop.rst:48 ae67a1075fdb4a1ba4f77d2dda0415bc
+msgid "**accept or refuse**"
+msgstr ""
+"**接受或拒绝**"
+
+#: ../../source/sop.rst:49 dd4263e9da85437f8e8a7546dd1a187c
+msgid ""
+"Accept when the delivered ratio lands inside the band; report ``valid == "
+"false`` with a reason and **no usable gains** otherwise."
+msgstr ""
+"交付比落在带内则接受；否则报告 ``valid == false`` ，并给出原因与 **无可"
+"用增益** 。"
+
+#: ../../source/sop.rst:51 df02607621fd41db86ee39b9660d0a17
+msgid "``SpeedTuneResult::valid``, ``.reason``, ``.tolerance``"
+msgstr ""
+"``SpeedTuneResult::valid`` 、 ``.reason`` 、 ``.tolerance`` （判定、原因"
+"、容差）"
+
+#: ../../source/sop.rst:53 2e426053a452437f909a6dc5a57cbcc8
+msgid ""
+"**The order is not a style choice.** Proposing before measuring is "
+"accepting your own model with your own model; measuring before proposing "
+"lets the criterion drift with the measurement. What makes the sequence "
+"legitimate is that the proposal uses only this machine's data while the "
+"acceptance test is applied where the machine is not the one that produced"
+" the gains -- see the replay criterion below."
+msgstr ""
+"**这个顺序不是风格选择。** 先提出再测量，等于用自己的模型验收自己的模型"
+"；先测量再提出，判据会随测量一起漂。这个次序之所以成立，在于提议只用这台"
+"电机的数据，而验收测试施加在不是产生这组增益的那台电机上——见下文的复现判"
+"据。"
+
+#: ../../source/sop.rst:60 d5c5449c881e42c6bda1e1733e4b79f8
+msgid "The three criteria, and what each one can falsify"
+msgstr ""
+"三条判据，以及每条能证伪什么"
+
+#: ../../source/sop.rst:62 f214b15039f34154a40ef40097338f2a
+msgid ""
+"**1. The procedure replays on a second machine, and the criterion moves "
+"with it.** Tune on machine A, apply to machine B, and the delivered ratio"
+" leaves the band; tune on B and apply to B and it is back inside. The "
+"gains themselves scale with the machine's own ratio, which is the check "
+"that the procedure read the machine rather than memorising a number. The "
+"falsifying run: replace B with a copy of A and both the strict inequality"
+" and the gain ratio go red at once. A criterion that cannot be made red "
+"is a criterion that is not testing anything."
+msgstr ""
+"**1. 规程能在第二台电机上复现，判据随之移动。** 在 A 机上整定、施加到 B"
+"机，交付比离开带内；在 B 机上整定、施加到 B 机，它又回到带内。增益本身随"
+"机自身的比值缩放，这就是“规程读的是电机、而不是背下一个数字”的检查。证伪"
+"实验：把 B 换成 A 的一份拷贝，严格不等式与增益比会同时变红。无法变红的判"
+"据，就是没有在检验任何东西的判据。"
+
+#: ../../source/sop.rst:70 f6ea2520fdeb426b9f53ad3613eb8b8a
+msgid ""
+"**2. Data that does not describe this machine yields no number.** On a "
+"machine far outside the plausible range the result is ``valid == false`` "
+"with a non-empty reason, and the gains handed back are *bit for bit* the "
+"nameplate ones the caller would have used anyway -- so a caller that "
+"applies whatever it is given changes nothing. The measured ratio is still"
+" reported, and it is reported as a statement **about the measurement**, "
+"not as a gain."
+msgstr ""
+"**2. 不描述这台电机的数据给不出数字。** 对一台远在合理范围之外的电机，结"
+"果是 ``valid == false`` ，并带有非空的原因；交回的增益与调用方本来就会用"
+"的铭牌增益 *逐位相同* ——所以拿到什么就施加什么的调用方，什么都没改变。实"
+"测比仍然报告，但它是关于 **测量** 的陈述，而不是增益。"
+
+#: ../../source/sop.rst:77 7934970071fe422d870e89e87ceb944f
+msgid ""
+"**3. The objective is distance to failure, not smallness of error.** The "
+"search maximises the margin between the identified ratio and the edge of "
+"the acceptance band, and that margin crosses zero exactly where the "
+"library's own refusal starts. An objective written as \"smaller "
+"residual\" would be a different quantity with a different winner: on the "
+"outer loop's own grid the smallest residual and the best held-out margin "
+"are not achieved by the same setting, and the residual wins on the wrong "
+"side. That is the argument for the margin, and it is measurable rather "
+"than aesthetic."
+msgstr ""
+"**3. 目标是到失败的距离，而不是误差之小。** 搜索最大化的是辨识比与验收带"
+"边缘之间的余量，而这个余量恰好在库自身的拒绝开始处过零。写成“残差更小”的"
+"目标是另一个量，胜出者也不同：在外环自己的网格上，最小残差与最好的留出集"
+"余量不由同一组设置取得，而残差胜在错误的一侧。这就是采用余量的理由，并且"
+"它是可度量的，不是审美。"
+
+#: ../../source/sop.rst:87 8a5061181b9449709b4a0eb279b03370
+msgid "Where the acceptance band comes from"
+msgstr ""
+"验收带的来源"
+
+#: ../../source/sop.rst:89 572a43d631f543d4a7afab22690b8aad
+msgid ""
+"The band's upper edge is the geometric mean of two measured quantities, "
+"and neither of them is chosen by taste:"
+msgstr ""
+"带的上边缘是两个实测量值的几何平均，两者都不是凭口味选的："
+
+#: ../../source/sop.rst:92 e2ebb8ceb3be4d40b7b4d1a09999c9cf
+msgid ""
+"the largest residual the gain law itself leaves across a decade of "
+"bandwidth (measured in the motor configuration's own cases), because a "
+"band narrower than the law's own spread would fail a correctly identified"
+" loop;"
+msgstr ""
+"增益律本身在一个十倍带宽范围内留下的最大残差（在电机配置自己的用例中测得"
+"），因为比该律自身散布更窄的带会把一个辨识正确的环判为不合格；"
+
+#: ../../source/sop.rst:95 1ebaa32d36ec436ba7b45a623579941e
+msgid ""
+"the smallest nameplate error this repository already treats as "
+"operational (the inertia tolerance), because a band wider than that would"
+" pass a machine nobody has described."
+msgstr ""
+"本仓库已经当作可投运处理的最小铭牌误差（惯量容差），因为比它更宽的带会放"
+"行一台没人描述过的电机。"
+
+#: ../../source/sop.rst:99 7e2250272ec34300b6868b35601b0b17
+msgid ""
+"Both factors and their product live in the claim row for "
+"``core/auto_tune.hpp``. **``tolerance`` itself is the caller's number**, "
+"not a measured bound: ``valid`` is judged against whatever the caller "
+"passed, so a caller who widens it owns the consequence. And the delivered"
+" bandwidth is **not** 1.0 by construction -- the band accepts *this law*,"
+" not \"unity\"."
+msgstr ""
+"两个因子及其乘积都记在 ``core/auto_tune.hpp`` 的主张行里。 **``tolerance"
+"`` 本身是调用方的数字** ，不是测出来的界： ``valid`` 是拿调用方传进来的"
+"值判定，所以把它放宽的调用方自己承担后果。并且交付带宽在构造上 **不是** "
+"1.0——带接受的是 *这条律* ，不是“单位增益”。"
+
+#: ../../source/sop.rst:106 bd83cb87f4ea4576b61c5162a65a4ba5
+msgid "The second cut: search process parameters only"
+msgstr ""
+"第二处切分：只搜索过程参数"
+
+#: ../../source/sop.rst:108 03b3bc6f0b8048b29a5a2d2bd1fd28a5
+msgid ""
+"A hyper-parameter search over this procedure is only meaningful if the "
+"things being searched actually move the result, and that has to be "
+"checked before it is searched, not after. Two facts from that check:"
+msgstr ""
+"对本规程做超参数搜索，只有在被搜索的东西确实会移动结果时才有意义，而这一"
+"点必须在搜索之前核对，不在之后。该核对给出两个事实："
+
+#: ../../source/sop.rst:112 0d1ab5eb29ce4a619a746b40aec5a570
+msgid ""
+"**The window length is a real parameter, and residual and margin disagree"
+" about it.** The best residual is not the best held-out margin; the two "
+"orderings differ, which is the whole reason criterion 3 exists. The "
+"difference is small on a clean two-parameter plant and the point is the "
+"ordering, not the magnitude."
+msgstr ""
+"**窗长是真正的参数，残差与余量对它并不一致。** 最好的残差不是最好的留出"
+"余量；两种排序不同，这正是判据 3 存在的全部理由。在一个干净的两参数被控"
+"对象上差别很小，重点在排序，不在幅度。"
+
+#: ../../source/sop.rst:116 50da276d354a4e50b15a79070dcce8d9
+msgid ""
+"**The injection amplitude is not a parameter at all.** Scaling it leaves "
+"the identified ratio unchanged, because the fit is scale invariant. "
+"Searching it walks a flat objective, and a flat objective makes any "
+"sampler look patient."
+msgstr ""
+"**注入幅值根本不是参数。** 对它缩放不改变辨识出的比，因为拟合是尺度不变"
+"的。搜索它等于在一个平坦的目标上游走，而平坦的目标会让任何采样器都显得很"
+"有耐心。"
+
+#: ../../source/sop.rst:120 2f1c4fca59b242bdaa9b14a9d0036654
+msgid ""
+"A deterministic grid is used deliberately. The criterion is a margin on a"
+" held-out set; a grid makes the ranking reversal reproducible and CI-"
+"able, and swapping in a sampler that draws from a distribution would not "
+"change a single conclusion."
+msgstr ""
+"这里刻意采用确定性网格。判据是留出集上的余量；网格让排序反转可复现、可进"
+"CI，换成从分布中抽样的采样器不会改变任何一条结论。"
+
+#: ../../source/sop.rst:125 48e2add0fafd4befaabd65d8935de7f1
+msgid "What this procedure does not claim"
+msgstr ""
+"本规程不主张什么"
+
+#: ../../source/sop.rst:127 26f8278dfded41e7b3cb1677f8bd3d1a
+msgid ""
+"**Only the outer loop.** The current loop is assumed fast and is not "
+"identified."
+msgstr ""
+"**只涉及外环。** 电流环被假定足够快，不做辨识。"
+
+#: ../../source/sop.rst:128 844a379847ed4656a9dc87e01ec6c5a4
+msgid ""
+"**``tolerance`` is not a measured bound.** It is the caller's acceptance "
+"number (see above)."
+msgstr ""
+"**``tolerance`` 不是测出来的界。** 它是调用方的验收数字（见上）。"
+
+#: ../../source/sop.rst:130 6fcc614f94fb4d189920b008b4ff92b1
+msgid ""
+"**The delivered bandwidth is not unity.** The law is what the band "
+"accepts."
+msgstr ""
+"**交付带宽不是单位增益。** 带接受的就是这条律。"
+
+#: ../../source/sop.rst:131 f407b42bc7ec4ba69dcfbf1af6e84f16
+msgid ""
+"**Not the sensorless low-speed case.** That capability's replay needs a "
+"bench that can be moved to a second machine (changing flux linkage or "
+"dead time moves its floor with them), and until that bench exists the "
+"low-speed side has a **falsification** rather than a procedure: an early "
+"estimate of its speed floor as a ratio of dead-time volts to flux linkage"
+" was measured to be a lower bound, and a magnet change predicted to lower"
+" it made the measured error worse at every speed. No page in this "
+"documentation may present that number as a boundary."
+msgstr ""
+"**不涉及无感低速工况。** 那项能力的复现需要一个能搬到第二台电机上的台架"
+"（改磁链或改死区会连带移动它的下限），在这样一个台架出现之前，低速这一侧"
+"只有 **证伪** ，没有规程：早先按“死区伏秒与磁链之比”给出的转速下限估计，"
+"实测为下界，而按预测能降低它的一次磁钢改动，使每个转速上的实测误差都变差"
+"。本文档的任何一页都不得把那个数字当作边界。"
+
+#: ../../source/sop.rst:138 c6336949bd4d4c1daf4b5baf3a07f4c7
+msgid ""
+"**Not an optimiser.** The search is a grid over process parameters, and "
+"its output is a setting, not a model of your machine."
+msgstr ""
+"**不是优化器。** 搜索是过程参数上的网格，其输出是一组设置，不是使用者的"
+"电机的模型。"
+
+#: ../../source/sop.rst:142 4153c8067dbf4ac7ac91391c903db930
+msgid "Reproduce it"
+msgstr ""
+"复现方式"
+
+#: ../../source/sop.rst:144 66ab469fe2804b1898ab0ce62162e6aa
+msgid "The driver builds against the conan-cached gtest and runs standalone:"
+msgstr ""
+"该驱动对着 conan 缓存里的 gtest 构建，可独立运行："
+
+#: ../../source/sop.rst:155 17edf41b45b3457c929faa9a032747d2
+msgid ""
+"It runs as part of ``ctest`` as well; the case count is in ``docs"
+"/verification-numbers.json`` so this page does not have to carry it."
+msgstr ""
+"它也作为 ``ctest`` 的一部分运行；用例数记在 ``"
+"docs/verification-numbers.json`` 里，本页不必再承载这个数字。"
+

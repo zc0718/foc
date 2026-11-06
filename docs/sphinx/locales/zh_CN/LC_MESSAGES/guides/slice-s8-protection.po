@@ -1,0 +1,301 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2026, HeT-FTI
+# This file is distributed under the same license as the foc package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: foc 0.1.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-11-06 23:08+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: zh_CN\n"
+"Language-Team: zh_CN <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.17.0\n"
+
+#: ../../source/guides/slice-s8-protection.rst:2
+#: d47cca2444924660840b9586ace301ff
+msgid "_`Health and protection`"
+msgstr ""
+"_`健康状态与保护`"
+
+#: ../../source/guides/slice-s8-protection.rst:4
+#: 20caea2fbb4a4a279ebfcfdeb409074c
+msgid ""
+"The task: decide what a drive does when something is wrong -- how long an"
+" overload may last, what happens after it trips, and what the answers "
+"must not be confused with."
+msgstr ""
+"任务：决定出问题时驱动器做什么——过载可以持续多久，跳闸之后发生什么，以及"
+"这些答案不能与什么混为一谈。"
+
+#: ../../source/guides/slice-s8-protection.rst:9
+#: 191cd21c12584a7dad5316097b09dcb6
+msgid "What you need"
+msgstr ""
+"所需部件"
+
+#: ../../source/guides/slice-s8-protection.rst:11
+#: af59e6376e034e2794d74f4d32a4df58
+msgid ""
+"``foc/core/protection.hpp`` -- the mechanism matrix (over-current, over- "
+"and under-voltage, temperature, i2t, stall, lost sync), the ranked fault,"
+" the latched mask, and the derated current limit that goes with it."
+msgstr ""
+"``foc/core/protection.hpp`` ——机制矩阵（过流、过压与欠压、温度、i2t、堵"
+"转、失步）、排过序的故障、锁存的掩码，以及随之而来的降额电流限值。"
+
+#: ../../source/guides/slice-s8-protection.rst:14
+#: b92aa1d950d84ea5b1a78449442a81e1
+msgid ""
+"``foc/core/watchdog.hpp`` -- silence measurement: ``Feeding``, "
+"``Expired``, ``ClockLost``, and the distinction between kicking and "
+"polling."
+msgstr ""
+"``foc/core/watchdog.hpp`` ——沉默测量： ``Feeding`` 、 ``Expired`` 、 ``"
+"ClockLost`` ，以及喂狗与轮询之间的区别。"
+
+#: ../../source/guides/slice-s8-protection.rst:16
+#: ea701e2d7fda45b99bd527583027f715
+msgid ""
+"``foc/core/thermal_limit.hpp`` -- the winding's own first-order model, "
+"which is where the temperature the protector is fed with comes from."
+msgstr ""
+"``foc/core/thermal_limit.hpp`` ——绕组自身的一阶模型，保护器拿到的温度就"
+"来自这里。"
+
+#: ../../source/guides/slice-s8-protection.rst:18
+#: 847a01aee67f4f94bb5a8af8f5e5b938
+msgid ""
+"``foc/core/brake_chopper.hpp`` -- the bus over-voltage path, with the "
+"brake resistor's thermal budget rather than a voltage-only decision."
+msgstr ""
+"``foc/core/brake_chopper.hpp`` ——母线过压通路，依据制动电阻的热预算，而"
+"不是只看电压做决定。"
+
+#: ../../source/guides/slice-s8-protection.rst:20
+#: 0712a271758147ddaabfff06885a8b54
+msgid ""
+"``foc/core/auto_tune.hpp`` and ``foc/core/commissioning.hpp`` -- the "
+"parameter path: where the numbers a protection compares against are "
+"supposed to come from. The procedure that produces them is :doc:`../sop`,"
+" not a constant."
+msgstr ""
+"``foc/core/auto_tune.hpp`` 与 ``foc/core/commissioning.hpp`` ——参数通路"
+"：保护用来比较的那些数本应来自哪里。产生它们的流程是 :doc:`../sop` ，不"
+"是一个常数。"
+
+#: ../../source/guides/slice-s8-protection.rst:25
+#: fbf08b90cc0140ccb7407ed7d279b49c
+msgid "A minimal program"
+msgstr ""
+"最小程序"
+
+#: ../../source/guides/slice-s8-protection.rst:27
+#: 14d4f73b5455425a8454d639322d0950
+msgid ""
+"``docs/doxygen/dox/demos/slice-s8-protection.cxx`` sweeps the i2t budget "
+"below the hard trip, reads the derating curve across the trip "
+"temperature, walks the latch through a trip and a reset, asks a watchdog "
+"past its window, and pushes the bus into a brake chopper. The same file "
+"produces this slice's figure."
+msgstr ""
+"``docs/doxygen/dox/demos/slice-s8-protection.cxx`` 在硬跳闸以下扫 i2t 预"
+"算，读跨越跳闸温度的降额曲线，让锁存器走一遍跳闸与复位，向已经超出窗口的"
+"看门狗发问，并把母线推进制动斩波。本切片的图也由同一个文件产生。"
+
+#: ../../source/guides/slice-s8-protection.rst:39
+#: 86ae3d5004494c4bb42f1cd06e70e43d
+msgid "Where the numbers come from"
+msgstr ""
+"数字的来源"
+
+#: ../../source/guides/slice-s8-protection.rst:41
+#: 48138b9440d148dc9829f3d666da5f88
+msgid ""
+"**The i2t budget is not \"rated current for one second\".** It is "
+"``i_continuous^2 * tau``, the equilibrium of the thermal model, and that "
+"identity is what pins the units down: a budget that is anything else "
+"either trips a machine running at its own nameplate or never trips at "
+"all."
+msgstr ""
+"**i2t 预算不是“额定电流跑一秒”。** 它是 ``i_continuous^2 * tau`` ，即热"
+"模型的平衡点，正是这个恒等式把单位钉死：任何别的预算，要么把一台跑在自身"
+"铭牌上的电机跳掉，要么永远不跳闸。"
+
+#: ../../source/guides/slice-s8-protection.rst:45
+#: 8c4f1faed5bf414f9e014546a2dc1373
+msgid ""
+"**The cooling time constant is the winding's**, not a tuning number. It "
+"is the same quantity ``thermal_limit.hpp`` models, and if the two "
+"disagree the budget is describing a different machine from the one the "
+"temperature comes from."
+msgstr ""
+"**冷却时间常数属于绕组** ，不是整定参数。它就是 ``thermal_limit.hpp`` 所"
+"建模的同一个量，若两者不一致，预算描述的电机与温度来源那台电机就不是同一"
+"台。"
+
+#: ../../source/guides/slice-s8-protection.rst:48
+#: b7b4331e631d48eeb2e190514857f8a9
+msgid ""
+"**The trip and the derating endpoints come from the insulation class and "
+"the magnet**, and the third temperature -- where derating starts -- is "
+"where the drive begins to give up torque in order to stay below the other"
+" two."
+msgstr ""
+"**跳闸点与降额端点来自绝缘等级和磁钢** ，而第三个温度——降额开始的地方——"
+"是驱动器开始放弃转矩、以便待在前两者之下的地方。"
+
+#: ../../source/guides/slice-s8-protection.rst:51
+#: f479784257914b48b93fb0d2132bef3a
+msgid ""
+"**The watchdog window** is set by the slowest legitimate silence in the "
+"system, not by the control period: too tight and it trips on a long "
+"branch, too loose and it reports a dead loop as healthy."
+msgstr ""
+"**看门狗窗口** 由系统中最长的合法沉默设定，不由控制周期设定：太紧会在一"
+"条长分支上误判，太松会把死掉的环报成健康。"
+
+#: ../../source/guides/slice-s8-protection.rst:54
+#: 03d364d05de740459427fcb7ec0fb29e
+msgid ""
+"**The brake resistor's budget** is its thermal mass; ``duty_max`` and the"
+" minimum on/off times belong to the gate driver. The chopper's job is to "
+"spend the first without violating the second."
+msgstr ""
+"**制动电阻的预算** 是它的热质量； ``duty_max`` 与最小通断时间属于栅极驱"
+"动器。斩波器的职责就是花掉前者而不违反后者。"
+
+#: ../../source/guides/slice-s8-protection.rst:59
+#: 2daa47a79de44b6d902a116f66441e64
+msgid "How it goes wrong"
+msgstr ""
+"失效方式"
+
+#: ../../source/guides/slice-s8-protection.rst:61
+#: 0a70675e059946d182dc83f375b9a3c3
+msgid ""
+"**The budget read as a threshold.** \"It trips above rated current\" is "
+"the wrong mental model: at the rated current the budget's equilibrium "
+"*is* the budget, so the time to trip is infinite, and just above it the "
+"time is finite but long. A supervisor that expects a threshold will size "
+"a contactor for the wrong event."
+msgstr ""
+"**把预算当成阈值。** “超过额定电流就跳闸”是错的思维模型：在额定电流上，"
+"预算的平衡点 *就是* 预算，因此跳闸时间是无穷大；而略高于它时，时间有限但"
+"很长。以为存在阈值的上位机会按错误的事件去选接触器。"
+
+#: ../../source/guides/slice-s8-protection.rst:65
+#: 5f6ab474562145a78774fe67a9ff68cb
+msgid ""
+"**Derating and tripping treated as one decision.** They are two numbers "
+"with a gap between them: at the trip temperature the derating curve still"
+" allows current. A controller that only applies the curve never trips, "
+"and one that only applies the trip runs at full current right up to the "
+"wire's limit."
+msgstr ""
+"**把降额与跳闸当成同一个决定。** 它们是两个数，中间隔着一段间隙：在跳闸"
+"温度上，降额曲线仍然允许电流。只执行曲线的控制器永不跳闸，只执行跳闸的则"
+"一直满电流跑到导线的极限。"
+
+#: ../../source/guides/slice-s8-protection.rst:69
+#: 20fa69d38df04f7492991ee67ce21a23
+msgid ""
+"**A trip that clears itself.** The output stays disabled after the "
+"current comes back, and that is deliberate: the reason it tripped has not"
+" been looked at. ``reset()`` is the caller's explicit decision, and a "
+"drive that auto-reset would restart into the same fault at a rate set by "
+"the fault itself."
+msgstr ""
+"**会自己清除的跳闸。** 电流恢复之后输出仍保持封锁，这是刻意的：跳闸的原"
+"因还没有人看过。 ``reset()`` 是调用方的显式决定，而自动复位的驱动器会以"
+"故障自身设定的速率重新撞进同一个故障。"
+
+#: ../../source/guides/slice-s8-protection.rst:73
+#: 573a34d11c464ae7a88e1d143a94ded4
+msgid ""
+"**A watchdog kicked from the wrong place.** It measures silence, not "
+"progress. Kicking it from the same loop that must be watched -- or from "
+"an interrupt that keeps running while the loop is stuck -- produces a "
+"perfectly fed watchdog attached to a dead controller."
+msgstr ""
+"**从错误的地方喂狗。** 它测的是沉默，不是进展。从那个本该被监视的环里喂"
+"它——或从环卡住时仍在运行的中断里喂它——得到的是一个被喂得很好、却挂在一个"
+"死控制器上的看门狗。"
+
+#: ../../source/guides/slice-s8-protection.rst:77
+#: f9fdb7dce3f04b2ab691e2fdf94381be
+msgid ""
+"**A chopper that only watches the bus.** Holding the bus at the threshold"
+" with a resistor whose thermal budget is spent is a controlled way to "
+"burn the resistor. The budget latches the duty to zero for that reason."
+msgstr ""
+"**只看母线的斩波器。** 用一个热预算已经花光的电阻把母线压在阈值上，是一"
+"种受控地烧掉这个电阻的方式。预算正是为此把占空比锁存为零。"
+
+#: ../../source/guides/slice-s8-protection.rst:82
+#: f4febd1cac8e445faf2f1e94741d9a97
+msgid "Evidence"
+msgstr ""
+"证据"
+
+#: ../../source/guides/slice-s8-protection.rst:84
+#: 7c7b7f4f26da4116945b1748c42b497f
+msgid ""
+"Five claim rows cover this slice: ``foc/core/protection.hpp``, "
+"``foc/core/watchdog.hpp``, ``foc/core/thermal_limit.hpp``, "
+"``foc/core/brake_chopper.hpp`` and ``foc/core/commissioning.hpp``; the "
+"level this page may state is the minimum of those five. The times, "
+"temperatures and budgets this page would otherwise want to quote live in "
+"those rows and in their test files -- the example here retypes the same "
+"configuration the protection tests use, on purpose, so that what it "
+"demonstrates is the shipped behaviour and not a demo-only set of limits."
+msgstr ""
+"五条主张行覆盖本切片： ``foc/core/protection.hpp`` 、 ``"
+"foc/core/watchdog.hpp`` 、 ``foc/core/thermal_limit.hpp`` 、 ``"
+"foc/core/brake_chopper.hpp`` 和 ``foc/core/commissioning.hpp`` ；本页可"
+"以陈述的等级是这五条中的最小值。本页本来会想引用的时间、温度与预算都在那"
+"几行和它们的测试文件里——这里的示例刻意重抄了保护测试所用的同一份配置，好"
+"让它演示的是出货行为，而不是一套只属于示例的限值。"
+
+#: ../../source/guides/slice-s8-protection.rst:94
+#: cf3d9875b25c43d0aad668026b68e2dd
+msgid "Figure"
+msgstr ""
+"图"
+
+#: ../../source/guides/slice-s8-protection.rst:101
+#: 8f068423d67747bdb92b270a1bc8708f
+msgid ""
+"left: how long an overload lasts, below the hard trip -- a duration that "
+"runs away as the current approaches the rating; right: the continuous "
+"limit against temperature, with the trip threshold drawn on top of it at "
+"a temperature where the limit is still not zero"
+msgstr ""
+"左：硬跳闸以下的过载能持续多久——一个随电流逼近额定值而失控增长的时长；右"
+"：连续限值随温度的变化，跳闸阈值画在它上面，且画在一个限值仍不为零的温度"
+"处"
+
+#: ../../source/guides/slice-s8-protection.rst:106
+#: 0620238eaef247338789323e567f7379
+msgid ""
+"Both panels come from this page's example. The trip line is drawn from "
+"its own row of data rather than from where the curve reaches zero, "
+"because those are two different temperatures and drawing one for the "
+"other is exactly failure mode 2. What the figure does not show is the "
+"rest of the slice: the latch, the watchdog and the chopper are printed by"
+" the same program and are not time-series in the figure, because a latch "
+"has one interesting instant and a plot of it would be one step."
+msgstr ""
+"两个面板都来自本页的示例。跳闸线取自它自己那一行数据，而不是取自曲线到达"
+"零的位置，因为那是两个不同的温度，用其中一个去画另一个正是失效方式 2。图"
+"没有展示的是本切片的其余部分：锁存器、看门狗和斩波器由同一个程序打印，在"
+"图上却不是时间序列，因为锁存器只有一个有意义的瞬间，把它画出来只会是一个"
+"台阶。"
+

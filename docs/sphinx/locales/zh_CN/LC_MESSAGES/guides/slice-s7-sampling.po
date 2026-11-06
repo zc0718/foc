@@ -1,0 +1,284 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2026, HeT-FTI
+# This file is distributed under the same license as the foc package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: foc 0.1.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-11-06 23:08+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: zh_CN\n"
+"Language-Team: zh_CN <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.17.0\n"
+
+#: ../../source/guides/slice-s7-sampling.rst:2 71cab41da5624407946eb5e9a069d3f0
+msgid "_`Sampling and the power stage`"
+msgstr ""
+"_`采样与功率级`"
+
+#: ../../source/guides/slice-s7-sampling.rst:4 32465890c0204316a795465bffee5e15
+msgid ""
+"The task: decide whether the current can be measured at all this "
+"switching period, understand what the bridge does to the voltage it was "
+"asked for, and get one diagnosis out of a bench session instead of a list"
+" of failures."
+msgstr ""
+"任务：判断本开关周期里电流到底能不能测到，弄清桥对被要求的电压做了什么，"
+"并从一次台架会话里得到一个诊断，而不是一串失败项。"
+
+#: ../../source/guides/slice-s7-sampling.rst:9 f92566dd2f7b4b789c7ee309d6522ff4
+msgid "What you need"
+msgstr ""
+"所需部件"
+
+#: ../../source/guides/slice-s7-sampling.rst:11
+#: d5176674927b471a9c67037026cd5382
+msgid ""
+"``foc/core/single_shunt.hpp`` -- the sampling windows one DC-link shunt "
+"leaves you, and the three-valued verdict that comes with them."
+msgstr ""
+"``foc/core/single_shunt.hpp`` ——一个母线分流电阻给你留下哪些采样窗口，以"
+"及随窗口而来的三值判定。"
+
+#: ../../source/guides/slice-s7-sampling.rst:13
+#: a82c553f54ed40b0881d2a23cb134783
+msgid ""
+"``foc/core/deadtime.hpp`` -- the phase-domain dead-time correction, its "
+"two shapes, and the estimator that identifies the fade width."
+msgstr ""
+"``foc/core/deadtime.hpp`` ——相域死区补偿、它的两种形状，以及辨识淡出宽度"
+"的估计器。"
+
+#: ../../source/guides/slice-s7-sampling.rst:15
+#: 9e5aa9163bb1427991e1f6cd6bc0e80e
+msgid ""
+"``foc/core/board_check.hpp`` -- the measurands a bench session produces, "
+"and the mapping from a failure pattern to the one thing most likely "
+"wrong."
+msgstr ""
+"``foc/core/board_check.hpp`` ——一次台架会话产生的被测量，以及从失效模式"
+"到最可能出错的那一处的映射。"
+
+#: ../../source/guides/slice-s7-sampling.rst:17
+#: 85ba3fd1c36844bd81ca644decbaca6c
+msgid ""
+"``foc/core/trace.hpp`` -- a fixed-capacity ring of per-period samples. It"
+" records the currents and voltages the loop *believed*, one record per "
+"control period with the platform clock next to them -- which is also why "
+"it cannot answer a sampling-instant question on its own."
+msgstr ""
+"``foc/core/trace.hpp`` ——容量固定的逐周期采样环形缓冲。它记录的是环 *以"
+"为* 的电流与电压，每个控制周期一条记录，旁边附平台时钟——这也是它单靠自己"
+"回答不了采样时刻问题的原因。"
+
+#: ../../source/guides/slice-s7-sampling.rst:23
+#: 2a8e48156927484fa46f5194cb653e0d
+msgid "A minimal program"
+msgstr ""
+"最小程序"
+
+#: ../../source/guides/slice-s7-sampling.rst:25
+#: 4c000fe949f340d8826af15853bac533
+msgid ""
+"``docs/doxygen/dox/demos/slice-s7-sampling.cxx`` sweeps the modulation "
+"index at three angles against the shunt verdict, reads the dead-time "
+"correction in two configurations, and runs the board check twice on the "
+"same measurements. The same file produces this slice's figure."
+msgstr ""
+"``docs/doxygen/dox/demos/slice-s7-sampling.cxx`` 在三个角度上扫调制比并"
+"对照分流器的判定，在两种配置下读取死区补偿，并对同一组测量跑两遍板级自检"
+"。本切片的图也由同一个文件产生。"
+
+#: ../../source/guides/slice-s7-sampling.rst:37
+#: c3472b40493144ff935fc98ea3f606ad
+msgid "Where the numbers come from"
+msgstr ""
+"数字的来源"
+
+#: ../../source/guides/slice-s7-sampling.rst:39
+#: 84ee03f7d5604c11b221e7d37c6950a8
+msgid ""
+"**The settling time and the sampling time** are your ADC's and your gate "
+"driver's, not the library's. Together they are the number every window is"
+" compared with, so they decide whether a topology is usable at your "
+"switching frequency at all."
+msgstr ""
+"**建立时间与采样时间** 属于你的 ADC 和你的栅极驱动器，不属于本库。两者合"
+"起来就是每个窗口拿来比较的那个数，因此它们决定一种拓扑在你的开关频率下到"
+"底能不能用。"
+
+#: ../../source/guides/slice-s7-sampling.rst:43
+#: 14093f67755443ae993587e25c3cd639
+msgid ""
+"**The switching period** turns duties into seconds, and it is also the "
+"denominator of the dead-time voltage: the loss is `t_dead / T_pwm` of the"
+" bus, so the same nanoseconds cost twice as much at half the frequency."
+msgstr ""
+"**开关周期** 把占空比变成秒，它同时是死区电压的分母：损失是母线的 `"
+"t_dead/ T_pwm` ，因此在频率减半时，同样的纳秒数代价翻倍。"
+
+#: ../../source/guides/slice-s7-sampling.rst:46
+#: fc2582e43d89494bb108e8f0a0a201d7
+msgid ""
+"**The fade width** is the one number nobody can compute from a nameplate."
+" `predicted_ripple_a()` is an upper bound that is wrong by an order of "
+"magnitude, and `DeadTimeFadeEstimator` is what replaces it -- with a "
+"result whose own header advises against using it."
+msgstr ""
+"**淡出宽度** 是唯一没人能从铭牌算出来的数。 `predicted_ripple_a()` 是一"
+"个错了一个数量级的上界， `DeadTimeFadeEstimator` 就是替代它的东西——而它"
+"自己的头文件又不建议使用它的结果。"
+
+#: ../../source/guides/slice-s7-sampling.rst:50
+#: 0852e09a9edd49369d21caa85747792a
+msgid ""
+"**The board limits** are tolerances, kept separate from the measurements "
+"so a saved session can be re-judged without being re-run."
+msgstr ""
+"**板级限值** 是容差，与测量分开保存，从而使一次存下来的会话可以在不重跑"
+"的情况下重新判定。"
+
+#: ../../source/guides/slice-s7-sampling.rst:54
+#: 38bcb5ae68e6463299f94e426e43a599
+msgid "How it goes wrong"
+msgstr ""
+"失效方式"
+
+#: ../../source/guides/slice-s7-sampling.rst:56
+#: 9b05dc456403459f989dc26b8dbff979
+msgid ""
+"**The window read as a function of amplitude only.** It is a function of "
+"the vector's angle as well. At a sector boundary two phases carry the "
+"same duty, one of the two active intervals is exactly zero, and no "
+"modulation index makes it measurable -- the sweep in the figure's left "
+"panel sits on the axis for every request. A design that validated its "
+"sampling at one operating point has validated one operating point."
+msgstr ""
+"**把窗口当成只随幅值变化的函数。** 它还是矢量角度的函数。在扇区边界上，"
+"两相占空比相同，两个有效区间之一恰好为零，任何调制比都让它测不出来——图中"
+"左面板的扫描对每个请求都贴在轴上。在一个工作点上验证过采样的设计，只验证"
+"了一个工作点。"
+
+#: ../../source/guides/slice-s7-sampling.rst:62
+#: b49d514080fb404a98fa67b642f01a56
+msgid ""
+"**A correction measured in the wrong frame.** The library adds its "
+"correction per phase, then projects back to alpha-beta to reach the "
+"modulator, and that projection drops the part common to all three phases "
+"-- which a floating star point cannot see either. Read the same "
+"correction in one phase's duty and the modulator's own common-mode shift "
+"takes another bite. The example prints the same number three ways; a "
+"measurement note that does not say which frame it used cannot be "
+"reproduced."
+msgstr ""
+"**在错误的坐标系里量到的补偿量。** 库按相加上补偿，再投影回 alpha-beta"
+"送给调制器，而这次投影会丢掉三相共有的那部分——浮动的星点同样看不见那部分"
+"。若把同一个补偿量读成一相的占空比，调制器自己的共模偏移又会再咬掉一块。"
+"示例用三种方式打印同一个数；不说明自己用了哪个坐标系的测量记录无法复现。"
+
+#: ../../source/guides/slice-s7-sampling.rst:69
+#: 0d2c14888fbb4f7db995e0b965d611f5
+msgid ""
+"**\"Measurable\" treated as a boolean.** The verdict has three values, "
+"and the two failures are not the same failure: a narrow window can be "
+"waited for, an empty one means the pattern itself gives nothing to "
+"sample, so the answer is a different sampling instant rather than a "
+"longer one."
+msgstr ""
+"**把“能否测量”当成布尔值。** 判定有三个取值，而两种失败不是同一种失败："
+"窄窗口可以等，空窗口意味着开关模式本身没给出可采样的东西，所以答案是换一"
+"个采样时刻，而不是把时刻拉长。"
+
+#: ../../source/guides/slice-s7-sampling.rst:73
+#: d9bdc6b7b7764dd59bdcfbbff626bbf9
+msgid ""
+"**Trusting an identified parameter because it is identifiable.** The fade"
+" width can be identified and it still loses to the plain step; the header"
+" records both the comparison and the reason. Identifiability says the "
+"number exists, not that the model it belongs to is the right shape."
+msgstr ""
+"**因为参数可辨识就相信它。** 淡出宽度可以被辨识出来，却仍然不如朴素的阶"
+"跃补偿；头文件把这项比较和原因都记了下来。可辨识只说明这个数存在，不说明"
+"它所属的模型形状是对的。"
+
+#: ../../source/guides/slice-s7-sampling.rst:77
+#: c2b6f8711db64e06ab53bf6a447e51bc
+msgid ""
+"**A report that lists failures instead of naming a cause.** Two inverted "
+"phases make the ripple comparison meaningless, so a session can fail "
+"three items and still have one thing to fix. The example runs the check "
+"before and after fixing it, and the second session names a different item"
+" -- which is the only way to know the first diagnosis was right."
+msgstr ""
+"**只罗列失败项、不指出病因的报告。** 两相反接会让纹波比较失去意义，因此"
+"一次会话可以有三项不通过，而需要修的只有一处。示例在修好之前和之后各跑一"
+"次自检，第二次会话指出的是另一个项目——这是知道第一次诊断正确的唯一办法。"
+
+#: ../../source/guides/slice-s7-sampling.rst:84
+#: 1692dbc47cd94f9f9158cce947058164
+msgid "Evidence"
+msgstr ""
+"证据"
+
+#: ../../source/guides/slice-s7-sampling.rst:86
+#: 3cd53d47d06c4105a2c958685796be84
+msgid ""
+"Four claim rows cover this slice -- ``foc/core/single_shunt.hpp``, "
+"``foc/core/deadtime.hpp``, ``foc/core/trace.hpp`` and "
+"``foc/core/board_check.hpp`` -- and the level this page may state is the "
+"minimum of those four. The numbers behind the window sizes, the "
+"identified fade width and the diagnosis mapping live in those rows and in"
+" their test files, not on this page."
+msgstr ""
+"四条主张行覆盖本切片—— ``foc/core/single_shunt.hpp`` 、 ``"
+"foc/core/deadtime.hpp`` 、 ``foc/core/trace.hpp`` 和 ``"
+"foc/core/board_check.hpp`` ——本页可以陈述的等级是这四条中的最小值。窗口"
+"尺寸、辨识出的淡出宽度与诊断映射背后的数字在那几行和它们的测试文件里，不"
+"在本页。"
+
+#: ../../source/guides/slice-s7-sampling.rst:94
+#: 21de9105f34b4fc6bcf4f72f03545c2d
+msgid "Figure"
+msgstr ""
+"图"
+
+#: ../../source/guides/slice-s7-sampling.rst:101
+#: 8914540e44b54103997dc091890c7cd5
+msgid ""
+"left: the sampling window one shunt leaves, against the modulation index,"
+" at three vector angles -- hollow markers are the samples the library "
+"refused; right: the dead-time correction the library commands, read in "
+"the alpha-beta frame, for the step and the ramp"
+msgstr ""
+"左：一个分流电阻在三个矢量角度下留下的采样窗口，对着调制比；空心标记是库"
+"拒绝的采样；右：库所命令的死区补偿，在 alpha-beta 坐标系下读，阶跃与斜坡"
+"两种"
+
+#: ../../source/guides/slice-s7-sampling.rst:106
+#: 768cff9b70fe4272b6921cd085313ea3
+msgid ""
+"The figure is produced by ``docs/demos/make_figures.py`` from this page's"
+" own example. The \"settle + sample\" line and the per-phase "
+"``deadtime_v`` line both come out of the CSV's ``limit`` column, so they "
+"are the configuration the run used rather than constants typed into the "
+"plot. What the figure does not show is the hardware the numbers describe:"
+" no ADC samples here, no ringing, and the flat top of each window curve "
+"is the modulator clamping rather than anything the shunt does. Whether "
+"the ramp beats the step on a real bridge is a switching-plant "
+"measurement, and it lives in the claim row."
+msgstr ""
+"图由 ``docs/demos/make_figures.py`` 从本页自己的示例生成。“建立 + 采样”"
+"那条线与逐相的 ``deadtime_v`` 线都来自 CSV 的 ``limit`` 列，因此它们是这"
+"次运行所用的配置，而不是敲进绘图脚本里的常数。图没有展示的是这些数字所描"
+"述的硬件：这里没有 ADC 采样，没有振铃，而每条窗口曲线顶部的平段是调制器"
+"在削顶，不是分流电阻做了什么。斜坡在真实桥上是否胜过阶跃，是一次开关级被"
+"控对象测量，它住在主张行里。"
+

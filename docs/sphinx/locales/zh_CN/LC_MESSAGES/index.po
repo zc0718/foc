@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: foc 0.1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-23 18:28+0800\n"
+"POT-Creation-Date: 2026-11-06 23:08+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: zh_CN\n"
@@ -18,313 +18,380 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.17.0\n"
 
-#: ../../source/index.rst:127
+#: ../../source/index.rst:128
 msgid "Quick start"
 msgstr "快速上手"
 
-#: ../../source/index.rst:127
+#: ../../source/index.rst:128
+msgid "Architecture"
+msgstr ""
+"架构"
+
+#: ../../source/index.rst:128
+msgid "Task slices"
+msgstr ""
+"任务切片"
+
+#: ../../source/index.rst:128
+msgid "Outer-loop self-tuning"
+msgstr ""
+"外环自整定"
+
+#: ../../source/index.rst:128
+msgid "What this library does not do"
+msgstr ""
+"本库不做什么"
+
+#: ../../source/index.rst:128
+msgid "What each capability offers"
+msgstr ""
+"每项能力提供什么"
+
+#: ../../source/index.rst:128
 msgid "Usage and verification"
 msgstr "用法与验证"
 
-#: ../../source/index.rst:127
+#: ../../source/index.rst:128
+msgid "Language compliance: what can be claimed today"
+msgstr ""
+"语言合规：今天可以主张什么"
+
+#: ../../source/index.rst:128
+msgid "Foundation corrections"
+msgstr ""
+"地基修正"
+
+#: ../../source/index.rst:128
 msgid "Demos"
 msgstr "功能演示"
 
-#: ../../source/index.rst:127
+#: ../../source/index.rst:128
 msgid "Using the library"
 msgstr "使用本库"
 
-#: ../../source/index.rst:135
+#: ../../source/index.rst:143
+msgid "Symbols and units"
+msgstr ""
+"符号与单位"
+
+#: ../../source/index.rst:143
 msgid "Convention alignment"
 msgstr "约定对齐"
 
-#: ../../source/index.rst:135
+#: ../../source/index.rst:143
 msgid "Reference"
 msgstr "参考"
 
-#: ../../source/index.rst:2 b54146886f8b4b3aa117e4ea8bf92130
+#: ../../source/index.rst:2 645ae088aa9a4c53bfc9c35527313056
 msgid "_`foc Project Documentation`"
 msgstr "_`foc 项目文档`"
 
-#: ../../source/index.rst:5 dc2c552259cb4f43827eca4401ca6b69
+#: ../../source/index.rst:5 a758e8ef54194ba89c70ed7a9f56d594
 msgid "_`Introduction`"
 msgstr "简介"
 
-#: ../../source/index.rst:7 eebecf030aa44a9a89dea202aeb18d92
+#: ../../source/index.rst:7 b03730196ce54c35bac7a2ef81c3cafe
 msgid ""
 ":code:`foc` is a field-oriented-control library for three-phase PMSM "
 "drives. One engineering constraint drives every design choice: **the "
 "control loop must be predictable** — no heap, no exceptions, no virtual "
 "calls, no hidden allocation in the code path that runs every PWM period."
 msgstr ""
-":code:`foc` 是面向三相 PMSM 的磁场定向控制（FOC）库。所有设计取舍都服务于同一条工程约束：**控制环必须可预测**——跑在每个"
-" PWM 周期的代码路径里没有堆、没有异常、没有虚函数调用、没有隐式内存分配。"
+":code:`foc` 是面向三相 PMSM 的磁场定向控制（FOC）库。所有设计取舍都服务"
+"于同一条工程约束： **控制环必须可预测** ——跑在每个 PWM 周期的代码路径里"
+"没有堆、没有异常、没有虚函数调用、没有隐式内存分配。"
 
-#: ../../source/index.rst:11 036b86b5c3a74a1ca05e9c12d8ee79b2
+#: ../../source/index.rst:11 073e79bf3d504f948a42ca2c78533730
 msgid "Three consumer faces share one implementation:"
 msgstr "三个使用面共用同一份实现："
 
-#: ../../source/index.rst:13 50985f280a5e4ab5a83817231f38a000
+#: ../../source/index.rst:13 b8e32a8c630441ab9b5d889699162629
 msgid "One core, three faces"
 msgstr "一个内核，三个使用面"
 
-#: ../../source/index.rst:17 e2188fa22c144ae38421b21767ac9ce3
+#: ../../source/index.rst:17 677536e23f22483a89856b5f57ff18fc
 msgid "Face"
 msgstr "使用面"
 
-#: ../../source/index.rst:18 0f53052bb502459fa093efa7bca50d47
+#: ../../source/index.rst:18 86184272eb654955948261e0c611985d
 msgid "Header / module"
 msgstr "头文件 / 模块"
 
-#: ../../source/index.rst:19 4bc54ae7f1ce483f8b75cab7cae0a3db
+#: ../../source/index.rst:19 ef3eb06e139c4a47815edf3c88c9118b
 msgid "Who it is for"
 msgstr "适用对象"
 
-#: ../../source/index.rst:20 74859207e3f64cd8b02234b0e1e27ca9
+#: ../../source/index.rst:20 356c1d769384439b8e15472f90a8e6e5
 msgid "C++17"
 msgstr ""
+"C++17"
 
-#: ../../source/index.rst:21 d05978c66d3c42e7adb58420eb9f1dfe
+#: ../../source/index.rst:21 a3d1d94effb04980bf16d2ee33ea3ea2
 msgid ":code:`foc/motor/motor.hpp`"
 msgstr ""
+":code:`foc/motor/motor.hpp` （C++ 使用面的头文件）"
 
-#: ../../source/index.rst:22 f95f1672ff7b48e0aa2d5f3be73bf9a2
+#: ../../source/index.rst:22 f9ae31a31c334c44825da8f5005891b5
 msgid "Board-level users: inject your own :code:`HalPolicy` and own every gain."
-msgstr "上板用户：注入自己的 :code:`HalPolicy`，所有增益自己定。"
+msgstr ""
+"上板用户：注入自己的 :code:`HalPolicy` ，所有增益自己定。"
 
-#: ../../source/index.rst:23 a0717baa7ca847df9345f1b360bd761e
+#: ../../source/index.rst:23 f44e205528774a4f96e088250abffe60
 msgid "C11"
 msgstr ""
+"C11"
 
-#: ../../source/index.rst:24 f696ce658aaf40ef87455658d713fd40
+#: ../../source/index.rst:24 17d3e01119b0463f86c0f36feba395fa
 msgid ":code:`foc/api/foc_api.h`"
 msgstr ""
+":code:`foc/api/foc_api.h` （C 使用面的头文件）"
 
-#: ../../source/index.rst:25 486c6a4c4baf40fc8cb2f0b008f8dbd9
+#: ../../source/index.rst:25 3ad784bb45e94c6485ec077b20825b91
 msgid ""
 "Non-C++ projects, glue code and scripted tests: a frozen ABI over the "
 "same core."
 msgstr "非 C++ 工程、胶水代码与脚本化测试：同一内核之上的冻结 ABI。"
 
-#: ../../source/index.rst:26 ab2c638294904cc5a7fd4fa423ae35b4
+#: ../../source/index.rst:26 504fe997a5ad41248c07f8f09221bc00
 msgid "Python"
 msgstr ""
+"Python"
 
-#: ../../source/index.rst:27 11cae9a46c644da19e79b43d44be2f84
+#: ../../source/index.rst:27 060866915fa946218da6208ff3951859
 msgid ":code:`import foc_python` (optional)"
 msgstr ""
+":code:`import foc_python` （可选）"
 
-#: ../../source/index.rst:28 eba14785252e47aa9ccef74e3c630795
+#: ../../source/index.rst:28 51ca6edd36dc4724affa118ba94c5568
 msgid "Host-side scripts and data analysis, built on the C API."
 msgstr "上位机脚本与数据分析，建立在 C API 之上。"
 
-#: ../../source/index.rst:31 a7cd376aa396461192e58dea95433dd9
+#: ../../source/index.rst:31 1393de74f6e944d091f5cc38e26cf7fa
 msgid "_`What V1 does`"
 msgstr "_`V1 做了什么`"
 
-#: ../../source/index.rst:33 21df0ee0bcd646f09f06812c5e8da87e
+#: ../../source/index.rst:33 6b8d0e8eba12407ca86532c230c68bcd
 msgid ""
 "Clarke / Park and their inverses, space-vector modulation, PI "
 "controllers, a motor state machine and a back-EMF observer."
 msgstr "Clarke / Park 及其逆变换、空间矢量调制、PI 控制器、电机状态机与反电动势观测器。"
 
-#: ../../source/index.rst:35 1f1aac7789754f959624f42f27384182
+#: ../../source/index.rst:35 7dbcbf74585f48f9ab6715288ff77740
 msgid ""
 "**Policy-composed motor**: observer, modulator, controller and HAL are "
 "template parameters, so the whole current loop inlines into one "
 "translation unit."
-msgstr "**策略组合的电机**：观测器、调制器、控制器与 HAL 都是模板参数，整条电流环内联进一个翻译单元。"
+msgstr ""
+"**策略组合的电机** ：观测器、调制器、控制器与 HAL 都是模板参数，整条电流"
+"环内联进一个翻译单元。"
 
-#: ../../source/index.rst:37 0d2423060d304e52acd74071ddfafdfd
+#: ../../source/index.rst:37 5d2d40a735f448d2a9bddadc8ca773ba
 msgid ""
 "Simulation-grade HAL stubs (PWM duty history, scripted current, simulated"
 " position), so the complete control chain can be exercised without "
 "hardware."
 msgstr "仿真级 HAL 桩（PWM 占空比历史、脚本化电流、模拟位置），无需硬件即可跑通完整控制链。"
 
-#: ../../source/index.rst:39 3aa4bf68848045a487af989a381dd98e
+#: ../../source/index.rst:39 34abb670ebd24476ba371807c563f025
 msgid ""
 "A C API with generation-checked opaque handles: a stale handle is "
 "*detected*, never dereferenced."
-msgstr "带代际校验的不透明句柄的 C API：失效句柄会被*识别*，绝不解引用。"
+msgstr ""
+"带代际校验的不透明句柄的 C API：失效句柄会被 *识别* ，绝不解引用。"
 
-#: ../../source/index.rst:41 e53d170a82b14a4887990fc663e15888
+#: ../../source/index.rst:41 744a51192f644e77a2f1f5ab53a2edd3
 msgid ""
 "An optional pybind11 module that binds the **C API**, not the C++ "
 "templates."
-msgstr "可选的 pybind11 模块，绑定的是 **C API**，不是 C++ 模板。"
+msgstr ""
+"可选的 pybind11 模块，绑定的是 **C API** ，不是 C++ 模板。"
 
-#: ../../source/index.rst:43 67ae68177cc948e9a11eb0b7cfc298f7
+#: ../../source/index.rst:43 75d77794e70944cab3b2674b5695a3b8
 msgid ""
 "All of this is verified in software only — see :ref:`honest limits "
 "<honest-limits>`."
-msgstr "以上全部只在软件层面验证——见 :ref:`诚实边界 <honest-limits>`。"
+msgstr ""
+"以上全部只在软件层面验证——见 :ref:`诚实边界 <honest-limits>` 。"
 
-#: ../../source/index.rst:46 10292467a9954c7784c174587061faf3
+#: ../../source/index.rst:46 2c036b76acb0427ab4b5ce9a038c7136
 msgid "_`Quick start`"
 msgstr "_`快速上手`"
 
-#: ../../source/index.rst:48 28f76d831b3947068a46ba67b77e0b26
+#: ../../source/index.rst:48 00ffc473e59244339868c9bb7a380fb0
 msgid "conanfile.py"
 msgstr "Conan 依赖配置"
 
-#: ../../source/index.rst:54 eaf8e3e10afd4b7dbe57b8fbefe31e0d
+#: ../../source/index.rst:54 aa8f4d2ce3eb44639392d79768300767
 msgid "CMakeLists.txt"
 msgstr "CMake 构建列表"
 
-#: ../../source/index.rst:61 441b17f1ed0b47a0aaf32fa306d870cf
+#: ../../source/index.rst:61 b4b769931a394ef0887a05bae6d49989
 msgid ""
 "One rule to remember: link the aggregate target :code:`foc::foc`. It "
 "carries both :code:`foc::foc_c` and :code:`foc::foc_cpp`, and the package"
 " metadata guarantees the order."
 msgstr ""
-"只需记一条规则：链接聚合目标 :code:`foc::foc`。它同时带 :code:`foc::foc_c` 与 "
-":code:`foc::foc_cpp`，顺序由包元数据保证。"
+"只需记一条规则：链接聚合目标 :code:`foc::foc` 。它同时带 :code:`"
+"foc::foc_c` 与 :code:`foc::foc_cpp` ，顺序由包元数据保证。"
 
-#: ../../source/index.rst:66 723a2bbf3a26442fa69ef05405788695
+#: ../../source/index.rst:66 1d3d583648c7472d8da78910ade32acc
 msgid ""
 "C consumers still link the C++ runtime. The C ABI is stable, the "
 "implementation is C++: set :code:`LINKER_LANGUAGE CXX` (or add one empty "
 ":code:`.cpp`), otherwise you will see :code:`undefined reference to "
 "__cxa_*`. This boundary is documented, not papered over."
 msgstr ""
-"C 使用者仍要链接 C++ 运行时。C ABI 是稳定的，但实现是 C++：把 :code:`LINKER_LANGUAGE CXX` "
-"设上（或加一个空 :code:`.cpp`），否则会看到 :code:`undefined reference to "
-"__cxa_*`。这条边界写在文档里，不粉饰。"
+"C 使用者仍要链接 C++ 运行时。C ABI 是稳定的，但实现是 C++：把 :code:`"
+"LINKER_LANGUAGE CXX` 设上（或加一个空 :code:`.cpp` ），否则会看到 :code:"
+"`undefined reference to __cxa_*` 。这条边界写在文档里，不粉饰。"
 
-#: ../../source/index.rst:71 1078c3942c204df98ba5883f4f36c4bd
+#: ../../source/index.rst:71 ef4bafbccb9045dfaf628622f381b594
 msgid "_`Project structure`"
 msgstr "_`项目结构`"
 
-#: ../../source/index.rst:86 b782349daefa4c9ba0f38aaa30518dbe
+#: ../../source/index.rst:86 0d3a4e7cff1645eab9fa967b7f4f643b
 msgid "_`Honest limits`"
 msgstr "_`诚实边界`"
 
-#: ../../source/index.rst:88 d6add93d56c3453d881fb0735fb398df
+#: ../../source/index.rst:88 05255a248d5240bb93da5fc743926c73
 msgid ""
 "V1 does **not** claim, and does not pretend to verify, the following. "
-"They are deferred to the hardware stage:"
-msgstr "V1 **不承诺**、也不假装验证下列内容，它们留待硬件阶段："
+"They are deferred to the hardware stage. (For the limits that are *not* "
+"deferred -- the ones that are properties of the method and are pinned by "
+"test cases -- see :doc:`what this library does not do <boundaries>`.)"
+msgstr ""
+"V1 **不** 声称、也不假装验证以下几项。它们被推迟到硬件阶段。（至于那些 *"
+"没有* 推迟的限制——即方法本身的性质、且已由测试用例钉住的部分——见 :doc:`"
+"本库不做什么 <boundaries>` 。）"
 
-#: ../../source/index.rst:95 5dabb4bf541341348dc4a8d78c9774c8
+#: ../../source/index.rst:96 6ea25664e1b2498ab5621d76be76ea7b
 msgid "#"
 msgstr ""
+"#"
 
-#: ../../source/index.rst:96 187d7fe342cc4deea91af257322bd8ea
+#: ../../source/index.rst:97 2016489cd9e24e9a9753a3ff47c6a763
 msgid "Item"
 msgstr "项目"
 
-#: ../../source/index.rst:97 7895c5b904074c4494af0532be1e6444
+#: ../../source/index.rst:98 314628fb5516402ba58ccaa677e625b2
 msgid "Why it cannot be verified yet"
 msgstr "为什么现在无法验证"
 
-#: ../../source/index.rst:98 32b26bc7675d4695a9daf6f4c5f5b718
+#: ../../source/index.rst:99 ecd800003bce4fb89b8be54e265af0ef
 msgid "U1"
 msgstr ""
+"U1"
 
-#: ../../source/index.rst:99 3e563f5ed3bb481cb7db423c18053dbb
+#: ../../source/index.rst:100 6685e83c45f0475486832375861ecfb8
 msgid "Dead-time compensation in practice"
 msgstr "死区补偿的实际效果"
 
-#: ../../source/index.rst:100 4ae9af7013f64e9baf63a23563d3374c
+#: ../../source/index.rst:101 0167a771f28b4a9c802849a457732cca
 msgid "Needs the real inverter non-linearity."
 msgstr "需要真实逆变器的非线性。"
 
-#: ../../source/index.rst:101 e5d3bc00a3314db5ae56a5b3cca4acc6
+#: ../../source/index.rst:102 800d6603ba9d49a289c3b9b3d2a762cb
 msgid "U2"
 msgstr ""
+"U2"
 
-#: ../../source/index.rst:102 f431043d72f94a86bda95d4172a0b7b6
+#: ../../source/index.rst:103 ef482233b15b43bebbcb0f364b57d130
 msgid "ADC sampling aligned with PWM timing"
 msgstr "ADC 采样与 PWM 时序对齐"
 
-#: ../../source/index.rst:103 95a7e953d2c245e49587e8ff4216b0e3
+#: ../../source/index.rst:104 f4b0531db6c2421db962cc16640ff3f9
 msgid "Depends on the MCU timer and trigger chain."
 msgstr "依赖具体 MCU 的定时器与触发链。"
 
-#: ../../source/index.rst:104 3fb5ffd1aec546cca80d8f288bb472b9
+#: ../../source/index.rst:105 741ccc82588046529e739334f09990db
 msgid "U3"
 msgstr ""
+"U3"
 
-#: ../../source/index.rst:105 f35406fda48c4038bc66d119626a866b
+#: ../../source/index.rst:106 dd927bc0b6d04c858e6d1985f75b3a32
 msgid "Observer robustness against real parameter drift"
 msgstr "观测器对真实参数偏差的鲁棒性"
 
-#: ../../source/index.rst:106 51396f068b4940e583084192cce5a5f0
+#: ../../source/index.rst:107 be65fe6726b64295879705017a5c0d67
 msgid "The perturbation used in the SIL model is idealised."
 msgstr "SIL 模型里的摄动是理想化的。"
 
-#: ../../source/index.rst:107 23fe08be89434bd2b49a31b478cbc623
+#: ../../source/index.rst:108 48015dad30aa48cab1459b2f9d1af43c
 msgid "U4"
 msgstr ""
+"U4"
 
-#: ../../source/index.rst:108 3e9753dc601547cabeacec98745d58c6
+#: ../../source/index.rst:109 7a90f3fb1b524e1fa474611a69b67277
 msgid "EMI / EMC behaviour"
 msgstr "EMI / EMC 行为"
 
-#: ../../source/index.rst:109 ed29c98323d64f73bfba9c1d0aadbda7
+#: ../../source/index.rst:110 8288754170ed4de9b071b3829798d8a9
 msgid "Not observable in software."
 msgstr "纯软件不可观测。"
 
-#: ../../source/index.rst:110 38f3df433fe14fdf97ab71b410e492ea
+#: ../../source/index.rst:111 67fa3842e10645fd937d354434330fc6
 msgid "U5"
 msgstr ""
+"U5"
 
-#: ../../source/index.rst:111 a726a9ad237b473fab79b940e0b0a913
+#: ../../source/index.rst:112 32a3c47d3588473e9e3be7f7f04a693f
 msgid "Acoustic noise and vibration"
 msgstr "噪声与振动"
 
-#: ../../source/index.rst:112 4deb132b0973461daa3596337b588396
+#: ../../source/index.rst:113 c8bbf268910840d482534518cdc7bf83
 msgid "Needs a mechanical load."
 msgstr "需要机械负载。"
 
-#: ../../source/index.rst:113 101819cef72c4e68bbd692fe2ac162d0
+#: ../../source/index.rst:114 195680291caf4dd5b91b2e4231f94bb2
 msgid "U6"
 msgstr ""
+"U6"
 
-#: ../../source/index.rst:114 31f3643b359048f49ee0b40d6f3f6d9b
+#: ../../source/index.rst:115 718f3b0cf37d476797da01e9f0f1053a
 msgid "ISR worst-case execution time on the target MCU"
 msgstr "目标 MCU 上的 ISR 最坏执行时间（WCET）"
 
-#: ../../source/index.rst:115 96374a1c5bd04d859d56aa61cee6b461
+#: ../../source/index.rst:116 416bb40a2ad745058163c451992a5507
 msgid "No target profile is shipped."
 msgstr "没有随包提供目标板 profile。"
 
-#: ../../source/index.rst:116 29767846ea3c48afb4e59acd7dd63698
+#: ../../source/index.rst:117 b8c130bea0b6457c832da3d37b2d030c
 msgid "U7"
 msgstr ""
+"U7"
 
-#: ../../source/index.rst:117 565aae3039974e0d93116cd76f86400b
+#: ../../source/index.rst:118 c0f878c9ef214b78953b09504791a5a0
 msgid "Flash / RAM footprint against a chip budget"
 msgstr "Flash / RAM 占用是否达标"
 
-#: ../../source/index.rst:118 11b6bcbab9554e3d89406ea302bf8801
+#: ../../source/index.rst:119 8327f66a0357412c8aed6c2054301922
 msgid "No target constraint to measure against."
 msgstr "没有可对照的芯片约束。"
 
-#: ../../source/index.rst:119 b9086f889ca74be1bfc1b827ef491620
+#: ../../source/index.rst:120 8f0e50f360cf452884172177ab7c3ea4
 msgid "U8"
 msgstr ""
+"U8"
 
-#: ../../source/index.rst:120 d3e5cbeb724d4be89e0d4d611728406c
+#: ../../source/index.rst:121 e0e73000eb1b4ce0a24720b72419dec3
 msgid "A pure-C consumer **without** the C++ runtime"
 msgstr "**不依赖** C++ 运行时的纯 C 消费者"
 
-#: ../../source/index.rst:121 d80354c31e354cc2915d6b6a29a663c9
+#: ../../source/index.rst:122 6afe152a13d44069a87cd11f19cd1802
 msgid ""
 "Would need a stripped link script and hand-written stubs; V1 explicitly "
 "requires C users to link the C++ runtime."
 msgstr "需要裁剪链接脚本并手写桩；V1 明确要求 C 使用者链接 C++ 运行时。"
 
-#: ../../source/index.rst:125 9f5111f2a5a94003ba2dff9992d238bf
+#: ../../source/index.rst:126 1ff68588b1db406f81cba71c2f7df84c
 msgid "_`Detailed settings`"
 msgstr "_`详细设置`"
 
-#: ../../source/index.rst:142 2f4129faeaa6415db0c0fe537c14ec61
+#: ../../source/index.rst:151 93d915d9e92742e3b84e4f31a643dbce
 msgid "_`License`"
 msgstr "许可证"
 
-#: ../../source/index.rst:144 9810cef3eb9c4ea6915c3b4959a7949e
+#: ../../source/index.rst:153 98ef219bcd3644b9b121f7e8f7b4767e
 msgid ""
 "This project is licensed under the Apache-2.0 License. See the LICENSE "
 "file for details."
@@ -341,4 +408,11 @@ msgstr "本项目采用 Apache-2.0 许可证授权。详情请参阅 LICENSE 文
 
 #~ msgid "Build system"
 #~ msgstr "构建系统"
+
+#~ msgid ""
+#~ "V1 does **not** claim, and does "
+#~ "not pretend to verify, the following."
+#~ " They are deferred to the hardware"
+#~ " stage:"
+#~ msgstr "V1 **不承诺**、也不假装验证下列内容，它们留待硬件阶段："
 

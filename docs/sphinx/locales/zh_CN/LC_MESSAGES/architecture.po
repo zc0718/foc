@@ -1,0 +1,931 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2026, HeT-FTI
+# This file is distributed under the same license as the foc package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: foc 0.1.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-11-06 23:08+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: zh_CN\n"
+"Language-Team: zh_CN <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.17.0\n"
+
+#: ../../source/architecture.rst:2 4548ffc0f314442f8d397619592dc65b
+msgid "_`Architecture`"
+msgstr ""
+"_`架构`"
+
+#: ../../source/architecture.rst:4 a11679c091234558b0062276d19571b0
+msgid ""
+"This page answers the question the reference documentation does not: "
+"**why is the library shaped this way**. It is written for three readers "
+"-- the architect deciding whether this belongs in a product, the reviewer"
+" deciding whether its shape holds, and the integrator deciding where they"
+" are expected to cut."
+msgstr ""
+"本页回答参考文档不去回答的那个问题： **这个库为什么长成这个样子** 。它面"
+"向三类读者——判断它是否该进产品的架构师，判断它的形状是否站得住的评审者，"
+"以及判断自己该在哪里切开的集成者。"
+
+#: ../../source/architecture.rst:10 df5d2c02bf9d4628ad149c688f01dde7
+msgid "The position"
+msgstr ""
+"立场"
+
+#: ../../source/architecture.rst:12 a00f288027864b6c8116d29cb5a1a17d
+msgid ""
+"Most motor-control software is one of four things, and each is right for "
+"somebody. A vendor SDK brings a working drive on one part family and the "
+"vendor's abstraction with it. A model-based toolchain generates code from"
+" a block diagram. A research library lives where iteration is cheap. A "
+"framework owns the application, including the loop and the memory."
+msgstr ""
+"多数电机控制软件是四类东西之一，每一类都对某类人合适。厂商 SDK 带来在某"
+"个芯片系列上能跑的驱动器，也把厂商的抽象一并带来。基于模型的工具链从框图"
+"生成代码。研究型库栖身在迭代便宜的地方。框架占有应用，包括环和内存。"
+
+#: ../../source/architecture.rst:17 836fbe7718b548339ca821eb94e5ba6d
+msgid ""
+"The position this library takes is the space those leave: **a core that "
+"can be handed to a reviewer, whose cost is bounded by construction, whose"
+" numerical behaviour is argued rather than asserted, and which is the "
+"same code from C++, from C and from a script.**"
+msgstr ""
+"本库取的是这四类留出来的空档： **一个能交到评审者手里的内核——代价由构造"
+"方式界定，数值行为是被论证的而不是被断言的，并且从 C++、从 C、从脚本看都"
+"是同一份代码。**"
+
+#: ../../source/architecture.rst:21 0354ab908deb4db29fb6971f16a1785e
+msgid ""
+"That position is a set of refusals, and each is a decision rather than a "
+"preference:"
+msgstr ""
+"这个立场是一组拒绝，每一条都是决定，而不是偏好："
+
+#: ../../source/architecture.rst:23 dc419813fbfe4697b45c7587e312dabb
+msgid ""
+"**no heap in the loop**, which forbids containers and buys a worst case "
+"that can be written down;"
+msgstr ""
+"**环里没有堆** ，因此禁用容器，换来一个可以写在纸上的最坏情形；"
+
+#: ../../source/architecture.rst:25 aaca7a82132c466cbbd032862d781225
+msgid ""
+"**no exceptions and no RTTI**, which buys an error path whose cost is a "
+"returned value;"
+msgstr ""
+"**不用异常，也不用 RTTI** ，换来一条代价只是一个返回值的错误路径；"
+
+#: ../../source/architecture.rst:26 08e43a9ae14144308fdb376b08a056de
+msgid ""
+"**no virtual dispatch on the periodic path**, which buys inlining through"
+" the whole chain;"
+msgstr ""
+"**周期路径上没有虚分派** ，换来整条链路的内联；"
+
+#: ../../source/architecture.rst:27 e8611d33b91b4a42bbbe17da558fa275
+msgid ""
+"**no defaults that could hide a fault**, which buys a boot that fails "
+"loudly instead of a protection that was never enabled."
+msgstr ""
+"**不留可能掩盖故障的默认值** ，换来一次会大声失败的上电，而不是一条从未"
+"被使能的保护。"
+
+#: ../../source/architecture.rst:31 cc074d1269304caf869de5d17fcad9e6
+msgid "What a breadth-first library optimises for, and what changes here"
+msgstr ""
+"广度优先的库优化什么，这里改了什么"
+
+#: ../../source/architecture.rst:33 67730c88583749a1bd17d29c5ce12d2c
+msgid ""
+"The architecture chapter of a large library is a map of a breadth-first "
+"system: the module graph, the data objects that flow through it, how to "
+"plug in a new algorithm, which backends are interchangeable. Those "
+"libraries are judged on coverage and on being a substrate for other "
+"people's work, so they are optimised for **extension volume**."
+msgstr ""
+"大型库的架构章节画的是广度优先系统的地图：模块图、在其中流动的数据对象、"
+"如何插入新算法、哪些后端可互换。这类库按覆盖面和能否当他人的工作底座来评"
+"判，因此优化的是 **扩展体量** 。"
+
+#: ../../source/architecture.rst:38 607dbad4bca34d918cf4c78077af553f
+msgid ""
+"A hard-real-time core is optimised for the opposite: a small number of "
+"seams, each of them compile-time, and a cost that does not depend on the "
+"input. The dimensions are the same and the answers are inverted."
+msgstr ""
+"硬实时内核优化的方向正相反：接缝数量少，每条都在编译期，代价与输入无关。"
+"维度相同，答案相反。"
+
+#: ../../source/architecture.rst:42 1ca6c53519b64655afb267f149865a45
+msgid "The same dimensions, the opposite answers"
+msgstr ""
+"同样的维度，相反的答案"
+
+#: ../../source/architecture.rst:46 5a6563d13d4740968668278558cc0e68
+msgid "Dimension"
+msgstr ""
+"维度"
+
+#: ../../source/architecture.rst:47 fa634849145f4751b6e76c1459b6af0d
+msgid "A breadth-first library"
+msgstr ""
+"广度优先的库"
+
+#: ../../source/architecture.rst:48 dae057d107a04612be39857ffaeea70a
+msgid "This one, and why"
+msgstr ""
+"本库，以及理由"
+
+#: ../../source/architecture.rst:49 e09d3f543c83410eb915c50da9bab8ea
+msgid "Extensibility"
+msgstr ""
+"可扩展性"
+
+#: ../../source/architecture.rst:50 2359e34ed56341e981da5ec61c8015b4
+msgid "hundreds of algorithms behind one interface, discovered at run time"
+msgstr ""
+"成百上千种算法藏在一个接口背后，运行期才发现"
+
+#: ../../source/architecture.rst:51 38ebb54568c54e1e9acf4c7e56b5f2a6
+msgid ""
+"four policy seams, fixed at compile time, because a run-time lookup is a "
+"cost the loop cannot audit"
+msgstr ""
+"四条策略接缝，编译期固定，因为一次运行期查找是环无法审计的代价"
+
+#: ../../source/architecture.rst:53 b71f5a09c7a548e284c9c371df53f4f7
+msgid "Object model"
+msgstr ""
+"对象模型"
+
+#: ../../source/architecture.rst:54 fe09d029e4ad45e0b878872d63fea1a8
+msgid "deep hierarchies, shared ownership, reference counting"
+msgstr ""
+"深层继承、共享所有权、引用计数"
+
+#: ../../source/architecture.rst:55 7372d311f32c4b08802986de8ab33859
+msgid ""
+"value types and composition; ownership stays with the caller, so there is"
+" nothing to count and nothing to leak"
+msgstr ""
+"值类型与组合；所有权留在调用方，因此没有东西要计数，也没有东西会泄漏"
+
+#: ../../source/architecture.rst:57 df9c526b07d645eb99c7b53daad1bd79
+msgid "Data flow"
+msgstr ""
+"数据流"
+
+#: ../../source/architecture.rst:58 e0ae3f0fd09b461b925ee66f4e162317
+msgid "images and meshes through a pipeline of stages"
+msgstr ""
+"图像与网格穿过一条分级流水线"
+
+#: ../../source/architecture.rst:59 f3f078a111aa4104a789e468ef2df5e6
+msgid ""
+"one request and three duties per period; the state is the controller's, "
+"not the library's"
+msgstr ""
+"每个周期一次请求、三项职责；状态属于控制器，不属于库"
+
+#: ../../source/architecture.rst:61 49b46be9995f49e790e520e323dd548d
+msgid "Backends"
+msgstr ""
+"后端"
+
+#: ../../source/architecture.rst:62 71d01e88b5544ffaa5774ef8326c43ce
+msgid "interchangeable, selected by configuration"
+msgstr ""
+"可互换，由配置选择"
+
+#: ../../source/architecture.rst:63 8437d218722a4a7996e11e36fee16bfe
+msgid "one HAL policy per build; the hardware is not a run-time detail"
+msgstr ""
+"每次构建一个 HAL 策略；硬件不是运行期细节"
+
+#: ../../source/architecture.rst:64 afb3b7b6f79147299e27287233f987c0
+msgid "Error model"
+msgstr ""
+"错误模型"
+
+#: ../../source/architecture.rst:65 136d0257f44e4b5fb80e8d457abbaea7
+msgid "exceptions or status trees, because failure is rare and deferred"
+msgstr ""
+"异常或状态树，因为失败罕见且被推迟处理"
+
+#: ../../source/architecture.rst:66 2e2724776beb4281838e4cea27bd5980
+msgid ""
+"a closed set of returned codes, because failure must be decided in the "
+"same period"
+msgstr ""
+"一组封闭的返回码，因为失败必须在同一个周期内定下来"
+
+#: ../../source/architecture.rst:67 ea8183f41e2a4af1871114d52b590e51
+msgid "Binary compatibility"
+msgstr ""
+"二进制兼容"
+
+#: ../../source/architecture.rst:68 56e3c1ad6e954fe6a0ab660c841fc87e
+msgid "versioned libraries, plugins, symbol visibility"
+msgstr ""
+"带版本的库、插件、符号可见性"
+
+#: ../../source/architecture.rst:69 e398beb4f1ca4a8d985e82656414d043
+msgid "a frozen C surface with size-tagged structs and generation-checked handles"
+msgstr ""
+"冻结的 C 使用面，结构体自带长度标记，句柄带代数校验"
+
+#: ../../source/architecture.rst:70 2c3920383dfe419ead73014e98eea672
+msgid "Cost model"
+msgstr ""
+"代价模型"
+
+#: ../../source/architecture.rst:71 26589426232b4f66a458f4c0c689eda3
+msgid "measured per operation, optimised per backend"
+msgstr ""
+"逐操作测量，逐后端优化"
+
+#: ../../source/architecture.rst:72 8a853daaa60c46f09439e46ff52f8c70
+msgid "bounded by construction: no allocation, no dispatch, no exception"
+msgstr ""
+"由构造方式本身界定：不分配、不分派、不抛异常"
+
+#: ../../source/architecture.rst:74 a9dae710521b4635a4e7d92b0da93426
+msgid ""
+"Two consequences surprise readers arriving from a breadth-first library. "
+"There is **no plugin architecture**, and that is not an omission: adding "
+"an observer is a template argument plus a case, and the compiler is the "
+"registration mechanism. And the **C surface exists for the opposite "
+"reason a C API usually exists** -- not to let other languages in, but to "
+"give the core a boundary that cannot grow accidentally, since every "
+"declaration there is a promise about the next decade."
+msgstr ""
+"对从广度优先库过来的人，有两处结论出乎意料。其一， **没有插件架构** ，这"
+"不是遗漏：增加一个观测器就是一个模板实参加一个 case 分支，编译器就是注册"
+"机制。其二， **C 使用面存在的理由，与通常的 C API 相反** ——不是为了让别"
+"的语言进来，而是给内核一条不会意外生长的边界，因为那里的每一条声明都是关"
+"于未来十年的承诺。"
+
+#: ../../source/architecture.rst:82 a392a460543a49d28f7b107b8ce55900
+msgid "Three faces, one core"
+msgstr ""
+"三个使用面，一个内核"
+
+#: ../../source/architecture.rst:84 45ea0d2a12ba469cb88139dfa245f115
+msgid ""
+"The core cannot be written in the language of any one consumer: it is "
+"value types and functions over them, and each face is a thin adaptation."
+msgstr ""
+"内核不能用任何一个使用方的语言来写：它是值类型，以及作用于这些值类型的函"
+"数；每个使用面都只是一层薄适配。"
+
+#: ../../source/architecture.rst:92 615f90600b864eae9e8c97623a9c2033
+msgid ""
+"Each arrow points inward. No face knows about another, and Python reaches"
+" the core only through the C surface."
+msgstr ""
+"每条箭头都指向内部。使用面彼此不相识，Python 只能经由 C 使用面触到内核。"
+
+#: ../../source/architecture.rst:95 5b834904f8d64445a70958bf854b5779
+msgid ""
+"The dependency direction is not a style preference. If Python could reach"
+" the templates directly, the C surface would stop being a constraint on "
+"it and the two surfaces would drift, with the tests of one silently not "
+"covering the other."
+msgstr ""
+"依赖方向不是风格偏好。如果 Python 能直接够到模板，C 使用面就不再是对它的"
+"约束，两个使用面会各自漂移，一边的用例悄悄盖不住另一边。"
+
+#: ../../source/architecture.rst:100 711d1069044b4bad9c0db98322380a4a
+msgid "The loop, composed rather than inherited"
+msgstr ""
+"环由组合而来，不是继承而来"
+
+#: ../../source/architecture.rst:102 71abd1f47e4d4575a8a847ec46378f8f
+msgid ""
+"The periodic path is a composition of policies fixed at compile time: the"
+" HAL is a template parameter, the modulator is a template parameter, the "
+"regulator is a template parameter, and the composition is a type."
+msgstr ""
+"周期路径是若干编译期固定的策略的组合：HAL 是模板实参，调制器是模板实参，"
+"调节器是模板实参，而组合本身是一个类型。"
+
+#: ../../source/architecture.rst:111 e1b18f477d2c40cc9ba32052a1a83e38
+msgid ""
+"One PWM period: the reference, the regulators, the limits, the modulator,"
+" the minimum-pulse stage, the HAL, and the observer closing the loop "
+"through the angle."
+msgstr ""
+"一个 PWM 周期：给定、调节器、限幅、调制器、最小脉宽级、HAL，以及经由角度"
+"把环闭合的观测器。"
+
+#: ../../source/architecture.rst:114 c67e9e1f339542cfbbab8e6ff7ac0722
+msgid ""
+"Two asymmetries in that picture are where this differs from a textbook "
+"cascade. The **limits are inside the chain** rather than at its output, "
+"so a regulator knows the ceiling it is working against rather than "
+"discovering it afterwards. And the **minimum-pulse and dead-time stage "
+"sits between the modulator and the HAL**, because those losses happen "
+"between arithmetic and copper and nothing downstream can infer them."
+msgstr ""
+"图里有两处不对称，正是本库与教科书式级联的分野。其一， **限幅在链路内部*"
+"* ，而不在链路出口，因此调节器事先就知道自己顶着哪个上限，不必事后才发现"
+"。其二， **最小脉宽与死区这一级夹在调制器与 HAL 之间** ，因为这些损失发"
+"生在算术与铜线之间，下游任何环节都推断不出来。"
+
+#: ../../source/architecture.rst:121 9acdbdf4fa52430bab8b5a09c4f2c7c9
+msgid "The layering, and what may depend on what"
+msgstr ""
+"分层，以及谁可以依赖谁"
+
+#: ../../source/architecture.rst:128 dc01f03a156048a885f0d45414838382
+msgid ""
+"Header layers. The value layer is the floor: everything may depend on it "
+"and it depends on nothing but the standard library. The HAL appears as a "
+"box with no arrows out, because it is a policy the caller implements "
+"rather than a module the library calls."
+msgstr ""
+"头文件分层。值层是地板：任何东西都可以依赖它，而它除标准库之外不依赖任何"
+"东西。HAL 画成一个没有出箭头的方框，因为它是调用方实现的策略，而不是库去"
+"调用的模块。"
+
+#: ../../source/architecture.rst:132 6b0bffc2cf37465fbb5e1b905800a1f7
+msgid ""
+"Two rules hold the picture up. **A third-party header may not reach a "
+"public header**: the cost was measured to be multiples of the entire "
+"include face, so the answer is no rather than \"only a little\", and the "
+"dependency gate is what says so. And **the C face is a mirror, not a "
+"dependency**: ``foc_types.h`` is written by hand against the value "
+"layer's semantics rather than generated from it, because a generated "
+"mirror breaks whenever the generator does -- and it breaks in the ABI."
+msgstr ""
+"两条规则撑起这张图。其一， **第三方头文件不得进入公开头文件** ：代价实测"
+"是整个 include 面的数倍，所以答案是“不行”，而不是“只一点点”，这么回答的"
+"是依赖门禁。其二， **C 使用面是镜像，不是依赖** ： ``foc_types.h`` 是照"
+"着值层的语义手写的，而不是从值层生成的，因为生成的镜像会随生成器一起坏——"
+"而且坏在 ABI 上。"
+
+#: ../../source/architecture.rst:140 9e72b2bd70b54ab69079f2ce2e45d0a0
+msgid "The data model"
+msgstr ""
+"数据模型"
+
+#: ../../source/architecture.rst:142 1948e62ff28f47c4b303e15a1aa5eab2
+msgid ""
+"Everything that flows through the library is a small value type whose "
+"name says what it is: a phase triple, a stationary pair, a rotor-frame "
+"pair, a configuration struct, a result struct. They are trivially "
+"copyable, they have no invariants a constructor must defend, and the "
+"library never owns them."
+msgstr ""
+"在库里流动的一切都是小的值类型，名字即其所是：三相三元组、静止坐标系下的"
+"一对、转子坐标系下的一对、配置结构体、结果结构体。它们可平凡复制，没有需"
+"要构造函数去守住的不变量，库也从不持有它们。"
+
+#: ../../source/architecture.rst:147 eed83242f7bc4d62b1a07d2cb31a4da9
+msgid ""
+"Three properties follow. **No aliasing**: a function that takes a value "
+"cannot be affected by another context mutating it, so \"who else holds "
+"this\" never arises in the loop. **No hidden state**: a result struct "
+"carries what the caller needs to decide what happened -- a saturation "
+"flag, a mask, a timestamp and a status -- so nobody has to ask the object"
+" what it meant. **Units in the names**: the symbol registry generates the"
+" symbol table, and a quantity without a registered unit fails the "
+"documentation's gates, which is a cheap way to make \"milliseconds where "
+"seconds were expected\" a visible mistake."
+msgstr ""
+"由此有三条性质。其一， **没有别名** ：按值取参的函数，不会被另一处上下文"
+"改写它而影响，因此“还有谁持有它”在环里从不成为问题。其二， **没有隐藏状"
+"态** ：结果结构体带着调用方判断发生了什么所需的一切——饱和标志、掩码、时"
+"间戳与状态，没有人需要再去问那个对象它是什么意思。其三， **单位写在名字"
+"里** ：符号注册表生成符号表，一个没有登记单位的量过不了文档门禁，这是让“"
+"该用秒的地方写成毫秒”变成可见错误的便宜办法。"
+
+#: ../../source/architecture.rst:156 5038cf2d5ad74161b17df3fc0da40916
+msgid "The failure model"
+msgstr ""
+"失败模型"
+
+#: ../../source/architecture.rst:158 9fac4d58bce34f03a802187045462bd5
+msgid "Failure is a value with a small closed set of meanings."
+msgstr ""
+"失败是一个值，含义是一个小的封闭集合。"
+
+#: ../../source/architecture.rst:165 a6e9c82a33aa4c6eb0ef995dc5a3632f
+msgid ""
+"What can go wrong and which code carries it. The distinction that matters"
+" operationally is between \"you asked wrong\" and \"this build cannot\"."
+msgstr ""
+"会出什么错，由哪个码承载。运行中真正要紧的区分，是“你问错了”和“这次构建"
+"做不到”之间的区分。"
+
+#: ../../source/architecture.rst:168 84102eed38e54f43a786501dad7a59af
+msgid ""
+"That distinction is not pedantry. Some fields of the host setup structure"
+" are appended over time, and an absent one means the caller was compiled "
+"against an older header rather than that the value is zero. A call that "
+"needs an absent field answers *not implemented*, because otherwise \"we "
+"never asked\" reads like \"nothing is wrong\" -- and the caller's "
+"recovery differs: one is fixed by passing the value, the other by "
+"rebuilding."
+msgstr ""
+"这条区分不是咬文嚼字。主机设置结构体的某些字段是随时间追加的，字段缺席意"
+"味着调用方是按更旧的头文件编译的，而不是那个值是零。需要某个缺席字段的调"
+"用会回答 *未实现* ，否则“从没问过”读起来就像“没有问题”——而调用方的补救方"
+"式不同：一种靠把值传进去，另一种靠重新构建。"
+
+#: ../../source/architecture.rst:174 3a2d7f8fd04d4a38a6e58542017ab37e
+msgid ""
+"Two conventions complete the model. **Refusals happen before work**: a "
+"configuration that cannot be run is rejected at construction or at the "
+"first call that needs it. And **diagnostics saturate rather than wrap**: "
+"a loss counter that wraps to zero reports \"nothing lost\" at the moment "
+"everything was lost."
+msgstr ""
+"两条约定补全这个模型。其一， **拒绝发生在干活之前** ：跑不起来的配置在构"
+"造时就被拒掉，或者在第一次需要它时被拒掉。其二， **诊断量饱和而不回绕** "
+"：一个回绕到零的丢失计数器，会在一切都丢了的那一刻报告“没有丢失”。"
+
+#: ../../source/architecture.rst:180 789d2c1176ca480f898604f41dbdabd1
+msgid "The configuration model"
+msgstr ""
+"配置模型"
+
+#: ../../source/architecture.rst:182 e884120a7cfd47cd897601bdeb2a2569
+msgid ""
+"Configuration is a struct passed at construction, readable but never "
+"partly written. That is stronger than it looks: there is no moment at "
+"which a running drive has a mixture of old and new settings, which is the"
+" failure mode of a setter-based interface in a system with a periodic "
+"interrupt."
+msgstr ""
+"配置是一个在构造时传入的结构体，可读，但从不被部分写入。这比看上去更硬："
+"不存在某一刻运行中的驱动器混着新旧两套设置，而这正是带周期中断的系统里、"
+"基于 setter 的接口的失效方式。"
+
+#: ../../source/architecture.rst:187 569f778fa851413a908e335bd5d5398a
+msgid ""
+"Values divide into two kinds, and the division is visible in the types. "
+"**Boot-time** values -- pole pairs, dead time, switching period, current "
+"limits -- describe the hardware and are fixed for the life of the object."
+" **Run-time** values -- references, enables, mode -- are commands and are"
+" functions rather than fields. Mixing the two is the most common silent "
+"integration error after a wrong pole count, because a dead time copied "
+"onto a different bridge behaves exactly like a machine whose resistance "
+"is wrong."
+msgstr ""
+"取值分两类，分野在类型上看得见。 **上电期** 取值——极对数、死区、开关周期"
+"、电流限值——描述硬件，在对象的整个生命期内固定。 **运行期** 取值——给定、"
+"使能、模式——是命令，是函数而不是字段。把两类混在一起，是继极对数写错之后"
+"最常见的静默集成错误，因为把死区抄到另一座桥上，行为与一台电阻不对的电机"
+"完全相同。"
+
+#: ../../source/architecture.rst:194 ecb868741cea42529fbfe730f4e19377
+msgid ""
+"The refusal policy completes it: a value that is merely unhelpful is "
+"accepted, and a value that is **inconsistent** is refused. An injection "
+"amplitude of zero is not \"off\"; it is a request for an observer that "
+"cannot work."
+msgstr ""
+"拒绝策略补全这一层：只是没什么用的取值会被接受，而 **自相矛盾** 的取值会"
+"被拒绝。注入幅值取零不是“关掉”，而是在要求一个无法工作的观测器。"
+
+#: ../../source/architecture.rst:199 c4e214ac51df447fba2f66d9633dbd03
+msgid "The memory and concurrency models"
+msgstr ""
+"内存模型与并发模型"
+
+#: ../../source/architecture.rst:201 6b7d6458b21049f2a246974042af1fd7
+msgid ""
+"There is no allocation anywhere. Fixed-capacity rings, fixed-size "
+"observer state, configuration by value. Tracing is switched by changing a"
+" **type**, not a flag: the disabled channel is an empty type whose "
+"methods the optimiser deletes, so \"off costs nothing\" is structural and"
+" the size of the motor does not change with tracing enabled."
+msgstr ""
+"任何地方都不分配。固定容量的环形缓冲、固定大小的观测器状态、按值传递的配"
+"置。轨迹靠换一个 **类型** 来开关，而不是换一个标志位：关闭的通道是一个空"
+"类型，其方法被优化器删掉，因此“关掉不花钱”是结构性的，打开轨迹也不改变电"
+"机对象的大小。"
+
+#: ../../source/architecture.rst:206 64dbf7ca354a40d3ad72ff5b1bf8c401
+msgid ""
+"There is one loop, one context and no locks. Every entry point is written"
+" for exactly one caller, and the library does not pretend to be thread-"
+"safe by adding mutexes a real-time path cannot afford to take. What it "
+"does instead is make the dangerous boundary explicit: the HAL is called "
+"from inside the period, so an implementation that blocks has broken the "
+"loop's premise -- the contract says so, and the porting checklist asks "
+"about it."
+msgstr ""
+"只有一个环、一个上下文，没有锁。每个入口点都是为唯一一个调用方写的，库也"
+"不靠加互斥量来假装线程安全——实时路径付不起取锁的代价。它做的是把危险的边"
+"界显式摆出来：HAL 是在周期内部被调用的，所以一个会阻塞的实现已经破坏了环"
+"的前提——契约这么写着，移植检查清单也会问到这一点。"
+
+#: ../../source/architecture.rst:213 81db7c0d72f34e22b200d633d999da4e
+msgid "The extension model"
+msgstr ""
+"扩展模型"
+
+#: ../../source/architecture.rst:215 10d0df707e3b40debada8790b9db063f
+msgid ""
+"There are four seams, and they are one kind of seam: a template parameter"
+" whose required interface is a handful of member functions, checked at "
+"compile time."
+msgstr ""
+"接缝有四条，且是同一种接缝：一个模板实参，它要求的接口是若干成员函数，在"
+"编译期检查。"
+
+#: ../../source/architecture.rst:223 f796fd13fd2647b5865b8759fb288d65
+msgid ""
+"You write one of the boxes on the left; the library names what it needs "
+"and checks it when the composition is instantiated."
+msgstr ""
+"左边方框中的一个由你实现；库声明自己需要什么，并在组合被实例化时检查。"
+
+#: ../../source/architecture.rst:226 6a8f679c814f4cf7a983d5cde62400c1
+msgid ""
+"Adding a capability is a compile-time act with three consequences. The "
+"cost of the new code is visible in the call graph, because it is inlined "
+"where it is used rather than dispatched. A configuration is a type, so "
+"two variants are two binaries rather than one binary with a flag -- cheap"
+" to reason about, expensive in code size for a large variant matrix. And "
+"a wrong implementation fails to compile rather than failing at run time."
+msgstr ""
+"增加一项能力是编译期的动作，带三个后果。新代码的代价在调用图上看得见，因"
+"为它在使用处内联，不是分派过去的。配置是一个类型，所以两个变体是两份二进"
+"制，而不是一份二进制加一个标志位——推理便宜，变体矩阵一大就在代码体积上昂"
+"贵。写错的实现是编译不过，而不是在运行期失败。"
+
+#: ../../source/architecture.rst:232 36265e367a74408583f5e0db3c6a77ef
+msgid ""
+"The seams are deliberately few. A fifth would be a commitment to a fifth "
+"kind of variation, and this project would rather add one after seeing the"
+" variation twice."
+msgstr ""
+"接缝是刻意做少的。第五条接缝等于承诺第五种变化，本项目宁愿把一种变化见过"
+"两次之后再动手加。"
+
+#: ../../source/architecture.rst:236 9ec99b41006a4c5681c92b733c180d1d
+msgid "The compatibility model"
+msgstr ""
+"兼容模型"
+
+#: ../../source/architecture.rst:238 4f961f29b4dc49079cf09e1b5d0b2c9c
+msgid ""
+"The C surface is frozen in the way that matters: existing declarations do"
+" not change meaning, structures carry their own size so appending a field"
+" is compatible, and handles carry a generation counter so a stale one is "
+"detected rather than dereferenced. The C++ surface is not frozen the same"
+" way, and the asymmetry is deliberate: templates are recompiled, binaries"
+" are not."
+msgstr ""
+"C 使用面在要紧的意义上是冻结的：已有声明不改含义，结构体自带长度，所以追"
+"加字段是兼容的；句柄带代数计数器，所以过期的句柄会被检出而不是被解引用。"
+"C++ 使用面不以同样的方式冻结，这种不对称是刻意的：模板会被重新编译，二进"
+"制不会。"
+
+#: ../../source/architecture.rst:244 6afe4767319d4e52ae9fff40e0a8b615
+msgid ""
+"The practical rule is: depend on the C surface when the dependency must "
+"survive a rebuild you do not control, and on the templates when you want "
+"the inlining."
+msgstr ""
+"实用规则是：这份依赖必须活过一次不由你掌控的重新构建，就依赖 C 使用面；"
+"你要的是内联，就依赖模板。"
+
+#: ../../source/architecture.rst:248 4f5776667a364d97b23c9ab5c0f7d894
+msgid "Where the numbers live"
+msgstr ""
+"数字各有其家"
+
+#: ../../source/architecture.rst:250 2e261324975043e1b9fe23f6c46a73c5
+msgid "A fact has one home, and the artefacts that repeat it are generated."
+msgstr ""
+"一个事实只有一个家，重复它的产物都是生成的。"
+
+#: ../../source/architecture.rst:257 cbff9a18d7bd4f6186dce73f0844864e
+msgid ""
+"The registries, the artefacts generated from them, and the gates that "
+"would notice a disagreement. The claim table is a registry like the "
+"others: its evidence column makes a claim checkable and its basis column "
+"makes a change's blast radius computable."
+msgstr ""
+"注册表、由注册表生成的产物，以及会发现不一致的门禁。主张表和其他注册表同"
+"类：它的证据列让一条主张可被检验，它的依据列让一次改动的波及范围可被算出"
+"来。"
+
+#: ../../source/architecture.rst:261 bcbd212ce68f4c24bc4333cbc658c5fe
+msgid ""
+"This is architecture rather than bookkeeping because it decides what a "
+"reviewer can ask. \"Where does this number come from\" has a file answer;"
+" \"what would invalidate this claim\" has a file answer; \"what prevents "
+"this from rotting\" has a gate answer."
+msgstr ""
+"这属于架构而不是记账，因为它决定了评审者能问什么。“这个数字从哪来”有一个"
+"文件的答案；“什么会让这条主张失效”有一个文件的答案；“什么拦着它腐坏”有一"
+"个门禁的答案。"
+
+#: ../../source/architecture.rst:266 4aeb926e96b14a52a4d3f7eb58b2bb2c
+msgid "The costs, and who pays them"
+msgstr ""
+"代价，以及由谁承担"
+
+#: ../../source/architecture.rst:268 dcd1fe4175d44a13a4a3de950aa23067
+msgid "Four decisions and their price"
+msgstr ""
+"四项决定及其价格"
+
+#: ../../source/architecture.rst:272 d66821acade1402fb1dd6e7db2783899
+msgid "Decision"
+msgstr ""
+"决定"
+
+#: ../../source/architecture.rst:273 c66e323fe43749378e5fb56df0731b9d
+msgid "Alternative rejected"
+msgstr ""
+"被否掉的替代方案"
+
+#: ../../source/architecture.rst:274 14097b3eb3de427b9df0fb2a55ef1b9c
+msgid "What it would have bought"
+msgstr ""
+"它本可换来什么"
+
+#: ../../source/architecture.rst:275 6481054b281a45e8a377bf9db14f9705
+msgid "What it costs, and who pays"
+msgstr ""
+"代价是什么，由谁承担"
+
+#: ../../source/architecture.rst:276 8ba3ae64495340f1a34d8c91d6850448
+msgid "Composition at compile time"
+msgstr ""
+"编译期组合"
+
+#: ../../source/architecture.rst:277 06f2b574443d41f1bd125825608bcf56
+msgid "a run-time interface per component"
+msgstr ""
+"每个组件一个运行期接口"
+
+#: ../../source/architecture.rst:278 59720bb7396a40acb720f9a8c1b2d495
+msgid "deciding a variant at run time, one binary for many products"
+msgstr ""
+"运行期决定变体，一份二进制服务多个产品"
+
+#: ../../source/architecture.rst:279 6c4222ccaddc4ac4abe30a38704a3a43
+msgid "a factory one level up in the product; the integrator pays"
+msgstr ""
+"产品里往上挪一层的工厂；由集成者承担"
+
+#: ../../source/architecture.rst:280 15374a2dba20482489a46ed7ab379f36
+msgid "No exceptions"
+msgstr ""
+"不用异常"
+
+#: ../../source/architecture.rst:281 c3fa2e7e44864813bca5e2172cb6030e
+msgid "throwing from deep inside a nested call"
+msgstr ""
+"从嵌套调用的深处抛出"
+
+#: ../../source/architecture.rst:282 d35abfc13c144e90b08375c4815a5372
+msgid "error paths that do not lengthen signatures"
+msgstr ""
+"不拉长签名的错误路径"
+
+#: ../../source/architecture.rst:283 0148597cedca40ce944fde74b9aba61d
+msgid "every call that can fail returns a value; the author pays"
+msgstr ""
+"每个可能失败的调用都返回值；由作者承担"
+
+#: ../../source/architecture.rst:284 f949ef7de7de472da3f3cce8b0687693
+msgid "No allocation"
+msgstr ""
+"不分配"
+
+#: ../../source/architecture.rst:285 01e891ec24f340f7b4e4319185ac0180
+msgid "strings, containers, logging in place"
+msgstr ""
+"就地使用字符串、容器、日志"
+
+#: ../../source/architecture.rst:286 4f29ca803ff543329be6cd8cb3029aee
+msgid "convenience, and error messages built at the failure site"
+msgstr ""
+"便利，以及在故障点就地构造的错误信息"
+
+#: ../../source/architecture.rst:287 25cf7eb9d9434af197483be4d2ce5e6f
+msgid "fault reporting is a code plus a counter; commissioning pays"
+msgstr ""
+"故障上报是一个码加一个计数器；由投运调试承担"
+
+#: ../../source/architecture.rst:288 d2b1fa7e229c4503b7842498f46c4fdd
+msgid "Refusals instead of defaults"
+msgstr ""
+"拒绝，而不是默认值"
+
+#: ../../source/architecture.rst:289 a19ec81fe36a4804be704a99ec8b4d07
+msgid "a permissive configuration with sensible zeros"
+msgstr ""
+"一份宽松的、零值看着合理的配置"
+
+#: ../../source/architecture.rst:290 1455c3c0543a4c6eaa685bdd3485359a
+msgid "a boot that never argues"
+msgstr ""
+"一次从不争辩的上电"
+
+#: ../../source/architecture.rst:291 37f53d832e184cb5a9c518e0b621e8e5
+msgid "bring-up friction at least once per board; the integrator pays"
+msgstr ""
+"每块板至少一次的上板调试摩擦；由集成者承担"
+
+#: ../../source/architecture.rst:292 beb415ea47d84f1bb00b56b232737c27
+msgid "Frozen C surface"
+msgstr ""
+"冻结的 C 使用面"
+
+#: ../../source/architecture.rst:293 69e255b4e96f43a8bc3f45276dced304
+msgid "evolve the C API freely with the templates"
+msgstr ""
+"让 C API 随模板自由演进"
+
+#: ../../source/architecture.rst:294 b3a32319eca948bf8b0eefd5549d85d5
+msgid "fewer, simpler declarations"
+msgstr ""
+"更少、更简单的声明"
+
+#: ../../source/architecture.rst:295 7c5a04df83874a329a38b3abf3a1840e
+msgid ""
+"a size field in every struct crossing the boundary; the binding author "
+"pays"
+msgstr ""
+"每个跨边界的结构体都带一个长度字段；由绑定作者承担"
+
+#: ../../source/architecture.rst:297 e8278c18e1274325bd74d49ada7847f6
+msgid ""
+"None of these is a defect to be fixed later. Each is the other side of a "
+"stated constraint, and adopting the library is deciding whether those "
+"costs are cheaper than the alternative's."
+msgstr ""
+"这些都不是留待日后修的缺陷。每一条都是某条已声明约束的另一面；采用这个库"
+"，就是在判断这些代价是否比替代方案的代价更便宜。"
+
+#: ../../source/architecture.rst:301 d59cd8c74ab741adba1ba76f64234082
+msgid "How the shape was arrived at"
+msgstr ""
+"这个形状是怎么来的"
+
+#: ../../source/architecture.rst:303 89937a07c5b548ae8045dd28e519cfaf
+msgid ""
+"History. This section is a record rather than a specification, and the "
+"word above is what the documentation's voice gate looks for before it "
+"lets a paragraph talk about the past."
+msgstr ""
+"历史。本节是记录而不是规范，上面那个词就是文档的语气门禁在放行一段谈过去"
+"的文字之前要找的东西。"
+
+#: ../../source/architecture.rst:306 4ac4aa3cc16c42668988ed093b7cc8b0
+msgid ""
+"The shape converged rather than being designed in one sitting, and the "
+"sequence is visible in the repository."
+msgstr ""
+"这个形状是收敛出来的，不是一次坐下来设计出来的，先后顺序在仓库里看得见。"
+
+#: ../../source/architecture.rst:309 0e0ae78ad79b4b53b6d625d9c5ecdbcc
+msgid ""
+"**Refusals came first, and they came from failures.** Each of the four "
+"prohibitions began as a defect in something built on top: a loop whose "
+"period occasionally overran, an observer that silently did nothing, a "
+"configuration that was accepted and produced a drive that merely looked "
+"configured. The rule that followed is mechanical -- when a failure is "
+"found, the fix is written as a refusal that fails loudly, because a "
+"default that keeps working a little is how the same defect returns twice."
+msgstr ""
+"**拒绝在先，而拒绝来自失败。** 四条禁令中的每一条，起初都是建在其上的某"
+"个东西里的一个缺陷：一个周期偶尔超期的环、一个悄悄什么都不做的观测器、一"
+"份被接受却只造出一台看着像配置好了的驱动器的配置。随之定下的规则是机械的"
+"——发现一次失败，就把修法写成一条会大声失败的拒绝，因为一个“还能凑合工作"
+"一点”的默认值，正是同一个缺陷回来两次的方式。"
+
+#: ../../source/architecture.rst:316 407ff534f6aa4740a6ee49bf21229ab0
+msgid ""
+"**The registries came from documentation drift.** Documentation that "
+"carried numbers in prose stopped being true. The response was not to "
+"check harder but to give each fact a file and generate everything that "
+"repeats it, then add a gate that compares the documented copy with the "
+"artefact -- which is why the site and the manual both draw their numbers "
+"from registries."
+msgstr ""
+"**注册表来自文档漂移。** 把数字写在散文里的文档，不再为真。应对的办法不"
+"是检查得更勤，而是给每个事实一个文件，把一切重复它的东西生成出来，再加一"
+"道门禁，把文档里的副本与产物做比较——站点和手册的数字都取自注册表，原因就"
+"在这里。"
+
+#: ../../source/architecture.rst:321 e43b88e190764d5aa4da7ec01f7a4071
+msgid ""
+"**The evidence model came from a claim nothing could contradict.** A "
+"statement was found that had passed every check because no check was "
+"about it. The claim table, the case pointer in both directions, and the "
+"basis graph all date from that discovery, and the correction is recorded "
+"publicly in :doc:`foundation-log`."
+msgstr ""
+"**证据模型来自一条没有任何东西能反驳的主张。** 当时发现有一句话通过了所"
+"有检查，因为没有任何一项检查是针对它的。主张表、双向的用例指针、依据图，"
+"都始于那一次发现，纠正过程公开记录在 :doc:`foundation-log` 里。"
+
+#: ../../source/architecture.rst:326 3431723bed58476b89c15f6af3bda728
+msgid ""
+"**The C face came from a versioning problem, not from a portability "
+"wish.** The binary boundary exists because consumers were recompiling the"
+" templates and the semantics were drifting between them. Freezing the C "
+"surface forced the semantics into declarations, and the other bindings "
+"then had something stable to bind to."
+msgstr ""
+"**C 使用面来自一个版本问题，而不是可移植性的愿望。** 二进制边界之所以存"
+"在，是因为使用方各自重新编译模板，语义在它们之间漂移。冻结 C 使用面把语"
+"义逼进了声明里，其他绑定于是有了稳定的东西可绑。"
+
+#: ../../source/architecture.rst:331 6ad03bd49d9742b1a43d1070afe28e8a
+msgid ""
+"**The infrastructure layer is byte-pinned on purpose.** The build system "
+"and the formatting and linting configuration are not edited by hand; they"
+" are owned outside this library and checked byte for byte, because a "
+"project that lets its own build files drift cannot make claims about "
+"anybody else's builds."
+msgstr ""
+"**基础设施层是刻意按字节钉住的。** 构建系统与格式、lint 配置都不手工编辑"
+"；它们归本库之外所有，并逐字节比对，因为一个任由自己的构建文件漂移的项目"
+"，无法对他人的构建作出任何主张。"
+
+#: ../../source/architecture.rst:336 707f2942cbfb4d6598a416ce4e140d23
+msgid ""
+"The practical lesson is the one worth carrying: each decision above is a "
+"response to something that had already gone wrong, each is cheap to "
+"describe and expensive to retrofit, and the shape is what survived."
+msgstr ""
+"值得带走的是那条实用教训：上面每一项决定都是对某件已经出错之事的回应，每"
+"一条描述起来便宜、事后补装昂贵，留下来的就是现在的形状。"
+
+#: ../../source/architecture.rst:341 339846bf259549e59dc05eecfcbb63ed
+msgid "How to review the architecture"
+msgstr ""
+"如何评审这套架构"
+
+#: ../../source/architecture.rst:343 4632098fa6fc454dbcd7c0a7aaf6bfed
+msgid ""
+"Does the periodic path allocate, throw, or dispatch virtually? The build "
+"disables two of the three; the third is checked by reading the "
+"composition, which is a type."
+msgstr ""
+"周期路径会分配、会抛异常、会做虚分派吗？三者之中构建禁掉了两个；第三个靠"
+"读组合来检查，而组合是一个类型。"
+
+#: ../../source/architecture.rst:345 c443f74d3ad147229fc4d953d2faaa24
+msgid ""
+"Can a consumer reach the core without going through a declared face? The "
+"layering picture is the claim; the include face is the check."
+msgstr ""
+"使用方能否不经过某个已声明的使用面就够到内核？分层图是主张，include 面是"
+"检查。"
+
+#: ../../source/architecture.rst:347 e667d76607914e809b7e71e4d59a04ec
+msgid ""
+"Is every fact in one place, and is disagreement detectable? The "
+"registries and the gates answer it, and the answer is checkable by "
+"running them."
+msgstr ""
+"每个事实是否只有一处出处，不一致是否可被发现？注册表和门禁回答这个问题；"
+"回答能否成立，把它们跑一遍就知道。"
+
+#: ../../source/architecture.rst:349 0136714af1f84d0ab72934d7b1b92f73
+msgid ""
+"What happens when a configuration is wrong? It is refused, with a code "
+"that separates \"you asked wrong\" from \"this build cannot\"."
+msgstr ""
+"配置写错时会发生什么？会被拒绝，并给出一个把“你问错了”和“这次构建做不到”"
+"分开的错误码。"
+
+#: ../../source/architecture.rst:351 cbe8988fc76041f3a033ae1f594b3704
+msgid ""
+"How does a new capability enter? Through one of four seams, at compile "
+"time, with its interface checked by the compiler and its behaviour "
+"checked by a case."
+msgstr ""
+"一项新能力怎么进来？经由四条接缝之一，在编译期进来；接口由编译器检查，行"
+"为由一条用例检查。"
+
+#: ../../source/architecture.rst:353 b80cde69c208496bac4f16708407f548
+msgid ""
+"What does the architecture refuse to do, and is that written down? This "
+"page and :doc:`boundaries`, in that order."
+msgstr ""
+"这套架构拒绝做什么，这写下来了吗？本页与 :doc:`boundaries` ，就是这个顺"
+"序。"
+

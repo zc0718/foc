@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: foc 0.1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-23 17:40+0800\n"
+"POT-Creation-Date: 2026-11-06 23:08+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: zh_CN\n"
@@ -18,63 +18,96 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.17.0\n"
 
-#: ../../source/usage.rst:2 33c9e7ca8f124032b5a98c8cac4cf66c
+#: ../../source/usage.rst:2 53aa0192018047148399d518a5811d39
 msgid "_`Usage and verification`"
 msgstr "_`用法与验证`"
 
-#: ../../source/usage.rst:4 ee5ca7616b474af18d22ca59ae92131a
-msgid "This page is the part a user actually needs: the three faces of the library, the model behind them, and the evidence that they work."
+#: ../../source/usage.rst:4 5c8f9bb63eb54859a2daabf70fed5218
+msgid ""
+"This page is the part a user actually needs: the three faces of the "
+"library, the model behind them, and the evidence that they work."
 msgstr "本页是使用者真正需要的部分：库的三个使用面、它们背后的模型，以及它们确实可用的证据。"
 
-#: ../../source/usage.rst:8 ec36e7d59c4a4b68a9dd732099b957a0
+#: ../../source/usage.rst:8 33e0a1f953ac4ea2a5f4848c0163f40e
 msgid "_`C++ path (recommended for board-level work)`"
 msgstr "_`C++ 路径（上板首选）`"
 
-#: ../../source/usage.rst:10 c69780bb6cbb4f78a72a0cfe953adb7d
-msgid "Every policy is a template parameter: the observer, the modulator, the controllers and the HAL. Nothing is virtual, and swapping a policy costs nothing at run time."
+#: ../../source/usage.rst:10 8e2e4c0b69b342a0bb2cecd249b4d117
+msgid ""
+"Every policy is a template parameter: the observer, the modulator, the "
+"controllers and the HAL. Nothing is virtual, and swapping a policy costs "
+"nothing at run time."
 msgstr "所有策略都是模板参数：观测器、调制器、控制器与 HAL。没有虚函数，换策略不付运行时代价。"
 
-#: ../../source/usage.rst:13 d6f384ce69064f0181732248c476c7a2
+#: ../../source/usage.rst:13 58556d847da6456296237a5b4fb2b78c
 msgid "one motor, one control step"
 msgstr "一个电机，一个控制步"
 
-#: ../../source/usage.rst:42 f6adcc0f5bb9441eb5051a4a8c6a491e
-msgid ":code:`tick()` is noexcept, allocates nothing and does no I/O — it is the ISR entry point. The tuning helpers (:code:`current_pi_config`, :code:`speed_pi_config`) live in the library so the C path and the SIL bench use exactly the same numbers."
-msgstr ":code:`tick()` 是 noexcept、不分配、不做 I/O——它就是 ISR 入口。整定辅助函数（:code:`current_pi_config`、:code:`speed_pi_config`）放在库里，保证 C 路径与 SIL 台架用的是同一组数。"
+#: ../../source/usage.rst:42 f547f20781494bc9a86ff4b4b174bacf
+msgid ""
+":code:`tick()` is noexcept, allocates nothing and does no I/O — it is the"
+" ISR entry point. The tuning helpers (:code:`current_pi_config`, "
+":code:`speed_pi_config`) live in the library so the C path and the SIL "
+"bench use exactly the same numbers."
+msgstr ""
+":code:`tick()` 是 noexcept、不分配、不做 I/O——它就是 ISR 入口。整定辅助"
+"函数（ :code:`current_pi_config` 、 :code:`speed_pi_config` ）放在库里，"
+"保证 C 路径与 SIL 台架用的是同一组数。"
 
-#: ../../source/usage.rst:47 e27a2f3015eb4636a67a198044a82c3d
+#: ../../source/usage.rst:47 bc3a9c89d5304ac89231592fea1341b4
 msgid "_`C path (non-C++ projects, glue code)`"
 msgstr "_`C 路径（非 C++ 工程、胶水层）`"
 
-#: ../../source/usage.rst:49 f81561b42b594ce5be7a003390f45eb6
+#: ../../source/usage.rst:49 933fb2b9c2464608bbc4c5be2ca20281
 msgid "the same motor through the frozen ABI"
 msgstr "同一个电机，走冻结的 ABI"
 
-#: ../../source/usage.rst:68 684d915c8c8d498c89b1f9348d81f9ce
-msgid "Handles are opaque tokens carrying a generation counter: after :code:`foc_motor_destroy()` an old handle answers :code:`FOC_ERR_PARAM` instead of touching freed memory. The C path runs on the stub HAL with library defaults (20 kHz, 500 ns dead time, 5 A limit, 24 V bus); for real hardware use the C++ path."
-msgstr "句柄是带代际计数的不透明令牌：调用 :code:`foc_motor_destroy()` 之后，旧句柄返回 :code:`FOC_ERR_PARAM`，而不是去碰已释放的内存。C 路径跑在桩 HAL 与库内默认值上（20 kHz、500 ns 死区、5 A 限流、24 V 母线）；上真实硬件请走 C++ 路径。"
+#: ../../source/usage.rst:68 80fc156578fa4ce69f0be9447d0b5ddd
+msgid ""
+"Handles are opaque tokens carrying a generation counter: after "
+":code:`foc_motor_destroy()` an old handle answers :code:`FOC_ERR_PARAM` "
+"instead of touching freed memory. The C path runs on the stub HAL with "
+"library defaults (20 kHz, 500 ns dead time, 5 A limit, 24 V bus); for "
+"real hardware use the C++ path."
+msgstr ""
+"句柄是带代际计数的不透明令牌：调用 :code:`foc_motor_destroy()` 之后，旧"
+"句柄返回 :code:`FOC_ERR_PARAM` ，而不是去碰已释放的内存。C 路径跑在桩"
+"HAL 与库内默认值上（20 kHz、500 ns 死区、5 A 限流、24 V 母线）；上真实硬"
+"件请走 C++ 路径。"
 
-#: ../../source/usage.rst:74 46ea2024720a4c82bfd90f6eeb2e2133
+#: ../../source/usage.rst:74 451b6243f20d44b6bc93d0d054166d9a
 msgid "_`Python path (host-side scripts)`"
 msgstr "_`Python 路径（上位机脚本）`"
 
-#: ../../source/usage.rst:76 8f9a1fd63c4f4635bd4e2d53579a61f4
+#: ../../source/usage.rst:76 6f307e40d54049de89829f08e00b6c25
 msgid "the same motor from Python"
 msgstr "同一个电机，从 Python 驱动"
 
-#: ../../source/usage.rst:89 79b09ee4716c458f85fae9b5b303d01e
-msgid "The module binds the **C API**. Failures raise :code:`foc_python.FocError` whose :code:`code` attribute is the very :code:`ErrorCode` the C function returned — Python gets exceptions, you keep the raw code."
-msgstr "模块绑定的是 **C API**。失败抛 :code:`foc_python.FocError`，其 :code:`code` 属性就是 C 函数返回的那个 :code:`ErrorCode`——Python 拿到异常，你仍保留原始错误码。"
+#: ../../source/usage.rst:89 6d371e620bd442a4aea7303dd74f4fb4
+msgid ""
+"The module binds the **C API**. Failures raise "
+":code:`foc_python.FocError` whose :code:`code` attribute is the very "
+":code:`ErrorCode` the C function returned — Python gets exceptions, you "
+"keep the raw code."
+msgstr ""
+"模块绑定的是 **C API** 。失败抛 :code:`foc_python.FocError` ，其 :code:`"
+"code` 属性就是 C 函数返回的那个 :code:`ErrorCode` ——Python 拿到异常，你"
+"仍保留原始错误码。"
 
-#: ../../source/usage.rst:94 22e2b2cd60ac48838981763c1f260168
+#: ../../source/usage.rst:94 a7c60426176344ceaa1f8ad9aeacc5b8
 msgid "_`The model behind the loop`"
 msgstr "_`控制环背后的模型`"
 
-#: ../../source/usage.rst:96 96136e187fef47fba929172ddd4cbf4a
-msgid "The controller sees a dq-frame PMSM. The plant used by the SIL tests integrates exactly this, with fixed-step RK4 at 10 µs against a 100 µs control step:"
-msgstr "控制器看到的是 dq 轴 PMSM。SIL 测试用的 plant 就按下面这组方程积分：固定步长 RK4，10 µs 积分步长对 100 µs 控制步长："
+#: ../../source/usage.rst:96 07f5184e205e4beebc5943a5e990434c
+msgid ""
+"The controller sees a dq-frame PMSM. The plant used by the SIL tests "
+"integrates exactly this, with fixed-step RK4 at 10 µs against a 100 µs "
+"control step:"
+msgstr ""
+"控制器看到的是 dq 轴 PMSM。SIL 测试用的 plant 就按下面这组方程积分：固定步长 RK4，10 µs 积分步长对 100 µs "
+"控制步长："
 
-#: ../../source/usage.rst:99 ac77b07afd91496d95d3792ba1f7008d
+#: ../../source/usage.rst:99 dd6cfb8d5a1248b489a4cde3e1fbc720
 msgid ""
 "\\begin{aligned}\n"
 "\\frac{di_d}{dt} &= \\frac{v_d - R_s i_d + \\omega_e L_q i_q}{L_d} \\\\\n"
@@ -85,96 +118,1178 @@ msgid ""
 "T_e = \\tfrac{3}{2} p \\left(\\psi_f i_q + (L_d - L_q) i_d i_q\\right)\n"
 "\\end{aligned}"
 msgstr ""
+"% dq 轴电压方程与机械转矩方程\n\\begin{aligned}\n\\frac{di_d}{dt} &= \\"
+"frac{v_d - R_s i_d + \\omega_e L_q i_q}{L_d} \\\\\n\\frac{di_q}{dt} &="
+"\\frac{v_q - R_s i_q - \\omega_e L_d i_d - \\omega_e \\psi_f}{L_q} \\\\"
+"\n\\frac{d\\omega_m}{dt} &= \\frac{T_e - B \\omega_m - T_{load}}{J}, \\"
+"qquad\nT_e = \\tfrac{3}{2} p \\left(\\psi_f i_q + (L_d - L_q) i_d i_q\\"
+"right)\n\\end{aligned}"
 
-#: ../../source/usage.rst:109 cdaa72329c4348b5a3589088f1578872
-msgid "with :math:`\\psi_f = K_t / (1.5 p)` and :math:`\\omega_e = p\\,\\omega_m`. The torque constant is *knot* the back-EMF constant: conflating them is the classic way to be wrong by 1.5 p."
-msgstr "其中 :math:`\\psi_f = K_t / (1.5 p)`、:math:`\\omega_e = p\\,\\omega_m`。转矩常数**不是**反电动势常数：把两者混为一谈，正是差 1.5 p 的经典错法。"
+#: ../../source/usage.rst:109 676e399bc60d477cb5cc8b213eaf5bd1
+msgid ""
+"with :math:`\\psi_f = K_t / (1.5 p)` and :math:`\\omega_e = "
+"p\\,\\omega_m`. The torque constant is *knot* the back-EMF constant: "
+"conflating them is the classic way to be wrong by 1.5 p."
+msgstr ""
+"其中 :math:`\\psi_f = K_t / (1.5 p)` 、 :math:`\\omega_e = p\\,\\omega_m"
+"` 。转矩常数 **不是** 反电动势常数：把两者混为一谈，正是差 1.5 p 的经典"
+"错法。"
 
-#: ../../source/usage.rst:113 761c76b03e6442c6a22ed0b775356754
+#: ../../source/usage.rst:112 1c9e5e2db33f4e97a58aac48cad317f0
+msgid ""
+"**How that model earns its place.** Everything else in this documentation"
+" is measured against it, so it is the one thing that cannot be taken on "
+"trust. Four checks, none of which is a comparison with itself:"
+msgstr ""
+"**这个模型凭什么站得住。** 本文档其余内容都以它为基准测量，因此它是唯一"
+"不能凭信任接受的东西。四项检查，没有一项是与自己的比较："
+
+#: ../../source/usage.rst:115 f8937b0758114e539c42191bc284bf20
+msgid ""
+"**The equations above are the equations the plant integrates** -- same "
+"terms, same `psi_f = Kt/(1.5p)` substitution, and the header block states"
+" them next to the code that computes them."
+msgstr ""
+"**上面的方程就是 plant 积分的方程** ——同样的各项、同样的 `psi_f = Kt/("
+"1.5p)` 代换，而且头文件里把它们写在了计算它们的代码旁边。"
+
+#: ../../source/usage.rst:117 59982200e85f4b12aefa31d31975fa01
+msgid ""
+"**An independent formulation agrees.** `sil_abc_plant.hpp` integrates the"
+" three phase fluxes directly from `v = Rs*i + d(lambda)/dt` with "
+"`lambda_p = (Ls - M)*i_p + lambda_m*cos(theta_p)` and derives torque from"
+" co-energy, without Clarke, Park or `psi_f`. The two models agree on "
+"`i_d`/`i_q` to 2 % and on torque, and on the electrical time constant: "
+"two different formulations of the same physics is the strongest evidence "
+"available without a bench."
+msgstr ""
+"**独立的写法给出同样的结果。** `sil_abc_plant.hpp` 直接用 `v = Rs*i + d("
+"lambda)/dt` 与 `lambda_p = (Ls - M)*i_p + lambda_m*cos(theta_p)` 对三相"
+"磁链积分，并由共能导出转矩，不经过 Clarke、Park，也不用 `psi_f` 。两个模"
+"型在 `i_d` /`i_q` 上一致到 2 %、在转矩上一致，电气时间常数也一致：同一套"
+"物理的两种不同写法，是没有台架时能拿到的最强证据。"
+
+#: ../../source/usage.rst:121 053d88f1592145bca466ee914028b855
+msgid ""
+"**Analytic anchors.** An `RL` step matches the closed-form solution; the "
+"mechanical steady state satisfies the torque balance; positive torque at "
+"positive speed delivers mechanical power; phase currents round-trip back "
+"to the dq frame; `psi_f` follows the torque constant."
+msgstr ""
+"**解析锚点。** `RL` 阶跃与闭式解一致；机械稳态满足转矩平衡；正转速下的正"
+"转矩输出机械功率；相电流能往返回到 dq 坐标； `psi_f` 与转矩常数对应。"
+
+#: ../../source/usage.rst:124 fa9994cf110d4b51ba275836f09f1e15
+msgid ""
+"**A conservation law at the frequency it is used at.** `P_elec = P_copper"
+" + dW/dt + P_mech`, with `W = 1.5*(Ld*id^2/2 + Lq*iq^2/2 + psi_f*id)`, "
+"run at **900 rad/s electrical**: 11313.95 J in, 11302.81 J out as copper "
+"plus mechanical work over 0.1 s (**0.098 %**), and the worst single "
+"period within **0.37 %**. One invariant catches a wrong factor of 1.5, a "
+"wrong `psi_f` and a cross-coupling sign at the same time."
+msgstr ""
+"**在它被使用的频率上守一条守恒律。** `P_elec = P_copper + dW/dt + P_mech"
+"` ，其中 `W = 1.5*(Ld*id^2/2 + Lq*iq^2/2 + psi_f*id)` ，在 **900 rad/s电"
+"气** 下运行：0.1 s 内输入 11313.95 J，以铜耗加机械功输出 11302.81 J（ **"
+"0.098 %** ），单个周期的最坏值在 **0.37 %** 以内。一个不变量同时抓住错的"
+"1.5 系数、错的 `psi_f` 和交叉耦合的符号。"
+
+#: ../../source/usage.rst:129 edfd9e61bdb54b5ebd62f68af3b7065c
+msgid ""
+"What none of the four do is say the *parameters* describe a real motor. "
+"Saturation, iron loss and winding temperature are modelled and **off by "
+"default**; the plant is exact for the machine it describes and says "
+"nothing about a specific one. That is why every claim in this library is "
+"of the form \"this algorithm does X on a machine described by these "
+"equations\" -- falsifiable, and true -- and none of them is of the form "
+"\"this will work on your motor\", which would need a bench."
+msgstr ""
+"这四项都不说明这些 *参数* 描述的是真实电机。饱和、铁耗与绕组温度都已建模"
+"，默认 **关闭** ；plant 对它描述的那台机器是精确的，对具体某一台则什么也"
+"没说。这就是为什么本库的每条主张都写成“这个算法在一台由这些方程描述的机"
+"器上做到 X”——可证伪，而且成立——没有一条写成“这在你的电机上能用”，那需要"
+"台架。"
+
+#: ../../source/usage.rst:135 faa9404188514b2bbbfe83bd09982e74
+msgid "_`Sizing the injection (HFI)`"
+msgstr ""
+"_`注入的定量（HFI）`"
+
+#: ../../source/usage.rst:137 d62b1a8311fb4308bb107bf8534e714e
+msgid ""
+"The injection observer buys an angle where back-EMF has nothing to say, "
+"and it is not free. Every number below was measured on the SIL envelope "
+"fixture — a loaded machine held at a given speed on a dyno, the observer "
+"as a passenger, so a cell is a property of the observer and not of a loop"
+" closing on it."
+msgstr ""
+"注入观测器在反电动势无从说话的地方换来一个角度，而这并不免费。下面每个数"
+"字都在 SIL 包络台架上测得——一台带载电机在测功机上被保持在给定转速，观测"
+"器只是乘客，因此每一格都是观测器自身的性质，而不是某个闭合在它上面的环的"
+"性质。"
+
+#: ../../source/usage.rst:141 3f2466a3e9684015b85e601e858338c8
+msgid ""
+"**The carrier has a ceiling set by the control rate.** Ask for it rather "
+"than guess:"
+msgstr ""
+"**载波有上限，由控制频率决定。** 去问它，而不是猜它："
+
+#: ../../source/usage.rst:150 ad0ec27aa5984a00905e146c90730b1a
+msgid ""
+"The same question from C is :code:`foc_hfi_max_inject_hz(pwm_freq_hz)`. "
+"Past the ceiling the observer does not get noisy, it stops: the "
+"demodulated amplitude collapses, the lock detector drops out, the angle "
+"freezes and the speed reads zero, which a loop cannot tell from a stalled"
+" rotor — measured as a -19.5 rad/s speed bias before the failure was "
+"understood. :code:`foc_motor_create_ex()` refuses such a request, and the"
+" cases it cannot catch are reported by :code:`observer_locked`."
+msgstr ""
+"从 C 侧问同一个问题是 :code:`foc_hfi_max_inject_hz(pwm_freq_hz)` 。越过"
+"上限之后观测器不是变吵，而是停住：解调幅值塌陷、锁定检测掉出、角度冻结、"
+"速度读数为零，环无法把它与堵转的转子区分开——这一失效被理解之前，它表现为"
+"-19.5 rad/s 的速度偏差。 :code:`foc_motor_create_ex()` 拒绝这类请求，抓"
+"不住的情形由 :code:`observer_locked` 报告。"
+
+#: ../../source/usage.rst:156 93e48030c8b04c638111daf72c96f0d4
+msgid ""
+"The same admission test runs when the observer is changed on a running "
+"motor: :code:`Motor.set_observer()` -- :code:`foc_motor_set_observer()` "
+"from C -- validates the request against the setup already in force, so a "
+"motor built without a carrier can run on back-EMF but cannot be handed "
+"over to HFI later. Outside the Run state it answers :code:`STATE` "
+"instead, because a hand-over carries an estimate and an observer that has"
+" not been stepped has none to carry. Both refusals arrive as "
+":code:`FocError`, never as a silently unchanged "
+":code:`status()[\"observer\"]`."
+msgstr ""
+"在运行中的电机上更换观测器时，同一套准入测试会再跑一遍： :code:`"
+"Motor.set_observer()` ——C 侧是 :code:`foc_motor_set_observer()` ——拿请求"
+"去对已在生效的 setup 校验，因此一台没配载波的电机可以跑反电动势，但之后"
+"不能移交给 HFI。在 Run 状态之外它改答 :code:`STATE` ，因为移交要带走一个"
+"估计值，而一个从未被推进过的观测器没有估计值可带。两种拒绝都以 :code:`"
+"FocError` 到达，绝不会表现为 :code:`status()[\"observer\"]` 悄悄不变。"
+
+#: ../../source/usage.rst:162 4e713bf28ec9405ea150881469b8a263
+msgid ""
+"Within the ceiling, higher is better on both axes at once, because the "
+"angle bias falls faster than the injected current:"
+msgstr ""
+"在上限之内，越高越好，两个轴同时变好，因为角度偏差下降得比注入电流更快："
+
+#: ../../source/usage.rst:164 bafaa309cd7948a6ab2a96dc8b958419
+msgid "20 rad/s mechanical, 200 Hz demodulation, 12 V"
+msgstr ""
+"20 rad/s 机械、200 Hz 解调、12 V"
+
+#: ../../source/usage.rst:167 4e6a4e9f2ef94a80a73698a3b9f399f7
+msgid "carrier"
+msgstr ""
+"载波频率"
+
+#: ../../source/usage.rst:168 1355921ece9a4f85bf2ca488398eb334
+msgid "angle bias"
+msgstr ""
+"角度偏差"
+
+#: ../../source/usage.rst:169 5bc63bfdf8004d5ebcc2bf9235cead79
+msgid "HF current"
+msgstr ""
+"高频电流"
+
+#: ../../source/usage.rst:170 b56a65fa459a4db9abae3b2bca05eee5
+msgid "2000 Hz"
+msgstr ""
+"2000 Hz"
+
+#: ../../source/usage.rst:171 22e60d698aab4f53b5be809dc0be65d5
+msgid "0.0060 rad"
+msgstr ""
+"0.0060 rad"
+
+#: ../../source/usage.rst:172 0b73022cbf624fd08c4d31c56e228c56
+msgid "4.04 A"
+msgstr ""
+"4.04 A"
+
+#: ../../source/usage.rst:173 00011b8daa174da5ba585570d53f8a20
+msgid "4000 Hz"
+msgstr ""
+"4000 Hz"
+
+#: ../../source/usage.rst:174 ca802bc7a835466eaf6217a33e6c0a14
+msgid "0.0012 rad"
+msgstr ""
+"0.0012 rad"
+
+#: ../../source/usage.rst:175 39244437e47544cab0b416f4ea30228d
+msgid "1.89 A"
+msgstr ""
+"1.89 A"
+
+#: ../../source/usage.rst:176 b00c41748d1c49edaedfacda29644b6e
+msgid "8000 Hz"
+msgstr ""
+"8000 Hz"
+
+#: ../../source/usage.rst:177 650f3db6760e43f7b7a5d90727c83c35
+msgid "0.00018 rad"
+msgstr ""
+"0.00018 rad"
+
+#: ../../source/usage.rst:178 909df0a433a54e1387dcd9ceb51abb5b
+msgid "0.38 A"
+msgstr ""
+"0.38 A"
+
+#: ../../source/usage.rst:180 d29e9573740c4d91915ae38274e53430
+msgid ""
+"**Ask for the whole configuration, rather than assembling it.** "
+":code:`foc.hfi_size()` -- :code:`foc_hfi_size()` from C -- takes the "
+"machine and the control rate and returns the carrier, the amplitude, and "
+"both cutoffs:"
+msgstr ""
+"**要一整套配置，而不是自己拼。** :code:`foc.hfi_size()` ——C 侧是 :code:`"
+"foc_hfi_size()` ——取机器与控制频率，返回载波、幅值以及两个截止频率："
+
+#: ../../source/usage.rst:188 49a1013f04cc4c4e91f2acd5e07ad9e9
+#, python-brace-format
+msgid ""
+"The amplitude is the volts that draw the HF current *you* budget ($V = "
+"I_{hf}\\,\\omega_h L_d$), so the injection becomes a decision about "
+"current -- which is what sizes the torque ripple and the extra losses -- "
+"instead of a voltage copied from an example. And the result is a "
+"configuration the library accepts: that is what the tests assert, because"
+" a sizing tool that recommends something the library then refuses would "
+"be worse than no tool."
+msgstr ""
+"幅值是为 *你* 预算的高频电流所需的电压（$V = I_{hf}\\,\\omega_h L_d$），"
+"于是注入变成一个关于电流的决定——而电流才决定转矩纹波与附加损耗——而不是从"
+"示例里照抄的一个电压。并且结果是一份库接受的配置：这正是测试所断言的，因"
+"为一个推荐的配置会被库拒绝的定量工具，比没有工具更糟。"
+
+#: ../../source/usage.rst:193 397b6de6a3f84ba7ab60c8823db900bb
+msgid ""
+"**The demodulation window is a fixed choice, not a scheduled one.** "
+"Across standstill to 50 rad/s mechanical it changes the angle error by "
+"under 0.5 %, and at standstill the *narrowest* window is best by 14x. "
+"What looked like \"a narrow window breaks at speed\" is a start-up "
+"transient, which is what the blanking time is for."
+msgstr ""
+"**解调窗口是固定选择，不随转速调度。** 从静止到 50 rad/s 机械，它让角度"
+"误差的变化不到 0.5 %；而在静止时 *最窄* 的窗口最好，好 14x。看起来像“窄"
+"窗口在高速下会坏”的现象其实是一段起动暂态，消隐时间正是为它准备的。"
+
+#: ../../source/usage.rst:197 a145530fdeba4561bf697b88e776c335
+msgid ""
+"**What is left at low speed is the injection's own price.** In a closed "
+"servo at 20 rad/s the steady bias is 0.0039 rad/s — 0.02 % — and the "
+"remainder is a ripple at the carrier frequency. It is not the estimator, "
+"the angle, the window, the rotor's inertia or the demodulator's clamp: it"
+" scales with the injected current (a third of the volts, 0.36 of the "
+"tone) and with speed (4.0x the speed, 4.0x the tone), and it is "
+"indifferent to the saliency. It is the injected current cross-coupling "
+"into torque on a turning machine, and :code:`inject_v` is the knob that "
+"sizes it."
+msgstr ""
+"**低速下剩下的东西，是注入自身的代价。** 在一个 20 rad/s 的闭环伺服里，"
+"稳态偏差是 0.0039 rad/s——0.02 %——其余部分是载波频率上的纹波。它不是估计"
+"器、不是角度、不是窗口、不是转子惯量、也不是解调器的钳位：它随注入电流成"
+"比例（电压三分之一，单音 0.36），也随转速成比例（转速 4.0x，单音 4.0x）"
+"，并且对凸极率不敏感。它是注入电流在一台转动的机器上交叉耦合进转矩， "
+":code:`inject_v` 就是给它定尺寸的旋钮。"
+
+#: ../../source/usage.rst:203 53dac84c6deb44609f9df2bf6c83358f
+msgid ""
+"**Watch it rather than assume it.** :code:`status()` carries the "
+"observer's own verdict:"
+msgstr ""
+"**看着它，别假设它。** :code:`status()` 携带观测器自己的判定："
+
+#: ../../source/usage.rst:212 f77b84e2116146d0833651b713511322
+msgid ""
+":code:`observer_error` is exactly zero for observers that publish no "
+"error signal, so read it together with :code:`observer_locked` and "
+":code:`observer`."
+msgstr ""
+"对不发布误差信号的观测器， :code:`observer_error` 恰好为零，因此要连同 "
+":code:`observer_locked` 与 :code:`observer` 一起读。"
+
+#: ../../source/usage.rst:215 588ed721d20d4ce99594cd04909cdaa1
+msgid ""
+"**Record the window, rather than watching a scalar.** A status report "
+"answers \"what is true now\"; a fault is usually a question about the "
+"last few milliseconds. The trace channel is a ninth policy on the motor, "
+"so it is chosen at compile time and costs nothing when it is not chosen:"
+msgstr ""
+"**录下窗口，而不是盯着一个标量。** 状态报告回答“现在什么是真的”，而一次"
+"故障通常问的是最近几毫秒。轨迹通道是电机上的第九个策略，因此它在编译期选"
+"定，未选定时不付代价："
+
+#: ../../source/usage.rst:231 63cbfbb94a194e8c84d694d0799cb969
+msgid ""
+"One sample per period, six numbers and two states: the measured currents "
+"the PI acted on, the currents it was asked for, the voltage it applied, "
+"the mechanical speed, and the mode and status the period ended in. With "
+"the default :code:`foc::core::NullTrace` the type is empty -- no member, "
+"no branch, no pointer check -- so \"off costs nothing\" is a property of "
+"the type system rather than a promise about the optimiser."
+msgstr ""
+"每个周期一条采样，六个数与两个状态：PI 据以动作的实测电流、要求它给的电"
+"流、它施加的电压、机械转速，以及该周期结束时的模式与状态。默认的 :code:`"
+"foc::core::NullTrace` 让这个类型是空的——没有成员、没有分支、没有指针检查"
+"——所以“关掉不花钱”是类型系统的性质，而不是对优化器的承诺。"
+
+#: ../../source/usage.rst:236 681943e7f3094833b565725f255ef17d
+msgid ""
+"A full ring keeps recording and counts what it overwrote, because "
+"forgetting with a counter is reversible and stopping is not: a trace that"
+" freezes when it fills loses exactly the window a fault is interesting "
+"in. Timestamps come from the platform clock, truncated to 32 bits (71.6 "
+"minutes); with no clock every :code:`t_us` is zero, which means \"no "
+"timestamp\" rather than \"everything happened at once\"."
+msgstr ""
+"环满之后继续记录，并统计覆盖掉多少条，因为带计数的遗忘是可逆的，停住不是"
+"：填满即冻结的轨迹恰好丢掉故障最有意思的那段窗口。时间戳来自平台时钟，截"
+"断到 32 位（71.6 分钟）；没有时钟时每个 :code:`t_us` 都是零，这表示“没有"
+"时间戳”，而不是“所有事同时发生”。"
+
+#: ../../source/usage.rst:241 889a23324f6f4558b76122eff2f72096
+msgid ""
+"From C the same window is caller-owned storage and a run-time capacity, "
+"because the ABI is one type for every caller:"
+msgstr ""
+"从 C 看，同一个窗口是调用方拥有的存储加上运行期容量，因为 ABI 对所有调用"
+"方只有一种类型："
+
+#: ../../source/usage.rst:253 35f3d3ce2d174e91b8e80e9c87896d71
+msgid ""
+"and from Python the storage belongs to the object, so there is nothing to"
+" keep alive by hand:"
+msgstr ""
+"而从 Python 看，存储属于对象本身，没有需要手工保活的东西："
+
+#: ../../source/usage.rst:263 bad3eb62781a4800b99a65a79dc6e160
+msgid ""
+"The C path pays one null check per period for that run-time capacity -- "
+"predictable, and nothing when detached. The compiled-in C++ path pays "
+"nothing because the capacity is the type. Measured cost of the whole "
+"feature where it lands: the Debug archive grew 8.6 KB (56.9 to 65.6 KB), "
+"of which the code is 1.5 KB and the ten new functions themselves about "
+"0.65 KB; the rest is DWARF for two new types, which a Release artifact "
+"does not carry. A Release ROM figure has **not** been measured, and is "
+"not claimed."
+msgstr ""
+"C 路径为这个运行期容量每个周期付一次空指针检查——可预测，未挂接时不付。编"
+"译期写死的 C++ 路径一分不付，因为容量就是类型。整个特性落到实处的实测代"
+"价：Debug 归档增长 8.6 KB（从 56.9 KB 到 65.6 KB），其中代码 1.5 KB、十"
+"个新函数本身约 0.65 KB；其余是两个新类型的 DWARF，Release 产物不携带。"
+"Release 的 ROM 数字 **没有** 测过，也不作主张。"
+
+#: ../../source/usage.rst:269 3940ae2fdfc147e19d78ccdd50a81904
+#, python-format
+msgid ""
+"Three things this channel is measured to do, and one it cannot. Measured:"
+" a sample agrees with "
+":code:`telemetry()`/:code:`state()`/:code:`status()` **bit for bit** in "
+"the same period; the null channel adds no storage and no branch (host, "
+"best of three rounds: 158.0 ns/period off against 161.9 on over 20 000 "
+"periods -- the +3.9 ns difference is at the resolution of that "
+"measurement, and one round of it reported recording as *faster*, which is"
+" how a noise figure announces itself); and a sample survives a "
+":code:`%.9g` text round trip bit for bit, so a trace written to a file is"
+" still the same numbers when it is read back. What it cannot do is tell "
+"you what the *hardware* did -- it records what the loop believed, so a "
+"perfect-looking trace is entirely consistent with a miscalibrated current"
+" sensor. Per-period cost on a target is also unmeasured here: the host "
+"figure above says nothing about a 100 MHz core, and a budget for that is "
+"a claim somebody would have to take with a scope."
+msgstr ""
+"这条通道被测出能做三件事，还有一件做不到。已测：同一周期内，一条采样与 "
+":code:`telemetry()` /:code:`state()` /:code:`status()` **逐位** 一致；空"
+"通道不增加存储、不增加分支（主机上三轮取最好：20 000 个周期，关闭"
+"158.0ns/周期，开启 161.9——+3.9 ns 的差值在该测量的分辨率量级上，其中一轮"
+"甚至报告记录 *更快* ，一个噪声数字就是这样自报家门的）；一条采样经 "
+":code:`%.9g` 文本往返后逐位不变，因此写进文件的轨迹读回来仍是同一组数。"
+"做不到的是告诉你 *硬件* 做了什么——它记录的是环所相信的东西，因此一条看起"
+"来完美的轨迹，与一个标定错误的电流传感器完全相容。目标板上的逐周期代价在"
+"这里同样没有测量：上面的主机数字对一个 100 MHz 内核什么也没说，那笔预算"
+"得有人拿示波器去主张。"
+
+#: ../../source/usage.rst:277 d0d5e516b9064041a47e1df01ce46bbd
+msgid ""
+"**Compare a window instead of remembering a number.** A status report "
+"answers \"what is true now\" and a trace answers \"what the loop did\"; "
+"neither answers \"did this change\". Three recorded windows do, and they "
+"are compared on demand:"
+msgstr ""
+"**比较窗口，而不是记住一个数。** 状态报告回答“现在什么是真的”，轨迹回答“"
+"环做了什么”；两者都不回答“这件事变了吗”。三段录下来的窗口回答得了，它们"
+"按需比较："
+
+#: ../../source/usage.rst:285 9c4bdda1dc4b45dcb5b13b1fe8e3f967
+msgid ""
+"Each window is plain text: a header naming the scenario and the module "
+"hash it came from, then one line per sample. It is readable in a diff, "
+"which is the only reason a stored number can be reviewed instead of "
+"trusted. The report names the **trace**, the **quantity** and the "
+"**difference**, and classifies it:"
+msgstr ""
+"每个窗口都是纯文本：一段头信息写明场景和它来自的模块哈希，然后每条采样一"
+"行。它在 diff 里可读，这也是一个存下来的数能被审阅而不是被信任的唯一理由"
+"。报告写出 **哪条轨迹** 、 **哪个量** 、 **差多少** ，并给它分类："
+
+#: ../../source/usage.rst:289 4bc8f4848f9541febf98a7d71f5de456
+msgid "what a difference means"
+msgstr ""
+"差异的含义"
+
+#: ../../source/usage.rst:293 ebbbb66aea6f4f70ab71ca8c15e50127
+msgid "band"
+msgstr ""
+"区间"
+
+#: ../../source/usage.rst:294 1f8361bf4a424e58a5a45da015009930
+msgid "reading"
+msgstr ""
+"解读"
+
+#: ../../source/usage.rst:295 a8301e965f464dd4b8aaf0a14c18edd4
+msgid "``<= 1e-5``"
+msgstr ""
+"``<= 1e-5``"
+
+#: ../../source/usage.rst:296 ec0053a3ef5c4df18d378a05db60e3ba
+msgid "same -- arithmetic noise between builds, not a behaviour change"
+msgstr ""
+"相同——构建之间的算术语噪声，不是行为变化"
+
+#: ../../source/usage.rst:297 1e738ed541444919ae224a4c81b035a9
+msgid "``<= 30 %``"
+msgstr ""
+"``<= 30 %``"
+
+#: ../../source/usage.rst:298 155cad91bda04fb58a71efa195c1027f
+msgid "drift -- worth a look, not evidence of anything by itself"
+msgstr ""
+"漂移——值得看一眼，但本身不构成任何证据"
+
+#: ../../source/usage.rst:299 b2ac4442d5b1455c993d34272035a6a6
+msgid "``1.3x .. 2.0x``"
+msgstr ""
+"``1.3x .. 2.0x``"
+
+#: ../../source/usage.rst:300 8d5d75742a534b42acafabfa2c0e467d
+msgid ""
+"**attribute** -- the signature of a missing term rather than of noise; "
+"this is where the W7-c investigation landed (0.1356 predicted against "
+"0.0900 measured, 1.51x) and the term that explained it was real"
+msgstr ""
+"**归因** ——是缺了一项的签名，而不是噪声的签名；W7-c 的调查正落在这一格（"
+"预测 0.1356，实测 0.0900，1.51x），并且解释它的那一项真实存在"
+
+#: ../../source/usage.rst:302 eab90fbec3ef47a0914501fb6e62bfee
+msgid "``> 2.0x`` or a sign flip"
+msgstr ""
+"``> 2.0x`` 或符号翻转"
+
+#: ../../source/usage.rst:303 dfa5cab08957438aa613e1ba86487005
+msgid "changed -- expected after an algorithm change, a surprise otherwise"
+msgstr ""
+"变化——算法改动后属预期，其余情形是意外"
+
+#: ../../source/usage.rst:305 42ff3b77320a4ee08cf38a140626c3e4
+msgid ""
+"The ledger **reports and does not block**, deliberately: a ledger that "
+"gates a build gets its tolerance widened the first time it is "
+"inconvenient, and then the reference value means nothing. ``--strict`` "
+"exists for a release gate, where a human has already decided that this "
+"build and this baseline are comparable."
+msgstr ""
+"台账 **只报告、不阻塞** ，这是刻意的：一个拦住构建的台账，第一次碍事时它"
+"的容差就会被放宽，此后参考值毫无意义。 ``--strict`` 是为发布门禁准备的，"
+"那里已经由人决定过这次构建与这份基线可以比较。"
+
+#: ../../source/usage.rst:309 c223cbb4251149d783da298fed21494c
+msgid ""
+"A golden is a recording from one machine and one build, not a "
+"specification: a different compiler produces different floats in the last"
+" digits. The header carries the module hash so the report can say when a "
+"baseline came from another build, and the bands above are what keep that "
+"honest -- a foreign baseline shows up as drift, not as a silent pass."
+msgstr ""
+"黄金值是某一台机器、某一次构建的录制，不是规格：换一个编译器，浮点数的末"
+"几位就会不同。头信息携带模块哈希，好让报告能说明某份基线来自另一次构建；"
+"上面的区间让这件事保持诚实——外来的基线会表现为漂移，而不是悄悄通过。"
+
+#: ../../source/usage.rst:313 e82821fae1a646a78d76dce89a954723
+msgid ""
+"**Measure the loop instead of eyeballing the plot.** A window tells you "
+"what happened; `foc/core/step_metrics.hpp` turns it into the numbers a "
+"tuning decision rests on. The library's own speed loop is designed as a "
+"first-order closed loop with time constant `1 / wb` (`speed_pi_config()` "
+"cancels the mechanical pole `B/J` and leaves `wb / s`), so the bandwidth "
+"it reports can be checked against the bandwidth that was *asked for* -- a"
+" measurement of the gain law, not of the fit."
+msgstr ""
+"**测量环路，而不是靠眼睛看曲线。** 窗口告诉你发生了什么； `"
+"foc/core/step_metrics.hpp` 把它变成整定决策所依赖的那些数。库自带的速度"
+"环按一阶闭环设计，时间常数为 `1 / wb` （ `speed_pi_config()` 对消机械极"
+"点 `B/J` ，剩下 `wb / s` ），因此它报告的带宽可以对着 *请求的* 带宽核对—"
+"—这是对增益律的测量，而不是对拟合的测量。"
+
+#: ../../source/usage.rst:335 c1ccf0f049d7446bb4109b0f066d848f
+msgid ""
+"Three criteria, each of which was watched going red before it was "
+"believed:"
+msgstr ""
+"三条判据，每一条都先被看着变红，然后才被相信："
+
+#: ../../source/usage.rst:337 a456a697ee1e40d59c0019d100d81ac8
+#, python-format
+msgid ""
+"**fitted vs analytic, <= 10 %.** A 10 rad/s step on the SIL bench fits to"
+" **243.57 rad/s against the 250 rad/s requested (-2.57 %)** through the "
+"Python plant, and **+9.15 %** through the C++ bench. This band is weak "
+"and the weakness is measured: a 20 % error in the gain law moves the "
+"reading only to -9.88 %, still inside it, because the estimator's bias is"
+" the same size as the defect. The companion criterion -- request 125 and "
+"250 rad/s and demand the measurements move by the same factor (134.66 and"
+" 272.87 rad/s, ratio 2.026) -- is what notices a loop that ignores the "
+"request it was given. Attribution, one knob at a time: raising that "
+"bench's inner current bandwidth 2000 to 4000 rad/s moves the number from "
+"+9.4 % to +5.8 %, halving the control period moves it 0.07 points, and "
+"giving the window its pre-step sample moves it 0.30. The inner loop is "
+"the story; the rest is a first-order model applied to a cascade."
+msgstr ""
+"**拟合值对解析值，<= 10 %。** SIL 台架上一个 10 rad/s 的阶跃，经 Python"
+"侧 plant 拟合出 **243.57 rad/s，而请求是 250 rad/s（-2.57 %）** ，经 C++"
+"台架则是 **+9.15 %** 。这条区间很弱，而弱是被测量过的：增益律偏 20 % 只"
+"把读数推到 -9.88 %，仍在其内，因为估计器的偏差与缺陷同样大小。配套判据——"
+"请求 125 与 250 rad/s，并要求两次测量以同一倍数移动（134.66 与"
+"272.87rad/s，比值 2.026）——才能发现一个无视所受请求的环。归因，一次一个"
+"旋钮：把该台架的内环电流带宽从 2000 提到 4000 rad/s，数字从 +9.4 % 变到"
+"+5.8 %；控制周期减半，它移动 0.07 个百分点；给窗口补上阶跃前那条采样，移"
+"动0.30。内环才是故事，其余是一个一阶模型套在一条级联上。"
+
+#: ../../source/usage.rst:346 0b589fe331dc42c8b71ca8e15d6279c9
+msgid ""
+"**C++ vs Python on the same samples, <= 1 %.** Two implementations of one"
+" definition, compared in one process -- measured agreement is 0.003 % at "
+"400 rad/s, so the band is a tripwire for drift rather than a tolerance."
+msgstr ""
+"**同一组采样上的 C++ 与 Python，<= 1 %。** 同一定义的两种实现，在同一进"
+"程里比较——400 rad/s 下实测一致性为 0.003 %，因此这条区间是漂移的绊线，而"
+"不是一个容差。"
+
+#: ../../source/usage.rst:348 45f0378440e4481f9202aa304285ee09
+msgid ""
+"**replay, error 0.** The settling time is an *index* decision, not a "
+"fitted number, so both sides must pick the same sample: the analysis "
+"layer recomputes it from the window and the comparison is on the index, "
+"exactly."
+msgstr ""
+"**重放，误差 0。** 调节时间是一个 *索引* 决定，不是拟合出来的数，因此两"
+"侧必须挑中同一条采样：分析层从窗口重算它，比较严格落在索引上。"
+
+#: ../../source/usage.rst:351 db16429a4c4140a69bf2c0e7bbcf304f
+#, python-format
+msgid ""
+"A sweep closes the gap the band above leaves open. Drive the reference "
+"with `A*cos(w t)`, fit both the command and the response at that "
+"frequency (`foc/core/sinusoid_fit.hpp`), divide: the -3 dB point needs no"
+" model and moves *with* an error instead of carrying a bias of its own. "
+"Measured: **234.91 rad/s against 250 requested (-6.04 %)** on the C++ "
+"bench, **236.18 rad/s (-5.53 %)** through the Python plant, two "
+"independent machines agreeing to 0.5 %. The same 20 % gain error that the"
+" step band could not see moves this crossing to **210.79 rad/s (-15.68 "
+"%)**, outside the band."
+msgstr ""
+"一次扫频补上上面那条区间留的缺口。用 `A*cos(w t)` 驱动给定，在该频率上同"
+"时拟合指令与响应（ `foc/core/sinusoid_fit.hpp` ），再相除：-3 dB 点不需"
+"要模型，并且随误差 *一起* 移动，而不是自带偏差。实测：C++ 台架上 **"
+"234.91rad/s，而请求 250（-6.04 %）** ，经 Python 侧 plant **236.18 rad/s"
+"（-5.53%）** ，两台独立的机器一致到 0.5 %。阶跃区间看不见的那个 20 % 增"
+"益误差，把这一交点推到 **210.79 rad/s（-15.68 %）** ，落在区间之外。"
+
+#: ../../source/usage.rst:357 af41569e21694cb39ed76e8b77d35ed9
+msgid "the same defect, two instruments"
+msgstr ""
+"同一个缺陷，两件仪器"
+
+#: ../../source/usage.rst:361 e160e65c73f44b82aa1715a6d64c9b6a
+msgid "criterion"
+msgstr ""
+"判据"
+
+#: ../../source/usage.rst:362 44aeb66fba704b5990ae1635291d8022
+msgid "no defect"
+msgstr ""
+"无缺陷"
+
+#: ../../source/usage.rst:363 99560ecd822e4cfc97cb67be08370235
+msgid "gain law x0.8"
+msgstr ""
+"增益律 x0.8"
+
+#: ../../source/usage.rst:364 7c17b4912e464fcea9c4ddfe83c2e64d
+msgid "verdict"
+msgstr ""
+"结论"
+
+#: ../../source/usage.rst:365 690e4e00c51e40faaba01e89fba30d14
+msgid "step fit vs analytic, 10 % band"
+msgstr ""
+"阶跃拟合对解析值，10 % 误差带"
+
+#: ../../source/usage.rst:366 4bd7bfb1ad2c42b5b66a78654667fd9c
+msgid "+9.15 %"
+msgstr ""
+"+9.15 %"
+
+#: ../../source/usage.rst:367 f963eb4d8fc6499baed039177c477b6d
+msgid "-9.88 %"
+msgstr ""
+"-9.88 %"
+
+#: ../../source/usage.rst:368 6dd6b7a83b11464695247245b844624a
+msgid "blind: passes either way"
+msgstr ""
+"失明：两种情况都通过"
+
+#: ../../source/usage.rst:369 48f790b54a834333a517584d7b577a96
+msgid "step fit ratio 125 / 250"
+msgstr ""
+"阶跃拟合比值 125 / 250"
+
+#: ../../source/usage.rst:370 ../../source/usage.rst:371
+#: 12c4f5d88a6e4d0380d2b2d630ed2ef7 b133683b15384eee890364778ad6b430
+msgid "2.026"
+msgstr ""
+"2.026"
+
+#: ../../source/usage.rst:372 114c98d1aa4a4d1abd76f731acc5ab29
+msgid "blind: a ratio cannot see a scale error"
+msgstr ""
+"失明：比值看不出尺度误差"
+
+#: ../../source/usage.rst:373 f4574068ed19452a8c4ae60731dcb8b6
+msgid "sweep -3 dB, 10 % band"
+msgstr ""
+"扫频 -3 dB，10 % 误差带"
+
+#: ../../source/usage.rst:374 8cd4cda141bd40e8a8233bff22aff9e5
+msgid "-6.04 %"
+msgstr ""
+"-6.04 %"
+
+#: ../../source/usage.rst:375 c1ad14510f364339ba3f21409e4c7b81
+msgid "**-15.68 %**"
+msgstr ""
+"**-15.68 %**"
+
+#: ../../source/usage.rst:376 d2b11e1d9f944fa1afadd001d42a8c7e
+msgid "fails, as it should"
+msgstr ""
+"失败，本该如此"
+
+#: ../../source/usage.rst:378 a88af1c5c6e541e5a5df9938b97fd3c8
+#, python-format
+msgid ""
+"The analysis layer also carries a spectrum and a THD (`analyze.spectrum`,"
+" `analyze.thd`), checked against a signal whose answer is arithmetic "
+"rather than a modelling opinion: a unit tone reads 1.000 under a Hann "
+"window with the usual 2/sum correction, and a known 11.2 % distortion "
+"made of a 10 % third harmonic and a 5 % fifth reads 0.1118 with each "
+"harmonic in its own bin. Neither has a C-side counterpart, and neither "
+"needs one: they measure the window, not the loop."
+msgstr ""
+"分析层还带一个频谱与一个 THD（ `analyze.spectrum` 、 `analyze.thd` ），"
+"对着一个答案来自算术而不是建模意见的信号校验：单位音调在 Hann 窗配常规"
+"2/sum修正下读出 1.000；一个已知 11.2 % 的失真，由 10 % 三次谐波与 5 % 五"
+"次谐波组成，读出 0.1118，且每个谐波各在自己的频率格内。两者都没有 C 侧对"
+"应物，也不需要：它们测的是窗口，不是环。"
+
+#: ../../source/usage.rst:383 ff72640ffdcd44a5866054164eff51c5
+msgid ""
+"**Break a stuck axis loose on purpose.** A speed PI does eventually break"
+" a stuck axis free -- its integral ramps the current until the torque "
+"passes the breakaway point -- and that is the problem: by then the "
+"integral has stored the whole windup, so the moment the rotor lets go the"
+" stored torque drives it past the setpoint. `core/stall_start.hpp` does "
+"the same thing deliberately: a known torque ramp, a report the instant "
+"the rotor moves, and the torque it moved on as the handover value."
+msgstr ""
+"**有意识地把卡住的轴撬开。** 速度 PI 最终确实能把卡住的轴撬开——它的积分"
+"把电流一路顶到转矩越过起动点——而这正是问题：到那时积分已经存下全部绕入量"
+"，转子一松，存下的转矩就把它推过给定。 `core/stall_start.hpp` 刻意做同一"
+"件事：一条已知的转矩斜坡、转子一动就给出的报告，以及它起动时所用的转矩作"
+"为交接值。"
+
+#: ../../source/usage.rst:398 f4cdce5f636843e2a548eeab7fc68a3d
+msgid ""
+"Measured: 0.030 N*m of breakaway at 0.5 N*m/s is reached and released at "
+"**60.1 ms**; against a real stuck plant (stiction 0.020 N*m, load 0.010 "
+"N*m) the sequence releases at **0.0307 N*m after 61.3 ms**, and a 0.9x "
+"torque -- a sequence asking for less than it believes -- moves that to "
+"68.0 ms and the case fails. A jam at the limit reports `Failed` with zero"
+" torque after 400 ms of ramp plus a 200 ms grace."
+msgstr ""
+"实测：以 0.5 N *m/s 爬升到 0.030 N* m 的起动力矩，在 **60.1 ms** 达到并"
+"释放；对一个真实的卡死 plant（静摩擦 0.020 N *m、负载 0.010 N* m），序列"
+"在 * *61.3 ms 后于 0.0307 N* m** 释放；把转矩打到 0.9x——序列要的比它以为"
+"的少——则推到 68.0 ms，该用例失败。在限幅处卡死时，序列在 400 ms 斜坡加"
+"200 ms宽限之后报 `Failed` 并输出零转矩。"
+
+#: ../../source/usage.rst:403 1e75473415d643a18d1ca5fc0aa971ec
+msgid ""
+"**Turn a standing error into arithmetic.** A proportional position loop "
+"on a machine with friction has a *dead band*, not a residual: below a "
+"certain error the torque it can still ask for is under the breakaway and "
+"the axis does not move at all. `core/friction_comp.hpp` adds the Coulomb "
+"term that moves that wall, and refuses the estimates that would turn it "
+"into a motor."
+msgstr ""
+"**把静态误差变成算术。** 带摩擦的机器上，比例位置环留下的是一个 *死区*"
+"，而不是残差：误差小到某个值以下，它还能要求的转矩低于起动点，轴就完全不"
+"动。 `core/friction_comp.hpp` 加上那一项库仑项，把这道墙移开，并拒绝那些"
+"会把它变成一个电机的估计值。"
+
+#: ../../source/usage.rst:414 b99d12998daf451fbdc2393120f038b0
+#, python-format
+msgid ""
+"The numbers are the capability. The band is `static / kp` -- **4.003 mrad"
+" measured against 4.0 predicted** at `kp = 5 N*m/rad` -- and with the "
+"compensation it is `(static - coulomb) / kp`, **2.021 against 2.0**. It "
+"follows the estimate, which is why the estimate has to come from a "
+"measurement: 1.007 mrad with a 50 % over-estimate, and above the "
+"breakaway there is no band at all -- a `(0.030, 0.030)` estimate walks "
+"the axis **5.625 mrad with the reference held at zero and no command at "
+"all**."
+msgstr ""
+"这些数就是能力本身。死区宽度是 `static / kp` ——在 `kp = 5 N*m/rad` 下 **"
+"实测 4.003 mrad，预测 4.0** ——加上补偿后是 `(static - coulomb) / kp` ， "
+"**2.021 对 2.0** 。它跟着估计值走，这也是估计值必须来自测量的原因：高估"
+"50% 时为 1.007 mrad；而在起动点以上根本没有死区——一个 `(0.030, 0.030)` "
+"的估计值，在给定始终为零、完全没有任何指令的情况下，让轴 **走动 "
+"5.625mrad** 。"
+
+#: ../../source/usage.rst:420 a435ab7a6b7d4b8f896628f0504839d3
+msgid ""
+"The latch is not decoration. At rest the measured speed is zero-mean "
+"noise, so a Coulomb term on `sign(speed)` is a square wave of amplitude "
+"twice the term: measured with +-0.01 rad/s of encoder noise, the naive "
+"law ripples **20.03 mN*m** peak to peak and the latched one **0.036**, "
+"550 times quieter, while both park the axis in the same place."
+msgstr ""
+"锁存不是装饰。静止时实测转速是零均值噪声，因此作用在 `sign(speed)` 上的"
+"库仑项是一个幅度为该项两倍的方波：在 +-0.01 rad/s 的编码器噪声下实测，朴"
+"素做法峰峰值纹波 * *20.03 mN* m **，锁存做法** 0.036**，安静 550 倍，而"
+"两者都把轴停在同一处。"
+
+#: ../../source/usage.rst:424 16de8a2e3a4746bb93ec0d9d41c22a1c
+msgid ""
+"**Keep an axis out of a wall, and gear two axes together.** Two small "
+"stages for the shapes an AGV or a winder needs. `core/soft_limit.hpp` "
+"refuses a target outside the window (status, not a clamp -- a clamp makes"
+" a programming fault look plausible) and caps the velocity on the way in:"
+msgstr ""
+"**让轴离墙远一点，并把两根轴啮合起来。** 两段小环节，对应 AGV 或卷绕机需"
+"要的形状。 `core/soft_limit.hpp` 拒绝窗口外的目标（返回状态，而不是钳位—"
+"—钳位会让一处编程错误看起来合理），并在进去的路上限制速度："
+
+#: ../../source/usage.rst:434 a2cddfee105a4f8ba98d9b086f68db23
+msgid ""
+"The ceiling is `v^2 <= 2*a*(d - v*dt)`, and the `v*dt` term is what makes"
+" it work: at 20 rad/s toward a wall the axis crosses by **19 mm** without"
+" it and stops **1.04 mm short** with it, where 19 mm is exactly the 1 ms "
+"this drive takes to deliver a braking current. `core/gear_ratio.hpp` is "
+"the other half of an AGV:"
+msgstr ""
+"上限是 `v^2 <= 2*a*(d - v*dt)` ，而让这个式子管用的是 `v*dt` 这一项：以"
+"20 rad/s 冲向一堵墙，没有它时轴越过 **19 mm** ，有它时停在还差 **1.04 mm"
+"** 处，其中 19 mm 恰好是本驱动交付制动电流所需的 1 ms。 `"
+"core/gear_ratio.hpp` 是 AGV 的另一半："
+
+#: ../../source/usage.rst:445 95e03c32629d4ad99317b23677e1ad6a
+msgid ""
+"The unwrap is not a detail: three wrapped revolutions become 18.85 rad of"
+" continuous reference instead of two 6.28 rad jumps. And the "
+"synchronisation error of a *perfectly geared* pair is `v*kd/kp` -- **25.6"
+" mrad measured against 25.0 predicted**, linear in the rate and inverse "
+"in the gain -- which the velocity output removes (1.3 mrad). A gear that "
+"emits only a position is a lag generator with a ratio."
+msgstr ""
+"解缠不是细节：三圈卷绕的圈数变成 18.85 rad 的连续给定，而不是两次"
+"6.28rad 的跳变。而一对 *完全啮合* 的传动，其同步误差是 `v*kd/kp` —— **实"
+"测 25.6mrad，预测 25.0** ，随速率线性、随增益反比——速度输出把它消掉（1.3"
+"mrad）。只输出位置的传动，是一台带减速比的滞后发生器。"
+
+#: ../../source/usage.rst:450 3630c50652634162b5d17888a6652648
+msgid ""
+"**Run a motor from three Hall sensors.** `core/hall.hpp` carries the two "
+"things a Hall drive needs and nothing else: the six-step table, and an "
+"electrical angle interpolated from edge timing."
+msgstr ""
+"**用三个霍尔传感器跑电机。** `core/hall.hpp` 只装霍尔驱动需要的两样东西"
+"，别的没有：六步换相表，以及由边沿时刻插值出的电角度。"
+
+#: ../../source/usage.rst:461 ab18cfa3c450419fa8299684f65e7a02
+msgid ""
+"The numbers that decide whether that is enough. Held at one commutation "
+"state, the torque is the cosine of where the rotor sits in the sector: "
+"maximum at the centre, **0.866 at both edges, never negative** -- a 14.0 "
+"% peak-to-peak ripple that six-step cannot avoid, and the argument for "
+"interpolating an angle at all. Interpolating buys a factor of **52 at 120"
+" rad/s electrical** (0.338 degrees RMS against the sector centre's "
+"17.52), and the factor shrinks to 7.5 at 900 rad/s because what is left "
+"is one *sampling period* of rotation (2.30 degrees at 62.5 us) rather "
+"than the 60-degree sector."
+msgstr ""
+"决定这样够不够的那些数。锁在一个换相状态上时，转矩是转子在扇区内位置的余"
+"弦：中间最大， **两个边沿处 0.866，从不为负** ——这是六步无法避免的 14.0"
+"%峰峰纹波，也是插值角度之所以必要的理由。插值买到 **在 120 rad/s 电气下"
+"的52 倍** （相对扇区中心的 17.52，RMS 为 0.338 度）；到 900 rad/s 时这个"
+"倍数缩到 7.5，因为剩下的是一个 *采样周期* 的转动（62.5 us 下 2.30 度），"
+"而不是整个 60 度扇区。"
+
+#: ../../source/usage.rst:467 c8129339ab4f4767a11d6ca0f15cf4b6
+#, python-format
+msgid ""
+"What it cannot do is in the same header: with a sensor stuck, `Fault` "
+"covers 15.5 % of a revolution and `State` another 53.9 %, and **8.4 % "
+"still reads `Ok` while wrong by up to 59 degrees**. The status is the "
+"whole admission story -- an estimate that is not being measured says so "
+"rather than reporting a sector centre as if it were a measurement."
+msgstr ""
+"它做不到的事写在同一个头文件里：一个传感器卡住时， `Fault` 覆盖一圈中的"
+"15.5 %， `State` 再覆盖 53.9 %，还有 **8.4 % 仍读 `Ok`，而误差可达 59 度"
+"** 。状态就是准入的全部说法——一个并非由测量得到的估计值会说出来，而不是"
+"把扇区中心当作测量结果报出去。"
+
+#: ../../source/usage.rst:471 d41ebefb25804c5aa0ae18983b134fe1
+msgid ""
+"**A fault is not a temperature.** Protection is graded -- derate, then "
+"trip -- and the two decisions are separate fields rather than one code: "
+"`output_allowed` is defined as `active_mask == 0`, so a **fault means "
+"authority was removed**, while a **derating** drive is still running and "
+"says so through `i_limit_a` falling below the `i_max_a` the caller "
+"configured. Measured on the ladder case: 3.00 A at 45 C, **1.80 A at 80 C"
+" with output still allowed and no fault**, then 0 A and no output at 105 "
+"C. When two faults are active at once the lower-ranked one is reported "
+"and both bits stay visible in `active_mask` (0x006 for current plus "
+"voltage, 0x018 for voltage plus heat)."
+msgstr ""
+"**故障不是温度。** 保护是分级的——先降额，再跳闸——这两个决定是两个独立字"
+"段而不是一个错误码： `output_allowed` 定义为 `active_mask == 0` ，因此 *"
+"*故障意味着权限被收回** ，而一个正在 **降额** 的驱动仍在运行，并通过 `"
+"i_limit_a` 低于调用方配置的 `i_max_a` 说出来。在阶梯用例上实测：45 C 时"
+"3.00 A， **80 C 时 1.80 A，输出仍被允许且无故障** ，到 105 C 则为 0 A、"
+"无输出。同时有两个故障时报告等级较低的那个，两个位都留在 `active_mask` "
+"里可见（电流加电压为 0x006，电压加过温为 0x018）。"
+
+#: ../../source/usage.rst:478 3b89a88883be4603b8053a99303cb80f
+msgid ""
+"**Command a torque, not an amperage.** `set_torque()` takes amps and "
+"leaves the N*m conversion to the caller -- the same arithmetic, with the "
+"same sign convention and the same limit, in every product. "
+"`foc/motor/torque_map.hpp` is that arithmetic once:"
+msgstr ""
+"**指令给转矩，不是给安培。** `set_torque()` 收的是安培，把 N*m 的换算留"
+"给调用方——在每个产品里都是同一套算术、同样的符号约定、同样的限幅。 `"
+"foc/motor/torque_map.hpp` 把这段算术只写一次："
+
+#: ../../source/usage.rst:489 d19b59a2e05f4cc280012c41e314e46e
+msgid ""
+"The estimate is `kt*iq + 1.5*pp*(ld-lq)*id*iq`, which is the expression "
+"the plant integrates -- so it is checked against something that shares no"
+" line with it: the mechanical torque `J*dw/dt + B*w` from the recorded "
+"speed. The two agree to **+0.006 % at 2 A** and **+0.007 % at 20 A**, "
+"where the loop is saturated; the plan's 5 % band is three orders of "
+"magnitude wider than the measured residual, which is the forward-"
+"difference error in `dw/dt`. Scaling the map's gain by 10 % moves the "
+"same measurement to **-9.994 %**, so the band is a gate rather than "
+"decoration."
+msgstr ""
+"估计式是 `kt*iq + 1.5*pp*(ld-lq)*id*iq` ，也就是 plant 所积分的那条表达"
+"式——因此拿一个与它不共用任何一行的量来核对：由录制转速算出的机械转矩 `J*"
+"dw/dt + B*w` 。两者在 **2 A 下一致到 +0.006 %** 、在环已饱和的 **20 A 下"
+"一致到 +0.007 %** ；计划里的 5 % 区间比实测残差宽三个数量级，那点残差正"
+"是 `dw/dt` 的前向差分误差。把映射的增益缩放 10 %，同一测量变为 **-9.994"
+"%** ，所以这条区间是门禁，不是装饰。"
+
+#: ../../source/usage.rst:495 b17e7358f7794c0c84e24a5842705e99
+msgid ""
+"**Ask what a wrong nameplate costs.** Every gain here is derived from the"
+" nameplate, so the design question is how wrong it can be before the "
+"claim stops holding. `benchmark/script/montecarlo.py` draws machines, "
+"runs the loop on each and reports the spread:"
+msgstr ""
+"**问一问铭牌错了要付多少。** 这里每个增益都从铭牌导出，因此设计问题是："
+"它错到什么程度，主张就不再成立。 `benchmark/script/montecarlo.py` 抽样生"
+"成机器，对每台跑一遍环，并报告离散程度："
+
+#: ../../source/usage.rst:504 f89761ea423b4ca6b8cb40188ac6b4dc
+#, python-format
+msgid ""
+"With a 10 % standard deviation on six nameplate parameters, a **matched**"
+" family -- every drawn machine described correctly by its own nameplate "
+"-- spreads **2.92 %** in bandwidth and 97.5 % of it stays inside the 10 %"
+" band, while the **mismatched** family spreads **19.18 %** and 42.5 % of "
+"it does. At 20 % the same pair reads 6.21 % against 29.74 % (yields 92.5 "
+"% and 12.5 %). That factor of about six and a half is what deriving every"
+" gain from the nameplate buys, and it is the only number on this page "
+"that states it as a quantity rather than a design intention. All four "
+"figures are `--trials 40 --seed 11`, the seed the suite uses."
+msgstr ""
+"六个铭牌参数取 10 % 标准差时， **匹配** 的一族——每台抽到的机器都被自己的"
+"铭牌正确描述——带宽离散 **2.92 %** ，其中 97.5 % 落在 10 % 区间内；而 **"
+"不匹配** 的一族离散 **19.18 %** ，只有 42.5 % 落进去。取 20 % 时同一对照"
+"读数为6.21 % 对 29.74 %（合格率 92.5 % 与 12.5 %）。那个约六倍半的倍数，"
+"就是“每个增益都从铭牌导出”换来的东西；它也是本页唯一一个把这个收益写成量"
+"、而不是写成设计意图的数字。四个数字都是 `--trials 40 --seed 11` ，即测"
+"试套件用的种子。"
+
+#: ../../source/usage.rst:511 fdd46eafe3c24ab187e497738657be6f
+#, python-format
+msgid ""
+"A single parameter moves predictably, which is the arithmetic behind `kp "
+"= wb*J/Kt`: a nameplate `J` 10 % high raises the bandwidth 8.46 % (the "
+"1.40 % shortfall is the mechanical pole `B/J` only partly cancelled, "
+"since `ki = wb*B/Kt` does not move with `J`), and a nameplate `kt` 10 % "
+"high lowers it 9.28 % (prediction 9.09 %, within 0.2 %)."
+msgstr ""
+"单个参数的变化可以预测，这就是 `kp = wb*J/Kt` 背后的算术：铭牌 `J` 偏高"
+"10 % 使带宽升高 8.46 %（少掉的 1.40 % 是因为机械极点 `B/J` 只被部分对消—"
+"— `ki = wb*B/Kt` 不随 `J` 变），铭牌 `kt` 偏高 10 % 则使它降低 9.28 %（"
+"预测 9.09 %，相差 0.2 % 以内）。"
+
+#: ../../source/usage.rst:515 eaa4d8fa5ee3451eb29a30110ae937fd
+msgid ""
+"Read back through the CLI, the ledger's own `speed_step_100` window "
+"measures **197.59 rad/s** against the 200 rad/s the library defaults to "
+"(-1.2 %) -- on a window decimated to one sample per millisecond against a"
+" four-millisecond time constant. That is the analysis layer replaying a "
+"stored file rather than the object that produced it."
+msgstr ""
+"通过 CLI 读回来，台账自带的 `speed_step_100` 窗口测出 **197.59 rad/s** "
+"，而库默认为 200 rad/s（-1.2 %）——而且是在一个抽成每毫秒一条采样的窗口上"
+"，对着四毫秒的时间常数。那是分析层在重放一个存下来的文件，而不是在重放产"
+"生它的那个对象。"
+
+#: ../../source/usage.rst:519 e9e1adeab8044d058ecc7d28061e61ca
+msgid ""
+"What it cannot do: a first-order fit on a response that is not first-"
+"order reports the first-order *equivalent*, which is a real number and "
+"not the system's bandwidth -- which is why the band above is 10 % and is "
+"attributed rather than assumed."
+msgstr ""
+"它做不到的：对一条并非一阶的响应做一阶拟合，报出的是它的一阶 *等效* ，那"
+"是个真实的数，但不是系统的带宽——这就是上面那条区间取 10 %、且要靠归因而"
+"不是假定的原因。"
+
+#: ../../source/usage.rst:524 4f054f7a628144b4925a5b05e030f28d
 msgid "_`Verification: what is actually checked`"
 msgstr "_`验证：到底检查了什么`"
 
-#: ../../source/usage.rst:115 5294d264d8df4ae2b50177e6ade8a36e
-msgid "Every number below is produced by the commands in the same column, on the same commit."
+#: ../../source/usage.rst:526 cf7272249a164042b59eb3acaa7c72ba
+msgid ""
+"Every number below is produced by the commands in the same column, on the"
+" same commit."
 msgstr "下面每个数字都由同一行的命令、在同一 commit 上产出。"
 
-#: ../../source/usage.rst:117 b209a148924842a193c3c250ad8fbaa5
+#: ../../source/usage.rst:528 f726222f0f77452d9c740d18b2fc9b98
+msgid ""
+"The rightmost column is the **evidence level** (defined in the project "
+"README): L1 is enforced by construction, L2 is measured against the model"
+" in this repository with the criterion written first, L3 adds a measured "
+"sensitivity to the model being wrong, L4 would be measured on real "
+"hardware. **There are no L4 claims** -- no motor has been attached to any"
+" of this. Read every number below as \"true of the documented model\", "
+"and use :code:`BoardSelfTest` / :code:`check_board()` to find out whether"
+" your hardware matches that model."
+msgstr ""
+"最右一列是 **证据等级** （定义见项目 README）：L1 由构造本身保证，L2 对"
+"着本仓库的模型测量且判据先行写出，L3 再补上“模型错了会怎样”的实测灵敏度"
+"，L4 需要在真实硬件上测量。 **没有任何 L4 主张** ——这些东西没有接上过任"
+"何一台电机。下面每个数字都读作“对文档所述模型为真”，并用 :code:`"
+"BoardSelfTest` / :code:`check_board()` 查明你的硬件是否与该模型相符。"
+
+#: ../../source/usage.rst:535 deb74cd54e5040f49677a04f67f0bdf5
 msgid "evidence, not adjectives"
 msgstr "证据，不是形容词"
 
-#: ../../source/usage.rst:121 4efee64eee6445c29fb61d2b8cb10a79
+#: ../../source/usage.rst:539 9a0af824d409404fba51bc45ff27c508
 msgid "What"
 msgstr "项目"
 
-#: ../../source/usage.rst:122 e5dfcc43ab984f9984ecc8aef456eb60
+#: ../../source/usage.rst:540 5f9b4fc5f29b4fe2a3f396bf334d8668
 msgid "How"
 msgstr "怎么跑"
 
-#: ../../source/usage.rst:123 0a119066768d463c8c3b879670280fc2
+#: ../../source/usage.rst:541 ea8b541199fd4c28828fa2c1e9ce69d2
 msgid "Result"
 msgstr "结果"
 
-#: ../../source/usage.rst:124 4c2772b930794be0a8878768615d4cfc
+#: ../../source/usage.rst:542 15cc1ae34ad24d83bcaafe78821bcdc7
+msgid "Level"
+msgstr ""
+"等级"
+
+#: ../../source/usage.rst:543 85d4b24481b44f5f9db499412547b612
 msgid "Unit, SIL and stress cases"
 msgstr "单元、SIL 与 stress 用例"
 
-#: ../../source/usage.rst:125 b8758566c13c40229d5501a7aac39f79
+#: ../../source/usage.rst:544 d03b789ffa774a5c971f901837eca4e8
 msgid ":code:`conan create . -s build_type=Debug --build=missing`"
 msgstr ""
+":code:`conan create . -s build_type=Debug --build=missing` （构建并运行"
+"用例的命令）"
 
-#: ../../source/usage.rst:126 0beedbf051f94d8f82a8ffafd2eae1c0
-msgid "131 cases, 0 failed"
-msgstr "131 个用例，0 失败"
+#: ../../source/usage.rst:545 ae66dd29baee491da1066c75b8dfee11
+msgid "857 cases, 0 failed"
+msgstr ""
+"857 个用例，0 失败"
 
-#: ../../source/usage.rst:127 98e8e1ed87044f0b89a44d9962ccf647
+#: ../../source/usage.rst:546 92c0ce40b52e488cb88784240dadfa67
+msgid "L1/L2"
+msgstr ""
+"L1/L2"
+
+#: ../../source/usage.rst:547 0f4239f6b23d489189d25c247abb00bd
 msgid "Line coverage"
 msgstr "行覆盖率"
 
-#: ../../source/usage.rst:128 e26e3cfd8f8b4af7ad5c6f3a58d83185
-msgid ":code:`python3 .github/misc/coverage_gate.py`"
+#: ../../source/usage.rst:548 12091ed53a3a42b8b047773c4ebf2184
+msgid ":code:`python3 .github/project/coverage_gate.py`"
 msgstr ""
+":code:`python3 .github/project/coverage_gate.py` （行覆盖率门禁）"
 
-#: ../../source/usage.rst:129 2f1528706bb64f70bad95978ec8bbe6a
+#: ../../source/usage.rst:549 f1bcf33e5fba4977837c77d1533fa380
 #, python-format
-msgid "96.23 % overall, 99.46 % in :code:`core/`"
-msgstr "整体 96.23 %，:code:`core/` 99.46 %"
+msgid "94.67 % overall, 96.56 % in :code:`core/`"
+msgstr ""
+"整体 94.67 %， :code:`core/` 96.56 %"
 
-#: ../../source/usage.rst:130 aeb4c34af6cf4ce2a4d65b5728efd5c6
+#: ../../source/usage.rst:550 ../../source/usage.rst:554
+#: ../../source/usage.rst:558 ../../source/usage.rst:570
+#: 2a319b52ecc64cd7b12c3b2ddde3e157 66dedf13f087485ea967a1a5e0a396b7
+#: 6edf69db01a0494bbbaa1365348b6544 abe43b432624478fbafd473cc247ec11
+msgid "L1"
+msgstr ""
+"L1"
+
+#: ../../source/usage.rst:551 1c78438697d8412e9bf3e7608cdcd47b
 msgid "Layering and standalone headers"
 msgstr "分层与头文件独立编译"
 
-#: ../../source/usage.rst:131 75452e4b81a4443e8bb88b9eb6454d38
+#: ../../source/usage.rst:552 0293bbd12bd24a039781fab4a50b09ea
 msgid ":code:`gates.py guard` / :code:`gates.py strict`"
 msgstr ""
+":code:`gates.py guard` / :code:`gates.py strict` （分层与独立头文件检查"
+"）"
 
-#: ../../source/usage.rst:132 0c0e22f4c6534d95b6f5d15be8499bc4
+#: ../../source/usage.rst:553 4e078d85ba71429fb9a4ba3be2d4f7ba
 msgid "0 violations"
 msgstr "0 违规"
 
-#: ../../source/usage.rst:133 75187462024d4727913f0aee32d84021
+#: ../../source/usage.rst:555 23f189f143a046d5a177ac36eb36f38c
 msgid "Negative compilation (fake HAL must not compile)"
 msgstr "负向编译（伪 HAL 必须编译失败）"
 
-#: ../../source/usage.rst:134 3829948a82c747bdb23dca42e9d4ec51
-msgid ":code:`python3 .github/misc/negative_compile.py`"
+#: ../../source/usage.rst:556 67dfbb5f62c54686912e66eb7a0b745a
+msgid ":code:`python3 .github/project/negative_compile.py`"
 msgstr ""
+":code:`python3 .github/project/negative_compile.py` （负向编译门禁）"
 
-#: ../../source/usage.rst:135 37b56a8371f9421aa133b6f14c7da918
-msgid "10 / 10 cases behave as specified"
-msgstr "10 / 10 用例行为符合约定"
+#: ../../source/usage.rst:557 e0fbf0eb34a54896adf8283d3a83bc87
+msgid "28 / 28 cases behave as specified"
+msgstr ""
+"28 / 28 用例行为符合约定"
 
-#: ../../source/usage.rst:136 70458ca2952945d9bc61a002a157a6f8
+#: ../../source/usage.rst:559 dacb922e8afd40209be9c55691a6fa90
+msgid "The dq model itself"
+msgstr ""
+"dq 模型本身"
+
+#: ../../source/usage.rst:560 6484fb9289434693bdf1f5bf3891c0bd
+msgid ""
+":code:`test_abc_plant.cpp` -- an independently derived phase-variable "
+"plant"
+msgstr ""
+":code:`test_abc_plant.cpp` ——一个独立推导的相变量 plant"
+
+#: ../../source/usage.rst:561 3a8238152097437391a7f862d1148cb5
+msgid ""
+"6 operating points agree on :math:`(i_d, i_q)` within 0.02 A, torque "
+"within 0.3 %"
+msgstr ""
+"6 个工作点在 :math:`(i_d, i_q)` 上一致到 0.02 A 以内，转矩一致到 0.3 %"
+"以内"
+
+#: ../../source/usage.rst:562 ../../source/usage.rst:566
+#: 39a72402c64841c1835c6e3ced6d5835 bc4a782c1cc74bfba074d5ea708826bf
+msgid "L3"
+msgstr ""
+"L3"
+
+#: ../../source/usage.rst:563 ebb46d12fc38438fb579203c15f3149e
+msgid "Unmodelled effects (q-axis saturation, iron loss, sensor gain/offset)"
+msgstr ""
+"未建模效应（q 轴饱和、铁耗、传感器增益/偏置）"
+
+#: ../../source/usage.rst:564 1c4d29e0adf244a5b6947ea10db99ec2
+msgid ":code:`test_sil_sensitivity.cpp`"
+msgstr ""
+":code:`test_sil_sensitivity.cpp` （SIL 灵敏度用例）"
+
+#: ../../source/usage.rst:565 90c5b4b18cd1498f935e985aaa692ad6
+msgid ""
+"8 rows; the worst single effect doubles the angle error, all stay inside "
+"the ceiling"
+msgstr ""
+"8 行；最坏的单一项效应使角度误差翻倍，全部仍在天花板之内"
+
+#: ../../source/usage.rst:567 e7a9240feadb46aaaff00e2ac5db416e
 msgid "Three hosts and two cross targets"
 msgstr "三平台 + 两个交叉目标"
 
-#: ../../source/usage.rst:137 d20583c9f26d442bb66a8ed0cdbe6e32
+#: ../../source/usage.rst:568 b4927d1896b04be69594c33bfdda25ba
 msgid "CI (ubuntu / macOS / Windows; arm-linux-a53, mcu-m4)"
 msgstr "CI（ubuntu / macOS / Windows；arm-linux-a53、mcu-m4）"
 
-#: ../../source/usage.rst:138 afdff8ac31124cc49d8d5857f80bf46a
+#: ../../source/usage.rst:569 aa370f1a2ce64cc1806cae4031c41fa5
 msgid "17 / 17 jobs green"
 msgstr "17 / 17 个 job 全绿"
 
-#: ../../source/usage.rst:140 9343639e74f44ec2b0d7b080a3b96488
-msgid "The SIL bench is layered on purpose: an analytic reference (L1), an independent offline arbiter (L2), and scenario tests S1–S5 (current step, speed step, sine tracking, saturation limit, parameter perturbation). The SguanFOC project is a *third* reference, not the judge."
-msgstr "SIL 台架是分层设计的：解析解参考（L1）、独立的离线仲裁器（L2）、以及场景测试 S1–S5（电流阶跃、速度阶跃、正弦跟踪、饱和限幅、参数摄动）。SguanFOC 只是**第三**参考，不是裁判。"
+#: ../../source/usage.rst:572 83197b2cbf7c495f8a060aeb814c9858
+msgid ""
+"Two things this table deliberately does *not* say. First, \"0 failed\" is"
+" a statement about the scenarios someone wrote, not a proof of "
+"correctness. Second, the SIL bench's own validity rests on the phase-"
+"variable cross-check above -- which is why that cross-check exists: with "
+"no motor expert to review the derivation, a second derivation is the only"
+" thing that can disagree."
+msgstr ""
+"这张表刻意有两件事不 *说* 。第一，“0 失败”是关于有人写下的那些场景的陈述"
+"，不是正确性的证明。第二，SIL 台架自身的有效性依赖上面那次相变量交叉核对"
+"——这正是该核对存在的原因：没有电机专家来审这份推导，第二条推导是唯一可能"
+"提出异议的东西。"
+
+#: ../../source/usage.rst:578 dfe78fded690474a82a75c1b573c3fe3
+msgid ""
+"The SIL bench is layered on purpose: an analytic reference (L1), an "
+"independent offline arbiter (L2), and the scenario tests (current step, "
+"speed step, sine tracking, saturation limit, parameter perturbation). The"
+" SguanFOC project is a *third* reference, not the judge."
+msgstr ""
+"SIL台架是分层设计的：解析解参考（L1）、独立的离线仲裁器（L2）、以及场景"
+"测试（电流阶跃、速度阶跃、正弦跟踪、饱和限幅、参数摄动）。SguanFOC只是 *"
+"*第三** 参考，不是裁判。"
+
+#~ msgid ":code:`python3 .github/misc/coverage_gate.py`"
+#~ msgstr ""
+
+#~ msgid ":code:`python3 .github/misc/negative_compile.py`"
+#~ msgstr ""
+
