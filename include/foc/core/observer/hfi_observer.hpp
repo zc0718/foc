@@ -92,16 +92,19 @@ class HfiObserver final {
      *     Sizing `inject_hz` is not free either, and both ends were measured on the SIL envelope fixture (a loaded
      *     machine held at a given speed, the observer as a passenger, so a cell is a property of the observer):
      *
-     *     - **Within what the control rate resolves, higher is better.** At 20 rad/s mech the angle bias, which is what
-     *     a lag looks like at a constant speed, fell from 0.0060 rad at 2000 Hz to 0.0012 at 4000 and 0.00018 at 8000
-     *     -- a factor of 33 across a 4x carrier -- while the HF current it drew with the same 12 V fell from 4.04 A to
-     *     0.38 A. Both ends of that are wins, which is unusual enough to state: the same volts buy a smaller bias *and*
-     *     less injected current. - **Above it, the method stops working and says nothing.** The boundary is `control_hz
-     *     / 2.5` measured as kMinSamplesPerCarrier: 8000 Hz at 20 kHz (2.50 periods per cycle) held in every cell of
-     *     the sweep, 8400 (2.38) already failed at the widest demodulation cutoff tried, 9200 (2.17) failed at all of
-     *     them. Past the boundary the demodulated amplitude collapses, the lock detector drops out, the angle freezes
-     *     and the speed reads zero: a loop closing on it ran to a speed bias of -19.5 rad/s in the fixture. `update()`
-     *     therefore refuses a carrier this rate cannot resolve, rather than leaving the caller with a frozen angle. -
+     *     \li **Within what the control rate resolves, higher is better.** At 20 rad/s mech the angle bias, which is
+     *     what a lag looks like at a constant speed, fell from 0.0060 rad at 2000 Hz to 0.0012 at 4000 and 0.00018 at
+     *     8000 -- a factor of 33 across a 4x carrier -- while the HF current it drew with the same 12 V fell from 4.04
+     *     A to 0.38 A. Both ends of that are wins, which is unusual enough to state: the same volts buy a smaller bias
+     *     *and* less injected current.
+     *
+     *     **Above it, the method stops working and says nothing.** The boundary is `control_hz / 2.5` measured as
+     *     kMinSamplesPerCarrier: 8000 Hz at 20 kHz (2.50 periods per cycle) held in every cell of the sweep, 8400
+     *     (2.38) already failed at the widest demodulation cutoff tried, 9200 (2.17) failed at all of them. Past the
+     *     boundary the demodulated amplitude collapses, the lock detector drops out, the angle freezes and the speed
+     *     reads zero: a loop closing on it ran to a speed bias of -19.5 rad/s in the fixture. `update()` therefore
+     *     refuses a carrier this rate cannot resolve, rather than leaving the caller with a frozen angle.
+     *
      *     **`demod_lpf_hz` should be scheduled by nothing.** A grid over 0/5/20/50 rad/s mech crossed with 100/200/400
      *     Hz found the window's effect at speed to be under 0.5 %, and at standstill the *narrowest* window best by 14x
      *     (0.00011 against 0.00154 rad). So the window is a noise/protection trade with a fixed answer, not a quantity
@@ -125,16 +128,19 @@ class HfiObserver final {
      *     定容 `inject_hz` 同样不自由，两端都在 SIL 包线台架上量过（带载电机给定转速、观测器当乘客，于是一个格子是观测
      *     器的性质）：
      *
-     *     - **范围之内，越高越好。** 20 rad/s 机械下，角度偏差（恒速下滞后就是这个样子）从 2000 Hz 的 0.0060 rad 降到
+     *     \li **范围之内，越高越好。** 20 rad/s 机械下，角度偏差（恒速下滞后就是这个样子）从 2000 Hz 的 0.0060 rad 降到
      *     4000 Hz 的 0.0012、8000 Hz 的 0.00018——4 倍载波换来 33 倍改善——而同样 12 V 拉出的高频电流从 4.04 A 降到 0.38
-     *     A。两端都是收益，这值得明说：同样的伏特数既买到更小的偏差，又买到更少的注入电流。 - **超出之后，方法失效且一
-     *     声不响。** 边界是实测的 `control_hz / 2.5`（即 kMinSamplesPerCarrier）：20 kHz 上的 8000 Hz（每周期 2.50 个样
-     *     本）在扫描每一格都站住， 8400（2.38）在试过的最宽解调截止频率上已失败，9200 （ 2.17）在三个截止频率上全部失
-     *     败。越过边界后解调幅值塌掉、锁定判据脱落、角度冻结、转速报零：台架上闭在它上面的环跑到 -19.5 rad/s 的转速偏
-     *     差。因此 `update()` 会拒绝这个控制率分辨不了的载波，而不是把冻结的角度留给调用方。 - **`demod_lpf_hz` 不该由
-     *     任何东西调度。** 0/5/20/50 rad/s 机械 × 100/200/400 Hz 的网格显示，窗口在转速下的影响不到 0.5%，而静止时**最
-     *     窄**的窗口好 14 倍（0.00011 对 0.00154 rad）。因此窗口是一个有固定答案的噪声/ 保护折中，不是按转速调度的量；
-     *     早先某一版里"窄窗在高速下会崩 "其实是一个起动瞬态，那正是下面 `blank_s_` 的用途。
+     *     A。两端都是收益，这值得明说：同样的伏特数既买到更小的偏差，又买到更少的注入电流。
+     *
+     *     **超出之后，方法失效且一 声不响。** 边界是实测的 `control_hz / 2.5`（即 kMinSamplesPerCarrier）：20 kHz 上的
+     *     8000 Hz（每周期 2.50 个样 本）在扫描每一格都站住， 8400（2.38）在试过的最宽解调截止频率上已失败，9200 （
+     *     2.17）在三个截止频率上全部失 败。越过边界后解调幅值塌掉、锁定判据脱落、角度冻结、转速报零：台架上闭在它上面的
+     *     环跑到 -19.5 rad/s 的转速偏 差。因此 `update()` 会拒绝这个控制率分辨不了的载波，而不是把冻结的角度留给调用
+     *     方。
+     *
+     *     **`demod_lpf_hz` 不该由 任何东西调度。** 0/5/20/50 rad/s 机械 × 100/200/400 Hz 的网格显示，窗口在转速下的影响
+     *     不到 0.5%，而静止时**最 窄**的窗口好 14 倍（0.00011 对 0.00154 rad）。因此窗口是一个有固定答案的噪声/ 保护折
+     *     中，不是按转速调度的量； 早先某一版里"窄窗在高速下会崩 "其实是一个起动瞬态，那正是下面 `blank_s_` 的用途。
      * @since 0.1.0
      */
     /**

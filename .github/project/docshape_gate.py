@@ -31,10 +31,16 @@ What it checks now
    same filter over every block and asks it for both languages, so the rule it enforces is the pipeline's
    own, not a second opinion about it. Measured before the repair: 88 blocks in 38 files.
 
+4. **A list stays a list.** `docfmt` joins consecutive body lines into one paragraph, so a `- ` item
+   marker written on its own line comes back as a run-on sentence -- and an item that shares a line
+   with the sentence before it was never a list at all. Doxygen's own `\li` command separated by
+   blank lines survives the reflow, so that is what the tree uses, and a `- ` marker in the middle
+   of a body line is red.
+
 What it deliberately does not check: which fields a block carries. A type with nothing to warn about should not hold an
 empty `@warning`, so "which sections exist" is a judgement rather than a rule. `docfmt` already enforces the shape the
 docs pipeline depends on (one tag per language group, untagged bodies, alignment, wrapping) and `docvoice` already
-enforces the register. What is left here is the three things neither of those can see.
+enforces the register. What is left here is the four things neither of those can see.
 """
 
 from __future__ import annotations
@@ -66,6 +72,9 @@ BRIEF_COLUMNS = 100
 CJK = re.compile(r"[\u3000-\u303f\u4e00-\u9fff\uff01-\uff60]")
 LANG_MARKER = re.compile(r"\[(?:en|zh|jp)\]")
 LANG_TAG = re.compile(r"^\s*\*\s*@\w+.*\[(?:en|zh|jp)\]")
+# A list marker in the middle of a body line: either a `-` list that docfmt has already flattened, or
+# an item that never got its own paragraph. Either way the reader sees one run-on sentence.
+JOINED_ITEM = re.compile(r"[^\s]\s-\s\*\*")
 
 
 def _english_words(text: str) -> int:
@@ -136,6 +145,9 @@ def scan_text(text: str) -> tuple[list[str], int]:
         for offset, line in enumerate(block.splitlines()):
             if INVENTED.match(line):
                 invented.append(f"{start + offset}: invented section marker: {line.strip().lstrip('* ')}")
+            if JOINED_ITEM.search(line):
+                invented.append(f"{start + offset}: a `- ` list item inside a paragraph -- use `\\li` with a "
+                                f"blank line between items, or docfmt joins them into one sentence")
             brief = BRIEF.match(line)
             if brief and len(brief.group(1)) > BRIEF_COLUMNS:
                 long_briefs += 1
@@ -227,6 +239,11 @@ def selftest() -> int:
         ("both briefs first, both bodies after them",
          "/**\n * @brief [en] one line\n *\n * @brief [zh] 一行\n *\n *     " + body_en.strip()
          + "\n *\n *     " + body_zh.strip() + "\n */\nclass X {};\n", False, True),
+        ("a list flattened into a paragraph",
+         "/**\n * @brief [en] x\n *\n *     Intro. - **Item one.** text\n */\nclass X {};\n", True, False),
+        ("a list written as `\\li` items",
+         "/**\n * @brief [en] x\n *\n *     Intro.\n *\n *     \\li **Item one.** text\n */\nclass X {};\n",
+         False, False),
         ("the compact one-line form",
          "/** [en] Rows in the report. Fixed so the report has no growth path to negotiate. [zh] "
          "报告的行数。固定，于是这份报告不需要为增长再谈一次。 */\nclass X {};\n", False, False),
@@ -275,8 +292,8 @@ def main(argv: list[str] | None = None) -> int:
     if problems:
         print(f"[docshape] FAIL ({len(problems)} problem(s))", file=sys.stderr)
         return 1
-    print(f"[docshape] OK (no invented section markers; every body paragraph reaches the build of its "
-          f"own language; {sum(measured['long_briefs'].values())} over-long brief(s) at or below baseline)")
+    print(f"[docshape] OK (no invented section markers; lists intact; every body paragraph reaches the build "
+          f"of its own language; {sum(measured['long_briefs'].values())} over-long brief(s) at or below baseline)")
     return 0
 
 
