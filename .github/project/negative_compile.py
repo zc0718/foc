@@ -39,6 +39,30 @@ ROOT = Path(__file__).resolve().parents[2]
 # name, the member the case is about, the body of the fake type, and whether it must FAIL.
 CASES = [
     {
+        # The C ABI's one attribute promise, stated where it can actually fail: a C compiler, a dropped
+        # `foc_err_t`, and `-Werror` so the diagnostic is a build failure. Before `FOC_WARN_UNUSED` existed,
+        # this TU compiled clean -- the handle stayed null, every later call answered `FOC_ERR_PARAM`, and the
+        # caller's build said nothing at all.
+        # C ABI 的唯一一条属性promise，放在它真能失败的地方：C 编译器、被丢掉的 `foc_err_t`、以及让诊断成为构建
+        # 失败的 `-Werror`。在 `FOC_WARN_UNUSED` 存在之前，这个 TU 编译得干干净净——句柄保持空，之后每个调用都答
+        # `FOC_ERR_PARAM`，而调用方的构建一个字都不说。
+        "name": "c_abi_dropped_error_code",
+        "lang": "c",
+        "flags": ["-Werror"],
+        "syntax_only": False,
+        "must_fail": True,
+        "must_name": ["foc_motor_create", "warn_unused_result"],
+        "source": """#include <foc/api/foc_api.h>
+
+int main(void) {
+    foc_motor_t motor = 0;
+    foc_motor_params_t params = {0};
+    foc_motor_create(&params, &motor); /* the result is dropped on purpose */
+    return 0;
+}
+""",
+    },
+    {
         "name": "pwm_missing_fault",
         "header": "foc/hal/pwm.hpp",
         "trait": "foc::hal::concepts::is_pwm_v",
@@ -558,6 +582,14 @@ static_assert({trait}<{type}>, "{type} must satisfy the contract in {header} ({m
 
 
 def build_tu(case):
+    """The TU for one case: the concept-stub template by default, or `source` verbatim.
+
+    `source` exists because not every negative case is about a concept. The C ABI's "you may not drop this
+    result" promise is enforced by an attribute, and the only way to show it is a translation unit that
+    drops one -- which has no trait, no member and no probe, so the template above cannot express it.
+    """
+    if "source" in case:
+        return case["source"]
     return TEMPLATE.format(
         name=case["name"],
         member=case["member"],
@@ -570,14 +602,34 @@ def build_tu(case):
     )
 
 
-def run_case(case, compiler, include_dirs, std, verbose):
-    """Compile one case; returns (ok, detail)."""
+def run_case(case, compiler, include_dirs, std, verbose, ccompiler="gcc"):
+    """Compile one case; returns (ok, detail).
+
+    `lang: "c"` switches the compiler and the standard together, because a C promise (`warn_unused_result`)
+    can only be demonstrated by a C compiler: g++ would compile the same file as C++ and the attribute that
+    is being tested would be a different one. `flags` is how a case asks for the diagnostic to be fatal --
+    the `-Werror` that turns "unused result" into a build failure belongs to the case, not to the harness."""
+    lang = case.get("lang", "cxx")
+    suffix = ".c" if lang == "c" else ".cpp"
+    case_std = "c11" if lang == "c" else std
+    exe = ccompiler if lang == "c" else compiler
     with tempfile.TemporaryDirectory(prefix="foc-negative-") as tmp:
-        source = Path(tmp) / f"{case['name']}.cpp"
+        source = Path(tmp) / f"{case['name']}{suffix}"
         source.write_text(build_tu(case), encoding="utf-8")
-        command = [compiler, f"-std={std}", "-fsyntax-only", "-Wall", "-Wextra"]
+        command = [exe, f"-std={case_std}", "-Wall", "-Wextra", *case.get("flags", [])]
         command += [f"-I{d}" for d in include_dirs]
         command.append(str(source))
+        # `-fsyntax-only` stops after the front end, and `-Wunused-result` is emitted later -- so a case that
+        # asserts *this diagnostic is fatal* asks for a real compile. Measured: the dropped-`foc_err_t` case
+        # passed `-fsyntax-only -Werror` with no diagnostic at all, which is a false green of the worst kind
+        # (the gate reporting that the promise holds while nothing checked it).
+        # `-fsyntax-only` 在前端之后就停，而 `-Wunused-result` 是更晚产生的——所以断言"这个诊断是致命的"的用例
+        # 要求真编译。实测：丢弃 `foc_err_t` 那条用例在 `-fsyntax-only -Werror` 下一句诊断都没有，那是最坏的一种
+        # 假绿（门禁在报"承诺成立"，而其实没有任何东西检查过它）。
+        if case.get("syntax_only", True):
+            command.insert(2, "-fsyntax-only")
+        else:
+            command += ["-c", "-o", str(Path(tmp) / "out.o")]
         completed = subprocess.run(command, capture_output=True, text=True, check=False)
 
     output = (completed.stdout or "") + (completed.stderr or "")
@@ -588,13 +640,20 @@ def run_case(case, compiler, include_dirs, std, verbose):
     if case["must_fail"]:
         if completed.returncode == 0:
             return False, "compiled, but this stub must be rejected"
-        # Attribution: the diagnostic must name the contract header. g++ prints the
-        # static_assert message, which carries the path by construction.
-        if case["header"] not in output:
+        # Attribution: the diagnostic must name the thing that was violated. A concept stub fails through
+        # the contract header's `static_assert`, which carries the path by construction; a C attribute fails
+        # through the function name and the attribute name, and never mentions the header at all -- so those
+        # cases state what the compiler has to say rather than inheriting a rule that cannot hold for them.
+        must_name = case.get("must_name")
+        if must_name:
+            missing = [spelling for spelling in must_name if spelling not in output]
+            if missing:
+                return False, f"failed without naming {missing[0]}"
+        elif case["header"] not in output:
             return False, f"failed without naming {case['header']}"
         # The compiler itself must name the member (via the probe), so a green gate is not just
         # the gate reading back its own message.
-        if case["member"] not in output:
+        if not must_name and case["member"] not in output:
             return False, f"failed without naming the member {case['member']}"
         return True, "rejected as required"
 
@@ -608,7 +667,9 @@ def main():
     parser.add_argument("--list", action="store_true", help="list the case names and exit")
     parser.add_argument("--verbose", action="store_true", help="echo compiler diagnostics")
     parser.add_argument("-I", "--include", action="append", default=[], help="extra include dir")
-    parser.add_argument("--compiler", default=os.environ.get("CXX", "c++"), help="compiler to use")
+    parser.add_argument("--compiler", default=os.environ.get("CXX", "c++"), help="C++ compiler to use")
+    parser.add_argument("--ccompiler", default=os.environ.get("CC", "gcc"),
+                        help="C compiler, for cases that state a C promise (lang=c)")
     args = parser.parse_args()
 
     if args.list:
@@ -621,7 +682,7 @@ def main():
     std = "c++17"
     failures = 0
     for case in CASES:
-        ok, detail = run_case(case, args.compiler, include_dirs, std, args.verbose)
+        ok, detail = run_case(case, args.compiler, include_dirs, std, args.verbose, args.ccompiler)
         status = "ok  " if ok else "FAIL"
         print(f"[negative] {status} {case['name']:<38} {detail}")
         if not ok:

@@ -90,8 +90,7 @@
     "test_api_host_motor.cpp": "C ABI from C++, declared without extern \"C\" in the test",
     "test_api_identification.cpp": "C ABI from C++, declared without extern \"C\" in the test",
     "test_api_observer_selector.cpp": "C ABI from C++, declared without extern \"C\" in the test",
-    "test_api_position_absolute.cpp": "C ABI from C++, declared without extern \"C\" in the test",
-    "test_invariants.cpp": "uses the same non-extern-C ABI declarations for its driver harness",
+    "test_api_position_absolute.cpp": "C ABI from C++, declared without extern \"C\" in the test",  "test_enum_names.cpp": "walks the published C ABI's name/enum tables from C++, so it needs the ABI (added 2026-11-06 with the case itself)",    "test_invariants.cpp": "uses the same non-extern-C ABI declarations for its driver harness",
     "test_sil_api_equivalence.cpp": "compares the ABI against the C++ API, so it needs the ABI",
     "test_register_map.cpp": "C ABI from C++, declared without extern \"C\" in the test"
   },

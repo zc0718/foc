@@ -3,6 +3,56 @@
 #include <stdint.h>
 // Conan::ImportEnd
 
+/**
+ * @brief [en] Does this compiler know the attribute? 0 when it does not say.
+ * @brief [zh] 这个编译器认识该属性吗？它不说就是 0。
+ * @param x [en] the attribute name, without the double underscores or parentheses.
+ * @param x [zh] 属性名，不带双下划线与括号。
+ * @note [en] Two macros, not a portability library. The C surface needs exactly one attribute -- "do not ignore this
+ *            result" -- and the vocabulary for it is three lines on every compiler this library supports. A quirks
+ *            library would buy a hundred other attributes, none of which has a caller here, and would put a second
+ *            include path in front of every C consumer. Re-open the question when a *fourth* macro would have to fork
+ *            per compiler; today nothing forks.
+ * @note [zh] 两个宏，不是一个可移植性库。C 面恰好只需要一个属性——"别忽略这个返回值"——而它的写在本库支持的每个编译器上都
+ *            只是三行。quirks 库会买来一百个别的属性，这里一个都没有调用方，还会在每个 C 使用方前面多放一条包含路径。等
+ *            到需要写**第四个**宏且它非按编译器分叉不可时再重开这个问题；今天没有任何东西分叉。
+ * @since 0.1.12
+ */
+#if defined(__has_attribute)
+// NOLINTNEXTLINE(cppcoreguidelines-macro-usage) -- see deviation/cppcoreguidelines-macro-usage.md
+#define FOC_HAS_ATTRIBUTE(x) __has_attribute(x)
+#else
+// NOLINTNEXTLINE(cppcoreguidelines-macro-usage) -- same reason: `__has_attribute` needs an argument
+#define FOC_HAS_ATTRIBUTE(x) 0
+#endif
+
+/**
+ * @brief [en] Put on a declaration whose return value a caller must not silently drop.
+ * @brief [zh] 放在"调用方不许悄悄丢掉返回值"的声明上。
+ * @note [en] Before this existed, `foc_motor_create()`'s `foc_err_t` could be dropped without a word: the handle stayed
+ *            null, every later call answered `FOC_ERR_PARAM`, and nothing in the caller's build said anything. That is
+ *            the signature of the defect class this library refuses -- a wrong answer that looks like a right one.
+ *            Dropping a code on purpose still has to say so: `(void)foc_set_speed(m, v);` does **not** silence this on
+ *            GCC, because `__attribute__((warn_unused_result))` ignores the void cast (unlike `[[nodiscard]]`). The
+ *            escape route that does work is to bind it first -- `foc_err_t e = foc_set_speed(m, v); (void)e;` -- and it
+ *            is deliberately not the cheapest one to type. Measured 2026-11-06 with `gcc -std=c11 -Wall -Wextra`: the
+ *            void-cast form warns, the bind-then-void form is silent.
+ * @note [zh] 在这个存在之前，`foc_motor_create()` 的 `foc_err_t` 可以被无声丢掉：句柄保持空，之后每个调用都答
+ *            `FOC_ERR_PARAM`，而调用方的构建里一个字都不说。这正是本库拒绝接受的那类缺陷的特征——一个看起来像对的错误答
+ *            案。有意丢掉返回码必须**写出来**：`(void)foc_set_speed(m, v);` 在 GCC 上**并不能**消除这个告警——
+ *            `__attribute__((warn_unused_result))` 不认这个 void 转换（`[[nodiscard]]` 才认）。真正能过的写法是先绑一个
+ *            变量：`foc_err_t e = foc_set_speed(m, v); (void)e;`——而且它**故意**不是最省事的那种写法。 2026-11-06 用
+ *            `gcc -std=c11 -Wall -Wextra` 实测：转 void 那种告警，绑变量那种静默。
+ * @since 0.1.12
+ */
+#if defined(__cplusplus) && (__cplusplus >= 201703L)
+#define FOC_WARN_UNUSED [[nodiscard]]
+#elif FOC_HAS_ATTRIBUTE(warn_unused_result)
+#define FOC_WARN_UNUSED __attribute__((warn_unused_result))
+#else
+#define FOC_WARN_UNUSED
+#endif
+
 
 /**
  * @brief [en] Opaque motor handle of the C path. Created by foc_motor_create(), invalidated by foc_motor_destroy(); a
@@ -418,7 +468,10 @@ typedef enum foc_fault {
     FOC_FAULT_OVER_TEMPERATURE = 4,
     FOC_FAULT_I2T = 5,
     FOC_FAULT_STALL = 6,
-    FOC_FAULT_LOST_SYNC = 7
+    FOC_FAULT_LOST_SYNC = 7,
+    FOC_FAULT_DRIVE_FAULT = 8,
+    FOC_FAULT_WATCHDOG = 9,
+    FOC_FAULT_CLOCK_LOST = 10
 } foc_fault_t;
 
 /** [en] Rows in `foc_board_report_t`. Fixed so the report has no growth path to

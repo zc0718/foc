@@ -20,7 +20,7 @@
  * @since 0.1.0
  * @exporter
  */
-foc_err_t foc_motor_create(const foc_motor_params_t *params, foc_motor_t *out);
+FOC_WARN_UNUSED foc_err_t foc_motor_create(const foc_motor_params_t *params, foc_motor_t *out);
 
 
 /**
@@ -43,7 +43,8 @@ foc_err_t foc_motor_create(const foc_motor_params_t *params, foc_motor_t *out);
  * @since 0.1.0
  * @exporter
  */
-foc_err_t foc_motor_create_ex(const foc_motor_params_t *params, const foc_motor_setup_t *setup, foc_motor_t *out);
+FOC_WARN_UNUSED foc_err_t foc_motor_create_ex(const foc_motor_params_t *params, const foc_motor_setup_t *setup,
+                                              foc_motor_t *out);
 
 /**
  * @brief [en] Create a motor whose measurements come from the caller and whose duties go back to it.
@@ -66,8 +67,8 @@ foc_err_t foc_motor_create_ex(const foc_motor_params_t *params, const foc_motor_
  * @since 0.1.2
  * @exporter
  */
-foc_err_t foc_motor_create_host(const foc_motor_params_t *params, const foc_motor_setup_t *setup,
-                                const foc_hal_callbacks_t *callbacks, foc_motor_t *out);
+FOC_WARN_UNUSED foc_err_t foc_motor_create_host(const foc_motor_params_t *params, const foc_motor_setup_t *setup,
+                                                const foc_hal_callbacks_t *callbacks, foc_motor_t *out);
 
 
 /**
@@ -84,7 +85,7 @@ foc_err_t foc_motor_create_host(const foc_motor_params_t *params, const foc_moto
  * @since 0.1.0
  * @exporter
  */
-foc_err_t foc_motor_get_setup(foc_motor_t motor, foc_motor_setup_t *out);
+FOC_WARN_UNUSED foc_err_t foc_motor_get_setup(foc_motor_t motor, foc_motor_setup_t *out);
 
 
 /**
@@ -116,7 +117,7 @@ foc_err_t foc_motor_get_setup(foc_motor_t motor, foc_motor_setup_t *out);
  * @since 0.1.6
  * @exporter
  */
-foc_err_t foc_motor_set_observer(foc_motor_t motor, foc_observer_t observer);
+FOC_WARN_UNUSED foc_err_t foc_motor_set_observer(foc_motor_t motor, foc_observer_t observer);
 
 
 /**
@@ -131,7 +132,7 @@ foc_err_t foc_motor_set_observer(foc_motor_t motor, foc_observer_t observer);
  * @since 0.1.0
  * @exporter
  */
-foc_err_t foc_motor_destroy(foc_motor_t motor);
+FOC_WARN_UNUSED foc_err_t foc_motor_destroy(foc_motor_t motor);
 
 
 /**
@@ -144,7 +145,7 @@ foc_err_t foc_motor_destroy(foc_motor_t motor);
  * @since 0.1.0
  * @exporter
  */
-foc_err_t foc_motor_enable(foc_motor_t motor);
+FOC_WARN_UNUSED foc_err_t foc_motor_enable(foc_motor_t motor);
 
 
 /**
@@ -157,7 +158,7 @@ foc_err_t foc_motor_enable(foc_motor_t motor);
  * @since 0.1.0
  * @exporter
  */
-foc_err_t foc_motor_disable(foc_motor_t motor);
+FOC_WARN_UNUSED foc_err_t foc_motor_disable(foc_motor_t motor);
 
 
 /**
@@ -174,7 +175,7 @@ foc_err_t foc_motor_disable(foc_motor_t motor);
  * @since 0.1.0
  * @exporter
  */
-foc_err_t foc_motor_clear_fault(foc_motor_t motor);
+FOC_WARN_UNUSED foc_err_t foc_motor_clear_fault(foc_motor_t motor);
 
 /**
  * @brief [en] Start a breakaway sequence: raise the torque on a known ramp and report the instant the rotor moves.
@@ -206,7 +207,7 @@ foc_err_t foc_motor_clear_fault(foc_motor_t motor);
  * @since 0.1.9
  * @exporter
  */
-foc_err_t foc_motor_begin_stall_start(foc_motor_t motor, const foc_stall_start_config_t *recipe);
+FOC_WARN_UNUSED foc_err_t foc_motor_begin_stall_start(foc_motor_t motor, const foc_stall_start_config_t *recipe);
 
 /**
  * @brief [en] Where the breakaway sequence is, and the torque it last commanded.
@@ -225,7 +226,7 @@ foc_err_t foc_motor_begin_stall_start(foc_motor_t motor, const foc_stall_start_c
  * @since 0.1.9
  * @exporter
  */
-foc_err_t foc_motor_get_stall_start(foc_motor_t motor, foc_stall_start_status_t *out);
+FOC_WARN_UNUSED foc_err_t foc_motor_get_stall_start(foc_motor_t motor, foc_stall_start_status_t *out);
 
 /**
  * @brief [en] Abandon the sequence and zero the torque command; the mode is left as the caller had it.
@@ -239,7 +240,7 @@ foc_err_t foc_motor_get_stall_start(foc_motor_t motor, foc_stall_start_status_t 
  * @since 0.1.9
  * @exporter
  */
-foc_err_t foc_motor_cancel_stall_start(foc_motor_t motor);
+FOC_WARN_UNUSED foc_err_t foc_motor_cancel_stall_start(foc_motor_t motor);
 
 
 /**
@@ -254,7 +255,7 @@ foc_err_t foc_motor_cancel_stall_start(foc_motor_t motor);
  * @since 0.1.0
  * @exporter
  */
-foc_err_t foc_set_speed(foc_motor_t motor, float rad_per_s);
+FOC_WARN_UNUSED foc_err_t foc_set_speed(foc_motor_t motor, float rad_per_s);
 
 
 /**
@@ -273,7 +274,7 @@ foc_err_t foc_set_speed(foc_motor_t motor, float rad_per_s);
  * @since 0.1.0
  * @exporter
  */
-foc_err_t foc_set_speed_f64(foc_motor_t motor, double rad_per_s);
+FOC_WARN_UNUSED foc_err_t foc_set_speed_f64(foc_motor_t motor, double rad_per_s);
 
 
 /**
@@ -288,7 +289,7 @@ foc_err_t foc_set_speed_f64(foc_motor_t motor, double rad_per_s);
  * @since 0.1.0
  * @exporter
  */
-foc_err_t foc_set_torque(foc_motor_t motor, float iq_a);
+FOC_WARN_UNUSED foc_err_t foc_set_torque(foc_motor_t motor, float iq_a);
 
 
 /**
@@ -303,7 +304,7 @@ foc_err_t foc_set_torque(foc_motor_t motor, float iq_a);
  * @since 0.1.0
  * @exporter
  */
-foc_err_t foc_set_torque_f64(foc_motor_t motor, double iq_a);
+FOC_WARN_UNUSED foc_err_t foc_set_torque_f64(foc_motor_t motor, double iq_a);
 
 
 /**
@@ -325,7 +326,7 @@ foc_err_t foc_set_torque_f64(foc_motor_t motor, double iq_a);
  * @since 0.1.0
  * @exporter
  */
-foc_err_t foc_set_position(foc_motor_t motor, float position_rad);
+FOC_WARN_UNUSED foc_err_t foc_set_position(foc_motor_t motor, float position_rad);
 
 
 /**
@@ -340,7 +341,7 @@ foc_err_t foc_set_position(foc_motor_t motor, float position_rad);
  * @since 0.1.0
  * @exporter
  */
-foc_err_t foc_set_position_f64(foc_motor_t motor, double position_rad);
+FOC_WARN_UNUSED foc_err_t foc_set_position_f64(foc_motor_t motor, double position_rad);
 
 
 /**
@@ -359,7 +360,7 @@ foc_err_t foc_set_position_f64(foc_motor_t motor, double position_rad);
  * @since 0.1.0
  * @exporter
  */
-foc_err_t foc_set_command(foc_motor_t motor, const foc_motor_command_t *command);
+FOC_WARN_UNUSED foc_err_t foc_set_command(foc_motor_t motor, const foc_motor_command_t *command);
 
 
 /**
@@ -377,7 +378,7 @@ foc_err_t foc_set_command(foc_motor_t motor, const foc_motor_command_t *command)
  * @since 0.1.0
  * @exporter
  */
-foc_err_t foc_motor_get_status(foc_motor_t motor, foc_motor_status_t *out);
+FOC_WARN_UNUSED foc_err_t foc_motor_get_status(foc_motor_t motor, foc_motor_status_t *out);
 
 
 /**
@@ -404,7 +405,7 @@ foc_err_t foc_motor_get_status(foc_motor_t motor, foc_motor_status_t *out);
  * @since 0.1.8
  * @exporter
  */
-foc_err_t foc_motor_get_position_absolute(foc_motor_t motor, float *position_mech_rad);
+FOC_WARN_UNUSED foc_err_t foc_motor_get_position_absolute(foc_motor_t motor, float *position_mech_rad);
 
 
 /**
@@ -419,7 +420,7 @@ foc_err_t foc_motor_get_position_absolute(foc_motor_t motor, float *position_mec
  * @since 0.1.0
  * @exporter
  */
-foc_err_t foc_tick(foc_motor_t motor, float dt_s);
+FOC_WARN_UNUSED foc_err_t foc_tick(foc_motor_t motor, float dt_s);
 
 
 /**
@@ -440,7 +441,7 @@ foc_err_t foc_tick(foc_motor_t motor, float dt_s);
  * @since 0.1.0
  * @exporter
  */
-foc_err_t foc_get_state(foc_motor_t motor, float *speed_rad_s, float *id, float *iq);
+FOC_WARN_UNUSED foc_err_t foc_get_state(foc_motor_t motor, float *speed_rad_s, float *id, float *iq);
 
 
 /**
@@ -506,7 +507,8 @@ float foc_axis_deadtime_v(float deadtime_s, float switching_hz, float v_bus_v, f
  * @since 0.1.1
  * @exporter
  */
-foc_err_t foc_field_weakening_worthwhile(const foc_motor_params_t *params, float i_max_a, foc_fw_verdict_t *out);
+FOC_WARN_UNUSED foc_err_t foc_field_weakening_worthwhile(const foc_motor_params_t *params, float i_max_a,
+                                                         foc_fw_verdict_t *out);
 
 /**
  * @brief [en] The MTPA dq current reference for a q-axis command.
@@ -538,8 +540,8 @@ foc_err_t foc_field_weakening_worthwhile(const foc_motor_params_t *params, float
  * @since 0.1.1
  * @exporter
  */
-foc_err_t foc_mtpa_reference(const foc_motor_params_t *params, float i_max_a, float iq_command_a, float *id_a,
-                             float *iq_a);
+FOC_WARN_UNUSED foc_err_t foc_mtpa_reference(const foc_motor_params_t *params, float i_max_a, float iq_command_a,
+                                             float *id_a, float *iq_a);
 
 /**
  * @brief [en] The current-loop PI the library would run for this setup, clamps included.
@@ -568,7 +570,8 @@ foc_err_t foc_mtpa_reference(const foc_motor_params_t *params, float i_max_a, fl
  * @since 0.1.3
  * @exporter
  */
-foc_err_t foc_current_pi_gains(const foc_motor_params_t *params, const foc_motor_setup_t *setup, foc_pi_gains_t *out);
+FOC_WARN_UNUSED foc_err_t foc_current_pi_gains(const foc_motor_params_t *params, const foc_motor_setup_t *setup,
+                                               foc_pi_gains_t *out);
 
 /**
  * @brief [en] The speed-loop PI the library would run for this setup, clamps included.
@@ -588,7 +591,8 @@ foc_err_t foc_current_pi_gains(const foc_motor_params_t *params, const foc_motor
  * @since 0.1.3
  * @exporter
  */
-foc_err_t foc_speed_pi_gains(const foc_motor_params_t *params, const foc_motor_setup_t *setup, foc_pi_gains_t *out);
+FOC_WARN_UNUSED foc_err_t foc_speed_pi_gains(const foc_motor_params_t *params, const foc_motor_setup_t *setup,
+                                             foc_pi_gains_t *out);
 
 /**
  * @brief [en] Stator resistance and the constant voltage loss, fitted to a standstill sweep.
@@ -615,8 +619,8 @@ foc_err_t foc_speed_pi_gains(const foc_motor_params_t *params, const foc_motor_s
  * @since 0.1.3
  * @exporter
  */
-foc_err_t foc_rs_estimate(const foc_motor_params_t *params, const float *v_command, const float *i_current,
-                          uint32_t count, foc_identify_result_t *out);
+FOC_WARN_UNUSED foc_err_t foc_rs_estimate(const foc_motor_params_t *params, const float *v_command,
+                                          const float *i_current, uint32_t count, foc_identify_result_t *out);
 
 /**
  * @brief [en] Rotor flux linkage and the constant measurement offset, fitted to a zero-current sweep.
@@ -645,8 +649,9 @@ foc_err_t foc_rs_estimate(const foc_motor_params_t *params, const float *v_comma
  * @since 0.1.3
  * @exporter
  */
-foc_err_t foc_flux_estimate(const foc_motor_params_t *params, const float *omega_e, const float *v_magnitude,
-                            const float *i_magnitude, uint32_t count, foc_identify_result_t *out);
+FOC_WARN_UNUSED foc_err_t foc_flux_estimate(const foc_motor_params_t *params, const float *omega_e,
+                                            const float *v_magnitude, const float *i_magnitude, uint32_t count,
+                                            foc_identify_result_t *out);
 
 /**
  * @brief [en] Judge a board from what was measured.
@@ -664,8 +669,8 @@ foc_err_t foc_flux_estimate(const foc_motor_params_t *params, const float *omega
  * @since 0.1.1
  * @exporter
  */
-foc_err_t foc_board_check(const foc_board_measurements_t *measurements, const foc_board_limits_t *limits,
-                          foc_board_report_t *out);
+FOC_WARN_UNUSED foc_err_t foc_board_check(const foc_board_measurements_t *measurements,
+                                          const foc_board_limits_t *limits, foc_board_report_t *out);
 
 /**
  * @brief [en] A stable lowercase name for a `FOC_BOARD_ITEM_*` value.
@@ -720,7 +725,7 @@ const char *foc_fault_name(int32_t fault);
  * @since 0.1.1
  * @exporter
  */
-foc_err_t foc_protector_create(const foc_protection_config_t *config, foc_protector_t *out);
+FOC_WARN_UNUSED foc_err_t foc_protector_create(const foc_protection_config_t *config, foc_protector_t *out);
 
 /**
  * @brief [en] Advance one control period.
@@ -740,8 +745,8 @@ foc_err_t foc_protector_create(const foc_protection_config_t *config, foc_protec
  * @since 0.1.1
  * @exporter
  */
-foc_err_t foc_protector_step(foc_protector_t protector, const foc_protection_input_t *in, float dt_s,
-                             foc_protection_output_t *out);
+FOC_WARN_UNUSED foc_err_t foc_protector_step(foc_protector_t protector, const foc_protection_input_t *in, float dt_s,
+                                             foc_protection_output_t *out);
 
 /**
  * @brief [en] Clear the faults.
@@ -756,7 +761,7 @@ foc_err_t foc_protector_step(foc_protector_t protector, const foc_protection_inp
  * @since 0.1.1
  * @exporter
  */
-foc_err_t foc_protector_reset(foc_protector_t protector, int32_t cold);
+FOC_WARN_UNUSED foc_err_t foc_protector_reset(foc_protector_t protector, int32_t cold);
 
 /**
  * @brief [en] Release a protector.
@@ -768,7 +773,7 @@ foc_err_t foc_protector_reset(foc_protector_t protector, int32_t cold);
  * @since 0.1.1
  * @exporter
  */
-foc_err_t foc_protector_destroy(foc_protector_t protector);
+FOC_WARN_UNUSED foc_err_t foc_protector_destroy(foc_protector_t protector);
 
 /**
  * @brief [en] The highest HFI injection carrier a given control rate can resolve, in Hz.
@@ -823,7 +828,8 @@ float foc_hfi_max_inject_hz(float pwm_freq_hz);
  * @since 0.1.7
  * @exporter
  */
-foc_err_t foc_hfi_size(const foc_motor_params_t *params, float pwm_freq_hz, float hf_current_a, foc_hfi_sizing_t *out);
+FOC_WARN_UNUSED foc_err_t foc_hfi_size(const foc_motor_params_t *params, float pwm_freq_hz, float hf_current_a,
+                                       foc_hfi_sizing_t *out);
 
 
 /**
@@ -849,7 +855,7 @@ foc_err_t foc_hfi_size(const foc_motor_params_t *params, float pwm_freq_hz, floa
  * @since 0.1.8
  * @exporter
  */
-foc_err_t foc_motor_set_trace(foc_motor_t motor, foc_trace_sample_t *samples, uint32_t capacity);
+FOC_WARN_UNUSED foc_err_t foc_motor_set_trace(foc_motor_t motor, foc_trace_sample_t *samples, uint32_t capacity);
 
 
 /**
@@ -892,7 +898,7 @@ uint32_t foc_motor_trace_dropped(foc_motor_t motor);
  * @since 0.1.8
  * @exporter
  */
-foc_err_t foc_motor_trace_read(foc_motor_t motor, uint32_t index, foc_trace_sample_t *out);
+FOC_WARN_UNUSED foc_err_t foc_motor_trace_read(foc_motor_t motor, uint32_t index, foc_trace_sample_t *out);
 
 
 /**
@@ -905,7 +911,7 @@ foc_err_t foc_motor_trace_read(foc_motor_t motor, uint32_t index, foc_trace_samp
  * @since 0.1.8
  * @exporter
  */
-foc_err_t foc_motor_trace_reset(foc_motor_t motor);
+FOC_WARN_UNUSED foc_err_t foc_motor_trace_reset(foc_motor_t motor);
 
 
 /**
@@ -941,7 +947,8 @@ foc_err_t foc_motor_trace_reset(foc_motor_t motor);
  * @since 0.1.8
  * @exporter
  */
-foc_err_t foc_step_metrics(const float *y, uint32_t n, float dt_s, float target, float band, foc_step_metrics_t *out);
+FOC_WARN_UNUSED foc_err_t foc_step_metrics(const float *y, uint32_t n, float dt_s, float target, float band,
+                                           foc_step_metrics_t *out);
 
 
 /**
@@ -972,7 +979,8 @@ foc_err_t foc_step_metrics(const float *y, uint32_t n, float dt_s, float target,
  * @since 0.1.8
  * @exporter
  */
-foc_err_t foc_sinusoid_fit(const float *y, uint32_t n, float dt_s, float omega_rad_s, foc_sinusoid_fit_t *out);
+FOC_WARN_UNUSED foc_err_t foc_sinusoid_fit(const float *y, uint32_t n, float dt_s, float omega_rad_s,
+                                           foc_sinusoid_fit_t *out);
 
 
 /**
@@ -996,8 +1004,8 @@ foc_err_t foc_sinusoid_fit(const float *y, uint32_t n, float dt_s, float omega_r
  * @since 0.1.8
  * @exporter
  */
-foc_err_t foc_torque_map_build(const foc_motor_params_t *params, float i_max_a, float min_nm, float max_nm,
-                               foc_torque_map_t *out);
+FOC_WARN_UNUSED foc_err_t foc_torque_map_build(const foc_motor_params_t *params, float i_max_a, float min_nm,
+                                               float max_nm, foc_torque_map_t *out);
 
 
 /**
@@ -1035,10 +1043,11 @@ float foc_torque_estimate(const foc_torque_map_t *map, float id_a, float iq_a);
  * @since 0.1.8
  * @exporter
  */
-foc_err_t foc_torque_command(const foc_torque_map_t *map, float requested_nm, float id_a, foc_torque_command_t *out);
+FOC_WARN_UNUSED foc_err_t foc_torque_command(const foc_torque_map_t *map, float requested_nm, float id_a,
+                                             foc_torque_command_t *out);
 
 
-foc_err_t foc_autotune_create(const foc_autotune_config_t *config, foc_autotune_t *out);
+FOC_WARN_UNUSED foc_err_t foc_autotune_create(const foc_autotune_config_t *config, foc_autotune_t *out);
 
 /**
  * @brief [en] Feed one control period of the torque-step window.
@@ -1058,8 +1067,8 @@ foc_err_t foc_autotune_create(const foc_autotune_config_t *config, foc_autotune_
  * @since 0.1.9
  * @exporter
  */
-foc_err_t foc_autotune_accumulate(foc_autotune_t handle, float dt_s, float iq_a, float omega_mech_rad_s,
-                                  int32_t saturated);
+FOC_WARN_UNUSED foc_err_t foc_autotune_accumulate(foc_autotune_t handle, float dt_s, float iq_a, float omega_mech_rad_s,
+                                                  int32_t saturated);
 
 /**
  * @brief [en] Turn the window into gains, or into a refusal.
@@ -1078,7 +1087,7 @@ foc_err_t foc_autotune_accumulate(foc_autotune_t handle, float dt_s, float iq_a,
  * @since 0.1.9
  * @exporter
  */
-foc_err_t foc_autotune_finish(foc_autotune_t handle, foc_autotune_result_t *out);
+FOC_WARN_UNUSED foc_err_t foc_autotune_finish(foc_autotune_t handle, foc_autotune_result_t *out);
 
 /**
  * @brief [en] Throw away the window, keeping the configuration.
@@ -1090,7 +1099,7 @@ foc_err_t foc_autotune_finish(foc_autotune_t handle, foc_autotune_result_t *out)
  * @since 0.1.9
  * @exporter
  */
-foc_err_t foc_autotune_reset(foc_autotune_t handle);
+FOC_WARN_UNUSED foc_err_t foc_autotune_reset(foc_autotune_t handle);
 
 /**
  * @brief [en] Release the session slot.
@@ -1102,7 +1111,7 @@ foc_err_t foc_autotune_reset(foc_autotune_t handle);
  * @since 0.1.9
  * @exporter
  */
-foc_err_t foc_autotune_destroy(foc_autotune_t handle);
+FOC_WARN_UNUSED foc_err_t foc_autotune_destroy(foc_autotune_t handle);
 
 /**
  * @brief [en] Open a cogging-learning session for one machine and one window shape.
@@ -1120,7 +1129,7 @@ foc_err_t foc_autotune_destroy(foc_autotune_t handle);
  * @since 0.1.9
  * @exporter
  */
-foc_err_t foc_cogging_learn_create(const foc_cogging_learn_config_t *config, foc_cogging_learn_t *out);
+FOC_WARN_UNUSED foc_err_t foc_cogging_learn_create(const foc_cogging_learn_config_t *config, foc_cogging_learn_t *out);
 
 /**
  * @brief [en] Feed one control period of the speed loop's answer.
@@ -1144,8 +1153,8 @@ foc_err_t foc_cogging_learn_create(const foc_cogging_learn_config_t *config, foc
  * @since 0.1.9
  * @exporter
  */
-foc_err_t foc_cogging_learn_accumulate(foc_cogging_learn_t handle, float theta_mech_rad, float iq_a, float id_a,
-                                       float omega_mech_rad_s, int32_t saturated);
+FOC_WARN_UNUSED foc_err_t foc_cogging_learn_accumulate(foc_cogging_learn_t handle, float theta_mech_rad, float iq_a,
+                                                       float id_a, float omega_mech_rad_s, int32_t saturated);
 
 /**
  * @brief [en] Whether the window already holds the revolutions the configuration asked for.
@@ -1159,7 +1168,7 @@ foc_err_t foc_cogging_learn_accumulate(foc_cogging_learn_t handle, float theta_m
  * @since 0.1.9
  * @exporter
  */
-foc_err_t foc_cogging_learn_ready(foc_cogging_learn_t handle, int32_t *out_ready);
+FOC_WARN_UNUSED foc_err_t foc_cogging_learn_ready(foc_cogging_learn_t handle, int32_t *out_ready);
 
 /**
  * @brief [en] Turn the window into a table, or into the reasons it is not one.
@@ -1189,8 +1198,8 @@ foc_err_t foc_cogging_learn_ready(foc_cogging_learn_t handle, int32_t *out_ready
  * @since 0.1.9
  * @exporter
  */
-foc_err_t foc_cogging_learn_finish(foc_cogging_learn_t handle, foc_cogging_harmonic_t *out_table, int32_t capacity,
-                                   foc_cogging_learn_result_t *out_result);
+FOC_WARN_UNUSED foc_err_t foc_cogging_learn_finish(foc_cogging_learn_t handle, foc_cogging_harmonic_t *out_table,
+                                                   int32_t capacity, foc_cogging_learn_result_t *out_result);
 
 /**
  * @brief [en] Throw away the window, keeping the configuration.
@@ -1202,7 +1211,7 @@ foc_err_t foc_cogging_learn_finish(foc_cogging_learn_t handle, foc_cogging_harmo
  * @since 0.1.9
  * @exporter
  */
-foc_err_t foc_cogging_learn_reset(foc_cogging_learn_t handle);
+FOC_WARN_UNUSED foc_err_t foc_cogging_learn_reset(foc_cogging_learn_t handle);
 
 /**
  * @brief [en] Release the session slot.
@@ -1214,4 +1223,4 @@ foc_err_t foc_cogging_learn_reset(foc_cogging_learn_t handle);
  * @since 0.1.9
  * @exporter
  */
-foc_err_t foc_cogging_learn_destroy(foc_cogging_learn_t handle);
+FOC_WARN_UNUSED foc_err_t foc_cogging_learn_destroy(foc_cogging_learn_t handle);
