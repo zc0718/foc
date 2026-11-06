@@ -631,6 +631,27 @@
           "why": "it clamps the mapped torque through `core::clamp`; `SlewLimiter` is not in its path. Its torque-per-amp numbers are computed from the map's own arithmetic, which did not change, and `test_torque_map.cpp` passes in the same run."
         }
       ]
+    },
+    {
+      "id": "B-16",
+      "date": "2026-11-06",
+      "what_changed": "The docstring *shape* in `core/pi.hpp` and `core/limits.hpp` changed a second time: the six bold pseudo-sections were replaced with Doxygen's own fields (short `@brief`, untagged body paragraphs, `\\f[...\\f]` for the formula, `@warning` for what is refused, `@see` for the pointers). No code, signature, member or default moved, so every verdict in B-14 and B-15 stands; what is superseded is only their description of the shape, because the entries are append-only and are not rewritten. The reason for the second pass is worth recording: the six-section template was invented here, while `.github/skills/_shared/code-conventions.md` had already fixed the tag shape (\"照 `fcpp/include/doctest.hpp`\") and Doxygen has a field for each of the six notions. The visible cost of the invention was that `@brief` stopped being brief -- a section called \"Model\" has to carry a paragraph.",
+      "seeds": [
+        "include/foc/core/pi.hpp",
+        "include/foc/core/limits.hpp"
+      ],
+      "affected": [
+        {
+          "row": "core/pi.hpp",
+          "verdict": "holds",
+          "why": "the claim row publishes the droop law, the zero at `-ki/kp`, the overshoot comparison and the peak-time ratios -- all measured from `Pi::run()`'s arithmetic, which is byte-identical. The rewrite touched only the doc block and `\\(f\\)`-formatted LaTeX inside it. Measured on this tree: 857/857 cases."
+        },
+        {
+          "row": "core/limits.hpp",
+          "verdict": "holds",
+          "why": "the row publishes clamp and slew behaviour produced by `clamp` and `SlewLimiter::step`, neither of which changed. The rewrite is inside the class doc block. Measured on this tree: 857/857 cases, `test_limits.cpp` included."
+        }
+      ]
     }
   ]
 }

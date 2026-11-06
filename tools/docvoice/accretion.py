@@ -245,13 +245,15 @@ def _interesting(line: str) -> bool:
 #
 # Accretion has a physical mechanism: a caveat is discovered, and there is nowhere in the block to put
 # it, so it becomes another `@note`. Do that ten times and the block is a pile of footnotes with a
-# `@brief` on top. The six-section skeleton (Model / Equation / Notation / Guarantees / Refusals /
-# Evidence) gives the caveat a home; a limit that lives in `@note` instead of `Refusals` is the
-# fingerprint of a block that grew by patching.
+# `@brief` on top. The home already exists in Doxygen's own vocabulary -- `@warning` for a refusal,
+# `@see` for a pointer, a body paragraph for the law -- and a limit that lives in `@note` instead of
+# `@warning` is the fingerprint of a block that grew by patching. (An earlier version of this comment
+# named a six-section skeleton invented in this repo; that template was withdrawn, see plan section 5.3:
+# the tag shape is fixed upstream by `_shared/code-conventions.md` + `fcpp/include/doctest.hpp`.)
 #
 # Measured 2026-11-06: 546 `@note` paragraphs, 197 of them (36 %) carry a refusal or a limit. So the
-# class is large, mechanical to detect, and mechanical to fix -- move the sentence into the section
-# that a reader actually looks at.
+# class is large, mechanical to detect, and mechanical to fix -- move the sentence into the field a
+# reader actually looks at.
 REFUSAL = re.compile(r'做不到|不能|不会|不可|不支持|拒绝|\bworse than\b|\bcannot\b|\bdoes not\b|'
                      r'\bmust not\b|\bnever\b|\bis not valid\b|\brejects?\b', re.IGNORECASE)
 NOTE_PARA = re.compile(r'@note\b[^\n]*\n((?:[^\n]*\n)*?)(?=\n?\s*\*\s*@|\Z)')
