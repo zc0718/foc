@@ -35,7 +35,11 @@ DEMOS = ROOT / "docs" / "sphinx" / "source" / "demos"
 # `src/core/version.cpp` is left out on purpose: the recipe wraps the C headers in `extern "C"`
 # when it exports them, the raw repository headers are not wrapped, so that one C++ wrapper does
 # not link against `version.c` outside Conan. Nothing in the exporter calls it.
-SKIP_SOURCES = {"version.cpp"}
+# `version.cpp` is left out because the recipe wraps the C headers in `extern "C"`
+# when it exports them, and the raw headers are not wrapped -- so that one C++
+# wrapper does not link outside Conan. The C sources are linked in: the C ABI demo
+# calls `foc_api.c`, and a demo that cannot link the path it documents is a lie.
+SKIP_SOURCES = {"version.cpp", "version.c"}
 
 COLORS = {"measured": "#1f77b4", "reference": "#d62728", "aux": "#2ca02c"}
 
@@ -49,7 +53,9 @@ def build(source: pathlib.Path, target: pathlib.Path) -> None:
     切片示例用同一个函数编译，所以图不可能来自读者看不到的代码：文档里的片段与图里的曲线
     是同一个翻译单元。
     """
-    sources = [str(p) for p in sorted((ROOT / "src").rglob("*.cpp")) if p.name not in SKIP_SOURCES]
+    sources = [str(p) for p in sorted((ROOT / "src").rglob("*.cpp"))
+               if p.name not in SKIP_SOURCES] + [str(p) for p in sorted((ROOT / "src").rglob("*.c"))
+                                                 if p.name not in SKIP_SOURCES]
     command = [
         "g++", "-std=c++17", "-O2",
         f"-I{ROOT / 'include'}", f"-I{ROOT / 'test_package' / 'test' / 'unit'}",
@@ -236,6 +242,26 @@ def plot_slice_s5(rows: list[dict[str, str]]) -> None:
     save(fig, "slice_s5_modulation")
 
 
+def plot_slice_s9(rows: list[dict[str, str]]) -> None:
+    """What crosses the C ABI: the command, the speed the host reports, and one duty."""
+    stride = max(1, len(rows) // 4000)
+    sample = rows[::stride]
+    t = [1000.0 * float(row["t_s"]) for row in sample]
+    fig, (top, bottom) = plt.subplots(2, 1, sharex=True, figsize=(7.2, 4.4))
+    top.plot(t, [float(row["iq_command_a"]) for row in sample], "--", color=COLORS["reference"], label="iq command")
+    top.plot(t, [float(row["iq_measured_a"]) for row in sample], color=COLORS["measured"], label="iq measured")
+    top.set_ylabel("iq (A)")
+    top.legend(loc="lower right")
+    bottom.plot(t, [float(row["duty_span"]) for row in sample], color=COLORS["aux"], label="duty span (written back)")
+    bottom.set_ylabel("max duty - min duty")
+    bottom.set_xlabel("time (ms)")
+    bottom.legend(loc="upper right")
+    for axis in (top, bottom):
+        axis.grid(True, which="both", alpha=0.3)
+    top.set_title("Through the C ABI: the command in, the state and the duties back out")
+    save(fig, "slice_s9_c_abi")
+
+
 def run_slice(name: str, workdir: pathlib.Path, plotter) -> None:
     """Build one slice example, run it in CSV mode, plot it.
 
@@ -288,6 +314,7 @@ def main() -> int:
         run_slice("slice-s1-startup", pathlib.Path(workdir), plot_slice_s1)
         run_slice("slice-s6-position", pathlib.Path(workdir), plot_slice_s6)
         run_slice("slice-s5-modulation", pathlib.Path(workdir), plot_slice_s5)
+        run_slice("slice-s9-c-abi", pathlib.Path(workdir), plot_slice_s9)
     print("done: figures in docs/images/OUT_demo_*.png, tables in docs/sphinx/source/demos/")
     return 0
 

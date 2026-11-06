@@ -1,0 +1,38 @@
+/**
+ * @example slice-s9-c-abi.cxx
+ *
+ * @brief [en] Consuming the library from C: five callbacks in, a handle out, then plain `foc_*` calls.
+ * @brief [zh] 从 C 侧使用本库：五个回调进去、一个句柄出来，之后都是普通的 `foc_*` 调用。
+ *
+ * @section s9_shows [en] What the example shows [zh] 这个例子展示了什么
+ * @par [en] The whole integration sequence -- `foc_motor_create_host`, `foc_motor_enable`, `foc_set_torque`,
+ *      `foc_tick`, `foc_get_state`, `foc_motor_get_status`, `foc_motor_destroy` -- with a host that owns the power
+ *      stage. Nothing in it is C++: the callbacks are plain function pointers, and a pure C consumer writes the same
+ *      lines.
+ * @par [zh] 完整的集成序列——`foc_motor_create_host`、`foc_motor_enable`、`foc_set_torque`、`foc_tick`、
+ *      `foc_get_state`、`foc_motor_get_status`、`foc_motor_destroy`——宿主自己拥有功率级。其中没有一处是 C++：
+ *      回调就是普通函数指针，纯 C 消费者写的是同样的几行。
+ *
+ * @section s9_notimpl [en] The one callback whose absence has its own answer [zh] 唯一一个"缺失时单独回答"的回调
+ * @par [en] `read_drive_fault` is the required callback that is **appended** to the struct, so it arrives as NULL from
+ *      a caller built against an older header. That caller is not at fault, and "we never asked" must not read like
+ *      "nothing is wrong" -- so `create_host()` answers `FOC_ERR_NOT_IMPL`, not `FOC_ERR_PARAM`. This example sets it,
+ *      and the comment says why leaving it out is a refusal rather than a default.
+ * @par [zh] `read_drive_fault` 是那个**追加**在结构体末尾的必需回调，所以按旧头编译的调用方会以 NULL 传进来。那不是
+ *      它的错，而"我们没问"不能读成"什么都没坏"——所以 `create_host()` 答 `FOC_ERR_NOT_IMPL` 而不是
+ *      `FOC_ERR_PARAM`。例子把它设上，并写明为什么漏掉它是一次拒绝而不是一个默认值。
+ *
+ * @section s9_stand_in [en] The host below is a stand-in, and it says so [zh] 下面的宿主是替身，而且它自己说了
+ * @par [en] Ohm's law across the winding plus the winding's own `L/R`: enough for the current loop to regulate, and
+ *      nothing more. A real host would be feeding ADC samples, and the page points at where that is shown instead.
+ * @par [zh] 绕组上的欧姆定律加上绕组自身的 `L/R`：够让电流环调住，仅此而已。真实宿主喂的是 ADC 采样，页面会指出
+ *      那件事在哪里演示。
+ *
+ * @include slice-s9-c-abi.cxx
+ *
+ * @note [en] Link the aggregate target `foc::foc`; the command on the first line links every translation unit in the
+ *            repository, including the one C file the ABI lives in.
+ * @note [zh] 链接聚合目标 `foc::foc`；第一行的命令链了仓库里每一个翻译单元，包括 ABI 所在的那个 C 文件。
+ *
+ * @since 0.1.12
+ */

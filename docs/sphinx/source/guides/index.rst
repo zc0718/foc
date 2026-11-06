@@ -88,11 +88,11 @@ The slices
      - Consume the library from C, Python or a simulation master
      - ``api/foc_api.h`` ``comm/frame`` ``comm/register_map``
        ``comm/encoder_stream`` ``api/python_bindings.cpp``
-     - planned
-     - planned
+     - :doc:`slice-s9-c-abi`
+     - written
 
 A slice is ``written`` when its page carries all seven parts and its example
-compiles. The remaining five are listed with their pieces so the boundary of
+compiles. The remaining four are listed with their pieces so the boundary of
 what this section promises stays visible: a task page that does not exist yet is
 a plan, not a gap to be discovered by a reader.
 
@@ -103,6 +103,7 @@ a plan, not a gap to be discovered by a reader.
    Bringing a sensorless machine up <slice-s1-startup>
    Torque below base speed <slice-s3-torque>
    High speed and modulation <slice-s5-modulation>
+   Consuming the library from outside C++ <slice-s9-c-abi>
    Positioning an axis <slice-s6-position>
 
 The figures already on the site
