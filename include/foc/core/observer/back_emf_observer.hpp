@@ -13,11 +13,13 @@ namespace core {
 /**
  * @brief [en] Back-EMF flux-linkage observer (open-loop integration), V1's "real" observer.
  *
+ *     Model: `psi_ab = integral(v_ab - Rs * i_ab) dt - L * i_ab`, angle = atan2(psi_beta, psi_alpha). Units are SI; the
+ *     V1 build assumes `Ld == Lq` (surface-mounted PMSM).
+ *
  * @brief [zh] 反电动势磁链观测器（开环积分），V1 的"真实可用"观测器。
  *
- *     Model: `psi_ab = integral(v_ab - Rs * i_ab) dt - L * i_ab`, angle = atan2(psi_beta, psi_alpha). Units are SI; the
- *     V1 build assumes `Ld == Lq` (surface-mounted PMSM). 模型：`psi_ab = ∫(v_ab - Rs·i_ab)dt - L·i_ab`，角度 =
- *     atan2(psi_beta, psi_alpha)。 SI 单位；V1 假设 `Ld == Lq`（表贴式 PMSM）。
+ *     模型：`psi_ab = ∫(v_ab - Rs·i_ab)dt - L·i_ab`，角度 = atan2(psi_beta, psi_alpha)。 SI 单位；V1 假设 `Ld == Lq`（
+ *     表贴式 PMSM）。
  *
  * @warning [en] A pure integrator cannot know its integration constant, so the **absolute** angle needs a known initial
  *               flux. Seed it with `seed_flux()` during/after the align phase (the motor layer knows psi_m = Kt / (1.5

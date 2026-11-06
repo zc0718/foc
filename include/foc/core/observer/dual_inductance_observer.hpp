@@ -16,9 +16,6 @@ namespace core {
  * @brief [en] Dual-inductance flux observer: the same integrator as `BackEmfObserver`, but the rotor angle is recovered
  *             from the saliency instead of from a single `L`.
  *
- * @brief [zh] 双电感磁链观测器：与 `BackEmfObserver` 相同的积分器，但转子角从凸极性反解，而不是靠单一 `L` 减掉电流磁
- *             链。
- *
  *     The stator flux of a salient machine is a **position-dependent** quantity, not "rotor flux plus `L*i`":
  *
  *     psi = psi_f * e^(j*theta) + L0 * i + L1 * conj(i) * e^(j*2*theta), L0 = (Ld + Lq) / 2, L1 = (Ld - Lq) / 2
@@ -31,6 +28,10 @@ namespace core {
  *     psi / dt = v - Rs * i`, with no inductance term at all) and inverts the relation above exactly: with `x =
  *     e^(j*theta)` the relation is a **quadratic in `x`**, so the answer is closed form and needs no iteration, no
  *     allocation and no tuning.
+ *
+ * @brief [zh] 双电感磁链观测器：与 `BackEmfObserver` 相同的积分器，但转子角从凸极性反解，而不是靠单一 `L` 减掉电流磁
+ *
+ *     链。
  *
  *     凸极电机的定子磁链是**与位置相关**的量，不是"转子磁链加上 `L·i`"：
  *

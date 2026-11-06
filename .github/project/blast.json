@@ -802,6 +802,91 @@
           "why": "publishes the sample parse; it never recomputes a value from these headers; the whole diff is comment text: every changed line in these 23 headers starts with `*` (`git diff -U0 -- include | grep -E '^[+-]' | grep -vE '^[+-]\\s*\\*'` is empty), so no declaration, member, default, formula or arithmetic changed."
         }
       ]
+    },
+    {
+      "id": "B-19",
+      "date": "2026-11-06",
+      "what_changed": "Second half of the language-grouping repair: the blocks whose English and Chinese paragraphs were welded together, interleaved, or stranded after a `@note [zh]` chunk. Each was cut at the boundary between the two languages, keeping the order within each language, and the English half moved under the `[en]` tag that opens its group. Measured with the pipeline's own `_language_filter`, the tree now reports 0 blocks losing English prose from the `en` build and 0 blocks letting English prose into the `zh` build (it was 88 blocks in 38 files when this started).",
+      "seeds": [
+        "include/foc/core/observer/back_emf_observer.hpp",
+        "include/foc/core/observer/blended_observer.hpp",
+        "include/foc/core/observer/dual_inductance_observer.hpp",
+        "include/foc/core/observer/hfi_observer.hpp",
+        "include/foc/core/observer/observer_policy.hpp",
+        "include/foc/motor/motor_config.hpp"
+      ],
+      "affected": [
+        {
+          "row": "core/observer/back_emf_observer.hpp",
+          "verdict": "holds",
+          "why": "publishes the back-EMF observer's angle and speed error; the diff is comment text only (no non-`*` line changed in this header), so no declaration, member, default, formula or arithmetic moved."
+        },
+        {
+          "row": "core/observer/blended_observer.hpp",
+          "verdict": "holds",
+          "why": "publishes the blend's angle error across the speed range; the diff is comment text only (no non-`*` line changed in this header), so no declaration, member, default, formula or arithmetic moved."
+        },
+        {
+          "row": "core/observer/dual_inductance_observer.hpp",
+          "verdict": "holds",
+          "why": "publishes the salient-machine observer's angle error; the diff is comment text only (no non-`*` line changed in this header), so no declaration, member, default, formula or arithmetic moved."
+        },
+        {
+          "row": "core/observer/hfi_observer.hpp",
+          "verdict": "holds",
+          "why": "publishes the saliency-tracking numbers at standstill; the diff is comment text only (no non-`*` line changed in this header), so no declaration, member, default, formula or arithmetic moved."
+        },
+        {
+          "row": "core/observer/ideal_observer.hpp",
+          "verdict": "holds",
+          "why": "publishes the ideal observer that the others are compared against; the diff is comment text only (no non-`*` line changed in this header), so no declaration, member, default, formula or arithmetic moved."
+        },
+        {
+          "row": "core/observer/nonlinear_flux_observer.hpp",
+          "verdict": "holds",
+          "why": "publishes the flux observer's angle error; the diff is comment text only (no non-`*` line changed in this header), so no declaration, member, default, formula or arithmetic moved."
+        },
+        {
+          "row": "core/observer/switchable_observer.hpp",
+          "verdict": "holds",
+          "why": "publishes the hand-over between two observers; the diff is comment text only (no non-`*` line changed in this header), so no declaration, member, default, formula or arithmetic moved."
+        },
+        {
+          "row": "core/pi.hpp",
+          "verdict": "holds",
+          "why": "publishes the PI step against ledger E-PI-1; the diff is comment text only (no non-`*` line changed in this header), so no declaration, member, default, formula or arithmetic moved."
+        },
+        {
+          "row": "core/traits.hpp",
+          "verdict": "holds",
+          "why": "publishes the policy-shape deductions those observers are checked by; the diff is comment text only (no non-`*` line changed in this header), so no declaration, member, default, formula or arithmetic moved."
+        },
+        {
+          "row": "motor/motor.hpp",
+          "verdict": "holds",
+          "why": "publishes the end-to-end stack the observers are composed into; the diff is comment text only (no non-`*` line changed in this header), so no declaration, member, default, formula or arithmetic moved."
+        },
+        {
+          "row": "motor/torque_map.hpp",
+          "verdict": "holds",
+          "why": "publishes the torque estimate and its inverse; the diff is comment text only (no non-`*` line changed in this header), so no declaration, member, default, formula or arithmetic moved."
+        },
+        {
+          "row": "core/trace.hpp",
+          "verdict": "holds",
+          "why": "publishes the trace record's layout and the null channel's cost; the diff is comment text only (no non-`*` line changed in this header), so no declaration, member, default, formula or arithmetic moved."
+        },
+        {
+          "row": "core/trace_parse.hpp",
+          "verdict": "holds",
+          "why": "publishes the sample parse, which never recomputes a value from these headers; the diff is comment text only (no non-`*` line changed in this header), so no declaration, member, default, formula or arithmetic moved."
+        },
+        {
+          "row": "motor/motor_config.hpp",
+          "verdict": "holds",
+          "why": "publishes the nameplate-to-loop period rounding that its own fields decide; the diff is comment text only (no non-`*` line changed in this header), so no declaration, member, default, formula or arithmetic moved."
+        }
+      ]
     }
   ]
 }

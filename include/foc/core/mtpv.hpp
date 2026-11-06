@@ -37,14 +37,15 @@ struct MtpvConfig final {
  * @brief [en] One point on the maximum-torque map: what the drive should hold at this speed, and whether the voltage or
  *             the current is what decided it.
  *
- * @brief [zh] 最大转矩地图上的一个点：这个转速下驱动器该守住什么，以及是电压还是电流决定了它。
- *
  *     `voltage_limited` is the honest half of the answer. Below the base speed the optimum is the current-limited MTPA
  *     point and the voltage ceiling is not what stops the drive -- reporting an MTPV point there would be reporting a
  *     number computed from a constraint that is not active, which is how a policy ends up "working" on a machine it
- *     does not describe. `voltage_limited` 是这个答案里诚实的那一半。基速以下最优点是被电流限幅的 MTPA 点，电压上限并非
- *     拦住驱动器的东西——在那里报一个 MTPV 点，就是用一条**没有生效**的约束算出来的数，而那正是一条策略"在一台它并不描述
- *     的机器上也能跑通"的来路。
+ *     does not describe. `voltage_limited`
+ *
+ * @brief [zh] 最大转矩地图上的一个点：这个转速下驱动器该守住什么，以及是电压还是电流决定了它。
+ *
+ *     是这个答案里诚实的那一半。基速以下最优点是被电流限幅的 MTPA 点，电压上限并非拦住驱动器的东西——在那里报一个 MTPV
+ *     点，就是用一条**没有生效**的约束算出来的数，而那正是一条策略"在一台它并不描述的机器上也能跑通"的来路。
  * @since 0.1.9
  * @exporter
  */

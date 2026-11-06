@@ -24,12 +24,14 @@ namespace concepts {
  * @brief [en] Compile-time contract checks for the foc_hal interfaces (C++17 detection idiom; the project targets
  *             C++17, so `concept`/`requires` are not available).
  *
- * @brief [zh] foc_hal 接口的编译期契约检查（C++17 检测惯用法；项目目标是 C++17，没有 concept/requires）。
- *
  *     Each trait answers two questions at once: does the member exist with the documented signature, and is it
  *     `noexcept`? A stub that forgets a member fails at compile time with the message from the caller's
- *     `static_assert`, never at run time. 每个 trait 同时回答两件事：成员是否以文档化的签名存在、是否 `noexcept`。 漏掉
- *     成员的桩会在编译期失败（报调用点的 static_assert 消息），不会拖到运行期。
+ *     `static_assert`, never at run time.
+ *
+ * @brief [zh] foc_hal 接口的编译期契约检查（C++17 检测惯用法；项目目标是 C++17，没有 concept/requires）。
+ *
+ *     每个 trait 同时回答两件事：成员是否以文档化的签名存在、是否 `noexcept`。 漏掉成员的桩会在编译期失败（报调用点的
+ *     static_assert 消息），不会拖到运行期。
  * @since 0.1.0
  * @exporter
  */

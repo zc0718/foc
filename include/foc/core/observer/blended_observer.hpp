@@ -52,24 +52,28 @@ inline auto wrap_full_turn(float angle) noexcept -> float {
 /**
  * @brief [en] One angle estimate from two observers, each valid in a different speed regime.
  *
- * @brief [zh] 由两个各自在某个速度区间有效的观测器合成的单一角度估计。
- *
  *     Why neither observer alone is enough: a saliency loop measures the magnetic circuit, which does not care about
  *     speed, so it works at standstill and drowns in the fundamental current as speed rises. A back-EMF observer
  *     measures the voltage the rotation generates, so it needs rotation and its accuracy improves with speed -- a flux
  *     integrator with a 30 % Rs error was measured at 2.7 rad of angle error near standstill and 0.02 rad at 400 rad/s
  *     electrical, on the same fixture where the saliency loop went the other way. The two curves cross, and this class
- *     is that crossing. 为什么单用哪个都不够：凸极环测的是磁路，与转速无关，因此静止可用，转速升高后被基频电流淹没。 反
- *     电动势观测器测的是旋转产生的电压，必须有转速，且精度随转速提高——同一台架上，Rs 偏 30% 的磁链 积分器在近静止处实测
- *     角度误差 2.7 rad，400 rad/s 电角速度处 0.02 rad，而凸极环的趋势正好相反。 两条曲线交叉，本类就是这个交叉。
+ *     is that crossing.
  *
  *     The weight is a linear ramp between two speeds, not a switch, and the band is required to have width. A hard
  *     switch driven by the very speed being estimated is a limit cycle: it switches, the speed reading changes, it
  *     switches back. The band also has to *end before the low-speed observer stops working*, which is a measured
  *     property of the machine, not a universal constant -- hence a configuration field rather than a number inside this
- *     class. 权重是两个转速之间的线性斜坡而不是开关，且要求带宽不为零。用被估计的转速去驱动的硬开关就是一个 极限环：切
- *     换 → 转速读数变化 → 切回来。此外带宽必须**在低速观测器失效之前结束**，而那是被控对象 的实测属性、不是通用常数——所
- *     以它是配置字段，而不是本类里的某个数字。
+ *     class.
+ *
+ * @brief [zh] 由两个各自在某个速度区间有效的观测器合成的单一角度估计。
+ *
+ *     为什么单用哪个都不够：凸极环测的是磁路，与转速无关，因此静止可用，转速升高后被基频电流淹没。 反电动势观测器测的是
+ *     旋转产生的电压，必须有转速，且精度随转速提高——同一台架上，Rs 偏 30% 的磁链 积分器在近静止处实测角度误差 2.7 rad，
+ *     400 rad/s 电角速度处 0.02 rad，而凸极环的趋势正好相反。 两条曲线交叉，本类就是这个交叉。
+ *
+ *     权重是两个转速之间的线性斜坡而不是开关，且要求带宽不为零。用被估计的转速去驱动的硬开关就是一个 极限环：切换 → 转
+ *     速读数变化 → 切回来。此外带宽必须**在低速观测器失效之前结束**，而那是被控对象 的实测属性、不是通用常数——所以它是
+ *     配置字段，而不是本类里的某个数字。
  *
  * @note [en] The angle blend is a shortest-arc interpolation, never a plain mix of two numbers in [0, 2*pi): the two
  *            estimates sit on opposite sides of the wrap every time one of them crosses zero, and averaging those raw

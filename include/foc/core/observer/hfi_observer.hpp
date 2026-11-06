@@ -16,19 +16,24 @@ namespace core {
  *             angle out of the current response. Works at standstill, where a back-EMF observer has nothing to
  *             integrate.
  *
- * @brief [zh] 凸极跟踪观测器：在估计的 d 轴注入高频电压，从电流响应中读出转子角度。静止时即可工作， 而这正是反电动势观
- *             测器无事可做的地方。
- *
  *     Why this cannot be a back-EMF variant: back-EMF scales with speed, so at zero speed it is zero and the angle is
  *     unobservable. Saliency does not scale with speed at all -- it is a property of the magnetic circuit. That is why
- *     the two are complements, not alternatives. 为什么它不可能是反电动势观测器的变体：反电动势与转速成正比，零速时为
- *     零，角度不可观测。凸极 与转速完全无关——它是磁路的属性。两者互补，不是二选一。
+ *     the two are complements, not alternatives.
  *
  *     Signal chain, one current-loop step: v_inj = V_h * sin(w_h t) along the estimated d axis eps = LPF2{ 2 * (i_ab .
  *     q_est) * cos(w_h t) } / demod_gain eps ~= -sin(2 * angle_error) The error drives a type-2 PLL whose gains come
- *     from a bandwidth and a damping ratio, so the numbers a caller tunes are physical instead of machine-specific. 信
- *     号链，每个电流环步： v_inj = V_h·sin(w_h t)，方向为估计 d 轴 eps = LPF2{ 2·(i_ab·q_est)·cos(w_h t) } / demod_gain
- *     eps ≈ -sin(2·角度误差) 该误差驱动二阶 PLL，其增益由带宽与阻尼比导出，于是调用方调的是物理量而非机器特定的数字。
+ *     from a bandwidth and a damping ratio, so the numbers a caller tunes are physical instead of machine-specific.
+ *
+ * @brief [zh] 凸极跟踪观测器：在估计的 d 轴注入高频电压，从电流响应中读出转子角度。静止时即可工作， 而这正是反电动势观
+ *
+ *     测器无事可做的地方。
+ *
+ *     为什么它不可能是反电动势观测器的变体：反电动势与转速成正比，零速时为零，角度不可观测。凸极 与转速完全无关——它是磁
+ *     路的属性。两者互补，不是二选一。
+ *
+ *     信号链，每个电流环步： v_inj = V_h·sin(w_h t)，方向为估计 d 轴 eps = LPF2{ 2·(i_ab·q_est)·cos(w_h t) } /
+ *     demod_gain eps ≈ -sin(2·角度误差) 该误差驱动二阶 PLL，其增益由带宽与阻尼比导出，于是调用方调的是物理量而非机器特
+ *     定的数字。
  *
  * @warning [en] Three limitations that are properties of the method, not bugs to be found later:
  *
@@ -65,6 +70,7 @@ class HfiObserver final {
     /**
      * @brief [en] Injection, demodulation and loop-shaping parameters.
      * @brief [zh] 注入、解调与环路整形参数。
+     *
      * @note [en] Every field is a physical quantity. There is no `enabled` flag: an injection amplitude of zero is
      *            rejected rather than treated as "off", because an observer that silently does nothing is
      *            indistinguishable from one that is broken. Sizing `inject_v`: an injected carrier is not free. Any
@@ -83,24 +89,8 @@ class HfiObserver final {
      *            its first sample a constant current never reaches the multiplier at all. Set it above the highest
      *            electrical frequency at which HFI is meant to work and well below `inject_hz`.
      *
-     * @note [zh] 每个字段都是物理量。没有 `enabled` 开关：注入幅值 0 会被拒绝而不是当作“关闭”， 因为一个静默无作为的观
-     *            测器与一个坏掉的观测器无法区分。
-     *
-     *     定容 `inject_v`：注入载波不是免费的。与它并行的**任何其他**观测器——比如反电动势磁链 积分器——都分不清载波与真
-     *     正的反电动势，而积分器没有复位，留下的东西就一直留着。残余量约为 一个载波周期的伏秒，即 `inject_v /
-     *     (2π·inject_hz)`，单位 Wb；换算成角度偏差就是 `inject_v / (2π·inject_hz·ψf)` rad。实测：4.8 mWb 转子上 2 V / 2
-     *     kHz 给出 0.031 rad， 预测 0.033。因此幅值是一笔交易——大到能读出凸极，小到它在别处留下的偏差在应用可接受范围
-     *     内。
-     *
-     *     `current_hp_hz` 存在的理由：解调器把实测电流与载波相乘，于是电流中**任何**直流成分 都会以载波频率漏过后级滤波
-     *     器，变成误差信号上的固定偏置。静止时的负载阶跃正好如此：凭空 出现一个直流电流。在台架上实测，0.5 A 的 q 轴电
-     *     流使误差偏置 0.034——足以把一次起动 推过 `pi/2` 边界、锁到镜像上。高通在解调前去掉基频，且由于滤波器在第一个采
-     *     样上自播种， 恒定电流根本到不了乘法器。取值应在“HFI 预期工作的最高电频率”之上、`inject_hz` 之下。
-     *
      *     Sizing `inject_hz` is not free either, and both ends were measured on the SIL envelope fixture (a loaded
-     *     machine held at a given speed, the observer as a passenger, so a cell is a property of the observer): 定容
-     *     `inject_hz` 同样不自由，两端都在 SIL 包线台架上量过（带载电机给定转速、观测器当乘客，于是一个格子是观测器的性
-     *     质）：
+     *     machine held at a given speed, the observer as a passenger, so a cell is a property of the observer):
      *
      *     - **Within what the control rate resolves, higher is better.** At 20 rad/s mech the angle bias, which is what
      *     a lag looks like at a constant speed, fell from 0.0060 rad at 2000 Hz to 0.0012 at 4000 and 0.00018 at 8000
@@ -116,17 +106,35 @@ class HfiObserver final {
      *     Hz found the window's effect at speed to be under 0.5 %, and at standstill the *narrowest* window best by 14x
      *     (0.00011 against 0.00154 rad). So the window is a noise/protection trade with a fixed answer, not a quantity
      *     to schedule by speed; what looked like "a narrow window breaks at speed" in an early draft was a start-up
-     *     transient, which is what `blank_s_` below is for. - **范围之内，越高越好。** 20 rad/s 机械下，角度偏差（恒速
-     *     下滞后就是这个样子）从 2000 Hz 的 0.0060 rad 降到 4000 Hz 的 0.0012、8000 Hz 的 0.00018——4 倍载波换来 33 倍改
-     *     善——而同样 12 V 拉出的高频电流从 4.04 A 降到 0.38 A。两端都是收益，这值得明说：同样的伏特数既买到更小的偏差，
-     *     又买到更少的注入电流。 - **超出之后，方法失效且一声不响。** 边界是实测的 `control_hz / 2.5`（即
-     *     kMinSamplesPerCarrier）：20 kHz 上的 8000 Hz（每周期 2.50 个样本）在扫描每一格都站住，8400（2.38）在试过的最
-     *     宽解调截止频率上已失败，9200 （ 2.17）在三个截止频率上全部失败。越过边界后解调幅值塌掉、锁定判据脱落、角度冻
-     *     结、转速报零：台架上闭在它上面的环跑到 -19.5 rad/s 的转速偏差。因此 `update()` 会拒绝这个控制率分辨不了的载
-     *     波，而不是把冻结的角度留给调用方。 - **`demod_lpf_hz` 不该由任何东西调度。** 0/5/20/50 rad/s 机械 ×
-     *     100/200/400 Hz 的网格显示，窗口在转速下的影响不到 0.5%，而静止时**最窄**的窗口好 14 倍（0.00011 对 0.00154
-     *     rad）。因此窗口是一个有固定答案的噪声/ 保护折中，不是按转速调度的量；早先某一版里"窄窗在高速下会崩"其实是一个
-     *     起动瞬态，那正是下面 `blank_s_` 的用途。
+     *     transient, which is what `blank_s_` below is for.
+     *
+     * @note [zh] 每个字段都是物理量。没有 `enabled` 开关：注入幅值 0 会被拒绝而不是当作“关闭”， 因为一个静默无作为的观
+     *            测器与一个坏掉的观测器无法区分。
+     *
+     *     定容 `inject_v`：注入载波不是免费的。与它并行的**任何其他**观测器——比如反电动势磁链 积分器——都分不清载波与真
+     *     正的反电动势，而积分器没有复位，留下的东西就一直留着。残余量约为 一个载波周期的伏秒，即 `inject_v /
+     *     (2π·inject_hz)`，单位 Wb；换算成角度偏差就是 `inject_v / (2π·inject_hz·ψf)` rad。实测：4.8 mWb 转子上 2 V / 2
+     *     kHz 给出 0.031 rad， 预测 0.033。因此幅值是一笔交易——大到能读出凸极，小到它在别处留下的偏差在应用可接受范围
+     *     内。
+     *
+     *     `current_hp_hz` 存在的理由：解调器把实测电流与载波相乘，于是电流中**任何**直流成分 都会以载波频率漏过后级滤波
+     *     器，变成误差信号上的固定偏置。静止时的负载阶跃正好如此：凭空 出现一个直流电流。在台架上实测，0.5 A 的 q 轴电
+     *     流使误差偏置 0.034——足以把一次起动 推过 `pi/2` 边界、锁到镜像上。高通在解调前去掉基频，且由于滤波器在第一个采
+     *     样上自播种， 恒定电流根本到不了乘法器。取值应在“HFI 预期工作的最高电频率”之上、`inject_hz` 之下。
+     *
+     *     定容 `inject_hz` 同样不自由，两端都在 SIL 包线台架上量过（带载电机给定转速、观测器当乘客，于是一个格子是观测
+     *     器的性质）：
+     *
+     *     - **范围之内，越高越好。** 20 rad/s 机械下，角度偏差（恒速下滞后就是这个样子）从 2000 Hz 的 0.0060 rad 降到
+     *     4000 Hz 的 0.0012、8000 Hz 的 0.00018——4 倍载波换来 33 倍改善——而同样 12 V 拉出的高频电流从 4.04 A 降到 0.38
+     *     A。两端都是收益，这值得明说：同样的伏特数既买到更小的偏差，又买到更少的注入电流。 - **超出之后，方法失效且一
+     *     声不响。** 边界是实测的 `control_hz / 2.5`（即 kMinSamplesPerCarrier）：20 kHz 上的 8000 Hz（每周期 2.50 个样
+     *     本）在扫描每一格都站住， 8400（2.38）在试过的最宽解调截止频率上已失败，9200 （ 2.17）在三个截止频率上全部失
+     *     败。越过边界后解调幅值塌掉、锁定判据脱落、角度冻结、转速报零：台架上闭在它上面的环跑到 -19.5 rad/s 的转速偏
+     *     差。因此 `update()` 会拒绝这个控制率分辨不了的载波，而不是把冻结的角度留给调用方。 - **`demod_lpf_hz` 不该由
+     *     任何东西调度。** 0/5/20/50 rad/s 机械 × 100/200/400 Hz 的网格显示，窗口在转速下的影响不到 0.5%，而静止时**最
+     *     窄**的窗口好 14 倍（0.00011 对 0.00154 rad）。因此窗口是一个有固定答案的噪声/ 保护折中，不是按转速调度的量；
+     *     早先某一版里"窄窗在高速下会崩 "其实是一个起动瞬态，那正是下面 `blank_s_` 的用途。
      * @since 0.1.0
      */
     /**

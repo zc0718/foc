@@ -18,20 +18,22 @@ namespace motor {
  *     loop period). A field of zero there means "use the natural behaviour": `speed_loop_period_s = 0` runs the speed
  *     loop on every tick, which is what the library did before the field existed.
  *
- * @brief [zh] 单台电机的铭牌参数，SI 单位。构造时一次填好。
- *
- *     本结构同时携带电机本体与随之而来的设置决策（限幅、载波、死区、环路周期）。其中取值为 0 的字段表示“使用自然行为”：
- *     `speed_loop_period_s = 0` 表示每个 tick 都跑速度环，也就是这个 字段出现之前库的行为。
- *
  *     **The period fields are lower bounds, not exact periods.** The loops run on whole control ticks, so the actual
  *     period is `dt*ceil(period/dt)` -- asking for 1.2 ticks gets 2 -- and because the elapsed time accumulates in
  *     float32 the rounded sum can fall just short of the request and add one more tick, which is why a requested 1.000
  *     ms runs every 21 ticks (1.050 ms) while 0.250 ms and 0.500 ms land exactly. After six years of ticks that is one
  *     tick, not six; but a caller who needs an exact decimation ratio has to check the actual period rather than assume
- *     it. **周期字段是下界，不是精确周期。** 环路按整控制拍运行，所以实际周期是 `dt*ceil(周期/dt)`——要 1.2 拍得到 2
- *     拍；而经过时间用 float32 累加，舍入后的和可能比请求略小，于是再多等一拍：所以请求 1.000 ms 实际每 21 拍跑一次（
- *     1.050 ms），而 0.250 ms 与 0.500 ms 恰好落在点上。这个偏差是一拍、不会随时间增加；但需要精确降采样比的调用方必须
- *     去查实际周期，不能假定。
+ *     it.
+ *
+ * @brief [zh] 单台电机的铭牌参数，SI 单位。构造时一次填好。
+ *
+ *     本结构同时携带电机本体与随之而来的设置决策（限幅、载波、死区、环路周期）。其中取值为 0 的字段表示“使用自然行为”：
+ *     `speed_loop_period_s = 0` 表示每个 tick 都跑速度环，也就是这个 字段出现之前库的行为。
+ *
+ *     **周期字段是下界，不是精确周期。** 环路按整控制拍运行，所以实际周期是 `dt*ceil(周期/dt)`——要 1.2 拍得到 2 拍；而
+ *     经过时间用 float32 累加，舍入后的和可能比请求略小，于是再多等一拍：所以请求 1.000 ms 实际每 21 拍跑一次（ 1.050
+ *     ms），而 0.250 ms 与 0.500 ms 恰好落在点上。这个偏差是一拍、不会随时间增加；但需要精确降采样比的调用方必须去查实
+ *     际周期，不能假定。
  * @since 0.1.0
  * @exporter
  */

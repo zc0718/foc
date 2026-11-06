@@ -52,10 +52,11 @@ struct TorqueMap {
 /**
  * @brief [en] What a torque command actually became.
  *
- * @brief [zh] 一条力矩指令实际变成了什么。
- *
  *     `limited` is the reason this is a struct rather than a number: a clipped command and an obeyed one differ in
  *     nothing else, and a caller that cannot tell them apart will report a tensioner as holding when it is saturating.
+ *
+ * @brief [zh] 一条力矩指令实际变成了什么。
+ *
  *     这条指令是否被裁剪，正是这里用结构体而不是一个数的原因：被裁剪的指令与被执行的指令在其他方面毫无差别，分不清二者
  *     的调用方会在张力控制已经饱和时报"正在保持"。
  * @since 0.1.8
