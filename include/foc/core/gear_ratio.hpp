@@ -12,11 +12,15 @@ namespace foc {
 namespace core {
 
 
-namespace {
+namespace detail {
 
 /**
  * @brief [en] Fold an angle into `[-pi, pi)`.
  * @brief [zh] 把角度折进 `[-pi, pi)`。
+ * @note [en] A named scope, not an unnamed one: an unnamed namespace in a header gives every translation unit its own
+ *            internal-linkage copy, which is what `cert-dcl59-cpp` is about.
+ * @note [zh] 具名作用域而不是无名命名空间：头文件里的无名命名空间给每个 TU 各一份内部链接副本，`cert-dcl59-cpp` 说的就
+ *            是它。
  */
 inline auto wrap_pi(float angle_rad) noexcept -> float {
     constexpr float kPiRad = 3.14159265358979323846F;
@@ -28,7 +32,7 @@ inline auto wrap_pi(float angle_rad) noexcept -> float {
     return wrapped - kPiRad;
 }
 
-} // namespace
+} // namespace detail
 
 
 /**
@@ -179,7 +183,7 @@ class ElectronicGear final {
             last_wrapped_rad_ = master_wrapped_rad;
             unwrapped_rad_ = 0.0F;
         } else {
-            const float delta = wrap_pi(master_wrapped_rad - last_wrapped_rad_);
+            const float delta = detail::wrap_pi(master_wrapped_rad - last_wrapped_rad_);
             // `kMaxStepRad` exists to be used. Below the 0.9 factor the decode is inside its domain; at or above it the
             // shortest arc is no longer a statement about motion, and the count is reported as lost rather than guessed.
             // `kMaxStepRad` 存在就是为了被使用。在 0.9 系数以下解码还在自己的域内；到或超过它，最短弧就不再是关于运动

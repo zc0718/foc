@@ -261,11 +261,22 @@ class HallTracker final {
 };
 
 
-namespace {
-
 constexpr float kHallSectorRad = 1.04719755119659774615F; ///< [en] pi/3, one sector, rad. [zh] π/3，一个扇区，rad。
 constexpr float kHallTwoPiRad = 6.28318530717958647692F;  ///< [en] 2*pi. [zh] 2π。
 
+namespace detail {
+
+/**
+ * @brief [en] Fold an angle into `[0, 2*pi)`.
+ * @brief [zh] 把角度折进 `[0, 2π)`。
+ * @note [en] A named scope, not an unnamed one: an unnamed namespace in a header gives every translation unit its own
+ *            internal-linkage copy of the function, so a header-only library ships one body per TU and the address of
+ *            the helper differs between them. `cert-dcl59-cpp` says exactly this, and it is the family this project now
+ *            enforces.
+ * @note [zh] 具名作用域而不是无名命名空间：头文件里的无名命名空间会给每个 TU 各生成一份内部链接的函数，于是这个头文件式
+ *            库在每个 TU 里都带一份函数体，且辅助函数的地址在不同 TU 间不相等。`cert-dcl59-cpp` 说的就是这件事，也正是
+ *            本项目现在开始强制的那个族。
+ */
 auto hall_wrap(float angle_rad) noexcept -> float {
     float wrapped = std::fmod(angle_rad, kHallTwoPiRad);
     if (wrapped < 0.0F) {
@@ -274,7 +285,7 @@ auto hall_wrap(float angle_rad) noexcept -> float {
     return wrapped;
 }
 
-} // namespace
+} // namespace detail
 
 inline auto six_step_duty(std::uint8_t code, float amplitude, HallDirection direction) noexcept -> Uvw<float> {
     constexpr float kMidRail = 0.5F;
@@ -448,7 +459,7 @@ inline auto HallTracker::angle_elec_rad(float now_s) const noexcept -> float {
     if (angle > (centre + half)) {
         angle = centre + half;
     }
-    return hall_wrap(angle);
+    return detail::hall_wrap(angle);
 }
 
 inline auto HallTracker::speed_elec_rad_s() const noexcept -> float { return speed_; }

@@ -426,7 +426,7 @@ def cmd_ci_policy(_explicit):
 PROJECT_GATES = ('license', 'strict', 'claims', 'docs', 'deps', 'form', 'boundaries', 'capabilities', 'ci-policy',
                  'assume', 'anchor', 'scaffold', 'budget', 'clocks', 'observability', 'combinations', 'domain',
                  'mutants', 'plantref', 'fmu', 'pil', 'mcdc', 'blast', 'wired', 'smoke', 'regmap', 'subset',
-                 'docvoice', 'symbols', 'equations')
+                 'docvoice', 'symbols', 'equations', 'enforce')
 
 
 def cmd_subset(_explicit):
@@ -454,6 +454,23 @@ def cmd_equations(_explicit):
     a docstring migration cannot invalidate it), a real `TEST()`, a witness pointer or the word `math`, and a worked
     evaluation this gate redoes. `--selftest` first: seven mutations, each of which must be caught."""
     script = str(ROOT / '.github' / 'project' / 'equations_gate.py')
+    for _args in (['--selftest'], []):
+        _rc = subprocess.run([sys.executable, script, *_args], cwd=ROOT, text=True).returncode
+        if _rc:
+            return _rc
+    return 0
+
+
+def cmd_enforce(_explicit):
+    """Check families the pinned clang-tidy config does not enable, enforced without editing it.
+
+    Why it exists: `rules.tsv` carried the CERT family as `open` because the enablement point is `.github/misc/`
+    `.clang-tidy`, which `scaffold` pins byte for byte. That reason was wrong -- `clang-tidy --checks` overrides the
+    config's `Checks` key while its `CheckOptions` and `HeaderFilterRegex` still apply, so the pinned file stays
+    identical and the family is enforced here instead. `--selftest` first, and it is a real measurement: the probe
+    must be diagnosed with the family on **and** clean with it off, so a family that is not actually switched on
+    cannot pass."""
+    script = str(ROOT / '.github' / 'project' / 'enforce_gate.py')
     for _args in (['--selftest'], []):
         _rc = subprocess.run([sys.executable, script, *_args], cwd=ROOT, text=True).returncode
         if _rc:
@@ -797,6 +814,8 @@ def main():
                    'direction, and the Sphinx page is generated from the same table the gate reads',
         'equations': 'every law the docs state names the symbol that implements it, a real TEST() and a witness, and '
                      'the worked evaluation in the ledger is recomputed rather than trusted',
+        'enforce': 'the check families the pinned clang-tidy config does not enable (CERT today) are still enforced, '
+                   'by adding them with --checks so the byte-pinned config is untouched',
         'pil': 'run the speed-step scenario on the target ISA under qemu and compare with the host; SKIPPED when its '
                'material is absent',
         'all': ' + '.join(PROJECT_GATES),
@@ -876,6 +895,8 @@ def main():
         return cmd_symbols([])
     if args.gate == 'equations':
         return cmd_equations([])
+    if args.gate == 'enforce':
+        return cmd_enforce([])
     # The chain above is the only thing standing between a single-gate invocation and the aggregate below, and it
     # has now been forgotten twice (`plantref` before, `combinations` and `mcdc` this time). A missing branch does
     # not fail: it runs *every* gate and prints "all N", which reads as success. So the fall-through is refused
@@ -904,6 +925,7 @@ def main():
                   'docvoice': cmd_docvoice,
                   'symbols': cmd_symbols,
                   'equations': cmd_equations,
+                  'enforce': cmd_enforce,
                   'pil': lambda _f: cmd_pil([], tolerant=True)}[name]([]) ]
     if failed:
         print(f'[project-gates] FAIL: {", ".join(failed)}', flush=True)

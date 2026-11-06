@@ -1,0 +1,255 @@
+#!/usr/bin/env python3
+"""The check families the pinned clang-tidy config does not enable, enforced without editing it.
+
+Why this exists
+---------------
+`rules.tsv` recorded the CERT C++ family as `open` for one reason: the enablement point is
+`.github/misc/.clang-tidy`, and that file is byte-pinned by the `scaffold` gate, so a local edit would make the next
+upstream release unmergeable. The family sat there as a known gap for weeks, with the reason "we cannot turn it on"
+written in a table.
+
+That reason was wrong. `clang-tidy --checks` overrides the config's `Checks` key while the config's `CheckOptions`
+and `HeaderFilterRegex` still apply, so the pinned file can stay byte-identical and the family can still be
+enforced -- by this repository's own gate, which is exactly where `subset`, `symbols` and `equations` live. The
+measurement that made it safe is in `enforce.json`: three sites, all `cert-dcl59-cpp`, all fixed.
+
+What it checks
+--------------
+1. The checks string is **composed from the pinned config**, not retyped: the `Checks:` block is parsed out of
+   `.github/misc/.clang-tidy` and the extra families are appended. A retyped list would drift from upstream silently,
+   and the failure would look like "the family is enabled" when it is not.
+2. Every family in `enforce.json` carries a `why`; a family nobody justified is a family that will be deleted by the
+   first person who finds it inconvenient.
+3. Every target compiles and produces **no diagnostic at all** -- the extra families are added to the pinned set, not
+   substituted for it, so this is the pinned gate plus more rather than instead of.
+4. `pending` entries need a `why` too. A family that is not enabled yet is a decision, and an unexplained decision is
+   indistinguishable from an oversight.
+
+Two measurement traps this gate is built around
+-----------------------------------------------
+**clang-tidy writes diagnostics to stdout on the pinned version**, not stderr. Reading stderr reports a clean sweep
+over everything, which is how the first two counts of these families came back as "0 hits" and were wrong.
+**A sweep with no positive control is not a measurement.** `--selftest` therefore builds a file that must be diagnosed
+and requires the gate to see it, then removes the family and requires the same file to be clean -- so the selftest
+fails if the family is not actually switched on.
+
+Usage
+-----
+    python3 .github/project/enforce_gate.py            # check
+    python3 .github/project/enforce_gate.py --list     # print the composed checks string and every problem
+    python3 .github/project/enforce_gate.py --selftest # prove the family is really on
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import re
+import subprocess
+import sys
+import tempfile
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[2]
+TABLE = Path(__file__).resolve().parent / "enforce.json"
+PINNED = ROOT / ".github" / "misc" / ".clang-tidy"
+SCAN_DIRS = ("include", "src")
+SUFFIXES = {".h", ".hpp", ".c", ".cpp"}
+SKIP_PARTS = {"build", "CMakeFiles", ".git"}
+
+
+def pinned_checks() -> list[str]:
+    """The `Checks:` block of the pinned config, as check patterns.
+
+    Parsed rather than retyped: a copy of upstream's list is a copy that stops matching the day upstream changes, and
+    the resulting failure would read as "the extra family is on" while the pinned set had quietly shrunk.
+    解析而不是抄写：抄一份上游清单，上游一改就不再匹配，而失败会读成"额外的族开着"，实际是钉住的集合悄悄少了。
+    """
+    lines = PINNED.read_text(encoding="utf-8").splitlines()
+    out: list[str] = []
+    inside = False
+    for line in lines:
+        if line.startswith("Checks:"):
+            inside = True
+            continue
+        if inside and line and not line[0].isspace():
+            break
+        if not inside:
+            continue
+        text = line.split("#", 1)[0].strip()
+        out.extend(part.strip() for part in text.replace("\n", " ").split(",") if part.strip())
+    return out
+
+
+def extra_families(table: dict) -> list[str]:
+    return [entry["checks"] for entry in table.get("families", []) if entry.get("checks")]
+
+
+def family_matcher(patterns: list[str]) -> re.Pattern[str]:
+    """Match a diagnostic's `[check-name]` against the extra patterns only.
+
+    The composed run enables the pinned families too, and this gate would then also report their diagnostics -- on a
+    wider target set than `tidy` uses (header-standalone units). That is not enforcement, it is a second, stricter
+    copy of another gate, and the first header it swept produced one: `cppcoreguidelines-avoid-magic-numbers` on an
+    array bound (`orders[6]`) in `foc_types.h`, invisible to `tidy` because `tidy` only compiles `src/` units. That
+    gap is real and worth fixing, but it is `tidy`'s gap and it must be fixed there, not absorbed here by a gate that
+    was not asked to. So: this gate reports only what it was created to enforce.
+    组合运行也开了钉住的那些族，于是本门会连它们的诊断一起报——而目标集比 `tidy` 更宽（头文件单独成 TU）。那不是强制，
+    那是另一个门的一份更严的拷贝；它扫到的第一个头就冒出一条：`foc_types.h` 里数组边界 `orders[6]` 上的
+    `cppcoreguidelines-avoid-magic-numbers`，`tidy` 看不见是因为 `tidy` 只编 `src/` 的 TU。那个缺口是真的、该修，但它是
+    `tidy` 的缺口，得在那边修，不能在这里被一个没被要求做这件事的门默默吸收。所以：本门只报它被创建来强制的那部分。
+    """
+    names = []
+    for pattern in patterns:
+        if pattern.endswith("*"):
+            names.append(re.escape(pattern[:-1]))
+        else:
+            names.append(re.escape(pattern))
+    # Alternation, not a character class: `[cert-]` would match any single character of `cert-`, so every
+    # `bugprone-` and `cppcoreguidelines-` diagnostic contains an `e` and would be reported by this gate.
+    # 用择一而不是字符类：`[cert-]` 会匹配 `cert-` 里任意一个单字符，于是每条 `bugprone-` /
+    # `cppcoreguidelines-` 诊断都因为含一个 `e` 而被本门报出来。
+    return re.compile("|".join(f"(?:{name})" for name in names))
+
+
+def compose(table: dict) -> str:
+    return ",".join([*pinned_checks(), *extra_families(table)])
+
+
+def targets() -> list[Path]:
+    found = []
+    for name in SCAN_DIRS:
+        for path in (ROOT / name).rglob("*"):
+            if path.suffix in SUFFIXES and path.is_file() and not (SKIP_PARTS & set(path.parts)):
+                found.append(path)
+    return sorted(found)
+
+
+def run_one(checks: str, work: Path, target: Path) -> list[str]:
+    """Diagnostics for one target, read from **stdout** -- see the module docstring."""
+    include_root = ROOT / "include"
+    if target.suffix in (".h", ".hpp") and target.is_relative_to(include_root):
+        # A public header is compiled through a synthetic TU that includes it, so self-containment is part of the
+        # check. A private header (`src/api/bridge.h`) is not on the include path and is compiled as itself.
+        tu = work / (target.stem + ".cpp")
+        tu.write_text(f'#include "{target.relative_to(include_root).as_posix()}"\n', encoding="utf-8")
+    else:
+        tu = target
+    std = "-std=c11" if target.suffix == ".c" else "-std=c++17"
+    cxx = [] if target.suffix == ".c" else ["-fno-exceptions", "-fno-rtti"]
+    cmd = ["clang-tidy", f"--config-file={PINNED.relative_to(ROOT).as_posix()}", f"--checks={checks}",
+           str(tu), "--", std, *cxx, "-Iinclude"]
+    done = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True)
+    return [line for line in done.stdout.splitlines() if "warning:" in line or "error:" in line]
+
+
+def evaluate(table: dict) -> list[str]:
+    problems: list[str] = []
+    if not PINNED.is_file():
+        return [f"{PINNED.name} is missing; the pinned check set cannot be read"]
+    base = pinned_checks()
+    if not base:
+        problems.append("the pinned config yields no checks, so composing from it would enforce nothing")
+    if base[:1] != ["-*"]:
+        problems.append("the pinned config does not start with '-*'; the composed set would add to whatever "
+                        "clang-tidy enables by default instead of to a known-empty base")
+    seen: set[str] = set()
+    for entry in table.get("families", []):
+        name = entry.get("id", "?")
+        if name in seen:
+            problems.append(f"{name}: declared twice")
+        seen.add(name)
+        if not entry.get("checks"):
+            problems.append(f"{name}: has no `checks` pattern")
+        if not (entry.get("why") or {}).get("en"):
+            problems.append(f"{name}: enabled without a reason — that is how a family gets deleted by the next "
+                            f"person who finds it inconvenient")
+    for entry in table.get("pending", []):
+        if not (entry.get("why") or {}).get("en"):
+            problems.append(f"pending {entry.get('id', '?')}: no reason, which is indistinguishable from an oversight")
+    return problems
+
+
+def probe(checks: str, work: Path) -> list[str]:
+    """One header that must be diagnosed by the extra family: an unnamed namespace in a header.
+
+    `--header-filter=.*` is passed here and only here: the probe lives outside the repository, so the config's
+    `HeaderFilterRegex` (anchored to `^(include|src)/`) would hide the very diagnostic being looked for. This makes
+    the probe answer "is the family enabled", which is the question; the real sweep keeps the config's filter.
+    这里、且只有这里传 `--header-filter=.*`：探针住在仓库外，配置里的 `HeaderFilterRegex`（锚在 `^(include|src)/`）
+    恰好会把要找的那条诊断滤掉。这样探针回答的是"族开着吗"——那才是问题；正式扫描仍用配置的过滤器。
+    """
+    probe_dir = work / "probe"
+    probe_dir.mkdir(exist_ok=True)
+    (probe_dir / "bad.hpp").write_text("namespace {\ninline auto f() noexcept -> int { return 1; }\n} // namespace\n",
+                                       encoding="utf-8")
+    tu = probe_dir / "use.cpp"
+    tu.write_text('#include "bad.hpp"\n\nint main() { return f(); }\n', encoding="utf-8")
+    cmd = ["clang-tidy", f"--config-file={PINNED.relative_to(ROOT).as_posix()}", f"--checks={checks}",
+           "--header-filter=.*", str(tu), "--", "-std=c++17", f"-I{probe_dir}"]
+    done = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True)
+    return [line for line in done.stdout.splitlines() if "warning:" in line or "error:" in line]
+
+
+def selftest(table: dict) -> int:
+    """Two runs, opposite verdicts: the family must be on, and the probe must be what proves it."""
+    full = compose(table)
+    stripped = ",".join(pinned_checks())
+    with tempfile.TemporaryDirectory(prefix="enforce-selftest-") as work:
+        work_path = Path(work)
+        on = probe(full, work_path)
+        off = probe(stripped, work_path)
+    caught = 0
+    trials = [
+        ("an unnamed namespace in a header is diagnosed by the extra family", bool(on)),
+        ("the same file is clean once the extra family is removed, so the probe measures the family", not off),
+    ]
+    for label, ok in trials:
+        print(f"[enforce-selftest] {'OK  ' if ok else 'MISS'} {label}")
+        caught += 1 if ok else 0
+    print(f"[enforce-selftest] {caught} / {len(trials)} judgement(s) as expected")
+    return 0 if caught == len(trials) else 1
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--selftest", action="store_true", help="prove the extra families are actually switched on")
+    parser.add_argument("--list", action="store_true", help="print the composed checks string and every problem")
+    args = parser.parse_args(argv)
+    table = json.loads(TABLE.read_text(encoding="utf-8"))
+    if args.selftest:
+        return selftest(table)
+    problems = evaluate(table)
+    checks = compose(table)
+    if args.list:
+        print(f"[enforce] checks = {checks}")
+    if problems:
+        for problem in problems:
+            print(f"[enforce] {problem}", file=sys.stderr)
+        print(f"[enforce] FAIL ({len(problems)} problem(s))", file=sys.stderr)
+        return 1
+    files = targets()
+    if not files:
+        print("[enforce] FAIL: no targets; the gate would report a clean sweep over nothing", file=sys.stderr)
+        return 1
+    families = ", ".join(extra_families(table))
+    matcher = family_matcher(extra_families(table))
+    failures = 0
+    with tempfile.TemporaryDirectory(prefix="enforce-") as work:
+        work_path = Path(work)
+        for target in files:
+            diagnostics = [line for line in run_one(checks, work_path, target) if matcher.search(line)]
+            if diagnostics:
+                failures += 1
+                print(f"--- {target.relative_to(ROOT).as_posix()}")
+                for line in diagnostics:
+                    print(f"    {line.strip()}")
+    if failures:
+        print(f"[enforce] FAIL ({failures}/{len(files)} target(s))", file=sys.stderr)
+        return 1
+    print(f"[enforce] OK ({len(files)} target(s), {families} on top of the pinned set)")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

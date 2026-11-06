@@ -1,0 +1,44 @@
+{
+  "_comment": [
+    "Check families the pinned clang-tidy config does not enable, but which this project still enforces.",
+    "上游钉住的 .clang-tidy 没有启用、但本项目仍然强制的检查族。",
+    "",
+    "**Why a second list instead of editing the config.** `.github/misc/.clang-tidy` is byte-pinned by the `scaffold` gate:",
+    "touching it means the next upstream release cannot be merged without replaying private code by hand. But clang-tidy",
+    "takes `--checks` on the command line, and that flag overrides the config's `Checks` key while the config's",
+    "`CheckOptions` and `HeaderFilterRegex` still apply. So the pinned file stays byte-identical, and the extra families",
+    "are enforced by this repository's own gate.",
+    "**为什么另开一张表而不去改配置。** `.github/misc/.clang-tidy` 被 `scaffold` 门字节钉住：动它意味着下一次上游发版",
+    "必须手抄私有代码才能合并。但 clang-tidy 支持命令行 `--checks`，它会覆盖配置里的 `Checks` 键，而配置里的",
+    "`CheckOptions` 与 `HeaderFilterRegex` 依然生效。于是钉住的文件字节不变，多出来的检查族由本仓库自己的门禁强制执行。",
+    "",
+    "**A family enters this list only after it measures clean or is covered by a permit.** `cert-*` was measured at 82 headers",
+    "and 42 sources: three sites, all `cert-dcl59-cpp`, all fixed (an unnamed namespace in a header gives every translation",
+    "unit its own internal-linkage copy). A family that is enabled while still red would turn every build red, which is a",
+    "way of switching a gate off, not on.",
+    "**只有先量干净、或被偏差许可覆盖的族才能进这张表。** `cert-*` 在 82 个头与 42 个源文件上量到三处命中，全是",
+    "`cert-dcl59-cpp`，且已全部修掉（头文件里的无名命名空间会让每个 TU 各得一份内部链接副本）。一个还带红就启用的族",
+    "会把每次构建都弄红——那是把门禁关掉的一种方式，不是打开。"
+  ],
+  "families": [
+    {
+      "id": "cert",
+      "checks": "cert-*",
+      "status": "enforced",
+      "why": {
+        "en": "The CERT C++ secure-coding rules. Measured at zero on both trees before being switched on, and the three sites it found on the way are fixed rather than suppressed.",
+        "zh": "CERT C++ 安全编码规则。启用前在两棵树上都量到 0；沿途发现的 3 处已修掉而不是抑制掉。"
+      }
+    }
+  ],
+  "pending": [
+    {
+      "id": "cppcoreguidelines",
+      "checks": "cppcoreguidelines-*",
+      "why": {
+        "en": "Not here yet, and the number is not known: a config-less sweep reports 670 diagnostics while the pinned-config sweep over `src/` reports none, and two measurements that disagree by 670 mean at least one of them is measuring something other than what the gate would see. Enabling a family on an unverified count is how a gate becomes decoration, so the count comes first.",
+        "zh": "还不在表里，而且**数还不知道**：无配置扫出 670 条，而被钉住配置下扫 `src/` 是 0 条；两个数差 670，说明至少有一个测的不是门禁会看到的东西。拿一个没验证过的计数去启用一个族，正是把门禁变成装饰的做法——所以先出数，再启用。"
+      }
+    }
+  ]
+}

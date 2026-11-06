@@ -486,11 +486,11 @@
 
     {
       "rule": "cert-cpp-family",
-      "check": "tidy:cert-*",
-      "status": "open",
+      "check": "gate:enforce",
+      "status": "implemented",
       "lang": "c++17",
       "delta": "none",
-      "why": "CERT C++ 全族（本机 clang-tidy 18.1.3 上 39 条）**未启用**。启用点在 `.github/misc/.clang-tidy`，而那个文件被 scaffold 门字节钉住 ⇒ 本地改不了，只能走上游补丁。按 T0-language-subset.md §Step 1 的实测，现有代码在该族上 0 命中，所以上游补丁的代价是\"改一行配置\"，不是\"修一堆代码\"。这是本表里最便宜的一条 open。",
+      "why": "CERT C++ 全族的原判是「未启用，启用点在字节钉住的 `.github/misc/.clang-tidy`，只能走上游补丁」，并附一句「现有代码 0 命中」。两点都要更正：① **0 命中是测错的**——第一次读的是 clang-tidy 的 stderr，而它把诊断写在 stdout，两次扫描都是假的 0；补上正对照（拿一个必然违规的文件试同一套调用）重测，真实命中是 3 处，全是 `cert-dcl59-cpp`（头文件里的无名命名空间），已修：改成具名 `detail` 作用域，因为无名命名空间会给每个 TU 各生成一份内部链接副本。② **字节钉住并不阻塞启用**：`clang-tidy --checks` 会覆盖配置的 `Checks` 键，而配置的 `CheckOptions` 与 `HeaderFilterRegex` 仍生效，所以新增的 `enforce` 门（第 31 道）把钉住集合原样读出来、追加 `cert-*`，配置文件一个字节没动。它的 `--selftest` 是实测式的：同一个探针在族开启时必须被诊断、关掉时必须干净。",
       "owner": "zc",
       "source": "A2 SEI CERT C++（免费，wiki）"
     },
