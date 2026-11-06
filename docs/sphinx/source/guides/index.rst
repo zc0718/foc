@@ -60,8 +60,8 @@ The slices
    * - S4
      - Keep producing torque above base speed, and decide whether it is worth it
      - ``field_weakening`` ``mtpv`` ``machine_map``
-     - planned
-     - planned
+     - :doc:`slice-s4-field-weakening`
+     - written
    * - S5
      - Modulate the voltage: overmodulation, minimum pulse, six-step
      - ``svpwm`` ``min_pulse`` ``six_step``
@@ -92,7 +92,7 @@ The slices
      - written
 
 A slice is ``written`` when its page carries all seven parts and its example
-compiles. The remaining four are listed with their pieces so the boundary of
+compiles. The remaining three are listed with their pieces so the boundary of
 what this section promises stays visible: a task page that does not exist yet is
 a plan, not a gap to be discovered by a reader.
 
@@ -102,6 +102,7 @@ a plan, not a gap to be discovered by a reader.
 
    Bringing a sensorless machine up <slice-s1-startup>
    Torque below base speed <slice-s3-torque>
+   Above base speed <slice-s4-field-weakening>
    High speed and modulation <slice-s5-modulation>
    Consuming the library from outside C++ <slice-s9-c-abi>
    Positioning an axis <slice-s6-position>

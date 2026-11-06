@@ -262,6 +262,54 @@ def plot_slice_s9(rows: list[dict[str, str]]) -> None:
     save(fig, "slice_s9_c_abi")
 
 
+def plot_slice_s4(rows: list[dict[str, str]]) -> None:
+    """Where the currents go above base speed, and what torque is left."""
+    fig, (left, right) = plt.subplots(1, 2, figsize=(9.6, 4.0))
+    id_a = [float(row["id_a"]) for row in rows]
+    iq_a = [float(row["iq_a"]) for row in rows]
+    ratio = [float(row["speed_ratio"]) for row in rows]
+    torque = [float(row["torque_nm"]) for row in rows]
+    limited = [row["voltage_limited"] == "1" for row in rows]
+
+    first = next((i for i, flag in enumerate(limited) if flag), None)
+    if first is not None:
+        left.plot(id_a[:first + 1], iq_a[:first + 1], color=COLORS["aux"], linewidth=2.4,
+                  label="current-limited (MTPA)")
+        left.plot(id_a[first:], iq_a[first:], color=COLORS["reference"], linewidth=2.0,
+                  label="voltage-limited")
+        left.plot([id_a[first]], [iq_a[first]], "o", color="black", markersize=4)
+        left.annotate("base speed", xy=(id_a[first], iq_a[first]),
+                      xytext=(id_a[first] + 0.08, iq_a[first] - 0.35), fontsize=8,
+                      arrowprops={"arrowstyle": "->", "linewidth": 0.8})
+    else:
+        left.plot(id_a, iq_a, color=COLORS["measured"], linewidth=1.2)
+    # The asymptote the sweep runs to: it is the last sample's id, not a constant
+    # written here -- the figure may show it, the page may not assert it.
+    # 扫描趋向的那条渐近线：取最后一个采样点的 id，而不是在这里写一个常数。
+    left.axvline(id_a[-1], color="grey", linestyle=":", linewidth=0.9)
+    left.annotate("runs to -psi_f/Ld", xy=(id_a[-1], min(iq_a)), xytext=(id_a[-1] + 0.06, min(iq_a) + 0.12),
+                  fontsize=8, color="dimgrey")
+    left.set_ylim(0.0, max(iq_a) * 1.18)
+    left.set_xlabel("id (A)")
+    left.set_ylabel("iq (A)")
+    left.set_title("the current path leaves MTPA and runs to -psi_f/Ld")
+    left.grid(True, alpha=0.3)
+    left.legend(loc="upper right", fontsize=8)
+
+    right.plot(ratio, torque, color=COLORS["measured"])
+    if first is not None:
+        right.axvline(ratio[first], color=COLORS["reference"], linewidth=0.9, linestyle="--")
+        right.annotate(f"voltage binds at {ratio[first]:.2f} x base", xy=(ratio[first], max(torque) * 0.5),
+                       xytext=(ratio[first] + 0.8, max(torque) * 0.5), fontsize=8, color=COLORS["reference"])
+    right.set_xlabel("electrical speed / base speed")
+    right.set_ylabel("torque (N.m)")
+    right.set_title("torque left above base speed")
+    right.set_ylim(bottom=0.0)
+    right.grid(True, alpha=0.3)
+    fig.tight_layout()
+    save(fig, "slice_s4_field_weakening")
+
+
 def run_slice(name: str, workdir: pathlib.Path, plotter) -> None:
     """Build one slice example, run it in CSV mode, plot it.
 
@@ -315,6 +363,7 @@ def main() -> int:
         run_slice("slice-s6-position", pathlib.Path(workdir), plot_slice_s6)
         run_slice("slice-s5-modulation", pathlib.Path(workdir), plot_slice_s5)
         run_slice("slice-s9-c-abi", pathlib.Path(workdir), plot_slice_s9)
+        run_slice("slice-s4-field-weakening", pathlib.Path(workdir), plot_slice_s4)
     print("done: figures in docs/images/OUT_demo_*.png, tables in docs/sphinx/source/demos/")
     return 0
 
