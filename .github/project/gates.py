@@ -406,7 +406,7 @@ def cmd_ci_policy(_explicit):
 PROJECT_GATES = ('license', 'strict', 'claims', 'docs', 'deps', 'form', 'boundaries', 'capabilities', 'ci-policy',
                  'assume', 'anchor', 'scaffold', 'budget', 'clocks', 'observability', 'combinations', 'domain',
                  'mutants', 'plantref', 'fmu', 'pil', 'mcdc', 'blast', 'wired', 'smoke', 'regmap', 'subset',
-                 'docvoice', 'symbols')
+                 'docvoice', 'symbols', 'equations')
 
 
 def cmd_subset(_explicit):
@@ -421,6 +421,21 @@ def cmd_subset(_explicit):
     script = ROOT / 'tools' / 'compliance' / 'subset_gate.py'
     for _args in (['--selftest'], []):
         _rc = subprocess.run([sys.executable, str(script), *_args], cwd=ROOT, text=True).returncode
+        if _rc:
+            return _rc
+    return 0
+
+
+def cmd_equations(_explicit):
+    """The equation ledger: every law the docs state is tied to its code and recomputed.
+
+    Why this is not a formula list: a formula in a docstring is a *claim about the code*, and until something reads
+    both it is an opinion that happens to be typeset. Each row names the implementing symbol (never a line number, so
+    a docstring migration cannot invalidate it), a real `TEST()`, a witness pointer or the word `math`, and a worked
+    evaluation this gate redoes. `--selftest` first: seven mutations, each of which must be caught."""
+    script = str(ROOT / '.github' / 'project' / 'equations_gate.py')
+    for _args in (['--selftest'], []):
+        _rc = subprocess.run([sys.executable, script, *_args], cwd=ROOT, text=True).returncode
         if _rc:
             return _rc
     return 0
@@ -758,6 +773,8 @@ def main():
                     'time", no "we stepped in it" -- the ledger may, and is exempt by name',
         'symbols': 'every glyph the spec register uses is in the symbol table with a unit, a frame and a positive '
                    'direction, and the Sphinx page is generated from the same table the gate reads',
+        'equations': 'every law the docs state names the symbol that implements it, a real TEST() and a witness, and '
+                     'the worked evaluation in the ledger is recomputed rather than trusted',
         'pil': 'run the speed-step scenario on the target ISA under qemu and compare with the host; SKIPPED when its '
                'material is absent',
         'all': ' + '.join(PROJECT_GATES),
@@ -835,6 +852,8 @@ def main():
         return cmd_docvoice([])
     if args.gate == 'symbols':
         return cmd_symbols([])
+    if args.gate == 'equations':
+        return cmd_equations([])
     # The chain above is the only thing standing between a single-gate invocation and the aggregate below, and it
     # has now been forgotten twice (`plantref` before, `combinations` and `mcdc` this time). A missing branch does
     # not fail: it runs *every* gate and prints "all N", which reads as success. So the fall-through is refused
@@ -862,6 +881,7 @@ def main():
                   'subset': cmd_subset,
                   'docvoice': cmd_docvoice,
                   'symbols': cmd_symbols,
+                  'equations': cmd_equations,
                   'pil': lambda _f: cmd_pil([], tolerant=True)}[name]([]) ]
     if failed:
         print(f'[project-gates] FAIL: {", ".join(failed)}', flush=True)

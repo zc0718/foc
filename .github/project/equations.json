@@ -1,0 +1,176 @@
+{
+  "_comment": [
+    "The equations the documentation states as laws, each tied to the code that implements it and to a test that",
+    "exercises that code, plus one worked evaluation the gate recomputes. The point is not to have a list of formulas:",
+    "it is that a formula in the docs is a claim about the code, and a claim with no pointer is an opinion.",
+    "文档里当作定律陈述的公式，每条都绑到实现它的代码与跑那段代码的用例，外加一次由门禁重算的实算。目的不是攒一张",
+    "公式清单，而是：文档里的公式是关于代码的主张，而没有指针的主张只是意见。",
+    "",
+    "**`impl` is `{file, symbol}`, never `path:line`.** A docstring migration moves lines; it does not rename the",
+    "function that owns the law. This registry has to survive Z3, and a line number would not.",
+    "**`impl` 是 `{file, symbol}`，绝不是 `path:line`。** docstring 迁移会挪行号，但不会给定律所属的函数改名。本台账必须活过",
+    "Z3，而行号活不过。",
+    "",
+    "**`witness` is a pointer or the literal `math`.** `case:Suite.Name` and `claim:<path>` name something that exists",
+    "elsewhere; `math` states that no independent witness exists, which is a conclusion and has to be said out loud. It",
+    "must never carry an evidence level: the level has one exit (`README.md` + `claim-basis.json`) and a copy here would",
+    "go stale the next time a row is promoted.",
+    "**`witness` 是指针或字面量 `math`。** `case:套件.用例` 与 `claim:<路径>` 指向别处真实存在的东西；`math` 表示没有独立",
+    "证人，那是一个结论，必须明说。它绝不能携带证据等级：等级只有一个出口（`README.md` + `claim-basis.json`），在这里复制",
+    "一份，下一次升档就会过期。",
+    "",
+    "**What the numeric check proves, and what it does not.** The gate recomputes the law from the inputs recorded here",
+    "and compares with `expect`. That proves the row is internally consistent and that nobody typed the number by hand.",
+    "It does **not** prove the C++ agrees -- that is the `case`'s job, and the case is a name the gate can only check",
+    "for existence. Two links, each of which can go red on its own; neither one alone is a verification.",
+    "**数值判据证明了什么、没证明什么。** 门禁按这里记下的输入重算定律并与 `expect` 比较。这证明该行自洽、且那个数不是",
+    "手敲的。它**不**证明 C++ 与之一致——那是 `case` 的工作，而门禁对 `case` 只能检查它存在。两条链各自会红；任何一条单独",
+    "都不算验证。",
+    "",
+    "**No law that `domain.json` already recomputes is repeated here.** `lambda = Ld*i_max/psi_f` and `i_char = psi_f/(Lq-Ld)`",
+    "live there with their machine tables. Two files recomputing one law is how a repository ends up with two truths about",
+    "one number, which is the most expensive defect class in this tree.",
+    "**`domain.json` 已经重算过的定律不在这里重复。** `lambda = Ld·i_max/psi_f` 与 `i_char = ψf/(Lq−Ld)` 连同机器表都在那边。",
+    "一个定律两份重算，正是“同一个数两套口径”的来源，而那是本树最贵的一类缺陷。"
+  ],
+  "gaps": [
+    {
+      "law": "psi_f = Kt / (1.5 * pole_pairs)",
+      "impl": {"file": "src/motor/motor_config.cpp", "symbol": "psi_f_wb"},
+      "why": {
+        "en": "Deliberately absent from `rows`: no test calls `psi_f_wb()` directly. It is exercised only through the gains and the feedforward config, so any row here would name a case that does not test the law. It belongs in the ledger the day a case for it exists, not before.",
+        "zh": "故意不在 `rows` 里：没有用例直接调用 `psi_f_wb()`。它只经由增益与前馈配置被间接用到，因此在这里写任何一行都会指向一个并不在测该定律的用例。它属于“有用例的那一天”，不属于现在。"
+      }
+    }
+  ],
+  "rows": [
+    {
+      "id": "E-CLARKE-1",
+      "name": "Clarke transform, amplitude invariant",
+      "latex": "\\alpha = \\tfrac{2}{3}\\left(u - \\tfrac{v+w}{2}\\right),\\quad \\beta = \\tfrac{1}{\\sqrt{3}}\\,(v - w)",
+      "symbols": ["alpha_beta"],
+      "impl": {"file": "include/foc/core/transforms.hpp", "symbol": "clarke"},
+      "case": "Transforms.ClarkeIsAmplitudeInvariant",
+      "witness": "math",
+      "law": "clarke",
+      "check": {"kind": "numeric", "inputs": {"u": 1.0, "v": -0.5, "w": -0.5}, "expect": {"alpha": 1.0, "beta": 0.0}},
+      "note": {
+        "en": "The 2/3 is the amplitude convention, and it is the whole difference between this library and a power-invariant Clarke: swapping it for 1/2 keeps every round trip passing and halves every measured current.",
+        "zh": "那个 2/3 是幅值约定，也是本库与功率不变式 Clarke 之间的全部差别：换成 1/2 之后所有往返用例照样通过，而每一个实测电流都缩小一半。"
+      }
+    },
+    {
+      "id": "E-CLARKE-2",
+      "name": "Inverse Clarke transform",
+      "latex": "u = \\alpha,\\quad v = -\\tfrac{1}{2}\\alpha + \\tfrac{\\sqrt{3}}{2}\\beta,\\quad w = -\\tfrac{1}{2}\\alpha - \\tfrac{\\sqrt{3}}{2}\\beta",
+      "symbols": ["alpha_beta"],
+      "impl": {"file": "include/foc/core/transforms.hpp", "symbol": "inv_clarke"},
+      "case": "Transforms.InverseClarkeRoundTrips",
+      "witness": "math",
+      "law": "inv_clarke",
+      "check": {"kind": "numeric", "inputs": {"alpha": 1.0, "beta": 0.0}, "expect": {"u": 1.0, "v": -0.5, "w": -0.5}},
+      "note": {
+        "en": "`inv_clarke` produces a balanced set: it has thrown the zero sequence away and cannot put it back. That is why the abc plant needs `v -= mean(v)` before integrating duty times bus voltage.",
+        "zh": "`inv_clarke` 产出的是平衡组：零序已被丢掉，无法恢复。所以 abc 被控对象在积分“占空比×母线电压”之前必须先 `v -= mean(v)`。"
+      }
+    },
+    {
+      "id": "E-PARK-1",
+      "name": "Park transform",
+      "latex": "d = \\alpha\\cos\\theta_e + \\beta\\sin\\theta_e,\\quad q = -\\alpha\\sin\\theta_e + \\beta\\cos\\theta_e",
+      "symbols": ["theta_e", "alpha_beta", "i_d", "i_q"],
+      "impl": {"file": "include/foc/core/transforms.hpp", "symbol": "park"},
+      "case": "Transforms.ParkAtNinetyDegreesSwapsAxes",
+      "witness": "math",
+      "law": "park",
+      "check": {"kind": "numeric", "inputs": {"alpha": 1.0, "beta": 0.0, "theta_rad": 1.5707963267948966},
+                "expect": {"d": 6.123233995736766e-17, "q": -1.0}},
+      "note": {
+        "en": "The minus sign on `q` is the convention: with this rotation the q axis lags the d axis, so a positive `i_q` produces motoring torque in the direction `theta_e` advances. Dropping the sign still round-trips and inverts every torque. `expect['d']` is `6.12e-17` and not `0.0` because `pi/2` is not representable: the gate recomputes the law and refuses a hand-rounded zero.",
+        "zh": "`q` 上的负号是约定：按这个旋转，q 轴滞后 d 轴，于是正的 `i_q` 在 `theta_e` 前进的方向上产生电动转矩。去掉负号后往返依然成立，而所有转矩反号。`expect['d']` 是 `6.12e-17` 而不是 `0.0`，因为 `π/2` 无法精确表示：门禁会重算定律，手写的零会被它拒收。"
+      }
+    },
+    {
+      "id": "E-PARK-2",
+      "name": "Inverse Park transform",
+      "latex": "\\alpha = d\\cos\\theta_e - q\\sin\\theta_e,\\quad \\beta = d\\sin\\theta_e + q\\cos\\theta_e",
+      "symbols": ["theta_e", "alpha_beta", "i_d", "i_q"],
+      "impl": {"file": "include/foc/core/transforms.hpp", "symbol": "inv_park"},
+      "case": "Transforms.InverseParkRoundTrips",
+      "witness": "math",
+      "law": "inv_park",
+      "check": {"kind": "numeric", "inputs": {"d": 0.0, "q": -1.0, "theta_rad": 1.5707963267948966},
+                "expect": {"alpha": 1.0, "beta": -6.123233995736766e-17}},
+      "note": {
+        "en": "An orthogonal rotation, so the inverse is the transpose and the magnitudes are preserved. The case asserts the round trip, not the pair of formulas: a pair whose two halves are wrong the same way still round-trips, which is why the numeric check above exists as well.",
+        "zh": "正交旋转，因此逆就是转置、幅值保持。用例断言的是往返，而不是那两个公式：两半以同一种方式写错时往返依然成立，这正是上面那条数值判据存在的理由。"
+      }
+    },
+    {
+      "id": "E-CURPI-1",
+      "name": "Current-loop PI gains from the nameplate",
+      "latex": "k_p = \\max(2\\omega_b L_d - R_s,\\, 0),\\quad k_i = \\omega_b^2 L_d,\\quad v_{lim} = \\tfrac{1}{2} v_{bus}",
+      "symbols": ["ld", "rs", "v_bus", "pole_pairs"],
+      "impl": {"file": "src/motor/motor_config.cpp", "symbol": "current_pi_config"},
+      "case": "ApiPiGains.TheGainsFollowTheDesignRuleAndTheLoopDeliversThem",
+      "via": "foc_current_pi_gains",
+      "witness": "case:ApiPiGains.TheGainsFollowTheDesignRuleAndTheLoopDeliversThem",
+      "law": "current_pi",
+      "check": {"kind": "numeric", "inputs": {"bandwidth_rad_s": 1000.0, "ld": 0.0004, "rs": 0.5, "v_bus": 24.0},
+                "expect": {"kp": 0.3, "ki": 400.0, "v_lim": 12.0}},
+      "note": {
+        "en": "Substituting the plant pole `R/L` back gives `s^2 + 2\\omega_b s + \\omega_b^2`: critically damped, no overshoot, every gain from the nameplate. The floor at zero is not cosmetic -- below `R/(2L)` the design rule asks for a negative proportional gain.",
+        "zh": "把被控对象极点 `R/L` 代回去得到 `s² + 2ω_b·s + ω_b²`：临界阻尼、无超调，增益全部由铭牌导出。零下限不是装饰——低于 `R/(2L)` 时设计规则会要求负的比例增益。"
+      }
+    },
+    {
+      "id": "E-SPDPI-1",
+      "name": "Speed-loop PI gains cancelling the mechanical pole",
+      "latex": "k_p = \\omega_b J / K_t,\\quad k_i = \\omega_b B / K_t",
+      "symbols": ["kt"],
+      "impl": {"file": "src/motor/motor_config.cpp", "symbol": "speed_pi_config"},
+      "case": "AutoTune.IdentifiesTheMachineItWasToldAboutAndLandsOnTheNameplateGains",
+      "via": "speed_pi_config",
+      "witness": "case:AutoTune.IdentifiesTheMachineItWasToldAboutAndLandsOnTheNameplateGains",
+      "law": "speed_pi",
+      "check": {"kind": "numeric", "inputs": {"bandwidth_rad_s": 1000.0, "j": 0.0001, "b": 0.0001, "kt": 0.05},
+                "expect": {"kp": 2.0, "ki": 2.0}},
+      "note": {
+        "en": "The loop collapses to `\\omega_b/s`, a first-order response with time constant `1/\\omega_b`. The witness is worth reading: it identifies the same two ratios from a measurement of the plant, so this law has two independent routes to it rather than two copies of itself.",
+        "zh": "环路退化成 `ω_b/s`，即时间常数 `1/ω_b` 的一阶响应。证人值得一读：它从对被控对象的测量里辨识出同样那两个比值，所以这条定律有两条独立路径，而不是自身的两份拷贝。"
+      }
+    },
+    {
+      "id": "E-MTPA-1",
+      "name": "MTPA d-axis current",
+      "latex": "i_d = \\frac{\\psi_f - \\sqrt{\\psi_f^2 + 8(L_q-L_d)^2 i_q^2}}{4(L_q-L_d)}",
+      "symbols": ["psi_f", "ld", "lq", "i_d", "i_q"],
+      "impl": {"file": "include/foc/core/reference.hpp", "symbol": "d_axis"},
+      "case": "Mtpa.TheGainIsWorthShippingWhereTheReluctanceTermIs",
+      "witness": "math",
+      "law": "mtpa",
+      "check": {"kind": "numeric", "inputs": {"psi_f": 0.004761904761904762, "ld": 0.004, "lq": 0.008, "iq_abs": 2.0},
+                "expect": {"i_d": -1.147571976953714, "magnitude": 2.3058450603389327}},
+      "note": {
+        "en": "On the salient profile (`Ld = 4 mH`, `Lq = 8 mH`, i.e. `Ld` ten times the nominal), not on the nominal surface machine, where `i_d = 0` is the whole curve and the capacitance this equation buys is zero.",
+        "zh": "算在有凸极的那份档案上（`Ld = 4 mH`、`Lq = 8 mH`，即 `Ld` 是标称值的十倍），不是标称表贴机——那台机器上 `i_d = 0` 就是整条曲线，本条公式买到的好处为零。"
+      }
+    },
+    {
+      "id": "E-MTPA-2",
+      "name": "MTPA on a surface machine is exactly zero",
+      "latex": "L_q = L_d \\;\\Rightarrow\\; i_d = 0",
+      "symbols": ["ld", "lq", "i_d"],
+      "impl": {"file": "include/foc/core/reference.hpp", "symbol": "d_axis"},
+      "case": "Mtpa.ASurfaceMachineGetsExactlyZeroNotAnEpsilon",
+      "witness": "case:Mtpa.ASurfaceMachineGetsExactlyZeroNotAnEpsilon",
+      "law": "mtpa_surface",
+      "check": {"kind": "numeric", "inputs": {"psi_f": 0.004761904761904762, "ld": 0.0004, "lq": 0.0004, "iq_abs": 2.0},
+                "expect": {"i_d": 0.0}},
+      "note": {
+        "en": "The branch exists so the denominator is never applied to a saliency of one ulp: dividing by it produces a huge `i_d` whose sign is noise, and the case asserts the zero rather than an epsilon because an epsilon is an opinion about how small a saliency is.",
+        "zh": "这个分支存在的意义是让分母永远不去除一个只有 1 ulp 的凸极：除下去会得到一个巨大的 `i_d`，其符号是噪声。用例断言的是恰好为零而不是一个极小量，因为“极小”只是对“凸极有多小”的一种看法。"
+      }
+    }
+  ]
+}
