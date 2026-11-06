@@ -465,6 +465,27 @@
         }
       ],
       "no_effect": "No claim row was re-based: `set_thermal` is off unless a host calls it with a positive `rt` and `ct`, and the four rows above integrate bit-identical states. The suite moved only by the five new cases in `test_sil_thermal.cpp`."
+    },
+    {
+      "id": "B-13",
+      "date": "2026-11-06",
+      "what_changed": "`trace.hpp`'s loss counter saturates instead of wrapping, in both rings. `RingTrace::push` incremented a `uint16_t` and `SpanTrace::push` a `uint32_t` unconditionally, so at 65 536 losses the first read 0 -- the number a channel that lost nothing reports. The rule is now one function, `detail::count_lost<T>`, used by both, and `dropped()` stops at the type's maximum. Nothing else moved: the sample array, the head/count arithmetic, `at()`, `latest()`, `reset()` and the detached-span behaviour are byte-identical, and the value of `dropped()` is unchanged for every count below saturation, which is every count any existing case produces (the largest existing case drops 92). The README row gained the promise because it is now one: a saturating counter is worth stating, a wrapping one was worth fixing.",
+      "seeds": [
+        "include/foc/core/trace.hpp",
+        "test_package/test/unit/test_trace.cpp"
+      ],
+      "affected": [
+        {
+          "row": "core/trace.hpp",
+          "verdict": "holds",
+          "why": "the claim is about the sample record (layout, agreement with `telemetry()`/`state()`/`status()`, the null channel's cost, the text round trip, the C ABI and Python faces), none of which is touched: the change is one increment on a counter that is not part of the record. `dropped()` is bit-identical for every count below the type's maximum -- the largest drop count any other case drives is 92 -- so no published number moves. The saturation itself is measured, not argued: `test_trace.cpp` pushes 65 537 samples into a capacity-1 `RingTrace<1>` and asserts the counter equals `min(pushes-1, 65535)` at every step, is monotone at every step, and is still at 65 535 after 1 000 more pushes; `SpanTrace` runs the same 65 537 pushes through the 32-bit path and matches exactly. Measured on this tree: `test_trace` 9/9, and the whole suite 855 cases, 0 failed"
+        },
+        {
+          "row": "core/trace_parse.hpp",
+          "verdict": "holds",
+          "why": "it reads the declared loss from `foc_motor_trace_dropped()` and says so in its own comment -- it never recomputes it -- so a counter that stops at 65 535 instead of returning to 0 changes nothing in the parser: the value is a number it copies through, and its cases drive losses of 0 and 500, both far below saturation. Its radii are unaffected too: the declared loss makes a window partial with no interior gap, which is a statement about the window's completeness and is unchanged by the counter's floor. Measured on this tree: `test_trace_parse` 7/7"
+        }
+      ]
     }
   ]
 }

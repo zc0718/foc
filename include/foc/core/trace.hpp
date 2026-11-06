@@ -2,12 +2,44 @@
 #pragma once
 #include <array>
 #include <cstdint>
+#include <limits>
 #include <foc/core/types.hpp>
 // Conan::ImportEnd
 
 namespace foc {
 
 namespace core {
+
+namespace detail {
+
+/**
+ * @brief [en] Add one to a loss counter, unless it is already at the largest value its type can hold.
+ * @brief [zh] 给丢帧计数器加一，除非它已经到该类型能表示的最大值。
+ * @param counter [en] the counter to advance; unchanged at saturation.
+ * @param counter [zh] 要推进的计数器；饱和时不变。
+ * @note [en] A loss counter that wraps is not a smaller counter, it is a wrong one: at `UINT16_MAX + 1` it reads 0,
+ *            which is exactly what a channel that lost nothing reports. Whoever reads the number cannot tell the two
+ *            apart, so the wrap turns "a lot was lost" into "all is well" -- the one direction of error a diagnostic
+ *            must not have. Saturating instead keeps the counter monotone, so `dropped() == max` is a statement that
+ *            can be acted on ("at least this many, the channel overflowed") rather than a number that has to be
+ *            trusted. The rule lives in one function because two rings use it, and because the boundary is otherwise
+ *            testable only by 4.29 billion pushes on the 32-bit one. A rule that cannot be reached by a test is a rule
+ *            that can be deleted by a mutation without anything going red; this shape is reachable at any width.
+ * @note [zh] 会回绕的丢帧计数器不是一个小一点的计数器，而是一个错的：在 `UINT16_MAX + 1` 处它读作 0，而那正是"什么也没
+ *            丢"会报的数。读这个数的人分不开两者，于是回绕把"丢了很多"变成了"一切正常"——这是诊断唯一不能有的错误方向。
+ *            改成饱和则让计数器保持单调，于是 `dropped() == max` 是一句可以据此动作的话（"至少这么多，通道溢出了"），而
+ *            不是一个只能选择相信的数。规则只放在一个函数里，因为两个环都用它，也因为否则它的边界在 32 位那个上只能靠
+ *            42.9 亿次推入才能测到。一个测试碰不到的规则，就是一个可以被变异删除而什么都不变红的规则；这个形状在任何宽
+ *            度上都碰得到。
+ * @since 0.1.12
+ */
+template <typename T> constexpr void count_lost(T& counter) noexcept {
+    if (counter < std::numeric_limits<T>::max()) {
+        ++counter;
+    }
+}
+
+} // namespace detail
 
 
 /**
@@ -93,7 +125,7 @@ template <std::uint16_t Capacity> class RingTrace final {
         samples_[head_] = sample;
         head_ = static_cast<std::uint16_t>((head_ + 1U) % Capacity);
         if (overwrote) {
-            ++dropped_;
+            detail::count_lost(dropped_);
         } else {
             ++count_;
         }
@@ -102,6 +134,19 @@ template <std::uint16_t Capacity> class RingTrace final {
 
     [[nodiscard]] static constexpr auto capacity() noexcept -> std::uint16_t { return Capacity; }
     [[nodiscard]] auto size() const noexcept -> std::uint16_t { return count_; }
+
+    /**
+     * @brief [en] How many samples have been overwritten, saturating at `UINT16_MAX`.
+     * @brief [zh] 被覆盖掉的样本数，饱和在 `UINT16_MAX`。
+     * @return [en] the count; `capacity()` is a lower bound on the number of pushes it took, and a value equal to the
+     *              maximum means "at least this many", not "exactly this many".
+     * @return [zh] 该计数；`capacity()` 加上它就是推入次数的下界，而等于最大值意味着"至少这么多"而不是"恰好这么多"。
+     * @note [en] Saturating rather than wrapping is a decision about what the number is *for*: it is read by a host
+     *            that decides whether the trace it received is complete. A counter that went back to zero would report
+     *            a channel that lost nothing, which is the one answer that must not be produced by accident.
+     * @note [zh] 选饱和而不是回绕，是关于这个数**用来干什么**的决定：读它的是一个判断"收到的轨迹完不完整"的宿主。一个会
+     *            回到零的计数器会报出一个什么也没丢的通道——而这是唯一一种绝不能被误发的答案。
+     */
     [[nodiscard]] auto dropped() const noexcept -> std::uint16_t { return dropped_; }
 
     /**
@@ -184,6 +229,17 @@ class SpanTrace final {
 
     [[nodiscard]] auto capacity() const noexcept -> std::uint32_t { return capacity_; }
     [[nodiscard]] auto size() const noexcept -> std::uint32_t { return count_; }
+
+    /**
+     * @brief [en] How many samples have been overwritten, saturating at `UINT32_MAX`.
+     * @brief [zh] 被覆盖掉的样本数，饱和在 `UINT32_MAX`。
+     * @note [en] Same rule as `RingTrace::dropped()` and the same reason: this is the counter the C ABI hands to a host
+     *            (`foc_motor_trace_dropped()`), and a host reads it to decide whether the window it received is
+     *            complete. Wrapping would let a channel that lost 4 billion samples report none.
+     * @note [zh] 规则与理由同 `RingTrace::dropped()`：这个计数器正是 C ABI 交给宿主的那一个（
+     *            `foc_motor_trace_dropped()`），宿主读它来决定收到的窗口完不完整。回绕会让一个丢了 42 亿个样本的通道报
+     *            出"一个也没丢"。
+     */
     [[nodiscard]] auto dropped() const noexcept -> std::uint32_t { return dropped_; }
 
     /**
@@ -198,7 +254,7 @@ class SpanTrace final {
         samples_[head_] = sample;
         head_ = (head_ + 1U) % capacity_;
         if (overwrote) {
-            ++dropped_;
+            detail::count_lost(dropped_);
         } else {
             ++count_;
         }

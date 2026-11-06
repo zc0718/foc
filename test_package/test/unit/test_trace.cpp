@@ -15,6 +15,8 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <algorithm>
+#include <limits>
 #include <type_traits>
 
 #include <gtest/gtest.h>
@@ -504,6 +506,95 @@ TEST(Trace, BothRingsAgreeWithAModelThatCannotWrap) {
     EXPECT_TRUE(same_sample(sample_of(1U), shipped.at(0U))) << "and the sample that is there is still there";
     std::printf("\n[trace] 100 pushes at capacity 8: dropped %u, retained %u, latest t_us %u\n",
                 static_cast<unsigned>(ring.dropped()), static_cast<unsigned>(ring.size()), ring.latest().t_us);
+}
+
+/**
+ * @brief [en] The loss counter saturates; it never returns to a small number, and it never decreases.
+ *
+ * @brief [zh] 丢帧计数器饱和；它不会回到一个小数字，也从不减少。
+ *
+ *     The count is read by whoever decides whether the trace they received is complete. That reader has exactly two
+ *     questions -- "did I lose anything" and "how much" -- and a wrapping counter answers the first one wrongly at the
+ *     moment it matters most: after 65536 losses on a `uint16_t` it reads 0, which is what a healthy channel reports. A
+ *     defect whose symptom is "looks healthy" is the one class this library does not accept, so the counter stops at
+ *     the maximum and says so.
+ *
+ *     The check is a property rather than a boundary value: over 65537 pushes into a capacity-1 ring the counter must
+ *     be monotone at every step, must equal `min(pushes - 1, 65535)` at every step, and must still be at the maximum
+ *     1000 pushes later. "It saturated once" is not the claim; "it can never come back down" is.
+ *
+ *     读这个数的人要判断"收到的轨迹完不完整"。这个读者只有两个问题——"我丢了没有"和"丢了多少"——而回绕的计数器恰好在最要
+ *     紧的时刻把第一个答错：`uint16_t` 上丢够 65536 个之后它读作 0，而那正是健康通道报的数。一个症状是"看起来正常"的缺
+ *     陷，是本库唯一不接受的那一类，所以计数器停在最大值并说明这一点。
+ *
+ *     判据是一条**性质**而不是一个边界值：往容量 1 的环里推 65537 次，计数器在**每一步**都必须单调、都必须等于 `min(推
+ *     入次数 - 1, 65535)`，并且再过 1000 次推入仍然停在最大值。"它曾经饱和过"不是主张；"它再也降不下来"才是。
+ */
+TEST(Trace, TheLossCounterSaturatesInsteadOfWrapping) {
+    constexpr std::uint32_t kPushes = 65537U;          // 1 to fill + 65536 overwrites => one past UINT16_MAX
+    constexpr std::uint32_t kSettled = 1000U;          // and then keep going, to prove it never comes back
+    constexpr auto kMax = std::numeric_limits<std::uint16_t>::max();
+
+    foc::core::RingTrace<1> ring;
+    ASSERT_FALSE(ring.push(sample_of(0U))) << "the first push into an empty ring overwrites nothing";
+
+    std::uint16_t previous = ring.dropped();
+    for (std::uint32_t k = 1U; k < kPushes; ++k) {
+        const bool overwrote = ring.push(sample_of(k));
+        ASSERT_TRUE(overwrote) << "a capacity-1 ring overwrites on every push after the first: " << k;
+        const auto lost = static_cast<std::uint16_t>(std::min<std::uint32_t>(k, kMax));
+        ASSERT_EQ(ring.dropped(), lost) << "drop counter after " << k << " overwrites";
+        ASSERT_GE(ring.dropped(), previous) << "the loss counter went backwards at push " << k;
+        previous = ring.dropped();
+    }
+    ASSERT_EQ(ring.dropped(), kMax) << "the counter did not reach saturation";
+
+    for (std::uint32_t k = kPushes; k < (kPushes + kSettled); ++k) {
+        ASSERT_TRUE(ring.push(sample_of(k)));
+    }
+    EXPECT_EQ(ring.dropped(), kMax) << "the counter came back down below the maximum, so it wraps somewhere";
+    // The samples themselves are unaffected by the counter's saturation: the ring still holds the newest one.
+    EXPECT_EQ(ring.size(), 1U);
+    EXPECT_TRUE(same_sample(sample_of(kPushes + kSettled - 1U), ring.latest()));
+
+    // The same rule through the 32-bit path. It cannot be driven to its own boundary in a test (4.29e9 pushes), so
+    // what is checkable here is that it is the *same* rule: exact while below the maximum, and monotone throughout.
+    // 同一条规则走 32 位那条路。它自己的边界在用例里推不到（42.9 亿次），所以这里能查的是"它是**同一条**规则"：
+    // 未到最大值时精确，全程单调。
+    std::array<foc::core::TraceSample, 1> storage{};
+    foc::core::SpanTrace span(storage.data(), 1U);
+    for (std::uint32_t k = 0U; k < kPushes; ++k) {
+        ASSERT_EQ(span.push(sample_of(k)), k > 0U) << "span capacity-1 overwrite flag at " << k;
+        ASSERT_EQ(span.dropped(), k) << "span drop counter at " << k;
+    }
+}
+
+/**
+ * @brief [en] The saturation rule is a function of its own, so its boundary is reachable at any width.
+ *
+ * @brief [zh] 饱和规则是一个独立函数，于是它的边界在任何宽度上都碰得到。
+ *
+ *     Two rings use one rule. Testing it only through `SpanTrace` would need 4294967296 pushes (about half a minute of
+ *     CI, and a test nobody keeps); testing it only through `RingTrace` would leave the 32-bit instantiation's rule
+ *     unvisited. Naming it and checking it on `std::uint8_t` costs three pushes and makes the rule killable: delete the
+ *     clamp and this case goes red, whichever ring the clamp was written in.
+ *
+ *     两个环共用一条规则。只通过 `SpanTrace` 去测它要 4294967296 次推入（约半分钟 CI，而且是没人会留着的用例）；只通过
+ *     `RingTrace` 去测它，则 32 位那个实例化的规则永远没被走到。给它一个名字并在 `std::uint8_t` 上检查它，代价是三次推
+ *     入，却让这条规则变得可被变异杀死：删掉钳位，本用例就红——无论钳位当初写在哪一个环里。
+ */
+TEST(Trace, TheSaturationRuleIsReachableAtAnyWidth) {
+    std::uint8_t small = 3U;
+    foc::core::detail::count_lost(small);
+    EXPECT_EQ(small, 4U) << "below the maximum it must simply count";
+
+    small = std::numeric_limits<std::uint8_t>::max();
+    foc::core::detail::count_lost(small);
+    EXPECT_EQ(small, std::numeric_limits<std::uint8_t>::max()) << "at the maximum it must not advance";
+
+    small = static_cast<std::uint8_t>(std::numeric_limits<std::uint8_t>::max() - 1U);
+    foc::core::detail::count_lost(small);
+    EXPECT_EQ(small, std::numeric_limits<std::uint8_t>::max()) << "the last representable step must still be taken";
 }
 
 /**
