@@ -542,11 +542,11 @@ whether your hardware matches that model.
      - Level
    * - Unit, SIL and stress cases
      - :code:`conan create . -s build_type=Debug --build=missing`
-     - 852 cases, 0 failed
+     - 857 cases, 0 failed
      - L1/L2
    * - Line coverage
      - :code:`python3 .github/project/coverage_gate.py`
-     - 94.55 % overall, 96.56 % in :code:`core/`
+     - 94.66 % overall, 96.56 % in :code:`core/`
      - L1
    * - Layering and standalone headers
      - :code:`gates.py guard` / :code:`gates.py strict`
@@ -554,7 +554,7 @@ whether your hardware matches that model.
      - L1
    * - Negative compilation (fake HAL must not compile)
      - :code:`python3 .github/project/negative_compile.py`
-     - 27 / 27 cases behave as specified
+     - 28 / 28 cases behave as specified
      - L1
    * - The dq model itself
      - :code:`test_abc_plant.cpp` -- an independently derived phase-variable plant
