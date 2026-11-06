@@ -141,6 +141,7 @@ _`Detailed settings`
    :caption: Reference
    :numbered:
 
+   Symbols and units <symbols>
    Convention alignment <conventions>
 
 _`License`

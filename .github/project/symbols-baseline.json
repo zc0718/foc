@@ -1,0 +1,30 @@
+{
+  "_comment": [
+    "Today's measurements, frozen so they may only fall. `unregistered` is per file on purpose: a file that",
+    "gains one glyph cannot hide behind a file that lost two.",
+    "今天的测量值，冻结后只许下降。`unregistered` 按文件计，这样一个文件新增的记号无法被另一个文件减少的抵掉。"
+  ],
+  "unregistered": {
+    "include/foc/core/cogging_learn.hpp": 3,
+    "include/foc/core/field_weakening.hpp": 2,
+    "include/foc/core/auto_tune.hpp": 6,
+    "include/foc/core/mtpv.hpp": 3,
+    "include/foc/core/protection.hpp": 1,
+    "include/foc/motor/torque_map.hpp": 2,
+    "include/foc/core/observer/dual_inductance_observer.hpp": 1,
+    "src/core/cogging_learn.cpp": 3,
+    "src/core/auto_tune.cpp": 1,
+    "src/core/observer/dual_inductance_observer.cpp": 4
+  },
+  "prose_anchors": [
+    "eta_flux",
+    "lambda",
+    "omega_h",
+    "omega_l",
+    "phi_inj",
+    "sigma",
+    "tau",
+    "theta_p"
+  ],
+  "reserved": 1
+}

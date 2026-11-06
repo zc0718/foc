@@ -406,7 +406,7 @@ def cmd_ci_policy(_explicit):
 PROJECT_GATES = ('license', 'strict', 'claims', 'docs', 'deps', 'form', 'boundaries', 'capabilities', 'ci-policy',
                  'assume', 'anchor', 'scaffold', 'budget', 'clocks', 'observability', 'combinations', 'domain',
                  'mutants', 'plantref', 'fmu', 'pil', 'mcdc', 'blast', 'wired', 'smoke', 'regmap', 'subset',
-                 'docvoice')
+                 'docvoice', 'symbols')
 
 
 def cmd_subset(_explicit):
@@ -421,6 +421,21 @@ def cmd_subset(_explicit):
     script = ROOT / 'tools' / 'compliance' / 'subset_gate.py'
     for _args in (['--selftest'], []):
         _rc = subprocess.run([sys.executable, str(script), *_args], cwd=ROOT, text=True).returncode
+        if _rc:
+            return _rc
+    return 0
+
+
+def cmd_symbols(_explicit):
+    """The symbol table: one entry per glyph the spec register may use, plus a page generated from it.
+
+    Why a gate and not a page: a table nobody checks is a table that drifts, and the failure this prevents is
+    specific -- an angle in the wrong frame, or a bare `ω` that never says which speed it is. The gate renders
+    `docs/sphinx/source/symbols.rst` from the same file it validates, so the page cannot say something the table
+    does not. `--selftest` first: six mutations, each of which must be caught."""
+    script = str(ROOT / '.github' / 'project' / 'symbols_gate.py')
+    for _args in (['--selftest'], []):
+        _rc = subprocess.run([sys.executable, script, *_args], cwd=ROOT, text=True).returncode
         if _rc:
             return _rc
     return 0
@@ -741,6 +756,8 @@ def main():
                   'deviation has its five elements, every NOLINT has a record, and the open count did not rise',
         'docvoice': 'the spec and guide registers carry no diary sentences: no dates of record, no "the 3rd '
                     'time", no "we stepped in it" -- the ledger may, and is exempt by name',
+        'symbols': 'every glyph the spec register uses is in the symbol table with a unit, a frame and a positive '
+                   'direction, and the Sphinx page is generated from the same table the gate reads',
         'pil': 'run the speed-step scenario on the target ISA under qemu and compare with the host; SKIPPED when its '
                'material is absent',
         'all': ' + '.join(PROJECT_GATES),
@@ -816,6 +833,8 @@ def main():
         return cmd_subset([])
     if args.gate == 'docvoice':
         return cmd_docvoice([])
+    if args.gate == 'symbols':
+        return cmd_symbols([])
     # The chain above is the only thing standing between a single-gate invocation and the aggregate below, and it
     # has now been forgotten twice (`plantref` before, `combinations` and `mcdc` this time). A missing branch does
     # not fail: it runs *every* gate and prints "all N", which reads as success. So the fall-through is refused
@@ -842,6 +861,7 @@ def main():
                   'fmu': lambda _f: cmd_fmu([], tolerant=True),
                   'subset': cmd_subset,
                   'docvoice': cmd_docvoice,
+                  'symbols': cmd_symbols,
                   'pil': lambda _f: cmd_pil([], tolerant=True)}[name]([]) ]
     if failed:
         print(f'[project-gates] FAIL: {", ".join(failed)}', flush=True)
