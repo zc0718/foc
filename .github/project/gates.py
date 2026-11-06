@@ -462,13 +462,15 @@ def cmd_equations(_explicit):
 
 
 def cmd_docshape(_explicit):
-    """A public type's docstring answers the same six questions, in the same order, in both languages.
+    """Docstrings use Doxygen's own vocabulary; they do not invent a section template.
 
-    The form was measured, not invented: six Doxygen `@par` headings are impossible in this pipeline (`docfmt` repairs
-    a body line that starts with a tag by stripping the `@`, which merges the six sections into one paragraph). What
-    survives is one tag line per language group and untagged body paragraphs, so section 1 is the `@brief` sentence
-    and sections 2..6 open with a bold marker. Ratcheted both ways: `migrated` only grows, the debt only falls.
-    `--selftest` first -- five mutations, including a misspelled marker."""
+    This gate first shipped as a six-section skeleton with a ratchet over 195 blocks. That was a mistake worth naming:
+    the template already exists upstream (`.github/skills/_shared/code-conventions.md` points at
+    `fcpp/include/doctest.hpp`), and Doxygen has a field for everything the six sections were reaching for -- a short
+    `@brief`, untagged body paragraphs, `\\f[...\\f]` for formulas, `@note`/`@warning`, `@see`. The cost showed up
+    exactly where it was predicted: the `@brief` stopped being brief, because a section called \"Model\" has to carry a
+    paragraph. What survives is the two things `docfmt` and `docvoice` cannot see: an invented section marker is red,
+    and a brief wider than a line is red (ratcheted, since the tree has 74 of them today)."""
     script = str(ROOT / '.github' / 'project' / 'docshape_gate.py')
     for _args in (['--selftest'], []):
         _rc = subprocess.run([sys.executable, script, *_args], cwd=ROOT, text=True).returncode
@@ -832,8 +834,8 @@ def main():
                      'the worked evaluation in the ledger is recomputed rather than trusted',
         'enforce': 'the check families the pinned clang-tidy config does not enable (CERT today) are still enforced, '
                    'by adding them with --checks so the byte-pinned config is untouched',
-        'docshape': 'every public type in a migrated file answers the six questions (model, equation, notation, '
-                    'guarantees, refusals, evidence) in both languages, and the remaining debt only falls',
+        'docshape': 'docstrings use Doxygen fields rather than an invented section template: no `**Model.**`-style '
+                    'markers, and a `@brief` is a line rather than a paragraph (ratcheted)',
         'pil': 'run the speed-step scenario on the target ISA under qemu and compare with the host; SKIPPED when its '
                'material is absent',
         'all': ' + '.join(PROJECT_GATES),

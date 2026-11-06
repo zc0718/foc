@@ -26,46 +26,34 @@ template <typename T> constexpr auto clamp(T value, T low, T high) noexcept -> T
 /**
  * @brief [en] Moves its output towards a target no faster than a configured rate, symmetrically in both directions.
  *
- *     **Equation.** `y <- clamp(target, y - rate*dt, y + rate*dt)` for `dt > 0`, and `y` holds otherwise; ledger
- *     `E-SLEW-1`.
+ *     The budget for one step, \f$\rho\,\Delta t\f$, is applied to the **state** rather than to the error:
  *
- *     **Notation.** `y` the limited value (the object's state), `target` the requested value, `rate` per second, `dt`
- *     the step length in s. All in the caller's units; the rate carries them per second.
+ *     \f[ y \leftarrow \mathrm{clamp}(r,\; y - \rho\,\Delta t,\; y + \rho\,\Delta t) \qquad \text{for } \Delta t > 0
+ *     \f]
  *
- *     **Guarantees.** The change per step never exceeds `rate*dt`, in either direction, so a step command cannot
- *     produce a jump larger than the configured slope however far away the target is. The budget is applied to the
- *     state rather than to the error, which is what makes this a rate limit instead of a first-order lag: the limiter
- *     keeps no memory of how far behind it was.
- *
- *     **Refusals.** Nothing is refused. A non-positive `dt` is not an error here -- it is a step in which no time
- *     passed, so the value holds and the caller sees the same number it saw last time. A non-positive `rate` makes
- *     every step return the held value, which is a frozen output rather than a rejected configuration; the crate that
- *     builds the limiter from a nameplate is where a bad rate should be caught.
- *
- *     **Evidence.** The `foc/core/limits.hpp` claim row, `test_limits.cpp` (`RampsTowardsTargetAtConfiguredRate`,
- *     `ReachesTargetWhenInsideOneStep`, `LimitsNegativeDirection`, `NonPositiveDtHoldsValue`), ledger `E-SLEW-1`.
+ *     That is what makes this a rate limit rather than a first-order lag -- the limiter keeps no memory of how far
+ *     behind it was. \f$y\f$ is the limited value (the object's state), \f$r\f$ the requested value, \f$\rho\f$ the
+ *     rate per second and \f$\Delta t\f$ the step length. All in the caller's units; the rate carries them per second.
+ *     Ledger `E-SLEW-1`.
  *
  * @brief [zh] 让输出以不超过配置速率的步进逼近目标，正反两个方向对称。
  *
- *     **Equation.** `dt > 0` 时 `y ← clamp(target, y − rate·dt, y + rate·dt)`，否则 `y` 保持不变；台账 `E-SLEW-1`。
+ *     一步的预算 \f$\rho\,\Delta t\f$ 作用在**状态**上而不是误差上：
  *
- *     **Notation.** `y` 限幅后的值（即对象状态）、`target` 请求值、`rate` 每秒变化量、`dt` 步长，s。全部取调用方单位；
- *     速率自带“每秒”。
+ *     \f[ y \leftarrow \mathrm{clamp}(r,\; y - \rho\,\Delta t,\; y + \rho\,\Delta t) \qquad \Delta t > 0 \f]
  *
- *     **Guarantees.** 每一步的变化不超过 `rate·dt`，两个方向都一样：无论目标多远，阶跃指令都不会造成大于配置斜率的跳
- *     变。预算作用在**状态**上而不是误差上，因此这是速率限制而不是一阶滞后——限制器不记得自己落后多少。
+ *     这正是它是速率限制而不是一阶滞后的原因——限制器不记得自己落后多少。\f$y\f$ 是限幅后的值（对象状态）、 \f$r\f$ 是请
+ *     求值、\f$\rho\f$ 是每秒变化量、\f$\Delta t\f$ 是步长。全部取调用方单位；速率自带“每秒”。台账 `E-SLEW-1`。
  *
- *     **Refusals.** 这里不拒绝任何东西。非正 `dt` 不是错误——那是没有时间经过的一步，于是值保持不变、调用方看到的是上一
- *     拍的数。非正 `rate` 会让每一步都返回保持值，也就是输出被冻住，而不是配置被拒绝；该在校验处拦下的是用铭牌构造限制
- *     器的那一层。
- *
- *     **Evidence.** `foc/core/limits.hpp` 的 claim 行、`test_limits.cpp`（`RampsTowardsTargetAtConfiguredRate`、
- *     `ReachesTargetWhenInsideOneStep`、`LimitsNegativeDirection`、`NonPositiveDtHoldsValue`）、台账 `E-SLEW-1`。
- *
- * @context [en] Current-loop ISR: noexcept, no allocation.
- * @context [zh] 电流环 ISR：noexcept、不分配。
- * @since 0.1.0
- * @exporter
+ * @warning [en] Nothing is refused here, and two cases look like errors but are not. A non-positive \f$\Delta t\f$ is a
+ *               step in which no time passed, so the value holds and the caller sees the same number as last time. A
+ *               non-positive rate freezes the output rather than rejecting the configuration: `step()` only multiplies
+ *               the rate and never validates it, so the layer that builds the limiter from a nameplate is where a bad
+ *               rate belongs.
+ * @warning [zh] 这里不拒绝任何东西，而有两种情形看起来像错误其实不是。非正 \f$\Delta t\f$ 是没有时间经过的一步，于是值
+ *               保持不变、调用方看到上一拍的数。非正速率会让输出冻住，而不是配置被拒绝：`step()` 只乘速率、从不校验它，
+ *               所以该拦下坏速率的是用铭牌构造限制器的那一层。
+ * @see `foc/core/limits.hpp` claim row, `test_limits.cpp` (`RampsTowardsTargetAtConfiguredRate`, `NonPositiveDtHoldsValue`), ledger `E-SLEW-1`
  */
 class SlewLimiter final {
   public:
