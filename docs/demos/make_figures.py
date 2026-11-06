@@ -310,6 +310,98 @@ def plot_slice_s4(rows: list[dict[str, str]]) -> None:
     save(fig, "slice_s4_field_weakening")
 
 
+def plot_slice_s7(rows: list[dict[str, str]]) -> None:
+    """Sampling and the power stage: when a single shunt can measure, and what
+    the dead-time correction looks like once it is read in the alpha-beta frame.
+
+    Neither panel asserts a threshold of its own: the "needed" window and
+    `deadtime_v` both arrive in the CSV's `limit` column, straight out of the
+    configuration the program ran with.
+    两块图都不自己断言阈值：窗口所需的时长与 `deadtime_v` 都来自 CSV 的 `limit` 列，
+    直接就是程序运行时的配置。
+    """
+    fig, (left, right) = plt.subplots(1, 2, figsize=(9.6, 3.9))
+
+    # Left: the window a single shunt leaves you, against the modulation index,
+    # at three angles. A point where the library said "not measurable" is drawn
+    # as a hollow marker on the axis, so the flat-at-zero series is visible rather
+    # than absent.
+    # 左：单电阻留下的窗口随调制比的变化，三个角度。库判为"测不了"的点画成空心标记压在
+    # 横轴上，这样"恒为零"的那条线是看得见的，而不是不存在。
+    merged: list[list[tuple[float, float, float]]] = []
+    for angle, colour in ((0, COLORS["reference"]), (20, COLORS["measured"]), (30, COLORS["aux"])):
+        series = [row for row in rows if row["kind"] == f"shunt{angle}"]
+        if not series:
+            continue
+        measurable = [(float(r["x"]), float(r["value"])) for r in series if r["flag"] == "0"]
+        refused = [(float(r["x"]), float(r["value"])) for r in series if r["flag"] != "0"]
+        if measurable:
+            left.plot([p[0] for p in measurable], [p[1] for p in measurable], color=colour, linewidth=1.8,
+                      label=f"{angle} deg")
+        if refused:
+            # Hollow markers, not clipped: every sample of the 0 deg series is
+            # refused, so those markers *are* the series and they land exactly on
+            # the axis. Drawn as clipped markers it would look missing.
+            # 空心标记且不裁剪：0 度那条线每个采样都被判不可测，这些标记**就是**那条线，
+            # 而且正好落在横轴上。按裁剪画会看起来像根本没这条线。
+            left.plot([p[0] for p in refused], [p[1] for p in refused], "^", color=colour, markersize=4.0,
+                      alpha=0.7, markerfacecolor="white", clip_on=False, zorder=5,
+                      label=f"{angle} deg (refused)")
+        merged.append([(float(r["x"]), float(r["value"]), float(r["limit"])) for r in series])
+
+        # Where the window stops growing is the modulator clamping, not the shunt:
+        # read the knee from the data instead of naming a modulation index.
+        # 窗口不再变大的地方是调制器钳位，不是采样电阻：拐点从数据里读，不在这里
+        # 写一个调制比。
+        points = [(float(r["x"]), float(r["value"])) for r in series]
+        knee = next((points[i][0] for i in range(1, len(points))
+                     if points[i][1] == points[i - 1][1] and points[i - 1][1] > 0.0), None)
+        if knee is not None and angle == 30:
+            left.axvline(knee, color=colour, linestyle=":", linewidth=0.9)
+            left.annotate("flattens where the modulator clamps", xy=(knee, 6.0), xytext=(knee + 0.03, 11.0),
+                          fontsize=8, color=colour)
+
+    needed = next((point[2] for series in merged for point in series if point[2] > 0.0), 0.0)
+    if needed > 0.0:
+        left.axhline(needed, color="black", linestyle="--", linewidth=0.9)
+        left.annotate(f"settle + sample = {needed:.2f} us", xy=(0.02, needed), xytext=(0.05, needed + 0.6),
+                      fontsize=8)
+    left.set_xlabel("modulation index m")
+    left.set_ylabel("sampling window (us)")
+    left.set_ylim(bottom=0.0)
+    left.grid(True, alpha=0.3)
+    left.legend(loc="upper left", fontsize=7, title="vector angle (hollow = refused)", title_fontsize=7)
+    left.set_title("one shunt: the window depends on the angle")
+
+    # Right: the correction the library commands, read as the alpha-beta-visible
+    # voltage. The dashed line is the per-phase loss that was asked for; neither
+    # curve has to touch it, and the page says why.
+    # 右：库下达的修正，按 αβ 可见电压读数。虚线是要求的单相损失；两条曲线都不必碰到它，
+    # 原因在正文里。
+    for kind, colour, style, label in (("dead", COLORS["reference"], "-", "step (i_fade = 0)"),
+                                       ("ramp", COLORS["measured"], "-", "ramp (i_fade > 0)")):
+        series = [row for row in rows if row["kind"] == kind]
+        if not series:
+            continue
+        right.plot([float(r["x"]) for r in series], [float(r["value"]) for r in series], style, color=colour,
+                   linewidth=1.8, label=label)
+    limit = next((float(r["limit"]) for r in rows if r["kind"] in ("dead", "ramp")), 0.0)
+    if limit > 0.0:
+        right.axhline(limit, color="black", linestyle="--", linewidth=0.9)
+        right.annotate(f"deadtime_v = {limit:.3f} V (per phase)", xy=(0.11, limit), xytext=(0.045, limit + 0.03),
+                       fontsize=8)
+    right.set_xlabel("|i| on the measured phase (A)")
+    right.set_ylabel("correction, alpha-beta visible (V)")
+    right.set_xlim(0.0, 0.14)
+    right.set_ylim(bottom=0.0)
+    right.grid(True, alpha=0.3)
+    right.legend(loc="lower right", fontsize=8)
+    right.set_title("dead time: step vs ramp")
+
+    fig.tight_layout()
+    save(fig, "slice_s7_sampling")
+
+
 def run_slice(name: str, workdir: pathlib.Path, plotter) -> None:
     """Build one slice example, run it in CSV mode, plot it.
 
@@ -364,6 +456,7 @@ def main() -> int:
         run_slice("slice-s5-modulation", pathlib.Path(workdir), plot_slice_s5)
         run_slice("slice-s9-c-abi", pathlib.Path(workdir), plot_slice_s9)
         run_slice("slice-s4-field-weakening", pathlib.Path(workdir), plot_slice_s4)
+        run_slice("slice-s7-sampling", pathlib.Path(workdir), plot_slice_s7)
     print("done: figures in docs/images/OUT_demo_*.png, tables in docs/sphinx/source/demos/")
     return 0
 

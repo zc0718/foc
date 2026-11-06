@@ -76,8 +76,8 @@ The slices
    * - S7
      - Sample current accurately: dead time, one shunt, the sampling instant
      - ``deadtime`` ``single_shunt`` ``trace`` ``board_check``
-     - planned
-     - planned
+     - :doc:`slice-s7-sampling`
+     - written
    * - S8
      - Know when it has failed, and where the parameters came from
      - ``protection`` ``watchdog`` ``thermal_limit`` ``brake_chopper``
@@ -92,7 +92,7 @@ The slices
      - written
 
 A slice is ``written`` when its page carries all seven parts and its example
-compiles. The remaining three are listed with their pieces so the boundary of
+compiles. The remaining two are listed with their pieces so the boundary of
 what this section promises stays visible: a task page that does not exist yet is
 a plan, not a gap to be discovered by a reader.
 
@@ -106,6 +106,7 @@ a plan, not a gap to be discovered by a reader.
    High speed and modulation <slice-s5-modulation>
    Consuming the library from outside C++ <slice-s9-c-abi>
    Positioning an axis <slice-s6-position>
+   Sampling and the power stage <slice-s7-sampling>
 
 The figures already on the site
 -------------------------------
