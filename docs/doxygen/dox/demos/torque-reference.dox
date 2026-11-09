@@ -22,7 +22,7 @@
  * @par [en] After the feedforward, not inside the PI: the PI's own clamp is what stops the integral from winding up,
  *      and the sum of PI and feedforward is what the modulator has to be able to deliver. The example clamps the sum
  *      and prints both, so the reader can see the difference rather than take it on trust.
- * @par [zh] 放在前馈**之后**、PI 之内不放：PI 自己的限幅是用来阻止积分饱和的，而"PI 加前馈"之和才是调制器要能给出的量。
+ * @par [zh] 放在前馈 **之后** 、PI 之内不放：PI 自己的限幅是用来阻止积分饱和的，而"PI 加前馈"之和才是调制器要能给出的量。
  *      例子夹的是和，并且把两者都打印出来，读者可以自己看出差别，而不必相信这句话。
  *
  * @section torque_reference_not [en] What the example deliberately does not do [zh] 例子故意不做的事

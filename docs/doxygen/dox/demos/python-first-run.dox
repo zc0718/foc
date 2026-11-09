@@ -45,7 +45,7 @@
  * @par [en] Measured on this build: a 50.0 rad/s command settles at **50.282 rad/s** (0.56 %),
  *      with `id` at 0 and `iq` at 0.500 A -- the friction term, and nothing else. The script
  *      asserts a 5 % band, so a sign error or a swapped dq axis cannot pass silently.
- * @par [zh] 本机构建上实测：给定 50.0 rad/s，稳定在 **50.282 rad/s**（0.56 %），`id` 为 0、
+ * @par [zh] 本机构建上实测：给定 50.0 rad/s，稳定在 **50.282 rad/s** （0.56 %），`id` 为 0、
  *      `iq` 为 0.500 A——正好是摩擦项，没有别的。脚本断言 5 % 的带，所以符号写反或 dq 轴接错
  *      都不可能悄悄通过。
  *

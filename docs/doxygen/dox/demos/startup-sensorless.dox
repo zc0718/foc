@@ -14,14 +14,14 @@
  *      nothing to measure it with, which is what open loop means. The example passes `0.0F` as the measured
  *      mechanical angle and says so, because a reader copying it needs to know that the argument is for the policy
  *      that takes over, not for this one.
- * @par [zh] `theta_e_rad` 是例行**命令**的角度，不是测出来的：开环那一段没有东西能测它，这就是开环的意思。例子
+ * @par [zh] `theta_e_rad` 是例行 **命令** 的角度，不是测出来的：开环那一段没有东西能测它，这就是开环的意思。例子
  *      给实测机械角传 `0.0F`，并把这件事写出来——照抄的人需要知道那个参数是给接管的策略用的，不是给它自己用的。
  *
  * @section startup_sensorless_done [en] What "finished" means, and what it does not [zh] “结束”是什么意思，以及不是什么
  * @par [en] `finished` means the hand-over speed was reached. It does **not** mean the rotor came with the vector --
  *      that judgement needs a speed measurement and lives in `Motor`'s hand-over check, one window later. A drive
  *      that treats this flag as "the motor is spinning" will report success on a rotor that never moved.
- * @par [zh] `finished` 只表示到达了交接转速，**不**表示转子跟着矢量转起来了——那个判断需要一次转速测量，属于
+ * @par [zh] `finished` 只表示到达了交接转速， **不** 表示转子跟着矢量转起来了——那个判断需要一次转速测量，属于
  *      `Motor` 的交接检查，在一个窗口之后。把这个标志当成“电机在转”的驱动，会在转子从未动过的情形上报成功。
  *
  * @section startup_sensorless_numbers [en] The numbers behind the figure [zh] 图背后的数字

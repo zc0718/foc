@@ -7,7 +7,7 @@
  *      excess spends the margin. Swept below the hard trip, the answer to an overload is therefore a time that goes to
  *      infinity as the current approaches the rating -- not a yes/no, and not a threshold.
  * @par [zh] i2t 预算是 `i_cont²·τ`，所以连续额定永远坐在限值上，只有超出的部分花掉余量。在硬跳闸以下扫描，
- *      过载的答案因此是一个在电流逼近额定时趋于无穷的**时长**——不是是/否，也不是一个阈值。
+ *      过载的答案因此是一个在电流逼近额定时趋于无穷的 **时长**——不是是/否，也不是一个阈值。
  *
  * @section protection_and_derating_derate [en] Derating and tripping are two numbers [zh] 降额与跳闸是两个数
  * @par [en] The continuous limit is a curve in temperature and the trip is a threshold, and the threshold is below
@@ -23,7 +23,7 @@
  *      how a supervisor asks without moving the deadline. The brake chopper holds a thermal budget, so a chopper that
  *      only follows the bus voltage can keep the bus perfect while it burns out.
  * @par [zh] 过流跳闸在电流回落后仍然保持：跳闸的原因还没有人看过，而 `reset()` 是调用方的决定。看门狗量的是
- *      **沉默**而不是进展，`poll()` 是监督者在不移动截止时间的前提下发问的方式。制动斩波器带着一份热预算，所以
+ *      **沉默** 而不是进展，`poll()` 是监督者在不移动截止时间的前提下发问的方式。制动斩波器带着一份热预算，所以
  *      一个只看母线电压的斩波器可以把母线守得完美，同时把自己烧掉。
  *
  * @section protection_and_derating_numbers [en] The numbers behind the figure [zh] 图背后的数字

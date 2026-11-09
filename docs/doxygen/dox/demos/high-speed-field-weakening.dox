@@ -8,13 +8,13 @@
  *      starts to bind, the d current grows negative on purpose, and the q current falls -- the torque lost per amp is
  *      traded for the voltage headroom that keeps the loop solvable at all.
  * @par [zh] 用运行区求解器扫一遍电角速度。基速以下答案不动，因为只有电流上限生效、而 MTPA 是它最好的用法。基速以上
- *      电压椭圆开始约束，d 轴电流**故意**变负、q 轴电流下降——用"每安培转矩"去换让环路仍然可解的电压余量。
+ *      电压椭圆开始约束，d 轴电流 **故意** 变负、q 轴电流下降——用"每安培转矩"去换让环路仍然可解的电压余量。
  *
  * @section high_speed_field_weakening_base [en] Base speed is not `v_max / psi_f` [zh] 基速不是 `v_max / psi_f`
  * @par [en] It is `v_max` over the flux magnitude **at the MTPA point**, which includes the d current MTPA already
  *      spends. Using `psi_f` alone gives a number several times too high on a salient machine, and a drive built on it
  *      discovers the real ceiling only when the current loop saturates above it.
- * @par [zh] 基速是 `v_max` 除以 **MTPA 点处的**磁链幅值，那里面已经包含 MTPA 花掉的 d 轴电流。只拿 `psi_f` 会得到
+ * @par [zh] 基速是 `v_max` 除以 **MTPA 点处的** 磁链幅值，那里面已经包含 MTPA 花掉的 d 轴电流。只拿 `psi_f` 会得到
  *      一个高出好几倍的数，而据此设计的驱动会在电流环饱和的那一刻才发现真正的天花板。
  *
  * @section high_speed_field_weakening_lambda [en] The number that decides whether any of this is worth doing [zh] 决定这一切值不值得做的那个数

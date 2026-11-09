@@ -16,7 +16,7 @@
  *      a caller built against an older header. That caller is not at fault, and "we never asked" must not read like
  *      "nothing is wrong" -- so `create_host()` answers `FOC_ERR_NOT_IMPL`, not `FOC_ERR_PARAM`. This example sets it,
  *      and the comment says why leaving it out is a refusal rather than a default.
- * @par [zh] `read_drive_fault` 是那个**追加**在结构体末尾的必需回调，所以按旧头编译的调用方会以 NULL 传进来。那不是
+ * @par [zh] `read_drive_fault` 是那个 **追加** 在结构体末尾的必需回调，所以按旧头编译的调用方会以 NULL 传进来。那不是
  *      它的错，而"我们没问"不能读成"什么都没坏"——所以 `create_host()` 答 `FOC_ERR_NOT_IMPL` 而不是
  *      `FOC_ERR_PARAM`。例子把它设上，并写明为什么漏掉它是一次拒绝而不是一个默认值。
  *

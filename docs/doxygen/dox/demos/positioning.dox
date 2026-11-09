@@ -20,7 +20,7 @@
  * @par [en] An out-of-range target comes back as `Param` **and** the previous target. The trap: a caller that ignores
  *      the status keeps commanding the old position and looks like it is working -- the axis holds still and nothing
  *      reports a problem. Check the status, not the target.
- * @par [zh] 越界目标回来时带 `Param`，**且**回来的是上一个目标。坑在于：忽略状态的调用方会一直命令旧位置，
+ * @par [zh] 越界目标回来时带 `Param`， **且** 回来的是上一个目标。坑在于：忽略状态的调用方会一直命令旧位置，
  *      看起来一切正常——轴不动，也没有任何东西报错。要看状态，不要看目标。
  *
  * @section positioning_numbers [en] The numbers behind the figure [zh] 图背后的数字
