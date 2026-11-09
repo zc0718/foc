@@ -688,8 +688,8 @@ class CurrentSenseCalibrator final {
  * @brief [zh] 从电压阶跃交付的 **磁链** 求增量电感，`L = ∫(v − rs·i)/Δi`，而不是靠微分电流。
  *
  *   为什么用积分。20 kHz 电流传感器的 `di/dt` 是两个几乎相等的带噪数之差再乘 `1/dt`： 噪声被放大 `1/dt` 倍，要有滤波
- *   器，而滤波器的群延迟又会带来偏差。积分形式每个样本 用一次、不加权、不用滤波：`∫(v_delivered − rs·i)dt = L·Δi` 是 **
- *   精确**的，因为 `L·di/dt` 这一项就是 `L·i` 的导数。
+ *   器，而滤波器的群延迟又会带来偏差。积分形式每个样本 用一次、不加权、不用滤波：`∫(v_delivered − rs·i)dt = L·Δi` 是
+ *   ** 精确**的，因为 `L·di/dt` 这一项就是 `L·i` 的导数。
  *
  *   `v_delivered` 是什么，以及随之而来的误差。逆变器交付 `v_cmd − deadtime_v·sign(i)`， 本积分器用 `RsEstimator` 量到的
  *   `deadtime_v` 把它减掉。电流过零期间真实损失 **小** 于 `deadtime_v`（那就是淡出带），所以积分在穿越时间 `t_cross` 内

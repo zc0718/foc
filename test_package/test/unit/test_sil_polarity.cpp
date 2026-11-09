@@ -413,7 +413,7 @@ auto pulse_at(double delta_rad, double settle_s) -> PulseResult {
  *   推动的电流更小，激起的电感塌陷也更少，真实衰减更快。这是一阶律的小信号边界，写成域而不是拟合掉。
  *
  *   窗口本身是被别的东西定下的，这是本用例 **发现** 的而不是假设的：60° 处不对称仍有 0.093 A，是 0.02 A 阈值的 **4.6 倍
- *   **，而答案照样被拒——因为脉冲现在有很大的 q 分量，转子被推走 14 mrad 电角度，两个脉冲不再从同一个工作点出发。把松弛
+ *    **，而答案照样被拒——因为脉冲现在有很大的 q 分量，转子被推走 14 mrad 电角度，两个脉冲不再从同一个工作点出发。把松弛
  *   加到 20 ms 后 60° 又能作答，这就指出了真正的限制项。
  */
 TEST(SilPolarity, TheAnswerFadesAsTheCosineSquaredAndTheRotorClosesTheWindow) {

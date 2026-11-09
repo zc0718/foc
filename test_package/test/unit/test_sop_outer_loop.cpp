@@ -243,12 +243,12 @@ TEST(Sop, TheObjectiveIsTheDistanceToTheRefusalBoundaryNotTheErrorMagnitude) {
  *   Two readings, and they are different claims. **The criterion moves**: `kp_B/kp_A` = 1.20000, because `kp =
  *   bandwidth/(kt/J)` and B's ratio is 1.2 times A's. **And it still holds**: each machine's own pass lands on 1.031 of
  *   the request, i.e. the same law, so the band built from the law accepts both. What makes the second column a
- *   *held-out* measurement rather than a restatement is the third claim -- A's gains on B deliver 0.859, **outside the
- *   band**, and strictly less than B's own gains deliver. The fourth column closes the other direction: B's gains on A
- *   deliver 1.238, **also outside the band** -- which corrected this case's first draft, where I had assumed a 24 %
- *   overshoot was still close enough. It is not: the band rejects *both* cross-applications and accepts only the
- *   machine's own pair. If someone replaces B with a copy of A, the ratios become the same number and the strict
- *   inequalities go red: that is the plan's red proof, and it is a case rather than a paragraph.
+ *   *held-out* measurement rather than a restatement is the third claim -- A's gains on B deliver 0.859,
+ *   **outside the band**, and strictly less than B's own gains deliver. The fourth column closes the other direction:
+ *   B's gains on A deliver 1.238, **also outside the band** -- which corrected this case's first draft, where I had
+ *   assumed a 24 % overshoot was still close enough. It is not: the band rejects *both* cross-applications and accepts
+ *   only the machine's own pair. If someone replaces B with a copy of A, the ratios become the same number and the
+ *   strict inequalities go red: that is the plan's red proof, and it is a case rather than a paragraph.
  *
  *   A 是标称 plant，B 重 20 %——仍在 25 % 容差内，所以 B 是一台有人可以正当地描述过的机器，流程必须同时服务两者。实测见
  *   上表。两种读法，是两个不同的断言。 **判据会动** ：`kp_B/kp_A` = 1.20000，因为 `kp = bandwidth/(kt/J)` 而 B 的比值为
@@ -309,8 +309,8 @@ TEST(Sop, TheSameProcedureOnASecondMachineMovesTheCriterionAndStillHolds) {
  *   A machine 50 % heavier than the nameplate is not a subtle case, and that is the point: the refusal has to be
  *   boring. Measured: `valid` false, `reason` non-empty, and the gains **bit-identical** to `speed_pi_config()`'s
  *   nameplate pair -- a caller that applies whatever it gets applies nothing new. The measured ratio is still reported
- *   (1.50026), because "I measured 1.5x of what you told me" is the useful half, and it is a statement **about the
- *   measurement**, not a gain.
+ *   (1.50026), because "I measured 1.5x of what you told me" is the useful half, and it is a statement
+ *   **about the measurement**, not a gain.
  *
  *   一台比铭牌重 50 % 的机器不是微妙的情形，而这正是要点：拒绝必须是无聊的。实测：`valid` 为假、`reason` 非空，增益与
  *   `speed_pi_config()` 的铭牌对 **逐位相同** ——拿到什么就施加什么的调用方什么都没换。测量到的比值仍报出（1.50026），因

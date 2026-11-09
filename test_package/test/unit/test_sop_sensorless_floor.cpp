@@ -57,11 +57,11 @@ auto predicted_crossing(const sil::SopMachine& machine, float dead_v) -> float {
  *   That is a real, identifiable quantity and stage 1 succeeds.
  *
  *   **The measurement refuses to be a criterion.** With 1 us of dead time the worst error over the settled window is
- *   0.1591 / 0.0679 / 0.0835 / 0.0757 / 0.0410 / 0.0898 rad at 60 / 80 / 90 / 120 / 200 / 300 rad/s: it **goes down and
- *   then up again**. What the window measures is the amplitude of a lightly damped oscillation, and an amplitude has no
- *   monotone relation to speed, so "how far is this from failing" is not a function of speed here and the "smallest
- *   speed at which an angle may be claimed" does not exist as an interval. The 101 rad/s the row predicts is a **lower
- *   bound**: the first speed that passes the 0.05 rad gate at all is 200 rad/s, roughly twice it.
+ *   0.1591 / 0.0679 / 0.0835 / 0.0757 / 0.0410 / 0.0898 rad at 60 / 80 / 90 / 120 / 200 / 300 rad/s: it
+ *   **goes down and then up again**. What the window measures is the amplitude of a lightly damped oscillation, and an
+ *   amplitude has no monotone relation to speed, so "how far is this from failing" is not a function of speed here and
+ *   the "smallest speed at which an angle may be claimed" does not exist as an interval. The 101 rad/s the row predicts
+ *   is a **lower bound**: the first speed that passes the 0.05 rad gate at all is 200 rad/s, roughly twice it.
  *
  *   两条事实，都在机器 A 上测，而第二条正是这条流程交付不了的原因。
  *

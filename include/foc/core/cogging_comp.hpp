@@ -110,9 +110,9 @@ struct CoggingCompInput final {
  *   **The gain is the salient machine's, not the nameplate's.** `T = 1.5*p*(psi_f + (ld-lq)*id)*iq`, so the current
  *   that produces a wanted torque depends on `id`. Using `Kt = 1.5*p*psi_f` alone scales the answer by the ratio
  *   `(psi_f + (ld-lq)*id)/psi_f` -- on the F32 profile at `id = -1.8 A` that ratio is **2.64**, so the naive gain asks
- *   for 2.64x the current the machine actually needs and the ripple comes back **inverted at 1.5x its original
- *   amplitude**. Worse than doing nothing, and it lands exactly where compensation is most wanted (high speed, d-axis
- *   current flowing).
+ *   for 2.64x the current the machine actually needs and the ripple comes back
+ *   **inverted at 1.5x its original amplitude**. Worse than doing nothing, and it lands exactly where compensation is
+ *   most wanted (high speed, d-axis current flowing).
  *
  *   **Where it stops.** Above the current loop's bandwidth the demand buys heat and phase-shifted current instead of
  *   smooth motion: the same measurement shows the loop's own share of the cogging falling to 49 % at a 76 Hz ripple.
@@ -140,7 +140,7 @@ struct CoggingCompInput final {
  *   们选择不要」与「要了但被上限拒了」。
  *
  *   **它做不到什么。** 它抵消的是转矩纹波；它不负责找表（那是自学习那件），也不纠正相位错的表（相位错则**什么都不抵消
- *   ** ——用例里的反证），而在削磁电流处 `ψf + (Ld−Lq)·id = 0`，机器根本出不了转矩，于是偏置被拒绝而不是被除。
+ *    ** ——用例里的反证），而在削磁电流处 `ψf + (Ld−Lq)·id = 0`，机器根本出不了转矩，于是偏置被拒绝而不是被除。
  * @since 0.1.9
  * @exporter
  */

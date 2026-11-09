@@ -327,11 +327,12 @@ auto fitted_ratio(double dt_s, std::size_t n, double gain, double offset, double
  *   - **sample rate, 0.2 ms to 2 ms (10x): ratio 1.000000 -> 0.9999995.** The regressor is `t` and the ordinate is
  *   `ln(1 - progress)`; for a sampled exponential that relation is *exactly* linear at any spacing, so the fit is not
  *   approximating a continuous curve. An implementation that fitted a continuous-time approximation, or that assumed a
- *   particular number of samples per time constant, would move here. - **window, 10 ms to 40 ms (2.5x more samples):
- *   ratio 1.000000 -> 0.999999.** Same reason -- every sample is on the line, so adding samples adds information and
- *   not bias. - **DC offset, +-1 and +5 on a 10 A step: ratio 1.000000.** The offset appears in `y[0]` and in `y[i]`
- *   and cancels in `progress`. That cancellation is the reason a biased current sensor does not corrupt a bandwidth
- *   measurement -- and a version that forgot to subtract `y[0]` would show it immediately.
+ *   particular number of samples per time constant, would move here. -
+ *   **window, 10 ms to 40 ms (2.5x more samples): ratio 1.000000 -> 0.999999.** Same reason -- every sample is on the
+ *   line, so adding samples adds information and not bias. - **DC offset, +-1 and +5 on a 10 A step: ratio 1.000000.**
+ *   The offset appears in `y[0]` and in `y[i]` and cancels in `progress`. That cancellation is the reason a biased
+ *   current sensor does not corrupt a bandwidth measurement -- and a version that forgot to subtract `y[0]` would show
+ *   it immediately.
  *
  *   The boundary is stated rather than hidden: at an 80 ms window (**20 time constants**) the ratio is 1.002148, and
  *   that is not the fit's fault -- the samples are `float32`, and `1 - exp(-20)` cannot be represented finely enough to
@@ -339,10 +340,10 @@ auto fitted_ratio(double dt_s, std::size_t n, double gain, double offset, double
  *   the algebra, which is worth knowing before recording a 20-time-constant window and expecting 1e-6.
  *
  *   只有非零行的敏感度表分不清"好估计器"与"运气好的估计器"；这里有意思的行是那三个零，因为它们每一个都是一条会被貌似合
- *   理的替代实现破坏的结构性事实：采样率（0.2→2 ms） **1.000000 → 0.9999995** 、窗口（10→40 ms） **1.000000 →
- *   0.999999** （理由相同：每个样本都在那条直线上，加样本只加信息不加偏置）、直流偏置 ±1 与 +5（对 10 A 阶跃）
- *   **1.000000** （偏置在 `y[0]` 与 `y[i]` 里同时出现、在 `progress` 里约掉——这正是偏置的电流传感器不会污染带宽测量的原
- *   因，而一个忘了减 `y[0]` 的版本会立刻显形）。
+ *   理的替代实现破坏的结构性事实：采样率（0.2→2 ms） **1.000000 → 0.9999995** 、窗口（10→40 ms）
+ *   **1.000000 → 0.999999** （理由相同：每个样本都在那条直线上，加样本只加信息不加偏置）、直流偏置 ±1 与 +5（对 10 A 阶
+ *   跃） **1.000000** （偏置在 `y[0]` 与 `y[i]` 里同时出现、在 `progress` 里约掉——这正是偏置的电流传感器不会污染带宽测
+ *   量的原因，而一个忘了减 `y[0]` 的版本会立刻显形）。
  *
  *   边界写出来而不是藏起来： **20 个时间常数** （80 ms）处比值是 1.002148，那不是拟合的问题——样本是 `float32`， `1 −
  *   exp(−20)` 无法表示得足够细以让 `ln(1 − progress)` 保持平直。所以长窗口下的精度由 **样本格式** 而不是代数决定，这一

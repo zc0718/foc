@@ -148,7 +148,7 @@ auto frozen_plant() -> foc::sil::PlantParams {
  *     The duties are turned into phase volts the way an inverter would, Clarke'd, and Parked at the rotor -- so the
  *     number that comes out is the torque the machine actually makes in that commutation state at that rotor position.
  *     把占空比按逆变器的方式变成相电压，Clarke，再按转子角 Park——于是出来的数是机器在那个换相状态、那个转子位置下**真的
- *     ** 产生的力矩。
+ *      ** 产生的力矩。
  */
 auto held_state_current(const foc::sil::PlantParams &params, std::uint8_t code, float theta_e_rad,
                         foc::core::HallDirection direction, float amplitude, float v_bus) -> foc::core::Dq<float> {
@@ -664,7 +664,7 @@ TEST(HallTracker, ANonFiniteSampleIsRefusedAndDoesNotPoisonTheClock) {
  *
  *   `angle_elec_rad()` 把插值直线钳在传感器仍在指名的那个扇区里，而两条钳位不是同一段代码：正向从 **下** 边界进入、反向
  *   从 **上** 边界进入，所以下边界那条只在反向时才会触发。此前每个用例都让转子正向转，也就是说下边界钳位 **从未执行过
- *   ** —— 而反向那一侧缺一条钳位在只看正向的运行里不可见，在另一个方向上却是无界的角度误差（转子停住时，直线会以最后那
+ *    ** —— 而反向那一侧缺一条钳位在只看正向的运行里不可见，在另一个方向上却是无界的角度误差（转子停住时，直线会以最后那
  *   个转速一直走下去）。
  *
  *   伪证是线性预测：断言它落在下边界 **之下** ，所以下面那个等号是一次"有活可干"的钳位，而不是碰巧落在那里。

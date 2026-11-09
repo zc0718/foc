@@ -69,9 +69,9 @@ struct InverterConfig final {
  *   applied (A2's ramp is checked the same way, S19 V6).
  *
  *   Carrier: centre-aligned, so the high window of leg x is `[(1-d)/2, (1+d)/2]*T`. Every switching period is then
- *   self-contained -- at the period boundary all three legs are commanded low -- so the model keeps **no state across
- *   periods** and any period is reproducible from its own inputs. That is what makes single-period verification
- *   (V1/V2/V3) meaningful.
+ *   self-contained -- at the period boundary all three legs are commanded low -- so the model keeps
+ *   **no state across periods** and any period is reproducible from its own inputs. That is what makes single-period
+ *   verification (V1/V2/V3) meaningful.
  *
  *   Resolution: within a sub-step the high-side and dead-time windows are integrated *as fractions*, so the **mean**
  *   voltage over a sub-step is exact and dead time is never quantised; the sub-step length only limits how finely the

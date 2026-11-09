@@ -932,10 +932,10 @@ typedef struct foc_trace_sample {
  * @brief [en] What a recorded step response did, measured rather than eyeballed.
  * @brief [zh] 一段记录下来的阶跃响应到底做了什么，是测出来的而不是看出来的。
  * @note [en] `status` is the diagnostic channel and not decoration: `FOC_OK` means a first-order decay was fitted,
- *            `FOC_ERR_STATE` means the window carried no usable decay -- `bandwidth_rad_s` is 0 **and the settling
- *            numbers are still valid**, because a response can settle without being fittable. `FOC_ERR_PARAM` means the
- *            arguments cannot describe a step at all. A bandwidth of 0 therefore never means "not measured by
- *            accident".
+ *            `FOC_ERR_STATE` means the window carried no usable decay -- `bandwidth_rad_s` is 0
+ *            **and the settling numbers are still valid**, because a response can settle without being fittable.
+ *            `FOC_ERR_PARAM` means the arguments cannot describe a step at all. A bandwidth of 0 therefore never means
+ *            "not measured by accident".
  * @note [zh] `status` 是诊断通道，不是装饰：`FOC_OK` 表示拟合到一阶衰减，`FOC_ERR_STATE` 表示窗口里没有可用的衰减—— 此
  *            时 `bandwidth_rad_s` 为 0， **而稳定时间等数仍然有效** ，因为一段响应可以稳定却不可拟合。`FOC_ERR_PARAM`
  *            表示参数根本描述不了一个阶跃。因此带宽为 0 永远不会是"不小心没测"。

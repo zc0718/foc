@@ -30,8 +30,9 @@ namespace sil = foc::sil;
  *
  *   What the rig says. **With `i_d = 0` the error does not depend on the saliency ratio at all** (0.1044 / 0.1048 /
  *   0.1035 for ratios 1.0 / 2.0 / 2.5). That is arithmetic, not coincidence: a single-`L` observer's model error is
- *   `(Ld - Lq)*i_d`, so with `i_d = 0` a salient machine *is* a surface machine to it. **The boundary therefore does
- *   not exist where it was claimed to**, and the plan's entry is corrected rather than trusted.
+ *   `(Ld - Lq)*i_d`, so with `i_d = 0` a salient machine *is* a surface machine to it.
+ *   **The boundary therefore does not exist where it was claimed to**, and the plan's entry is corrected rather than
+ *   trusted.
  *
  *   The real limitation is `i_d != 0`, and it is worse than any saliency ratio: at 200 rad/s with `i_d = -1 A` the
  *   single-`L` observer reads **0.5079 rad even on a surface machine**, three times the ceiling. Same mechanism as P8:
@@ -56,9 +57,9 @@ namespace sil = foc::sil;
  *   条边界并不在 被声称的位置**，计划里的那一条被更正，而不是被沿用。
  *
  *   真正的限制是 `i_d ≠ 0`，而且它比任何凸极比都严重：200 rad/s、 `i_d = −1 A` 下，单 `L` 观测器**即使在表贴机上也读
- *   0.5079 rad**，是天花板的三倍。机理 与 P8 相同：磁链目标是常数 `ψf`，所以任何 d 轴电流都会改变它本该跟踪的那个磁链，
- *   而低速下 反电势太小，压不住这个误差。3200 rad/s 下同样的 d 轴电流无害（P8 量到 0.0705 rad），所以 这是对"能不能用
- *   `i_d`"的 **低速** 限制，不是普遍限制。
+ *    0.5079 rad**，是天花板的三倍。机理 与 P8 相同：磁链目标是常数 `ψf`，所以任何 d 轴电流都会改变它本该跟踪的那个磁
+ *   链，而低速下 反电势太小，压不住这个误差。3200 rad/s 下同样的 d 轴电流无害（P8 量到 0.0705 rad），所以 这是对"能不能
+ *   用 `i_d`"的 **低速** 限制，不是普遍限制。
  *
  *   以及那个本该修好它的观测器：造了、跑了、 **比没有更糟** 、撤回。误差是位者的一半 （`Lq/Ld = 2` 时 0.2517 对
  *   0.4942 ），但离 0.15 天花板很远，而且它的残余误差同样与凸极比 无关——所以它并没有在观测凸极，它只是碰巧改善了 `i_d`

@@ -60,9 +60,9 @@ constexpr float kAbsoluteCeilingRad = 0.15F;
  *             found this the hard way). A ratio does not go stale when the bench changes, because both sides move
  *             together.
  * @brief [zh] **准入规则** ，也是本文件需要的重定：候选被准入，当且仅当它不差于 **已经出厂** 的那个观测器——**在同一台
- *             plant、同一个工作点**上量。绝对数干不了这件事：0.10 是在均值 plant 上 定的，而同一个观测器在开关 plant 上
- *             读 0.1037，于是台架一换，闸就卡住了它自己的在位者 （P5-f 就是撞在这上面）。比值不会因为台架变化而过期，因
- *             为两边一起动。
+ *              plant、同一个工作点**上量。绝对数干不了这件事：0.10 是在均值 plant 上 定的，而同一个观测器在开关 plant
+ *             上读 0.1037，于是台架一换，闸就卡住了它自己的在位者 （P5-f 就是撞在这上面）。比值不会因为台架变化而过期，
+ *             因为两边一起动。
  */
 constexpr float kNoWorseThanIncumbent = 1.0F;
 

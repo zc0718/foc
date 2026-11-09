@@ -242,8 +242,8 @@ auto probe_run(float omega, float iq, float rs_hat, float i_offset_a, int steps)
  *
  *   Two conclusions a user can act on. **A parameter error is a bias, not a runaway**: a 10 % wrong `Rs` costs 0.19 rad
  *   at 200 rad/s and *less* at higher speed, so the honest spec is "bounded, `eps*Rs*iq/(omega*psi_f)` while that is
- *   small", and the case records where that stops being true (the 50 rad/s row, where the error saturates at `pi`). **A
- *   sensor offset is the runaway**: it enters as a constant voltage error in every step, integrates without ever
+ *   small", and the case records where that stops being true (the 50 rad/s row, where the error saturates at `pi`).
+ *   **A sensor offset is the runaway**: it enters as a constant voltage error in every step, integrates without ever
  *   reversing, and a 50 mA offset puts the estimate 0.71 rad out in 100 ms. That is why a current-sense offset has to
  *   be calibrated out before this observer is trusted, and it is the number the README row now carries.
  *
@@ -251,7 +251,7 @@ auto probe_run(float omega, float iq, float rs_hat, float i_offset_a, int steps)
  *   会。实测（`Rs = 0.5`、`L = 8e-4`、`ψf = 4.7619e-3`、`dt = 50 µs`）见上表。两个可操作的结论：**参数误差是偏置而不是
  *   跑飞 **——10 % 的 `Rs` 误差在 200 rad/s 花 0.19 rad、转速更高时更小，所以诚实的规格是"有界， `ε·Rs·iq/(ω·ψf)`（在它
  *   还很小时）"，而本用例把这条律失效的地方也记下来了（50 rad/s 那行，误差饱和到 π）。 **传感器偏置才是跑飞的那一个
- *   ** ：它每步都以恒定电压误差进入、永不反向地积分，50 mA 的偏置 100 ms 就把估计推出 0.71 rad。所以信任这个观测器之前
+ *    ** ：它每步都以恒定电压误差进入、永不反向地积分，50 mA 的偏置 100 ms 就把估计推出 0.71 rad。所以信任这个观测器之前
  *   必须先把电流零偏标定掉，而这个数就是 README 行现在带着的那个。
  */
 TEST(BackEmfObserver, TheResidueIsOneStepAndOnlyADcOffsetRunsAway) {

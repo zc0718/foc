@@ -161,10 +161,10 @@ struct FieldWeakeningAdvice final {
  *   It spends current on flux instead of on torque.
  *
  *   Drop-in for `NullReferenceGenerator`: same shape, same call site, which is the point -- `ReferenceInput` already
- *   carries `omega_e`, `v_bus` and the measured current, so field weakening needs **no change to `Motor`, no new
- *   template parameter on the existing instantiations, and no state**. Measured (SIL): the nominal machine's `i_d` goes
- *   to `-1.55 A` at the base speed and `-2.70 A` at 3500 rad/s, holding `i_q = 1.24 A` where `i_d = 0` would give zero
- *   torque.
+ *   carries `omega_e`, `v_bus` and the measured current, so field weakening needs
+ *   **no change to `Motor`, no new template parameter on the existing instantiations, and no state**. Measured (SIL):
+ *   the nominal machine's `i_d` goes to `-1.55 A` at the base speed and `-2.70 A` at 3500 rad/s, holding `i_q = 1.24 A`
+ *   where `i_d = 0` would give zero torque.
  *
  * @brief [zh] 用电流去买磁链（而不是转矩），从而把驱动器留在电压上限以内的 d 轴参考。
  *

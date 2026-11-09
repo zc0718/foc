@@ -14,11 +14,11 @@ namespace core {
  *
  *   `window_ns` is in **nanoseconds**, not seconds, and that is the whole point of the type. A window expressed in
  *   seconds is a float, a float deadline compared against a float elapsed time is two roundings meeting, and the
- *   repository already carries the receipt for that mistake: the float timer this library used to have ran **12.8 %
- *   fast at 512 s and stopped advancing from there**, turning a 512 s timeout into 446.7 s and a 520 s one into one
- *   that never fired (`ElapsedClock`'s note). A watchdog is the last thing that may inherit that class of error -- its
- *   job is to stop the drive when a number stops moving, so a deadline that drifts is a deadline that stops protecting
- *   in a way nobody can see.
+ *   repository already carries the receipt for that mistake: the float timer this library used to have ran
+ *   **12.8 % fast at 512 s and stopped advancing from there**, turning a 512 s timeout into 446.7 s and a 520 s one
+ *   into one that never fired (`ElapsedClock`'s note). A watchdog is the last thing that may inherit that class of
+ *   error -- its job is to stop the drive when a number stops moving, so a deadline that drifts is a deadline that
+ *   stops protecting in a way nobody can see.
  *
  * @brief [zh] 看门狗只由这一个数来定尺寸：喂狗方可以沉默多久。
  *
@@ -130,9 +130,9 @@ struct WatchdogReport final {
  *   时器的声明。
  *
  *   **倒退的时钟不是一次很长的沉默。** `uint64_t` 里 `now - last_kick` 把倒退 5 ms 变成 `1.8e19 ns`——584 年的沉默——于是
- *   一份"喂狗方饿死了"的报告说的其实是一个跳变了的时钟。两个答案都会停下驱动器，那是安全的那一半；但事后第一个问题是 **
- *   到底哪一个 **，而本类把二者分开：倒退锁存 `ClockLost` 而不是 `Expired`。** 前向** 跳跃大于窗口则不区分，因为没人能
- *   区分 ——向前跳一小时与喂狗方停了一小时是同样的两个数——而编造证据支撑不了的诊断，正是故障字变成传闻的方式。它按过期
+ *   一份"喂狗方饿死了"的报告说的其实是一个跳变了的时钟。两个答案都会停下驱动器，那是安全的那一半；但事后第一个问题是
+ *   ** 到底哪一个 **，而本类把二者分开：倒退锁存 `ClockLost` 而不是 `Expired`。** 前向** 跳跃大于窗口则不区分，因为没人
+ *   能区分 ——向前跳一小时与喂狗方停了一小时是同样的两个数——而编造证据支撑不了的诊断，正是故障字变成传闻的方式。它按过期
  *   报。
  *
  *   **锁存就是功能本身。** 一旦 `Expired` 或 `ClockLost`，状态直到 `reset()` 都不会动，而锁存之后的一次 `kick()` 回答

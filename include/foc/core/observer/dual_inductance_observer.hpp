@@ -49,20 +49,21 @@ namespace core {
  *            it is kept where it belongs, in the tests, because it returns the same number from the same inputs:
  *            measured agreement **2.384e-07 rad** over 60 (angle, `i_d`, `i_q`) samples. A public switch whose options
  *            differ only in which code path rounds differently is dead weight, the same kind this project removed twice
- *            (a threshold that could never be true, a constant with no consumer). The rule it follows: **ship a
- *            `method=` when the choice changes behaviour, not when it changes the spelling.** The switch this class
- *            would grow is over the *flux source* -- the present pure integrator, which needs a seed and never forgets
- *            a bad one, against a corrected flux that needs no seed and carries a gain -- because that choice changes
- *            the failure modes (start-up from an unknown angle becomes possible; low-speed behaviour and the tuning
- *            surface change with it). That is a different observer with its own measurements, not a flag on this one.
+ *            (a threshold that could never be true, a constant with no consumer). The rule it follows:
+ *            **ship a `method=` when the choice changes behaviour, not when it changes the spelling.** The switch this
+ *            class would grow is over the *flux source* -- the present pure integrator, which needs a seed and never
+ *            forgets a bad one, against a corrected flux that needs no seed and carries a gain -- because that choice
+ *            changes the failure modes (start-up from an unknown angle becomes possible; low-speed behaviour and the
+ *            tuning surface change with it). That is a different observer with its own measurements, not a flag on this
+ *            one.
  * @note [zh] **这里没有 `method=`，那是决定而不是遗漏。** 反解同一个关系确实还有第二种做法——不去解二次方程，而是最小化
  *            同一个表达式的残差——而它被留在该在的地方：测试里。因为它从同样的输入给出同一个数：60 组 (角度, `i_d`,
  *            `i_q`) 样本上实测一致到 **2.384e-07 rad** 。一个公开开关，若它的选项只在"哪条代码路径舍入得不同"上有别，就
  *            是死重量—— 本项目已经删过两次同类东西（一个永远不可能为真的阈值、一个没有消费者的常量）。它遵循的规则是：
  *            **当选择改变行为时才提供 `method=`，当选择只改变写法时不提供。** 这个类真正会长出来的开关是关于** 磁链来源
- *            **的——现在的纯积分器需要种子、且永不忘记坏种子，对上一种不需要种子、带修正增益的磁链——因为那个选择改变失效
- *            模式（从未知角度起动成为可能；低速行为与整定面随之改变）。那是一个需要自己测量表的另一个观测器，不是本类上
- *            的一个标志位。
+ *             **的——现在的纯积分器需要种子、且永不忘记坏种子，对上一种不需要种子、带修正增益的磁链——因为那个选择改变失
+ *            效模式（从未知角度起动成为可能；低速行为与整定面随之改变）。那是一个需要自己测量表的另一个观测器，不是本类
+ *            上的一个标志位。
  * @warning [en] Like the open-loop integrator it generalises, the **absolute** angle needs a seed: a pure integrator
  *               cannot know its integration constant. `seed_flux()` takes the full stator flux (not the rotor flux),
  *               and the two roots of the quadratic are disambiguated by continuity with the previous estimate -- on the

@@ -71,10 +71,10 @@ struct MtpvPoint final {
  *
  *   `T(t) / (1.5*p) = (V/Lq) * [ p_r*sin t + q_r*sin 2t ]`, `p_r = psi_f*Lq/Ld`, `q_r = (Ld-Lq)*V/(2*Ld)`,
  *
- *   **which is a single sinusoid in `t` plus its second harmonic, so its stationary points are a quadratic in `cos
- *   t`**: `4*q_r*c^2 + p_r*c - 2*q_r = 0`. Two roots, one of each sign; the torque-maximising one is the one whose `sin
- *   t` carries the sign that makes the reluctance term add to the magnet term. No iteration, and the **same** quadratic
- *   on the current circle gives MTPA with `p_r = psi_f`, `q_r = (Ld-Lq)*i_max/2` -- the two candidates of the whole
+ *   **which is a single sinusoid in `t` plus its second harmonic, so its stationary points are a quadratic in `cos t`**:
+ *   `4*q_r*c^2 + p_r*c - 2*q_r = 0`. Two roots, one of each sign; the torque-maximising one is the one whose `sin t`
+ *   carries the sign that makes the reluctance term add to the magnet term. No iteration, and the **same** quadratic on
+ *   the current circle gives MTPA with `p_r = psi_f`, `q_r = (Ld-Lq)*i_max/2` -- the two candidates of the whole
  *   constant-torque map are the same three lines of arithmetic.
  *
  *   The maximum of `T` along the ellipse **is** the tangency point of the torque hyperbola with the ellipse, so the

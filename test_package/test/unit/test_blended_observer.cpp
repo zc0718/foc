@@ -351,8 +351,8 @@ TEST(BlendedObserver, TheInterpolationHappensOnTheCircleAndNotOnTheLine) {
  *   物理上什么都没动。
  *
  *   后半句是给使用方的：发布 **转速** 是两个转速的同一个凸组合，所以扫动期间它停在（共同的）转速上。一个在动而一个不动
- *   的角度与转速彼此不自洽，用转速积分重建位置的消费者会与直接读角度的人在交接期间不一致，差值恰好是那个分歧量。这是 **
- *   该知道的性质**而不是要修的缺陷：角度是更好的估计，扫动就是交接的工作方式。
+ *   的角度与转速彼此不自洽，用转速积分重建位置的消费者会与直接读角度的人在交接期间不一致，差值恰好是那个分歧量。这是
+ *   ** 该知道的性质**而不是要修的缺陷：角度是更好的估计，扫动就是交接的工作方式。
  */
 TEST(BlendedObserver, AHandoverSweepsTheAngleWithoutMovingTheSpeed) {
     constexpr float kStart = 10.0F;

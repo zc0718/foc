@@ -158,11 +158,18 @@ def _wrap(text: str, indent: int) -> list[str]:
     出现在行首——需要时把它**前面整个单元**一起下移，而不是只拽下最后一个字符，因为只拽一个
     字符会把数字和单词拦腰截断（`±20 %` → `±2` / `0%`）。
     """
+    # An emphasis pair is one unit: breaking between `**` and its text, or between
+    # the text and its closing `**`, leaves the delimiter touching a line edge, and
+    # both renderers then require a whitespace boundary that is no longer there --
+    # the pair prints as literal asterisks. A sentinel stands in for the spaces
+    # inside the pair so the wrap cannot see them as break opportunities.
+    SENTINEL = "\x00"
+    protected = re.sub(r'\*\*[^*\n]+?\*\*', lambda m: m.group(0).replace(" ", SENTINEL), text)
     lines: list[str] = []
     current = ""
     width = indent
     last_piece = ""
-    for unit, space in _units(text):
+    for unit, space in _units(protected):
         piece = (" " if (space and current) else "") + unit
         add = _columns(piece)
         if current and (width + add) > MAX_COLUMN:
@@ -185,7 +192,7 @@ def _wrap(text: str, indent: int) -> list[str]:
             last_piece = piece
     if current:
         lines.append(current)
-    return lines
+    return [line.replace(SENTINEL, " ") for line in lines]
 
 
 # A line that opens a new run inside a paragraph. This is the repo's own bilingual style --

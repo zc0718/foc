@@ -1061,14 +1061,15 @@ using foc::sil::speed_loop_gain;
  *
  *   The sensitivity is the actionable half, and it is lopsided:
  *
- *   | nameplate error at 200 rad/s | measured -3 dB / requested | |---|---| | inertia -20 % / +20 % / +50 % | **0.82262
- *   / 1.23666 / 1.54877 **| | friction -50 % / +50 % / +200 % |** 1.02948 / 1.02949 / 1.02951** |
+ *   | nameplate error at 200 rad/s | measured -3 dB / requested | |---|---| | inertia -20 % / +20 % / +50 % |
+ *   **0.82262 / 1.23666 / 1.54877 **| | friction -50 % / +50 % / +200 % |** 1.02948 / 1.02949 / 1.02951** |
  *
- *   Divided by the error-free 1.02948 those inertia rows read 0.799 / 1.201 / 1.504: **the bandwidth you get is the
- *   bandwidth you asked for times `J_hat/J`**. The friction rows move the fourth digit -- because `kp = wb*J/kt` alone
- *   sets the first-order bandwidth and `ki` only trims the friction term, so a wrong `b` costs steady-state droop and
- *   not bandwidth. That asymmetry is the reason a commissioning run should fit `J` before `b`, and it is the one number
- *   here a user can act on: a 20 % inertia error is a 20 % bandwidth error, one for one.
+ *   Divided by the error-free 1.02948 those inertia rows read 0.799 / 1.201 / 1.504:
+ *   **the bandwidth you get is the bandwidth you asked for times `J_hat/J`**. The friction rows move the fourth digit
+ *   -- because `kp = wb*J/kt` alone sets the first-order bandwidth and `ki` only trims the friction term, so a wrong
+ *   `b` costs steady-state droop and not bandwidth. That asymmetry is the reason a commissioning run should fit `J`
+ *   before `b`, and it is the one number here a user can act on: a 20 % inertia error is a 20 % bandwidth error, one
+ *   for one.
  *
  *   这一行必须解释 `step_metrics` 报出的那个数：SIL 台架测到 243.57 rad/s 对 250 rad/s 的请求（Python plant −2.57 %
  *   ），而 C++ 台架是 +9.15 %。这里在 **理想电流环** 上实测（见上表）：律在一个十倍带宽范围内好到 **3.5 %** ，残差随

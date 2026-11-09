@@ -26,15 +26,15 @@ namespace sil {
  *     missing quantity was not a board, it was a **port**: the inverter knew its pole voltages and the plant knew its
  *     currents, and nobody multiplied them.
  *
- *     Sign convention, stated once because every criterion below depends on it: `i_dc` is positive **into the
- *     inverter** (motoring). The node equation is
+ *     Sign convention, stated once because every criterion below depends on it: `i_dc` is positive
+ *     **into the inverter** (motoring). The node equation is
  *
  *     C * dv/dt = i_source - i_dc - i_load - i_chopper
  *
  *     so a motoring drive discharges the capacitor and a regenerating one charges it. `i_load` is an auxiliary draw and
- *     `i_chopper` is the brake resistor, both positive-into-the-device. With `capacitance_f <= 0` the bus is an **ideal
- *     source**: the voltage stays where it was put and the books still run, which is what makes the counterfactual
- *     measurable -- the energy that should have moved the voltage shows up as a residual instead.
+ *     `i_chopper` is the brake resistor, both positive-into-the-device. With `capacitance_f <= 0` the bus is an
+ *     **ideal source**: the voltage stays where it was put and the books still run, which is what makes the
+ *     counterfactual measurable -- the energy that should have moved the voltage shows up as a residual instead.
  *
  * @details [zh] 在这个文件存在之前，母线是一个 **常数** ：`PlantDcLink` 返回被设进去的那个值，
  *               `DiscreteInverter::begin_period()` 把它锁存。仓库里没有任何东西问过「这一拍有多少电荷离开了母线」，于是
@@ -103,7 +103,7 @@ struct BusParams final {
  *            says which of the two this run is, so a reader does not have to infer it.
  * @note [zh] `residual_j` 才是重点：它是守恒律 **解释不了** 的那部分。有电容时它是积分误差，必须很小；理想源时它是一个
  *            真实电容本该吸收的能量，而一段对理想源报出 `residual_j == 0` 的运行什么都没有测到——它只有一本 **不可能出错
- *            ** 的账，而这正是本仓库反复发现的形状。`accountable` 直接说明这次运行属于哪一种，读者不必去推断。
+ *             ** 的账，而这正是本仓库反复发现的形状。`accountable` 直接说明这次运行属于哪一种，读者不必去推断。
  * @since 0.1.9
  * @exporter
  */

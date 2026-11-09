@@ -666,10 +666,10 @@ TEST(Protection,
  *
  *   The decision is `(!input.flux_valid) || (abs(flux_error_ratio) > sync_error_ratio)`. Every existing case feeds
  *   `flux_valid = true`, so the first term has never been true and its independent effect was never shown: the
- *   short-circuit means a machine that says "my flux estimate is not valid" reaches `LostSync` **without any error
- *   ratio at all**, and nothing tested that. The pair is therefore the boundary one -- the same input twice, differing
- *   only in `flux_valid`, with the ratio held small in both -- so the first term is the only thing that can change the
- *   answer.
+ *   short-circuit means a machine that says "my flux estimate is not valid" reaches `LostSync`
+ *   **without any error ratio at all**, and nothing tested that. The pair is therefore the boundary one -- the same
+ *   input twice, differing only in `flux_valid`, with the ratio held small in both -- so the first term is the only
+ *   thing that can change the answer.
  *
  *   那个判定是 `(!input.flux_valid) || (abs(flux_error_ratio) > sync_error_ratio)`。既有用例全部喂 `flux_valid =
  *   true`，于是第一项从未为真、它的独立作用从未被演示：短路意味着一台说"我的磁链估计无效" 的机器 **根本不需要误差比**
