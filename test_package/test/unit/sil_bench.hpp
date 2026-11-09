@@ -88,18 +88,18 @@ inline auto nominal_spec() -> MachineSpec {
  *            `psi_f/Ld = 11.9 A` against a 3 A limit, so field weakening cannot null the flux and MTPV has
  *            **no operating point** -- a capability verified only there is verified on nothing. This profile is the
  *            case `core/field_weakening.hpp` already describes in prose ("the same machine with ten times the
- *            inductance holds 36 % of its base torque at 8000 rad/s"), written down as parameters: `Ld = 4 mH`, `Lq = 8
- *            mH` (saliency 2), the **same** `psi_f` and the same 3 A limit, so `lambda = Ld*i_max/psi_f = 2.52` and
- *            `i_char = 1.19 A` -- inside the limit, which is what C7 and C8 in `domain.json` recompute.
+ *            inductance holds 36 % of its base torque at 8000 rad/s"), written down as parameters: `Ld = 4 mH`,
+ *            `Lq = 8 mH` (saliency 2), the **same** `psi_f` and the same 3 A limit, so `lambda = Ld*i_max/psi_f = 2.52`
+ *            and `i_char = 1.19 A` -- inside the limit, which is what C7 and C8 in `domain.json` recompute.
  * @note [zh] 为什么需要第二份档案，一句话：标称机的特征电流是 `psi_f/Ld = 11.9 A` 而限幅只有 3 A，于是弱磁削不动磁链、
  *            MTPV **没有工作点** ——只在那种机器上验过的能力，等于没验过。这份档案就是 `core/field_weakening.hpp` 早已写
- *            成散文的那台机器（“同一台机器把电感放大十倍，8000 rad/s 处仍有基速转矩的 36 %”），把话写成参数： `Ld = 4
- *            mH`、`Lq = 8 mH`（凸极比 2）、 **同样的** `psi_f` 与 3 A 限幅，于是 `lambda = 2.52`、 `i_char = 1.19 A`——
- *            落在限幅内，这正是 `domain.json` 里 C7 与 C8 重算的东西。
+ *            成散文的那台机器（“同一台机器把电感放大十倍，8000 rad/s 处仍有基速转矩的 36 %”），把话写成参数：
+ *            `Ld = 4 mH`、 `Lq = 8 mH`（凸极比 2）、 **同样的** `psi_f` 与 3 A 限幅，于是 `lambda = 2.52`、
+ *            `i_char = 1.19 A` —— 落在限幅内，这正是 `domain.json` 里 C7 与 C8 重算的东西。
  * @warning [en] **Synthetic, and labelled as such.** It is not a prototype and nothing measured on it says anything
  *               about the four real machines, which stay outside the domain -- `domain.json` keeps both statements.
  * @warning [zh] **是合成档案，并且就这么标注。** 它不是样机，在它身上量到的任何东西都不能替四台真实机器说话——那四台仍在
- *               域外，`domain.json` 把两句话都留着。
+ *               域外， `domain.json` 把两句话都留着。
  */
 inline auto in_domain_spec() -> MachineSpec {
     // rs     ld      lq      kt     j       b       poles i_max  pwm
@@ -148,7 +148,7 @@ inline auto nominal_motor_config() -> motor::MotorConfig { return motor_config_f
 /**
  * @brief [en] Current-loop PI tuned for critical damping: `ki = wn^2*L`, `kp = 2*wn*L - R`, which cancels the
  *             electrical pole and gives `s^2 + 2*wn*s + wn^2`.
- * @brief [zh] 电流环 PI，按临界阻尼整定：`ki = wn^2*L`、`kp = 2*wn*L - R`，抵消电气极点后得到 `s^2 + 2*wn*s + wn^2`。
+ * @brief [zh] 电流环 PI，按临界阻尼整定： `ki = wn^2*L`、 `kp = 2*wn*L - R`，抵消电气极点后得到 `s^2 + 2*wn*s + wn^2`。
  * @since 0.1.0
  */
 inline auto current_pi_config(const motor::MotorConfig& mc, float omega_rad_s, float v_bus) -> core::Pi::Config {
@@ -160,7 +160,7 @@ inline auto current_pi_config(const motor::MotorConfig& mc, float omega_rad_s, f
 
 /**
  * @brief [en] Speed-loop PI with pole-zero cancellation of the mechanical pole `B/J`: `kp = wn*J/Kt`, `ki = wn*B/Kt`.
- * @brief [zh] 速度环 PI，抵消机械极点 `B/J`：`kp = wn*J/Kt`、`ki = wn*B/Kt`。
+ * @brief [zh] 速度环 PI，抵消机械极点 `B/J`： `kp = wn*J/Kt`、 `ki = wn*B/Kt`。
  * @since 0.1.0
  */
 inline auto speed_pi_config(const motor::MotorConfig& mc, float omega_rad_s) -> core::Pi::Config {

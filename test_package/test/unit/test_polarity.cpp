@@ -225,8 +225,8 @@ TEST(MagnetPolarityTest, RejectsNonPositivePeriod) {
  *   称，即自信的 `Reversed`。
  *
  *   护栏用调用方自己声明的分辨力当尺子——两个起点相差超过 `min_asymmetry_a` 时，那个分辨力下的任何结论都不成立。下面的用
- *   例同时检查护栏 **与夹具** ：`FakeDx` 原本完全没有衰减，于是这里的每个用例都在悄悄走那条退化路径，并以错误的理由得到
- *   正确的标签。
+ *   例同时检查护栏 **与夹具** ： `FakeDx` 原本完全没有衰减，于是这里的每个用例都在悄悄走那条退化路径，并以错误的理由得
+ *   到正确的标签。
  */
 TEST(MagnetPolarityTest, AWindingThatNeverRelaxesGetsInconclusiveInsteadOfAWrongAnswer) {
     // The motor is the one that is `Aligned`; only the winding's relaxation changes.

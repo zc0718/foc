@@ -187,8 +187,8 @@ TEST(SilSpeedFromAngle, DifferencingTheAngleBeatsTheObserversOwnSpeed) {
 /**
  * @brief Both noise gains are the ones the closed forms predict, and the measurement can tell the closed forms apart.
  *
- *     The header claims two things about this estimator's noise: the shipped delayed difference has `sigma_v =
- *     sqrt(2)*sigma_theta/(N*dt)`, and a least-squares slope over the same window would be quieter by
+ *     The header claims two things about this estimator's noise: the shipped delayed difference has
+ *     `sigma_v = sqrt(2)*sigma_theta/(N*dt)`, and a least-squares slope over the same window would be quieter by
  *     `sqrt(6N/((N+1)(N+2)))` -- 5.82x at N = 200. The second number was `sqrt(12/N)` (4.1x) until F-42, wrong by
  *     exactly `sqrt(2)`.
  *

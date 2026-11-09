@@ -21,13 +21,41 @@ namespace core {
  */
 enum class TextStatus : std::uint8_t {
     Ok = 0,
-    Truncated, ///< [en] the output buffer was too small. [zh] 输出缓冲不够。
-    BadFormat, ///< [en] a line is not `key=value`, or a value is not a number. [zh] 某行不是 `key=value`，或值不是数字。
-    Unsupported,  ///< [en] the `format` version is not one this build knows. [zh] `format` 版本不认识。
-    OutOfRange,   ///< [en] a value is not finite, or a length is not positive. [zh] 数值非有限，或长度非正。
-    TooManyRows,  ///< [en] more `row=` lines than the map holds. [zh] `row=` 行数超过表的容量。
-    NotSorted,    ///< [en] rows are not in strictly increasing current. [zh] 行的电流不是严格递增。
-    NoParameters, ///< [en] `rs` was never given. [zh] 没有给 `rs`。
+    /**
+     * @brief [en] the output buffer was too small.
+     * @brief [zh] 输出缓冲不够。
+     */
+    Truncated,
+    /**
+     * @brief [en] a line is not `key=value`, or a value is not a number.
+     * @brief [zh] 某行不是 `key=value`，或值不是数字。
+     */
+    BadFormat,
+    /**
+     * @brief [en] the `format` version is not one this build knows.
+     * @brief [zh] `format` 版本不认识。
+     */
+    Unsupported,
+    /**
+     * @brief [en] a value is not finite, or a length is not positive.
+     * @brief [zh] 数值非有限，或长度非正。
+     */
+    OutOfRange,
+    /**
+     * @brief [en] more `row=` lines than the map holds.
+     * @brief [zh] `row=` 行数超过表的容量。
+     */
+    TooManyRows,
+    /**
+     * @brief [en] rows are not in strictly increasing current.
+     * @brief [zh] 行的电流不是严格递增。
+     */
+    NotSorted,
+    /**
+     * @brief [en] `rs` was never given.
+     * @brief [zh] 没有给 `rs`。
+     */
+    NoParameters,
 };
 
 

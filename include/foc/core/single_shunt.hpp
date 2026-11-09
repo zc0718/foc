@@ -25,10 +25,22 @@ namespace core {
  */
 struct ShuntTimes final {
     float
-        t_active1_s; ///< [en] only the largest-duty phase conducts: `(dmax - dmid)*T`, s. [zh] 只有占空比最大的那一相导通：`(dmax − dmid)·T`，s。
+        /**
+         * @brief [en] only the largest-duty phase conducts: `(dmax - dmid)*T`, s.
+         * @brief [zh] 只有占空比最大的那一相导通： `(dmax − dmid)·T`，s。
+         */
+        t_active1_s;
     float
-        t_active2_s; ///< [en] the two largest conduct: `(dmid - dmin)*T`, s. [zh] 最大的两相导通：`(dmid − dmin)·T`，s。
-    float t_zero_s;  ///< [en] all three low: `(1 - dmax + dmin)*T`, s. [zh] 三相全低：`(1 − dmax + dmin)·T`，s。
+        /**
+         * @brief [en] the two largest conduct: `(dmid - dmin)*T`, s.
+         * @brief [zh] 最大的两相导通： `(dmid − dmin)·T`，s。
+         */
+        t_active2_s;
+    /**
+     * @brief [en] all three low: `(1 - dmax + dmin)*T`, s.
+     * @brief [zh] 三相全低： `(1 − dmax + dmin)·T`，s。
+     */
+    float t_zero_s;
 };
 
 /**
@@ -45,9 +57,21 @@ struct ShuntTimes final {
  * @exporter
  */
 enum class ShuntVerdict : std::uint8_t {
-    Measurable = 0, ///< [en] both windows are long enough. [zh] 两个窗口都够长。
-    WindowTooNarrow, ///< [en] at least one active interval is shorter than settle + sample. [zh] 至少一个有效区间短于建立加采样。
-    NoActiveVector, ///< [en] both vanish: the period is one zero vector and the shunt carries nothing. [zh] 两者都消失：整周期是一个零矢量，采样电阻上没有电流。
+    /**
+     * @brief [en] both windows are long enough.
+     * @brief [zh] 两个窗口都够长。
+     */
+    Measurable = 0,
+    /**
+     * @brief [en] at least one active interval is shorter than settle + sample.
+     * @brief [zh] 至少一个有效区间短于建立加采样。
+     */
+    WindowTooNarrow,
+    /**
+     * @brief [en] both vanish: the period is one zero vector and the shunt carries nothing.
+     * @brief [zh] 两者都消失：整周期是一个零矢量，采样电阻上没有电流。
+     */
+    NoActiveVector,
 };
 
 /**
@@ -58,13 +82,33 @@ enum class ShuntVerdict : std::uint8_t {
  */
 struct ShuntWindow final {
     ErrorCode
-        status; ///< [en] Ok, or Param for a configuration that cannot be judged. [zh] Ok；配置无法判定时为 Param。
-    ShuntVerdict verdict; ///< [en] three answers, not a boolean. [zh] 三种答案，不是一个布尔。
-    ShuntTimes times;     ///< [en] the pattern's three intervals. [zh] 图样的三个区间。
+        /**
+         * @brief [en] Ok, or Param for a configuration that cannot be judged.
+         * @brief [zh] Ok；配置无法判定时为 Param。
+         */
+        status;
+    /**
+     * @brief [en] three answers, not a boolean.
+     * @brief [zh] 三种答案，不是一个布尔。
+     */
+    ShuntVerdict verdict;
+    /**
+     * @brief [en] the pattern's three intervals.
+     * @brief [zh] 图样的三个区间。
+     */
+    ShuntTimes times;
     float
-        window_s; ///< [en] `min(t_active1, t_active2)/2`: what is actually left to sample. [zh] `min(t1, t2)/2`：真正剩下可采样的时间。
+        /**
+         * @brief [en] `min(t_active1, t_active2)/2`: what is actually left to sample.
+         * @brief [zh] `min(t1, t2)/2`：真正剩下可采样的时间。
+         */
+        window_s;
     float
-        needed_s; ///< [en] `t_settle + t_sample`, the number the window is compared with. [zh] `t_settle + t_sample`，窗口与之比较的那个数。
+        /**
+         * @brief [en] `t_settle + t_sample`, the number the window is compared with.
+         * @brief [zh] `t_settle + t_sample`，窗口与之比较的那个数。
+         */
+        needed_s;
 };
 
 /**
@@ -80,11 +124,23 @@ struct ShuntWindow final {
  * @exporter
  */
 struct ShuntCurrents final {
-    ErrorCode status; ///< [en] Ok, or Param for a duty that is not a duty. [zh] Ok；占空比不像占空比时为 Param。
+    /**
+     * @brief [en] Ok, or Param for a duty that is not a duty.
+     * @brief [zh] Ok；占空比不像占空比时为 Param。
+     */
+    ErrorCode status;
     bool
-        valid; ///< [en] false = do not use `i_uvw`, it is not a measurement. [zh] 假 = 别用 `i_uvw`，它不是一个测量值。
+        /**
+         * @brief [en] false = do not use `i_uvw`, it is not a measurement.
+         * @brief [zh] 假 = 别用 `i_uvw`，它不是一个测量值。
+         */
+        valid;
     Uvw<float>
-        i_uvw; ///< [en] the three phase currents, A, summing to zero by construction. [zh] 三相电流，A，按构造和为零。
+        /**
+         * @brief [en] the three phase currents, A, summing to zero by construction.
+         * @brief [zh] 三相电流，A，按构造和为零。
+         */
+        i_uvw;
 };
 
 /**
@@ -145,9 +201,21 @@ class SingleShunt final {
      * @exporter
      */
     struct Config final {
-        float t_settle_s; ///< [en] ringing + propagation after each edge, s. [zh] 每个边沿之后的振铃加传输延迟，s。
-        float t_sample_s; ///< [en] the ADC's own aperture/hold, s. [zh] ADC 自己的采样保持时间，s。
-        float switching_period_s; ///< [en] period the duty is relative to, s. [zh] 占空比所相对的周期，s。
+        /**
+         * @brief [en] ringing + propagation after each edge, s.
+         * @brief [zh] 每个边沿之后的振铃加传输延迟，s。
+         */
+        float t_settle_s;
+        /**
+         * @brief [en] the ADC's own aperture/hold, s.
+         * @brief [zh] ADC 自己的采样保持时间，s。
+         */
+        float t_sample_s;
+        /**
+         * @brief [en] period the duty is relative to, s.
+         * @brief [zh] 占空比所相对的周期，s。
+         */
+        float switching_period_s;
     };
 
     SingleShunt() noexcept = default;

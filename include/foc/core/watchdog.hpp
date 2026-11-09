@@ -31,8 +31,11 @@ namespace core {
  * @exporter
  */
 struct WatchdogConfig final {
-    std::uint64_t window_ns{
-        0U}; ///< [en] the longest silence allowed, ns; 0 is a configuration error. [zh] 允许的最长沉默，ns；0 是配置错误。
+    std::uint64_t window_ns{/**
+         * @brief [en] the longest silence allowed, ns; 0 is a configuration error.
+         * @brief [zh] 允许的最长沉默，ns；0 是配置错误。
+         */
+                            0U};
 };
 
 /**
@@ -52,10 +55,26 @@ struct WatchdogConfig final {
  * @exporter
  */
 enum class WatchdogState : std::uint8_t {
-    Unarmed = 0, ///< [en] no kick has arrived yet, so nothing is measured. [zh] 还没有任何一次喂狗，因此什么都没在量。
-    Feeding,     ///< [en] the last kick is inside the window. [zh] 最近一次喂狗在窗口之内。
-    Expired,     ///< [en] the window passed with no kick; latched. [zh] 窗口过去了而没有喂狗；已锁存。
-    ClockLost,   ///< [en] the timestamp went backwards; latched. [zh] 时间戳倒退了；已锁存。
+    /**
+     * @brief [en] no kick has arrived yet, so nothing is measured.
+     * @brief [zh] 还没有任何一次喂狗，因此什么都没在量。
+     */
+    Unarmed = 0,
+    /**
+     * @brief [en] the last kick is inside the window.
+     * @brief [zh] 最近一次喂狗在窗口之内。
+     */
+    Feeding,
+    /**
+     * @brief [en] the window passed with no kick; latched.
+     * @brief [zh] 窗口过去了而没有喂狗；已锁存。
+     */
+    Expired,
+    /**
+     * @brief [en] the timestamp went backwards; latched.
+     * @brief [zh] 时间戳倒退了；已锁存。
+     */
+    ClockLost,
 };
 
 /**
@@ -82,12 +101,28 @@ enum class WatchdogState : std::uint8_t {
  */
 struct WatchdogReport final {
     ErrorCode
-        status; ///< [en] `Ok` feeding, `State` unarmed or fed after a latch, `Fault` tripped, `Param` bad window. [zh] `Ok` 正在喂、`State` 未武装或锁存后再喂、`Fault` 已跳闸、`Param` 窗口非法。
-    WatchdogState state; ///< [en] the state this answer is about. [zh] 本回答所处的状态。
+        /**
+         * @brief [en] `Ok` feeding, `State` unarmed or fed after a latch, `Fault` tripped, `Param` bad window.
+         * @brief [zh] `Ok` 正在喂、 `State` 未武装或锁存后再喂、 `Fault` 已跳闸、 `Param` 窗口非法。
+         */
+        status;
+    /**
+     * @brief [en] the state this answer is about.
+     * @brief [zh] 本回答所处的状态。
+     */
+    WatchdogState state;
     std::uint64_t
-        step_ns; ///< [en] forward silence, or backwards distance; 0 when unarmed. [zh] 前向沉默时长，或倒退距离；未武装时为 0。
+        /**
+         * @brief [en] forward silence, or backwards distance; 0 when unarmed.
+         * @brief [zh] 前向沉默时长，或倒退距离；未武装时为 0。
+         */
+        step_ns;
     std::uint64_t
-        remaining_ns; ///< [en] time left before the deadline while feeding, else 0. [zh] 正在喂时距截止的剩余时间，否则 0。
+        /**
+         * @brief [en] time left before the deadline while feeding, else 0.
+         * @brief [zh] 正在喂时距截止的剩余时间，否则 0。
+         */
+        remaining_ns;
 };
 
 /**
@@ -174,7 +209,10 @@ class Watchdog final {
      */
     auto setup(const WatchdogConfig& config) noexcept -> ErrorCode;
 
-    /** @brief [en] The window in force. [zh] 当前生效的窗口。 */
+    /**
+     * @brief [en] The window in force.
+     * @brief [zh] 当前生效的窗口。
+     */
     [[nodiscard]] auto config() const noexcept -> const WatchdogConfig& { return config_; }
 
     /**
@@ -212,7 +250,10 @@ class Watchdog final {
      */
     auto poll(std::uint64_t now_ns) noexcept -> WatchdogReport;
 
-    /** @brief [en] The latched state, without asking the clock anything. [zh] 锁存的状态，不问时钟任何问题。 */
+    /**
+     * @brief [en] The latched state, without asking the clock anything.
+     * @brief [zh] 锁存的状态，不问时钟任何问题。
+     */
     [[nodiscard]] auto state() const noexcept -> WatchdogState { return state_; }
 
     /**
@@ -227,10 +268,16 @@ class Watchdog final {
      */
     [[nodiscard]] auto fault_code() const noexcept -> FaultCode;
 
-    /** @brief [en] The stamp of the last accepted kick; 0 when unarmed. [zh] 最后一次被接受的喂狗时间戳；未武装时为 0。 */
+    /**
+     * @brief [en] The stamp of the last accepted kick; 0 when unarmed.
+     * @brief [zh] 最后一次被接受的喂狗时间戳；未武装时为 0。
+     */
     [[nodiscard]] auto last_kick_ns() const noexcept -> std::uint64_t { return last_kick_ns_; }
 
-    /** @brief [en] How many kicks have been accepted; a late kick is not one. [zh] 已被接受的喂狗次数；迟到的喂狗不算。 */
+    /**
+     * @brief [en] How many kicks have been accepted; a late kick is not one.
+     * @brief [zh] 已被接受的喂狗次数；迟到的喂狗不算。
+     */
     [[nodiscard]] auto kicks() const noexcept -> std::uint32_t { return kicks_; }
 
   private:

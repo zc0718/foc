@@ -23,11 +23,31 @@ namespace core {
  * @exporter
  */
 enum class StartupState : std::uint8_t {
-    Idle = 0,   ///< [en] not started or reset. [zh] 未开始或已复位。
-    Align = 1,  ///< [en] rotor pulled to a known angle and held. [zh] 把转子拉到已知角度并保持。
-    Pull = 2,   ///< [en] forced vector accelerating open-loop. [zh] 强制矢量开环加速。
-    Done = 3,   ///< [en] hand-over speed reached; control belongs to the observer. [zh] 已到交接转速；控制权归观测器。
-    Failed = 4, ///< [en] the recipe could not be carried out. [zh] 配方无法执行。
+    /**
+     * @brief [en] not started or reset.
+     * @brief [zh] 未开始或已复位。
+     */
+    Idle = 0,
+    /**
+     * @brief [en] rotor pulled to a known angle and held.
+     * @brief [zh] 把转子拉到已知角度并保持。
+     */
+    Align = 1,
+    /**
+     * @brief [en] forced vector accelerating open-loop.
+     * @brief [zh] 强制矢量开环加速。
+     */
+    Pull = 2,
+    /**
+     * @brief [en] hand-over speed reached; control belongs to the observer.
+     * @brief [zh] 已到交接转速；控制权归观测器。
+     */
+    Done = 3,
+    /**
+     * @brief [en] the recipe could not be carried out.
+     * @brief [zh] 配方无法执行。
+     */
+    Failed = 4,
 };
 
 
@@ -42,14 +62,34 @@ enum class StartupState : std::uint8_t {
  */
 struct StartupConfig final {
     float
-        align_current_a; ///< [en] current that holds the rotor at the first angle, A (> 0). [zh] 把转子按在首个角上的电流，A（> 0）。
-    float align_hold_s; ///< [en] how long to hold before pulling, s (> 0). [zh] 拖动前保持多久，s（> 0）。
+        /**
+         * @brief [en] current that holds the rotor at the first angle, A (> 0).
+         * @brief [zh] 把转子按在首个角上的电流，A（> 0）。
+         */
+        align_current_a;
+    /**
+     * @brief [en] how long to hold before pulling, s (> 0).
+     * @brief [zh] 拖动前保持多久，s（> 0）。
+     */
+    float align_hold_s;
     float
-        pull_current_a; ///< [en] current while the vector accelerates, A (> 0). [zh] 矢量加速期间施加的电流，A（> 0）。
+        /**
+         * @brief [en] current while the vector accelerates, A (> 0).
+         * @brief [zh] 矢量加速期间施加的电流，A（> 0）。
+         */
+        pull_current_a;
     float
-        pull_accel_rad_s2; ///< [en] electrical acceleration of the forced vector, rad/s^2 (> 0). [zh] 强制矢量的电角加速度，rad/s^2（> 0）。
+        /**
+         * @brief [en] electrical acceleration of the forced vector, rad/s^2 (> 0).
+         * @brief [zh] 强制矢量的电角加速度，rad/s^2（> 0）。
+         */
+        pull_accel_rad_s2;
     float
-        handover_speed_rad_s; ///< [en] electrical speed at which control is handed over, rad/s (> 0). [zh] 交出控制权的电角速度，rad/s（> 0）。
+        /**
+         * @brief [en] electrical speed at which control is handed over, rad/s (> 0).
+         * @brief [zh] 交出控制权的电角速度，rad/s（> 0）。
+         */
+        handover_speed_rad_s;
 };
 
 
@@ -164,7 +204,11 @@ class StartupRoutine final {
     StartupConfig config_{};
     StartupState state_{StartupState::Idle};
     ElapsedClock
-        elapsed_; ///< [en] Integer clock: a float sum of periods drifts, then freezes. [zh] 整数钟：浮点周期累加会漂移，然后冻结。
+        /**
+         * @brief [en] Integer clock: a float sum of periods drifts, then freezes.
+         * @brief [zh] 整数钟：浮点周期累加会漂移，然后冻结。
+         */
+        elapsed_;
     float theta_e_{0.0F};
     float omega_e_{0.0F};
     float offset_mech_{0.0F};

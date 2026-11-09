@@ -67,7 +67,7 @@ struct TrackerRun final {
  *
  *     The samples are taken at the control rate and nothing is fed to the tracker except the code and the time, which
  *     is what a real drive has. `setup` is the sensor set, so the same run measures a healthy set and a broken one. 以
- *     控制频率采样，除了编码与时间之外不喂给跟踪器任何东西——这正是真实驱动手上有的一切。`setup` 是传感器组，因此同一段
+ *     控制频率采样，除了编码与时间之外不喂给跟踪器任何东西——这正是真实驱动手上有的一切。 `setup` 是传感器组，因此同一段
  *     代码既能测健康的组，也能测坏掉的组。
  */
 auto run_tracker(float omega_elec, float dt_s, float seconds, const foc::sil::HallSetup &setup,
@@ -249,7 +249,7 @@ TEST(HallSixStep, TheTableIsARotationAtNinetyDegreesPlusSixtyPerSector) {
  *     integral of cos over the sector divided by its width), so the peak-to-peak ripple is (1 - 0.866) / 0.9549 =
  *     14.0 % of the mean torque -- analytic here, measured below, and the same number from both routes. 保持在一个换相
  *     状态上，力矩是转子在扇区内位置的 `cos(误差)`：中心最大， **两个边沿 0.866** ，永不为负——这就是六步消不掉的 14.0 %
- *     脉动。这个数是"为什么值得插值角度"的全部论据。`cos` 在 ±30° 上均值为 0.9549（扇区内 cos 的积分除以宽度），于是峰
+ *     脉动。这个数是"为什么值得插值角度"的全部论据。 `cos` 在 ±30° 上均值为 0.9549（扇区内 cos 的积分除以宽度），于是峰
  *     峰脉动是 (1 − 0.866) / 0.9549 = 14.0 % 的均值力矩——这里是解析，下面实测，两条路给出同一个数。
  */
 TEST(HallSixStep, HeldAtOneStateTheTorqueIsTheCosineOfThePositionAndNeverGoesNegative) {
@@ -559,7 +559,7 @@ TEST(HallTracker, AHardDecelerationAlsoLooksLikeAMissedEdgeWhichIsWhyStateIsNotA
  *
  *   `angle_elec_rad()` 在什么都没看见时返回 `0`，而这个零是 **故意** 与"转子停在零位"同一个值——契约说调用方必须读
  *   `status()` / `sector()` 来区分两者，而契约诚实的那一半是这个访问器永远不编一个看起来合理的角度。另一半是"一个边沿 "
- *   买到了什么：一个边沿是一个 **扇区** ，不是一个转速，所以能给出的最好答案是那个扇区的中心，而它不能是 `0` （只有扇区
+ *   买到了什么：一个边沿是一个 **扇区** ，不是一个转速，所以能给出的最好答案是那个扇区的中心，而它不能是 `0`（只有扇区
  *   5 的 `0` 才碰巧落在扇区里）。
  *
  *   这一对要紧，因为起动流程读到的第一个数就是这个：把"没有信息"和"转子在 0"都答成 `0` 的跟踪器是对的，而在边沿之后仍答
@@ -610,7 +610,7 @@ TEST(HallTracker, BeforeTheFirstEdgeThereIsNoAngleAndAfterOneThereIsASector) {
  *   hence the explicit finiteness assertion at the end.
  *
  *   这条守卫存在，是因为 `now_s` 是 `float` 而时钟由调用方掌握：时基里一个 `NaN` 会悄悄把此后每个 `elapsed` 变成
- *   `NaN`、把每个与间隔带的比较变成 `false`、把发布的角度变成 `NaN`——环路再把它送进 Park，变成 `NaN` 占空比。一条报
+ *   `NaN`、把每个与间隔带的比较变成 `false`、把发布的角度变成 `NaN` ——环路再把它送进 Park，变成 `NaN` 占空比。一条报
  *   `Param` 的守卫只有在它同时 **不采纳** 该采样时才值得存在，而这正是没人检查的那一半：两个跟踪器，一个每隔 37 拍喂一
  *   次 `NaN` 再喂真实采样，两者在角度、转速、周期上必须 **逐位** 相同。
  *
@@ -741,8 +741,8 @@ TEST(HallTracker, TheClampHoldsOnTheLowerBoundaryWhichOnlyAReversalVisits) {
  *   sensor failure, and a detector that reported one as the other would make every installation look broken.
  *
  *   到目前为此所有测量扰动的都是跟踪器的 **输入** ——转速、某一路卡死——但没有任何一次挪动传感器本身，而真实安装恰恰有这
- *   个误差（三个传感器手工装在一个支架上，各差几度）。`HallSetup::mount_error_rad` 就是为这个存在的，而它从来没被设成过
- *   非零值。
+ *   个误差（三个传感器手工装在一个支架上，各差几度）。 `HallSetup::mount_error_rad` 就是为这个存在的，而它从来没被设成
+ *   过非零值。
  *
  *   实测（健康组、300 rad/s 电角、6.25e-5 s 采样、120 ms 窗口，基线 0.696° rms / 1.211° 最大值）见上表。两个系数：
  *   **刚性旋转下最坏误差一比一增长** ——最大值减基线在 2/4/8° 下是 1.988/3.976/8.002°，即 0.994/0.994/1.000，因为转动传
@@ -754,8 +754,8 @@ TEST(HallTracker, TheClampHoldsOnTheLowerBoundaryWhichOnlyAReversalVisits) {
  *   一个真边界把它纠正过来。只列刚性一项的表会把最坏情形低估一半以上。
  *
  *   带子宽，是因为"采样窗口上的最大值"不是偏移的光滑函数（取决于采样栅格落在扇区里的位置）；这里声称的是系数，不是某一
- *   位小数。`fault_fraction` 与 `stale_fraction` 断言保持为零：安装偏移是标定误差、不是传感器失效，把一个当另一个报的检
- *   测器会让每一次安装都看起来是坏的。
+ *   位小数。 `fault_fraction` 与 `stale_fraction` 断言保持为零：安装偏移是标定误差、不是传感器失效，把一个当另一个报的
+ *   检测器会让每一次安装都看起来是坏的。
  */
 TEST(HallTracker, TheMountingErrorEntersOneToOneAndTheWorstCaseIsOneMisplacedSensor) {
     constexpr float kDt = 6.25e-5F;

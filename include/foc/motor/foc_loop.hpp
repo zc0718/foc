@@ -19,9 +19,21 @@ using core::Uvw;
  * @exporter
  */
 struct LoopFrame final {
-    Dq<float> i_dq;  ///< [en] measured current in the rotating frame. [zh] 旋转系实测电流。
-    Uvw<float> duty; ///< [en] duty written to the inverter. [zh] 写给逆变器的占空比。
-    bool saturated;  ///< [en] true when the modulator clamped. [zh] 调制器钳位时为 true。
+    /**
+     * @brief [en] measured current in the rotating frame.
+     * @brief [zh] 旋转系实测电流。
+     */
+    Dq<float> i_dq;
+    /**
+     * @brief [en] duty written to the inverter.
+     * @brief [zh] 写给逆变器的占空比。
+     */
+    Uvw<float> duty;
+    /**
+     * @brief [en] true when the modulator clamped.
+     * @brief [zh] 调制器钳位时为 true。
+     */
+    bool saturated;
 };
 
 

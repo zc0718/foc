@@ -16,9 +16,21 @@ namespace core {
  * @exporter
  */
 struct SvpwmResult final {
-    Uvw<float> duty;  ///< [en] duty ratios in [0, 1]. [zh] 占空比，范围 [0, 1]。
-    bool saturated;   ///< [en] true when over-modulation clamping was applied. [zh] 发生过调制钳位时为 true。
-    ErrorCode status; ///< [en] Ok, or Param when the DC link voltage was not positive. [zh] Ok；母线电压非正时 Param。
+    /**
+     * @brief [en] duty ratios in [0, 1].
+     * @brief [zh] 占空比，范围 [0, 1]。
+     */
+    Uvw<float> duty;
+    /**
+     * @brief [en] true when over-modulation clamping was applied.
+     * @brief [zh] 发生过调制钳位时为 true。
+     */
+    bool saturated;
+    /**
+     * @brief [en] Ok, or Param when the DC link voltage was not positive.
+     * @brief [zh] Ok；母线电压非正时 Param。
+     */
+    ErrorCode status;
 };
 
 
@@ -38,9 +50,21 @@ struct SvpwmResult final {
  * @exporter
  */
 struct ModulatorInput final {
-    Ab<float> v_ab;   ///< [en] commanded stator voltage, V. [zh] 指令定子电压，V。
-    float v_bus;      ///< [en] DC link voltage, V. [zh] 母线电压，V。
-    Uvw<float> i_uvw; ///< [en] measured phase currents, A. [zh] 实测相电流，A。
+    /**
+     * @brief [en] commanded stator voltage, V.
+     * @brief [zh] 指令定子电压，V。
+     */
+    Ab<float> v_ab;
+    /**
+     * @brief [en] DC link voltage, V.
+     * @brief [zh] 母线电压，V。
+     */
+    float v_bus;
+    /**
+     * @brief [en] measured phase currents, A.
+     * @brief [zh] 实测相电流，A。
+     */
+    Uvw<float> i_uvw;
 };
 
 

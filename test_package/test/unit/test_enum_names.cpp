@@ -132,8 +132,8 @@ auto report(const char* what, const Walk& result) -> std::string {
  *
  *   **不宣称** ：一个追加在末值之后的新枚举值， **并且** 给 switch 加了 `default:` 标签， **并且** 把
  *   `foc_bridge_fault_name` 里的范围检查放宽——这三件事凑齐了仍能过本用例。没有反射就抓不到这种组合，而它需要的三步里有
- *   两步半都被编译器盯着；而关闭这个角落的代价是一个让每个消费者多编 277 个头的依赖（见 `.github/project/deps.json`），
- *   这个仓库不为剩下的那个角付这个价。
+ *   两步半都被编译器盯着；而关闭这个角落的代价是一个让每个消费者多编 277 个头的依赖（见 `.github/project/deps.json`
+ *   ），这个仓库不为剩下的那个角付这个价。
  */
 TEST(EnumNames, EveryFaultTheAbiCanReturnHasItsOwnNameAndItsOwnMacro) {
     // (c) first: the mirror. These are the assertions that failed before the fix, so they also document the gap.

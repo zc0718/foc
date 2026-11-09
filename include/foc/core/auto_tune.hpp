@@ -29,20 +29,51 @@ namespace core {
  * @exporter
  */
 struct SpeedTuneConfig final {
-    float kt_nm_per_a{
-        0.0F}; ///< [en] nameplate torque constant, used only for the fallback gains and `J`. [zh] 铭牌转矩常数，只用于回退增益与 `J`。
-    float j_expected_kg_m2{
-        0.0F}; ///< [en] the inertia the caller believes in; `valid` is decided against it. [zh] 调用方相信的惯量；`valid` 对着它判定。
-    float b_expected_nm_s{0.0F}; ///< [en] the viscous coefficient the caller believes in. [zh] 调用方相信的粘性系数。
-    float bandwidth_rad_s{0.0F}; ///< [en] requested closed-loop bandwidth, rad/s. [zh] 请求的闭环带宽，rad/s。
-    float i_max_a{0.0F}; ///< [en] current ceiling for the produced `Pi` config, A. [zh] 产出的 `Pi` 配置的电流上限，A。
-    float tolerance{
-        0.25F}; ///< [en] how far the measured inertia may sit from `j_expected`, relative. [zh] 实测惯量与 `j_expected` 允许的相对偏差。
-    float min_current_a{
-        0.05F}; ///< [en] below this peak current the window carries no information. [zh] 峰值电流低于此值，窗口不携带信息。
-    float max_residual{
-        0.35F}; ///< [en] largest normalised fit residual that is still called a measurement. [zh] 仍算测量的最大归一化拟合残差。
-    int min_samples{100}; ///< [en] shortest window that can be called one. [zh] 能称为窗口的最短长度。
+    float kt_nm_per_a{/**
+         * @brief [en] nameplate torque constant, used only for the fallback gains and `J`.
+         * @brief [zh] 铭牌转矩常数，只用于回退增益与 `J`。
+         */
+                      0.0F};
+    float j_expected_kg_m2{/**
+         * @brief [en] the inertia the caller believes in; `valid` is decided against it.
+         * @brief [zh] 调用方相信的惯量； `valid` 对着它判定。
+         */
+                           0.0F};
+    /**
+     * @brief [en] the viscous coefficient the caller believes in.
+     * @brief [zh] 调用方相信的粘性系数。
+     */
+    float b_expected_nm_s{0.0F};
+    /**
+     * @brief [en] requested closed-loop bandwidth, rad/s.
+     * @brief [zh] 请求的闭环带宽，rad/s。
+     */
+    float bandwidth_rad_s{0.0F};
+    /**
+     * @brief [en] current ceiling for the produced `Pi` config, A.
+     * @brief [zh] 产出的 `Pi` 配置的电流上限，A。
+     */
+    float i_max_a{0.0F};
+    float tolerance{/**
+         * @brief [en] how far the measured inertia may sit from `j_expected`, relative.
+         * @brief [zh] 实测惯量与 `j_expected` 允许的相对偏差。
+         */
+                    0.25F};
+    float min_current_a{/**
+         * @brief [en] below this peak current the window carries no information.
+         * @brief [zh] 峰值电流低于此值，窗口不携带信息。
+         */
+                        0.05F};
+    float max_residual{/**
+         * @brief [en] largest normalised fit residual that is still called a measurement.
+         * @brief [zh] 仍算测量的最大归一化拟合残差。
+         */
+                       0.35F};
+    /**
+     * @brief [en] shortest window that can be called one.
+     * @brief [zh] 能称为窗口的最短长度。
+     */
+    int min_samples{100};
 };
 
 /**
@@ -60,20 +91,60 @@ struct SpeedTuneConfig final {
  */
 struct SpeedTuneResult final {
     ErrorCode
-        status; ///< [en] `Ok` when the configuration could be evaluated, `Param` when it could not. [zh] 配置能评估时为 `Ok`，否则 `Param`。
+        /**
+         * @brief [en] `Ok` when the configuration could be evaluated, `Param` when it could not.
+         * @brief [zh] 配置能评估时为 `Ok`，否则 `Param`。
+         */
+        status;
     bool
-        valid; ///< [en] whether the measurement is a measurement of *this* machine. [zh] 这次测量是否是对 **这台** 机器的测量。
-    float kt_over_j; ///< [en] identified acceleration per amp, rad/s^2 per A. [zh] 辨识出的每安培加速度，rad/s²/A。
-    float b_over_j;  ///< [en] identified mechanical pole, 1/s. [zh] 辨识出的机械极点，1/s。
+        /**
+         * @brief [en] whether the measurement is a measurement of *this* machine.
+         * @brief [zh] 这次测量是否是对 **这台** 机器的测量。
+         */
+        valid;
+    /**
+     * @brief [en] identified acceleration per amp, rad/s^2 per A.
+     * @brief [zh] 辨识出的每安培加速度，rad/s²/A。
+     */
+    float kt_over_j;
+    /**
+     * @brief [en] identified mechanical pole, 1/s.
+     * @brief [zh] 辨识出的机械极点，1/s。
+     */
+    float b_over_j;
     float
-        j_kg_m2; ///< [en] `kt / (kt/J)` from the nameplate `kt`, or 0 when `kt` was not supplied. [zh] 由铭牌 `kt` 得出的 `kt/(kt/J)`；没给 `kt` 时为 0。
-    float kp_a_per_rad_s;  ///< [en] proportional gain to apply. [zh] 要施加的比例增益。
-    float ki_a_per_rad_s2; ///< [en] integral gain to apply. [zh] 要施加的积分增益。
+        /**
+         * @brief [en] `kt / (kt/J)` from the nameplate `kt`, or 0 when `kt` was not supplied.
+         * @brief [zh] 由铭牌 `kt` 得出的 `kt/(kt/J)`；没给 `kt` 时为 0。
+         */
+        j_kg_m2;
+    /**
+     * @brief [en] proportional gain to apply.
+     * @brief [zh] 要施加的比例增益。
+     */
+    float kp_a_per_rad_s;
+    /**
+     * @brief [en] integral gain to apply.
+     * @brief [zh] 要施加的积分增益。
+     */
+    float ki_a_per_rad_s2;
     float
-        residual; ///< [en] normalised RMS residual of the fit, 0 = the model explains the window exactly. [zh] 拟合的归一化 RMS 残差，0 表示模型完全解释了该窗口。
+        /**
+         * @brief [en] normalised RMS residual of the fit, 0 = the model explains the window exactly.
+         * @brief [zh] 拟合的归一化 RMS 残差，0 表示模型完全解释了该窗口。
+         */
+        residual;
     const char*
-        reason; ///< [en] why `valid` is false, for a log; empty when it is true. [zh] `valid` 为假的原因，用于日志；为真时为空串。
-    int samples; ///< [en] how many periods were judged. [zh] 参与判定的周期数。
+        /**
+         * @brief [en] why `valid` is false, for a log; empty when it is true.
+         * @brief [zh] `valid` 为假的原因，用于日志；为真时为空串。
+         */
+        reason;
+    /**
+     * @brief [en] how many periods were judged.
+     * @brief [zh] 参与判定的周期数。
+     */
+    int samples;
 };
 
 /**
@@ -112,10 +183,16 @@ class SpeedTuner final {
 
     explicit SpeedTuner(const SpeedTuneConfig& config) noexcept : config_(config) {}
 
-    /** @brief [en] Whether the configuration could ever produce an answer. [zh] 该配置是否有可能给出答案。 */
+    /**
+     * @brief [en] Whether the configuration could ever produce an answer.
+     * @brief [zh] 该配置是否有可能给出答案。
+     */
     [[nodiscard]] auto validate() const noexcept -> ErrorCode;
 
-    /** @brief [en] Throw away the window. [zh] 丢弃当前窗口。 */
+    /**
+     * @brief [en] Throw away the window.
+     * @brief [zh] 丢弃当前窗口。
+     */
     void reset() noexcept;
 
     /**
@@ -133,10 +210,16 @@ class SpeedTuner final {
      */
     void accumulate(float dt_s, float iq_a, float omega_mech_rad_s, bool saturated) noexcept;
 
-    /** @brief [en] Periods accumulated so far. [zh] 目前累积的周期数。 */
+    /**
+     * @brief [en] Periods accumulated so far.
+     * @brief [zh] 目前累积的周期数。
+     */
     [[nodiscard]] auto samples() const noexcept -> int;
 
-    /** @brief [en] Turn the window into gains, or into a refusal. [zh] 把窗口变成增益，或变成一个拒绝。 */
+    /**
+     * @brief [en] Turn the window into gains, or into a refusal.
+     * @brief [zh] 把窗口变成增益，或变成一个拒绝。
+     */
     [[nodiscard]] auto finish() const noexcept -> SpeedTuneResult;
 
   private:

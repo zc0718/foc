@@ -24,10 +24,18 @@ class StubHall final : public hal::Hall {
   public:
     StubHall() noexcept = default;
 
-    /** @brief [en] Set the reported code. @brief [zh] 设置上报的编码。 @since 0.1.0 */
+    /**
+     * @brief [en] Set the reported code.
+     * @brief [zh] 设置上报的编码。
+     * @since 0.1.0
+     */
     void set_states(std::uint8_t code) noexcept { code_ = static_cast<std::uint8_t>(code & 0x07U); }
 
-    /** @brief [en] The reported code. @brief [zh] 上报的编码。 @since 0.1.0 */
+    /**
+     * @brief [en] The reported code.
+     * @brief [zh] 上报的编码。
+     * @since 0.1.0
+     */
     auto states() noexcept -> std::uint8_t override { return code_; }
 
   private:

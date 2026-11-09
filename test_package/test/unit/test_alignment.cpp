@@ -81,8 +81,8 @@ auto angular_difference(float a, float b) -> float {
  * @brief [zh] 以流程阶段驱动、以一阶滞后跟随磁场的转子。
  * @note [en] Phase-driven rather than time-driven on purpose: a test must not break when a phase boundary moves by one
  *            control period. `follow_sign` of -1 models an inverted encoder, which is the failure worth detecting.
- * @note [zh] 故意用阶段而非时间驱动：阶段边界移动一个控制周期不应让测试失效。`follow_sign` 取 -1 即模拟编码器符号接反，
- *            那正是值得检出的失败。
+ * @note [zh] 故意用阶段而非时间驱动：阶段边界移动一个控制周期不应让测试失效。 `follow_sign` 取 -1 即模拟编码器符号接
+ *            反，那正是值得检出的失败。
  */
 class ScriptedRotor final {
   public:
@@ -530,11 +530,11 @@ auto run_creeping_capture(float creep_rad_s, float hold_s, float start_rad) -> C
  *   `settle_tolerance_rad` 是调试工程师为了"让一台有点粘的机器通过"而设的那一个数，而此前没有任何东西说明通过它
  *   **代价** 多少。捕获是保持窗口上的圆均值，因此对一个以 `ω` 均匀扫过 `ω·T` 的转子：
  *
- *   - 均值落在 **弧的中点** ，于是偏置错 `ω·T/2`——半个行程； - 读数在弧上均匀分布，而均匀分布的圆离散度（`√(−2·ln R)`）
- *   就是它的标准差 `ω·T/√12`； - 两者是同一次扫掠的两种看法，所以它们的比值在 **每个** 速率上都是 `√3 = 1.7321`——一个任
- *   何拟合常数都满足不了的、无标度的量。
+ *   - 均值落在 **弧的中点** ，于是偏置错 `ω·T/2` ——半个行程； - 读数在弧上均匀分布，而均匀分布的圆离散度（
+ *   `√(−2·ln R)`）就是它的标准差 `ω·T/√12`； - 两者是同一次扫掠的两种看法，所以它们的比值在 **每个** 速率上都是
+ *   `√3 = 1.7321` ——一个任何拟合常数都满足不了的、无标度的量。
  *
- *   实测（`hold = 50 ms`，四个爬动速率，偏置/离散度）：0.012475/0.007217、0.024950/0.014434、0.049900/0.028869、
+ *   实测（ `hold = 50 ms`，四个爬动速率，偏置/离散度）：0.012475/0.007217、0.024950/0.014434、0.049900/0.028869、
  *   0.099800/0.057745。离散度与 `ω·T/√12` 四位吻合（0.007217、0.014434、0.028868、0.057735）；偏置在每个速率上比
  *   `ω·T/2` 短 0.2 %，那是 **圆** 均值相对弧中点的二阶收缩，也正是下面的带取 0.3 % 而不是精确等号的原因。比值读出
  *   1.7286/1.7286/1.7285/1.7283——在八倍的爬动范围内四位不变，且因同一原因比 `√3` 低 0.2 %。
@@ -609,8 +609,8 @@ TEST(Alignment, ARotorStillCreepingCostsHalfItsTravelAndShowsRootThreeTimesThatI
  *   未被执行过的分支，因为每个脚本化运行一看到失败就停。
  *
  *   同一个循环还钉住了槽位契约的另一半：纯对齐 **静止** 交接，所以 `handover_speed_e_rad_s` 每一拍都是 0，包括失败的那
- *   些。这个 0 不是占位符——`Motor` 把它读作"这次交接不能按'抓住了'评判"，而一个报 **强制矢量** 速率的版本会让每次静止对
- *   齐都看起来像失步候选。
+ *   些。这个 0 不是占位符—— `Motor` 把它读作"这次交接不能按'抓住了'评判"，而一个报 **强制矢量** 速率的版本会让每次静止
+ *   对齐都看起来像失步候选。
  */
 TEST(Alignment, ARejectedAlignmentKeepsSayingSoUntilItIsReset) {
     foc::core::AlignConfig config = make_config();

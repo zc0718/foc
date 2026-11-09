@@ -59,9 +59,21 @@ class MotionProfile final {
      * @exporter
      */
     struct Config final {
-        float shaping_gain_rad_s;   ///< [en] velocity per rad of error, 1/s. [zh] 每弧度误差对应的速度，1/s。
-        float velocity_limit_rad_s; ///< [en] ceiling for the velocity command, rad/s. [zh] 速度指令上限，rad/s。
-        float accel_limit_rad_s2; ///< [en] how fast the command may change, rad/s^2. [zh] 指令允许的变化速率，rad/s^2。
+        /**
+         * @brief [en] velocity per rad of error, 1/s.
+         * @brief [zh] 每弧度误差对应的速度，1/s。
+         */
+        float shaping_gain_rad_s;
+        /**
+         * @brief [en] ceiling for the velocity command, rad/s.
+         * @brief [zh] 速度指令上限，rad/s。
+         */
+        float velocity_limit_rad_s;
+        /**
+         * @brief [en] how fast the command may change, rad/s^2.
+         * @brief [zh] 指令允许的变化速率，rad/s^2。
+         */
+        float accel_limit_rad_s2;
     };
 
     MotionProfile() noexcept = default;

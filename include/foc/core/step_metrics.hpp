@@ -36,13 +36,21 @@ namespace core {
  * @exporter
  */
 struct StepMetrics {
-    ErrorCode status; ///< [en] Ok / State (no usable decay) / Param. [zh] Ok / State（无可用衰减）/ Param。
+    /**
+     * @brief [en] Ok / State (no usable decay) / Param.
+     * @brief [zh] Ok / State（无可用衰减）/ Param。
+     */
+    ErrorCode status;
     /**
      * @brief [en] -3 dB of the fitted first-order loop, rad/s; 0 unless status is Ok.
      * @brief [zh] 拟合一阶环路的 -3 dB 点，rad/s；仅当 status 为 Ok 时非零。
      */
     float bandwidth_rad_s;
-    float tau_s; ///< [en] fitted time constant, s; `1 / bandwidth_rad_s`. [zh] 拟合时间常数，s。
+    /**
+     * @brief [en] fitted time constant, s; `1 / bandwidth_rad_s`.
+     * @brief [zh] 拟合时间常数，s。
+     */
+    float tau_s;
     /**
      * @brief [en] Seconds from the first sample until the response stays in the band; -1 never, 0 if it starts there.
      * @brief [zh] 从首个样本起，响应此后一直落在带内所需时间；永不进入为 -1，一开始就在带内为 0。

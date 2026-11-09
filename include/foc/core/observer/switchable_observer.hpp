@@ -25,12 +25,32 @@ namespace core {
  * @exporter
  */
 enum class ObserverKind : std::uint8_t {
-    BackEmf = 0,       ///< [en] the back-EMF observer. [zh] 反电势观测器。
-    NonlinearFlux = 1, ///< [en] the non-linear flux observer. [zh] 非线性磁链观测器。
-    Hfi = 2,           ///< [en] the injection observer; the only one that injects. [zh] 注入观测器；唯一会注入的那个。
-    Blended = 3,       ///< [en] injection below the band, back-EMF above it. [zh] 带下用注入，带上用反电势。
+    /**
+     * @brief [en] the back-EMF observer.
+     * @brief [zh] 反电势观测器。
+     */
+    BackEmf = 0,
+    /**
+     * @brief [en] the non-linear flux observer.
+     * @brief [zh] 非线性磁链观测器。
+     */
+    NonlinearFlux = 1,
+    /**
+     * @brief [en] the injection observer; the only one that injects.
+     * @brief [zh] 注入观测器；唯一会注入的那个。
+     */
+    Hfi = 2,
+    /**
+     * @brief [en] injection below the band, back-EMF above it.
+     * @brief [zh] 带下用注入，带上用反电势。
+     */
+    Blended = 3,
     DualInductance =
-        4, ///< [en] the salient-machine observer: both inductances, no `i_d` bias. [zh] 凸极机观测器：两个电感都带，没有 `i_d` 偏置。
+        /**
+         * @brief [en] the salient-machine observer: both inductances, no `i_d` bias.
+         * @brief [zh] 凸极机观测器：两个电感都带，没有 `i_d` 偏置。
+         */
+    4,
 };
 
 

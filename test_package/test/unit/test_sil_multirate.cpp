@@ -274,19 +274,19 @@ TEST(SilMultirate, TheRequestedPeriodIsALowerBoundAndTheTickIsTheUnit) {
  *   - the **slow** root sits at `z = 1 - omega_b*T`, i.e. a real-time time constant of `T/(1-z) = 1/omega_b` --
  *   **independent of T**. That is the whole reason decimation is allowed to be coarse: the integral is rescaled by the
  *   elapsed time, so the loop's speed is a property of the gains and not of the sampling. - the **fast** root runs off
- *   to `z = -1` at `omega_b*T = 2`, which is marginal stability. With `omega_b = 250 rad/s` and `dt = 50 us` that is `T
- *   = 8 ms`, i.e. **160x** decimation.
+ *   to `z = -1` at `omega_b*T = 2`, which is marginal stability. With `omega_b = 250 rad/s` and `dt = 50 us` that is
+ *   `T = 8 ms`, i.e. **160x** decimation.
  *
  *   Measured: the settle time is flat from 1x to 140x (0.0685 s against 0.0690 s, 0.7 %) and then breaks -- 0.1058 s at
  *   160x and 0.5000 s at 180x, with the overshoot going 1.73 % -> 3.62 % -> 7.28 %. The boundary is not a tuning
  *   constant anywhere in the code; it falls out of the model.
  *
- *   z 域模型是本行的第二来源，且与代码无关：把 plant 归约为惯量（`Kt/(J*s)`，速度环自身的设计把 `J/b` 极点对消掉了）并
+ *   z 域模型是本行的第二来源，且与代码无关：把 plant 归约为惯量（ `Kt/(J*s)`，速度环自身的设计把 `J/b` 极点对消掉了）并
  *   加零阶保持，开环为 `L(z) = [omega_b*T*(z-1) + omega_b*T^2/tau_b]/(z-1)^2`，于是
  *
- *   - **慢** 根位于 `z = 1 - omega_b*T`，即实时时间常数 `T/(1-z) = 1/omega_b`—— **与 T 无关** 。这正是降采样可以这么粗
+ *   - **慢** 根位于 `z = 1 - omega_b*T`，即实时时间常数 `T/(1-z) = 1/omega_b` —— **与 T 无关** 。这正是降采样可以这么粗
  *   的全部理由：积分按经过时间重新标度，所以环路的快慢是增益的属性、不是采样的属性。 - **快** 根在 `omega_b*T = 2` 处跑
- *   到 `z = -1`，即临界稳定。`omega_b = 250 rad/s`、`dt = 50 µs` 对应 `T = 8 ms`，也就是 **160×** 降采样。
+ *   到 `z = -1`，即临界稳定。 `omega_b = 250 rad/s`、 `dt = 50 µs` 对应 `T = 8 ms`，也就是 **160×** 降采样。
  *
  *   实测：稳定时间从 1× 到 140× 都是平的（0.0685 对 0.0690，差 0.7 %），之后断掉——160× 时 0.1058 s、180× 时 0.5000 s，
  *   超调 1.73 % → 3.62 % → 7.28 %。这条边界不是代码里的任何整定常数，它是从模型里掉出来的。

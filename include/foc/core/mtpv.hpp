@@ -28,10 +28,26 @@ namespace core {
  * @exporter
  */
 struct MtpvConfig final {
-    MachineParams params;    ///< [en] `rs` unused; `ld`/`lq`/`psi_f` used. [zh] 不用 `rs`；用 `ld`/`lq`/`psi_f`。
-    float v_max_v;           ///< [en] stator voltage ceiling, V. [zh] 定子电压上限，V。
-    float i_max_a;           ///< [en] current ceiling, A. [zh] 电流上限，A。
-    std::uint8_t pole_pairs; ///< [en] used for torque only. [zh] 仅用于转矩。
+    /**
+     * @brief [en] `rs` unused; `ld`/`lq`/`psi_f` used.
+     * @brief [zh] 不用 `rs`；用 `ld`/`lq`/`psi_f`。
+     */
+    MachineParams params;
+    /**
+     * @brief [en] stator voltage ceiling, V.
+     * @brief [zh] 定子电压上限，V。
+     */
+    float v_max_v;
+    /**
+     * @brief [en] current ceiling, A.
+     * @brief [zh] 电流上限，A。
+     */
+    float i_max_a;
+    /**
+     * @brief [en] used for torque only.
+     * @brief [zh] 仅用于转矩。
+     */
+    std::uint8_t pole_pairs;
 };
 
 /**
@@ -52,12 +68,36 @@ struct MtpvConfig final {
  * @exporter
  */
 struct MtpvPoint final {
-    ErrorCode status;     ///< [en] `Ok`, or why not. [zh] `Ok`，或为什么不是。
-    bool voltage_limited; ///< [en] the voltage ellipse binds: see above. [zh] 生效的是电压椭圆：见上。
-    float id_a;           ///< [en] d-axis current, A. [zh] d 轴电流，A。
-    float iq_a;           ///< [en] q-axis current, A. [zh] q 轴电流，A。
-    float torque_nm;      ///< [en] the same expression the plant uses, N.m. [zh] 与 plant 同一表达式，N·m。
-    float current_a;      ///< [en] `|i|`, A: margin to the ceiling. [zh] `|i|`，A：到上限的余量。
+    /**
+     * @brief [en] `Ok`, or why not.
+     * @brief [zh] `Ok`，或为什么不是。
+     */
+    ErrorCode status;
+    /**
+     * @brief [en] the voltage ellipse binds: see above.
+     * @brief [zh] 生效的是电压椭圆：见上。
+     */
+    bool voltage_limited;
+    /**
+     * @brief [en] d-axis current, A.
+     * @brief [zh] d 轴电流，A。
+     */
+    float id_a;
+    /**
+     * @brief [en] q-axis current, A.
+     * @brief [zh] q 轴电流，A。
+     */
+    float iq_a;
+    /**
+     * @brief [en] the same expression the plant uses, N.m.
+     * @brief [zh] 与 plant 同一表达式，N·m。
+     */
+    float torque_nm;
+    /**
+     * @brief [en] `|i|`, A: margin to the ceiling.
+     * @brief [zh] `|i|`，A：到上限的余量。
+     */
+    float current_a;
 };
 
 /**

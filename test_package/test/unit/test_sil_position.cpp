@@ -92,7 +92,7 @@ auto step_position(float position_bandwidth_rad_s, float velocity_limit_rad_s, f
  *             mrad of overshoot and 180 ms to the 2% band, which is the first-order response the position-loop contract
  *             predicts (`settle ~= 4/kp`).
  * @brief [zh] 级联必须落到给定角度并保持住。本台架实测：20 rad/s 时超调 2.1 mrad、180 ms 进入 2% 带， 正是位置环契约预
- *             测的一阶响应（`settle ≈ 4/kp`）。
+ *             测的一阶响应（ `settle ≈ 4/kp`）。
  */
 TEST(SilPosition, StepLandsOnTargetAndStaysThere) {
     const Outcome outcome = step_position(20.0F, 50.0F);

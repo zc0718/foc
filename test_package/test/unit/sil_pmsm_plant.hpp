@@ -54,8 +54,8 @@ struct PlantParams final {
      * @brief [en] speed below which the rotor counts as at rest for the stiction decision, rad/s. A small band is
      *             unavoidable: `sign(0)` is not defined, and a model that integrates through zero without one chatters
      *             across it.
-     * @brief [zh] 判定"静止"的速度带宽，rad/s。这一带宽不可避免：`sign(0)` 无定义，而一个穿过零点却无带宽的模型会在零点
-     *             两侧抖动。
+     * @brief [zh] 判定"静止"的速度带宽，rad/s。这一带宽不可避免： `sign(0)` 无定义，而一个穿过零点却无带宽的模型会在零
+     *             点两侧抖动。
      */
     float omega_eps_rad_s{0.0F};
     /**
@@ -94,11 +94,11 @@ struct PlantState final {
  *
  * @brief [zh] 用于 SIL 测试的参数化 PMSM 被控对象模型。
  *
- *   Equations (d-q, SI). Note the back-EMF term uses the rotor flux linkage `psi_f`, not the torque constant: `Kt = 1.5
- *   * pole_pairs * psi_f`, so `psi_f = Kt / (1.5 * pole_pairs)`. Using `Kt` directly in the voltage equation is
- *   dimensionally wrong (PRD erratum D24). 方程（d-q，SI）。注意反电动势项用的是转子磁链 `psi_f`，不是转矩常数： `Kt =
- *   1.5 * pole_pairs * psi_f`，即 `psi_f = Kt / (1.5 * pole_pairs)`。 在电压方程里直接用 `Kt` 量纲不对（PRD 勘误 D24
- *   ）。
+ *   Equations (d-q, SI). Note the back-EMF term uses the rotor flux linkage `psi_f`, not the torque constant:
+ *   `Kt = 1.5 * pole_pairs * psi_f`, so `psi_f = Kt / (1.5 * pole_pairs)`. Using `Kt ` directly in the voltage equation
+ *   is dimensionally wrong (PRD erratum D24). 方程（d-q，SI）。注意反电动势项用的是转子磁链 ` psi_f`，不是转矩常数：
+ *   `Kt = 1.5 * pole_pairs * psi_f`，即 `psi_f = Kt / (1.5 * pole_pairs)`。 在电压方程里直接用 `Kt` 量纲不对（PRD 勘误
+ *   D24 ）。
  *
  *   did/dt = (vd - Rs*id + we*Lq*iq) / Ld diq/dt = (vq - Rs*iq - we*Ld*id - we*psi_f) / Lq Te = 1.5 * p * (psi_f*iq +
  *   (Ld - Lq)*id*iq) dwm/dt = (Te - B*wm - T_load) / J dthm/dt = wm, we = p * wm
@@ -162,7 +162,7 @@ class PmsmPlant final {
      * @brief [en] Model d-axis magnetic saturation: `Ld(i_d) = Ld0 * (1 - depth * tanh(i_d / current_a))`. Off by
      *             default (depth = 0), because a nameplate gives one `Ld` at rated current and nothing about the shape
      *             of its collapse -- saturation is a modelling refinement, not a datasheet number.
-     * @brief [zh] 模拟 d 轴磁饱和：`Ld(i_d) = Ld0·(1 - depth·tanh(i_d/current_a))`。默认关闭 （depth = 0），因为铭牌只
+     * @brief [zh] 模拟 d 轴磁饱和： `Ld(i_d) = Ld0·(1 - depth·tanh(i_d/current_a))`。默认关闭 （depth = 0），因为铭牌只
      *             给额定点的一个 `Ld`，不说它怎么塌——饱和是建模细化，不是铭牌数字。
      * @param depth [en] fractional fall of the incremental inductance at `i_d >> current_a`, 0..1.
      * @param depth [zh] `i_d >> current_a` 时增量电感的下降比例，0..1。
@@ -172,9 +172,9 @@ class PmsmPlant final {
      *            `-i_d` opposes it, so the *same* volt-second pulse produces two different current rises -- which is
      *            the only thing `MagnetPolarityTest` has to measure. The model is a local fit near `+-current_a`, not a
      *            magnetics reference: the `dL/di` term in the voltage equation is deliberately ignored.
-     * @note [zh] 它存在的理由：没有它就看不出磁钢极性。`+i_d` 增强转子磁链、`-i_d` 削弱它，于是 **相同** 的伏秒脉冲会产
-     *            生两个不同的电流上升——这是 `MagnetPolarityTest` 唯一可测的现象。该模型是 `±current_a` 附近的局部拟合，
-     *            不是磁学参考：电压方程里的 `dL/di` 项被故意忽略。
+     * @note [zh] 它存在的理由：没有它就看不出磁钢极性。 `+i_d` 增强转子磁链、 `-i_d` 削弱它，于是 **相同** 的伏秒脉冲会
+     *            产生两个不同的电流上升——这是 `MagnetPolarityTest` 唯一可测的现象。该模型是 `±current_a` 附近的局部拟
+     *            合，不是磁学参考：电压方程里的 `dL/di` 项被故意忽略。
      * @since 0.1.0
      */
     void set_d_axis_saturation(float depth, float current_a) noexcept;
@@ -237,7 +237,7 @@ class PmsmPlant final {
 
     /**
      * @brief [en] Model winding heating: `Rs = Rs20 * (1 + alpha * (T - 20))`. Off by default.
-     * @brief [zh] 模拟绕组发热：`Rs = Rs20·(1 + alpha·(T − 20))`。默认关闭。
+     * @brief [zh] 模拟绕组发热： `Rs = Rs20·(1 + alpha·(T − 20))`。默认关闭。
      * @param temperature_c [en] winding temperature in degrees C.
      * @param temperature_c [zh] 绕组温度，摄氏度。
      * @param alpha_per_k [en] temperature coefficient, copper is about 3.93e-3 per K.
@@ -271,7 +271,7 @@ class PmsmPlant final {
     /**
      * @brief [en] Turn on a one-node thermal model: `Ct*dT/dt = P_cu - (T - T_amb)/Rt`, off by default.
      *
-     * @brief [zh] 打开单节点热模型：`Ct·dT/dt = P_cu − (T − T_amb)/Rt`，默认关闭。
+     * @brief [zh] 打开单节点热模型： `Ct·dT/dt = P_cu − (T − T_amb)/Rt`，默认关闭。
      *
      *   `P_cu = 1.5*(id^2 + iq^2)*Rs(T)` -- the 1.5 is the same amplitude-invariant convention the torque uses, and
      *   `Rs(T)` is this plant's own `effective_rs()`, so the model has the **positive feedback** a real winding has:
@@ -279,26 +279,26 @@ class PmsmPlant final {
      *   proportionality, and above `Rt*P*alpha = 1` there is no steady state at all -- which is a property worth being
      *   able to see in SIL rather than discovering on a bench.
      *
-     *   The step is the **exact** solution of the one-node equation with the loss held at the step's own state (`T <-
-     *   T_eq + (T - T_eq)*exp(-dt/tau)`, `tau = Rt*Ct`), not an Euler step: a thermal time constant is seconds while
-     *   the electrical step is microseconds, so an explicit form would be stable only by luck.
+     *   The step is the **exact** solution of the one-node equation with the loss held at the step's own state (
+     *   `T <- T_eq + (T - T_eq)*exp(-dt/tau)`, `tau = Rt*Ct`), not an Euler step: a thermal time constant is seconds
+     *   while the electrical step is microseconds, so an explicit form would be stable only by luck.
      *
      *   **Off by default, and bit-identical when off**: with `rt <= 0` or `ct <= 0` nothing is integrated and `temp_c_`
      *   stays exactly what `set_winding_temperature` put there.
      *
-     *   `P_cu = 1.5·(id² + iq²)·Rs(T)`——那个 1.5 与转矩用的是同一个幅值不变约定，`Rs(T)` 就是本 plant 自己的
+     *   `P_cu = 1.5·(id² + iq²)·Rs(T)` ——那个 1.5 与转矩用的是同一个幅值不变约定， `Rs(T)` 就是本 plant 自己的
      *   `effective_rs()`，于是模型具备真实绕组具备的 **正反馈** ：更热→损耗更大→更热。这个反馈让稳态是 **非线性** 的而
      *   不是一个比例关系，而且当 `Rt·P·α = 1` 以上 **根本不存在稳态** ——这是一个应该在 SIL 里看得见、而不是在台架上才发
      *   现的性质。
      *
-     *   步进用单节点方程的 **精确解** （损耗取该步自身状态）：`T ← T_eq + (T − T_eq)·exp(−dt/τ)`，`τ = Rt·Ct`，而不是欧
-     *   拉步：热时间常数是秒、电步长是微秒，显式格式只能靠运气稳定。
+     *   步进用单节点方程的 **精确解** （损耗取该步自身状态）： `T ← T_eq + (T − T_eq)·exp(−dt/τ)`， `τ = Rt·Ct`，而不是
+     *   欧拉步：热时间常数是秒、电步长是微秒，显式格式只能靠运气稳定。
      *
-     *   **默认关闭，关闭时逐位不变** ：`rt <= 0` 或 `ct <= 0` 时什么都不积分，`temp_c_` 精确停在
+     *   **默认关闭，关闭时逐位不变** ： `rt <= 0` 或 `ct <= 0` 时什么都不积分， `temp_c_` 精确停在
      *   `set_winding_temperature` 放进去的那个值。
      *
      * @param config [en] the three parameters above; any non-positive `rt` or `ct` turns the model off.
-     * @param config [zh] 上面三个参数；`rt` 或 `ct` 非正即关闭模型。
+     * @param config [zh] 上面三个参数； `rt` 或 `ct` 非正即关闭模型。
      * @since 0.1.0
      */
     void set_thermal(ThermalConfig config) noexcept;
@@ -312,7 +312,7 @@ class PmsmPlant final {
 
     /**
      * @brief [en] Copper loss at the current state, W: `1.5*(id^2 + iq^2)*Rs(T)`.
-     * @brief [zh] 当前状态下的铜损，W：`1.5·(id² + iq²)·Rs(T)`。
+     * @brief [zh] 当前状态下的铜损，W： `1.5·(id² + iq²)·Rs(T)`。
      * @since 0.1.0
      */
     [[nodiscard]] auto copper_loss_w() const noexcept -> float;
@@ -348,8 +348,8 @@ class PmsmPlant final {
      * @brief [en] Inject a cogging torque into the mechanical equation, as a table of harmonics (order per
      *             **mechanical** revolution, `amplitude * sin(order*theta_mech + phase)`, N*m).
      *
-     * @brief [zh] 把齿槽转矩以谐波表注入机械方程（次数按 **每机械转** ，`amplitude · sin(order·θ_mech + phase)`，N·m
-     *             ）。
+     * @brief [zh] 把齿槽转矩以谐波表注入机械方程（次数按 **每机械转** ， `amplitude · sin(order·θ_mech + phase)`，
+     *             N·m ）。
      *
      *   Additive on the rotor: `J*dwm/dt = (Te + Tcog - B*wm - friction - load) / J`, and it is handed to the friction
      *   model as part of the driving torque because that is what a detent is -- at rest, cogging alone can move the

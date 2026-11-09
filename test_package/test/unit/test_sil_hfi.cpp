@@ -404,7 +404,7 @@ auto hf_amplitude(float ld, float lq, float inject_v, float inject_hz) -> double
  *   3. **Sample timing** -- `max_inject_hz(control_hz)` is `control_hz / kMinSamplesPerCarrier`: at 20 kHz the last
  *   accepted carrier is 8000 Hz and 8001 is refused by status rather than left to collapse.
  *
- *   `hf_current_a` 是解调幅值，而 `predicted_gain_a` 是观测被归一化所依据的闭式：`V_h*(Ld-Lq)/(2*ω_h*Ld*Lq)`。这个式子
+ *   `hf_current_a` 是解调幅值，而 `predicted_gain_a` 是观测被归一化所依据的闭式： `V_h*(Ld-Lq)/(2*ω_h*Ld*Lq)`。这个式子
  *   不是拟合——它是 **两个导纳之差** `(V_h/(2ω_h))*(1/Lq − 1/Ld)`，即高频电流响应中与转子位置有关的那一部分。所以下面两
  *   个系数是对着算术核对的，不是对着上一次运行：
  *
@@ -414,7 +414,7 @@ auto hf_amplitude(float ld, float lq, float inject_v, float inject_hz) -> double
  *   2. **凸极** ——三台机器走过同一 `(Ld, Lq)` 比例的一条线：幅值除以闭式保持不变，于是 plant 量到的是 `(Ld-Lq)/(Ld*Lq)`
  *   而不是比如说 `Ld-Lq`。
  *
- *   3. **采样时序** ——`max_inject_hz(control_hz)` 就是 `control_hz / kMinSamplesPerCarrier`：20 kHz 下最后一个被接受的
+ *   3. **采样时序** —— `max_inject_hz(control_hz)` 就是 `control_hz / kMinSamplesPerCarrier`：20 kHz 下最后一个被接受的
  *   载波是 8000 Hz，8001 由状态拒绝，而不是留给它塌掉。
  */
 TEST(SilHfi, TheCarrierHasThreeSensitivityCoefficientsAndEachIsAClosedForm) {

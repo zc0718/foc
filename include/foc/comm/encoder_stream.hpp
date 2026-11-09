@@ -27,18 +27,35 @@ namespace comm {
  * @exporter
  */
 struct EncoderLayout final {
-    int single_turn_bits{
-        0}; ///< [en] resolution within a revolution, bits; > 0 and <= 32 total. [zh] 转内分辨率，位；> 0 且总数 <= 32。
-    int multi_turn_bits{0}; ///< [en] revolution count, bits; 0 = single-turn. [zh] 转数位数；0 = 单圈。
+    int single_turn_bits{/**
+         * @brief [en] resolution within a revolution, bits; > 0 and <= 32 total.
+         * @brief [zh] 转内分辨率，位；> 0 且总数 <= 32。
+         */
+                         0};
+    /**
+     * @brief [en] revolution count, bits; 0 = single-turn.
+     * @brief [zh] 转数位数；0 = 单圈。
+     */
+    int multi_turn_bits{0};
 
-    /** @brief [en] Data bits before the status bits. [zh] 状态位之前的数据位数。 */
+    /**
+     * @brief [en] Data bits before the status bits.
+     * @brief [zh] 状态位之前的数据位数。
+     */
     [[nodiscard]] auto data_bits() const noexcept -> int { return single_turn_bits + multi_turn_bits; }
 
-    /** @brief [en] A BiSS-C style frame: data, an error bit, a warning bit, a 6-bit CRC. [zh] BiSS-C 风格的一帧：数据、错误位、警告位、6 位 CRC。 */
+    /**
+     * @brief [en] A BiSS-C style frame: data, an error bit, a warning bit, a 6-bit CRC.
+     * @brief [zh] BiSS-C 风格的一帧：数据、错误位、警告位、6 位 CRC。
+     */
     [[nodiscard]] auto frame_bits() const noexcept -> int { return data_bits() + 2 + kCrcBits; }
 
     static constexpr int kCrcBits =
-        6; ///< [en] the CRC is six bits wide, over the data and status bits. [zh] CRC 六位，覆盖数据位与状态位。
+        /**
+         * @brief [en] the CRC is six bits wide, over the data and status bits.
+         * @brief [zh] CRC 六位，覆盖数据位与状态位。
+         */
+        6;
 };
 
 /**
@@ -59,15 +76,43 @@ struct EncoderLayout final {
  */
 struct EncoderFrame final {
     ErrorCode
-        status; ///< [en] `Ok`, `Param` (the frame cannot be read) or `State` (read, not trustworthy). [zh] `Ok`、`Param`（读不出）或 `State`（读出了但不可信）。
-    std::uint32_t position; ///< [en] raw single-turn counts. [zh] 原始转内计数。
+        /**
+         * @brief [en] `Ok`, `Param` (the frame cannot be read) or `State` (read, not trustworthy).
+         * @brief [zh] `Ok`、 `Param`（读不出）或 `State`（读出了但不可信）。
+         */
+        status;
+    /**
+     * @brief [en] raw single-turn counts.
+     * @brief [zh] 原始转内计数。
+     */
+    std::uint32_t position;
     std::uint32_t
-        turns; ///< [en] raw revolution count; 0 when the layout has no multi-turn bits. [zh] 原始转数；布局没有多圈位时为 0。
-    std::uint32_t raw_data; ///< [en] the data field as transmitted, host order. [zh] 线上传输的数据域（主机序）。
-    bool error_bit;         ///< [en] the encoder's own error bit. [zh] 编码器自己的错误位。
-    bool warning;           ///< [en] the encoder's own warning bit. [zh] 编码器自己的警告位。
+        /**
+         * @brief [en] raw revolution count; 0 when the layout has no multi-turn bits.
+         * @brief [zh] 原始转数；布局没有多圈位时为 0。
+         */
+        turns;
+    /**
+     * @brief [en] the data field as transmitted, host order.
+     * @brief [zh] 线上传输的数据域（主机序）。
+     */
+    std::uint32_t raw_data;
+    /**
+     * @brief [en] the encoder's own error bit.
+     * @brief [zh] 编码器自己的错误位。
+     */
+    bool error_bit;
+    /**
+     * @brief [en] the encoder's own warning bit.
+     * @brief [zh] 编码器自己的警告位。
+     */
+    bool warning;
     bool
-        crc_ok; ///< [en] whether the six CRC bits match the data and status bits. [zh] 六位 CRC 与数据位、状态位是否相符。
+        /**
+         * @brief [en] whether the six CRC bits match the data and status bits.
+         * @brief [zh] 六位 CRC 与数据位、状态位是否相符。
+         */
+        crc_ok;
 };
 
 /**
@@ -157,13 +202,29 @@ class TurnAssembler final {
      */
     struct Step final {
         ErrorCode
-            status; ///< [en] `Ok`, `Param` (bad layout or count), or `State` (a gap was reported). [zh] `Ok`、`Param`（布局或计数不合法）或 `State`（报了缺口）。
+            /**
+             * @brief [en] `Ok`, `Param` (bad layout or count), or `State` (a gap was reported).
+             * @brief [zh] `Ok`、 `Param`（布局或计数不合法）或 `State`（报了缺口）。
+             */
+            status;
         bool
-            jumped; ///< [en] whether the reading was further than `max_step_counts` from the last one. [zh] 该读数与上一次相距超过 `max_step_counts`。
+            /**
+             * @brief [en] whether the reading was further than `max_step_counts` from the last one.
+             * @brief [zh] 该读数与上一次相距超过 `max_step_counts`。
+             */
+            jumped;
         std::int64_t
-            unwrapped; ///< [en] unwrapped count after this step; unchanged when a gap is reported. [zh] 本步之后的不回绕计数；报缺口时不变。
+            /**
+             * @brief [en] unwrapped count after this step; unchanged when a gap is reported.
+             * @brief [zh] 本步之后的不回绕计数；报缺口时不变。
+             */
+            unwrapped;
         std::int64_t
-            delta; ///< [en] how far this reading moved it, signed counts; 0 on a gap. [zh] 本读数让它动了多少，带符号计数；缺口时为 0。
+            /**
+             * @brief [en] how far this reading moved it, signed counts; 0 on a gap.
+             * @brief [zh] 本读数让它动了多少，带符号计数；缺口时为 0。
+             */
+            delta;
     };
 
     /**
@@ -178,7 +239,10 @@ class TurnAssembler final {
     TurnAssembler(int single_turn_bits, std::uint32_t max_step_counts) noexcept
         : single_turn_bits_(single_turn_bits), max_step_counts_(max_step_counts) {}
 
-    /** @brief [en] Forget the last reading, so the next one re-seeds the origin. [zh] 忘掉上一次读数，于是下一次重新定原点。 */
+    /**
+     * @brief [en] Forget the last reading, so the next one re-seeds the origin.
+     * @brief [zh] 忘掉上一次读数，于是下一次重新定原点。
+     */
     void reset() noexcept;
 
     /**
@@ -192,10 +256,16 @@ class TurnAssembler final {
      */
     [[nodiscard]] auto push(std::uint32_t position, bool crc_ok) noexcept -> Step;
 
-    /** @brief [en] Unwrapped count so far, or 0 before the first good frame. [zh] 目前的不回绕计数；第一帧好数据之前是 0。 */
+    /**
+     * @brief [en] Unwrapped count so far, or 0 before the first good frame.
+     * @brief [zh] 目前的不回绕计数；第一帧好数据之前是 0。
+     */
     [[nodiscard]] auto unwrapped() const noexcept -> std::int64_t { return unwrapped_; }
 
-    /** @brief [en] Whether an origin has been seeded. [zh] 是否已经定过原点。 */
+    /**
+     * @brief [en] Whether an origin has been seeded.
+     * @brief [zh] 是否已经定过原点。
+     */
     [[nodiscard]] auto started() const noexcept -> bool { return started_; }
 
   private:

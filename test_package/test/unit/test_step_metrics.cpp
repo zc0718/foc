@@ -345,9 +345,9 @@ auto fitted_ratio(double dt_s, std::size_t n, double gain, double offset, double
  *   跃） **1.000000** （偏置在 `y[0]` 与 `y[i]` 里同时出现、在 `progress` 里约掉——这正是偏置的电流传感器不会污染带宽测
  *   量的原因，而一个忘了减 `y[0]` 的版本会立刻显形）。
  *
- *   边界写出来而不是藏起来： **20 个时间常数** （80 ms）处比值是 1.002148，那不是拟合的问题——样本是 `float32`， `1 −
- *   exp(−20)` 无法表示得足够细以让 `ln(1 − progress)` 保持平直。所以长窗口下的精度由 **样本格式** 而不是代数决定，这一
- *   点在录一段 20τ 的窗口并期待 1e-6 之前值得知道。
+ *   边界写出来而不是藏起来： **20 个时间常数** （80 ms）处比值是 1.002148，那不是拟合的问题——样本是 `float32`，
+ *   `1 − exp(−20)` 无法表示得足够细以让 `ln(1 − progress)` 保持平直。所以长窗口下的精度由 **样本格式** 而不是代数决定，
+ *   这一点在录一段 20τ 的窗口并期待 1e-6 之前值得知道。
  */
 TEST(StepMetrics, TheFitIsExactInItsOwnSampleRateWindowAndDcOffset) {
     // Sample rate: same physical window, tenfold change in spacing.
@@ -469,7 +469,7 @@ TEST(StepMetrics, ADroopInTheFinalValueCostsFarMoreThanNoiseDoes) {
  * @brief [en] The two ends of the settling rule -- `0` for a response that never leaves the band and `-1` for one that
  *             never reaches it -- and the arrival time in between against its closed form.
  *
- * @brief [zh] 稳定规则的两端——从未离开带内的响应为 `0`、永不到达的为 `-1`——以及两者之间那个到达时刻对着闭式。
+ * @brief [zh] 稳定规则的两端——从未离开带内的响应为 `0`、永不到达的为 `-1` ——以及两者之间那个到达时刻对着闭式。
  *
  *   `settling_s` promises three different things and two of them had never been produced: `0` when the response starts
  *   inside the band, `-1` when it never gets there, and the arrival time otherwise. The `0` looks like a degenerate
@@ -483,12 +483,12 @@ TEST(StepMetrics, ADroopInTheFinalValueCostsFarMoreThanNoiseDoes) {
  *   来是 **完美** 。中间那个到达时刻有闭式——一旦 `step·exp(−t/τ) ≤ band` 就进带——所以它对着算术比而不是对着一个记下来的
  *   数：实测 **18.5000 ms** 对 `τ·ln(step/band) = 18.4207 ms`，差一个采样栅格。
  *
- *   Stated rather than tested: the fit's `!(slope < 0)` guard is **unreachable**. Every regression sample has `0 <
- *   progress < 1`, hence `0 < w < 1`, hence `ln(w) < 0`, and `t > 0`, so the through-origin slope is a sum of strictly
- *   negative terms -- it cannot come out non-negative. A receding response therefore reports `State` from the *earlier*
- *   guard (fewer than three usable samples), which the existing case already covers. The dead guard is harmless and
- *   worth keeping as a tripwire, but no test can reach it, and claiming otherwise would be claiming a branch that does
- *   not exist.
+ *   Stated rather than tested: the fit's `!(slope < 0)` guard is **unreachable**. Every regression sample has
+ *   `0 < progress < 1`, hence `0 < w < 1`, hence `ln(w) < 0`, and `t > 0`, so the through-origin slope is a sum of
+ *   strictly negative terms -- it cannot come out non-negative. A receding response therefore reports `State` from the
+ *   *earlier* guard (fewer than three usable samples), which the existing case already covers. The dead guard is
+ *   harmless and worth keeping as a tripwire, but no test can reach it, and claiming otherwise would be claiming a
+ *   branch that does not exist.
  *
  *   写明而不是测出：拟合的 `!(slope < 0)` 守卫 **不可达** 。每个回归样本都有 `0 < progress < 1`，于是 `0 < w < 1`，于是
  *   `ln(w) < 0`，而 `t > 0`，所以过原点斜率是一串严格负数之和——它不可能非负。因此"退回"的响应是由 **更早** 那条守卫（可

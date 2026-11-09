@@ -24,8 +24,16 @@ namespace core {
  * @exporter
  */
 enum class HallDirection : std::uint8_t {
-    Forward = 0, ///< [en] push toward increasing electrical angle. [zh] 朝电角度增大的方向推。
-    Reverse = 1, ///< [en] push the other way, the same table three sectors later. [zh] 反向推，同一张表往后挪三格。
+    /**
+     * @brief [en] push toward increasing electrical angle.
+     * @brief [zh] 朝电角度增大的方向推。
+     */
+    Forward = 0,
+    /**
+     * @brief [en] push the other way, the same table three sectors later.
+     * @brief [zh] 反向推，同一张表往后挪三格。
+     */
+    Reverse = 1,
 };
 
 
@@ -237,11 +245,31 @@ class HallTracker final {
 
   private:
     std::uint8_t sector_{kHallNoSector};
-    float edge_s_{0.0F};      ///< [en] time of the last edge. [zh] 最近边沿的时刻。
-    float entry_angle_{0.0F}; ///< [en] angle the rotor had at that edge, rad. [zh] 该边沿时转子的角度。
-    float speed_{0.0F};       ///< [en] rad/s electrical, signed. [zh] 电角速度，有符号。
-    float period_{0.0F};      ///< [en] last sector period, s. [zh] 最近的扇区周期，s。
-    float now_s_{0.0F};       ///< [en] time of the last sample. [zh] 最近一次采样的时刻。
+    /**
+     * @brief [en] time of the last edge.
+     * @brief [zh] 最近边沿的时刻。
+     */
+    float edge_s_{0.0F};
+    /**
+     * @brief [en] angle the rotor had at that edge, rad.
+     * @brief [zh] 该边沿时转子的角度。
+     */
+    float entry_angle_{0.0F};
+    /**
+     * @brief [en] rad/s electrical, signed.
+     * @brief [zh] 电角速度，有符号。
+     */
+    float speed_{0.0F};
+    /**
+     * @brief [en] last sector period, s.
+     * @brief [zh] 最近的扇区周期，s。
+     */
+    float period_{0.0F};
+    /**
+     * @brief [en] time of the last sample.
+     * @brief [zh] 最近一次采样的时刻。
+     */
+    float now_s_{0.0F};
     bool seen_edge_{false};
     /**
      * @brief [en] the stored timestamp came from a transition, not the first sample.
@@ -260,8 +288,16 @@ class HallTracker final {
 };
 
 
-constexpr float kHallSectorRad = 1.04719755119659774615F; ///< [en] pi/3, one sector, rad. [zh] π/3，一个扇区，rad。
-constexpr float kHallTwoPiRad = 6.28318530717958647692F;  ///< [en] 2*pi. [zh] 2π。
+/**
+ * @brief [en] pi/3, one sector, rad.
+ * @brief [zh] π/3，一个扇区，rad。
+ */
+constexpr float kHallSectorRad = 1.04719755119659774615F;
+/**
+ * @brief [en] 2*pi.
+ * @brief [zh] 2π。
+ */
+constexpr float kHallTwoPiRad = 6.28318530717958647692F;
 
 namespace detail {
 

@@ -37,19 +37,66 @@ namespace motor {
  * @exporter
  */
 struct MotorConfig final {
-    float rs;                        ///< [en] stator resistance in ohm. [zh] 定子电阻，Ω。
-    float ld;                        ///< [en] d-axis inductance in H. [zh] d 轴电感，H。
-    float lq;                        ///< [en] q-axis inductance in H. [zh] q 轴电感，H。
-    float kt;                        ///< [en] torque constant in N*m/A. [zh] 转矩常数，N·m/A。
-    float j;                         ///< [en] rotor inertia in kg*m^2. [zh] 转子惯量，kg·m²。
-    float b;                         ///< [en] viscous friction in N*m*s. [zh] 粘性摩擦，N·m·s。
-    std::uint8_t pole_pairs;         ///< [en] pole pairs, >= 1. [zh] 极对数，>= 1。
-    float i_max_a;                   ///< [en] current limit per axis in A. [zh] 每轴电流限幅，A。
-    float pwm_freq_hz;               ///< [en] carrier frequency in Hz. [zh] 载波频率，Hz。
-    float deadtime_ns;               ///< [en] inverter dead time in ns. [zh] 逆变器死区时间，ns。
-    float speed_loop_period_s{0.0F}; ///< [en] speed-loop period in s, 0 = every tick. [zh] 速度环周期，s，0 = 每 tick。
-    float position_loop_period_s{
-        0.0F}; ///< [en] position-loop period in s, 0 = every tick. [zh] 位置环周期，s，0 = 每 tick。
+    /**
+     * @brief [en] stator resistance in ohm.
+     * @brief [zh] 定子电阻，Ω。
+     */
+    float rs;
+    /**
+     * @brief [en] d-axis inductance in H.
+     * @brief [zh] d 轴电感，H。
+     */
+    float ld;
+    /**
+     * @brief [en] q-axis inductance in H.
+     * @brief [zh] q 轴电感，H。
+     */
+    float lq;
+    /**
+     * @brief [en] torque constant in N*m/A.
+     * @brief [zh] 转矩常数，N·m/A。
+     */
+    float kt;
+    /**
+     * @brief [en] rotor inertia in kg*m^2.
+     * @brief [zh] 转子惯量，kg·m²。
+     */
+    float j;
+    /**
+     * @brief [en] viscous friction in N*m*s.
+     * @brief [zh] 粘性摩擦，N·m·s。
+     */
+    float b;
+    /**
+     * @brief [en] pole pairs, >= 1.
+     * @brief [zh] 极对数，>= 1。
+     */
+    std::uint8_t pole_pairs;
+    /**
+     * @brief [en] current limit per axis in A.
+     * @brief [zh] 每轴电流限幅，A。
+     */
+    float i_max_a;
+    /**
+     * @brief [en] carrier frequency in Hz.
+     * @brief [zh] 载波频率，Hz。
+     */
+    float pwm_freq_hz;
+    /**
+     * @brief [en] inverter dead time in ns.
+     * @brief [zh] 逆变器死区时间，ns。
+     */
+    float deadtime_ns;
+    /**
+     * @brief [en] speed-loop period in s, 0 = every tick.
+     * @brief [zh] 速度环周期，s，0 = 每 tick。
+     */
+    float speed_loop_period_s{0.0F};
+    float position_loop_period_s{/**
+         * @brief [en] position-loop period in s, 0 = every tick.
+         * @brief [zh] 位置环周期，s，0 = 每 tick。
+         */
+                                 0.0F};
 };
 
 } // namespace motor

@@ -49,10 +49,10 @@ auto nlfo_config() -> foc::core::NonlinearFluxObserver::Config {
  *   below already uses, and it stands for "a machine that does have saliency" -- a per-machine number, which is why the
  *   observer takes it as a field instead of deriving it.
  *
- *   解调增益按 `predicted_gain_a(inject_v, inject_hz, Ld, Lq + Ld)` 传入，而不是由机器自身的凸极算出：本文件的机器 `Ld
- *   == Lq`，其凸极为零，而零增益会被观测器拒绝（误差归一化要除以它）——于是朴素公式会把载波放进 `Param`，两个注入模式就
- *   永远停在零。`+ Ld` 与下面那个锁定判据用例已在用的替换相同，它代表"一台确实有凸极的机器"——这是一个逐机器的数，也正是
- *   观测器把它作为字段而非推导它的原因。
+ *   解调增益按 `predicted_gain_a(inject_v, inject_hz, Ld, Lq + Ld)` 传入，而不是由机器自身的凸极算出：本文件的机器
+ *   `Ld == Lq`，其凸极为零，而零增益会被观测器拒绝（误差归一化要除以它）——于是朴素公式会把载波放进 `Param`，两个注入模
+ *   式就永远停在零。 `+ Ld` 与下面那个锁定判据用例已在用的替换相同，它代表"一台确实有凸极的机器"——这是一个逐机器的数，
+ *   也正是观测器把它作为字段而非推导它的原因。
  */
 auto hfi_config() -> foc::core::HfiObserver::Config {
     foc::core::HfiObserver::Config config{};

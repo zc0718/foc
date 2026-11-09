@@ -277,8 +277,8 @@ auto largest_accepted(double distance, double decel, double delay) -> double {
  *   The header states the invariant `v^2 <= 2*a*(d - v*delay)` and stops there. An invariant that is only ever
  *   *checked* leaves the question "how much speed does this distance actually buy me" unanswered, and that is the
  *   question a commissioning engineer asks. The answer is the fixed point of the map: the largest `v` that satisfies
- *   the inequality with equality. Solving the quadratic `v^2 + 2*a*tau*v - 2*a*d = 0` gives `v* = sqrt(a^2*tau^2 +
- *   2*a*d) - a*tau`.
+ *   the inequality with equality. Solving the quadratic `v^2 + 2*a*tau*v - 2*a*d = 0` gives
+ *   `v* = sqrt(a^2*tau^2 + 2*a*d) - a*tau`.
  *
  *   Three consequences, each measurable on its own. It is **homogeneous of degree one in `(d, a)` jointly**: scale both
  *   the window and the braking capability and every accepted speed scales with them, so a machine twice as strong
@@ -293,8 +293,8 @@ auto largest_accepted(double distance, double decel, double delay) -> double {
  *   得 `v* = sqrt(a²τ² + 2·a·d) − a·τ`。
  *
  *   三个后果，每个都可单独量。它在 `(d, a)` 上是 **联合的一次齐次** ：把窗口与制动能力一起放大，每个被接受的速度都随之
- *   放大，所以一台强一倍、行程也长一倍的机器恰好快一倍——而不是 `sqrt(2)` 倍，那是不带延迟的式子会说的。`τ → 0` 时它退化
- *   为 `sqrt(2·a·d)`，所以延迟项是一个永远不改变主行为的修正。它的三个偏导是 `a/(v_seam+aτ)`、
+ *   放大，所以一台强一倍、行程也长一倍的机器恰好快一倍——而不是 `sqrt(2)` 倍，那是不带延迟的式子会说的。 `τ → 0` 时它退
+ *   化为 `sqrt(2·a·d)`，所以延迟项是一个永远不改变主行为的修正。它的三个偏导是 `a/(v_seam+aτ)`、
  *   `v_seam²/(2a(v_seam+aτ))`、 `−a·v_seam/(v_seam+aτ)`，这就是登记册要的那张敏感度表：每个误差源（墙的位置、减速度、驱
  *   动延迟）一个系数。
  */
@@ -464,7 +464,7 @@ auto approach(double command, double decel, double delay, bool shaped) -> Approa
  *
  *   1. 上限在 `d = v²/(2a) + v·延迟` 处开始咬合——这是不动点的反函数，量它就是在空间里量接缝，而不是在速度里；
  *
- *   2. 延迟项把最近接近点推开恰好 `v·延迟`——制动电流到位之前轴不可避免要走的距离。它的收益因此 **与接近速度成正比** ，
+ *   2. 延迟项把最近接近点推开恰好 `v·延迟` ——制动电流到位之前轴不可避免要走的距离。它的收益因此 **与接近速度成正比** ，
  *   这就是它在 5 rad/s 处几乎一文不值（4.6 mm）、在 20 处是全部的原因。
  *
  *   三个速度、每个速度两趟。第二条律才是让第一条可检的东西：它说两个最近接近点之差就是延迟行程，而这个差能测到四位有效
@@ -508,14 +508,14 @@ TEST(SoftLimit, TheDelayTermShiftsTheClosestApproachByExactlyTheDelayTravel) {
  * @brief [zh] 不是一个区间的窗口，在它失败的每一种方式上都被拒绝；而访问器报出的是真正生效的那个窗口。
  *
  *   The three failures are separate arithmetic accidents -- reversed, and non-finite on either end -- and the
- *   non-finite ones are the ones that matter downstream, because `NaN` compares false against everything: a `min <=
- *   target <= max` test written against a `NaN` wall refuses every target for a reason nothing reports. The accessor
- *   half is the other direction: `set_config()` claims to replace the window, and the only way to see that it did is to
- *   ask for the window back and to watch the new one start refusing.
+ *   non-finite ones are the ones that matter downstream, because `NaN` compares false against everything: a
+ *   `min <= target <= max` test written against a `NaN` wall refuses every target for a reason nothing reports. The
+ *   accessor half is the other direction: `set_config()` claims to replace the window, and the only way to see that it
+ *   did is to ask for the window back and to watch the new one start refusing.
  *
  *   这三种失败是三起彼此独立的算术事故——反了、以及任一端非有限——而其中非有限的那几个才是下游真正要紧的，因为 `NaN` 与任
- *   何东西比较都为假：用一面 `NaN` 的墙去写 `min <= target <= max`，会以一件没人报出的事情为由拒绝每一个目标。访问器那
- *   一半是另一个方向：`set_config()` 声称换掉了窗口，而要看它真换了，唯一的办法就是把窗口要回来，再看新窗口开始拒绝。
+ *   何东西比较都为假：用一面 `NaN` 的墙去写 `min <= target <= max `，会以一件没人报出的事情为由拒绝每一个目标。访问器那
+ *   一半是另一个方向： `set_config()` 声称换掉了窗口，而要看它真换了，唯一的办法就是把窗口要回来，再看新窗口开始拒绝。
  */
 TEST(SoftLimit, AWindowThatIsNotAnIntervalIsRefusedHoweverItIsBroken) {
     const float inf = std::numeric_limits<float>::infinity();

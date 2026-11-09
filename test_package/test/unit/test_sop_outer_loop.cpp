@@ -134,12 +134,12 @@ auto identify(float j_scale, int window_steps = 6, float amplitude = 1.0F) -> Sp
 /**
  * @brief [en] **Stage 3, measure**: what bandwidth these gains actually deliver on a machine of inertia `j_scale`.
  * @brief [zh] **第 3 步，测量** ：这些增益在惯量为 `j_scale` 的机器上到底交付多少带宽。
- * @note [en] The tuned gains are handed over as the design pair they imply (`j_hat = kt/(kt/J)`, `b_hat =
- *            (b/J)*j_hat`), which is exactly the formula `speed_pi_config()` uses -- case 1 asserts that substitution
- *            is faithful to the last bit, so this is the same measurement the incumbent loop gets and not a second gain
- *            law.
- * @note [zh] 整定出的增益以它们蕴含的设计对交出（`j_hat = kt/(kt/J)`、`b_hat = (b/J)·j_hat`），正是 `speed_pi_config()`
- *            用的公式——用例 1 断言这一步替换逐位忠实，所以这就是在位环路拿到的那次测量，而不是第二条增益律。
+ * @note [en] The tuned gains are handed over as the design pair they imply (`j_hat = kt/(kt/J)`, `b_hat = (b/J)*j_hat`
+ *            ), which is exactly the formula `speed_pi_config()` uses -- case 1 asserts that substitution is faithful
+ *            to the last bit, so this is the same measurement the incumbent loop gets and not a second gain law.
+ * @note [zh] 整定出的增益以它们蕴含的设计对交出（ `j_hat = kt/(kt/J)`、 `b_hat = (b/J)·j_hat`），正是
+ *            `speed_pi_config()` 用的公式——用例 1 断言这一步替换逐位忠实，所以这就是在位环路拿到的那次测量，而不是第二
+ *            条增益律。
  */
 auto delivered_ratio(const SpeedTuneResult& gains, float j_scale) -> double {
     const auto spec = foc::sil::nominal_spec();
@@ -171,11 +171,11 @@ auto identified_margin(const SpeedTuneResult& result) -> float {
  * @brief [zh] 辨识、提议、测量，并记录一个 **距离失败多远** 的目标：在库拒绝的那一点上正好归零。
  *
  *   The objective the plan allows is not "how small is the error" but "how far is this from failing". Here the failure
- *   is not invented: `SpeedTuner` refuses when the identified inertia leaves `tolerance`, so `tolerance - |j_hat/j -
- *   1|` is a number that **crosses zero at the library's own refusal point** and nowhere else. Measured on the way
- *   there (0.25 tolerance): 1.00 -> +0.2498, 1.12 -> +0.1298, 1.20 -> +0.0498, 1.24 -> +0.0098, 1.26 -> -0.0102 and
- *   *refused*. The last two rows are the teeth: the objective is not a monotone decoration, it is the sign that
- *   predicts the answer.
+ *   is not invented: `SpeedTuner` refuses when the identified inertia leaves `tolerance`, so
+ *   `tolerance - |j_hat/j - 1|` is a number that **crosses zero at the library's own refusal point** and nowhere else.
+ *   Measured on the way there (0.25 tolerance): 1.00 -> +0.2498, 1.12 -> +0.1298, 1.20 -> +0.0498, 1.24 -> +0.0098,
+ *   1.26 -> -0.0102 and *refused*. The last two rows are the teeth: the objective is not a monotone decoration, it is
+ *   the sign that predicts the answer.
  *
  *   计划允许的目标不是"误差多小"，而是"离失败还有多远"。这里的失败不是我编的：辨识出的惯量离开 `tolerance` 时
  *   `SpeedTuner` 就拒绝，于是 `tolerance − |j_hat/j − 1|` 是一个 **在库自己的拒绝点上穿越零** 的数。沿途实测（容差
@@ -240,10 +240,10 @@ TEST(Sop, TheObjectiveIsTheDistanceToTheRefusalBoundaryNotTheErrorMagnitude) {
  *   | | A's gains on A | A's gains on B | B's gains on A | B's gains on B | |---|---|---|---| | delivered ratio |
  *   **1.03136** | **0.85898** | **1.23787** | **1.03114** |
  *
- *   Two readings, and they are different claims. **The criterion moves**: `kp_B/kp_A` = 1.20000, because `kp =
- *   bandwidth/(kt/J)` and B's ratio is 1.2 times A's. **And it still holds**: each machine's own pass lands on 1.031 of
- *   the request, i.e. the same law, so the band built from the law accepts both. What makes the second column a
- *   *held-out* measurement rather than a restatement is the third claim -- A's gains on B deliver 0.859,
+ *   Two readings, and they are different claims. **The criterion moves**: `kp_B/kp_A` = 1.20000, because
+ *   `kp = bandwidth/(kt/J)` and B's ratio is 1.2 times A's. **And it still holds**: each machine's own pass lands on
+ *   1.031 of the request, i.e. the same law, so the band built from the law accepts both. What makes the second column
+ *   a *held-out* measurement rather than a restatement is the third claim -- A's gains on B deliver 0.859,
  *   **outside the band**, and strictly less than B's own gains deliver. The fourth column closes the other direction:
  *   B's gains on A deliver 1.238, **also outside the band** -- which corrected this case's first draft, where I had
  *   assumed a 24 % overshoot was still close enough. It is not: the band rejects *both* cross-applications and accepts
@@ -251,11 +251,11 @@ TEST(Sop, TheObjectiveIsTheDistanceToTheRefusalBoundaryNotTheErrorMagnitude) {
  *   strict inequalities go red: that is the plan's red proof, and it is a case rather than a paragraph.
  *
  *   A 是标称 plant，B 重 20 %——仍在 25 % 容差内，所以 B 是一台有人可以正当地描述过的机器，流程必须同时服务两者。实测见
- *   上表。两种读法，是两个不同的断言。 **判据会动** ：`kp_B/kp_A` = 1.20000，因为 `kp = bandwidth/(kt/J)` 而 B 的比值为
- *   A 的 1.2 倍。 **而且仍然成立** ：每台机器自己的整定都落在请求的 1.031，也就是同一条律，于是由律造出的带会接受两者。
- *   让第二列成为 **留出集** 测量而不是复述的，是第三个断言——A 的增益用在 B 上交付 0.859、 **在带外** ，且严格低于 B 自
- *   己增益交付的量（0.833 倍）。若把 B 换成 A 的一份拷贝，两个比值变成同一个数，那条严格不等式立刻红：这就是计划要的能
- *   红证明，而且它是一个用例而不是一段话。
+ *   上表。两种读法，是两个不同的断言。 **判据会动** ： `kp_B/kp_A` = 1.20000，因为 `kp = bandwidth/(kt/J)` 而 B 的比值
+ *   为 A 的 1.2 倍。 **而且仍然成立** ：每台机器自己的整定都落在请求的 1.031，也就是同一条律，于是由律造出的带会接受两
+ *   者。让第二列成为 **留出集** 测量而不是复述的，是第三个断言——A 的增益用在 B 上交付 0.859、 **在带外** ，且严格低于 B
+ *   自己增益交付的量（0.833 倍）。若把 B 换成 A 的一份拷贝，两个比值变成同一个数，那条严格不等式立刻红：这就是计划要的
+ *   能红证明，而且它是一个用例而不是一段话。
  */
 TEST(Sop, TheSameProcedureOnASecondMachineMovesTheCriterionAndStillHolds) {
     const SpeedTuneResult a = identify(1.0F);
@@ -312,7 +312,7 @@ TEST(Sop, TheSameProcedureOnASecondMachineMovesTheCriterionAndStillHolds) {
  *   (1.50026), because "I measured 1.5x of what you told me" is the useful half, and it is a statement
  *   **about the measurement**, not a gain.
  *
- *   一台比铭牌重 50 % 的机器不是微妙的情形，而这正是要点：拒绝必须是无聊的。实测：`valid` 为假、`reason` 非空，增益与
+ *   一台比铭牌重 50 % 的机器不是微妙的情形，而这正是要点：拒绝必须是无聊的。实测： `valid` 为假、 `reason` 非空，增益与
  *   `speed_pi_config()` 的铭牌对 **逐位相同** ——拿到什么就施加什么的调用方什么都没换。测量到的比值仍报出（1.50026），因
  *   为 "我量到的是你说的 1.5 倍"是有用的那一半，而它是 **关于测量** 的一句话，不是一条增益。
  */

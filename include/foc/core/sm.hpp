@@ -16,10 +16,26 @@ namespace core {
  * @exporter
  */
 enum class MotorState : std::uint8_t {
-    Idle = 0,  ///< [en] outputs off. [zh] 输出关闭。
-    Align = 1, ///< [en] rotor alignment before closed loop. [zh] 闭环前的转子对齐。
-    Run = 2,   ///< [en] closed loop. [zh] 闭环运行。
-    Fault = 3, ///< [en] latched fault, only clear_fault() leaves it. [zh] 故障锁存，只能由 clear_fault() 退出。
+    /**
+     * @brief [en] outputs off.
+     * @brief [zh] 输出关闭。
+     */
+    Idle = 0,
+    /**
+     * @brief [en] rotor alignment before closed loop.
+     * @brief [zh] 闭环前的转子对齐。
+     */
+    Align = 1,
+    /**
+     * @brief [en] closed loop.
+     * @brief [zh] 闭环运行。
+     */
+    Run = 2,
+    /**
+     * @brief [en] latched fault, only clear_fault() leaves it.
+     * @brief [zh] 故障锁存，只能由 clear_fault() 退出。
+     */
+    Fault = 3,
 };
 
 

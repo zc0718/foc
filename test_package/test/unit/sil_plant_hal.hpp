@@ -277,7 +277,7 @@ class PlantHal final {
 
     /**
    * @brief [en] Model inverter dead time as a per-phase voltage loss: `v_applied = v_cmd - v_dead * sign(i_phase)`.
-   * @brief [zh] 把逆变器死区建模为每相的电压损失：`v_applied = v_cmd - v_dead * sign(i_phase)`。
+   * @brief [zh] 把逆变器死区建模为每相的电压损失： `v_applied = v_cmd - v_dead * sign(i_phase)`。
    * @param v_dead [en] the magnitude, in V, of `(t_dead / T_pwm) * v_bus`; 0 disables the model.
    * @param v_dead [zh] `(t_dead / T_pwm) * v_bus` 的量值，V；0 表示关闭该模型。
    * @note [en] What this model buys: without it, the PRD's U1 ("dead time cannot be verified in SIL") was a statement
@@ -336,7 +336,7 @@ class PlantHal final {
     PlantDcLink dc_link;
     /**
      * @brief [en] The brake resistor's switch: what `core::BrakeChopper` writes, and what the bus node equation reads.
-     * @brief [zh] 制动电阻的开关：`core::BrakeChopper` 写它，母线节点方程读它。
+     * @brief [zh] 制动电阻的开关： `core::BrakeChopper` 写它，母线节点方程读它。
      * @note [en] A HAL member and not a `set_brake()` pointer, because the switch is part of the power stage rather
      *            than an optional measurement: it is always there, and with nothing writing to it the duty is 0 and the
      *            plant is byte for byte what it was before this member existed. Attaching a *meter* stays optional
@@ -353,7 +353,7 @@ class PlantHal final {
      * @note [en] Required by `Motor::start()`, so the bench has to have one; `set_faulted(true)` is how a fault case
      *            makes the drive stop, and it is the same seam that F42's injection harness uses. Nothing writes it by
      *            default, so every existing SIL number is unchanged.
-     * @note [zh] `Motor::start()` 要求它在，所以台架必须有一个；`set_faulted(true)` 就是故障用例让驱动停下的方式，也是
+     * @note [zh] `Motor::start()` 要求它在，所以台架必须有一个； `set_faulted(true)` 就是故障用例让驱动停下的方式，也是
      *            F42 注入 harness 用的同一个缝。默认没有东西写它，所以既有的每个 SIL 数字都不变。
      * @since 0.1.0
      */

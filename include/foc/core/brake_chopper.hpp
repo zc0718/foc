@@ -25,16 +25,48 @@ namespace core {
  * @exporter
  */
 struct BrakeChopperConfig final {
-    float v_on;      ///< [en] turn on above this, V. [zh] 高于此值导通，V。
-    float v_off;     ///< [en] turn off below this, V. [zh] 低于此值关断，V。
-    float r_ohm;     ///< [en] brake resistor, ohm, > 0. [zh] 制动电阻，Ω，> 0。
-    float duty_max;  ///< [en] the largest duty the resistor is driven at, (0, 1]. [zh] 驱动电阻的最大占空比，(0, 1]。
-    float min_on_s;  ///< [en] shortest on-time, s. [zh] 最短导通时间，s。
-    float min_off_s; ///< [en] shortest off-time, s. [zh] 最短关断时间，s。
+    /**
+     * @brief [en] turn on above this, V.
+     * @brief [zh] 高于此值导通，V。
+     */
+    float v_on;
+    /**
+     * @brief [en] turn off below this, V.
+     * @brief [zh] 低于此值关断，V。
+     */
+    float v_off;
+    /**
+     * @brief [en] brake resistor, ohm, > 0.
+     * @brief [zh] 制动电阻，Ω，> 0。
+     */
+    float r_ohm;
+    /**
+     * @brief [en] the largest duty the resistor is driven at, (0, 1].
+     * @brief [zh] 驱动电阻的最大占空比，(0, 1]。
+     */
+    float duty_max;
+    /**
+     * @brief [en] shortest on-time, s.
+     * @brief [zh] 最短导通时间，s。
+     */
+    float min_on_s;
+    /**
+     * @brief [en] shortest off-time, s.
+     * @brief [zh] 最短关断时间，s。
+     */
+    float min_off_s;
     float
-        i2t_limit_a2s; ///< [en] the resistor's thermal budget, A^2*s; `<= 0` = no budget. [zh] 电阻的热预算，A²·s；`<= 0` 表示没有预算。
+        /**
+         * @brief [en] the resistor's thermal budget, A^2*s; `<= 0` = no budget.
+         * @brief [zh] 电阻的热预算，A²·s； `<= 0` 表示没有预算。
+         */
+        i2t_limit_a2s;
     float
-        i2t_cool_tau_s; ///< [en] cooling time constant, s; `<= 0` = it never cools. [zh] 冷却时间常数，s；`<= 0` 表示不冷却。
+        /**
+         * @brief [en] cooling time constant, s; `<= 0` = it never cools.
+         * @brief [zh] 冷却时间常数，s； `<= 0` 表示不冷却。
+         */
+        i2t_cool_tau_s;
 };
 
 
@@ -54,15 +86,39 @@ struct BrakeChopperConfig final {
  * @exporter
  */
 struct BrakeChopperOutput final {
-    ErrorCode status; ///< [en] Ok, or Param for a configuration that cannot chop. [zh] Ok；配置无法斩波时为 Param。
-    float duty;       ///< [en] duty applied to the resistor, 0..duty_max. [zh] 施加到电阻上的占空比，0..duty_max。
+    /**
+     * @brief [en] Ok, or Param for a configuration that cannot chop.
+     * @brief [zh] Ok；配置无法斩波时为 Param。
+     */
+    ErrorCode status;
+    /**
+     * @brief [en] duty applied to the resistor, 0..duty_max.
+     * @brief [zh] 施加到电阻上的占空比，0..duty_max。
+     */
+    float duty;
     float
-        current_a; ///< [en] period-average current into the resistor, A (= duty*v/r). [zh] 流入电阻的周期平均电流，A。
+        /**
+         * @brief [en] period-average current into the resistor, A (= duty*v/r).
+         * @brief [zh] 流入电阻的周期平均电流，A。
+         */
+        current_a;
     float
-        i2t_a2s; ///< [en] the resistor's I2t: integral of the **mean square** current, A^2*s. [zh] 电阻的 I²t： **均方** 电流的积分，A²·s。
-    bool on;     ///< [en] the chopper is on this period. [zh] 本周期斩波器导通。
+        /**
+         * @brief [en] the resistor's I2t: integral of the **mean square** current, A^2*s.
+         * @brief [zh] 电阻的 I²t： **均方** 电流的积分，A²·s。
+         */
+        i2t_a2s;
+    /**
+     * @brief [en] the chopper is on this period.
+     * @brief [zh] 本周期斩波器导通。
+     */
+    bool on;
     bool
-        budget_exceeded; ///< [en] latched: the budget is spent, the duty is forced to 0. [zh] 锁存：预算已耗尽，占空比强制为 0。
+        /**
+         * @brief [en] latched: the budget is spent, the duty is forced to 0.
+         * @brief [zh] 锁存：预算已耗尽，占空比强制为 0。
+         */
+        budget_exceeded;
 };
 
 
@@ -207,7 +263,10 @@ class BrakeChopper final {
     [[nodiscard]] auto i2t_a2s() const noexcept -> double { return i2t_a2s_; }
     [[nodiscard]] auto budget_exceeded() const noexcept -> bool { return budget_exceeded_; }
 
-    /** @brief [en] Forget the heat and the latch; the next period is a first period. [zh] 清掉热量与锁存；下一周期算第一周期。 */
+    /**
+     * @brief [en] Forget the heat and the latch; the next period is a first period.
+     * @brief [zh] 清掉热量与锁存；下一周期算第一周期。
+     */
     void reset() noexcept {
         on_ = false;
         i2t_a2s_ = 0.0;

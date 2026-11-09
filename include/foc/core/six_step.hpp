@@ -23,7 +23,11 @@ struct SixStepConfig final {
      * @brief [zh] 矢量幅值，0 < a <= 1。
      */
     float amplitude;
-    HallDirection direction; ///< [en] which way the table is pushed. [zh] 朝哪边推表。
+    /**
+     * @brief [en] which way the table is pushed.
+     * @brief [zh] 朝哪边推表。
+     */
+    HallDirection direction;
     /**
    * @brief [en] How many sectors one period may move, 1..5.
    * @brief [zh] 一个周期允许跨过的扇区数，1..5。
@@ -50,7 +54,11 @@ struct SixStepOutput final {
      * @brief [zh] Ok；配置不可用时 Param。
      */
     ErrorCode status;
-    Uvw<float> duty; ///< [en] the three duties to apply. [zh] 要施加的三个占空比。
+    /**
+     * @brief [en] the three duties to apply.
+     * @brief [zh] 要施加的三个占空比。
+     */
+    Uvw<float> duty;
     /**
      * @brief [en] the sector the returned vector belongs to.
      * @brief [zh] 返回的矢量所属扇区。

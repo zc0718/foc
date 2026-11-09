@@ -38,10 +38,16 @@ class StubFaultInput final : public hal::FaultInput {
         ++changes_;
     }
 
-    /** @brief [en] The state the next read will report. [zh] 下一次读取会报的状态。 */
+    /**
+     * @brief [en] The state the next read will report.
+     * @brief [zh] 下一次读取会报的状态。
+     */
     [[nodiscard]] auto faulted() noexcept -> bool override { return faulted_; }
 
-    /** @brief [en] Whether the last read saw a fault, without advancing anything. [zh] 最近一次读取是否看到故障，不推进任何东西。 */
+    /**
+     * @brief [en] Whether the last read saw a fault, without advancing anything.
+     * @brief [zh] 最近一次读取是否看到故障，不推进任何东西。
+     */
     [[nodiscard]] auto is_faulted() const noexcept -> bool { return faulted_; }
 
     /**
@@ -54,7 +60,10 @@ class StubFaultInput final : public hal::FaultInput {
      */
     [[nodiscard]] auto change_count() const noexcept -> std::uint32_t { return changes_; }
 
-    /** @brief [en] Back to the power-on state: not faulted, counter cleared. [zh] 回到上电态：无故障、计数清零。 */
+    /**
+     * @brief [en] Back to the power-on state: not faulted, counter cleared.
+     * @brief [zh] 回到上电态：无故障、计数清零。
+     */
     void reset() noexcept {
         faulted_ = false;
         changes_ = 0U;

@@ -22,7 +22,11 @@ enum class ErrorCode : std::int8_t {
     NoResource = -2,
     State = -3,
     NotImpl = -4,
-    Fault = -5, ///< [en] latched inverter fault. [zh] 锁存的逆变故障。
+    /**
+     * @brief [en] latched inverter fault.
+     * @brief [zh] 锁存的逆变故障。
+     */
+    Fault = -5,
 };
 
 
@@ -101,10 +105,21 @@ template <typename T> struct Uvw final {
  */
 class ElapsedClock final {
   public:
-    static constexpr float kNanosPerSecond = 1.0e9F;                   ///< [en] ns per s. [zh] 每秒纳秒数。
-    static constexpr std::uint64_t kMaxNanos = 1000000000000000000ULL; ///< [en] saturation point, ns. [zh] 饱和点，ns。
+    /**
+     * @brief [en] ns per s.
+     * @brief [zh] 每秒纳秒数。
+     */
+    static constexpr float kNanosPerSecond = 1.0e9F;
+    /**
+     * @brief [en] saturation point, ns.
+     * @brief [zh] 饱和点，ns。
+     */
+    static constexpr std::uint64_t kMaxNanos = 1000000000000000000ULL;
 
-    /** @brief [en] Back to zero. [zh] 归零。 */
+    /**
+     * @brief [en] Back to zero.
+     * @brief [zh] 归零。
+     */
     void reset() noexcept { nanos_ = 0U; }
 
     /**
@@ -121,15 +136,24 @@ class ElapsedClock final {
         nanos_ = ((nanos_ > (kMaxNanos - step)) ? kMaxNanos : (nanos_ + step));
     }
 
-    /** @brief [en] Nanoseconds accumulated. [zh] 已累加的纳秒数。 */
+    /**
+     * @brief [en] Nanoseconds accumulated.
+     * @brief [zh] 已累加的纳秒数。
+     */
     [[nodiscard]] auto nanos() const noexcept -> std::uint64_t { return nanos_; }
 
-    /** @brief [en] Seconds accumulated. [zh] 已累加的秒数。 */
+    /**
+     * @brief [en] Seconds accumulated.
+     * @brief [zh] 已累加的秒数。
+     */
     [[nodiscard]] auto seconds() const noexcept -> float {
         return static_cast<float>(nanos_) * (1.0F / kNanosPerSecond);
     }
 
-    /** @brief [en] Whether the count has reached `limit_s`. [zh] 计数是否已达到 `limit_s`。 */
+    /**
+     * @brief [en] Whether the count has reached `limit_s`.
+     * @brief [zh] 计数是否已达到 `limit_s`。
+     */
     [[nodiscard]] auto reached(float limit_s) const noexcept -> bool { return nanos_ >= to_nanos(limit_s); }
 
     /**

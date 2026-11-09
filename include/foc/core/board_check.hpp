@@ -77,7 +77,11 @@ enum class BoardItem : std::uint8_t {
  */
 enum class BoardCause : std::uint8_t {
     None = 0,
-    OffsetBias, ///< [en] a channel's zero is off. [zh] 某通道的零点偏了。
+    /**
+     * @brief [en] a channel's zero is off.
+     * @brief [zh] 某通道的零点偏了。
+     */
+    OffsetBias,
     /**
      * @brief [en] a channel's sign is inverted.
      * @brief [zh] 某通道的符号反了。
@@ -240,10 +244,26 @@ struct BoardLimits final {
  * @exporter
  */
 struct BoardReading final {
-    BoardItem item; ///< [en] which check. [zh] 哪一项。
-    float value;    ///< [en] the measured number. [zh] 量到的数。
-    float limit;    ///< [en] the number it was compared with. [zh] 比较用的数。
-    bool pass;      ///< [en] the verdict. [zh] 判定。
+    /**
+     * @brief [en] which check.
+     * @brief [zh] 哪一项。
+     */
+    BoardItem item;
+    /**
+     * @brief [en] the measured number.
+     * @brief [zh] 量到的数。
+     */
+    float value;
+    /**
+     * @brief [en] the number it was compared with.
+     * @brief [zh] 比较用的数。
+     */
+    float limit;
+    /**
+     * @brief [en] the verdict.
+     * @brief [zh] 判定。
+     */
+    bool pass;
     /**
      * @brief [en] 0..2 when the item is per-phase, 3 otherwise.
      * @brief [zh] 逐相项为 0..2，否则 3。
@@ -264,7 +284,11 @@ struct BoardReport final {
      * @brief [zh] 每项一行。
      */
     BoardReading items[kMaxItems]{};
-    int count{0}; ///< [en] rows filled. [zh] 已填行数。
+    /**
+     * @brief [en] rows filled.
+     * @brief [zh] 已填行数。
+     */
+    int count{0};
     /**
      * @brief [en] rows that failed.
      * @brief [zh] 失败行数。
@@ -573,7 +597,11 @@ class BoardSelfTest final {
          * @brief [zh] 辨识出的电阻，Ω。
          */
         float rs_ohm;
-        bool complete; ///< [en] every step ran. [zh] 每一步都跑完了。
+        /**
+         * @brief [en] every step ran.
+         * @brief [zh] 每一步都跑完了。
+         */
+        bool complete;
         /**
          * @brief [en] voltage points the `Rs` fit accepted.
          * @brief [zh] `Rs` 拟合采用的电压点数。

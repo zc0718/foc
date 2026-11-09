@@ -41,7 +41,7 @@ PyObject* g_foc_error_type = nullptr;
 
 /**
  *  [en] Raised when a C API call returns anything but FOC_OK; `code` is the raw foc_err_t.
- *  [zh] 任一 C API 调用返回非 FOC_OK 时抛出；`code` 是原始的 foc_err_t。
+ *  [zh] 任一 C API 调用返回非 FOC_OK 时抛出； `code` 是原始的 foc_err_t。
  */
 class FocError final : public std::runtime_error {
   public:
@@ -93,8 +93,8 @@ auto check(foc_err_t code, const char* call) -> void {
 /**
  *  [en] RAII owner of one `foc_motor_t`. The handle is destroyed exactly once: `close()` clears it, the destructor
  *       calls `close()`, and a destroyed instance cannot be used again.
- *  [zh] 一个 `foc_motor_t` 的 RAII 持有者。句柄只销毁一次：`close()` 清空它，析构函数调用 `close()`，已销毁的实例不能再
- *       用。
+ *  [zh] 一个 `foc_motor_t` 的 RAII 持有者。句柄只销毁一次： `close()` 清空它，析构函数调用 `close()`，已销毁的实例不能
+ *       再用。
  */
 /**
  * @brief [en] A Python object standing in for the plant: it receives the duties and supplies the measurements.
@@ -452,8 +452,8 @@ class Motor final {
  *            attached by reference, so it must outlive the attachment -- `Motor.set_trace(None)` or letting the motor
  *            die first are both fine, and `attach` re-checks that the motor is alive.
  * @note [zh] 存储刻意归 Python：C ABI 之所以取调用方持有的数组，是因为固件作者可能想把轨迹放进链接段，而 Python 这边的
- *            自然对应就是本对象持有的缓冲区。它是按引用挂载的，因此必须活得比挂载更久——`Motor.set_trace(None)` 或先让电
- *            机销毁都可以；`attach` 会重新检查电机是否还活着。
+ *            自然对应就是本对象持有的缓冲区。它是按引用挂载的，因此必须活得比挂载更久—— `Motor.set_trace(None)` 或先让
+ *            电机销毁都可以； `attach` 会重新检查电机是否还活着。
  * @since 0.1.0
  */
 class Trace final {

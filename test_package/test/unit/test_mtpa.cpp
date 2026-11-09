@@ -41,11 +41,11 @@ namespace sil = foc::sil;
  *   machine: angle error <= 0.15 rad with the single-`L` observer that ships. If it does, MTPA does not ship -- a
  *   torque gain bought with a broken angle estimate is not a gain.
  *
- * @note [zh] `i_char = ψf/Ld` 是决定 MTPA 值不值钱的那个无量纲开关：它就是磁阻项与磁钢项同量级 的电流。`i_char/i_max =
- *            4`（标称表贴机）时最好也就 3 %；`i_char/i_max = 1` 时是 30 %。 所以判据写在 MTPA **该** 值钱的那个点上，并
- *            用标称机说明它在哪儿不值钱。
+ * @note [zh] `i_char = ψf/Ld` 是决定 MTPA 值不值钱的那个无量纲开关：它就是磁阻项与磁钢项同量级 的电流。
+ *            `i_char/i_max = 4`（标称表贴机）时最好也就 3 %； `i_char/i_max = 1` 时是 30 %。 所以判据写在 MTPA **该**
+ *            值钱的那个点上，并用标称机说明它在哪儿不值钱。
  *
- *   1. `Lq/Ld = 2`、`i_char = i_max` → 满电流下转矩比 `i_d = 0` 至少 **+20 %** （闭式解是 30.2 %；留 20 % 是给二分和"
+ *   1. `Lq/Ld = 2`、 `i_char = i_max` → 满电流下转矩比 `i_d = 0` 至少 **+20 %** （闭式解是 30.2 %；留 20 % 是给二分和"
  *   两者是在等 **电流** 而不是等 **电压** 下比较的" 这件事留余量）。 2. 任何给定下 `|i|` 都不超过 `i_max`，包括荒谬的给
  *   定。
  *

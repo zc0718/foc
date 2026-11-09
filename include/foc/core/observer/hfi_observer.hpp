@@ -161,20 +161,56 @@ class HfiObserver final {
      * @since 0.1.0
      */
     struct Config final {
-        float inject_v; ///< [en] injection amplitude, peak V, > 0. [zh] 注入幅值，峰值 V，> 0。
+        /**
+         * @brief [en] injection amplitude, peak V, > 0.
+         * @brief [zh] 注入幅值，峰值 V，> 0。
+         */
+        float inject_v;
         float
-            inject_hz; ///< [en] injection frequency in Hz, > demod_lpf_hz and <= max_inject_hz(control_hz), see the note. [zh] 注入频率，Hz，> demod_lpf_hz 且 <= max_inject_hz(control_hz)，见注释。
+            /**
+             * @brief [en] injection frequency in Hz, > demod_lpf_hz and <= max_inject_hz(control_hz), see the note.
+             * @brief [zh] 注入频率，Hz，> demod_lpf_hz 且 <= max_inject_hz(control_hz)，见注释。
+             */
+            inject_hz;
         float
-            current_hp_hz; ///< [en] high-pass on the measured current in Hz, see the note below. [zh] 实测电流的高通截止频率，Hz，见下方注释。
-        float demod_lpf_hz;     ///< [en] demodulation filter cutoff in Hz. [zh] 解调滤波截止频率，Hz。
-        float pll_bandwidth_hz; ///< [en] PLL natural frequency in Hz, > 0. [zh] PLL 自然频率，Hz，> 0。
-        float pll_zeta; ///< [en] PLL damping ratio, > 0 (0.7..1.0 typical). [zh] PLL 阻尼比，> 0（常用 0.7..1.0）。
+            /**
+             * @brief [en] high-pass on the measured current in Hz, see the note below.
+             * @brief [zh] 实测电流的高通截止频率，Hz，见下方注释。
+             */
+            current_hp_hz;
+        /**
+         * @brief [en] demodulation filter cutoff in Hz.
+         * @brief [zh] 解调滤波截止频率，Hz。
+         */
+        float demod_lpf_hz;
+        /**
+         * @brief [en] PLL natural frequency in Hz, > 0.
+         * @brief [zh] PLL 自然频率，Hz，> 0。
+         */
+        float pll_bandwidth_hz;
+        /**
+         * @brief [en] PLL damping ratio, > 0 (0.7..1.0 typical).
+         * @brief [zh] PLL 阻尼比，> 0（常用 0.7..1.0）。
+         */
+        float pll_zeta;
         float
-            speed_lpf_hz; ///< [en] low-pass on the *published* speed, in Hz; 0 publishes it unfiltered, see the note. [zh] **已发布** 转速的低通截止频率，Hz；0 表示原样发布，见注释。
+            /**
+             * @brief [en] low-pass on the *published* speed, in Hz; 0 publishes it unfiltered, see the note.
+             * @brief [zh] **已发布** 转速的低通截止频率，Hz；0 表示原样发布，见注释。
+             */
+            speed_lpf_hz;
         float
-            demod_gain_a; ///< [en] signed sensitivity, see predicted_gain_a(); != 0. [zh] 带符号灵敏度，见 predicted_gain_a()；!= 0。
+            /**
+             * @brief [en] signed sensitivity, see predicted_gain_a(); != 0.
+             * @brief [zh] 带符号灵敏度，见 predicted_gain_a()；!= 0。
+             */
+            demod_gain_a;
         float
-            min_hf_current_a; ///< [en] HF current amplitude below which "no lock" is reported, >= 0. [zh] 低于此高频电流幅值即报告“未锁定”，>= 0。
+            /**
+             * @brief [en] HF current amplitude below which "no lock" is reported, >= 0.
+             * @brief [zh] 低于此高频电流幅值即报告“未锁定”，>= 0。
+             */
+            min_hf_current_a;
     };
 
     /**
@@ -383,22 +419,62 @@ class HfiObserver final {
     FirstOrderLowPass demod_lpf_a_;
     FirstOrderLowPass demod_lpf_b_;
     FirstOrderLowPass
-        speed_lpf_; ///< [en] the proportional path's low-pass, unconfigured when `speed_lpf_hz` is 0. [zh] 比例通路的低通；`speed_lpf_hz` 为 0 时未配置。
+        /**
+         * @brief [en] the proportional path's low-pass, unconfigured when `speed_lpf_hz` is 0.
+         * @brief [zh] 比例通路的低通； `speed_lpf_hz` 为 0 时未配置。
+         */
+        speed_lpf_;
     FirstOrderLowPass amplitude_lpf_;
     ObsState state_;
     ErrorCode status_;
     float
-        phase_applied_; ///< [en] injection phase of the voltage in effect during the last period. [zh] 上一周期实际生效电压的注入相位。
-    float theta_applied_; ///< [en] estimate that oriented that voltage. [zh] 该电压所用的方向角。
-    float omega_int_;     ///< [en] PLL integral state, electrical rad/s. [zh] PLL 积分状态，电角速度。
-    float error_;         ///< [en] normalised error, diagnostics. [zh] 归一化误差，诊断用。
-    float hf_amp_;        ///< [en] demodulated HF amplitude in A. [zh] 解调高频幅值，A。
-    float dt_configured_; ///< [en] period the filters were built for. [zh] 滤波器配置所用的周期。
+        /**
+         * @brief [en] injection phase of the voltage in effect during the last period.
+         * @brief [zh] 上一周期实际生效电压的注入相位。
+         */
+        phase_applied_;
+    /**
+     * @brief [en] estimate that oriented that voltage.
+     * @brief [zh] 该电压所用的方向角。
+     */
+    float theta_applied_;
+    /**
+     * @brief [en] PLL integral state, electrical rad/s.
+     * @brief [zh] PLL 积分状态，电角速度。
+     */
+    float omega_int_;
+    /**
+     * @brief [en] normalised error, diagnostics.
+     * @brief [zh] 归一化误差，诊断用。
+     */
+    float error_;
+    /**
+     * @brief [en] demodulated HF amplitude in A.
+     * @brief [zh] 解调高频幅值，A。
+     */
+    float hf_amp_;
+    /**
+     * @brief [en] period the filters were built for.
+     * @brief [zh] 滤波器配置所用的周期。
+     */
+    float dt_configured_;
     float
-        blank_s_; ///< [en] start-up blanking time, derived from the demodulation filter. [zh] 起动屏蔽时长，由解调滤波器导出。
-    float blank_left_s_; ///< [en] blanking still to run. [zh] 尚未走完的屏蔽时间。
+        /**
+         * @brief [en] start-up blanking time, derived from the demodulation filter.
+         * @brief [zh] 起动屏蔽时长，由解调滤波器导出。
+         */
+        blank_s_;
+    /**
+     * @brief [en] blanking still to run.
+     * @brief [zh] 尚未走完的屏蔽时间。
+     */
+    float blank_left_s_;
     bool primed_;
-    float no_signal_s_; ///< [en] how long the carrier response has been absent, s. [zh] 载波响应已缺失多久，s。
+    /**
+     * @brief [en] how long the carrier response has been absent, s.
+     * @brief [zh] 载波响应已缺失多久，s。
+     */
+    float no_signal_s_;
     bool locked_;
 };
 

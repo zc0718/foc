@@ -13,7 +13,10 @@ namespace {
 constexpr float kPi = 3.14159265358979F;
 constexpr float kTwoPi = 6.28318530717959F;
 
-/** @brief [en] Wrap to (-pi, pi]. [zh] 折到 (-pi, pi]。 */
+/**
+ * @brief [en] Wrap to (-pi, pi].
+ * @brief [zh] 折到 (-pi, pi]。
+ */
 auto wrap_pi(float angle) noexcept -> float {
     while (angle <= -kPi) {
         angle += kTwoPi;

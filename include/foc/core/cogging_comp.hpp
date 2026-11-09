@@ -27,9 +27,21 @@ namespace core {
  * @exporter
  */
 struct CoggingCompHarmonic final {
-    std::uint8_t order; ///< [en] per mechanical revolution. [zh] 每机械转的次数。
-    float amplitude_nm; ///< [en] peak of this harmonic, N*m. [zh] 该谐波的峰值，N·m。
-    float phase_rad;    ///< [en] phase at `theta_mech = 0`, rad. [zh] `θ_mech = 0` 处的相位，rad。
+    /**
+     * @brief [en] per mechanical revolution.
+     * @brief [zh] 每机械转的次数。
+     */
+    std::uint8_t order;
+    /**
+     * @brief [en] peak of this harmonic, N*m.
+     * @brief [zh] 该谐波的峰值，N·m。
+     */
+    float amplitude_nm;
+    /**
+     * @brief [en] phase at `theta_mech = 0`, rad.
+     * @brief [zh] `θ_mech = 0` 处的相位，rad。
+     */
+    float phase_rad;
 };
 
 /**
@@ -55,10 +67,26 @@ struct CoggingCompHarmonic final {
  * @exporter
  */
 struct CoggingCompConfig final {
-    MachineParams params;    ///< [en] `psi_f`, `ld`, `lq`; `rs` unused. [zh] 用 `psi_f`、`ld`、`lq`；不用 `rs`。
-    std::uint8_t pole_pairs; ///< [en] the electrical-to-mechanical bridge. [zh] 电角与机械角之间的桥。
-    float fade_from_hz;      ///< [en] compensation starts fading here; 0 = never. [zh] 从这里开始淡出；0 = 不淡出。
-    float fade_to_hz;        ///< [en] fully faded here; must exceed `fade_from_hz`. [zh] 到这里完全淡出；须大于前者。
+    /**
+     * @brief [en] `psi_f`, `ld`, `lq`; `rs` unused.
+     * @brief [zh] 用 `psi_f`、 `ld`、 `lq`；不用 `rs`。
+     */
+    MachineParams params;
+    /**
+     * @brief [en] the electrical-to-mechanical bridge.
+     * @brief [zh] 电角与机械角之间的桥。
+     */
+    std::uint8_t pole_pairs;
+    /**
+     * @brief [en] compensation starts fading here; 0 = never.
+     * @brief [zh] 从这里开始淡出；0 = 不淡出。
+     */
+    float fade_from_hz;
+    /**
+     * @brief [en] fully faded here; must exceed `fade_from_hz`.
+     * @brief [zh] 到这里完全淡出；须大于前者。
+     */
+    float fade_to_hz;
 };
 
 /**
@@ -76,11 +104,31 @@ struct CoggingCompConfig final {
  * @exporter
  */
 struct CoggingCompOutput final {
-    ErrorCode status; ///< [en] `Ok`, or why not. [zh] `Ok`，或为什么不是。
-    float iq_a;       ///< [en] current to **add** to the q-axis reference, A. [zh] 要 **加** 到 q 轴参考上的电流，A。
-    float torque_nm;  ///< [en] the cancelled torque before any limit, N*m. [zh] 未被任何限制影响前的被抵消转矩，N·m。
-    float gain;       ///< [en] the frequency fade in [0, 1]. [zh] 频率淡出系数，[0, 1]。
-    bool clipped;     ///< [en] the current ceiling trimmed the answer. [zh] 电流上限削掉了答案的一部分。
+    /**
+     * @brief [en] `Ok`, or why not.
+     * @brief [zh] `Ok`，或为什么不是。
+     */
+    ErrorCode status;
+    /**
+     * @brief [en] current to **add** to the q-axis reference, A.
+     * @brief [zh] 要 **加** 到 q 轴参考上的电流，A。
+     */
+    float iq_a;
+    /**
+     * @brief [en] the cancelled torque before any limit, N*m.
+     * @brief [zh] 未被任何限制影响前的被抵消转矩，N·m。
+     */
+    float torque_nm;
+    /**
+     * @brief [en] the frequency fade in [0, 1].
+     * @brief [zh] 频率淡出系数，[0, 1]。
+     */
+    float gain;
+    /**
+     * @brief [en] the current ceiling trimmed the answer.
+     * @brief [zh] 电流上限削掉了答案的一部分。
+     */
+    bool clipped;
 };
 
 /**
@@ -90,11 +138,31 @@ struct CoggingCompOutput final {
  * @exporter
  */
 struct CoggingCompInput final {
-    float theta_mech_rad;   ///< [en] mechanical angle, unwrapped or not. [zh] 机械角，归一化与否都可。
-    float omega_mech_rad_s; ///< [en] mechanical speed, rad/s. [zh] 机械转速，rad/s。
-    float id_a;             ///< [en] d-axis current now, A. [zh] 当前 d 轴电流，A。
-    float iq_command_a;     ///< [en] the reference this offset will be added to, A. [zh] 本偏置要加到的那个参考，A。
-    float i_max_a;          ///< [en] the current ceiling, A. [zh] 电流上限，A。
+    /**
+     * @brief [en] mechanical angle, unwrapped or not.
+     * @brief [zh] 机械角，归一化与否都可。
+     */
+    float theta_mech_rad;
+    /**
+     * @brief [en] mechanical speed, rad/s.
+     * @brief [zh] 机械转速，rad/s。
+     */
+    float omega_mech_rad_s;
+    /**
+     * @brief [en] d-axis current now, A.
+     * @brief [zh] 当前 d 轴电流，A。
+     */
+    float id_a;
+    /**
+     * @brief [en] the reference this offset will be added to, A.
+     * @brief [zh] 本偏置要加到的那个参考，A。
+     */
+    float iq_command_a;
+    /**
+     * @brief [en] the current ceiling, A.
+     * @brief [zh] 电流上限，A。
+     */
+    float i_max_a;
 };
 
 /**
@@ -148,7 +216,10 @@ struct CoggingCompInput final {
  */
 class CoggingCompensation final {
   public:
-    /** @brief [en] How many harmonics a table may hold. [zh] 一张表最多能装几条谐波。 */
+    /**
+     * @brief [en] How many harmonics a table may hold.
+     * @brief [zh] 一张表最多能装几条谐波。
+     */
     static constexpr int kMaxHarmonics = 6;
 
     CoggingCompensation() noexcept = default;
@@ -167,7 +238,10 @@ class CoggingCompensation final {
      */
     void set_table(const CoggingCompHarmonic* harmonics, int count) noexcept;
 
-    /** @brief [en] How many harmonics are installed. [zh] 当前装了几条谐波。 */
+    /**
+     * @brief [en] How many harmonics are installed.
+     * @brief [zh] 当前装了几条谐波。
+     */
     [[nodiscard]] auto harmonics() const noexcept -> int { return count_; }
 
     /**

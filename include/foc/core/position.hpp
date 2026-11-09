@@ -34,10 +34,26 @@ namespace core {
  * @exporter
  */
 struct PositionInput final {
-    float target_rad;           ///< [en] target mechanical angle, rad. [zh] 目标机械角，rad。
-    float velocity_limit_rad_s; ///< [en] per-move ceiling, 0 = own. [zh] 本次速度上限，0 = 用自身配置。
-    float accel_limit_rad_s2;   ///< [en] per-move rate limit, 0 = own. [zh] 本次加速度上限，0 = 用自身配置。
-    float kp_scale;             ///< [en] stiffness scale, 0 = own. [zh] 刚度缩放，0 = 用自身配置。
+    /**
+     * @brief [en] target mechanical angle, rad.
+     * @brief [zh] 目标机械角，rad。
+     */
+    float target_rad;
+    /**
+     * @brief [en] per-move ceiling, 0 = own.
+     * @brief [zh] 本次速度上限，0 = 用自身配置。
+     */
+    float velocity_limit_rad_s;
+    /**
+     * @brief [en] per-move rate limit, 0 = own.
+     * @brief [zh] 本次加速度上限，0 = 用自身配置。
+     */
+    float accel_limit_rad_s2;
+    /**
+     * @brief [en] stiffness scale, 0 = own.
+     * @brief [zh] 刚度缩放，0 = 用自身配置。
+     */
+    float kp_scale;
 };
 
 
@@ -121,9 +137,21 @@ class PositionP final {
      * @exporter
      */
     struct Config final {
-        float gain_1_s;             ///< [en] velocity per rad of error, 1/s. [zh] 每弧度误差的速度，1/s。
-        float velocity_limit_rad_s; ///< [en] own ceiling, rad/s. [zh] 自身速度上限，rad/s。
-        float accel_limit_rad_s2; ///< [en] own rate limit, rad/s^2; 0 = none. [zh] 自身加速度上限，rad/s^2；0 = 不限。
+        /**
+         * @brief [en] velocity per rad of error, 1/s.
+         * @brief [zh] 每弧度误差的速度，1/s。
+         */
+        float gain_1_s;
+        /**
+         * @brief [en] own ceiling, rad/s.
+         * @brief [zh] 自身速度上限，rad/s。
+         */
+        float velocity_limit_rad_s;
+        /**
+         * @brief [en] own rate limit, rad/s^2; 0 = none.
+         * @brief [zh] 自身加速度上限，rad/s^2；0 = 不限。
+         */
+        float accel_limit_rad_s2;
     };
 
     PositionP() noexcept = default;

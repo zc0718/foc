@@ -47,12 +47,12 @@ struct HallSetup final {
  * @note [en] Sensor `i` reads high while `cos(theta - phi_i) > 0`, i.e. for 180 degrees around its own position, and
  *            `phi_i = i * 120 deg + mount_error_rad[i]`. Bit `i` of the code is sensor `i`, so the six reachable codes
  *            are exactly **1..6** and the two codes a three-bit field has left over -- 0 and 7 -- are the ones no
- *            healthy set of sensors can produce. That is why every driver in the field tests `state == 0 || state ==
- *            7`: it is not a convention, it is the arithmetic of the encoding.
- * @note [zh] 第 `i` 个传感器在 `cos(theta - phi_i) > 0` 时为高，即围绕自身位置 180°，其中 `phi_i = i*120° +
- *            mount_error_rad[i]`。编码的第 `i` 位就是第 `i` 个传感器，因此六个可达编码恰好是 **1..6** ，而三位字段剩下
- *            的两个编码 0 和 7 正是任何健康传感器组都产生不出来的。这就是为什么现场每个驱动都会判 `state == 0 || state
- *            == 7`：这不是约定，是这种编码的算术。
+ *            healthy set of sensors can produce. That is why every driver in the field tests `state == 0 || state == 7`
+ *            : it is not a convention, it is the arithmetic of the encoding.
+ * @note [zh] 第 `i` 个传感器在 `cos(theta - phi_i) > 0` 时为高，即围绕自身位置 180°，其中
+ *            `phi_i = i*120° + mount_error_rad[i]`。编码的第 `i` 位就是第 `i` 个传感器，因此六个可达编码恰好是
+ *            **1..6** ，而三位字段剩下的两个编码 0 和 7 正是任何健康传感器组都产生不出来的。这就是为什么现场每个驱动都
+ *            会判 `state == 0 || state == 7`：这不是约定，是这种编码的算术。
  * @since 0.1.0
  */
 class HallSensorModel final {

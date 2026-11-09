@@ -220,7 +220,7 @@ auto deadband_rad(Axis::Law law, float coulomb_comp_nm, float static_comp_nm, bo
  *
  *     `0.020 / 5` = **4.0 mrad** and `0.010 / 5` = **2.0 mrad**, measured as **4.003** and **2.021**. Neither depends
  *     on the loop's bandwidth, the inertia or the bus voltage -- only on the two friction numbers and the gain -- which
- *     is what makes them a criterion rather than a description. `0.020/5` = **4.0 mrad** 、`0.010/5` = **2.0 mrad** ，
+ *     is what makes them a criterion rather than a description. `0.020/5` = **4.0 mrad** 、 `0.010/5` = **2.0 mrad** ，
  *     实测 **4.003** 与 **2.021** 。两者都不取决于环路带宽、惯量或母线电压 ——只取决于两个摩擦数和增益——这正是它们成为判
  *     据而不是描述的原因。
  */
@@ -245,7 +245,7 @@ TEST(FrictionComp, TheDeadBandHalvesBecauseItIsStaticMinusCoulombOverKp) {
 }
 
 /**
- * @brief An over-estimate under the breakaway narrows the band further -- `(0.020 - 0.015) / 5` = 1.0 mrad, measured 1.007 -- which is why the estimate has to be a measurement: the band follows it wherever it goes. 低于起动点的过估把带子进一步压窄——`(0.020 − 0.015)/5` = 1.0 mrad，实测 1.007——这正是估计值必须来自测量的理由：带子跟着它走到哪算哪。
+ * @brief An over-estimate under the breakaway narrows the band further -- `(0.020 - 0.015) / 5` = 1.0 mrad, measured 1.007 -- which is why the estimate has to be a measurement: the band follows it wherever it goes. 低于起动点的过估把带子进一步压窄—— `(0.020 − 0.015)/5` = 1.0 mrad，实测 1.007——这正是估计值必须来自测量的理由：带子跟着它走到哪算哪。
  */
 TEST(FrictionComp, AnOverEstimateUnderTheBreakawayNarrowsTheBandFurther) {
     const float over = deadband_rad(Axis::Law::Compensated, 0.015F, kStaticNm);
@@ -262,8 +262,8 @@ TEST(FrictionComp, AnOverEstimateUnderTheBreakawayNarrowsTheBandFurther) {
  *     0.020, and **0.000 mrad** with the correct `(0.010, 0.020)`. 高于起动点的估计会让补偿变成一台电机：参考保持为零、
  *     **完全没有任何指令** ，轴自己走了 5.6 mrad。这不是整定失误，而是定义——大于静摩擦的项在没有任何指令的情况下推动转
  *     子。这正是 `validate()` 拒绝那个在数字上看得见的形态（动摩擦高于起动）、而对付看不见的那个形态唯一诚实的办法是量
- *     出来的估计值的原因。实测：`(0.030, 0.030)` 对一台起动点 0.020 的机器走了 **5.625 mrad** ，正确的 `(0.010, 0.020)`
- *     是 **0.000 mrad** 。
+ *     出来的估计值的原因。实测： `(0.030, 0.030)` 对一台起动点 0.020 的机器走了 **5.625 mrad** ，正确的
+ *     `(0.010, 0.020)` 是 **0.000 mrad** 。
  */
 TEST(FrictionComp, AnEstimateAboveTheBreakawayWalksTheAxisWithNoCommandAtAll) {
     Axis correct(Axis::Law::Compensated, kCoulombNm, kStaticNm, false);
@@ -407,20 +407,20 @@ TEST(FrictionComp, TheSignComesFromTheReferenceThenTheDemandThenStaysWhereItWas)
  *     velocity-sign feedforward has neither the state nor the velocity dependence to reproduce it. The predictions
  *     below are derived from that model, written before the measurement:
  *
- *     P1 cruising at `v` with a dip of width `vs`, the compensated following error is larger than with no dip by `(Fs -
- *     Fc) * exp(-(v/vs)^2) / kKp`. At v = 0.25 / 1 / 2 rad/s with vs = 1 rad/s that is 1.879 / 0.7358 / 0.0367 mrad. P2
- *     uncompensated minus compensated equals `(Fc + b*v) / kKp` -- the Coulomb term plus the viscous one, because the
- *     loop's viscous share is cancelled too. 2.0500 / 2.2000 / 2.4000 mrad at 0.25 / 1 / 2 rad/s. P3 the saving is
- *     **identical with and without the dip**. This is the one with teeth: P1 says where the compensation stops working,
- *     P3 says it never learns about the dip at all. That is a statement about the *structure* of the law, and a
- *     compensator with any model of the dip would fail it.
+ *     P1 cruising at `v` with a dip of width `vs`, the compensated following error is larger than with no dip by
+ *     `(Fs - Fc) * exp(-(v/vs)^2) / kKp`. At v = 0.25 / 1 / 2 rad/s with vs = 1 rad/s that is 1.879 / 0.7358 / 0.0367
+ *     mrad. P2 uncompensated minus compensated equals `(Fc + b*v) / kKp` -- the Coulomb term plus the viscous one,
+ *     because the loop's viscous share is cancelled too. 2.0500 / 2.2000 / 2.4000 mrad at 0.25 / 1 / 2 rad/s. P3 the
+ *     saving is **identical with and without the dip**. This is the one with teeth: P1 says where the compensation
+ *     stops working, P3 says it never learns about the dip at all. That is a statement about the *structure* of the
+ *     law, and a compensator with any model of the dip would fail it.
  *
  *     P2 was written wrong the first time -- as `Fc / kKp`, 2.000 mrad flat -- because the plant applies `b*omega` as a
  *     separate term from the friction law, so cancelling it is part of the saving. The measurement said 2.05 / 2.20 /
  *     2.40 and the corrected form reproduced all three to four digits; the prediction was corrected from a
  *     re-derivation, not from the numbers (A-40, and A-42 before it). P1 巡速 `v`、下凹宽 `vs` 时，补偿后的跟随误差比无
  *     下凹时大 `(Fs − Fc)·exp(−(v/vs)²)/kKp`。v = 0.25 / 1 / 2 rad/s、 vs = 1 rad/s 时分别是 1.879 / 0.7358 / 0.0367
- *     mrad。 P2 不补偿减补偿等于 `(Fc + b·v)/kKp`——库仑项 **加** 粘性项，因为环路那部分粘性也被抵消了。0.25 / 1 / 2
+ *     mrad。 P2 不补偿减补偿等于 `(Fc + b·v)/kKp` ——库仑项 **加** 粘性项，因为环路那部分粘性也被抵消了。0.25 / 1 / 2
  *     rad/s 下分别是 2.0500 / 2.2000 / 2.4000 mrad。 P3 这个节省 **与有没有下凹完全相同** 。这条才是有牙齿的：P1 说补偿
  *     在哪里失效，P3 说它 **从来不知道** 下凹的存在。这是关于该规律 **结构** 的断言；任何带下凹模型的补偿器都过不了它。
  *     P2 第一版写错了——写成 `Fc/kKp` 恒定 2.000 mrad——因为 plant 把 `b·ω` 当作与摩擦律 **分开** 的一项，抵消它也是节省

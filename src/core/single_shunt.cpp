@@ -23,7 +23,11 @@ struct Ranked final {
     float max_v;
     float mid_v;
     float min_v;
-    std::uint8_t max_k; ///< 0 = u, 1 = v, 2 = w
+    /**
+     * @brief [en] Which phase each duty belongs to: 0 = u, 1 = v, 2 = w.
+     * @brief [zh] 每个占空比属于哪一相：0 = u，1 = v，2 = w。
+     */
+    std::uint8_t max_k;
     std::uint8_t mid_k;
     std::uint8_t min_k;
 };

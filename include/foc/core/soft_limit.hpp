@@ -23,8 +23,16 @@ namespace core {
  * @since 0.1.0
  */
 struct SoftLimitConfig final {
-    float min_rad; ///< [en] lower wall, rad, inclusive. [zh] 下墙，rad，含端点。
-    float max_rad; ///< [en] upper wall, rad, inclusive. [zh] 上墙，rad，含端点。
+    /**
+     * @brief [en] lower wall, rad, inclusive.
+     * @brief [zh] 下墙，rad，含端点。
+     */
+    float min_rad;
+    /**
+     * @brief [en] upper wall, rad, inclusive.
+     * @brief [zh] 上墙，rad，含端点。
+     */
+    float max_rad;
 };
 
 
@@ -43,8 +51,16 @@ struct SoftLimitOutput final {
      *             游任何东西都不会看到一个会把它驱进墙里的位置。
      */
     ErrorCode status;
-    float target_rad; ///< [en] the target to use this period. [zh] 本周期要用的目标。
-    bool at_wall;     ///< [en] the accepted target is exactly on a wall. [zh] 被接受的目标正好在墙上。
+    /**
+     * @brief [en] the target to use this period.
+     * @brief [zh] 本周期要用的目标。
+     */
+    float target_rad;
+    /**
+     * @brief [en] the accepted target is exactly on a wall.
+     * @brief [zh] 被接受的目标正好在墙上。
+     */
+    bool at_wall;
 };
 
 

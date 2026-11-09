@@ -527,7 +527,7 @@
       "sign": "positive along the winding's own flux direction; a vector, so it carries two components.",
       "anchor": {
         "file": "include/foc/core/observer/dual_inductance_observer.hpp",
-        "code": "Ab<float> psi_; ///< [en] stator flux estimate in Wb (the integrator state)."
+        "code": "Ab<float> psi_;"
       },
       "note": {
         "en": "Registered when the bare `ψ` in this observer's prose turned out to be the last unregistered glyph: the sentence was naming the stator estimate while the table only knew the rotor constant `ψf`.",

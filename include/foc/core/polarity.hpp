@@ -22,9 +22,21 @@ namespace core {
  * @exporter
  */
 enum class PolarityVerdict : std::int8_t {
-    Inconclusive, ///< [en] no pulse pair has finished, or they showed no asymmetry. [zh] 还没跑完一对脉冲，或二者没有不对称。
-    Aligned, ///< [en] the estimate's +d already is the magnet's +d. [zh] 估计的 +d 就是磁钢的 +d。
-    Reversed, ///< [en] the estimate is half a turn out: add pi before closing the loop. [zh] 估计差半个电周期：闭环前加 π。
+    /**
+     * @brief [en] no pulse pair has finished, or they showed no asymmetry.
+     * @brief [zh] 还没跑完一对脉冲，或二者没有不对称。
+     */
+    Inconclusive,
+    /**
+     * @brief [en] the estimate's +d already is the magnet's +d.
+     * @brief [zh] 估计的 +d 就是磁钢的 +d。
+     */
+    Aligned,
+    /**
+     * @brief [en] the estimate is half a turn out: add pi before closing the loop.
+     * @brief [zh] 估计差半个电周期：闭环前加 π。
+     */
+    Reversed,
 };
 
 
@@ -79,11 +91,27 @@ class MagnetPolarityTest final {
      * @since 0.1.0
      */
     struct Config final {
-        float pulse_v;  ///< [en] d-axis pulse magnitude in V, > 0. [zh] d 轴脉冲幅值，V，> 0。
-        float pulse_s;  ///< [en] duration of each pulse in s, > 0. [zh] 每个脉冲的时长，s，> 0。
-        float settle_s; ///< [en] relaxation before each pulse in s, >= 0. [zh] 每个脉冲前的松弛时间，s，>= 0。
+        /**
+         * @brief [en] d-axis pulse magnitude in V, > 0.
+         * @brief [zh] d 轴脉冲幅值，V，> 0。
+         */
+        float pulse_v;
+        /**
+         * @brief [en] duration of each pulse in s, > 0.
+         * @brief [zh] 每个脉冲的时长，s，> 0。
+         */
+        float pulse_s;
+        /**
+         * @brief [en] relaxation before each pulse in s, >= 0.
+         * @brief [zh] 每个脉冲前的松弛时间，s，>= 0。
+         */
+        float settle_s;
         float
-            min_asymmetry_a; ///< [en] rise difference below which the answer is Inconclusive, >= 0. [zh] 上升差低于此值即判为 Inconclusive，>= 0。
+            /**
+             * @brief [en] rise difference below which the answer is Inconclusive, >= 0.
+             * @brief [zh] 上升差低于此值即判为 Inconclusive，>= 0。
+             */
+            min_asymmetry_a;
     };
 
     /**
@@ -93,13 +121,33 @@ class MagnetPolarityTest final {
      */
     struct Output final {
         PolarityVerdict
-            verdict;    ///< [en] Inconclusive until a pair has finished. [zh] 一对脉冲跑完前恒为 Inconclusive。
-        Ab<float> v_ab; ///< [en] voltage the caller must apply this step. [zh] 本步调用方必须施加的电压。
-        bool running;   ///< [en] false once the verdict is final. [zh] 结论确定后为 false。
+            /**
+             * @brief [en] Inconclusive until a pair has finished.
+             * @brief [zh] 一对脉冲跑完前恒为 Inconclusive。
+             */
+            verdict;
+        /**
+         * @brief [en] voltage the caller must apply this step.
+         * @brief [zh] 本步调用方必须施加的电压。
+         */
+        Ab<float> v_ab;
+        /**
+         * @brief [en] false once the verdict is final.
+         * @brief [zh] 结论确定后为 false。
+         */
+        bool running;
         float
-            delta_positive_a; ///< [en] signed current change during the +d pulse, A. [zh] +d 脉冲期间带符号的电流变化，A。
+            /**
+             * @brief [en] signed current change during the +d pulse, A.
+             * @brief [zh] +d 脉冲期间带符号的电流变化，A。
+             */
+            delta_positive_a;
         float
-            delta_negative_a; ///< [en] signed current change during the -d pulse, A. [zh] −d 脉冲期间带符号的电流变化，A。
+            /**
+             * @brief [en] signed current change during the -d pulse, A.
+             * @brief [zh] −d 脉冲期间带符号的电流变化，A。
+             */
+            delta_negative_a;
     };
 
     /**
@@ -162,9 +210,21 @@ class MagnetPolarityTest final {
     ErrorCode status_;
     Stage stage_;
     PolarityVerdict verdict_;
-    float theta_e_;            ///< [en] d-axis angle the pulses are applied along. [zh] 脉冲施加的 d 轴角度。
-    ElapsedClock stage_clock_; ///< [en] time in the current stage, as an integer clock. [zh] 当前阶段已用时间，整数钟。
-    float i_before_a_; ///< [en] current along d at the end of the preceding settle. [zh] 前一段松弛结束时的 d 轴电流。
+    /**
+     * @brief [en] d-axis angle the pulses are applied along.
+     * @brief [zh] 脉冲施加的 d 轴角度。
+     */
+    float theta_e_;
+    /**
+     * @brief [en] time in the current stage, as an integer clock.
+     * @brief [zh] 当前阶段已用时间，整数钟。
+     */
+    ElapsedClock stage_clock_;
+    /**
+     * @brief [en] current along d at the end of the preceding settle.
+     * @brief [zh] 前一段松弛结束时的 d 轴电流。
+     */
+    float i_before_a_;
     /**
  * @brief [en] The same value captured before the *positive* pulse.
  *

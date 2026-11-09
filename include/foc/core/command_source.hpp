@@ -66,8 +66,16 @@ struct StepCommandOutput final {
      * @brief [zh] Ok；配置不可用时 Param。
      */
     ErrorCode status;
-    float position_rad;  ///< [en] position reference, rad. [zh] 位置参考，rad。
-    std::int64_t pulses; ///< [en] signed pulse count, exact. [zh] 有符号脉冲计数，精确。
+    /**
+     * @brief [en] position reference, rad.
+     * @brief [zh] 位置参考，rad。
+     */
+    float position_rad;
+    /**
+     * @brief [en] signed pulse count, exact.
+     * @brief [zh] 有符号脉冲计数，精确。
+     */
+    std::int64_t pulses;
     /**
      * @brief [en] change since the previous call.
      * @brief [zh] 相对上一次调用的变化。
@@ -296,7 +304,11 @@ class AnalogCommand final {
  * @exporter
  */
 struct PpmCommandConfig final {
-    float min_us; ///< [en] the shortest valid frame, > 0. [zh] 最短有效帧，> 0。
+    /**
+     * @brief [en] the shortest valid frame, > 0.
+     * @brief [zh] 最短有效帧，> 0。
+     */
+    float min_us;
     /**
      * @brief [en] the longest valid frame, > `min_us`.
      * @brief [zh] 最长有效帧，> `min_us`。
@@ -413,7 +425,11 @@ class PpmCommand final {
 
   private:
     PpmCommandConfig config_{};
-    ElapsedClock silence_; ///< [en] how long since the last frame. [zh] 距上一帧多久。
+    /**
+     * @brief [en] how long since the last frame.
+     * @brief [zh] 距上一帧多久。
+     */
+    ElapsedClock silence_;
     float last_value_{0.0F};
 };
 

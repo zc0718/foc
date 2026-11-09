@@ -46,11 +46,11 @@ auto holding_voltage(const foc::sil::PlantParams &p, float omega_e, float id_a, 
  * @brief Power in equals copper loss plus the rate of change of stored magnetic energy plus mechanical power, at 900 rad/s electrical -- the single invariant that catches a wrong 1.5, a wrong `psi_f`, and a cross-coupling sign.
  *
  *     This is the foundation the rest of the library stands on, so it is stated as an identity rather than as a
- *     comparison between two models: `1.5*(vd*id + vq*iq) = 1.5*Rs*(id^2+iq^2) + d/dt(1.5*(Ld*id^2/2 + Lq*iq^2/2 +
- *     psi_f*id)) + Te*wm`. Run with the rotor held at speed (a dyno) and the currents driven from one operating point
- *     to another, so the stored term is not zero and the balance has to include it. 这是库其余一切所立足的地基，所以它
- *     作为恒等式陈述，而不是两个模型之间的比较。转子由测功机保持转速、电流从一个工作点到另一个工作点，于是储能项不为
- *     零，平衡必须把它算进去。
+ *     comparison between two models:
+ *     `1.5*(vd*id + vq*iq) = 1.5*Rs*(id^2+iq^2) + d/dt(1.5*(Ld*id^2/2 + Lq*iq^2/2 + psi_f*id)) + Te*wm`. Run with the
+ *     rotor held at speed (a dyno) and the currents driven from one operating point to another, so the stored term is
+ *     not zero and the balance has to include it. 这是库其余一切所立足的地基，所以它作为恒等式陈述，而不是两个模型之间
+ *     的比较。转子由测功机保持转速、电流从一个工作点到另一个工作点，于是储能项不为零，平衡必须把它算进去。
  */
 TEST(HighSpeed, ThePlantConservesPowerAtNineHundredRadPerSecondElectrical) {
     constexpr float kOmegaE = 900.0F;

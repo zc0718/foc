@@ -36,16 +36,16 @@ namespace sil {
  *     **ideal source**: the voltage stays where it was put and the books still run, which is what makes the
  *     counterfactual measurable -- the energy that should have moved the voltage shows up as a residual instead.
  *
- * @details [zh] 在这个文件存在之前，母线是一个 **常数** ：`PlantDcLink` 返回被设进去的那个值，
+ * @details [zh] 在这个文件存在之前，母线是一个 **常数** ： `PlantDcLink` 返回被设进去的那个值，
  *               `DiscreteInverter::begin_period()` 把它锁存。仓库里没有任何东西问过「这一拍有多少电荷离开了母线」，于是
  *               母线跌落不可观测，斩波器工不工作也不可观测。缺的不是板子，是一个 **端口** ：逆变器知道自己的极电压，
  *               plant 知道自己的电流，而没有人把它们乘起来。
  *
- *   符号约定只说一次，因为下面每条判据都依赖它：`i_dc` 为正表示 **流入逆变器** （电动）。节点方程是
+ *   符号约定只说一次，因为下面每条判据都依赖它： `i_dc` 为正表示 **流入逆变器** （电动）。节点方程是
  *
  *   C * dv/dt = i_source - i_dc - i_load - i_chopper
  *
- *   所以电动时电容放电、回馈时电容充电。`i_load` 是辅助负载电流，`i_chopper` 是制动电阻，两者都是"流入器件为正"。
+ *   所以电动时电容放电、回馈时电容充电。 `i_load` 是辅助负载电流， `i_chopper` 是制动电阻，两者都是"流入器件为正"。
  *   `capacitance_f <= 0` 时母线是 **理想源** ：电压停在原处，账照记——这正是让反事实可测的原因：本该把电压推动的那份能
  *   量，会以残差的形式露出来。
  * @since 0.1.0
@@ -53,20 +53,20 @@ namespace sil {
  */
 /**
  * @brief [en] The DC current that a d-q voltage/current pair draws from the bus: `1.5*(v_d*i_d + v_q*i_q) / v_bus`.
- * @brief [zh] 一对 dq 电压/电流从母线抽取的直流电流：`1.5*(v_d*i_d + v_q*i_q) / v_bus`。
+ * @brief [zh] 一对 dq 电压/电流从母线抽取的直流电流： `1.5*(v_d*i_d + v_q*i_q) / v_bus`。
  * @param v_dq [en] applied voltage in the rotor frame, V.
  * @param v_dq [zh] 施加在转子坐标系上的电压，V。
  * @param i_dq [en] current at the same instant, A.
  * @param i_dq [zh] 同一时刻的电流，A。
  * @param v_bus [en] bus voltage, V; `<= 0` answers 0 rather than a division.
- * @param v_bus [zh] 母线电压，V；`<= 0` 时答 0 而不是做除法。
+ * @param v_bus [zh] 母线电压，V； `<= 0` 时答 0 而不是做除法。
  * @return [en] current into the inverter, A, positive when motoring.
  * @return [zh] 流入逆变器的电流，A，电动为正。
  * @note [en] The `3/2` is the amplitude-invariant transform's power factor and not a fudge: this repository's `clarke`
- *            and `park` keep amplitudes, so the three-phase instantaneous power is `1.5*(v_alpha*i_alpha +
- *            v_beta*i_beta)` and the same `3/2` survives the rotation into d-q. A model built on power-invariant
- *            transforms would have no factor at all -- which is why the factor is derived here once instead of being
- *            sprinkled at call sites where it could be forgotten in one of them.
+ *            and `park` keep amplitudes, so the three-phase instantaneous power is
+ *            `1.5*(v_alpha*i_alpha + v_beta*i_beta)` and the same `3/2` survives the rotation into d-q. A model built
+ *            on power-invariant transforms would have no factor at all -- which is why the factor is derived here once
+ *            instead of being sprinkled at call sites where it could be forgotten in one of them.
  * @note [zh] `3/2` 是幅值不变型变换的功率系数，不是凑出来的：本仓库的 `clarke` 与 `park` 保持幅值，所以三相瞬时功率是
  *            `1.5*(v_alpha*i_alpha + v_beta*i_beta)`，转到 dq 之后同一个 `3/2` 仍在。用功率不变型变换建模的话根本没有这
  *            个系数——这正是把它在这里推导一次、而不是撒在各调用点的原因：撒出去就会在其中一个点上被忘掉。
@@ -103,7 +103,7 @@ struct BusParams final {
  *            says which of the two this run is, so a reader does not have to infer it.
  * @note [zh] `residual_j` 才是重点：它是守恒律 **解释不了** 的那部分。有电容时它是积分误差，必须很小；理想源时它是一个
  *            真实电容本该吸收的能量，而一段对理想源报出 `residual_j == 0` 的运行什么都没有测到——它只有一本
- *            **不可能出错** 的账，而这正是本仓库反复发现的形状。`accountable` 直接说明这次运行属于哪一种，读者不必去推
+ *            **不可能出错** 的账，而这正是本仓库反复发现的形状。 `accountable` 直接说明这次运行属于哪一种，读者不必去推
  *            断。
  * @since 0.1.0
  * @exporter

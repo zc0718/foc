@@ -41,8 +41,16 @@ class BackEmfObserver final {
      * @since 0.1.0
      */
     struct Config final {
-        float rs; ///< [en] stator resistance in ohm, >= 0. [zh] 定子电阻，Ω，>= 0。
-        float l;  ///< [en] stator inductance in H, > 0 (V1: Ld == Lq). [zh] 定子电感，H，> 0（V1：Ld == Lq）。
+        /**
+         * @brief [en] stator resistance in ohm, >= 0.
+         * @brief [zh] 定子电阻，Ω，>= 0。
+         */
+        float rs;
+        /**
+         * @brief [en] stator inductance in H, > 0 (V1: Ld == Lq).
+         * @brief [zh] 定子电感，H，> 0（V1：Ld == Lq）。
+         */
+        float l;
     };
 
     /**
@@ -139,8 +147,16 @@ class BackEmfObserver final {
 
   private:
     Config config_;
-    Ab<float> psi_;    ///< [en] flux linkage estimate in Wb (the integrator state). [zh] 磁链估计，Wb（积分器状态）。
-    Ab<float> i_prev_; ///< [en] previous current sample; makes the L*di term exact. [zh] 上次电流采样，使 L·di 项精确。
+    /**
+     * @brief [en] flux linkage estimate in Wb (the integrator state).
+     * @brief [zh] 磁链估计，Wb（积分器状态）。
+     */
+    Ab<float> psi_;
+    /**
+     * @brief [en] previous current sample; makes the L*di term exact.
+     * @brief [zh] 上次电流采样，使 L·di 项精确。
+     */
+    Ab<float> i_prev_;
     ObsState state_;
     ErrorCode status_;
     bool primed_;

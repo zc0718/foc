@@ -41,19 +41,34 @@ class StubBrakeSwitch final : public hal::BrakeSwitch {
      */
     void write_duty(float duty) noexcept override;
 
-    /** @brief [en] Open the switch. [zh] 断开开关。 */
+    /**
+     * @brief [en] Open the switch.
+     * @brief [zh] 断开开关。
+     */
     void disable() noexcept override;
 
-    /** @brief [en] The last duty written; 0 after `disable()` or before any write. [zh] 最近写入的占空比；`disable()` 之后或从未写入时为 0。 */
+    /**
+     * @brief [en] The last duty written; 0 after `disable()` or before any write.
+     * @brief [zh] 最近写入的占空比； `disable()` 之后或从未写入时为 0。
+     */
     [[nodiscard]] auto duty() const noexcept -> float;
 
-    /** @brief [en] Whether a non-zero duty is being held. [zh] 当前是否保持着非零占空比。 */
+    /**
+     * @brief [en] Whether a non-zero duty is being held.
+     * @brief [zh] 当前是否保持着非零占空比。
+     */
     [[nodiscard]] auto enabled() const noexcept -> bool;
 
-    /** @brief [en] How many times `write_duty()` was called. [zh] `write_duty()` 被调用的次数。 */
+    /**
+     * @brief [en] How many times `write_duty()` was called.
+     * @brief [zh] `write_duty()` 被调用的次数。
+     */
     [[nodiscard]] auto write_count() const noexcept -> std::uint32_t;
 
-    /** @brief [en] The configured chopping frequency, 0 before `configure()`. [zh] 已配置的斩波频率，`configure()` 之前为 0。 */
+    /**
+     * @brief [en] The configured chopping frequency, 0 before `configure()`.
+     * @brief [zh] 已配置的斩波频率， `configure()` 之前为 0。
+     */
     [[nodiscard]] auto freq_hz() const noexcept -> float;
 
   private:

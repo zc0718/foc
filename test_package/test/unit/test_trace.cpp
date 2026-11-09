@@ -444,14 +444,14 @@ auto same_sample(const foc::core::TraceSample& a, const foc::core::TraceSample& 
  *   is not duplication: they are two implementations of one contract, and the pair is the check that the contract is
  *   written down rather than invented per class.
  *
- *   `RingTrace` 只有一个容量 4 的用例，而它通过了：回绕、顺序、`dropped()` 在那里都对。覆盖率说出了用例说不出的事：时钟
- *   电机实例化的 `RingTrace<8>` 与被追踪电机实例化的 `RingTrace<64>` 是 **各自的函数** ，两者都从未覆盖过一个样本。模板
- *   的契约只被"产品用到的每个实例化"测到多少算多少——这正是手写用例清单会藏住、而按实例化测量藏不住的东西。
+ *   `RingTrace` 只有一个容量 4 的用例，而它通过了：回绕、顺序、 `dropped()` 在那里都对。覆盖率说出了用例说不出的事：时
+ *   钟电机实例化的 `RingTrace<8>` 与被追踪电机实例化的 `RingTrace<64>` 是 **各自的函数** ，两者都从未覆盖过一个样本。模
+ *   板的契约只被"产品用到的每个实例化"测到多少算多少——这正是手写用例清单会藏住、而按实例化测量藏不住的东西。
  *
  *   参照物是 `PlainLog`：它保留每次推入、投影尾部，没有回绕、没有 head、没有取模。容量 8 上推 100 次，环保留 8 个、丢掉
- *   92 个，而 `at(i)` 对 **每个** `i` 都必须等于 `log.at(8, i)`——整个环，不是抽查——`latest()` 必须等于第 100 个。对调用
- *   方数组上的 `SpanTrace` 也这么做不是重复：它们是同一份契约的两种实现，而这一对正是"契约是写下来的、不是每个类各自发
- *   明"的证据。
+ *   92 个，而 `at(i)` 对 **每个** `i` 都必须等于 `log.at(8, i)` ——整个环，不是抽查—— `latest()` 必须等于第 100 个。对调
+ *   用方数组上的 `SpanTrace` 也这么做不是重复：它们是同一份契约的两种实现，而这一对正是"契约是写下来的、不是每个类各自
+ *   发明"的证据。
  */
 TEST(Trace, BothRingsAgreeWithAModelThatCannotWrap) {
     constexpr std::uint32_t kPushes = 100U;
@@ -524,11 +524,11 @@ TEST(Trace, BothRingsAgreeWithAModelThatCannotWrap) {
  *   pushes later. "It saturated once" is not the claim; "it can never come back down" is.
  *
  *   读这个数的人要判断"收到的轨迹完不完整"。这个读者只有两个问题——"我丢了没有"和"丢了多少"——而回绕的计数器恰好在最要紧
- *   的时刻把第一个答错：`uint16_t` 上丢够 65536 个之后它读作 0，而那正是健康通道报的数。一个症状是"看起来正常"的缺陷，
+ *   的时刻把第一个答错： `uint16_t` 上丢够 65536 个之后它读作 0，而那正是健康通道报的数。一个症状是"看起来正常"的缺陷，
  *   是本库唯一不接受的那一类，所以计数器停在最大值并说明这一点。
  *
- *   判据是一条 **性质** 而不是一个边界值：往容量 1 的环里推 65537 次，计数器在 **每一步** 都必须单调、都必须等于 `min(
- *   推入次数 - 1, 65535)`，并且再过 1000 次推入仍然停在最大值。"它曾经饱和过"不是主张；"它再也降不下来"才是。
+ *   判据是一条 **性质** 而不是一个边界值：往容量 1 的环里推 65537 次，计数器在 **每一步** 都必须单调、都必须等于
+ *   `min( 推入次数 - 1, 65535)`，并且再过 1000 次推入仍然停在最大值。"它曾经饱和过"不是主张；"它再也降不下来"才是。
  */
 TEST(Trace, TheLossCounterSaturatesInsteadOfWrapping) {
     constexpr std::uint32_t kPushes = 65537U;          // 1 to fill + 65536 overwrites => one past UINT16_MAX
@@ -611,7 +611,7 @@ TEST(Trace, TheSaturationRuleIsReachableAtAnyWidth) {
  *   and the buffer's own bytes are checked to be untouched while detached -- a detached ring writing into the caller's
  *   array would be a defect that only shows up on the host that owns it.
  *
- *   `SpanTrace` 正是 C ABI 指向的东西（`src/api/bridge.cpp`），所以它的未挂载状态不是学术问题：一个请求长度为 0 的轨迹
+ *   `SpanTrace` 正是 C ABI 指向的东西（ `src/api/bridge.cpp`），所以它的未挂载状态不是学术问题：一个请求长度为 0 的轨迹
  *   缓冲、或分配失败的宿主，落到的就是这个状态，而它可能给出的两个错误答案是"解引用空指针"与"报一个尺寸"。头文件两个都
  *   不承诺。
  *

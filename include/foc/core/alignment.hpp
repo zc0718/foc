@@ -16,12 +16,36 @@ namespace core {
  * @exporter
  */
 enum class AlignState : std::uint8_t {
-    Idle = 0,   ///< [en] not started or reset. [zh] 未开始或已复位。
-    Ramp = 1,   ///< [en] current rising. [zh] 电流爬升中。
-    Settle = 2, ///< [en] holding, averaging. [zh] 保持并平均角度。
-    Verify = 3, ///< [en] quarter-turn check. [zh] 四分之一圈校验。
-    Done = 4,   ///< [en] offset is valid. [zh] 偏置有效。
-    Failed = 5, ///< [en] see failure(). [zh] 见 failure()。
+    /**
+     * @brief [en] not started or reset.
+     * @brief [zh] 未开始或已复位。
+     */
+    Idle = 0,
+    /**
+     * @brief [en] current rising.
+     * @brief [zh] 电流爬升中。
+     */
+    Ramp = 1,
+    /**
+     * @brief [en] holding, averaging.
+     * @brief [zh] 保持并平均角度。
+     */
+    Settle = 2,
+    /**
+     * @brief [en] quarter-turn check.
+     * @brief [zh] 四分之一圈校验。
+     */
+    Verify = 3,
+    /**
+     * @brief [en] offset is valid.
+     * @brief [zh] 偏置有效。
+     */
+    Done = 4,
+    /**
+     * @brief [en] see failure().
+     * @brief [zh] 见 failure()。
+     */
+    Failed = 5,
 };
 
 
@@ -37,10 +61,26 @@ enum class AlignState : std::uint8_t {
  * @exporter
  */
 enum class AlignFailure : std::uint8_t {
-    None = 0,           ///< [en] no failure. [zh] 无失败。
-    NotConfigured = 1,  ///< [en] recipe rejected. [zh] 配方被拒。
-    NotSettled = 2,     ///< [en] rotor kept moving. [zh] 转子仍在动。
-    DirectionWrong = 3, ///< [en] rotor moved backwards. [zh] 转子反向移动。
+    /**
+     * @brief [en] no failure.
+     * @brief [zh] 无失败。
+     */
+    None = 0,
+    /**
+     * @brief [en] recipe rejected.
+     * @brief [zh] 配方被拒。
+     */
+    NotConfigured = 1,
+    /**
+     * @brief [en] rotor kept moving.
+     * @brief [zh] 转子仍在动。
+     */
+    NotSettled = 2,
+    /**
+     * @brief [en] rotor moved backwards.
+     * @brief [zh] 转子反向移动。
+     */
+    DirectionWrong = 3,
 };
 
 
@@ -63,12 +103,36 @@ enum class AlignFailure : std::uint8_t {
  * @exporter
  */
 struct AlignConfig final {
-    float current_a;            ///< [en] pull strength, A (> 0). [zh] 拉力，A（> 0）。
-    float ramp_s;               ///< [en] rise time, s (0 = step). [zh] 爬升时间，s（0 = 直接给足）。
-    float hold_s;               ///< [en] window, s (> 0). [zh] 窗口，s（> 0）。
-    float settle_tolerance_rad; ///< [en] allowed spread, rad (> 0). [zh] 允许离散度，rad（> 0）。
-    float verify_s;             ///< [en] check hold, s (0 = skip). [zh] 校验保持，s（0 = 跳过）。
-    float align_angle_e_rad;    ///< [en] forced angle, rad (usually 0). [zh] 强制角，rad（通常为 0）。
+    /**
+     * @brief [en] pull strength, A (> 0).
+     * @brief [zh] 拉力，A（> 0）。
+     */
+    float current_a;
+    /**
+     * @brief [en] rise time, s (0 = step).
+     * @brief [zh] 爬升时间，s（0 = 直接给足）。
+     */
+    float ramp_s;
+    /**
+     * @brief [en] window, s (> 0).
+     * @brief [zh] 窗口，s（> 0）。
+     */
+    float hold_s;
+    /**
+     * @brief [en] allowed spread, rad (> 0).
+     * @brief [zh] 允许离散度，rad（> 0）。
+     */
+    float settle_tolerance_rad;
+    /**
+     * @brief [en] check hold, s (0 = skip).
+     * @brief [zh] 校验保持，s（0 = 跳过）。
+     */
+    float verify_s;
+    /**
+     * @brief [en] forced angle, rad (usually 0).
+     * @brief [zh] 强制角，rad（通常为 0）。
+     */
+    float align_angle_e_rad;
 };
 
 
@@ -79,8 +143,16 @@ struct AlignConfig final {
  * @exporter
  */
 struct AlignOutput final {
-    float id_a;        ///< [en] d-axis current, A. [zh] d 轴电流，A。
-    float theta_e_rad; ///< [en] forced electrical angle, rad. [zh] 强制电角度，rad。
+    /**
+     * @brief [en] d-axis current, A.
+     * @brief [zh] d 轴电流，A。
+     */
+    float id_a;
+    /**
+     * @brief [en] forced electrical angle, rad.
+     * @brief [zh] 强制电角度，rad。
+     */
+    float theta_e_rad;
     /**
      * @brief [en] The electrical speed the sequence hands over *at*, or 0 when it hands over without a pull.
      * @brief [zh] 序列交接时的电角速度；不拖动就交接时为 0。
@@ -94,8 +166,16 @@ struct AlignOutput final {
      *               止对齐就会报故障，这样的驱动无法使用。
      */
     float handover_speed_e_rad_s{0.0F};
-    bool finished; ///< [en] accepted on this tick. [zh] 本次 tick 捕获通过。
-    bool failed;   ///< [en] rejected on this tick. [zh] 本次 tick 捕获被拒。
+    /**
+     * @brief [en] accepted on this tick.
+     * @brief [zh] 本次 tick 捕获通过。
+     */
+    bool finished;
+    /**
+     * @brief [en] rejected on this tick.
+     * @brief [zh] 本次 tick 捕获被拒。
+     */
+    bool failed;
 };
 
 
@@ -289,7 +369,11 @@ class AlignRoutine final {
     AlignFailure failure_{AlignFailure::None};
     std::uint32_t pole_pairs_{0U};
     ElapsedClock
-        elapsed_; ///< [en] Integer clock: a float sum of periods drifts, then freezes. [zh] 整数钟：浮点周期累加会漂移，然后冻结。
+        /**
+         * @brief [en] Integer clock: a float sum of periods drifts, then freezes.
+         * @brief [zh] 整数钟：浮点周期累加会漂移，然后冻结。
+         */
+        elapsed_;
     float id_a_{0.0F};
     float offset_mech_rad_{0.0F};
     float spread_rad_{0.0F};

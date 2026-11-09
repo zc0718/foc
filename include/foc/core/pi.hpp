@@ -25,9 +25,21 @@ namespace core {
  * @exporter
  */
 struct SpeedInput final {
-    float target_rad_s; ///< [en] speed setpoint, rad/s. [zh] 速度给定，rad/s。
-    float kp_scale;     ///< [en] proportional scale, 0 = configured. [zh] 比例缩放，0 = 用配置值。
-    float ilimit_scale; ///< [en] integral-limit scale, 0 = configured. [zh] 积分限幅缩放，0 = 用配置值。
+    /**
+     * @brief [en] speed setpoint, rad/s.
+     * @brief [zh] 速度给定，rad/s。
+     */
+    float target_rad_s;
+    /**
+     * @brief [en] proportional scale, 0 = configured.
+     * @brief [zh] 比例缩放，0 = 用配置值。
+     */
+    float kp_scale;
+    /**
+     * @brief [en] integral-limit scale, 0 = configured.
+     * @brief [zh] 积分限幅缩放，0 = 用配置值。
+     */
+    float ilimit_scale;
 };
 
 
@@ -102,12 +114,36 @@ class Pi final {
      * @since 0.1.0
      */
     struct Config final {
-        float kp;           ///< [en] proportional gain, must be >= 0. [zh] 比例增益，必须 >= 0。
-        float ki;           ///< [en] integral gain, must be >= 0. [zh] 积分增益，必须 >= 0。
-        float out_min;      ///< [en] lower output clamp. [zh] 输出下限。
-        float out_max;      ///< [en] upper output clamp. [zh] 输出上限。
-        float integral_min; ///< [en] lower integral clamp. [zh] 积分下限。
-        float integral_max; ///< [en] upper integral clamp. [zh] 积分上限。
+        /**
+         * @brief [en] proportional gain, must be >= 0.
+         * @brief [zh] 比例增益，必须 >= 0。
+         */
+        float kp;
+        /**
+         * @brief [en] integral gain, must be >= 0.
+         * @brief [zh] 积分增益，必须 >= 0。
+         */
+        float ki;
+        /**
+         * @brief [en] lower output clamp.
+         * @brief [zh] 输出下限。
+         */
+        float out_min;
+        /**
+         * @brief [en] upper output clamp.
+         * @brief [zh] 输出上限。
+         */
+        float out_max;
+        /**
+         * @brief [en] lower integral clamp.
+         * @brief [zh] 积分下限。
+         */
+        float integral_min;
+        /**
+         * @brief [en] upper integral clamp.
+         * @brief [zh] 积分上限。
+         */
+        float integral_max;
     };
 
     /**

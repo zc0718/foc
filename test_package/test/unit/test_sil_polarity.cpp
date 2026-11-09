@@ -484,16 +484,17 @@ TEST(SilPolarity, TheAnswerFadesAsTheCosineSquaredAndTheRotorClosesTheWindow) {
  *   `Aligned` -- the wrong sign, and 96 % *larger* in magnitude than the honest 0.5651 A. A wrong answer that is louder
  *   than the right one is invisible to any magnitude check downstream.
  *
- *   The crossing is derivable with nothing but the winding: the residual decays as `exp(-t/tau)` with `tau = Ld/Rs =
- *   571 us`, and the guard releases when it falls below `min_asymmetry_a = 0.02 A`, i.e. at `tau*ln(1.791/0.020) = 2.57
- *   ms`. Measured: **refused at 2 ms, answered at 3 ms** -- the first grid point above the prediction. The precondition
- *   is therefore not a comfort margin; it is a number, and one the caller can compute for their own winding.
+ *   The crossing is derivable with nothing but the winding: the residual decays as `exp(-t/tau)` with
+ *   `tau = Ld/Rs = 571 us`, and the guard releases when it falls below `min_asymmetry_a = 0.02 A`, i.e. at
+ *   `tau*ln(1.791/0.020) = 2.57 ms`. Measured: **refused at 2 ms, answered at 3 ms** -- the first grid point above the
+ *   prediction. The precondition is therefore not a comfort margin; it is a number, and one the caller can compute for
+ *   their own winding.
  *
  *   这就是 F-47。没有护栏时的失效形态是最糟的那种：零松弛下第二个脉冲从第一个脉冲的尾巴上出发，磁钢为 `Aligned` 的机器
  *   算出 **-0.5404 A** 的不对称——符号错，幅值还比诚实的 0.5651 A **大 96 %** 。一个比正确答案更"响"的错误答案，下游任何
  *   幅值检查都看不见。
  *
- *   交界可以只用绕组推出来：残余按 `exp(-t/tau)` 衰减，`tau = Ld/Rs = 571 us`，护栏在它落到 `min_asymmetry_a = 0.02 A`
+ *   交界可以只用绕组推出来：残余按 `exp(-t/tau)` 衰减， `tau = Ld/Rs = 571 us`，护栏在它落到 `min_asymmetry_a = 0.02 A`
  *   以下时放开，即 `tau*ln(1.791/0.020) = 2.57 ms`。实测： **2 ms 被拒、 3 ms 作答** ——预测之上的第一个栅格点。所以这条
  *   前置条件不是舒适裕度；它是一个数，而且调用方可以按自己的绕组算出来。
  */

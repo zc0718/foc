@@ -60,18 +60,62 @@ template <typename T> constexpr void count_lost(T& counter) noexcept {
  * @exporter
  */
 struct TraceSample final {
-    std::uint32_t t_us;  ///< [en] platform clock, low 32 bits. [zh] 平台时钟低 32 位。
-    float i_d;           ///< [en] measured d-axis current, A. [zh] 实测 d 轴电流，A。
-    float i_q;           ///< [en] measured q-axis current, A. [zh] 实测 q 轴电流，A。
-    float i_ref_d;       ///< [en] demanded d-axis current, A. [zh] 给定的 d 轴电流，A。
-    float i_ref_q;       ///< [en] demanded q-axis current, A. [zh] 给定的 q 轴电流，A。
-    float v_d;           ///< [en] applied d-axis voltage, V. [zh] 施加的 d 轴电压，V。
-    float v_q;           ///< [en] applied q-axis voltage, V. [zh] 施加的 q 轴电压，V。
-    float speed_mech;    ///< [en] mechanical speed, rad/s. [zh] 机械转速，rad/s。
-    std::uint8_t mode;   ///< [en] `MotorState` at the end of the period. [zh] 周期结束时的 `MotorState`。
-    std::uint8_t status; ///< [en] `ErrorCode` at the end of the period. [zh] 周期结束时的 `ErrorCode`。
+    /**
+     * @brief [en] platform clock, low 32 bits.
+     * @brief [zh] 平台时钟低 32 位。
+     */
+    std::uint32_t t_us;
+    /**
+     * @brief [en] measured d-axis current, A.
+     * @brief [zh] 实测 d 轴电流，A。
+     */
+    float i_d;
+    /**
+     * @brief [en] measured q-axis current, A.
+     * @brief [zh] 实测 q 轴电流，A。
+     */
+    float i_q;
+    /**
+     * @brief [en] demanded d-axis current, A.
+     * @brief [zh] 给定的 d 轴电流，A。
+     */
+    float i_ref_d;
+    /**
+     * @brief [en] demanded q-axis current, A.
+     * @brief [zh] 给定的 q 轴电流，A。
+     */
+    float i_ref_q;
+    /**
+     * @brief [en] applied d-axis voltage, V.
+     * @brief [zh] 施加的 d 轴电压，V。
+     */
+    float v_d;
+    /**
+     * @brief [en] applied q-axis voltage, V.
+     * @brief [zh] 施加的 q 轴电压，V。
+     */
+    float v_q;
+    /**
+     * @brief [en] mechanical speed, rad/s.
+     * @brief [zh] 机械转速，rad/s。
+     */
+    float speed_mech;
+    /**
+     * @brief [en] `MotorState` at the end of the period.
+     * @brief [zh] 周期结束时的 `MotorState`。
+     */
+    std::uint8_t mode;
+    /**
+     * @brief [en] `ErrorCode` at the end of the period.
+     * @brief [zh] 周期结束时的 `ErrorCode`。
+     */
+    std::uint8_t status;
     std::uint16_t
-        pad; ///< [en] keeps the record a fixed size (36 bytes with these seven floats). [zh] 使记录为固定 36 字节。
+        /**
+         * @brief [en] keeps the record a fixed size (36 bytes with these seven floats).
+         * @brief [zh] 使记录为固定 36 字节。
+         */
+        pad;
 };
 
 

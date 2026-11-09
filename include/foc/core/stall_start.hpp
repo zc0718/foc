@@ -16,10 +16,26 @@ namespace core {
  * @exporter
  */
 enum class StallStartPhase : std::uint8_t {
-    Idle = 0,     ///< [en] not started, or reset. [zh] 未开始或已复位。
-    Ramping = 1,  ///< [en] torque rising toward the breakaway point. [zh] 力矩朝起动点上升。
-    Released = 2, ///< [en] the rotor moved; the speed loop owns the axis. [zh] 转子已动，控制权归速度环。
-    Failed = 3,   ///< [en] the torque limit was reached and the rotor never moved. [zh] 力矩到顶而转子始终未动。
+    /**
+     * @brief [en] not started, or reset.
+     * @brief [zh] 未开始或已复位。
+     */
+    Idle = 0,
+    /**
+     * @brief [en] torque rising toward the breakaway point.
+     * @brief [zh] 力矩朝起动点上升。
+     */
+    Ramping = 1,
+    /**
+     * @brief [en] the rotor moved; the speed loop owns the axis.
+     * @brief [zh] 转子已动，控制权归速度环。
+     */
+    Released = 2,
+    /**
+     * @brief [en] the torque limit was reached and the rotor never moved.
+     * @brief [zh] 力矩到顶而转子始终未动。
+     */
+    Failed = 3,
 };
 
 
@@ -72,14 +88,26 @@ struct StallStartConfig final {
  * @exporter
  */
 struct StallStartOutput final {
-    StallStartPhase phase; ///< [en] the phase after this step. [zh] 本步之后的阶段。
+    /**
+     * @brief [en] the phase after this step.
+     * @brief [zh] 本步之后的阶段。
+     */
+    StallStartPhase phase;
     /**
      * @brief [en] Ok while running; Param when the recipe is unusable; State when not started.
      * @brief [zh] 运行中为 Ok；配方不可用时为 Param；未开始时为 State。
      */
     ErrorCode status;
-    float torque_nm; ///< [en] torque to command, N*m (0 unless Ramping or Released). [zh] 要下发的力矩，N·m。
-    bool limited;    ///< [en] true when the ramp has reached `max_torque_nm`. [zh] 斜坡已到 `max_torque_nm`。
+    /**
+     * @brief [en] torque to command, N*m (0 unless Ramping or Released).
+     * @brief [zh] 要下发的力矩，N·m。
+     */
+    float torque_nm;
+    /**
+     * @brief [en] true when the ramp has reached `max_torque_nm`.
+     * @brief [zh] 斜坡已到 `max_torque_nm`。
+     */
+    bool limited;
 };
 
 
@@ -222,7 +250,10 @@ class StallStart final {
     }
 
   private:
-    /** @brief [en] The ramp evaluated at the ramp clock, clamped to the recipe's ceiling. [zh] 在爬升时钟处求值的爬升，夹到配方上限。 */
+    /**
+     * @brief [en] The ramp evaluated at the ramp clock, clamped to the recipe's ceiling.
+     * @brief [zh] 在爬升时钟处求值的爬升，夹到配方上限。
+     */
     [[nodiscard]] auto ramped_torque_nm() const noexcept -> float {
         const float ramped = config_.ramp_nm_per_s * ramp_.seconds();
         return (ramped < config_.max_torque_nm) ? ramped : config_.max_torque_nm;
@@ -230,8 +261,16 @@ class StallStart final {
 
     StallStartConfig config_{};
     StallStartPhase phase_{StallStartPhase::Idle};
-    ElapsedClock ramp_; ///< [en] how long the ramp has been climbing. [zh] 爬升已进行多久。
-    ElapsedClock hold_; ///< [en] how long it has held at the torque ceiling. [zh] 已在力矩上限上停留多久。
+    /**
+     * @brief [en] how long the ramp has been climbing.
+     * @brief [zh] 爬升已进行多久。
+     */
+    ElapsedClock ramp_;
+    /**
+     * @brief [en] how long it has held at the torque ceiling.
+     * @brief [zh] 已在力矩上限上停留多久。
+     */
+    ElapsedClock hold_;
 };
 
 

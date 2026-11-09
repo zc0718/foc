@@ -229,9 +229,9 @@ TEST(BlendedObserver, RejectsNonPositivePeriodAndResetClearsTheHandover) {
  *
  *   The output is `theta_low + w*shortest_arc(theta_high, theta_low)`, which is one line of algebra and makes the whole
  *   sensitivity table fall out: an error in the low source reaches the output at `1-w`, an error in the high source at
- *   `w`, and a *miscalibrated decision* (a speed reading off by `d omega`) moves the angle by `d omega * disagreement /
- *   span`, because the weight's own slope is `1/span`. The three coefficients are measured with stub observers whose
- *   answers are set by hand, so nothing here depends on a plant.
+ *   `w`, and a *miscalibrated decision* (a speed reading off by `d omega`) moves the angle by
+ *   `d omega * disagreement / span`, because the weight's own slope is `1/span`. The three coefficients are measured
+ *   with stub observers whose answers are set by hand, so nothing here depends on a plant.
  *
  *   The numbers below are the coefficients, not a fit: `w` comes out at exactly 0.25000 / 0.50000 / 0.75000 for 35 / 60
  *   / 85 rad/s against a 10..110 band, which is `(speed - start)/span` to the last digit the float carries.
@@ -306,8 +306,8 @@ TEST(BlendedObserver, EveryBlendCoefficientIsTheWeightOrOneMinusIt) {
  *   and 6.000 apart the other way.
  *
  *   若用普通减法算 `θ_low + w*(θ_high − θ_low)`，两个答案落在折返两侧时就会绕远路，把输出甩出将近一整圈——而且恰好发生在
- *   两个观测器意见不一致的那个边界上。在短弧上取差值才是混合对输入连续的原因；本用例用 3.0 与 3.2832 rad 的桩把它钉住——
- *   两个点在折返两侧相距 0.283，另一边则有 6.000。
+ *   两个观测器意见不一致的那个边界上。在短弧上取差值才是混合对输入连续的原因；本用例用 3.0 与 3.2832 rad 的桩把它钉住
+ *   —— 两个点在折返两侧相距 0.283，另一边则有 6.000。
  */
 TEST(BlendedObserver, TheInterpolationHappensOnTheCircleAndNotOnTheLine) {
     constexpr float kStart = 10.0F;

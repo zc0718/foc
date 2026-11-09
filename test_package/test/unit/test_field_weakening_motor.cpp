@@ -52,9 +52,10 @@ constexpr float kAngleCeilingRad = 0.15F;
  *
  * @brief [zh] 判据，写在测量之前。
  *
- *   1. **停在** 目标转速上并被告知保持，装 `FieldWeakeningReference` 的驱动器守得住 （≥ 目标的 0.97）并为此花掉 `i_d <
- *   −2 A`；同样的驱动器换成 `d = 0` 参考会掉到目标的 0.95 以下。对比才是结论：只说"它守住了 3200"也可能意味着目标没超过
- *   基速。 2. 归一化假设：若把幅值修正归一化，弱磁区角误差降到 ≤ 0.055 rad；否则维持现状， 并记录下反驳它的那个数。
+ *   1. **停在** 目标转速上并被告知保持，装 `FieldWeakeningReference` 的驱动器守得住 （≥ 目标的 0.97）并为此花掉
+ *   `i_d < −2 A`；同样的驱动器换成 `d = 0` 参考会掉到目标的 0.95 以下。对比才是结论：只说"它守住了 3200"也可能意味着目
+ *   标没超过基速。 2. 归一化假设：若把幅值修正归一化，弱磁区角误差降到 ≤ 0.055 rad；否则维持现状， 并记录下反驳它的那个
+ *   数。
  *
  * @note [en] What hypothesis 2 actually is. Normalising by `psi_target` is the *same* law with the gain divided by
  *            `psi_target` -- a factor of 210 on this machine. It is not a new law; it is a 210x gain increase wearing a
@@ -68,7 +69,7 @@ auto psi_f_of(const sil::MachineSpec &s) -> float {
 
 /**
  * @brief [en] The analytical base speed at 24 V: `omega*psi_f = v_max`.
- * @brief [zh] 24 V 下解析基速：`ω·ψf = v_max`。
+ * @brief [zh] 24 V 下解析基速： `ω·ψf = v_max`。
  */
 auto base_speed_rad(const sil::MachineSpec &s) -> float {
   return (kOneOverSqrt3 * 24.0F) / psi_f_of(s);

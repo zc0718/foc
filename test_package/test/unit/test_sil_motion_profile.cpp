@@ -134,11 +134,11 @@ TEST(SilMotionProfile, AccelLimitedMoveRespectsItsLimitsAndStillArrives) {
  *   dwell is a consequence of the two limits, not of the gain.
  *
  *   Criterion, written before this run: the smallest cruise gap agrees with `v_limit^2 / (2 * accel_limit)` within 25
- *   %, and the cruise window is non-empty (otherwise the assertion is vacuous). 本用例原本要检验的假设是 `e = v_limit /
- *   shaping_gain`，即一阶跟踪器跟斜坡的教科书跟随误差。 **实测把它否掉了** ：巡航间隙 0.496 rad，而预测 0.100；而决定性
- *   的一点是——把 shaping gain 加倍，它仍然是 0.496。一个在其所谓参数加倍时不动的数，就不是那个参数的。
+ *   %, and the cruise window is non-empty (otherwise the assertion is vacuous). 本用例原本要检验的假设是
+ *   `e = v_limit / shaping_gain`，即一阶跟踪器跟斜坡的教科书跟随误差。 **实测把它否掉了** ：巡航间隙 0.496 rad，而预测
+ *   0.100；而决定性的一点是——把 shaping gain 加倍，它仍然是 0.496。一个在其所谓参数加倍时不动的数，就不是那个参数的。
  *
- *   原因是结构性的，值得写进主张而不是留在注释里：`MotionProfile` 不产生被跟随的位置参考，它用位置误差塑造 **速度** 指
+ *   原因是结构性的，值得写进主张而不是留在注释里： `MotionProfile` 不产生被跟随的位置参考，它用位置误差塑造 **速度** 指
  *   令，所以这里没有斜坡、也就没有斜坡跟随误差。它真正给出界的是巡航在哪里结束：剩余距离降到 `v^2 / (2a)` 时开始减速，
  *   于是巡航间隙以下限的形式被那个阈值夹住，停留时间是两个限值的后果，不是增益的。
  *

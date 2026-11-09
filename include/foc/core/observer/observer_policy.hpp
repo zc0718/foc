@@ -15,8 +15,16 @@ namespace core {
  * @exporter
  */
 struct ObsState final {
-    float theta_e; ///< [en] electrical angle in rad, normalised to [0, 2*pi). [zh] 电角度，rad，归一化到 [0, 2π)。
-    float omega_e; ///< [en] electrical angular speed in rad/s. [zh] 电角速度，rad/s。
+    /**
+     * @brief [en] electrical angle in rad, normalised to [0, 2*pi).
+     * @brief [zh] 电角度，rad，归一化到 [0, 2π)。
+     */
+    float theta_e;
+    /**
+     * @brief [en] electrical angular speed in rad/s.
+     * @brief [zh] 电角速度，rad/s。
+     */
+    float omega_e;
 };
 
 

@@ -44,7 +44,11 @@ namespace core {
  * @exporter
  */
 struct FieldWeakeningAdvice final {
-    float i_char_a; ///< [en] `psi_f/Ld`, A. [zh] `ψf/Ld`，A。
+    /**
+     * @brief [en] `psi_f/Ld`, A.
+     * @brief [zh] `ψf/Ld`，A。
+     */
+    float i_char_a;
     /**
      * @brief [en] `i_char/i_max`; below 1 means the flux can be nulled inside the current limit.
      * @brief [zh] `i_char/i_max`；小于 1 表示在电流限幅内能把磁链削到零。
@@ -195,9 +199,21 @@ class FieldWeakeningReference final {
          * @brief [zh] 判定不用，保留以与其它策略对称。
          */
         float rs;
-        float l;       ///< [en] single-L model, H. [zh] 单一 L 模型，H。
-        float psi_f;   ///< [en] rotor flux linkage, Wb. [zh] 转子磁链，Wb。
-        float i_max_a; ///< [en] per-axis current limit, A. [zh] 每轴电流限幅，A。
+        /**
+         * @brief [en] single-L model, H.
+         * @brief [zh] 单一 L 模型，H。
+         */
+        float l;
+        /**
+         * @brief [en] rotor flux linkage, Wb.
+         * @brief [zh] 转子磁链，Wb。
+         */
+        float psi_f;
+        /**
+         * @brief [en] per-axis current limit, A.
+         * @brief [zh] 每轴电流限幅，A。
+         */
+        float i_max_a;
         /**
          * @brief [en] `v_max/v_bus`; `1/sqrt(3)` for SVPWM's linear range.
          * @brief [zh] `v_max/v_bus`；SVPWM 线性区取 `1/√3`。

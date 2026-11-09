@@ -43,7 +43,7 @@ struct InverterConfig final {
     std::int32_t sub_per_switch;
     /**
    * @brief [en] the gate driver's minimum transmissible pulse in s; `<= 0` = an ideal driver, which is the default.
-   * @brief [zh] 栅极驱动器能送出的最短脉冲，s；`<= 0` 表示理想驱动器，也就是默认值。
+   * @brief [zh] 栅极驱动器能送出的最短脉冲，s； `<= 0` 表示理想驱动器，也就是默认值。
    * @note [en] This is a **driver** limit, independent of the current: a commanded high window narrower than `t_min`
    *            never happens, and a commanded *low* window narrower than `t_min` means the high side never turns off.
    *            Unlike the dead time, the model does not take this from anywhere else and the library's `MinPulse` is
@@ -64,9 +64,9 @@ struct InverterConfig final {
  *   current it produces is smooth and the dead-time error is a formula that was handed to it. Any observer that reacts
  *   to ripple -- a sliding-mode observer above all -- is then being graded against the formula rather than against
  *   hardware. Here the dead-time volt-seconds are not an input: they *fall out* of "turn-off is immediate, turn-on is
- *   delayed, and whichever device still conducts is decided by the current". The identity `v_err =
- *   -(t_dead/T)*v_bus*sign(i)` is therefore a property that can be *checked* (S19 V2), not an assumption that is
- *   applied (A2's ramp is checked the same way, S19 V6).
+ *   delayed, and whichever device still conducts is decided by the current". The identity
+ *   `v_err = -(t_dead/T)*v_bus*sign(i)` is therefore a property that can be *checked* (S19 V2), not an assumption that
+ *   is applied (A2's ramp is checked the same way, S19 V6).
  *
  *   Carrier: centre-aligned, so the high window of leg x is `[(1-d)/2, (1+d)/2]*T`. Every switching period is then
  *   self-contained -- at the period boundary all three legs are commanded low -- so the model keeps
@@ -80,11 +80,11 @@ struct InverterConfig final {
  *
  * @brief [zh] 从被控对象看过去的开关逆变器：每条桥臂的门极信号、死区、续流二极管，以及由此得到的三相 极电压。
  *
- *   存在的理由：`PlantHal` 里的平均值模型在整个控制周期内保持一个电压矢量，于是它产生的 电流是平滑的、死区误差是一条被
+ *   存在的理由： `PlantHal` 里的平均值模型在整个控制周期内保持一个电压矢量，于是它产生的 电流是平滑的、死区误差是一条被
  *   喂给它的公式。任何对纹波有反应的观测器——首当其冲是滑模 观测器——因此是在对着公式打分，而不是对着硬件打分。这里死区伏
- *   秒不是输入：它从"关断立即、 开通延迟、仍导通的那只器件由电流决定"里 **落出来** 。所以 `v_err =
- *   −(t_dead/T)·v_bus·sign(i)` 是一条可以被 **检验** 的性质（S19 V2），而不是被施加的假设（A2 的斜坡同样如此，S19 V6
- *   ）。
+ *   秒不是输入：它从"关断立即、 开通延迟、仍导通的那只器件由电流决定"里 **落出来** 。所以
+ *   `v_err = −(t_dead/T)·v_bus·sign(i)` 是一条可以被 **检验** 的性质（S19 V2），而不是被施加的假设（A2 的斜坡同样如此，
+ *   S19 V6 ）。
  *
  *   载波：中心对齐，于是 x 相的高侧窗口是 `[(1-d)/2, (1+d)/2]·T`。每个开关周期因此是自包含的 ——周期边界处三相都被命令为
  *   低侧——所以模型 **不跨周期存状态** ，任何周期都能由它自己的输入复现。 这正是单周期验证（V1/V2/V3）有意义的原因。
@@ -94,11 +94,11 @@ struct InverterConfig final {
  *
  * @note [en] The neutral point is not modelled: the machine is a floating star, so only line-to-line voltages matter
  *            and the common mode cancels in the Clarke transform. That is also why `clarke(pole voltages)` must
- *            reproduce the commanded `v_ab` exactly when dead time is off (V1) -- the same identity that makes
- *            `Svpwm`'s midpoint injection equivalent to the classic sector formulation. Known idealisations, stated so
- *            the numbers are read correctly: the current sign inside a dead-time window is taken at the sub-step
- *            boundary (so a zero crossing inside one sub-step is resolved to sub-step accuracy); reverse recovery,
- *            ringing and device capacitance are absent.
+ *            reproduce the commanded `v_ab` exactly when dead time is off (V1) -- the same identity that makes `Svpwm`
+ *            's midpoint injection equivalent to the classic sector formulation. Known idealisations, stated so the
+ *            numbers are read correctly: the current sign inside a dead-time window is taken at the sub-step boundary
+ *            (so a zero crossing inside one sub-step is resolved to sub-step accuracy); reverse recovery, ringing and
+ *            device capacitance are absent.
  * @note [zh] 中性点不建模：电机是浮地星形，只有线电压有意义，共模在 Clarke 变换里自动消掉。这也是为什么 死区关闭时
  *            `clarke(极电压)` 必须精确复现指令 `v_ab`（V1）——正是同一条恒等式让 `Svpwm` 的中点 注入与经典扇区公式等价。
  *            已知的理想化，写下来是为了让数字被正确解读：死区窗口内的电流方向取子步边界处的值（所以子步 内部的过零只有
@@ -132,7 +132,7 @@ class DiscreteInverter final {
     /**
    * @brief [en] Rail-to-rail voltage loss the dead time injects per phase, `(t_dead/T)*v_bus`, V. This is the number
    *             the *verification* predicts; the model never uses it.
-   * @brief [zh] 死区每相注入的电压损失，`(t_dead/T)·v_bus`，V。这是 **验证** 要预测的数；模型自己不用它。
+   * @brief [zh] 死区每相注入的电压损失， `(t_dead/T)·v_bus`，V。这是 **验证** 要预测的数；模型自己不用它。
    */
     [[nodiscard]] auto deadtime_voltage(float v_bus) const noexcept -> float {
         return (t_sw_ > 0.0F) ? ((config_.t_dead_s / t_sw_) * v_bus) : 0.0F;

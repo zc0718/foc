@@ -174,13 +174,13 @@ TEST(StateMachine, LegalTransitionTableMatchesExpectation) {
  *   The pair is therefore the boundary one: `to = 3` (inside the set, illegal from most states) and `to = 4` (outside
  *   it). Both must answer `State` and neither may move the machine.
  *
- *   `request()` 因为两个原因拒绝：目标根本不是状态（`to >= kStateCount`），或者它是状态但边非法（
- *   `!kLegal[from][to]` ）。MC/DC 发现既有的表驱动用例只走到了第二条：它只在四个真实状态上迭代，于是第一个条件从未为
- *   真，保护那次数组查表短路的语义也就从未被演示过。这不止是覆盖率问题——越界下标正是从 int 或反序列化的枚举强转过来的产
- *   物，而它背后那次查表在缺少第一项时会越界。
+ *   `request()` 因为两个原因拒绝：目标根本不是状态（ `to >= kStateCount`），或者它是状态但边非法（
+ *   `!kLegal[from][to]`）。MC/DC 发现既有的表驱动用例只走到了第二条：它只在四个真实状态上迭代，于是第一个条件从未为真，
+ *   保护那次数组查表短路的语义也就从未被演示过。这不止是覆盖率问题——越界下标正是从 int 或反序列化的枚举强转过来的产物，
+ *   而它背后那次查表在缺少第一项时会越界。
  *
- *   所以这一对就是边界对：`to = 3`（集合内，从多数状态出发非法）与 `to = 4`（集合外）。两者都必须答 `State`，且都不许移
- *   动机器。
+ *   所以这一对就是边界对： `to = 3`（集合内，从多数状态出发非法）与 `to = 4`（集合外）。两者都必须答 `State`，且都不许
+ *   移动机器。
  */
 TEST(StateMachine, AnOutOfRangeTargetIsRefusedByADifferentConditionThanAnIllegalEdge) {
     const auto out_of_range = static_cast<foc::core::MotorState>(4);

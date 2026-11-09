@@ -34,7 +34,11 @@ namespace comm {
  * @exporter
  */
 struct FrameLayout final {
-    static constexpr std::uint8_t kStart = 0xA5U; ///< [en] start-of-frame byte. [zh] 帧起始字节。
+    /**
+     * @brief [en] start-of-frame byte.
+     * @brief [zh] 帧起始字节。
+     */
+    static constexpr std::uint8_t kStart = 0xA5U;
     /**
      * @brief [en] start + seq + type + len + crc(2).
      * @brief [zh] 起始 + seq + type + len + CRC(2)。
@@ -58,7 +62,11 @@ struct FrameLayout final {
  * @exporter
  */
 enum class FrameStatus : std::uint8_t {
-    Ok = 0, ///< [en] a whole, intact frame. [zh] 完整无损的一帧。
+    /**
+     * @brief [en] a whole, intact frame.
+     * @brief [zh] 完整无损的一帧。
+     */
+    Ok = 0,
     /**
      * @brief [en] fewer bytes than the layout requires.
      * @brief [zh] 字节数少于布局所需。
@@ -74,7 +82,11 @@ enum class FrameStatus : std::uint8_t {
      * @brief [zh] 长度字段越过了给定的缓冲区。
      */
     BadLength,
-    BadChecksum, ///< [en] the CRC does not match. [zh] CRC 不匹配。
+    /**
+     * @brief [en] the CRC does not match.
+     * @brief [zh] CRC 不匹配。
+     */
+    BadChecksum,
 };
 
 /**
@@ -98,7 +110,11 @@ struct Frame final {
      * @brief [zh] 报文类型；编解码器不解释它。
      */
     std::uint8_t type;
-    std::uint8_t length; ///< [en] payload bytes, 0..255. [zh] 负载字节数，0..255。
+    /**
+     * @brief [en] payload bytes, 0..255.
+     * @brief [zh] 负载字节数，0..255。
+     */
+    std::uint8_t length;
     /**
      * @brief [en] into the caller's buffer, `length` of them.
      * @brief [zh] 指向调用方缓冲区，共 `length` 个。

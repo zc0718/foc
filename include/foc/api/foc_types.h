@@ -4,6 +4,19 @@
 // Conan::ImportEnd
 
 /**
+ * @file foc_types.h
+ * @brief [en] The frozen C ABI data types: every handle, struct, enum and flag value a C consumer sees.
+ * @brief [zh] 冻结的 C ABI 数据类型：C 消费方看到的每个句柄、结构体、枚举与标志值。
+ * @note [en] Frozen means the numbers are the interface: a field's order and an enumerator's value may not change
+ *            without a new ABI revision, because a consumer may be compiled against an older header and linked against
+ *            this binary. `struct_size` exists for that reason in every struct here -- a smaller number is an older
+ *            header and is accepted, a larger one is refused.
+ * @note [zh] 「冻结」指的是数值本身就是接口：字段顺序与枚举值不经新的 ABI 修订不得改动，因为消费方可能用旧头编译、链接
+ *            到新二进制。每个结构体里的 `struct_size` 正是为此存在——更小的数表示更旧的头部并被接受，更大的数被拒绝。
+ * @since 0.1.0
+ */
+
+/**
  * @brief [en] Does this compiler know the attribute? 0 when it does not say.
  * @brief [zh] 这个编译器认识该属性吗？它不说就是 0。
  * @param x [en] the attribute name, without the double underscores or parentheses.
@@ -135,11 +148,31 @@ typedef struct foc_motor_params {
  */
 // NOLINTNEXTLINE(performance-enum-size) -- a C ABI enum cannot carry a C++ base type.
 typedef enum foc_observer {
-    FOC_OBSERVER_BACK_EMF = 0,       ///< back-EMF observer; the shipped default
-    FOC_OBSERVER_NONLINEAR_FLUX = 1, ///< non-linear flux observer
-    FOC_OBSERVER_HFI = 2,            ///< high-frequency injection, zero-speed
-    FOC_OBSERVER_BLENDED = 3,        ///< the blend of the two across speed
-    FOC_OBSERVER_DUAL_INDUCTANCE = 4 ///< both inductances: no d-axis bias, for MTPA and IPM
+    /**
+     * @brief [en] back-EMF observer; the shipped default
+     * @brief [zh] 反电动势观测器；出厂默认
+     */
+    FOC_OBSERVER_BACK_EMF = 0,
+    /**
+     * @brief [en] non-linear flux observer
+     * @brief [zh] 非线性磁链观测器
+     */
+    FOC_OBSERVER_NONLINEAR_FLUX = 1,
+    /**
+     * @brief [en] high-frequency injection, zero-speed
+     * @brief [zh] 高频注入，零速段
+     */
+    FOC_OBSERVER_HFI = 2,
+    /**
+     * @brief [en] the blend of the two across speed
+     * @brief [zh] 两者随转速混合
+     */
+    FOC_OBSERVER_BLENDED = 3,
+    /**
+     * @brief [en] both inductances: no d-axis bias, for MTPA and IPM
+     * @brief [zh] 双电感：无 d 轴偏置，用于 MTPA 与 IPM
+     */
+    FOC_OBSERVER_DUAL_INDUCTANCE = 4
 } foc_observer_t;
 
 /**
@@ -169,36 +202,88 @@ typedef enum foc_observer {
  * @exporter
  */
 typedef struct foc_motor_setup {
-    uint32_t struct_size; ///< sizeof(foc_motor_setup_t); smaller = an older header
-    float i_max_a;        ///< per-axis current limit, A; 0 = library default
-    float pwm_freq_hz;    ///< carrier frequency, Hz; 0 = library default
-    float deadtime_ns;    ///< inverter dead time, ns; taken literally
-    float v_bus_v;        ///< nominal DC link voltage, V; 0 = library default
-                          /** current-loop bandwidth, rad/s; 0 = library default */
+    /**
+     * @brief [en] sizeof(foc_motor_setup_t); smaller = an older header
+     * @brief [zh] sizeof(foc_motor_setup_t)；更小表示更旧的头部
+     */
+    uint32_t struct_size;
+    /**
+     * @brief [en] per-axis current limit, A; 0 = library default
+     * @brief [zh] 每轴电流限幅，A；0 = 用库默认值
+     */
+    float i_max_a;
+    /**
+     * @brief [en] carrier frequency, Hz; 0 = library default
+     * @brief [zh] 载波频率，Hz；0 = 用库默认值
+     */
+    float pwm_freq_hz;
+    /**
+     * @brief [en] inverter dead time, ns; taken literally
+     * @brief [zh] 逆变器死区，ns；按字面采用
+     */
+    float deadtime_ns;
+    /**
+     * @brief [en] nominal DC link voltage, V; 0 = library default
+     * @brief [zh] 标称母线电压，V；0 = 用库默认值
+     */
+    float v_bus_v;
+    /** current-loop bandwidth, rad/s; 0 = library default */
     float current_bandwidth_rad_s;
     /** speed-loop bandwidth, rad/s; 0 = library default */
     float speed_bandwidth_rad_s;
-    float speed_loop_period_s; ///< speed-loop period, s; 0 = every tick
-                               /** position-loop bandwidth, rad/s; 0 = library default */
+    /**
+     * @brief [en] speed-loop period, s; 0 = every tick
+     * @brief [zh] 速度环周期，s；0 = 每个 tick 都跑
+     */
+    float speed_loop_period_s;
+    /** position-loop bandwidth, rad/s; 0 = library default */
     float position_bandwidth_rad_s;
     /** speed setpoint ceiling for moves, rad/s; 0 = library default */
     float velocity_limit_rad_s;
-    float position_loop_period_s; ///< position-loop period, s; 0 = every tick
-                                  /** position velocity-command rate limit, rad/s^2; 0 = none */
+    /**
+     * @brief [en] position-loop period, s; 0 = every tick
+     * @brief [zh] 位置环周期，s；0 = 每个 tick 都跑
+     */
+    float position_loop_period_s;
+    /** position velocity-command rate limit, rad/s^2; 0 = none */
     float position_accel_limit_rad_s2;
-    float align_current_a; ///< alignment current, A; 0 = do not align
-    float align_ramp_s;    ///< alignment ramp time, s; 0 = apply at once
-    float align_hold_s;    ///< alignment hold window, s; required when aligning
-                           /** accepted spread during the hold, rad; required when aligning */
+    /**
+     * @brief [en] alignment current, A; 0 = do not align
+     * @brief [zh] 对齐电流，A；0 = 不做对齐
+     */
+    float align_current_a;
+    /**
+     * @brief [en] alignment ramp time, s; 0 = apply at once
+     * @brief [zh] 对齐斜坡时间，s；0 = 立即施加
+     */
+    float align_ramp_s;
+    /**
+     * @brief [en] alignment hold window, s; required when aligning
+     * @brief [zh] 对齐保持窗口，s；做对齐时必填
+     */
+    float align_hold_s;
+    /** accepted spread during the hold, rad; required when aligning */
     float align_tolerance_rad;
-    float align_verify_s;    ///< direction-check hold, s; 0 = skip the check
-    float align_angle_e_rad; ///< forced electrical angle, rad; 0 = the usual zero
-                             /** foc_observer_t; 0 = FOC_OBSERVER_BACK_EMF, the shipped default */
+    /**
+     * @brief [en] direction-check hold, s; 0 = skip the check
+     * @brief [zh] 方向校验保持时间，s；0 = 跳过校验
+     */
+    float align_verify_s;
+    /**
+     * @brief [en] forced electrical angle, rad; 0 = the usual zero
+     * @brief [zh] 强制电角度，rad；0 = 通常的零点
+     */
+    float align_angle_e_rad;
+    /** foc_observer_t; 0 = FOC_OBSERVER_BACK_EMF, the shipped default */
     int32_t observer;
     /** HFI carrier amplitude, peak V; required for FOC_OBSERVER_HFI */
     float inject_v;
-    float inject_hz; ///< HFI carrier frequency, Hz; required for FOC_OBSERVER_HFI
-                     /** below this speed only the injection observer runs; required for BLENDED */
+    /**
+     * @brief [en] HFI carrier frequency, Hz; required for FOC_OBSERVER_HFI
+     * @brief [zh] HFI 载波频率，Hz；选 FOC_OBSERVER_HFI 时必填
+     */
+    float inject_hz;
+    /** below this speed only the injection observer runs; required for BLENDED */
     float blend_start_rad_s;
     /** above this speed only the back-EMF observer runs; required for BLENDED */
     float blend_end_rad_s;
@@ -232,10 +317,18 @@ typedef struct foc_motor_setup {
  */
 // NOLINTNEXTLINE(performance-enum-size) -- a C ABI enum cannot carry a C++ base type, and this one is frozen: `foc::MotorState` mirrors these numbers.
 typedef enum foc_motor_state {
-    FOC_MOTOR_IDLE = 0, ///< outputs off
+    /**
+     * @brief [en] outputs off
+     * @brief [zh] 输出关闭
+     */
+    FOC_MOTOR_IDLE = 0,
     FOC_MOTOR_ALIGN = 1,
     FOC_MOTOR_RUN = 2,
-    FOC_MOTOR_FAULT = 3 ///< latched; clear with foc_motor_clear_fault()
+    /**
+     * @brief [en] latched; clear with foc_motor_clear_fault()
+     * @brief [zh] 已锁存；用 foc_motor_clear_fault() 清除
+     */
+    FOC_MOTOR_FAULT = 3
 } foc_motor_state_t;
 
 
@@ -279,16 +372,28 @@ typedef enum foc_align_failure {
  * @exporter
  */
 typedef struct foc_motor_command {
-    float position_rad;  ///< target mechanical angle, rad
-    float max_current_a; ///< q-axis ceiling for this move, A; 0 = nameplate limit
+    /**
+     * @brief [en] target mechanical angle, rad
+     * @brief [zh] 目标机械角，rad
+     */
+    float position_rad;
+    /**
+     * @brief [en] q-axis ceiling for this move, A; 0 = nameplate limit
+     * @brief [zh] 本次移动的 q 轴上限，A；0 = 铭牌限值
+     */
+    float max_current_a;
     /** q-axis current added after the speed loop, A; speed and position modes (ignored in torque mode, where the command is the reference) */
     float feedforward_current_a;
     /** speed ceiling for this move, rad/s; 0 = the controller's own */
     float max_velocity_rad_s;
     /** velocity rate limit for this move, rad/s^2; 0 = the controller's */
     float max_accel_rad_s2;
-    float kp_scale; ///< stiffness scale, 1 = configured, 0 = leave it configured
-                    /** speed-loop gain scale, 1 = configured, 0 = leave it configured */
+    /**
+     * @brief [en] stiffness scale, 1 = configured, 0 = leave it configured
+     * @brief [zh] 刚度缩放，1 = 用配置值，0 = 保持配置值不动
+     */
+    float kp_scale;
+    /** speed-loop gain scale, 1 = configured, 0 = leave it configured */
     float kd_scale;
     /** speed-loop integral-limit scale, 1 = configured, 0 = leave it */
     float ilimit_scale;
@@ -326,25 +431,69 @@ typedef struct foc_motor_command {
  * @since 0.1.0
  */
 typedef struct foc_hfi_sizing {
-    uint32_t struct_size; ///< sizeof(foc_hfi_sizing_t)
-    float inject_hz;      ///< the carrier this control rate can resolve, Hz
-                          /** peak volts that draw `hf_current_a` on this machine's d axis, V */
+    /**
+     * @brief [en] sizeof(foc_hfi_sizing_t)
+     * @brief [zh] sizeof(foc_hfi_sizing_t)
+     */
+    uint32_t struct_size;
+    /**
+     * @brief [en] the carrier this control rate can resolve, Hz
+     * @brief [zh] 该控制频率能分辨的载波，Hz
+     */
+    float inject_hz;
+    /** peak volts that draw `hf_current_a` on this machine's d axis, V */
     float inject_v;
-    float demod_lpf_hz; ///< demodulation cutoff, Hz
-    float speed_lpf_hz; ///< cutoff on the published speed, Hz
-    float hf_current_a; ///< the peak HF current `inject_v` draws, A
+    /**
+     * @brief [en] demodulation cutoff, Hz
+     * @brief [zh] 解调截止频率，Hz
+     */
+    float demod_lpf_hz;
+    /**
+     * @brief [en] cutoff on the published speed, Hz
+     * @brief [zh] 对外发布转速的截止频率，Hz
+     */
+    float speed_lpf_hz;
+    /**
+     * @brief [en] the peak HF current `inject_v` draws, A
+     * @brief [zh] `inject_v` 抽出的高频电流峰值，A
+     */
+    float hf_current_a;
 } foc_hfi_sizing_t;
 
 typedef struct foc_motor_status {
-    uint32_t struct_size;  ///< sizeof(foc_motor_status_t)
-    int32_t mode_state;    ///< foc_motor_state_t: Idle / Align / Run / Fault
-    int32_t error;         ///< last sticky error, a foc_err_t value
-    int32_t align_state;   ///< foc_align_state_t
-    int32_t align_failure; ///< foc_align_failure_t
-                           /** captured mechanical offset, rad in [0, 2*pi); valid once DONE */
+    /**
+     * @brief [en] sizeof(foc_motor_status_t)
+     * @brief [zh] sizeof(foc_motor_status_t)
+     */
+    uint32_t struct_size;
+    /**
+     * @brief [en] foc_motor_state_t: Idle / Align / Run / Fault
+     * @brief [zh] foc_motor_state_t：Idle / Align / Run / Fault
+     */
+    int32_t mode_state;
+    /**
+     * @brief [en] last sticky error, a foc_err_t value
+     * @brief [zh] 最近的粘滞错误，取 foc_err_t 的值
+     */
+    int32_t error;
+    /**
+     * @brief [en] foc_align_state_t
+     * @brief [zh] foc_align_state_t
+     */
+    int32_t align_state;
+    /**
+     * @brief [en] foc_align_failure_t
+     * @brief [zh] foc_align_failure_t
+     */
+    int32_t align_failure;
+    /** captured mechanical offset, rad in [0, 2*pi); valid once DONE */
     float align_offset_rad;
-    float align_spread_rad; ///< spread of the accepted capture, rad
-                            /** worst control-tick interval seen, us; 0 without a clock */
+    /**
+     * @brief [en] spread of the accepted capture, rad
+     * @brief [zh] 被接受那一次捕获的分散度，rad
+     */
+    float align_spread_rad;
+    /** worst control-tick interval seen, us; 0 without a clock */
     uint32_t max_period_us;
     /** the observer actually running (a foc_observer_t); appended, gated by struct_size */
     int32_t observer;
@@ -511,19 +660,71 @@ typedef enum foc_board_report_capacity { FOC_BOARD_MAX_ITEMS = 12 } foc_board_re
  */
 typedef struct foc_board_measurements {
     uint32_t struct_size;
-    float sum_current_a;      ///< mean i_u+i_v+i_w under a steady drive, A
-    float offset_a[3];        ///< zero-current reading per phase, A
-    float response_sign[3];   ///< +1 / -1 / +2 = unknown, per phase
-    float ripple_measured_a;  ///< ripple the ADC sees, A
-    float ripple_expected_a;  ///< what the switching period implies, A
-    float deadtime_v;         ///< identified dead-time volts (axis), V
-    float deadtime_cmd_v;     ///< what the board was configured with, V
-    float encoder_offset_rad; ///< residual mount offset, rad
-    float rs_ohm;             ///< identified resistance, ohm
-    float rs_nameplate_ohm;   ///< nameplate resistance, ohm
-    float psi_f_wb;           ///< identified flux linkage, Wb
-    float psi_f_nameplate_wb; ///< nameplate flux linkage, Wb
-    float observer_error_rad; ///< observer angle error on a known trajectory, rad
+    /**
+     * @brief [en] mean i_u+i_v+i_w under a steady drive, A
+     * @brief [zh] 稳态驱动下 i_u+i_v+i_w 的均值，A
+     */
+    float sum_current_a;
+    /**
+     * @brief [en] zero-current reading per phase, A
+     * @brief [zh] 每相的零电流读数，A
+     */
+    float offset_a[3];
+    /**
+     * @brief [en] +1 / -1 / +2 = unknown, per phase
+     * @brief [zh] 每相 +1 / -1 / +2 = 未知
+     */
+    float response_sign[3];
+    /**
+     * @brief [en] ripple the ADC sees, A
+     * @brief [zh] ADC 实际看到的纹波，A
+     */
+    float ripple_measured_a;
+    /**
+     * @brief [en] what the switching period implies, A
+     * @brief [zh] 开关周期所隐含的纹波，A
+     */
+    float ripple_expected_a;
+    /**
+     * @brief [en] identified dead-time volts (axis), V
+     * @brief [zh] 辨识出的死区伏秒（轴向上），V
+     */
+    float deadtime_v;
+    /**
+     * @brief [en] what the board was configured with, V
+     * @brief [zh] 板子被配置成的值，V
+     */
+    float deadtime_cmd_v;
+    /**
+     * @brief [en] residual mount offset, rad
+     * @brief [zh] 残余安装偏置，rad
+     */
+    float encoder_offset_rad;
+    /**
+     * @brief [en] identified resistance, ohm
+     * @brief [zh] 辨识出的电阻，ohm
+     */
+    float rs_ohm;
+    /**
+     * @brief [en] nameplate resistance, ohm
+     * @brief [zh] 铭牌电阻，ohm
+     */
+    float rs_nameplate_ohm;
+    /**
+     * @brief [en] identified flux linkage, Wb
+     * @brief [zh] 辨识出的磁链，Wb
+     */
+    float psi_f_wb;
+    /**
+     * @brief [en] nameplate flux linkage, Wb
+     * @brief [zh] 铭牌磁链，Wb
+     */
+    float psi_f_nameplate_wb;
+    /**
+     * @brief [en] observer angle error on a known trajectory, rad
+     * @brief [zh] 已知轨迹上的观测器角度误差，rad
+     */
+    float observer_error_rad;
 } foc_board_measurements_t;
 
 /**
@@ -534,22 +735,75 @@ typedef struct foc_board_measurements {
  */
 typedef struct foc_board_limits {
     uint32_t struct_size;
-    float sum_current_a;      ///< |sum| allowed, A
-    float offset_a;           ///< |zero reading| allowed, A
-    float ripple_ratio;       ///< measured/expected ripple ceiling
-    float deadtime_ratio;     ///< dead-time relative error allowed
-    float encoder_offset_rad; ///< residual mount offset allowed, rad
-    float parameter_ratio;    ///< Rs / psi_f relative error allowed
-    float observer_error_rad; ///< observer error allowed, rad
+    /**
+     * @brief [en] |sum| allowed, A
+     * @brief [zh] 允许的 |和|，A
+     */
+    float sum_current_a;
+    /**
+     * @brief [en] |zero reading| allowed, A
+     * @brief [zh] 允许的 |零读数|，A
+     */
+    float offset_a;
+    /**
+     * @brief [en] measured/expected ripple ceiling
+     * @brief [zh] 实测/理论纹波比的上限
+     */
+    float ripple_ratio;
+    /**
+     * @brief [en] dead-time relative error allowed
+     * @brief [zh] 允许的死区相对误差
+     */
+    float deadtime_ratio;
+    /**
+     * @brief [en] residual mount offset allowed, rad
+     * @brief [zh] 允许的残余安装偏置，rad
+     */
+    float encoder_offset_rad;
+    /**
+     * @brief [en] Rs / psi_f relative error allowed
+     * @brief [zh] 允许的 Rs / psi_f 相对误差
+     */
+    float parameter_ratio;
+    /**
+     * @brief [en] observer error allowed, rad
+     * @brief [zh] 允许的观测器误差，rad
+     */
+    float observer_error_rad;
 } foc_board_limits_t;
 
-/** @brief [en] One row of the report. [zh] 报告的一行。 @since 0.1.0 @exporter */
+/**
+ * @brief [en] One row of the report.
+ * @brief [zh] 报告的一行。
+ * @since 0.1.0
+ * @exporter
+ */
 typedef struct foc_board_reading {
-    int32_t item;  ///< FOC_BOARD_ITEM_*
-    float value;   ///< the measured number
-    float limit;   ///< the number it was compared with
-    int32_t pass;  ///< non-zero = pass
-    int32_t phase; ///< 0..2 for per-phase items, 3 otherwise
+    /**
+     * @brief [en] FOC_BOARD_ITEM_*
+     * @brief [zh] FOC_BOARD_ITEM_*
+     */
+    int32_t item;
+    /**
+     * @brief [en] the measured number
+     * @brief [zh] 实测到的数
+     */
+    float value;
+    /**
+     * @brief [en] the number it was compared with
+     * @brief [zh] 与它比较的那个数
+     */
+    float limit;
+    /**
+     * @brief [en] non-zero = pass
+     * @brief [zh] 非零 = 通过
+     */
+    int32_t pass;
+    /**
+     * @brief [en] 0..2 for per-phase items, 3 otherwise
+     * @brief [zh] 逐相项为 0..2，其它为 3
+     */
+    int32_t phase;
 } foc_board_reading_t;
 
 /**
@@ -561,10 +815,26 @@ typedef struct foc_board_reading {
 typedef struct foc_board_report {
     uint32_t struct_size;
     foc_board_reading_t items[FOC_BOARD_MAX_ITEMS];
-    int32_t count;       ///< rows filled
-    int32_t failures;    ///< rows that failed
-    int32_t cause;       ///< FOC_BOARD_CAUSE_*
-    int32_t cause_phase; ///< 0..2, or 3
+    /**
+     * @brief [en] rows filled
+     * @brief [zh] 已填入的行数
+     */
+    int32_t count;
+    /**
+     * @brief [en] rows that failed
+     * @brief [zh] 未通过的行数
+     */
+    int32_t failures;
+    /**
+     * @brief [en] FOC_BOARD_CAUSE_*
+     * @brief [zh] FOC_BOARD_CAUSE_*
+     */
+    int32_t cause;
+    /**
+     * @brief [en] 0..2, or 3
+     * @brief [zh] 0..2，或 3
+     */
+    int32_t cause_phase;
 } foc_board_report_t;
 
 /**
@@ -579,7 +849,11 @@ typedef struct foc_fw_verdict {
     float i_char_a;
     /** i_char / i_max: the region is worth having when <= 1, i.e. the current limit can null the flux */
     float ratio;
-    float speed_gain; ///< speed multiple the flux can buy
+    /**
+     * @brief [en] speed multiple the flux can buy
+     * @brief [zh] 磁链能换来的转速倍数
+     */
+    float speed_gain;
     int32_t worthwhile;
 } foc_fw_verdict_t;
 
@@ -599,11 +873,23 @@ typedef struct foc_fw_verdict {
 // 基类型保持 `int`，理由与其余几个相同：C99 的 enum 没有固定底层类型，而它跨的是同一个已冻结的 ABI。
 // NOLINTNEXTLINE(performance-enum-size)
 typedef enum foc_stall_phase {
-    FOC_STALL_IDLE = 0,    ///< not started, or cancelled
-    FOC_STALL_RAMPING = 1, ///< the sequence owns the torque command
-                           /** the rotor moved; the hand-over torque is the value to take over on */
+    /**
+     * @brief [en] not started, or cancelled
+     * @brief [zh] 未开始，或已取消
+     */
+    FOC_STALL_IDLE = 0,
+    /**
+     * @brief [en] the sequence owns the torque command
+     * @brief [zh] 序列持有转矩指令
+     */
+    FOC_STALL_RAMPING = 1,
+    /** the rotor moved; the hand-over torque is the value to take over on */
     FOC_STALL_RELEASED = 2,
-    FOC_STALL_FAILED = 3 ///< the ceiling was held and the rotor never moved
+    /**
+     * @brief [en] the ceiling was held and the rotor never moved
+     * @brief [zh] 一直顶在限幅上而转子始终没动
+     */
+    FOC_STALL_FAILED = 3
 } foc_stall_phase_t;
 
 /**
@@ -619,13 +905,25 @@ typedef enum foc_stall_phase {
  */
 typedef struct foc_stall_start_config {
     uint32_t struct_size;
-    float breakaway_nm; ///< stiction plus load the rotor must beat, N*m
-                        /** the ceiling the drive may command, N*m; must exceed breakaway_nm */
+    /**
+     * @brief [en] stiction plus load the rotor must beat, N*m
+     * @brief [zh] 转子必须越过的静摩擦加负载，N*m
+     */
+    float breakaway_nm;
+    /** the ceiling the drive may command, N*m; must exceed breakaway_nm */
     float max_torque_nm;
-    float ramp_nm_per_s; ///< how fast the torque is raised, N*m/s
-                         /** mechanical speed that counts as "it moved", rad/s */
+    /**
+     * @brief [en] how fast the torque is raised, N*m/s
+     * @brief [zh] 转矩抬升速度，N*m/s
+     */
+    float ramp_nm_per_s;
+    /** mechanical speed that counts as "it moved", rad/s */
     float release_speed_rad_s;
-    float give_up_s; ///< how long the ceiling may be held without motion, s
+    /**
+     * @brief [en] how long the ceiling may be held without motion, s
+     * @brief [zh] 顶在限幅上允许持续多久而无位移，s
+     */
+    float give_up_s;
 } foc_stall_start_config_t;
 
 /**
@@ -636,10 +934,18 @@ typedef struct foc_stall_start_config {
  */
 typedef struct foc_stall_start_status {
     uint32_t struct_size;
-    int32_t phase; ///< FOC_STALL_*
-                   /** the torque the sequence last commanded; after RELEASED this is the hand-over */
+    /**
+     * @brief [en] FOC_STALL_*
+     * @brief [zh] FOC_STALL_*
+     */
+    int32_t phase;
+    /** the torque the sequence last commanded; after RELEASED this is the hand-over */
     float torque_nm;
-    int32_t limited; ///< the ramp is at its ceiling
+    /**
+     * @brief [en] the ramp is at its ceiling
+     * @brief [zh] 斜坡已在限幅上
+     */
+    int32_t limited;
 } foc_stall_start_status_t;
 
 /**
@@ -655,12 +961,36 @@ typedef struct foc_stall_start_status {
  */
 typedef struct foc_pi_gains {
     uint32_t struct_size;
-    float kp;           ///< proportional gain
-    float ki;           ///< integral gain
-    float out_min;      ///< clamp on the controller output
-    float out_max;      ///< clamp on the controller output
-    float integral_min; ///< clamp on the integrator state
-    float integral_max; ///< clamp on the integrator state
+    /**
+     * @brief [en] proportional gain
+     * @brief [zh] 比例增益
+     */
+    float kp;
+    /**
+     * @brief [en] integral gain
+     * @brief [zh] 积分增益
+     */
+    float ki;
+    /**
+     * @brief [en] clamp on the controller output
+     * @brief [zh] 控制器输出的钳位
+     */
+    float out_min;
+    /**
+     * @brief [en] clamp on the controller output
+     * @brief [zh] 控制器输出的钳位
+     */
+    float out_max;
+    /**
+     * @brief [en] clamp on the integrator state
+     * @brief [zh] 积分器状态的钳位
+     */
+    float integral_min;
+    /**
+     * @brief [en] clamp on the integrator state
+     * @brief [zh] 积分器状态的钳位
+     */
+    float integral_max;
 } foc_pi_gains_t;
 
 /**
@@ -676,10 +1006,26 @@ typedef struct foc_pi_gains {
  */
 typedef struct foc_identify_result {
     uint32_t struct_size;
-    float value;    ///< Rs in ohm, or psi_f in Wb, depending on the call
-    float offset;   ///< the constant term the fit found, V
-    float residual; ///< rms of what the model could not explain, V
-    int32_t valid;  ///< non-zero only when the samples could support a slope
+    /**
+     * @brief [en] Rs in ohm, or psi_f in Wb, depending on the call
+     * @brief [zh] 按调用不同，为 Rs（ohm）或 psi_f（Wb）
+     */
+    float value;
+    /**
+     * @brief [en] the constant term the fit found, V
+     * @brief [zh] 拟合得到的常数项，V
+     */
+    float offset;
+    /**
+     * @brief [en] rms of what the model could not explain, V
+     * @brief [zh] 模型解释不了那部分的均方根，V
+     */
+    float residual;
+    /**
+     * @brief [en] non-zero only when the samples could support a slope
+     * @brief [zh] 只有样本足以支撑一个斜率时才非零
+     */
+    int32_t valid;
     int32_t samples;
 } foc_identify_result_t;
 
@@ -710,15 +1056,44 @@ typedef struct foc_protection_config {
     float hysteresis_ratio;
 } foc_protection_config_t;
 
-/** @brief [en] One step's measurements. [zh] 一步的测量值。 @since 0.1.0 @exporter */
+/**
+ * @brief [en] One step's measurements.
+ * @brief [zh] 一步的测量值。
+ * @since 0.1.0
+ * @exporter
+ */
 typedef struct foc_protection_input {
     uint32_t struct_size;
-    float i_magnitude_a;    ///< peak phase current, A
-    float v_bus_v;          ///< DC link, V
-    float temperature_c;    ///< hottest measured point, deg C
-    float omega_e_rad_s;    ///< electrical speed, rad/s
-    float flux_error_ratio; ///< |psi_est - psi_f| / psi_f, 0 = healthy
-    int32_t flux_valid;     ///< non-zero = the observer has an answer
+    /**
+     * @brief [en] peak phase current, A
+     * @brief [zh] 相电流峰值，A
+     */
+    float i_magnitude_a;
+    /**
+     * @brief [en] DC link, V
+     * @brief [zh] 母线电压，V
+     */
+    float v_bus_v;
+    /**
+     * @brief [en] hottest measured point, deg C
+     * @brief [zh] 实测最热点，°C
+     */
+    float temperature_c;
+    /**
+     * @brief [en] electrical speed, rad/s
+     * @brief [zh] 电角速度，rad/s
+     */
+    float omega_e_rad_s;
+    /**
+     * @brief [en] |psi_est - psi_f| / psi_f, 0 = healthy
+     * @brief [zh] |psi_est - psi_f| / psi_f，0 = 健康
+     */
+    float flux_error_ratio;
+    /**
+     * @brief [en] non-zero = the observer has an answer
+     * @brief [zh] 非零 = 观测器有答案
+     */
+    int32_t flux_valid;
 } foc_protection_input_t;
 
 /**
@@ -729,12 +1104,36 @@ typedef struct foc_protection_input {
  */
 typedef struct foc_protection_output {
     uint32_t struct_size;
-    int32_t fault;          ///< FOC_FAULT_*
-    uint32_t active_mask;   ///< bit `1 << code` per active fault
-    uint32_t latched_mask;  ///< the same, faults that will not self-clear
-    float i_limit_a;        ///< derated current limit, 0 when tripped
-    int32_t output_allowed; ///< 0 = stop switching this step
-    float i2t_budget;       ///< the thermal budget in A^2*s
+    /**
+     * @brief [en] FOC_FAULT_*
+     * @brief [zh] FOC_FAULT_*
+     */
+    int32_t fault;
+    /**
+     * @brief [en] bit `1 << code` per active fault
+     * @brief [zh] 每个活动故障一位 `1 << code`
+     */
+    uint32_t active_mask;
+    /**
+     * @brief [en] the same, faults that will not self-clear
+     * @brief [zh] 同上，但是不会自行消失的故障
+     */
+    uint32_t latched_mask;
+    /**
+     * @brief [en] derated current limit, 0 when tripped
+     * @brief [zh] 降额后的电流限值，跳闸时为 0
+     */
+    float i_limit_a;
+    /**
+     * @brief [en] 0 = stop switching this step
+     * @brief [zh] 0 = 本步停止开关
+     */
+    int32_t output_allowed;
+    /**
+     * @brief [en] the thermal budget in A^2*s
+     * @brief [zh] 热预算，A^2*s
+     */
+    float i2t_budget;
 } foc_protection_output_t;
 
 /**
@@ -750,8 +1149,16 @@ typedef struct foc_protection_output {
  * @exporter
  */
 typedef struct foc_hal_callbacks {
-    uint32_t struct_size; ///< sizeof(foc_hal_callbacks_t)
-    void *user;           ///< handed back to every callback unchanged
+    /**
+     * @brief [en] sizeof(foc_hal_callbacks_t)
+     * @brief [zh] sizeof(foc_hal_callbacks_t)
+     */
+    uint32_t struct_size;
+    /**
+     * @brief [en] handed back to every callback unchanged
+     * @brief [zh] 原样交回给每个回调
+     */
+    void *user;
 
     /** Required: receive the three phase duties, each in [0, 1]. */
     void (*pwm_write_duty)(void *user, const float duty_uvw[3]);
@@ -817,7 +1224,11 @@ typedef struct foc_hal_callbacks {
     int32_t (*read_drive_fault)(void *user);
 } foc_hal_callbacks_t;
 
-/** @brief [en] Handle to a protector instance. [zh] 保护器实例的句柄。 @since 0.1.0 */
+/**
+ * @brief [en] Handle to a protector instance.
+ * @brief [zh] 保护器实例的句柄。
+ * @since 0.1.0
+ */
 typedef struct foc_protector_s *foc_protector_t;
 
 /**
@@ -844,16 +1255,56 @@ typedef struct foc_autotune_s *foc_autotune_t;
  * @exporter
  */
 typedef struct foc_autotune_config {
-    uint32_t struct_size;   ///< sizeof(foc_autotune_config_t)
-    float kt_nm_per_a;      ///< nameplate torque constant, N*m/A
-    float j_expected_kg_m2; ///< the inertia the caller believes in, kg*m^2
-    float b_expected_nm_s;  ///< the viscous coefficient believed in, N*m*s
-    float bandwidth_rad_s;  ///< requested closed-loop bandwidth, rad/s
-    float i_max_a;          ///< current ceiling for the produced gains, A
-    float tolerance;        ///< relative distance the measured inertia may sit from j_expected
-    float min_current_a;    ///< below this peak current the window carries no information
-    float max_residual;     ///< largest normalised fit residual still called a measurement
-    int32_t min_samples;    ///< shortest window that can be called one
+    /**
+     * @brief [en] sizeof(foc_autotune_config_t)
+     * @brief [zh] sizeof(foc_autotune_config_t)
+     */
+    uint32_t struct_size;
+    /**
+     * @brief [en] nameplate torque constant, N*m/A
+     * @brief [zh] 铭牌转矩常数，N*m/A
+     */
+    float kt_nm_per_a;
+    /**
+     * @brief [en] the inertia the caller believes in, kg*m^2
+     * @brief [zh] 调用方相信的转动惯量，kg*m^2
+     */
+    float j_expected_kg_m2;
+    /**
+     * @brief [en] the viscous coefficient believed in, N*m*s
+     * @brief [zh] 所相信的粘性系数，N*m*s
+     */
+    float b_expected_nm_s;
+    /**
+     * @brief [en] requested closed-loop bandwidth, rad/s
+     * @brief [zh] 要求的闭环带宽，rad/s
+     */
+    float bandwidth_rad_s;
+    /**
+     * @brief [en] current ceiling for the produced gains, A
+     * @brief [zh] 产出增益所用的电流上限，A
+     */
+    float i_max_a;
+    /**
+     * @brief [en] relative distance the measured inertia may sit from j_expected
+     * @brief [zh] 实测惯量与 j_expected 允许的相对距离
+     */
+    float tolerance;
+    /**
+     * @brief [en] below this peak current the window carries no information
+     * @brief [zh] 低于这个峰值电流，窗口不含信息
+     */
+    float min_current_a;
+    /**
+     * @brief [en] largest normalised fit residual still called a measurement
+     * @brief [zh] 仍算作一次测量的归一化拟合残差上限
+     */
+    float max_residual;
+    /**
+     * @brief [en] shortest window that can be called one
+     * @brief [zh] 能被算作一次测量的最短窗口
+     */
+    int32_t min_samples;
 } foc_autotune_config_t;
 
 /**
@@ -870,17 +1321,61 @@ typedef struct foc_autotune_config {
  * @exporter
  */
 typedef struct foc_autotune_result {
-    uint32_t struct_size;  ///< sizeof(foc_autotune_result_t)
-    int32_t status;        ///< foc_err_t of the configuration itself
-    int32_t valid;         ///< 1 only when the window is a measurement of THIS machine
-    float kt_over_j;       ///< identified acceleration per amp, rad/s^2 per A
-    float b_over_j;        ///< identified mechanical pole, 1/s
-    float j_kg_m2;         ///< kt / (kt/J) from the nameplate kt; 0 when kt was not given
-    float kp_a_per_rad_s;  ///< proportional gain to apply
-    float ki_a_per_rad_s2; ///< integral gain to apply
-    float residual;        ///< normalised RMS residual of the fit; 0 = the model explains the window exactly
-    const char *reason;    ///< why valid is 0, for a log; "" when valid
-    int32_t samples;       ///< periods judged
+    /**
+     * @brief [en] sizeof(foc_autotune_result_t)
+     * @brief [zh] sizeof(foc_autotune_result_t)
+     */
+    uint32_t struct_size;
+    /**
+     * @brief [en] foc_err_t of the configuration itself
+     * @brief [zh] 配置本身的 foc_err_t
+     */
+    int32_t status;
+    /**
+     * @brief [en] 1 only when the window is a measurement of THIS machine
+     * @brief [zh] 窗口确实测的是 **这台** 机器时才为 1
+     */
+    int32_t valid;
+    /**
+     * @brief [en] identified acceleration per amp, rad/s^2 per A
+     * @brief [zh] 辨识出的每安培加速度，rad/s^2 per A
+     */
+    float kt_over_j;
+    /**
+     * @brief [en] identified mechanical pole, 1/s
+     * @brief [zh] 辨识出的机械极点，1/s
+     */
+    float b_over_j;
+    /**
+     * @brief [en] kt / (kt/J) from the nameplate kt; 0 when kt was not given
+     * @brief [zh] 由铭牌 kt 得到的 kt / (kt/J)；未给 kt 时为 0
+     */
+    float j_kg_m2;
+    /**
+     * @brief [en] proportional gain to apply
+     * @brief [zh] 要施加的比例增益
+     */
+    float kp_a_per_rad_s;
+    /**
+     * @brief [en] integral gain to apply
+     * @brief [zh] 要施加的积分增益
+     */
+    float ki_a_per_rad_s2;
+    /**
+     * @brief [en] normalised RMS residual of the fit; 0 = the model explains the window exactly
+     * @brief [zh] 拟合的归一化 RMS 残差；0 = 模型完全解释了这段窗口
+     */
+    float residual;
+    /**
+     * @brief [en] why valid is 0, for a log; "" when valid
+     * @brief [zh] valid 为 0 的原因，供日志用；valid 时为空串
+     */
+    const char *reason;
+    /**
+     * @brief [en] periods judged
+     * @brief [zh] 参与判定的周期数
+     */
+    int32_t samples;
 } foc_autotune_result_t;
 
 /**
@@ -914,17 +1409,61 @@ typedef struct foc_autotune_result {
  * @exporter
  */
 typedef struct foc_trace_sample {
-    uint32_t t_us;    ///< platform clock, low 32 bits; 0 = this HAL has no clock
-    float i_d;        ///< measured d-axis current, A
-    float i_q;        ///< measured q-axis current, A
-    float i_ref_d;    ///< demanded d-axis current, A
-    float i_ref_q;    ///< demanded q-axis current, A
-    float v_d;        ///< applied d-axis voltage, V
-    float v_q;        ///< applied q-axis voltage, V
-    float speed_mech; ///< mechanical speed, rad/s
-    uint8_t mode;     ///< foc_motor_state_t at the end of the period
-    uint8_t status;   ///< foc_err_t at the end of the period, as its unsigned byte
-    uint16_t pad;     ///< keeps the record a fixed size; written as 0
+    /**
+     * @brief [en] platform clock, low 32 bits; 0 = this HAL has no clock
+     * @brief [zh] 平台时钟低 32 位；0 = 该 HAL 没有时钟
+     */
+    uint32_t t_us;
+    /**
+     * @brief [en] measured d-axis current, A
+     * @brief [zh] 实测 d 轴电流，A
+     */
+    float i_d;
+    /**
+     * @brief [en] measured q-axis current, A
+     * @brief [zh] 实测 q 轴电流，A
+     */
+    float i_q;
+    /**
+     * @brief [en] demanded d-axis current, A
+     * @brief [zh] 指令 d 轴电流，A
+     */
+    float i_ref_d;
+    /**
+     * @brief [en] demanded q-axis current, A
+     * @brief [zh] 指令 q 轴电流，A
+     */
+    float i_ref_q;
+    /**
+     * @brief [en] applied d-axis voltage, V
+     * @brief [zh] 施加的 d 轴电压，V
+     */
+    float v_d;
+    /**
+     * @brief [en] applied q-axis voltage, V
+     * @brief [zh] 施加的 q 轴电压，V
+     */
+    float v_q;
+    /**
+     * @brief [en] mechanical speed, rad/s
+     * @brief [zh] 机械转速，rad/s
+     */
+    float speed_mech;
+    /**
+     * @brief [en] foc_motor_state_t at the end of the period
+     * @brief [zh] 周期结束时的 foc_motor_state_t
+     */
+    uint8_t mode;
+    /**
+     * @brief [en] foc_err_t at the end of the period, as its unsigned byte
+     * @brief [zh] 周期结束时的 foc_err_t，按其无符号字节
+     */
+    uint8_t status;
+    /**
+     * @brief [en] keeps the record a fixed size; written as 0
+     * @brief [zh] 让记录保持定长；写为 0
+     */
+    uint16_t pad;
 } foc_trace_sample_t;
 
 
@@ -943,12 +1482,24 @@ typedef struct foc_trace_sample {
  * @exporter
  */
 typedef struct foc_step_metrics {
-    uint32_t struct_size; ///< sizeof(foc_step_metrics_t)
-    int32_t status;       ///< foc_err_t of the measurement itself
-                          /** -3 dB of the fitted first-order loop, rad/s; 0 unless status is FOC_OK */
+    /**
+     * @brief [en] sizeof(foc_step_metrics_t)
+     * @brief [zh] sizeof(foc_step_metrics_t)
+     */
+    uint32_t struct_size;
+    /**
+     * @brief [en] foc_err_t of the measurement itself
+     * @brief [zh] 测量本身的 foc_err_t
+     */
+    int32_t status;
+    /** -3 dB of the fitted first-order loop, rad/s; 0 unless status is FOC_OK */
     float bandwidth_rad_s;
-    float tau_s; ///< fitted time constant, s; 1 / bandwidth_rad_s
-                 /** s from the first sample until it stays inside the band; -1 = never */
+    /**
+     * @brief [en] fitted time constant, s; 1 / bandwidth_rad_s
+     * @brief [zh] 拟合出的时间常数，s；1 / bandwidth_rad_s
+     */
+    float tau_s;
+    /** s from the first sample until it stays inside the band; -1 = never */
     float settling_s;
     /** peak beyond the target, as a fraction of the step */
     float overshoot_fraction;
@@ -972,11 +1523,23 @@ typedef struct foc_step_metrics {
  * @exporter
  */
 typedef struct foc_sinusoid_fit {
-    uint32_t struct_size; ///< sizeof(foc_sinusoid_fit_t)
-    int32_t status;       ///< foc_err_t of the fit itself
-                          /** peak amplitude of the fitted tone, same unit as the samples */
+    /**
+     * @brief [en] sizeof(foc_sinusoid_fit_t)
+     * @brief [zh] sizeof(foc_sinusoid_fit_t)
+     */
+    uint32_t struct_size;
+    /**
+     * @brief [en] foc_err_t of the fit itself
+     * @brief [zh] 拟合本身的 foc_err_t
+     */
+    int32_t status;
+    /** peak amplitude of the fitted tone, same unit as the samples */
     float amplitude;
-    float phase_rad; ///< phase of +A*cos(w*t + phase), rad
+    /**
+     * @brief [en] phase of +A*cos(w*t + phase), rad
+     * @brief [zh] +A*cos(w*t + phase) 的相位，rad
+     */
+    float phase_rad;
 } foc_sinusoid_fit_t;
 
 
@@ -992,13 +1555,41 @@ typedef struct foc_sinusoid_fit {
  * @exporter
  */
 typedef struct foc_torque_map {
-    uint32_t struct_size; ///< sizeof(foc_torque_map_t)
-    int32_t status;       ///< foc_err_t of the map itself
-    float nm_per_a;       ///< torque per q-axis amp, N*m/A
-    float reluctance;     ///< 1.5*pole_pairs*(ld - lq), N*m/A^2
-    float i_limit_a;      ///< per-axis current limit
-    float min_nm;         ///< lower torque limit after the current limit is applied, N*m
-    float max_nm;         ///< upper torque limit after the current limit is applied, N*m
+    /**
+     * @brief [en] sizeof(foc_torque_map_t)
+     * @brief [zh] sizeof(foc_torque_map_t)
+     */
+    uint32_t struct_size;
+    /**
+     * @brief [en] foc_err_t of the map itself
+     * @brief [zh] 映射本身的 foc_err_t
+     */
+    int32_t status;
+    /**
+     * @brief [en] torque per q-axis amp, N*m/A
+     * @brief [zh] 每 q 轴安培的转矩，N*m/A
+     */
+    float nm_per_a;
+    /**
+     * @brief [en] 1.5*pole_pairs*(ld - lq), N*m/A^2
+     * @brief [zh] 1.5*pole_pairs*(ld - lq)，N*m/A^2
+     */
+    float reluctance;
+    /**
+     * @brief [en] per-axis current limit
+     * @brief [zh] 每轴电流限幅
+     */
+    float i_limit_a;
+    /**
+     * @brief [en] lower torque limit after the current limit is applied, N*m
+     * @brief [zh] 施加电流限值后的转矩下限，N*m
+     */
+    float min_nm;
+    /**
+     * @brief [en] upper torque limit after the current limit is applied, N*m
+     * @brief [zh] 施加电流限值后的转矩上限，N*m
+     */
+    float max_nm;
 } foc_torque_map_t;
 
 
@@ -1013,12 +1604,36 @@ typedef struct foc_torque_map {
  * @exporter
  */
 typedef struct foc_torque_command {
-    uint32_t struct_size; ///< sizeof(foc_torque_command_t)
-    int32_t status;       ///< foc_err_t of the command
-    float torque_nm;      ///< the torque actually commanded after both limits
-    float iq_a;           ///< the q-axis current that delivers it
-    uint8_t limited;      ///< 1 when the request was clipped
-    uint8_t reserved[3];  ///< fixed layout; written as 0
+    /**
+     * @brief [en] sizeof(foc_torque_command_t)
+     * @brief [zh] sizeof(foc_torque_command_t)
+     */
+    uint32_t struct_size;
+    /**
+     * @brief [en] foc_err_t of the command
+     * @brief [zh] 指令的 foc_err_t
+     */
+    int32_t status;
+    /**
+     * @brief [en] the torque actually commanded after both limits
+     * @brief [zh] 两个限值之后实际下达的转矩
+     */
+    float torque_nm;
+    /**
+     * @brief [en] the q-axis current that delivers it
+     * @brief [zh] 把它送出去的 q 轴电流
+     */
+    float iq_a;
+    /**
+     * @brief [en] 1 when the request was clipped
+     * @brief [zh] 请求被裁剪时为 1
+     */
+    uint8_t limited;
+    /**
+     * @brief [en] fixed layout; written as 0
+     * @brief [zh] 固定布局；写为 0
+     */
+    uint8_t reserved[3];
 } foc_torque_command_t;
 
 
@@ -1035,9 +1650,21 @@ typedef struct foc_torque_command {
  * @exporter
  */
 typedef struct foc_cogging_harmonic {
-    uint32_t order;     ///< per mechanical revolution
-    float amplitude_nm; ///< peak of this harmonic, N*m; always >= 0
-    float phase_rad;    ///< phase at theta_mech = 0, rad, wrapped into (-pi, pi]
+    /**
+     * @brief [en] per mechanical revolution
+     * @brief [zh] 每机械转
+     */
+    uint32_t order;
+    /**
+     * @brief [en] peak of this harmonic, N*m; always >= 0
+     * @brief [zh] 该谐波的峰值，N*m；恒 >= 0
+     */
+    float amplitude_nm;
+    /**
+     * @brief [en] phase at theta_mech = 0, rad, wrapped into (-pi, pi]
+     * @brief [zh] theta_mech = 0 处的相位，rad，折算到 (-pi, pi]
+     */
+    float phase_rad;
 } foc_cogging_harmonic_t;
 
 /**
@@ -1064,17 +1691,61 @@ typedef struct foc_cogging_learn_s *foc_cogging_learn_t;
  * @exporter
  */
 typedef struct foc_cogging_learn_config {
-    uint32_t struct_size;  ///< sizeof(foc_cogging_learn_config_t)
-    float psi_f;           ///< permanent-magnet flux linkage, Wb
-    float ld;              ///< d-axis inductance, H; > 0
-    float lq;              ///< q-axis inductance, H; > 0
-    uint32_t pole_pairs;   ///< pole pairs; 0 is rejected
-    uint8_t orders[6];     ///< which mechanical orders to learn; 0 is rejected
-    uint32_t count;        ///< how many entries of `orders` are valid, 1..6
-    int32_t revolutions;   ///< how many mechanical revolutions the window must hold, >= 1
-    float min_speed_rad_s; ///< below this the loop's share is not measurable; refuse
-    float max_speed_rad_s; ///< above this the lag is baked in; refuse; must exceed min_speed_rad_s
-    float speed_tolerance; ///< allowed relative spread of |omega| over the window; > 0
+    /**
+     * @brief [en] sizeof(foc_cogging_learn_config_t)
+     * @brief [zh] sizeof(foc_cogging_learn_config_t)
+     */
+    uint32_t struct_size;
+    /**
+     * @brief [en] permanent-magnet flux linkage, Wb
+     * @brief [zh] 永磁磁链，Wb
+     */
+    float psi_f;
+    /**
+     * @brief [en] d-axis inductance, H; > 0
+     * @brief [zh] d 轴电感，H；> 0
+     */
+    float ld;
+    /**
+     * @brief [en] q-axis inductance, H; > 0
+     * @brief [zh] q 轴电感，H；> 0
+     */
+    float lq;
+    /**
+     * @brief [en] pole pairs; 0 is rejected
+     * @brief [zh] 极对数；0 会被拒绝
+     */
+    uint32_t pole_pairs;
+    /**
+     * @brief [en] which mechanical orders to learn; 0 is rejected
+     * @brief [zh] 要学哪几个机械次数；0 会被拒绝
+     */
+    uint8_t orders[6];
+    /**
+     * @brief [en] how many entries of `orders` are valid, 1..6
+     * @brief [zh] `orders` 里有多少项有效，1..6
+     */
+    uint32_t count;
+    /**
+     * @brief [en] how many mechanical revolutions the window must hold, >= 1
+     * @brief [zh] 窗口至少要覆盖多少机械转，>= 1
+     */
+    int32_t revolutions;
+    /**
+     * @brief [en] below this the loop's share is not measurable; refuse
+     * @brief [zh] 低于此值时环路那份不可测；拒绝
+     */
+    float min_speed_rad_s;
+    /**
+     * @brief [en] above this the lag is baked in; refuse; must exceed min_speed_rad_s
+     * @brief [zh] 高于此值滞后就已固化；拒绝；必须大于 min_speed_rad_s
+     */
+    float max_speed_rad_s;
+    /**
+     * @brief [en] allowed relative spread of |omega| over the window; > 0
+     * @brief [zh] 窗口内 |omega| 允许的相对分散度；> 0
+     */
+    float speed_tolerance;
 } foc_cogging_learn_config_t;
 
 /**
@@ -1091,12 +1762,44 @@ typedef struct foc_cogging_learn_config {
  * @exporter
  */
 typedef struct foc_cogging_learn_result {
-    uint32_t struct_size;  ///< sizeof(foc_cogging_learn_result_t)
-    int32_t status;        ///< foc_err_t: the library's own verdict on the window
-    int32_t count;         ///< how many harmonics were written; 0 when nothing was
-    int32_t required;      ///< how many entries the answer needs (the config's `count`)
-    int32_t capacity;      ///< how many entries the caller offered
-    float revolutions;     ///< mechanical revolutions the window covered
-    float speed_min_rad_s; ///< smallest |omega| seen, rad/s
-    float speed_max_rad_s; ///< largest |omega| seen, rad/s
+    /**
+     * @brief [en] sizeof(foc_cogging_learn_result_t)
+     * @brief [zh] sizeof(foc_cogging_learn_result_t)
+     */
+    uint32_t struct_size;
+    /**
+     * @brief [en] foc_err_t: the library's own verdict on the window
+     * @brief [zh] foc_err_t：库自己对这段窗口的判定
+     */
+    int32_t status;
+    /**
+     * @brief [en] how many harmonics were written; 0 when nothing was
+     * @brief [zh] 写入了多少个谐波；一个都没写时为 0
+     */
+    int32_t count;
+    /**
+     * @brief [en] how many entries the answer needs (the config's `count`)
+     * @brief [zh] 答案需要多少项（配置里的 `count`）
+     */
+    int32_t required;
+    /**
+     * @brief [en] how many entries the caller offered
+     * @brief [zh] 调用方提供了多少项
+     */
+    int32_t capacity;
+    /**
+     * @brief [en] mechanical revolutions the window covered
+     * @brief [zh] 窗口覆盖的机械转数
+     */
+    float revolutions;
+    /**
+     * @brief [en] smallest |omega| seen, rad/s
+     * @brief [zh] 窗口内见到的最小 |omega|，rad/s
+     */
+    float speed_min_rad_s;
+    /**
+     * @brief [en] largest |omega| seen, rad/s
+     * @brief [zh] 窗口内见到的最大 |omega|，rad/s
+     */
+    float speed_max_rad_s;
 } foc_cogging_learn_result_t;

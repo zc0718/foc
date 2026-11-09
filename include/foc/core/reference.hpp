@@ -28,10 +28,26 @@ namespace core {
  * @exporter
  */
 struct ReferenceInput final {
-    float iq_command_a;  ///< [en] q-axis command in A. [zh] q 轴给定，A。
-    float omega_e_rad_s; ///< [en] electrical angular speed in rad/s. [zh] 电角速度，rad/s。
-    float v_bus_v;       ///< [en] DC link voltage in V, this step. [zh] 本周期母线电压，V。
-    Dq<float> i_meas;    ///< [en] measured dq current in A. [zh] 实测 dq 电流，A。
+    /**
+     * @brief [en] q-axis command in A.
+     * @brief [zh] q 轴给定，A。
+     */
+    float iq_command_a;
+    /**
+     * @brief [en] electrical angular speed in rad/s.
+     * @brief [zh] 电角速度，rad/s。
+     */
+    float omega_e_rad_s;
+    /**
+     * @brief [en] DC link voltage in V, this step.
+     * @brief [zh] 本周期母线电压，V。
+     */
+    float v_bus_v;
+    /**
+     * @brief [en] measured dq current in A.
+     * @brief [zh] 实测 dq 电流，A。
+     */
+    Dq<float> i_meas;
 };
 
 
@@ -136,10 +152,26 @@ class MtpaReference final {
      * @since 0.1.0
      */
     struct Config final {
-        float ld;      ///< [en] d-axis inductance, H. [zh] d 轴电感，H。
-        float lq;      ///< [en] q-axis inductance, H. [zh] q 轴电感，H。
-        float psi_f;   ///< [en] rotor flux linkage, Wb. [zh] 转子磁链，Wb。
-        float i_max_a; ///< [en] per-axis current limit, A. [zh] 每轴电流限幅，A。
+        /**
+         * @brief [en] d-axis inductance, H.
+         * @brief [zh] d 轴电感，H。
+         */
+        float ld;
+        /**
+         * @brief [en] q-axis inductance, H.
+         * @brief [zh] q 轴电感，H。
+         */
+        float lq;
+        /**
+         * @brief [en] rotor flux linkage, Wb.
+         * @brief [zh] 转子磁链，Wb。
+         */
+        float psi_f;
+        /**
+         * @brief [en] per-axis current limit, A.
+         * @brief [zh] 每轴电流限幅，A。
+         */
+        float i_max_a;
         /**
          * @brief [en] How much d-axis current this machine may use per rad/s of electrical speed, A/(rad/s). Defaults
          *             to 0, which refuses d-axis current outright: that is the only value that is safe with no

@@ -23,7 +23,11 @@ struct TraceSpan final {
      * @brief [zh] 自最旧起，共 `size` 条。
      */
     const TraceSample* samples;
-    std::uint32_t size; ///< [en] retained samples. [zh] 保留的样本数。
+    /**
+     * @brief [en] retained samples.
+     * @brief [zh] 保留的样本数。
+     */
+    std::uint32_t size;
     /**
      * @brief [en] from `foc_motor_trace_dropped()`; declared, not inferred.
      * @brief [zh] 来自 `foc_motor_trace_dropped()`；是声明的，不是推出来的。
@@ -83,7 +87,11 @@ struct TraceReport final {
      * @brief [zh] Ok；参数根本无法描述一段窗口时 Param。
      */
     ErrorCode status;
-    std::uint32_t samples; ///< [en] samples considered. [zh] 计入的样本数。
+    /**
+     * @brief [en] samples considered.
+     * @brief [zh] 计入的样本数。
+     */
+    std::uint32_t samples;
     /**
      * @brief [en] declared loss before the window.
      * @brief [zh] 窗口之前声明的丢失量。
@@ -94,7 +102,11 @@ struct TraceReport final {
      * @brief [zh] 窗口内部推出的丢失量，以周期计。
      */
     std::uint32_t missing;
-    std::uint32_t gaps; ///< [en] places where the cadence broke. [zh] 节拍断掉的位置数。
+    /**
+     * @brief [en] places where the cadence broke.
+     * @brief [zh] 节拍断掉的位置数。
+     */
+    std::uint32_t gaps;
     /**
      * @brief [en] places where `t_us` went backwards.
      * @brief [zh] `t_us` 往回跳的位置数。

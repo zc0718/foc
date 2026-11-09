@@ -230,8 +230,8 @@ struct BreakawayRun final {
  *   `true_breakaway_nm` is the plant's stiction plus the constant load; `recipe_breakaway_nm` is what the caller *told*
  *   the sequence. They are separate arguments because every sensitivity row below is about the difference between them.
  *
- *   `true_breakaway_nm` 是 plant 的静摩擦加恒定负载；`recipe_breakaway_nm` 是调用方 **告诉** 序列的那个数。两者是分开的
- *   参数，因为下面每一行敏感度关心的都是它们之差。
+ *   `true_breakaway_nm` 是 plant 的静摩擦加恒定负载； `recipe_breakaway_nm` 是调用方 **告诉** 序列的那个数。两者是分开
+ *   的参数，因为下面每一行敏感度关心的都是它们之差。
  */
 auto run_breakaway(float recipe_breakaway_nm, float true_breakaway_nm, float ramp_nm_per_s,
                    int max_ticks = 40000) -> BreakawayRun {
@@ -306,7 +306,7 @@ auto run_breakaway(float recipe_breakaway_nm, float true_breakaway_nm, float ram
  *
  *   `step()` 由控制环每周期调用，不管序列有没有启动，因为配方是在配置时校验的、环路没有理由再问一次。所以 Idle 那一条分
  *   支决定了"未启动的序列是否无害"：一个从第一次 `step()` 就开始爬升的版本，会在对象一存在时就把力矩推进轴里，而整个过
- *   程中没有任何 `begin()`——只读 `torque_nm` 的调用方永远看不出原因。
+ *   程中没有任何 `begin()` ——只读 `torque_nm` 的调用方永远看不出原因。
  *
  *   伪证是 `begin()` 之后的同一次调用：它必须爬升。没有这一半，一个永远答 `State` 的 `step()` 也能过第一条断言，而那样
  *   整个模块就是死的。
@@ -413,16 +413,16 @@ TEST(StallStart, TheRampRateSetsWhenTheAxisGoesAndNotHowMuchTorqueItTakes) {
  *   so a wild over-estimate is not free: at 0.199 N*m against a 0.2 N*m limit it validates, and at 0.201 it is refused.
  *   Both halves are asserted, because "the number is harmless" and "the number is ignored" are different statements.
  *
- *   这是靠"`StallStartConfig` 里哪个字段能建敏感度表"这个问题找到的，然后去读代码：`breakaway_nm` 只出现在 `validate()`
- *   里，别处没有。斜坡不用它、松脱判定不用它、`Failed` 不用它。所以序列对 **自己听起来最重要的那个输入** 不敏感——这要么
- *   是一条值得写下来的设计属性，要么是一个缺陷，而本用例的后半段就是用来分开这两者的。
+ *   这是靠"`StallStartConfig` 里哪个字段能建敏感度表"这个问题找到的，然后去读代码： `breakaway_nm` 只出现在
+ *   `validate()` 里，别处没有。斜坡不用它、松脱判定不用它、 `Failed` 不用它。所以序列对 **自己听起来最重要的那个输入**
+ *   不敏感——这要么是一条值得写下来的设计属性，要么是一个缺陷，而本用例的后半段就是用来分开这两者的。
  *
  *   它是属性，理由正是头文件声称的机理：交接值就是转子真正动起来的那个力矩，是 **测出来的** ，所以任何配方数字都偏不了
  *   它。实测（真实起动点 0.030 N·m，配方 0.015/0.030/0.045）：三个都是 **61.3 ms 时 0.0307 N·m** 。再把同样三份配方打到
  *   起动点为 0.040 N·m 的 plant 上：三个都是 **81.0 ms 时 0.0405 N·m** ——所以这个数跟着机器走、不跟着配方走，而一个报
  *   `config_.breakaway_nm` 的版本会过第一轮、败在第二轮。
  *
- *   配方真正决定的是序列 **允不允许跑** （`max_torque_nm > breakaway_nm`），所以离谱的高估并非免费：0.199 N·m 对 0.2
+ *   配方真正决定的是序列 **允不允许跑** （ `max_torque_nm > breakaway_nm`），所以离谱的高估并非免费：0.199 N·m 对 0.2
  *   N·m 的限幅能过校验，0.201 就被拒。两半都断言，因为"这个数无害"与"这个数被忽略"是两句不同的话。
  */
 TEST(StallStart, TheRecipeBreakawayIsCheckedButNeverSteersTheHandoverValue) {
@@ -481,7 +481,7 @@ TEST(StallStart, TheRecipeBreakawayIsCheckedButNeverSteersTheHandoverValue) {
  *   是闭式的——斜坡在 `限幅/速率` 处削平、宽限从那里开始——所以它可以对着算术比，而不是对着"晚于 0.55 s"。
  *
  *   实测（0.2 N·m、0.5 N·m/s、1e-4 s 周期）：4000 拍（400.0 ms）削平，0.2 s 宽限下 `Failed` 正好落在第 **6000** 拍；
- *   0.4 s 宽限下是 **8001** 而不是 8000——`hold_s_` 是 float32 累加器，1e-4 s 加 4000 次不会正好落在 0.4 上。这一拍是
+ *   0.4 s 宽限下是 **8001** 而不是 8000—— `hold_s_` 是 float32 累加器，1e-4 s 加 4000 次不会正好落在 0.4 上。这一拍是
  *   **记录** 而不是调掉的：累加器不可能对每个周期都精确，而一条要求 8000 的判据就成了关于 float32 的判据，而不是关于这
  *   个序列的判据。
  */

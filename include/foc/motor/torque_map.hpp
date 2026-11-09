@@ -31,7 +31,11 @@ namespace foc {
  * @exporter
  */
 struct TorqueMap {
-    ErrorCode status; ///< [en] Ok / Param (nameplate cannot produce a torque). [zh] Ok / Param（铭牌不能产生力矩）。
+    /**
+     * @brief [en] Ok / Param (nameplate cannot produce a torque).
+     * @brief [zh] Ok / Param（铭牌不能产生力矩）。
+     */
+    ErrorCode status;
     /**
      * @brief [en] torque per q-axis amp, N*m/A; this is the nameplate's `kt`.
      * @brief [zh] 每安培 q 轴电流的力矩，N·m/A；即铭牌 `kt`。
@@ -43,9 +47,21 @@ struct TorqueMap {
      * @brief [zh] `1.5·极对数·(ld − lq)`，N·m/A²：使力矩同时依赖 `id` 与 `iq` 的凸极项。
      */
     float reluctance;
-    float i_limit_a; ///< [en] per-axis current limit the command is clamped to. [zh] 指令被钳制到的每轴电流限幅。
-    float min_nm;    ///< [en] lower torque limit, N*m (equal to max for a one-way command). [zh] 力矩下限，N·m。
-    float max_nm;    ///< [en] upper torque limit, N*m. [zh] 力矩上限，N·m。
+    /**
+     * @brief [en] per-axis current limit the command is clamped to.
+     * @brief [zh] 指令被钳制到的每轴电流限幅。
+     */
+    float i_limit_a;
+    /**
+     * @brief [en] lower torque limit, N*m (equal to max for a one-way command).
+     * @brief [zh] 力矩下限，N·m。
+     */
+    float min_nm;
+    /**
+     * @brief [en] upper torque limit, N*m.
+     * @brief [zh] 力矩上限，N·m。
+     */
+    float max_nm;
 };
 
 
@@ -63,10 +79,26 @@ struct TorqueMap {
  * @exporter
  */
 struct TorqueCommand {
-    ErrorCode status; ///< [en] Ok / Param (the map is unusable). [zh] Ok / Param（地图不可用）。
-    float torque_nm;  ///< [en] the torque actually commanded after both limits, N*m. [zh] 双侧限幅之后实际下发的力矩。
-    float iq_a;       ///< [en] the q-axis current that delivers it, A. [zh] 交付该力矩的 q 轴电流，A。
-    bool limited;     ///< [en] true when the request was clipped. [zh] 请求被裁剪时为真。
+    /**
+     * @brief [en] Ok / Param (the map is unusable).
+     * @brief [zh] Ok / Param（地图不可用）。
+     */
+    ErrorCode status;
+    /**
+     * @brief [en] the torque actually commanded after both limits, N*m.
+     * @brief [zh] 双侧限幅之后实际下发的力矩。
+     */
+    float torque_nm;
+    /**
+     * @brief [en] the q-axis current that delivers it, A.
+     * @brief [zh] 交付该力矩的 q 轴电流，A。
+     */
+    float iq_a;
+    /**
+     * @brief [en] true when the request was clipped.
+     * @brief [zh] 请求被裁剪时为真。
+     */
+    bool limited;
 };
 
 

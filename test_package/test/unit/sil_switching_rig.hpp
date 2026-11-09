@@ -35,8 +35,8 @@ struct SwitchingRigConfig final {
    * @brief [en] d-axis current, A. Non-zero here is what makes a salient machine behave saliently: the model error a
    *             single-`L` observer makes is `(Ld - Lq)*i_d`, so with `i_d = 0` every saliency ratio looks identical.
    *             Defaults to 0, so every existing test keeps its meaning.
-   * @brief [zh] d 轴电流，A。这里非零才是凸极机表现为凸极的条件：单 `L` 观测器的模型误差是 `(Ld − Lq)·id`，所以 `i_d =
-   *             0` 时任何凸极比看起来都一样。默认 0，既有测试含义不变。
+   * @brief [zh] d 轴电流，A。这里非零才是凸极机表现为凸极的条件：单 `L` 观测器的模型误差是 `(Ld − Lq)·id`，所以
+   *             `i_d = 0` 时任何凸极比看起来都一样。默认 0，既有测试含义不变。
    */
   float id_a{0.0F};
   /**
@@ -244,8 +244,8 @@ auto run_switched(const SwitchingRigConfig &config, Update &&update) -> float {
  * @brief [en] A textbook sliding-mode observer, **a control and not a candidate**: it exists so the gate has something
  *             that can fail. Current-error sliding surface, `z = K * sat(s / layer)` injected as a voltage, and a
  *             first-order filter on `z` to read out the equivalent control (the back-EMF).
- * @brief [zh] 教科书式滑模观测器， **是对照而不是候选** ：它的存在是为了让闸有一个能失败的对象。电流误差 滑模面，`z =
- *             K·sat(s/layer)` 作为注入电压，再对 `z` 做一阶滤波读出等效控制（反电动势）。
+ * @brief [zh] 教科书式滑模观测器， **是对照而不是候选** ：它的存在是为了让闸有一个能失败的对象。电流误差 滑模面，
+ *             `z = K·sat(s/layer)` 作为注入电压，再对 `z` 做一阶滤波读出等效控制（反电动势）。
  * @note [en] It is deliberately *sane*: it reaches ~0.03 rad on a plant with neither impairment, so a failure here is
  *            about the structure under disturbance, not about a broken straw man.
  * @note [zh] 它被刻意做得 **靠谱** ：在没有任何未建模效应的 plant 上它能到 ~0.03 rad，所以这里的失败是结构 在扰动下的问
@@ -318,10 +318,10 @@ private:
  *            switching (chatter), so it tracks speed too. These constants are fitted to the S18 record, not derived:
  *            the point of the bookkeeping is that a *single constant* provably cannot serve the envelope, not that
  *            these particular numbers are optimal.
- * @note [zh] 两个数来自同一个事实：滑模增益必须大于它要重建的反电动势，`K > |omega_e|·psi_f`；又不能比它大 太多，否则注
- *            入的抖振跟着涨。所以 `K` 有下限且正比于转速。等效控制滤波器是镜像的问题：拐点要明显 高于必须通过的信号（否
- *            则滞后），又要低到能压住开关（否则抖振），所以它也跟随转速。 这些常数是对着 S18 的记录 **拟合** 的，不是推
- *            导出来的：这份记账要说明的是"单个常数 **不可能** 覆盖整个包络"，而不是这几个数字最优。
+ * @note [zh] 两个数来自同一个事实：滑模增益必须大于它要重建的反电动势， `K > |omega_e|·psi_f`；又不能比它大 太多，否则
+ *            注入的抖振跟着涨。所以 `K` 有下限且正比于转速。等效控制滤波器是镜像的问题：拐点要明显 高于必须通过的信号（
+ *            否则滞后），又要低到能压住开关（否则抖振），所以它也跟随转速。 这些常数是对着 S18 的记录 **拟合** 的，不是
+ *            推导出来的：这份记账要说明的是"单个常数 **不可能** 覆盖整个包络"，而不是这几个数字最优。
  * @since 0.1.0
  */
 struct SmoTuning final {

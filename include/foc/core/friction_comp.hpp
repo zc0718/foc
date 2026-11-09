@@ -24,11 +24,27 @@ namespace core {
  */
 struct FrictionConfig final {
     float
-        coulomb_nm; ///< [en] kinetic friction to cancel while moving, N*m (>= 0). [zh] 运动时要抵消的库仑摩擦，N·m（>= 0）。
-    float static_nm; ///< [en] breakaway estimate, N*m (>= `coulomb_nm`). [zh] 起动点估计，N·m（>= `coulomb_nm`）。
-    float viscous_nm_per_rad_s; ///< [en] viscous coefficient, N*m*s/rad (>= 0). [zh] 粘性系数，N·m·s/rad（>= 0）。
+        /**
+         * @brief [en] kinetic friction to cancel while moving, N*m (>= 0).
+         * @brief [zh] 运动时要抵消的库仑摩擦，N·m（>= 0）。
+         */
+        coulomb_nm;
+    /**
+     * @brief [en] breakaway estimate, N*m (>= `coulomb_nm`).
+     * @brief [zh] 起动点估计，N·m（>= `coulomb_nm`）。
+     */
+    float static_nm;
+    /**
+     * @brief [en] viscous coefficient, N*m*s/rad (>= 0).
+     * @brief [zh] 粘性系数，N·m·s/rad（>= 0）。
+     */
+    float viscous_nm_per_rad_s;
     float
-        rest_band_rad_s; ///< [en] |measured speed| at or below this counts as at rest, rad/s (>= 0). [zh] 实测转速绝对值不高于此即视为静止，rad/s（>= 0）。
+        /**
+         * @brief [en] |measured speed| at or below this counts as at rest, rad/s (>= 0).
+         * @brief [zh] 实测转速绝对值不高于此即视为静止，rad/s（>= 0）。
+         */
+        rest_band_rad_s;
 };
 
 
@@ -44,8 +60,16 @@ struct FrictionOutput final {
      * @brief [zh] 正常为 `Ok`；配置不可用时为 `Param`，此时不加任何东西。
      */
     ErrorCode status;
-    float torque_nm; ///< [en] torque to add to the loop's command, N*m. [zh] 要加到环路指令上的力矩，N·m。
-    bool at_rest;    ///< [en] both speeds are inside the rest band. [zh] 两个速度都在静止带内。
+    /**
+     * @brief [en] torque to add to the loop's command, N*m.
+     * @brief [zh] 要加到环路指令上的力矩，N·m。
+     */
+    float torque_nm;
+    /**
+     * @brief [en] both speeds are inside the rest band.
+     * @brief [zh] 两个速度都在静止带内。
+     */
+    bool at_rest;
     /**
      * @brief [en] At rest while being asked for more than the breakaway estimate: the axis is stalled, or the estimate
      *             is low. Reported rather than acted on -- which of the two it is cannot be told from here.

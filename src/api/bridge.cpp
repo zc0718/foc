@@ -104,10 +104,26 @@ constexpr std::size_t kMaxMotors = 4U;
  * @since 0.1.0
  */
 struct Setup final {
-    float i_max_a;     ///< [en] per-axis current limit in A. [zh] 每轴电流限幅，A。
-    float pwm_freq_hz; ///< [en] carrier frequency in Hz. [zh] 载波频率，Hz。
-    float deadtime_ns; ///< [en] inverter dead time in ns. [zh] 逆变器死区时间，ns。
-    float v_bus_v;     ///< [en] nominal DC link voltage in V. [zh] 母线电压，V。
+    /**
+     * @brief [en] per-axis current limit in A.
+     * @brief [zh] 每轴电流限幅，A。
+     */
+    float i_max_a;
+    /**
+     * @brief [en] carrier frequency in Hz.
+     * @brief [zh] 载波频率，Hz。
+     */
+    float pwm_freq_hz;
+    /**
+     * @brief [en] inverter dead time in ns.
+     * @brief [zh] 逆变器死区时间，ns。
+     */
+    float deadtime_ns;
+    /**
+     * @brief [en] nominal DC link voltage in V.
+     * @brief [zh] 母线电压，V。
+     */
+    float v_bus_v;
     /**
      * @brief [en] position-loop period, s (0 = every tick).
      * @brief [zh] 位置环周期，s（0 = 每 tick）。
@@ -148,14 +164,26 @@ struct Setup final {
      * @brief [zh] 对齐电流，A（0 = 不对齐）。
      */
     float align_current_a;
-    float align_ramp_s; ///< [en] alignment ramp, s. [zh] 对齐爬升，s。
-    float align_hold_s; ///< [en] alignment hold window, s. [zh] 对齐保持窗口，s。
+    /**
+     * @brief [en] alignment ramp, s.
+     * @brief [zh] 对齐爬升，s。
+     */
+    float align_ramp_s;
+    /**
+     * @brief [en] alignment hold window, s.
+     * @brief [zh] 对齐保持窗口，s。
+     */
+    float align_hold_s;
     /**
      * @brief [en] accepted spread, rad.
      * @brief [zh] 允许离散度，rad。
      */
     float align_tolerance_rad;
-    float align_verify_s; ///< [en] direction check hold, s. [zh] 方向校验保持，s。
+    /**
+     * @brief [en] direction check hold, s.
+     * @brief [zh] 方向校验保持，s。
+     */
+    float align_verify_s;
     /**
      * @brief [en] which observer to run, as a `foc_observer_t`; 0 is the shipped default.
      * @brief [zh] 运行哪个观测器，取 `foc_observer_t`；0 是出厂默认。
@@ -171,7 +199,11 @@ struct Setup final {
      * @brief [zh] HFI 载波幅值，峰值 V。
      */
     float inject_v;
-    float inject_hz; ///< [en] HFI carrier frequency, Hz. [zh] HFI 载波频率，Hz。
+    /**
+     * @brief [en] HFI carrier frequency, Hz.
+     * @brief [zh] HFI 载波频率，Hz。
+     */
+    float inject_hz;
     /**
      * @brief [en] below this only the injection observer runs.
      * @brief [zh] 低于此值只用注入观测器。
@@ -898,7 +930,10 @@ auto resolve_autotune(foc_autotune_t handle) noexcept -> AutoTuneSlot* {
     return &slot;
 }
 
-/** @brief [en] Field by field: the C struct carries a `struct_size` header the C++ config does not. [zh] 逐字段：C 结构多一个 `struct_size` 头。 */
+/**
+ * @brief [en] Field by field: the C struct carries a `struct_size` header the C++ config does not.
+ * @brief [zh] 逐字段：C 结构多一个 `struct_size` 头。
+ */
 auto autotune_config(const foc_autotune_config_t& in) noexcept -> core::SpeedTuneConfig {
     core::SpeedTuneConfig out{};
     out.kt_nm_per_a = in.kt_nm_per_a;
@@ -974,8 +1009,15 @@ auto resolve_cogging_learn(foc_cogging_learn_t handle) noexcept -> CoggingLearnS
     return &slot;
 }
 
-/** @brief [en] Field by field, as everywhere else: the C struct carries a `struct_size` header the C++ config has not.</brief> */
-/** @brief [zh] 逐字段，处处如此：C 结构多一个 C++ 配置没有的 `struct_size` 头。 */
+/**
+ * @brief [en] Field by field, as everywhere else.
+ *
+ *   The C struct carries a `struct_size` header the C++ config has not.
+ *
+ * @brief [zh] 和别处一样逐字段搬运。
+ *
+ *   C 结构体带一个 `struct_size` 头，而 C++ 配置没有。
+ */
 auto cogging_config(const foc_cogging_learn_config_t& in) noexcept -> core::CoggingLearnConfig {
     core::CoggingLearnConfig out{};
     out.params = core::MachineParams{0.0F, in.ld, in.lq, in.psi_f};

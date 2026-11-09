@@ -122,13 +122,36 @@ class DualInductanceObserver final {
     };
 
     struct Config final {
-        float rs;                                  ///< [en] stator resistance in ohm, >= 0. [zh] 定子电阻，Ω，>= 0。
-        float ld;                                  ///< [en] d-axis inductance in H, > 0. [zh] d 轴电感，H，> 0。
-        float lq;                                  ///< [en] q-axis inductance in H, > 0. [zh] q 轴电感，H，> 0。
-        float psi_f;                               ///< [en] rotor flux linkage in Wb, > 0. [zh] 转子磁链，Wb，> 0。
-        FluxSource source{FluxSource::Integrator}; ///< [en] see FluxSource. [zh] 见 FluxSource。
-        float correction_gain{
-            0.2F}; ///< [en] fraction of the residual removed per step, (0, 1]; unused by `Integrator`. [zh] 每步消掉的残差比例，(0, 1]；`Integrator` 不用。
+        /**
+         * @brief [en] stator resistance in ohm, >= 0.
+         * @brief [zh] 定子电阻，Ω，>= 0。
+         */
+        float rs;
+        /**
+         * @brief [en] d-axis inductance in H, > 0.
+         * @brief [zh] d 轴电感，H，> 0。
+         */
+        float ld;
+        /**
+         * @brief [en] q-axis inductance in H, > 0.
+         * @brief [zh] q 轴电感，H，> 0。
+         */
+        float lq;
+        /**
+         * @brief [en] rotor flux linkage in Wb, > 0.
+         * @brief [zh] 转子磁链，Wb，> 0。
+         */
+        float psi_f;
+        /**
+         * @brief [en] see FluxSource.
+         * @brief [zh] 见 FluxSource。
+         */
+        FluxSource source{FluxSource::Integrator};
+        float correction_gain{/**
+             * @brief [en] fraction of the residual removed per step, (0, 1]; unused by `Integrator`.
+             * @brief [zh] 每步消掉的残差比例，(0, 1]； `Integrator` 不用。
+             */
+                              0.2F};
     };
 
     /**
@@ -304,10 +327,26 @@ class DualInductanceObserver final {
 
   private:
     Config config_;
-    float l0_;      ///< [en] (ld + lq) / 2. [zh] (ld+lq)/2。
-    float l1_;      ///< [en] (ld - lq) / 2; zero is the surface-mounted degeneracy. [zh] (ld−lq)/2；零即表贴式退化。
-    Ab<float> psi_; ///< [en] stator flux estimate in Wb (the integrator state). [zh] 定子磁链估计，Wb（积分器状态）。
-    float seed_theta_; ///< [en] angle the seed implied, for the first root choice. [zh] 种子隐含的角度，用于首次选根。
+    /**
+     * @brief [en] (ld + lq) / 2.
+     * @brief [zh] (ld+lq)/2。
+     */
+    float l0_;
+    /**
+     * @brief [en] (ld - lq) / 2; zero is the surface-mounted degeneracy.
+     * @brief [zh] (ld−lq)/2；零即表贴式退化。
+     */
+    float l1_;
+    /**
+     * @brief [en] stator flux estimate in Wb (the integrator state).
+     * @brief [zh] 定子磁链估计，Wb（积分器状态）。
+     */
+    Ab<float> psi_;
+    /**
+     * @brief [en] angle the seed implied, for the first root choice.
+     * @brief [zh] 种子隐含的角度，用于首次选根。
+     */
+    float seed_theta_;
     ObsState state_;
     ErrorCode status_;
     bool theta_primed_;

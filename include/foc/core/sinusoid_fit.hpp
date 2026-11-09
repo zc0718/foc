@@ -29,10 +29,22 @@ namespace core {
  */
 struct SinusoidFit {
     ErrorCode
-        status; ///< [en] Ok / State (window shorter than a period) / Param. [zh] Ok / State（窗口不足一周期）/ Param。
+        /**
+         * @brief [en] Ok / State (window shorter than a period) / Param.
+         * @brief [zh] Ok / State（窗口不足一周期）/ Param。
+         */
+        status;
     float
-        amplitude; ///< [en] peak amplitude of the fitted tone, same unit as the samples. [zh] 拟合出的音峰值，与样本同单位。
-    float phase_rad; ///< [en] phase of `+A*cos(w*t + phase)`, rad. [zh] `+A*cos(w*t + phase)` 的相位，rad。
+        /**
+         * @brief [en] peak amplitude of the fitted tone, same unit as the samples.
+         * @brief [zh] 拟合出的音峰值，与样本同单位。
+         */
+        amplitude;
+    /**
+     * @brief [en] phase of `+A*cos(w*t + phase)`, rad.
+     * @brief [zh] `+A*cos(w*t + phase)` 的相位，rad。
+     */
+    float phase_rad;
 };
 
 

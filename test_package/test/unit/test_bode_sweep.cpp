@@ -186,7 +186,7 @@ auto tone(std::vector<float> &y, std::size_t n, float dt, float omega, float amp
 /**
  * @brief [en] The estimator the header claims to be better than: one rectangular-window DFT bin, `2/N*|bin|`.
  *
- * @brief [zh] 头文件声称比它更好的那个估计器：矩形窗只取一个 DFT bin，`2/N·|bin|`。
+ * @brief [zh] 头文件声称比它更好的那个估计器：矩形窗只取一个 DFT bin， `2/N·|bin|`。
  *
  *   This is not a strawman and it is not a reimplementation of the thing under test: it is the *other* way to do this
  *   job, it is exact on a whole number of cycles, and the header's claim is precisely that it is biased when the window

@@ -52,9 +52,16 @@ class SpeedFromAngle final {
      * @since 0.1.0
      */
     struct Config final {
-        std::uint16_t window_ticks{
-            200U}; ///< [en] samples between the two differences, >= 2. [zh] 两次差分之间相隔的采样数，>= 2。
-        std::uint8_t pole_pairs{1U}; ///< [en] pole pairs, >= 1. [zh] 极对数，>= 1。
+        std::uint16_t window_ticks{/**
+             * @brief [en] samples between the two differences, >= 2.
+             * @brief [zh] 两次差分之间相隔的采样数，>= 2。
+             */
+                                   200U};
+        /**
+         * @brief [en] pole pairs, >= 1.
+         * @brief [zh] 极对数，>= 1。
+         */
+        std::uint8_t pole_pairs{1U};
     };
 
     /**
@@ -85,7 +92,10 @@ class SpeedFromAngle final {
      */
     [[nodiscard]] auto mech_rad_s() const noexcept -> float { return ready_ ? speed_mech_rad_s_ : 0.0F; }
 
-    /** @brief [en] Whether the window has filled at least once. [zh] 窗口是否已经填满过。 */
+    /**
+     * @brief [en] Whether the window has filled at least once.
+     * @brief [zh] 窗口是否已经填满过。
+     */
     [[nodiscard]] auto ready() const noexcept -> bool { return ready_; }
 
     /**
@@ -99,14 +109,25 @@ class SpeedFromAngle final {
      */
     [[nodiscard]] auto lost_count() const noexcept -> bool { return lost_count_; }
 
-    /** @brief [en] Back to empty, keeping the configuration. [zh] 回到空状态，保留配置。 */
+    /**
+     * @brief [en] Back to empty, keeping the configuration.
+     * @brief [zh] 回到空状态，保留配置。
+     */
     void reset() noexcept;
 
   private:
     Config config_;
     float buffer_[kMaxWindowTicks]{};
-    float continuous_rad_; ///< [en] unwrapped electrical angle. [zh] 解开折返后的电角度。
-    float previous_rad_;   ///< [en] the previous raw sample. [zh] 上一个原始采样。
+    /**
+     * @brief [en] unwrapped electrical angle.
+     * @brief [zh] 解开折返后的电角度。
+     */
+    float continuous_rad_;
+    /**
+     * @brief [en] the previous raw sample.
+     * @brief [zh] 上一个原始采样。
+     */
+    float previous_rad_;
     float speed_mech_rad_s_;
     float last_dt_s_;
     std::uint16_t filled_;

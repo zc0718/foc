@@ -34,7 +34,7 @@ constexpr float kPwmHz = 20000.0F;
 constexpr float kDeadtimeS = 1.0e-6F;
 
 /**
- * @brief The voltage a dead time of `kDeadtimeS` injects per phase at the given bus voltage: `(t_dead / T_pwm) * v_bus`, i.e. the missing volt-seconds spread over the switching period. 给定母线电压下，`kDeadtimeS` 死区每相注入的电压：`(t_dead / T_pwm) * v_bus`。
+ * @brief The voltage a dead time of `kDeadtimeS` injects per phase at the given bus voltage: `(t_dead / T_pwm) * v_bus` , i.e. the missing volt-seconds spread over the switching period. 给定母线电压下， `kDeadtimeS` 死区每相注入的电压： `(t_dead / T_pwm) * v_bus`。
  */
 auto deadtime_voltage(float v_bus) -> float {
   return (kDeadtimeS * kPwmHz) * v_bus;
@@ -425,7 +425,7 @@ TEST(SilDeadtime,
   // Three variants at three currents. `off` = no compensation, `step` =
   // the `sign()` stage, `ramp` = the fade with `predicted_ripple_a()`
   // (0.375 A for this machine). 三种变体、三个电流。`off` = 不补偿，`step`
-  // = `sign()` 环节，`ramp` = 用 `predicted_ripple_a()` （本机 0.375
+  // = `sign()` 环节，`ramp` = 用 `predicted_ripple_a()`（本机 0.375
   // A）的淡出。
   const float v_dead = kSwitchingTDead * kPwmHz * 24.0F;
   const float ripple =

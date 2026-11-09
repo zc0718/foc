@@ -127,7 +127,11 @@ class RsEstimator final {
      * @since 0.1.0
      */
     struct Result final {
-        float rs; ///< [en] stator resistance in ohm. [zh] 定子电阻，Ω。
+        /**
+         * @brief [en] stator resistance in ohm.
+         * @brief [zh] 定子电阻，Ω。
+         */
+        float rs;
         /**
          * @brief [en] the loss the fit implies, V.
          * @brief [zh] 拟合隐含的损失电压，V。
@@ -312,7 +316,11 @@ class FluxEstimator final {
      * @since 0.1.0
      */
     struct Result final {
-        float psi_f; ///< [en] rotor flux linkage in Wb. [zh] 转子磁链，Wb。
+        /**
+         * @brief [en] rotor flux linkage in Wb.
+         * @brief [zh] 转子磁链，Wb。
+         */
+        float psi_f;
         /**
          * @brief [en] the constant part of the measurement, V.
          * @brief [zh] 测量里的固定偏置，V。
@@ -494,7 +502,11 @@ class CurrentSenseCalibrator final {
          * @brief [zh] 读数 = gain·真值 + 零漂。
          */
         float gain;
-        float offset_a; ///< [en] the fitted intercept, A. [zh] 拟合截距，A。
+        /**
+         * @brief [en] the fitted intercept, A.
+         * @brief [zh] 拟合截距，A。
+         */
+        float offset_a;
         /**
          * @brief [en] rms of what the line could not explain, A.
          * @brief [zh] 直线解释不掉的部分的均方根，A。
@@ -715,7 +727,11 @@ class IncrementalInductanceEstimator final {
      * @since 0.1.0
      */
     struct Config final {
-        float rs; ///< [en] stator resistance in ohm. [zh] 定子电阻，Ω。
+        /**
+         * @brief [en] stator resistance in ohm.
+         * @brief [zh] 定子电阻，Ω。
+         */
+        float rs;
         /**
          * @brief [en] (t_dead/T_pwm)*v_bus in V; 0 = ignore.
          * @brief [zh] (t_dead/T_pwm)*v_bus，V；0 = 不计。
@@ -734,7 +750,11 @@ class IncrementalInductanceEstimator final {
      * @since 0.1.0
      */
     struct Result final {
-        float l_h; ///< [en] incremental inductance in H. [zh] 增量电感，H。
+        /**
+         * @brief [en] incremental inductance in H.
+         * @brief [zh] 增量电感，H。
+         */
+        float l_h;
         /**
          * @brief [en] the flux the step delivered, Wb.
          * @brief [zh] 阶跃交付的磁链，Wb。

@@ -47,8 +47,16 @@ struct Telemetry final {
      * @brief [zh] 机械速度，rad/s。
      */
     float speed_mech_rad_s;
-    float id_a; ///< [en] measured d-axis current in A. [zh] 实测 d 轴电流，A。
-    float iq_a; ///< [en] measured q-axis current in A. [zh] 实测 q 轴电流，A。
+    /**
+     * @brief [en] measured d-axis current in A.
+     * @brief [zh] 实测 d 轴电流，A。
+     */
+    float id_a;
+    /**
+     * @brief [en] measured q-axis current in A.
+     * @brief [zh] 实测 q 轴电流，A。
+     */
+    float iq_a;
     /**
      * @brief [en] worst tick interval, us.
      * @brief [zh] 最差 tick 间隔，us。
@@ -64,8 +72,16 @@ struct Telemetry final {
  * @exporter
  */
 enum class ReferenceMode : std::uint8_t {
-    Torque = 0, ///< [en] iq is commanded directly. [zh] 直接给定 iq。
-    Speed = 1,  ///< [en] the speed controller produces iq. [zh] 由速度环产生 iq。
+    /**
+     * @brief [en] iq is commanded directly.
+     * @brief [zh] 直接给定 iq。
+     */
+    Torque = 0,
+    /**
+     * @brief [en] the speed controller produces iq.
+     * @brief [zh] 由速度环产生 iq。
+     */
+    Speed = 1,
     /**
      * @brief [en] the position loop produces the speed setpoint.
      * @brief [zh] 由位置环产生速度给定。

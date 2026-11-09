@@ -18,10 +18,26 @@ namespace core {
  * @exporter
  */
 enum class HomingState : std::uint8_t {
-    Idle = 0,   ///< [en] not started or reset. [zh] 未开始或已复位。
-    Creep = 1,  ///< [en] turning slowly, waiting for the index mark. [zh] 慢速旋转，等待索引标记。
-    Done = 2,   ///< [en] the origin is established. [zh] 原点已建立。
-    Failed = 3, ///< [en] the search gave up. [zh] 搜索放弃。
+    /**
+     * @brief [en] not started or reset.
+     * @brief [zh] 未开始或已复位。
+     */
+    Idle = 0,
+    /**
+     * @brief [en] turning slowly, waiting for the index mark.
+     * @brief [zh] 慢速旋转，等待索引标记。
+     */
+    Creep = 1,
+    /**
+     * @brief [en] the origin is established.
+     * @brief [zh] 原点已建立。
+     */
+    Done = 2,
+    /**
+     * @brief [en] the search gave up.
+     * @brief [zh] 搜索放弃。
+     */
+    Failed = 3,
 };
 
 
@@ -32,9 +48,21 @@ enum class HomingState : std::uint8_t {
  * @exporter
  */
 enum class HomingFailure : std::uint8_t {
-    None = 0,          ///< [en] no failure. [zh] 无失败。
-    NotConfigured = 1, ///< [en] the recipe was rejected. [zh] 配方被拒。
-    TimedOut = 2,      ///< [en] the mark was never seen. [zh] 从未见到标记。
+    /**
+     * @brief [en] no failure.
+     * @brief [zh] 无失败。
+     */
+    None = 0,
+    /**
+     * @brief [en] the recipe was rejected.
+     * @brief [zh] 配方被拒。
+     */
+    NotConfigured = 1,
+    /**
+     * @brief [en] the mark was never seen.
+     * @brief [zh] 从未见到标记。
+     */
+    TimedOut = 2,
 };
 
 
@@ -50,9 +78,21 @@ enum class HomingFailure : std::uint8_t {
  * @exporter
  */
 struct HomingConfig final {
-    float creep_speed_rad_s; ///< [en] |speed| while searching, rad/s (> 0). [zh] 搜索时的转速绝对值，rad/s（> 0）。
-    float timeout_s;         ///< [en] give up after this long, s (> 0). [zh] 超过这个时间就放弃，s（> 0）。
-    int8_t direction;        ///< [en] +1 or -1; which way to turn. [zh] +1 或 -1；朝哪边转。
+    /**
+     * @brief [en] |speed| while searching, rad/s (> 0).
+     * @brief [zh] 搜索时的转速绝对值，rad/s（> 0）。
+     */
+    float creep_speed_rad_s;
+    /**
+     * @brief [en] give up after this long, s (> 0).
+     * @brief [zh] 超过这个时间就放弃，s（> 0）。
+     */
+    float timeout_s;
+    /**
+     * @brief [en] +1 or -1; which way to turn.
+     * @brief [zh] +1 或 -1；朝哪边转。
+     */
+    int8_t direction;
 };
 
 
@@ -96,9 +136,17 @@ class HomingRoutine final {
      * @exporter
      */
     struct Output final {
-        float speed_ref_rad_s{0.0F}; ///< [en] speed command, 0 unless searching. [zh] 转速指令，非搜索期间为 0。
+        /**
+         * @brief [en] speed command, 0 unless searching.
+         * @brief [zh] 转速指令，非搜索期间为 0。
+         */
+        float speed_ref_rad_s{0.0F};
         HomingState state{HomingState::Idle};
-        bool finished{false}; ///< [en] `Done` or `Failed`; either way the caller stops here. [zh] `Done` 或 `Failed`。
+        /**
+         * @brief [en] `Done` or `Failed`; either way the caller stops here.
+         * @brief [zh] `Done` 或 `Failed`。
+         */
+        bool finished{false};
     };
 
     explicit HomingRoutine(HomingConfig config) noexcept;
@@ -144,16 +192,28 @@ class HomingRoutine final {
      */
     auto step(const PositionReference& reference, float dt_s) noexcept -> Output;
 
-    /** @brief [en] Current state. [zh] 当前状态。 */
+    /**
+     * @brief [en] Current state.
+     * @brief [zh] 当前状态。
+     */
     [[nodiscard]] auto state() const noexcept -> HomingState { return state_; }
 
-    /** @brief [en] Why it stopped. [zh] 为什么停下。 */
+    /**
+     * @brief [en] Why it stopped.
+     * @brief [zh] 为什么停下。
+     */
     [[nodiscard]] auto failure() const noexcept -> HomingFailure { return failure_; }
 
-    /** @brief [en] Time spent searching so far, s. [zh] 目前已搜索的时间，s。 */
+    /**
+     * @brief [en] Time spent searching so far, s.
+     * @brief [zh] 目前已搜索的时间，s。
+     */
     [[nodiscard]] auto elapsed_s() const noexcept -> float { return elapsed_.seconds(); }
 
-    /** @brief [en] Back to `Idle` with the timer cleared, keeping the recipe. [zh] 回到 `Idle` 并清空计时，保留配方。 */
+    /**
+     * @brief [en] Back to `Idle` with the timer cleared, keeping the recipe.
+     * @brief [zh] 回到 `Idle` 并清空计时，保留配方。
+     */
     void reset() noexcept;
 
   private:

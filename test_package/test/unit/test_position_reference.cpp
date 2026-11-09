@@ -431,12 +431,12 @@ TEST(PositionReference, TheCountingChannelHasFourErrorSourcesAndEachHasAClosedFo
  *   channel already declares for the electrical step and 400 times the drift measured over five turns.
  *
  *   电角度通路本来就不猜：达到或超过电 `0.9*pi` 的步长被 **报告** 而不是被解掉，因为选一个方向会给出一个看起来没问题、
- *   却差了整整一圈的角度。索引通路没有这条规则，而它才是更危险的那条：一个虚假脉冲产生的吸附是 `wrap_pi(相位)`——最多
+ *   却差了整整一圈的角度。索引通路没有这条规则，而它才是更危险的那条：一个虚假脉冲产生的吸附是 `wrap_pi(相位)` ——最多
  *   3.14 **机械** 弧度，是它本该防住的电步长的七倍——而且没有任何东西报告它。下一次真实标记又把它移回来，于是这个缺陷表
  *   现为一个没人能复现的瞬变。
  *
  *   修法就是同一条规则、同一个单位：机械残差超过 `0.9*pi/p` 时两个源描述的不是同一个事件，于是脉冲被拒绝并置旗。低于它
- *   时脉冲是 **被相信的** ，而这条边界写在这里而不是藏着：`p = 7` 时阈值是 0.404 rad，正是该通道为电步长已经声明过的分
+ *   时脉冲是 **被相信的** ，而这条边界写在这里而不是藏着： `p = 7` 时阈值是 0.404 rad，正是该通道为电步长已经声明过的分
  *   辨力下限，也是五圈实测漂移的 400 倍。
  */
 TEST(PositionReference, AMarkThatCannotBeTheMarkIsReportedInsteadOfMovingTheOrigin) {

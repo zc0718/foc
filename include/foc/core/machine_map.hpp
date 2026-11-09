@@ -22,10 +22,26 @@ namespace core {
  * @exporter
  */
 struct MachineMapPoint final {
-    float i_a;      ///< [en] current magnitude the row was measured at, A, >= 0. [zh] 该行的电流幅值，A，>= 0。
-    float ld_h;     ///< [en] d-axis inductance, H, > 0. [zh] d 轴电感，H，> 0。
-    float lq_h;     ///< [en] q-axis inductance, H, > 0. [zh] q 轴电感，H，> 0。
-    float psi_f_wb; ///< [en] rotor flux linkage, Wb, > 0. [zh] 转子磁链，Wb，> 0。
+    /**
+     * @brief [en] current magnitude the row was measured at, A, >= 0.
+     * @brief [zh] 该行的电流幅值，A，>= 0。
+     */
+    float i_a;
+    /**
+     * @brief [en] d-axis inductance, H, > 0.
+     * @brief [zh] d 轴电感，H，> 0。
+     */
+    float ld_h;
+    /**
+     * @brief [en] q-axis inductance, H, > 0.
+     * @brief [zh] q 轴电感，H，> 0。
+     */
+    float lq_h;
+    /**
+     * @brief [en] rotor flux linkage, Wb, > 0.
+     * @brief [zh] 转子磁链，Wb，> 0。
+     */
+    float psi_f_wb;
 };
 
 

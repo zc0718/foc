@@ -24,8 +24,8 @@ constexpr float kTwoPi = 6.28318530718F;
  *     It exists as a named field rather than as a local float because the `budget` gate checks that the registry's
  *     claim ("`set_cogging` is covered by `test_sil_cogging.cpp`, through `ripple_p2p_rad_s`") is a field that file
  *     really has -- a name nothing defines would be a promise with no owner. 它做成具名字段而不是局部浮点数，是因为
- *     `budget` 门会核对登记表里那句话（“`set_cogging` 由 `test_sil_cogging.cpp` 的 `ripple_p2p_rad_s` 覆盖”）在该文件里
- *     真的存在——一个谁也没定义的名字，就是一条没有主语的承诺。
+ *     `budget` 门会核对登记表里那句话（“ `set_cogging` 由 `test_sil_cogging.cpp` 的 `ripple_p2p_rad_s` 覆盖”）在该文件
+ *     里真的存在——一个谁也没定义的名字，就是一条没有主语的承诺。
  */
 struct CoggingEffects final {
     float injected_nm;      ///< [en] peak of the injected harmonic, N*m. [zh] 注入谐波的峰值，N·m。

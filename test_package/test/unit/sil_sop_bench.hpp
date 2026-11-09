@@ -50,8 +50,8 @@ constexpr float kSopGainDt = 5e-5F;
  * @note [en] `j_hat`/`b_hat` go into the gains and `j_true`/`b_true` into the machine, which is the whole point: a
  *            nameplate error is exactly the difference between those two pairs. The current loop is skipped (torque =
  *            kt*i in the same period), so whatever this measures belongs to the **speed** law and not to a cascade.
- * @note [zh] `j_hat`/`b_hat` 进增益、`j_true`/`b_true` 进机器，这正是要点：铭牌误差就是这两对参数之差。电流环被跳过（力
- *            矩在同一周期内就是 kt·i），所以这里量到的一切属于 **速度** 律而不属于任何级联。
+ * @note [zh] `j_hat`/`b_hat` 进增益、 `j_true`/`b_true` 进机器，这正是要点：铭牌误差就是这两对参数之差。电流环被跳过（
+ *            力矩在同一周期内就是 kt·i），所以这里量到的一切属于 **速度** 律而不属于任何级联。
  * @since 0.1.0
  */
 inline auto speed_loop_gain(float bandwidth_rad_s, float j_true, float b_true, float j_hat, float b_hat, float kt,

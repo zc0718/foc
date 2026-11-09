@@ -34,10 +34,26 @@ namespace core {
  * @exporter
  */
 struct MachineParams final {
-    float rs;    ///< [en] stator resistance in ohm, >= 0. [zh] 定子电阻，Ω，>= 0。
-    float ld;    ///< [en] d-axis inductance in H, > 0. [zh] d 轴电感，H，> 0。
-    float lq;    ///< [en] q-axis inductance in H, > 0. [zh] q 轴电感，H，> 0。
-    float psi_f; ///< [en] rotor (permanent-magnet) flux linkage in Wb. [zh] 转子（永磁）磁链，Wb。
+    /**
+     * @brief [en] stator resistance in ohm, >= 0.
+     * @brief [zh] 定子电阻，Ω，>= 0。
+     */
+    float rs;
+    /**
+     * @brief [en] d-axis inductance in H, > 0.
+     * @brief [zh] d 轴电感，H，> 0。
+     */
+    float ld;
+    /**
+     * @brief [en] q-axis inductance in H, > 0.
+     * @brief [zh] q 轴电感，H，> 0。
+     */
+    float lq;
+    /**
+     * @brief [en] rotor (permanent-magnet) flux linkage in Wb.
+     * @brief [zh] 转子（永磁）磁链，Wb。
+     */
+    float psi_f;
 };
 
 

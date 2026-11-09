@@ -52,15 +52,39 @@ class NonlinearFluxObserver final {
      * @since 0.1.0
      */
     struct Config final {
-        float rs; ///< [en] stator resistance in ohm, >= 0. [zh] 定子电阻，Ω，>= 0。
-        float l;  ///< [en] stator inductance in H, > 0 (single-L model). [zh] 定子电感，H，> 0（单一 L 模型）。
+        /**
+         * @brief [en] stator resistance in ohm, >= 0.
+         * @brief [zh] 定子电阻，Ω，>= 0。
+         */
+        float rs;
+        /**
+         * @brief [en] stator inductance in H, > 0 (single-L model).
+         * @brief [zh] 定子电感，H，> 0（单一 L 模型）。
+         */
+        float l;
         float
-            psi_f; ///< [en] rotor flux linkage the correction pulls towards, Wb, > 0. [zh] 修正所拉向的转子磁链，Wb，> 0。
+            /**
+             * @brief [en] rotor flux linkage the correction pulls towards, Wb, > 0.
+             * @brief [zh] 修正所拉向的转子磁链，Wb，> 0。
+             */
+            psi_f;
         float
-            gain_ratio; ///< [en] correction rate as a fraction of the estimated electrical speed, > 0. [zh] 修正速率占估计电角速度的比例，> 0。
-        float min_gain_rad_s; ///< [en] floor for that rate, > 0. [zh] 该速率的下限，rad/s，> 0。
+            /**
+             * @brief [en] correction rate as a fraction of the estimated electrical speed, > 0.
+             * @brief [zh] 修正速率占估计电角速度的比例，> 0。
+             */
+            gain_ratio;
+        /**
+         * @brief [en] floor for that rate, > 0.
+         * @brief [zh] 该速率的下限，rad/s，> 0。
+         */
+        float min_gain_rad_s;
         float
-            min_flux_wb; ///< [en] below this estimated flux no answer is reported, > 0. [zh] 低于此估计磁链即不报答案，> 0。
+            /**
+             * @brief [en] below this estimated flux no answer is reported, > 0.
+             * @brief [zh] 低于此估计磁链即不报答案，> 0。
+             */
+            min_flux_wb;
     };
 
     /**
@@ -142,8 +166,16 @@ class NonlinearFluxObserver final {
 
   private:
     Config config_;
-    Ab<float> psi_;    ///< [en] PM flux estimate in Wb (the integrator state). [zh] 永磁磁链估计，Wb（积分器状态）。
-    Ab<float> i_prev_; ///< [en] previous current sample; makes the L*di term exact. [zh] 上次电流采样，使 L·di 项精确。
+    /**
+     * @brief [en] PM flux estimate in Wb (the integrator state).
+     * @brief [zh] 永磁磁链估计，Wb（积分器状态）。
+     */
+    Ab<float> psi_;
+    /**
+     * @brief [en] previous current sample; makes the L*di term exact.
+     * @brief [zh] 上次电流采样，使 L·di 项精确。
+     */
+    Ab<float> i_prev_;
     ObsState state_;
     ErrorCode status_;
     bool locked_;

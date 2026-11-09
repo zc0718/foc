@@ -38,9 +38,9 @@ constexpr float kVDead = kSwitchingTDead * kPwmHz * kVBus;
  *             onto `d` gives `(2/3)*(dV + dV/2 + dV/2) = (4/3)*dV`: an axis sees **more** than a phase does, because
  *             the two opposing phases push the same way once projected. Every number measured on an axis is in this
  *             convention; the per-phase number the compensator uses is not, and the difference is exactly this factor.
- * @brief [zh] 同一个损失在 **d 轴上** 是什么样。把三相的阶跃 `(+dV, -dV, -dV)` 投影到 `d` 得 `(2/3)·(dV + dV/2 + dV/2)
- *             = (4/3)·dV`：轴上的数 **比** 每相 **大** ，因为两相反向的阶跃投影之后同向相加。所有在轴上量到的数都是这个
- *             约定；补偿器用的每相数不是，两者差的正是这个系数。
+ * @brief [zh] 同一个损失在 **d 轴上** 是什么样。把三相的阶跃 `(+dV, -dV, -dV)` 投影到 `d` 得
+ *             `(2/3)·(dV + dV/2 + dV/2) = (4/3)·dV`：轴上的数 **比** 每相 **大** ，因为两相反向的阶跃投影之后同向相加。
+ *             所有在轴上量到的数都是这个约定；补偿器用的每相数不是，两者差的正是这个系数。
  */
 constexpr float kVAxisDead = (4.0F / 3.0F) * kVDead;
 
@@ -48,8 +48,8 @@ constexpr float kVAxisDead = (4.0F / 3.0F) * kVDead;
  * @brief [en] A standstill bench: the plant plus the switching inverter, driven with a fixed d-q command. `period()`
  *             runs exactly one switching period and returns that period's **mean** current, which is the only quantity
  *             a commissioning sweep should ever look at.
- * @brief [zh] 堵转台架：plant 加开关逆变器，用固定的 d-q 指令驱动。`period()` 正好跑一个开关周期并返回该周期的 **均值**
- *             电流——整定扫描唯一该看的量。
+ * @brief [zh] 堵转台架：plant 加开关逆变器，用固定的 d-q 指令驱动。 `period()` 正好跑一个开关周期并返回该周期的
+ *             **均值** 电流——整定扫描唯一该看的量。
  */
 class StandstillRig final {
 public:
@@ -120,7 +120,8 @@ auto nominal_params() -> sil::PlantParams {
 /**
  * @brief [en] A salient machine: `Lq = 2*Ld`. The nominal one has `Ld == Lq`, which makes a d/q mix-up invisible --
  *             exactly the kind of bug this test is for.
- * @brief [zh] 一台凸极机：`Lq = 2·Ld`。标称机 `Ld == Lq`，会把 d/q 弄反这种错误藏得干干净净——而这正是本测试要找的东西。
+ * @brief [zh] 一台凸极机： `Lq = 2·Ld`。标称机 `Ld == Lq`，会把 d/q 弄反这种错误藏得干干净净——而这正是本测试要找的东
+ *             西。
  */
 auto salient_params() -> sil::PlantParams {
   sil::PlantParams params = nominal_params();
@@ -267,8 +268,8 @@ namespace {
  *             return the settled voltage magnitude. Freezing the speed (`j = 1e6`) is the same trick the locked-rotor
  *             tests use in the other direction: the mechanical equation is taken out of the experiment so that the
  *             *electrical* one is all that is left.
- * @brief [zh] 把 plant 冻在一个电角速度上旋转，用一个纯积分器把 `i_q = 0` 闭上，返回稳定后的电压 幅值。冻结转速（`j =
- *             1e6`）和堵转测试用的是同一个手法的反方向：把机械方程从实验里拿掉，只剩电气方程。
+ * @brief [zh] 把 plant 冻在一个电角速度上旋转，用一个纯积分器把 `i_q = 0` 闭上，返回稳定后的电压 幅值。冻结转速（
+ *             `j = 1e6`）和堵转测试用的是同一个手法的反方向：把机械方程从实验里拿掉，只剩电气方程。
  */
 auto zero_current_voltage(float omega_e, const sil::PlantParams &params)
     -> float {
@@ -542,8 +543,8 @@ auto spread(std::uint32_t &state) noexcept -> float {
  * @brief [en] The admission measurement S18 uses, on an arbitrary machine and at the **nominal** tuning: the flux
  *             observer is told that machine's nameplate numbers (`psi_f = Kt/(1.5*p)`) while `Ks` and `Ki` stay at 0.3
  *             / 3.0. That is what "no retuning" means.
- * @brief [zh] S18 用的准入测量，跑在任意机器上、用 **标称** 整定：磁链观测器被告知该机器的铭牌数（`psi_f =
- *             Kt/(1.5·p)` ），而 `Ks`、`Ki` 仍是 0.3 / 3.0。这就是"不重调"。
+ * @brief [zh] S18 用的准入测量，跑在任意机器上、用 **标称** 整定：磁链观测器被告知该机器的铭牌数（
+ *             `psi_f = Kt/(1.5·p)`），而 `Ks`、 `Ki` 仍是 0.3 / 3.0。这就是"不重调"。
  */
 auto gate_error(const sil::MachineSpec &spec, float omega_e,
                 float min_gain_rad_s = 3.0F) -> float {
@@ -680,7 +681,7 @@ namespace {
  * @brief [en] Step one axis of a standstill rig from zero current and integrate exactly `periods` switching periods.
  *             `hold_shaft` freezes the mechanical equation -- a real commissioning locks the shaft, and P5-c's second
  *             test shows what happens without it.
- * @brief [zh] 在堵转台架上给一个轴加阶跃，从零电流出发，精确积分 `periods` 个开关周期。`hold_shaft` 冻结机械方程——真实
+ * @brief [zh] 在堵转台架上给一个轴加阶跃，从零电流出发，精确积分 `periods` 个开关周期。 `hold_shaft` 冻结机械方程——真实
  *             整定会把轴锁死；P5-c 的第二个测试展示不锁会怎样。
  */
 auto step_axis(const sil::PlantParams &params, bool on_d_axis, int periods,

@@ -141,10 +141,22 @@ template <typename LowSpeed, typename HighSpeed> class BlendedObserver final {
      * @since 0.1.0
      */
     struct Config final {
-        float blend_start_rad_s; ///< [en] below this, only the low-speed observer. [zh] 低于此值只用低速观测器。
-        float blend_end_rad_s;   ///< [en] above this, only the high-speed observer. [zh] 高于此值只用高速观测器。
+        /**
+         * @brief [en] below this, only the low-speed observer.
+         * @brief [zh] 低于此值只用低速观测器。
+         */
+        float blend_start_rad_s;
+        /**
+         * @brief [en] above this, only the high-speed observer.
+         * @brief [zh] 高于此值只用高速观测器。
+         */
+        float blend_end_rad_s;
         float
-            handover_lpf_hz; ///< [en] smoothing of the speed the handover is decided on, Hz, > 0. [zh] 交接判据所用转速的平滑截止，Hz，> 0。
+            /**
+             * @brief [en] smoothing of the speed the handover is decided on, Hz, > 0.
+             * @brief [zh] 交接判据所用转速的平滑截止，Hz，> 0。
+             */
+            handover_lpf_hz;
     };
 
     /**
@@ -396,9 +408,21 @@ template <typename LowSpeed, typename HighSpeed> class BlendedObserver final {
     ErrorCode status_;
     FirstOrderLowPass speed_lpf_;
     ObsState state_;
-    float speed_;  ///< [en] filtered |high-speed speed|, the handover criterion. [zh] 滤波后的高速转速模值，交接判据。
-    float weight_; ///< [en] share of the high-speed observer, 0..1. [zh] 高速观测器的占比，0..1。
-    float dt_configured_; ///< [en] period the handover filter was built for. [zh] 交接滤波器配置所用的周期。
+    /**
+     * @brief [en] filtered |high-speed speed|, the handover criterion.
+     * @brief [zh] 滤波后的高速转速模值，交接判据。
+     */
+    float speed_;
+    /**
+     * @brief [en] share of the high-speed observer, 0..1.
+     * @brief [zh] 高速观测器的占比，0..1。
+     */
+    float weight_;
+    /**
+     * @brief [en] period the handover filter was built for.
+     * @brief [zh] 交接滤波器配置所用的周期。
+     */
+    float dt_configured_;
 };
 
 

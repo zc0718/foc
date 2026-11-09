@@ -26,8 +26,16 @@ namespace core {
  */
 struct MinPulseConfig final {
     float
-        min_pulse_s; ///< [en] shortest pulse the driver transmits, s; `<= 0` = off. [zh] 驱动器能送出的最短脉冲，s；`<= 0` 表示关闭。
-    float switching_period_s; ///< [en] the period the duty is relative to, s. [zh] 占空比所相对的周期，s。
+        /**
+         * @brief [en] shortest pulse the driver transmits, s; `<= 0` = off.
+         * @brief [zh] 驱动器能送出的最短脉冲，s； `<= 0` 表示关闭。
+         */
+        min_pulse_s;
+    /**
+     * @brief [en] the period the duty is relative to, s.
+     * @brief [zh] 占空比所相对的周期，s。
+     */
+    float switching_period_s;
 };
 
 /**
@@ -44,12 +52,28 @@ struct MinPulseConfig final {
  */
 struct MinPulseOutput final {
     ErrorCode
-        status; ///< [en] Ok, or Param for a configuration/voltage that cannot be shaped. [zh] Ok；配置或母线电压无法整形时为 Param。
-    Uvw<float> duty; ///< [en] the duty the bridge will actually run. [zh] 桥臂实际会跑的占空比。
+        /**
+         * @brief [en] Ok, or Param for a configuration/voltage that cannot be shaped.
+         * @brief [zh] Ok；配置或母线电压无法整形时为 Param。
+         */
+        status;
+    /**
+     * @brief [en] the duty the bridge will actually run.
+     * @brief [zh] 桥臂实际会跑的占空比。
+     */
+    Uvw<float> duty;
     Uvw<float>
-        lost_vs; ///< [en] volt-seconds not delivered this period, V*s, positive = short. [zh] 本周期未交付的伏秒，V·s，正数表示少给。
+        /**
+         * @brief [en] volt-seconds not delivered this period, V*s, positive = short.
+         * @brief [zh] 本周期未交付的伏秒，V·s，正数表示少给。
+         */
+        lost_vs;
     bool
-        narrowed; ///< [en] at least one phase's pulse was not transmitted as asked. [zh] 至少有一相的脉冲没有按请求送出。
+        /**
+         * @brief [en] at least one phase's pulse was not transmitted as asked.
+         * @brief [zh] 至少有一相的脉冲没有按请求送出。
+         */
+        narrowed;
 };
 
 /**

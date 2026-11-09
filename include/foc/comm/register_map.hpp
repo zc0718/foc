@@ -68,17 +68,41 @@ enum class RegisterId : std::uint16_t {
      * @brief [zh] 见过的最差控制节拍间隔，µs。
      */
     MaxPeriodUs = 3,
-    Observer = 4, ///< [en] the observer actually running. [zh] 实际在跑的观测器。
+    /**
+     * @brief [en] the observer actually running.
+     * @brief [zh] 实际在跑的观测器。
+     */
+    Observer = 4,
     /**
      * @brief [en] 1 while the observer says it is measuring.
      * @brief [zh] 观测器自称在测量时为 1。
      */
     ObserverLocked = 5,
-    TraceSize = 6,    ///< [en] retained trace samples. [zh] 保留的轨迹样本数。
-    TraceDropped = 7, ///< [en] trace samples overwritten. [zh] 被覆盖的轨迹样本数。
-    SpeedRadS = 8,    ///< [en] mechanical speed, as float bits. [zh] 机械转速，float 位型。
-    CurrentD = 9,     ///< [en] d-axis current, as float bits. [zh] d 轴电流，float 位型。
-    CurrentQ = 10,    ///< [en] q-axis current, as float bits. [zh] q 轴电流，float 位型。
+    /**
+     * @brief [en] retained trace samples.
+     * @brief [zh] 保留的轨迹样本数。
+     */
+    TraceSize = 6,
+    /**
+     * @brief [en] trace samples overwritten.
+     * @brief [zh] 被覆盖的轨迹样本数。
+     */
+    TraceDropped = 7,
+    /**
+     * @brief [en] mechanical speed, as float bits.
+     * @brief [zh] 机械转速，float 位型。
+     */
+    SpeedRadS = 8,
+    /**
+     * @brief [en] d-axis current, as float bits.
+     * @brief [zh] d 轴电流，float 位型。
+     */
+    CurrentD = 9,
+    /**
+     * @brief [en] q-axis current, as float bits.
+     * @brief [zh] q 轴电流，float 位型。
+     */
+    CurrentQ = 10,
 };
 
 /**
@@ -93,7 +117,11 @@ enum class RegisterId : std::uint16_t {
  * @exporter
  */
 enum class RegisterKind : std::uint8_t {
-    Unsigned = 0, ///< [en] an unsigned count or code. [zh] 无符号计数或编码。
+    /**
+     * @brief [en] an unsigned count or code.
+     * @brief [zh] 无符号计数或编码。
+     */
+    Unsigned = 0,
     /**
      * @brief [en] a signed code that can be negative.
      * @brief [zh] 可能为负的有符号编码。
@@ -123,11 +151,26 @@ enum class RegisterKind : std::uint8_t {
  * @exporter
  */
 struct RegisterEntry final {
-    RegisterId id;     ///< [en] the register's wire address. [zh] 寄存器的线上地址。
-    RegisterKind kind; ///< [en] how to interpret the word. [zh] 怎么解释这个字。
-    const char* abi;   ///< [en] the C function behind it. [zh] 背后的 C 函数。
-    std::int32_t (*read)(foc_motor_t motor,
-                         std::uint32_t* raw); ///< [en] the reader. [zh] 读取函数。
+    /**
+     * @brief [en] the register's wire address.
+     * @brief [zh] 寄存器的线上地址。
+     */
+    RegisterId id;
+    /**
+     * @brief [en] how to interpret the word.
+     * @brief [zh] 怎么解释这个字。
+     */
+    RegisterKind kind;
+    /**
+     * @brief [en] the C function behind it.
+     * @brief [zh] 背后的 C 函数。
+     */
+    const char* abi;
+    /**
+     * @brief [en] the reader.
+     * @brief [zh] 读取函数。
+     */
+    std::int32_t (*read)(foc_motor_t motor, std::uint32_t* raw);
 };
 
 /**

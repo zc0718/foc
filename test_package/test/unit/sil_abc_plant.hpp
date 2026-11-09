@@ -17,23 +17,24 @@ namespace sil {
  *   Why this exists, and what it substitutes for. With no motor expert to review the dq derivation, a sign or factor
  *   error in `sil_pmsm_plant.hpp` would make every SIL conclusion wrong in the same direction while staying
  *   *internally* consistent -- nothing inside the project could see it. This model never forms a dq quantity: it
- *   integrates the three phase fluxes directly from `v = Rs*i + d(lambda)/dt` with `lambda_p = (Ls - M)*i_p +
- *   lambda_m*cos(theta_p)`, and it derives torque from co-energy as `Te = -p*lambda_m*sum(i_p*sin(theta_p))`. If the
- *   two models agree at six operating points, both derivations are almost certainly right; if they disagree, one is
- *   wrong and the disagreement points at which.
+ *   integrates the three phase fluxes directly from `v = Rs*i + d(lambda)/dt` with
+ *   `lambda_p = (Ls - M)*i_p + lambda_m*cos(theta_p)`, and it derives torque from co-energy as
+ *   `Te = -p*lambda_m*sum(i_p*sin(theta_p))`. If the two models agree at six operating points, both derivations are
+ *   almost certainly right; if they disagree, one is wrong and the disagreement points at which.
  *
  * @brief [zh] 第二台 **独立推导** 的相变量 PMSM 被控对象，只用于与 dq plant 对拍。
  *
  *   为什么要有它、它替代什么。没有电机专家来评审 dq 推导时， `sil_pmsm_plant.hpp` 里一个符号或系数错误会让 **所有** SIL
- *   结论朝同一个方向错，而内部 完全自洽——项目内部没有任何东西能看见它。本模型 **从不构造 dq 量** ：它直接按 `v = Rs·i +
- *   dλ/dt` 积分三相磁链，`λ_p = (Ls − M)·i_p + λm·cos(θ_p)`， 并由磁共能给出转矩 `Te = −p·λm·Σ(i_p·sin θ_p)`。两个模型
- *   在六个工作点上一致， 则两个推导几乎必然都对；若不一致，其中一个错了，而不一致的位置会指出是哪一个。
+ *   结论朝同一个方向错，而内部 完全自洽——项目内部没有任何东西能看见它。本模型 **从不构造 dq 量** ：它直接按
+ *   `v = Rs·i + dλ/dt` 积分三相磁链， `λ_p = (Ls − M)·i_p + λm·cos(θ_p)`， 并由磁共能给出转矩
+ *   `Te = −p·λm·Σ(i_p·sin θ_p)`。两个模型在六个工作点上一致， 则两个推导几乎必然都对；若不一致，其中一个错了，而不一致
+ *   的位置会指出是哪一个。
  *
  * @note [en] Scope, stated so nobody over-reads it. This is a **non-salient** machine (`Ld = Lq`), because that is the
  *            case where the phase-variable form is unambiguous; a salient abc model needs an angle-dependent inductance
  *            matrix and would reintroduce the very transformation being checked. The mechanical equation is
  *            deliberately frozen: mechanics is not where derivation errors hide, and the dq plant already covers it.
- * @note [zh] 范围，写清楚以免被过度解读。这是 **非凸极** 机器（`Ld = Lq`），因为那正是相变量 形式无歧义的情形；凸极的
+ * @note [zh] 范围，写清楚以免被过度解读。这是 **非凸极** 机器（ `Ld = Lq`），因为那正是相变量 形式无歧义的情形；凸极的
  *            abc 模型需要随角度变化的电感矩阵，会把正要检查的那个变换 又引回来。机械方程故意冻结：推导错误不藏在力学
  *            里，而 dq plant 已经覆盖了它。
  * @context [en] Host-side SIL only: never part of the shipped library.
@@ -122,8 +123,8 @@ class AbcPlant final {
      *
      *   **Off by default (no harmonics), and bit-identical when off** -- the same rule the other injection ports
      *   follow: an error source that changes the frozen scenarios cannot be told apart from a regression. 它 **加性**
-     *   进入机械方程（`J·ω' = Te − b·ω − load + Tcog`），这就固定了补偿器必须产出的符号：要抵消它，控制器得让 `Te` 带上
-     *   `-Tcog`。若把它写成「恰好随角度变化的负载」，算术上等价，却把那个符号留给写补偿的人重新发现一遍。
+     *   进入机械方程（ `J·ω' = Te − b·ω − load + Tcog`），这就固定了补偿器必须产出的符号：要抵消它，控制器得让 `Te` 带
+     *   上 `-Tcog`。若把它写成「恰好随角度变化的负载」，算术上等价，却把那个符号留给写补偿的人重新发现一遍。
      *   **默认关闭（无谐波），关闭时逐位不变** ——与其它注入端口同一条规矩：会改变冻结场景的误差源无法与回归区分。
      *
      * @param harmonics [en] the table, at most `kMaxCogging` entries.

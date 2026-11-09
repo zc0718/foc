@@ -44,8 +44,16 @@ inline auto wrap_pi(float angle_rad) noexcept -> float {
  * @since 0.1.0
  */
 struct GearConfig final {
-    float ratio;      ///< [en] slave radians per master radian, non-zero. [zh] 每主轴弧度的从轴弧度，非零。
-    float offset_rad; ///< [en] slave position when the master reads zero, rad. [zh] 主轴读数为零时的从轴位置，rad。
+    /**
+     * @brief [en] slave radians per master radian, non-zero.
+     * @brief [zh] 每主轴弧度的从轴弧度，非零。
+     */
+    float ratio;
+    /**
+     * @brief [en] slave position when the master reads zero, rad.
+     * @brief [zh] 主轴读数为零时的从轴位置，rad。
+     */
+    float offset_rad;
 };
 
 
@@ -63,8 +71,16 @@ struct GearOutput final {
      *             的而不是缺失的。
      */
     ErrorCode status;
-    float slave_rad;            ///< [en] the slave target, rad. [zh] 从轴目标，rad。
-    float master_unwrapped_rad; ///< [en] the master angle with the wrap removed, rad. [zh] 去掉卷绕后的主轴角度，rad。
+    /**
+     * @brief [en] the slave target, rad.
+     * @brief [zh] 从轴目标，rad。
+     */
+    float slave_rad;
+    /**
+     * @brief [en] the master angle with the wrap removed, rad.
+     * @brief [zh] 去掉卷绕后的主轴角度，rad。
+     */
+    float master_unwrapped_rad;
     /**
      * @brief [en] the slave's velocity reference, rad/s -- the master's own speed times the ratio.
      * @brief [zh] 从轴的速度参考，rad/s——主轴自身转速乘传动比。

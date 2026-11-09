@@ -18,8 +18,16 @@ namespace core {
  * @exporter
  */
 struct FeedforwardInput final {
-    float omega_e_rad_s; ///< [en] electrical angular speed in rad/s. [zh] 电角速度，rad/s。
-    Dq<float> i_meas;    ///< [en] measured dq current in A. [zh] 实测 dq 电流，A。
+    /**
+     * @brief [en] electrical angular speed in rad/s.
+     * @brief [zh] 电角速度，rad/s。
+     */
+    float omega_e_rad_s;
+    /**
+     * @brief [en] measured dq current in A.
+     * @brief [zh] 实测 dq 电流，A。
+     */
+    Dq<float> i_meas;
 };
 
 
@@ -73,9 +81,21 @@ class DecouplingFeedforward final {
      * @since 0.1.0
      */
     enum class Terms : std::uint8_t {
-        Cross = 0,        ///< [en] `-we*Lq*iq` on d and `+we*Ld*id` on q. [zh] d 轴 `-we*Lq*iq`、q 轴 `+we*Ld*id`。
-        Bemf = 1,         ///< [en] `+we*psi_f` on q only. [zh] 只在 q 轴加 `+we*psi_f`。
-        CrossAndBemf = 2, ///< [en] both, the usual choice. [zh] 两者都加，通常选这个。
+        /**
+         * @brief [en] `-we*Lq*iq` on d and `+we*Ld*id` on q.
+         * @brief [zh] d 轴 `-we*Lq*iq`、q 轴 `+we*Ld*id`。
+         */
+        Cross = 0,
+        /**
+         * @brief [en] `+we*psi_f` on q only.
+         * @brief [zh] 只在 q 轴加 `+we*psi_f`。
+         */
+        Bemf = 1,
+        /**
+         * @brief [en] both, the usual choice.
+         * @brief [zh] 两者都加，通常选这个。
+         */
+        CrossAndBemf = 2,
     };
 
     /**
@@ -90,10 +110,26 @@ class DecouplingFeedforward final {
      * @exporter
      */
     struct Config final {
-        float ld;       ///< [en] d-axis inductance in H. [zh] d 轴电感，H。
-        float lq;       ///< [en] q-axis inductance in H. [zh] q 轴电感，H。
-        float psi_f_wb; ///< [en] rotor flux linkage in Wb. [zh] 转子磁链，Wb。
-        Terms terms;    ///< [en] which terms to apply. [zh] 应用哪些项。
+        /**
+         * @brief [en] d-axis inductance in H.
+         * @brief [zh] d 轴电感，H。
+         */
+        float ld;
+        /**
+         * @brief [en] q-axis inductance in H.
+         * @brief [zh] q 轴电感，H。
+         */
+        float lq;
+        /**
+         * @brief [en] rotor flux linkage in Wb.
+         * @brief [zh] 转子磁链，Wb。
+         */
+        float psi_f_wb;
+        /**
+         * @brief [en] which terms to apply.
+         * @brief [zh] 应用哪些项。
+         */
+        Terms terms;
     };
 
     DecouplingFeedforward() noexcept = default;

@@ -40,16 +40,46 @@ namespace core {
  */
 struct CoggingLearnConfig final {
     MachineParams
-        params; ///< [en] `psi_f`/`ld`/`lq` used to turn the learned current into a torque. [zh] 用 `psi_f`/`ld`/`lq` 把学到的电流换成转矩。
-    std::uint8_t pole_pairs;  ///< [en] ditto. [zh] 同上。
-    std::uint8_t orders[6]{}; ///< [en] which mechanical orders to learn. [zh] 要学哪几个机械次数。
-    int count{0};             ///< [en] how many entries are valid. [zh] 有效条数。
-    int revolutions{2}; ///< [en] how many mechanical revolutions the window must hold. [zh] 窗口至少要跨多少机械转。
-    float min_speed_rad_s{
-        0.5F}; ///< [en] below this the loop's share is not measurable; refuse. [zh] 低于此值环路那份不可测；拒绝。
-    float max_speed_rad_s{10.0F}; ///< [en] above this the lag is baked in; refuse. [zh] 高于此值会把滞后烘进去；拒绝。
-    float speed_tolerance{
-        0.10F}; ///< [en] allowed spread of `|omega|` over the window, relative. [zh] 窗口内 `|ω|` 允许的相对散布。
+        /**
+         * @brief [en] `psi_f`/`ld`/`lq` used to turn the learned current into a torque.
+         * @brief [zh] 用 `psi_f`/`ld`/`lq` 把学到的电流换成转矩。
+         */
+        params;
+    /**
+     * @brief [en] ditto.
+     * @brief [zh] 同上。
+     */
+    std::uint8_t pole_pairs;
+    /**
+     * @brief [en] which mechanical orders to learn.
+     * @brief [zh] 要学哪几个机械次数。
+     */
+    std::uint8_t orders[6]{};
+    /**
+     * @brief [en] how many entries are valid.
+     * @brief [zh] 有效条数。
+     */
+    int count{0};
+    /**
+     * @brief [en] how many mechanical revolutions the window must hold.
+     * @brief [zh] 窗口至少要跨多少机械转。
+     */
+    int revolutions{2};
+    float min_speed_rad_s{/**
+         * @brief [en] below this the loop's share is not measurable; refuse.
+         * @brief [zh] 低于此值环路那份不可测；拒绝。
+         */
+                          0.5F};
+    /**
+     * @brief [en] above this the lag is baked in; refuse.
+     * @brief [zh] 高于此值会把滞后烘进去；拒绝。
+     */
+    float max_speed_rad_s{10.0F};
+    float speed_tolerance{/**
+         * @brief [en] allowed spread of `|omega|` over the window, relative.
+         * @brief [zh] 窗口内 `|ω_m|` 允许的相对散布。
+         */
+                          0.10F};
 };
 
 /**
@@ -64,11 +94,31 @@ struct CoggingLearnConfig final {
  * @exporter
  */
 struct CoggingLearnReport final {
-    ErrorCode status;  ///< [en] `Ok`, `Param`, or `State` (not ready). [zh] `Ok`、`Param`，或 `State`（没准备好）。
-    int count;         ///< [en] how many harmonics were written. [zh] 写出了几条谐波。
-    float revolutions; ///< [en] how many mechanical revolutions the window covered. [zh] 窗口跨了多少机械转。
-    float speed_min;   ///< [en] smallest `|omega|` seen, rad/s. [zh] 见到的最小 `|ω|`，rad/s。
-    float speed_max;   ///< [en] largest `|omega|` seen, rad/s. [zh] 见到的最大 `|ω|`，rad/s。
+    /**
+     * @brief [en] `Ok`, `Param`, or `State` (not ready).
+     * @brief [zh] `Ok`、 `Param`，或 `State`（没准备好）。
+     */
+    ErrorCode status;
+    /**
+     * @brief [en] how many harmonics were written.
+     * @brief [zh] 写出了几条谐波。
+     */
+    int count;
+    /**
+     * @brief [en] how many mechanical revolutions the window covered.
+     * @brief [zh] 窗口跨了多少机械转。
+     */
+    float revolutions;
+    /**
+     * @brief [en] smallest `|omega|` seen, rad/s.
+     * @brief [zh] 见到的最小 `|ω_m|`，rad/s。
+     */
+    float speed_min;
+    /**
+     * @brief [en] largest `|omega|` seen, rad/s.
+     * @brief [zh] 见到的最大 `|ω_m|`，rad/s。
+     */
+    float speed_max;
 };
 
 /**
@@ -118,7 +168,10 @@ class CoggingLearner final {
 
     explicit CoggingLearner(const CoggingLearnConfig& config) noexcept : config_(config) {}
 
-    /** @brief [en] Throw away everything accumulated so far. [zh] 丢弃已累积的一切。 */
+    /**
+     * @brief [en] Throw away everything accumulated so far.
+     * @brief [zh] 丢弃已累积的一切。
+     */
     void reset() noexcept;
 
     /**
@@ -138,10 +191,16 @@ class CoggingLearner final {
      */
     void accumulate(float theta_mech_rad, float iq_a, float id_a, float omega_mech_rad_s, bool saturated) noexcept;
 
-    /** @brief [en] Whether enough has been accumulated to try. [zh] 是否已攒够可以一试。 */
+    /**
+     * @brief [en] Whether enough has been accumulated to try.
+     * @brief [zh] 是否已攒够可以一试。
+     */
     [[nodiscard]] auto ready() const noexcept -> bool;
 
-    /** @brief [en] Revolutions covered so far. [zh] 目前覆盖的转数。 */
+    /**
+     * @brief [en] Revolutions covered so far.
+     * @brief [zh] 目前覆盖的转数。
+     */
     [[nodiscard]] auto revolutions() const noexcept -> float;
 
     /**
@@ -161,7 +220,10 @@ class CoggingLearner final {
      */
     [[nodiscard]] auto finish(CoggingCompHarmonic* out, int capacity) const noexcept -> CoggingLearnReport;
 
-    /** @brief [en] Whether the configuration could ever work. [zh] 配置是否有可能成立。 */
+    /**
+     * @brief [en] Whether the configuration could ever work.
+     * @brief [zh] 配置是否有可能成立。
+     */
     [[nodiscard]] auto validate() const noexcept -> ErrorCode;
 
   private:

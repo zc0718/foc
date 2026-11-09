@@ -76,7 +76,7 @@ struct Trajectory final {
 
 /**
  * @brief [en] Run the scenario at the given instants; `nominal_dt` decides which period the loop is *told*.
- * @brief [zh] 在给定时刻跑这个场景；`nominal_dt` 决定 **告诉** 环路的是哪个周期。
+ * @brief [zh] 在给定时刻跑这个场景； `nominal_dt` 决定 **告诉** 环路的是哪个周期。
  */
 auto run(const foc::sil::RtosSchedule& schedule, bool nominal_dt) -> Trajectory {
     foc::motor::MotorConfig mc{0.5F, 4.0e-4F, 4.0e-4F, 0.05F, 1.0e-4F, 1.0e-4F, kPolePairs, 3.0F, 20000.0F, 0.0F};

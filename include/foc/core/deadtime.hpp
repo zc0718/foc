@@ -274,7 +274,11 @@ class DeadTimeFadeEstimator final {
    * @since 0.1.0
    */
     struct Config final {
-        float rs; ///< [en] stator resistance in ohm. [zh] 定子电阻，Ω。
+        /**
+         * @brief [en] stator resistance in ohm.
+         * @brief [zh] 定子电阻，Ω。
+         */
+        float rs;
         /**
          * @brief [en] (t_dead/T_pwm)*v_bus in V.
          * @brief [zh] (t_dead/T_pwm)*v_bus，V。

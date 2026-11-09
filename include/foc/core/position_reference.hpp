@@ -94,7 +94,10 @@ class PositionReference final {
      */
     [[nodiscard]] auto referenced_mech_rad() const noexcept -> float { return referenced_mech_rad_; }
 
-    /** @brief [en] Whether an index has been seen since construction or reset. [zh] 自构造或复位以来是否见过索引。 */
+    /**
+     * @brief [en] Whether an index has been seen since construction or reset.
+     * @brief [zh] 自构造或复位以来是否见过索引。
+     */
     [[nodiscard]] auto homed() const noexcept -> bool { return homed_; }
 
     /**

@@ -29,15 +29,36 @@ namespace core {
  */
 struct ThermalLimitConfig final {
     MachineParams
-        params; ///< [en] `rs` is the resistance at **20 C**; `ld`/`lq`/`psi_f` are unused. [zh] `rs` 是 **20 °C** 下的电阻；`ld`/`lq`/`psi_f` 不用。
-    float alpha_per_k{3.93e-3F}; ///< [en] copper's temperature coefficient, 1/K. [zh] 铜的温度系数，1/K。
-    float rt_k_per_w{
-        0.0F}; ///< [en] thermal resistance to ambient, K/W; <=0 is a configuration error. [zh] 到环境的热阻，K/W；<=0 是配置错误。
-    float ct_j_per_k{
-        0.0F}; ///< [en] thermal capacitance, J/K; only the time budget needs it, and <=0 means "no budget". [zh] 热容，J/K；只有时间预算需要它，<=0 表示"不给预算"。
-    float t_ambient_c{20.0F}; ///< [en] ambient the heat leaks to, C. [zh] 散热到的环境温度，°C。
-    float t_allowed_c{
-        105.0F}; ///< [en] the temperature the reserve is sized against, C. [zh] 用来定这份余量的温度，°C。
+        /**
+         * @brief [en] `rs` is the resistance at **20 C**; `ld`/`lq`/`psi_f` are unused.
+         * @brief [zh] `rs` 是 **20 °C** 下的电阻； `ld`/`lq`/`psi_f` 不用。
+         */
+        params;
+    /**
+     * @brief [en] copper's temperature coefficient, 1/K.
+     * @brief [zh] 铜的温度系数，1/K。
+     */
+    float alpha_per_k{3.93e-3F};
+    float rt_k_per_w{/**
+         * @brief [en] thermal resistance to ambient, K/W; <=0 is a configuration error.
+         * @brief [zh] 到环境的热阻，K/W；<=0 是配置错误。
+         */
+                     0.0F};
+    float ct_j_per_k{/**
+         * @brief [en] thermal capacitance, J/K; only the time budget needs it, and <=0 means "no budget".
+         * @brief [zh] 热容，J/K；只有时间预算需要它，<=0 表示"不给预算"。
+         */
+                     0.0F};
+    /**
+     * @brief [en] ambient the heat leaks to, C.
+     * @brief [zh] 散热到的环境温度，°C。
+     */
+    float t_ambient_c{20.0F};
+    float t_allowed_c{/**
+         * @brief [en] the temperature the reserve is sized against, C.
+         * @brief [zh] 用来定这份余量的温度，°C。
+         */
+                      105.0F};
 };
 
 /**
@@ -47,12 +68,28 @@ struct ThermalLimitConfig final {
  * @exporter
  */
 struct ThermalLimitReport final {
-    ErrorCode status; ///< [en] `Ok` or `Param`. [zh] `Ok` 或 `Param`。
+    /**
+     * @brief [en] `Ok` or `Param`.
+     * @brief [zh] `Ok` 或 `Param`。
+     */
+    ErrorCode status;
     float
-        continuous_a; ///< [en] the current whose settle is exactly `t_allowed_c`, A. [zh] 稳态恰好是 `t_allowed_c` 的那个电流，A。
+        /**
+         * @brief [en] the current whose settle is exactly `t_allowed_c`, A.
+         * @brief [zh] 稳态恰好是 `t_allowed_c` 的那个电流，A。
+         */
+        continuous_a;
     float
-        settle_at_cont_c; ///< [en] where that current settles, C -- equal to `t_allowed_c` by construction. [zh] 该电流的稳态温度，°C——按构造等于 `t_allowed_c`。
-    float thermal_time_const_s; ///< [en] `Rt*Ct` when `ct > 0`, else 0. [zh] `ct > 0` 时为 `Rt·Ct`，否则 0。
+        /**
+         * @brief [en] where that current settles, C -- equal to `t_allowed_c` by construction.
+         * @brief [zh] 该电流的稳态温度，°C——按构造等于 `t_allowed_c`。
+         */
+        settle_at_cont_c;
+    /**
+     * @brief [en] `Rt*Ct` when `ct > 0`, else 0.
+     * @brief [zh] `ct > 0` 时为 `Rt·Ct`，否则 0。
+     */
+    float thermal_time_const_s;
 };
 
 /**
@@ -73,11 +110,27 @@ struct ThermalLimitReport final {
  */
 struct ThermalBudget final {
     ErrorCode
-        status;   ///< [en] `Ok`, or `Param` when the configuration cannot answer. [zh] `Ok`；配置无法回答时是 `Param`。
-    bool crosses; ///< [en] whether this current ever reaches `t_allowed_c`. [zh] 这个电流是否会到达 `t_allowed_c`。
+        /**
+         * @brief [en] `Ok`, or `Param` when the configuration cannot answer.
+         * @brief [zh] `Ok`；配置无法回答时是 `Param`。
+         */
+        status;
+    /**
+     * @brief [en] whether this current ever reaches `t_allowed_c`.
+     * @brief [zh] 这个电流是否会到达 `t_allowed_c`。
+     */
+    bool crosses;
     float
-        seconds; ///< [en] time to reach it, s; `infinity` when `crosses` is false. [zh] 到达它所需时间，s；`crosses` 为假时是 `infinity`。
-    float settle_c; ///< [en] where this current settles if it is held, C. [zh] 一直保持该电流时的稳态温度，°C。
+        /**
+         * @brief [en] time to reach it, s; `infinity` when `crosses` is false.
+         * @brief [zh] 到达它所需时间，s； `crosses` 为假时是 `infinity`。
+         */
+        seconds;
+    /**
+     * @brief [en] where this current settles if it is held, C.
+     * @brief [zh] 一直保持该电流时的稳态温度，°C。
+     */
+    float settle_c;
 };
 
 /**
@@ -131,13 +184,22 @@ class ThermalLimit final {
 
     explicit ThermalLimit(const ThermalLimitConfig& config) noexcept : config_(config) {}
 
-    /** @brief [en] Whether the configuration could ever answer. [zh] 该配置是否有可能回答。 */
+    /**
+     * @brief [en] Whether the configuration could ever answer.
+     * @brief [zh] 该配置是否有可能回答。
+     */
     [[nodiscard]] auto validate() const noexcept -> ErrorCode;
 
-    /** @brief [en] The current that can be held indefinitely, with its settle. [zh] 可以一直保持的电流，以及它的稳态温度。 */
+    /**
+     * @brief [en] The current that can be held indefinitely, with its settle.
+     * @brief [zh] 可以一直保持的电流，以及它的稳态温度。
+     */
     [[nodiscard]] auto continuous() const noexcept -> ThermalLimitReport;
 
-    /** @brief [en] Where a current settles if it is held, C; `infinity` when the model has no steady state. [zh] 一直保持某电流时的稳态温度，°C；模型无稳态时是 `infinity`。 */
+    /**
+     * @brief [en] Where a current settles if it is held, C; `infinity` when the model has no steady state.
+     * @brief [zh] 一直保持某电流时的稳态温度，°C；模型无稳态时是 `infinity`。
+     */
     [[nodiscard]] auto settle_temperature_c(float current_a) const noexcept -> float;
 
     /**
@@ -151,7 +213,10 @@ class ThermalLimit final {
      */
     [[nodiscard]] auto budget(float current_a, float t_now_c) const noexcept -> ThermalBudget;
 
-    /** @brief [en] `Rt`, ohm-shaped but K/W: what was configured. [zh] 配置进来的 `Rt`（K/W）。 */
+    /**
+     * @brief [en] `Rt`, ohm-shaped but K/W: what was configured.
+     * @brief [zh] 配置进来的 `Rt`（K/W）。
+     */
     [[nodiscard]] auto thermal_resistance_k_per_w() const noexcept -> float;
 
   private:

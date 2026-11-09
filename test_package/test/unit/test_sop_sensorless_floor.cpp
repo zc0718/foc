@@ -24,7 +24,7 @@ constexpr sil::SopMachine kMachineB{1.25F};
 
 /**
  * @brief [en] The speed at which the dead-time voltage equals the back-EMF, `V_dead / psi_f`.
- * @brief [zh] 死区电压与反电势相等的那个转速，`V_dead / psi_f`。
+ * @brief [zh] 死区电压与反电势相等的那个转速， `V_dead / psi_f`。
  * @param machine [en] which machine.
  * @param machine [zh] 哪台机器。
  * @param dead_v [en] per-tick dead-time voltage, V.
@@ -141,11 +141,11 @@ TEST(SopSensorlessFloor, TheDelayIsIdentifiedButTheBoundaryIsNotAMonotoneCriteri
  *   cannot be delivered as a criterion: its one closed form does not survive a change of machine.
  *
  *   机器 B 是同一台机器换 25 % 更强的磁钢，并且被正确地描述给驱动器（plant 与模型同时缩放），所以这是两台机器之间的比
- *   较，不是两份描述之间的比较。`psi_f` 升 25 %，于是 `V_dead/psi_f` 从 **100.8** 落到 **80.6 rad/s** ：在 90 rad/s 处
+ *   较，不是两份描述之间的比较。 `psi_f` 升 25 %，于是 `V_dead/psi_f` 从 **100.8** 落到 **80.6 rad/s** ：在 90 rad/s 处
  *   机器 B 本该站在自己边界的安全侧，而机器 A 不是。
  *
  *   实测机器 B **在每个试过的转速上都更差** ：90 rad/s 处 0.1738 对 0.0835、120 处 0.1140 对 0.0757、200 处 0.0618 对
- *   0.0410。所以 `V_dead/psi_f` 不是那条律：`psi_f` 同时移动观测器的模型、环路要读的反电势、以及速度环拿住机器的增益，
+ *   0.0410。所以 `V_dead/psi_f` 不是那条律： `psi_f` 同时移动观测器的模型、环路要读的反电势、以及速度环拿住机器的增益，
  *   而那些项赢了。这是一个 **被否证的假设** ，记录下来而不是悄悄丢掉——它也是 F19 这条流程不能作为判据交付的第二个原因：
  *   它唯一的闭式解经不起换一台机器。
  */

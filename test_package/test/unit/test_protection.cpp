@@ -671,10 +671,10 @@ TEST(Protection,
  *   input twice, differing only in `flux_valid`, with the ratio held small in both -- so the first term is the only
  *   thing that can change the answer.
  *
- *   那个判定是 `(!input.flux_valid) || (abs(flux_error_ratio) > sync_error_ratio)`。既有用例全部喂 `flux_valid =
- *   true`，于是第一项从未为真、它的独立作用从未被演示：短路意味着一台说"我的磁链估计无效" 的机器 **根本不需要误差比**
- *   就会落到 `LostSync`，而这件事没有任何用例测过。所以这一对是边界对——同一个输入跑两次，只差 `flux_valid`，两次的误差
- *   比都很小——于是第一项是唯一能改变答案的东西。
+ *   那个判定是 `(!input.flux_valid) || (abs(flux_error_ratio) > sync_error_ratio)`。既有用例全部喂
+ *   `flux_valid = true`，于是第一项从未为真、它的独立作用从未被演示：短路意味着一台说"我的磁链估计无效" 的机器
+ *   **根本不需要误差比** 就会落到 `LostSync`，而这件事没有任何用例测过。所以这一对是边界对——同一个输入跑两次，只差
+ *   `flux_valid`，两次的误差比都很小——于是第一项是唯一能改变答案的东西。
  */
 TEST(Protection, AnInvalidFluxTripsLostSyncWithoutAnyErrorRatio) {
   foc::core::Protector protection(config());
@@ -701,16 +701,16 @@ TEST(Protection, AnInvalidFluxTripsLostSyncWithoutAnyErrorRatio) {
  *
  * @brief [zh] 清除阈值可精确表示的配置，于是"刚好在带内/带外"是测试真能站住的位置。
  *
- *   Mutation found this: eleven mutants in the four clearing expressions survived, all of them arithmetic on `x*(1 -/+
- *   h)`. The reason was not a weak assertion but an absent one -- no case had ever made a tripped fault *stop* being
- *   tripped, so the whole clearing half of `keep()` was unmeasured. The header claims hysteresis as one of the three
- *   things this block does ("a bus hovering on the threshold would otherwise chatter"), and the claim had no test. The
- *   thresholds here are dyadic (`128*0.5 = 64`) so the boundary is a number a test can name exactly; with the shipped
- *   `t_trip = 100, h = 0.05` the product is 94.999999... and no assertion can stand on it.
+ *   Mutation found this: eleven mutants in the four clearing expressions survived, all of them arithmetic on
+ *   `x*(1 -/+ h)`. The reason was not a weak assertion but an absent one -- no case had ever made a tripped fault
+ *   *stop* being tripped, so the whole clearing half of `keep()` was unmeasured. The header claims hysteresis as one of
+ *   the three things this block does ("a bus hovering on the threshold would otherwise chatter"), and the claim had no
+ *   test. The thresholds here are dyadic (`128*0.5 = 64`) so the boundary is a number a test can name exactly; with the
+ *   shipped `t_trip = 100, h = 0.05` the product is 94.999999... and no assertion can stand on it.
  *
  *   变异测试发现的：四条清除表达式里的十一个变异体全部存活，全是 `x*(1 ∓ h)` 上的算术。原因不是断言写弱了，是根本没写
  *   ——没有任何用例让已跳闸的故障 **停止** 跳闸，于是 `keep()` 的清除那一半整体未被测量。头文件把迟滞列为本块的三个特性
- *   之一（"母线悬在阈值上会反复抖"），而这个主张没有用例。这里的阈值取二进制可精确表示的值（`128*0.5 = 64`），边界才是
+ *   之一（"母线悬在阈值上会反复抖"），而这个主张没有用例。这里的阈值取二进制可精确表示的值（ `128*0.5 = 64`），边界才是
  *   测试能精确指定的数；若用出厂值 `t_trip = 100, h = 0.05`，乘积是 94.999999…，没有断言能站在上面。
  */
 auto band_config() -> core::ProtectionConfig {
@@ -832,7 +832,7 @@ TEST(Protection, EachTripThresholdIsStrictAndTheLimitItselfDoesNotTrip) {
  *   read.
  *
  *   这里有两个变异体存活，而它们覆盖了第二个掩码的全部：健康步上 `latched_mask = 0` 被改成 `= 1`，以及位或 `1U << code`
- *   被翻倍成 `2U << code`。两者都存活，因为所有用例只读 `fault` 或 `active_mask`——调用方用来判断"这一条不会自己好"的字
+ *   被翻倍成 `2U << code`。两者都存活，因为所有用例只读 `fault` 或 `active_mask` ——调用方用来判断"这一条不会自己好"的字
  *   段，写了但从来没人读。
  */
 TEST(Protection, TheLatchedMaskSaysWhichFaultsWillNotClearOnTheirOwn) {
@@ -907,10 +907,11 @@ TEST(Protection, AZeroCoolingConstantMeansTheBudgetOnlyAccumulates) {
  *   are 9 and 6.75 -- both of which clear while the budget is still well inside the band, so one step in the middle
  *   tells them apart.
  *
- *   这里又有两个变异体存活——`budget*(1-h)` 里的 `*` 变 `/`、`-` 变 `+`——因为套件里唯一的 `I2t` 用例只把预算 **推上去**
- *   跳到闸就停了，衰减那一半从未跑过。充电电流必须 **高于** `budget/tau`（3 A 只会渐近逼近 4.5 A²·s 而永远不越过——这条
- *   用例的第一版就犯了这个错，被它自己的跳闸断言挡住了），所以用 4 A，30 步到 4.9。 `budget = 4.5`、`h = 0.5` 时带是
- *   2.25..4.5，而变异的阈值是 9 与 6.75——两者都会在预算还稳稳落在带内时就清除，所以带中间走一步就能分开它们。
+ *   这里又有两个变异体存活—— `budget*(1-h)` 里的 `*` 变 `/`、 `-` 变 `+` ——因为套件里唯一的 `I2t` 用例只把预算
+ *   **推上去** 跳到闸就停了，衰减那一半从未跑过。充电电流必须 **高于** `budget/tau`（3 A 只会渐近逼近 4.5 A²·s 而永远不
+ *   越过——这条用例的第一版就犯了这个错，被它自己的跳闸断言挡住了），所以用 4 A，30 步到 4.9。 `budget = 4.5`、
+ *   `h = 0.5` 时带是 2.25..4.5，而变异的阈值是 9 与 6.75——两者都会在预算还稳稳落在带内时就清除，所以带中间走一步就能分
+ *   开它们。
  */
 TEST(Protection, TheSpentBudgetStaysSpentUntilItIsBelowTheBand) {
   constexpr float kExactDt = 1.0F / 64.0F;
@@ -950,9 +951,9 @@ TEST(Protection, TheSpentBudgetStaysSpentUntilItIsBelowTheBand) {
  *   through `step()` (the trip fires first at `t_trip < t_derate_end` in every sane config), which is exactly why it
  *   needs a case that calls `derated_limit()` directly.
  *
- *   `used >= 1` 返回 0，而下一行会返回 `i_max*(1-used)`——对任何略大于 1 的 `used` 都是负数。变异体把比较挪到 `>
- *   1.001`，于是落在两者之间的温度会给调用方一个很小的 **负** 限幅；调用方拿它做钳位，就把指令钳成了反向。这条路径从
- *   `step()` 走不到（任何合理配置下 `t_trip < t_derate_end`，先跳闸），所以它需要一条直接调用 `derated_limit()` 的用
+ *   `used >= 1` 返回 0，而下一行会返回 `i_max*(1-used)` ——对任何略大于 1 的 `used` 都是负数。变异体把比较挪到
+ *   `> 1.001`，于是落在两者之间的温度会给调用方一个很小的 **负** 限幅；调用方拿它做钳位，就把指令钳成了反向。这条路径从
+ *   ` step()` 走不到（任何合理配置下 `t_trip < t_derate_end`，先跳闸），所以它需要一条直接调用 `derated_limit()` 的用
  *   例。
  */
 TEST(Protection, PastTheEndOfTheDeratingRampTheLimitIsExactlyZero) {
@@ -977,7 +978,7 @@ TEST(Protection, PastTheEndOfTheDeratingRampTheLimitIsExactlyZero) {
  * @brief [en] `reset()` clears what latched and keeps the thermal memory; `reset_cold()` is the one that also forgets
  *             the heat.
  *
- * @brief [zh] `reset()` 清掉锁存的、保留热记忆；`reset_cold()` 才是连热度一起忘掉的那个。
+ * @brief [zh] `reset()` 清掉锁存的、保留热记忆； `reset_cold()` 才是连热度一起忘掉的那个。
  *
  *   Under AddressSanitizer the two loops in `reset()`/`reset_cold()` were the only survivors left that no arithmetic
  *   could explain, and the reason was not subtlety: **nothing in this module's tests ever called them**. They are
@@ -985,8 +986,8 @@ TEST(Protection, PastTheEndOfTheDeratingRampTheLimitIsExactlyZero) {
  *   checked -- an operator action whose entire contract ("clear the latched faults", "`I2t` is *not* cleared here, the
  *   winding is still hot") had no direct witness.
  *
- *   在 AddressSanitizer 下，`reset()`/`reset_cold()` 里那两个循环是最后一批算术解释不了的存活体，而原因并不微妙：
- *   **本模块的用例从未调用过它们** 。它们从 C ABI 走得到（`bridge.cpp` 调 `reset_cold()`），所以行覆盖率是满足的，而主
+ *   在 AddressSanitizer 下， `reset()`/`reset_cold()` 里那两个循环是最后一批算术解释不了的存活体，而原因并不微妙：
+ *   **本模块的用例从未调用过它们** 。它们从 C ABI 走得到（ `bridge.cpp` 调 `reset_cold()`），所以行覆盖率是满足的，而主
  *   张从未被检查——一个运维动作的完整契约（"清掉锁存的故障"、"这里 **不** 清 `I2t`，绕组还热着"）没有直接证词。
  */
 TEST(Protection, ResetClearsTheLatchedOnesButKeepsTheHeatUntilResetCold) {
@@ -1024,8 +1025,8 @@ namespace {
  *
  *   The currents used here all stay below `i_hard_a`, so `OverCurrent` cannot fire and the code that comes back is
  *   `I2t` alone -- above the hard limit the ranking would report the other one and the measurement would be about a
- *   different mechanism. 这里用的电流都低于 `i_hard_a`，所以 `OverCurrent` 不可能先跳，返回的码只可能是 `I2t`——超过硬限
- *   时排名会报另一个，那次测量就变成关于别的机理了。
+ *   different mechanism. 这里用的电流都低于 `i_hard_a`，所以 `OverCurrent` 不可能先跳，返回的码只可能是 `I2t` ——超过硬
+ *   限时排名会报另一个，那次测量就变成关于别的机理了。
  */
 auto steps_to_i2t(float current_a) -> int {
   core::Protector protector(config());

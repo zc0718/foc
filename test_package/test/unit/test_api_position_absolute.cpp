@@ -66,7 +66,7 @@ struct PlantHost final {
      *            -- the measured 0.0000 -> 0.0000 over 10 ms of rotation. `hal/position.hpp` warns about exactly this
      *            ("a level would count one pass thousands of times"); the warning was right and the rig was wrong.
      * @note [zh] 本台架的第一版返回 `index_edges > 0`，也就是一个 **电平** 。越过之后每一拍都重新建立原点，把
-     *            referenced 角度永久钉在 `index_mech_rad` 上——实测 10 ms 的转动里 0.0000 -> 0.0000。`hal/position.hpp`
+     *            referenced 角度永久钉在 `index_mech_rad` 上——实测 10 ms 的转动里 0.0000 -> 0.0000。 `hal/position.hpp`
      *            早就警告过这一点（"电平会把一次经过数成几千次"）；警告是对的，台架错了。
      */
     bool index_pulse_now{false};

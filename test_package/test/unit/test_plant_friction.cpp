@@ -29,7 +29,7 @@ auto friction_rig() -> foc::sil::PlantParams {
 }
 
 /**
- * @brief The voltage that makes **both** current derivatives zero at the state given: a decoupled current source. Nulling `diq` alone was not enough and the first two runs of this file measured it: with `vd = 0` the d current drifts to `we*lq*iq/Rs` (0.21 A here), and that drift removes a `we*ld*id` term from `diq`, bleeding the q current by 5 % -- 35.4 rad/s against the 40.0 the arithmetic promises. The cross-coupling term on the d axis is what keeps the d current where it was put. 只把 `diq` 置零不够，本文件前两次运行的实测说明了这一点：`vd = 0` 时 d 轴电流会漂到 `ωe·lq·iq/Rs`（这里 0.21 A），而这个漂移从 `diq` 里拿掉了一项 `ωe·ld·id`，把 q 轴电流抽走 5%——35.4 rad/s 对算术承诺的 40.0。d 轴上的交叉耦合项才是把 d 轴电流留在原处的东西。
+ * @brief The voltage that makes **both** current derivatives zero at the state given: a decoupled current source. Nulling `diq` alone was not enough and the first two runs of this file measured it: with `vd = 0` the d current drifts to `we*lq*iq/Rs` (0.21 A here), and that drift removes a `we*ld*id` term from `diq`, bleeding the q current by 5 % -- 35.4 rad/s against the 40.0 the arithmetic promises. The cross-coupling term on the d axis is what keeps the d current where it was put. 只把 `diq` 置零不够，本文件前两次运行的实测说明了这一点： `vd = 0` 时 d 轴电流会漂到 `ωe·lq·iq/Rs`（这里 0.21 A），而这个漂移从 `diq` 里拿掉了一项 `ωe·ld·id`，把 q 轴电流抽走 5%——35.4 rad/s 对算术承诺的 40.0。d 轴上的交叉耦合项才是把 d 轴电流留在原处的东西。
  */
 auto decoupled_source(const foc::sil::PlantParams &params, float omega_mech, float iq_setpoint, float psi_f)
     -> foc::core::Dq<float> {
@@ -45,7 +45,7 @@ auto decoupled_source(const foc::sil::PlantParams &params, float omega_mech, flo
 }
 
 /**
- * @brief Hold a fixed q current by nulling `diq` every step, so the mechanical law is the only thing under test. The plant integrates the currents from the applied voltage, so "hold iq" means feeding the voltage that makes `diq = 0` at the current speed: `vq = Rs*iq + we*psi_f`. That is a current-regulated source, which is what the mechanical equation is meant to be driven by here. plant 从施加电压积分电流，因此"保持 iq"就是喂那个让当前转速下 `diq = 0` 的电压：`vq = Rs·iq + ωe·ψf`。这就是一个电流源，也正是力学方程在这里应当被驱动的方式。
+ * @brief Hold a fixed q current by nulling `diq` every step, so the mechanical law is the only thing under test. The plant integrates the currents from the applied voltage, so "hold iq" means feeding the voltage that makes `diq = 0` at the current speed: `vq = Rs*iq + we*psi_f`. That is a current-regulated source, which is what the mechanical equation is meant to be driven by here. plant 从施加电压积分电流，因此"保持 iq"就是喂那个让当前转速下 `diq = 0` 的电压： `vq = Rs·iq + ωe·ψf`。这就是一个电流源，也正是力学方程在这里应当被驱动的方式。
  */
 auto run_open_loop(const foc::sil::PlantParams &params, float iq_a, float seconds) -> foc::sil::PlantState {
     foc::sil::PmsmPlant plant(params);

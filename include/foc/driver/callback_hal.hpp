@@ -333,7 +333,10 @@ class CallbackPosition final : public hal::PositionSensor {
         return (callbacks_.position_has_index != nullptr) && (callbacks_.position_has_index(callbacks_.user) != 0);
     }
 
-    /** @brief [en] True only on the tick the mark was crossed. [zh] 仅在越过标记的那一拍为真。 */
+    /**
+     * @brief [en] True only on the tick the mark was crossed.
+     * @brief [zh] 仅在越过标记的那一拍为真。
+     */
     [[nodiscard]] auto index_pulse() noexcept -> bool {
         return (callbacks_.position_index_pulse != nullptr) && (callbacks_.position_index_pulse(callbacks_.user) != 0);
     }

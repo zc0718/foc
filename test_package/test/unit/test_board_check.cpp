@@ -252,7 +252,7 @@ namespace sil = foc::sil;
  *             sign, offset -- because that is where they live on real hardware: the power stage is fine, the reading of
  *             it is not. `read_uvw()` returns the sample the ISR would see, taken at the trigger point, not "now".
  * @brief [zh] 一块可以按 P7-a 点名的方式接错的堵转板子。故障在 **传感器路径** ——符号、零漂——因为真实硬件上它们就在那
- *             里：功率级是好的，读数不是。`read_uvw()` 返回 ISR 会看到的那个采样，取自触发 点，而不是"现在"。
+ *             里：功率级是好的，读数不是。 `read_uvw()` 返回 ISR 会看到的那个采样，取自触发 点，而不是"现在"。
  */
 class FaultyBoard final {
 public:

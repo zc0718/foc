@@ -27,15 +27,31 @@ namespace core {
  */
 enum class FaultCode : std::uint8_t {
     None = 0,
-    OverCurrent,  ///< [en] |i| above the hard limit. [zh] |i| 超过硬限。
-    OverVoltage,  ///< [en] DC link above the limit. [zh] 母线超过上限。
-    UnderVoltage, ///< [en] DC link below the limit. [zh] 母线低于下限。
+    /**
+     * @brief [en] |i| above the hard limit.
+     * @brief [zh] |i| 超过硬限。
+     */
+    OverCurrent,
+    /**
+     * @brief [en] DC link above the limit.
+     * @brief [zh] 母线超过上限。
+     */
+    OverVoltage,
+    /**
+     * @brief [en] DC link below the limit.
+     * @brief [zh] 母线低于下限。
+     */
+    UnderVoltage,
     /**
      * @brief [en] winding or heatsink above the limit.
      * @brief [zh] 绕组或散热器超过上限。
      */
     OverTemperature,
-    I2t, ///< [en] the thermal budget is spent. [zh] 热预算用完了。
+    /**
+     * @brief [en] the thermal budget is spent.
+     * @brief [zh] 热预算用完了。
+     */
+    I2t,
     /**
      * @brief [en] current without motion for too long.
      * @brief [zh] 有电流却没有运动，且持续太久。
@@ -121,8 +137,16 @@ enum class FaultCode : std::uint8_t {
  * @exporter
  */
 struct ProtectionInput final {
-    float i_magnitude_a; ///< [en] peak phase current, A. [zh] 相电流峰值，A。
-    float v_bus_v;       ///< [en] DC link, V. [zh] 母线电压，V。
+    /**
+     * @brief [en] peak phase current, A.
+     * @brief [zh] 相电流峰值，A。
+     */
+    float i_magnitude_a;
+    /**
+     * @brief [en] DC link, V.
+     * @brief [zh] 母线电压，V。
+     */
+    float v_bus_v;
     /**
      * @brief [en] hottest measured point, deg C.
      * @brief [zh] 测到的最热点，℃。
@@ -152,21 +176,37 @@ struct ProtectionInput final {
  * @exporter
  */
 struct ProtectionConfig final {
-    float i_hard_a; ///< [en] instantaneous trip, A. [zh] 瞬时跳闸，A。
+    /**
+     * @brief [en] instantaneous trip, A.
+     * @brief [zh] 瞬时跳闸，A。
+     */
+    float i_hard_a;
     /**
      * @brief [en] nominal continuous limit before derating, A.
      * @brief [zh] 降额前的额定连续限幅，A。
      */
     float i_max_a;
-    float i2t_a2s; ///< [en] thermal budget, A^2*s. [zh] 热预算，A²·s。
+    /**
+     * @brief [en] thermal budget, A^2*s.
+     * @brief [zh] 热预算，A²·s。
+     */
+    float i2t_a2s;
     /**
      * @brief [en] the budget's decay time constant, s; this is the winding's thermal time constant in the squared
      *             current, not a tuning number.
      * @brief [zh] 预算的衰减时间常数，s； 它是绕组在电流平方上的热时间常数，不是整定值。
      */
     float i2t_cooling_s;
-    float v_max_v; ///< [en] DC link upper limit, V. [zh] 母线上限，V。
-    float v_min_v; ///< [en] DC link lower limit, V. [zh] 母线下限，V。
+    /**
+     * @brief [en] DC link upper limit, V.
+     * @brief [zh] 母线上限，V。
+     */
+    float v_max_v;
+    /**
+     * @brief [en] DC link lower limit, V.
+     * @brief [zh] 母线下限，V。
+     */
+    float v_min_v;
     /**
      * @brief [en] temperature that trips, deg C.
      * @brief [zh] 跳闸温度，℃。
