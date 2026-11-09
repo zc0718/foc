@@ -754,7 +754,7 @@ class BoardSelfTest final {
      *   同一次扫描给出三个数。读数在 **整个周期里的峰峰值** 就是 ADC 实际看到的纹波，即 `SamplingInstant` 项与开关周期
      *   对比的那个量。 **板子自己那个触发点上的读数相对周期均值的 偏离** （`sample_error_a`）就是那个位置在安培上让环付
      *   出多少。 **偏离最小处的位置** 才是触发点 该在的地方——而它是被 **量出来并上报** 的，不是被假设的，因为它 **并不
-     *   总是 ** 周期中心：中心对齐的 PWM 把均值放在中心，边沿对齐的把均值放在电流穿过自身平均值的时刻，那取决于占空比。
+     *   总是** 周期中心：中心对齐的 PWM 把均值放在中心，边沿对齐的把均值放在电流穿过自身平均值的时刻，那取决于占空比。
      *   假设 0.5 是一个披着常数外衣的猜测。
      *
      * @note [en] Skipped entirely when the bench has no trigger to move; that is detected at compile time, not at run

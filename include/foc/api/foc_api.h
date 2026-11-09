@@ -1202,7 +1202,7 @@ FOC_WARN_UNUSED foc_err_t foc_cogging_learn_ready(foc_cogging_learn_t handle, in
  * @return [zh] `struct_size` 与本构建不符的 `out_result`、以及空的 `out_result`，同样答 FOC_ERR_PARAM。 FOC_OK：`count
  *              == required`（一张表）或 `count == 0`（只要报告的那次调用，意思是 **窗口是好的** ）；窗口不是一次测量时
  *              FOC_ERR_STATE，`result.status` 指明是四条拒绝里的哪一条；`capacity` 小于 `required` 时 FOC_ERR_PARAM（
- *              ** 此时不评估窗口**——先修缓冲区，否则"缓冲区太小"与"窗口不好"会是同一个答案）。
+ *              **此时不评估窗口**——先修缓冲区，否则"缓冲区太小"与"窗口不好"会是同一个答案）。
  * @note [en] **Never truncates.** A table shorter than `required` would make the caller believe it asked for fewer
  *            orders, and a compensator built from it would be missing exactly the harmonics nobody kept a record of.
  * @note [zh] **从不截断。** 比 `required` 短的表会让调用方以为它只要了这么几次，而用它造出的补偿器恰好缺掉那些没人记录

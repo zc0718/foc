@@ -286,11 +286,11 @@ TEST(FrictionComp, AnEstimateAboveTheBreakawayWalksTheAxisWithNoCommandAtAll) {
  *     is a torque oscillation of amplitude twice the term. Measured with +-0.01 rad/s of speed noise: **20.03 mN*m
  *     peak-to-peak for the naive law **-- twice the 10 mN*m term, as it must be -- and** 0.036 mN*m for the
  *     latch**, which is only the viscous term acting on the noise it was handed. The latch is 550 times quieter, and both park the axis within a milliradian of the same place.
- *     静止时补偿是 **常数** ，而被它替代的那条规律是一条方波：同一段运行、同一份噪声、两条规律、一个窗口。拿 `sign(实测
- *     转速)` 乘库仑项是最直观的实现，而它恰恰在需要这一级的地方是错的：静止时实测转速是零均值噪声，符号因此翻转，而翻转
- *     的符号就是幅度为该项两倍的力矩振荡。在 ±0.01 rad/s 的转速噪声下实测： **朴素规律峰峰 20.03 mN·m** —— 必然是
- *      10 mN·m 的两倍——而 **锁存 0.036 mN·m** ，那只是粘性项作用在喂给它的噪声上。锁存安静 550 倍，而两者把轴停在同一处
- *     附近（毫弧度以内）。
+ *     静止时补偿是**常数**，而被它替代的那条规律是一条方波：同一段运行、同一份噪声、两条规律、一个窗口。拿 `sign(实测转
+ *     速)` 乘库仑项是最直观的实现，而它恰恰在需要这一级的地方是错的：静止时实测转速是零均值噪声，符号因此翻转，而翻转的
+ *     符号就是幅度为该项两倍的力矩振荡。在 ±0.01 rad/s 的转速噪声下实测：**朴素规律峰峰 20.03 mN·m**—— 必然是 10 mN·m
+ *     的两倍——而**锁存 0.036 mN·m** ，那只是粘性项作用在喂给它的噪声上。锁存安静 550 倍，而两者把轴停在同一处附近（毫弧
+ *     度以内）。
  */
 TEST(FrictionComp, TheLatchIsWhatKeepsTheCompensationFromBecomingASquareWaveAtRest) {
     Axis naive(Axis::Law::Naive, kCoulombNm, kStaticNm, true);

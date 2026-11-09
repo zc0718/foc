@@ -60,10 +60,10 @@ namespace core {
  *            同一个表达式的残差——而它被留在该在的地方：测试里。因为它从同样的输入给出同一个数：60 组 (角度, `i_d`,
  *            `i_q`) 样本上实测一致到 **2.384e-07 rad** 。一个公开开关，若它的选项只在"哪条代码路径舍入得不同"上有别，就
  *            是死重量—— 本项目已经删过两次同类东西（一个永远不可能为真的阈值、一个没有消费者的常量）。它遵循的规则是：
- *            **当选择改变行为时才提供 `method=`，当选择只改变写法时不提供。** 这个类真正会长出来的开关是关于** 磁链来源
- *             **的——现在的纯积分器需要种子、且永不忘记坏种子，对上一种不需要种子、带修正增益的磁链——因为那个选择改变失
- *            效模式（从未知角度起动成为可能；低速行为与整定面随之改变）。那是一个需要自己测量表的另一个观测器，不是本类
- *            上的一个标志位。
+ *            **当选择改变行为时才提供 `method=`，当选择只改变写法时不提供。** 这个类真正会长出来的开关是关于**磁链来源
+ *            **的——现在的纯积分器需要种子、且永不忘记坏种子，对上一种不需要种子、带修正增益的磁链——因为那个选择改变失效
+ *            模式（从未知角度起动成为可能；低速行为与整定面随之改变）。那是一个需要自己测量表的另一个观测器，不是本类上
+ *            的一个标志位。
  * @warning [en] Like the open-loop integrator it generalises, the **absolute** angle needs a seed: a pure integrator
  *               cannot know its integration constant. `seed_flux()` takes the full stator flux (not the rotor flux),
  *               and the two roots of the quadratic are disambiguated by continuity with the previous estimate -- on the

@@ -198,8 +198,8 @@ TEST(SilSpeedFromAngle, DifferencingTheAngleBeatsTheObserversOwnSpeed) {
  *     0.4899, 46 % apart, so the band is not doing the deciding -- the data is. 这个头文件对噪声说了两件事：出货的延迟
  *     差分是 `σ_v = √2·σ_θ/(N·dt)`，而同窗口的最小二乘斜率会安静 `√(6N/((N+1)(N+2)))` 倍——N = 200 时 5.82 倍。第二个数
  *     在 F-42 之前写的是 `√(12/N)`（4.1 倍），错了整整 `√2`。测量只有在能 **区分竞争公式** 时才值得做，所以本用例在**同
- *     一段 **合成角度流上同时算两个估计器，并断言实测比值与正确闭式差 5 % 以内、** 同时**落在旧公式的 5 % 之外。N = 50
- *     时两个候选是 0.3363 与 0.4899，相差 46 %——做判断的是数据，不是带宽。
+ *     一段**合成角度流上同时算两个估计器，并断言实测比值与正确闭式差 5 % 以内、**同时**落在旧公式的 5 % 之外。N = 50 时
+ *     两个候选是 0.3363 与 0.4899，相差 46 %——做判断的是数据，不是带宽。
  */
 TEST(SilSpeedFromAngle, BothNoiseGainsAreTheOnesTheClosedFormsPredict) {
     constexpr float kDt = 5e-5F;

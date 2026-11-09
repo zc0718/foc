@@ -138,7 +138,7 @@ class StepCommand final {
    *                                faster than the control rate.
    * @param pulses_this_period [zh] 自上次调用以来数到的脉冲数，符号取接口自己的方向；只能看见一个边沿的调用方传 `+1` 或
    *                                `-1`。用计数而不是边沿，是因为每周期只取一个边沿，在轴比控制频率更快时会 **静默 少计
-   *                                 **。
+   *                                **。
    */
     [[nodiscard]] auto step(std::int64_t pulses_this_period) noexcept -> StepCommandOutput {
         StepCommandOutput out{ErrorCode::Ok, 0.0F, pulses_, 0.0F, false};

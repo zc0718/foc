@@ -472,7 +472,7 @@ TEST(StallStart, TheRecipeBreakawayIsCheckedButNeverSteersTheHandoverValue) {
  *   0.55 s".
  *
  *   Measured with 0.2 N*m at 0.5 N*m/s and a 1e-4 s period: clipping at 4000 ticks (400.0 ms) and `Failed` at
- *   **exactly 6000 **ticks for a 0.2 s grace. With a 0.4 s grace it is** 8001**, not 8000: `hold_s_` is a float32
+ *   **exactly 6000**ticks for a 0.2 s grace. With a 0.4 s grace it is**8001**, not 8000: `hold_s_` is a float32
  *   accumulator, and 4000 additions of 1e-4 s do not land on 0.4 exactly. That one tick is recorded rather than tuned
  *   away -- the accumulator cannot be made exact for every period, and a criterion that demanded 8000 would be a
  *   criterion about float32 rather than about the sequence.
@@ -481,9 +481,9 @@ TEST(StallStart, TheRecipeBreakawayIsCheckedButNeverSteersTheHandoverValue) {
  *   是闭式的——斜坡在 `限幅/速率` 处削平、宽限从那里开始——所以它可以对着算术比，而不是对着"晚于 0.55 s"。
  *
  *   实测（0.2 N·m、0.5 N·m/s、1e-4 s 周期）：4000 拍（400.0 ms）削平，0.2 s 宽限下 `Failed` 正好落在第 **6000** 拍；
- *   0.4 s 宽限下是 **8001** 而不是 8000——`hold_s_` 是 float32 累加器，1e-4 s 加 4000 次不会正好落在 0.4 上。这一拍是
- *   ** 记录**而不是调掉的：累加器不可能对每个周期都精确，而一条要求 8000 的判据就成了关于 float32 的判据，而不是关于这
- *   个序列的判据。
+ *   0.4 s 宽限下是 **8001** 而不是 8000——`hold_s_` 是 float32 累加器，1e-4 s 加 4000 次不会正好落在 0.4 上。这一拍是 **
+ *   记录**而不是调掉的：累加器不可能对每个周期都精确，而一条要求 8000 的判据就成了关于 float32 的判据，而不是关于这个序
+ *   列的判据。
  */
 TEST(StallStart, AFailedAxisIsDeclaredAtTheClippingTimePlusTheGrace) {
     auto jammed_ticks = [](float give_up_s) {

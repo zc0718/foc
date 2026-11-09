@@ -40,8 +40,8 @@ namespace core {
  * @note [zh] 修正在 **相域** 进行（逆 Clarke、按相整形、再 Clarke 回去），因为物理机制就在那里：损失属于 每一相，而不属
  *            于矢量。按矢量幅值补偿等于在补偿另一台电机。
  *
- *   它做不到的：损失不会像 `sign()` 说的那样在过零处瞬间换极性，而是在一段电流范围内淡出； 在这个范围内 `sign()` 会**
- *   过修**——开关 plant 上实测，近零处阶跃补偿比不补偿还差。
+ *   它做不到的：损失不会像 `sign()` 说的那样在过零处瞬间换极性，而是在一段电流范围内淡出； 在这个范围内 `sign()` 会**过
+ *   修**——开关 plant 上实测，近零处阶跃补偿比不补偿还差。
  *
  * @context [en] Current-loop ISR: noexcept, no allocation, one branch when disabled.
  * @context [zh] 电流环 ISR：noexcept、不分配、未启用时只有一个分支。

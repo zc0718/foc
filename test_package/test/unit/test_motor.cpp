@@ -1062,7 +1062,7 @@ using foc::sil::speed_loop_gain;
  *   The sensitivity is the actionable half, and it is lopsided:
  *
  *   | nameplate error at 200 rad/s | measured -3 dB / requested | |---|---| | inertia -20 % / +20 % / +50 % |
- *   **0.82262 / 1.23666 / 1.54877 **| | friction -50 % / +50 % / +200 % |** 1.02948 / 1.02949 / 1.02951** |
+ *   **0.82262 / 1.23666 / 1.54877**| | friction -50 % / +50 % / +200 % |**1.02948 / 1.02949 / 1.02951** |
  *
  *   Divided by the error-free 1.02948 those inertia rows read 0.799 / 1.201 / 1.504:
  *   **the bandwidth you get is the bandwidth you asked for times `J_hat/J`**. The friction rows move the fourth digit

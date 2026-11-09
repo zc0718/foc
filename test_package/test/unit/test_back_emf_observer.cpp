@@ -249,10 +249,10 @@ auto probe_run(float omega, float iq, float rs_hat, float i_offset_a, int steps)
  *
  *   这个观测器是纯积分——`ψ += (v − Rs·i)·dt − L·di`， **没有修正项** ——所以唯一要紧的问题是哪些输入误差会累积、哪些不
  *   会。实测（`Rs = 0.5`、`L = 8e-4`、`ψf = 4.7619e-3`、`dt = 50 µs`）见上表。两个可操作的结论：**参数误差是偏置而不是
- *   跑飞 **——10 % 的 `Rs` 误差在 200 rad/s 花 0.19 rad、转速更高时更小，所以诚实的规格是"有界， `ε·Rs·iq/(ω·ψf)`（在它
- *   还很小时）"，而本用例把这条律失效的地方也记下来了（50 rad/s 那行，误差饱和到 π）。 **传感器偏置才是跑飞的那一个
- *    ** ：它每步都以恒定电压误差进入、永不反向地积分，50 mA 的偏置 100 ms 就把估计推出 0.71 rad。所以信任这个观测器之前
- *   必须先把电流零偏标定掉，而这个数就是 README 行现在带着的那个。
+ *   跑飞**——10 % 的 `Rs` 误差在 200 rad/s 花 0.19 rad、转速更高时更小，所以诚实的规格是"有界， `ε·Rs·iq/(ω·ψf)`（在它还
+ *   很小时）"，而本用例把这条律失效的地方也记下来了（50 rad/s 那行，误差饱和到 π）。 **传感器偏置才是跑飞的那一个** ：
+ *   它每步都以恒定电压误差进入、永不反向地积分，50 mA 的偏置 100 ms 就把估计推出 0.71 rad。所以信任这个观测器之前必须先
+ *   把电流零偏标定掉，而这个数就是 README 行现在带着的那个。
  */
 TEST(BackEmfObserver, TheResidueIsOneStepAndOnlyADcOffsetRunsAway) {
     // Row 1: the exact model leaves exactly one step of rotation, whatever the speed.

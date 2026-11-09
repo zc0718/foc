@@ -90,7 +90,7 @@ struct MinPulseOutput final {
  *
  *   这个类 **做不到** 什么，写下来是因为不写就会有调用方以为它做得到：它无法让驱动器送出一个它拒绝送的脉冲；它不建模两
  *   个边沿的传输延迟 **抖动** ；余量假定下一周期的 `t_min` 相同——一个极限会变的驱动器（温度、母线电压）破坏的是 **精确
- *   性 **，不是那条界。
+ *   性**，不是那条界。
  *
  * @context [en] Current-loop ISR: noexcept, no allocation, one branch per phase when disabled.
  * @context [zh] 电流环 ISR：noexcept、不分配、未启用时每相一个分支。

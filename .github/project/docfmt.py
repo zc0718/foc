@@ -114,6 +114,25 @@ def _join_prose(parts: Iterable[str]) -> str:
     return out
 
 
+def _unpaired_emphasis(text: str) -> bool:
+    """Whether this text carries emphasis damage that only a re-wrap can repair.
+
+    Two shapes: an odd number of `**` (a pair lost its partner), or a pair whose
+    body begins or ends with a space -- which is what a wrap produces when it breaks
+    between a delimiter and its text, and is why the joined text renders as literal
+    asterisks. Code spans are removed first: `**` inside them is code.
+    """
+    visible = re.sub(r'``[^`]*``|`[^`]*`', '', text)
+    marks = [m.start() for m in re.finditer(r'\*\*', visible)]
+    if len(marks) % 2:
+        return True
+    for k in range(0, len(marks), 2):
+        body = visible[marks[k] + 2:marks[k + 1]]
+        if body[:1] == ' ' or body[-1:] == ' ':
+            return True
+    return False
+
+
 def _units(text: str) -> list[tuple[str, bool]]:
     """Split into wrap units: ASCII words stay whole, CJK breaks between characters.
 
@@ -164,7 +183,15 @@ def _wrap(text: str, indent: int) -> list[str]:
     # the pair prints as literal asterisks. A sentinel stands in for the spaces
     # inside the pair so the wrap cannot see them as break opportunities.
     SENTINEL = "\x00"
-    protected = re.sub(r'\*\*[^*\n]+?\*\*', lambda m: m.group(0).replace(" ", SENTINEL), text)
+    def _pair(match: "re.Match[str]") -> str:
+        # Leading/trailing spaces inside a delimiter are always damage: a pair that
+        # was split by an earlier wrap joins back as `** text**`, and a delimiter
+        # adjacent to a space is not a delimiter. Spaces *within* the phrase are
+        # the author's and are sentinel-hidden so the wrap cannot break there.
+        body = match.group(1).strip(" ").strip(SENTINEL)
+        return "**" + body.replace(" ", SENTINEL) + "**"
+
+    protected = re.sub(r'\*\*([^*\n]+?)\*\*', _pair, text)
     lines: list[str] = []
     current = ""
     width = indent
@@ -253,7 +280,12 @@ def _fix_block(lines: list[str], start: int, end: int) -> list[str]:
             if corroborated and (len(hanging) == 1) and (next(iter(hanging)) > run[0][0]):
                 indents = {run[0][0]}
         overflow = any(_columns(e[1]) + e[0] > MAX_COLUMN for e in run)
-        if len(indents) == 1 and not overflow:
+        # A run that carries an odd number of `**` outside code has a pair split
+        # across its own line breaks. The lines agree with each other, so the
+        # consistency test above would leave it alone -- but "agrees with itself" is
+        # not the property that matters when the join is what broke the markup.
+        split_pair = _unpaired_emphasis(' '.join(e[1] for e in run))
+        if len(indents) == 1 and not overflow and not split_pair:
             # Consistent: leave it byte-identical. This tool repairs damage, it does not impose a
             # house style on prose that is already fine -- which is what keeps it from churning a
             # hundred good comments to fix thirty bad ones.
