@@ -3,7 +3,8 @@
 #include <stdint.h>
 // Conan::ImportEnd
 
-/**
+/*!
+ * @ingroup group_c_api
  * @file foc_types.h
  * @brief [en] The frozen C ABI data types: every handle, struct, enum and flag value a C consumer sees.
  * @brief [zh] 冻结的 C ABI 数据类型：C 消费方看到的每个句柄、结构体、枚举与标志值。
@@ -89,10 +90,16 @@ typedef struct foc_motor_s *foc_motor_t;
  * @since 0.1.0
  * @exporter
  */
-// The base type stays `int`: C99 has no fixed underlying type for an enum, and the size of
-// foc_err_t is part of the frozen C ABI (foc::ErrorCode mirrors these values one to one).
-// 基类型保持 `int`：C99 的 enum 没有固定底层类型，且 foc_err_t 的大小属于已冻结的 C ABI
-// （foc::ErrorCode 与这些数值一一对应）。
+/**
+ * @brief [en] The base type stays `int`.
+ *
+ *   C99 has no fixed underlying type for an enum, and the size of `foc_err_t` is part of the frozen C ABI (
+ *   `foc::ErrorCode` mirrors these values one to one).
+ *
+ * @brief [zh] 基类型保持 `int`。
+ *
+ *   C99 的 enum 没有固定底层类型，而 `foc_err_t` 的大小属于已冻结的 C ABI（ `foc::ErrorCode` 与这些数值一一对应）。
+ */
 // NOLINTNEXTLINE(performance-enum-size)
 typedef enum foc_err {
     FOC_OK = 0,
@@ -868,9 +875,15 @@ typedef struct foc_fw_verdict {
  * @since 0.1.0
  * @exporter
  */
-// The base type stays `int` for the same reason as the others: a C99 enum has no fixed underlying type, and this
-// one crosses the same frozen ABI.
-// 基类型保持 `int`，理由与其余几个相同：C99 的 enum 没有固定底层类型，而它跨的是同一个已冻结的 ABI。
+/**
+ * @brief [en] The base type stays `int` for the same reason as the others.
+ *
+ *   A C99 enum has no fixed underlying type, and this one crosses the same frozen ABI.
+ *
+ * @brief [zh] 基类型保持 `int`，理由与其余几个相同。
+ *
+ *   C99 的 enum 没有固定底层类型，而它跨的是同一个已冻结的 ABI。
+ */
 // NOLINTNEXTLINE(performance-enum-size)
 typedef enum foc_stall_phase {
     /**

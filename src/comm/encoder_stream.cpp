@@ -8,14 +8,21 @@ namespace comm {
 
 namespace {
 
-// `x^6 + x + 1` is `0b1000011`, but a six-bit register holds only the **remainder**, so the `x^6` term is implicit in the
-// shift-out and the constant is `0b000011`. Writing `0x43` folds a bit the register cannot hold: it leaks into bit 6, the wire
-// truncates it, and the encoder and decoder then disagree exactly when that bit is set -- measured at position 2047, where the
-// recomputed value was `0x7B` against `0x3B` on the wire. The case that caught it was the exhaustive one, and it caught it as a
-// *decode failure* rather than as a bad CRC, which is why the sum was worth checking by hand.
-// `x^6 + x + 1` 是 `0b1000011`，但六位寄存器只装 **余数** ，`x^6` 那一项隐含在移出位里，所以常数是 `0b000011`。写成 `0x43`
-// 会折入一个寄存器装不下的位：它漏进第 6 位、线上被截断，于是只要该位被置上，编码侧与解码侧就不一致——实测出现在位置 2047，
-// 重算值 `0x7B` 对线上 `0x3B`。抓到它的是那条穷举用例，而且它表现为一次 **解码失败** 而不是一次坏 CRC，所以把这个和手工核对一遍是值得的。
+/**
+ * @brief [en] `x^6 + x + 1` is `0b1000011`; a six-bit register holds only the **remainder**.
+ *
+ *   So the `x^6` term is implicit in the shift-out and the constant is `0b000011`. Writing `0x43` folds a bit the
+ *   register cannot hold: it leaks into bit 6, the wire truncates it, and the encoder and decoder then disagree exactly
+ *   when that bit is set -- measured at position 2047, where the recomputed value was `0x7B` against `0x3B` on the
+ *   wire. The case that caught it was the exhaustive one, and it caught it as a *decode failure* rather than as a bad
+ *   CRC, which is why the sum was worth checking by hand.
+ *
+ * @brief [zh] `x^6 + x + 1` 是 `0b1000011`；六位寄存器只装 **余数** 。
+ *
+ *   写成 `0x43` 会折入一个寄存器装不下的位：它漏进第 6 位、线上被截断，于是只要该位被置上，编码侧 与解码侧就不一致——实
+ *   测出现在位置 2047， 重算值 `0x7B` 对线上 `0x3B`。抓到它的是那条穷举用例，而且它表现为 一次 **解码失败** 而不是一次
+ *   坏 CRC，所以把这个和手工核对一遍是值得的。
+ */
 constexpr std::uint8_t kCrcPoly = 0x03U;
 constexpr int kBitsPerByte = 8;
 
@@ -60,9 +67,11 @@ auto decode_biss(const std::uint8_t* bits, int bit_count, const EncoderLayout& l
         return out;
     }
     if (bit_count != layout.frame_bits()) {
-        // A stream of the wrong length is a stream that is not this encoder's frame. Refusing is the only answer that
-        // cannot produce a plausible angle from a misaligned one.
-        // 长度不对的码流就不是这台编码器的帧。拒绝是唯一不会从错位码流里产生一个"看起来合理的角度"的答案。
+        /**
+         * @brief [en] A stream of the wrong length is a stream that is not this encoder's frame. Refusing is the only
+         *             answer that cannot produce a plausible angle from a misaligned one.
+         * @brief [zh] 长度不对的码流就不是这台编码器的帧。拒绝是唯一不会从错位码流里产生一个"看起来合理的角度"的答案。
+         */
         return out;
     }
 

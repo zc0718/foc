@@ -11,7 +11,10 @@ namespace foc {
 
 namespace motor {
 
-// Stable symbols for the V1 default composition (ADR-005): back-EMF observer + SVPWM + PI + stub HAL.
+/**
+ * @brief [en] Stable symbols for the V1 default composition (ADR-005): back-EMF observer + SVPWM + PI + stub HAL.
+ * @brief [zh] V1 默认组合的稳定符号（ADR-005）：反电动势观测器 + SVPWM + PI + 桩 HAL。
+ */
 template class Motor<core::BackEmfObserver, core::Svpwm, core::Pi, driver::StubHal>;
 
 } // namespace motor

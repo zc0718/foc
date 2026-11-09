@@ -94,37 +94,51 @@ auto CoggingCompensation::offset(const CoggingCompInput& in) const noexcept -> C
         return out;
     }
     if (count_ == 0) {
-        // Nothing to cancel: not an error, and deliberately not a "gain of zero" either -- there is no table, so there is
-        // no decision to report.
-        // 没有可抵消的东西：不是错误，也故意不报成「增益为零」——没有表，就没有决定可报。
+        /**
+         * @brief [en] Nothing to cancel: not an error, and deliberately not a "gain of zero" either -- there is no
+         *             table, so there is no decision to report.
+         * @brief [zh] 没有可抵消的东西：不是错误，也故意不报成「增益为零」——没有表，就没有决定可报。
+         */
         return CoggingCompOutput{ErrorCode::Ok, 0.0F, 0.0F, 1.0F, false};
     }
 
     const MachineParams& m = config_.params;
-    // Torque per amp on the q axis, at the `id` actually flowing: `dT/diq = 1.5*p*(psi_f + (ld-lq)*id)`.
-    // q 轴每安培的转矩，在 **实际流动的** `id` 处：`dT/diq = 1.5·p·(ψf + (Ld−Lq)·id)`。
+    /**
+     * @brief [en] Torque per amp on the q axis, at the `id` actually flowing: `dT/diq = 1.5*p*(psi_f + (ld-lq)*id)`.
+     * @brief [zh] q 轴每安培的转矩，在 **实际流动的** `id` 处： `dT/diq = 1.5·p·(ψf + (Ld−Lq)·id)`。
+     */
     const float kt_eff = 1.5F * static_cast<float>(config_.pole_pairs) * (m.psi_f + ((m.ld - m.lq) * in.id_a));
-    // "No torque per amp" has to be judged **against the machine's own scale**, not against an absolute number. The
-    // flux-nulling `id` is `-psi_f/(ld-lq)`, so evaluating `kt_eff` there is a *cancellation* and its residue is one rounding
-    // of `1.5*p*psi_f` -- measured 1.3e-9 N*m/A on this machine, which is 2.6e-8 of that scale. A bare `1e-9` sits inside the
-    // rounding, so whether the refusal fired depended on the compiler: `g++` landed the residue at 8e-10 and refused, `clang`
-    // on macOS landed it at 1.1e-9 and answered `Ok`. A millionth of the scale is above every rounding and below any real
-    // torque per amp by orders of magnitude, so the refusal no longer depends on the last bit of two different orders.
-    // 「每安培没有转矩」必须对着 **机器自身的尺度** 判定，而不是一个绝对数。削磁 `id` 就是 `-psi_f/(ld-lq)`，于是在那里求 `kt_eff`
-    // 是一次 **相消** ，其残差是 `1.5·p·ψf` 的一个舍入——本机上实测 1.3e-9 N·m/A，即该尺度的 2.6e-8。写死的 `1e-9` 就落在舍入里，
-    // 于是拒绝是否触发取决于编译器：`g++` 的残差落在 8e-10 并拒绝了，macOS 上的 `clang` 落在 1.1e-9 并答了 `Ok`。取尺度的百万分之一
-    // 既高于任何舍入、又低于任何真实的每安培转矩好几个数量级，于是这个拒绝不再取决于两种运算顺序的最后一位。
+    /**
+     * @brief [en] "No torque per amp" has to be judged **against the machine's own scale**, not against an absolute
+     *             number. The flux-nulling `id` is `-psi_f/(ld-lq)`, so evaluating `kt_eff` there is a *cancellation*
+     *             and its residue is one rounding of `1.5*p*psi_f` -- measured 1.3e-9 N*m/A on this machine, which is
+     *             2.6e-8 of that scale. A bare `1e-9` sits inside the rounding, so whether the refusal fired depended
+     *             on the compiler: `g++` landed the residue at 8e-10 and refused, `clang` on macOS landed it at 1.1e-9
+     *             and answered `Ok`. A millionth of the scale is above every rounding and below any real torque per amp
+     *             by orders of magnitude, so the refusal no longer depends on the last bit of two different orders.
+     * @brief [zh] 「每安培没有转矩」必须对着 **机器自身的尺度** 判定，而不是一个绝对数。削磁 `id` 就是
+     *             `-psi_f/(ld-lq)`，于是在那里求 `kt_eff` 是一次 **相消** ，其残差是 `1.5·p·ψf` 的一个舍入——本机上实测
+     *             1.3e-9 N·m/A，即该尺度的 2.6e-8。写死的 `1e-9` 就落在舍入里， 于是拒绝是否触发取决于编译器： `g++` 的
+     *             残差落在 8e-10 并拒绝了，macOS 上的 `clang` 落在 1.1e-9 并答了 `Ok`。取尺度的百万分之一 既高于任何舍
+     *             入、又低于任何真实的每安培转矩好几个数量级，于是这个拒绝不再取决于两种运算顺序的最后一位。
+     */
     const float torque_scale = 1.5F * static_cast<float>(config_.pole_pairs) * std::fabs(m.psi_f);
     if (!(std::fabs(kt_eff) > (torque_scale * 1.0e-6F))) {
-        // The machine cannot produce torque at this `id` (it is at the flux-nulling current), so no current can cancel a
-        // torque here. Refusing is the honest answer; dividing would produce an infinity that the caller would clamp.
-        // 机器在该 `id` 处出不了转矩（正处在削磁电流），所以这里没有任何电流能抵消转矩。拒绝是诚实的答案；相除会产生一个
-        // 调用方随后会钳掉的无穷。
+        /**
+         * @brief [en] The machine cannot produce torque at this `id` (it is at the flux-nulling current), so no current
+         *             can cancel a torque here. Refusing is the honest answer; dividing would produce an infinity that
+         *             the caller would clamp.
+         * @brief [zh] 机器在该 `id` 处出不了转矩（正处在削磁电流），所以这里没有任何电流能抵消转矩。拒绝是诚实的答案；
+         *             相除会产生一个 调用方随后会钳掉的无穷。
+         */
         return CoggingCompOutput{ErrorCode::Param, 0.0F, 0.0F, 1.0F, false};
     }
 
-    // The frequency fade, on the highest order in the table because that is the fastest thing being asked for.
-    // 频率淡出，按表里的最高次数算，因为那是被要求的最快的成分。
+    /**
+     * @brief [en] The frequency fade, on the highest order in the table because that is the fastest thing being asked
+     *             for.
+     * @brief [zh] 频率淡出，按表里的最高次数算，因为那是被要求的最快的成分。
+     */
     float gain = 1.0F;
     if (config_.fade_from_hz > 0.0F) {
         const float omega = std::fabs(in.omega_mech_rad_s);
@@ -137,15 +151,20 @@ auto CoggingCompensation::offset(const CoggingCompInput& in) const noexcept -> C
     }
 
     const float cancelled = table_torque_nm(table_, count_, in.theta_mech_rad);
-    // The offset is the current that produces `-cancelled`, scaled by the fade. `kt_eff` carries its sign, so a salient
-    // machine with `id` beyond the flux-nulling point is compensated with the opposite current -- which is what the
-    // physics says, and it is the reason the fade and the sign are both computed rather than taken from `Kt`.
-    // 偏置就是产生 `-cancelled` 的电流，再乘上淡出系数。`kt_eff` 带符号，所以 `id` 越过削磁点的凸极机会用相反的电流补偿——
-    // 物理就是这么说的，这也是淡出与符号都要计算、而不从 `Kt` 取值的原因。
+    /**
+     * @brief [en] The offset is the current that produces `-cancelled`, scaled by the fade. `kt_eff` carries its sign,
+     *             so a salient machine with `id` beyond the flux-nulling point is compensated with the opposite current
+     *             -- which is what the physics says, and it is the reason the fade and the sign are both computed
+     *             rather than taken from `Kt`.
+     * @brief [zh] 偏置就是产生 `-cancelled` 的电流，再乘上淡出系数。 `kt_eff` 带符号，所以 `id` 越过削磁点的凸极机会用
+     *             相反的电流补偿—— 物理就是这么说的，这也是淡出与符号都要计算、而不从 `Kt` 取值的原因。
+     */
     const float wanted = ((-cancelled) / kt_eff) * gain;
 
-    // The ceiling applies to the sum, because the sum is what the current loop sees.
-    // 上限作用在 **和** 上，因为电流环看到的就是那个和。
+    /**
+     * @brief [en] The ceiling applies to the sum, because the sum is what the current loop sees.
+     * @brief [zh] 上限作用在 **和** 上，因为电流环看到的就是那个和。
+     */
     const float total = in.iq_command_a + wanted;
     const float limit = (in.i_max_a > 0.0F) ? in.i_max_a : 0.0F;
     float bounded = total;

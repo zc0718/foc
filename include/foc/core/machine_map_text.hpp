@@ -279,9 +279,11 @@ inline auto read_document(const char* text, std::size_t length, MachineDocument*
                 }
                 value = detail::skip_spaces(text, end, value);
                 if (value < end) {
-                    // `row=0,4e-4,6e-4,0.05,extra` is a typo, not an annotation. Accepting it would let a
-                    // fifth column be silently dropped by every reader.
-                    // `row=0,4e-4,6e-4,0.05,extra` 是笔误，不是批注。接受它等于让第五列被每个读方静默丢弃。
+                    /**
+                     * @brief [en] `row=0,4e-4,6e-4,0.05,extra` is a typo, not an annotation. Accepting it would let a
+                     *             fifth column be silently dropped by every reader.
+                     * @brief [zh] `row=0,4e-4,6e-4,0.05,extra` 是笔误，不是批注。接受它等于让第五列被每个读方静默丢弃。
+                     */
                     return fail(TextStatus::BadFormat, line_number);
                 }
                 if (!std::isfinite(fields[0]) || !std::isfinite(fields[1]) || !std::isfinite(fields[2]) ||

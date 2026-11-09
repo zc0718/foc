@@ -12,10 +12,16 @@ namespace {
 
 constexpr double kSingular = 1.0e-12;
 
-// Solve the symmetric 3x3 normal equations by Cramer's rule. Order is `[iq, omega, 1]`, so the intercept is the third
-// parameter and an unknown constant load has somewhere to go that is not the slope on the current.
-// 用克拉默法则解对称的 3×3 正规方程。顺序是 `[iq, ω_m, 1]`，所以截距是第三个参数，而一个未知的恒定负载有地方可去，且那里不是对
-// 电流的斜率。
+/**
+ * @brief [en] Solve the symmetric 3x3 normal equations by Cramer's rule.
+ *
+ *   Order is `[iq, omega_m, 1]`, so the intercept is the third parameter and an unknown constant load has somewhere to
+ *   go that is not the slope on the current.
+ *
+ * @brief [zh] 用克拉默法则解对称的 3×3 正规方程。
+ *
+ *   顺序是 `[iq, ω_m, 1]`，所以截距是第三个参数，而一个未知的恒定负载有地方可去，且那里不是对电流的斜率。
+ */
 struct Fit final {
     bool ok;
     double a_iq;   // d(alpha)/d(iq) = kt/J

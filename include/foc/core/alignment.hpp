@@ -379,13 +379,15 @@ class AlignRoutine final {
     float spread_rad_{0.0F};
     float last_spread_rad_{0.0F};
     float first_mean_rad_{0.0F};
-    // Accumulated in double on purpose: hundreds of float samples summed in float put a noise floor
-    // of roughly 1e-3 rad on the very number that decides accept/reject, which is the same order as
-    // a sensible tolerance. The trig arguments stay float -- that is all the sensor gives -- but the
-    // summation must not lose what little the samples carry.
-    // 故意用 double 累加：数百个 float 采样用 float 求和，会给这个决定"接受/拒绝"的数字压上约 1e-3 rad
-    // 的噪声地板，正好与合理容差同一量级。三角函数的自变量仍是 float（传感器只给得出这么多），但求和
-    // 不能把采样里那点信息再丢掉。
+    /**
+     * @brief [en] Accumulated in double on purpose: hundreds of float samples summed in float put a noise floor of
+     *             roughly 1e-3 rad on the very number that decides accept/reject, which is the same order as a sensible
+     *             tolerance. The trig arguments stay float -- that is all the sensor gives -- but the summation must
+     *             not lose what little the samples carry.
+     * @brief [zh] 故意用 double 累加：数百个 float 采样用 float 求和，会给这个决定"接受/拒绝"的数字压上约 1e-3 rad 的噪
+     *             声地板，正好与合理容差同一量级。三角函数的自变量仍是 float（传感器只给得出这么多），但求和 不能把采样
+     *             里那点信息再丢掉。
+     */
     double sum_sin_{0.0};
     double sum_cos_{0.0};
     std::uint32_t samples_{0U};

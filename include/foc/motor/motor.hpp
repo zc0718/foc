@@ -738,16 +738,20 @@ class Motor final {
     ReferenceMode mode_;
     float iq_ref_a_;
     float speed_ref_rad_s_;
-    // These three stay float on purpose, and they are a different thing from the `core::ElapsedClock` the routines
-    // use: none of them only grows. `speed_elapsed_s_` and `position_elapsed_s_` are phase decimators, cleared every
-    // time the loop they gate runs, so their magnitude is bounded by the configured period; `stall_elapsed_s_` is
-    // bounded by `kStallWindowS` because reaching it faults. A float is exact enough for a value that never leaves
-    // hundredths of a second -- but a *timeout* is not bounded that way, which is why the routines that own one no
-    // longer accumulate it in float (F-105), and `gates.py clocks` holds the line.
-    // 这三个故意留作 float，与各流程用的 `core::ElapsedClock` 不是一回事：它们都 **不是只增不减** 的。
-    // `speed_elapsed_s_` 与 `position_elapsed_s_` 是分频相位，它们所门控的环每跑一次就清零，量级被配置的周期兜住；
-    // `stall_elapsed_s_` 被 `kStallWindowS` 兜住（达到即故障）。一个永不超出百分之几秒的量，float 足够精确——
-    // 但 **超时** 不是这样被兜住的，所以拥有超时的流程不再用 float 累加它（F-105），并由 `gates.py clocks` 守住。
+    /**
+     * @brief [en] These three stay float on purpose, and they are a different thing from the `core::ElapsedClock` the
+     *             routines use: none of them only grows. `speed_elapsed_s_` and `position_elapsed_s_` are phase
+     *             decimators, cleared every time the loop they gate runs, so their magnitude is bounded by the
+     *             configured period; `stall_elapsed_s_` is bounded by `kStallWindowS` because reaching it faults. A
+     *             float is exact enough for a value that never leaves hundredths of a second -- but a *timeout* is not
+     *             bounded that way, which is why the routines that own one no longer accumulate it in float (F-105),
+     *             and `gates.py clocks` holds the line.
+     * @brief [zh] 这三个故意留作 float，与各流程用的 `core::ElapsedClock` 不是一回事：它们都 **不是只增不减** 的。
+     *             `speed_elapsed_s_` 与 `position_elapsed_s_` 是分频相位，它们所门控的环每跑一次就清零，量级被配置的周
+     *             期兜住； `stall_elapsed_s_` 被 `kStallWindowS` 兜住（达到即故障）。一个永不超出百分之几秒的量，float
+     *             足够精确—— 但 **超时** 不是这样被兜住的，所以拥有超时的流程不再用 float 累加它（F-105），并由
+     *             `gates.py clocks` 守住。
+     */
     float speed_elapsed_s_;
     bool speed_step_due_;
     float position_ref_rad_;
@@ -770,27 +774,32 @@ class Motor final {
     std::uint64_t last_clock_us_;
     bool clock_seeded_;
     Ab<float> v_ab_prev_;
-    // Post-hand-over check: the open-loop start forces the angle and cannot see the rotor, so it cannot tell whether
-    // the rotor was caught. The observer can, one window later. Kept as a countdown in seconds rather than ticks so a
-    // variable control period cannot stretch the window.
-    // 交接后检查：开环起动强制角度、看不见转子，因此它无法判断转子是否被抓住。观测器在一个窗口之后可以。
-    // 用秒而不是 tick 做倒计时，变化的控制周期就不能把这个窗口拉长。
+    /**
+     * @brief [en] Post-hand-over check: the open-loop start forces the angle and cannot see the rotor, so it cannot
+     *             tell whether the rotor was caught. The observer can, one window later. Kept as a countdown in seconds
+     *             rather than ticks so a variable control period cannot stretch the window.
+     * @brief [zh] 交接后检查：开环起动强制角度、看不见转子，因此它无法判断转子是否被抓住。观测器在一个窗口之后可以。 用
+     *             秒而不是 tick 做倒计时，变化的控制周期就不能把这个窗口拉长。
+     */
     float handover_omega_e_rad_s_{0.0F};
     float handover_check_s_{0.0F};
-    // Stall detector: the loop is at full current and the machine is not moving the way it was asked to. Counted in
-    // seconds for the same reason as the hand-over window -- a tick count means nothing across control rates.
-    // 堵转检测：环路顶在满电流，而机器没有按指令方向运动。用秒计数，理由与交接窗口相同——tick 数跨控制频率没有意义。
+    /**
+     * @brief [en] Stall detector: the loop is at full current and the machine is not moving the way it was asked to.
+     *             Counted in seconds for the same reason as the hand-over window -- a tick count means nothing across
+     *             control rates.
+     * @brief [zh] 堵转检测：环路顶在满电流，而机器没有按指令方向运动。用秒计数，理由与交接窗口相同——tick 数跨控制频率没
+     *             有意义。
+     */
     float stall_elapsed_s_{0.0F};
-    // Breakaway sequence. A concrete member rather than an eleventh policy slot:
-    // the sequence is stateful, it needs `dt` and the measured speed every
-    // period, and it is the *torque source* for a while -- which is what the mode
-    // already expresses. An eleventh template parameter would have churned every
-    // instantiation in `src/` and every test that names one, for a policy nobody
-    // would ever substitute.
-    // 起步序列。具体成员而不是第十一个策略槽：序列是有状态的，每周期都要 `dt`
-    // 与实测转速，且它在一段时间内就是
-    // **转矩来源** ——而这正是模式已经表达的事。加第十一个模板参数会弄脏 `src/`
-    // 里每个实例化与每个点名它的用例， 而那个策略没有人会去替换。
+    /**
+     * @brief [en] Breakaway sequence. A concrete member rather than an eleventh policy slot: the sequence is stateful,
+     *             it needs `dt` and the measured speed every period, and it is the *torque source* for a while -- which
+     *             is what the mode already expresses. An eleventh template parameter would have churned every
+     *             instantiation in `src/` and every test that names one, for a policy nobody would ever substitute.
+     * @brief [zh] 起步序列。具体成员而不是第十一个策略槽：序列是有状态的，每周期都要 `dt` 与实测转速，且它在一段时间内
+     *             就是 **转矩来源** ——而这正是模式已经表达的事。加第十一个模板参数会弄脏 `src/` 里每个实例化与每个点名
+     *             它的用例， 而那个策略没有人会去替换。
+     */
     core::StallStart stall_start_{};
     core::StallStartPhase stall_phase_{core::StallStartPhase::Idle};
     float stall_torque_nm_{0.0F};

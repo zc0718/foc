@@ -6,8 +6,15 @@ namespace foc {
 
 namespace core {
 
-// Stable ABI symbols for the V1 precision (ADR-005): even a consumer that never instantiates the
-// templates itself links against these float specialisations.
+/**
+ * @brief [en] Stable ABI symbols for the V1 precision (ADR-005).
+ *
+ *   Even a consumer that never instantiates the templates itself links against these float specialisations.
+ *
+ * @brief [zh] V1 精度的稳定 ABI 符号（ADR-005）。
+ *
+ *   即使消费方自己从不实例化模板，也链接到这些 float 特化。
+ */
 template Ab<float> clarke<float>(Uvw<float>) noexcept;
 
 template Uvw<float> inv_clarke<float>(Ab<float>) noexcept;

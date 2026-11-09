@@ -141,8 +141,10 @@ inline auto torque_map(const motor::MotorConfig& config, float min_nm, float max
     out.reluctance = 1.5F * static_cast<float>(config.pole_pairs) * (config.ld - config.lq);
     out.i_limit_a = config.i_max_a;
 
-    // What the inverter can actually deliver, then the caller's limits on top of it.
-    // 逆变器真正能交付的，再把调用方的限幅叠加其上。
+    /**
+     * @brief [en] What the inverter can actually deliver, then the caller's limits on top of it.
+     * @brief [zh] 逆变器真正能交付的，再把调用方的限幅叠加其上。
+     */
     const float deliverable = config.kt * config.i_max_a;
     out.min_nm = (min_nm > -deliverable) ? min_nm : -deliverable;
     out.max_nm = (max_nm < deliverable) ? max_nm : deliverable;

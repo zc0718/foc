@@ -46,15 +46,8 @@ auto ThermalLimit::continuous() const noexcept -> ThermalLimitReport {
     const double rt = static_cast<double>(config_.rt_k_per_w);
     const double alpha = static_cast<double>(config_.alpha_per_k);
     const double t_allowed = static_cast<double>(config_.t_allowed_c);
-    // `i_cont^2 = (t_allowed - Ta) / (Rt*1.5*rs20*(1 + alpha*(t_allowed-20)))`. The parenthesised factor is the feedback: it
-    // says the winding is *less* able to carry current at the temperature the reserve is sized against, and dropping it is
-    // the naive answer that reads 15.5 % high on copper at 105 C.
-    // `i_cont² = (t_allowed − Ta)/(Rt·1.5·rs20·(1 + α·(t_allowed−20)))`。括号里那一项就是反馈：它说绕组在"余量所在的那个
-    // 温度"上 **更带不动** 电流，而丢掉它得到的是在铜的 105 ℃ 处高 15.5 % 的天真答案。
-    // No guards here: `validate()` has already established `rs > 0`, `rt > 0` and `t_allowed > t_ambient`, which is exactly
-    // what makes the denominator and the numerator positive. A second check that can never fire is a line nobody can test.
-    // 这里不设护栏：`validate()` 已经确立 `rs > 0`、`rt > 0`、`t_allowed > t_ambient`，而这正是分母与分子为正的条件。再加一道
-    // 永不触发的检查，就是一行谁也测不到的东西。
+    // `i_cont^2 = (t_allowed - Ta) / (Rt*1.5*rs20*(1 + alpha*(t_allowed-20)))`. The parenthesised factor is the feedback: it says the winding is *less* able to carry current at the temperature the reserve is sized against, and dropping it is the naive answer that reads 15.5 % high on copper at 105 C. No guards here: `validate()` has already established `rs > 0`, `rt > 0` and `t_allowed > t_ambient`, which is exactly what makes the denominator and the numerator positive. A second check that can never fire is a line nobody can test.
+    // `i_cont² = (t_allowed − Ta)/(Rt·1.5·rs20·(1 + α·(t_allowed−20)))`。括号里那一项就是反馈：它说绕组在" 余量所在的那个 温度"上 **更带不动** 电流，而丢掉它得到的是在铜的 105 ℃ 处高 15.5 % 的天真答案。 这里 不设护栏： `validate()` 已经确立 `rs > 0`、 `rt > 0`、 `t_allowed > t_ambient`，而这正是分母与分子为 正的条件。再加一道 永不触发的检查，就是一行谁也测不到的东西。
     const double denominator =
         rt * kLossPerAmpSquared * static_cast<double>(config_.params.rs) * (1.0 + (alpha * (t_allowed - 20.0)));
     const double squared = (t_allowed - static_cast<double>(config_.t_ambient_c)) / denominator;
@@ -142,13 +135,16 @@ auto ThermalLimit::budget(float current_a, float t_now_c) const noexcept -> Ther
     // `t_eq` 是 `dT/dt = (a + b·T)/Ct` 的 **渐近线** ；当 `b > 0` 时那是一个节点正在 **远离** 的负数——把它当成"收敛到哪里"报出去，
     // 等于递给调度一个看着挺合理的 −234 ℃。所以只要没有稳态，报出的稳态就是无穷；而下面的穿越时间仍然用那条渐近线，因为精确解需要它。
     out.settle_c = (b < 0.0) ? static_cast<float>(t_eq) : kInfinity;
-    // Sustainability is decided in **current**, not by comparing two temperatures: `t_eq` at `i_cont` sits a rounding error
-    // above `t_star`, and a comparison in temperature would then hand back a finite crossing time for the very current the
-    // class calls continuous. The tolerance is on the current (`1e-6` relative), so "continuous means forever" holds by
-    // construction and any current measurably above it still gets its honest, finite crossing.
-    // 可持续性用 **电流** 判定，而不是比较两个温度：`i_cont` 处的 `t_eq` 会高出 `t_star` 一个舍入误差，若按温度比较，本类称为可持续的
-    // 那个电流反而会拿到一个有限的穿越时间。容差落在电流上（相对 `1e-6`），于是"可持续即永远"按构造成立，而任何可测地高于它的电流
-    // 仍会拿到它诚实的、有限的穿越时间。
+    /**
+     * @brief [en] Sustainability is decided in **current**, not by comparing two temperatures: `t_eq` at `i_cont` sits
+     *             a rounding error above `t_star`, and a comparison in temperature would then hand back a finite
+     *             crossing time for the very current the class calls continuous. The tolerance is on the current (
+     *             `1e-6` relative), so "continuous means forever" holds by construction and any current measurably
+     *             above it still gets its honest, finite crossing.
+     * @brief [zh] 可持续性用 **电流** 判定，而不是比较两个温度： `i_cont` 处的 `t_eq` 会高出 `t_star` 一个舍入误差，若
+     *             按温度比较，本类称为可持续的 那个电流反而会拿到一个有限的穿越时间。容差落在电流上（相对 `1e-6`），于
+     *             是"可持续即永远"按构造成立，而任何可测地高于它的电流 仍会拿到它诚实的、有限的穿越时间。
+     */
     const float i_cont = continuous().continuous_a;
     const bool sustainable = (b < 0.0) && (std::fabs(current_a) <= (static_cast<double>(i_cont) * (1.0 + 1.0e-6)));
     out.crosses = !sustainable;
@@ -160,10 +156,12 @@ auto ThermalLimit::budget(float current_a, float t_now_c) const noexcept -> Ther
         out.seconds = kInfinity; // the crossing exists but no `Ct` was supplied, so no time can be named
         return out;
     }
-    // `t = (Ct/b)*ln((T* - T_eq)/(T_now - T_eq))`, the exact solution, valid for either sign of `b` -- which is why the
-    // run-away case needs no separate branch and no integration.
-    // `t = (Ct/b)·ln((T* − T_eq)/(T_now − T_eq))`，精确解，对 `b` 的两种符号都成立——正因为如此，失控那一支不需要单独的
-    // 分支，也不需要积分。
+    /**
+     * @brief [en] `t = (Ct/b)*ln((T* - T_eq)/(T_now - T_eq))`, the exact solution, valid for either sign of `b` --
+     *             which is why the run-away case needs no separate branch and no integration.
+     * @brief [zh] `t = (Ct/b)·ln((T* − T_eq)/(T_now − T_eq))`，精确解，对 `b` 的两种符号都成立——正因为如此，失控那一支
+     *             不需要单独的 分支，也不需要积分。
+     */
     const double ratio = (t_star - t_eq) / (t_now - t_eq);
     if (!(ratio > 0.0)) {
         out.seconds = 0.0F;

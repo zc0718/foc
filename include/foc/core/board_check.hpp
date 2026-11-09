@@ -371,18 +371,20 @@ struct movable_trigger<Bench, std::void_t<decltype(std::declval<Bench&>().set_sa
         report.failures += pass ? 0 : 1;
     };
 
-    // 1. Kirchhoff. The true phase currents sum to zero, so a steady non-zero
-    // sum is either an offset or a channel that has been negated -- a negation
-    // turns `+i, -i/2, -i/2` into `-i, -i/2, -i/2`, whose sum is `-2i`, so the
-    // sum *grows* rather than cancelling.
-    // 1. 基尔霍夫。真实相电流之和为零，所以稳态下和不为零要么是零漂、要么是一条通道被取了反——
-    // 取反把 `+i, −i/2, −i/2` 变成 `−i, −i/2, −i/2`，其和是 `−2i`，于是和是 **变大** 而不是抵消。
+    /**
+     * @brief [en] 1. Kirchhoff. The true phase currents sum to zero, so a steady non-zero sum is either an offset or a
+     *             channel that has been negated -- a negation turns `+i, -i/2, -i/2` into `-i, -i/2, -i/2`, whose sum
+     *             is `-2i`, so the sum *grows* rather than cancelling.
+     * @brief [zh] 1. 基尔霍夫。真实相电流之和为零，所以稳态下和不为零要么是零漂、要么是一条通道被取了反—— 取反把
+     *             `+i, −i/2, −i/2` 变成 `−i, −i/2, −i/2`，其和是 `−2i`，于是和是 **变大** 而不是抵消。
+     */
     const bool sum_ok = std::fabs(m.sum_current_a) <= limits.sum_current_a;
     add(BoardItem::CurrentSum, m.sum_current_a, limits.sum_current_a, sum_ok, 3);
 
-    // 2. Per-phase zero reading and response sign, which are what make the sum
-    // fail in the first place.
-    // 2. 逐相零读数与响应符号，它们才是让"和"失败的根源。
+    /**
+     * @brief [en] 2. Per-phase zero reading and response sign, which are what make the sum fail in the first place.
+     * @brief [zh] 2. 逐相零读数与响应符号，它们才是让"和"失败的根源。
+     */
     bool any_offset = false;
     bool any_flip = false;
     std::uint8_t first_offset = 3;
@@ -395,8 +397,10 @@ struct movable_trigger<Bench, std::void_t<decltype(std::declval<Bench&>().set_sa
             any_offset = true;
             first_offset = (first_offset == 3) ? phase : first_offset;
         }
-        // A positive d-axis drive puts `+i` on u and `-i/2` on v and w.
-        // 正 d 轴驱动在 u 上给 `+i`，在 v、w 上给 `−i/2`。
+        /**
+         * @brief [en] A positive d-axis drive puts `+i` on u and `-i/2` on v and w.
+         * @brief [zh] 正 d 轴驱动在 u 上给 `+i`，在 v、w 上给 `−i/2`。
+         */
         const float expected = (phase == 0) ? 1.0F : -1.0F;
         const float measured = m.response_sign[phase];
         const bool sign_ok = std::fabs(measured) < 1.5F && ((measured * expected) > 0.0F);
@@ -407,42 +411,53 @@ struct movable_trigger<Bench, std::void_t<decltype(std::declval<Bench&>().set_sa
         }
     }
 
-    // 3. Sampling instant. At the centre of the zero vector the ADC sees a
-    // current that is *at* its average; off-centre it sees the ripple, and the
-    // measured peak-to-peak therefore exceeds what the switching period
-    // predicts. The ratio is the number; there is no absolute threshold that
-    // would work across bus voltages and inductances.
-    // 3. 采样时刻。零矢量中心处 ADC 看到的是电流的均值；偏离中心就落在纹波上，于是实测峰峰值
-    // 超过开关周期预测的值。比值才是那个数；任何绝对阈值都跨不过母线电压与电感的变化。
+    /**
+     * @brief [en] 3. Sampling instant. At the centre of the zero vector the ADC sees a current that is *at* its
+     *             average; off-centre it sees the ripple, and the measured peak-to-peak therefore exceeds what the
+     *             switching period predicts. The ratio is the number; there is no absolute threshold that would work
+     *             across bus voltages and inductances.
+     * @brief [zh] 3. 采样时刻。零矢量中心处 ADC 看到的是电流的均值；偏离中心就落在纹波上，于是实测峰峰值 超过开关周期预
+     *             测的值。比值才是那个数；任何绝对阈值都跨不过母线电压与电感的变化。
+     */
     const float ratio = (m.ripple_expected_a > 1.0e-9F) ? (m.ripple_measured_a / m.ripple_expected_a) : 0.0F;
     const bool ripple_ok = ratio <= limits.ripple_ratio;
     add(BoardItem::SamplingInstant, ratio, limits.ripple_ratio, ripple_ok, 3);
 
-    // 4. Dead time: the board knows what it was configured with, and the
-    // identification knows what it actually is.
-    // 4. 死区：板子知道自己被配成了多少，辨识知道它实际是多少。
+    /**
+     * @brief [en] 4. Dead time: the board knows what it was configured with, and the identification knows what it
+     *             actually is.
+     * @brief [zh] 4. 死区：板子知道自己被配成了多少，辨识知道它实际是多少。
+     */
     const bool deadtime_ok = detail::rel_error(m.deadtime_v, m.deadtime_cmd_v) <= limits.deadtime_ratio;
     add(BoardItem::DeadTime, m.deadtime_v, m.deadtime_cmd_v, deadtime_ok, 3);
 
-    // 5. Encoder: after alignment the residual mount offset should be nothing.
-    // 5. 编码器：对齐之后残余安装偏置应该为零。
+    /**
+     * @brief [en] 5. Encoder: after alignment the residual mount offset should be nothing.
+     * @brief [zh] 5. 编码器：对齐之后残余安装偏置应该为零。
+     */
     const bool encoder_ok = std::fabs(m.encoder_offset_rad) <= limits.encoder_offset_rad;
     add(BoardItem::EncoderOffset, m.encoder_offset_rad, limits.encoder_offset_rad, encoder_ok, 3);
 
-    // 6. Parameters against the nameplate.
-    // 6. 参数对铭牌。
+    /**
+     * @brief [en] 6. Parameters against the nameplate.
+     * @brief [zh] 6. 参数对铭牌。
+     */
     const bool rs_ok = detail::rel_error(m.rs_ohm, m.rs_nameplate_ohm) <= limits.parameter_ratio;
     add(BoardItem::Parameters, m.rs_ohm, m.rs_nameplate_ohm, rs_ok, 3);
     const bool flux_ok = detail::rel_error(m.psi_f_wb, m.psi_f_nameplate_wb) <= limits.parameter_ratio;
     add(BoardItem::Parameters, m.psi_f_wb, m.psi_f_nameplate_wb, flux_ok, 3);
 
-    // 7. The observer on a trajectory it is supposed to track.
-    // 7. 观测器在本该跟上的轨迹上。
+    /**
+     * @brief [en] 7. The observer on a trajectory it is supposed to track.
+     * @brief [zh] 7. 观测器在本该跟上的轨迹上。
+     */
     const bool observer_ok = m.observer_error_rad <= limits.observer_error_rad;
     add(BoardItem::ObserverHealth, m.observer_error_rad, limits.observer_error_rad, observer_ok, 3);
 
-    // --- diagnosis: which single cause explains the most failures? ---
-    // --- 诊断：哪一个单一成因解释得最多？---
+    /**
+     * @brief [en] --- diagnosis: which single cause explains the most failures? ---
+     * @brief [zh] --- 诊断：哪一个单一成因解释得最多？---
+     */
     struct Candidate final {
         BoardCause cause;
         int score;

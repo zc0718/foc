@@ -289,11 +289,15 @@ class BrakeChopper final {
     BrakeChopperConfig config_{};
     bool on_{false};
     bool budget_exceeded_{false};
-    // A `double`, not a `float`, and not an `ElapsedClock`: this is the **integral** `int i^2 dt`, not a duration, so it
-    // has no business being counted in nanoseconds -- but it does need more than 24 bits of mantissa, because a slow
-    // ramp (a few mA over minutes) is exactly the case a float accumulator quantises away.
-    // 用 `double` 而不是 `float`，也不是 `ElapsedClock`：这是 **积分** `∫i²dt` 而不是时长，所以没有理由按纳秒计数——但它确实
-    // 需要超过 24 位尾数，因为一个缓慢的累积（几毫安、几分钟）正是 float 累加器会量化掉的那种情况。
+    /**
+     * @brief [en] A `double`, not a `float`, and not an `ElapsedClock`: this is the **integral** `int i^2 dt`, not a
+     *             duration, so it has no business being counted in nanoseconds -- but it does need more than 24 bits of
+     *             mantissa, because a slow ramp (a few mA over minutes) is exactly the case a float accumulator
+     *             quantises away.
+     * @brief [zh] 用 `double` 而不是 `float`，也不是 `ElapsedClock`：这是 **积分** `∫i²dt` 而不是时长，所以没有理由按纳
+     *             秒计数——但它确实 需要超过 24 位尾数，因为一个缓慢的累积（几毫安、几分钟）正是 float 累加器会量化掉的
+     *             那种情况。
+     */
     double i2t_a2s_{0.0};
     ElapsedClock on_clock_{};
     ElapsedClock off_clock_{};
