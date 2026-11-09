@@ -283,8 +283,8 @@
         },
         {
           "file": "src/core/limits.cpp",
-          "line": 39,
-          "col": 19,
+          "line": 36,
+          "col": 14,
           "original": ">",
           "replacement": ">=",
           "operator": "swap"
@@ -316,8 +316,8 @@
         },
         {
           "file": "src/core/limits.cpp",
-          "line": 39,
-          "col": 19,
+          "line": 36,
+          "col": 14,
           "original": ">",
           "replacement": ">=",
           "kind": "equivalent",
@@ -325,7 +325,7 @@
         }
       ],
       "notes": "5 of 5 survivor(s) classified. equivalent: 5; equivalent_by_overspecification: 0; unreachable: 0; invisible_without_memory_checker: 0 | 2026-11-05: two of the five classified survivors were NOT equivalent and the classification was wrong. `limits.cpp:29:19` and `:31:26` (the `delta > max_delta` / `delta < -max_delta` boundary) were recorded as \"the two forms are the same number\", which is true only while `value + max_delta` rounds to `target` -- i.e. at every magnitude the old cases used (0.05 + 0.1 vs 0.15). It is false when the subtraction that produced `delta` cancels, and then the branch that accumulates throws the target away: from -1e8, target 1.0, one 1e8 step, `value = target` answers 1.0 and `value += max_delta` answers 0.0. `SlewLimiter.AtExactlyOneStepTheTargetIsAssignedAndNotAccumulated` now pins both sides, so those two mutants are killed rather than excused, and the module goes 2/7 (28.6 %) -> 4/7 (57.1 %). The three that remain are the proveable ones: both `clamp` boundaries and the zero-period guard.",
-      "recorded": "2026-11-05"
+      "recorded": "2026-11-09"
     },
     "sm": {
       "mutate": [
@@ -372,14 +372,6 @@
         },
         {
           "file": "include/foc/core/protection.hpp",
-          "line": 356,
-          "col": 57,
-          "original": ">",
-          "replacement": ">=",
-          "operator": "swap"
-        },
-        {
-          "file": "include/foc/core/protection.hpp",
           "line": 365,
           "col": 22,
           "original": ">",
@@ -388,32 +380,40 @@
         },
         {
           "file": "include/foc/core/protection.hpp",
-          "line": 370,
-          "col": 62,
+          "line": 373,
+          "col": 60,
           "original": ">",
           "replacement": ">=",
           "operator": "swap"
         },
         {
           "file": "include/foc/core/protection.hpp",
-          "line": 383,
-          "col": 85,
+          "line": 381,
+          "col": 51,
+          "original": ">",
+          "replacement": ">=",
+          "operator": "swap"
+        },
+        {
+          "file": "include/foc/core/protection.hpp",
+          "line": 387,
+          "col": 82,
           "original": "1.0",
           "replacement": "1.001",
           "operator": "constant"
         },
         {
           "file": "include/foc/core/protection.hpp",
-          "line": 371,
-          "col": 62,
+          "line": 388,
+          "col": 84,
           "original": "<",
           "replacement": "<=",
           "operator": "swap"
         },
         {
           "file": "include/foc/core/protection.hpp",
-          "line": 385,
-          "col": 81,
+          "line": 388,
+          "col": 106,
           "original": "1.0",
           "replacement": "1.001",
           "operator": "constant"
@@ -428,8 +428,8 @@
         },
         {
           "file": "include/foc/core/protection.hpp",
-          "line": 373,
-          "col": 60,
+          "line": 441,
+          "col": 31,
           "original": ">",
           "replacement": ">=",
           "operator": "swap"
@@ -444,8 +444,8 @@
         },
         {
           "file": "include/foc/core/protection.hpp",
-          "line": 381,
-          "col": 51,
+          "line": 448,
+          "col": 20,
           "original": ">",
           "replacement": ">=",
           "operator": "swap"
@@ -460,8 +460,8 @@
         },
         {
           "file": "include/foc/core/protection.hpp",
-          "line": 38,
-          "col": 12,
+          "line": 493,
+          "col": 22,
           "original": "0",
           "replacement": "1",
           "operator": "constant"
@@ -471,7 +471,7 @@
       "truncated": [],
       "judged": 67,
       "score": 80.6,
-      "seconds": 645.4,
+      "seconds": 873.9,
       "equivalents": [
         {
           "file": "include/foc/core/protection.hpp",
@@ -484,8 +484,8 @@
         },
         {
           "file": "include/foc/core/protection.hpp",
-          "line": 356,
-          "col": 57,
+          "line": 365,
+          "col": 22,
           "original": ">",
           "replacement": ">=",
           "kind": "equivalent",
@@ -493,8 +493,8 @@
         },
         {
           "file": "include/foc/core/protection.hpp",
-          "line": 365,
-          "col": 22,
+          "line": 373,
+          "col": 60,
           "original": ">",
           "replacement": ">=",
           "kind": "equivalent",
@@ -502,8 +502,8 @@
         },
         {
           "file": "include/foc/core/protection.hpp",
-          "line": 370,
-          "col": 62,
+          "line": 381,
+          "col": 51,
           "original": ">",
           "replacement": ">=",
           "kind": "equivalent",
@@ -511,8 +511,8 @@
         },
         {
           "file": "include/foc/core/protection.hpp",
-          "line": 383,
-          "col": 85,
+          "line": 387,
+          "col": 82,
           "original": "1.0",
           "replacement": "1.001",
           "kind": "equivalent_by_overspecification",
@@ -520,8 +520,8 @@
         },
         {
           "file": "include/foc/core/protection.hpp",
-          "line": 371,
-          "col": 62,
+          "line": 388,
+          "col": 84,
           "original": "<",
           "replacement": "<=",
           "kind": "unreachable",
@@ -529,8 +529,8 @@
         },
         {
           "file": "include/foc/core/protection.hpp",
-          "line": 385,
-          "col": 81,
+          "line": 388,
+          "col": 106,
           "original": "1.0",
           "replacement": "1.001",
           "kind": "equivalent_by_overspecification",
@@ -547,8 +547,8 @@
         },
         {
           "file": "include/foc/core/protection.hpp",
-          "line": 373,
-          "col": 60,
+          "line": 441,
+          "col": 31,
           "original": ">",
           "replacement": ">=",
           "kind": "equivalent",
@@ -565,8 +565,8 @@
         },
         {
           "file": "include/foc/core/protection.hpp",
-          "line": 381,
-          "col": 51,
+          "line": 448,
+          "col": 20,
           "original": ">",
           "replacement": ">=",
           "kind": "equivalent",
@@ -583,8 +583,8 @@
         },
         {
           "file": "include/foc/core/protection.hpp",
-          "line": 38,
-          "col": 12,
+          "line": 493,
+          "col": 22,
           "original": "0",
           "replacement": "1",
           "kind": "equivalent",
@@ -592,7 +592,7 @@
         }
       ],
       "notes": "13 of 13 survivor(s) classified (equivalent: 10, equivalent_by_overspecification: 2, unreachable: 1). Re-keyed 2026-11-04, second time: F39 appended `FaultCode::DriveFault` and its latch line, which inserted 18 lines above this whole region, so the record's `file:line:col` identities stopped matching. The shift was verified rather than assumed -- for every entry, HEAD's line L and the working file's line L+18 both carry the recorded token at the recorded column -- and then the positions were moved with the classifications untouched. Two entries were NOT re-keyed because they are no longer survivors: `reset()`'s `<`->`<=` and `8`->`9` are now killed, and the reason is the same change that caused the shift. The loop `for (code = 1; code < 8; ++code)` used to be unable to tell `<` from `<=` because code 8 was not an enumerator; appending `DriveFault` made code 8 a real code and `test_fault_input`'s latch-outlives-the-pin / clear-then-idle case now sees the difference. F39 therefore bought coverage here: 52/67 = 77.6 % -> 54/67 = 80.6 %. Earlier re-key (same day): protection.hpp had grown 7-31 lines after the 2026-10-31 record and 14 of 15 classifications no longer matched anything; every entry was re-pointed index for index against a fresh --list with the mutation text asserted equal at every index. | 2026-11-05: every line number above was shifted by 20 because `FaultCode` appended `Watchdog` and `ClockLost` right after `DriveFault`, moving every survivor below the enum down by exactly 20 lines. The mutants are the same 13 (identical operators, columns and text), so no classification changed -- only the addresses did. Verified against the gate's own report: the 13 keys it names are these 13 plus 20.",
-      "recorded": "2026-11-04"
+      "recorded": "2026-11-09"
     }
   },
   "_comment": [
