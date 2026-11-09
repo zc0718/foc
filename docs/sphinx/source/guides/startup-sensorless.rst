@@ -31,7 +31,7 @@ included below from the repository rather than copied into the page, so the list
 
 Three things in its output are worth reading slowly:
 
-- the recipe with a hand-over speed of zero is **refused by ``validate()``**, not
+- the recipe with a hand-over speed of zero is **refused by** ``validate()``, not
   started and abandoned;
 - during the hold the current is constant and the forced angle does not move --
   that is the point of the hold, and a shorter hold than the rotor's settling

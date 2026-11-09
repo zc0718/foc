@@ -69,9 +69,9 @@ are otherwise indistinguishable.
 
 Two consequences worth stating plainly:
 
-- **``implemented`` in the rule table means "a named mechanism runs it", and the
-  mechanism for a lint rule is now the family table.** A check that the pinned
-  file names while nothing executes it is not an implemented rule; it is a
+- **The word "implemented" in the rule table means "a named mechanism runs it",
+  and the mechanism for a lint rule is now the family table.** A check that the
+  pinned file names while nothing executes it is not an implemented rule; it is a
   sentence about a file. The ``tidy:`` rows therefore describe the pinned
   intent, and the rows whose enforcement comes from ``enforce`` say so.
 - **"This check is on" is a claim about a run, not about a configuration.** The

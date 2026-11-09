@@ -97,7 +97,7 @@ neither of them is chosen by taste:
   nobody has described.
 
 Both factors and their product live in the claim row for ``core/auto_tune.hpp``.
-**``tolerance`` itself is the caller's number**, not a measured bound: ``valid``
+**The tolerance is the caller's number**, not a measured bound: ``valid``
 is judged against whatever the caller passed, so a caller who widens it owns the
 consequence. And the delivered bandwidth is **not** 1.0 by construction -- the
 band accepts *this law*, not "unity".
@@ -125,7 +125,7 @@ What this procedure does not claim
 ----------------------------------
 
 - **Only the outer loop.** The current loop is assumed fast and is not identified.
-- **``tolerance`` is not a measured bound.** It is the caller's acceptance number
+- **The tolerance is not a measured bound.** It is the caller's acceptance number
   (see above).
 - **The delivered bandwidth is not unity.** The law is what the band accepts.
 - **Not the sensorless low-speed case.** That capability's replay needs a bench

@@ -135,6 +135,7 @@ accident.
    :numbered:
 
    Quick start <quickstart>
+   Installing and toolchains <install>
 
 .. toctree::
    :caption: Guides
@@ -152,6 +153,7 @@ accident.
    Architecture <architecture>
    Symbols and units <symbols>
    Convention alignment <conventions>
+   What "predictable" costs <cost-model>
 
 .. toctree::
    :caption: Evidence and limits
@@ -161,6 +163,14 @@ accident.
    What each capability offers <capabilities>
    Usage and verification <usage>
    Language compliance <compliance>
+
+.. toctree::
+   :caption: Reference
+   :numbered:
+
+   API index <api-index>
+   Glossary <glossary>
+   FAQ <faq>
 
 .. toctree::
    :caption: Development and provenance

@@ -56,7 +56,7 @@ How it goes wrong
    run. The figure's left panel is what "attempted anyway" looks like: the
    estimate never moves, and it never moves for the whole window rather than
    converging late.
-2. **``error()`` read as the angle error.** It is the demodulator's residual, and
+2. **The error output read as the angle error.** ``error()`` is the demodulator's residual, and
    it is zero both when the lock is perfect and when there is no signal at all --
    the two cases a start-up most needs to tell apart. ``locked()`` is the answer;
    the example prints both next to the true angle error so the difference is
