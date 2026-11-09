@@ -87,7 +87,7 @@ A C program can use the C ABI and still has to link the C++ runtime:
 Without ``LINKER_LANGUAGE CXX`` (or one empty ``.cpp`` in the target) the link fails with
 symbols named ``__cxa_`` — the C++ runtime's own entry points. That is not a packaging accident: the ABI is C, the
 implementation is C++, and the library says so instead of hiding a C++ runtime behind a C
-header. :ref:`U8 in honest limits <honest-limits>` is the stronger version of the same
+header. :ref:`The pure-C row in honest limits <honest-limits>` is the stronger version of the same
 statement — a C consumer *without* the C++ runtime is explicitly not supported.
 
 Common failures, and what each one means

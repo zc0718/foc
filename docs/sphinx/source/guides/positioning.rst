@@ -26,7 +26,7 @@ A minimal program
 -----------------
 
 ``docs/doxygen/dox/demos/positioning.cxx`` shows the two refusals, one
-gear sample and one shaped move. The same file produces this slice's figure.
+gear sample and one shaped move. The same file produces this page's figure.
 
 .. literalinclude:: ../../../../docs/doxygen/dox/demos/positioning.cxx
    :language: cpp
@@ -76,7 +76,7 @@ How it goes wrong
 Evidence
 --------
 
-Six claim rows cover this slice -- ``soft_limit``, ``motion_profile``,
+Six claim rows cover this page -- ``soft_limit``, ``motion_profile``,
 ``position``, ``position_reference``, ``homing`` and ``gear_ratio`` -- and the
 level this page may state is the minimum of those six. The levels themselves are
 read from the claim table in the project ``README.md``.
@@ -85,7 +85,7 @@ Figure
 ------
 
 .. figure:: ../../images/ALL_positioning.png
-   :name: figure slice s6
+   :name: figure positioning
    :width: 720
    :align: center
 

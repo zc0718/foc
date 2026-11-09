@@ -20,7 +20,7 @@ A minimal program
 
 ``docs/doxygen/dox/demos/modulation-limits.cxx`` sweeps a requested amplitude at
 two electrical angles, shapes a narrow pulse, and walks the six-step table twice.
-The same file produces this slice's figure.
+The same file produces this page's figure.
 
 .. literalinclude:: ../../../../docs/doxygen/dox/demos/modulation-limits.cxx
    :language: cpp
@@ -63,7 +63,7 @@ How it goes wrong
 Evidence
 --------
 
-Three claim rows cover this slice -- ``foc/core/svpwm.hpp``,
+Three claim rows cover this page -- ``foc/core/svpwm.hpp``,
 ``foc/core/min_pulse.hpp`` and ``foc/core/six_step.hpp`` -- and the level this
 page may state is the minimum of those three. The numbers behind the two clamp
 amplitudes live in those rows and in ``test_svpwm.cpp``, not on this page.
@@ -72,7 +72,7 @@ Figure
 ------
 
 .. figure:: ../../images/ALL_modulation_limits.png
-   :name: figure slice s5
+   :name: figure modulation-limits
    :width: 720
    :align: center
 

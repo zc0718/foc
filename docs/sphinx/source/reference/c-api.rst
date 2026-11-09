@@ -172,8 +172,8 @@ Linking it
 
 The ABI is C, the implementation is C++. Set ``LINKER_LANGUAGE CXX`` (or add one empty ``.cpp``),
 otherwise the link fails on symbols named ``__cxa_``. :doc:`../install` states this as a rule and
-:ref:`U8 <honest-limits>` states the stronger version: a C consumer *without* the C++ runtime is
-not supported.
+:ref:`the honest-limits row on a pure-C consumer <honest-limits>` states the stronger version: a C consumer
+*without* the C++ runtime is not supported.
 
 Related
 -------

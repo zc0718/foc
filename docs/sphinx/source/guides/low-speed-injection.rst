@@ -15,7 +15,7 @@ What you need
   single-inductance answer -- so it is not a way around the first failure mode
   below, it is a way to stop paying the bias that a single inductance brings.
 - ``foc/core/observer/blended_observer.hpp`` -- the hand-over between the two as
-  speed rises, so the slice does not end at the point where the low-speed method
+  speed rises, so the page does not end at the point where the low-speed method
   stops working.
 
 A minimal program
@@ -25,7 +25,7 @@ A minimal program
 standstill, drives it with the observer's own injection, and runs the loop three
 times: a surface-mount rotor, an interior rotor, and an interior rotor observed
 by a controller that cannot resolve the carrier. The same file produces this
-slice's figure.
+page's figure.
 
 .. literalinclude:: ../../../../docs/doxygen/dox/demos/low-speed-injection.cxx
    :language: cpp
@@ -78,7 +78,7 @@ How it goes wrong
 Evidence
 --------
 
-Two claim rows cover this slice -- ``foc/core/observer/hfi_observer.hpp`` and
+Two claim rows cover this page -- ``foc/core/observer/hfi_observer.hpp`` and
 ``foc/core/observer/dual_inductance_observer.hpp`` -- and the level this page may
 state is the minimum of those two. Every measured number this page would
 otherwise want to quote -- the angle bias the residue leaves, the carrier ratio
@@ -89,7 +89,7 @@ Figure
 ------
 
 .. figure:: ../../images/ALL_low_speed_injection.png
-   :name: figure slice s2
+   :name: figure low-speed-injection
    :width: 760
    :align: center
 

@@ -167,8 +167,8 @@ Health, faults and records
 - ``trace_parse.hpp`` — a window of trace samples as the host got it out of the ring, and the
   samples that window lost.
 
-The stages the slices use
--------------------------
+The stages the task pages use
+-----------------------------
 
 .. list-table::
    :header-rows: 1

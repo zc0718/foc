@@ -24,7 +24,7 @@ Two consequences, stated plainly:
   mention, the honest reading is that the documentation owes you a page, not that the library
   lacks a seam. That is an issue against this section.
 - **Names are stable, ordering is not.** The names on these pages are the contract (the C API's
-  are frozen; the C++ ones are the ones the slices use). Anything else — helper namespaces,
+  are frozen; the C++ ones are the ones the guide pages use. Anything else — helper namespaces,
   detail headers, file layout — is free to move, and no page promises otherwise.
 
 The six groups
@@ -142,7 +142,7 @@ Naming rules worth knowing before you read any page
 What this section will not do
 -----------------------------
 
-- **It will not replace the slice page.** Entry points tell you what exists; the slice tells you
+- **It will not replace the task page.** Entry points tell you what exists; the task page tells you
   the order, the numbers, and the way it goes wrong.
 - **It will not list internals.** Anonymous-namespace helpers, detail headers and file layout are
   not part of the contract and are not documented here.

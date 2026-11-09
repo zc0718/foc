@@ -1,7 +1,7 @@
 _`One machine, one shift`
 =========================
 
-The nine task slices answer one question each. This page runs them **in the order an axis
+The nine task pages answer one question each. This page runs them **in the order an axis
 meets them**, on a single nameplate, from reading the plate to latching a trip — and each stage
 contributes one number to a single table.
 
@@ -13,7 +13,7 @@ program ever disagree, the program is right and the page is stale.
 The machine
 -----------
 
-One nameplate is used all the way through — the same one the slices use, so a figure or a
+One nameplate is used all the way through — the same one the other pages use, so a figure or a
 number from another page can be compared with this run without converting anything:
 
 .. list-table::
@@ -31,7 +31,7 @@ number from another page can be compared with this run without converting anythi
      - the SIL bench default; the modulator's ceiling follows from it
    * - Control period
      - 50 µs (20 kHz)
-     - the bench default, and the rate the slices step their sequences at
+     - the bench default, and the rate the task pages step their sequences at
    * - Nameplate ``Rs`` / ``Ld`` / ``Lq`` / ``psi_f``
      - 0.5 Ω / 4 mH / 8 mH / 0.01 Wb
      - a salient machine: ``Lq`` is twice ``Ld``, which is what makes injection and MTPA mean
@@ -194,8 +194,8 @@ What this page is not
 ---------------------
 
 - **Not a tuning guide.** Gains come from the library's own helpers; where they come from is on
-  each slice page, and how to re-tune the outer loop on a new machine is :doc:`../sop`.
+  each task page, and how to re-tune the outer loop on a new machine is :doc:`../sop`.
 - **Not a hardware claim.** Stages 4 and 6 run on the SIL plant, which is a model. What the
   plant cannot represent is listed item by item under :ref:`honest limits <honest-limits>`.
-- **Not a substitute for the slices.** Each stage states one number and hands over; the failure
-  modes that compile cleanly live on the slice page it links to.
+- **Not a substitute for the task pages.** Each stage states one number and hands over; the failure
+  modes that compile cleanly live on the page it links to.

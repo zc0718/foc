@@ -3,10 +3,10 @@ _`Torque below base speed`
 
 The task: from a torque request, produce a dq current reference this machine can
 actually deliver, and drive both current axes to it inside the voltage the
-modulator has. This is the slice every other slice stands on -- the field
-weakening of slice S4 answers the same question above base speed, and the
-observer of slice S1 exists so that the angle this slice assumes is available
-without a sensor.
+modulator has. This is the page every other page stands on -- the field
+weakening page, :doc:`high-speed-field-weakening`, answers the same question above base speed, and the
+observer on the startup page, :doc:`startup-sensorless`, exists so that the angle this page assumes is
+available without a sensor.
 
 What you need
 -------------
@@ -18,7 +18,7 @@ What you need
 - ``foc/core/feedforward.hpp`` -- the axis cross-coupling and back-EMF terms,
   added **after** the PI so the PI keeps its own-axis job.
 - ``foc/core/limits.hpp`` -- ``clamp``, and the ceiling itself. The ceiling is
-  not the rail voltage: it is the modulator's linear range, which slice S5
+  not the rail voltage: it is the modulator's linear range, which :doc:`modulation-limits`
   covers.
 
 A minimal program
@@ -82,14 +82,14 @@ How it goes wrong
 Evidence
 --------
 
-Four claim rows cover this slice, one per piece: ``foc/core/reference.hpp``,
+Four claim rows cover this page, one per piece: ``foc/core/reference.hpp``,
 ``foc/core/limits.hpp``, ``foc/core/pi.hpp`` and ``foc/core/feedforward.hpp``.
-The level this slice may state is the **minimum** of those four, and the level
+The level this page may state is the **minimum** of those four, and the level
 itself is read from the claim table in the project ``README.md`` rather than
 written here -- a number copied into a page is a second source of truth with a
 shelf life.
 
-Not claimed by this slice: the torque the loop produces. A torque figure needs a
+Not claimed by this page: the torque the loop produces. A torque figure needs a
 machine model, which is the SIL bench's job and carries its own claim rows. This
 page stops at the current reference and the voltage command, which is where the
 library stops too.
@@ -98,11 +98,11 @@ Figure
 ------
 
 .. figure:: ../../images/ALL_demo_current_step.png
-   :name: figure slice s3
+   :name: figure torque-reference
    :width: 720
    :align: center
 
-   the current loop this slice builds, driven by the SIL bench: iq follows a
+   the current loop this page builds, driven by the SIL bench: iq follows a
    1 A step in both directions, id is held near zero by the d-axis controller
 
 The figure is produced by ``docs/demos/make_figures.py`` from the SIL bench, not

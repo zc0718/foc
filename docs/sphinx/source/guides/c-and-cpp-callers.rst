@@ -3,7 +3,7 @@ _`Consuming the library from outside C++`
 
 The task: the control law is chosen, the board is built, and the application is
 not C++. Get the loop running from C, from Python, or from a simulation master
-without reimplementing any of the previous slices.
+without reimplementing any of the earlier pages.
 
 What you need
 -------------
@@ -76,7 +76,7 @@ How it goes wrong
 Evidence
 --------
 
-The C ABI's own claim rows cover this slice (``foc/api/foc_api.h`` and
+The C ABI's own claim rows cover this page (``foc/api/foc_api.h`` and
 ``foc/api/foc_types.h``), together with the three wire headers. The level this
 page may state is the minimum of those rows, read from the claim table in the
 project ``README.md``; the C surface is graded lower than the C++ one on purpose,
@@ -86,7 +86,7 @@ Figure
 ------
 
 .. figure:: ../../images/ALL_callers.png
-   :name: figure slice s9
+   :name: figure c-and-cpp-callers
    :width: 720
    :align: center
 

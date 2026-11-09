@@ -297,8 +297,8 @@ readable in a diff, which is the only reason a stored number can be reviewed ins
    * - ``<= 30 %``
      - drift -- worth a look, not evidence of anything by itself
    * - ``1.3x .. 2.0x``
-     - **attribute** -- the signature of a missing term rather than of noise; this is where the W7-c investigation
-       landed (0.1356 predicted against 0.0900 measured, 1.51x) and the term that explained it was real
+     - **attribute** -- the signature of a missing term rather than of noise; this is where the cross-axis
+       investigation landed (0.1356 predicted against 0.0900 measured, 1.51x) and the term that explained it was real
    * - ``> 2.0x`` or a sign flip
      - changed -- expected after an algorithm change, a surprise otherwise
 

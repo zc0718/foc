@@ -5,7 +5,7 @@
 //   g++ -std=c++17 -fno-exceptions -fno-rtti -Wall -Wextra -Werror -Iinclude docs/doxygen/dox/demos/high-speed-field-weakening.cxx src/core/mtpv.cpp -o /tmp/high-speed-field-weakening
 //
 // With `--csv <path>` it writes the sweep as rows; `docs/demos/make_figures.py`
-// draws this slice's figure from that file.
+// draws this example's figure from that file.
 //
 // 弱磁 —— 基速以上：电压天花板开始约束，电流必须离开 MTPA 曲线才能继续出力。
 // 带 `--csv <path>` 时把扫描写成行，供绘图脚本使用。
@@ -23,8 +23,9 @@ namespace {
 constexpr float kVBusV = 24.0F;
 
 /// The voltage the modulator can actually deliver over a whole rotation: the
-/// inscribed circle of its hexagon, not the rail. S5 draws why those differ.
-/// 调制器在整个旋转上都保证得住的电压：它六边形的**内切圆**，不是母线电压。两者为何不同见 S5。
+/// inscribed circle of its hexagon, not the rail. The
+/// modulation-limits example draws why those differ.
+/// 调制器在整个旋转上都保证得住的电压：它六边形的**内切圆**，不是母线电压。两者为何不同见 modulation-limits 示例。
 constexpr float kVMaxV = kVBusV / 1.7320508F;
 
 } // namespace
@@ -104,11 +105,11 @@ auto main(int argc, char** argv) -> int {
     }
 
     // The number that decides whether field weakening is worth implementing at
-    // all, printed rather than asserted: `lambda`. The plan's domain gate uses the
-    // same ratio, so a machine that lands outside it is a machine where the whole
-    // slice is optional.
-    // 决定"弱磁值不值得做"的那个数，打印出来而不是断言：`lambda`。计划的 domain 门用的是同一个
-    // 比值，所以落在这个范围之外的机器，整片都是可选的。
+    // all, printed rather than asserted: `lambda`. The `domain` gate uses the same
+    // ratio, so a machine that lands outside it is a machine where field weakening is
+    // not worth doing.
+    // 决定"弱磁值不值得做"的那个数，打印出来而不是断言：`lambda`。`domain` 门用的是同一个
+    // 比值，所以落在这个范围之外的机器，弱磁不值得做。
     const float lambda = (machine.ld * config.i_max_a) / machine.psi_f;
     std::printf("\nlambda = Ld * i_max / psi_f = %.3f  (above 1: field weakening has room)\n",
                 static_cast<double>(lambda));

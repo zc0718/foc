@@ -89,7 +89,7 @@ struct FieldWeakeningAdvice final {
  *   **implied** by the clause above (`ratio <= 1` and an infinite gain), so neither could ever be the deciding test --
  *   the function returned `worthwhile = true` from the early branch and the two-condition expression was
  *   unreachable-as-true. Removed rather than left in place: a threshold that cannot bind reads as a policy and is
- *   decoration (F-107). The *reason* it existed is kept in the sentence above.
+ *   decoration. The *reason* it existed is kept in the sentence above.
  *
  * @brief [zh] 只用铭牌数字做的"做/不做"判定。
  *
@@ -101,8 +101,8 @@ struct FieldWeakeningAdvice final {
  *
  *   这里原先写着两个阈值 `ratio < 0.6` 与 `speed_gain >= 1.5`，各配一条理由。两者都被上面那一条蕴含（ `ratio <= 1`、增
  *   益无穷），因此都不可 能成为决定性的检验——函数是从早返回分支返回 `worthwhile = true` 的，那条两条件表达式
- *   **永远不可能为真** 。已删除而不 是留在原地：一个不可能生效的阈值读起来像策略，其实是装饰（F-107）。它当初存在的
- *   **理由** 已并入上一句。
+ *   **永远不可能为真** 。已删除而不 是留在原地：一个不可能生效的阈值读起来像策略，其实是装饰。它当初存在的 **理由** 已
+ *   并入上一句。
  *
  * @param params [en] the machine, SI.
  * @param params [zh] 机器，SI。

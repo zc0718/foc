@@ -72,9 +72,9 @@ What is measured, and what is not
      - verified by tools that report allocations, and by the fact that the control path calls
        no allocator
    * - worst-case execution time on *your* MCU
-     - **not measured**: no target profile is shipped. :ref:`U6 <honest-limits>`
+     - **not measured**: no target profile is shipped. :ref:`The ISR-cost row in honest limits <honest-limits>`
    * - flash and RAM footprint against *your* budget
-     - **not measured**: :ref:`U7 <honest-limits>`
+     - **not measured**: :ref:`the footprint row in honest limits <honest-limits>`
    * - behaviour under an ISR that is itself interrupted
      - **not measured**: no target, no interrupt controller
 

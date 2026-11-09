@@ -41,8 +41,8 @@ Three numbers in its output are the whole decision:
 Where the numbers come from
 ---------------------------
 
-- **The voltage ceiling is the modulator's inscribed circle, not the rail.** Slice
-  S5 shows why those differ and by how much; using the rail here makes the whole
+- **The voltage ceiling is the modulator's inscribed circle, not the rail.** The
+  :doc:`modulation-limits` page shows why those differ and by how much; using the rail here makes the whole
   region look wider than it is.
 - **The current ceiling is per axis in the nameplate and per vector here.** `|i|`
   is what the solver bounds.
@@ -53,7 +53,7 @@ How it goes wrong
 -----------------
 
 1. **Base speed taken from `psi_f`.** Too high by the amount MTPA already spends on
-   the d axis, and the error is largest exactly on the salient machines this slice
+   the d axis, and the error is largest exactly on the salient machines this page
    exists for.
 2. **The voltage ceiling taken as the rail.** The rail is only reachable at six
    angles of the rotation; a request sized to it clips five times a revolution and
@@ -69,7 +69,7 @@ How it goes wrong
 Evidence
 --------
 
-Three claim rows cover this slice -- ``foc/core/field_weakening.hpp``,
+Three claim rows cover this page -- ``foc/core/field_weakening.hpp``,
 ``foc/core/mtpv.hpp`` and ``foc/core/machine_map.hpp`` -- and the level this page
 may state is the minimum of those three. The numbers behind the boundaries are in
 those rows and in ``test_mtpv.cpp``, not on this page.
@@ -78,7 +78,7 @@ Figure
 ------
 
 .. figure:: ../../images/ALL_high_speed_field_weakening.png
-   :name: figure slice s4
+   :name: figure high-speed-field-weakening
    :width: 960
    :align: center
 

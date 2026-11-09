@@ -6,7 +6,7 @@
 //   g++ -std=c++17 -fno-exceptions -fno-rtti -Wall -Wextra -Werror -Iinclude docs/doxygen/dox/demos/positioning.cxx src/core/motion_profile.cpp -o /tmp/positioning
 //
 // With `--csv <path>` it writes the same run as rows; that is how
-// `docs/demos/make_figures.py` draws this slice's figure.
+// `docs/demos/make_figures.py` draws this example's figure.
 //
 // 定位 —— 定位：接纳一个目标、为它塑造一条速度、并知道轴能去哪。没有被控对象：下面的
 // "轴"只是一个纯积分器，所以看到的是速度轮廓的形状与限位的拒绝，不是一台电机。

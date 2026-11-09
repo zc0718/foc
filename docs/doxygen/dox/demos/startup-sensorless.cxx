@@ -7,7 +7,7 @@
 //   g++ -std=c++17 -fno-exceptions -fno-rtti -Wall -Wextra -Werror -Iinclude docs/doxygen/dox/demos/startup-sensorless.cxx -o /tmp/startup-sensorless
 //
 // With `--csv <path>` it writes the same run as rows instead of a table; that is
-// how `docs/demos/make_figures.py` draws this slice's figure, so the figure and
+// how `docs/demos/make_figures.py` draws this example's figure, so the figure and
 // the snippet are one program.
 //
 // 起动 —— 无感起转：按住转子、把矢量拖到某个转速、交出控制权。没有硬件也没有被控对象：

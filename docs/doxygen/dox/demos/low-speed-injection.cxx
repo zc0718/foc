@@ -5,7 +5,7 @@
 //   g++ -std=c++17 -fno-exceptions -fno-rtti -Wall -Wextra -Werror -Iinclude docs/doxygen/dox/demos/low-speed-injection.cxx src/core/observer/hfi_observer.cpp src/core/transform.cpp -o /tmp/low-speed-injection
 //
 // With `--csv <path>` it writes both sweeps as rows; `docs/demos/make_figures.py`
-// draws this slice's figure from that file.
+// draws this example's figure from that file.
 //
 // 低速 —— 零速与低速：高频注入，以及它拒绝在哪些机器上工作。
 
@@ -21,10 +21,10 @@ namespace {
 constexpr float kTwoPi = 6.28318530718F;
 
 // A standstill salient machine, small enough to read: two axes, no back EMF, no
-// saturation. `lq_ratio == 1` is a surface-mount rotor -- the case this slice is
+// saturation. `lq_ratio == 1` is a surface-mount rotor -- the case this example is
 // about.
 // 一台静止的凸极电机，小到能一眼读完：两个轴、没有反电动势、没有饱和。
-// `lq_ratio == 1` 就是表贴式转子——本切片要讲的就是这一种。
+// `lq_ratio == 1` 就是表贴式转子——本示例要讲的就是这一种。
 struct SalientPlant final {
     float rs_ohm = 1.0F;
     float ld_h = 0.010F;
@@ -82,10 +82,10 @@ auto main(int argc, char **argv) -> int {
     constexpr int kSteps = 20000; // one second
     constexpr int kLogEvery = 20; // 1 ms
 
-    // Three runs that between them answer the slice's question. The first is a
+    // Three runs that between them answer this example's question. The first is a
     // surface-mount rotor, the second an interior one, and the third is an interior
     // rotor observed by a controller that cannot resolve the carrier.
-    // 三次运行合起来回答本切片的问题。第一次是表贴式转子，第二次是内置式，第三次是内置式
+    // 三次运行合起来回答本示例的问题。第一次是表贴式转子，第二次是内置式，第三次是内置式
     // 转子，但控制器分辨不了这个载波。
     struct Case final {
         const char *name;

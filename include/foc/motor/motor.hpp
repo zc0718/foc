@@ -753,12 +753,12 @@ class Motor final {
      *             decimators, cleared every time the loop they gate runs, so their magnitude is bounded by the
      *             configured period; `stall_elapsed_s_` is bounded by `kStallWindowS` because reaching it faults. A
      *             float is exact enough for a value that never leaves hundredths of a second -- but a *timeout* is not
-     *             bounded that way, which is why the routines that own one no longer accumulate it in float (F-105),
-     *             and `gates.py clocks` holds the line.
+     *             bounded that way, which is why the routines that own one no longer accumulate it in float, and
+     *             `gates.py clocks` holds the line.
      * @brief [zh] 这三个故意留作 float，与各流程用的 `core::ElapsedClock` 不是一回事：它们都 **不是只增不减** 的。
      *             `speed_elapsed_s_` 与 `position_elapsed_s_` 是分频相位，它们所门控的环每跑一次就清零，量级被配置的周
      *             期兜住； `stall_elapsed_s_` 被 `kStallWindowS` 兜住（达到即故障）。一个永不超出百分之几秒的量，float
-     *             足够精确—— 但 **超时** 不是这样被兜住的，所以拥有超时的流程不再用 float 累加它（F-105），并由
+     *             足够精确—— 但 **超时** 不是这样被兜住的，所以拥有超时的流程不再用 float 累加它，并由
      *             `gates.py clocks` 守住。
      */
     float speed_elapsed_s_;
@@ -885,7 +885,7 @@ auto Motor<Observer, Modulator, Controller, HalPolicy, RefGenerator, FeedForward
     }
 
     // Align: a sensored setup already knows the angle; a sensorless one needs the flux seeded from
-    // the nameplate so the integrator's unknown constant stops mattering (see D18 in the PRD).
+    // the nameplate so the integrator's unknown constant stops mattering.
     if constexpr (core::concepts::has_seed_flux_v<Observer>) {
         policies_.observer.seed_flux(Ab<float>{psi_f_wb(config_), 0.0F});
     }
@@ -1033,9 +1033,9 @@ auto Motor<Observer, Modulator, Controller, HalPolicy, RefGenerator, FeedForward
     // Admission, not validation of the numbers alone: the sequence commands a
     // torque, so it can only run on an axis that is running and not being
     // aligned. Both refusals leave the phase `Idle` -- a refusal that leaves the
-    // old state standing is the failure mode the aligner had (F-35).
+    // old state standing is the failure mode the aligner had.
     // 准入，而不只是数字校验：序列下发的是转矩，所以只能在一个正在运行、且不在对齐的轴上跑。两种拒绝都把阶段留在
-    // `Idle`——拒绝却把旧状态留着，正是对齐器修掉的那个失效形态（F-35）。
+    // `Idle`——拒绝却把旧状态留着，正是对齐器修掉的那个失效形态。
     if (sm_.state() != core::MotorState::Run) {
         stall_phase_ = core::StallStartPhase::Idle;
         return ErrorCode::State;

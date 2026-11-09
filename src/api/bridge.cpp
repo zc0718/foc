@@ -1167,7 +1167,7 @@ template <typename Slot> auto set_observer(Slot& slot, foc_observer_t observer) 
     // alone leaves the current's own flux out of the integration constant and a pure integrator never forgets -- measured
     // as 0.0525 rad of permanent offset at 2.5 A in `test_switchable_observer.cpp`. Every other member ignores the
     // argument. (This was once justified here by "a hand-over that landed pi away"; that number was the rig leaving the
-    // member unconfigured, i.e. `A-110`, and the reason above stands on its own.)
+    // member unconfigured, and the reason above stands on its own.)
     // 用双参数版本：`DualInductanceObserver` 积分的是 **定子** 磁链，只给 `psi_f·e^(jθ)` 会把电流自身的磁链漏在积分常数之外，
     // 而纯积分器不会遗忘——在本仓库自己的链路上，它表现为交接后落在偏 π 的位置。其余成员会忽略这个参数。
     const motor::Telemetry hand_over_tm = instance.telemetry();

@@ -93,34 +93,25 @@ test cases -- see :doc:`what this library does not do <boundaries>`.)
 
 .. list-table::
    :header-rows: 1
-   :widths: 8 40 52
+   :widths: 40 60
 
-   * - #
-     - Item
+   * - Item
      - Why it cannot be verified yet
-   * - U1
-     - Dead-time compensation in practice
+   * - Dead-time compensation in practice
      - Needs the real inverter non-linearity.
-   * - U2
-     - ADC sampling aligned with PWM timing
+   * - ADC sampling aligned with PWM timing
      - Depends on the MCU timer and trigger chain.
-   * - U3
-     - Observer robustness against real parameter drift
+   * - Observer robustness against real parameter drift
      - The perturbation used in the SIL model is idealised.
-   * - U4
-     - EMI / EMC behaviour
+   * - EMI / EMC behaviour
      - Not observable in software.
-   * - U5
-     - Acoustic noise and vibration
+   * - Acoustic noise and vibration
      - Needs a mechanical load.
-   * - U6
-     - ISR worst-case execution time on the target MCU
+   * - ISR worst-case execution time on the target MCU
      - No target profile is shipped.
-   * - U7
-     - Flash / RAM footprint against a chip budget
+   * - Flash / RAM footprint against a chip budget
      - No target constraint to measure against.
-   * - U8
-     - A pure-C consumer **without** the C++ runtime
+   * - A pure-C consumer **without** the C++ runtime
      - Would need a stripped link script and hand-written stubs; V1 explicitly requires C
        users to link the C++ runtime.
 
@@ -142,7 +133,7 @@ accident.
    :caption: Guides
    :numbered:
 
-   Task slices <guides/index>
+   Guides by task <guides/index>
    One machine, one shift <guides/walkthrough>
    Measured responses <demos/index>
    Outer-loop self-tuning <sop>

@@ -175,11 +175,11 @@ Tools and artefacts
    SIL
       Software-in-the-loop: the library's control loop running against a plant *model* on the
       host. What it can show is in :doc:`../demos/index`; what it cannot is
-      :ref:`U1-U8 <honest-limits>`.
+      :ref:`what is deferred to hardware <honest-limits>`.
 
-   slice
-      One page per task, in :doc:`../guides/index`. Not per header: a slice is what a reader is
-      trying to do, and the headers are listed inside it.
+   task page
+      One page per task, in :doc:`../guides/index`. Not per header: a task page is what a reader
+      is trying to do, and the headers are listed inside it.
 
    gate
       A check that fails a build: formatting, layering, standalone headers, negative

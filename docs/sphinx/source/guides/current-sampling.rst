@@ -25,7 +25,7 @@ A minimal program
 ``docs/doxygen/dox/demos/current-sampling.cxx`` sweeps the modulation index at
 three angles against the shunt verdict, reads the dead-time correction in two
 configurations, and runs the board check twice on the same measurements. The same
-file produces this slice's figure.
+file produces this page's figure.
 
 .. literalinclude:: ../../../../docs/doxygen/dox/demos/current-sampling.cxx
    :language: cpp
@@ -81,7 +81,7 @@ How it goes wrong
 Evidence
 --------
 
-Four claim rows cover this slice -- ``foc/core/single_shunt.hpp``,
+Four claim rows cover this page -- ``foc/core/single_shunt.hpp``,
 ``foc/core/deadtime.hpp``, ``foc/core/trace.hpp`` and
 ``foc/core/board_check.hpp`` -- and the level this page may state is the minimum
 of those four. The numbers behind the window sizes, the identified fade width
@@ -92,7 +92,7 @@ Figure
 ------
 
 .. figure:: ../../images/ALL_current_sampling.png
-   :name: figure slice s7
+   :name: figure current-sampling
    :width: 760
    :align: center
 

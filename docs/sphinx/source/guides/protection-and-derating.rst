@@ -27,7 +27,7 @@ A minimal program
 ``docs/doxygen/dox/demos/protection-and-derating.cxx`` sweeps the i2t budget below the
 hard trip, reads the derating curve across the trip temperature, walks the latch
 through a trip and a reset, asks a watchdog past its window, and pushes the bus
-into a brake chopper. The same file produces this slice's figure.
+into a brake chopper. The same file produces this page's figure.
 
 .. literalinclude:: ../../../../docs/doxygen/dox/demos/protection-and-derating.cxx
    :language: cpp
@@ -79,7 +79,7 @@ How it goes wrong
 Evidence
 --------
 
-Five claim rows cover this slice: ``foc/core/protection.hpp``,
+Five claim rows cover this page: ``foc/core/protection.hpp``,
 ``foc/core/watchdog.hpp``, ``foc/core/thermal_limit.hpp``,
 ``foc/core/brake_chopper.hpp`` and ``foc/core/commissioning.hpp``; the level this
 page may state is the minimum of those five. The times, temperatures and budgets
@@ -92,7 +92,7 @@ Figure
 ------
 
 .. figure:: ../../images/ALL_protection_and_derating.png
-   :name: figure slice s8
+   :name: figure protection-and-derating
    :width: 760
    :align: center
 
@@ -104,6 +104,6 @@ Figure
 Both panels come from this page's example. The trip line is drawn from its own row
 of data rather than from where the curve reaches zero, because those are two
 different temperatures and drawing one for the other is exactly failure mode 2.
-What the figure does not show is the rest of the slice: the latch, the watchdog and
+What the figure does not show is the rest of the page: the latch, the watchdog and
 the chopper are printed by the same program and are not time-series in the figure,
 because a latch has one interesting instant and a plot of it would be one step.

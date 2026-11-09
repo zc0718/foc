@@ -1,12 +1,12 @@
-_`Task slices`
-==============
+_`Guides by task`
+=================
 
 The API reference answers "what does this function take". This section answers
 the other question: **"I have a task; which pieces do I need, and how do they go
 together."** One page per task, not per header.
 
-Every slice page has the same seven parts, so a page you have read once teaches
-you where to look on the next one:
+Every page in this section has the same seven parts, so one you have read teaches you
+where to look on the next one:
 
 1. **The task** -- the question in the words a user would use.
 2. **What you need** -- the headers, and what each one is for.
@@ -15,7 +15,7 @@ you where to look on the next one:
 4. **Where the numbers come from** -- which nameplate field or helper produces
    each constant, because a retyped gain is a second machine.
 5. **How it goes wrong** -- the failure modes that compile cleanly.
-6. **Evidence** -- which claim rows cover the slice, and what the slice does not
+6. **Evidence** -- which claim rows cover the page, and what the page does not
    claim.
 7. **Figure** -- produced by ``docs/demos/make_figures.py``, never hand-drawn.
 
@@ -25,80 +25,60 @@ Two rules apply to every page and are worth stating once:
   ``docs/doxygen/dox/demos/``, not a copy of it: what the page shows is the translation unit
   that produced part 7's figure, so the two cannot drift. The one compile command lives in
   :doc:`../demos/index` instead of being repeated on every page.
-- **The evidence level is the minimum of the slice's claim rows**, and the level
+- **The evidence level is the minimum of the page's claim rows**, and the level
   itself lives in the claim table in the project ``README.md``. No page in this
   section repeats a level or a measured number; a number copied into a page is a
   second source of truth with a shelf life.
-- **The figure shows what it shows.** Where a slice's headline number is not
+- **The figure shows what it shows.** Where a page's headline number is not
   visible in the figure, the page says so rather than choosing a figure that
   looks like it agrees.
 
-The slices
-----------
+The nine pages
+--------------
 
 .. list-table::
    :header-rows: 1
-   :widths: 6 30 40 12 12
+   :widths: 44 40 16
 
-   * - #
-     - The task
+   * - The task
      - Pieces
      - Example
-     - State
-   * - S1
-     - Bring a sensorless machine up, and know when to trust the observer
+   * - Bring a sensorless machine up, and know when to trust the observer
      - ``alignment`` ``polarity`` ``startup`` ``stall_start``
        ``observer/blended_observer``
      - :doc:`startup-sensorless`
-     - written
-   * - S2
-     - Produce torque at zero and low speed, and know when this machine cannot
+   * - Produce torque at zero and low speed, and know when this machine cannot
      - ``observer/hfi_observer`` ``observer/dual_inductance_observer``
      - :doc:`low-speed-injection`
-     - written
-   * - S3
-     - Turn a torque request into a dq current reference and close both axes
+   * - Turn a torque request into a dq current reference and close both axes
      - ``reference`` ``limits`` ``pi`` ``feedforward``
      - :doc:`torque-reference`
-     - written
-   * - S4
-     - Keep producing torque above base speed, and decide whether it is worth it
+   * - Keep producing torque above base speed, and decide whether it is worth it
      - ``field_weakening`` ``mtpv`` ``machine_map``
      - :doc:`high-speed-field-weakening`
-     - written
-   * - S5
-     - Modulate the voltage: overmodulation, minimum pulse, six-step
+   * - Modulate the voltage: overmodulation, minimum pulse, six-step
      - ``svpwm`` ``min_pulse`` ``six_step``
      - :doc:`modulation-limits`
-     - written
-   * - S6
-     - Build a position loop, home the axis, stay inside soft limits
+   * - Build a position loop, home the axis, stay inside soft limits
      - ``position`` ``position_reference`` ``motion_profile`` ``homing``
        ``soft_limit`` ``gear_ratio``
      - :doc:`positioning`
-     - written
-   * - S7
-     - Sample current accurately: dead time, one shunt, the sampling instant
+   * - Sample current accurately: dead time, one shunt, the sampling instant
      - ``deadtime`` ``single_shunt`` ``trace`` ``board_check``
      - :doc:`current-sampling`
-     - written
-   * - S8
-     - Know when it has failed, and where the parameters came from
+   * - Know when it has failed, and where the parameters came from
      - ``protection`` ``watchdog`` ``thermal_limit`` ``brake_chopper``
        ``auto_tune`` ``commissioning``
      - :doc:`protection-and-derating`
-     - written
-   * - S9
-     - Consume the library from C, Python or a simulation master
+   * - Consume the library from C, Python or a simulation master
      - ``api/foc_api.h`` ``comm/frame`` ``comm/register_map``
        ``comm/encoder_stream`` ``api/python_bindings.cpp``
      - :doc:`c-and-cpp-callers`
-     - written
 
-A slice is ``written`` when its page carries all seven parts and its example
-compiles. **All nine are written**, which makes the list above the boundary of
-what this section promises rather than a forecast: a task that is not in it is
-not covered here, and the pieces column says what it would take to add it.
+Every page in the list carries all seven parts and its example compiles, which
+makes the list above the boundary of what this section promises rather than a
+forecast: a task that is not in it is not covered here, and the pieces column
+says what it would take to add it.
 
 .. toctree::
    :maxdepth: 1
@@ -119,10 +99,10 @@ The figures already on the site
 
 :doc:`../demos/index` holds the SIL traces that the figure step draws on. They
 are scenario pages rather than task pages: a scenario says "watch the loop do
-this", a slice says "here is what to wire on your machine".
+this", a task page says "here is what to wire on your machine".
 
-Reading the slices in order
----------------------------
+Reading the pages in order
+--------------------------
 
 The nine pages below are independent on purpose, but a machine does not meet them
 independently: it is read, checked, aligned, given a torque command, run past base

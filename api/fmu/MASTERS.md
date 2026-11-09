@@ -43,12 +43,12 @@ which part of the contract broke:
    point is accepted immediately afterwards** — both, in that order, because "refuses everything" would
    satisfy the first half alone.
 
-Item 3 is the one added on 2026-11-06 (F-1). Before it, `modelDescription.xml` declared
+Item 3 is the one added on 2026-11-06. Before it, `modelDescription.xml` declared
 `canHandleVariableCommunicationStepSize="true"` while `fmi2DoStep` fed `communicationStepSize` straight
 into `foc_tick`: a variable-step master would have run a controller tuned for a different period, with no
 error and no warning. The declaration is now `false`, the wrapper enforces it, and this matrix's third
 column is what makes the enforcement observable from outside.
-第 3 条是 2026-11-06（F-1）加的。在这之前 `modelDescription.xml` 声明
+第 3 条是 2026-11-06 加的。在这之前 `modelDescription.xml` 声明
 `canHandleVariableCommunicationStepSize="true"`，而 `fmi2DoStep` 把 `communicationStepSize` 直接喂给
 `foc_tick`：一个变步长主控会开动一台按别的周期调参的控制器，无错误、无警告。现在声明是 `false`，包装器强制执行，
 而本矩阵的第三列就是让那次强制执行**从外部可观察**的东西。

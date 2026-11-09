@@ -75,7 +75,7 @@ _`1. What this library fixes`
        zero-order in the **stationary** frame; arbiter side: scipy :code:`solve_ivp` (RK45,
        rtol 1e-9) — the two paths are deliberately not the same code
      - :code:`sil_plant_hal.hpp`, :code:`offline_arbiter.py`
-   * - Comparison slice
+   * - Compared quantities
      - mechanical speed (rad/s), :math:`i_d` / :math:`i_q` (A), time measured from the step
        instant; samples aligned to the control period (the L2 reference keeps every fifth row)
      - :code:`test_sil_l2_reference.cpp`
@@ -141,5 +141,5 @@ _`5. Change rule`
    adding back-calculation to the PI) must change **this page first**, then the code, then the L2
    reference traces (regenerated with :code:`offline_arbiter.py`) — and only then may it be
    committed. Reversing that order yields gates that are green while the convention is wrong.
-#. A new comparison scenario appends a row to the *comparison slice* in section 1 and gets its own
-   decision record in the PRD.
+#. A new comparison scenario appends a row to the *compared quantities* table in section 1 and says
+   on that row why it compares what it compares.

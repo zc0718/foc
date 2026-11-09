@@ -67,10 +67,10 @@ inline constexpr std::uint8_t kHallNoSector = 0xFFU;
  * @note [en] Sector `k` spans electrical angles `[k*60 - 30, k*60 + 30)`, i.e. it is **centred** on `k*60`, because
  *            that is where the three sensors place their edges: sensors at 0/120/240 switch at 30/90/150/... and never
  *            at zero. Measured in `test_hall_physics.cpp` rather than assumed -- an earlier version of that file
- *            assumed the edges fell on multiples of 60 and straddled one (ledger C-7).
+ *            assumed the edges fell on multiples of 60 and straddled one.
  * @note [zh] 扇区 `k` 覆盖电角度 `[k*60 − 30, k*60 + 30)`，即 **以 `k*60` 为中心** ，因为三个传感器正是把边沿放在那里：
  *            0/120/240 的传感器在 30/90/150/…处切换，从不在零处。这是 `test_hall_physics.cpp` 里量出来的，不是假设的——
- *            那个文件更早的一版假设边沿落在 60 的倍数上，结果跨过了一条边沿（台账 C-7）。
+ *            那个文件更早的一版假设边沿落在 60 的倍数上，结果跨过了一条边沿。
  * @since 0.1.0
  */
 [[nodiscard]] constexpr auto hall_sector(std::uint8_t code) noexcept -> std::uint8_t {

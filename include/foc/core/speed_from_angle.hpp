@@ -42,14 +42,14 @@ namespace core {
  *            angle is the right direction at all. Both closed forms are checked against the shipped estimator in
  *            `test_sil_speed_from_angle.cpp`, which is why the factor here is 5.82 and not the 4.1 an earlier version
  *            of this note claimed: that one dropped the `sqrt(2)` the difference itself carries, and was wrong by
- *            exactly `sqrt(2)` (F-42). The output is 0 until the window has filled. A speed that starts by reporting
- *            the difference across a partly-filled window would report a number divided by the wrong interval, which is
+ *            exactly `sqrt(2)`. The output is 0 until the window has filled. A speed that starts by reporting the
+ *            difference across a partly-filled window would report a number divided by the wrong interval, which is
  *            worse than reporting nothing.
  * @note [zh] 刻意做成 **能被测量** 的最便宜形式：延迟差分，而不是最小二乘斜率。同一窗口上的斜率会比它安静 `√(12/N)`
  *            倍，闭式是 `√(6N/((N+1)(N+2)))`，在 N = 200 时是 **5.82** 倍——值得有，但在便宜形式证明"对角度做差分"方向正
  *            确之前不值得先建。两条闭式都在 `test_sil_speed_from_angle.cpp` 里对着出货的估计器核过，所以这里的系数是
- *            5.82 而不是本注更早版本写的 4.1：那一版漏了差分自身带的 `√2`，错了整整 `√2` 倍（F-42）。窗口填满之前输出为
- *            0。一开始就用半满窗口报差分，等于把一个数除以错误的区间——那比什么都不报更糟。
+ *            5.82 而不是本注更早版本写的 4.1：那一版漏了差分自身带的 `√2`，错了整整 `√2` 倍。窗口填满之前输出为 0。一开
+ *            始就用半满窗口报差分，等于把一个数除以错误的区间——那比什么都不报更糟。
  * @since 0.1.0
  * @exporter
  */

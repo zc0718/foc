@@ -386,11 +386,11 @@ class SwitchableObserver final {
      * @brief [zh] 被选中成员的 **配置** 状态——它才是把"保持不动的输出"和"算错的算法"区分开的东西。
      * @note [en] Added because a rig that selects a member without configuring it reads a constant: an all-zero
      *            `Config` is refused by `valid_config`, `update()` then holds, and at the port a member that is not
-     *            running is indistinguishable from one that is wrong. A defect recorded against this class (`A-110` in
-     *            the foundation log) was exactly that, so the way to see it is part of the class now.
+     *            running is indistinguishable from one that is wrong. A defect recorded against this class was exactly
+     *            that, so the way to see it is part of the class now.
      * @note [zh] 之所以有它：只选中成员却没配置它的台架读到的是个常数——全零 `Config` 会被 `valid_config` 拒绝、
-     *            `update()` 随后保持不动，而在端口上"没在跑的成员"与"算错的成员"完全一样。记在这个类名下的一个缺陷（
-     *            foundation-log 的 `A-110`）正是如此，所以"看得见它"的办法现在是类的一部分。
+     *            `update()` 随后保持不动，而在端口上"没在跑的成员"与"算错的成员"完全一样。记在这个类名下的一个缺陷正是
+     *            如此，所以"看得见它"的办法现在是类的一部分。
      * @return [en] `ErrorCode::Ok` when the selected member accepted its configuration, `Param` when it did not.
      * @return [zh] 被选中成员接受了配置时为 `ErrorCode::Ok`，否则为 `Param`。
      * @since 0.1.0

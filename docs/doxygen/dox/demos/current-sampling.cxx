@@ -5,7 +5,7 @@
 //   g++ -std=c++17 -fno-exceptions -fno-rtti -Wall -Wextra -Werror -Iinclude docs/doxygen/dox/demos/current-sampling.cxx src/core/svpwm.cpp src/core/single_shunt.cpp -o /tmp/current-sampling
 //
 // With `--csv <path>` it writes both sweeps as rows; `docs/demos/make_figures.py`
-// draws this slice's figure from that file.
+// draws this example's figure from that file.
 //
 // 采样 —— 采样与功率级：到底有没有时间测电流，以及死区对桥臂交付电压做了什么。
 
@@ -184,10 +184,10 @@ auto main(int argc, char **argv) -> int {
 
     // ---------------------------------------------------------- board check
     // A bench session produces numbers, not verdicts -- and "two items failed" is
-    // not actionable. The measurand that points at *this* slice is the one the ADC
+    // not actionable. The measurand that points at *this* example is the one the ADC
     // sees: if the sampled ripple is much larger than the switching period implies,
     // the sample is landing off the centre of the zero vector.
-    // 一次台架测量给出的是数字，不是结论——而"两项失败了"没法处理。指向**本切片**的那个
+    // 一次台架测量给出的是数字，不是结论——而"两项失败了"没法处理。指向**本示例**的那个
     // 被测量就是 ADC 看到的东西：如果采到的纹波远大于开关周期应有的值，采样点就落在零矢量
     // 中心之外。
     foc::core::BoardMeasurements measured{};
@@ -196,7 +196,7 @@ auto main(int argc, char **argv) -> int {
     measured.offset_a[1] = -0.002F;
     measured.offset_a[2] = 0.001F;
     measured.ripple_expected_a = 0.10F;
-    measured.ripple_measured_a = 0.22F; // the one this slice is about
+    measured.ripple_measured_a = 0.22F; // the one this example is about
     measured.deadtime_v = deadtime_v;
     measured.deadtime_cmd_v = deadtime_v;
     measured.encoder_offset_rad = 0.003F;

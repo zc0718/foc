@@ -5,8 +5,8 @@ The :ref:`boundaries page <What this library does not do>` says what this librar
 what is measured and how it is checked. Neither answers the question the person adding an algorithm actually has: *what
 does a capability have to come with?*
 
-This page is that answer, one row per capability. Six columns: the four things a new capability owes, plus the two links
-that let the row be audited.
+This page is that answer, one row per capability. Five columns: the four things a new capability owes, plus the
+case name that lets the row be audited.
 
 1. **Diagnostic channel** -- how the capability says "I am not measuring", "I have not converged", "I am holding". A
    capability whose only output is a number cannot be debugged in the field, because zero and "no idea" look the same.
@@ -18,7 +18,6 @@ that let the row be audited.
    written down instead of papered over. The gate counts the `todo` rows on every run.
 4. **Invariant participation** -- which case in `test_invariants.cpp` this capability must obey. ``na -- <reason>`` is
    allowed and the reason is required.
-5. **Ledger row** -- when a capability forced a foundation correction, `foundation-log.rst` says which and what it cost.
 
 The `capabilities` gate checks every cell: a header under `core/` or `motor/` must be listed here or named in
 `capability-scope.json` as deliberately unlisted; every case name must exist as a `TEST()`; every ``none`` must have an
@@ -78,27 +77,24 @@ the sensitivity half is not, so the row stays **L2**.
 
 .. list-table:: capability matrix
    :header-rows: 1
-   :widths: 20 22 20 24 8 6
+   :widths: 20 24 20 28 8
 
    * - Capability
      - Diagnostic channel
      - Admission
      - Boundary
      - Invariant
-     - Ledger
    * - ``core/transforms.hpp``
      - na -- stateless: there is no state that could hold a stale angle, and the caller owns the angle.
      - na -- no configuration; a wrong argument is a wrong answer, which the invariance case catches.
      - none -- Clarke is blind to the zero sequence, which is stated and asserted rather than corrected; nothing
        else is known to break.
      - TheAmplitudeConventionHoldsAndTheZeroSequenceIsLost, ARotationAndItsFrameComposeExactly
-     - --
    * - ``core/limits.hpp``
      - na -- stateless: a clamp with no memory has nothing to report about itself.
      - na -- no configuration; a limit wider than the signal is a caller decision, not a contradiction.
      - ``Invariants.TheClampIsContinuousAndAJumpWouldShow``
      - TheClampIsContinuousAndAJumpWouldShow
-     - --
    * - ``core/pi.hpp``
      - ``status()``, ``integral()``, ``output()`` -- the integrator state is readable because a wound-up integrator is
        the failure mode that looks like a tuning problem.
@@ -106,14 +102,12 @@ the sensitivity half is not, so the row stays **L2**.
        holds instead of moving.
      - na -- the loop is linear and every limit on it is a clamp or a gain; the limits that matter are the plant's.
      - ElapsedTimeDecidesTheIntegralNotTheCallCount, TheClampIsContinuousAndAJumpWouldShow
-     - --
    * - ``core/filters.hpp``
      - ``configured()``, ``size()`` -- an unconfigured filter says so instead of passing its input through untouched.
      - ``configure()`` refuses a non-positive cutoff or step.
      - na -- a first-order filter is exact for its stated cutoff; the limit that matters belongs to the loop
        around it, not to the filter.
      - na -- linear and time-invariant; the invariants that bite are on the loop around it, not on it.
-     - --
    * - ``core/protection.hpp``
      - ``thermal_budget()``, ``derated_limit()``, ``fault_is_latched()`` -- "fine", "derating" and "stopped" are three
        readable numbers rather than one code. The split is by definition and not by accident: `output_allowed` is
@@ -125,13 +119,11 @@ the sensitivity half is not, so the row stays **L2**.
      - na -- the configuration is a set of numbers; a nonsensical one is refused by the constructor that consumes it.
      - ``FaultInjection.TheProtectorCodesReachTheFaultCodeThroughTheDocumentedHop``
      - na -- a supervisor over other capabilities, not an equation of its own.
-     - --
    * - ``core/speed_from_angle.hpp``
      - ``ready()``, ``lost_count()`` -- differentiates an angle and says when the angle stopped arriving.
      - ``reset()`` is mandatory after a gap: the module will not publish a speed across one.
      - ``SilSpeedFromAngleClosedLoop.AWindowShortEnoughToBeOnTimeIsTheOnlyWayThisRouteWins``
      - ElapsedTimeDecidesTheIntegralNotTheCallCount
-     - A-3
    * - ``core/trace.hpp``
      - ``size()``, ``dropped()``, ``latest()`` -- a full ring keeps recording and counts what it overwrote, so \"I lost
        the window\" is a number rather than an absence. ``t_us == 0`` on every sample means the platform has no clock,
@@ -140,7 +132,6 @@ the sensitivity half is not, so the row stays **L2**.
        sample instead of reaching out of bounds.
      - ``Trace.TheRecordAgreesWithTheScalarReadBitForBit``
      - na -- a recorder of other capabilities' arithmetic, with none of its own.
-     - A-8
    * - ``core/soft_limit.hpp``
      - `at_wall`, and the `Param` that a refused target returns. A clamp would make an impossible command look plausible
        and the caller would never learn; the status is the only channel a programming fault has.
@@ -148,7 +139,6 @@ the sensitivity half is not, so the row stays **L2**.
        A wall is *inclusive*: "move to the limit" is the one command a soft limit exists to make safe.
      - ``SoftLimit.TheDelayTermIsTheDifferenceBetweenNineteenMillimetresPastAndOneShort``
      - na -- no integration; the remembered target is the whole state.
-     - A-20
    * - ``core/gear_ratio.hpp``
      - `master_unwrapped_rad` and `slave_velocity_rad_s`. The unwrapped master is the synchronisation error's reference --
        comparing against the wrapped one is how a perfect pair reports 6.28 rad once a revolution -- and the velocity is
@@ -157,7 +147,6 @@ the sensitivity half is not, so the row stays **L2**.
        untouched). A zero ratio is refused because a decoupled slave and a stuck slave look identical.
      - ``ElectronicGear.TheSyncErrorIsTheRampLagInBothOfItsTerms``
      - na -- one state variable (the accumulated master angle); the cases check that a ratio change does not move it.
-     - A-21, C-10
    * - ``core/friction_comp.hpp``
      - ``at_rest`` and `stalled` -- and the fact that the output is a *constant* at rest rather than a square wave. A
        Coulomb term on `sign(measured speed)` ripples by twice the term where the stage is needed most; the latch is what
@@ -168,7 +157,6 @@ the sensitivity half is not, so the row stays **L2**.
      - ``FrictionComp.AnEstimateAboveTheBreakawayWalksTheAxisWithNoCommandAtAll``
      - na -- no time constant and no integration; the only state is the latched direction, and the cases check that it
        survives a re-tune.
-     - A-18, A-19, C-9
    * - ``core/hall.hpp``
      - ``status()`` -- three answers rather than one number: `Fault` when the code is 0 or 7 (the two a three-bit field
        leaves over), `State` when the interval between edges stopped looking like a sector, `Ok` otherwise -- plus
@@ -181,7 +169,6 @@ the sensitivity half is not, so the row stays **L2**.
      - ``HallTracker.AStuckSensorIsCoveredByTwoChannelsAndNeitherAloneIsEnough``
      - na -- a per-sample decoder; the only cross-frame state is the sector period, and a doubtful one is kept rather
        than taken.
-     - F-10, F-11, F-12, F-13, C-8
    * - ``core/brake_chopper.hpp``
      - `BrakeChopperOutput`: `duty`, the **period-average** `current_a`, `i2t_a2s` (the integral of the **mean square**
        current, which is not the square of that average -- they differ by `1/duty_max`), `on`, and the latched
@@ -191,7 +178,6 @@ the sensitivity half is not, so the row stays **L2**.
        of zero, in both cases **without** changing any state; a spent budget latches rather than resuming.
      - ``SilBrakeChopper.TheChopperHoldsTheBusAndTheBooksClose``
      - na -- the bounds and the current law are asserted in the capability's own case, swept across the bus range with the wrong law computed alongside; the invariants suite is for statements that must hold whatever composition is selected, and a chopper is not on a composition axis.
-     - --
    * - ``core/min_pulse.hpp``
      - `MinPulseOutput` carries `duty` (what to command), `lost_vs` (the volt-seconds the bridge will not deliver,
        signed and per phase) and `narrowed`; the residue is readable through `carry()`, which is what lets a trace
@@ -202,7 +188,6 @@ the sensitivity half is not, so the row stays **L2**.
      - ``SilMinPulse.ThePlantTransmitsWhatTheDriverAllowsAndThePolicyKnowsThePrice``
      - na -- a per-period policy whose only state is one residue, bounded by one minimum pulse and asserted as
        such; it produces no continuous output for the invariants suite to hold.
-     - --
    * - ``core/single_shunt.hpp``
      - `ShuntVerdict` has three answers, not a boolean: `Measurable`, `WindowTooNarrow` (this period cannot be read, the
        reference is near a sector boundary) and `NoActiveVector` (nothing flows through the shunt at all, so nothing is
@@ -214,7 +199,6 @@ the sensitivity half is not, so the row stays **L2**.
        `valid == false`, because a narrow window is the normal operating condition and not a configuration error.
      - ``SingleShunt.TheBlindSpotIsLowModulationNotTheVoltageLimit``
      - na -- stateless, one period at a time, and the thing it holds is a verdict rather than an accumulated value.
-     - --
    * - ``core/mtpv.hpp``
      - `MtpvPoint` names which ceiling decided the point: `voltage_limited` is true only when the voltage ellipse moved the
        answer, and `current_a` is the margin to the current ceiling, so a host can tell "the voltage is what limits me"
@@ -228,7 +212,6 @@ the sensitivity half is not, so the row stays **L2**.
        never empty and a zero-torque point is returned rather than a failure.
      - ``Mtpv.StayingOnTheCurrentLimitThereWouldOvervoltTheDrive``
      - na -- stateless, one speed at a time, and what it produces is an operating point rather than an accumulated value.
-     - --
    * - ``core/cogging_comp.hpp``
      - `CoggingCompOutput` separates the two ways a compensator can stop working: `gain` is the frequency fade ("we
        chose not to ask for this ripple") and `clipped` is the current ceiling ("we asked and it was refused"), with
@@ -239,7 +222,6 @@ the sensitivity half is not, so the row stays **L2**.
        non-finite. A table of nothing is `Ok` with a zero offset -- there is no table, so there is no decision to report.
      - ``CoggingComp.ATableWithTheWrongPhaseCancelsNothingAtAll``
      - na -- stateless, one period at a time, and what it produces is an offset rather than an accumulated value.
-     - --
    * - ``core/cogging_learn.hpp``
      - `CoggingLearnReport` reports `revolutions` and the speed band on **every** exit, including the refused ones: a
        refusal that says nothing leaves the caller guessing whether to spin longer, slower, or steadier, and those are
@@ -264,7 +246,6 @@ the sensitivity half is not, so the row stays **L2**.
      - ``CoggingLearn.TheLearnedTableCancelsTheInjectionItWasLearnedFrom``
      - na -- the accumulators are sums over a finite window that is thrown away on `reset()`, and what leaves the class is
        a table rather than a per-tick output.
-     - --
    * - ``core/thermal_limit.hpp``
      - `ThermalBudget` separates "this current can be held forever" from "this current can be held for five more seconds"
        instead of reporting one number for both: `crosses == false` with `seconds` infinite is the sustainable answer, and
@@ -276,7 +257,6 @@ the sensitivity half is not, so the row stays **L2**.
        cannot name a time.
      - ``ThermalLimit.TheNaiveLawReadsFifteenPercentHighAndThePlantSaysSo``
      - na -- stateless: every answer is a closed form of the configuration and its arguments, and nothing is accumulated.
-     - --
    * - ``core/watchdog.hpp``
      - `WatchdogState` separates the four answers a feeder can leave behind: `Feeding` (inside the window), `Expired` (the
        window passed), `ClockLost` (the stamp went backwards) and `Unarmed` (nothing measured yet). The last two are the
@@ -290,7 +270,6 @@ the sensitivity half is not, so the row stays **L2**.
      - ``Watchdog.TheDeadlineIsExactForEveryWholeNumberOfControlPeriods``
      - na -- it holds one timestamp and one latch, neither of which is a continuous-output invariant; the latch is pinned
        by `Watchdog.AFeederThatComesBackDoesNotClearTheTrip`, which is a sequence rather than a per-tick property.
-     - --
    * - ``core/auto_tune.hpp``
      - `SpeedTuneResult` separates "here are gains measured from this machine" from "I could not measure this machine":
        `valid` is the bit, and on a refusal the gains it carries are the **nameplate** ones, so a caller that applies
@@ -308,7 +287,6 @@ the sensitivity half is not, so the row stays **L2**.
      - ``AutoTune.ADoubledInertiaIsRefusedAndTheGainsComeBackUntouched``
      - na -- the window is a finite sum that is thrown away on `reset()`, and what leaves the class is a `Pi` config rather
        than a per-tick output.
-     - --
    * - ``comm/frame.hpp``
      - `FrameStatus` names which check failed (start / length / checksum) instead of one generic failure, and
        `SequenceChecker` reports `missing` / `duplicate` / `out_of_order` separately. `missing` counts the frames
@@ -318,7 +296,6 @@ the sensitivity half is not, so the row stays **L2**.
      - ``Frame.NoSingleByteCorruptionIsAccepted``
      - na -- the codec holds no state; `SequenceChecker` holds one byte and one flag, and neither is a
        continuous-output invariant.
-     - --
    * - ``comm/encoder_stream.hpp``
      - `EncoderFrame` separates "this frame arrived and is not trustworthy" (`State` plus `crc_ok == false`, with the counts
        still filled in so a log has something to show) from "this buffer cannot be read at all" (`Param`, with no value
@@ -331,7 +308,6 @@ the sensitivity half is not, so the row stays **L2**.
      - ``EncoderStream.TheLengthIsRefusedAndAShiftIsTheFramingLayersProblemNotTheCrc``
      - na -- the decoder is a pure function of one frame, and the assembler holds one previous count and one origin, neither of
        which is a continuous-output invariant.
-     - --
    * - ``comm/register_map.hpp``
      - `read_register()` answers one 32-bit word per register; `RegisterKind` says whether to read it as an
        unsigned count, a signed code, or IEEE-754 bits.
@@ -339,7 +315,6 @@ the sensitivity half is not, so the row stays **L2**.
        **with the word untouched** -- except the two count registers, whose C functions document NULL as 0.
      - ``RegisterMap.ARefusedReadLeavesTheWordAloneAndTheTwoKindsOfAnswerStayDifferent``
      - na -- read-only and idempotent; nothing here accumulates.
-     - --
    * - ``core/trace_parse.hpp``
      - `missing` (inferred inside the window), `lost` (declared before it), `gaps`, `reversals`, `segments`, and
        `complete` only when nothing is missing either way. `consistent` is the parser's own check: `missing` is
@@ -348,7 +323,6 @@ the sensitivity half is not, so the row stays **L2**.
        reports `timed == false` rather than a fabricated consistency.
      - ``TraceParse.AWrapIsOnePeriodAndNotAHole``
      - na -- a host-side tool, not a control-path component; it holds no state between calls.
-     - --
    * - ``core/six_step.hpp``
      - `sector`, `changed`, `holding` and `skipped`, plus `rejected()`/`illegal()` counters. `holding` and
        `skipped` are different things and the duty alone cannot tell them apart: one means the pins named no
@@ -358,7 +332,6 @@ the sensitivity half is not, so the row stays **L2**.
      - ``SixStep.WalkingTheSectorsTurnsTheVectorSixtyDegreesEach``
      - na -- each call maps a code to a vector; the state it keeps is the last accepted sector, which is the
        boundary case above rather than a continuous-output invariant.
-     - --
    * - ``core/command_source.hpp``
      - `analog`: `in_deadband`; `ppm`: `valid`; `step`: `pulses`, `delta_rad` and `jump`. A command source whose only
        output is a number cannot be told apart from a dead link, and `jump` is the difference between "the axis moved"
@@ -368,7 +341,6 @@ the sensitivity half is not, so the row stays **L2**.
        refused rather than approximated, because the approximation is a position error that never goes away.
      - ``CommandSource.AWholeTurnIsExactlyAWholeTurn``
      - na -- each call is a pure map from its input to a command; there is no state to hold invariant across time.
-     - --
    * - ``core/step_metrics.hpp``
      - ``status``, and it carries weight: ``Ok`` means a first-order decay was fitted, ``State`` means the window carried
        none -- and the settling numbers stay valid in that case, because a response can settle without being fittable.
@@ -377,7 +349,6 @@ the sensitivity half is not, so the row stays **L2**.
        band, or a window that does not move at all (``y[0] == target``).
      - ``StepMetrics.AWindowWithoutADecayReportsStateRatherThanAConfidentNumber``
      - na -- it measures other capabilities' arithmetic and owns none of its own.
-     - F-8, F-9
    * - ``core/sinusoid_fit.hpp``
      - ``status``: ``Ok`` for a conditioned fit, ``State`` when the window is shorter than one period of the frequency
        asked about -- where a number would be produced but would not be the tone's amplitude.
@@ -385,7 +356,6 @@ the sensitivity half is not, so the row stays **L2**.
        where the projection aliases and reports the tone at a frequency the signal does not have.
      - ``BodeSweep.TheThreeDecibelPointIsTheBandwidthTheGainLawWasAskedFor``
      - na -- it measures other capabilities' arithmetic and owns none of its own.
-     - A-12
    * - ``motor/torque_map.hpp``
      - ``status`` for the map and ``limited`` for every command. The second one is the point: a clipped command and an
        obeyed one are otherwise identical, and a caller who cannot tell them apart reports a saturating tensioner as
@@ -395,7 +365,6 @@ the sensitivity half is not, so the row stays **L2**.
        no current can deliver the request -- a refusal, because clamping would report a torque that cannot be produced.
      - ``TorqueMap.TheLimitsAreNarrowedToWhatTheInverterCanDeliver``
      - na -- algebraic, no state to keep invariant across frames or time scales.
-     - A-14
    * - ``core/stall_start.hpp``
      - ``phase()`` and `limited`. "starting", "released" and "cannot start" are three states rather than one number, and
        `Failed` is a first-class answer: a load the drive cannot move is a fact about the machine, and a sequence that
@@ -410,19 +379,16 @@ the sensitivity half is not, so the row stays **L2**.
        `Idle` rather than half-way into a ramp.
      - ``StallStart.AStuckAxisSaysFailedInsteadOfRampingForever``
      - na -- a sequencer over other capabilities, not an equation of its own.
-     - C-5
    * - ``core/observer/observer_policy.hpp``
      - na -- concepts: it names what an observer must provide and provides nothing itself.
      - na -- a type either satisfies the concept or fails to compile, which is the strongest admission there is.
      - na -- there is no runtime behaviour to bound.
      - na -- there is no arithmetic here to be invariant about.
-     - --
    * - ``core/observer/ideal_observer.hpp``
      - ``reset()``, ``set_truth()`` -- a test double told the answer; it has no failure mode to report.
      - na -- it accepts whatever truth it is given, which is the whole point of it.
      - na -- only the SIL harness uses it; the harness is not part of the shipped library.
      - na -- no arithmetic beyond assigning the truth it was handed.
-     - --
    * - ``core/observer/back_emf_observer.hpp``
      - ``state()``, ``flux()`` -- and deliberately no ``locked()``: there is no channel that could withhold a verdict,
        so reporting one would be a fiction.
@@ -430,7 +396,6 @@ the sensitivity half is not, so the row stays **L2**.
      - todo -- standstill is the obvious limit: there is no signal there. No case pins it yet, and writing the row
        without the case is the folklore the boundaries gate exists to prevent.
      - na -- a flux integration, not an algebraic identity.
-     - --
    * - ``core/observer/dual_inductance_observer.hpp``
      - ``state()``, ``flux()``, ``root_gap_rad()`` -- the last is a diagnostic and not an estimate: it says how far
        apart the two rotor positions consistent with the measured flux and current are.
@@ -442,14 +407,12 @@ the sensitivity half is not, so the row stays **L2**.
        step and 0.1128 after 200 -- which is why `seed_at()` takes an angle rather than a guess. See
        ``DualInductanceObserver.TheSecondRootIsNotARotorPositionAndAWrongSeedIsPermanent``.
      - na -- one complex square root and one quadratic, evaluated pointwise.
-     - --
    * - ``core/observer/nonlinear_flux_observer.hpp``
      - ``locked()``, ``state()``, ``flux()``
      - na -- parameters arrive through ``apply_params()``; saliency enters the flux law, not a switch.
      - none -- the mode is admitted on facts about the machine, and its estimate's sensitivity to those facts is
        measured rather than assumed.
      - na -- a flux law with a saturation term, evaluated pointwise.
-     - --
    * - ``core/observer/hfi_observer.hpp``
      - ``locked()``, ``error()``, ``hf_current_a()``, ``status()`` -- the error signal is the demodulated quantity, so
        "no measurement" and "zero error" are distinguishable numbers.
@@ -457,14 +420,12 @@ the sensitivity half is not, so the row stays **L2**.
        resolve; ``update()`` refuses the last one too, on the path that bypasses the bridge.
      - ``HfiObserver.ACarrierThisControlRateCannotResolveIsRefusedNotFrozen``
      - na -- a demodulation with a carrier; its algebra is the PLL's, which is stateful and nonlinear.
-     - F-2
    * - ``core/observer/blended_observer.hpp``
      - ``locked()``, ``blend()`` -- the mix is readable, so "which observer is carrying the estimate right now" is a
        number rather than an inference.
      - ``ErrorCode::Param`` when the hand-over band is inverted or empty.
      - ``SilHfiEnvelope.AcquiringARotorAlreadyRunningNeedsASeed``
      - na -- a schedule over two stateful observers.
-     - --
    * - ``core/observer/switchable_observer.hpp``
      - ``kind()``, ``locked()``, ``error()``, ``injection_ab()`` -- the slot reports which mode is really running and
        what that mode is measuring, so a refused request cannot masquerade as a switch.
@@ -472,7 +433,6 @@ the sensitivity half is not, so the row stays **L2**.
        cannot support the requested mode; ``set_kind()`` is the compile-time-only path.
      - ``SwitchableObserver.TheSelectedObserversLockVerdictIsReachableThroughTheSlot``
      - na -- a dispatcher; the invariants belong to the modes it dispatches to.
-     - F-1
    * - ``motor/motor.hpp``
      - ``status()`` (mode, fault, observer, locked), ``error()``, ``trace()`` -- the composed loop answers "is it
        running, what is it commutating on, what has it recorded", so a wrong angle is a named mode rather than a
@@ -481,7 +441,6 @@ the sensitivity half is not, so the row stays **L2**.
        the setup in force cannot support -- on facts (no carrier, no saliency), not on a switch.
      - ``MotorInjection.ASensoredAxisInjectsWithoutSurrenderingTheAngle``
      - ScalingImpedanceAndVoltageTogetherChangesNothing, TheClampIsContinuousAndAJumpWouldShow
-     - F-6, F-7
 
 Twenty-three headers under ``core/`` and ``motor/`` are not listed yet: alignment, board_check, commissioning, deadtime,
 feedforward, field_weakening, homing, machine_map, machine_map_text, machine_params, motion_profile, polarity, position,

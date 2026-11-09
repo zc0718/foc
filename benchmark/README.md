@@ -149,7 +149,7 @@ cp bench_config_linux.json bench_config.json
 
 | 用例 | 量的是什么 | repeat |
 |------|-----------|--------|
-| `tick_full_loop_dt100us` | **ISR 整环**（观测器 + 双电流 PI + SVPWM + 状态机），PRD U6 唯一有意义的量 | 100 000 |
+| `tick_full_loop_dt100us` | **ISR 整环**（观测器 + 双电流 PI + SVPWM + 状态机），"目标 MCU 上的最坏执行时间" 唯一有意义的量 | 100 000 |
 | `clarke_park` | 正变换（Clarke + Park） | 2 000 000 |
 | `inv_park_clarke` | 逆变换（inv Park + inv Clarke） | 2 000 000 |
 | `svpwm_modulate` | 空间矢量调制（含 min-max 中点注入） | 500 000 |
@@ -179,9 +179,9 @@ x86_64 / g++ 13 / `-O2` 上的参考值（同一台机器复现，波动 ±10%�
 | pi step | ≈ 9 ns |
 | observer update | ≈ 19 ns |
 
-> **诚实边界**：这是宿主机上的**相对**开销，**不是** MCU 的 WCET。目标板的数字（PRD U6/U7）
-> 必须用 `python benchmark/script/run_bench.py` 在真实板卡上采集——本仓库当前没有板子，
-> 因此 U6/U7 仍标记为"未验证"，不得把上表的 ns 当作硬件结论引用。
+> **诚实边界**：这是宿主机上的**相对**开销，**不是** MCU 的 WCET。目标板的数字（诚实边界里
+> 的 "ISR 最坏执行时间" 与 "Flash/RAM 占用" 两条）必须用 `python benchmark/script/run_bench.py`
+> 在真实板卡上采集——本仓库当前没有板子，因此这两条仍标记为"未验证"，不得把上表的 ns 当作硬件结论引用。
 
 ### Step 2：编写算法测试用例（MCU / Linux 完全一致）
 

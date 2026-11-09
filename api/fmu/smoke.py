@@ -103,12 +103,12 @@ def main() -> int:
     state = fmu.getInteger([vr["state"]])[0]
     error = fmu.getInteger([vr["error"]])[0]
 
-    # F-1, the defect this leg exists for: the description used to say the slave could take a variable step while the
+    # The defect this leg exists for: the description used to say the slave could take a variable step while the
     # step was fed straight into `foc_tick`, so a master that changed the rate silently ran a *differently tuned*
     # controller. The declaration is now `false` and the wrapper enforces it, which only counts if something observes
     # the refusal -- so: a doubled step must be refused at the same timeline point where a correct step is accepted.
     # Doing both, in that order, is what separates "refuses what it should" from "refuses everything".
-    # F-1，本腿存在的缺陷：描述文件曾说这个 slave 能接受变步长，而步长被直接喂进 `foc_tick`，于是一个改变了速率的主控
+    # 本腿存在的缺陷：描述文件曾说这个 slave 能接受变步长，而步长被直接喂进 `foc_tick`，于是一个改变了速率的主控
     # 会**掠静地**开动一台重新调过参的控制器。现在声明是 `false` 且包装器强制执行，而这只在**有东西观察到那次拒绝**时才
     # 算数——所以：在同一个时间点上，双倍步长必须被拒、正确步长必须被接受。两个都做，且按这个顺序，才能把"拒绝它该拒
     # 绝的"与"什么都拒绝"分开。

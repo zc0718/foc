@@ -11,7 +11,7 @@ Linking and building
 
 The error names ``__cxa_`` symbols. The ABI is C, the implementation is C++: set
 ``LINKER_LANGUAGE CXX`` on the target (or add one empty ``.cpp``). This is documented rather
-than worked around — see :ref:`U8 <honest-limits>` and :doc:`install`.
+than worked around — see :ref:`the pure-C row in honest limits <honest-limits>` and :doc:`install`.
 
 **Which target should I link?**
 

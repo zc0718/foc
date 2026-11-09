@@ -7,9 +7,9 @@ this library's depth axis learned the shape of the omission five times over (see
 holds its last angle and reports zero speed, a mode admitted on a switch instead of on a fact, a limit nobody wrote down.
 A checklist in a document does not survive; a table whose cells are checked does.
 
-The table is `docs/sphinx/source/capabilities.rst`. Six columns, fixed grammar:
+The table is `docs/sphinx/source/capabilities.rst`. Five columns, fixed grammar:
 
-    diagnostic channel | admission | boundary | invariant | ledger
+    diagnostic channel | admission | boundary | invariant
 
 Cell grammar (enforced, because a column of prose is a column nobody parses):
 
@@ -41,7 +41,7 @@ INCLUDE = ROOT / "include" / "foc"
 README = ROOT / "README.md"
 UNIT = ROOT / "test_package" / "test" / "unit"
 
-COLUMNS = 6
+COLUMNS = 5
 MANAGED = re.compile(r"^(none|na|todo)\s+--\s+(\S.{19,})$")
 CASE = re.compile(r"^``([A-Z][A-Za-z0-9_]*)\.([A-Za-z0-9_]+)``$")
 HEADER = re.compile(r"^``([^`]+\.(?:hpp|h))``$")
@@ -90,13 +90,6 @@ def claim_levels() -> dict[str, str]:
         for module in (m.strip("` ").removeprefix("foc/") for m in cells[0].split(",") if m.strip("` ")):
             levels[module] = level
     return levels
-
-
-def ledger_ids() -> set[str]:
-    page = ROOT / "docs" / "sphinx" / "source" / "foundation-log.rst"
-    if not page.is_file():
-        return set()
-    return set(re.findall(r"\b([FCA]-\d+)\b", page.read_text(encoding="utf-8")))
 
 
 def invariant_cases() -> set[str]:
@@ -164,23 +157,21 @@ def main() -> int:
         "admission",
         "boundary",
         "invariant",
-        "ledger",
     ]:
         problems.append(f"the table header must be the six fixed columns, got: {header_row}")
     body = rows[1:]
 
     cases = test_index()
     levels = claim_levels()
-    ledger = ledger_ids()
     invariants = invariant_cases()
     listed: set[str] = set()
 
     for row in body:
-        if len(row) < COLUMNS - 1:
+        if len(row) < COLUMNS:
             problems.append(f"row with {len(row)} cell(s) (the table has {COLUMNS}): {row[0][:60]}")
             continue
         cells = [normalized(c) for c in row] + [""] * COLUMNS
-        header_cell, diag, admit, bound, invariant, ledger_cell = cells[:COLUMNS]
+        header_cell, diag, admit, bound, invariant = cells[:COLUMNS]
 
         header = HEADER.match(header_cell)
         if not header:
@@ -222,10 +213,6 @@ def main() -> int:
             for part in (p.strip() for p in invariant.split(",")):
                 if part and part not in invariants:
                     problems.append(f"{module}: invariant '{part}' is not a TEST(Invariants, ...) case")
-        if ledger_cell not in {"--", "—"}:
-            for token in (t.strip() for t in re.split(r"[,;]", ledger_cell)):
-                if token and token not in ledger:
-                    problems.append(f"{module}: ledger row '{token}' is not in foundation-log.rst")
 
         if verbose:
             print(f"  {module:46s} boundary={bound[:28]!r} invoice={invariant[:20]!r}")

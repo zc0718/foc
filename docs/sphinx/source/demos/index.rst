@@ -25,7 +25,7 @@ minus ``version``, which the Conan recipe wraps in ``extern "C"`` and the raw he
        $(find src -name '*.cpp' -o -name '*.c' | grep -v '/version\.') \
        -o /tmp/torque-reference
 
-Swap the stem for the example you want; each slice page below links to the one it uses.
+Swap the stem for the example you want; each task page below links to the one it uses.
 
 The scenarios mirror the SIL acceptance suite, so what you see here is the same closed
 loop the test suite asserts on.
@@ -90,7 +90,7 @@ sine can. Explained in :doc:`../sop`.
 One response per task
 ---------------------
 
-The same figure step, applied to each task slice's own example — no plant, no closed loop,
+The same figure step, applied to each task page's own example — no plant, no closed loop,
 just the quantity that task is about:
 
 .. figure:: ../../images/ALL_startup_sensorless.png

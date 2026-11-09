@@ -227,9 +227,9 @@ class BrakeChopper final {
             }
         }
         // Integer nanosecond clocks for the dwell times: a minimum on-time is a **duration**, and a float that is
-        // accumulated with a period loses the small increments once it is large (F-105) -- which for a chopper that
+        // accumulated with a period loses the small increments once it is large -- which for a chopper that
         // stays on for minutes means the floor stops holding exactly when it matters.
-        // 驻留时间用整数纳秒时钟：最短导通时间是 **时长** ，而一个按周期累加的 float 在变大之后会把小增量丢掉（F-105）——
+        // 驻留时间用整数纳秒时钟：最短导通时间是 **时长** ，而一个按周期累加的 float 在变大之后会把小增量丢掉——
         // 对一个连续导通数分钟的斩波器，那意味着下限恰好在最要紧的时候失效。
         if (on_) {
             on_clock_.add_sample(dt_s);

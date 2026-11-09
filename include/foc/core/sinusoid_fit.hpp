@@ -71,9 +71,9 @@ struct SinusoidFit {
  *   `A*cos(w*t)`, record the response, fit both, divide. The arithmetic is a projection onto `{1, cos, sin}`, solved as
  *   the normal equations -- exact for a window that contains whole cycles and unbiased for one that does not. A plain
  *   DFT bin is **not** the same thing, and the precise statement is narrower than "a bin is biased off a whole cycle":
- *   a bin is also exact on half cycles, and pays only on the other fractions. Measured on a 3 V tone at 10 kHz (A-101):
- *   2.00, 2.50, 3.00 and 3.50 cycles give a bin error of 0.0000 %, while 3.20 and 3.40 give +4.09 % and +2.01 % --
- *   against 0.0000 % (1.2e-7) for the fit at every one of those lengths.
+ *   a bin is also exact on half cycles, and pays only on the other fractions. Measured on a 3 V tone at 10 kHz: 2.00,
+ *   2.50, 3.00 and 3.50 cycles give a bin error of 0.0000 %, while 3.20 and 3.40 give +4.09 % and +2.01 % -- against
+ *   0.0000 % (1.2e-7) for the fit at every one of those lengths.
  *
  * @brief [zh] 在已知频率上，对一段录制窗口做单音最小二乘拟合。
  *
@@ -84,9 +84,9 @@ struct SinusoidFit {
  *
  *   存在的意义是让环路不需要频谱仪就能测自己的频率响应：用 `A*cos(w*t)` 驱动给定，录下响应，两边都拟合，相除。算术是向
  *   `{1, cos, sin}` 的投影，用正规方程求解——对整周期窗口精确，对非整周期窗口无偏。单取 DFT 一个 bin **不** 是一回事，而
- *   精确的说法比“非整周期就有偏”要窄：bin 在 **半周期** 上也是精确的，只在其余分数上付代价。3 V 音、 10 kHz 下实测（
- *   A-101）：2.00 / 2.50 / 3.00 / 3.50 周期的 bin 误差均为 0.0000 %，而 3.20 与 3.40 周期分别为 +4.09 % 与 +2.01 % ——
- *   同一批长度下本函数的误差恒为 0.0000 %（1.2e-7）。
+ *   精确的说法比“非整周期就有偏”要窄：bin 在 **半周期** 上也是精确的，只在 其余分数上付代价。3 V 音、 10 kHz 下实测：
+ *   2.00 / 2.50 / 3.00 / 3.50 周期的 bin 误差均为 0.0000 %，而 3.20 与 3.40 周期分别为 +4.09 % 与 +2.01 % —— 同一批长度
+ *   下本函数的误差恒为 0.0000 %（1.2e-7）。
  *
  * @param y [en] response samples, oldest first, SI units.
  * @param y [zh] 响应样本，最早的在前，SI 单位。

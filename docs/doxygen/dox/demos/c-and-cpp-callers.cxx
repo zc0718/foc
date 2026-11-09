@@ -7,7 +7,7 @@
 //   g++ -std=c++17 -fno-exceptions -fno-rtti -Wall -Wextra -Werror -Iinclude docs/doxygen/dox/demos/c-and-cpp-callers.cxx src/api/foc_api.c src/api/bridge.cpp src/core/*.cpp src/motor/*.cpp src/comm/*.cpp src/driver/*.cpp src/core/observer/*.cpp -o /tmp/c-and-cpp-callers
 //
 // With `--csv <path>` it writes the run as rows; `docs/demos/make_figures.py`
-// draws this slice's figure from that file.
+// draws this example's figure from that file.
 //
 // 调用方 —— 从 C 侧使用本库：五个函数指针进去、一个句柄出来，之后每一次调用都是普通的
 // `foc_*` 函数。带 `--csv <path>` 时把这次运行写成行，供绘图脚本使用。

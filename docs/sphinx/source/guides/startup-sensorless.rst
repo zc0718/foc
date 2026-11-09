@@ -21,7 +21,7 @@ A minimal program
 -----------------
 
 ``docs/doxygen/dox/demos/startup-sensorless.cxx`` steps the sequence at the control
-rate and prints every state change. The same file produces this slice's figure. It is
+rate and prints every state change. The same file produces this page's figure. It is
 included below from the repository rather than copied into the page, so the listing here
 **is** the file that ran.
 
@@ -63,8 +63,8 @@ How it goes wrong
 -----------------
 
 1. **The rotor never followed, and nothing says so.** The vector ramps, the angle
-   advances, ``finished`` is true, and the axis is stationary. Nothing in this
-   slice catches that; ``stall_start`` and the hand-over check exist because of
+   advances, ``finished`` is true, and the axis is stationary. Nothing on this
+   page catches that; ``stall_start`` and the hand-over check exist because of
    it. Treat ``finished`` as "the sequence ran", never as "the motor is turning".
 2. **Hand-over before the observer converged.** The observer needs a window of
    speed to converge, so the hand-over speed is a floor, not a target to
@@ -80,7 +80,7 @@ How it goes wrong
 Evidence
 --------
 
-Four claim rows cover this slice -- ``foc/core/startup.hpp``,
+Four claim rows cover this page -- ``foc/core/startup.hpp``,
 ``foc/core/alignment.hpp``, ``foc/core/observer/blended_observer.hpp`` and
 ``foc/core/stall_start.hpp`` -- and the level this page may state is the minimum
 of those four. The levels themselves are read from the claim table in the
@@ -90,7 +90,7 @@ Figure
 ------
 
 .. figure:: ../../images/ALL_startup_sensorless.png
-   :name: figure slice s1
+   :name: figure startup-sensorless
    :width: 720
    :align: center
 

@@ -6,7 +6,7 @@
 //   g++ -std=c++17 -fno-exceptions -fno-rtti -Wall -Wextra -Werror -Iinclude docs/doxygen/dox/demos/modulation-limits.cxx src/core/svpwm.cpp src/core/min_pulse.cpp -o /tmp/modulation-limits
 //
 // With `--csv <path>` it writes the sweep as rows; `docs/demos/make_figures.py`
-// draws this slice's figure from that file.
+// draws this example's figure from that file.
 //
 // 调制 —— 高速与调制：把一个电压矢量变成占空比、看清线性区的边界，以及真实驱动对
 // "短到送不出去"的脉冲做了什么。
