@@ -171,6 +171,32 @@ def scan_text(text: str) -> tuple[list[str], int]:
     return invented, long_briefs
 
 
+TITLE_CMD = re.compile(r"^\s*\*?\s*@(section|subsection|subsubsection|page|defgroup|mainpage)\b(.*)$")
+TITLE_MARKUP = re.compile(r"`|\*\*|<")
+
+
+def scan_titles(text: str) -> list[str]:
+    """A heading command's title must be plain text.
+
+    Measured on doxygen 1.9.8: a code span inside `@section` is escaped into the heading
+    (`&lt;tt&gt;`), so the title "Base speed is not `v_max / psi_f`" printed the tags themselves,
+    and a bold pair in a title prints its asterisks for the same reason. Titles are therefore
+    judged as literals -- put the markup in the body paragraph below.
+    """
+    problems: list[str] = []
+    for line in text.splitlines():
+        match = TITLE_CMD.match(line)
+        if not match:
+            continue
+        title = match.group(2)
+        found = TITLE_MARKUP.search(title)
+        if found:
+            problems.append(f"a heading title carries markup ({found.group(0)!r}): "
+                            f"{title.strip()[:60]!r} -- doxygen escapes it into the heading, so the "
+                            f"markup is printed instead of applied; keep the title plain text")
+    return problems
+
+
 def scan_language(text: str, pipeline) -> list[str]:
     """Blocks whose English body does not reach the English build, or does reach the Chinese one.
 
@@ -222,6 +248,7 @@ def measure() -> dict:
         rel = path.relative_to(ROOT).as_posix()
         text = path.read_text(encoding="utf-8", errors="replace")
         language.extend(f"{rel}:{line}" for line in scan_language(text, pipeline))
+        invented.extend(f"{rel}: {line}" for line in scan_titles(text))
     return {"invented": invented, "language": language, "long_briefs": per_file}
 
 
@@ -283,8 +310,22 @@ def selftest() -> int:
         ok = got == want
         print(f"[docshape-selftest] {'OK  ' if ok else 'MISS'} {label}: {got} (expected {want})")
         caught += 1 if ok else 0
-    print(f"[docshape-selftest] {caught} / {len(cases)} judgement(s) as expected")
-    return 0 if caught == len(cases) else 1
+    for label, text, expect in (
+        ("a heading title with a code span",
+         " * @section base [en] Base speed is not `v_max / psi_f` [zh] 基速不是 `v_max`\n", True),
+        ("a heading title with bold",
+         " * @section base [en] **Base speed** is not psi_f [zh] 基速\n", True),
+        ("a plain heading title",
+         " * @section base [en] Base speed is not v_max over psi_f [zh] 基速\n", False),
+    ):
+        got = bool(scan_titles(text))
+        ok = got == expect
+        print(f"[docshape-selftest] {'OK  ' if ok else 'MISS'} {label}: "
+              f"{'invented' if got else 'clean'} (expected {'invented' if expect else 'clean'})")
+        caught += 1 if ok else 0
+    total = len(cases) + 3
+    print(f"[docshape-selftest] {caught} / {total} judgement(s) as expected")
+    return 0 if caught == total else 1
 
 
 def main(argv: list[str] | None = None) -> int:

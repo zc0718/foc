@@ -18,7 +18,7 @@
  * @par [en] One run of the SIL bench, the same executable the figure comes from: a PMSM plant in
  *      the loop, the current and speed PIs closed at the rates the library is tuned for.
  *
- * \image html ALL_demo_current_step.png "Current step on the SIL bench" width=760px
+ * \image html ALL_demo_current_step.png "Current step on the SIL bench" width=760
  *
  * | Scenario | Metric | Value |
  * |----------|--------|-------|
@@ -32,7 +32,7 @@
  *
  * @par [zh] SIL 台架的一次运行，与图同一个可执行文件：PMSM plant 在环内，电流环与速度环按库调好的速率闭合。
  *
- * \image html ALL_demo_current_step.png "SIL 台架上的电流阶跃" width=760px
+ * \image html ALL_demo_current_step.png "SIL 台架上的电流阶跃" width=760
  *
  * | 场景 | 指标 | 数值 |
  * |------|------|------|

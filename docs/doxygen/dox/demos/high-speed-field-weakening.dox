@@ -10,7 +10,7 @@
  * @par [zh] 用运行区求解器扫一遍电角速度。基速以下答案不动，因为只有电流上限生效、而 MTPA 是它最好的用法。基速以上
  *      电压椭圆开始约束，d 轴电流 **故意** 变负、q 轴电流下降——用"每安培转矩"去换让环路仍然可解的电压余量。
  *
- * @section high_speed_field_weakening_base [en] Base speed is not `v_max / psi_f` [zh] 基速不是 `v_max / psi_f`
+ * @section high_speed_field_weakening_base [en] Base speed is not v_max over psi_f [zh] 基速不是 v_max 除以 psi_f
  * @par [en] It is `v_max` over the flux magnitude **at the MTPA point**, which includes the d current MTPA already
  *      spends. Using `psi_f` alone gives a number several times too high on a salient machine, and a drive built on it
  *      discovers the real ceiling only when the current loop saturates above it.
@@ -27,7 +27,7 @@
  * @section high_speed_field_weakening_numbers [en] The numbers behind the figure [zh] 图背后的数字
  * @par [en] The rows below are read out of this example's own `--csv` run -- the same run the figure is drawn from, so the table and the picture cannot disagree.
  *
- * \image html ALL_high_speed_field_weakening.png "Drawn from the same run the table below lists" width=760px
+ * \image html ALL_high_speed_field_weakening.png "Drawn from the same run the table below lists" width=760
  *
  * | speed / base | id (A) | iq (A) | torque (N m) | voltage-limited |
  * |---|---|---|---|---|
@@ -37,7 +37,7 @@
  *
  * @par [zh] 下面这些行取自本示例自己的 `--csv` 输出——与图同一次运行，所以表和图不会互相矛盾。
  *
- * \image html ALL_high_speed_field_weakening.png "由下表所列的同一次运行绘制" width=760px
+ * \image html ALL_high_speed_field_weakening.png "由下表所列的同一次运行绘制" width=760
  *
  * | 转速 / 基速 | id (A) | iq (A) | 转矩 (N·m) | 受电压限 |
  * |---|---|---|---|---|

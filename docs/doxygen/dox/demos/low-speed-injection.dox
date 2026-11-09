@@ -32,7 +32,7 @@
  * @section low_speed_injection_numbers [en] The numbers behind the figure [zh] 图背后的数字
  * @par [en] The rows below are read out of this example's own `--csv` run -- the same run the figure is drawn from, so the table and the picture cannot disagree.
  *
- * \image html ALL_low_speed_injection.png "Drawn from the same run the table below lists" width=760px
+ * \image html ALL_low_speed_injection.png "Drawn from the same run the table below lists" width=760
  *
  * | rotor | t (ms) | angle error (rad) | locked |
  * |---|---|---|---|
@@ -42,7 +42,7 @@
  *
  * @par [zh] 下面这些行取自本示例自己的 `--csv` 输出——与图同一次运行，所以表和图不会互相矛盾。
  *
- * \image html ALL_low_speed_injection.png "由下表所列的同一次运行绘制" width=760px
+ * \image html ALL_low_speed_injection.png "由下表所列的同一次运行绘制" width=760
  *
  * | 转子 | t (ms) | 角度误差 (rad) | 锁定 |
  * |---|---|---|---|
