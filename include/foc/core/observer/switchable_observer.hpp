@@ -13,6 +13,15 @@
 #include <foc/core/types.hpp>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_core
+ * @file switchable_observer.hpp
+ *
+ * @brief [en] The observer kinds a drive may select at run time, and the wrapper that forwards to the chosen one.
+ * @brief [zh] 驱动可在运行期选择的观测器种类，以及转发到所选实现的包装。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 namespace core {

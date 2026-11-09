@@ -4,6 +4,15 @@
 #include <foc/core/limits.hpp>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_motor
+ * @file motor_config.cpp
+ *
+ * @brief [en] Implements the nameplate admission and the gain derivations the motor is constructed from.
+ * @brief [zh] 实现铭牌准入，以及电机构造所依据的增益推导。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 

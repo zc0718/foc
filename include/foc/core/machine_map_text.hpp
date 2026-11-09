@@ -10,6 +10,15 @@
 #include <foc/core/machine_map.hpp>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_core
+ * @file machine_map_text.hpp
+ *
+ * @brief [en] Reads a machine document from text, and says precisely why when it cannot.
+ * @brief [zh] 从文本读入电机文档，读不了时精确说明原因。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 namespace core {

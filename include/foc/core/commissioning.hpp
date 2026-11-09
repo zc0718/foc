@@ -3,6 +3,15 @@
 #include <cmath>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_core
+ * @file commissioning.hpp
+ *
+ * @brief [en] The standstill estimators used to commission an axis: resistance, flux, current-sense offset and incremental inductance.
+ * @brief [zh] 轴调试用的静止辨识器：电阻、磁链、电流采样偏置与增量电感。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 namespace core {

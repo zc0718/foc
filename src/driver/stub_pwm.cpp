@@ -2,6 +2,15 @@
 #include <foc/driver/stub_pwm.hpp>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_driver
+ * @file stub_pwm.cpp
+ *
+ * @brief [en] Implements the PWM stub: it records what was written and when, which is what the timing cases read.
+ * @brief [zh] PWM 桩件的实现：记录写了什么、何时写的——时序用例读的正是这两样。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 namespace driver {

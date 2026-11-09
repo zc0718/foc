@@ -2,6 +2,15 @@
 #include <foc/core/cogging_learn.hpp>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_core
+ * @file cogging_learn.cpp
+ *
+ * @brief [en] Implements the learning session: window accumulation, the harmonic fit, and the capacity contract.
+ * @brief [zh] 学习会话的实现：窗口累积、谐波拟合，以及容量契约。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 namespace core {

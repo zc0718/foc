@@ -5,6 +5,15 @@
 #include <foc/core/types.hpp>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_core
+ * @file back_emf_observer.hpp
+ *
+ * @brief [en] The open-loop back-EMF flux observer: integrate the voltage, subtract the resistive drop, take atan2 of the result.
+ * @brief [zh] 开环反电动势磁链观测器：积分电压、减去电阻压降、对结果取 atan2。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 namespace core {

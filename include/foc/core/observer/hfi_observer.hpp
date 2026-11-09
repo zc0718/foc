@@ -6,6 +6,15 @@
 #include <foc/core/types.hpp>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_core
+ * @file hfi_observer.hpp
+ *
+ * @brief [en] The saliency-tracking observer: inject, demodulate, and take the angle from the current response.
+ * @brief [zh] 凸极跟踪观测器：注入、解调，并从电流响应中取出角度。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 namespace core {

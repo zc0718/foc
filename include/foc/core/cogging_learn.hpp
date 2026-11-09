@@ -7,6 +7,15 @@
 #include <foc/core/types.hpp>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_core
+ * @file cogging_learn.hpp
+ *
+ * @brief [en] The cogging learner's contract: which orders, over how many revolutions, and what it measured when it finished.
+ * @brief [zh] 齿槽学习器的契约：学哪几个阶次、跨多少圈，以及结束时它测到了什么。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 namespace core {

@@ -3,6 +3,15 @@
 #include <foc/api/foc_types.h>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_c_api
+ * @file foc_api.h
+ *
+ * @brief [en] The C entry points: create, step and destroy a motor instance from a plain C caller.
+ * @brief [zh] C 入口：普通 C 调用方创建、推进与销毁一个电机实例。
+ * @since 0.1.0
+ */
+
 
 /**
  * @brief [en] Create a motor instance from the C path.

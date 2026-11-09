@@ -6,6 +6,15 @@
 #include <foc/core/transforms.hpp>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_core
+ * @file polarity.cpp
+ *
+ * @brief [en] Implements the polarity test: the pulse pair, the window that decides it, and the failure it reports.
+ * @brief [zh] 极性测试的实现：脉冲对、做出判定的那个窗口，以及它报出的失败。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 namespace core {

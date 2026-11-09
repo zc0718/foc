@@ -5,6 +5,15 @@
 #include <foc/core/types.hpp>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_core
+ * @file filters.hpp
+ *
+ * @brief [en] The first-order low pass the loop is filtered with, and why one pole is enough.
+ * @brief [zh] 环路所用的一阶低通，以及为什么一阶节就够。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 namespace core {

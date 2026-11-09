@@ -4,6 +4,15 @@
 #include <cstdint>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_core
+ * @file protection.hpp
+ *
+ * @brief [en] The fault vocabulary and the protector that chooses between them: one code per physical mechanism.
+ * @brief [zh] 故障词汇表，以及在其中做出判断的保护器：每种物理机制对应一个代码。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 namespace core {

@@ -6,6 +6,15 @@
 #include <foc/core/types.hpp>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_core
+ * @file trace.hpp
+ *
+ * @brief [en] The trace sink interface: one sample at a time, into a ring that may be the null sink.
+ * @brief [zh] 跟踪接收接口：逐样本写入，环形缓冲也可能是空实现。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 namespace core {

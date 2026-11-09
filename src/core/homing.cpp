@@ -2,6 +2,15 @@
 #include <foc/core/homing.hpp>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_core
+ * @file homing.cpp
+ *
+ * @brief [en] Implements the homing search: pulse handling, position accumulation, and when to declare it lost.
+ * @brief [zh] 回零搜索的实现：脉冲处理、位置累积，以及何时判定丢失。
+ * @since 0.1.0
+ */
+
 #include <cmath>
 
 namespace foc {

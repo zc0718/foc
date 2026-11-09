@@ -2,6 +2,15 @@
 #include <foc/core/speed_from_angle.hpp>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_core
+ * @file speed_from_angle.cpp
+ *
+ * @brief [en] Implements speed by differencing the angle across a fixed delay, with the wrap handled at the edge.
+ * @brief [zh] 转速的实现：以固定延时对角差分，并在边界处处理回绕。
+ * @since 0.1.0
+ */
+
 #include <cmath>
 
 namespace foc {

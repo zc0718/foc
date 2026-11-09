@@ -7,6 +7,15 @@
 #include <foc/hal/pwm.hpp>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_driver
+ * @file stub_pwm.hpp
+ *
+ * @brief [en] A PWM that records what was written instead of driving gates.
+ * @brief [zh] 记录写入内容而不驱动栅极的 PWM。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 namespace driver {

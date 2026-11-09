@@ -7,6 +7,15 @@
 #include <foc/core/types.hpp>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_core
+ * @file friction_comp.hpp
+ *
+ * @brief [en] The friction a drive is told to cancel, and the speeds that decide when the axis counts as at rest.
+ * @brief [zh] 驱动被告知要抵消的摩擦，以及判定轴静止的转速门限。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 namespace core {

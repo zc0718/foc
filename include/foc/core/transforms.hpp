@@ -4,6 +4,15 @@
 #include <foc/core/types.hpp>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_core
+ * @file transforms.hpp
+ *
+ * @brief [en] The Clarke and Park transforms, in the amplitude-invariant convention the rest of the library assumes.
+ * @brief [zh] Clarke 与 Park 变换，采用库内其余部分所假设的幅值不变约定。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 namespace core {

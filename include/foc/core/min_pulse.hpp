@@ -6,6 +6,15 @@
 #include <foc/core/types.hpp>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_core
+ * @file min_pulse.hpp
+ *
+ * @brief [en] The gate driver's own pulse-width limit, and the duty that survives once a narrow pulse is dropped.
+ * @brief [zh] 栅极驱动器自身的脉宽下限，以及窄脉冲被丢弃后剩下的占空比。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 namespace core {

@@ -4,6 +4,15 @@
 #include <foc/core/types.hpp>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_core
+ * @file stall_start.hpp
+ *
+ * @brief [en] The breakaway sequence: its phases, configuration and the output of one step.
+ * @brief [zh] 起动序列：它的阶段、配置与单步输出。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 namespace core {

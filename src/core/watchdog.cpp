@@ -2,6 +2,15 @@
 #include <foc/core/watchdog.hpp>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_core
+ * @file watchdog.cpp
+ *
+ * @brief [en] Implements the watchdog: the deadline, the feeder, and the latch that outlives a silent period.
+ * @brief [zh] 看门狗的实现：期限、喂狗，以及那段沉默之后仍然留着的锁存。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 namespace core {

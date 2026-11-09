@@ -5,6 +5,15 @@
 #include <foc/core/types.hpp>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_core
+ * @file speed_from_angle.hpp
+ *
+ * @brief [en] Mechanical speed from an angle, by differencing it across a fixed delay.
+ * @brief [zh] 由角度差分求机械转速，差分跨越固定时延。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 namespace core {

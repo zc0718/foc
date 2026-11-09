@@ -3,6 +3,15 @@
 #include <cstdint>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_core
+ * @file types.hpp
+ *
+ * @brief [en] The error codes and clock helpers shared by the C++ path and the C API.
+ * @brief [zh] C++ 路径与 C API 共用的错误码与时钟辅助。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 

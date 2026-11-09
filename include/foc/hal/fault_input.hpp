@@ -2,6 +2,15 @@
 #pragma once
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_hal
+ * @file fault_input.hpp
+ *
+ * @brief [en] The power stage's fault output: one bit that says the drive has tripped.
+ * @brief [zh] 功率级的故障输出：一位表示驱动已跳闸。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 namespace hal {

@@ -2,6 +2,15 @@
 #pragma once
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_core
+ * @file machine_params.hpp
+ *
+ * @brief [en] The electrical facts about a machine that its algorithms need, in SI units.
+ * @brief [zh] 电机的算法所需的电气事实，采用 SI 单位。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 namespace core {

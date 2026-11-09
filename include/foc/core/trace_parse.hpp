@@ -6,6 +6,15 @@
 #include <foc/core/types.hpp>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_core
+ * @file trace_parse.hpp
+ *
+ * @brief [en] A window of trace samples as the host got it out of the ring, and the samples that window lost.
+ * @brief [zh] 主机从环形缓冲取到的一段跟踪样本，以及这段窗口丢掉的样本。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 namespace core {

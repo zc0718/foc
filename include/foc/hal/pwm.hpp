@@ -3,6 +3,15 @@
 #include <foc/core/types.hpp>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_hal
+ * @file pwm.hpp
+ *
+ * @brief [en] The gate-driver contract: how a duty reaches the switches, and what the switch has to promise in return.
+ * @brief [zh] 栅极驱动契约：占空比如何到达开关，以及开关反过来必须承诺什么。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 

@@ -16,7 +16,7 @@
       "survivors": [
         {
           "file": "src/core/observer/nonlinear_flux_observer.cpp",
-          "line": 35,
+          "line": 45,
           "col": 18,
           "original": "<",
           "replacement": "<=",
@@ -24,15 +24,15 @@
         },
         {
           "file": "src/core/observer/nonlinear_flux_observer.cpp",
-          "line": 38,
-          "col": 18,
+          "line": 33,
+          "col": 23,
           "original": ">=",
           "replacement": ">",
           "operator": "swap"
         },
         {
           "file": "src/core/observer/nonlinear_flux_observer.cpp",
-          "line": 52,
+          "line": 62,
           "col": 18,
           "original": "<=",
           "replacement": "<",
@@ -40,15 +40,15 @@
         },
         {
           "file": "src/core/observer/nonlinear_flux_observer.cpp",
-          "line": 55,
-          "col": 18,
+          "line": 33,
+          "col": 45,
           "original": ">",
           "replacement": ">=",
           "operator": "swap"
         },
         {
           "file": "src/core/observer/nonlinear_flux_observer.cpp",
-          "line": 115,
+          "line": 126,
           "col": 27,
           "original": "0.5",
           "replacement": "0.5005",
@@ -56,8 +56,8 @@
         },
         {
           "file": "src/core/observer/nonlinear_flux_observer.cpp",
-          "line": 120,
-          "col": 25,
+          "line": 33,
+          "col": 70,
           "original": ">",
           "replacement": ">=",
           "operator": "swap"
@@ -68,7 +68,8 @@
       "judged": 52,
       "score": 88.5,
       "seconds": 176.8,
-      "recorded": "2026-10-31"
+      "recorded": "2026-10-31",
+      "equivalents": []
     },
     "pi": {
       "mutate": [
@@ -89,7 +90,8 @@
       "judged": 20,
       "score": 100.0,
       "seconds": 61.4,
-      "recorded": "2026-10-31"
+      "recorded": "2026-10-31",
+      "equivalents": []
     },
     "svpwm": {
       "mutate": [
@@ -100,14 +102,14 @@
         "test_package/test/unit/test_svpwm.cpp"
       ],
       "limit_per_file": 200,
-      "killed": 45,
+      "killed": 46,
       "survived": 12,
       "invalid": 6,
       "timeout": 0,
       "survivors": [
         {
           "file": "src/core/svpwm.cpp",
-          "line": 21,
+          "line": 31,
           "col": 40,
           "original": "8",
           "replacement": "9",
@@ -115,7 +117,7 @@
         },
         {
           "file": "src/core/svpwm.cpp",
-          "line": 21,
+          "line": 31,
           "col": 46,
           "original": "0",
           "replacement": "1",
@@ -123,80 +125,80 @@
         },
         {
           "file": "src/core/svpwm.cpp",
-          "line": 21,
-          "col": 74,
+          "line": 31,
+          "col": 62,
           "original": "4",
           "replacement": "5",
           "operator": "constant"
         },
         {
           "file": "src/core/svpwm.cpp",
-          "line": 43,
-          "col": 18,
+          "line": 41,
+          "col": 85,
+          "original": "1.0",
+          "replacement": "1.001",
+          "operator": "constant"
+        },
+        {
+          "file": "src/core/svpwm.cpp",
+          "line": 48,
+          "col": 17,
           "original": ">",
           "replacement": ">=",
           "operator": "swap"
         },
         {
           "file": "src/core/svpwm.cpp",
-          "line": 43,
-          "col": 41,
+          "line": 53,
+          "col": 38,
           "original": ">",
           "replacement": ">=",
           "operator": "swap"
         },
         {
           "file": "src/core/svpwm.cpp",
-          "line": 43,
-          "col": 85,
+          "line": 53,
+          "col": 69,
           "original": ">",
           "replacement": ">=",
           "operator": "swap"
         },
         {
           "file": "src/core/svpwm.cpp",
-          "line": 45,
-          "col": 18,
+          "line": 55,
+          "col": 38,
           "original": "<",
           "replacement": "<=",
           "operator": "swap"
         },
         {
           "file": "src/core/svpwm.cpp",
-          "line": 45,
-          "col": 41,
+          "line": 55,
+          "col": 69,
           "original": "<",
           "replacement": "<=",
           "operator": "swap"
         },
         {
           "file": "src/core/svpwm.cpp",
-          "line": 45,
-          "col": 85,
+          "line": 56,
+          "col": 69,
           "original": "<",
           "replacement": "<=",
           "operator": "swap"
         },
         {
           "file": "src/core/svpwm.cpp",
-          "line": 54,
-          "col": 49,
-          "original": "||",
-          "replacement": "&&",
-          "operator": "swap"
-        },
-        {
-          "file": "src/core/svpwm.cpp",
-          "line": 81,
-          "col": 85,
+          "line": 116,
+          "col": 84,
           "original": "2.0",
           "replacement": "2.002",
           "operator": "constant"
         },
         {
           "file": "src/core/svpwm.cpp",
-          "line": 84,
-          "col": 83,
+          "line": 41,
+          "col": 44,
           "original": "+",
           "replacement": "-",
           "operator": "swap"
@@ -204,10 +206,11 @@
       ],
       "invalid_sites": 6,
       "truncated": [],
-      "judged": 57,
-      "score": 78.9,
-      "seconds": 146.2,
-      "recorded": "2026-10-31"
+      "judged": 58,
+      "score": 79.3,
+      "seconds": 171.4,
+      "recorded": "2026-11-09",
+      "equivalents": []
     },
     "transforms": {
       "mutate": [
@@ -225,7 +228,7 @@
       "survivors": [
         {
           "file": "include/foc/core/transforms.hpp",
-          "line": 21,
+          "line": 30,
           "col": 69,
           "original": "*",
           "replacement": "/",
@@ -233,7 +236,7 @@
         },
         {
           "file": "include/foc/core/transforms.hpp",
-          "line": 21,
+          "line": 30,
           "col": 66,
           "original": "2",
           "replacement": "3",
@@ -245,7 +248,8 @@
       "judged": 38,
       "score": 94.7,
       "seconds": 52.5,
-      "recorded": "2026-10-31"
+      "recorded": "2026-10-31",
+      "equivalents": []
     },
     "limits": {
       "mutate": [
@@ -263,7 +267,7 @@
       "survivors": [
         {
           "file": "include/foc/core/limits.hpp",
-          "line": 22,
+          "line": 31,
           "col": 19,
           "original": "<",
           "replacement": "<=",
@@ -271,7 +275,7 @@
         },
         {
           "file": "include/foc/core/limits.hpp",
-          "line": 22,
+          "line": 31,
           "col": 42,
           "original": ">",
           "replacement": ">=",
@@ -279,8 +283,8 @@
         },
         {
           "file": "src/core/limits.cpp",
-          "line": 26,
-          "col": 14,
+          "line": 39,
+          "col": 19,
           "original": ">",
           "replacement": ">=",
           "operator": "swap"
@@ -294,7 +298,7 @@
       "equivalents": [
         {
           "file": "include/foc/core/limits.hpp",
-          "line": 22,
+          "line": 31,
           "col": 19,
           "original": "<",
           "replacement": "<=",
@@ -303,7 +307,7 @@
         },
         {
           "file": "include/foc/core/limits.hpp",
-          "line": 22,
+          "line": 31,
           "col": 42,
           "original": ">",
           "replacement": ">=",
@@ -312,8 +316,8 @@
         },
         {
           "file": "src/core/limits.cpp",
-          "line": 26,
-          "col": 14,
+          "line": 39,
+          "col": 19,
           "original": ">",
           "replacement": ">=",
           "kind": "equivalent",
@@ -342,7 +346,8 @@
       "judged": 4,
       "score": 100.0,
       "seconds": 39.8,
-      "recorded": "2026-10-31"
+      "recorded": "2026-10-31",
+      "equivalents": []
     },
     "protection": {
       "mutate": [
@@ -359,7 +364,7 @@
       "survivors": [
         {
           "file": "include/foc/core/protection.hpp",
-          "line": 305,
+          "line": 355,
           "col": 18,
           "original": ">",
           "replacement": ">=",
@@ -367,7 +372,15 @@
         },
         {
           "file": "include/foc/core/protection.hpp",
-          "line": 315,
+          "line": 356,
+          "col": 57,
+          "original": ">",
+          "replacement": ">=",
+          "operator": "swap"
+        },
+        {
+          "file": "include/foc/core/protection.hpp",
+          "line": 365,
           "col": 22,
           "original": ">",
           "replacement": ">=",
@@ -375,47 +388,39 @@
         },
         {
           "file": "include/foc/core/protection.hpp",
-          "line": 323,
-          "col": 60,
+          "line": 370,
+          "col": 62,
           "original": ">",
           "replacement": ">=",
           "operator": "swap"
         },
         {
           "file": "include/foc/core/protection.hpp",
-          "line": 331,
-          "col": 51,
-          "original": ">",
-          "replacement": ">=",
-          "operator": "swap"
-        },
-        {
-          "file": "include/foc/core/protection.hpp",
-          "line": 337,
-          "col": 82,
+          "line": 383,
+          "col": 85,
           "original": "1.0",
           "replacement": "1.001",
           "operator": "constant"
         },
         {
           "file": "include/foc/core/protection.hpp",
-          "line": 338,
-          "col": 84,
+          "line": 371,
+          "col": 62,
           "original": "<",
           "replacement": "<=",
           "operator": "swap"
         },
         {
           "file": "include/foc/core/protection.hpp",
-          "line": 338,
-          "col": 106,
+          "line": 385,
+          "col": 81,
           "original": "1.0",
           "replacement": "1.001",
           "operator": "constant"
         },
         {
           "file": "include/foc/core/protection.hpp",
-          "line": 349,
+          "line": 399,
           "col": 26,
           "original": "8",
           "replacement": "9",
@@ -423,15 +428,15 @@
         },
         {
           "file": "include/foc/core/protection.hpp",
-          "line": 391,
-          "col": 31,
+          "line": 373,
+          "col": 60,
           "original": ">",
           "replacement": ">=",
           "operator": "swap"
         },
         {
           "file": "include/foc/core/protection.hpp",
-          "line": 394,
+          "line": 444,
           "col": 27,
           "original": "<=",
           "replacement": "<",
@@ -439,15 +444,15 @@
         },
         {
           "file": "include/foc/core/protection.hpp",
-          "line": 398,
-          "col": 20,
+          "line": 381,
+          "col": 51,
           "original": ">",
           "replacement": ">=",
           "operator": "swap"
         },
         {
           "file": "include/foc/core/protection.hpp",
-          "line": 402,
+          "line": 452,
           "col": 18,
           "original": ">=",
           "replacement": ">",
@@ -455,8 +460,8 @@
         },
         {
           "file": "include/foc/core/protection.hpp",
-          "line": 443,
-          "col": 22,
+          "line": 38,
+          "col": 12,
           "original": "0",
           "replacement": "1",
           "operator": "constant"
@@ -470,7 +475,7 @@
       "equivalents": [
         {
           "file": "include/foc/core/protection.hpp",
-          "line": 305,
+          "line": 355,
           "col": 18,
           "original": ">",
           "replacement": ">=",
@@ -479,8 +484,8 @@
         },
         {
           "file": "include/foc/core/protection.hpp",
-          "line": 315,
-          "col": 22,
+          "line": 356,
+          "col": 57,
           "original": ">",
           "replacement": ">=",
           "kind": "equivalent",
@@ -488,8 +493,8 @@
         },
         {
           "file": "include/foc/core/protection.hpp",
-          "line": 323,
-          "col": 60,
+          "line": 365,
+          "col": 22,
           "original": ">",
           "replacement": ">=",
           "kind": "equivalent",
@@ -497,8 +502,8 @@
         },
         {
           "file": "include/foc/core/protection.hpp",
-          "line": 331,
-          "col": 51,
+          "line": 370,
+          "col": 62,
           "original": ">",
           "replacement": ">=",
           "kind": "equivalent",
@@ -506,8 +511,8 @@
         },
         {
           "file": "include/foc/core/protection.hpp",
-          "line": 337,
-          "col": 82,
+          "line": 383,
+          "col": 85,
           "original": "1.0",
           "replacement": "1.001",
           "kind": "equivalent_by_overspecification",
@@ -515,8 +520,8 @@
         },
         {
           "file": "include/foc/core/protection.hpp",
-          "line": 338,
-          "col": 84,
+          "line": 371,
+          "col": 62,
           "original": "<",
           "replacement": "<=",
           "kind": "unreachable",
@@ -524,8 +529,8 @@
         },
         {
           "file": "include/foc/core/protection.hpp",
-          "line": 338,
-          "col": 106,
+          "line": 385,
+          "col": 81,
           "original": "1.0",
           "replacement": "1.001",
           "kind": "equivalent_by_overspecification",
@@ -533,7 +538,7 @@
         },
         {
           "file": "include/foc/core/protection.hpp",
-          "line": 349,
+          "line": 399,
           "col": 26,
           "original": "8",
           "replacement": "9",
@@ -542,8 +547,8 @@
         },
         {
           "file": "include/foc/core/protection.hpp",
-          "line": 391,
-          "col": 31,
+          "line": 373,
+          "col": 60,
           "original": ">",
           "replacement": ">=",
           "kind": "equivalent",
@@ -551,7 +556,7 @@
         },
         {
           "file": "include/foc/core/protection.hpp",
-          "line": 394,
+          "line": 444,
           "col": 27,
           "original": "<=",
           "replacement": "<",
@@ -560,8 +565,8 @@
         },
         {
           "file": "include/foc/core/protection.hpp",
-          "line": 398,
-          "col": 20,
+          "line": 381,
+          "col": 51,
           "original": ">",
           "replacement": ">=",
           "kind": "equivalent",
@@ -569,7 +574,7 @@
         },
         {
           "file": "include/foc/core/protection.hpp",
-          "line": 402,
+          "line": 452,
           "col": 18,
           "original": ">=",
           "replacement": ">",
@@ -578,8 +583,8 @@
         },
         {
           "file": "include/foc/core/protection.hpp",
-          "line": 443,
-          "col": 22,
+          "line": 38,
+          "col": 12,
           "original": "0",
           "replacement": "1",
           "kind": "equivalent",

@@ -6,6 +6,15 @@
 #include <foc/core/types.hpp>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_core
+ * @file mtpv.hpp
+ *
+ * @brief [en] The maximum-torque-per-volt point, and the two ceilings that bound a machine's operating point.
+ * @brief [zh] 每伏最大转矩工作点，以及约束电机工作点的两个上限。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 namespace core {

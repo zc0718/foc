@@ -5,6 +5,15 @@
 #include <foc/core/types.hpp>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_core
+ * @file reference.hpp
+ *
+ * @brief [en] The reference generator's input, its null form, and the MTPA implementation.
+ * @brief [zh] 参考生成器的输入、其空实现，以及 MTPA 实现。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 namespace core {

@@ -3,6 +3,15 @@
 #include <foc/core/types.hpp>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_core
+ * @file observer_policy.hpp
+ *
+ * @brief [en] The interface every observer implements: what it is given and what it has to return.
+ * @brief [zh] 每个观测器都要实现的接口：给它什么、它必须返回什么。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 namespace core {

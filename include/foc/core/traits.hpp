@@ -14,6 +14,15 @@
 #include <utility>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_core
+ * @file traits.hpp
+ *
+ * @brief [en] Compile-time checks that a policy really implements the foc_hal interfaces the loop calls.
+ * @brief [zh] 编译期检查某个策略确实实现了环路所调用的 foc_hal 接口。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 namespace hal {

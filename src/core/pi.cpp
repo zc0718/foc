@@ -4,6 +4,15 @@
 #include <foc/core/limits.hpp>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_core
+ * @file pi.cpp
+ *
+ * @brief [en] Implements the PI loop: per-call gain scaling, the integral clamp, and the output clamp in that order.
+ * @brief [zh] PI 环的实现：按调用缩放增益、积分钳位、输出钳位，按这个次序。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 namespace core {

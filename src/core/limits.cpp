@@ -2,6 +2,15 @@
 #include <foc/core/limits.hpp>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_core
+ * @file limits.cpp
+ *
+ * @brief [en] Implements the slew limiter and the symmetric clamp shared by the reference policies.
+ * @brief [zh] 参考策略共用的斜率限制与对称钳位的实现。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 namespace core {

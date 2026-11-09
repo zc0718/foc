@@ -4,6 +4,15 @@
 #include <foc/driver/stub_brake_switch.hpp>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_driver
+ * @file stub_brake_switch.cpp
+ *
+ * @brief [en] Implements the brake-switch stub: it records the duty instead of driving it.
+ * @brief [zh] 制动开关桩件的实现：记录占空比，而不是驱动它。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 namespace driver {

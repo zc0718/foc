@@ -6,6 +6,15 @@
 #include <foc/core/types.hpp>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_core
+ * @file startup.hpp
+ *
+ * @brief [en] The start-up sequence as a state machine: its states, configuration and the routine that advances them.
+ * @brief [zh] 启动序列的状态机：状态、配置与推进它们的例程。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 namespace core {

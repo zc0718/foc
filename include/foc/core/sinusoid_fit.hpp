@@ -5,6 +5,15 @@
 #include <foc/core/types.hpp>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_core
+ * @file sinusoid_fit.hpp
+ *
+ * @brief [en] A single tone measured out of a recorded window, and the quality of the fit it came from.
+ * @brief [zh] 从一段记录窗口里测出的单一音调，以及这次拟合的质量。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 namespace core {

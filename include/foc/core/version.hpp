@@ -3,6 +3,15 @@
 #include <foc/version.h>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_core
+ * @file version.hpp
+ *
+ * @brief [en] The version query the core answers, from the string the C API reports.
+ * @brief [zh] 核心提供的版本查询，取自 C API 所报告的字符串。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 

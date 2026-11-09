@@ -3,6 +3,15 @@
 #include <cstdint>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_hal
+ * @file clock.hpp
+ *
+ * @brief [en] The monotonic microsecond clock the control loop is timed against.
+ * @brief [zh] 控制环路计时所依的单调微秒时钟。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 namespace hal {

@@ -4,6 +4,15 @@
 #include <cmath>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_core
+ * @file startup.cpp
+ *
+ * @brief [en] Implements the start-up sequence: hold the current, ramp the forced vector, hand over at speed.
+ * @brief [zh] 起动序列的实现：按住电流、把强制矢量加速、到转速后交出控制权。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 namespace core {

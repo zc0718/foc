@@ -3,6 +3,15 @@
 #include <foc/core/position.hpp>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_core
+ * @file motion_profile.hpp
+ *
+ * @brief [en] The profile that shapes a velocity command into something the mechanics can follow.
+ * @brief [zh] 把速度指令塑造成机械跟得上的形状的运动规划。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 namespace core {

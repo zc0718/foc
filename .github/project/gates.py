@@ -426,7 +426,8 @@ def cmd_ci_policy(_explicit):
 PROJECT_GATES = ('license', 'strict', 'claims', 'docs', 'deps', 'form', 'boundaries', 'capabilities', 'ci-policy',
                  'assume', 'anchor', 'scaffold', 'budget', 'clocks', 'observability', 'combinations', 'domain',
                  'mutants', 'plantref', 'fmu', 'pil', 'mcdc', 'blast', 'wired', 'smoke', 'regmap', 'subset',
-                 'docvoice', 'symbols', 'equations', 'enforce', 'docshape', 'docver', 'docannot')
+                 'docvoice', 'symbols', 'equations', 'enforce', 'docshape', 'docver', 'docannot',
+                 'docscope')
 
 
 def cmd_subset(_explicit):
@@ -488,6 +489,23 @@ def cmd_docannot(_explicit):
     `///<` carried onto a line with no declaration to its left, is red. Banners and code-reader
     notes (`fall through`, `intentionally empty`) are recognised. `--selftest` first."""
     script = str(ROOT / '.github' / 'project' / 'docannot_gate.py')
+    for _args in (['--selftest'], []):
+        _rc = subprocess.run([sys.executable, script, *_args], cwd=ROOT, text=True).returncode
+        if _rc:
+            return _rc
+    return 0
+
+
+def cmd_docscope(_explicit):
+    """A doc block sits at file scope or in a type body; inside a function it documents nothing.
+
+    Why: `EXTRACT_ALL = YES` publishes a block wherever it is written, so a block over a *statement* is
+    not an error, not a warning, and not visible in review -- it reaches the site as prose with no
+    declaration to describe. The measurement has to be comment-aware: a regex over brace characters
+    invented 333 phantom hits, because doc prose itself carries `{0, 1}` and `f(x) { ... }`, so the
+    counter strips comments, strings and literals and treats a doc block's opening line as not-code.
+    `--selftest` first: both block shapes inside a body, braces in prose, and a one-line empty body."""
+    script = str(ROOT / '.github' / 'project' / 'docscope_gate.py')
     for _args in (['--selftest'], []):
         _rc = subprocess.run([sys.executable, script, *_args], cwd=ROOT, text=True).returncode
         if _rc:
@@ -875,6 +893,8 @@ def main():
                   'to a sibling file, and no other version stamp survives in the doc tree',
         'docannot': 'a doc comment is shaped like one: no plain `/* */` above a declaration and no `///<` carried '
                     'onto a line with no declaration to its left, both of which publish a member with no text',
+        'docscope': 'a doc block sits at file scope or in a type body: inside a function it publishes prose with no '
+                    'declaration to describe, which `EXTRACT_ALL` makes invisible',
         'pil': 'run the speed-step scenario on the target ISA under qemu and compare with the host; SKIPPED when its '
                'material is absent',
         'all': ' + '.join(PROJECT_GATES),
@@ -962,6 +982,8 @@ def main():
         return cmd_docver([])
     if args.gate == 'docannot':
         return cmd_docannot([])
+    if args.gate == 'docscope':
+        return cmd_docscope([])
     # The chain above is the only thing standing between a single-gate invocation and the aggregate below, and it
     # has now been forgotten twice (`plantref` before, `combinations` and `mcdc` this time). A missing branch does
     # not fail: it runs *every* gate and prints "all N", which reads as success. So the fall-through is refused
@@ -994,6 +1016,7 @@ def main():
                   'docshape': cmd_docshape,
                   'docver': cmd_docver,
                   'docannot': cmd_docannot,
+                  'docscope': cmd_docscope,
                   'pil': lambda _f: cmd_pil([], tolerant=True)}[name]([]) ]
     if failed:
         print(f'[project-gates] FAIL: {", ".join(failed)}', flush=True)

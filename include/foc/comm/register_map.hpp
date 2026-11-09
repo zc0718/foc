@@ -36,6 +36,15 @@
 #include <foc/api/foc_api.h>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_comm
+ * @file register_map.hpp
+ *
+ * @brief [en] The register table a host talks to, dense from 1 so enumeration has no holes.
+ * @brief [zh] 主机访问的寄存器表，从 1 起连续编号，枚举时没有空洞。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 namespace comm {

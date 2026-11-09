@@ -3,6 +3,15 @@
 #include <foc/hal/dc_link.hpp>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_driver
+ * @file stub_dc_link.hpp
+ *
+ * @brief [en] A DC link whose bus voltage is settable from the outside.
+ * @brief [zh] 母线电压可由外部设定的直流母线。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 namespace driver {

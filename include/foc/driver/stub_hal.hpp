@@ -7,6 +7,15 @@
 #include <foc/driver/stub_pwm.hpp>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_driver
+ * @file stub_hal.hpp
+ *
+ * @brief [en] A complete HalPolicy built from the reference stubs, for benches and unit tests.
+ * @brief [zh] 由参考桩件拼成的完整 HalPolicy，供台架与单元测试使用。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 namespace driver {

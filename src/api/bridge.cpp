@@ -30,6 +30,15 @@
 #include <foc/motor/torque_map.hpp>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_c_api
+ * @file bridge.cpp
+ *
+ * @brief [en] Implements the C handle layer: slot tables, generation-checked handles, and dispatch into the C++ core.
+ * @brief [zh] C 句柄层的实现：槽位表、带代际校验的句柄，以及向 C++ 内核的派发。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 namespace api {

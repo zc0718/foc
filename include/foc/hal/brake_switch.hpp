@@ -3,6 +3,15 @@
 #include <foc/core/types.hpp>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_hal
+ * @file brake_switch.hpp
+ *
+ * @brief [en] The brake resistor's switch: one duty output, whose safe state is open.
+ * @brief [zh] 制动电阻开关：一路占空比输出，其安全状态是断开。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 namespace hal {

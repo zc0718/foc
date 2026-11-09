@@ -6,6 +6,15 @@
 #include <foc/core/types.hpp>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_core
+ * @file brake_chopper.hpp
+ *
+ * @brief [en] The brake chopper's duties and the state it falls back to.
+ * @brief [zh] 制动斩波器的职责，以及它退回的状态。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 namespace core {

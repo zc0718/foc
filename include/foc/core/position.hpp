@@ -2,6 +2,15 @@
 #pragma once
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_core
+ * @file core/position.hpp
+ *
+ * @brief [en] The position slot's input, its null form, and the proportional position controller.
+ * @brief [zh] 位置环节的输入、其空实现，以及比例位置控制器。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 namespace core {

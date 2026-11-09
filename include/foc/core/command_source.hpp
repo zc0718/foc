@@ -5,6 +5,15 @@
 #include <foc/core/types.hpp>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_core
+ * @file command_source.hpp
+ *
+ * @brief [en] The command sources a drive can be driven by: step and analog, each with its own configuration and output.
+ * @brief [zh] 驱动可用的指令源：阶跃与模拟量，各自带走自己的配置与输出。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 namespace core {

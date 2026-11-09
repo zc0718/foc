@@ -4,6 +4,15 @@
 #include <cmath>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_driver
+ * @file sim_position.cpp
+ *
+ * @brief [en] Implements the simulated position source the plant drives, including the index mark.
+ * @brief [zh] 仿真的位置源实现：由被控对象驱动，含索引标记。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 namespace driver {

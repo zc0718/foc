@@ -7,6 +7,15 @@
 #include <foc/core/types.hpp>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_core
+ * @file core/hall.hpp
+ *
+ * @brief [en] The six-step direction table, and the tracker that holds a direction across a sensor code change.
+ * @brief [zh] 六步换相方向表，以及跨越编码变化仍维持方向的跟踪器。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 namespace core {

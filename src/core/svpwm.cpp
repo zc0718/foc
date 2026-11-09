@@ -7,6 +7,15 @@
 #include <foc/core/transforms.hpp>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_core
+ * @file svpwm.cpp
+ *
+ * @brief [en] Implements SVPWM: sector, dwell times, and the common-mode choice that keeps the linear range honest.
+ * @brief [zh] SVPWM 的实现：扇区、作用时间，以及让线性范围名副其实的共模选择。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 namespace core {

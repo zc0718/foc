@@ -6,6 +6,15 @@
 #include <foc/core/transforms.hpp>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_core
+ * @file nonlinear_flux_observer.cpp
+ *
+ * @brief [en] Implements the nonlinear flux observer: the amplitude-corrected integrator and its stability bound.
+ * @brief [zh] 非线性磁链观测器的实现：幅值修正积分器与它的稳定边界。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 namespace core {

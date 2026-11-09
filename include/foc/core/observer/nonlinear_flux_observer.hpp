@@ -5,6 +5,15 @@
 #include <foc/core/types.hpp>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_core
+ * @file nonlinear_flux_observer.hpp
+ *
+ * @brief [en] The flux observer that follows the machine's magnetisation map instead of a single inductance.
+ * @brief [zh] 沿电机磁化表（而非单一电感）推进的磁链观测器。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 namespace core {

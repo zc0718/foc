@@ -21,6 +21,15 @@
 #include <type_traits>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_motor
+ * @file motor.hpp
+ *
+ * @brief [en] The motor instance and the vocabulary around it: telemetry, reference mode, and the command it accepts.
+ * @brief [zh] 电机实例及其周边词汇：遥测、参考模式与它接受的指令。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 namespace motor {

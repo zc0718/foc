@@ -2,6 +2,15 @@
 #include <foc/core/sm.hpp>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_core
+ * @file sm.cpp
+ *
+ * @brief [en] Implements the motor state machine: the transition table, and the transitions it refuses.
+ * @brief [zh] 电机状态机的实现：转移表，以及它拒绝的那些转移。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 namespace core {

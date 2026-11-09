@@ -4,6 +4,15 @@
 #include <foc/hal/position.hpp>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_driver
+ * @file sim_position.hpp
+ *
+ * @brief [en] A position sensor the SIL plant writes into, so the loop reads an angle it did not invent.
+ * @brief [zh] 由 SIL 台架写入的位置传感器，环路读到的角度不是它自己编的。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 namespace driver {

@@ -58,7 +58,7 @@ jobs:
           # 这个列表是「没有 conan 的机器能跑的全部门禁」，而它少了四个：`clocks`、`observability`、`combinations`、`domain`
           # 都写了、也接进了 `gates.py`，却从没被任何工作流跑过——没人 CI 跑的门禁就是散文。现在加一个门禁，就要同时加到
           # `PROJECT_GATES` 与这里；而 `ci-policy` 仍然拒绝那些开销属于开发者机器的门禁。
-          for gate in license strict claims docs boundaries capabilities ci-policy assume anchor scaffold budget clocks observability combinations domain subset docvoice symbols equations enforce docshape docver docannot; do
+          for gate in license strict claims docs boundaries capabilities ci-policy assume anchor scaffold budget clocks observability combinations domain subset docvoice symbols equations enforce docshape docver docannot docscope; do
             echo "::group::$gate"
             python3 .github/project/gates.py "$gate" || failed=1
             echo "::endgroup::"

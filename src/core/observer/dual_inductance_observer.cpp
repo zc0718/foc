@@ -6,6 +6,15 @@
 #include <foc/core/transforms.hpp>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_core
+ * @file dual_inductance_observer.cpp
+ *
+ * @brief [en] Implements the dual-inductance observer: the complex-vector form, seeding, and the ratio that decides when the quadratic term stops mattering.
+ * @brief [zh] 双电感观测器的实现：复矢量形式、播种，以及决定二次项何时可忽略的那个比值。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 namespace core {

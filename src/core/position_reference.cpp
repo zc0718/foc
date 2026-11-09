@@ -2,6 +2,15 @@
 #include <foc/core/position_reference.hpp>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_core
+ * @file position_reference.cpp
+ *
+ * @brief [en] Implements the position reference: unwrapping, index marks, and the lost-count latch that discredits it.
+ * @brief [zh] 位置参考的实现：解回绕、索引标记，以及使这份结果不可信的丢计数锁存。
+ * @since 0.1.0
+ */
+
 #include <cmath>
 
 namespace foc {

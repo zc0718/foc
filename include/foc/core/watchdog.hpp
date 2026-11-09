@@ -5,6 +5,15 @@
 #include <foc/core/types.hpp>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_core
+ * @file watchdog.hpp
+ *
+ * @brief [en] The one number a watchdog is sized by: how long the feeder may stay silent, and what that made it conclude.
+ * @brief [zh] 看门狗唯一的尺寸依据：喂狗方可以沉默多久，以及由此得出的结论。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 namespace core {

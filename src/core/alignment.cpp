@@ -4,6 +4,15 @@
 #include <cmath>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_core
+ * @file alignment.cpp
+ *
+ * @brief [en] Implements the rotor-alignment sequence: forced ramp, settle window, direction check, verdict.
+ * @brief [zh] 转子对齐序列的实现：强制爬升、稳定窗口、方向校验与判定。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 namespace core {

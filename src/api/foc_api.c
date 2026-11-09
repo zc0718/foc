@@ -7,6 +7,15 @@
 #include "bridge.h"
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_c_api
+ * @file foc_api.c
+ *
+ * @brief [en] Implements the C entry points: argument validation and the float/double boundary, one call each.
+ * @brief [zh] C 入口点的实现：参数校验与 float/double 边界，一次调用一个入口。
+ * @since 0.1.0
+ */
+
 /**
  * @brief [en] The C path's own layer: raw-pointer validation and float/double entry points.
  *

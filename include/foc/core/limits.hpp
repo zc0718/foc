@@ -3,6 +3,15 @@
 #include <foc/core/types.hpp>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_core
+ * @file limits.hpp
+ *
+ * @brief [en] The clamps every stage shares: a symmetric clamp and a slew limiter with explicit rates.
+ * @brief [zh] 各级共用的限幅：对称钳位，以及带显式速率的斜坡限制器。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 namespace core {

@@ -3,6 +3,15 @@
 #include <cstdint>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_hal
+ * @file hal/hall.hpp
+ *
+ * @brief [en] The three hall sensors, as one three-bit field.
+ * @brief [zh] 三个霍尔传感器，合为一个三位编码。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 namespace hal {

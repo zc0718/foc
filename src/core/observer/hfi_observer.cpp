@@ -7,6 +7,15 @@
 #include <foc/core/transforms.hpp>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_core
+ * @file hfi_observer.cpp
+ *
+ * @brief [en] Implements the saliency-tracking observer: injection, demodulation, the lock detector and its refusals.
+ * @brief [zh] 凸极跟踪观测器的实现：注入、解调、锁定判据与它的拒绝。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 namespace core {

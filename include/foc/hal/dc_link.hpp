@@ -2,6 +2,15 @@
 #pragma once
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_hal
+ * @file dc_link.hpp
+ *
+ * @brief [en] The DC bus voltage source the modulator scales its duties by.
+ * @brief [zh] 调制器据以缩放占空比的直流母线电压来源。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 namespace hal {

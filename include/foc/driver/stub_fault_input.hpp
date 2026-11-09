@@ -5,6 +5,15 @@
 #include <foc/hal/fault_input.hpp>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_driver
+ * @file stub_fault_input.hpp
+ *
+ * @brief [en] A fault input that reports exactly what it was told, and nothing else.
+ * @brief [zh] 只报告被告诉的内容、不多说一句的故障输入。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 namespace driver {

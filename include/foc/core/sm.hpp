@@ -4,6 +4,15 @@
 #include <foc/core/types.hpp>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_core
+ * @file sm.hpp
+ *
+ * @brief [en] The motor state machine: the states an instance may be in, and the transitions between them.
+ * @brief [zh] 电机状态机：实例可能处于的状态及其之间的迁移。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 namespace core {

@@ -7,6 +7,15 @@
 #include <foc/core/types.hpp>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_core
+ * @file six_step.hpp
+ *
+ * @brief [en] What a six-step commutation needs to know, and what it decides each period.
+ * @brief [zh] 六步换相需要知道什么，以及它每个周期决定什么。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 namespace core {

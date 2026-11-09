@@ -2,6 +2,15 @@
 #include <foc/core/transforms.hpp>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_core
+ * @file transforms.cpp
+ *
+ * @brief [en] Instantiates the transform templates for `float`, so both the C++ and the C path link against symbols rather than inlining their own copy.
+ * @brief [zh] 为 `float` 显式实例化变换模板，使 C++ 与 C 两条路径都链接到符号，而不是各自内联一份。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 namespace core {

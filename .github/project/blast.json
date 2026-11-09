@@ -1819,6 +1819,157 @@
           "why": "`motor/torque_map.hpp` rests on these headers; the changes are the bugprone fixes described in this entry (bitwise/signedness and rounding restated, one switch label merged), which leave every value the row quotes unchanged."
         }
       ]
+    },
+    {
+      "id": "B-23",
+      "date": "2026-11-09",
+      "what_changed": "The B4 documentation pass: every `src` file and every public header gained one file block (`/*! @ingroup … @file … @brief [en]/[zh] @since 0.1.0 */`) right after `// Conan::ImportEnd`, so that a file page has a description and appears in its topic group. 123 files touched and **not one code line**: the diff is 1107 insertion lines of comment and 0 deletions, which is also why this entry settles every affected row as `holds` rather than re-testing. The seeds below are the files that the ledger's own triggers pick up from that change set (fan-in ≥ 2 or upstream of ≥ 3 claim modules); their rows are listed so the account is closed, not skipped.",
+      "seeds": [
+        "include/foc/core/alignment.hpp",
+        "include/foc/core/deadtime.hpp",
+        "include/foc/core/position.hpp",
+        "include/foc/core/six_step.hpp",
+        "include/foc/hal/clock.hpp",
+        "include/foc/hal/current_sense.hpp",
+        "include/foc/hal/dc_link.hpp",
+        "include/foc/hal/hall.hpp",
+        "include/foc/hal/position.hpp",
+        "include/foc/hal/pwm.hpp",
+        "include/foc/motor/foc_loop.hpp",
+        "src/motor/foc_loop.cpp"
+      ],
+      "affected": [
+        {
+          "row": "core/motion_profile.hpp",
+          "verdict": "holds",
+          "why": "This row's L3 evidence is `test_motion_profile.cpp`, `test_motion_profile_landmarks.cpp`, `test_sil_motion_profile.cpp`, and the case measures behaviour. The diff reaches it only through `@file`: one `/*!` block inserted after `// Conan::ImportEnd`, with zero code lines added, changed or removed (`git diff -U0 -- include src` has 0 deletion lines and every insertion is inside a comment), so the code the case executes is byte-identical and nothing needed re-running. If this had been a code change the row would have needed a number."
+        },
+        {
+          "row": "core/observer/blended_observer.hpp",
+          "verdict": "holds",
+          "why": "This row's L3 evidence is `test_blended_observer.cpp`, `test_sil_observer_blend.cpp`, and the case measures behaviour. The diff reaches it only through `@file`: one `/*!` block inserted after `// Conan::ImportEnd`, with zero code lines added, changed or removed (`git diff -U0 -- include src` has 0 deletion lines and every insertion is inside a comment), so the code the case executes is byte-identical and nothing needed re-running. If this had been a code change the row would have needed a number."
+        },
+        {
+          "row": "core/observer/switchable_observer.hpp",
+          "verdict": "holds",
+          "why": "This row's L1 evidence is `test_switchable_observer.cpp`, and the case measures behaviour. The diff reaches it only through `@file`: one `/*!` block inserted after `// Conan::ImportEnd`, with zero code lines added, changed or removed (`git diff -U0 -- include src` has 0 deletion lines and every insertion is inside a comment), so the code the case executes is byte-identical and nothing needed re-running. If this had been a code change the row would have needed a number."
+        },
+        {
+          "row": "core/pi.hpp",
+          "verdict": "holds",
+          "why": "This row's L3 evidence is `test_pi.cpp`, and the case measures behaviour. The diff reaches it only through `@file`: one `/*!` block inserted after `// Conan::ImportEnd`, with zero code lines added, changed or removed (`git diff -U0 -- include src` has 0 deletion lines and every insertion is inside a comment), so the code the case executes is byte-identical and nothing needed re-running. If this had been a code change the row would have needed a number."
+        },
+        {
+          "row": "core/six_step.hpp",
+          "verdict": "holds",
+          "why": "This row's L1 evidence is `test_six_step.cpp`, and the case measures behaviour. The diff reaches it only through `@file`: one `/*!` block inserted after `// Conan::ImportEnd`, with zero code lines added, changed or removed (`git diff -U0 -- include src` has 0 deletion lines and every insertion is inside a comment), so the code the case executes is byte-identical and nothing needed re-running. If this had been a code change the row would have needed a number."
+        },
+        {
+          "row": "core/startup.hpp",
+          "verdict": "holds",
+          "why": "This row's L3 evidence is `test_sil_startup.cpp`, and the case measures behaviour. The diff reaches it only through `@file`: one `/*!` block inserted after `// Conan::ImportEnd`, with zero code lines added, changed or removed (`git diff -U0 -- include src` has 0 deletion lines and every insertion is inside a comment), so the code the case executes is byte-identical and nothing needed re-running. If this had been a code change the row would have needed a number."
+        },
+        {
+          "row": "core/trace.hpp",
+          "verdict": "holds",
+          "why": "This row's L2 evidence is `test_trace.cpp`, `c_api_validation.c`, `test/python/test_python_bindings.py`, and the case measures behaviour. The diff reaches it only through `@file`: one `/*!` block inserted after `// Conan::ImportEnd`, with zero code lines added, changed or removed (`git diff -U0 -- include src` has 0 deletion lines and every insertion is inside a comment), so the code the case executes is byte-identical and nothing needed re-running. If this had been a code change the row would have needed a number."
+        },
+        {
+          "row": "core/trace_parse.hpp",
+          "verdict": "holds",
+          "why": "This row's L2 evidence is `test_trace_parse.cpp`, and the case measures behaviour. The diff reaches it only through `@file`: one `/*!` block inserted after `// Conan::ImportEnd`, with zero code lines added, changed or removed (`git diff -U0 -- include src` has 0 deletion lines and every insertion is inside a comment), so the code the case executes is byte-identical and nothing needed re-running. If this had been a code change the row would have needed a number."
+        },
+        {
+          "row": "core/traits.hpp",
+          "verdict": "holds",
+          "why": "This row's L1 evidence is `test_traits_contract.cpp`, `negative_compile.py`, and the case measures behaviour. The diff reaches it only through `@file`: one `/*!` block inserted after `// Conan::ImportEnd`, with zero code lines added, changed or removed (`git diff -U0 -- include src` has 0 deletion lines and every insertion is inside a comment), so the code the case executes is byte-identical and nothing needed re-running. If this had been a code change the row would have needed a number."
+        },
+        {
+          "row": "driver/callback_hal.hpp",
+          "verdict": "holds",
+          "why": "This row's L1 evidence is `test_host_hal.cpp`, and the case measures behaviour. The diff reaches it only through `@file`: one `/*!` block inserted after `// Conan::ImportEnd`, with zero code lines added, changed or removed (`git diff -U0 -- include src` has 0 deletion lines and every insertion is inside a comment), so the code the case executes is byte-identical and nothing needed re-running. If this had been a code change the row would have needed a number."
+        },
+        {
+          "row": "driver/scripted_current.hpp",
+          "verdict": "holds",
+          "why": "This row's L1 evidence is `test_driver_stubs.cpp`, and the case measures behaviour. The diff reaches it only through `@file`: one `/*!` block inserted after `// Conan::ImportEnd`, with zero code lines added, changed or removed (`git diff -U0 -- include src` has 0 deletion lines and every insertion is inside a comment), so the code the case executes is byte-identical and nothing needed re-running. If this had been a code change the row would have needed a number."
+        },
+        {
+          "row": "driver/sim_position.hpp",
+          "verdict": "holds",
+          "why": "This row's L1 evidence is `test_driver_stubs.cpp`, and the case measures behaviour. The diff reaches it only through `@file`: one `/*!` block inserted after `// Conan::ImportEnd`, with zero code lines added, changed or removed (`git diff -U0 -- include src` has 0 deletion lines and every insertion is inside a comment), so the code the case executes is byte-identical and nothing needed re-running. If this had been a code change the row would have needed a number."
+        },
+        {
+          "row": "driver/stub_brake_switch.hpp",
+          "verdict": "holds",
+          "why": "This row's L1 evidence is `test_driver_stubs.cpp`, and the case measures behaviour. The diff reaches it only through `@file`: one `/*!` block inserted after `// Conan::ImportEnd`, with zero code lines added, changed or removed (`git diff -U0 -- include src` has 0 deletion lines and every insertion is inside a comment), so the code the case executes is byte-identical and nothing needed re-running. If this had been a code change the row would have needed a number."
+        },
+        {
+          "row": "driver/stub_dc_link.hpp",
+          "verdict": "holds",
+          "why": "This row's L1 evidence is `test_driver_stubs.cpp`, and the case measures behaviour. The diff reaches it only through `@file`: one `/*!` block inserted after `// Conan::ImportEnd`, with zero code lines added, changed or removed (`git diff -U0 -- include src` has 0 deletion lines and every insertion is inside a comment), so the code the case executes is byte-identical and nothing needed re-running. If this had been a code change the row would have needed a number."
+        },
+        {
+          "row": "driver/stub_hal.hpp",
+          "verdict": "holds",
+          "why": "This row's L1 evidence is `test_driver_stubs.cpp`, and the case measures behaviour. The diff reaches it only through `@file`: one `/*!` block inserted after `// Conan::ImportEnd`, with zero code lines added, changed or removed (`git diff -U0 -- include src` has 0 deletion lines and every insertion is inside a comment), so the code the case executes is byte-identical and nothing needed re-running. If this had been a code change the row would have needed a number."
+        },
+        {
+          "row": "driver/stub_hall.hpp",
+          "verdict": "holds",
+          "why": "This row's L1 evidence is `test_six_step.cpp`, and the case measures behaviour. The diff reaches it only through `@file`: one `/*!` block inserted after `// Conan::ImportEnd`, with zero code lines added, changed or removed (`git diff -U0 -- include src` has 0 deletion lines and every insertion is inside a comment), so the code the case executes is byte-identical and nothing needed re-running. If this had been a code change the row would have needed a number."
+        },
+        {
+          "row": "driver/stub_pwm.hpp",
+          "verdict": "holds",
+          "why": "This row's L1 evidence is `test_driver_stubs.cpp`, and the case measures behaviour. The diff reaches it only through `@file`: one `/*!` block inserted after `// Conan::ImportEnd`, with zero code lines added, changed or removed (`git diff -U0 -- include src` has 0 deletion lines and every insertion is inside a comment), so the code the case executes is byte-identical and nothing needed re-running. If this had been a code change the row would have needed a number."
+        },
+        {
+          "row": "hal/brake_switch.hpp",
+          "verdict": "holds",
+          "why": "This row's L1 evidence is `test_traits_contract.cpp`, `test_fault_input.cpp`, and the case measures behaviour. The diff reaches it only through `@file`: one `/*!` block inserted after `// Conan::ImportEnd`, with zero code lines added, changed or removed (`git diff -U0 -- include src` has 0 deletion lines and every insertion is inside a comment), so the code the case executes is byte-identical and nothing needed re-running. If this had been a code change the row would have needed a number."
+        },
+        {
+          "row": "hal/clock.hpp",
+          "verdict": "holds",
+          "why": "This row's L1 evidence is `test_traits_contract.cpp`, `test_fault_input.cpp`, and the case measures behaviour. The diff reaches it only through `@file`: one `/*!` block inserted after `// Conan::ImportEnd`, with zero code lines added, changed or removed (`git diff -U0 -- include src` has 0 deletion lines and every insertion is inside a comment), so the code the case executes is byte-identical and nothing needed re-running. If this had been a code change the row would have needed a number."
+        },
+        {
+          "row": "hal/dc_link.hpp",
+          "verdict": "holds",
+          "why": "This row's L1 evidence is `test_traits_contract.cpp`, `test_fault_input.cpp`, and the case measures behaviour. The diff reaches it only through `@file`: one `/*!` block inserted after `// Conan::ImportEnd`, with zero code lines added, changed or removed (`git diff -U0 -- include src` has 0 deletion lines and every insertion is inside a comment), so the code the case executes is byte-identical and nothing needed re-running. If this had been a code change the row would have needed a number."
+        },
+        {
+          "row": "hal/hall.hpp",
+          "verdict": "holds",
+          "why": "This row's L1 evidence is `test_six_step.cpp`, and the case measures behaviour. The diff reaches it only through `@file`: one `/*!` block inserted after `// Conan::ImportEnd`, with zero code lines added, changed or removed (`git diff -U0 -- include src` has 0 deletion lines and every insertion is inside a comment), so the code the case executes is byte-identical and nothing needed re-running. If this had been a code change the row would have needed a number."
+        },
+        {
+          "row": "hal/position.hpp",
+          "verdict": "holds",
+          "why": "This row's L1 evidence is `test_traits_contract.cpp`, `test_fault_input.cpp`, and the case measures behaviour. The diff reaches it only through `@file`: one `/*!` block inserted after `// Conan::ImportEnd`, with zero code lines added, changed or removed (`git diff -U0 -- include src` has 0 deletion lines and every insertion is inside a comment), so the code the case executes is byte-identical and nothing needed re-running. If this had been a code change the row would have needed a number."
+        },
+        {
+          "row": "motor/foc_loop.hpp",
+          "verdict": "holds",
+          "why": "This row's L3 evidence is `test_sil_multirate.cpp`, and the case measures behaviour. The diff reaches it only through `@file`: one `/*!` block inserted after `// Conan::ImportEnd`, with zero code lines added, changed or removed (`git diff -U0 -- include src` has 0 deletion lines and every insertion is inside a comment), so the code the case executes is byte-identical and nothing needed re-running. If this had been a code change the row would have needed a number."
+        },
+        {
+          "row": "motor/motor.hpp",
+          "verdict": "holds",
+          "why": "This row's L3 evidence is `test_motor.cpp`, `test_rtos_bridge.cpp`, `test_field_weakening_motor.cpp`, `test_position_index.cpp`, and the case measures behaviour. The diff reaches it only through `@file`: one `/*!` block inserted after `// Conan::ImportEnd`, with zero code lines added, changed or removed (`git diff -U0 -- include src` has 0 deletion lines and every insertion is inside a comment), so the code the case executes is byte-identical and nothing needed re-running. If this had been a code change the row would have needed a number."
+        },
+        {
+          "row": "motor/motor_config.hpp",
+          "verdict": "holds",
+          "why": "This row's L3 evidence is `test_motor.cpp`, and the case measures behaviour. The diff reaches it only through `@file`: one `/*!` block inserted after `// Conan::ImportEnd`, with zero code lines added, changed or removed (`git diff -U0 -- include src` has 0 deletion lines and every insertion is inside a comment), so the code the case executes is byte-identical and nothing needed re-running. If this had been a code change the row would have needed a number."
+        },
+        {
+          "row": "motor/torque_map.hpp",
+          "verdict": "holds",
+          "why": "This row's L3 evidence is `test_torque_map.cpp`, `test/python/test_python_bindings.py`, and the case measures behaviour. The diff reaches it only through `@file`: one `/*!` block inserted after `// Conan::ImportEnd`, with zero code lines added, changed or removed (`git diff -U0 -- include src` has 0 deletion lines and every insertion is inside a comment), so the code the case executes is byte-identical and nothing needed re-running. If this had been a code change the row would have needed a number."
+        }
+      ]
     }
   ]
 }

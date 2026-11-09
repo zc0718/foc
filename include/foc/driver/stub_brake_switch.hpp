@@ -5,6 +5,15 @@
 #include <foc/hal/brake_switch.hpp>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_driver
+ * @file stub_brake_switch.hpp
+ *
+ * @brief [en] A brake switch that records the duty instead of driving hardware.
+ * @brief [zh] 记录占空比而不驱动硬件的制动开关。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 namespace driver {

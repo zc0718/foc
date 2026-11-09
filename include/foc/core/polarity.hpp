@@ -5,6 +5,15 @@
 #include <foc/core/types.hpp>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_core
+ * @file polarity.hpp
+ *
+ * @brief [en] The magnet-polarity pulse test: what a pulse pair concluded, and the test that runs it.
+ * @brief [zh] 磁极极性脉冲试验：一对脉冲得出了什么结论，以及执行它的试验。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 namespace core {

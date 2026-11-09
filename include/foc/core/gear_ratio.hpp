@@ -7,6 +7,15 @@
 #include <foc/core/types.hpp>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_core
+ * @file gear_ratio.hpp
+ *
+ * @brief [en] Electronic gearing: the ratio between motor and load, and where the output angle is folded.
+ * @brief [zh] 电子齿轮：电机与负载之间的传动比，以及输出角折叠到的区间。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 namespace core {

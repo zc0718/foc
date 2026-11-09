@@ -5,6 +5,15 @@
 #include <foc/core/types.hpp>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_core
+ * @file thermal_limit.hpp
+ *
+ * @brief [en] The thermal facts a current limit is derived from, and the limit itself.
+ * @brief [zh] 电流限值所依据的热事实，以及该限值本身。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 namespace core {

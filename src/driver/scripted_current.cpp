@@ -2,6 +2,15 @@
 #include <foc/driver/scripted_current.hpp>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_driver
+ * @file scripted_current.cpp
+ *
+ * @brief [en] Implements the scripted current source: the SIL tests replay a recorded trace through it.
+ * @brief [zh] 脚本化电流源的实现：SIL 测试通过它重放一段录下来的轨迹。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 namespace driver {

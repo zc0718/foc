@@ -4,6 +4,15 @@
 #include <foc/core/types.hpp>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_core
+ * @file auto_tune.hpp
+ *
+ * @brief [en] The speed-loop tuner's contract: what it is asked for, what it reports, and what it is allowed to trust.
+ * @brief [zh] 速度环整定器的契约：被要求什么、回报什么，以及它被允许相信什么。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 namespace core {

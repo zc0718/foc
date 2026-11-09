@@ -2,6 +2,15 @@
 #include <foc/core/single_shunt.hpp>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_core
+ * @file single_shunt.cpp
+ *
+ * @brief [en] Implements the single-shunt reconstruction: ranking the three duties and placing the sample where the shunt can see it.
+ * @brief [zh] 单电阻重构的实现：给三相占空比排序，并把采样点放在电阻看得见的位置。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 namespace core {

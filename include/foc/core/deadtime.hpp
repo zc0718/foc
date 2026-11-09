@@ -6,6 +6,15 @@
 #include <foc/core/types.hpp>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_core
+ * @file deadtime.hpp
+ *
+ * @brief [en] The dead-time estimate a compensator needs, and how it fades as the current leaves zero.
+ * @brief [zh] 死区补偿所需的死区估计，以及它随电流离开零点如何淡出。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 namespace core {

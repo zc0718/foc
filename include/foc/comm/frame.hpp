@@ -4,6 +4,15 @@
 #include <cstdint>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_comm
+ * @file frame.hpp
+ *
+ * @brief [en] The byte-level wire contract: a frame layout, its status, and a checker that keeps sequence numbers honest.
+ * @brief [zh] 字节级链路契约：帧布局、帧状态，以及让序号保持诚实的校验器。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 namespace comm {

@@ -5,6 +5,15 @@
 #include <cmath>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_core
+ * @file position.cpp
+ *
+ * @brief [en] Implements the position slot: target, velocity ceiling and acceleration shaping, one step at a time.
+ * @brief [zh] 位置槽位的实现：目标、速度上限与加速度整形，一次一步。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 namespace core {

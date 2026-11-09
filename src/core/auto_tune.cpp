@@ -2,6 +2,15 @@
 #include <foc/core/auto_tune.hpp>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_core
+ * @file auto_tune.cpp
+ *
+ * @brief [en] Implements the speed-loop tuner: two ratios solved from a window, and the refusals that keep a number from pretending to be a measurement.
+ * @brief [zh] 速度环整定器的实现：从一段窗口解出两个比值，以及那些不让数字冒充测量值的拒绝。
+ * @since 0.1.0
+ */
+
 #include <cmath>
 
 namespace foc {

@@ -3,6 +3,15 @@
 #include <foc/core/types.hpp>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_hal
+ * @file current_sense.hpp
+ *
+ * @brief [en] The three-phase current sensing contract, including what it must do while the shunt cannot see the current.
+ * @brief [zh] 三相电流采样契约，包括采样电阻看不见电流时它必须做什么。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 namespace hal {

@@ -2,6 +2,15 @@
 #include <foc/core/min_pulse.hpp>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_core
+ * @file min_pulse.cpp
+ *
+ * @brief [en] Implements the driver rule for one phase: the narrowest pulse it can transmit, on a clamped duty.
+ * @brief [zh] 单相驱动规则的实现：在已钳位的占空比上，它所能传输的最窄脉冲。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 namespace core {

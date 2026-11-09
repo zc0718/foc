@@ -6,6 +6,15 @@
 #include <foc/core/types.hpp>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_core
+ * @file homing.hpp
+ *
+ * @brief [en] The homing search: its states, failures, configuration and the routine that advances them.
+ * @brief [zh] 回零搜索：状态、失败、配置与推进它们的例程。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 namespace core {

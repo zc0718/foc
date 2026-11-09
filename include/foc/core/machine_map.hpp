@@ -6,6 +6,15 @@
 #include <foc/core/machine_params.hpp>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_core
+ * @file machine_map.hpp
+ *
+ * @brief [en] The magnetisation map of a machine: rows of current, inductance and flux that the observer interpolates.
+ * @brief [zh] 电机的磁化表：按电流、电感、磁链给出的行，供观测器插值。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 namespace core {

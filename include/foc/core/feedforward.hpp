@@ -4,6 +4,15 @@
 #include <foc/core/types.hpp>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_core
+ * @file feedforward.hpp
+ *
+ * @brief [en] The feedforward stage's input, its null form, and the decoupling implementation that consumes it.
+ * @brief [zh] 前馈级的输入、其空实现，以及消费它的解耦实现。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 namespace core {

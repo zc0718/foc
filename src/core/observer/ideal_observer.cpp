@@ -2,6 +2,15 @@
 #include <foc/core/observer/ideal_observer.hpp>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_core
+ * @file ideal_observer.cpp
+ *
+ * @brief [en] Implements the SIL-only ideal observer: it reports the plant angle and speed, and refuses to pretend it measured them.
+ * @brief [zh] 仅 SIL 用的理想观测器实现：直接报出被控对象的角度与转速，并且不假装那是测出来的。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 namespace core {

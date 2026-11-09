@@ -3,6 +3,15 @@
 #include <foc/core/types.hpp>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_core
+ * @file pi.hpp
+ *
+ * @brief [en] The proportional-integral regulator, with per-call gain scaling: how hard the drive resists, for this call only.
+ * @brief [zh] PI 调节器，带逐调用增益缩放：本次调用里驱动抵抗得多硬。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 namespace core {

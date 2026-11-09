@@ -10,6 +10,15 @@
 #include <foc/hal/pwm.hpp>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_driver
+ * @file callback_hal.hpp
+ *
+ * @brief [en] The five HAL operations a host supplies as plain C calls, and the policy that turns them into foc_hal.
+ * @brief [zh] 宿主以普通 C 调用提供的五个 HAL 操作，以及把它们变成 foc_hal 的策略。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 namespace driver {

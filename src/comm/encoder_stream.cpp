@@ -2,6 +2,15 @@
 #include <foc/comm/encoder_stream.hpp>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_comm
+ * @file encoder_stream.cpp
+ *
+ * @brief [en] Implements the bit-oriented encoder frame: packing, the CRC the register can hold, and unwrapping.
+ * @brief [zh] 位序编码器帧的实现：打包、寄存器装得下的那道 CRC，以及回绕解算。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 namespace comm {

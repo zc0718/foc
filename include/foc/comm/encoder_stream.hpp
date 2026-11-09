@@ -5,6 +5,15 @@
 #include <foc/core/types.hpp>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_comm
+ * @file encoder_stream.hpp
+ *
+ * @brief [en] The bit-level contract for reading an absolute encoder off a serial stream: its layout, one frame, and the assembly across turns.
+ * @brief [zh] 从串行码流读绝对编码器的位级契约：布局、单帧，以及跨圈拼装。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 namespace comm {

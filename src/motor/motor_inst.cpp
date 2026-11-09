@@ -7,6 +7,15 @@
 #include <foc/driver/stub_hal.hpp>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_motor
+ * @file motor_inst.cpp
+ *
+ * @brief [en] Instantiates the default motor composition, so the C path links against one set of symbols.
+ * @brief [zh] 显式实例化默认电机组合，使 C 路径链接到同一套符号。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 namespace motor {

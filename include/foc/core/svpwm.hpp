@@ -4,6 +4,15 @@
 #include <foc/core/types.hpp>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_core
+ * @file svpwm.hpp
+ *
+ * @brief [en] The modulator: one evaluation's result, the input it is given, and the SVPWM that produces both.
+ * @brief [zh] 调制器：一次求值的结果、喂给它的输入，以及产生两者的 SVPWM。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 namespace core {

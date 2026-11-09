@@ -9,6 +9,15 @@
 #include <foc/core/types.hpp>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_core
+ * @file board_check.hpp
+ *
+ * @brief [en] Board checks as numbers: what was measured, what the limits are, and what each item concluded.
+ * @brief [zh] 以数字表达的台架检查：测到了什么、限值是多少、每一条得出什么结论。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 namespace core {

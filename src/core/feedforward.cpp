@@ -2,6 +2,15 @@
 #include <foc/core/feedforward.hpp>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_core
+ * @file feedforward.cpp
+ *
+ * @brief [en] Implements the feedforward sum: the terms a policy contributes, added in the documented order.
+ * @brief [zh] 前馈求和的实现：各策略贡献的项，按文档写明的次序相加。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 namespace core {

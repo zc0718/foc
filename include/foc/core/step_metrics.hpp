@@ -5,6 +5,15 @@
 #include <foc/core/types.hpp>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_core
+ * @file step_metrics.hpp
+ *
+ * @brief [en] What a recorded step response actually did, in numbers a tuning decision can rest on.
+ * @brief [zh] 一次阶跃响应的实测结果，用可供整定决策依托的数字表示。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 namespace core {

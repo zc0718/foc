@@ -4,6 +4,15 @@
 #include <foc/core/transforms.hpp>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_core
+ * @file filters.cpp
+ *
+ * @brief [en] Implements the first-order low-pass: the coefficient from cutoff and period, then the state update.
+ * @brief [zh] 一阶低通的实现：由截止频率与周期算出系数，再推进状态。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 namespace core {

@@ -2,6 +2,15 @@
 #include <foc/core/mtpv.hpp>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_core
+ * @file mtpv.cpp
+ *
+ * @brief [en] Implements the MTPV solution: the stationarity condition, its domain, and the fallback outside it.
+ * @brief [zh] MTPV 求解的实现：驻点条件、它的定义域，以及域外的回退。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 namespace core {

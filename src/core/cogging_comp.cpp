@@ -2,6 +2,15 @@
 #include <foc/core/cogging_comp.hpp>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_core
+ * @file cogging_comp.cpp
+ *
+ * @brief [en] Implements the cogging table: lookup by mechanical angle and the per-order torque sum.
+ * @brief [zh] 齿槽表的实现：按机械角查表，以及逐次转矩求和。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 namespace core {

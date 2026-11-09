@@ -4,6 +4,15 @@
 #include <foc/core/types.hpp>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_core
+ * @file ideal_observer.hpp
+ *
+ * @brief [en] The observer that is right on purpose: it reports the plant's true angle and speed, for SIL only.
+ * @brief [zh] 故意「直接正确」的观测器：报告台架真实角度与转速，仅用于 SIL。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 namespace core {

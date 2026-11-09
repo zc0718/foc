@@ -4,6 +4,15 @@
 #include <foc/core/types.hpp>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_core
+ * @file alignment.hpp
+ *
+ * @brief [en] The rotor-alignment sequence as a state machine: its states, failures, configuration and the null form.
+ * @brief [zh] 转子对齐序列的状态机：状态、失败、配置及其空实现。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 namespace core {

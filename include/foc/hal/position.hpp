@@ -2,6 +2,15 @@
 #pragma once
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_hal
+ * @file hal/position.hpp
+ *
+ * @brief [en] The rotor position and velocity source the observers are corrected against.
+ * @brief [zh] 供观测器校正的转子位置与转速来源。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 namespace hal {

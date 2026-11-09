@@ -4,6 +4,15 @@
 #include <foc/core/types.hpp>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_motor
+ * @file foc_loop.hpp
+ *
+ * @brief [en] One frame of the current loop, in the order the hardware needs it.
+ * @brief [zh] 电流环的一帧，按硬件要求的顺序排列。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 namespace motor {

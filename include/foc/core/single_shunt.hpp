@@ -7,6 +7,15 @@
 #include <foc/core/types.hpp>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_core
+ * @file single_shunt.hpp
+ *
+ * @brief [en] What a single shunt can measure in one period, and the reconstruction built on that answer.
+ * @brief [zh] 单电阻在一个周期里能量到什么，以及建立在这个答案上的重构。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 namespace core {

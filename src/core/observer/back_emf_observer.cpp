@@ -6,6 +6,15 @@
 #include <foc/core/transforms.hpp>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_core
+ * @file back_emf_observer.cpp
+ *
+ * @brief [en] Implements the back-EMF flux observer: open-loop integration of `v - Rs*i`, seeded from the nameplate.
+ * @brief [zh] 反电动势磁链观测器的实现：对 `v - Rs*i` 做开环积分，用铭牌播种。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 namespace core {

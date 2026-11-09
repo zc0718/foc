@@ -2,6 +2,15 @@
 #include <foc/core/thermal_limit.hpp>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_core
+ * @file thermal_limit.cpp
+ *
+ * @brief [en] Implements the thermal limit: the steady-state root of the loss equation and the time budget to it.
+ * @brief [zh] 热限值的实现：损耗方程的稳态根，以及到达它的时间预算。
+ * @since 0.1.0
+ */
+
 #include <cmath>
 #include <limits>
 

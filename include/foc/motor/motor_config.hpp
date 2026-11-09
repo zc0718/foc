@@ -6,6 +6,15 @@
 #include <foc/core/position.hpp>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_motor
+ * @file motor_config.hpp
+ *
+ * @brief [en] The nameplate of one motor in SI units, populated once at construction.
+ * @brief [zh] 一台电机的铭牌参数，SI 单位，构造时一次填好。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 namespace motor {

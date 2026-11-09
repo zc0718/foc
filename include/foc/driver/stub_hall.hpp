@@ -4,6 +4,15 @@
 #include <foc/hal/hall.hpp>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_driver
+ * @file stub_hall.hpp
+ *
+ * @brief [en] A hall sensor whose code is settable from the outside.
+ * @brief [zh] 编码可由外部设定的霍尔传感器。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 namespace driver {

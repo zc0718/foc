@@ -5,6 +5,15 @@
 #include <foc/core/types.hpp>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_core
+ * @file position_reference.hpp
+ *
+ * @brief [en] A continuous mechanical angle built from an electrical estimate, with an index mark to fix its origin.
+ * @brief [zh] 由电气角估计拼出的连续机械角，并用索引标记固定原点。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 namespace core {

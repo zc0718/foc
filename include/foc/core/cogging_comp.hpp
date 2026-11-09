@@ -6,6 +6,15 @@
 #include <foc/core/types.hpp>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_core
+ * @file cogging_comp.hpp
+ *
+ * @brief [en] The cogging-torque compensator: one harmonic's coefficients, the input it reads, and what it adds to the reference.
+ * @brief [zh] 齿槽转矩补偿器：单个谐波的系数、它读取的输入，以及它叠加到指令上的量。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 namespace core {

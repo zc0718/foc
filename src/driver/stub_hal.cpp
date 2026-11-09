@@ -2,6 +2,15 @@
 #include <foc/driver/stub_hal.hpp>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_driver
+ * @file stub_hal.cpp
+ *
+ * @brief [en] Implements the HalPolicy assembled from the reference stubs, with each stub resettable on its own.
+ * @brief [zh] 由参考桩件组装成的 HalPolicy 实现，每个桩件都能单独复位。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 namespace driver {

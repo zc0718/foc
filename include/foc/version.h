@@ -2,6 +2,15 @@
 #pragma once
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_core
+ * @file version.h
+ *
+ * @brief [en] The version string the package reports, as a query a C caller can make.
+ * @brief [zh] 包所报告的版本字符串，以 C 调用方可发起的查询形式给出。
+ * @since 0.1.0
+ */
+
 
 /**
  * @brief [en] Version string of the foc library, e.g. "0.1.0". Kept in sync with metadata.json.

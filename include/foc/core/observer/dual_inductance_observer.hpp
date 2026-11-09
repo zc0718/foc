@@ -7,6 +7,15 @@
 #include <foc/core/types.hpp>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_core
+ * @file dual_inductance_observer.hpp
+ *
+ * @brief [en] The dual-inductance flux observer: two current models, each valid where the other is not.
+ * @brief [zh] 双电感磁链观测器：两个电流模型，各自在对方失效的地方有效。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 namespace core {

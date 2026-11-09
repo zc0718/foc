@@ -7,6 +7,15 @@
 #include <foc/hal/current_sense.hpp>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_driver
+ * @file scripted_current.hpp
+ *
+ * @brief [en] A current sensor that replays a scripted sequence, so a test can say what it saw.
+ * @brief [zh] 回放脚本化序列的电流传感器，让用例能指定它「看到」什么。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 namespace driver {

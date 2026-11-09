@@ -7,6 +7,15 @@
 #include <foc/core/types.hpp>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_core
+ * @file soft_limit.hpp
+ *
+ * @brief [en] The window an axis is allowed to occupy, and how the command is bent as it reaches the edge.
+ * @brief [zh] 轴被允许占据的窗口，以及指令临近边界时如何被弯折。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 namespace core {

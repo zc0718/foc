@@ -5,6 +5,15 @@
 #include <foc/motor/motor_config.hpp>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_motor
+ * @file torque_map.hpp
+ *
+ * @brief [en] The nameplate restated in the units a customer thinks in: newton-metres per amp, and the limits that cap it.
+ * @brief [zh] 用客户习惯的单位重述的铭牌：每安培牛顿米，以及限制它的两个上限。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 

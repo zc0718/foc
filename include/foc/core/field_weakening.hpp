@@ -6,6 +6,15 @@
 #include <foc/core/types.hpp>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_core
+ * @file field_weakening.hpp
+ *
+ * @brief [en] Whether field weakening is worth building for this machine, as advice, and the reference stage that acts on it.
+ * @brief [zh] 弱磁对这台电机是否值得构建——以建议的形式给出，以及照此动作的参考级。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 namespace core {

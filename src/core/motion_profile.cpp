@@ -5,6 +5,15 @@
 #include <cmath>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_core
+ * @file motion_profile.cpp
+ *
+ * @brief [en] Implements the position controller that shapes its own velocity command before the speed loop sees it.
+ * @brief [zh] 位置控制器的实现：在速度环看到之前，先自己整形速度指令。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 namespace core {

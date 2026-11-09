@@ -7,6 +7,15 @@
 #include <foc/core/types.hpp>
 // Conan::ImportEnd
 
+/*!
+ * @ingroup group_core
+ * @file blended_observer.hpp
+ *
+ * @brief [en] The shortest-arc blend between two angle estimates, and the wrapped difference it is built on.
+ * @brief [zh] 两个角度估计之间的最短弧混合，以及它所依据的绕回差值。
+ * @since 0.1.0
+ */
+
 namespace foc {
 
 namespace core {
