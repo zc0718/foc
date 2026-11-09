@@ -94,6 +94,30 @@ PATTERNS = (
 # The one escape hatch, and it has to be visible in the block itself.
 TOLERANCE = re.compile(r'\bHistory\b')
 
+# Private work codes: a register letter and a number that only the ledger can resolve. No
+# legitimate use exists in a shipped surface, so this needs no allowance and no tuning -- measured
+# before it was written: `\b[FCA]-\d+\b` matched 25 lines across `include/`, `src/` and `api/**`,
+# every one of them a citation of an internal entry.
+#
+# Two labels that look like candidates and are deliberately **not** in this family, because
+# measuring said so:
+#   * `L1`..`L4` are the evidence levels, defined in the README legend and used as vocabulary.
+#   * `S1`..`S9` and `U1`..`U8` numbered visible lists (the task pages, the honest limits), which a
+#     reader resolves by scrolling. They were renamed for tone, not because they were unreadable.
+ID_PATTERNS = (
+    ('private-id', re.compile(r'\b[FCA]-\d+\b')),
+    # The same defect in two more shapes: the review passes were numbered `O-1`.. and the planning
+    # rounds `W7-a`, and both were cited in prose exactly as the register codes were. The planning
+    # form keeps its letter suffix in the rule (`W7` alone is a wattage as often as a round).
+    ('private-id', re.compile(r'\bO-\d+\b')),
+    ('private-id', re.compile(r'\bW\d+-[a-z]\b')),
+    # The planning document was cited by name too. A bare erratum number (`D24`) is **not** in this
+    # family: it cannot be told apart from a diode designator, so that family is covered by editing
+    # only -- measured at two sites, both in `include/`, and both rewritten.
+    ('private-id', re.compile(r'\bPRD\b')),
+)
+
+
 
 def blocks_of(text: str, suffix: str) -> list[tuple[int, str]]:
     """(first line number, block text) units. A Doxygen block for source, a paragraph for prose.
@@ -121,16 +145,16 @@ def blocks_of(text: str, suffix: str) -> list[tuple[int, str]]:
     return out
 
 
-def violations_of(path: Path) -> list[dict]:
+def violations_of(path: Path, patterns=PATTERNS, honour_tolerance: bool = True) -> list[dict]:
     """Every offending line in one file, with the block it belongs to."""
     found: list[dict] = []
     suffix = path.suffix
     text = path.read_text(encoding='utf-8')
     for start, block in blocks_of(text, suffix):
-        if TOLERANCE.search(block):
+        if honour_tolerance and TOLERANCE.search(block):
             continue
         for offset, line in enumerate(block.splitlines()):
-            for kind, pattern in PATTERNS:
+            for kind, pattern in patterns:
                 if pattern.search(line):
                     found.append({
                         'file': path.relative_to(ROOT).as_posix(),
@@ -148,8 +172,8 @@ def is_exempt(rel: str) -> str | None:
     return None
 
 
-def scan() -> tuple[list[dict], list[str]]:
-    """(violations, problems with the setup itself)."""
+def scan() -> tuple[list[dict], list[dict], list[str]]:
+    """(diary violations, private-id violations, problems with the setup itself)."""
     problems: list[str] = []
     for prefix in EXEMPT:
         if not (ROOT / prefix).exists():
@@ -157,6 +181,15 @@ def scan() -> tuple[list[dict], list[str]]:
                             f'rule that no longer has a reason keeps not applying')
 
     found: list[dict] = []
+    ids: list[dict] = []
+
+    def visit(path: Path, exempt: bool) -> None:
+        # The date/ordinal/colloquial rules honour the exemption; the private-code family
+        # does not. See the module docstring for why that is not a loophole.
+        ids.extend(violations_of(path, ID_PATTERNS, honour_tolerance=False))
+        if not exempt:
+            found.extend(violations_of(path))
+
     for name in SPEC_DIRS:
         base = ROOT / name
         if not base.is_dir():
@@ -164,22 +197,16 @@ def scan() -> tuple[list[dict], list[str]]:
             continue
         for path in sorted(base.rglob('*')):
             if path.suffix in SPEC_SUFFIXES and path.is_file():
-                found += violations_of(path)
+                visit(path, exempt=False)
     if GUIDE_DIR.is_dir():
         for path in sorted(GUIDE_DIR.rglob('*.rst')):
-            rel = path.relative_to(ROOT).as_posix()
-            if is_exempt(rel):
-                continue
-            found += violations_of(path)
+            visit(path, exempt=bool(is_exempt(path.relative_to(ROOT).as_posix())))
     else:
         problems.append('docs/sphinx/source/ is missing')
 
     for path in sorted((ROOT / 'api').rglob('*.md')) if (ROOT / 'api').is_dir() else []:
-        rel = path.relative_to(ROOT).as_posix()
-        if is_exempt(rel):
-            continue
-        found += violations_of(path)
-    return found, problems
+        visit(path, exempt=bool(is_exempt(path.relative_to(ROOT).as_posix())))
+    return found, ids, problems
 
 
 def counts(found: list[dict]) -> dict[str, int]:
@@ -189,22 +216,28 @@ def counts(found: list[dict]) -> dict[str, int]:
     return out
 
 
-def read_baseline() -> tuple[dict[str, int], list[str]]:
+def read_baseline() -> tuple[dict[str, int], dict[str, int], list[str]]:
+    """(diary counts, private-id counts, problems). Two maps, one file."""
     if not BASELINE.is_file():
-        return {}, [f'{BASELINE.name} is missing; run with --baseline']
+        return {}, {}, [f'{BASELINE.name} is missing; run with --baseline']
     data = json.loads(BASELINE.read_text(encoding='utf-8'))
-    per_file = data.get('per_file')
-    if not isinstance(per_file, dict):
-        return {}, [f'{BASELINE.name} has no `per_file` map']
-    return {str(k): int(v) for k, v in per_file.items()}, []
+    problems: list[str] = []
+    out: list[dict[str, int]] = []
+    for key in ('per_file', 'private_id_per_file'):
+        per_file = data.get(key)
+        if not isinstance(per_file, dict):
+            problems.append(f'{BASELINE.name} has no `{key}` map')
+            per_file = {}
+        out.append({str(k): int(v) for k, v in per_file.items()})
+    return out[0], out[1], problems
 
 
-def judge(now: dict[str, int], base: dict[str, int]) -> list[str]:
+def judge(now: dict[str, int], base: dict[str, int], what: str = 'diary line') -> list[str]:
     problems = []
     for path, count in sorted(now.items()):
         allowed = base.get(path, 0)
         if count > allowed:
-            problems.append(f'{path}: {count} diary line(s), baseline allows {allowed}')
+            problems.append(f'{path}: {count} {what}(s), baseline allows {allowed}')
     return problems
 
 
@@ -225,6 +258,26 @@ def selftest() -> int:
          '/**\n * this accessor is used to seed the observer before a run\n */', False),
         ('a paragraph without a date', 'docs/sphinx/source/x.rst', 'Just prose.\n', False),
     ]
+    id_cases = [
+        ('a private code in a spec block', 'include/x.hpp',
+         '/**\n * the same shape as F-40, which is why\n */', True),
+        ('a private code in the ledger', 'docs/sphinx/source/foundation-log.rst',
+         'Root cause here (A-110).\n', True),
+        ('the escape hatch does not cover a code', 'include/x.hpp',
+         '/**\n * @note History: measured, see C-7\n */', True),
+        ('an evidence level is not a private code', 'include/x.hpp',
+         '/**\n * an L2 statement, not an L4 one\n */', False),
+        ('a review pass number is a private code', 'docs/sphinx/source/x.rst',
+         'It reaches L3 through the pass, O-13, which named a different question.\n', True),
+        ('a planning round is a private code', 'docs/sphinx/source/x.rst',
+         'The leg has not linked since W7-a.\n', True),
+        ('the planning document is not to be named', 'include/x.hpp',
+         '/**\n * the target is PRD U6\n */', True),
+        ('a wattage is not a private code', 'include/x.hpp',
+         '/**\n * a 2 W7 allowance would be a different sentence\n */', False),
+        ('a list label is not a private code', 'docs/sphinx/source/x.rst',
+         'See the honest limits, U8.\n', False),
+    ]
     failures = 0
     for name, rel, text, want in cases:
         suffix = Path(rel).suffix
@@ -242,6 +295,22 @@ def selftest() -> int:
         print(f'[docvoice-selftest] {"ok  " if ok else "MISS"} {name}: '
               f'{"caught" if hit else "clean"} (wanted {"caught" if want else "clean"})')
 
+    for name, rel, text, want in id_cases:
+        suffix = Path(rel).suffix
+        got = []
+        for start, block in blocks_of(text, suffix):
+            for offset, line in enumerate(block.splitlines()):
+                for kind, pattern in ID_PATTERNS:
+                    if pattern.search(line):
+                        got.append((start + offset, kind))
+        hit = bool(got)
+        ok = hit == want
+        failures += 0 if ok else 1
+        print(f'[docvoice-selftest] {"ok  " if ok else "MISS"} {name}: '
+              f'{"caught" if hit else "clean"} (wanted {"caught" if want else "clean"})')
+
+    total_cases = len(cases) + len(id_cases)
+
     base = judge({'a.hpp': 2, 'b.hpp': 1}, {'a.hpp': 2, 'b.hpp': 3})
     ok = base == []
     failures += 0 if ok else 1
@@ -252,7 +321,13 @@ def selftest() -> int:
     failures += 0 if ok else 1
     print(f'[docvoice-selftest] {"ok  " if ok else "MISS"} one above baseline: {rose}')
 
-    print(f'[docvoice-selftest] {len(cases) + 2 - failures} / {len(cases) + 2} judgement(s) as expected')
+    rose = judge({'a.rst': 1}, {}, what='private code')
+    ok = len(rose) == 1 and 'private code(s)' in rose[0]
+    failures += 0 if ok else 1
+    print(f'[docvoice-selftest] {"ok  " if ok else "MISS"} a private code with no baseline: {rose}')
+
+    print(f'[docvoice-selftest] {total_cases + 3 - failures} / {total_cases + 3} '
+          f'judgement(s) as expected')
     return 1 if failures else 0
 
 
@@ -267,11 +342,13 @@ def main(argv: list[str]) -> int:
     if args.selftest:
         return selftest()
 
-    found, problems = scan()
+    found, ids, problems = scan()
     now = counts(found)
-    base, more = read_baseline()
+    id_now = counts(ids)
+    base, id_base, more = read_baseline()
     problems += more
     problems += judge(now, base)
+    problems += judge(id_now, id_base, what='private code')
 
     if args.baseline:
         BASELINE.write_text(json.dumps({
@@ -280,15 +357,20 @@ def main(argv: list[str]) -> int:
                 'way: a file may fall below its number freely, and may not rise. Re-run with --baseline in',
                 'the same commit that changes a number, so the number in the diff is one somebody decided on.',
                 'The ledger (foundation-log.rst) is exempt by EXEMPT in docvoice_gate.py, not by absence here.',
+                '`private_id_per_file` is the same ratchet for internal work codes (`F-40`, `A-110`). It is',
+                'kept in a separate map because EXEMPT does not apply to it: dates are the ledger\'s content,',
+                'but the codes are not.',
             ],
-            'recorded': '2026-11-06',
+            'recorded': '2026-11-09',
             'per_file': now,
+            'private_id_per_file': id_now,
         }, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
-        print(f'[docvoice] froze {sum(now.values())} line(s) across {len(now)} file(s)')
+        print(f'[docvoice] froze {sum(now.values())} diary line(s) across {len(now)} file(s)')
+        print(f'[docvoice] froze {sum(id_now.values())} private code(s) across {len(id_now)} file(s)')
         return 0
 
     if args.list or problems:
-        for item in found:
+        for item in found + ids:
             print(f'[docvoice] {item["file"]}:{item["line"]} {item["kind"]}: {item["text"]}')
     total = sum(now.values())
     if problems:
@@ -296,8 +378,10 @@ def main(argv: list[str]) -> int:
             print(f'[docvoice] FAIL {problem}', file=sys.stderr)
         print(f'[docvoice] FAIL ({len(problems)} problem(s))')
         return 1
-    print(f'[docvoice] OK ({total} diary line(s), at or below baseline in every file; '
-          f'registers: {" + ".join(SPEC_DIRS)}, docs/sphinx/source/** except the declared exemptions)')
+    print(f'[docvoice] OK ({total} diary line(s), {sum(id_now.values())} private code(s), '
+          f'at or below baseline in every file; '
+          f'registers: {" + ".join(SPEC_DIRS)}, docs/sphinx/source/** except the declared exemptions, '
+          f'plus the private-code family over the exemptions too)')
     return 0
 
 

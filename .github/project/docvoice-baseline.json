@@ -3,9 +3,12 @@
     "Per-file count of diary sentences in the spec and guide registers. The ratchet runs one",
     "way: a file may fall below its number freely, and may not rise. Re-run with --baseline in",
     "the same commit that changes a number, so the number in the diff is one somebody decided on.",
-    "The ledger (foundation-log.rst) is exempt by EXEMPT in docvoice_gate.py, not by absence here."
+    "The ledger (foundation-log.rst) is exempt by EXEMPT in docvoice_gate.py, not by absence here.",
+    "`private_id_per_file` is the same ratchet for internal work codes (`F-40`, `A-110`). It is",
+    "kept in a separate map because EXEMPT does not apply to it: dates are the ledger's content,",
+    "but the codes are not."
   ],
-  "recorded": "2026-11-06",
+  "recorded": "2026-11-09",
   "per_file": {
     "include/foc/core/field_weakening.hpp": 2,
     "include/foc/core/hall.hpp": 1,
@@ -14,6 +17,7 @@
     "include/foc/core/speed_from_angle.hpp": 1,
     "include/foc/core/watchdog.hpp": 2,
     "include/foc/motor/motor.hpp": 2,
-    "src/api/bridge.cpp": 4
-  }
+    "src/api/bridge.cpp": 3
+  },
+  "private_id_per_file": {}
 }
