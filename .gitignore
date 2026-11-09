@@ -32,6 +32,12 @@ __pycache__/
 /docs/sphinx/build/
 /docs/sphinx/source/_static
 /docs/sphinx/source/_templates
+# /docs/sphinx/locales/ is NOT tracked any more: `docs/build.py` regenerates it on every run
+# (make gettext + sphinx-intl update), so it is build output, not source. The 2026-11-09
+# translation set (25 po + 25 mo, 25 % filled) was archived as a draft under
+# /workspace/drafts/2026-11-09-sphinx-locales-draft/ with restore instructions. Ignoring the
+# path is what keeps a `git add -A` from publishing half-filled translations.
+/docs/sphinx/locales/
 
 # /examples/ is NOT a home for this repo: the FMU lives in /api/fmu/ (wrapper, build,
 # smoke, modelDescription) and docs demos live in /docs/demos/. A duplicate wrapper was
