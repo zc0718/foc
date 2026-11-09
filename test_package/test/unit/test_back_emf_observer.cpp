@@ -248,11 +248,11 @@ auto probe_run(float omega, float iq, float rs_hat, float i_offset_a, int steps)
  *   be calibrated out before this observer is trusted, and it is the number the README row now carries.
  *
  *   这个观测器是纯积分——`ψ += (v − Rs·i)·dt − L·di`， **没有修正项** ——所以唯一要紧的问题是哪些输入误差会累积、哪些不
- *   会。实测（`Rs = 0.5`、`L = 8e-4`、`ψf = 4.7619e-3`、`dt = 50 µs`）见上表。两个可操作的结论：**参数误差是偏置而不是
- *   跑飞**——10 % 的 `Rs` 误差在 200 rad/s 花 0.19 rad、转速更高时更小，所以诚实的规格是"有界， `ε·Rs·iq/(ω·ψf)`（在它还
- *   很小时）"，而本用例把这条律失效的地方也记下来了（50 rad/s 那行，误差饱和到 π）。 **传感器偏置才是跑飞的那一个** ：
- *   它每步都以恒定电压误差进入、永不反向地积分，50 mA 的偏置 100 ms 就把估计推出 0.71 rad。所以信任这个观测器之前必须先
- *   把电流零偏标定掉，而这个数就是 README 行现在带着的那个。
+ *   会。实测（`Rs = 0.5`、`L = 8e-4`、`ψf = 4.7619e-3`、`dt = 50 µs`）见上表。两个可操作的结论：
+ *   **参数误差是偏置而不是跑飞** ——10 % 的 `Rs` 误差在 200 rad/s 花 0.19 rad、转速更高时更小，所以诚实的规格是"有界，
+ *   `ε·Rs·iq/(ω·ψf)`（在它还很小时）"，而本用例把这条律失效的地方也记下来了（50 rad/s 那行，误差饱和到 π）。
+ *   **传感器偏置才是跑飞的那一个** ：它每步都以恒定电压误差进入、永不反向地积分，50 mA 的偏置 100 ms 就把估计推出 0.71
+ *   rad。所以信任这个观测器之前必须先把电流零偏标定掉，而这个数就是 README 行现在带着的那个。
  */
 TEST(BackEmfObserver, TheResidueIsOneStepAndOnlyADcOffsetRunsAway) {
     // Row 1: the exact model leaves exactly one step of rotation, whatever the speed.
@@ -320,7 +320,7 @@ TEST(BackEmfObserver, TheResidueIsOneStepAndOnlyADcOffsetRunsAway) {
  *   where the two are far apart. The second half is what proves the case can tell the two apart at all.
  *
  *   此前没有任何东西调用过这个观测器的 `apply_params()`，而这里比别处更要紧：该方法在 **单一 L** 模型上设置 `config_.l
- *   = params.lq`，所以在任何 `Ld != Lq` 的机器上，观测器是被**有意**告知用 q 轴值的。这个选择正是 `i_d != 0` 工况由
+ *   = params.lq`，所以在任何 `Ld != Lq` 的机器上，观测器是被 **有意** 告知用 q 轴值的。这个选择正是 `i_d != 0` 工况由
  *   `combinations.json` 里的比率额度而不是由模型处理的原因，而它从未被一个用例钉住——一个取 `ld` 的版本会通过所有已有测
  *   试。
  *

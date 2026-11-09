@@ -102,8 +102,9 @@ struct BusParams final {
  *            -- it has an account that cannot go wrong, which is the shape this repository keeps finding. `accountable`
  *            says which of the two this run is, so a reader does not have to infer it.
  * @note [zh] `residual_j` 才是重点：它是守恒律 **解释不了** 的那部分。有电容时它是积分误差，必须很小；理想源时它是一个
- *            真实电容本该吸收的能量，而一段对理想源报出 `residual_j == 0` 的运行什么都没有测到——它只有一本 **不可能出错
- *            ** 的账，而这正是本仓库反复发现的形状。`accountable` 直接说明这次运行属于哪一种，读者不必去推断。
+ *            真实电容本该吸收的能量，而一段对理想源报出 `residual_j == 0` 的运行什么都没有测到——它只有一本
+ *            **不可能出错** 的账，而这正是本仓库反复发现的形状。`accountable` 直接说明这次运行属于哪一种，读者不必去推
+ *            断。
  * @since 0.1.0
  * @exporter
  */

@@ -408,7 +408,7 @@ typedef struct foc_motor_status {
      *
      * @brief [zh] 以索引标记为基准的机械角，rad。
      *
-     *   追加字段，由 struct_size 门控。**仅在 `homed` 为 1 且 `lost_count` 为 0 时 有效**——第一次索引之前它读 0，而 0
+     *   追加字段，由 struct_size 门控。 **仅在 `homed` 为 1 且 `lost_count` 为 0 时 有效** ——第一次索引之前它读 0，而 0
      *   是合法机械角，所以单看这个值分不出「回零后停在原点」与「从未回过零」。 请优先用
      *   `foc_motor_get_position_absolute()`，它在那种情形拒绝而不是返回那个 0。
      */

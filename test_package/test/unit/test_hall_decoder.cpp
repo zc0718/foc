@@ -147,8 +147,8 @@ auto frozen_plant() -> foc::sil::PlantParams {
  *
  *     The duties are turned into phase volts the way an inverter would, Clarke'd, and Parked at the rotor -- so the
  *     number that comes out is the torque the machine actually makes in that commutation state at that rotor position.
- *     把占空比按逆变器的方式变成相电压，Clarke，再按转子角 Park——于是出来的数是机器在那个换相状态、那个转子位置下**真的
- *     ** 产生的力矩。
+ *     把占空比按逆变器的方式变成相电压，Clarke，再按转子角 Park——于是出来的数是机器在那个换相状态、那个转子位置下
+ *     **真的** 产生的力矩。
  */
 auto held_state_current(const foc::sil::PlantParams &params, std::uint8_t code, float theta_e_rad,
                         foc::core::HallDirection direction, float amplitude, float v_bus) -> foc::core::Dq<float> {
@@ -744,10 +744,10 @@ TEST(HallTracker, TheClampHoldsOnTheLowerBoundaryWhichOnlyAReversalVisits) {
  *   个误差（三个传感器手工装在一个支架上，各差几度）。`HallSetup::mount_error_rad` 就是为这个存在的，而它从来没被设成过
  *   非零值。
  *
- *   实测（健康组、300 rad/s 电角、6.25e-5 s 采样、120 ms 窗口，基线 0.696° rms / 1.211° 最大值）见上表。两个系数：**刚
- *   性旋转下最坏误差一比一增长**——最大值减基线在 2/4/8° 下是 1.988/3.976/8.002°，即 0.994/0.994/1.000，因为转动传感器组
- *   就是转动坐标； **单只装歪时 rms 约为四分之三** （0.679/0.752/0.751），因为只有它辖下两条边界动了、六个扇区里四个原
- *   地不动。
+ *   实测（健康组、300 rad/s 电角、6.25e-5 s 采样、120 ms 窗口，基线 0.696° rms / 1.211° 最大值）见上表。两个系数：
+ *   **刚性旋转下最坏误差一比一增长** ——最大值减基线在 2/4/8° 下是 1.988/3.976/8.002°，即 0.994/0.994/1.000，因为转动传
+ *   感器组就是转动坐标； **单只装歪时 rms 约为四分之三** （0.679/0.752/0.751），因为只有它辖下两条边界动了、六个扇区里
+ *   四个原地不动。
  *
  *   反直觉的那一半也断言，因为它决定支架该怎么造：同样偏移下单只装歪的 **最坏** 误差比刚性更大（2° 时 5.105° 对
  *   3.199° ），达到偏移的 1.9–2.6 倍——受影响的两个扇区里插值锚在一条整体偏了一个偏移量的边界上，于是误差先翻倍，直到下

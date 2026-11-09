@@ -94,8 +94,8 @@ inline auto nominal_spec() -> MachineSpec {
  * @note [zh] 为什么需要第二份档案，一句话：标称机的特征电流是 `psi_f/Ld = 11.9 A` 而限幅只有 3 A，于是弱磁削不动磁链、
  *            MTPV **没有工作点** ——只在那种机器上验过的能力，等于没验过。这份档案就是 `core/field_weakening.hpp` 早已写
  *            成散文的那台机器（“同一台机器把电感放大十倍，8000 rad/s 处仍有基速转矩的 36 %”），把话写成参数： `Ld = 4
- *            mH`、`Lq = 8 mH`（凸极比 2）、**同样的** `psi_f` 与 3 A 限幅，于是 `lambda = 2.52`、 `i_char = 1.19 A`——落
- *            在限幅内，这正是 `domain.json` 里 C7 与 C8 重算的东西。
+ *            mH`、`Lq = 8 mH`（凸极比 2）、 **同样的** `psi_f` 与 3 A 限幅，于是 `lambda = 2.52`、 `i_char = 1.19 A`——
+ *            落在限幅内，这正是 `domain.json` 里 C7 与 C8 重算的东西。
  * @warning [en] **Synthetic, and labelled as such.** It is not a prototype and nothing measured on it says anything
  *               about the four real machines, which stay outside the domain -- `domain.json` keeps both statements.
  * @warning [zh] **是合成档案，并且就这么标注。** 它不是样机，在它身上量到的任何东西都不能替四台真实机器说话——那四台仍在

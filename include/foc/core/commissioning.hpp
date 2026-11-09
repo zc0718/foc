@@ -688,13 +688,13 @@ class CurrentSenseCalibrator final {
  * @brief [zh] 从电压阶跃交付的 **磁链** 求增量电感，`L = ∫(v − rs·i)/Δi`，而不是靠微分电流。
  *
  *   为什么用积分。20 kHz 电流传感器的 `di/dt` 是两个几乎相等的带噪数之差再乘 `1/dt`： 噪声被放大 `1/dt` 倍，要有滤波
- *   器，而滤波器的群延迟又会带来偏差。积分形式每个样本 用一次、不加权、不用滤波：`∫(v_delivered − rs·i)dt = L·Δi` 是 **
- *   精确**的，因为 `L·di/dt` 这一项就是 `L·i` 的导数。
+ *   器，而滤波器的群延迟又会带来偏差。积分形式每个样本 用一次、不加权、不用滤波：`∫(v_delivered − rs·i)dt = L·Δi` 是
+ *   **精确** 的，因为 `L·di/dt` 这一项就是 `L·i` 的导数。
  *
  *   `v_delivered` 是什么，以及随之而来的误差。逆变器交付 `v_cmd − deadtime_v·sign(i)`， 本积分器用 `RsEstimator` 量到的
  *   `deadtime_v` 把它减掉。电流过零期间真实损失 **小** 于 `deadtime_v`（那就是淡出带），所以积分在穿越时间 `t_cross` 内
- *   减多了， 磁链偏低约 `deadtime_v·t_cross`。0.48 V、20 µs，对 1 A 阶跃的 `L·Δi = 4e-4 V·s` 是 2.4 %——在容差内，但**方
- *   向是已知的**，所以要写下来而不是 指望它不存在。
+ *   减多了， 磁链偏低约 `deadtime_v·t_cross`。0.48 V、20 µs，对 1 A 阶跃的 `L·Δi = 4e-4 V·s` 是 2.4 %——在容差内，但
+ *   **方向是已知的** ，所以要写下来而不是 指望它不存在。
  *
  * @note [en] `begin()` is what makes this a measurement rather than a running average: the rotor frame has to be
  *            aligned, the axis has to be named (d or q is chosen by which voltage component the caller steps), and the

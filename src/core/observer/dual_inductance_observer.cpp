@@ -157,8 +157,8 @@ auto arg(Cx a) noexcept -> float { return wrap_two_pi(std::atan2(a.im, a.re)); }
  *               quadratic coefficient, so at **zero current** the equation is genuinely linear and dividing by that
  *               coefficient would answer with inf.
  * @details [zh] 被丢掉的项是凸极自身的磁链，被它扰动的线性答案角度偏差约为 `|L1·i|/psi_f`——因此取万分之一时，这个丢弃值
- *               1e-4 rad，比要求观测器做到的 0.01 rad 低三个数量级。这个分支不是便利：`L1·conj(i)` 就是二次项系数， **
- *               零电流**时方程真的是线性的，除以该系数只会得到 inf。
+ *               1e-4 rad，比要求观测器做到的 0.01 rad 低三个数量级。这个分支不是便利：`L1·conj(i)` 就是二次项系数，
+ *               **零电流** 时方程真的是线性的，除以该系数只会得到 inf。
  * @since 0.1.0
  */
 constexpr float kLinearRatio = 1.0e-4F;

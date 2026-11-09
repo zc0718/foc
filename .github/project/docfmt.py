@@ -19,6 +19,16 @@ So the invariant is stated once, here, and checked by a gate:
    space-based wrap naturally leaves a whole sentence on one line. That is the point: the damage
    being repaired was caused by hand-wrapping Chinese at character boundaries.
 5. No trailing whitespace; no tab characters.
+6. **An emphasis pair keeps the whitespace boundary Doxygen's Markdown requires on the outside**,
+   and it is never split. Two measured facts, both from doxygen 1.9.8 on this tree's own shapes:
+   `前**相同**后` publishes the asterisks literally while `前 **相同** 后` renders them, so a pair
+   touching a non-ASCII character on either side gets one space; and `**\`x\` text**` never renders
+   whatever the spacing, so a pair whose body opens with a code span is the one shape this tool
+   cannot repair and `<b>…</b>` is used in the source instead.
+   成对标记必须在外侧保住 Doxygen Markdown 要求的空白边界，并且绝不被折行切开。两条实测事实
+   （doxygen 1.9.8，用本树自己的形状）：`前**相同**后` 会原样发布星号，而 `前 **相同** 后` 能渲染，
+   因此只要有一侧贴着非 ASCII 字符就补一个空格；而 `**\`x\` 文字**` 无论怎么加空格都不渲染，
+   这种形状本工具修不了，源码里改用 `<b>…</b>`。
 
 Usage:
     python3 .github/project/docfmt.py --check            # exit 1 if anything would change
@@ -88,6 +98,11 @@ def _columns(line: str) -> int:
 # matters to a reader. 收尾标点不得出现在行首：那是中文断行里唯一真会影响阅读的规则。
 NO_LINE_START = "。，、；：！？）》」』】%"
 
+# One emphasis pair, body possibly Chinese and possibly carrying sentinel-hidden spaces. A pair is
+# atomic for the wrap: breaking between `**` and its text publishes literal asterisks.
+# 一个成对标记，正文可能是中文、也可能含哨兵隐藏的空格。对折行而言它是原子单元。
+PAIR_UNIT = re.compile(r'\*\*[^*]+\*\*')
+
 
 def _join_prose(parts: Iterable[str]) -> str:
     """Join the lines of one paragraph without inserting a space inside Chinese.
@@ -152,6 +167,19 @@ def _units(text: str) -> list[tuple[str, bool]]:
         index = 0
         length = len(token)
         while index < length:
+            # An emphasis pair is one unit even when its body is Chinese. The per-character
+            # rule below would otherwise split `**过修**` into `**`, `过`, `修`, `**` and let a
+            # line break land between the delimiter and its text -- which publishes literal
+            # asterisks, exactly what the sentinel in `_wrap` was hiding spaces to prevent.
+            # 成对标记即使内容是中文也是一个单元。下面的逐字符规则否则会把 `**过修**` 切成
+            # `**`、`过`、`修`、`**`，让折行落在分隔符与文字之间——那正好发布出字面星号，
+            # 而这正是 `_wrap` 里用哨兵隐藏空格想避免的事。
+            pair = PAIR_UNIT.match(token, index)
+            if pair:
+                units.append((pair.group(0), space))
+                space = False
+                index = pair.end()
+                continue
             if ord(token[index]) > 0x2E7F:
                 units.append((token[index], space))
                 space = False
@@ -159,11 +187,38 @@ def _units(text: str) -> list[tuple[str, bool]]:
                 continue
             stop = index
             while stop < length and not token[stop].isspace() and ord(token[stop]) <= 0x2E7F:
+                if PAIR_UNIT.match(token, stop):
+                    break
                 stop += 1
             units.append((token[index:stop], space))
             space = False
             index = stop
     return units
+
+
+def _pad_emphasis(text: str) -> str:
+    """Give a `**pair**` the whitespace boundary Doxygen's Markdown asks for on the outside.
+
+    Measured with doxygen 1.9.8 on this tree's own shapes: `前**相同**后` publishes the
+    asterisks literally, while `前 **相同** 后` renders them. The boundary is what decides, and a
+    Han character or a full-width mark is not one -- 26 pairs in this tree sat directly against
+    Chinese text, which is why `**` still appeared in 19 published paragraphs after the wrap
+    learned to keep a pair on one unit. The padding is idempotent: an existing space is left
+    alone, so a second `--fix` pass changes nothing.
+    给 `**相邻**` 的成对标记在外侧补上 Doxygen Markdown 要求的空白边界。用本仓库自己的形状在
+    doxygen 1.9.8 上实测：`前**相同**后` 会把星号原样发布，而 `前 **相同** 后` 能渲染。决定
+    成败的是边界字符，而汉字或全角标点不是边界——本树有 26 处成对标记直接贴着中文，这就是折
+    行已经学会「一对标记当一个单元」之后，发布页面里仍有 19 段带着字面 `**` 的原因。补空格
+    是幂等的：已有空格不动，所以第二次 `--fix` 不产生改动。
+    """
+    def _spaced(match: "re.Match[str]") -> str:
+        before = text[match.start() - 1] if match.start() else " "
+        after = text[match.end()] if match.end() < len(text) else " "
+        return ((" " if ord(before) > 0x7F else "")
+                + match.group(0)
+                + (" " if ord(after) > 0x7F else ""))
+
+    return re.sub(r'\*\*[^*\n]+?\*\*', _spaced, text)
 
 
 def _wrap(text: str, indent: int) -> list[str]:
@@ -191,7 +246,7 @@ def _wrap(text: str, indent: int) -> list[str]:
         body = match.group(1).strip(" ").strip(SENTINEL)
         return "**" + body.replace(" ", SENTINEL) + "**"
 
-    protected = re.sub(r'\*\*([^*\n]+?)\*\*', _pair, text)
+    protected = re.sub(r'\*\*([^*\n]+?)\*\*', _pair, _pad_emphasis(text))
     lines: list[str] = []
     current = ""
     width = indent

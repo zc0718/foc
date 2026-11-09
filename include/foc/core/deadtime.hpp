@@ -40,8 +40,8 @@ namespace core {
  * @note [zh] 修正在 **相域** 进行（逆 Clarke、按相整形、再 Clarke 回去），因为物理机制就在那里：损失属于 每一相，而不属
  *            于矢量。按矢量幅值补偿等于在补偿另一台电机。
  *
- *   它做不到的：损失不会像 `sign()` 说的那样在过零处瞬间换极性，而是在一段电流范围内淡出； 在这个范围内 `sign()` 会**过
- *   修**——开关 plant 上实测，近零处阶跃补偿比不补偿还差。
+ *   它做不到的：损失不会像 `sign()` 说的那样在过零处瞬间换极性，而是在一段电流范围内淡出； 在这个范围内 `sign()` 会
+ *   **过修** ——开关 plant 上实测，近零处阶跃补偿比不补偿还差。
  *
  * @context [en] Current-loop ISR: noexcept, no allocation, one branch when disabled.
  * @context [zh] 电流环 ISR：noexcept、不分配、未启用时只有一个分支。
@@ -243,8 +243,8 @@ template <typename Modulator> class DeadTimeCompensator final {
  *
  *   为什么是 **旋转** 而不是 d 轴直流扫描。直流指令下损失是一个继电器：死区把电流 钉在零，直到指令超过
  *   `(4/π)·deadtime_v`，所以扫描根本没进到能看见淡出的 区域——本估计器的第一版正是这么做的，在开关 plant 上返回 `valid
- *   == false`， 而且是对的。旋转电流有的是**幅值**而不是符号，它的损失是基波 `(4/π)·deadtime_v·clamp(|I|/If)`：仍然每样
- *   本一个方程、一个未知数，但落在 机器真正工作的区域里。
+ *   == false`， 而且是对的。旋转电流有的是 **幅值** 而不是符号，它的损失是基波 `(4/π)·deadtime_v·clamp(|I|/If)`：仍然每
+ *   样本一个方程、一个未知数，但落在 机器真正工作的区域里。
  *
  * @note [en] Implementation: a fixed grid of candidate widths, each keeping a running sum of squared residuals, so the
  *            estimator is *streaming* -- it never stores samples and never allocates. The winner is refined by a

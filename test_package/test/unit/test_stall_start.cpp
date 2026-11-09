@@ -481,9 +481,9 @@ TEST(StallStart, TheRecipeBreakawayIsCheckedButNeverSteersTheHandoverValue) {
  *   是闭式的——斜坡在 `限幅/速率` 处削平、宽限从那里开始——所以它可以对着算术比，而不是对着"晚于 0.55 s"。
  *
  *   实测（0.2 N·m、0.5 N·m/s、1e-4 s 周期）：4000 拍（400.0 ms）削平，0.2 s 宽限下 `Failed` 正好落在第 **6000** 拍；
- *   0.4 s 宽限下是 **8001** 而不是 8000——`hold_s_` 是 float32 累加器，1e-4 s 加 4000 次不会正好落在 0.4 上。这一拍是 **
- *   记录**而不是调掉的：累加器不可能对每个周期都精确，而一条要求 8000 的判据就成了关于 float32 的判据，而不是关于这个序
- *   列的判据。
+ *   0.4 s 宽限下是 **8001** 而不是 8000——`hold_s_` 是 float32 累加器，1e-4 s 加 4000 次不会正好落在 0.4 上。这一拍是
+ *   **记录** 而不是调掉的：累加器不可能对每个周期都精确，而一条要求 8000 的判据就成了关于 float32 的判据，而不是关于这
+ *   个序列的判据。
  */
 TEST(StallStart, AFailedAxisIsDeclaredAtTheClippingTimePlusTheGrace) {
     auto jammed_ticks = [](float give_up_s) {

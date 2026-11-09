@@ -268,11 +268,11 @@ TEST(ElectronicGear, AZeroRatioIsRefusedRatherThanSilentlyDecoupling) {
  *     and stays there.
  *
  *     四条预言，测量之前写下来： P1 0.9π 以上的主轴步长无法从环绕角度解出，必须 **报告** 而不是猜。`kMaxStepRad` 就是为
- *     这个声明和注释的，而在 F-43 之前它没有消费者。 P2 把主轴量化到 `q`，同步误差至多 `|ratio|·q` 且 **不随时间增长
- *     ** ，因为相邻差分是望远镜式相消：累积的去卷绕角度只差 `e_k − e_0`，不是 `k` 个误差的随机游走。四秒行程上成立的上
- *     界就是这条结构的证据；一个缓慢增长的误差会是反证。 P3 采样间隔偏了比例 `j`，速度参考就偏 `ratio·ω·j/(1+j)`——精
- *     确，因为 `v_ref = ratio·delta/dt`，只有 `dt` 错。 P4 丢掉一个主轴采样，去卷绕参考会永久短一步，于是同步误差是
- *     `|ratio|·ω·dt` 并停在那里。
+ *     这个声明和注释的，而在 F-43 之前它没有消费者。 P2 把主轴量化到 `q`，同步误差至多 `|ratio|·q` 且
+ *     **不随时间增长** ，因为相邻差分是望远镜式相消：累积的去卷绕角度只差 `e_k − e_0`，不是 `k` 个误差的随机游走。四秒
+ *     行程上成立的上界就是这条结构的证据；一个缓慢增长的误差会是反证。 P3 采样间隔偏了比例 `j`，速度参考就偏
+ *     `ratio·ω·j/(1+j)`——精确，因为 `v_ref = ratio·delta/dt`，只有 `dt` 错。 P4 丢掉一个主轴采样，去卷绕参考会永久短一
+ *     步，于是同步误差是 `|ratio|·ω·dt` 并停在那里。
  */
 TEST(ElectronicGear, EveryMasterErrorSourceHasAClosedFormAndTheAssumptionIsChecked) {
     constexpr float kRatio = 2.5F;

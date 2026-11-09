@@ -123,8 +123,8 @@ class AbcPlant final {
      *   **Off by default (no harmonics), and bit-identical when off** -- the same rule the other injection ports
      *   follow: an error source that changes the frozen scenarios cannot be told apart from a regression. 它 **加性**
      *   进入机械方程（`J·ω' = Te − b·ω − load + Tcog`），这就固定了补偿器必须产出的符号：要抵消它，控制器得让 `Te` 带上
-     *   `-Tcog`。若把它写成「恰好随角度变化的负载」，算术上等价，却把那个符号留给写补偿的人重新发现一遍。 **默认关闭（
-     *   无谐波），关闭时逐位不变**——与其它注入端口同一条规矩：会改变冻结场景的误差源无法与回归区分。
+     *   `-Tcog`。若把它写成「恰好随角度变化的负载」，算术上等价，却把那个符号留给写补偿的人重新发现一遍。
+     *   **默认关闭（无谐波），关闭时逐位不变** ——与其它注入端口同一条规矩：会改变冻结场景的误差源无法与回归区分。
      *
      * @param harmonics [en] the table, at most `kMaxCogging` entries.
      * @param harmonics [zh] 谐波表，最多 `kMaxCogging` 条。

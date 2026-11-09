@@ -985,9 +985,9 @@ TEST(Protection, PastTheEndOfTheDeratingRampTheLimitIsExactlyZero) {
  *   checked -- an operator action whose entire contract ("clear the latched faults", "`I2t` is *not* cleared here, the
  *   winding is still hot") had no direct witness.
  *
- *   在 AddressSanitizer 下，`reset()`/`reset_cold()` 里那两个循环是最后一批算术解释不了的存活体，而原因并不微妙：**本模
- *   块的用例从未调用过它们**。它们从 C ABI 走得到（`bridge.cpp` 调 `reset_cold()`），所以行覆盖率是满足的，而主张从未被
- *   检查——一个运维动作的完整契约（"清掉锁存的故障"、"这里 **不** 清 `I2t`，绕组还热着"）没有直接证词。
+ *   在 AddressSanitizer 下，`reset()`/`reset_cold()` 里那两个循环是最后一批算术解释不了的存活体，而原因并不微妙：
+ *   **本模块的用例从未调用过它们** 。它们从 C ABI 走得到（`bridge.cpp` 调 `reset_cold()`），所以行覆盖率是满足的，而主
+ *   张从未被检查——一个运维动作的完整契约（"清掉锁存的故障"、"这里 **不** 清 `I2t`，绕组还热着"）没有直接证词。
  */
 TEST(Protection, ResetClearsTheLatchedOnesButKeepsTheHeatUntilResetCold) {
   core::Protector protector(config());

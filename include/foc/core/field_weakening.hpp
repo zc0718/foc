@@ -15,8 +15,8 @@ namespace core {
  *
  *   The number that decides it is the characteristic current \f$i_{char} = \psi_f / L_d\f$: the d-axis current that
  *   would null the rotor flux. If it sits far above the current limit the drive cannot null the flux, and field
- *   weakening buys only the sliver \f$i_{max}/i_{char}\f$ of it -- measured on the SIL machine as 2910 -> 3850 rad/s
- *   (**+32 %**) with torque collapsing to zero at the top. If it sits below the limit the machine has a real
+ *   weakening buys only the sliver \f$i_{max}/i_{char}\f$ of it -- measured on the SIL machine as 2910 -> 3850 rad/s (
+ *   **+32 %**) with torque collapsing to zero at the top. If it sits below the limit the machine has a real
  *   constant-power region: the same machine with ten times the inductance holds 36 % of its base torque at 8000 rad/s.
  *
  *   The go/no-go rule is the single comparison \f$i_{char} \le i_{max}\f$, i.e. \f$L_d\,i_{max} \ge \psi_f\f$; once it
@@ -87,9 +87,9 @@ struct FieldWeakeningAdvice final {
  *   Prius 牵引电机——一台正为此而造的机器——差 3.3 倍）。
  *
  *   这里原先写着两个阈值 `ratio < 0.6` 与 `speed_gain >= 1.5`，各配一条理由。两者都被上面那一条蕴含（`ratio <= 1`、增益
- *   无穷），因此都不可 能成为决定性的检验——函数是从早返回分支返回 `worthwhile = true` 的，那条两条件表达式**永远不可能
- *   为真**。已删除而不 是留在原地：一个不可能生效的阈值读起来像策略，其实是装饰（F-107）。它当初存在的**理由**已并入上
- *   一句。
+ *   无穷），因此都不可 能成为决定性的检验——函数是从早返回分支返回 `worthwhile = true` 的，那条两条件表达式
+ *   **永远不可能为真** 。已删除而不 是留在原地：一个不可能生效的阈值读起来像策略，其实是装饰（F-107）。它当初存在的
+ *   **理由** 已并入上一句。
  *
  * @param params [en] the machine, SI.
  * @param params [zh] 机器，SI。

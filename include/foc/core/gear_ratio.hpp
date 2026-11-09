@@ -73,8 +73,8 @@ struct GearOutput final {
      *            feeding this number forward as `+ kd * v_ref` cancels that term exactly for a constant speed. A gear
      *            without a velocity output is a lag generator with a ratio.
      * @note [zh] 不是便利项。只被告知"该在哪"的位置环跟随一个移动目标时滞后 `v · kd / kp`，在下面那对 SIL 轴上就是
-     *            **58 mrad 的同步误差**，而两轴完全按齿比同步；把这个数作为 `+ kd · v_ref` 前馈进去，对恒速情形正好抵消
-     *            该项。一个没有速度输出的齿轮，就是一台带传动比的滞后发生器。
+     *            **58 mrad 的同步误差** ，而两轴完全按齿比同步；把这个数作为 `+ kd · v_ref` 前馈进去，对恒速情形正好抵
+     *            消该项。一个没有速度输出的齿轮，就是一台带传动比的滞后发生器。
      */
     float slave_velocity_rad_s;
     /**

@@ -248,7 +248,7 @@ struct ProtectionOutput final {
  *
  *   Three things it does that a plain threshold check does not. (1) **Derating before tripping**: the current limit
  *   falls monotonically from `t_derate_start_c` to `t_derate_end_c`, so a hot machine loses authority gradually instead
- *   of failing at a cliff edge. (2) **`I2t` as a thermal model, not a counter**: `q' = i^2 - q/tau`, so the budget
+ *   of failing at a cliff edge. (2) <b>`I2t` as a thermal model, not a counter</b>: `q' = i^2 - q/tau`, so the budget
  *   *cools* while the current is off. A counter that only increments would make a machine that has been idle for an
  *   hour still carry the memory of a two-second overload. (3) **Hysteresis on exactly the faults that self-clear**: a
  *   bus hovering on the threshold would otherwise chatter the output enable at the control rate, and chatter is how a
@@ -263,9 +263,10 @@ struct ProtectionOutput final {
  * @brief [zh] 分类六类故障、锁存该锁存的、并在跳闸之前先降额。
  *
  *   它做三件单纯阈值检查不会做的事。（1） **跳闸之前先降额** ：电流限幅从 `t_derate_start_c` 单调降到
- *   `t_derate_end_c`，热的机器逐渐失去权限，而不是在悬崖边 上突然失效。（2） **`I2t` 是热模型不是计数器** ：`q' = i² −
- *   q/τ`，所以电流停下时预算会 **冷却** 。只增不减的计数器会让闲置一小时的机器仍然背着两秒过载的记忆。（3） **只有自恢
- *   复 的那些才加迟滞** ：母线悬在阈值上时，否则输出使能会按控制频率反复抖，而抖动正是把一个 保护变成故障源的方式。
+ *   `t_derate_end_c`，热的机器逐渐失去权限，而不是在悬崖边 上突然失效。（2） <b>`I2t` 是热模型不是计数器</b> ：`q' = i²
+ *   − q/τ`，所以电流停下时预算会 **冷却** 。只增不减的计数器会让闲置一小时的机器仍然背着两秒过载的记忆。（3）
+ *   **只有自恢复 的那些才加迟滞** ：母线悬在阈值上时，否则输出使能会按控制频率反复抖，而抖动正是把一个 保护变成故障源的
+ *   方式。
  *
  *   它 **不是** 什么，写在这里因为"热模型"容易招来误读。`q` 的单位是 A²·s，不是度： 这段代码不知道绕组温度是多少，它的
  *   `t_derate_*` 阈值是 **调用方给的数** ，不是本代码能 测出来的量。它用一个时间常数建模一个集总的铜损。它不建模磁钢、

@@ -360,8 +360,8 @@ class PmsmPlant final {
      *   this port integrates exactly what it integrated before. The mechanism is shared with `AbcPlant` through
      *   `sil_cogging_table.hpp`, so the two models cannot disagree about what a given table means. 加性作用在转子上：
      *   `J·dωm/dt = (Te + Tcog − B·ωm − friction − load)/J`，并且它作为驱动力矩的一部分交给摩擦模型 —— 因为定位点本来就
-     *   是这样：静止时齿槽单独就能推动转子。写成"负载"是同一份算术，只是把符号留给写补偿的人重新发现。 **默认关闭，关闭
-     *   时逐位不变**：没有表就完全没有这一项，所以本端口之前的所有场景积分的仍是原来那个东西。机制经
+     *   是这样：静止时齿槽单独就能推动转子。写成"负载"是同一份算术，只是把符号留给写补偿的人重新发现。
+     *   **默认关闭，关闭时逐位不变** ：没有表就完全没有这一项，所以本端口之前的所有场景积分的仍是原来那个东西。机制经
      *   `sil_cogging_table.hpp` 与 `AbcPlant` 共享，因此两台模型对同一张表的含义不可能分歧。
      *
      * @param harmonics [en] table, at most `kMaxCoggingHarmonics` entries; null clears.

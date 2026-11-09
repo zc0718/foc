@@ -177,9 +177,9 @@ class MtpaReference final {
      *            magnitude fits, which keeps "most torque per amp" true at every point including the clamp. The walk is
      *            a bisection on `i_q` because magnitude is monotone in `i_q` along the curve, and 24 halvings is the
      *            same budget the field-weakening solver uses.
-     * @note [zh] 装不下时 **不是** 把两个分量一起缩小：那会离开 MTPA 曲线，多丢了本可以拿到的转矩。 正确做法是**沿曲线
-     *            往下走**直到幅值装得下，这样"每安培转矩最大"在包括限幅点的每一点都 仍成立。走法是对 `i_q` 二分，因为沿
-     *            曲线幅值对 `i_q` 单调，而 24 次折半正是弱磁求解器 用的同一预算。
+     * @note [zh] 装不下时 **不是** 把两个分量一起缩小：那会离开 MTPA 曲线，多丢了本可以拿到的转矩。 正确做法是
+     *            **沿曲线往下走** 直到幅值装得下，这样"每安培转矩最大"在包括限幅点的每一点都 仍成立。走法是对 `i_q` 二
+     *            分，因为沿曲线幅值对 `i_q` 单调，而 24 次折半正是弱磁求解器 用的同一预算。
      * @since 0.1.0
      */
     [[nodiscard]] auto generate(const ReferenceInput& in) const noexcept -> Dq<float> {
