@@ -135,16 +135,14 @@ auto ThermalLimit::budget(float current_a, float t_now_c) const noexcept -> Ther
     // `t_eq` 是 `dT/dt = (a + b·T)/Ct` 的 **渐近线** ；当 `b > 0` 时那是一个节点正在 **远离** 的负数——把它当成"收敛到哪里"报出去，
     // 等于递给调度一个看着挺合理的 −234 ℃。所以只要没有稳态，报出的稳态就是无穷；而下面的穿越时间仍然用那条渐近线，因为精确解需要它。
     out.settle_c = (b < 0.0) ? static_cast<float>(t_eq) : kInfinity;
-    /**
-     * @brief [en] Sustainability is decided in **current**, not by comparing two temperatures: `t_eq` at `i_cont` sits
-     *             a rounding error above `t_star`, and a comparison in temperature would then hand back a finite
-     *             crossing time for the very current the class calls continuous. The tolerance is on the current (
-     *             `1e-6` relative), so "continuous means forever" holds by construction and any current measurably
-     *             above it still gets its honest, finite crossing.
-     * @brief [zh] 可持续性用 **电流** 判定，而不是比较两个温度： `i_cont` 处的 `t_eq` 会高出 `t_star` 一个舍入误差，若
-     *             按温度比较，本类称为可持续的 那个电流反而会拿到一个有限的穿越时间。容差落在电流上（相对 `1e-6`），于
-     *             是"可持续即永远"按构造成立，而任何可测地高于它的电流 仍会拿到它诚实的、有限的穿越时间。
-     */
+    // Sustainability is decided in **current**, not by comparing two temperatures: `t_eq` at `i_cont` sits
+    // a rounding error above `t_star`, and a comparison in temperature would then hand back a finite
+    // crossing time for the very current the class calls continuous. The tolerance is on the current (
+    // `1e-6` relative), so "continuous means forever" holds by construction and any current measurably
+    // above it still gets its honest, finite crossing.
+    // 可持续性用 **电流** 判定，而不是比较两个温度： `i_cont` 处的 `t_eq` 会高出 `t_star` 一个舍入误差，若
+    // 按温度比较，本类称为可持续的 那个电流反而会拿到一个有限的穿越时间。容差落在电流上（相对 `1e-6`），于
+    // 是"可持续即永远"按构造成立，而任何可测地高于它的电流 仍会拿到它诚实的、有限的穿越时间。
     const float i_cont = continuous().continuous_a;
     const bool sustainable = (b < 0.0) && (std::fabs(current_a) <= (static_cast<double>(i_cont) * (1.0 + 1.0e-6)));
     out.crosses = !sustainable;
@@ -156,12 +154,10 @@ auto ThermalLimit::budget(float current_a, float t_now_c) const noexcept -> Ther
         out.seconds = kInfinity; // the crossing exists but no `Ct` was supplied, so no time can be named
         return out;
     }
-    /**
-     * @brief [en] `t = (Ct/b)*ln((T* - T_eq)/(T_now - T_eq))`, the exact solution, valid for either sign of `b` --
-     *             which is why the run-away case needs no separate branch and no integration.
-     * @brief [zh] `t = (Ct/b)·ln((T* − T_eq)/(T_now − T_eq))`，精确解，对 `b` 的两种符号都成立——正因为如此，失控那一支
-     *             不需要单独的 分支，也不需要积分。
-     */
+    // `t = (Ct/b)*ln((T* - T_eq)/(T_now - T_eq))`, the exact solution, valid for either sign of `b` --
+    // which is why the run-away case needs no separate branch and no integration.
+    // `t = (Ct/b)·ln((T* − T_eq)/(T_now − T_eq))`，精确解，对 `b` 的两种符号都成立——正因为如此，失控那一支
+    // 不需要单独的 分支，也不需要积分。
     const double ratio = (t_star - t_eq) / (t_now - t_eq);
     if (!(ratio > 0.0)) {
         out.seconds = 0.0F;

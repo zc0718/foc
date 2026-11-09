@@ -67,11 +67,9 @@ auto decode_biss(const std::uint8_t* bits, int bit_count, const EncoderLayout& l
         return out;
     }
     if (bit_count != layout.frame_bits()) {
-        /**
-         * @brief [en] A stream of the wrong length is a stream that is not this encoder's frame. Refusing is the only
-         *             answer that cannot produce a plausible angle from a misaligned one.
-         * @brief [zh] 长度不对的码流就不是这台编码器的帧。拒绝是唯一不会从错位码流里产生一个"看起来合理的角度"的答案。
-         */
+        // A stream of the wrong length is a stream that is not this encoder's frame. Refusing is the only
+        // answer that cannot produce a plausible angle from a misaligned one.
+        // 长度不对的码流就不是这台编码器的帧。拒绝是唯一不会从错位码流里产生一个"看起来合理的角度"的答案。
         return out;
     }
 

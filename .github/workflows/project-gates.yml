@@ -36,7 +36,18 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v7
 
-      # stdlib only: no conan, no clang-tidy. Each gate reads this repository's own files.
+      # No conan, no clang-tidy: each gate reads this repository's own files. One dependency is real
+      # though -- `docshape` and `docver` load `docs/build.py` to measure the *actual* language and
+      # version filters, and that module imports numpy at line 3 (`docs/build.py` is scaffold-pinned,
+      # so the import stays). Without it the gate crashes instead of judging, which is what turned
+      # this job red from 2026-11-06 on.
+      # 不需要 conan/clang-tidy：每道门都只读本仓库自己的文件。但有一个真实依赖——`docshape` 与
+      # `docver` 会加载 `docs/build.py` 去量**真实的**语言与版本过滤器，而那个模块第 3 行 import numpy
+      # （`docs/build.py` 由 scaffold 钉死，这个 import 留着）。缺了它门禁会崩而不是判定，这正是本 job
+      # 从 2026-11-06 起一直红的原因。
+      - name: Doc pipeline dependency (numpy)
+        run: python3 -m pip install --upgrade pip numpy
+
       - name: Project gates
         run: |
           failed=0
@@ -47,7 +58,7 @@ jobs:
           # 这个列表是「没有 conan 的机器能跑的全部门禁」，而它少了四个：`clocks`、`observability`、`combinations`、`domain`
           # 都写了、也接进了 `gates.py`，却从没被任何工作流跑过——没人 CI 跑的门禁就是散文。现在加一个门禁，就要同时加到
           # `PROJECT_GATES` 与这里；而 `ci-policy` 仍然拒绝那些开销属于开发者机器的门禁。
-          for gate in license strict claims docs boundaries capabilities ci-policy assume anchor scaffold budget clocks observability combinations domain subset docvoice symbols equations enforce docshape; do
+          for gate in license strict claims docs boundaries capabilities ci-policy assume anchor scaffold budget clocks observability combinations domain subset docvoice symbols equations enforce docshape docver docannot; do
             echo "::group::$gate"
             python3 .github/project/gates.py "$gate" || failed=1
             echo "::endgroup::"

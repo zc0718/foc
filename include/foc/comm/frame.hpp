@@ -330,12 +330,10 @@ class SequenceChecker final {
             result.missing = static_cast<std::uint32_t>(ahead);
             expected_ = static_cast<std::uint8_t>(seq + 1U);
         }
-        /**
-         * @brief [en] The expectation is not advanced on a duplicate or a regression: the frame that fills the hole may
-         *             still arrive, and moving the goalpost would convert one loss into a report of "nothing lost".
-         * @brief [zh] 重复与倒退都不推进期望值：填补那个空洞的帧仍有可能到达，而挪动标杆会把一次丢失变成"什么都没丢"的
-         *             报告。
-         */
+        // The expectation is not advanced on a duplicate or a regression: the frame that fills the hole may
+        // still arrive, and moving the goalpost would convert one loss into a report of "nothing lost".
+        // 重复与倒退都不推进期望值：填补那个空洞的帧仍有可能到达，而挪动标杆会把一次丢失变成"什么都没丢"的
+        // 报告。
         return result;
     }
 

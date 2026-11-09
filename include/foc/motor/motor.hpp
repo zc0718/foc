@@ -1084,9 +1084,23 @@ auto Motor<Observer, Modulator, Controller, HalPolicy, RefGenerator, FeedForward
     // the control law -- it exists so an ISR overrun becomes visible instead of silent.
     // 可选过载测量：仅当平台提供了时钟时启用。它从不参与控制律——存在的意义是让 ISR 过载可见而非
     // 静默。
-    std::uint64_t now_us = 0U;
+    // One read, then two constexpr branches that each use it. It cannot be declared and assigned
+    // later: with a HAL that has no clock the assignment lives in a discarded branch, so the variable
+    // is never written and `misc-const-correctness` is right to ask for `const` -- which an ordinary
+    // declaration cannot give it. The immediately-invoked lambda makes the value const in every
+    // instantiation instead of suppressing the diagnostic in the six that have no clock.
+    // 只读一次，随后两支 constexpr 各自使用它。不能"先声明、后赋值"：HAL 没有时钟时那一次赋值
+    // 落在被丢弃的分支里，变量从未被写入，`misc-const-correctness` 就有理由要求 `const`——而普通
+    // 声明给不了。用立即调用的 lambda 让它在每个实例化里都是 const，而不是去压制那六个无时钟实例化
+    // 的诊断。
+    const std::uint64_t now_us = [&]() noexcept -> std::uint64_t {
+        if constexpr (core::concepts::has_clock_v<HalPolicy>) {
+            return hal_->clock.now_us();
+        } else {
+            return 0U;
+        }
+    }();
     if constexpr (core::concepts::has_clock_v<HalPolicy>) {
-        now_us = hal_->clock.now_us();
         if (clock_seeded_) {
             const std::uint64_t delta_us = now_us - last_clock_us_;
             const std::uint32_t clamped = (delta_us > UINT32_MAX) ? UINT32_MAX : static_cast<std::uint32_t>(delta_us);

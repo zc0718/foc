@@ -1302,16 +1302,14 @@ auto to_hal_callbacks(const foc_hal_callbacks_t& c) noexcept -> driver::HalCallb
     callbacks.pwm_enable = c.pwm_enable;
     callbacks.pwm_disable = c.pwm_disable;
     callbacks.now_us = c.now_us;
-    /**
-     * @brief [en] This struct is an *input*, so the appended fields must be gated by what the caller declared. Without
-     *             the gate a caller built against the previous header would have us read two pointers it never
-     *             allocated -- a stack overrun in the one direction the output-side clamp cannot protect. No caller can
-     *             truthfully declare less than the original layout, so 0 is treated as full size, matching the rule
-     *             stated for the output structs.
-     * @brief [zh] 这是 **输入** 结构，追加字段必须按调用方声明的大小门控。没有这道门，按旧头编译的调用方会让我们去读它
-     *             从未分配的 两个指针——而输出侧的钳位保护不了这个方向。没有调用方能诚实地声明小于原始布局，因此 0 按完
-     *             整大小处理，与输出结构的规矩一致。
-     */
+    // This struct is an *input*, so the appended fields must be gated by what the caller declared. Without
+    // the gate a caller built against the previous header would have us read two pointers it never
+    // allocated -- a stack overrun in the one direction the output-side clamp cannot protect. No caller can
+    // truthfully declare less than the original layout, so 0 is treated as full size, matching the rule
+    // stated for the output structs.
+    // 这是 **输入** 结构，追加字段必须按调用方声明的大小门控。没有这道门，按旧头编译的调用方会让我们去读它
+    // 从未分配的 两个指针——而输出侧的钳位保护不了这个方向。没有调用方能诚实地声明小于原始布局，因此 0 按完
+    // 整大小处理，与输出结构的规矩一致。
     const std::size_t declared = (c.struct_size == 0U) ? sizeof(foc_hal_callbacks_t) : c.struct_size;
     if (declared >= sizeof(foc_hal_callbacks_t)) {
         callbacks.position_has_index = c.position_has_index;
@@ -2504,11 +2502,9 @@ foc_err_t foc_bridge_cogging_learn_finish(foc_cogging_learn_t handle, foc_coggin
     out_result->speed_max_rad_s = report.speed_max;
     if (out_table != nullptr) {
         if (capacity < required) {
-            /**
-             * @brief [en] Never truncate: a table shorter than `required` makes the caller believe it asked for fewer
-             *             orders, and the harmonics it is missing are the ones it has no record of.
-             * @brief [zh] 从不截断：比 `required` 短的表会让调用方以为它只要了这么几次，而缺掉的那些正是它没有记录的。
-             */
+            // Never truncate: a table shorter than `required` makes the caller believe it asked for fewer
+            // orders, and the harmonics it is missing are the ones it has no record of.
+            // 从不截断：比 `required` 短的表会让调用方以为它只要了这么几次，而缺掉的那些正是它没有记录的。
             return FOC_ERR_PARAM;
         }
         if (report.status == foc::ErrorCode::Ok) {

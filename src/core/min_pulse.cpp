@@ -68,12 +68,10 @@ auto MinPulse::shape(Uvw<float> duty, float v_bus) noexcept -> MinPulseOutput {
     }
     const float m = min_duty();
     const float t = config_.switching_period_s;
-    /**
-     * @brief [en] The target is the request plus what the average still owes; the driver then does what it does, and
-     *             what remains
-     * @brief [zh] owed becomes the next period's carry. 目标是「请求 + 平均意义上还欠的」，随后驱动器做它该做的事，剩下
-     *             的欠账成为 下一周期的余量。
-     */
+    // The target is the request plus what the average still owes; the driver then does what it does, and
+    // what remains
+    // owed becomes the next period's carry. 目标是「请求 + 平均意义上还欠的」，随后驱动器做它该做的事，剩下
+    // 的欠账成为 下一周期的余量。
     const float tu = clamp(duty.u + carry_.u, 0.0F, 1.0F);
     const float tv = clamp(duty.v + carry_.v, 0.0F, 1.0F);
     const float tw = clamp(duty.w + carry_.w, 0.0F, 1.0F);

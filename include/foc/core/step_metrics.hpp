@@ -138,11 +138,9 @@ inline auto step_metrics(const float* y, std::size_t n, float dt_s, float target
         return out;
     }
 
-    /**
-     * @brief [en] Settling: the last sample outside the band decides it, so a response that leaves and re-enters is
-     *             measured by where it ends up rather than by where it first arrived.
-     * @brief [zh] 稳定时间由"最后一个落在带外的样本"决定，因此离开又重新进入的响应按最终位置算，而不是按第一次到达算。
-     */
+    // Settling: the last sample outside the band decides it, so a response that leaves and re-enters is
+    // measured by where it ends up rather than by where it first arrived.
+    // 稳定时间由"最后一个落在带外的样本"决定，因此离开又重新进入的响应按最终位置算，而不是按第一次到达算。
     std::size_t last_outside = n;
     for (std::size_t i = n; i > 0U; --i) {
         const float d = (y[i - 1U] > target) ? (y[i - 1U] - target) : (target - y[i - 1U]);
@@ -176,18 +174,16 @@ inline auto step_metrics(const float* y, std::size_t n, float dt_s, float target
     out.tail_error_fraction =
         static_cast<float>((tail_mean - static_cast<double>(target)) / static_cast<double>(step_abs));
 
-    /**
-     * @brief [en] First-order fit through the origin: the fraction still to go is w_i = 1 - (y_i - y0)/step = exp(-t_i
-     *             / tau), so ln(w_i) = -t_i / tau. The least-squares slope through the origin is the mean of `t*ln(w)`
-     *             over the mean of `t^2`; accumulating in double keeps a 2000-sample window from losing the slope to
-     *             float rounding. Note it is `w` and not its complement -- fitting ln of the *progress* is the same
-     *             mistake as fitting a different curve, and it fails quietly: the first draft of this function did
-     *             exactly that and reported a time constant 1722 times too large.
-     * @brief [zh] 过原点的一阶拟合：还差多少的比例 w_i = 1 - (y_i - y0)/step = exp(-t_i/tau)，于是 ln(w_i) = -t_i/tau。
-     *             过原点最小 二乘斜率等于 `t*ln(w)` 的均值除以 `t^2` 的均值；用 double 累加，避免 2000 个样本的窗口把斜
-     *             率丢在 float 舍入里。 注意是 `w` 而不是它的补——对"进度"取 ln 等于拟合另一条曲线，而且失败得很安静：本
-     *             函数的第一版正是这样写的， 报出的时间常数大了 1722 倍。
-     */
+    // First-order fit through the origin: the fraction still to go is w_i = 1 - (y_i - y0)/step = exp(-t_i
+    // / tau), so ln(w_i) = -t_i / tau. The least-squares slope through the origin is the mean of `t*ln(w)`
+    // over the mean of `t^2`; accumulating in double keeps a 2000-sample window from losing the slope to
+    // float rounding. Note it is `w` and not its complement -- fitting ln of the *progress* is the same
+    // mistake as fitting a different curve, and it fails quietly: the first draft of this function did
+    // exactly that and reported a time constant 1722 times too large.
+    // 过原点的一阶拟合：还差多少的比例 w_i = 1 - (y_i - y0)/step = exp(-t_i/tau)，于是 ln(w_i) = -t_i/tau。
+    // 过原点最小 二乘斜率等于 `t*ln(w)` 的均值除以 `t^2` 的均值；用 double 累加，避免 2000 个样本的窗口把斜
+    // 率丢在 float 舍入里。 注意是 `w` 而不是它的补——对"进度"取 ln 等于拟合另一条曲线，而且失败得很安静：本
+    // 函数的第一版正是这样写的， 报出的时间常数大了 1722 倍。
     double num = 0.0;
     double den = 0.0;
     std::size_t used = 0U;
