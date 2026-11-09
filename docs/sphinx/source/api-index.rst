@@ -26,22 +26,22 @@ an anonymous-namespace helper or a detail header — and it is not part of the c
    * - Group
      - What is in it
      - When you open it
-   * - `Core <../../../../doxygen/build/en/v0.1.0/build_sub/html/group__group__core.html>`_
+   * - `Core <../../../doxygen/build/en/v0.1.0/build_sub/html/group__group__core.html>`_
      - transforms, PI, limits, reference policies, observers, modulation, protection, motion
      - when you are choosing the algorithm, not the board
-   * - `Motor <../../../../doxygen/build/en/v0.1.0/build_sub/html/group__group__motor.html>`_
+   * - `Motor <../../../doxygen/build/en/v0.1.0/build_sub/html/group__group__motor.html>`_
      - ``Motor<...>`` and the policy composition that inlines the loop
      - when you are wiring the loop on a board with your own HAL
-   * - `HAL <../../../../doxygen/build/en/v0.1.0/build_sub/html/group__group__hal.html>`_
+   * - `HAL <../../../doxygen/build/en/v0.1.0/build_sub/html/group__group__hal.html>`_
      - the callbacks a board has to provide (current, angle, duties) and the stub
      - when you are porting: this is the only set of functions *you* implement
-   * - `Driver <../../../../doxygen/build/en/v0.1.0/build_sub/html/group__group__driver.html>`_
+   * - `Driver <../../../doxygen/build/en/v0.1.0/build_sub/html/group__group__driver.html>`_
      - encoder/hall handling, position and speed extraction
      - when the board's feedback is not a clean angle
-   * - `Comm <../../../../doxygen/build/en/v0.1.0/build_sub/html/group__group__comm.html>`_
+   * - `Comm <../../../doxygen/build/en/v0.1.0/build_sub/html/group__group__comm.html>`_
      - frames, register map, encoder stream
      - when the axis is driven from another device
-   * - `C API <../../../../doxygen/build/en/v0.1.0/build_sub/html/group__group__c__api.html>`_
+   * - `C API <../../../doxygen/build/en/v0.1.0/build_sub/html/group__group__c__api.html>`_
      - the frozen ABI: opaque handles, status codes, the servo façade
      - when you are not writing C++
 
@@ -58,10 +58,10 @@ The same core is reachable three ways, and the reference keeps them separate on 
      - Entry point
      - Read this if
    * - C++17
-     - ``foc/motor/motor.hpp`` — `Motor group <../../../../doxygen/build/en/v0.1.0/build_sub/html/group__group__motor.html>`_
+     - ``foc/motor/motor.hpp`` — `Motor group <../../../doxygen/build/en/v0.1.0/build_sub/html/group__group__motor.html>`_
      - you are on the board: own the gains, own the HAL, keep the loop inlined
    * - C11
-     - ``foc/api/foc_api.h`` — `C API group <../../../../doxygen/build/en/v0.1.0/build_sub/html/group__group__c__api.html>`_
+     - ``foc/api/foc_api.h`` — `C API group <../../../doxygen/build/en/v0.1.0/build_sub/html/group__group__c__api.html>`_
      - the surrounding project is not C++, or the consumer is glue code
    * - Python
      - ``import foc_python`` (host only)
@@ -73,9 +73,9 @@ the C handle path and the C++ template path, subtracted tick by tick.
 Indexes worth bookmarking
 -------------------------
 
-- `Every file, with one line saying what it is <../../../../doxygen/build/en/v0.1.0/build_sub/html/files.html>`_
-- `Every example, one page each <../../../../doxygen/build/en/v0.1.0/build_sub/html/examples.html>`_
-- `The reference's front page <../../../../doxygen/build/en/v0.1.0/build_sub/html/index.html>`_
+- `Every file, with one line saying what it is <../../../doxygen/build/en/v0.1.0/build_sub/html/files.html>`_
+- `Every example, one page each <../../../doxygen/build/en/v0.1.0/build_sub/html/examples.html>`_
+- `The reference's front page <../../../doxygen/build/en/v0.1.0/build_sub/html/index.html>`_
 
 About these links
 -----------------

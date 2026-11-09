@@ -84,8 +84,8 @@ A C program can use the C ABI and still has to link the C++ runtime:
    set_target_properties(app PROPERTIES LINKER_LANGUAGE CXX)   # without this: __cxa_*
    target_link_libraries(app PRIVATE foc::foc)
 
-Without ``LINKER_LANGUAGE CXX`` (or one empty ``.cpp`` in the target) the link fails on
-``undefined reference to __cxa_*``. That is not a packaging accident: the ABI is C, the
+Without ``LINKER_LANGUAGE CXX`` (or one empty ``.cpp`` in the target) the link fails with
+symbols named ``__cxa_`` — the C++ runtime's own entry points. That is not a packaging accident: the ABI is C, the
 implementation is C++, and the library says so instead of hiding a C++ runtime behind a C
 header. :ref:`U8 in honest limits <honest-limits>` is the stronger version of the same
 statement — a C consumer *without* the C++ runtime is explicitly not supported.
@@ -99,7 +99,7 @@ Common failures, and what each one means
 
    * - Symptom
      - What it is
-   * - ``undefined reference to __cxa_*``
+   * - a link error naming ``__cxa_`` symbols
      - the C target is being linked as C; set ``LINKER_LANGUAGE CXX``
    * - ``foc::foc target not found``
      - the Conan generator folder is not on ``CMAKE_PREFIX_PATH``, or ``find_package`` was

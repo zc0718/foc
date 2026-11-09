@@ -43,3 +43,18 @@
 .literal-block-wrapper + * {
     margin-top: 2.5em; /* space to the next line */
 }
+
+
+/* tables: the theme pins `white-space: nowrap` on every cell, so a table with a
+   sentence in a cell becomes a horizontal scrollbar instead of a table. Let cells
+   wrap, and let long unbroken tokens (paths, API names) break rather than push the
+   table past the content column. */
+.wy-table-responsive table td,
+.wy-table-responsive table th {
+    white-space: normal;
+}
+
+.wy-table-responsive table td code,
+.wy-table-responsive table th code {
+    overflow-wrap: anywhere;
+}

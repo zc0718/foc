@@ -72,7 +72,8 @@ void stage_nameplate() {
     // `Kt = 1.5 * p * psi_f`: the one conversion this page performs, and the one
     // place where a factor of 1.5 or a pole-pair count gets lost in the field.
     // `Kt = 1.5 * p * psi_f`：本页唯一的换算，也是现场最容易丢掉 1.5 或极对数的地方。
-    row(1, "Kt = 1.5 * pole_pairs * psi_f", 1.5 * static_cast<double>(kPolePairs) * nameplate.psi_f, "N.m/A");
+    const double kt = 1.5 * static_cast<double>(kPolePairs) * nameplate.psi_f;
+    row(1, "Kt = 1.5 * pole_pairs * psi_f", kt, "N.m/A");
 
     // The same nameplate as a file. A document without map rows carries only `rs`:
     // the per-current parameters live in the rows, so a round trip that is worth
@@ -89,9 +90,9 @@ void stage_nameplate() {
     const bool ok = (written > 0U) && foc::core::read_document(text, written, &readback, &error);
     row(1, "nameplate file: size", static_cast<double>(written), "B");
     row(1, "nameplate file: map rows", static_cast<double>(readback.map.count), "rows");
-    verdict(1, "nameplate round trip",
-            (ok && (readback.params.rs == nameplate.rs) && (readback.map.count == document.map.count)) ? "same"
-                                                                                                    : "differs");
+    const bool same_rs = ok && (readback.params.rs == nameplate.rs);
+    const bool same_rows = readback.map.count == document.map.count;
+    verdict(1, "nameplate round trip", (same_rs && same_rows) ? "same" : "differs");
 }
 
 // ---------------------------------------------------------------------------
@@ -161,9 +162,9 @@ void stage_startup() {
     // 先看拒绝：交接转速为零等于一个永远不会结束的配方。
     foc::core::StartupConfig broken = recipe;
     broken.handover_speed_rad_s = 0.0F;
-    verdict(3, "recipe with hand-over 0 rad/s", (foc::core::StartupRoutine{broken}.validate() == foc::ErrorCode::Ok)
-                                                   ? "accepted"
-                                                   : "refused");
+    const foc::core::StartupRoutine refused_start{broken};
+    const bool zero_handover_ok = refused_start.validate() == foc::ErrorCode::Ok;
+    verdict(3, "recipe with hand-over 0 rad/s", zero_handover_ok ? "accepted" : "refused");
 
     foc::core::StartupRoutine startup{recipe};
     if (!startup.begin(kPolePairs)) {
@@ -185,7 +186,8 @@ void stage_startup() {
     }
     row(3, "hold (align) lasts", static_cast<double>(hold_s), "s");
     row(3, "pull + hold, to hand-over", static_cast<double>(t_s), "s");
-    row(3, "hand-over speed (electrical)", static_cast<double>(out.handover_speed_e_rad_s), "rad/s");
+    row(3, "hand-over speed (electrical)",
+        static_cast<double>(out.handover_speed_e_rad_s), "rad/s");
     row(3, "hand-over speed (mechanical)",
         static_cast<double>(out.handover_speed_e_rad_s / static_cast<float>(kPolePairs)), "rad/s");
     row(3, "commanded angle at hand-over", static_cast<double>(out.theta_e_rad), "rad");
@@ -218,9 +220,12 @@ void stage_torque_step() {
         step.push_back(bench.sample());
     }
     const std::vector<float> iq = foc::sil::series_of(step, &foc::sil::Sample::iq_a);
-    row(4, "iq step: settling to 5 %", static_cast<double>(foc::sil::settling_time_s(step, &foc::sil::Sample::iq_a, 1.0F, 0.05F)), "s");
-    row(4, "iq step: overshoot", static_cast<double>(100.0F * foc::sil::overshoot_fraction(iq, 1.0F, 0.0F)), "%");
-    row(4, "iq step: steady-state error", static_cast<double>(1.0F - foc::sil::tail_mean(iq, 0.2F)), "A");
+    const float settle = foc::sil::settling_time_s(step, &foc::sil::Sample::iq_a, 1.0F, 0.05F);
+    const float overshoot = 100.0F * foc::sil::overshoot_fraction(iq, 1.0F, 0.0F);
+    row(4, "iq step: settling to 5 %", static_cast<double>(settle), "s");
+    row(4, "iq step: overshoot", static_cast<double>(overshoot), "%");
+    const double error = static_cast<double>(1.0F - foc::sil::tail_mean(iq, 0.2F));
+    row(4, "iq step: steady-state error", error, "A");
 }
 
 // ---------------------------------------------------------------------------
@@ -239,7 +244,8 @@ void stage_high_speed() {
     const foc::core::MtpvPoint mtpa = solver.mtpa_point();
     const float base = solver.base_speed_rad_s();
     row(5, "base speed (electrical)", static_cast<double>(base), "rad/s");
-    row(5, "base speed (mechanical)", static_cast<double>(base / static_cast<float>(kPolePairs)), "rad/s");
+    row(5, "base speed (mechanical)",
+        static_cast<double>(base / static_cast<float>(kPolePairs)), "rad/s");
     row(5, "MTPA id at the current ceiling", static_cast<double>(mtpa.id_a), "A");
     row(5, "MTPA iq at the current ceiling", static_cast<double>(mtpa.iq_a), "A");
 
@@ -256,9 +262,10 @@ void stage_high_speed() {
     }
     row(5, "voltage binds first at", static_cast<double>(ratio), "x base");
     const foc::core::MtpvPoint at_twice = solver.at_speed(2.0F * base);
+    const float mtpa_torque = (mtpa.torque_nm > 0.0F) ? mtpa.torque_nm : 1.0F;
+    const double torque_ratio = static_cast<double>(at_twice.torque_nm / mtpa_torque);
     row(5, "id at 2x base", static_cast<double>(at_twice.id_a), "A");
-    row(5, "torque at 2x base relative to MTPA",
-        static_cast<double>(at_twice.torque_nm / ((mtpa.torque_nm > 0.0F) ? mtpa.torque_nm : 1.0F)), "x");
+    row(5, "torque at 2x base relative to MTPA", torque_ratio, "x");
     verdict(5, "past base speed", "weakened");
 }
 
@@ -274,7 +281,8 @@ void stage_position() {
     const foc::core::SoftLimitOutput inside = limit.apply(0.5F);
     const foc::core::SoftLimitOutput beyond = limit.apply(1.5F);
     row(6, "target 0.5 accepted as", static_cast<double>(inside.target_rad), "rad");
-    verdict(6, "target 1.5 rad against wall 1.0", (beyond.status == foc::ErrorCode::Ok) ? "accepted" : "refused");
+    verdict(6, "target 1.5 rad against wall 1.0",
+            (beyond.status == foc::ErrorCode::Ok) ? "accepted" : "refused");
     row(6, "previous target returned instead", static_cast<double>(beyond.target_rad), "rad");
 
     foc::core::MotionProfile::Config shaping{};
@@ -294,7 +302,8 @@ void stage_position() {
     while (t_s < 1.5F) {
         const double theta = bench.plant().state().theta_mech;
         const float velocity = profile.step(target, static_cast<float>(theta), kDtS);
-        worst_velocity = (std::fabs(velocity) > worst_velocity) ? std::fabs(velocity) : worst_velocity;
+        const float magnitude = std::fabs(velocity);
+        worst_velocity = (magnitude > worst_velocity) ? magnitude : worst_velocity;
         bench.motor().set_speed(velocity);
         bench.tick_once();
         t_s += kDtS;
@@ -358,8 +367,10 @@ void stage_protection() {
     }
     row(7, "3.4 A continuous: trip after", static_cast<double>(trip_s), "s");
     verdict(7, "fault latched", output.output_allowed ? "no" : "yes");
-    row(7, "derated limit at 80 C", static_cast<double>(foc::core::Protector(config).derated_limit(80.0F)), "A");
-    row(7, "derated limit at 105 C", static_cast<double>(foc::core::Protector(config).derated_limit(105.0F)), "A");
+    const float limit_80 = foc::core::Protector(config).derated_limit(80.0F);
+    const float limit_105 = foc::core::Protector(config).derated_limit(105.0F);
+    row(7, "derated limit at 80 C", static_cast<double>(limit_80), "A");
+    row(7, "derated limit at 105 C", static_cast<double>(limit_105), "A");
 
     // The latch is the point of a trip: it does not clear because the current came
     // back. `reset()` clears the latched faults and deliberately keeps the i2t
@@ -370,7 +381,8 @@ void stage_protection() {
     // 记忆——绕组还热着——所以轴**依然**被拦住。只有 `reset_cold()` 能让它重新跑，而那个是
     // 给已经断电够久、确实凉了的机器用的。
     const foc::core::ProtectionOutput still_tripped = overloaded.step(healthy(0.5F, 40.0F), kDt);
-    verdict(7, "healthy input after the trip", still_tripped.output_allowed ? "allowed" : "still blocked");
+    verdict(7, "healthy input after the trip",
+            still_tripped.output_allowed ? "allowed" : "still blocked");
     overloaded.reset();
     const foc::core::ProtectionOutput after_reset = overloaded.step(healthy(0.5F, 40.0F), kDt);
     verdict(7, "after reset()", after_reset.output_allowed ? "allowed" : "still blocked");

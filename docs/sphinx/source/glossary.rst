@@ -1,7 +1,7 @@
 _`Glossary`
 ===========
 
-The words this documentation uses without re-defining them, in the order a reader meets them.
+Thirty-four words this documentation uses without re-defining them, in the order a reader meets them.
 Every entry says where it is used *in this library*, because the same word means slightly
 different things in different drives — and a symbol, once it is used in an equation, must be
 the one on :doc:`symbols`.
