@@ -141,6 +141,7 @@ accident.
    :numbered:
 
    Task slices <guides/index>
+   One machine, one shift <guides/walkthrough>
    Measured responses <demos/index>
    Outer-loop self-tuning <sop>
 

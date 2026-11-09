@@ -1,0 +1,48 @@
+one machine, one shift -- 7 pole pairs, 24 V bus, 20 kHz control loop
+
+ stage  quantity                                      value  unit
+   1  Rs                                              0.5  ohm
+   1  Ld                                            0.004  H
+   1  Lq                                            0.008  H
+   1  psi_f                                          0.01  Wb
+   1  Kt = 1.5 * pole_pairs * psi_f                 0.105  N.m/A
+   1  nameplate file: size                             64  B
+   1  nameplate file: map rows                          1  rows
+   1  nameplate round trip                           same  -
+   2  board items checked                              12  items
+   2  items failed (healthy board)                      0  items
+   2  cause on a healthy board                       none  -
+   2  items failed (one sign inverted)                  2  items
+   2  cause named                            current polarity  -
+   3  recipe with hand-over 0 rad/s               refused  -
+   3  hold (align) lasts                          0.01995  s
+   3  pull + hold, to hand-over                    1.5198  s
+   3  hand-over speed (electrical)                     60  rad/s
+   3  hand-over speed (mechanical)                 8.5714  rad/s
+   3  commanded angle at hand-over                 1.0337  rad
+   3  sequence finished                               yes  -
+   4  iq step: settling to 5 %                     0.0009  s
+   4  iq step: overshoot                                0  %
+   4  iq step: steady-state error                0.010139  A
+   5  base speed (electrical)                      579.86  rad/s
+   5  base speed (mechanical)                      82.837  rad/s
+   5  MTPA id at the current ceiling              -1.5865  A
+   5  MTPA iq at the current ceiling               2.5462  A
+   5  voltage binds first at                         1.05  x base
+   5  id at 2x base                               -2.7089  A
+   5  torque at 2x base relative to MTPA          0.64539  x
+   5  past base speed                            weakened  -
+   6  target 0.5 accepted as                          0.5  rad
+   6  target 1.5 rad against wall 1.0             refused  -
+   6  previous target returned instead                0.5  rad
+   6  peak velocity commanded                      3.7319  rad/s
+   6  move duration                                   1.5  s
+   6  residual error at 1.5 s                  9.1296e-06  rad
+   6  landed at                                   0.79999  rad
+   7  3.4 A continuous: trip after                0.75371  s
+   7  fault latched                                   yes  -
+   7  derated limit at 80 C                           1.8  A
+   7  derated limit at 105 C                          0.3  A
+   7  healthy input after the trip           still blocked  -
+   7  after reset()                          still blocked  -
+   7  after reset_cold()                          allowed  -

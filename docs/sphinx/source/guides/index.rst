@@ -120,3 +120,12 @@ The figures already on the site
 :doc:`../demos/index` holds the SIL traces that the figure step draws on. They
 are scenario pages rather than task pages: a scenario says "watch the loop do
 this", a slice says "here is what to wire on your machine".
+
+Reading the slices in order
+---------------------------
+
+The nine pages below are independent on purpose, but a machine does not meet them
+independently: it is read, checked, aligned, given a torque command, run past base
+speed, positioned and tripped. :doc:`walkthrough` does exactly that, in that order,
+on one nameplate, and states one number per stage — every one printed by a script
+that page includes.
