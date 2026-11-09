@@ -447,6 +447,48 @@ feedforward, field_weakening, homing, machine_map, machine_map_text, machine_par
 position_reference, reference, sm, startup, svpwm, traits, types, version, and the two remaining ``motor/`` headers. They
 are named in ``capability-scope.json`` so the count is visible, and so that a *new* header cannot join them silently.
 
+.. _evidence-levels:
+
+_`The four evidence levels`
+---------------------------
+
+Every quantitative statement on this site carries one of four levels, and the level is part of the statement
+rather than a footnote: an L2 number is not a weaker L4 number, it is a **different kind of claim**. The
+table below is the vocabulary. The worked example for each level is a claim row in the project
+``README.md``, and it stays there -- copying one here would give that number a second home with a shelf
+life, which is the failure this page's matrix exists to prevent.
+
+.. list-table::
+   :header-rows: 1
+   :widths: 7 30 27 36
+
+   * - Level
+     - What it means
+     - How it is checked
+     - What it does not say
+   * - **L1**
+     - Asserted by construction
+     - A compiler flag, a type, or a gate that fails the build
+     - That the behaviour was ever observed at run time
+   * - **L2**
+     - Measured against the model in this repository, with the criterion written before the
+       measurement and the number recorded
+     - A unit test that prints the number and asserts the criterion
+     - Anything about your machine: it is true of the plant in this repository
+   * - **L3**
+     - L2 plus a **measured sensitivity** -- how far the number moves when the model is wrong in the
+       ways it is known to be wrong
+     - ``test_sil_sensitivity.cpp``, plus a phase-variable cross-check of the model itself
+     - That the model omits nothing that matters to you; it bounds only what is known to be omitted
+   * - **L4**
+     - Measured on physical hardware, with the condition recorded
+     - not available in this repository
+     - --
+
+**No page here makes an L4 claim**: at the time of writing there is no motor, no inverter and no current
+probe on this project. A row may state the minimum of the levels its inputs depend on and no more, and
+where a page quotes a number it names the level it is quoting.
+
 An evidence level answers "how well is this supported". What may be said *to a customer* about a
 capability — the sentence, the tier behind it, and the industry it is said in — is
 :doc:`compliance/index`.

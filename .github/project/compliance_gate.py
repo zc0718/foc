@@ -130,12 +130,26 @@ def check_parity() -> list[str]:
         if zh not in dox:
             problems.append(f'{ident}: the zh sentence is not in {DOX.relative_to(ROOT)}')
 
-    # The table that presents them must have exactly one row per claim.
-    block = re.search(r'\.\. list-table::\n(?:\s+:[^\n]+\n)*\n((?:\s+\* - [^\n]+\n(?:\s{4,}[^\n]*\n)*)+)', PAGE.read_text(encoding='utf-8'))
-    rows = len(re.findall(r'^\s+\* - ', block.group(1), re.M)) - 1 if block else -1
-    if rows != len(claims):
+    # The table that presents them must have exactly one row per claim. It is found by its header,
+    # not by being the first table on the page: the page opens with a four-reader table that happens
+    # to have four rows, so the positional version was green for the wrong reason and would have
+    # stopped meaning anything the moment a claim was added. Measured before the change: the first
+    # table had 4 data rows, the sentence table had 4, and the claim count was 4.
+    tables = re.findall(r'\.\. list-table::\n(?:\s+:[^\n]+\n)*\n((?:\s+\* - [^\n]+\n(?:\s{4,}[^\n]*\n)*)+)',
+                        PAGE.read_text(encoding='utf-8'))
+    sentence_rows = None
+    for body in tables:
+        first = body.strip().splitlines()[0]
+        if 'never' in first.lower():
+            sentence_rows = len(re.findall(r'^\s+\* - ', body, re.M)) - 1
+            break
+    if sentence_rows is None:
         problems.append(
-            f'the sentence table on {PAGE.relative_to(ROOT)} has {rows} data row(s) for '
+            f'the sentence table on {PAGE.relative_to(ROOT)} was not found: no list-table there has a '
+            f'"Never" column, so nothing checks that every claim reaches the page')
+    elif sentence_rows != len(claims):
+        problems.append(
+            f'the sentence table on {PAGE.relative_to(ROOT)} has {sentence_rows} data row(s) for '
             f'{len(claims)} claim(s); an entry added to claims.json must be added to the page too')
     return problems
 

@@ -169,8 +169,9 @@ Tools and artefacts
 
    evidence level
       How a statement is supported (measured on the SIL plant, asserted by a test, verified by a
-      gate, or deferred to hardware). Pages may state **the minimum of the levels they depend
-      on**, and no more.
+      gate, or deferred to hardware). The four levels, side by side, are
+      :ref:`on the capability page <evidence-levels>`. Pages may state **the minimum of the levels
+      they depend on**, and no more.
 
    SIL
       Software-in-the-loop: the library's control loop running against a plant *model* on the

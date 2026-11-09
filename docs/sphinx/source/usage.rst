@@ -525,9 +525,10 @@ _`Verification: what is actually checked`
 
 Every number below is produced by the commands in the same column, on the same commit.
 
-The rightmost column is the **evidence level** (defined in the project README): L1 is enforced by
+The rightmost column is the **evidence level**: L1 is enforced by
 construction, L2 is measured against the model in this repository with the criterion written first,
-L3 adds a measured sensitivity to the model being wrong, L4 would be measured on real hardware.
+L3 adds a measured sensitivity to the model being wrong, L4 would be measured on real hardware --
+:ref:`the four levels side by side <evidence-levels>`.
 **There are no L4 claims** -- no motor has been attached to any of this. Read every number below as
 "true of the documented model", and use :code:`BoardSelfTest` / :code:`check_board()` to find out
 whether your hardware matches that model.

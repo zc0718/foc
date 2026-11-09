@@ -100,16 +100,33 @@ def invariant_cases() -> set[str]:
     return set(re.findall(r"^TEST\(Invariants\s*,\s*(\w+)\s*\)", text, re.MULTILINE))
 
 
-def table_rows() -> list[list[str]]:
-    """The capability table, as rows of cells. Blank continuation lines belong to the previous cell's row."""
+def all_tables() -> list[list[list[str]]]:
+    """Every list-table on the page, each as rows of cells.
+
+    Every table, not only the last one. The page explains itself with a second table (the four
+    evidence levels live in one), and a checker that takes whichever table comes last starts reading
+    the wrong one without saying so -- the first version of this function did exactly that, and the
+    gate then reported every capability as unlisted. The capability table is picked out by its header
+    row instead of by its position.
+    """
     text = PAGE.read_text(encoding="utf-8")
+    tables: list[list[list[str]]] = []
     rows: list[list[str]] = []
     current: list[str] | None = None
+
+    def close_table() -> None:
+        nonlocal rows
+        if rows:
+            tables.append(rows)
+        rows = []
+
     for raw in text.splitlines():
         line = raw.rstrip()
         if line.lstrip().startswith(".. list-table"):
-            rows.clear()
-            current = None
+            if current is not None:
+                rows.append(current)
+                current = None
+            close_table()
             continue
         stripped = line.strip()
         if stripped.startswith("* - "):
@@ -132,7 +149,16 @@ def table_rows() -> list[list[str]]:
             current[-1] = f"{current[-1]} {stripped}".strip()
     if current is not None:
         rows.append(current)
-    return rows
+    close_table()
+    return tables
+
+
+def table_rows() -> list[list[str]]:
+    """The capability table, as rows of cells, chosen by its header row."""
+    for rows in all_tables():
+        if rows and rows[0] and rows[0][0].strip().strip("`*_ ").lower() == "capability":
+            return rows
+    return []
 
 
 def normalized(cell: str) -> str:
