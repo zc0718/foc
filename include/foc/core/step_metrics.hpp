@@ -32,7 +32,7 @@ namespace core {
  *   `status` 是诊断通道，不是装饰：`Ok` 表示拟合到了衰减，`State` 表示窗口里没有可用的衰减（严格落在起点与目标之间的样
  *   本少于三个），`Param` 表示参数根本描述不了一个阶跃。构造上不可能出现 `status == Ok` 而带宽为 0，因此"零"不会被误读
  *   成"没测"——而这正是能力矩阵存在的理由。
- * @since 0.1.8
+ * @since 0.1.0
  * @exporter
  */
 struct StepMetrics {
@@ -107,7 +107,7 @@ struct StepMetrics {
  * @return [zh] 指标；即使 status 不是 Ok，每个字段也被写入。
  * @context [en] Host-side analysis over a recorded window: noexcept, no allocation, O(n), no function pointer.
  * @context [zh] 对录制窗口的主机侧分析：noexcept、不分配、O(n)、无函数指针。
- * @since 0.1.8
+ * @since 0.1.0
  * @exporter
  */
 inline auto step_metrics(const float* y, std::size_t n, float dt_s, float target, float band) noexcept -> StepMetrics {

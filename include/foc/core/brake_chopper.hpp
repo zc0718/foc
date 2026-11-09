@@ -21,7 +21,7 @@ namespace core {
  * @note [zh] `v_on > v_off` 不是整洁问题：那道间隔 **就是** 滞环，没有它斩波器会以变换器自己的采样率开关——每个控制周期
  *            一个脉冲、永远如此，而电阻承受着一个没人要求的占空比。最小导通/关断时间是第二道保险，因为母线正好停在一个
  *            阈值上、上面还叠着纹波时，光有滞环仍然会抖。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 struct BrakeChopperConfig final {
@@ -50,7 +50,7 @@ struct BrakeChopperConfig final {
  *            期自行恢复，因为电阻还是热的，而一个忘了这一点的控制器会很有礼貌地、每个周期一点地把它烧掉。锁存只能由
  *            `reset()` 清除，而一个从不清除它的调用方会得到一条持续上升的母线——那是正确的、看得见的失败，而不是看不见
  *            的。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 struct BrakeChopperOutput final {
@@ -86,7 +86,7 @@ struct BrakeChopperOutput final {
  *   设计上有两件事值得写下来，因为两个替代方案都唾手可得而且都是错的。占空比是 **`duty_max` 上的 bang-bang** ，而不是正
  *   比于超压量：按比例律，电阻的功率取决于母线超了多少，于是它对一次快速上升的第一反应 **太小** ，而在阈值处的反应干脆
  *   是 **零** 。预算是带 **冷却** 项积分的，因为没有冷却的预算是一辈子只跳一次、之后再也不跳的锁存器。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 class BrakeChopper final {

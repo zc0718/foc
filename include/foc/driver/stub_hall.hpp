@@ -17,17 +17,17 @@ namespace driver {
  *            refused `0` and `7` would hide the case the decoder is supposed to catch.
  * @note [zh] 它存在的意义是让解码器与换相策略在没有板子的情况下也能被跑到，并让契约有一个能证明「可实现」的实现。它故意
  *            不做任何校验：一个会拒绝 `0` 与 `7` 的 stub，会把本该由解码器抓到的情形藏起来。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 class StubHall final : public hal::Hall {
   public:
     StubHall() noexcept = default;
 
-    /** @brief [en] Set the reported code. @brief [zh] 设置上报的编码。 @since 0.1.9 */
+    /** @brief [en] Set the reported code. @brief [zh] 设置上报的编码。 @since 0.1.0 */
     void set_states(std::uint8_t code) noexcept { code_ = static_cast<std::uint8_t>(code & 0x07U); }
 
-    /** @brief [en] The reported code. @brief [zh] 上报的编码。 @since 0.1.9 */
+    /** @brief [en] The reported code. @brief [zh] 上报的编码。 @since 0.1.0 */
     auto states() noexcept -> std::uint8_t override { return code_; }
 
   private:

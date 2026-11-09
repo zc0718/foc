@@ -33,7 +33,7 @@ constexpr float kThirdTurnRad = 2.09439510239319549230F;
  *            表示没有故障——合法的传感器下标里没有 3，所以这个值不会被误撞上。回差（滞环） **故意** 没有建模。真实传感器
  *            的锁存宽度只在边沿处有噪声或抖动时才有意义，而这个模型两者都没有，所以一个回差旋钮会是个没有可观测效果的旋
  *            钮 ——正是台账 A-13 记的那种缺陷形态。它要么与噪声模型一起到位，要么就不来。
- * @since 0.1.9
+ * @since 0.1.0
  */
 struct HallSetup final {
     float mount_error_rad[3]{0.0F, 0.0F, 0.0F}; ///< [en] per-sensor placement error, rad. [zh] 每个传感器的安装误差，rad。
@@ -53,7 +53,7 @@ struct HallSetup final {
  *            mount_error_rad[i]`。编码的第 `i` 位就是第 `i` 个传感器，因此六个可达编码恰好是 **1..6** ，而三位字段剩下
  *            的两个编码 0 和 7 正是任何健康传感器组都产生不出来的。这就是为什么现场每个驱动都会判 `state == 0 || state
  *            == 7`：这不是约定，是这种编码的算术。
- * @since 0.1.9
+ * @since 0.1.0
  */
 class HallSensorModel final {
   public:
@@ -62,21 +62,21 @@ class HallSensorModel final {
     /**
      * @brief [en] The three-bit code at this electrical angle, 0..7.
      * @brief [zh] 该电角度下的三位编码，0..7。
-     * @since 0.1.9
+     * @since 0.1.0
      */
     [[nodiscard]] auto code(float theta_e_rad) const noexcept -> std::uint8_t;
 
     /**
      * @brief [en] Electrical angle at which sensor `i` switches on, normalised to [0, 2*pi).
      * @brief [zh] 第 `i` 个传感器由低变高的电角度，归一化到 [0, 2π)。
-     * @since 0.1.9
+     * @since 0.1.0
      */
     [[nodiscard]] auto switch_on_rad(std::uint8_t sensor) const noexcept -> float;
 
     /**
      * @brief [en] True for the six codes a healthy set of sensors can produce.
      * @brief [zh] 健康的传感器组能产生的六个编码为真。
-     * @since 0.1.9
+     * @since 0.1.0
      */
     [[nodiscard]] static auto legal(std::uint8_t code) noexcept -> bool;
 

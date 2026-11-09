@@ -1,6 +1,6 @@
 """The analysis layer: what a recorded window says about the loop that produced it.
 
-Why this module exists. The library can record a window (`Motor.trace()` / `foc_motor_trace_read`) and, since 0.1.8, it
+Why this module exists. The library can record a window (`Motor.trace()` / `foc_motor_trace_read`) and it
 can also measure one (`foc_step_metrics`, reached here as `foc_python.step_metrics`). Two implementations of the same
 metric is one too many unless the disagreement is *measured*, so this module is the independent one: numpy, written
 against the same definition, and checked against the C++ side to within 1 % on the same samples. When they disagree, one
@@ -8,7 +8,7 @@ of them is wrong and the build says so; when only one exists, nobody finds out.
 
 分析层：一段录制窗口对产生它的环路说了什么。
 
-本模块存在的意义。库能录窗口（`Motor.trace()` / `foc_motor_trace_read`），自 0.1.8 起也能测窗口（`foc_step_metrics`，
+本模块存在的意义。库能录窗口（`Motor.trace()` / `foc_motor_trace_read`），也能测窗口（`foc_step_metrics`，
 这里通过 `foc_python.step_metrics` 可达）。同一个指标有两份实现，除非**把分歧测出来**，否则就多了一份：因此本模块
 是独立的那一份——numpy 写成、遵循同一份定义、并与 C++ 侧在同一批样本上比到 1% 以内。两者不一致时，其中一个是错的，
 构建会说出来；只有一份存在时，没人会知道。

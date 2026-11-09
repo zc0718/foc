@@ -17,7 +17,7 @@ namespace {
  * @brief [en] Implements valid_config(); the contract is documented on its declaration.
  * @brief [zh] 实现 valid_config()；契约文档在对应的声明处。
  * @attacher
- * @since 0.1.11
+ * @since 0.1.0
  */
 constexpr auto valid_config(const DualInductanceObserver::Config& config) noexcept -> bool {
     if (!((config.rs >= 0.0F) && (config.ld > 0.0F) && (config.lq > 0.0F) && (config.psi_f > 0.0F))) {
@@ -35,7 +35,7 @@ constexpr auto valid_config(const DualInductanceObserver::Config& config) noexce
 /**
  * @brief [en] Wrap to [0, 2pi).
  * @brief [zh] 归一到 [0, 2π)。
- * @since 0.1.11
+ * @since 0.1.0
  */
 auto wrap_two_pi(float angle) noexcept -> float {
     while (angle < 0.0F) {
@@ -51,7 +51,7 @@ auto wrap_two_pi(float angle) noexcept -> float {
 /**
  * @brief [en] Wrap to (-pi, pi].
  * @brief [zh] 归一到 (−π, π]。
- * @since 0.1.11
+ * @since 0.1.0
  */
 auto wrap_pi(float angle) noexcept -> float {
     while (angle <= -kPi<float>) {
@@ -67,7 +67,7 @@ auto wrap_pi(float angle) noexcept -> float {
 /**
  * @brief [en] A complex number as two floats, so no `<complex>` is pulled into an ISR translation unit.
  * @brief [zh] 用两个 float 表示的复数，避免把 `<complex>` 拉进 ISR 的编译单元。
- * @since 0.1.11
+ * @since 0.1.0
  */
 struct Cx final {
     float re;
@@ -77,7 +77,7 @@ struct Cx final {
 /**
  * @brief [en] `a * b`.
  * @brief [zh] `a * b`。
- * @since 0.1.11
+ * @since 0.1.0
  */
 constexpr auto mul(Cx a, Cx b) noexcept -> Cx {
     return Cx{(a.re * b.re) - (a.im * b.im), (a.re * b.im) + (a.im * b.re)};
@@ -86,14 +86,14 @@ constexpr auto mul(Cx a, Cx b) noexcept -> Cx {
 /**
  * @brief [en] `a + b`.
  * @brief [zh] `a + b`。
- * @since 0.1.11
+ * @since 0.1.0
  */
 constexpr auto add(Cx a, Cx b) noexcept -> Cx { return Cx{a.re + b.re, a.im + b.im}; }
 
 /**
  * @brief [en] `a - b`.
  * @brief [zh] `a - b`。
- * @since 0.1.11
+ * @since 0.1.0
  */
 constexpr auto sub(Cx a, Cx b) noexcept -> Cx { return Cx{a.re - b.re, a.im - b.im}; }
 
@@ -101,7 +101,7 @@ constexpr auto sub(Cx a, Cx b) noexcept -> Cx { return Cx{a.re - b.re, a.im - b.
  * @brief [en] `a / b`, left to the hardware to saturate to inf/NaN rather than guarded: the caller has already
  *             established that `|b|` is not negligible.
  * @brief [zh] `a / b`；不做保护、交由硬件产生 inf/NaN——调用方已确保 `|b|` 不可忽略。
- * @since 0.1.11
+ * @since 0.1.0
  */
 constexpr auto div(Cx a, Cx b) noexcept -> Cx {
     const float d = (b.re * b.re) + (b.im * b.im);
@@ -111,28 +111,28 @@ constexpr auto div(Cx a, Cx b) noexcept -> Cx {
 /**
  * @brief [en] `k * a`.
  * @brief [zh] `k * a`。
- * @since 0.1.11
+ * @since 0.1.0
  */
 constexpr auto scale(float k, Cx a) noexcept -> Cx { return Cx{k * a.re, k * a.im}; }
 
 /**
  * @brief [en] `|a|`.
  * @brief [zh] `|a|`。
- * @since 0.1.11
+ * @since 0.1.0
  */
 auto magnitude(Cx a) noexcept -> float { return std::sqrt((a.re * a.re) + (a.im * a.im)); }
 
 /**
  * @brief [en] `conj(a)`.
  * @brief [zh] `conj(a)`。
- * @since 0.1.11
+ * @since 0.1.0
  */
 constexpr auto conj(Cx a) noexcept -> Cx { return Cx{a.re, -a.im}; }
 
 /**
  * @brief [en] Principal square root of a complex number, `sqrt(r) * (cos(phi/2) + j*sin(phi/2))`.
  * @brief [zh] 复数的主平方根，`sqrt(r)·(cos(arg/2) + j·sin(arg/2))`。
- * @since 0.1.11
+ * @since 0.1.0
  */
 auto sqrt_cx(Cx a) noexcept -> Cx {
     const float r = magnitude(a);
@@ -144,7 +144,7 @@ auto sqrt_cx(Cx a) noexcept -> Cx {
 /**
  * @brief [en] Angle of a complex number in [0, 2pi).
  * @brief [zh] 复数的角度，[0, 2π)。
- * @since 0.1.11
+ * @since 0.1.0
  */
 auto arg(Cx a) noexcept -> float { return wrap_two_pi(std::atan2(a.im, a.re)); }
 
@@ -159,7 +159,7 @@ auto arg(Cx a) noexcept -> float { return wrap_two_pi(std::atan2(a.im, a.re)); }
  * @details [zh] 被丢掉的项是凸极自身的磁链，被它扰动的线性答案角度偏差约为 `|L1·i|/psi_f`——因此取万分之一时，这个丢弃值
  *               1e-4 rad，比要求观测器做到的 0.01 rad 低三个数量级。这个分支不是便利：`L1·conj(i)` 就是二次项系数， **
  *               零电流**时方程真的是线性的，除以该系数只会得到 inf。
- * @since 0.1.11
+ * @since 0.1.0
  */
 constexpr float kLinearRatio = 1.0e-4F;
 

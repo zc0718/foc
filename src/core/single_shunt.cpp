@@ -17,7 +17,7 @@ namespace {
  * @brief [zh] 三个占空比按从大到小，以及每一个属于哪一相。一次遍历、不排数组，因为重构需要的正是「哪一相最大」，而排序
  *             索引正是扇区表会趁机溜回来的地方。
  * @attacher
- * @since 0.1.9
+ * @since 0.1.0
  */
 struct Ranked final {
     float max_v;

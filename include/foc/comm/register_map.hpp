@@ -49,7 +49,7 @@ namespace comm {
  *            disagree.
  * @note [zh] 这些编号是 **协议** 的，不是 C ABI 的，而且它们是整棵树里唯一写下寄存器编号的地方。任何想通过链路读这些东
  *            西的代码都用这个枚举来指代，于是"协议长出了第二套词汇"表现为一个编译错误，而不是两张互相矛盾的表格。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 enum class RegisterId : std::uint16_t {
@@ -89,7 +89,7 @@ enum class RegisterId : std::uint16_t {
  *            reporting a number that is correct to the bit and wrong to the reader.
  * @note [zh] `FloatBits` 的存在是因为 float 过不了面向字的寄存器接口：读方必须知道自己在看的是 IEEE-754 位型而不是整
  *            数，而把 1065353216 当速度打印出来的上位机报的是一个逐位正确、对读者错误的数。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 enum class RegisterKind : std::uint8_t {
@@ -119,7 +119,7 @@ enum class RegisterKind : std::uint8_t {
  *            表，在每一条构建腿里都是编译错误，早于任何门禁。以字符串为键的表需要门禁才能发现，而门禁只在它被接上的地方
  *            跑。 `abi` 是为了诊断与完整性检查而携带的，它 **就是 `read` 里那个函数的地址所属的函数名** ——两者写在同一
  *            行，所以漂不开。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 struct RegisterEntry final {
@@ -136,7 +136,7 @@ struct RegisterEntry final {
  * @note [en] Read-only and static: nothing here allocates, and a host that walks the table costs one function pointer
  *            call per register. It is not in the control path and is not meant to be.
  * @note [zh] 只读且静态：这里什么都不分配，走一遍表的代价是每个寄存器一次函数指针调用。它不在控制路径上，也不打算在。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 constexpr std::size_t kRegisterCount = 10U;
@@ -263,7 +263,7 @@ inline auto read_trace_dropped(foc_motor_t motor, std::uint32_t* raw) noexcept -
  * @brief [zh] 寄存器表本身。
  * @return [en] a static array of `kRegisterCount` entries.
  * @return [zh] 一个含 `kRegisterCount` 项的静态数组。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 inline auto register_table() noexcept -> const RegisterEntry* {
@@ -297,7 +297,7 @@ inline auto register_table() noexcept -> const RegisterEntry* {
  *            error -- the same rule as `decode_frame`: fill nothing until every check has passed.
  * @note [zh] C 接口拒绝了的寄存器不会触碰 `raw`，于是上位机不可能把一个陈旧的值与一个新到的错误配成一对——与
  *            `decode_frame` 同一条规则：在所有检查通过之前什么都不填。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 [[nodiscard]] inline auto read_register(foc_motor_t motor, RegisterId id, std::uint32_t* raw) noexcept -> bool {

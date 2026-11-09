@@ -21,7 +21,7 @@ namespace core {
  * @note [zh] `min_pulse_s` 是 **驱动器** 的属性，不是调制器的。自举高侧驱动器需要最小导通时间给电容充电，隔离驱动器的传
  *            输延迟会吞掉短脉冲，而数据手册只给一个覆盖两个边沿的数。`switching_period_s` 在这里只是因为调制器用占空比
  *            工作：`t_min / T` 是能活下来的最小占空比，做完这个除法之后整个配置就只剩这一个数。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 struct MinPulseConfig final {
@@ -39,7 +39,7 @@ struct MinPulseConfig final {
  *            because the bridge is inside the loop and the voltage is not measured.
  * @note [zh] `lost_vs` 是 **每相** 带符号的，正数表示桥臂 **少** 交付。调用方需要它，才能停止对自己的输出撒谎：一个假定
  *            指令被如实执行的环路，会积分一项反馈里看不见的电压误差，因为桥臂在环内、电压却没被量。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 struct MinPulseOutput final {
@@ -94,7 +94,7 @@ struct MinPulseOutput final {
  *
  * @context [en] Current-loop ISR: noexcept, no allocation, one branch per phase when disabled.
  * @context [zh] 电流环 ISR：noexcept、不分配、未启用时每相一个分支。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 class MinPulse final {
@@ -154,7 +154,7 @@ class MinPulse final {
      * @param v_bus [zh] 母线电压，V，只用来把占空比换成伏秒。
      * @return [en] the applied duty, the volt-seconds the bridge will not deliver, and whether anything was narrowed.
      * @return [zh] 实际施加的占空比、桥臂不会交付的伏秒，以及是否有任何一相被截窄。
-     * @since 0.1.9
+     * @since 0.1.0
      * @exporter
      */
     [[nodiscard]] auto apply(Uvw<float> duty, float v_bus) const noexcept -> MinPulseOutput;
@@ -173,7 +173,7 @@ class MinPulse final {
      * @note [zh] 结果里的 `duty` 是 **该命令什么** ，即请求加上带过来的余量；`lost_vs` 是带上余量之后 **仍然** 丢掉的部
      *            分，它在任意窗口上求和等于 `carry[窗口末]`——这条恒等式是测试能拿来卡住这个类的东西，也正是余量被暴露出
      *            来的原因。
-     * @since 0.1.9
+     * @since 0.1.0
      * @exporter
      */
     [[nodiscard]] auto shape(Uvw<float> duty, float v_bus) noexcept -> MinPulseOutput;

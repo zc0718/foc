@@ -231,7 +231,7 @@ class Motor final {
         /**
          * @brief [en] The trace channel. Defaults to the switch that costs nothing: an empty type with no-op calls.
          * @brief [zh] 轨迹通道。默认是不花代价的那个开关：一个空类型，调用皆空操作。
-         * @since 0.1.8
+         * @since 0.1.0
          */
         Trace trace{};
     };
@@ -287,7 +287,7 @@ class Motor final {
      *            `foc_bridge_fault_name()`.
      * @note [zh] 没有成因的 Fault 状态是"无从问起"的售后电话，因此这里的每个触发点都要报一个。它就是 C API 已经通过
      *            `foc_bridge_fault_name()` 给出名字的那套词条的 C++ 半边。
-     * @since 0.1.6
+     * @since 0.1.0
      */
     void fault(core::FaultCode code) noexcept;
 
@@ -297,7 +297,7 @@ class Motor final {
      * @note [en] `clear_fault()` resets it together with the controllers, so a stale cause can never outlive the state
      *            it explains.
      * @note [zh] `clear_fault()` 会连同控制器一起把它复位，因此陈旧的成因不会比它所解释的状态活得更久。
-     * @since 0.1.6
+     * @since 0.1.0
      */
     [[nodiscard]] auto fault_code() const noexcept -> core::FaultCode;
 
@@ -373,7 +373,7 @@ class Motor final {
      *
      * @param iq_a [en] the offset in A; clamped with the reference by the current ceiling, not here.
      * @param iq_a [zh] 偏置，A；它随参考一起被电流上限约束，不在这里约束。
-     * @since 0.1.9
+     * @since 0.1.0
      */
     void set_feedforward_current(float iq_a) noexcept;
 
@@ -407,7 +407,7 @@ class Motor final {
    *            矩模式，因此只有 `stall_start_phase()` 能说明当前指令力矩是序列的还是调用方的。到达 `Released` 后控制权
    *            回到调用方：必须在同一控制周期内调 `set_speed()`（或 `set_torque()`），否则起动转矩会继续施加。 `Failed`
    *            会锁存 `FaultCode::Stall`——驱动在限幅内搬不动的负载是关于这台机器的事实，它比发现它的那次调用活得更久。
-   * @since 0.1.9
+   * @since 0.1.0
    */
     auto begin_stall_start(const core::StallStartConfig& recipe) noexcept -> ErrorCode;
 
@@ -416,14 +416,14 @@ class Motor final {
    * @brief [zh] 起步序列处在哪一步，以及它上一次下发了多少力矩。
    * @note [en] Read them together: the phase says whether the torque below is still owned by the sequence.
    * @note [zh] 两个要一起读：阶段说明它下面那个力矩是否仍归序列所有。
-   * @since 0.1.9
+   * @since 0.1.0
    */
     [[nodiscard]] auto stall_start_phase() const noexcept -> core::StallStartPhase;
 
     /**
    * @brief [en] The torque the sequence last commanded, N*m. After `Released` this is the hand-over value.
    * @brief [zh] 序列上一次下发的力矩，N·m。进入 `Released` 之后它就是交接值。
-   * @since 0.1.9
+   * @since 0.1.0
    */
     [[nodiscard]] auto stall_start_torque_nm() const noexcept -> float;
 
@@ -433,14 +433,14 @@ class Motor final {
    * @note [en] It is the difference between "climbing" and "climbing and out of authority": at the ceiling the only
    *            outcomes left are motion or `Failed`.
    * @note [zh] 它是“还在爬”与“爬到顶、没有余地”的区别：贴在上限上时，剩下的结局只有动起来或 `Failed`。
-   * @since 0.1.9
+   * @since 0.1.0
    */
     [[nodiscard]] auto stall_start_limited() const noexcept -> bool;
 
     /**
    * @brief [en] Abandon the sequence and zero the torque command; the mode is left as the caller had it.
    * @brief [zh] 放弃序列并把指令力矩清零；模式保持调用方当前的样子。
-   * @since 0.1.9
+   * @since 0.1.0
    */
     void cancel_stall_start() noexcept;
 
@@ -483,7 +483,7 @@ class Motor final {
      *            in both cases so a template never has to ask which one it has.
      * @note [zh] 默认的 `NullTrace` 下它返回一个 `size()` 为 0 的空对象——两种情况都有这个访问器，于是模板不必去问它拿到
      *            的是哪一个。
-     * @since 0.1.8
+     * @since 0.1.0
      */
     [[nodiscard]] auto trace() noexcept -> Trace& { return policies_.trace; }
     [[nodiscard]] auto trace() const noexcept -> const Trace& { return policies_.trace; }
@@ -555,7 +555,7 @@ class Motor final {
      *            one.
      * @note [zh] 故意只读。原点由 `hal.position` 收到的索引脉冲建立，而不是由调用方写一个角度——可写的原点会让一个错误的
      *            数字看起来和测量出来的完全一样。
-     * @since 0.1.6
+     * @since 0.1.0
      */
     [[nodiscard]] auto position_reference() const noexcept -> const core::PositionReference&;
 
@@ -593,7 +593,7 @@ class Motor final {
      * @param inject [zh] 观测器本周期是否在被推进、因而拥有施加电压。
      * @return [en] `base` plus the carrier, or `base` alone when there is none.
      * @return [zh] `base` 加载波；没有载波时就是它。
-     * @since 0.1.2
+     * @since 0.1.0
      */
     [[nodiscard]] auto applied_voltage(const Ab<float>& base, bool inject) const noexcept -> Ab<float> {
         if constexpr (core::concepts::has_injection_v<Observer>) {

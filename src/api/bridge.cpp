@@ -47,7 +47,7 @@ namespace {
  * @note [zh] 为什么在 C++ 用户能拿到零代价的 `core::RingTrace<N>` 时还要有这个。那里的容量是模板参数，而 ABI 对所有调用
  *            方都是一个类型，所以 C 路径不可能在不引入第二个电机实现的前提下拥有编译期容量——而第二个实现就是第二条控制
  *            路径，桥的全部意义恰恰在于只有一条。代价是每周期一次空指针检查，而它是可预测的，未挂载时不到一纳秒。
- * @since 0.1.8
+ * @since 0.1.0
  */
 struct AbiTrace final {
     core::SpanTrace ring{};
@@ -86,7 +86,7 @@ using MotorT =
  * @note [en] Identical policy list on purpose. A second policy composition would be a second control path, and the
  *            point of the two pools is that the loop under test is one object.
  * @note [zh] 策略列表刻意完全一致。换一套策略组合就是第二条控制路径，而两个池的意义恰恰在于被测的环是同一个。
- * @since 0.1.2
+ * @since 0.1.0
  */
 using MotorT_Host =
     motor::Motor<core::SwitchableObserver, core::Svpwm, core::Pi, driver::CallbackHal, core::NullReferenceGenerator,
@@ -238,7 +238,7 @@ constexpr float kHfiMinRatio = 2.0F;
  *   在纹波台架上实测：200 Hz 把已发布转速里的载波音调从 0.4180 压到 0.0412 rad/s（10.1 倍），而稳态偏置没有变差（
  *   0.0039 → 0.0023 rad/s），并且 50 到 400 Hz 之间每个截止频率都稳定，所以这个选择不是稳定边界。50 Hz 实测更安静，但它
  *   只比 32 Hz 速度环自身带宽高 1.6 倍，那里的相位代价没有量过；200 Hz 高出 6.25 倍，代价约 9 度。
- * @since 0.1.7
+ * @since 0.1.0
  */
 constexpr float kHfiSpeedLpfHz = 200.0F;
 
@@ -262,7 +262,7 @@ auto covers(const foc_motor_setup_t& setup, std::size_t end_offset) noexcept -> 
  *            can be trusted to reproduce it.
  * @note [zh] 一个解析函数，三个调用方：两个构造函数与增益查询。于是增益查询不可能答出出厂环路没有使用的值——这也是库外整
  *            定工具能够被信任为复现它的唯一理由。
- * @since 0.1.3
+ * @since 0.1.0
  */
 struct Resolved final {
     foc::motor::MotorConfig config;
@@ -439,7 +439,7 @@ auto resolve_setup(const foc_motor_setup_t* requested) noexcept -> Setup {
  * @note [zh] 几种回答刻意分开。答 `FOC_OK` 却跑默认值，是一种静默替换。今天枚举里的每个模式都已接入，因此这里不再回答
  *            `FOC_ERR_NOT_IMPL`；该回答留在契约里供以后新增的模式使用，而一个永远走不到的分支被删掉，而不是留下来充作覆
  *            盖。
- * @since 0.1.4
+ * @since 0.1.0
  */
 auto observer_status(const Setup& setup, const foc_motor_params_t& params) noexcept -> foc_err_t {
     switch (setup.observer) {
@@ -696,7 +696,7 @@ template <typename SlotType> auto motor_of(SlotType& slot) noexcept -> auto& { r
  *            instantiations. Writing a second copy of `tick` for the host pool is exactly the confusion this avoids.
  * @note [zh] 唯一的派发点：各入口各自只有一个实现，两次实例化由编译器完成。给主控池再抄一份 `tick`，正是这里要避免的混
  *            淆。
- * @since 0.1.2
+ * @since 0.1.0
  */
 template <typename Fn> auto on_slot(foc_motor_t handle, Fn&& fn) -> foc_err_t {
     if (Slot* slot = resolve(handle)) {
@@ -755,8 +755,8 @@ namespace api {
 namespace {
 
 // ---------------------------------------------------------------------------------------------
-// ABI 0.1.1: commissioning, protection and the reference policies.
-// ABI 0.1.1：整定、保护与参考策略。
+// ABI 0.1.0: commissioning, protection and the reference policies.
+// ABI 0.1.0：整定、保护与参考策略。
 //
 // Why a second pool and a second magic. A `foc_protector_t` and a `foc_motor_t` are both opaque
 // pointers; if they shared a magic, passing one where the other belongs would resolve to a slot and
@@ -788,7 +788,7 @@ constexpr std::size_t kMaxProtectors = 4U;
  *            oversight.
  * @note [zh] `Protector` 没有默认构造函数，且只含浮点与枚举，所以内联字节上 placement new 就够， 不需要调析构。这一点是
  *            **写明的** 而不是假定的：若该类型将来长了需要释放的成员，这段注释会让 那次遗漏成为 bug 而不是疏忽。
- * @since 0.1.1
+ * @since 0.1.0
  */
 struct ProtectorSlot final {
     alignas(core::Protector) unsigned char storage[sizeof(core::Protector)]{};
@@ -1036,7 +1036,7 @@ auto machine_params(const foc_motor_params_t& p) noexcept -> core::MachineParams
  *            地板 `min_gain_rad_s` 3.0 只在 `3.0/0.3 = 10 rad/s` 以下起作用；`min_flux_wb` 取铭牌磁链的一半，于是"低于
  *            此磁链不报答案"落在额定的 50 %）。此处作为库默认值写明，等调用方确实需要不同值时再开放，而不是每次调用静默
  *            重新猜一遍。
- * @since 0.1.5
+ * @since 0.1.0
  */
 constexpr auto observer_mode(core::ObserverKind kind) noexcept -> std::int32_t {
     switch (kind) {
@@ -1171,7 +1171,7 @@ inline auto make_observer(const foc_motor_params_t& p, const Setup& setup) noexc
 /**
  * @brief [en] Map the caller's enumeration onto the slot's kind; only the admitted values arrive here.
  * @brief [zh] 把调用方的枚举映射到槽位的 kind；只有被放行的取值会到达这里。
- * @since 0.1.5
+ * @since 0.1.0
  */
 
 
@@ -1244,7 +1244,7 @@ template <typename T> auto size_ok(const T& value) noexcept -> bool {
  * @note [en] Field by field rather than a byte copy: the two layouts differ by the `struct_size` header, and an
  *            accidental match today would be a silent misread tomorrow.
  * @note [zh] 逐字段而不是整块拷贝：两个布局差一个 `struct_size` 头，今天的偶然对齐就是明天的静默误读。
- * @since 0.1.2
+ * @since 0.1.0
  */
 auto to_hal_callbacks(const foc_hal_callbacks_t& c) noexcept -> driver::HalCallbacks {
     driver::HalCallbacks callbacks{};
@@ -1850,8 +1850,8 @@ foc_err_t foc_bridge_get_state(foc_motor_t motor, float* speed_rad_s, float* id,
 
 
 // ---------------------------------------------------------------------------------------------
-// ABI 0.1.1 entry points.
-// ABI 0.1.1 入口。
+// ABI 0.1.0 entry points.
+// ABI 0.1.0 入口。
 // ---------------------------------------------------------------------------------------------
 
 float foc_bridge_axis_deadtime_v(float deadtime_s, float switching_hz, float v_bus_v, float angle_rad) {

@@ -25,7 +25,7 @@ namespace core {
  *   bandwidth·b/kt`——写成比值就是 `kp = bandwidth/(kt/J)` 与 `ki = bandwidth·(b/J)/(kt/J)`。所以整定器根本不需要知道
  *   `kt` 或 `J` 才能给出正确的增益；它需要 **量出这两个比值** 。铭牌只通过 `j_expected` 参与，而它的职责是回答另一个问
  *   题：这台机器是不是调用方以为自己在整定的那一台？
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 struct SpeedTuneConfig final {
@@ -55,7 +55,7 @@ struct SpeedTuneConfig final {
  * @note [zh] `valid` 为假时，本结构里的增益是 **铭牌** 增益——即 `speed_pi_config()` 会给的同一组值——于是"拿到什么就用什
  *            么 "的调用方等于什么都没换。这是刻意的：回退成零会得到一个出不了力矩的驱动器，回退成实测值则是悄悄整定到一
  *            台没人描述过的机器上。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 struct SpeedTuneResult final {
@@ -103,7 +103,7 @@ struct SpeedTuneResult final {
  *   型解释不了这个窗口——随位置变化的摩擦、齿槽定位点、在动的负载）、机械极点不成立或为负、实测惯量离 `j_expected` 超过
  *   `tolerance`。以上每一种，结果里带的都是 **铭牌** 增益且 `valid == false`，于是"拿到什么就用什么"的调用方等于什么都
  *   没换。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 class SpeedTuner final {
@@ -129,7 +129,7 @@ class SpeedTuner final {
      * @param omega_mech_rad_s [zh] 机械转速，rad/s。
      * @param saturated [en] whether the current loop was railing this period.
      * @param saturated [zh] 本周期电流环是否撞限。
-     * @since 0.1.9
+     * @since 0.1.0
      */
     void accumulate(float dt_s, float iq_a, float omega_mech_rad_s, bool saturated) noexcept;
 

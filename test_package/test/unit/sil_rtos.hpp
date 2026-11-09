@@ -23,7 +23,7 @@ namespace sil {
  *            instead of a reimplementation of it.
  * @note [zh] 这就是这一项的全部诀窍：库本来就从平台时钟量 `max_period_us`。把一块可拨动的虚拟时钟交给它，测的就是真实
  *            RTOS 会驱动的那条同样的代码路径，而不是它的一个再实现。
- * @since 0.1.9
+ * @since 0.1.0
  */
 class VirtualClock final {
   public:
@@ -44,7 +44,7 @@ class VirtualClock final {
  *            duty, and the test would then be measuring the copy.
  * @note [zh] `PlantHal` 是 `final` 且删除了拷贝与移动，所以这里 **引用** 它的四个成员而不是包含它。这是有意的：一份拷贝
  *            就是第二台带自己保持占空比的逆变器，而测试随后量到的会是那份拷贝。
- * @since 0.1.9
+ * @since 0.1.0
  */
 class ClockedPlantHal final {
   public:
@@ -69,7 +69,7 @@ class ClockedPlantHal final {
  * @brief [en] One periodic task in the model: how often it is released, how long it holds the CPU, and how important it
  *             is.
  * @brief [zh] 模型里的一个周期任务：多久释放一次、占用 CPU 多久、以及有多重要。
- * @since 0.1.9
+ * @since 0.1.0
  */
 struct RtosTask final {
     std::uint32_t period_us; ///< [en] release period, us. [zh] 释放周期，us。
@@ -86,7 +86,7 @@ struct RtosTask final {
  *            to prevent, and silence is what a schedule model makes visible.
  * @note [zh] `worst_interval_us` 是库必须与之一致的那个数，而 `overruns` 是"调度守不住期限时必须不为零"的那个数—— 静默
  *            过载正是这一项要防的失败，而调度模型让"静默"变得可见。
- * @since 0.1.9
+ * @since 0.1.0
  */
 struct RtosSchedule final {
     static constexpr std::size_t kCapacity = 256U;
@@ -123,7 +123,7 @@ struct RtosSchedule final {
  * @note [zh] 只有抢占式固定优先级这一层：任务拿到 CPU 就跑完，更高优先级在它释放时抢占，没有锁。这足以回答本项唯一要问
  *            的问题—— **控制任务什么时候才跑得上** ——并且刻意不足以回答别的。共享资源造成的阻塞是另一个模型、另一组数
  *            字，用这个模型假装覆盖它，正是一条用例最后断言了没人量过的东西的方式。
- * @since 0.1.9
+ * @since 0.1.0
  */
 inline auto simulate_control_task(const RtosTask* blockers, std::size_t blocker_count,
                                   std::uint32_t control_period_us, std::uint32_t control_busy_us,

@@ -27,7 +27,7 @@ namespace foc {
  *
  *   `status` 是诊断通道：铭牌能产生力矩时为 `Ok`，不能时为 `Param`（`kt <= 0` 表示这台机器每安培不产生力矩，那不是一个
  *   机器）。失败的地图仍然写满全部字段，因此忽略状态的调用方拿到的是零，而不是未初始化的限幅。
- * @since 0.1.8
+ * @since 0.1.0
  * @exporter
  */
 struct TorqueMap {
@@ -59,7 +59,7 @@ struct TorqueMap {
  *
  *   这条指令是否被裁剪，正是这里用结构体而不是一个数的原因：被裁剪的指令与被执行的指令在其他方面毫无差别，分不清二者的
  *   调用方会在张力控制已经饱和时报"正在保持"。
- * @since 0.1.8
+ * @since 0.1.0
  * @exporter
  */
 struct TorqueCommand {
@@ -88,7 +88,7 @@ struct TorqueCommand {
  *            promise the map cannot keep.
  * @note [zh] 电流限幅仍然叠加在力矩限幅之上：地图被钳到 `min/max_nm` 与 `kt·i_limit_a` 中较小的那个。否则一个比逆变器能
  *            力更宽的力矩限幅，就是地图兑现不了的承诺。
- * @since 0.1.8
+ * @since 0.1.0
  * @exporter
  */
 inline auto torque_map(const motor::MotorConfig& config, float min_nm, float max_nm) noexcept -> TorqueMap {
@@ -139,7 +139,7 @@ inline auto torque_map(const motor::MotorConfig& config, float min_nm, float max
  * @param iq_a [zh] q 轴电流，A。
  * @return [en] torque in N*m.
  * @return [zh] 力矩，N·m。
- * @since 0.1.8
+ * @since 0.1.0
  * @exporter
  */
 inline auto torque_estimate(const TorqueMap& map, float id_a, float iq_a) noexcept -> float {
@@ -172,7 +172,7 @@ inline auto torque_estimate(const TorqueMap& map, float id_a, float iq_a) noexce
  * @param id_a [zh] 指令将在其上下发的 d 轴电流，A。
  * @return [en] the command; `limited` says whether anything was clipped.
  * @return [zh] 指令；`limited` 表示是否有内容被裁剪。
- * @since 0.1.8
+ * @since 0.1.0
  * @exporter
  */
 inline auto torque_command(const TorqueMap& map, float requested_nm, float id_a) noexcept -> TorqueCommand {

@@ -20,7 +20,7 @@ namespace core {
  *            -- exactly 180 degrees away, which on a six-vector star is three places.
  * @note [zh] 方向 **不是** 传感器的性质。编码只说转子在哪；往哪个方向出力矩是驱动的决定，而它就是同一个编码对着相反的矢
  *            量读——恰好相差 180°，在六矢量星上就是隔三格。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 enum class HallDirection : std::uint8_t {
@@ -32,14 +32,14 @@ enum class HallDirection : std::uint8_t {
 /**
  * @brief [en] How many sectors one electrical revolution is divided into by a three-Hall set.
  * @brief [zh] 三霍尔组把一圈电角度分成的扇区数。
- * @since 0.1.9
+ * @since 0.1.0
  */
 inline constexpr std::uint8_t kHallSectors = 6U;
 
 /**
  * @brief [en] A sector index that means "no sector": an illegal code, or no edge seen yet.
  * @brief [zh] 表示"没有扇区"的索引：编码非法，或还没见过边沿。
- * @since 0.1.9
+ * @since 0.1.0
  */
 inline constexpr std::uint8_t kHallNoSector = 0xFFU;
 
@@ -54,7 +54,7 @@ inline constexpr std::uint8_t kHallNoSector = 0xFFU;
  * @note [zh] 扇区 `k` 覆盖电角度 `[k*60 − 30, k*60 + 30)`，即 **以 `k*60` 为中心** ，因为三个传感器正是把边沿放在那里：
  *            0/120/240 的传感器在 30/90/150/…处切换，从不在零处。这是 `test_hall_physics.cpp` 里量出来的，不是假设的——
  *            那个文件更早的一版假设边沿落在 60 的倍数上，结果跨过了一条边沿（台账 C-7）。
- * @since 0.1.9
+ * @since 0.1.0
  */
 [[nodiscard]] constexpr auto hall_sector(std::uint8_t code) noexcept -> std::uint8_t {
     // Indexed by code, bit i = sensor i. The six legal codes are 1..6 and the mapping is the rotor's order, measured:
@@ -67,7 +67,7 @@ inline constexpr std::uint8_t kHallNoSector = 0xFFU;
 /**
  * @brief [en] Electrical angle at the centre of a sector, rad.
  * @brief [zh] 扇区中心的电角度，rad。
- * @since 0.1.9
+ * @since 0.1.0
  */
 [[nodiscard]] constexpr auto hall_sector_centre_rad(std::uint8_t sector) noexcept -> float {
     constexpr float kSectorRad = 1.04719755119659774615F; // pi/3
@@ -91,7 +91,7 @@ inline constexpr std::uint8_t kHallNoSector = 0xFFU;
  *            转矩角从 +30° 走到 −30°，力矩在 `cos(30°)` = 0.866 到 1 之间，即均值的 14.0 % 峰峰。在
  *            `test_hall_decoder.cpp` 里对 plant 实测；插值角度的意义就是消掉这一项。非法编码回答三相全在中点——零矢量，
  *            不产生力矩，而不是一个产生错误力矩的猜测。
- * @since 0.1.9
+ * @since 0.1.0
  */
 [[nodiscard]] auto six_step_duty(std::uint8_t code, float amplitude, HallDirection direction) noexcept -> Uvw<float>;
 
@@ -128,7 +128,7 @@ inline constexpr std::uint8_t kHallNoSector = 0xFFU;
  *
  *   读数只计数、不锁存：`illegal_reads()` 与 `stale_reads()` 累加，而"单次毛刺是否该停轴"是本层不做的决定（与
  *   `torque_map` 的 `limited` 同一种分工）。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 class HallTracker final {
@@ -155,7 +155,7 @@ class HallTracker final {
     /**
      * @brief [en] Forget everything: no sector, no speed, no counts.
      * @brief [zh] 忘掉一切：无扇区、无转速、无计数。
-     * @since 0.1.9
+     * @since 0.1.0
      */
     void reset() noexcept;
 
@@ -169,7 +169,7 @@ class HallTracker final {
      * @param code [zh] 三位编码，0..7。
      * @return [en] `Ok` when the sample was a legal code, `Fault` when it was 0 or 7, `State` before the first edge.
      * @return [zh] 采样是合法编码时为 `Ok`，是 0 或 7 时为 `Fault`，在第一个边沿之前为 `State`。
-     * @since 0.1.9
+     * @since 0.1.0
      */
     auto update(float now_s, std::uint8_t code) noexcept -> ErrorCode;
 
@@ -181,49 +181,49 @@ class HallTracker final {
      *            otherwise. The sensors are the authority on *which* sector, so the estimate never leaves it.
      * @note [zh] 钳位不是装饰：转子停住时直线会继续走，估计值会离开传感器仍在报告的那个扇区，也就是在编码说别的话时误差
      *            无界增长。扇区的归属以传感器为准，所以估计值不越出它。
-     * @since 0.1.9
+     * @since 0.1.0
      */
     [[nodiscard]] auto angle_elec_rad(float now_s) const noexcept -> float;
 
     /**
      * @brief [en] Signed electrical speed from the last two edges, rad/s; 0 until two edges have been seen.
      * @brief [zh] 由最近两个边沿得到的有符号电角速度，rad/s；在见到两个边沿之前为 0。
-     * @since 0.1.9
+     * @since 0.1.0
      */
     [[nodiscard]] auto speed_elec_rad_s() const noexcept -> float;
 
     /**
      * @brief [en] The last sector, or `kHallNoSector`.
      * @brief [zh] 最近的扇区，或 `kHallNoSector`。
-     * @since 0.1.9
+     * @since 0.1.0
      */
     [[nodiscard]] auto sector() const noexcept -> std::uint8_t;
 
     /**
      * @brief [en] `Ok`; `Fault` after an illegal sample; `State` before the first edge or when one is overdue.
      * @brief [zh] `Ok`；最近一次采样非法时为 `Fault`；在第一个边沿之前或等边沿等得太久时为 `State`。
-     * @since 0.1.9
+     * @since 0.1.0
      */
     [[nodiscard]] auto status() const noexcept -> ErrorCode;
 
     /**
      * @brief [en] Time since the last edge, s; `0` when no edge has been seen.
      * @brief [zh] 距最近边沿的时间，s；没见过边沿时为 `0`。
-     * @since 0.1.9
+     * @since 0.1.0
      */
     [[nodiscard]] auto age_s() const noexcept -> float;
 
     /**
      * @brief [en] The last measured sector period, s; 0 until two edges have been seen.
      * @brief [zh] 最近一次实测的扇区周期，s；见到两个边沿之前为 0。
-     * @since 0.1.9
+     * @since 0.1.0
      */
     [[nodiscard]] auto period_s() const noexcept -> float;
 
     /**
      * @brief [en] Samples that read 0 or 7.
      * @brief [zh] 读到 0 或 7 的采样数。
-     * @since 0.1.9
+     * @since 0.1.0
      */
     [[nodiscard]] auto illegal_reads() const noexcept -> std::uint32_t;
 
@@ -231,7 +231,7 @@ class HallTracker final {
      * @brief [en] Times an interval was refused: an edge arriving on time it did not, or arriving where the length
      *             could not be a sector.
      * @brief [zh] 间隔被拒收的次数：边沿迟到而没有按时到，或到了但长度不可能是一个扇区。
-     * @since 0.1.9
+     * @since 0.1.0
      */
     [[nodiscard]] auto stale_reads() const noexcept -> std::uint32_t;
 

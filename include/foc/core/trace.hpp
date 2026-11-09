@@ -31,7 +31,7 @@ namespace detail {
  *            不是一个只能选择相信的数。规则只放在一个函数里，因为两个环都用它，也因为否则它的边界在 32 位那个上只能靠
  *            42.9 亿次推入才能测到。一个测试碰不到的规则，就是一个可以被变异删除而什么都不变红的规则；这个形状在任何宽
  *            度上都碰得到。
- * @since 0.1.12
+ * @since 0.1.0
  */
 template <typename T> constexpr void count_lost(T& counter) noexcept {
     if (counter < std::numeric_limits<T>::max()) {
@@ -56,7 +56,7 @@ template <typename T> constexpr void count_lost(T& counter) noexcept {
  *            值，`v_*` 是调制前施加的电压。轨迹不能告诉你各相里真实的电流——它告诉你环 **相信** 的电流，而那是唯一能解释
  *            它决策的东西。 `t_us` 是平台时钟截断到 32 位，于是每条记录保持 32 字节，每 71.6 分钟回绕一次。HAL 没有时钟
  *            时每条都是 0 ——恒为 0 意味着"没有时间戳"，这是关于平台的事实，而不是"所有事件同时发生"的声明。
- * @since 0.1.8
+ * @since 0.1.0
  * @exporter
  */
 struct TraceSample final {
@@ -84,7 +84,7 @@ struct TraceSample final {
  *            period, forever, in the path that must be predictable.
  * @note [zh] 这是默认值，也是让"关掉不花代价"成为结构性事实而非愿望的原因：类型为空，每个调用都是优化器会删掉的空操作，
  *            电机的 `sizeof()` 不变。运行时开关更好推理，但更贵——每周期一个分支，永远，就在那条必须可预测的路径上。
- * @since 0.1.8
+ * @since 0.1.0
  * @exporter
  */
 struct NullTrace final {
@@ -109,7 +109,7 @@ struct NullTrace final {
  * @note [zh] 写满时覆盖最旧的样本，并由 `dropped()` 计数。这是故意的：写满就停的记录，恰好丢掉故障真正有意思的那段窗
  *            口。带着计数器的遗忘是可反推的（你知道丢了多少），停止不是。 `push()` 在即将覆盖一个从未被读过的样本时返回
  *            `true`。把这个当错误处理的调用方是错的：这是信息。
- * @since 0.1.8
+ * @since 0.1.0
  * @exporter
  */
 template <std::uint16_t Capacity> class RingTrace final {
@@ -202,7 +202,7 @@ template <std::uint16_t Capacity> class RingTrace final {
  *            型；而想把轨迹放进链接段或内存池的固件作者，不该被迫让库持有一块它看不见的 `static` 数组。因此样本住在调用
  *            方放置它们的地方。未挂载时（`attach(nullptr, 0)` 或默认构造）每个调用都是空操作，什么也不计数：没有窗口可
  *            谈丢失。挂载后每周期一个空指针检查——这也正是编译期路径用 `RingTrace` 的原因：那里连这个检查都不存在。
- * @since 0.1.8
+ * @since 0.1.0
  * @exporter
  */
 class SpanTrace final {

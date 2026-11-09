@@ -22,7 +22,7 @@ namespace core {
  *
  *   是 **每机械转** 的次数。补偿器与注入它的被控对象必须用同一套索引，否则补偿会悄无声息地什么都不抵消——而 "错一个极对
  *   数" 是弄错它的最自然方式，所以这个类型与 SIL 注入共用，而不是在这里重新声明一遍。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 struct CoggingCompHarmonic final {
@@ -50,7 +50,7 @@ struct CoggingCompHarmonic final {
  *            以 `T_cog/Kt` 重现于 q 轴电流（实测 0.079 A，预测 0.080 A），但 80 rad/s（6 次 76 Hz，远高于 250 rad/s 的
  *            速度环）处只剩那份份额的 49 %。超过电流环带宽之后，要求纹波电流买到的是热和相移的电流而不是平稳的运动，所
  *            以淡出是一个 **在哪里停** 的决定，而且它是配置出来的，不是假设出来的。`fade_from_hz == 0` 表示不淡出。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 struct CoggingCompConfig final {
@@ -71,7 +71,7 @@ struct CoggingCompConfig final {
  *
  *   与 `iq_a` 分开报告，是因为两种失效不同、轨迹必须能分开：`gain` 是「频率淡出决定不要这个」，`clipped` 是「电流上限不
  *   让」。把任一藏起来的补偿器，看起来都像一个能用的补偿器。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 struct CoggingCompOutput final {
@@ -85,7 +85,7 @@ struct CoggingCompOutput final {
 /**
  * @brief [en] One control period's inputs: where the rotor is, what current it is carrying, and how fast it turns.
  * @brief [zh] 一个控制周期的输入：转子在哪、带着什么电流、转得多快。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 struct CoggingCompInput final {
@@ -141,7 +141,7 @@ struct CoggingCompInput final {
  *
  *   **它做不到什么。** 它抵消的是转矩纹波；它不负责找表（那是自学习那件），也不纠正相位错的表（相位错则**什么都不抵消**
  *   ——用例里的反证），而在削磁电流处 `ψf + (Ld−Lq)·id = 0`，机器根本出不了转矩，于是偏置被拒绝而不是被除。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 class CoggingCompensation final {
@@ -161,7 +161,7 @@ class CoggingCompensation final {
      * @param harmonics [zh] 表；空指针或 `count <= 0` 表示清空。0 次被丢弃（恒定转矩是负载，不是齿槽）。
      * @param count [en] how many entries are valid. Clamped to `kMaxHarmonics`.
      * @param count [zh] 有效条数。截断到 `kMaxHarmonics`。
-     * @since 0.1.9
+     * @since 0.1.0
      */
     void set_table(const CoggingCompHarmonic* harmonics, int count) noexcept;
 
@@ -175,7 +175,7 @@ class CoggingCompensation final {
      *              or infinite fade band, or a `fade_to_hz` that does not exceed `fade_from_hz`.
      * @return [zh] `Ok`；电感非正、磁链为负、极对数为零、淡出带为负或无穷、或 `fade_to_hz` 不大于 `fade_from_hz` 时为
      *              `Param`。
-     * @since 0.1.9
+     * @since 0.1.0
      */
     [[nodiscard]] auto validate() const noexcept -> ErrorCode;
 
@@ -192,7 +192,7 @@ class CoggingCompensation final {
      *            reporting a happy offset.
      * @note [zh] 偏置是 **加** 到 `iq_command_a` 上的，上限作用在 **和** 上，因为电流环看到的就是那个和。只对偏置削顶会
      *            让总电流越限，却报出一个愉快的偏置。
-     * @since 0.1.9
+     * @since 0.1.0
      */
     [[nodiscard]] auto offset(const CoggingCompInput& in) const noexcept -> CoggingCompOutput;
 

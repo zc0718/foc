@@ -16,7 +16,7 @@
  * @note [zh] 两个宏，不是一个可移植性库。C 面恰好只需要一个属性——"别忽略这个返回值"——而它的写在本库支持的每个编译器上都
  *            只是三行。quirks 库会买来一百个别的属性，这里一个都没有调用方，还会在每个 C 使用方前面多放一条包含路径。等
  *            到需要写 **第四个** 宏且它非按编译器分叉不可时再重开这个问题；今天没有任何东西分叉。
- * @since 0.1.12
+ * @since 0.1.0
  */
 #if defined(__has_attribute)
 // NOLINTNEXTLINE(cppcoreguidelines-macro-usage) -- see deviation/cppcoreguidelines-macro-usage.md
@@ -43,7 +43,7 @@
  *            `__attribute__((warn_unused_result))` 不认这个 void 转换（`[[nodiscard]]` 才认）。真正能过的写法是先绑一个
  *            变量：`foc_err_t e = foc_set_speed(m, v); (void)e;`——而且它 **故意** 不是最省事的那种写法。用 `gcc
  *            -std=c11 -Wall -Wextra` 即可复现：转 void 那种告警，绑变量那种静默。
- * @since 0.1.12
+ * @since 0.1.0
  */
 #if defined(__cplusplus) && (__cplusplus >= 201703L)
 #define FOC_WARN_UNUSED [[nodiscard]]
@@ -130,7 +130,7 @@ typedef struct foc_motor_params {
  *            际在跑的模式，调用方无需从自己请求了什么去推断。此处原来的中文注释说 `HFI` 与 `BLENDED` 仍回答
  *            `FOC_ERR_NOT_IMPL`，与紧邻其上的英文注释直接矛盾，并且已经错了好几个版本。一对彼此不一致的双语注释比单语更
  *            糟：最需要译文的那位读者，拿到的正是陈旧的那一半。
- * @since 0.1.4
+ * @since 0.1.0
  * @exporter
  */
 // NOLINTNEXTLINE(performance-enum-size) -- a C ABI enum cannot carry a C++ base type.
@@ -323,7 +323,7 @@ typedef struct foc_motor_command {
  * @note [zh] 每个字段都转达一条实测规则而不是偏好：载波取该控制率能分辨的最高值（也就是实测最好的角度偏差——8000 Hz 比
  *            2000 Hz 好 33 倍），幅值取能拉出 **你** 预算的高频电流所需的那份伏特（`I_hf·ω_h·Ld`，于是幅值变成一个关于
  *            注入电流的决定，而不是一个魔法电压），两个截止频率是包线扫描量到的固定值——解调 200 Hz、已发布转速 200 Hz。
- * @since 0.1.7
+ * @since 0.1.0
  */
 typedef struct foc_hfi_sizing {
     uint32_t struct_size; ///< sizeof(foc_hfi_sizing_t)
@@ -442,7 +442,7 @@ typedef struct foc_motor_status {
  *            this project's tidy gate rejects, and the values are frozen either way.
  * @note [zh] C 枚举，与本头文件里其它常量一致：`#define` 属于"用宏声明常量"，被本项目的 tidy 门拒 绝；两种写法下这些数
  *            值同样冻结。
- * @since 0.1.1
+ * @since 0.1.0
  * @exporter
  */
 // NOLINTNEXTLINE(performance-enum-size) -- a C ABI enum cannot carry a C++ base type.
@@ -460,7 +460,7 @@ typedef enum foc_board_item {
 /**
  * @brief [en] The single cause `foc_board_check()` names.
  * @brief [zh] `foc_board_check()` 点名的单一成因。
- * @since 0.1.1
+ * @since 0.1.0
  * @exporter
  */
 // NOLINTNEXTLINE(performance-enum-size) -- a C ABI enum cannot carry a C++ base type.
@@ -478,7 +478,7 @@ typedef enum foc_board_cause {
 /**
  * @brief [en] `foc_protection_output_t.fault` domain; the same ranking as `FaultCode`.
  * @brief [zh] `foc_protection_output_t.fault` 的取值域；排名与 `FaultCode` 一致。
- * @since 0.1.1
+ * @since 0.1.0
  * @exporter
  */
 // NOLINTNEXTLINE(performance-enum-size) -- a C ABI enum cannot carry a C++ base type.
@@ -506,7 +506,7 @@ typedef enum foc_board_report_capacity { FOC_BOARD_MAX_ITEMS = 12 } foc_board_re
  * @brief [zh] 板级检查量到的全部东西，放在一处。
  * @note [en] `struct_size` first, like every other struct here: the library only writes the fields that value covers.
  * @note [zh] 与这里其它结构一样 `struct_size` 在最前：库只写入该值覆盖到的字段。
- * @since 0.1.1
+ * @since 0.1.0
  * @exporter
  */
 typedef struct foc_board_measurements {
@@ -529,7 +529,7 @@ typedef struct foc_board_measurements {
 /**
  * @brief [en] The tolerances, separate from the measurements.
  * @brief [zh] 容差，与测量值分开。
- * @since 0.1.1
+ * @since 0.1.0
  * @exporter
  */
 typedef struct foc_board_limits {
@@ -543,7 +543,7 @@ typedef struct foc_board_limits {
     float observer_error_rad; ///< observer error allowed, rad
 } foc_board_limits_t;
 
-/** @brief [en] One row of the report. [zh] 报告的一行。 @since 0.1.1 @exporter */
+/** @brief [en] One row of the report. [zh] 报告的一行。 @since 0.1.0 @exporter */
 typedef struct foc_board_reading {
     int32_t item;  ///< FOC_BOARD_ITEM_*
     float value;   ///< the measured number
@@ -555,7 +555,7 @@ typedef struct foc_board_reading {
 /**
  * @brief [en] Every number plus the one cause to fix first.
  * @brief [zh] 每个数，加上那个最先该修的成因。
- * @since 0.1.1
+ * @since 0.1.0
  * @exporter
  */
 typedef struct foc_board_report {
@@ -570,7 +570,7 @@ typedef struct foc_board_report {
 /**
  * @brief [en] The go/no-go answer from nameplate numbers alone.
  * @brief [zh] 只用铭牌数字得到的做/不做判定。
- * @since 0.1.1
+ * @since 0.1.0
  * @exporter
  */
 typedef struct foc_fw_verdict {
@@ -591,7 +591,7 @@ typedef struct foc_fw_verdict {
  *            together, and the phase says which one is in charge.
  * @note [zh] `RAMPING` 表示转矩指令归序列所有；`RELEASED` 与 `FAILED` 表示它已把轴交回。不存在 “转矩一半是我的”这种状
  *            态：调用方要把阶段与转矩一起读，阶段说明哪个在管。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 // The base type stays `int` for the same reason as the others: a C99 enum has no fixed underlying type, and this
@@ -614,7 +614,7 @@ typedef enum foc_stall_phase {
  *            wall.
  * @note [zh] 这些都是物理量，其中要紧的是 `max_torque_nm`：上限不高于 `breakaway_nm` 的配方只可能产出
  *            `FOC_STALL_FAILED`，因此它会被拒绝，而不是朝墙上顶。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 typedef struct foc_stall_start_config {
@@ -631,7 +631,7 @@ typedef struct foc_stall_start_config {
 /**
  * @brief [en] Where the sequence is and what it last commanded.
  * @brief [zh] 序列处在哪一步，以及它上一次下发了多少力矩。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 typedef struct foc_stall_start_status {
@@ -650,7 +650,7 @@ typedef struct foc_stall_start_status {
  *            motor constructor calls, so a tuning tool cannot drift from the shipped loop.
  * @note [zh] 六个值全给，不只 `kp`/`ki`：在库外复现这个环的调用方还需要限幅，而差别通常就出在限幅上。取值来自电机构造函
  *            数调用的同一个辅助函数，因此整定工具无法与出厂环路漂移。
- * @since 0.1.3
+ * @since 0.1.0
  * @exporter
  */
 typedef struct foc_pi_gains {
@@ -671,7 +671,7 @@ typedef struct foc_pi_gains {
  *            `value` means nothing. A caller that ignores `valid` gets a number that looks like a measurement.
  * @note [zh] `residual` 是模型解释不掉的部分，单位与样本一致（V）。`valid` 是那道诚实的门：样本太少或扫描跨度不足以定出
  *            斜率时为 false，此时 `value` 没有意义。忽略 `valid` 的调用方会得到一个看起来像测量值的数字。
- * @since 0.1.3
+ * @since 0.1.0
  * @exporter
  */
 typedef struct foc_identify_result {
@@ -689,7 +689,7 @@ typedef struct foc_identify_result {
  *             machine instead of guessing them.
  * @brief [zh] 保护阈值。每个字段 **按原样** 使用——零就是零，它会立刻跳闸。要标称 24 V / 3 A 机器上的库默认值，给
  *             `foc_protector_create()` 传 NULL，而不是自己猜。
- * @since 0.1.1
+ * @since 0.1.0
  * @exporter
  */
 typedef struct foc_protection_config {
@@ -710,7 +710,7 @@ typedef struct foc_protection_config {
     float hysteresis_ratio;
 } foc_protection_config_t;
 
-/** @brief [en] One step's measurements. [zh] 一步的测量值。 @since 0.1.1 @exporter */
+/** @brief [en] One step's measurements. [zh] 一步的测量值。 @since 0.1.0 @exporter */
 typedef struct foc_protection_input {
     uint32_t struct_size;
     float i_magnitude_a;    ///< peak phase current, A
@@ -724,7 +724,7 @@ typedef struct foc_protection_input {
 /**
  * @brief [en] What to do this step.
  * @brief [zh] 本步的处置。
- * @since 0.1.1
+ * @since 0.1.0
  * @exporter
  */
 typedef struct foc_protection_output {
@@ -746,7 +746,7 @@ typedef struct foc_protection_output {
  *               inventing a timebase.
  * @details [zh] 五个是必需的，由库检查：占空比送出、相电流读入、机械角读入、母线电压读入、以及功率级的故障输出。其余是
  *               可选的，NULL 的含义是"这个主控方没有这个能力"，而不是"假定一个方便的值"——没有时钟就报 0，不编一个时基。
- * @since 0.1.2
+ * @since 0.1.0
  * @exporter
  */
 typedef struct foc_hal_callbacks {
@@ -817,7 +817,7 @@ typedef struct foc_hal_callbacks {
     int32_t (*read_drive_fault)(void *user);
 } foc_hal_callbacks_t;
 
-/** @brief [en] Handle to a protector instance. [zh] 保护器实例的句柄。 @since 0.1.1 */
+/** @brief [en] Handle to a protector instance. [zh] 保护器实例的句柄。 @since 0.1.0 */
 typedef struct foc_protector_s *foc_protector_t;
 
 /**
@@ -828,7 +828,7 @@ typedef struct foc_protector_s *foc_protector_t;
  *            window and ask for an answer, which is why it is a handle of its own rather than a motor register.
  * @note [zh] 标记为 **experimental** ：流程是稳定的，结构布局不承诺跨版本不变。一次会话是一个 **过程** 而不是一个寄存器
  *            —— 没法逐拍读它，只能喂一段窗口再要一个答案，所以它是自己的句柄而不是电机寄存器。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 typedef struct foc_autotune_s *foc_autotune_t;
@@ -840,7 +840,7 @@ typedef struct foc_autotune_s *foc_autotune_t;
  *            a wrong nameplate cannot move the gains -- it can only make `valid` come back false, which is the point.
  * @note [zh] `kt_nm_per_a` 只用于回退增益与 `j_kg_m2`；拟合辨识的是两个 **比值** ，所以铭牌错了不会移动增益——它只会让
  *            `valid` 变假，而这正是它的用途。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 typedef struct foc_autotune_config {
@@ -866,7 +866,7 @@ typedef struct foc_autotune_config {
  * @note [zh] `valid` 为 0 时携带的是 **铭牌** 增益——正是 `foc_speed_pi_config()` 会产出的那些——于是"拿到什么就用什么"
  *            的调用方什么都没换。回退成零是一台出不了力矩的驱动器；回退成实测值则是悄悄把驱动器整到一台没人描述过的机器
  *            上。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 typedef struct foc_autotune_result {
@@ -896,7 +896,7 @@ typedef struct foc_autotune_result {
  *              FOC_ERR_NO_RESOURCE。
  * @post [en] `*out` is owned by the caller until `foc_autotune_destroy()`.
  * @post [zh] `*out` 归调用方所有，直到 `foc_autotune_destroy()`。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 
@@ -910,7 +910,7 @@ typedef struct foc_autotune_result {
  *            bits; `t_us == 0` on every sample means the HAL has no clock.
  * @note [zh] 布局与 C++ 的 `core::TraceSample` 逐字段一致，`bridge.cpp` 在编译期断言这一点而不靠这条注释。七个数、两个
  *            状态，以及截断到 32 位的平台时间戳；每条 `t_us == 0` 表示 HAL 没有时钟。
- * @since 0.1.8
+ * @since 0.1.0
  * @exporter
  */
 typedef struct foc_trace_sample {
@@ -939,7 +939,7 @@ typedef struct foc_trace_sample {
  * @note [zh] `status` 是诊断通道，不是装饰：`FOC_OK` 表示拟合到一阶衰减，`FOC_ERR_STATE` 表示窗口里没有可用的衰减—— 此
  *            时 `bandwidth_rad_s` 为 0， **而稳定时间等数仍然有效** ，因为一段响应可以稳定却不可拟合。`FOC_ERR_PARAM`
  *            表示参数根本描述不了一个阶跃。因此带宽为 0 永远不会是"不小心没测"。
- * @since 0.1.8
+ * @since 0.1.0
  * @exporter
  */
 typedef struct foc_step_metrics {
@@ -968,7 +968,7 @@ typedef struct foc_step_metrics {
  * @note [zh] `status` 区分"有音"与"有数"：`FOC_OK` 表示良态拟合，`FOC_ERR_STATE` 表示窗口短于所问频率的一个周期（在不足
  *            一周期处拟合也会出数，但那不是这个音的幅值），`FOC_ERR_PARAM` 表示参数根本不是正弦——包括 `omega_rad_s` 超
  *            过 Nyquist，那里投影会混叠，幅值会被报到信号并不具有的频率上。
- * @since 0.1.8
+ * @since 0.1.0
  * @exporter
  */
 typedef struct foc_sinusoid_fit {
@@ -988,7 +988,7 @@ typedef struct foc_sinusoid_fit {
  *            limits do not describe an interval.
  * @note [zh] `status` 是准入通道：铭牌能产生力矩时为 `FOC_OK`；不能时为 `FOC_ERR_PARAM`（`kt <= 0` 表示这台机器每安培不
  *            产生力矩，那不是一个机器），或两个限幅不构成一个区间时亦然。
- * @since 0.1.8
+ * @since 0.1.0
  * @exporter
  */
 typedef struct foc_torque_map {
@@ -1009,7 +1009,7 @@ typedef struct foc_torque_map {
  *            caller that cannot tell them apart reports a saturating tensioner as holding.
  * @note [zh] `limited` 正是这里用结构体的原因：被裁剪的指令与被执行的指令在其他方面毫无差别，分不清二者的调用方会在张力
  *            控制已经饱和时报"正在保持"。
- * @since 0.1.8
+ * @since 0.1.0
  * @exporter
  */
 typedef struct foc_torque_command {
@@ -1030,7 +1030,7 @@ typedef struct foc_torque_command {
  *            is what makes a learned table usable without a units conversion in the caller.
  * @note [zh] `amplitude_nm` 恒为正，`phase_rad` 是 `theta_mech = 0` 处的相位，于是轮的形状是 `amplitude_nm·sin(order·θ
  *            + phase_rad)`。它与补偿器消费的是同一类型，这正是学到的表能被调用方不经单位换算直接使用的原因。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 typedef struct foc_cogging_harmonic {
@@ -1046,7 +1046,7 @@ typedef struct foc_cogging_harmonic {
  *            releases. A session exists because learning is a *window* rather than a value.
  * @note [zh] 与 `foc_autotune_t` 一样标记为 **experimental** ：流程稳定，布局不承诺跨版本不变。会话之所以存在，是因为学
  *            习是一段 **窗口** 而不是一个值。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 typedef struct foc_cogging_learn_s *foc_cogging_learn_t;
@@ -1059,7 +1059,7 @@ typedef struct foc_cogging_learn_s *foc_cogging_learn_t;
  *            table bakes in a phase error no averaging removes.
  * @note [zh] 转速带不是外挂的安全检查：学习器读的是 **速度环** 供给的电流，所以它学到的带着那个环路的增益与滞后。带内滞
  *            后只有几度；带外则把一个再怎么平均也去不掉的相位误差烘进表里。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 typedef struct foc_cogging_learn_config {
@@ -1086,7 +1086,7 @@ typedef struct foc_cogging_learn_config {
  * @note [zh] `required` 与 `capacity` 在 **每一次** 返回时都报出，包括什么都没写的那些。这就是完整的容量契约：槽位给少
  *            了的调用方会被告知答案需要几条，而不是拿到一张看起来完整的短表；只要报告（`out == NULL`）的调用方则不必持
  *            有缓冲区也能拿到同样的数。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 typedef struct foc_cogging_learn_result {

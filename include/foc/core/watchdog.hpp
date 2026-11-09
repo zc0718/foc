@@ -27,7 +27,7 @@ namespace core {
  *   再前进**，把一个 512 s 的超时变成 446.7 s 触发、把 520 s 的变成永不触发（见 `ElapsedClock` 的说明）。看门狗是最不该
  *   继承这一类误差的东西——它的职责就是在一个数停止前进时把驱动器停下来，于是一个会漂移的截止时刻，是一种没人看得见的失
  *   效。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 struct WatchdogConfig final {
@@ -48,7 +48,7 @@ struct WatchdogConfig final {
  *   `Unarmed` 不是健康状态，也不许读成健康状态。一个从未启动的看门狗没有保护任何东西，而它招来的失效是最安静的那种：主
  *   控方在调试时漏了一个 `kick()`，驱动器就一直跑下去，而所有报告都说 `Ok`，因为从来没有量过任何东西。所以它报
  *   `State`—— 调用方处在错误的状态——而不是报 `Feeding`。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 enum class WatchdogState : std::uint8_t {
@@ -77,7 +77,7 @@ enum class WatchdogState : std::uint8_t {
  *
  *   锁存后的报告重复 **造成锁存的那个数** ，而不是一个不断增长的计时器。一个小时后才去轮询一个已经跳闸的看门狗，必须看
  *   到那次跳闸，而不是"一小时"——否则"喂狗方迟了多久"这个头号问题的答案会随提问时间而变。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 struct WatchdogReport final {
@@ -140,7 +140,7 @@ struct WatchdogReport final {
  *
  *   **它不做什么。** 它不调用 `Motor::fault()`：驱动器属于调用方，库若伸手进去就是在替宿主做控制流决定。它知道成因，在
  *   `fault_code()` 里，而那条两行的链是宿主的。它不武装硬件看门狗、不读寄存器、也不决定自己该被多频繁地轮询。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 class Watchdog final {

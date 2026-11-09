@@ -19,7 +19,7 @@ namespace core {
  *            otherwise-correct design fails by a factor of two at the modulation edge.
  * @note [zh] 两个有效区间在七段式图样里每个周期被 **分两次** 施加，所以可用窗口是它们各自的一半： `min(t_active1,
  *            t_active2)/2`。这个「一半」不是细节——正是在这里，一个别的方面都正确的设计会在调制边界上差一个两倍。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 struct ShuntTimes final {
@@ -40,7 +40,7 @@ struct ShuntTimes final {
  *            there is nothing to measure and nothing to miss.
  * @note [zh] `WindowTooNarrow` 与 `NoActiveVector` 不是一回事，不许合并成「测不了」：前者说的是 **这个** 周期测不了、下
  *            一个大概就行（给定落在扇区边界附近），后者说的是电流根本不流经采样电阻，没什么可测、也没什么可漏。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 enum class ShuntVerdict : std::uint8_t {
@@ -52,7 +52,7 @@ enum class ShuntVerdict : std::uint8_t {
 /**
  * @brief [en] The verdict, the times it was reached from, and the one number that decided it.
  * @brief [zh] 结论、得出结论所用到的那些时间，以及决定它的那一个数。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 struct ShuntWindow final {
@@ -75,7 +75,7 @@ struct ShuntWindow final {
  *            on it.
  * @note [zh] 拒绝时 `i_uvw` 留零 **并且** `valid` 为假，而调用方单看数字是分不出这两者的——这正是那个标志存在的原因。「
  *            其实是拒绝」的重构零值，正是这个类型要防的缺陷：它看起来像一台不取电流的电机，而环路会照它动作。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 struct ShuntCurrents final {
@@ -132,7 +132,7 @@ struct ShuntCurrents final {
  *
  * @context [en] Current-loop ISR: noexcept, no allocation, no state.
  * @context [zh] 电流环 ISR：noexcept、不分配、无状态。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 class SingleShunt final {
@@ -140,7 +140,7 @@ class SingleShunt final {
     /**
      * @brief [en] The shunt's own timing, and the period the duty is relative to.
      * @brief [zh] 采样电阻自己的时间，以及占空比所相对的周期。
-     * @since 0.1.9
+     * @since 0.1.0
      * @exporter
      */
     struct Config final {
@@ -190,7 +190,7 @@ class SingleShunt final {
      * @brief [zh] 图样的三个区间，以及其中两个有效的能不能被采到。
      * @param duty [en] per-phase duty in [0, 1]; outside is clamped and reported as Param.
      * @param duty [zh] 每相占空比，[0, 1]；越界会被钳住并报 Param。
-     * @since 0.1.9
+     * @since 0.1.0
      * @exporter
      */
     [[nodiscard]] auto classify(Uvw<float> duty) const noexcept -> ShuntWindow;
@@ -204,7 +204,7 @@ class SingleShunt final {
      * @param i_dc_active1_a [zh] `t_active1` 期间（最大相单独）采样电阻上的电流，A。
      * @param i_dc_active2_a [en] the shunt current during `t_active2` (two largest phases), A.
      * @param i_dc_active2_a [zh] `t_active2` 期间（最大的两相）采样电阻上的电流，A。
-     * @since 0.1.9
+     * @since 0.1.0
      * @exporter
      */
     [[nodiscard]] auto reconstruct(Uvw<float> duty, float i_dc_active1_a, float i_dc_active2_a) const noexcept

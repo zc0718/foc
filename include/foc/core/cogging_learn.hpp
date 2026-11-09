@@ -35,7 +35,7 @@ namespace core {
  *   在滞后为 `d` 处学到的表只能抵消到原纹波的 `2·sin(d/2)`：5 rad/s 处 13.6 %、10 rad/s 25 %、20 rad/s 46 %、40 rad/s
  *   78 %。所以高于 `max_speed_rad_s` 去学不是"稍差一点"，而是把一个相位误差烘进表里，再怎么平均也去不掉。带内残差也不是
  *   零，那是方法本身的性质而不是缺陷：表带着学习处的滞后。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 struct CoggingLearnConfig final {
@@ -60,7 +60,7 @@ struct CoggingLearnConfig final {
  *            are three different actions.
  * @note [zh] 每一次退出（包括被拒绝的）都报出 `revolutions` 与转速带：一句什么都不说的拒绝，会让调用方去猜它该转更久、
  *            转更慢、还是转得更稳——而那是三种不同的动作。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 struct CoggingLearnReport final {
@@ -109,7 +109,7 @@ struct CoggingLearnReport final {
  *   **它做不到什么。** 它学的是 **若干次的和** ，仅此而已：没被要求的次数在表里是 **缺席** 而不是外插，因为作用在一个编
  *   造出来的谐波上的补偿器会注入自己的纹波。它学的是环路的响应，所以只在上面的带内可信。而且它不判断找到的纹波是不是齿
  *   槽—— 同一次上的死区或传感器纹波也会被同样高兴地学进去。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 class CoggingLearner final {
@@ -134,7 +134,7 @@ class CoggingLearner final {
      * @param omega_mech_rad_s [zh] 机械转速，rad/s。
      * @param saturated [en] whether the current loop was railing this period.
      * @param saturated [zh] 本周期电流环是否撞限。
-     * @since 0.1.9
+     * @since 0.1.0
      */
     void accumulate(float theta_mech_rad, float iq_a, float id_a, float omega_mech_rad_s, bool saturated) noexcept;
 
@@ -157,7 +157,7 @@ class CoggingLearner final {
      * @note [en] The result is a **torque** table in N*m, i.e. the same type and units the compensator and the plant
      *            speak.
      * @note [zh] 结果是 N·m 的 **转矩** 表，即补偿器与被控对象共用的类型与单位。
-     * @since 0.1.9
+     * @since 0.1.0
      */
     [[nodiscard]] auto finish(CoggingCompHarmonic* out, int capacity) const noexcept -> CoggingLearnReport;
 

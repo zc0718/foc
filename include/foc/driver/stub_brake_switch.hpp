@@ -19,7 +19,7 @@ namespace driver {
  *            state machine with a nice printout.
  * @note [zh] 两个调用方出于不同的理由需要同一件事。单元测试问"策略写了什么"；SIL 台架问同一个问题，然后把答案变成流过一
  *            个电阻的电流——这是斩波器唯一可被观测的方式：一个输出没人换算成电流的斩波器，只是一个打印得很好看的状态机。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 class StubBrakeSwitch final : public hal::BrakeSwitch {

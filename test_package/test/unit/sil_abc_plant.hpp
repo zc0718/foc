@@ -102,7 +102,7 @@ class AbcPlant final {
      *             inject. See `sil_cogging_table.hpp` for what an order means.
      * @brief [zh] 共享的谐波类型，于是 `AbcPlant::CoggingHarmonic` 仍然指两台 plant 注入的同一个东西。次数的含义见
      *             `sil_cogging_table.hpp`。
-     * @since 0.1.9
+     * @since 0.1.0
      */
     using CoggingHarmonic = ::foc::sil::CoggingHarmonic;
 
@@ -130,7 +130,7 @@ class AbcPlant final {
      * @param harmonics [zh] 谐波表，最多 `kMaxCogging` 条。
      * @param count [en] how many entries are valid.
      * @param count [zh] 有效条数。
-     * @since 0.1.9
+     * @since 0.1.0
      */
     void set_cogging(const CoggingHarmonic* harmonics, int count) noexcept {
         cogging_count_ = ::foc::sil::store_cogging(cogging_, kMaxCogging, harmonics, count);
@@ -143,7 +143,7 @@ class AbcPlant final {
      * @brief [en] The injected torque at the current mechanical angle, N*m -- the truth a compensator is measured
      *             against.
      * @brief [zh] 当前机械角处的注入转矩，N·m——补偿器被对照的那把尺。
-     * @since 0.1.9
+     * @since 0.1.0
      */
     [[nodiscard]] auto cogging_torque_nm() const noexcept -> float {
         return ::foc::sil::evaluate_cogging(cogging_, cogging_count_, theta_mech_rad());

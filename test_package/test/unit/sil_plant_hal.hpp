@@ -222,7 +222,7 @@ class PlantPosition final : public hal::PositionSensor {
  *            so.
  * @note [zh] 挂不挂 meter 就是「母线不可能跌落」与「母线会跌落」的差别。把刚性那条留作默认不是客气：这个端口存在之前测
  *            的每个数字，都是在一条电压恒定的母线上测的；悄悄给它们一条会跌落的母线，等于在不说一声的情况下把它们作废。
- * @since 0.1.9
+ * @since 0.1.0
  */
 class PlantDcLink final : public hal::DcLink {
   public:
@@ -326,7 +326,7 @@ class PlantHal final {
    * @note [en] Optional and off by default. With no meter, `advance()` is byte for byte what it was -- the port adds a
    *            measurement, not a behaviour.
    * @note [zh] 可选，默认关闭。不挂 meter 时 `advance()` 与从前逐字节相同——这个端口加的是 **测量** ，不是行为。
-   * @since 0.1.9
+   * @since 0.1.0
    */
     void set_bus(BusMeter* meter) noexcept;
 
@@ -344,7 +344,7 @@ class PlantHal final {
      * @note [zh] 是 HAL 成员而不是 `set_brake()` 指针，因为开关是功率级的一部分、不是可选的测量端口：它一直在，没有东西
      *            写它时占空比为 0，plant 与这个成员存在之前逐字节相同。而 **挂 meter** 仍然可选，因为那才是把一条刚性母
      *            线变成被积分的母线的那件事。
-     * @since 0.1.9
+     * @since 0.1.0
      */
     driver::StubBrakeSwitch brake;
     /**
@@ -355,7 +355,7 @@ class PlantHal final {
      *            default, so every existing SIL number is unchanged.
      * @note [zh] `Motor::start()` 要求它在，所以台架必须有一个；`set_faulted(true)` 就是故障用例让驱动停下的方式，也是
      *            F42 注入 harness 用的同一个缝。默认没有东西写它，所以既有的每个 SIL 数字都不变。
-     * @since 0.1.9
+     * @since 0.1.0
      */
     driver::StubFaultInput fault_input;
 

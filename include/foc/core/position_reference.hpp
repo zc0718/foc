@@ -34,7 +34,7 @@ namespace core {
  * @note [zh] 重建假定两次采样之间电角度前进不足 `pi`。这是对调用方的约束（控制周期 × 电角速度），不是可调参数；
  *            `update()` 遇到不可能的跳变会 **报告** 出来，而不是静默地选一个方向。在标称 20 kHz、7 极对下，该上限约为机
  *            械 9000 rad/s，远高于本库面向的任何机器。
- * @since 0.1.6
+ * @since 0.1.0
  * @exporter
  */
 class PositionReference final {
@@ -46,7 +46,7 @@ class PositionReference final {
      *            its zero elsewhere and this is how that is expressed without a second offset field.
      * @note [zh] `index_mech_rad` 是索引所代表的机械角度——通常是 0，但工装可以把零点定义在别处，这就是表达它的方式，不
      *            需要再开一个偏置字段。
-     * @since 0.1.6
+     * @since 0.1.0
      */
     struct Config final {
         std::uint8_t pole_pairs{1U};
@@ -67,7 +67,7 @@ class PositionReference final {
      * @return [zh] 本 tick 建立（或重建）了原点时为 `true`。其他情况为 `false`，包括跳变被拒绝时。
      * @context [en] Current-loop ISR: noexcept, no allocation.
      * @context [zh] 电流环 ISR：noexcept、不分配。
-     * @since 0.1.6
+     * @since 0.1.0
      */
     auto update(float theta_e_rad, bool index_pulse) noexcept -> bool;
 
@@ -78,7 +78,7 @@ class PositionReference final {
      *            whatever the first sample was. Use `referenced_mech_rad()` once `homed()`.
      * @note [zh] 相对运动用它是对的，位置指令用它就是错的：它的起点就是第一次采样的值。`homed()` 之后请用
      *            `referenced_mech_rad()`。
-     * @since 0.1.6
+     * @since 0.1.0
      */
     [[nodiscard]] auto unwrapped_mech_rad() const noexcept -> float { return unwrapped_mech_rad_; }
 
@@ -90,7 +90,7 @@ class PositionReference final {
      *              be true.
      * @return [zh] 在标记处读数为 `Config::index_mech_rad`、并继续累计圈数的连续角度；第一次索引之前为 `0`——这正是必须
      *              查 `homed()` 而不是假定它成立的原因。
-     * @since 0.1.6
+     * @since 0.1.0
      */
     [[nodiscard]] auto referenced_mech_rad() const noexcept -> float { return referenced_mech_rad_; }
 
@@ -109,14 +109,14 @@ class PositionReference final {
      * @note [zh] 一直保持到 `reset()` 或下一个被接受的标记。悄悄猜过去的重建会给出一个"看起来合理"却差了整整一圈的角
      *            度，那比承认丢了计数更糟。索引通路也受同一个护栏约束，否则一个虚假脉冲会把原点移走最多半个机械圈而无从
      *            得知——与电角度跳变遵守同一条规则、同一个单位。
-     * @since 0.1.6
+     * @since 0.1.0
      */
     [[nodiscard]] auto lost_count() const noexcept -> bool { return lost_count_; }
 
     /**
      * @brief [en] Forget the origin, the turn count and any jump, keeping the configuration.
      * @brief [zh] 忘掉原点、圈数与跳变，保留配置。
-     * @since 0.1.6
+     * @since 0.1.0
      */
     void reset() noexcept;
 

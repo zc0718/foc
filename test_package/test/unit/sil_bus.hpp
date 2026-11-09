@@ -48,7 +48,7 @@ namespace sil {
  *   所以电动时电容放电、回馈时电容充电。`i_load` 是辅助负载电流，`i_chopper` 是制动电阻，两者都是"流入器件为正"。
  *   `capacitance_f <= 0` 时母线是 **理想源** ：电压停在原处，账照记——这正是让反事实可测的原因：本该把电压推动的那份能
  *   量，会以残差的形式露出来。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 /**
@@ -70,7 +70,7 @@ namespace sil {
  * @note [zh] `3/2` 是幅值不变型变换的功率系数，不是凑出来的：本仓库的 `clarke` 与 `park` 保持幅值，所以三相瞬时功率是
  *            `1.5*(v_alpha*i_alpha + v_beta*i_beta)`，转到 dq 之后同一个 `3/2` 仍在。用功率不变型变换建模的话根本没有这
  *            个系数——这正是把它在这里推导一次、而不是撒在各调用点的原因：撒出去就会在其中一个点上被忘掉。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 inline auto bus_current_a(core::Dq<float> v_dq, core::Dq<float> i_dq, float v_bus) noexcept -> double {
@@ -104,7 +104,7 @@ struct BusParams final {
  * @note [zh] `residual_j` 才是重点：它是守恒律 **解释不了** 的那部分。有电容时它是积分误差，必须很小；理想源时它是一个
  *            真实电容本该吸收的能量，而一段对理想源报出 `residual_j == 0` 的运行什么都没有测到——它只有一本 **不可能出错
  *            ** 的账，而这正是本仓库反复发现的形状。`accountable` 直接说明这次运行属于哪一种，读者不必去推断。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 struct BusReport final {
@@ -133,7 +133,7 @@ struct BusReport final {
  *            rather than the model, and a defect of any size stands out against it.
  * @note [zh] 能量用 **梯形** 累加（子步两端电压的平均），而状态本身是显式推进的。这个不对称是有意的，也正是让残差可用的
  *            原因：两种格式相差 O(h²)，于是守恒检查量到的是求积误差而不是模型，任何量级的缺陷都会在它上面显出来。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 class BusMeter final {
@@ -205,7 +205,7 @@ class BusMeter final {
      *            quietly.
      * @note [zh] 这是一个开关加一个电阻的物理律，放在这里而不是斩波器里，因为斩波器不知道母线电压——是别人告诉它的。在两
      *            处各写一遍，会让「策略报告的电流」与「plant 注入的电流」安静地不一致。
-     * @since 0.1.9
+     * @since 0.1.0
      */
     [[nodiscard]] auto brake_current_a(float duty) const noexcept -> double {
         if (!(params_.resistor_ohm > 0.0F)) {

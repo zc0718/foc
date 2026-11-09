@@ -239,12 +239,12 @@ fmi2Status fmi2DoStep(fmi2Component c, fmi2Real currentCommunicationPoint, fmi2R
     }
 
     // This slave declares `canHandleVariableCommunicationStepSize="false"`, and a declaration nobody enforces is
-    // the defect this check exists to remove: until 0.1.12 the XML said `true` while the step was fed straight to
+    // the defect this check exists to remove: the XML said `true` while the step was fed straight to
     // `foc_tick`, so a variable-step master silently re-tuned the controller -- the gains belong to the period they
     // were computed for. The refusal is what makes the declaration true, and it is deliberately loud (an error, not
     // a warning): a master that needs a different rate must be told, not accommodated with a different controller.
     // 这个 slave 声明了 `canHandleVariableCommunicationStepSize="false"`，而一个没人执行的声明正是本检查要消除的
-    // 缺陷：0.1.12 之前 XML 说 `true`，而步长被直接喂给 `foc_tick`，于是一个变步长主控会 **掠静地** 重新调参控制器
+    // 缺陷：XML 说 `true`，而步长被直接喂给 `foc_tick`，于是一个变步长主控会 **掠静地** 重新调参控制器
     // ——增益属于它们当初计算时用的那个周期。让声明成真的是那次拒绝，而它故意是大声的（错误而不是警告）：需要别的
     // 速率的主控应该被告知，而不是被一个不同的控制器迎过去。
     if (s->fixed_step_s > 0.0) {

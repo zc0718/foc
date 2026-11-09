@@ -16,7 +16,7 @@ namespace core {
  *            double is needed here: the whole-turn part of the count is multiplied by it.
  * @note [zh] 放在本地而不是共享：另一份（`gear_ratio.hpp`）是函数内的 float。这里需要双精度，因为计数的整圈部分要与它相
  *            乘。
- * @since 0.1.9
+ * @since 0.1.0
  */
 constexpr double kTwoPiRad = 6.283185307179586476925286766559;
 
@@ -28,7 +28,7 @@ constexpr double kTwoPiRad = 6.283185307179586476925286766559;
  *            that does not divide) has to be refused rather than approximated.
  * @note [zh] `pulses_per_rev` 正是这里不能只是乘一下的理由：每圈整数个脉冲时，到弧度的映射是 **精确** 的；报别的数（或
  *            齿轮箱除不尽）的接口应当被拒绝，而不是被近似。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 struct StepCommandConfig final {
@@ -57,7 +57,7 @@ struct StepCommandConfig final {
 /**
  * @brief [en] What one control period of the step interface produced.
  * @brief [zh] 脉冲接口在一个控制周期内产出的东西。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 struct StepCommandOutput final {
@@ -100,7 +100,7 @@ struct StepCommandOutput final {
  *            allows is information the caller needs, and clamping it would erase it.
  * @note [zh] `jump` 是报告而不是限幅：一个精确计数、但移动量超过单周期允许值的位置，是调用方需要知道的信息，钳掉它就等
  *            于抹掉它。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 class StepCommand final {
@@ -187,7 +187,7 @@ class StepCommand final {
 /**
  * @brief [en] What an analogue input needs to know about the axis.
  * @brief [zh] 模拟量输入需要知道的轴参数。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 struct AnalogCommandConfig final {
@@ -215,7 +215,7 @@ struct AnalogCommandConfig final {
 /**
  * @brief [en] What one control period of the analogue input produced.
  * @brief [zh] 模拟量输入在一个控制周期内产出的东西。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 struct AnalogCommandOutput final {
@@ -240,7 +240,7 @@ struct AnalogCommandOutput final {
  * @brief [zh] 把一个模拟电压映射成指令。
  *
  *   死区是被减掉的，而不是一个开关阈值。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 class AnalogCommand final {
@@ -292,7 +292,7 @@ class AnalogCommand final {
 /**
  * @brief [en] What a pulse-width input needs to know about the axis.
  * @brief [zh] 脉宽输入需要知道的轴参数。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 struct PpmCommandConfig final {
@@ -322,7 +322,7 @@ struct PpmCommandConfig final {
 /**
  * @brief [en] What one control period of the pulse-width input produced.
  * @brief [zh] 脉宽输入在一个控制周期内产出的东西。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 struct PpmCommandOutput final {
@@ -347,7 +347,7 @@ struct PpmCommandOutput final {
  *            into a plausible value.
  * @note [zh] 窗口外的帧不是一个小指令，而是一条断掉的链路：`min_us`/`max_us` 存在的目的就是发现它，因此落在窗口外的帧给
  *            出恰为零的指令并说 `valid = false`，而不是被钳成一个看起来合理的值。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 class PpmCommand final {

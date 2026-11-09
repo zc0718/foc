@@ -41,7 +41,7 @@ namespace core {
  *            确之前不值得先建。两条闭式都在 `test_sil_speed_from_angle.cpp` 里对着出货的估计器核过，所以这里的系数是
  *            5.82 而不是本注更早版本写的 4.1：那一版漏了差分自身带的 `√2`，错了整整 `√2` 倍（F-42）。窗口填满之前输出为
  *            0。一开始就用半满窗口报差分，等于把一个数除以错误的区间——那比什么都不报更糟。
- * @since 0.1.6
+ * @since 0.1.0
  * @exporter
  */
 class SpeedFromAngle final {
@@ -49,7 +49,7 @@ class SpeedFromAngle final {
     /**
      * @brief [en] Window length and the machine's pole pairs.
      * @brief [zh] 窗口长度与极对数。
-     * @since 0.1.6
+     * @since 0.1.0
      */
     struct Config final {
         std::uint16_t window_ticks{
@@ -74,14 +74,14 @@ class SpeedFromAngle final {
      * @param dt_s [zh] 控制周期，s；非正值被忽略。
      * @context [en] Current-loop ISR: noexcept, no allocation, O(1).
      * @context [zh] 电流环 ISR：noexcept、不分配、O(1)。
-     * @since 0.1.6
+     * @since 0.1.0
      */
     void update(float theta_e_rad, float dt_s) noexcept;
 
     /**
      * @brief [en] Mechanical speed in rad/s, 0 until `ready()`.
      * @brief [zh] 机械转速，rad/s；`ready()` 之前为 0。
-     * @since 0.1.6
+     * @since 0.1.0
      */
     [[nodiscard]] auto mech_rad_s() const noexcept -> float { return ready_ ? speed_mech_rad_s_ : 0.0F; }
 
@@ -95,7 +95,7 @@ class SpeedFromAngle final {
      *            unwrapped, and guessing would produce a speed that looks plausible and is a whole turn out.
      * @note [zh] 与 `PositionReference` 同一条规矩：两次采样之间跳过半个电角度的角度无法解开折返，猜一个会给出一个看起
      *            来合理、却差了整整一圈的转速。
-     * @since 0.1.6
+     * @since 0.1.0
      */
     [[nodiscard]] auto lost_count() const noexcept -> bool { return lost_count_; }
 

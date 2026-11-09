@@ -16,7 +16,7 @@ namespace {
  * @brief [zh] 单相的驱动规则，作用在已钳进 [0, 1] 的占空比上。`apply()` 与 `shape()` 共用它，于是两者对「桥臂拿窄脉冲怎
  *             么办」永远不会分歧。
  * @attacher
- * @since 0.1.9
+ * @since 0.1.0
  */
 auto driver_rule(float duty, float min_duty) noexcept -> float {
     if (duty < min_duty) {
@@ -36,7 +36,7 @@ auto driver_rule(float duty, float min_duty) noexcept -> float {
  * @note [zh] `(duty − applied)·T` 是那个没发生的脉冲的宽度，乘上母线就是桥臂不会交付的伏秒。符号保留：被拉宽的脉冲是负
  *            的。
  * @attacher
- * @since 0.1.9
+ * @since 0.1.0
  */
 auto lost_volt_seconds(float requested, float applied, float period_s, float v_bus) noexcept -> float {
     return (requested - applied) * period_s * v_bus;

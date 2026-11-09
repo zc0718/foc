@@ -73,7 +73,7 @@ namespace core {
  *               度连续。
  * @context [en] Current-loop ISR after construction: noexcept, no allocation, no iteration count that depends on data.
  * @context [zh] 构造之后的电流环 ISR：noexcept、不分配、迭代次数不依赖数据。
- * @since 0.1.11
+ * @since 0.1.0
  * @exporter
  */
 class DualInductanceObserver final {
@@ -81,7 +81,7 @@ class DualInductanceObserver final {
     /**
      * @brief [en] Electrical parameters, with the two inductances kept apart and the rotor flux made explicit.
      * @brief [zh] 电气参数：两个电感分开保留，转子磁链显式给出。
-     * @since 0.1.11
+     * @since 0.1.0
      */
     /**
      * @brief [en] Where the flux state comes from -- the one choice on this class that changes *behaviour*.
@@ -101,7 +101,7 @@ class DualInductanceObserver final {
      *            于是 `Rs` 的铭牌误差会随运行时间在状态里累积。`Corrected` 在残差上闭合一个环、把状态按住在流形上，代价
      *            是一个增益。这才是 `method=` 该有的形状：同接口、同输入、 **失效模式不同** （另一个候选——第二种反解——
      *            为什么不发布，见类上的注释）。
-     * @since 0.1.11
+     * @since 0.1.0
      */
     enum class FluxSource : std::uint8_t {
         /**
@@ -136,7 +136,7 @@ class DualInductanceObserver final {
      * @brief [zh] 用电机参数构造。
      * @param config [en] invalid values put the observer in Param status (update then holds 0).
      * @param config [zh] 非法值会让观测器进入 Param 状态（之后 update 保持 0）。
-     * @since 0.1.11
+     * @since 0.1.0
      */
     explicit DualInductanceObserver(Config config) noexcept;
 
@@ -151,7 +151,7 @@ class DualInductanceObserver final {
      *            a wrong seed costs a fixed angle offset exactly as it does in the open-loop observer.
      * @note [zh] 种子不必精确：它只用于在二次方程的两个根之间定夺，种子有偏时带来的就是这个固定角度偏移——与开环观测器完
      *            全相同。
-     * @since 0.1.11
+     * @since 0.1.0
      */
     void seed_flux(Ab<float> psi_ab) noexcept;
 
@@ -171,7 +171,7 @@ class DualInductanceObserver final {
      * @note [zh] `psi_f·e^(jθ) + L0·i + L1·conj(i)·e^(j2θ)`，用本观测器自己的 `ld`、`lq`、`psi_f` 算。它存在的意义是交
      *            接方不必知道本观测器的状态是 **定子** 磁链：只拿转子磁链播种，会把电流自身的磁链漏在积分常数之外，而纯
      *            积分器不会遗忘——代价是一个约 `atan(|L0·i|/psi_f)` 的 **永久** 角度偏移，不是暂态。
-     * @since 0.1.11
+     * @since 0.1.0
      */
     void seed_at(float theta_e, Ab<float> i_ab) noexcept;
 
@@ -184,7 +184,7 @@ class DualInductanceObserver final {
      *            question to answer, which is the whole difference from `BackEmfObserver::apply_params`.
      * @note [zh] `ld`、`lq`、`psi_f` 都取自 `params`；这个观测器没有"用哪个电感"这个问题要回答，这正是它与
      *            `BackEmfObserver::apply_params` 的全部区别。
-     * @since 0.1.11
+     * @since 0.1.0
      */
     void apply_params(const MachineParams& params) noexcept;
 
@@ -202,7 +202,7 @@ class DualInductanceObserver final {
      * @note [en] `v_ab` must come from the *same* sample instant as `i_ab`, for the reason documented on
      *            `BackEmfObserver::update`.
      * @note [zh] `v_ab` 必须与 `i_ab` 取自同一采样时刻，理由见 `BackEmfObserver::update`。
-     * @since 0.1.11
+     * @since 0.1.0
      */
     auto update(Ab<float> v_ab, Ab<float> i_ab, float dt_s) noexcept -> ObsState;
 
@@ -211,35 +211,35 @@ class DualInductanceObserver final {
      * @brief [zh] 上一次 `update()` 报出的状态，不推进。
      * @return [en] The last `ObsState`; the initial one before any update.
      * @return [zh] 上一次的 `ObsState`；未推进过时是初始值。
-     * @since 0.1.11
+     * @since 0.1.0
      */
     [[nodiscard]] auto state() const noexcept -> ObsState { return state_; }
 
     /**
      * @brief [en] Clear the integrator, the speed estimate and the root continuity.
      * @brief [zh] 清除积分器、速度估计与选根连续性。
-     * @since 0.1.11
+     * @since 0.1.0
      */
     void reset() noexcept;
 
     /**
      * @brief [en] Ok, or Param after an invalid configuration or a non-positive dt.
      * @brief [zh] Ok，或非法配置 / 非正 dt 后的 Param。
-     * @since 0.1.11
+     * @since 0.1.0
      */
     [[nodiscard]] auto status() const noexcept -> ErrorCode;
 
     /**
      * @brief [en] Current stator flux estimate in Wb (diagnostics).
      * @brief [zh] 当前定子磁链估计，Wb（诊断用）。
-     * @since 0.1.11
+     * @since 0.1.0
      */
     [[nodiscard]] auto flux() const noexcept -> Ab<float>;
 
     /**
      * @brief [en] Which flux source this instance runs, as configured.
      * @brief [zh] 这个实例跑的是哪种磁链来源（按配置）。
-     * @since 0.1.11
+     * @since 0.1.0
      */
     [[nodiscard]] auto source() const noexcept -> FluxSource { return config_.source; }
 
@@ -255,7 +255,7 @@ class DualInductanceObserver final {
      * @note [zh] 这是诊断量，不是估计的一部分：两个根是"与实测磁链、电流一致的两个转子位置"，它们的间隔说明这个答案有多
      *            少来自连续性、多少来自测量。q 轴附近（`i_d ≈ 0`、凸极几乎不携带信息）间隔最小，而那正是调用方最不该相
      *            信这个角的地方。
-     * @since 0.1.11
+     * @since 0.1.0
      */
     [[nodiscard]] auto root_gap_rad() const noexcept -> float { return root_gap_rad_; }
 
@@ -273,7 +273,7 @@ class DualInductanceObserver final {
      * @note [zh] 这是 **唯一** 能告诉调用方"种子错了"的信号。磁链积分器没有反馈，所以坏种子是永久的（实测 0.1128 rad，
      *            200 步后不变）；但代数仍然说了话——二次方程 **当且仅当** 状态来自真实转子位置时才有一个模为 1 的根。实
      *            测：自洽状态 4.4e-16，用另一个电流构造的种子 3.4e-02——相差十二个数量级，这才使阈值可以被写下来。
-     * @since 0.1.11
+     * @since 0.1.0
      */
     [[nodiscard]] auto radius_error() const noexcept -> float { return radius_error_; }
 
@@ -289,7 +289,7 @@ class DualInductanceObserver final {
      * @note [zh] 容差取 1e-2，取自测量而不是为了好看：这台机器上自洽情形读 4.4e-16、不一致的种子读 3.4e-02，两者之间任
      *            何值都能分开它们；1e-2 在好的一侧留三个数量级、坏的一侧留半个数量级。它 **不是** 角度容差——它说的是 "
      *            这个状态到底能不能被解释"。
-     * @since 0.1.11
+     * @since 0.1.0
      */
     [[nodiscard]] auto flux_plausible() const noexcept -> bool {
         return !(radius_error_ > kRadiusTolerance) && !(radius_error_ < -kRadiusTolerance);
@@ -298,7 +298,7 @@ class DualInductanceObserver final {
     /**
      * @brief [en] Boundary of `flux_plausible()`; see the note there for how it was chosen.
      * @brief [zh] `flux_plausible()` 的边界；取值依据见那里的注释。
-     * @since 0.1.11
+     * @since 0.1.0
      */
     static constexpr float kRadiusTolerance = 1.0e-2F;
 

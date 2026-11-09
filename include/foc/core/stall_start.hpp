@@ -12,7 +12,7 @@ namespace core {
 /**
  * @brief [en] Where a breakaway sequence is.
  * @brief [zh] 起步序列处在哪一步。
- * @since 0.1.8
+ * @since 0.1.0
  * @exporter
  */
 enum class StallStartPhase : std::uint8_t {
@@ -31,7 +31,7 @@ enum class StallStartPhase : std::uint8_t {
  *            rather than ramping into a wall.
  * @note [zh] 这里每个数都是物理的，其中要紧的是 `max_torque_nm`：限幅低于 `breakaway_nm` 的序列不是序列，而是一台根本起
  *            不来的机器；`validate()` 会拒绝它，而不是朝墙上顶。
- * @since 0.1.8
+ * @since 0.1.0
  * @exporter
  */
 struct StallStartConfig final {
@@ -68,7 +68,7 @@ struct StallStartConfig final {
 /**
  * @brief [en] What the sequence wants this period.
  * @brief [zh] 序列本周期要什么。
- * @since 0.1.8
+ * @since 0.1.0
  * @exporter
  */
 struct StallStartOutput final {
@@ -105,7 +105,7 @@ struct StallStartOutput final {
  *
  *   `Failed` 是一等答案，不是错误路径。驱动在限幅内搬不动的负载是关于这台机器的事实，而一条"永远爬升、什么也不说" 的序
  *   列会让操作者盯着一根沉默的轴。
- * @since 0.1.8
+ * @since 0.1.0
  * @exporter
  */
 class StallStart final {

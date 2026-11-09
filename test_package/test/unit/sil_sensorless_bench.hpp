@@ -71,7 +71,7 @@ inline auto sop_wrap_pi(float angle) noexcept -> float {
  *                       is correctly described, so the replay compares two machines and not two descriptions.
  * @param psi_scale [zh] 磁钢强度的倍数， **plant 与模型同时缩放** ——第二台机器是被正确描述的，于是那次重放比较的是两台
  *                       机器而不是两份描述。
- * @since 0.1.9
+ * @since 0.1.0
  */
 struct SopMachine final {
     float psi_scale{1.0F};
@@ -144,7 +144,7 @@ struct SensorlessRow final {
  *            The observer starts from a zero seed -- maximally wrong -- which is the honest worst case.
  * @note [zh] 20 kHz 下跑 1.5 s， **最后 0.5 s** 是窗口，即"稳下来了吗"，不是捕获瞬态。观测器从零种子开始——最大程度地错
  *            ——这是诚实的下界。
- * @since 0.1.9
+ * @since 0.1.0
  */
 inline auto run_sensorless(float target_rad_s, float load_nm, float dead_v, const SopMachine& machine,
                            bool quiet = false) -> SensorlessRow {

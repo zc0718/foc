@@ -229,8 +229,8 @@ foc_err_t foc_get_state(foc_motor_t motor, float *speed_rad_s, float *id, float 
 }
 
 /* ------------------------------------------------------------------------------------------------
- * ABI 0.1.1: commissioning, protection and the reference policies.
- * ABI 0.1.1：整定、保护与参考策略。
+ * ABI 0.1.0: commissioning, protection and the reference policies.
+ * ABI 0.1.0：整定、保护与参考策略。
  *
  * Same division of labour as the motor path: this file owns the raw-pointer and finiteness checks
  * that a C caller can trip over, and the bridge owns everything that needs the C++ core.

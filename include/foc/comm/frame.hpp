@@ -30,7 +30,7 @@ namespace comm {
  *   开始；与缓冲区不符的长度是 **拒绝** 而不是钳位，钳位正是解码器越界读的方式。`seq` 是让 **接收方** 发现一帧它从未见
  *   过的帧的依据——CRC 无法报告一帧根本没有到达的帧。CRC 覆盖 `seq..payload` 而故意不含起始字节：起始字节坏了第一道检查
  *   就不过，而把它算进去会让同一帧的 CRC 取决于它是从哪次重新同步开始的。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 struct FrameLayout final {
@@ -54,7 +54,7 @@ struct FrameLayout final {
  *            to resynchronise, to ask for a retransmission, or to count a link loss -- and those are different actions.
  * @note [zh] 五个原因，没有"一般性错误"：说不清 **哪一道** 检查失败的接收方，无法决定是重新同步、请求重传，还是记一次链
  *            路丢失——而那是三种不同的动作。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 enum class FrameStatus : std::uint8_t {
@@ -84,7 +84,7 @@ enum class FrameStatus : std::uint8_t {
  *            and a decoder that copies is a decoder that can fail to fit; a pointer cannot fail.
  * @note [zh] `payload` **指向调用方的缓冲区** 。把它拷出来需要一个解码器无从得知的容量，而会拷贝的解码器就是可能装不下
  *            的解码器；指针不会失败。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 struct Frame final {
@@ -123,7 +123,7 @@ struct Frame final {
  * @note [zh] 具体变体很重要，所以是 **点名** 而不是描述：至少六种东西都叫"CRC-16 CCITT"，它们在初值、反射、末尾异或上各
  *            不相同，对同样字节给出不同的校验值。能说明这是哪一种的那个数，是 ASCII 串 `"123456789"` 的 `0x29B1`——标准
  *            自己的检查值，由用例断言。没有它，"它是个 CRC"这句话不可移植到别人的实现。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 [[nodiscard]] constexpr auto crc16_ccitt(const std::uint8_t* data, std::size_t length) noexcept -> std::uint16_t {
@@ -165,7 +165,7 @@ struct Frame final {
  *            indistinguishable from a corrupt one and turns a caller's bug into the receiver's resynchronisation.
  * @note [zh] 不写出半个帧：长度在写第一个字节之前就检查，因为链路上的半个帧与一个坏帧无法区分，会把调用方的缺陷变成接收
  *            方的重新同步。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 [[nodiscard]] inline auto encode_frame(std::uint8_t seq, std::uint8_t type, const std::uint8_t* payload,
@@ -211,7 +211,7 @@ struct Frame final {
  *            caller a plausible frame with one bit wrong, which is worse than no frame at all.
  * @note [zh] 失败时 `out` 不被触碰。先填好接收者 **再** 报 CRC 错的解码器，会把一帧"只错了一位、看起来很合理"的帧交给调
  *            用方，那比没有帧更糟。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 [[nodiscard]] inline auto decode_frame(const std::uint8_t* in, std::size_t length, Frame& out) noexcept -> FrameStatus {
@@ -247,7 +247,7 @@ struct Frame final {
  *            counter that reports the second tells the application what the CRC never can.
  * @note [zh] 三者可以同时成立，而且都不是错误：一帧要么到了要么没到，而能报告后者的计数器告诉应用层的东西，是 CRC 永远
  *            说不了的。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 struct SequenceResult final {
@@ -282,7 +282,7 @@ struct SequenceResult final {
  *            倒退无法区分——而两者之中，倒退才是意味着"对端重启了，或者有什么在重放帧"的那一个。这里做了一个默不作声的选
  *            择，并把它写下来，而不是留给代码恰好用到的那次比较。 `missing` 数的是"期望的那一帧"与"到达的那一帧"之间的
  *            帧，所以跳过一帧报 1 而不是 0。这个差一就是整个数字的价值所在——在计数明明有缺口时却报" 没丢"，比不报更糟。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 class SequenceChecker final {

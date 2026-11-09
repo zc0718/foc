@@ -21,7 +21,7 @@ namespace driver {
  * @note [zh] 两个角色，而第二个才是它在 `driver/` 而不在测试里的理由。 **仿真器** 装上它、从不拉高——这就是没有功率级的
  *            主控方把"这里没有故障通路"写下来的方式，而不是把问题悬着不管：`Motor::start()` 拒绝沉默。**测试或故障注入
  *             harness** 拉高它，然后检查驱动停了、`fault_code()` 说出了成因、以及引脚恢复安静之后锁存仍在。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 class StubFaultInput final : public hal::FaultInput {

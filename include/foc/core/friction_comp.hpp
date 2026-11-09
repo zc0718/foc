@@ -20,7 +20,7 @@ namespace core {
  *            breakaway point, which is a machine that cannot exist and would make the compensation a motor.
  * @note [zh] 这些是对 **一台机器的估计** ，不是整定旋钮：取真值的两倍就不再是抵消而是驱动，而 `validate()` 会拒绝它唯一
  *            能预见的那种情形——库仑项大于起动点，那是一台不可能存在的机器，也会让补偿变成一个电机。
- * @since 0.1.9
+ * @since 0.1.0
  */
 struct FrictionConfig final {
     float
@@ -35,7 +35,7 @@ struct FrictionConfig final {
 /**
  * @brief [en] What the compensation adds this period, and what it noticed.
  * @brief [zh] 本周期补偿要加多少，以及它注意到了什么。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 struct FrictionOutput final {
@@ -91,7 +91,7 @@ struct FrictionOutput final {
  *   为什么它有用：静止时比例环在 `|kp * 误差| <= 静摩擦` 处停下，于是留下 `静摩擦 / kp` 的稳态误差，加增益也去不掉（只
  *   是把同一条死区按比例缩小）。有了锁存的库仑项，环路在 `|kp * 误差 + 库仑| <= 静摩擦` 处停下，即到达侧的 `(静摩擦 −
  *   库仑) / kp`。这两个数是算术、不是整定，而随这个头文件一起发布的用例在 SIL plant 上把两个都量了。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 class FrictionComp final {
@@ -156,7 +156,7 @@ class FrictionComp final {
      * @param speed_meas_rad_s [zh] 实测机械转速。
      * @param demand_nm [en] what the loop is asking for, before compensation. @param demand_nm
      * @param demand_nm [zh] 环路在补偿之前要求的力矩。
-     * @since 0.1.9
+     * @since 0.1.0
      */
     [[nodiscard]] auto step(float speed_ref_rad_s, float speed_meas_rad_s, float demand_nm) noexcept -> FrictionOutput {
         FrictionOutput out{validate(), 0.0F, false, false};
@@ -186,7 +186,7 @@ class FrictionComp final {
     /**
      * @brief [en] The direction currently latched, -1 or +1.
      * @brief [zh] 当前锁存的方向，−1 或 +1。
-     * @since 0.1.9
+     * @since 0.1.0
      */
     [[nodiscard]] auto sign() const noexcept -> float { return sign_; }
 

@@ -20,7 +20,7 @@ namespace core {
  *            already past -- needs a homing switch, not a wider window.
  * @note [zh] 只有两个数：一个还带减速区、刚度或斜坡的软限位就是一台运动控制器，而这条轴已经有了一个。它做不到的事—— 把
  *            一条 **已经** 越过去的轴挡在墙外——需要回零开关，而不是更宽的窗口。
- * @since 0.1.10
+ * @since 0.1.0
  */
 struct SoftLimitConfig final {
     float min_rad; ///< [en] lower wall, rad, inclusive. [zh] 下墙，rad，含端点。
@@ -31,7 +31,7 @@ struct SoftLimitConfig final {
 /**
  * @brief [en] What the limit did to a target this period.
  * @brief [zh] 本周期限位对目标做了什么。
- * @since 0.1.10
+ * @since 0.1.0
  * @exporter
  */
 struct SoftLimitOutput final {
@@ -92,7 +92,7 @@ struct SoftLimitOutput final {
  *   a·τ`，延迟趋零时它退回熟悉的 `sqrt(2·a·d)`。它在 `(d, a)` 上联合一次齐次，所以一台强一倍、行程也长一倍的机器恰好快
  *   一倍而不是 `sqrt(2)` 倍；每个误差源都有一个平实的系数：每弧度墙的位置误差 `a/(v+a·τ)`、每 rad/s² 的制动能力
  *   `v²/(2·a·(v+a·τ))`、每秒延迟 `−a·v/(v+a·τ)`。
- * @since 0.1.10
+ * @since 0.1.0
  * @exporter
  */
 class SoftLimit final {
@@ -138,7 +138,7 @@ class SoftLimit final {
      *            "move to the limit" is the one command a soft limit exists to make safe.
      * @note [zh] 墙是 **含端点** 的：正好在墙上的目标被接受，并通过 `at_wall` 报告。用排除边界会让最后一个可用位置取决
      *            于一个 float 的最后一位，而"走到限位"正是软限位存在的意义所在的那条命令。
-     * @since 0.1.10
+     * @since 0.1.0
      */
     [[nodiscard]] auto apply(float target_rad) noexcept -> SoftLimitOutput {
         SoftLimitOutput out{validate(), target_rad_, false};
@@ -187,7 +187,7 @@ class SoftLimit final {
      * @note [zh] `decel_rad_s2` 是轴自身的停车能力、`delay_s` 是它自身的延迟，两者都无法从这里推导。取自数据表或一次调
      *            试运行的数才是唯一诚实的来源，因此 `减速度 <= 0` 被拒绝（指令原样通过）而不是取默认；负的延迟当作零处
      *            理 ——那是理想化驱动，也正是 `v·延迟` 这一项存在的目的所要纠正的假设。
-     * @since 0.1.10
+     * @since 0.1.0
      */
     [[nodiscard]] auto shape(float velocity_command_rad_s, float position_rad, float decel_rad_s2,
                              float delay_s) const noexcept -> float {
@@ -230,7 +230,7 @@ class SoftLimit final {
     /**
      * @brief [en] The target currently in force.
      * @brief [zh] 当前生效的目标。
-     * @since 0.1.10
+     * @since 0.1.0
      */
     [[nodiscard]] auto target_rad() const noexcept -> float { return target_rad_; }
 

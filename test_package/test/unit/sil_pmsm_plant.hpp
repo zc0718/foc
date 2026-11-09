@@ -260,7 +260,7 @@ class PmsmPlant final {
      *            temperature goes, so the plant has to be able to make it go somewhere.
      * @note [zh] 上面的 `set_winding_temperature` 是它的 **常数** 版本——一个数，没有动力学。降额调度无法对着常数论证：
      *            那条主张就是关于温度走向的，所以 plant 必须能让它走。
-     * @since 0.1.9
+     * @since 0.1.0
      */
     struct ThermalConfig final {
         float rt_k_per_w{0.0F};   ///< [en] thermal resistance, K/W; <=0 = off. [zh] 热阻，K/W；<=0 = 关闭。
@@ -299,28 +299,28 @@ class PmsmPlant final {
      *
      * @param config [en] the three parameters above; any non-positive `rt` or `ct` turns the model off.
      * @param config [zh] 上面三个参数；`rt` 或 `ct` 非正即关闭模型。
-     * @since 0.1.9
+     * @since 0.1.0
      */
     void set_thermal(ThermalConfig config) noexcept;
 
     /**
      * @brief [en] Winding temperature the plant is actually at, C -- what `effective_rs()` is using.
      * @brief [zh] plant 实际所处的绕组温度，°C——也就是 `effective_rs()` 正在用的那个。
-     * @since 0.1.9
+     * @since 0.1.0
      */
     [[nodiscard]] auto winding_temperature_c() const noexcept -> float;
 
     /**
      * @brief [en] Copper loss at the current state, W: `1.5*(id^2 + iq^2)*Rs(T)`.
      * @brief [zh] 当前状态下的铜损，W：`1.5·(id² + iq²)·Rs(T)`。
-     * @since 0.1.9
+     * @since 0.1.0
      */
     [[nodiscard]] auto copper_loss_w() const noexcept -> float;
 
     /**
      * @brief [en] Thermal time constant `Rt*Ct` in s; 0 when the model is off.
      * @brief [zh] 热时间常数 `Rt·Ct`，s；模型关闭时为 0。
-     * @since 0.1.9
+     * @since 0.1.0
      */
     [[nodiscard]] auto thermal_time_constant_s() const noexcept -> float;
 
@@ -368,7 +368,7 @@ class PmsmPlant final {
      * @param harmonics [zh] 表，最多 `kMaxCoggingHarmonics` 条；空指针表示清空。
      * @param count [en] how many entries are valid.
      * @param count [zh] 有效条数。
-     * @since 0.1.9
+     * @since 0.1.0
      */
     void set_cogging(const CoggingHarmonic* harmonics, int count) noexcept;
 
@@ -376,7 +376,7 @@ class PmsmPlant final {
      * @brief [en] The injected cogging torque at the current mechanical angle, N*m -- the truth a compensator is
      *             measured against, and the only number that says what an injection of zero should have done.
      * @brief [zh] 当前机械角处的注入齿槽转矩，N·m——补偿器被对照的那把尺，也是"注入为零时应当如何"的唯一答案。
-     * @since 0.1.9
+     * @since 0.1.0
      */
     [[nodiscard]] auto cogging_torque_nm() const noexcept -> float;
 
@@ -459,7 +459,7 @@ class PmsmPlant final {
      * @note [zh] 这是一个读数而不是输入：它就是上一次 `set_voltage_dq()` 被给到的值。它存在的理由是母线电流是
      *            `1.5*(v_d*i_d + v_q*i_q)/v_bus`，而一个必须自己另存一份电压的调用方，可能把电压和 **另一个时刻** 的电
      *            流配在一起——那正是让功率测量"悄悄错"而不是"明显错"的那个错误。
-     * @since 0.1.9
+     * @since 0.1.0
      */
     [[nodiscard]] auto voltage_dq() const noexcept -> core::Dq<float>;
 

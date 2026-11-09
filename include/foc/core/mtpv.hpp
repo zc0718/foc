@@ -24,7 +24,7 @@ namespace core {
  *   驱动器能加到端子上的电压，和允许推过去的电流。`pole_pairs` 在这里是因为转矩不是本模块的主题（ **轨迹** 才是），但调
  *   用方需要转矩来判断一个点值不值得去，而 N·m 的转矩需要极对数。电压上限是端子上的幅值而不是母线比例：从母线电压构造它
  *   的人拥有调制上限，本模块不去猜它。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 struct MtpvConfig final {
@@ -48,7 +48,7 @@ struct MtpvConfig final {
  *   这个转速下驱动器该守住什么，以及是电压还是电流决定了它。`voltage_limited` 是这个答案里诚实的那一半：基速以下最优点
  *   是被电流限幅的 MTPA 点，电压上限并非拦住驱动器的东西——在那里报一个 MTPV 点，就是用一条 **没有生效** 的约束算出来的
  *   数，而那正是一条策略"在一台它并不描述的机器上也能跑通"的来路。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 struct MtpvPoint final {
@@ -110,7 +110,7 @@ struct MtpvPoint final {
  * @note [en] `psi_f = 0` is a supported machine (synchronous reluctance): the magnet term vanishes and the quadratic
  *            keeps its reluctance solution at `cos t = 1/sqrt(2)`.
  * @note [zh] `psi_f = 0` 是被支持的（同步磁阻机）：磁钢项消失，二次方程保留它 `cos t = 1/√2` 的磁阻解。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 class Mtpv final {
@@ -125,7 +125,7 @@ class Mtpv final {
    * @return [en] `Ok`, or `Param` for a ceiling that is not positive, a negative inductance, a negative flux linkage,
    *              zero pole pairs, or a non-finite number anywhere.
    * @return [zh] `Ok`；上限非正、电感为负、磁链为负、极对数为零、或任何非有限数时为 `Param`。
-   * @since 0.1.9
+   * @since 0.1.0
    */
     [[nodiscard]] auto validate() const noexcept -> ErrorCode;
 
@@ -141,14 +141,14 @@ class Mtpv final {
    *            differ by 4x (`2520` against `628` rad/s), because `Lq*i_q` dominates the linkage there.
    * @note [zh] 这 **不是** `v_max/ψf`：那是 `i_d = i_q = 0` 时驱动器能达到的转速，而带电流的机器需要的电压比转子磁链暗
    *            示的更多。合成机上两者差 4 倍（`2520` 对 `628` rad/s），因为那里 `Lq·i_q` 主导磁链。
-   * @since 0.1.9
+   * @since 0.1.0
    */
     [[nodiscard]] auto base_speed_rad_s() const noexcept -> float;
 
     /**
    * @brief [en] The current-limited maximum-torque point, and the whole answer below the base speed.
    * @brief [zh] 电流受限的最大转矩点，也就是基速以下的全部答案。
-   * @since 0.1.9
+   * @since 0.1.0
    */
     [[nodiscard]] auto mtpa_point() const noexcept -> MtpvPoint;
 
@@ -162,7 +162,7 @@ class Mtpv final {
    * @param omega_e_rad_s [zh] 电转速，rad/s；负值取其幅值（这张地图对转向对称，凡是不用 `Rs` 的 dq 规律都如此）。
    * @return [en] the point, with `voltage_limited` saying which constraint decided it.
    * @return [zh] 该点，`voltage_limited` 说明是哪个约束决定的。
-   * @since 0.1.9
+   * @since 0.1.0
    */
     [[nodiscard]] auto at_speed(float omega_e_rad_s) const noexcept -> MtpvPoint;
 

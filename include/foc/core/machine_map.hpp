@@ -18,7 +18,7 @@ namespace core {
  *               that wants to be right away from the nominal point needs that table.
  * @details [zh] 单个 `Ld`/`Lq` 是关于一个工作点的陈述。内嵌机在远未到电流限幅时就已饱和，所以缩比模型或有限元给出的是一
  *               张表；任何想在标称点之外也正确的使用者都需要这张表。
- * @since 0.1.2
+ * @since 0.1.0
  * @exporter
  */
 struct MachineMapPoint final {
@@ -35,7 +35,7 @@ struct MachineMapPoint final {
  * @note [en] `Rs` is deliberately absent. It varies with temperature, not with current, so folding it into a current
  *            map would hide the one parameter whose error grows during a run.
  * @note [zh] 刻意不含 `Rs`。它随温度而非电流变化；把它折进电流表会掩盖那个在运行中误差不断增长的参数。
- * @since 0.1.2
+ * @since 0.1.0
  */
 struct MachinePoint final {
     float ld_h;
@@ -71,7 +71,7 @@ struct MachinePoint final {
  * @note [en] A one-row map is legal and means "constant, this is all I know" -- the honest representation of a
  *            nameplate parameter set.
  * @note [zh] 单行表是合法的，含义是"它是常数，我只知道这些"——也就是铭牌参数集的诚实表示。
- * @since 0.1.2
+ * @since 0.1.0
  * @exporter
  */
 struct MachineMap final {
@@ -124,7 +124,7 @@ struct MachineMap final {
      * @note [zh] `at()` 会钳位，而钳位后的答案在算术上与一次实测无法区分——这正是这个类型存在的目的所要防的那种混淆。所
      *            以钳位必须是 **可以问的** ：想知道自己是不是在外推的调用方先问一句，而不问的调用方是做了决定，不是被骗
      *            了。把钳位塞进返回的点里会改变 `at()` 对所有既有调用方的返回值；多问一句只花一次比较。
-     * @since 0.1.9
+     * @since 0.1.0
      * @exporter
      */
     [[nodiscard]] auto covers(float i_a) const noexcept -> bool {

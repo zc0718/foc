@@ -41,7 +41,7 @@ inline auto wrap_pi(float angle_rad) noexcept -> float {
  * @note [en] `ratio` is negative for a reversing gear and must not be zero -- a zero ratio is a coupling that silently
  *            holds still while the master moves, which is indistinguishable from a slave that is stuck.
  * @note [zh] 换向齿轮的 `ratio` 为负，且不得为零——零传动比是一个主轴运动时悄悄不动的耦合，与一根卡住的从轴无法区分。
- * @since 0.1.10
+ * @since 0.1.0
  */
 struct GearConfig final {
     float ratio;      ///< [en] slave radians per master radian, non-zero. [zh] 每主轴弧度的从轴弧度，非零。
@@ -52,7 +52,7 @@ struct GearConfig final {
 /**
  * @brief [en] What the gear asked for this period.
  * @brief [zh] 本周期齿轮要求的东西。
- * @since 0.1.10
+ * @since 0.1.0
  * @exporter
  */
 struct GearOutput final {
@@ -114,7 +114,7 @@ struct GearOutput final {
  *
  *   为什么它是独立一级而不是调用方的一行：去卷绕后的主轴同时也是 **同步误差** 的参照。拿卷绕的主轴去量从轴，正是一对完
  *   全同步的轴每转一圈报出 6.28 rad 误差的方式，而那个测量正是这条能力的要点。
- * @since 0.1.10
+ * @since 0.1.0
  * @exporter
  */
 class ElectronicGear final {
@@ -167,7 +167,7 @@ class ElectronicGear final {
      *            position -- is the same mistake as believing a first interval is a sector period.
      * @note [zh] 第一个采样定义原点，因此 `master_unwrapped_rad` 从零开始、从轴从 `offset_rad` 开始。这是一个选择，而另
      *            一种做法——相信第一次读数就是绝对位置——与相信"第一段间隔是一个扇区周期"是同一种错误。
-     * @since 0.1.10
+     * @since 0.1.0
      */
     [[nodiscard]] auto apply(float master_wrapped_rad, float dt_s) noexcept -> GearOutput {
         GearOutput out{validate(), 0.0F, 0.0F, 0.0F, lost_count_};
@@ -208,7 +208,7 @@ class ElectronicGear final {
     /**
      * @brief [en] The unwrapped master angle as of the last sample, rad.
      * @brief [zh] 最近一次采样时的去卷绕主轴角度，rad。
-     * @since 0.1.10
+     * @since 0.1.0
      */
     [[nodiscard]] auto master_unwrapped_rad() const noexcept -> float { return unwrapped_rad_; }
 

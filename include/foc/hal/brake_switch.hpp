@@ -57,7 +57,7 @@ namespace hal {
  *            合在电机旁边。
  * @context [en] `write_duty` runs inside the control ISR: no allocation, no blocking.
  * @context [zh] `write_duty` 在控制 ISR 内运行：不分配、不阻塞。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 class BrakeSwitch {
@@ -75,7 +75,7 @@ class BrakeSwitch {
      * @pre [zh] 尚未写入占空比。
      * @context [en] Initialisation only.
      * @context [zh] 仅初始化阶段。
-     * @since 0.1.9
+     * @since 0.1.0
      */
     virtual auto configure(float freq_hz) noexcept -> ErrorCode = 0;
 
@@ -88,7 +88,7 @@ class BrakeSwitch {
      * @post [zh] 从下一个开关周期生效。
      * @context [en] Control ISR, hard real time.
      * @context [zh] 控制 ISR，硬实时。
-     * @since 0.1.9
+     * @since 0.1.0
      */
     virtual void write_duty(float duty) noexcept = 0;
 
@@ -97,7 +97,7 @@ class BrakeSwitch {
      * @brief [zh] 断开开关并保持断开。
      * @post [en] The resistor is not driven from the next switching period until the next `write_duty`.
      * @post [zh] 从下一个开关周期起电阻不再被驱动，直到下一次 `write_duty`。
-     * @since 0.1.9
+     * @since 0.1.0
      */
     virtual void disable() noexcept = 0;
 };

@@ -21,7 +21,7 @@ constexpr float kTwoPi = 6.28318530718F;
  *            本补偿器接到那台 plant 上的用例，就是让两者在约定上保持诚实的东西，它断言抵消后的残差，而若两者漂开，那是
  *            唯一能把它们区分开的量。
  * @attacher
- * @since 0.1.9
+ * @since 0.1.0
  */
 auto table_torque_nm(const CoggingCompHarmonic* table, int count, float theta_mech) noexcept -> float {
     float sum = 0.0F;
@@ -36,7 +36,7 @@ auto table_torque_nm(const CoggingCompHarmonic* table, int count, float theta_me
  * @brief [en] The highest order in the table, which is what sets the ripple frequency.
  * @brief [zh] 表里的最高次数——它决定纹波频率。
  * @attacher
- * @since 0.1.9
+ * @since 0.1.0
  */
 auto highest_order(const CoggingCompHarmonic* table, int count) noexcept -> int {
     int order = 0;

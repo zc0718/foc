@@ -23,7 +23,7 @@ namespace comm {
  *   **为什么布局是参数而不是常数。** 多圈位对单圈编码器是零、对报转数的编码器是正数，而两者在电气上完全一样——这正是 "
  *   假定其中一种"的解码器会对另一种的帧给出一个看起来合理的角度的原因。帧长由这些数推出来，于是位数不是恰好这么多的码流
  *   会被 **拒绝** 而不是重新对齐：一个"挪到某个东西对得上为止"的解码器，最终会把一帧有效数据挪成一个错的值。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 struct EncoderLayout final {
@@ -54,7 +54,7 @@ struct EncoderLayout final {
  *   `status == State` 的意思是这一帧 **到了** 但不可信（CRC、编码器错误位、警告）。位置与转数仍然填好，因为记录坏帧的调
  *   用方需要知道它说了什么——但本库里没有任何东西会拿它们去动作：`TurnAssembler` 拒绝 `crc_ok` 为假的帧，而且它不需要看
  *   `status` 才这么做。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 struct EncoderFrame final {
@@ -79,7 +79,7 @@ struct EncoderFrame final {
  * @param bit_count [zh] `bits` 中属于报文的位数。
  * @param bit_offset [en] first bit to use; lets a caller checksum a slice of a longer buffer.
  * @param bit_offset [zh] 起始位；让调用方对长缓冲区中的一段求和。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 [[nodiscard]] auto crc6(const std::uint8_t* bits, int bit_count, int bit_offset = 0) noexcept -> std::uint8_t;
@@ -115,7 +115,7 @@ struct EncoderFrame final {
  * @param bit_count [zh] 可用位数；必须等于 `layout.frame_bits()`。
  * @param layout [en] the field widths.
  * @param layout [zh] 字段宽度。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 [[nodiscard]] auto decode_biss(const std::uint8_t* bits, int bit_count, const EncoderLayout& layout) noexcept
@@ -146,7 +146,7 @@ struct EncoderFrame final {
  *   在超过该距离的读数上，本类答 `State` 并把不回绕计数留在原处，因为中间的行程是未知的，而编造它（前进一圈、或走最短
  *   弧）正是位置控制器最终下达一个从未发生过的运动的方式。 **回绕** 不是缺口：4096 计数的转上 `4090 -> 5` 就是 +11 个计
  *   数，那是算术，不是推断。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 class TurnAssembler final {
@@ -173,7 +173,7 @@ class TurnAssembler final {
      * @param single_turn_bits [zh] 每转计数，位数；`1..31`。
      * @param max_step_counts [en] the most the axis can move between two frames, counts; `1..span/2`.
      * @param max_step_counts [zh] 轴在两帧之间最多能走多少计数；`1..span/2`。
-     * @since 0.1.9
+     * @since 0.1.0
      */
     TurnAssembler(int single_turn_bits, std::uint32_t max_step_counts) noexcept
         : single_turn_bits_(single_turn_bits), max_step_counts_(max_step_counts) {}
@@ -188,7 +188,7 @@ class TurnAssembler final {
      * @param position [zh] 来自 `decode_biss` 的原始转内计数。
      * @param crc_ok [en] whether that frame's CRC matched; a frame that failed is not fed at all.
      * @param crc_ok [zh] 该帧 CRC 是否通过；不通过的帧根本不参与拼接。
-     * @since 0.1.9
+     * @since 0.1.0
      */
     [[nodiscard]] auto push(std::uint32_t position, bool crc_ok) noexcept -> Step;
 

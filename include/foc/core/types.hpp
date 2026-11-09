@@ -96,7 +96,7 @@ template <typename T> struct Uvw final {
  *            `uint64_t`，到 1e18 ns（31.7 年）饱和而不是回绕，因为回绕会把一个长超时变成立刻超时。控制周期在入口被量化
  *            到 1 ns，且正周期至少让计数前进 1 ns——亚纳秒周期不现实，但一个会静默忽略传入周期的时钟正是本类要消灭的那种
  *            缺陷。
- * @since 0.1.6
+ * @since 0.1.0
  * @exporter
  */
 class ElapsedClock final {

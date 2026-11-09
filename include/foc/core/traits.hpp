@@ -126,7 +126,7 @@ struct is_clock<T, std::void_t<decltype(std::declval<T&>().now_us())>>
 /**
  * @brief [en] `T` satisfies the foc::hal::FaultInput contract.
  * @brief [zh] `T` 满足 foc::hal::FaultInput 契约。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 template <typename T, typename = void> struct is_fault_input : std::false_type {};
@@ -423,7 +423,7 @@ template <typename T> inline constexpr bool has_clock_v = has_clock<T>::value;
  *   与 `has_clock` 不同，这里的缺席 **不是** 静默的：它为 false 时 `Motor::start()` 以 `NotImpl` 拒绝，因为一个缺席的故
  *   障输入唯一可能代表的值就是"功率级没事"，而没有哪个库有资格替驱动器回答这一句。完整论证、以及没有这根引脚的主控方该
  *   写什么，见 `hal::FaultInput`。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 template <typename T, typename = void> struct has_fault_input : std::false_type {};
@@ -435,7 +435,7 @@ struct has_fault_input<T, std::void_t<decltype(std::declval<T&>().fault_input)>>
 /**
  * @brief [en] Convenience variable template for the required fault-input member.
  * @brief [zh] 必需的故障输入成员的便捷变量模板。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 template <typename T> inline constexpr bool has_fault_input_v = has_fault_input<T>::value;
@@ -641,7 +641,7 @@ template <typename T> inline constexpr bool has_mech_offset_v = has_mech_offset<
  * @note [zh] 可选，理由记在 `hal/position.hpp`：没有标记的传感器是完全正常的传感器，它只是无法建立绝对位置，而需要绝对
  *            位置的调用方必须 **被告知** 这件事，而不是拿到一个含义不同的数字。两个成员必须成对存在——能问"有没有标记"却
  *            永远不会给出脉冲的，不算标记。
- * @since 0.1.6
+ * @since 0.1.0
  * @exporter
  */
 template <typename T, typename = void> struct has_index : std::false_type {};
@@ -657,7 +657,7 @@ struct has_index<
 /**
  * @brief [en] Convenience variable template for the optional index hook.
  * @brief [zh] 可选索引钩子的便捷变量模板。
- * @since 0.1.6
+ * @since 0.1.0
  * @exporter
  */
 template <typename T> inline constexpr bool has_index_v = has_index<T>::value;
@@ -696,7 +696,7 @@ template <typename T> inline constexpr bool has_align_offset_v = has_align_offse
  *            ring at all. That is the difference between a policy and a special case.
  * @note [zh] 它描述的是环 **调用** 什么，而不是那个类是谁：`NullTrace` 满足它（全部空操作），于是环只有一条代码路径；一
  *            个只数调用次数的测试替身也满足它，而它根本不是环。这就是策略与特例的区别。
- * @since 0.1.8
+ * @since 0.1.0
  * @exporter
  */
 template <typename T, typename = void> struct is_trace_sink : std::false_type {};
@@ -710,7 +710,7 @@ struct is_trace_sink<
 /**
  * @brief [en] Convenience variable template for the trace sink contract.
  * @brief [zh] 轨迹接收端契约的便捷变量模板。
- * @since 0.1.8
+ * @since 0.1.0
  * @exporter
  */
 template <typename T> inline constexpr bool is_trace_sink_v = is_trace_sink<T>::value;
@@ -723,7 +723,7 @@ template <typename T> inline constexpr bool is_trace_sink_v = is_trace_sink<T>::
  *            injects nothing, so anything that has to decide "will this inject?" needs this trait to ask.
  * @note [zh] `has_injection_v` 回答的是关于 **类型** 的问题；能切换模式的策略在运行时回答的是另一个问题，两者并不相同。
  *            一个装着注入器却在跑反电势的槽位不注入任何东西，因此任何要判断"它会不会注入"的地方都需要这个特型来提问。
- * @since 0.1.8
+ * @since 0.1.0
  * @exporter
  */
 template <typename T, typename = void> struct has_kind : std::false_type {};
@@ -733,7 +733,7 @@ template <typename T> struct has_kind<T, std::void_t<decltype(std::declval<const
 /**
  * @brief [en] Convenience variable template for "can report its mode".
  * @brief [zh] "能上报自身模式"的便捷变量模板。
- * @since 0.1.8
+ * @since 0.1.0
  * @exporter
  */
 template <typename T> inline constexpr bool has_kind_v = has_kind<T>::value;
@@ -741,7 +741,7 @@ template <typename T> inline constexpr bool has_kind_v = has_kind<T>::value;
 /**
  * @brief [en] `T` can say whether it is injecting *right now*, as opposed to whether it could.
  * @brief [zh] `T` 能说出它 **此刻** 是否在注入，而不是它是否具备注入能力。
- * @since 0.1.8
+ * @since 0.1.0
  * @exporter
  */
 template <typename T, typename = void> struct has_injecting : std::false_type {};
@@ -753,7 +753,7 @@ struct has_injecting<T, std::void_t<decltype(std::declval<const T&>().injecting(
 /**
  * @brief [en] Convenience variable template for the run-time injection query.
  * @brief [zh] 运行时注入查询的便捷变量模板。
- * @since 0.1.8
+ * @since 0.1.0
  * @exporter
  */
 template <typename T> inline constexpr bool has_injecting_v = has_injecting<T>::value;

@@ -24,7 +24,7 @@ namespace core {
  *   `Protector` 已经会按温度降额——而它自己的头文件里就说了它不知道那个温度是多少，因为 `t_derate_*` 是调用方给的数。本
  *   类型回答保护器 **之前** 的那个问题：以这样的散热， **一直** 跑下去而不让绕组到达 `t_allowed_c`，电流能有多大？那是
  *   机器与它的安装方式的属性，不随 tick 变化，而算错了不是整定误差——是驱动器兑现不了的承诺。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 struct ThermalLimitConfig final {
@@ -43,7 +43,7 @@ struct ThermalLimitConfig final {
 /**
  * @brief [en] How much current the winding can hold indefinitely, and what that does to the temperature model.
  * @brief [zh] 绕组能一直扛住多大电流，以及那对温度模型意味着什么。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 struct ThermalLimitReport final {
@@ -68,7 +68,7 @@ struct ThermalLimitReport final {
  *   它收敛到哪里，以及在触及限值之前还能跑多久。`crosses == false` 的意思 **不是**"很久"，而是"永远不会"：稳态等于或低
  *   于 `t_allowed_c`，于是这个电流是可持续的、秒数字段是 `infinity`。把这两种情况折成一个大数字，正是调度去压一台本来毫
  *   无危险的机器的方式。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 struct ThermalBudget final {
@@ -120,7 +120,7 @@ struct ThermalBudget final {
  *
  *   **它不是什么。** 它不是对 `Rt`/`Ct` 的测量——那是调用方的数，而本仓库从未量过任何绕组的散热。它也不是控制器：它回答"
  *   这个电流能不能保持、能保持多久"，至于"不够久"时怎么办，是宿主决定的。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 class ThermalLimit final {
@@ -145,7 +145,7 @@ class ThermalLimit final {
      * @param current_a [zh] 待考察的电流，A。
      * @param t_now_c [en] the winding temperature now, C.
      * @param t_now_c [zh] 当前绕组温度，°C。
-     * @since 0.1.9
+     * @since 0.1.0
      */
     [[nodiscard]] auto budget(float current_a, float t_now_c) const noexcept -> ThermalBudget;
 

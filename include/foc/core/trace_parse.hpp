@@ -14,7 +14,7 @@ namespace core {
  * @brief [en] A window of trace samples as the host got it out of the ring: the retained samples, and the loss the
  *             recorder declared.
  * @brief [zh] 上位机从环里取出的一段轨迹窗口：保留下来的样本，以及记录器声明的丢失量。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 struct TraceSpan final {
@@ -34,7 +34,7 @@ struct TraceSpan final {
 /**
  * @brief [en] One run of samples that share a motor state and a cadence.
  * @brief [zh] 一段共享同一电机状态与同一节拍的样本。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 struct TraceSegment final {
@@ -74,7 +74,7 @@ struct TraceSegment final {
  *            本。前者说的是"往前看，或者换更大的环"；后者说的是"记录器自己丢了一拍"，那是缺陷或时钟跳变，不是谁选的配
  *            置。 `consistent` 只是这个解析器的自检： `missing` 被数了两遍，一遍累加逐对跳过数，一遍由首尾两个时间戳算
  *            出；两者不一致说明扫描写错了（取整或回绕处理有缺陷）。它检不出"样本真的不在"——见上一条。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 struct TraceReport final {
@@ -184,7 +184,7 @@ inline auto went_backwards(std::uint32_t delta_us) noexcept -> bool { return del
  * @pre [en] `span.samples` is non-null when `span.size` is non-zero, and the samples are the retained window oldest
  *           first, exactly as `foc_motor_trace_read(0..size-1)` returns them.
  * @pre [zh] `span.size` 非零时 `span.samples` 非空，且样本按 `foc_motor_trace_read(0..size-1)` 的顺序自最旧起排列。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 [[nodiscard]] inline auto analyze_trace(const TraceSpan& span, std::uint32_t period_us) noexcept -> TraceReport {
@@ -279,7 +279,7 @@ inline auto went_backwards(std::uint32_t delta_us) noexcept -> bool { return del
  *            correctly, in a header that is also compiled into firmware.
  * @note [zh] 枚举的代价是每段一趟，这对一个只会走几十段一次的上位机工具是正确的取舍：另一种做法是再加一张固定容量的表，
  *            而那个容量没人能选对，且这个头文件也会被编进固件。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 [[nodiscard]] inline auto trace_segment(const TraceSpan& span, std::uint32_t period_us, std::uint32_t index) noexcept

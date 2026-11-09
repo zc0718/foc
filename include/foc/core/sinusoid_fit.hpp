@@ -24,7 +24,7 @@ namespace core {
  *
  *   两个正弦量与一个状态。`status` 是诊断通道，不是装饰：`Ok` 表示拟合良态，`State` 表示窗口短于所问频率的一个周期（在
  *   不足一个周期的窗口上拟合也能出数，但那不是这个音的幅值），`Param` 表示参数根本不是一段正弦的描述。
- * @since 0.1.8
+ * @since 0.1.0
  * @exporter
  */
 struct SinusoidFit {
@@ -79,7 +79,7 @@ struct SinusoidFit {
  * @return [zh] 拟合结果；即使状态不是 `Ok`，`amplitude` 与 `phase_rad` 也会被写入。
  * @context [en] Host-side analysis over a recorded window: noexcept, no allocation, O(n), no function pointer.
  * @context [zh] 对录制窗口的主机侧分析：noexcept、不分配、O(n)、无函数指针。
- * @since 0.1.8
+ * @since 0.1.0
  * @exporter
  */
 inline auto sinusoid_fit(const float* y, std::size_t n, float dt_s, float omega_rad_s) noexcept -> SinusoidFit {

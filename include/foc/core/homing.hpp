@@ -14,7 +14,7 @@ namespace core {
 /**
  * @brief [en] What the homing search is doing right now.
  * @brief [zh] 回零搜索当前在做什么。
- * @since 0.1.6
+ * @since 0.1.0
  * @exporter
  */
 enum class HomingState : std::uint8_t {
@@ -28,7 +28,7 @@ enum class HomingState : std::uint8_t {
 /**
  * @brief [en] Why a homing search stopped.
  * @brief [zh] 一次回零搜索为什么停下。
- * @since 0.1.6
+ * @since 0.1.0
  * @exporter
  */
 enum class HomingFailure : std::uint8_t {
@@ -46,7 +46,7 @@ enum class HomingFailure : std::uint8_t {
  *            one.
  * @note [zh] 每个数字都由调用方给出，理由与 `StartupConfig` 相同：安全的爬行转速取决于机构，一个看起来合理的默认值与一
  *            个经过考虑的值无法区分。
- * @since 0.1.6
+ * @since 0.1.0
  * @exporter
  */
 struct HomingConfig final {
@@ -84,7 +84,7 @@ struct HomingConfig final {
  *            **不是** 失败：搜索之所以存在正是因为原点未知，而标记正是恢复计数的东西（见
  *            `PositionReference::lost_count()`）。一个因为丢计数就放弃的流程，会在轴回零前被动过时拒绝搜索 ——而那正是常
  *            态。
- * @since 0.1.6
+ * @since 0.1.0
  * @exporter
  */
 class HomingRoutine final {
@@ -92,7 +92,7 @@ class HomingRoutine final {
     /**
      * @brief [en] What the caller should apply this period.
      * @brief [zh] 调用方本周期应当施加的量。
-     * @since 0.1.6
+     * @since 0.1.0
      * @exporter
      */
     struct Output final {
@@ -111,7 +111,7 @@ class HomingRoutine final {
      *              value, or a direction that is not +1 or -1; otherwise `Ok`.
      * @return [zh] 所有字段为零时返回 `FOC_ERR_NOT_IMPL`——与 `StartupRoutine::validate()` 一样，这是"没有要求回零" 的书
      *              面写法；出现非正、非有限的值或方向不是 +1/-1 时返回 `FOC_ERR_PARAM`；否则 `Ok`。
-     * @since 0.1.6
+     * @since 0.1.0
      */
     [[nodiscard]] auto validate() const noexcept -> ErrorCode;
 
@@ -125,7 +125,7 @@ class HomingRoutine final {
      * @note [en] Already homed means already done. Turning a homed axis to look for a mark it is already sitting on
      *            would be a move nobody asked for.
      * @note [zh] 已回零即已完成。让一个已回零的轴转起来去找它已经坐着的标记，是一次没人要求过的运动。
-     * @since 0.1.6
+     * @since 0.1.0
      */
     auto begin(const PositionReference& reference) noexcept -> bool;
 
@@ -140,7 +140,7 @@ class HomingRoutine final {
      * @return [zh] 应当施加的转速，以及推进之后的状态。
      * @context [en] Current-loop ISR: noexcept, no allocation.
      * @context [zh] 电流环 ISR：noexcept、不分配。
-     * @since 0.1.6
+     * @since 0.1.0
      */
     auto step(const PositionReference& reference, float dt_s) noexcept -> Output;
 

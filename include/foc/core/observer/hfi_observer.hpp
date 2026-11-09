@@ -157,7 +157,7 @@ class HfiObserver final {
      *            在上面。只滤比例通路让积分器仍看原始误差，因此稳态行为不变；200 Hz 把已发布音调从 0.4180 压到 0.0110
      *            rad/s、把闭环转速纹波压小 6.3 倍，而稳态偏差三位数字不变。设为 `0` 即关闭，理由是一个需要原始比例项来
      *            要相位裕度的环：200 Hz 在 32 Hz 速度环带宽上的实测代价约 9 度。
-     * @since 0.1.7
+     * @since 0.1.0
      */
     struct Config final {
         float inject_v; ///< [en] injection amplitude, peak V, > 0. [zh] 注入幅值，峰值 V，> 0。
@@ -218,7 +218,7 @@ class HfiObserver final {
      *            8400 Hz（2.38）在试过的最宽解调截止频率（400 Hz）上已失败，9200 Hz（2.17）在三个截止频率上全部失败。失
      *            效是最糟的那种静默：解调幅值塌掉、锁定判据脱落、角度冻结、转速报零，于是闭在它上面的环跑飞（实测转速偏
      *            差 -19.5 rad/s）。因此拒绝是唯一诚实的回答，而且必须发生在控制率第一次可知的地方——`update()` 之内。
-     * @since 0.1.4
+     * @since 0.1.0
      */
     static constexpr float kMinSamplesPerCarrier = 2.5F;
 
@@ -233,7 +233,7 @@ class HfiObserver final {
      *            of the machine, which is why it is static and why it is not a config field.
      * @note [zh] 公开是为了让调用方在构造之前就能定容 `inject_hz`。它是 **控制率** 的性质而不是机器的性质，这也是它为何
      *            是静态的、而不是一个配置字段。
-     * @since 0.1.4
+     * @since 0.1.0
      */
     [[nodiscard]] static auto max_inject_hz(float control_hz) noexcept -> float;
 

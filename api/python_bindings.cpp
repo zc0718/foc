@@ -105,7 +105,7 @@ auto check(foc_err_t code, const char* call) -> void {
  *               it.
  * @details [zh] 每个 trampoline 都把 Python 抛出的东西捕获并锁存，因为控制环是 `noexcept`，异常穿过它会让进程终止。锁存
  *               的失败会停止后续调用，并由 `tick()` 在 Python 侧重抛，于是作者第一眼看到的就是调用它的那一行。
- * @since 0.1.2
+ * @since 0.1.0
  */
 struct PyHal final {
     py::object write_duty;
@@ -454,7 +454,7 @@ class Motor final {
  * @note [zh] 存储刻意归 Python：C ABI 之所以取调用方持有的数组，是因为固件作者可能想把轨迹放进链接段，而 Python 这边的
  *            自然对应就是本对象持有的缓冲区。它是按引用挂载的，因此必须活得比挂载更久——`Motor.set_trace(None)` 或先让电
  *            机销毁都可以；`attach` 会重新检查电机是否还活着。
- * @since 0.1.8
+ * @since 0.1.0
  */
 class Trace final {
   public:
@@ -884,9 +884,9 @@ PYBIND11_MODULE(foc_python, m) {
         .def("__repr__", [](const Motor& self) { return py::str("Motor(alive={})").format(self.alive()); });
 
     // ------------------------------------------------------------------------------------------
-    // ABI 0.1.1: the modules the C surface could not reach. Bound one for one, with no extra
+    // ABI 0.1.0: the modules the C surface could not reach. Bound one for one, with no extra
     // Python-side logic -- a thin binding is the only kind that cannot drift from the C contract.
-    // ABI 0.1.1：C 表面此前够不到的那些模块。一对一绑定，Python 侧不加任何额外逻辑——只有薄的
+    // ABI 0.1.0：C 表面此前够不到的那些模块。一对一绑定，Python 侧不加任何额外逻辑——只有薄的
     // 绑定才不会与 C 契约漂移。
     // ------------------------------------------------------------------------------------------
 
@@ -1097,9 +1097,9 @@ PYBIND11_MODULE(foc_python, m) {
         py::arg("params"), py::arg("i_max_a"), py::arg("iq_command_a"),
         "[en] (id_a, iq_a) for maximum torque per amp. [zh] 每安培转矩最大的 (id_a, iq_a)。");
 
-    // ABI 0.1.3: the gains and the identification primitives. Bound one for one, because the whole point of a tuning
+    // ABI 0.1.0: the gains and the identification primitives. Bound one for one, because the whole point of a tuning
     // tool is that it reproduces the shipped loop rather than re-deriving it.
-    // ABI 0.1.3：增益与辨识原语。一对一绑定，因为整定工具的意义就在于复现出厂环路，而不是另推一遍。
+    // ABI 0.1.0：增益与辨识原语。一对一绑定，因为整定工具的意义就在于复现出厂环路，而不是另推一遍。
     const auto gains_to_tuple = [](const foc_pi_gains_t& g) {
         return py::make_tuple(g.kp, g.ki, g.out_min, g.out_max, g.integral_min, g.integral_max);
     };

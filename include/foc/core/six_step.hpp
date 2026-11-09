@@ -14,7 +14,7 @@ namespace core {
 /**
  * @brief [en] What a six-step commutation needs to know.
  * @brief [zh] 六步换相需要知道的参数。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 struct SixStepConfig final {
@@ -41,7 +41,7 @@ struct SixStepConfig final {
 /**
  * @brief [en] What one period of six-step commutation produced.
  * @brief [zh] 六步换相在一个控制周期内产出的东西。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 struct SixStepOutput final {
@@ -89,7 +89,7 @@ struct SixStepOutput final {
  *   被告知的任何东西都给一个矢量——包括隔两格的扇区，那正是"漏读一次"的样子，而它产生的力矩方向是错的。因此只有相邻扇区
  *   被接受，跳变则保持旧矢量并计数。非法编码（`0` 或 `7`）是另一回事：引脚根本没有在指出位置，那里的回答是零矢量加
  *   `holding`。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 class SixStepCommutation final {

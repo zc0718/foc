@@ -64,7 +64,7 @@ FOC_WARN_UNUSED foc_err_t foc_motor_create_ex(const foc_motor_params_t *params, 
  *            `foc_motor_create()`: one control path, two ways of feeding it measurements.
  * @note [zh] 本函数签发的句柄被所有其它 `foc_*` 函数原样接受，与 `foc_motor_create()` 的句柄无差别：一条控制路径，两种
  *            喂测量值的方式。
- * @since 0.1.2
+ * @since 0.1.0
  * @exporter
  */
 FOC_WARN_UNUSED foc_err_t foc_motor_create_host(const foc_motor_params_t *params, const foc_motor_setup_t *setup,
@@ -114,7 +114,7 @@ FOC_WARN_UNUSED foc_err_t foc_motor_get_setup(foc_motor_t motor, foc_motor_setup
  *            `foc_motor_get_status()` 报出。
  * @context [en] Control context or a task that is not ticking at the same time; not ISR-safe against `foc_tick()`.
  * @context [zh] 控制上下文，或一个不与 `foc_tick()` 同时运行的任务；不可与 `foc_tick()` 并发。
- * @since 0.1.6
+ * @since 0.1.0
  * @exporter
  */
 FOC_WARN_UNUSED foc_err_t foc_motor_set_observer(foc_motor_t motor, foc_observer_t observer);
@@ -204,7 +204,7 @@ FOC_WARN_UNUSED foc_err_t foc_motor_clear_fault(foc_motor_t motor);
  *            `foc_set_torque()`），否则起动转矩会继续施加。`FOC_STALL_FAILED` 会锁存 `FOC_FAULT_STALL`。
  * @context [en] Control context or a task that is not ticking at the same time; not ISR-safe against `foc_tick()`.
  * @context [zh] 控制上下文，或一个不与 `foc_tick()` 并发运行的任务；不可与 `foc_tick()` 并发。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 FOC_WARN_UNUSED foc_err_t foc_motor_begin_stall_start(foc_motor_t motor, const foc_stall_start_config_t *recipe);
@@ -223,7 +223,7 @@ FOC_WARN_UNUSED foc_err_t foc_motor_begin_stall_start(foc_motor_t motor, const f
  *            hold.
  * @note [zh] 两个要一起读：阶段说明它旁边的力矩是否仍归序列所有。空闲的序列报 `FOC_STALL_IDLE` 与零力矩，而不是它碰巧保
  *            持过的上一个值。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 FOC_WARN_UNUSED foc_err_t foc_motor_get_stall_start(foc_motor_t motor, foc_stall_start_status_t *out);
@@ -237,7 +237,7 @@ FOC_WARN_UNUSED foc_err_t foc_motor_get_stall_start(foc_motor_t motor, foc_stall
  * @return [zh] `FOC_OK`；句柄种类不对时为 `FOC_ERR_PARAM`。
  * @context [en] Control context or a task that is not ticking at the same time; not ISR-safe against `foc_tick()`.
  * @context [zh] 控制上下文，或一个不与 `foc_tick()` 并发运行的任务；不可与 `foc_tick()` 并发。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 FOC_WARN_UNUSED foc_err_t foc_motor_cancel_stall_start(foc_motor_t motor);
@@ -402,7 +402,7 @@ FOC_WARN_UNUSED foc_err_t foc_motor_get_status(foc_motor_t motor, foc_motor_stat
  *            个合法的机械角——因此拿它去和目标比的调用方，分不出"已回零且停在原点"与"从未回过零"。缺原点是一个状态，所以
  *            它答一个状态错误，并且不去动接收者。故意 **没有** 配套的 setter：绝对目标必须闭环在 referenced 角度上，而
  *            存在位置传感器时环路闭环在传感器坐标系上。加那个 setter 等于加一个控制模式，而不是加一个入口。
- * @since 0.1.8
+ * @since 0.1.0
  * @exporter
  */
 FOC_WARN_UNUSED foc_err_t foc_motor_get_position_absolute(foc_motor_t motor, float *position_mech_rad);
@@ -473,8 +473,8 @@ FOC_WARN_UNUSED foc_err_t foc_get_state(foc_motor_t motor, float *speed_rad_s, f
 
 
 /* ------------------------------------------------------------------------------------------------
- * Commissioning, protection and the reference policies (ABI 0.1.1).
- * 整定、保护与参考策略（ABI 0.1.1）。
+ * Commissioning, protection and the reference policies (ABI 0.1.0).
+ * 整定、保护与参考策略（ABI 0.1.0）。
  * ---------------------------------------------------------------------------------------------- */
 
 /**
@@ -494,7 +494,7 @@ FOC_WARN_UNUSED foc_err_t foc_get_state(foc_motor_t motor, float *speed_rad_s, f
  *            and using one for the other is a 33 % error that reads exactly like a dead-time fault on a good board.
  * @note [zh] 存在的原因是每相数与轴上数在 d 轴差 4/3、在 q 轴差 2/√3，混用是一个 33 % 的误差， 在好板子上读起来和死区故
  *            障一模一样。
- * @since 0.1.1
+ * @since 0.1.0
  * @exporter
  */
 float foc_axis_deadtime_v(float deadtime_s, float switching_hz, float v_bus_v, float angle_rad);
@@ -510,7 +510,7 @@ float foc_axis_deadtime_v(float deadtime_s, float switching_hz, float v_bus_v, f
  * @param out [zh] 非 NULL 接收者；`struct_size` 须由调用方填好。
  * @return [en] FOC_OK, or FOC_ERR_PARAM.
  * @return [zh] FOC_OK，或 FOC_ERR_PARAM。
- * @since 0.1.1
+ * @since 0.1.0
  * @exporter
  */
 FOC_WARN_UNUSED foc_err_t foc_field_weakening_worthwhile(const foc_motor_params_t *params, float i_max_a,
@@ -543,7 +543,7 @@ FOC_WARN_UNUSED foc_err_t foc_field_weakening_worthwhile(const foc_motor_params_
  *               测器在 200 rad/s 读到 0.5079 rad，而它公开的天花板是 0.15 rad；同一个电流在 3200 rad/s 却无害。 要真正
  *               施加这个结果的闭环必须走 `MtpaReference`，它的 `i_d_per_speed_a_s_per_rad` 会在反电势撑起观测器 的转速
  *               以下拒绝 d 轴电流。
- * @since 0.1.1
+ * @since 0.1.0
  * @exporter
  */
 FOC_WARN_UNUSED foc_err_t foc_mtpa_reference(const foc_motor_params_t *params, float i_max_a, float iq_command_a,
@@ -573,7 +573,7 @@ FOC_WARN_UNUSED foc_err_t foc_mtpa_reference(const foc_motor_params_t *params, f
  * @warning [zh] 只有在 `Rs / (2·Ld)` 以上，所请求的带宽才有意义：那里比例增益 `2·w·Ld − Rs` 归零并被钳在下限。门槛以下
  *               环路退化为纯积分，交付的远少于所请求的：在标称电机（`Rs = 0.5`、`Ld = 4e-4`）上实测，200 rad/s 到达
  *               63 % 要 31 ms，而 `1/w` 是 5 ms。盲信请求的整定工具会交付一个比自己文档所说的慢六倍的环。
- * @since 0.1.3
+ * @since 0.1.0
  * @exporter
  */
 FOC_WARN_UNUSED foc_err_t foc_current_pi_gains(const foc_motor_params_t *params, const foc_motor_setup_t *setup,
@@ -594,7 +594,7 @@ FOC_WARN_UNUSED foc_err_t foc_current_pi_gains(const foc_motor_params_t *params,
  *            as on the requested bandwidth. Reading them here keeps a tuning tool from assuming a different convention.
  * @note [zh] 速度环抵消机械极点 `B/J`，因此其增益除了带宽还取决于惯量与 `kt`。从这里读数，整定工具就不会自作主张换一套
  *            约定。
- * @since 0.1.3
+ * @since 0.1.0
  * @exporter
  */
 FOC_WARN_UNUSED foc_err_t foc_speed_pi_gains(const foc_motor_params_t *params, const foc_motor_setup_t *setup,
@@ -622,7 +622,7 @@ FOC_WARN_UNUSED foc_err_t foc_speed_pi_gains(const foc_motor_params_t *params, c
  *            出一个未经审查的数字比不给更糟。
  * @context [en] Commissioning stage, rotor at standstill.
  * @context [zh] 整定阶段，转子静止。
- * @since 0.1.3
+ * @since 0.1.0
  * @exporter
  */
 FOC_WARN_UNUSED foc_err_t foc_rs_estimate(const foc_motor_params_t *params, const float *v_command,
@@ -652,7 +652,7 @@ FOC_WARN_UNUSED foc_err_t foc_rs_estimate(const foc_motor_params_t *params, cons
  *            `valid`。
  * @context [en] Commissioning stage, machine spinning, zero current command.
  * @context [zh] 整定阶段，电机旋转，电流给定为零。
- * @since 0.1.3
+ * @since 0.1.0
  * @exporter
  */
 FOC_WARN_UNUSED foc_err_t foc_flux_estimate(const foc_motor_params_t *params, const float *omega_e,
@@ -672,7 +672,7 @@ FOC_WARN_UNUSED foc_err_t foc_flux_estimate(const foc_motor_params_t *params, co
  * @return [zh] FOC_OK；NULL 或 `struct_size` 不对时返回 FOC_ERR_PARAM。
  * @context [en] Commissioning, once per board.
  * @context [zh] 整定阶段，每块板一次。
- * @since 0.1.1
+ * @since 0.1.0
  * @exporter
  */
 FOC_WARN_UNUSED foc_err_t foc_board_check(const foc_board_measurements_t *measurements,
@@ -685,7 +685,7 @@ FOC_WARN_UNUSED foc_err_t foc_board_check(const foc_board_measurements_t *measur
  * @param item [zh] 该值。
  * @return [en] a static string, never NULL; `"?"` for an out-of-range value.
  * @return [zh] 静态字符串，不会是 NULL；越界返回 `"?"`。
- * @since 0.1.1
+ * @since 0.1.0
  * @exporter
  */
 const char *foc_board_item_name(int32_t item);
@@ -697,7 +697,7 @@ const char *foc_board_item_name(int32_t item);
  * @param cause [zh] 该值。
  * @return [en] a static string, never NULL; `"?"` for an out-of-range value.
  * @return [zh] 静态字符串，不会是 NULL；越界返回 `"?"`。
- * @since 0.1.1
+ * @since 0.1.0
  * @exporter
  */
 const char *foc_board_cause_name(int32_t cause);
@@ -712,7 +712,7 @@ const char *foc_board_cause_name(int32_t cause);
  * @note [en] Paired with `foc_board_*_name()` so a log line is three calls and no switch statement in the caller's
  *            code.
  * @note [zh] 与 `foc_board_*_name()` 配对，于是一条日志就是三次调用，调用方代码里不需要 switch。
- * @since 0.1.1
+ * @since 0.1.0
  * @exporter
  */
 const char *foc_fault_name(int32_t fault);
@@ -728,7 +728,7 @@ const char *foc_fault_name(int32_t fault);
  * @return [zh] FOC_OK、FOC_ERR_PARAM，或池耗尽时的 FOC_ERR_NO_RESOURCE。
  * @post [en] `*out` is owned by the caller until `foc_protector_destroy()`.
  * @post [zh] `*out` 归调用方所有，直到 `foc_protector_destroy()`。
- * @since 0.1.1
+ * @since 0.1.0
  * @exporter
  */
 FOC_WARN_UNUSED foc_err_t foc_protector_create(const foc_protection_config_t *config, foc_protector_t *out);
@@ -748,7 +748,7 @@ FOC_WARN_UNUSED foc_err_t foc_protector_create(const foc_protection_config_t *co
  * @return [zh] FOC_OK、FOC_ERR_PARAM，或过期句柄时的 FOC_ERR_STATE。
  * @context [en] Current-loop ISR.
  * @context [zh] 电流环 ISR。
- * @since 0.1.1
+ * @since 0.1.0
  * @exporter
  */
 FOC_WARN_UNUSED foc_err_t foc_protector_step(foc_protector_t protector, const foc_protection_input_t *in, float dt_s,
@@ -764,7 +764,7 @@ FOC_WARN_UNUSED foc_err_t foc_protector_step(foc_protector_t protector, const fo
  * @param cold [zh] 非零同时清除 I²t 热记忆；零则保留，因为刚跳闸的机器还热着。
  * @return [en] FOC_OK or FOC_ERR_STATE.
  * @return [zh] FOC_OK 或 FOC_ERR_STATE。
- * @since 0.1.1
+ * @since 0.1.0
  * @exporter
  */
 FOC_WARN_UNUSED foc_err_t foc_protector_reset(foc_protector_t protector, int32_t cold);
@@ -776,7 +776,7 @@ FOC_WARN_UNUSED foc_err_t foc_protector_reset(foc_protector_t protector, int32_t
  * @param protector [zh] 句柄；NULL 视为无事。
  * @return [en] FOC_OK or FOC_ERR_STATE on a stale handle.
  * @return [zh] FOC_OK，或过期句柄时的 FOC_ERR_STATE。
- * @since 0.1.1
+ * @since 0.1.0
  * @exporter
  */
 FOC_WARN_UNUSED foc_err_t foc_protector_destroy(foc_protector_t protector);
@@ -800,7 +800,7 @@ FOC_WARN_UNUSED foc_err_t foc_protector_destroy(foc_protector_t protector);
  *            拦下的情况由 `foc_motor_get_status()` 的 `observer_locked` 报出。 2.5 是实测的：20 kHz 下 8000 Hz（每载波
  *            周期 2.50 个控制周期）在包线扫描的每一格都站住，8400 Hz（2.38）在最宽解调截止频率上已经失败，9200 Hz（
  *            2.17）在三个上全部失败。
- * @since 0.1.7
+ * @since 0.1.0
  * @exporter
  */
 float foc_hfi_max_inject_hz(float pwm_freq_hz);
@@ -831,7 +831,7 @@ float foc_hfi_max_inject_hz(float pwm_freq_hz);
  *            用例断言的性质，因为一个建议出库随后会拒绝的配置的定容工具，比没有工具更糟。它返回的数字都是实测的，每一个
  *            都在其推导处有文档：载波是 `foc_hfi_max_inject_hz(pwm_freq_hz)`，幅值是 `hf_current_a · 2π·inject_hz ·
  *            ld`，两个截止频率各 200 Hz——即 SIL 包线扫描在静止到 50 rad/s 机械范围内实测良好的那些值。
- * @since 0.1.7
+ * @since 0.1.0
  * @exporter
  */
 FOC_WARN_UNUSED foc_err_t foc_hfi_size(const foc_motor_params_t *params, float pwm_freq_hz, float hf_current_a,
@@ -858,7 +858,7 @@ FOC_WARN_UNUSED foc_err_t foc_hfi_size(const foc_motor_params_t *params, float p
  *            户用 `core::RingTrace<N>`，一分不付。两条路径都不分配：样本住在调用方放置它的地方。
  * @context [en] Call while the motor is stopped, or accept that the window starts mid-step.
  * @context [zh] 建议在电机停止时调用，否则接受窗口从半步中间开始。
- * @since 0.1.8
+ * @since 0.1.0
  * @exporter
  */
 FOC_WARN_UNUSED foc_err_t foc_motor_set_trace(foc_motor_t motor, foc_trace_sample_t *samples, uint32_t capacity);
@@ -871,7 +871,7 @@ FOC_WARN_UNUSED foc_err_t foc_motor_set_trace(foc_motor_t motor, foc_trace_sampl
  * @param motor [zh] 电机句柄；NULL 返回 0。
  * @return [en] retained samples, at most the attached capacity; 0 when no trace is attached.
  * @return [zh] 保留的样本数，不超过挂载的容量；未挂载时为 0。
- * @since 0.1.8
+ * @since 0.1.0
  * @exporter
  */
 uint32_t foc_motor_trace_size(foc_motor_t motor);
@@ -884,7 +884,7 @@ uint32_t foc_motor_trace_size(foc_motor_t motor);
  * @param motor [zh] 电机句柄；NULL 返回 0。
  * @return [en] the drop count, which survives a reset: it records what was already lost.
  * @return [zh] 丢帧计数，且不随复位清零：它记录的是 **已经** 丢掉的东西。
- * @since 0.1.8
+ * @since 0.1.0
  * @exporter
  */
 uint32_t foc_motor_trace_dropped(foc_motor_t motor);
@@ -901,7 +901,7 @@ uint32_t foc_motor_trace_dropped(foc_motor_t motor);
  * @param out [zh] 非 NULL 接收者。越界时写零，而不是越过调用方的数组去读。
  * @return [en] FOC_OK, or FOC_ERR_PARAM on a NULL motor or receiver.
  * @return [zh] FOC_OK；电机或接收者为 NULL 时返回 FOC_ERR_PARAM。
- * @since 0.1.8
+ * @since 0.1.0
  * @exporter
  */
 FOC_WARN_UNUSED foc_err_t foc_motor_trace_read(foc_motor_t motor, uint32_t index, foc_trace_sample_t *out);
@@ -914,7 +914,7 @@ FOC_WARN_UNUSED foc_err_t foc_motor_trace_read(foc_motor_t motor, uint32_t index
  * @param motor [zh] 电机句柄。
  * @return [en] FOC_OK, or FOC_ERR_PARAM on a NULL motor.
  * @return [zh] FOC_OK；电机为 NULL 时返回 FOC_ERR_PARAM。
- * @since 0.1.8
+ * @since 0.1.0
  * @exporter
  */
 FOC_WARN_UNUSED foc_err_t foc_motor_trace_reset(foc_motor_t motor);
@@ -956,7 +956,7 @@ FOC_WARN_UNUSED foc_err_t foc_motor_trace_reset(foc_motor_t motor);
  * @note [zh] `bandwidth_rad_s = 1 / tau`，对本库的速度环而言这就是断言的全部：`speed_pi_config()` 抵消机械极点后留下
  *            `wb / s`，其 -3 dB 点就是调用方请求的带宽。因此从轨迹拟合 `tau` 并与请求值比较，就是在测量增益律是否做到了
  *            文档说的事——钉住本函数的 SIL 用例做的正是这件事。
- * @since 0.1.8
+ * @since 0.1.0
  * @exporter
  */
 FOC_WARN_UNUSED foc_err_t foc_step_metrics(const float *y, uint32_t n, float dt_s, float target, float band,
@@ -988,7 +988,7 @@ FOC_WARN_UNUSED foc_err_t foc_step_metrics(const float *y, uint32_t n, float dt_
  * @note [zh] 这是扫频的运动部件：用 `A*cos(w*t)` 驱动给定，录下响应，两边都拟合，相除。`foc_step_metrics()` 的阶跃带宽
  *            是一个估计，其偏差与被测误差同量级（实测：20% 增益错误只让它挪动 9.9%）；而已知频率上的幅值不需要模型，且
  *            随误差本身移动约同样比例，这正是扫频成为"比例错误"之仪器的原因。
- * @since 0.1.8
+ * @since 0.1.0
  * @exporter
  */
 FOC_WARN_UNUSED foc_err_t foc_sinusoid_fit(const float *y, uint32_t n, float dt_s, float omega_rad_s,
@@ -1013,7 +1013,7 @@ FOC_WARN_UNUSED foc_err_t foc_sinusoid_fit(const float *y, uint32_t n, float dt_
  * @return [en] FOC_OK; FOC_ERR_PARAM for a NULL pointer, an unusable nameplate, a non-positive current limit, or limits
  *              that do not describe an interval.
  * @return [zh] FOC_OK；空指针、不可用的铭牌、非正的电流限幅、或两个限幅不构成区间时返回 FOC_ERR_PARAM。
- * @since 0.1.8
+ * @since 0.1.0
  * @exporter
  */
 FOC_WARN_UNUSED foc_err_t foc_torque_map_build(const foc_motor_params_t *params, float i_max_a, float min_nm,
@@ -1031,7 +1031,7 @@ FOC_WARN_UNUSED foc_err_t foc_torque_map_build(const foc_motor_params_t *params,
  * @param iq_a [zh] q 轴电流，A。
  * @return [en] torque in N*m. @return
  * @return [zh] 力矩，N·m。
- * @since 0.1.8
+ * @since 0.1.0
  * @exporter
  */
 float foc_torque_estimate(const foc_torque_map_t *map, float id_a, float iq_a);
@@ -1052,7 +1052,7 @@ float foc_torque_estimate(const foc_torque_map_t *map, float id_a, float iq_a);
  *              constant and leaves no current able to deliver the request.
  * @return [zh] FOC_OK；空指针、不可用的地图、或抵消了转矩常数、使任何电流都交付不了该请求的 d 轴电流时返回
  *              FOC_ERR_PARAM。
- * @since 0.1.8
+ * @since 0.1.0
  * @exporter
  */
 FOC_WARN_UNUSED foc_err_t foc_torque_command(const foc_torque_map_t *map, float requested_nm, float id_a,
@@ -1076,7 +1076,7 @@ FOC_WARN_UNUSED foc_err_t foc_autotune_create(const foc_autotune_config_t *confi
  * @param saturated [zh] 本周期电流环撞限时非零。
  * @return [en] FOC_OK, or FOC_ERR_STATE on a stale handle.
  * @return [zh] FOC_OK；过期句柄时为 FOC_ERR_STATE。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 FOC_WARN_UNUSED foc_err_t foc_autotune_accumulate(foc_autotune_t handle, float dt_s, float iq_a, float omega_mech_rad_s,
@@ -1096,7 +1096,7 @@ FOC_WARN_UNUSED foc_err_t foc_autotune_accumulate(foc_autotune_t handle, float d
  *            "you called me wrong", and those are different actions for the caller.
  * @note [zh] 拒绝也是答案：`status` 仍是 FOC_OK、`valid` 为 0、`reason` 说明是哪一种拒绝。改成返回错误码会让"这不是你描
  *            述的那台机器"与"你调用错了"无法区分，而那两件事对调用方意味着不同的动作。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 FOC_WARN_UNUSED foc_err_t foc_autotune_finish(foc_autotune_t handle, foc_autotune_result_t *out);
@@ -1108,7 +1108,7 @@ FOC_WARN_UNUSED foc_err_t foc_autotune_finish(foc_autotune_t handle, foc_autotun
  * @param handle [zh] 活着的会话。
  * @return [en] FOC_OK, or FOC_ERR_STATE on a stale handle.
  * @return [zh] FOC_OK；过期句柄时为 FOC_ERR_STATE。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 FOC_WARN_UNUSED foc_err_t foc_autotune_reset(foc_autotune_t handle);
@@ -1120,7 +1120,7 @@ FOC_WARN_UNUSED foc_err_t foc_autotune_reset(foc_autotune_t handle);
  * @param handle [zh] 来自 `foc_autotune_create()` 的句柄；过期句柄答 FOC_ERR_STATE。
  * @return [en] FOC_OK, or FOC_ERR_STATE on a stale handle.
  * @return [zh] FOC_OK；过期句柄时为 FOC_ERR_STATE。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 FOC_WARN_UNUSED foc_err_t foc_autotune_destroy(foc_autotune_t handle);
@@ -1138,7 +1138,7 @@ FOC_WARN_UNUSED foc_err_t foc_autotune_destroy(foc_autotune_t handle);
  *              为 FOC_ERR_NO_RESOURCE。
  * @note [en] **Experimental**: the procedure is stable, the layout is not promised across releases.
  * @note [zh] **experimental** ：流程稳定，布局不承诺跨版本不变。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 FOC_WARN_UNUSED foc_err_t foc_cogging_learn_create(const foc_cogging_learn_config_t *config, foc_cogging_learn_t *out);
@@ -1162,7 +1162,7 @@ FOC_WARN_UNUSED foc_err_t foc_cogging_learn_create(const foc_cogging_learn_confi
  *              window that silently grew); FOC_ERR_STATE on a stale handle.
  * @return [zh] FOC_OK；样本非有限时 FOC_ERR_PARAM（ **该样本不被采信** ——说出来胜过让窗口悄悄长大）；过期句柄时为
  *              FOC_ERR_STATE。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 FOC_WARN_UNUSED foc_err_t foc_cogging_learn_accumulate(foc_cogging_learn_t handle, float theta_mech_rad, float iq_a,
@@ -1177,7 +1177,7 @@ FOC_WARN_UNUSED foc_err_t foc_cogging_learn_accumulate(foc_cogging_learn_t handl
  * @param out_ready [zh] 可以尝试 `finish()` 时为 1，否则 0。
  * @return [en] FOC_OK, FOC_ERR_PARAM on a null pointer, or FOC_ERR_STATE on a stale handle.
  * @return [zh] FOC_OK；空指针时 FOC_ERR_PARAM；过期句柄时为 FOC_ERR_STATE。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 FOC_WARN_UNUSED foc_err_t foc_cogging_learn_ready(foc_cogging_learn_t handle, int32_t *out_ready);
@@ -1207,7 +1207,7 @@ FOC_WARN_UNUSED foc_err_t foc_cogging_learn_ready(foc_cogging_learn_t handle, in
  *            orders, and a compensator built from it would be missing exactly the harmonics nobody kept a record of.
  * @note [zh] **从不截断。** 比 `required` 短的表会让调用方以为它只要了这么几次，而用它造出的补偿器恰好缺掉那些没人记录
  *            过的谐波。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 FOC_WARN_UNUSED foc_err_t foc_cogging_learn_finish(foc_cogging_learn_t handle, foc_cogging_harmonic_t *out_table,
@@ -1220,7 +1220,7 @@ FOC_WARN_UNUSED foc_err_t foc_cogging_learn_finish(foc_cogging_learn_t handle, f
  * @param handle [zh] 活着的会话。
  * @return [en] FOC_OK, or FOC_ERR_STATE on a stale handle.
  * @return [zh] FOC_OK；过期句柄时为 FOC_ERR_STATE。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 FOC_WARN_UNUSED foc_err_t foc_cogging_learn_reset(foc_cogging_learn_t handle);
@@ -1232,7 +1232,7 @@ FOC_WARN_UNUSED foc_err_t foc_cogging_learn_reset(foc_cogging_learn_t handle);
  * @param handle [zh] 来自 `foc_cogging_learn_create()` 的句柄；过期句柄答 FOC_ERR_STATE。
  * @return [en] FOC_OK, or FOC_ERR_STATE on a stale handle.
  * @return [zh] FOC_OK；过期句柄时为 FOC_ERR_STATE。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 FOC_WARN_UNUSED foc_err_t foc_cogging_learn_destroy(foc_cogging_learn_t handle);

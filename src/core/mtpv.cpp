@@ -34,7 +34,7 @@ namespace {
  *            t` 的两种符号）都代进目标函数取最好。圆上的光滑函数没有边界，最大值必在其中——把 `c = 0` 也放进去，是为了让
  *            退化的 `q → 0` 机器（没有凸极：纯 q 轴电流）不需要特例，它的根跑到无穷远，被范围检查丢掉。
  * @attacher
- * @since 0.1.9
+ * @since 0.1.0
  */
 auto max_torque_angle(float p, float q) noexcept -> float {
     float best_value = -INFINITY;
@@ -94,7 +94,7 @@ namespace {
  *             module's points and a simulated trajectory means the same thing.
  * @brief [zh] 由 dq 电流算转矩，N·m——与 plant 用的同一表达式，于是本模块的点与仿真轨迹之间的比较是同一件事。
  * @attacher
- * @since 0.1.9
+ * @since 0.1.0
  */
 auto torque_nm(const MtpvConfig& config, float id, float iq) noexcept -> float {
     const MachineParams& m = config.params;

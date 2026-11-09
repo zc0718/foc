@@ -112,7 +112,7 @@ class BackEmfObserver final {
      *            kind it is talking to.
      * @note [zh] 另外三个观测器早已有这个访问器而它没有，于是一个持有全部四个的包装器反而无法为默认模式报出角度。在源头
      *            补齐而不是在包装器里给默认值做特例：读估计值的人不该需要知道自己在跟哪一种打交道。
-     * @since 0.1.6
+     * @since 0.1.0
      */
     [[nodiscard]] auto state() const noexcept -> ObsState { return state_; }
 

@@ -41,7 +41,7 @@ namespace driver {
  *            controller's request is a wish, not a command, once the switching hardware belongs to someone else.
  * @note [zh] 这里的 HAL `configure()` 是空操作：载波频率与死区归主控方的硬件所有。当开关硬件属于别人时，控制器的
  *            configure 只是一个愿望，不是命令。
- * @since 0.1.2
+ * @since 0.1.0
  * @exporter
  */
 struct HalCallbacks final {
@@ -100,7 +100,7 @@ struct HalCallbacks final {
      *            去驱动一个已去饱和的桥的主控方；而"我们没接"和"什么都没坏"在这里表现为同一个沉默。所以沉默被拒绝（
      *            `valid()` 为假、电机创建不出来），而一个确实没有这根引脚的主控方在自己代码里写 `return 0;`——一行，评审
      *            看得见，而不是一个没人选过的默认值。极性归主控方：返回你 **想表达** 的语义，而不是引脚电平。
-     * @since 0.1.9
+     * @since 0.1.0
      */
     std::int32_t (*read_drive_fault)(void* user);
 
@@ -191,7 +191,7 @@ struct HalCallbacks final {
 /**
  * @brief [en] PWM driven by host callbacks.
  * @brief [zh] 由主控方回调驱动的 PWM。
- * @since 0.1.2
+ * @since 0.1.0
  */
 class CallbackPwm final : public hal::Pwm {
   public:
@@ -243,7 +243,7 @@ class CallbackPwm final : public hal::Pwm {
 /**
  * @brief [en] Current sense fed by a host callback.
  * @brief [zh] 由主控方回调提供读数电流采样。
- * @since 0.1.2
+ * @since 0.1.0
  */
 class CallbackCurrent final : public hal::CurrentSense {
   public:
@@ -284,7 +284,7 @@ class CallbackCurrent final : public hal::CurrentSense {
  *            sensorless drive still hands the observer's source here -- in co-simulation the plant owns the truth.
  * @note [zh] `has_sensor()` 恒为 true：主控方给出角度，按定义就是在给出测量。无感驱动同样把观测器的源放在这里 ——联合仿
  *            真里，真值属于被控对象那一侧。
- * @since 0.1.2
+ * @since 0.1.0
  */
 class CallbackPosition final : public hal::PositionSensor {
   public:
@@ -347,7 +347,7 @@ class CallbackPosition final : public hal::PositionSensor {
 /**
  * @brief [en] DC link fed by a host callback.
  * @brief [zh] 由主控方回调提供读数的母线。
- * @since 0.1.2
+ * @since 0.1.0
  */
 class CallbackDcLink final : public hal::DcLink {
   public:
@@ -376,7 +376,7 @@ class CallbackDcLink final : public hal::DcLink {
  *            each tick is then the only statement about time, which is the honest answer for a host that has no clock.
  * @note [zh] 没有 `now_us` 时时钟恒报 0，控制环也就测不到任何时间：此时调用方每拍传入的 `dt` 是唯一关于时间的陈述——对一
  *            个没有时钟的主控方来说，这就是诚实的答案。
- * @since 0.1.2
+ * @since 0.1.0
  */
 class CallbackClock final : public hal::Clock {
   public:
@@ -416,7 +416,7 @@ class CallbackClock final : public hal::Clock {
  *            controller state, because swapping a data source is not a reason to forget the integrator.
  * @note [zh] `bind()` 可以在 tick 之间调用，把同一个电机指向不同的回调；它不会重置控制器状态——换数据源不是忘记积分器的
  *            理由。
- * @since 0.1.2
+ * @since 0.1.0
  * @exporter
  */
 /**
@@ -427,7 +427,7 @@ class CallbackClock final : public hal::Clock {
  *            already been told, in writing, that this host has no fault path.
  * @note [zh] 回调为 NULL 时 `faulted()` 答 false **不是** 那个危险的默认值：`HalCallbacks::valid()` 拒绝缺这个回调的集
  *            合，所以一个真正到达电机的 `CallbackHal` 早已被书面告知：本主控方没有故障通路。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 class CallbackFaultInput final : public hal::FaultInput {

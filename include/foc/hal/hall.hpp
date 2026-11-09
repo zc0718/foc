@@ -17,7 +17,7 @@ namespace hal {
  *            has to implement.
  * @note [zh] 做成一个端口而不是读引脚的工具函数，是为了让带换相输入的逆变器、移位寄存器、或定时器的霍尔接口都能喂给同一
  *            个解码器。扇区映射与边沿计时在解码器里；读引脚是宿主的事，而它只需要实现这一件事。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 class Hall {
@@ -31,7 +31,7 @@ class Hall {
      * @return [zh] 编码；`0` 与 `7` 是正常传感器组永远不会产生的两种组合。
      * @context [en] Control context. @context
      * @context [zh] 控制上下文。
-     * @since 0.1.9
+     * @since 0.1.0
      */
     virtual auto states() noexcept -> std::uint8_t = 0;
 };

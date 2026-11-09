@@ -40,5 +40,5 @@
  *            translation units it needs directly, which is enough for a demo and not what a product should do.
  * @note [zh] 链接聚合目标 `foc::foc`；例子第一行给出的命令直接链了它需要的两个翻译单元，对演示够用，但不是产品该用的方式。
  *
- * @since 0.1.12
+ * @since 0.1.0
  */

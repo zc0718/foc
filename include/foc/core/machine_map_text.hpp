@@ -17,7 +17,7 @@ namespace core {
 /**
  * @brief [en] Why a machine document could not be read.
  * @brief [zh] 机器文档读不进来的原因。
- * @since 0.1.2
+ * @since 0.1.0
  */
 enum class TextStatus : std::uint8_t {
     Ok = 0,
@@ -34,7 +34,7 @@ enum class TextStatus : std::uint8_t {
 /**
  * @brief [en] Where a document went wrong: one-based line, and why.
  * @brief [zh] 文档错在哪里：从 1 开始的行号，以及原因。
- * @since 0.1.2
+ * @since 0.1.0
  */
 struct TextError final {
     std::size_t line{0U};
@@ -56,7 +56,7 @@ struct TextError final {
  *               understood -- without the library having to know what any of it means.
  * @details [zh] `ignored` 既不是错误也不是警告：读方必须接受自己不认识的键，否则格式永远无法演进。计数的作用是让调用方
  *               察觉"文件里说的比这个版本理解的多"——而不需要库知道那些内容是什么意思。
- * @since 0.1.2
+ * @since 0.1.0
  * @exporter
  */
 struct MachineDocument final {
@@ -132,7 +132,7 @@ inline auto read_float(const char* text, std::size_t length, std::size_t& index,
  * @note [en] `%.9g` because that is the shortest decimal form that round-trips a `float`: a shorter one loses bits on
  *            the way back and makes a round-trip test a lie.
  * @note [zh] 用 `%.9g`，因为那是能让 `float` 往返的最短十进制形式；更短的形式往回读时会丢位，让往返测试变成谎话。
- * @since 0.1.2
+ * @since 0.1.0
  */
 inline auto write_document(const MachineDocument& document, char* out, std::size_t capacity) noexcept -> std::size_t {
     std::size_t used = 0U;
@@ -173,7 +173,7 @@ inline auto write_document(const MachineDocument& document, char* out, std::size
  * @note [en] Unknown keys are counted and ignored on purpose: a reader that rejects what it does not know can never be
  *            given a newer file, and a format that cannot grow is a format that gets bypassed.
  * @note [zh] 未知键 **有意** 计数并忽略：拒绝未知内容的读方永远收不到更新的文件，而不能演进的格式最终会被绕开。
- * @since 0.1.2
+ * @since 0.1.0
  */
 inline auto read_document(const char* text, std::size_t length, MachineDocument* document, TextError* error) noexcept
     -> bool {

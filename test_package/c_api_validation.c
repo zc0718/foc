@@ -149,8 +149,8 @@ int main(void) {
     CHECK(foc_motor_destroy(mover) == FOC_OK);
 
     /* ----------------------------------------------------------------------------------------
-     * ABI 0.1.1: the modules a C consumer could not reach at all before.
-     * ABI 0.1.1：在此之前 C 消费方完全够不到的那些模块。
+     * ABI 0.1.0: the modules a C consumer could not reach at all before.
+     * ABI 0.1.0：在此之前 C 消费方完全够不到的那些模块。
      * -------------------------------------------------------------------------------------- */
 
     /* The per-phase / per-axis dead-time convention. A 1 us dead time at 20 kHz on 24 V is

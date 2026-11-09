@@ -47,7 +47,7 @@ namespace hal {
  *
  * @context [en] Read once per control period, before anything else: a fault outranks every other status.
  * @context [zh] 每个控制周期读一次，且在所有事情之前：故障压过其余任何状态。
- * @since 0.1.9
+ * @since 0.1.0
  * @exporter
  */
 class FaultInput {
@@ -68,7 +68,7 @@ class FaultInput {
      *            多少 "。
      * @context [en] Control ISR.
      * @context [zh] 控制 ISR。
-     * @since 0.1.9
+     * @since 0.1.0
      */
     virtual auto faulted() noexcept -> bool = 0;
 };

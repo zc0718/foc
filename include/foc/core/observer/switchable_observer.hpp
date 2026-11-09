@@ -21,7 +21,7 @@ namespace core {
 /**
  * @brief [en] Which observer a `SwitchableObserver` forwards to.
  * @brief [zh] `SwitchableObserver` 转发给哪一个观测器。
- * @since 0.1.5
+ * @since 0.1.0
  * @exporter
  */
 enum class ObserverKind : std::uint8_t {
@@ -48,10 +48,10 @@ enum class ObserverKind : std::uint8_t {
  *   的句柄、magic 与派发都是围绕固定的池集合构造的。把选择做成成员而不是类型，所有选择就共用一个电机类型，这正是"不碰那
  *   些东西也能有运行时选择器"的前提。
  *
- * @note [en] The slot does **not** hold `DualInductanceObserver` (0.1.11), and that is a statement about this class
- *            rather than about the library: the four members here are the ones whose hand-over has been measured, and
- *            adding a fifth means re-measuring the hand-over rather than widening the enum. Until then a caller who
- *            needs saliency picks that observer directly, by type.
+ * @note [en] The slot does **not** hold `DualInductanceObserver`, and that is a statement about this class rather than
+ *            about the library: the four members here are the ones whose hand-over has been measured, and adding a
+ *            fifth means re-measuring the hand-over rather than widening the enum. Until then a caller who needs
+ *            saliency picks that observer directly, by type.
  *
  *   Both observers are constructed; **only the selected one is stepped**. The other is frozen, not reset: its state at
  *   the moment it is selected again is the state it had when it was last selected. That is deliberate -- a silent reset
@@ -60,15 +60,15 @@ enum class ObserverKind : std::uint8_t {
  *   **both**, because a seed given while one is running is still the right seed for the other, and forgetting one of
  *   them is exactly the kind of omission that only shows up at a hand-over.
  *
- * @note [zh] 这个槽位 **不包含** `DualInductanceObserver`（0.1.11）。这是关于本类的陈述而不是关于库的：这里的四个成员是
- *            " 交接已被量过"的那四个，加第五个意味着重测交接，而不是把枚举加宽。在那之前，需要凸极性的调用方直接按类型
- *            选那个观测器。
+ * @note [zh] 这个槽位 **不包含** `DualInductanceObserver`。这是关于本类的陈述而不是关于库的：这里的四个成员是 " 交接已
+ *            被量过"的那四个，加第五个意味着重测交接，而不是把枚举加宽。在那之前，需要凸极性的调用方直接按类型选那个观
+ *            测器。
  *
  *   两个观测器都会被构造，但 **只有被选中的那个会被推进** 。另一个是冻结而不是复位：它再次被选中时的状态，就是它上次被
  *   选中时的状态。这是刻意的——静默复位会让交接成败取决于当时哪个成员恰好是活的——但也意味着希望接手者从交出者的估计出发
  *   的调用方必须自己播种，而 `seed_flux()` 就是那个工具。 `seed_flux()` 会同时给 **两者** ：在其中一个运行时给出的种子
  *   对另一个同样成立，而漏掉一个正是那种只在交接时才会暴露的疏漏。
- * @since 0.1.5
+ * @since 0.1.0
  * @exporter
  */
 class SwitchableObserver final {
@@ -81,7 +81,7 @@ class SwitchableObserver final {
      *            positional one.
      * @note [zh] 用一个聚合而不是不断加长的参数表：增加一种模式不应打乱调用方已经在写的构造函数，而具名字段比位置参数更
      *            难传错顺序。
-     * @since 0.1.5
+     * @since 0.1.0
      */
     struct Config final {
         BackEmfObserver::Config back_emf{};
@@ -131,7 +131,7 @@ class SwitchableObserver final {
      *            `update()`, and the reason this is not simply `hfi_.injection_ab()`.
      * @note [zh] 只有被选中的观测器的相位会推进。去问闲置的那个，等于让第二个看不见的时钟以与被解调的那个不同的速率走动
      *            ——与 `update()` 同一条"冻结而不推进"的规则，也是这里不写成 `hfi_.injection_ab()` 的原因。
-     * @since 0.1.5
+     * @since 0.1.0
      */
     [[nodiscard]] auto injection_ab() const noexcept -> Ab<float> {
         switch (kind_) {
@@ -166,7 +166,7 @@ class SwitchableObserver final {
      * @note [en] Read from the selection, not from a cached copy: the wrapper keeps no state of its own, so this cannot
      *            disagree with what `update()` returned.
      * @note [zh] 从被选中的那个读，而不是从缓存的副本读：包装器自身不存状态，因此这里不可能与 `update()` 的返回不一致。
-     * @since 0.1.6
+     * @since 0.1.0
      */
     [[nodiscard]] auto state() const noexcept -> ObsState {
         switch (kind_) {
@@ -204,7 +204,7 @@ class SwitchableObserver final {
      *            是留下那个状态的东西，而它是靠读到一个冻结的转速被发现的，不是靠任何错误码。没有判据的观测器返回
      *            `true` 是诚实的答案：不存在能扣住一个结论的通道，而返回 `false` 会让每个反电势调用方去检查一件不存在的
      *            事。
-     * @since 0.1.7
+     * @since 0.1.0
      */
     [[nodiscard]] auto locked() const noexcept -> bool {
         switch (kind_) {
@@ -235,7 +235,7 @@ class SwitchableObserver final {
      *               needs to know whether it means anything has to look at `locked()`.
      * @warning [zh] `0` 按其构造就是有歧义的：一个完全锁定的注入观测器同样停在零附近。需要知道"是否存在误差信号"的调用
      *               方得去看 `kind()`；需要知道"它是否有意义"的得去看 `locked()`。
-     * @since 0.1.7
+     * @since 0.1.0
      */
     [[nodiscard]] auto error() const noexcept -> float {
         switch (kind_) {
@@ -275,7 +275,7 @@ class SwitchableObserver final {
      *            播种会写进一个已经在被推进的观测器，而先播种再切换则是一条需要有人记住的规矩。幅值取自
      *            `Config::nonlinear_flux.psi_f`，也就是这台机器的磁链——这里不存第二份。交接 **给** 注入观测器时返回
      *            `false`：那个观测器自己从电流响应里获取角度，无法被给予。
-     * @since 0.1.6
+     * @since 0.1.0
      */
     auto hand_over_to(ObserverKind next) noexcept -> bool {
         if (next == kind_) {
@@ -327,7 +327,7 @@ class SwitchableObserver final {
      *            `atan(|L0·i|/psi_f)`），不是暂态。本重载给它的是它真正持有的磁链 `psi_f·e^(jθ) + L0·i +
      *            L1·conj(i)·e^(j2θ)`。其余三个与之前完全一样：它们的状态是转子磁链（混合观测器是这两者之一），而在它们
      *            被允许的 `i_d = 0` 机器上，`psi_f·e^(jθ)` 就是那磁链，误差在其主张之内。
-     * @since 0.1.11
+     * @since 0.1.0
      */
     auto hand_over_to(ObserverKind next, Ab<float> i_ab) noexcept -> bool {
         if (next != ObserverKind::DualInductance) {
@@ -363,7 +363,7 @@ class SwitchableObserver final {
      *            foundation-log 的 `A-110`）正是如此，所以"看得见它"的办法现在是类的一部分。
      * @return [en] `ErrorCode::Ok` when the selected member accepted its configuration, `Param` when it did not.
      * @return [zh] 被选中成员接受了配置时为 `ErrorCode::Ok`，否则为 `Param`。
-     * @since 0.1.11
+     * @since 0.1.0
      */
     [[nodiscard]] auto member_status() const noexcept -> ErrorCode {
         switch (kind_) {
@@ -397,7 +397,7 @@ class SwitchableObserver final {
      * @note [zh] 与 `has_injection_v<SwitchableObserver>` 不同：后者对 **类型** 恒为真，与它跑哪个模式无关。环路需要的
      *            是运行时答案：没在注入的观测器不该被读取载波；而 HAL 提供角度的轴根本不推进观测器，那里的答案不是"零载
      *            波 " 而是"不存在载波"。
-     * @since 0.1.8
+     * @since 0.1.0
      * @exporter
      */
     [[nodiscard]] auto injecting() const noexcept -> bool {

@@ -19,7 +19,7 @@ namespace core {
  *            needs no new motor state -- it is a different recipe for the same state.
  * @note [zh] `Align` 与 `Pull` 都运行在 `Motor` 的 Align 状态里：那个状态正是角度被强制、观测器不推进的状态，而开环起动
  *            需要的正是它。因此这条序列不需要新的电机状态——它是同一个状态的另一份配方。
- * @since 0.1.5
+ * @since 0.1.0
  * @exporter
  */
 enum class StartupState : std::uint8_t {
@@ -37,7 +37,7 @@ enum class StartupState : std::uint8_t {
  * @note [en] Two currents, not one: the pull strength that holds the rotor still is not the strength that drags it
  *            around a full turn, and using the same number for both either fails to move the rotor or overheats it.
  * @note [zh] 两个电流而不是一个：把转子按住的拉力和把它拖过整圈的拉力不是同一个值，两者共用一个数要么拖不动，要么发热。
- * @since 0.1.5
+ * @since 0.1.0
  * @exporter
  */
 struct StartupConfig final {
@@ -69,7 +69,7 @@ struct StartupConfig final {
  *
  * @context [en] Start-up only. Once the sequence is Done the routine stays inert until reset().
  * @context [zh] 仅起动阶段。序列进入 Done 后本类保持静默，直到 reset()。
- * @since 0.1.5
+ * @since 0.1.0
  * @exporter
  */
 class StartupRoutine final {

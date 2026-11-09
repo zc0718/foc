@@ -54,8 +54,8 @@ foc_err_t foc_bridge_get_position_absolute(foc_motor_t motor, float *position_me
 foc_err_t foc_bridge_tick(foc_motor_t motor, float dt_s);
 foc_err_t foc_bridge_get_state(foc_motor_t motor, float *speed_rad_s, float *id, float *iq);
 
-/* --- ABI 0.1.1: commissioning, protection and the reference policies --- */
-/* --- ABI 0.1.1：整定、保护与参考策略 --- */
+/* --- ABI 0.1.0: commissioning, protection and the reference policies --- */
+/* --- ABI 0.1.0：整定、保护与参考策略 --- */
 
 float foc_bridge_axis_deadtime_v(float deadtime_s, float switching_hz, float v_bus_v, float angle_rad);
 foc_err_t foc_bridge_fw_worthwhile(const foc_motor_params_t *params, float i_max_a, foc_fw_verdict_t *out);
