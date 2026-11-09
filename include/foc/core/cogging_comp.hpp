@@ -11,17 +11,18 @@ namespace foc {
 namespace core {
 
 /**
- * @brief [en] One harmonic of the cogging torque a compensator will cancel: `amplitude * sin(order*theta_mech +
- *             phase)`.
+ * @brief [en] One harmonic of the cogging torque a compensator will cancel.
  *
- *   `order` is **per mechanical revolution**. The compensator and the plant that injects it must speak the same
- *   indexing or the compensation silently cancels nothing -- and a factor of `pole_pairs` is the natural way to get
- *   that wrong, so the type is shared with the SIL injection rather than re-declared here. `order`
+ *   The shape is `amplitude_nm * sin(order * theta_mech + phase_rad)`, and `order` is **per mechanical revolution**.
+ *   The compensator and the plant that injects it must speak the same indexing or the compensation silently cancels
+ *   nothing -- and a factor of `pole_pairs` is the natural way to get that wrong, so the type is shared with the SIL
+ *   injection rather than re-declared here. `order`
  *
- * @brief [zh] 补偿器要抵消的齿槽转矩的一个谐波：`amplitude · sin(order·θ_mech + phase)`。
+ * @brief [zh] 补偿器要抵消的齿槽转矩的一个谐波。
  *
- *   是 **每机械转** 的次数。补偿器与注入它的被控对象必须用同一套索引，否则补偿会悄无声息地什么都不抵消——而 "错一个极对
- *   数" 是弄错它的最自然方式，所以这个类型与 SIL 注入共用，而不是在这里重新声明一遍。
+ *   形状是 `amplitude_nm · sin(order · θ_mech + phase_rad)`，而 `order` 是 **每机械转** 的次数。补偿器与注入它的被控对
+ *   象必须用同一套索引，否则补偿会悄无声息地什么都不抵消——而 "错一个极对数" 是弄错它的最自然方式，所以这个类型与 SIL 注
+ *   入共用，而不是在这里重新声明一遍。
  * @since 0.1.0
  * @exporter
  */
@@ -49,7 +50,7 @@ struct CoggingCompHarmonic final {
  * @note [zh] `fade_from_hz` / `fade_to_hz` 是 SIL 测量给出数字的那条频率边界：速度环守住 10 rad/s 机械时，注入的 4 mN·m
  *            以 `T_cog/Kt` 重现于 q 轴电流（实测 0.079 A，预测 0.080 A），但 80 rad/s（6 次 76 Hz，远高于 250 rad/s 的
  *            速度环）处只剩那份份额的 49 %。超过电流环带宽之后，要求纹波电流买到的是热和相移的电流而不是平稳的运动，所
- *            以淡出是一个 **在哪里停** 的决定，而且它是配置出来的，不是假设出来的。`fade_from_hz == 0` 表示不淡出。
+ *            以淡出是一个 **在哪里停** 的决定，而且它是配置出来的，不是假设出来的。 `fade_from_hz == 0` 表示不淡出。
  * @since 0.1.0
  * @exporter
  */
@@ -69,8 +70,8 @@ struct CoggingCompConfig final {
  *
  * @brief [zh] 一个控制周期的补偿量，以及是哪个上限限制住了它。
  *
- *   与 `iq_a` 分开报告，是因为两种失效不同、轨迹必须能分开：`gain` 是「频率淡出决定不要这个」，`clipped` 是「电流上限不
- *   让」。把任一藏起来的补偿器，看起来都像一个能用的补偿器。
+ *   与 `iq_a` 分开报告，是因为两种失效不同、轨迹必须能分开： `gain` 是「频率淡出决定不要这个」， `clipped` 是「电流上限
+ *   不让」。把任一藏起来的补偿器，看起来都像一个能用的补偿器。
  * @since 0.1.0
  * @exporter
  */
@@ -130,13 +131,13 @@ struct CoggingCompInput final {
  *   流里重现 **0.079 A** ，而 `T_cog/Kt` 预测 **0.080 A** 。所以环路 **确实** 会回答齿槽——但只在转子已经被推动之后，代
  *   价是那一路上它引起的速度纹波。前馈一点也不用付：它早一个周期就从角度算出同一份电流，从不给误差发生的机会。
  *
- *   **增益是凸极机的，不是铭牌的。** `T = 1.5·p·(ψf + (Ld−Lq)·id)·iq`，所以产生某个转矩所需的电流取决于 `id`。只用 `Kt
- *   = 1.5·p·ψf` 会把答案按 `(ψf + (Ld−Lq)·id)/ψf` 的比例缩放——在 F32 那台档案机上 `id = −1.8 A` 时该比例是 **2.64** ，
- *   于是天真的增益要了机器实际需要的 **2.64 倍** 电流，纹波 **被翻到反向、幅值是原来的 1.5 倍** 。比什么都不做更糟，而
- *   且它恰好落在最需要补偿的地方（高速、d 轴有电流）。
+ *   **增益是凸极机的，不是铭牌的。** `T = 1.5·p·(ψf + (Ld−Lq)·id)·iq`，所以产生某个转矩所需的电流取决于 `id`。只用
+ *   `Kt = 1.5·p·ψf` 会把答案按 `(ψf + (Ld−Lq)·id)/ψf` 的比例缩放——在 F32 那台档案机上 `id = −1.8 A` 时该比例是
+ *   **2.64** ，于是天真的增益要了机器实际需要的 **2.64 倍** 电流，纹波 **被翻到反向、幅值是原来的 1.5 倍** 。比什么都不
+ *   做更糟，而且它恰好落在最需要补偿的地方（高速、d 轴有电流）。
  *
  *   **在哪里停。** 超过电流环带宽之后，要求到的纹波电流买到的是热与相移电流而不是平稳运动：同一次测量显示环路自己那份齿
- *   槽在 76 Hz 纹波处已降到 49 %。`fade_from_hz`/`fade_to_hz` 把这个决定做成配置项，并把淡出量报出来，好让轨迹区分「我
+ *   槽在 76 Hz 纹波处已降到 49 %。 `fade_from_hz`/`fade_to_hz` 把这个决定做成配置项，并把淡出量报出来，好让轨迹区分「我
  *   们选择不要」与「要了但被上限拒了」。
  *
  *   **它做不到什么。** 它抵消的是转矩纹波；它不负责找表（那是自学习那件），也不纠正相位错的表（相位错则
@@ -184,7 +185,7 @@ class CoggingCompensation final {
      * @brief [en] The q-axis current to add this period.
      * @brief [zh] 本周期要加的 q 轴电流。
      * @param in [en] angle, speed, `id`, the reference and the ceiling.
-     * @param in [zh] 角度、转速、`id`、参考与上限。
+     * @param in [zh] 角度、转速、 `id`、参考与上限。
      * @return [en] the offset with its fade and clipping reported; `Param` for a non-finite input or a machine that
      *              cannot produce torque at this `id`.
      * @return [zh] 偏置，连同淡出与削顶一起报出；输入非有限、或机器在该 `id` 处出不了转矩时为 `Param`。

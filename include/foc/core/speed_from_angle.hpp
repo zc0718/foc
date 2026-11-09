@@ -17,15 +17,15 @@ namespace core {
  *   speed that state is poor even when the *angle* is excellent. Measured on the injection observer at 20 rad/s
  *   mechanical: the angle is off by 0.0015 rad while its reported speed is off by 0.7995 rad/s, and a fifteen-point
  *   sweep of the loop's bandwidth and damping could only improve that by 2.75x. Differencing the angle instead asks a
- *   different question of the same signal, and the noise it carries is predictable from the angle's own error: `sigma_v
- *   = sigma_theta * sqrt(2) / (window_ticks * dt)`.
+ *   different question of the same signal, and the noise it carries is predictable from the angle's own error:
+ *   `sigma_v = sigma_theta * sqrt(2) / (window_ticks * dt)`.
  *
  * @brief [zh] 由角度求机械转速：跨固定延迟做差分。
  *
  *   存在的理由：观测器自己的 `omega_e` 是一个 **环路状态** —— 锁在解调载波上的 PLL——而低速时即便 **角度** 极好，这个状
  *   态也很差。在注入观测器上实测机械 20 rad/s：角度只差 0.0015 rad，而它报出的转速差到 0.7995 rad/s，且对该环路的带宽与
  *   阻尼做十五点扫描也只能改善 2.75 倍。改为对角度做差分，是对同一个信号问另一个问题，而它带的噪声可以由角度自身的误差
- *   预测：`σ_v = σ_θ·√2/(window_ticks·dt)`。
+ *   预测： `σ_v = σ_θ·√2/(window_ticks·dt)`。
  *
  * @note [en] Deliberately the cheapest form that can be measured: a delayed difference rather than a least-squares
  *            slope. The slope over the same window would be quieter by `sqrt(6N/((N+1)(N+2)))`, a factor of **5.82** at
@@ -80,7 +80,7 @@ class SpeedFromAngle final {
 
     /**
      * @brief [en] Mechanical speed in rad/s, 0 until `ready()`.
-     * @brief [zh] 机械转速，rad/s；`ready()` 之前为 0。
+     * @brief [zh] 机械转速，rad/s； `ready()` 之前为 0。
      * @since 0.1.0
      */
     [[nodiscard]] auto mech_rad_s() const noexcept -> float { return ready_ ? speed_mech_rad_s_ : 0.0F; }

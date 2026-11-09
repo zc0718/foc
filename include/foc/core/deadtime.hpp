@@ -13,19 +13,19 @@ namespace core {
 /**
  * @brief [en] Adds back what the inverter's dead time takes away, then hands the request to a real modulator.
  *
- *   Dead time clamps each phase to the rail its current is coming from for `t_dead`, so the inverter delivers `v_cmd -
- *   v_dead * sign(i_phase)` per phase *when the current is large*. Commanding `v_desired + v_dead * sign(i_phase)`
- *   therefore lands on `v_desired`, provided the stage can see the phase currents -- which is exactly why
- *   `ModulatorInput` carries them.
+ *   Dead time clamps each phase to the rail its current is coming from for `t_dead`, so the inverter delivers
+ *   `v_cmd - v_dead * sign(i_phase)` per phase *when the current is large*. Commanding
+ *   `v_desired + v_dead * sign(i_phase)` therefore lands on `v_desired`, provided the stage can see the phase currents
+ *   -- which is exactly why `ModulatorInput` carries them.
  *
  *   It is a *decorator*, not a flag on `Svpwm`: space-vector modulation and inverter linearisation are two different
  *   jobs, and any modulator can be compensated this way.
  *
  * @brief [zh] 把逆变器死区吃掉的电压加回去，再把请求交给真正的调制器。
  *
- *   死区在每个 `t_dead` 内把该相钳位到电流来自的那条母线，因此在电流 **较大** 时逆变器每相交付 `v_cmd −
- *   v_dead·sign(i_phase)`。于是命令 `v_desired + v_dead·sign(i_phase)` 就能落到 `v_desired`——前提是这一级看得到相电流，
- *   这正是 `ModulatorInput` 带着它们的原因。
+ *   死区在每个 `t_dead` 内把该相钳位到电流来自的那条母线，因此在电流 **较大** 时逆变器每相交付
+ *   `v_cmd − v_dead·sign(i_phase)`。于是命令 `v_desired + v_dead·sign(i_phase)` 就能落到 `v_desired` ——前提是这一级看得
+ *   到相电流，这正是 `ModulatorInput` 带着它们的原因。
  *
  *   它是 **装饰器** 而不是 `Svpwm` 上的一个开关：空间矢量调制与逆变器线性化是两件事，而且任何 调制器都能用这种方式被补
  *   偿。
@@ -237,14 +237,14 @@ template <typename Modulator> class DeadTimeCompensator final {
  *
  * @brief [zh] 从锁定转子的旋转电流扫描里拟合一个参数，把死区的 **淡出宽度** 辨识出来。
  *
- *   存在的理由：这个宽度是补偿级唯一需要的数，也是唯一没人能从铭牌算出来的数 （`predicted_ripple_a()` 是差一个数量级的
+ *   存在的理由：这个宽度是补偿级唯一需要的数，也是唯一没人能从铭牌算出来的数 （ `predicted_ripple_a()` 是差一个数量级的
  *   上界）。但它 **可测** ，而且很便宜： 定住转子、扫一个缓慢旋转电流的幅值、看电流怎么响应。若损失是理想阶跃， `|v|`
  *   就该正好是 `rs·|i| + deadtime_v`；偏离它的那部分就是淡出。
  *
  *   为什么是 **旋转** 而不是 d 轴直流扫描。直流指令下损失是一个继电器：死区把电流 钉在零，直到指令超过
- *   `(4/π)·deadtime_v`，所以扫描根本没进到能看见淡出的 区域——本估计器的第一版正是这么做的，在开关 plant 上返回 `valid
- *   == false`， 而且是对的。旋转电流有的是 **幅值** 而不是符号，它的损失是基波 `(4/π)·deadtime_v·clamp(|I|/If)`：仍然每
- *   样本一个方程、一个未知数，但落在 机器真正工作的区域里。
+ *   `(4/π)·deadtime_v`，所以扫描根本没进到能看见淡出的 区域——本估计器的第一版正是这么做的，在开关 plant 上返回
+ *   `valid == false`， 而且是对的。旋转电流有的是 **幅值** 而不是符号，它的损失是基波
+ *   `(4/π)·deadtime_v·clamp(|I|/If)`：仍然每样本一个方程、一个未知数，但落在 机器真正工作的区域里。
  *
  * @note [en] Implementation: a fixed grid of candidate widths, each keeping a running sum of squared residuals, so the
  *            estimator is *streaming* -- it never stores samples and never allocates. The winner is refined by a
@@ -295,7 +295,7 @@ class DeadTimeFadeEstimator final {
     struct Result final {
         /**
          * @brief [en] the width, A; meaningless unless `valid`.
-         * @brief [zh] 宽度，A；`valid` 为假时无意义。
+         * @brief [zh] 宽度，A； `valid` 为假时无意义。
          */
         float fade_a;
         /**
@@ -442,7 +442,7 @@ class DeadTimeFadeEstimator final {
     /**
      * @brief [en] The dead-time loss seen by a *rotating* current of amplitude `i_mag`: the fundamental of
      *             `deadtime_v*sign(i)` is `(4/pi)*deadtime_v` along the current, faded by `clamp(i_mag/i_fade)`.
-     * @brief [zh] **旋转** 电流（幅值 `i_mag`）看到的死区损失：`deadtime_v·sign(i)` 的基波是沿电流方向的
+     * @brief [zh] **旋转** 电流（幅值 `i_mag`）看到的死区损失： `deadtime_v·sign(i)` 的基波是沿电流方向的
      *             `(4/π)·deadtime_v`，再乘上 `clamp(i_mag/i_fade)` 的淡出。
      */
     [[nodiscard]] static auto loss_magnitude(float i_mag, float fade, float deadtime_v) noexcept -> float {

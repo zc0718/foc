@@ -115,18 +115,18 @@ inline constexpr std::uint8_t kHallNoSector = 0xFFU;
  *            single glitched sample should stop an axis is a decision this layer does not make (the same division of
  *            labour as `torque_map`'s `limited`).
  *
- * @note [zh] 为什么要有跟踪器而不是 `atan2`。只看编码只能把转子定位到一个扇区内，即 ±30°（半个扇区，靠算术改不了
- *            ——`test_hall_physics.cpp` 实测）。剩下的是边沿 **什么时候** 到：匀速转子穿过 60° 扇区的时间是已知的，所以
- *            两个边沿之间角度是一条直线，误差从 30° 塌缩为"定时分辨率 × 转速"——62.5 µs 周期、900 rad/s 电角下是 3.2°，
- *            而且这是 **采样** 极限，不是传感器极限。
+ * @note [zh] 为什么要有跟踪器而不是 `atan2`。只看编码只能把转子定位到一个扇区内，即 ±30°（半个扇区，靠算术改不了 ——
+ *            `test_hall_physics.cpp` 实测）。剩下的是边沿 **什么时候** 到：匀速转子穿过 60° 扇区的时间是已知的，所以两
+ *            个边沿之间角度是一条直线，误差从 30° 塌缩为"定时分辨率 × 转速"——62.5 µs 周期、900 rad/s 电角下是 3.2°，而
+ *            且这是 **采样** 极限，不是传感器极限。
  *
  *   它做不到什么，并且会说出来。卡死的传感器冻结自己那一位，于是转过五分之六圈编码都合法，而角度分辨率悄悄减半、边沿间
- *   隔翻倍。两条通道都看不全：300 rad/s 下对坏一路实测，`Fault`（非法窗口）覆盖 15.5 %， `State`（间隔检查）另占 53.9
- *   %，剩下 8.4 % 报 `Ok` 而误差最多 59°——高位卡死时是 13.7 % 与 120°。所以大约三分之一的圈数没有被申报，建在霍尔上的驱
- *   动需要第二个意见（电流或力矩的合理性、索引信号），而不是在编码上更聪明的检查。两条通道都分不清 **堵转** 与
+ *   隔翻倍。两条通道都看不全：300 rad/s 下对坏一路实测， `Fault`（非法窗口）覆盖 15.5 %， `State`（间隔检查）另占
+ *   53.9 %，剩下 8.4 % 报 `Ok` 而误差最多 59°——高位卡死时是 13.7 % 与 120°。所以大约三分之一的圈数没有被申报，建在霍尔
+ *   上的驱动需要第二个意见（电流或力矩的合理性、索引信号），而不是在编码上更聪明的检查。两条通道都分不清 **堵转** 与
  *   **丢边沿** ——都是"太久没有边沿"——所以 `status()` 报 `State` 而不是 `Fault`。
  *
- *   读数只计数、不锁存：`illegal_reads()` 与 `stale_reads()` 累加，而"单次毛刺是否该停轴"是本层不做的决定（与
+ *   读数只计数、不锁存： `illegal_reads()` 与 `stale_reads()` 累加，而"单次毛刺是否该停轴"是本层不做的决定（与
  *   `torque_map` 的 `limited` 同一种分工）。
  * @since 0.1.0
  * @exporter
@@ -143,10 +143,10 @@ class HallTracker final {
      *            new reference hides a dead sensor for the rest of the run, and a *short* one -- six samples of a
      *            genuine but sliver-thin sector just after a fault clears -- poisons the reference so that every true
      *            interval afterwards looks late (measured: 375 us against 3.5 ms, `State` from then on).
-     * @note [zh] 1.5 是健康间隔（1.0）与坏一路产生的间隔（2.0，`test_hall_physics.cpp` 实测）之间的算术中点：健康一侧留
-     *            50 % 余量，故障一侧 25 %。它是双边的，因为两侧实测都会咬人：被当成新参照的翻倍间隔会在此后的整段运行里
-     *            把坏掉的一路藏起来，而过 **短** 的间隔——故障刚消失后一个真实但极窄的扇区留下的六次采样——会把参照带偏，
-     *            使此后每个真实间隔都显得迟到（实测：375 µs 对 3.5 ms，从此永远 `State`）。
+     * @note [zh] 1.5 是健康间隔（1.0）与坏一路产生的间隔（2.0， `test_hall_physics.cpp` 实测）之间的算术中点：健康一侧
+     *            留 50 % 余量，故障一侧 25 %。它是双边的，因为两侧实测都会咬人：被当成新参照的翻倍间隔会在此后的整段运
+     *            行里把坏掉的一路藏起来，而过 **短** 的间隔——故障刚消失后一个真实但极窄的扇区留下的六次采样——会把参照带
+     *            偏，使此后每个真实间隔都显得迟到（实测：375 µs 对 3.5 ms，从此永远 `State`）。
      */
     static constexpr float kIntervalRatio = 1.5F;
 
@@ -163,9 +163,9 @@ class HallTracker final {
      * @brief [en] Feed one sample of the sensor code. Call it every control period, not only on change: a period with
      *             no edge is how a stall becomes visible.
      * @brief [zh] 送入一次传感器编码采样。每个控制周期都调，不是只在变化时调：没有边沿的那个周期正是堵转显形的方式。
-     * @param now_s [en] monotonic time of the sample, s. @param now_s
+     * @param now_s [en] monotonic time of the sample, s.
      * @param now_s [zh] 采样的单调时间，s。
-     * @param code [en] the three-bit code, 0..7. @param code
+     * @param code [en] the three-bit code, 0..7.
      * @param code [zh] 三位编码，0..7。
      * @return [en] `Ok` when the sample was a legal code, `Fault` when it was 0 or 7, `State` before the first edge.
      * @return [zh] 采样是合法编码时为 `Ok`，是 0 或 7 时为 `Fault`，在第一个边沿之前为 `State`。
@@ -276,10 +276,10 @@ namespace detail {
  *            the linker refuses. `misc-definitions-in-headers` reported exactly one function in this tree, this one.
  *            Keeping the name and the single address across TUs both work out only with `inline`.
  * @note [zh] 具名作用域而不是无名命名空间：头文件里的无名命名空间会给每个 TU 各生成一份内部链接的函数，于是这个头文件式
- *            库在每个 TU 里都带一份函数体，且辅助函数的地址在不同 TU 间不相等。`cert-dcl59-cpp` 说的就是这件事，也正是
+ *            库在每个 TU 里都带一份函数体，且辅助函数的地址在不同 TU 间不相等。 `cert-dcl59-cpp` 说的就是这件事，也正是
  *            本项目现在开始强制的那个族。 `inline`，而这不是细节：具名命名空间仍然让定义具备 **外部** 链接，于是两个包
- *            含此头的翻译单元会产生同一个符号的两份定义，链接器直接拒绝。`misc-definitions-in-headers` 在这棵树里只报了
- *            一个函数，就是它。既要保住名字、又要让各 TU 看到同一个地址，只有 `inline` 能同时成立。
+ *            含此头的翻译单元会产生同一个符号的两份定义，链接器直接拒绝。 `misc-definitions-in-headers` 在这棵树里只报
+ *            了一个函数，就是它。既要保住名字、又要让各 TU 看到同一个地址，只有 `inline` 能同时成立。
  */
 inline auto hall_wrap(float angle_rad) noexcept -> float {
     float wrapped = std::fmod(angle_rad, kHallTwoPiRad);

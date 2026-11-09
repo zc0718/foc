@@ -28,8 +28,8 @@ class Hall {
      * @brief [en] The sensor bits, bit `i` = sensor `i`, in `0..7`.
      * @brief [zh] 传感器位，第 `i` 位 = 第 `i` 个传感器，取值 `0..7`。
      * @return [en] the code; `0` and `7` are the two combinations a working set never produces.
-     * @return [zh] 编码；`0` 与 `7` 是正常传感器组永远不会产生的两种组合。
-     * @context [en] Control context. @context
+     * @return [zh] 编码； `0` 与 `7` 是正常传感器组永远不会产生的两种组合。
+     * @context [en] Control context.
      * @context [zh] 控制上下文。
      * @since 0.1.0
      */

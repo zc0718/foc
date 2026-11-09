@@ -52,7 +52,7 @@ struct EncoderLayout final {
  * @brief [zh] 一帧解码结果，包括它到底算不算一次读数。
  *
  *   `status == State` 的意思是这一帧 **到了** 但不可信（CRC、编码器错误位、警告）。位置与转数仍然填好，因为记录坏帧的调
- *   用方需要知道它说了什么——但本库里没有任何东西会拿它们去动作：`TurnAssembler` 拒绝 `crc_ok` 为假的帧，而且它不需要看
+ *   用方需要知道它说了什么——但本库里没有任何东西会拿它们去动作： `TurnAssembler` 拒绝 `crc_ok` 为假的帧，而且它不需要看
  *   `status` 才这么做。
  * @since 0.1.0
  * @exporter
@@ -72,7 +72,7 @@ struct EncoderFrame final {
 
 /**
  * @brief [en] Six-bit CRC over a bit stream, MSB first: `x^6 + x + 1`, initial value 0.
- * @brief [zh] 位流上的六位 CRC，高位在前：`x^6 + x + 1`，初值 0。
+ * @brief [zh] 位流上的六位 CRC，高位在前： `x^6 + x + 1`，初值 0。
  * @param bits [en] message bits, MSB first inside each byte.
  * @param bits [zh] 报文位，每个字节内高位在前。
  * @param bit_count [en] how many bits of `bits` belong to the message.
@@ -101,8 +101,8 @@ struct EncoderFrame final {
  *
  * @brief [zh] 从面向位的码流中解出一帧 BiSS-C 风格的数据。
  *
- *   码流高位在前：`turns | position | error | warning | crc[6]`。调用方拥有 **成帧** （把位从移位寄存器里打出来，包括协
- *   议的起始/ACK 与停止位），本函数拥有解释与拒绝：长度不等于布局给定的、CRC 不符、布局描述不了任何编码器。
+ *   码流高位在前： `turns | position | error | warning | crc[6]`。调用方拥有 **成帧** （把位从移位寄存器里打出来，包括
+ *   协议的起始/ACK 与停止位），本函数拥有解释与拒绝：长度不等于布局给定的、CRC 不符、布局描述不了任何编码器。
  *
  *   **错开一位不是 CRC 的活，而这是量出来的、不是假定的。** CRC 检出每一个单比特错误（逐位翻转穷举断言）以及长度不超过
  *   六位的突发——但错位两者都不是：它是另一条报文，而在用例那一帧上它 **通过了** CRC。所以错位的码流只能由 **成帧** 抓
@@ -139,9 +139,9 @@ struct EncoderFrame final {
  * @brief [zh] 把一串转内计数拼成一个不回绕的计数，并在缺口处拒绝猜测。
  *
  *   **位流没有序号，所以"丢了一帧"只有一种说法** ：下一次读数与上一次之间，比轴在两帧之间能走的距离更远。那个距离是
- *   **调用方的知识** ——读数率与轴的最高速——它因此是一个构造参数：单凭两个计数分不清正向回绕与反向跳变（`4090 -> 5` 正向
- *   是 +11 个计数、反向是 −4085，而两者是同样的两个数）。它被限制在半圈以内，因为超过半圈两种读法都成立、问题本身不可判
- *   定 —— 于是报 `Param` 而不是满怀希望地给一个答案。
+ *   **调用方的知识** ——读数率与轴的最高速——它因此是一个构造参数：单凭两个计数分不清正向回绕与反向跳变（ `4090 -> 5` 正
+ *   向是 +11 个计数、反向是 −4085，而两者是同样的两个数）。它被限制在半圈以内，因为超过半圈两种读法都成立、问题本身不可
+ *   判定 —— 于是报 `Param` 而不是满怀希望地给一个答案。
  *
  *   在超过该距离的读数上，本类答 `State` 并把不回绕计数留在原处，因为中间的行程是未知的，而编造它（前进一圈、或走最短
  *   弧）正是位置控制器最终下达一个从未发生过的运动的方式。 **回绕** 不是缺口：4096 计数的转上 `4090 -> 5` 就是 +11 个计
@@ -170,9 +170,9 @@ class TurnAssembler final {
      * @brief [en] An assembler for a resolution and a declared maximum travel per frame.
      * @brief [zh] 给定分辨率与声称的每帧最大行程的拼接器。
      * @param single_turn_bits [en] counts per revolution, as bits; `1..31`.
-     * @param single_turn_bits [zh] 每转计数，位数；`1..31`。
+     * @param single_turn_bits [zh] 每转计数，位数； `1..31`。
      * @param max_step_counts [en] the most the axis can move between two frames, counts; `1..span/2`.
-     * @param max_step_counts [zh] 轴在两帧之间最多能走多少计数；`1..span/2`。
+     * @param max_step_counts [zh] 轴在两帧之间最多能走多少计数； `1..span/2`。
      * @since 0.1.0
      */
     TurnAssembler(int single_turn_bits, std::uint32_t max_step_counts) noexcept

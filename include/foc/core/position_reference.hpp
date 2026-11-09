@@ -76,7 +76,7 @@ class PositionReference final {
      * @brief [zh] 自第一次采样以来的连续机械角度，无原点。
      * @note [en] This is the right quantity for relative motion and the wrong one for a position command: it starts at
      *            whatever the first sample was. Use `referenced_mech_rad()` once `homed()`.
-     * @note [zh] 相对运动用它是对的，位置指令用它就是错的：它的起点就是第一次采样的值。`homed()` 之后请用
+     * @note [zh] 相对运动用它是对的，位置指令用它就是错的：它的起点就是第一次采样的值。 `homed()` 之后请用
      *            `referenced_mech_rad()`。
      * @since 0.1.0
      */
@@ -88,7 +88,7 @@ class PositionReference final {
      * @return [en] A continuous angle that reads `Config::index_mech_rad` at the mark and keeps counting turns away
      *              from it; `0` before the first index, which is why `homed()` must be consulted rather than trusted to
      *              be true.
-     * @return [zh] 在标记处读数为 `Config::index_mech_rad`、并继续累计圈数的连续角度；第一次索引之前为 `0`——这正是必须
+     * @return [zh] 在标记处读数为 `Config::index_mech_rad`、并继续累计圈数的连续角度；第一次索引之前为 `0` ——这正是必须
      *              查 `homed()` 而不是假定它成立的原因。
      * @since 0.1.0
      */

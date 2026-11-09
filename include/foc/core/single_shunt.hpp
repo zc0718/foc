@@ -17,8 +17,9 @@ namespace core {
  * @note [en] The two active intervals are the ones a 7-segment pattern applies **twice** per period, so the usable
  *            window is half of each: `min(t_active1, t_active2)/2`. That half is not a detail -- it is where an
  *            otherwise-correct design fails by a factor of two at the modulation edge.
- * @note [zh] 两个有效区间在七段式图样里每个周期被 **分两次** 施加，所以可用窗口是它们各自的一半： `min(t_active1,
- *            t_active2)/2`。这个「一半」不是细节——正是在这里，一个别的方面都正确的设计会在调制边界上差一个两倍。
+ * @note [zh] 两个有效区间在七段式图样里每个周期被 **分两次** 施加，所以可用窗口是它们各自的一半：
+ *            `min(t_active1, t_active2)/2`。这个「一半」不是细节——正是在这里，一个别的方面都正确的设计会在调制边界上差
+ *            一个两倍。
  * @since 0.1.0
  * @exporter
  */
@@ -113,18 +114,18 @@ struct ShuntCurrents final {
  *   written for the first two and used for the third is 41 % too optimistic, which is why the test asserts two
  *   different bounds rather than one.
  *
- * @details [zh] 一个采样电阻放在直流回路里，于是它量到的是 **有效矢量** 恰好让它经过的那个电流：`V_k` 期间是占空比最大
- *               的那一相单独，`V_{k+1}` 期间是最大的两相（等价地，最小的那一相的相反数）。所以三次电流只需要两个读数，
+ * @details [zh] 一个采样电阻放在直流回路里，于是它量到的是 **有效矢量** 恰好让它经过的那个电流： `V_k` 期间是占空比最大
+ *               的那一相单独， `V_{k+1}` 期间是最大的两相（等价地，最小的那一相的相反数）。所以三次电流只需要两个读数，
  *               因为电机是浮地星形、三者和为零：
  *
- *   `i_max = i_dc(V_k)`、`i_min = −i_dc(V_{k+1})`、`i_mid = −(i_max + i_min)`。
+ *   `i_max = i_dc(V_k)`、 `i_min = −i_dc(V_{k+1})`、 `i_mid = −(i_max + i_min)`。
  *
  *   这就是全部重构；而通常随它一起出现的那张扇区表被 **刻意** 省掉了：答案只取决于哪一相的占空比排在哪个位置，所以一张
  *   按扇区号索引的表只会给「扇区约定写错」多一个地方，却不多一条测量。
  *
  *   决定能不能做的是窗口。七段式图样每个周期把每个有效矢量施加两次，所以振铃建立之后、下一个边沿之前可用的时间是
  *   `min(t_active1, t_active2)/2`，它必须不小于 `t_settle + t_sample`。靠近扇区边界时其中一个区间趋于零， **那里** 才是
- *   单电阻没有答案的工作区——不是近似不好，是没有。策略的回答就是把它说出来：`classify()` 返回 `WindowTooNarrow`，
+ *   单电阻没有答案的工作区——不是近似不好，是没有。策略的回答就是把它说出来： `classify()` 返回 `WindowTooNarrow`，
  *   `reconstruct()` 返回 `valid == false`，而不是拿一个在换向过程中读到的数拼出一个看起来合理的电流。
  *
  *   误差结构值得写下来，因为它并不均匀：最大和最小两相各承担一个读数的 ADC 误差，而中间那一相是一个 **差** ，噪声大
@@ -159,9 +160,9 @@ class SingleShunt final {
     /**
      * @brief [en] Ok when the configuration describes a shunt that could measure something.
      * @brief [zh] 配置描述的采样电阻至少有可能量到东西时为 Ok。
-     * @note [en] A zero period is refused, and so is a `needed_s` that leaves no window anywhere: if `2*(t_settle +
-     *            t_sample) >= T` then even a perfectly symmetric pattern cannot be read, and saying Ok would turn a
-     *            hardware that cannot work into a policy that occasionally reports a current.
+     * @note [en] A zero period is refused, and so is a `needed_s` that leaves no window anywhere: if
+     *            `2*(t_settle + t_sample) >= T` then even a perfectly symmetric pattern cannot be read, and saying Ok
+     *            would turn a hardware that cannot work into a policy that occasionally reports a current.
      * @note [zh] 零周期被拒绝；把窗口彻底挤没的 `needed_s` 也被拒绝：若 `2·(t_settle + t_sample) ≥ T`，那么连完全对称的
      *            图样都读不出来，说它 Ok 等于把一块干不了活的硬件变成一个偶尔报出电流的策略。
      */

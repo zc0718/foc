@@ -29,7 +29,7 @@ namespace motor {
  *   本结构同时携带电机本体与随之而来的设置决策（限幅、载波、死区、环路周期）。其中取值为 0 的字段表示“使用自然行为”：
  *   `speed_loop_period_s = 0` 表示每个 tick 都跑速度环，也就是这个 字段出现之前库的行为。
  *
- *   **周期字段是下界，不是精确周期。** 环路按整控制拍运行，所以实际周期是 `dt*ceil(周期/dt)`——要 1.2 拍得到 2 拍；而经
+ *   **周期字段是下界，不是精确周期。** 环路按整控制拍运行，所以实际周期是 `dt*ceil(周期/dt)` ——要 1.2 拍得到 2 拍；而经
  *   过时间用 float32 累加，舍入后的和可能比请求略小，于是再多等一拍：所以请求 1.000 ms 实际每 21 拍跑一次（ 1.050 ms
  *   ），而 0.250 ms 与 0.500 ms 恰好落在点上。这个偏差是一拍、不会随时间增加；但需要精确降采样比的调用方必须去查实际周
  *   期，不能假定。
@@ -110,7 +110,7 @@ auto current_pi_config(const motor::MotorConfig& config, float bandwidth_rad_s, 
 /**
  * @brief [en] Speed-loop PI that cancels the mechanical pole `B/J`: `kp = wb*J/Kt`, `ki = wb*B/Kt`. The loop then
  *             collapses to `wb/s`, i.e. a first-order closed loop with time constant `1/wb`.
- * @brief [zh] 抵消机械极点 `B/J` 的速度环 PI：`kp = wb*J/Kt`、`ki = wb*B/Kt`。环路随后退化为 `wb/s`，即时间常数为
+ * @brief [zh] 抵消机械极点 `B/J` 的速度环 PI： `kp = wb*J/Kt`、 `ki = wb*B/Kt`。环路随后退化为 `wb/s`，即时间常数为
  *             `1/wb` 的一阶闭环。
  * @param config [en] nameplate parameters.
  * @param config [zh] 铭牌参数。
@@ -157,11 +157,11 @@ auto feedforward_config(const motor::MotorConfig& config) noexcept -> core::Deco
  *   windup. That is why this controller is a P and the helper is called `position_p_config` -- the old name claimed a
  *   PI that never had an I.
  *
- * @brief [zh] 位置环配置：`增益 = 带宽`，外加两道限制。
+ * @brief [zh] 位置环配置： `增益 = 带宽`，外加两道限制。
  *
- *   速度环远快于位置环时，`gain = w` 让位置环闭环成一阶系统、带宽 `w`（`1/s` 由速度环 提供）。这里没有积分项：恒定负载
- *   转矩是速度环 **内部** 的扰动，速度环积分器已经消掉它，再加 一个积分器只会带来积分饱和。所以这个控制器是 P，辅助函数
- *   叫 `position_p_config`——旧名字 声称的 PI 从来没有 I。
+ *   速度环远快于位置环时， `gain = w` 让位置环闭环成一阶系统、带宽 `w`（ `1/s` 由速度环 提供）。这里没有积分项：恒定负
+ *   载转矩是速度环 **内部** 的扰动，速度环积分器已经消掉它，再加 一个积分器只会带来积分饱和。所以这个控制器是 P，辅助函
+ *   数叫 `position_p_config` ——旧名字 声称的 PI 从来没有 I。
  *
  * @param config [en] nameplate parameters.
  * @param config [zh] 铭牌参数。

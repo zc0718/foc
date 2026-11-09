@@ -19,7 +19,7 @@ namespace detail {
  * @brief [zh] 把角度折进 `[-pi, pi)`。
  * @note [en] A named scope, not an unnamed one: an unnamed namespace in a header gives every translation unit its own
  *            internal-linkage copy, which is what `cert-dcl59-cpp` is about.
- * @note [zh] 具名作用域而不是无名命名空间：头文件里的无名命名空间给每个 TU 各一份内部链接副本，`cert-dcl59-cpp` 说的就
+ * @note [zh] 具名作用域而不是无名命名空间：头文件里的无名命名空间给每个 TU 各一份内部链接副本， `cert-dcl59-cpp` 说的就
  *            是它。
  */
 inline auto wrap_pi(float angle_rad) noexcept -> float {
@@ -37,7 +37,7 @@ inline auto wrap_pi(float angle_rad) noexcept -> float {
 
 /**
  * @brief [en] How a slave axis follows a master: `slave = ratio * master + offset_rad`.
- * @brief [zh] 从轴如何跟随主轴：`从轴 = 传动比 × 主轴 + offset_rad`。
+ * @brief [zh] 从轴如何跟随主轴： `从轴 = 传动比 × 主轴 + offset_rad`。
  * @note [en] `ratio` is negative for a reversing gear and must not be zero -- a zero ratio is a coupling that silently
  *            holds still while the master moves, which is indistinguishable from a slave that is stuck.
  * @note [zh] 换向齿轮的 `ratio` 为负，且不得为零——零传动比是一个主轴运动时悄悄不动的耦合，与一根卡住的从轴无法区分。
@@ -157,11 +157,11 @@ class ElectronicGear final {
     /**
      * @brief [en] One master sample in, one slave target out.
      * @brief [zh] 一个主轴采样进，一个从轴目标出。
-     * @param master_wrapped_rad [en] the master angle as the encoder reports it, rad. @param master_wrapped_rad
+     * @param master_wrapped_rad [en] the master angle as the encoder reports it, rad.
      * @param master_wrapped_rad [zh] 编码器报告的主轴角度，rad。
      * @param dt_s [en] the sample interval, s; `<= 0` leaves the velocity reference at zero and does not affect the
-     *                  position. @param dt_s
-     * @param dt_s [zh] 采样间隔，s；`<= 0` 时速度参考为零，位置不受影响。
+     *                  position.
+     * @param dt_s [zh] 采样间隔，s； `<= 0` 时速度参考为零，位置不受影响。
      * @note [en] The first sample defines the origin, so `master_unwrapped_rad` starts at zero and the slave starts at
      *            `offset_rad`. That is a choice, and the alternative -- believing the first reading is an absolute
      *            position -- is the same mistake as believing a first interval is a sector period.

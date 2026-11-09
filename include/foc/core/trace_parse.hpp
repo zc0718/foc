@@ -68,7 +68,7 @@ struct TraceSegment final {
  *            more: `missing` is counted twice, once by summing the per-pair skips and once from the two endpoint
  *            timestamps, and a disagreement means the scan is wrong (a rounding or wrap-handling defect). It cannot
  *            detect a sample that is genuinely absent -- see above.
- * @note [zh] 两种丢失是两个字段，因为它们是两件不同的事，且需要相反的动作。`lost` 是记录器在窗口开始 **之前** 就已经扔
+ * @note [zh] 两种丢失是两个字段，因为它们是两件不同的事，且需要相反的动作。 `lost` 是记录器在窗口开始 **之前** 就已经扔
  *            掉的东西——由调用方 **声明** ，在窗口内部 **无法** 验证，因此一个"重算"它的解析器只是在把调用方的数字复述一
  *            遍。 `missing` 是窗口自己显示出来的：相邻时间戳相距超过一个周期的那些地方，意味着记录器在挂载期间跳过了样
  *            本。前者说的是"往前看，或者换更大的环"；后者说的是"记录器自己丢了一拍"，那是缺陷或时钟跳变，不是谁选的配
@@ -180,7 +180,7 @@ inline auto went_backwards(std::uint32_t delta_us) noexcept -> bool { return del
  * @param period_us [en] the control period in microseconds -- a configuration fact, stated by the caller.
  * @param period_us [zh] 控制周期，微秒——一个由调用方陈述的配置事实。
  * @return [en] the report; `status` is `Param` when `period_us` is 0 or the span is not usable.
- * @return [zh] 报告；`period_us` 为 0 或窗口不可用时 `status` 为 `Param`。
+ * @return [zh] 报告； `period_us` 为 0 或窗口不可用时 `status` 为 `Param`。
  * @pre [en] `span.samples` is non-null when `span.size` is non-zero, and the samples are the retained window oldest
  *           first, exactly as `foc_motor_trace_read(0..size-1)` returns them.
  * @pre [zh] `span.size` 非零时 `span.samples` 非空，且样本按 `foc_motor_trace_read(0..size-1)` 的顺序自最旧起排列。

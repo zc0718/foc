@@ -54,10 +54,10 @@ enum class AlignFailure : std::uint8_t {
  *            compiled in and stay inert until somebody configures it. Any other partial recipe is a `Param` error -- a
  *            half-configured alignment does not exist.
  *
- * @note [zh] `current_a`、`hold_s`、`settle_tolerance_rad` 必须严格为正；那里的 0 会被 `validate()` 拒绝，而不是被换成
- *            一个看起来合理的常数。可以合法取 0 的三项在下面各自说明。
+ * @note [zh] `current_a`、 `hold_s`、 `settle_tolerance_rad` 必须严格为正；那里的 0 会被 `validate()` 拒绝，而不是被换
+ *            成一个看起来合理的常数。可以合法取 0 的三项在下面各自说明。
  *
- *   **默认构造** 的配方（全零）是另一回事：调用方没有请求过对齐，`validate()` 答 `NotImpl` 而不是 `Param`。这就是"对齐
+ *   **默认构造** 的配方（全零）是另一回事：调用方没有请求过对齐， `validate()` 答 `NotImpl` 而不是 `Param`。这就是"对齐
  *   器编进来了，但在被配置之前保持静默"的实现方式。其余任何半配置 的配方都是 `Param` 错误——"配置了一半的对齐"不存在。
  * @since 0.1.0
  * @exporter
@@ -90,8 +90,8 @@ struct AlignOutput final {
      *               at all -- with 0 there is nothing to lose sync with, and a drive that faults on a stationary
      *               alignment would be unusable.
      * @details [zh] 只有对齐器自己知道转子是被拖到了某个转速、还是仅仅被按住：纯对齐把矢量转到目标就停，它自己的角速度
-     *               与转子无关。`Motor` 用它判断这次交接是否 **可以** 被判为"抓住了"——为 0 时没有同步可失，否则一个静止
-     *               对齐就会报故障，这样的驱动无法使用。
+     *               与转子无关。 `Motor` 用它判断这次交接是否 **可以** 被判为"抓住了"——为 0 时没有同步可失，否则一个静
+     *               止对齐就会报故障，这样的驱动无法使用。
      */
     float handover_speed_e_rad_s{0.0F};
     bool finished; ///< [en] accepted on this tick. [zh] 本次 tick 捕获通过。
@@ -108,7 +108,7 @@ struct AlignOutput final {
  *
  * @brief [zh] 对齐槽位的「本次构建不做对齐」占位实现。
  *
- *   满足对齐器形状，因此可作为默认模板实参；`begin()` 返回 `false`，告诉 `Motor` 从 Align 直接进 Run——与槽位出现之前的
+ *   满足对齐器形状，因此可作为默认模板实参； `begin()` 返回 `false`，告诉 `Motor` 从 Align 直接进 Run——与槽位出现之前的
  *   行为完全一致。装了绝对值编码器且偏置已存的构建在这里 确实无事可做。
  * @since 0.1.0
  * @exporter
@@ -162,9 +162,9 @@ class NullAlignment final {
  * @brief [zh] 锁轴对齐：把转子拉到已知的磁场方向，从而求出传感器的电角度偏置。
  *
  *   方法三句话：把定子电流矢量 **固定在静止坐标系** 的电角度 `align_angle_e_rad` 上，转子会被 拖到其 d 轴与之一致，因此
- *   静止时真实电角度就等于强制角。此时传感器读到的机械角是 `align_angle_e_rad/pole_pairs + offset`，于是 `offset = 读数
- *   - align_angle_e_rad/pole_pairs`。 因为转子停靠在 **最近的** 平衡点，只有电角度部分可观测：偏置只能确定到
- *   `2*pi/pole_pairs` 的模，所以绝对多圈位置仍然需要一个索引信号。
+ *   静止时真实电角度就等于强制角。此时传感器读到的机械角是 `align_angle_e_rad/pole_pairs + offset`，于是
+ *   `offset = 读数 - align_angle_e_rad/pole_pairs`。 因为转子停靠在 **最近的** 平衡点，只有电角度部分可观测：偏置只能确
+ *   定到 `2*pi/pole_pairs` 的模，所以绝对多圈位置仍然需要一个索引信号。
  *
  * @note [en] The angle must be forced, not read back. Regulating `id` against the *uncorrected* sensor angle produces a
  *            constant torque error of `sin(offset)`: the field chases the rotor and the machine turns forever instead

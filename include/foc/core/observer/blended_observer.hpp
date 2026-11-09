@@ -76,25 +76,25 @@ inline auto wrap_full_turn(float angle) noexcept -> float {
  *
  * @note [en] The angle blend is a shortest-arc interpolation, never a plain mix of two numbers in [0, 2*pi): the two
  *            estimates sit on opposite sides of the wrap every time one of them crosses zero, and averaging those raw
- *            values produces a jump of a whole turn at exactly the wrong moment. The injection is scaled by `1 -
- *            weight`, so the carrier winds down as the handover completes instead of being paid for forever. At full
- *            handover it is exactly zero. What the handover costs the high-speed half: while the carrier is being wound
- *            down it is still being delivered, and a model-based observer cannot tell it from back-EMF. An open-loop
- *            flux integrator keeps what it is given, so the crossing leaves it biased by roughly one carrier period of
- *            volt-seconds -- measured 0.031 rad at 2 V / 2 kHz, against 0.033 predicted by `inject_v /
- *            (2*pi*inject_hz*psi_f)`. Filtering the voltage handed to the high-speed observer would remove it and cost
- *            far more: a pole low enough to matter at the carrier frequency lags the fundamental by tens of degrees at
- *            speed. The usable answers are to size the carrier for the bias you can afford, or to make the high-speed
- *            half a loop that tracks the flux instead of integrating it open-loop. Where the *speed* noise comes from,
- *            because it decides what the fix is: not the numerical differentiation. A flux-plus-PLL observer was built
- *            and measured against the shipped one, on the same signals, expecting the loop's smooth speed to make the
- *            handover reproducible. It does not: both report the same speed ripple (+-3 rad/s at 20 rad/s electrical,
- *            +-12 at 100..200) and the loop's *angle* is 2-3x worse at speed (0.030 vs 0.011 rad at 400, 0.060 vs 0.020
- *            at 800). The reason is that the ripple is in the flux estimate itself -- the integrator is fed `v - Rs*i`
- *            and swallows the current's switching ripple -- so any estimator of the angle from that flux inherits it,
- *            and the loop's proportional path turns it straight back into speed. A loop on the *same* flux is therefore
- *            not the fix. What would be is an observer that closes a loop on the currents (Luenberger / sliding mode),
- *            so the ripple is rejected before it ever reaches the flux.
+ *            values produces a jump of a whole turn at exactly the wrong moment. The injection is scaled by
+ *            `1 - weight`, so the carrier winds down as the handover completes instead of being paid for forever. At
+ *            full handover it is exactly zero. What the handover costs the high-speed half: while the carrier is being
+ *            wound down it is still being delivered, and a model-based observer cannot tell it from back-EMF. An
+ *            open-loop flux integrator keeps what it is given, so the crossing leaves it biased by roughly one carrier
+ *            period of volt-seconds -- measured 0.031 rad at 2 V / 2 kHz, against 0.033 predicted by
+ *            `inject_v / (2*pi*inject_hz*psi_f)`. Filtering the voltage handed to the high-speed observer would remove
+ *            it and cost far more: a pole low enough to matter at the carrier frequency lags the fundamental by tens of
+ *            degrees at speed. The usable answers are to size the carrier for the bias you can afford, or to make the
+ *            high-speed half a loop that tracks the flux instead of integrating it open-loop. Where the *speed* noise
+ *            comes from, because it decides what the fix is: not the numerical differentiation. A flux-plus-PLL
+ *            observer was built and measured against the shipped one, on the same signals, expecting the loop's smooth
+ *            speed to make the handover reproducible. It does not: both report the same speed ripple (+-3 rad/s at 20
+ *            rad/s electrical, +-12 at 100..200) and the loop's *angle* is 2-3x worse at speed (0.030 vs 0.011 rad at
+ *            400, 0.060 vs 0.020 at 800). The reason is that the ripple is in the flux estimate itself -- the
+ *            integrator is fed `v - Rs*i` and swallows the current's switching ripple -- so any estimator of the angle
+ *            from that flux inherits it, and the loop's proportional path turns it straight back into speed. A loop on
+ *            the *same* flux is therefore not the fix. What would be is an observer that closes a loop on the currents
+ *            (Luenberger / sliding mode), so the ripple is rejected before it ever reaches the flux.
  *
  * @note [zh] 角度混合是 **最短弧插值** ，绝不是把 [0, 2π) 里的两个数字直接按权重相加：只要其中一个跨过零点， 两个估计就
  *            分处环绕的两侧，直接平均会在最不该跳的时刻产生整整一圈的跳变。
@@ -102,7 +102,7 @@ inline auto wrap_full_turn(float angle) noexcept -> float {
  *   注入按 `1 − 权重` 缩放，于是载波随交接完成而收掉，而不是永远付着这份代价。完全交接时恰为零。
  *
  *   交接对高速那一半的代价：载波在收掉的过程中仍在送达，而基于模型的观测器分不清它与反电动势。 开环磁链积分器给什么留什
- *   么，因此穿越会给它留下约一个载波周期伏秒的偏差——实测 2 V / 2 kHz 下 0.031 rad，`inject_v / (2π·inject_hz·ψf)` 预测
+ *   么，因此穿越会给它留下约一个载波周期伏秒的偏差——实测 2 V / 2 kHz 下 0.031 rad， `inject_v / (2π·inject_hz·ψf)` 预测
  *   0.033。给高速观测器的电压做滤波可以消掉它，代价 却更大：低到能在载波频率上起作用的极点，在高速时会把基频滞后几十
  *   度。可用的答案是按你能承受的 偏差去定容载波。
  *

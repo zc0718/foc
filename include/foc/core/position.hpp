@@ -50,7 +50,7 @@ struct PositionInput final {
  *
  * @brief [zh] 位置环槽位的「位置模式未编入」占位实现。
  *
- *   它满足控制器形状（`step(setpoint, feedback, dt)` + `reset()`），因此可以作为默认模板 实参；`Motor` 认得它并以
+ *   它满足控制器形状（ `step(setpoint, feedback, dt)` + `reset()`），因此可以作为默认模板 实参； `Motor` 认得它并以
  *   `ErrorCode::NotImpl` 作答，而不是静默保持零速度。没编进来的模式 必须自己说出来。
  *
  * @note [en] The slot takes `step(const PositionInput&, feedback, dt)`, not the plain controller shape: a move has a
@@ -60,7 +60,7 @@ struct PositionInput final {
  *            way: the inner speed PI holds the velocity, so a P position loop closes as a first-order system and a
  *            constant load torque is rejected by the speed loop's integrator.
  * @note [zh] 槽位接收的是 `step(const PositionInput&, feedback, dt)` 而非朴素控制器形状：一次运动有 速度和加速度，不只
- *            有一个终点（见 `PositionInput`）。内置两种实现：`core::PositionP`（比例、 不向前看，限制真正生效时会冲过
+ *            有一个终点（见 `PositionInput`）。内置两种实现： `core::PositionP`（比例、 不向前看，限制真正生效时会冲过
  *            头）与 `core::MotionProfile`（加入制动曲线，受限的运动停在 被告知的位置）。两种情况下阻尼都来自级联：内层
  *            速度 PI 守住速度，于是 P 位置环的闭环是一阶 系统，恒定负载转矩由速度环积分器消掉。
  * @since 0.1.0
@@ -94,7 +94,7 @@ class NullPositionControl final {
  *
  * @brief [zh] 比例位置控制：速度需求加两道限制，但 **没有** 制动曲线。
  *
- *   这是位置槽位的简单一半：`速度 = 增益 × 误差`，按速度上限钳位、按加速度上限限速率。 它和 `MotionProfile` 一样遵守按
+ *   这是位置槽位的简单一半： `速度 = 增益 × 误差`，按速度上限钳位、按加速度上限限速率。 它和 `MotionProfile` 一样遵守按
  *   次给出的限制，因此一次运动不会悄悄丢掉形状。
  *
  * @note [en] What it does *not* do is look ahead. With a velocity or acceleration limit binding it overshoots by

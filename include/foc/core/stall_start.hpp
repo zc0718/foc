@@ -30,7 +30,7 @@ enum class StallStartPhase : std::uint8_t {
  *            below `breakaway_nm` is not a sequence, it is a machine that cannot start, and `validate()` refuses it
  *            rather than ramping into a wall.
  * @note [zh] 这里每个数都是物理的，其中要紧的是 `max_torque_nm`：限幅低于 `breakaway_nm` 的序列不是序列，而是一台根本起
- *            不来的机器；`validate()` 会拒绝它，而不是朝墙上顶。
+ *            不来的机器； `validate()` 会拒绝它，而不是朝墙上顶。
  * @since 0.1.0
  * @exporter
  */
@@ -162,9 +162,9 @@ class StallStart final {
     /**
      * @brief [en] Advance one control period and answer what torque to command.
      * @brief [zh] 推进一个控制周期，并回答要下发多少力矩。
-     * @param dt_s [en] the period, s. @param dt_s
+     * @param dt_s [en] the period, s.
      * @param dt_s [zh] 周期，s。
-     * @param speed_mech_rad_s [en] the measured mechanical speed, rad/s. @param speed_mech_rad_s
+     * @param speed_mech_rad_s [en] the measured mechanical speed, rad/s.
      * @param speed_mech_rad_s [zh] 实测机械转速。
      */
     [[nodiscard]] auto step(float dt_s, float speed_mech_rad_s) noexcept -> StallStartOutput {

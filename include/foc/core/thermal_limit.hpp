@@ -65,7 +65,7 @@ struct ThermalLimitReport final {
  *
  * @brief [zh] 某个电流对绕组做了什么。
  *
- *   它收敛到哪里，以及在触及限值之前还能跑多久。`crosses == false` 的意思 **不是**"很久"，而是"永远不会"：稳态等于或低
+ *   它收敛到哪里，以及在触及限值之前还能跑多久。 `crosses == false` 的意思 **不是**"很久"，而是"永远不会"：稳态等于或低
  *   于 `t_allowed_c`，于是这个电流是可持续的、秒数字段是 `infinity`。把这两种情况折成一个大数字，正是调度去压一台本来毫
  *   无危险的机器的方式。
  * @since 0.1.0
@@ -86,9 +86,9 @@ struct ThermalBudget final {
  *   And into the time budget at any other current.
  *
  *   **The law.** A current-fed winding's loss grows with its own temperature, `P = 1.5*i^2*rs20*(1 + alpha*(T-20))`, so
- *   the settle is the root of `T = Ta + Rt*P(T)` rather than a product: `T(i) = (Ta + A*i^2) / (1 - B*i^2)`, with `A =
- *   Rt*1.5*rs20*(1-20*alpha)` and `B = Rt*1.5*rs20*alpha`, and inverting it at `T = t_allowed` gives the continuous
- *   current
+ *   the settle is the root of `T = Ta + Rt*P(T)` rather than a product: `T(i) = (Ta + A*i^2) / (1 - B*i^2)`, with
+ *   `A = Rt*1.5*rs20*(1-20*alpha)` and `B = Rt*1.5*rs20*alpha`, and inverting it at `T = t_allowed` gives the
+ *   continuous current
  *
  *   \f[ i_{cont} = \sqrt{\frac{t_{allowed} - T_a}{R_t\,1.5\,r_{s20}\,(1 + \alpha\,(t_{allowed} - 20))}} \f]
  *
@@ -109,15 +109,16 @@ struct ThermalBudget final {
  *
  * @brief [zh] 把一份热描述换成一个驱动器可以承诺的电流，以及任意其它电流下的时间预算。
  *
- *   **律。** 电流供电的绕组，其损耗随自身温度增长，`P = 1.5·i²·rs20·(1 + α·(T−20))`，所以稳态是 `T = Ta + Rt·P(T)` 的根
- *   而不是一个乘积：`T(i) = (Ta + A·i²)/(1 − B·i²)`，其中 `A = Rt·1.5·rs20·(1−20α)`、`B = Rt·1.5·rs20·α`；在 `T =
- *   t_allowed` 处反解即得持续电流 `i_cont = sqrt((t_allowed − Ta)/(Rt·1.5·rs20·(1 + α·(t_allowed − 20))))`。那个 `(1 +
- *   α·(t_allowed−20))` 就是反馈的全部内容：丢掉它得到的是天真的 `sqrt((T−Ta)/(1.5·Rt·rs20))`，在铜的 105 °C 处
+ *   **律。** 电流供电的绕组，其损耗随自身温度增长， `P = 1.5·i²·rs20·(1 + α·(T−20))`，所以稳态是 `T = Ta + Rt·P(T)` 的
+ *   根而不是一个乘积： `T(i) = (Ta + A·i²)/(1 − B·i²)`，其中 `A = Rt·1.5·rs20·(1−20α)`、 `B = Rt·1.5·rs20·α`；在
+ *   `T = t_allowed` 处反解即得持续电流 `i_cont = sqrt((t_allowed − Ta)/(Rt·1.5·rs20·(1 + α·(t_allowed − 20))))`。那个
+ *   `(1 + α·(t_allowed−20))` 就是反馈的全部内容：丢掉它得到的是天真的 `sqrt((T−Ta)/(1.5·Rt·rs20))`，在铜的 105 °C 处
  *   **高 15.5 %** ，而建立在它之上的驱动器会收敛到它自以为在遵守的限值 **之上** 。用例把两个数都断言，不只断言对的那
  *   个。
  *
- *   **时间预算。** 从已经处于 `t_now` 的绕组出发，同一方程的精确解给出 `t = −τ·ln((T_eq − t_allowed)/(T_eq − t_now))`，
- *   于是不需要积分，也没有步长能改变答案。`τ = Rt·Ct` 是调用方的数，所以 `Ct` 经由配置进来，尽管持续电流并不需要它。
+ *   **时间预算。** 从已经处于 `t_now` 的绕组出发，同一方程的精确解给出
+ *   `t = −τ·ln((T_eq − t_allowed)/(T_eq − t_now)) `，于是不需要积分，也没有步长能改变答案。 `τ = Rt·Ct` 是调用方的数，
+ *   所以 `Ct` 经由配置进来，尽管持续电流并不需要它。
  *
  *   **它不是什么。** 它不是对 `Rt`/`Ct` 的测量——那是调用方的数，而本仓库从未量过任何绕组的散热。它也不是控制器：它回答"
  *   这个电流能不能保持、能保持多久"，至于"不够久"时怎么办，是宿主决定的。

@@ -44,7 +44,7 @@ enum class ObserverKind : std::uint8_t {
  *
  * @brief [zh] 一个观测器槽位，持有两个并按选择转发。
  *
- *   存在的理由：`Motor` 静态组合观测器，没有它的话每次选择观测器都会变成又一次 `Motor` 实例化和另一个对象池——而 bridge
+ *   存在的理由： `Motor` 静态组合观测器，没有它的话每次选择观测器都会变成又一次 `Motor` 实例化和另一个对象池——而 bridge
  *   的句柄、magic 与派发都是围绕固定的池集合构造的。把选择做成成员而不是类型，所有选择就共用一个电机类型，这正是"不碰那
  *   些东西也能有运行时选择器"的前提。
  *
@@ -191,7 +191,7 @@ class SwitchableObserver final {
      *              non-linear flux observer's, the blend's. `true` for the back-EMF observer, which has no detector --
      *              see the note.
      * @return [zh] 被选中的观测器自己的结论（若有）：注入观测器的锁定判据、非线性磁链观测器的、混合观测器的。反电势观测
-     *              器没有判据，返回 `true`——见注释。
+     *              器没有判据，返回 `true` ——见注释。
      * @note [en] Why the wrapper has to forward this at all: a slot is what a caller holds, and without this accessor a
      *            caller cannot tell "the injection observer never locked" from "it locked and the machine is standing
      *            still" -- both look like an angle that does not move. That is not hypothetical: an injection carrier
@@ -229,7 +229,7 @@ class SwitchableObserver final {
      * @brief [zh] 被选中的观测器归一化的误差信号；该观测器不发布误差信号时为 `0`。
      * @return [en] About `-sin(2*angle_error)` for the injection observer, which is the only one that has such a signal
      *              today. `0.0F` for the other three.
-     * @return [zh] 注入观测器约为 `-sin(2·角度误差)`——今天只有它有这样的信号。其余三个返回 `0.0F`。
+     * @return [zh] 注入观测器约为 `-sin(2·角度误差)` ——今天只有它有这样的信号。其余三个返回 `0.0F`。
      * @warning [en] `0` is ambiguous by construction: a perfectly locked injection observer also sits near zero. A
      *               caller that needs to know whether an error signal exists has to look at `kind()`; a caller that
      *               needs to know whether it means anything has to look at `locked()`.
@@ -259,7 +259,7 @@ class SwitchableObserver final {
      *              (the injection observer has a carrier phase, not a flux vector). `true` means the incoming
      *              observer's state was written from the outgoing one's angle.
      * @return [zh] 若 `next` 已是当前选择，或接手的观测器没有磁链估计可安置（注入观测器有的是载波相位，不是磁链矢量），
-     *              返回 `false`。`true` 表示接手者的状态已按交出者的角度写入。
+     *              返回 `false`。 `true` 表示接手者的状态已按交出者的角度写入。
      * @note [en] **This is the switching call a hand-over should use.** `set_kind()` exists for the case where the
      *            caller genuinely wants the incoming observer to resume from whatever it last believed; because the
      *            idle observer is frozen rather than tracking, that belief can be arbitrarily stale, and using
@@ -317,16 +317,17 @@ class SwitchableObserver final {
      * @return [zh] 与单参数版本相同的返回值。
      * @note [en] Why this exists: `DualInductanceObserver` integrates the stator flux and subtracts nothing at readout,
      *            so handing it `psi_f*e^(j*theta)` is a seed that is missing the current's own flux -- and a pure
-     *            integrator never forgets, so the omission would be a **permanent** angle offset of about `atan(|L0*i|
-     *            / psi_f)`, not a transient. This overload gives that member `psi_f*e^(j*theta) + L0*i +
-     *            L1*conj(i)*e^(j*2*theta)`, which is the flux it holds. The other three are seeded exactly as before,
-     *            because their state is the rotor flux (or the blend's, which is one of those two) and, on the `i_d =
-     *            0` machines they are allowed on, `psi_f*e^(j*theta)` is that flux to the accuracy they claim.
-     * @note [zh] 为什么要有它：`DualInductanceObserver` 积分的是定子磁链、读数时什么都不减，所以交给它 `psi_f·e^(jθ)`
+     *            integrator never forgets, so the omission would be a **permanent** angle offset of about
+     *            `atan(|L0*i| / psi_f)`, not a transient. This overload gives that member
+     *            `psi_f*e^(j*theta) + L0*i + L1*conj(i)*e^(j*2*theta)`, which is the flux it holds. The other three are
+     *            seeded exactly as before, because their state is the rotor flux (or the blend's, which is one of those
+     *            two) and, on the `i_d = 0` machines they are allowed on, `psi_f*e^(j*theta)` is that flux to the
+     *            accuracy they claim.
+     * @note [zh] 为什么要有它： `DualInductanceObserver` 积分的是定子磁链、读数时什么都不减，所以交给它 `psi_f·e^(jθ)`
      *            当种子，恰好漏掉了电流自身的磁链——而纯积分器不会遗忘，这个疏漏就是一个 **永久** 的角度偏移（约
-     *            `atan(|L0·i|/psi_f)`），不是暂态。本重载给它的是它真正持有的磁链 `psi_f·e^(jθ) + L0·i +
-     *            L1·conj(i)·e^(j2θ)`。其余三个与之前完全一样：它们的状态是转子磁链（混合观测器是这两者之一），而在它们
-     *            被允许的 `i_d = 0` 机器上，`psi_f·e^(jθ)` 就是那磁链，误差在其主张之内。
+     *            `atan(|L0·i|/psi_f)`），不是暂态。本重载给它的是它真正持有的磁链
+     *            `psi_f·e^(jθ) + L0·i + L1·conj(i)·e^(j2θ)`。其余三个与之前完全一样：它们的状态是转子磁链（混合观测器是
+     *            这两者之一），而在它们被允许的 `i_d = 0` 机器上， `psi_f·e^(jθ)` 就是那磁链，误差在其主张之内。
      * @since 0.1.0
      */
     auto hand_over_to(ObserverKind next, Ab<float> i_ab) noexcept -> bool {
@@ -346,7 +347,7 @@ class SwitchableObserver final {
      *             stepped.
      * @brief [zh] 在运行时切换， **不** 把估计带过去。没有观测器被复位，也没有被推进。
      * @note [en] For a hand-over use `hand_over_to()` instead -- see the note there for why this one is a trap.
-     * @note [zh] 交接请用 `hand_over_to()`——原因见那里：这一个是个陷阱。
+     * @note [zh] 交接请用 `hand_over_to()` ——原因见那里：这一个是个陷阱。
      */
     void set_kind(ObserverKind kind) noexcept { kind_ = kind; }
 

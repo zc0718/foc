@@ -36,8 +36,8 @@ using core::Uvw;
  * @note [en] `max_period_us` is 0 unless the HalPolicy exposes a `clock`: the library never invents a time base, it
  *            only measures the one the platform gives it. It is an overrun indicator, not a scheduling input --
  *            `tick(dt)` takes its period from the caller.
- * @note [zh] 除非 HalPolicy 暴露了 `clock`，`max_period_us` 恒为 0：库从不自造时基，只测量平台给出的 时基。它是过载指示
- *            器而非调度输入——`tick(dt)` 的周期来自调用方。
+ * @note [zh] 除非 HalPolicy 暴露了 `clock`， `max_period_us` 恒为 0：库从不自造时基，只测量平台给出的 时基。它是过载指
+ *            示器而非调度输入—— `tick(dt)` 的周期来自调用方。
  * @since 0.1.0
  * @exporter
  */
@@ -88,8 +88,8 @@ enum class ReferenceMode : std::uint8_t {
  * @note [zh] 限制与缩放字段默认 0，含义是"用控制器自身配置的那个"。机构自己的限制仍在 `core::MotionProfile::Config`
  *            里；这些是 **这次运动** 的，非零值只在本次运动内替换配置值， 不需要任何恢复步骤。
  *
- *   三个缩放是柔顺旋钮。`kp_scale` 决定关节抵抗被推动的程度；`ilimit_scale` 决定速度 积分器被允许保有多少转矩，于是被手
- *   推的关节会退让而不是对抗；`kd_scale` 决定其周围的阻尼。 它们缩放增益而非限值，因此柔顺的关节仍然不能越过
+ *   三个缩放是柔顺旋钮。 `kp_scale` 决定关节抵抗被推动的程度； `ilimit_scale` 决定速度 积分器被允许保有多少转矩，于是被
+ *   手推的关节会退让而不是对抗； `kd_scale` 决定其周围的阻尼。 它们缩放增益而非限值，因此柔顺的关节仍然不能越过
  *   `max_current_a` 或运动限制。
  * @since 0.1.0
  * @exporter
@@ -115,8 +115,8 @@ struct Command final {
      *            `set_torque()` sets the reference directly, so a second additive field there would be two ways to say
      *            the same thing.
      * @note [zh] 齿槽、摩擦、重力项就走这个槽。它原先只在位置模式生效，而文档写的是「速度环后」，也就是说速度模式的宿主
-     *            根本没有 iq 偏置、而且从头上看不出来。torque 模式是有意排除的：`set_torque()` 直接设置参考，再加一个可
-     *            叠加字段就等于同一件事有两个说法。
+     *            根本没有 iq 偏置、而且从头上看不出来。torque 模式是有意排除的： `set_torque()` 直接设置参考，再加一个
+     *            可叠加字段就等于同一件事有两个说法。
      * @since 0.1.0
      */
     float feedforward_current_a;
@@ -197,10 +197,10 @@ struct Command final {
  *   \li `PositionControl` 提供 `step(setpoint, feedback, dt) noexcept -> float` 与 `reset()`，且下发的是 **速度** ；默
  *   认的 `core::NullPositionControl` 让位置模式回 `ErrorCode::NotImpl`，而不是假装成功。
  *
- *   \li `Aligner` 提供 `validate()`、`begin(pole_pairs) -> bool`、`step(dt, angle_mech) noexcept -> AlignOutput` 与
+ *   \li `Aligner` 提供 `validate()`、 `begin(pole_pairs) -> bool`、 `step(dt, angle_mech) noexcept -> AlignOutput` 与
  *   `reset()`；默认的 `core::NullAlignment` 的 `begin()` 回 `false`，于是 `start()` 直接从 Align 进 Run。
  *
- *   \li `HalPolicy` 暴露成员 `pwm`、`current_sense`、`position`、`dc_link`。
+ *   \li `HalPolicy` 暴露成员 `pwm`、 `current_sense`、 `position`、 `dc_link`。
  *
  * @context [en] tick() is the ISR entry: noexcept, no allocation, no I/O.
  * @context [zh] tick() 是 ISR 入口：noexcept、不分配、无 I/O。
@@ -344,8 +344,8 @@ class Motor final {
      *            ceiling. `set_command()` is the position-mode entry point, but the field itself is now honoured in
      *            speed mode too -- see `Command`.
      * @note [zh] `feedforward_current_a` 就是重力或摩擦项该去的地方：它加在速度环 **之后** ，所以不会和积分器打架，并且
-     *            和其余量一起受本次运动的电流上限约束。`set_command()` 是位置模式的入口，但这个字段现在在速度模式下也生
-     *            效 ——见 `Command`。
+     *            和其余量一起受本次运动的电流上限约束。 `set_command()` 是位置模式的入口，但这个字段现在在速度模式下也
+     *            生效 ——见 `Command`。
      * @since 0.1.0
      */
     void set_command(const Command& command) noexcept;
@@ -391,7 +391,7 @@ class Motor final {
    * @param recipe [zh] 机器的起动点估计与驱动的限幅。
    * @return [en] Ok; Param when the recipe cannot work (`max_torque_nm <= breakaway_nm`); State when the axis is
    *              aligning, faulted or not running. The phase stays `Idle` on both refusals.
-   * @return [zh] Ok；配方不可能成立时为 Param（`max_torque_nm <= breakaway_nm`）；正在对齐、已故障或未运行时为 State。
+   * @return [zh] Ok；配方不可能成立时为 Param（ `max_torque_nm <= breakaway_nm`）；正在对齐、已故障或未运行时为 State。
    *              两种拒绝都会让阶段停在 `Idle`。
    * @note [en] Why this is not "let the speed loop do it": a speed PI *does* break a stuck axis loose -- by winding its
    *            integral up until the torque passes the breakaway point -- and that stored torque is exactly what drives
@@ -406,7 +406,7 @@ class Motor final {
    *            脱，正是这份存下来的力矩把它推过给定。本序列把同一件事有意地做，并报告它发生在哪里。序列运行期间轴处于转
    *            矩模式，因此只有 `stall_start_phase()` 能说明当前指令力矩是序列的还是调用方的。到达 `Released` 后控制权
    *            回到调用方：必须在同一控制周期内调 `set_speed()`（或 `set_torque()`），否则起动转矩会继续施加。 `Failed`
-   *            会锁存 `FaultCode::Stall`——驱动在限幅内搬不动的负载是关于这台机器的事实，它比发现它的那次调用活得更久。
+   *            会锁存 `FaultCode::Stall` ——驱动在限幅内搬不动的负载是关于这台机器的事实，它比发现它的那次调用活得更久。
    * @since 0.1.0
    */
     auto begin_stall_start(const core::StallStartConfig& recipe) noexcept -> ErrorCode;
@@ -510,7 +510,7 @@ class Motor final {
      * @note [en] Forwarded, not stored: `Motor` does not model the machine itself, so keeping a copy would create a
      *            second source of truth for numbers that belong to the policies. A slot without the hook simply keeps
      *            what it was built with.
-     * @note [zh] 只转发、不保存：`Motor` 自己不建模机器，存一份会给本该属于策略的数字制造第二个真值来源。 没有该钩子的
+     * @note [zh] 只转发、不保存： `Motor` 自己不建模机器，存一份会给本该属于策略的数字制造第二个真值来源。 没有该钩子的
      *            槽位保持构造时的值。
      * @since 0.1.0
      */
@@ -549,7 +549,7 @@ class Motor final {
      * @brief [zh] 无感位置背后的圈计数与索引原点。
      * @return [en] The reference this motor keeps; `homed()` says whether a position command can be honoured and
      *              `lost_count()` whether the reconstruction may be trusted.
-     * @return [zh] 该电机持有的参考；`homed()` 说明位置指令能否被兑现，`lost_count()` 说明重建是否可被信任。
+     * @return [zh] 该电机持有的参考； `homed()` 说明位置指令能否被兑现， `lost_count()` 说明重建是否可被信任。
      * @note [en] Read-only on purpose. The origin is established by the index pulse arriving at `hal.position`, not by
      *            a caller writing an angle: a settable origin would let a wrong number look exactly like a measured
      *            one.
@@ -584,7 +584,7 @@ class Motor final {
      *            The gate stays at the call site: whether the observer is stepped this period is a fact about the loop,
      *            not about this arithmetic.
      * @note [zh] 写成具名函数，调用点才可能是一个 `const` 值。写在原地的话，对观测器在注入的那个实例化它必须是可变的，
-     *            对不注入的那个又可以是只读的（`if constexpr` 把整支赋值丢掉），而 `misc-const-correctness` 一次只看一
+     *            对不注入的那个又可以是只读的（ `if constexpr` 把整支赋值丢掉），而 `misc-const-correctness` 一次只看一
      *            个实例化——于是它要求的那个 `const` 在注入的实例化上编译不过。门控留在调用点：观测器本周期是否在被推进
      *            是关于环的事实，不是关于这段算术的事实。
      * @param base [en] the voltage the current loop asked for.
@@ -700,7 +700,7 @@ class Motor final {
      *            first version of the admission rule in `init()` used the type-level answer and refused every motor
      *            whose observer could switch modes -- thirty-eight failing cases' worth of wrong.
      * @note [zh] 这个区分正是它存在的全部理由：一个装着注入观测器却在跑反电势的槽位不注入任何东西，于是类型级特型对一个
-     *            实际是"否"的情形回答"是"。`init()` 里准入门槛的第一版用了类型级答案，拒绝了每一台观测器可切换模式的电
+     *            实际是"否"的情形回答"是"。 `init()` 里准入门槛的第一版用了类型级答案，拒绝了每一台观测器可切换模式的电
      *            机——那是三十八个用例的错。
      */
     [[nodiscard]] auto injecting_now() const noexcept -> bool {

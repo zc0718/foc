@@ -128,7 +128,7 @@ class BrakeChopper final {
      * @param v_bus [en] measured bus voltage, V.
      * @param v_bus [zh] 实测母线电压，V。
      * @param dt_s [en] period, s; `<= 0` is refused as `Param` and leaves everything as it was.
-     * @param dt_s [zh] 周期，s；`<= 0` 被拒绝为 `Param` 且什么都不改。
+     * @param dt_s [zh] 周期，s； `<= 0` 被拒绝为 `Param` 且什么都不改。
      * @return [en] the decision, including the resistor's heat.
      * @return [zh] 决定，包含电阻的热量。
      */

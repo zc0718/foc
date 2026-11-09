@@ -28,7 +28,7 @@ class StubBrakeSwitch final : public hal::BrakeSwitch {
 
     /**
      * @brief [en] Record the chopping frequency; `<= 0` is refused as `Param`.
-     * @brief [zh] 记录斩波频率；`<= 0` 被拒绝为 `Param`。
+     * @brief [zh] 记录斩波频率； `<= 0` 被拒绝为 `Param`。
      */
     auto configure(float freq_hz) noexcept -> ErrorCode override;
 

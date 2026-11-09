@@ -14,7 +14,7 @@ namespace {
  *   Which is the whole of both laws in this file: the ellipse case and the current-circle case differ only in what `p`
  *   and `q` are.
  *
- * @brief [zh] 使 `p·sin t + q·sin 2t` 最大的 `t`。本文件里的两条规律全在这里：椭圆情形与电流圆情形只差 `p`、`q` 取什
+ * @brief [zh] 使 `p·sin t + q·sin 2t` 最大的 `t`。本文件里的两条规律全在这里：椭圆情形与电流圆情形只差 `p`、 `q` 取什
  *             么。
  * @param p [en] the coefficient of the fundamental.
  * @param p [zh] 基波系数。
@@ -30,9 +30,9 @@ namespace {
  *            machine (no saliency: pure q-axis current) needs no special case, its roots going off to infinity and
  *            being dropped by the range check.
  * @note [zh] 驻点条件是 `p·cos t + 2·q·cos 2t = 0`，即 `c = cos t` 的 `4·q·c² + p·c − 2·q = 0`。两根一正一负，哪一个是
- *            **极大** 取决于 `p`、`q` 的符号，所以这里不去推理分支，而是把四个候选点（`c = 0` 与两个根，各自配上 `sin
- *            t` 的两种符号）都代进目标函数取最好。圆上的光滑函数没有边界，最大值必在其中——把 `c = 0` 也放进去，是为了让
- *            退化的 `q → 0` 机器（没有凸极：纯 q 轴电流）不需要特例，它的根跑到无穷远，被范围检查丢掉。
+ *            **极大** 取决于 `p`、 `q` 的符号，所以这里不去推理分支，而是把四个候选点（ `c = 0` 与两个根，各自配上
+ *            `sin t` 的两种符号）都代进目标函数取最好。圆上的光滑函数没有边界，最大值必在其中——把 `c = 0` 也放进去，是
+ *            为了让退化的 `q → 0` 机器（没有凸极：纯 q 轴电流）不需要特例，它的根跑到无穷远，被范围检查丢掉。
  * @attacher
  * @since 0.1.0
  */

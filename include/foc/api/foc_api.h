@@ -54,7 +54,7 @@ FOC_WARN_UNUSED foc_err_t foc_motor_create_ex(const foc_motor_params_t *params, 
  * @param setup [en] optional; NULL means the documented defaults.
  * @param setup [zh] 可选；NULL 表示使用文档化的默认值。
  * @param callbacks [en] non-NULL, `struct_size` filled, the four required callbacks present.
- * @param callbacks [zh] 非 NULL，`struct_size` 已填，四个必需回调齐全。
+ * @param callbacks [zh] 非 NULL， `struct_size` 已填，四个必需回调齐全。
  * @param out [en] non-NULL receiver of the handle.
  * @param out [zh] 非 NULL 的句柄接收者。
  * @return [en] FOC_OK, FOC_ERR_PARAM for a bad argument or an incomplete callback set, or FOC_ERR_NO_RESOURCE when the
@@ -180,7 +180,7 @@ FOC_WARN_UNUSED foc_err_t foc_motor_clear_fault(foc_motor_t motor);
 /**
  * @brief [en] Start a breakaway sequence: raise the torque on a known ramp and report the instant the rotor moves.
  * @brief [zh] 开始一条起步序列：以已知斜率抬升力矩，并报告转子动起来的那一刻。
- * @param motor [en] a running motor handle. @param motor
+ * @param motor [en] a running motor handle.
  * @param motor [zh] 正在运行的电机句柄。
  * @param recipe [en] the machine's breakaway estimate and the drive's limits; see `foc_stall_start_config_t`.
  * @param recipe [zh] 机器的起动点估计与驱动限幅；见 `foc_stall_start_config_t`。
@@ -201,7 +201,7 @@ FOC_WARN_UNUSED foc_err_t foc_motor_clear_fault(foc_motor_t motor);
  *            正是这份存下来的力矩把它推过给定。本序列把同一件事有意地做，并报告它发生在哪里，于是速度环可以从一个已知电
  *            流起步。爬升期间轴处于转矩模式，因此调用方要靠 `foc_motor_get_stall_start()` 才知道当前转矩是序列的还是自
  *            己的。从 `FOC_STALL_RELEASED` 起控制权回到调用方：必须在同一控制周期内调 `foc_set_speed()`（或
- *            `foc_set_torque()`），否则起动转矩会继续施加。`FOC_STALL_FAILED` 会锁存 `FOC_FAULT_STALL`。
+ *            `foc_set_torque()`），否则起动转矩会继续施加。 `FOC_STALL_FAILED` 会锁存 `FOC_FAULT_STALL`。
  * @context [en] Control context or a task that is not ticking at the same time; not ISR-safe against `foc_tick()`.
  * @context [zh] 控制上下文，或一个不与 `foc_tick()` 并发运行的任务；不可与 `foc_tick()` 并发。
  * @since 0.1.0
@@ -212,7 +212,7 @@ FOC_WARN_UNUSED foc_err_t foc_motor_begin_stall_start(foc_motor_t motor, const f
 /**
  * @brief [en] Where the breakaway sequence is, and the torque it last commanded.
  * @brief [zh] 起步序列处在哪一步，以及它上一次下发的力矩。
- * @param motor [en] a motor handle. @param motor
+ * @param motor [en] a motor handle.
  * @param motor [zh] 电机句柄。
  * @param out [en] receives the phase, the torque and the ceiling flag; `struct_size` must be set.
  * @param out [zh] 接收阶段、力矩与限幅标志；必须设置 `struct_size`。
@@ -231,7 +231,7 @@ FOC_WARN_UNUSED foc_err_t foc_motor_get_stall_start(foc_motor_t motor, foc_stall
 /**
  * @brief [en] Abandon the sequence and zero the torque command; the mode is left as the caller had it.
  * @brief [zh] 放弃序列并把指令力矩清零；模式保持调用方当前的样子。
- * @param motor [en] a motor handle. @param motor
+ * @param motor [en] a motor handle.
  * @param motor [zh] 电机句柄。
  * @return [en] `FOC_OK`, or `FOC_ERR_PARAM` for a handle of the wrong kind.
  * @return [zh] `FOC_OK`；句柄种类不对时为 `FOC_ERR_PARAM`。
@@ -398,10 +398,10 @@ FOC_WARN_UNUSED foc_err_t foc_motor_get_status(foc_motor_t motor, foc_motor_stat
  *            state error and leaves the receiver untouched. There is deliberately **no** matching setter: an absolute
  *            target would have to close on the referenced angle, and with a position sensor present the loop closes on
  *            the sensor's frame instead. Adding the setter means adding a control mode, not an entry point.
- * @note [zh] 为什么这不只是"读一个字段"。`foc_motor_status_t::referenced_mech_rad` 在第一次索引之前答 **0** ，而 0 是一
- *            个合法的机械角——因此拿它去和目标比的调用方，分不出"已回零且停在原点"与"从未回过零"。缺原点是一个状态，所以
- *            它答一个状态错误，并且不去动接收者。故意 **没有** 配套的 setter：绝对目标必须闭环在 referenced 角度上，而
- *            存在位置传感器时环路闭环在传感器坐标系上。加那个 setter 等于加一个控制模式，而不是加一个入口。
+ * @note [zh] 为什么这不只是"读一个字段"。 `foc_motor_status_t::referenced_mech_rad` 在第一次索引之前答 **0** ，而 0 是
+ *            一个合法的机械角——因此拿它去和目标比的调用方，分不出"已回零且停在原点"与"从未回过零"。缺原点是一个状态，所
+ *            以它答一个状态错误，并且不去动接收者。故意 **没有** 配套的 setter：绝对目标必须闭环在 referenced 角度上，
+ *            而存在位置传感器时环路闭环在传感器坐标系上。加那个 setter 等于加一个控制模式，而不是加一个入口。
  * @since 0.1.0
  * @exporter
  */
@@ -453,7 +453,7 @@ FOC_WARN_UNUSED foc_err_t foc_get_state(foc_motor_t motor, float *speed_rad_s, f
  *
  * @brief [zh] 给定值的 `_Generic` 分发。
  *
- *   于是 `foc_set_speed_g(m, 50)` 与 `foc_set_speed_g(m, 50.0f)` 都无需显式转换。`default:` 分支把其余所有算术类型导向
+ *   于是 `foc_set_speed_g(m, 50)` 与 `foc_set_speed_g(m, 50.0f)` 都无需显式转换。 `default:` 分支把其余所有算术类型导向
  *   double 入口，因此传指针或结构体会是编译错误，而不是静默转换。
  *
  * @note [en] Only defined for C11 and later; C++ callers pick the float or the _f64 function themselves (there is no
@@ -507,7 +507,7 @@ float foc_axis_deadtime_v(float deadtime_s, float switching_hz, float v_bus_v, f
  * @param i_max_a [en] per-axis current limit, A.
  * @param i_max_a [zh] 每轴电流限幅，A。
  * @param out [en] non-NULL receiver; `struct_size` must be set by the caller.
- * @param out [zh] 非 NULL 接收者；`struct_size` 须由调用方填好。
+ * @param out [zh] 非 NULL 接收者； `struct_size` 须由调用方填好。
  * @return [en] FOC_OK, or FOC_ERR_PARAM.
  * @return [zh] FOC_OK，或 FOC_ERR_PARAM。
  * @since 0.1.0
@@ -533,16 +533,16 @@ FOC_WARN_UNUSED foc_err_t foc_field_weakening_worthwhile(const foc_motor_params_
  * @return [zh] FOC_OK，或 FOC_ERR_PARAM。
  * @note [en] On a surface machine (`Ld == Lq`) `*id_a` is exactly 0, not an epsilon: an epsilon divides by nothing
  *            meaningful.
- * @note [zh] 表贴机（`Ld == Lq`）上 `*id_a` **恰好** 为 0，不是极小量：极小量除的是一个没有 意义的数。
+ * @note [zh] 表贴机（ `Ld == Lq`）上 `*id_a` **恰好** 为 0，不是极小量：极小量除的是一个没有 意义的数。
  * @warning [en] This answers the MTPA *curve*. It takes no speed, so it cannot know what the sensorless observer can
  *               see: with `i_d = -1 A` that observer reads 0.5079 rad at 200 rad/s against its 0.15 rad ceiling, while
  *               the same current is harmless at 3200 rad/s. A control loop that will actually apply the result must go
  *               through `MtpaReference`, whose `i_d_per_speed_a_s_per_rad` refuses d-axis current below the speed where
  *               the back-EMF carries the observer.
- * @warning [zh] 这个函数回答的是 MTPA **曲线** 。它没有转速入参，因此无从知道无感观测器看得见什么：`i_d = −1 A` 时 该观
- *               测器在 200 rad/s 读到 0.5079 rad，而它公开的天花板是 0.15 rad；同一个电流在 3200 rad/s 却无害。 要真正
- *               施加这个结果的闭环必须走 `MtpaReference`，它的 `i_d_per_speed_a_s_per_rad` 会在反电势撑起观测器 的转速
- *               以下拒绝 d 轴电流。
+ * @warning [zh] 这个函数回答的是 MTPA **曲线** 。它没有转速入参，因此无从知道无感观测器看得见什么： `i_d = −1 A` 时 该
+ *               观测器在 200 rad/s 读到 0.5079 rad，而它公开的天花板是 0.15 rad；同一个电流在 3200 rad/s 却无害。 要真
+ *               正施加这个结果的闭环必须走 `MtpaReference`，它的 `i_d_per_speed_a_s_per_rad` 会在反电势撑起观测器 的转
+ *               速以下拒绝 d 轴电流。
  * @since 0.1.0
  * @exporter
  */
@@ -557,21 +557,21 @@ FOC_WARN_UNUSED foc_err_t foc_mtpa_reference(const foc_motor_params_t *params, f
  * @param setup [en] NULL for the library defaults, otherwise `struct_size` filled.
  * @param setup [zh] NULL 表示用库默认值，否则 `struct_size` 已填。
  * @param out [en] non-NULL receiver; `struct_size` must be set by the caller.
- * @param out [zh] 非 NULL 接收者；`struct_size` 须由调用方填好。
+ * @param out [zh] 非 NULL 接收者； `struct_size` 须由调用方填好。
  * @return [en] FOC_OK, or FOC_ERR_PARAM on a NULL, a wrong `struct_size`, or a non-positive parameter.
- * @return [zh] FOC_OK；NULL、`struct_size` 不对或参数非正时返回 FOC_ERR_PARAM。
+ * @return [zh] FOC_OK；NULL、 `struct_size` 不对或参数非正时返回 FOC_ERR_PARAM。
  * @note [en] Same numbers the motor constructor uses, because it is the same helper. A tuning tool outside the library
  *            therefore reproduces the shipped loop instead of re-deriving it -- and a caller that finds these gains
  *            unsuitable can change the bandwidth in the setup rather than post-processing the result.
  * @note [zh] 与电机构造函数用的是同一个辅助函数，因此数字相同。库外的整定工具于是复现出厂环路，而不是另推一遍；调用方若
  *            觉得这些增益不合适，应当改设置里的带宽，而不是对结果做二次加工。
- * @warning [en] The requested bandwidth is only meaningful above `Rs / (2*Ld)`, where the proportional gain `2*w*Ld -
- *               Rs` goes to zero and is floored there. Below that floor the loop is integral-only and delivers far less
- *               than it was asked for: measured on the nominal machine (`Rs = 0.5`, `Ld = 4e-4`), 200 rad/s takes 31 ms
- *               to reach 63 % where `1/w` is 5 ms. A tuner that trusts the request blindly ships a loop six times
- *               slower than its own documentation says.
+ * @warning [en] The requested bandwidth is only meaningful above `Rs / (2*Ld)`, where the proportional gain
+ *               `2*w*Ld - Rs` goes to zero and is floored there. Below that floor the loop is integral-only and
+ *               delivers far less than it was asked for: measured on the nominal machine (`Rs = 0.5`, `Ld = 4e-4`), 200
+ *               rad/s takes 31 ms to reach 63 % where `1/w` is 5 ms. A tuner that trusts the request blindly ships a
+ *               loop six times slower than its own documentation says.
  * @warning [zh] 只有在 `Rs / (2·Ld)` 以上，所请求的带宽才有意义：那里比例增益 `2·w·Ld − Rs` 归零并被钳在下限。门槛以下
- *               环路退化为纯积分，交付的远少于所请求的：在标称电机（`Rs = 0.5`、`Ld = 4e-4`）上实测，200 rad/s 到达
+ *               环路退化为纯积分，交付的远少于所请求的：在标称电机（ `Rs = 0.5`、 `Ld = 4e-4`）上实测，200 rad/s 到达
  *               63 % 要 31 ms，而 `1/w` 是 5 ms。盲信请求的整定工具会交付一个比自己文档所说的慢六倍的环。
  * @since 0.1.0
  * @exporter
@@ -587,9 +587,9 @@ FOC_WARN_UNUSED foc_err_t foc_current_pi_gains(const foc_motor_params_t *params,
  * @param setup [en] NULL for the library defaults, otherwise `struct_size` filled.
  * @param setup [zh] NULL 表示用库默认值，否则 `struct_size` 已填。
  * @param out [en] non-NULL receiver; `struct_size` must be set by the caller.
- * @param out [zh] 非 NULL 接收者；`struct_size` 须由调用方填好。
+ * @param out [zh] 非 NULL 接收者； `struct_size` 须由调用方填好。
  * @return [en] FOC_OK, or FOC_ERR_PARAM on a NULL, a wrong `struct_size`, or a non-positive parameter.
- * @return [zh] FOC_OK；NULL、`struct_size` 不对或参数非正时返回 FOC_ERR_PARAM。
+ * @return [zh] FOC_OK；NULL、 `struct_size` 不对或参数非正时返回 FOC_ERR_PARAM。
  * @note [en] The speed loop cancels the mechanical pole `B/J`, so its gains depend on the inertia and on `kt` as well
  *            as on the requested bandwidth. Reading them here keeps a tuning tool from assuming a different convention.
  * @note [zh] 速度环抵消机械极点 `B/J`，因此其增益除了带宽还取决于惯量与 `kt`。从这里读数，整定工具就不会自作主张换一套
@@ -612,9 +612,9 @@ FOC_WARN_UNUSED foc_err_t foc_speed_pi_gains(const foc_motor_params_t *params, c
  * @param count [en] number of samples in both arrays.
  * @param count [zh] 两个数组的样本数。
  * @param out [en] non-NULL receiver; `struct_size` must be set by the caller.
- * @param out [zh] 非 NULL 接收者；`struct_size` 须由调用方填好。
+ * @param out [zh] 非 NULL 接收者； `struct_size` 须由调用方填好。
  * @return [en] FOC_OK, or FOC_ERR_PARAM on a NULL, a wrong `struct_size`, or a non-positive parameter.
- * @return [zh] FOC_OK；NULL、`struct_size` 不对或参数非正时返回 FOC_ERR_PARAM。
+ * @return [zh] FOC_OK；NULL、 `struct_size` 不对或参数非正时返回 FOC_ERR_PARAM。
  * @note [en] FOC_OK says the call ran, not that the fit means anything: read `valid` in the result. A sweep whose
  *            currents are all alike has no slope to find, and answering an unaudited number would be worse than
  *            answering none.
@@ -642,9 +642,9 @@ FOC_WARN_UNUSED foc_err_t foc_rs_estimate(const foc_motor_params_t *params, cons
  * @param count [en] number of samples in all three arrays.
  * @param count [zh] 三个数组的样本数。
  * @param out [en] non-NULL receiver; `struct_size` must be set by the caller.
- * @param out [zh] 非 NULL 接收者；`struct_size` 须由调用方填好。
+ * @param out [zh] 非 NULL 接收者； `struct_size` 须由调用方填好。
  * @return [en] FOC_OK, or FOC_ERR_PARAM on a NULL, a wrong `struct_size`, or a non-positive parameter.
- * @return [zh] FOC_OK；NULL、`struct_size` 不对或参数非正时返回 FOC_ERR_PARAM。
+ * @return [zh] FOC_OK；NULL、 `struct_size` 不对或参数非正时返回 FOC_ERR_PARAM。
  * @note [en] The fit is a straight line through voltage against speed: the slope is the flux linkage and the intercept
  *            is everything the model does not describe (inverter loss, sensor offset). Read `valid` before believing
  *            it.
@@ -663,11 +663,11 @@ FOC_WARN_UNUSED foc_err_t foc_flux_estimate(const foc_motor_params_t *params, co
  * @brief [en] Judge a board from what was measured.
  * @brief [zh] 用测到的数判定一块板子。
  * @param measurements [en] non-NULL, `struct_size` filled.
- * @param measurements [zh] 非 NULL，`struct_size` 已填。
+ * @param measurements [zh] 非 NULL， `struct_size` 已填。
  * @param limits [en] non-NULL, `struct_size` filled.
- * @param limits [zh] 非 NULL，`struct_size` 已填。
+ * @param limits [zh] 非 NULL， `struct_size` 已填。
  * @param out [en] non-NULL report; `struct_size` must be set by the caller.
- * @param out [zh] 非 NULL 报告；`struct_size` 须由调用方填好。
+ * @param out [zh] 非 NULL 报告； `struct_size` 须由调用方填好。
  * @return [en] FOC_OK, or FOC_ERR_PARAM on a NULL or a wrong `struct_size`.
  * @return [zh] FOC_OK；NULL 或 `struct_size` 不对时返回 FOC_ERR_PARAM。
  * @context [en] Commissioning, once per board.
@@ -743,7 +743,7 @@ FOC_WARN_UNUSED foc_err_t foc_protector_create(const foc_protection_config_t *co
  * @param dt_s [en] the period, s; must be finite and positive.
  * @param dt_s [zh] 周期，s；须有限且为正。
  * @param out [en] non-NULL receiver; `struct_size` must be set by the caller.
- * @param out [zh] 非 NULL 接收者；`struct_size` 须由调用方填好。
+ * @param out [zh] 非 NULL 接收者； `struct_size` 须由调用方填好。
  * @return [en] FOC_OK, FOC_ERR_PARAM, or FOC_ERR_STATE on a stale handle.
  * @return [zh] FOC_OK、FOC_ERR_PARAM，或过期句柄时的 FOC_ERR_STATE。
  * @context [en] Current-loop ISR.
@@ -796,9 +796,9 @@ FOC_WARN_UNUSED foc_err_t foc_protector_destroy(foc_protector_t protector);
  *            cell of the envelope sweep, 8400 Hz (2.38) already failed at the widest demodulation cutoff, and 9200 Hz
  *            (2.17) failed at all of them.
  * @note [zh] 在选 `foc_motor_setup_t::inject_hz` **之前** 问它。越过天花板后注入观测器会静默失效——解调幅值塌掉、锁定判
- *            据脱落、角度冻结、转速读零，环无法把它与堵转区分开。`foc_motor_create_ex()` 会直接拒绝这样的请求，而它没能
- *            拦下的情况由 `foc_motor_get_status()` 的 `observer_locked` 报出。 2.5 是实测的：20 kHz 下 8000 Hz（每载波
- *            周期 2.50 个控制周期）在包线扫描的每一格都站住，8400 Hz（2.38）在最宽解调截止频率上已经失败，9200 Hz（
+ *            据脱落、角度冻结、转速读零，环无法把它与堵转区分开。 `foc_motor_create_ex()` 会直接拒绝这样的请求，而它没
+ *            能拦下的情况由 `foc_motor_get_status()` 的 `observer_locked` 报出。 2.5 是实测的：20 kHz 下 8000 Hz（每载
+ *            波周期 2.50 个控制周期）在包线扫描的每一格都站住，8400 Hz（2.38）在最宽解调截止频率上已经失败，9200 Hz（
  *            2.17）在三个上全部失败。
  * @since 0.1.0
  * @exporter
@@ -829,8 +829,9 @@ float foc_hfi_max_inject_hz(float pwm_freq_hz);
  *            sweep measured as good across standstill to 50 rad/s mechanical.
  * @note [zh] 结果是 **可准入的** ：填进 `foc_motor_setup_t` 会得到一个 `foc_motor_create_ex()` 接受的配置。这正是 C 侧
  *            用例断言的性质，因为一个建议出库随后会拒绝的配置的定容工具，比没有工具更糟。它返回的数字都是实测的，每一个
- *            都在其推导处有文档：载波是 `foc_hfi_max_inject_hz(pwm_freq_hz)`，幅值是 `hf_current_a · 2π·inject_hz ·
- *            ld`，两个截止频率各 200 Hz——即 SIL 包线扫描在静止到 50 rad/s 机械范围内实测良好的那些值。
+ *            都在其推导处有文档：载波是 `foc_hfi_max_inject_hz(pwm_freq_hz)`，幅值是
+ *            `hf_current_a · 2π·inject_hz · ld`，两个截止频率各 200 Hz——即 SIL 包线扫描在静止到 50 rad/s 机械范围内实测
+ *            良好的那些值。
  * @since 0.1.0
  * @exporter
  */
@@ -840,7 +841,7 @@ FOC_WARN_UNUSED foc_err_t foc_hfi_size(const foc_motor_params_t *params, float p
 
 /**
  * @brief [en] Attach a trace buffer to a motor, or detach the current one with `NULL`.
- * @brief [zh] 给电机挂上一个轨迹缓冲区；`NULL` 拆除当前那一个。
+ * @brief [zh] 给电机挂上一个轨迹缓冲区； `NULL` 拆除当前那一个。
  * @param motor [en] handle from foc_motor_create(); NULL is FOC_ERR_PARAM.
  * @param motor [zh] 由 foc_motor_create() 得到的句柄；NULL 返回 FOC_ERR_PARAM。
  * @param samples [en] caller-owned array of at least `capacity` samples; NULL detaches. Its lifetime must outlast the
@@ -938,7 +939,7 @@ FOC_WARN_UNUSED foc_err_t foc_motor_trace_reset(foc_motor_t motor);
  * @param dt_s [zh] 相邻样本间隔，s（> 0）。
  * @param target [en] the commanded value the response approaches; `y[0]` is taken as the pre-step value, so the window
  *                    must start at or before the step.
- * @param target [zh] 响应逼近的目标值；`y[0]` 被当作阶跃前的值，因此窗口必须从阶跃前或阶跃处开始。
+ * @param target [zh] 响应逼近的目标值； `y[0]` 被当作阶跃前的值，因此窗口必须从阶跃前或阶跃处开始。
  * @param band [en] half-width of the settling band, same unit as `y` (>= 0).
  * @param band [zh] 稳定带半宽，与 `y` 同单位（>= 0）。
  * @param out [en] filled whenever the arguments describe a step, including the `FOC_ERR_STATE` case.
@@ -947,13 +948,13 @@ FOC_WARN_UNUSED foc_err_t foc_motor_trace_reset(foc_motor_t motor);
  *              FOC_ERR_PARAM for a NULL pointer, non-finite arguments, `dt_s <= 0`, `band < 0`, `n < 3`, or a window
  *              that does not move at all.
  * @return [zh] 拟合到衰减时返回 FOC_OK；未拟合到时返回 FOC_ERR_STATE（稳定时间等数仍然有效）；空指针、非有限参数、
- *              `dt_s <= 0`、`band < 0`、`n < 3`、或完全不动的一窗数据返回 FOC_ERR_PARAM。
+ *              `dt_s <= 0`、 `band < 0`、 `n < 3`、或完全不动的一窗数据返回 FOC_ERR_PARAM。
  * @note [en] `bandwidth_rad_s = 1 / tau`, and for this library's speed loop that is the whole claim:
  *            `speed_pi_config()` cancels the mechanical pole and leaves `wb / s`, a first-order loop whose -3 dB point
  *            is the bandwidth the caller asked for. Fitting `tau` from a trace and comparing it with the request
  *            therefore measures whether the gain law did what its documentation says -- which is the SIL case that pins
  *            this function.
- * @note [zh] `bandwidth_rad_s = 1 / tau`，对本库的速度环而言这就是断言的全部：`speed_pi_config()` 抵消机械极点后留下
+ * @note [zh] `bandwidth_rad_s = 1 / tau`，对本库的速度环而言这就是断言的全部： `speed_pi_config()` 抵消机械极点后留下
  *            `wb / s`，其 -3 dB 点就是调用方请求的带宽。因此从轨迹拟合 `tau` 并与请求值比较，就是在测量增益律是否做到了
  *            文档说的事——钉住本函数的 SIL 用例做的正是这件事。
  * @since 0.1.0
@@ -985,7 +986,7 @@ FOC_WARN_UNUSED foc_err_t foc_step_metrics(const float *y, uint32_t n, float dt_
  *            comparable to the errors it is meant to catch (measured: a 20 % gain error moved it 9.9 %); a magnitude at
  *            a known frequency needs no model and moves by about the error itself, which is why a sweep is the
  *            instrument for scale errors.
- * @note [zh] 这是扫频的运动部件：用 `A*cos(w*t)` 驱动给定，录下响应，两边都拟合，相除。`foc_step_metrics()` 的阶跃带宽
+ * @note [zh] 这是扫频的运动部件：用 `A*cos(w*t)` 驱动给定，录下响应，两边都拟合，相除。 `foc_step_metrics()` 的阶跃带宽
  *            是一个估计，其偏差与被测误差同量级（实测：20% 增益错误只让它挪动 9.9%）；而已知频率上的幅值不需要模型，且
  *            随误差本身移动约同样比例，这正是扫频成为"比例错误"之仪器的原因。
  * @since 0.1.0
@@ -999,7 +1000,7 @@ FOC_WARN_UNUSED foc_err_t foc_sinusoid_fit(const float *y, uint32_t n, float dt_
  * @brief [en] Build a torque map from the nameplate: N*m per amp, and the limits a torque command works inside.
  * @brief [zh] 由铭牌建立力矩地图：每安培多少 N·m，以及力矩指令工作的限幅。
  * @param params [en] the machine; `kt` and `pole_pairs` must describe a machine that produces torque.
- * @param params [zh] 机器；`kt` 与 `pole_pairs` 必须描述一台能产生力矩的机器。
+ * @param params [zh] 机器； `kt` 与 `pole_pairs` 必须描述一台能产生力矩的机器。
  * @param i_max_a [en] per-axis current limit, A (> 0). The torque limits are narrowed to what this can deliver.
  * @param i_max_a [zh] 每轴电流限幅，A（> 0）。力矩限幅会被收窄到这个值能交付的范围。
  * @param min_nm [en] lower torque limit, N*m. Pass 0 with a positive `max_nm` for a one-way command -- a tensioner or a
@@ -1022,14 +1023,14 @@ FOC_WARN_UNUSED foc_err_t foc_torque_map_build(const foc_motor_params_t *params,
 
 /**
  * @brief [en] The torque a dq current pair is producing: `kt*iq + 1.5*pp*(ld-lq)*id*iq`, in N*m.
- * @brief [zh] 一对 dq 电流正在产生的力矩：`kt·iq + 1.5·pp·(ld − lq)·id·iq`，单位 N·m。
+ * @brief [zh] 一对 dq 电流正在产生的力矩： `kt·iq + 1.5·pp·(ld − lq)·id·iq`，单位 N·m。
  * @param map [en] a map from foc_torque_map_build(); an unusable map estimates 0.
  * @param map [zh] 由 foc_torque_map_build() 得到的地图；不可用的地图估计出 0。
- * @param id_a [en] d-axis current, A. @param id_a
+ * @param id_a [en] d-axis current, A.
  * @param id_a [zh] d 轴电流，A。
- * @param iq_a [en] q-axis current, A. @param iq_a
+ * @param iq_a [en] q-axis current, A.
  * @param iq_a [zh] q 轴电流，A。
- * @return [en] torque in N*m. @return
+ * @return [en] torque in N*m.
  * @return [zh] 力矩，N·m。
  * @since 0.1.0
  * @exporter
@@ -1042,12 +1043,12 @@ float foc_torque_estimate(const foc_torque_map_t *map, float id_a, float iq_a);
  * @brief [zh] 把请求的力矩变成交付它的 q 轴电流，并施加双侧限幅。
  * @param map [en] a map from foc_torque_map_build().
  * @param map [zh] 由 foc_torque_map_build() 得到的地图。
- * @param requested_nm [en] the torque asked for, N*m; clipped to the map's limits. @param requested_nm
+ * @param requested_nm [en] the torque asked for, N*m; clipped to the map's limits.
  * @param requested_nm [zh] 请求的力矩。
- * @param id_a [en] the d-axis current the command will be applied at, A. @param id_a
+ * @param id_a [en] the d-axis current the command will be applied at, A.
  * @param id_a [zh] 指令将在其上下发的 d 轴电流。
  * @param out [en] filled whenever the map is usable; `limited` says whether anything was clipped.
- * @param out [zh] 地图可用时填入；`limited` 表示是否有内容被裁剪。
+ * @param out [zh] 地图可用时填入； `limited` 表示是否有内容被裁剪。
  * @return [en] FOC_OK; FOC_ERR_PARAM for a NULL pointer, an unusable map, or a d-axis current that cancels the torque
  *              constant and leaves no current able to deliver the request.
  * @return [zh] FOC_OK；空指针、不可用的地图、或抵消了转矩常数、使任何电流都交付不了该请求的 d 轴电流时返回
@@ -1088,14 +1089,14 @@ FOC_WARN_UNUSED foc_err_t foc_autotune_accumulate(foc_autotune_t handle, float d
  * @param handle [en] a live session.
  * @param handle [zh] 活着的会话。
  * @param out [en] non-NULL receiver; `struct_size` must be set by the caller.
- * @param out [zh] 非 NULL 接收者；`struct_size` 须由调用方填好。
+ * @param out [zh] 非 NULL 接收者； `struct_size` 须由调用方填好。
  * @return [en] FOC_OK (which does **not** mean `valid`), FOC_ERR_PARAM, or FOC_ERR_STATE on a stale handle.
  * @return [zh] FOC_OK（ **不** 表示 `valid`）、FOC_ERR_PARAM，或过期句柄时的 FOC_ERR_STATE。
  * @note [en] A refusal is an answer: `status` stays FOC_OK, `valid` is 0 and `reason` says which of the refusals fired.
  *            Returning an error code instead would make "this is not the machine you described" indistinguishable from
  *            "you called me wrong", and those are different actions for the caller.
- * @note [zh] 拒绝也是答案：`status` 仍是 FOC_OK、`valid` 为 0、`reason` 说明是哪一种拒绝。改成返回错误码会让"这不是你描
- *            述的那台机器"与"你调用错了"无法区分，而那两件事对调用方意味着不同的动作。
+ * @note [zh] 拒绝也是答案： `status` 仍是 FOC_OK、 `valid` 为 0、 `reason` 说明是哪一种拒绝。改成返回错误码会让"这不是
+ *            你描述的那台机器"与"你调用错了"无法区分，而那两件事对调用方意味着不同的动作。
  * @since 0.1.0
  * @exporter
  */
@@ -1190,7 +1191,7 @@ FOC_WARN_UNUSED foc_err_t foc_cogging_learn_ready(foc_cogging_learn_t handle, in
  * @param out_table [en] destination for `required` entries, or null to ask for the report alone.
  * @param out_table [zh] `required` 条的目标，或传空指针只问报告。
  * @param capacity [en] how many entries `out_table` holds; ignored when `out_table` is null.
- * @param capacity [zh] `out_table` 能装几条；`out_table` 为空时忽略。
+ * @param capacity [zh] `out_table` 能装几条； `out_table` 为空时忽略。
  * @param out_result [en] the report, on every return path.
  * @param out_result [zh] 报告，每一条返回路径上都写。
  * @return [en] FOC_OK with `count == required` (a table) or `count == 0` (the report-only call, meaning *the window was
@@ -1199,10 +1200,10 @@ FOC_WARN_UNUSED foc_err_t foc_cogging_learn_ready(foc_cogging_learn_t handle, in
  *              **the window is not evaluated in that case** — fix the buffer first, otherwise a small buffer and a bad
  *              window are the same answer). FOC_ERR_PARAM also covers an `out_result` whose `struct_size` does not
  *              match this build, and a null `out_result`.
- * @return [zh] `struct_size` 与本构建不符的 `out_result`、以及空的 `out_result`，同样答 FOC_ERR_PARAM。 FOC_OK：`count
- *              == required`（一张表）或 `count == 0`（只要报告的那次调用，意思是 **窗口是好的** ）；窗口不是一次测量时
- *              FOC_ERR_STATE，`result.status` 指明是四条拒绝里的哪一条；`capacity` 小于 `required` 时 FOC_ERR_PARAM（
- *              **此时不评估窗口** ——先修缓冲区，否则"缓冲区太小"与"窗口不好"会是同一个答案）。
+ * @return [zh] `struct_size` 与本构建不符的 `out_result`、以及空的 `out_result`，同样答 FOC_ERR_PARAM。 FOC_OK：
+ *              `count == required`（一张表）或 `count == 0`（只要报告的那次调用，意思是 **窗口是好的** ）；窗口不是一次
+ *              测量时 FOC_ERR_STATE， `result.status` 指明是四条拒绝里的哪一条； `capacity` 小于 `required` 时
+ *              FOC_ERR_PARAM（ **此时不评估窗口** ——先修缓冲区，否则"缓冲区太小"与"窗口不好"会是同一个答案）。
  * @note [en] **Never truncates.** A table shorter than `required` would make the caller believe it asked for fewer
  *            orders, and a compensator built from it would be missing exactly the harmonics nobody kept a record of.
  * @note [zh] **从不截断。** 比 `required` 短的表会让调用方以为它只要了这么几次，而用它造出的补偿器恰好缺掉那些没人记录

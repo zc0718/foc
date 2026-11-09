@@ -39,7 +39,7 @@ struct SoftLimitOutput final {
      * @brief [en] `Ok` when the target was inside the window and is passed through unchanged; `Param` when it was
      *             outside and has been *refused* -- the previous target comes back instead, so nothing downstream ever
      *             sees a position it would drive into a wall.
-     * @brief [zh] 目标在窗口内并原样通过时为 `Ok`；目标在窗口外并被 **拒绝** 时为 `Param`——回来的 是上一个目标，因此下
+     * @brief [zh] 目标在窗口内并原样通过时为 `Ok`；目标在窗口外并被 **拒绝** 时为 `Param` ——回来的 是上一个目标，因此下
      *             游任何东西都不会看到一个会把它驱进墙里的位置。
      */
     ErrorCode status;
@@ -78,8 +78,8 @@ struct SoftLimitOutput final {
  *
  *   两半回答两种不同的失效，把它们混在一起正是软限位名声不好的原因。拒绝窗口外的目标修的是 **编程** 错误——一次本就不该
  *   下发的运动——而它用状态回答而不是钳位，因为钳位会把一条不可能的命令变成一条看起来合理的命令，调用方永远学不到。靠近
- *   墙时限制速度修的是 **物理** 错误——轴有动量，需要距离把它耗掉——而它用一个每周期都成立的守恒式回答： `v² <= 2·a·(d −
- *   v·dt)`，`d` 是到墙的剩余距离，`a` 是轴真实具备的减速度，`dt` 是驱动自身的延迟。
+ *   墙时限制速度修的是 **物理** 错误——轴有动量，需要距离把它耗掉——而它用一个每周期都成立的守恒式回答：
+ *   `v² <= 2·a·(d − v·dt)`， `d` 是到墙的剩余距离， `a` 是轴真实具备的减速度， `dt` 是驱动自身的延迟。
  *
  *   为什么用守恒式而不是减速区：区有宽度，宽度得对，而"对"取决于速度。守恒式没有宽度——在任何速度和任何位置它说的都是同
  *   一件事——而且它就在施加它的那个周期里可检，用例因此可以逐点断言，而不是等到最后。
@@ -88,10 +88,10 @@ struct SoftLimitOutput final {
  *   它时停在墙前 **1.04 mm** ，而 19 mm 恰好是这台驱动把电流送到位所需的 1 ms 里的 `v·dt`。假设瞬时制动的上限等于假设无
  *   限加加速度，而没有哪台驱动有这个。
  *
- *   这条守恒式还有一个 **解** ，而那个解才是调试时该对着的数：距离 `d` 处上限放过的最大速度是 `sqrt(a²·τ² + 2·a·d) −
- *   a·τ`，延迟趋零时它退回熟悉的 `sqrt(2·a·d)`。它在 `(d, a)` 上联合一次齐次，所以一台强一倍、行程也长一倍的机器恰好快
- *   一倍而不是 `sqrt(2)` 倍；每个误差源都有一个平实的系数：每弧度墙的位置误差 `a/(v+a·τ)`、每 rad/s² 的制动能力
- *   `v²/(2·a·(v+a·τ))`、每秒延迟 `−a·v/(v+a·τ)`。
+ *   这条守恒式还有一个 **解** ，而那个解才是调试时该对着的数：距离 `d` 处上限放过的最大速度是
+ *   `sqrt(a²·τ² + 2·a·d) − a·τ`，延迟趋零时它退回熟悉的 `sqrt(2·a·d)`。它在 `(d, a)` 上联合一次齐次，所以一台强一倍、行
+ *   程也长一倍的机器恰好快一倍而不是 `sqrt(2)` 倍；每个误差源都有一个平实的系数：每弧度墙的位置误差 `a/(v+a·τ)`、每
+ *   rad/s² 的制动能力 `v²/(2·a·(v+a·τ))`、每秒延迟 `−a·v/(v+a·τ)`。
  * @since 0.1.0
  * @exporter
  */
@@ -131,7 +131,7 @@ class SoftLimit final {
     /**
      * @brief [en] Admit or refuse a target.
      * @brief [zh] 接纳或拒绝一个目标。
-     * @param target_rad [en] the target the caller wants, rad. @param target_rad
+     * @param target_rad [en] the target the caller wants, rad.
      * @param target_rad [zh] 调用方想要的目标，rad。
      * @note [en] The walls are **inclusive**: a target exactly on the wall is accepted and reported through `at_wall`.
      *            An exclusive boundary would make the last usable position depend on the last digit of a float, and
@@ -169,13 +169,13 @@ class SoftLimit final {
     /**
      * @brief [en] Cap a velocity command so the axis can still stop before the wall it is heading for.
      * @brief [zh] 限住速度指令，使轴仍能在它正驶向的那面墙之前停住。
-     * @param velocity_command_rad_s [en] what the loop would like, rad/s. @param velocity_command_rad_s
+     * @param velocity_command_rad_s [en] what the loop would like, rad/s.
      * @param velocity_command_rad_s [zh] 环路想要的速度，rad/s。
-     * @param position_rad [en] where the axis is, rad. @param position_rad
+     * @param position_rad [en] where the axis is, rad.
      * @param position_rad [zh] 轴在哪，rad。
-     * @param decel_rad_s2 [en] the deceleration the axis really has, rad/s^2 (> 0). @param decel_rad_s2
+     * @param decel_rad_s2 [en] the deceleration the axis really has, rad/s^2 (> 0).
      * @param decel_rad_s2 [zh] 轴真实具备的减速度，rad/s²（> 0）。
-     * @param delay_s [en] how long the drive takes to deliver a braking command, s (>= 0). @param delay_s
+     * @param delay_s [en] how long the drive takes to deliver a braking command, s (>= 0).
      * @param delay_s [zh] 驱动把制动指令送到位需要多久，s（>= 0）。
      * @return [en] a command whose magnitude never exceeds the ceiling `v^2 = 2*decel*(d - v*delay)` in the direction
      *              of the wall it is approaching, and the input unchanged otherwise.
@@ -184,7 +184,7 @@ class SoftLimit final {
      *            derivable here. A number taken from a datasheet or a commissioning run is the only honest source, so
      *            `decel <= 0` is refused (the command is passed through) instead of defaulted, and a negative delay is
      *            treated as zero -- the idealised drive, which is the assumption the `v*delay` term exists to correct.
-     * @note [zh] `decel_rad_s2` 是轴自身的停车能力、`delay_s` 是它自身的延迟，两者都无法从这里推导。取自数据表或一次调
+     * @note [zh] `decel_rad_s2` 是轴自身的停车能力、 `delay_s` 是它自身的延迟，两者都无法从这里推导。取自数据表或一次调
      *            试运行的数才是唯一诚实的来源，因此 `减速度 <= 0` 被拒绝（指令原样通过）而不是取默认；负的延迟当作零处
      *            理 ——那是理想化驱动，也正是 `v·延迟` 这一项存在的目的所要纠正的假设。
      * @since 0.1.0

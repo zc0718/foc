@@ -37,12 +37,12 @@
  *            escape route that does work is to bind it first -- `foc_err_t e = foc_set_speed(m, v); (void)e;` -- and it
  *            is deliberately not the cheapest one to type. Reproduce with `gcc -std=c11 -Wall -Wextra`: the void-cast
  *            form warns, the bind-then-void form is silent.
- * @note [zh] 在这个存在之前，`foc_motor_create()` 的 `foc_err_t` 可以被无声丢掉：句柄保持空，之后每个调用都答
+ * @note [zh] 在这个存在之前， `foc_motor_create()` 的 `foc_err_t` 可以被无声丢掉：句柄保持空，之后每个调用都答
  *            `FOC_ERR_PARAM`，而调用方的构建里一个字都不说。这正是本库拒绝接受的那类缺陷的特征——一个看起来像对的错误答
- *            案。有意丢掉返回码必须 **写出来** ：`(void)foc_set_speed(m, v);` 在 GCC 上 **并不能** 消除这个告警——
- *            `__attribute__((warn_unused_result))` 不认这个 void 转换（`[[nodiscard]]` 才认）。真正能过的写法是先绑一个
- *            变量：`foc_err_t e = foc_set_speed(m, v); (void)e;`——而且它 **故意** 不是最省事的那种写法。用 `gcc
- *            -std=c11 -Wall -Wextra` 即可复现：转 void 那种告警，绑变量那种静默。
+ *            案。有意丢掉返回码必须 **写出来** ： `(void)foc_set_speed(m, v);` 在 GCC 上 **并不能** 消除这个告警——
+ *            `__attribute__((warn_unused_result))` 不认这个 void 转换（ `[[nodiscard]]` 才认）。真正能过的写法是先绑一
+ *            个变量： `foc_err_t e = foc_set_speed(m, v); (void)e;` ——而且它 **故意** 不是最省事的那种写法。用
+ *            `gcc -std=c11 -Wall -Wextra` 即可复现：转 void 那种告警，绑变量那种静默。
  * @since 0.1.0
  */
 #if defined(__cplusplus) && (__cplusplus >= 201703L)
@@ -62,7 +62,7 @@
  *
  * @brief [zh] C 路径的不透明电机句柄。
  *
- *   由 `foc_motor_create()` 创建、`foc_motor_destroy()` 失效；内部用代际计数识别失效句柄。
+ *   由 `foc_motor_create()` 创建、 `foc_motor_destroy()` 失效；内部用代际计数识别失效句柄。
  * @since 0.1.0
  * @exporter
  */
@@ -123,11 +123,11 @@ typedef struct foc_motor_params {
  *            `FOC_ERR_NOT_IMPL`, which contradicted the en note directly above it and had been false for several
  *            releases. A bilingual pair that disagrees is worse than one language: the reader who needs the translation
  *            most is the one who gets the stale half.
- * @note [zh] 五种模式都已接入，每一种都是按事实而非按开关放行的：`NONLINEAR_FLUX` 只需要铭牌，`DUAL_INDUCTANCE` 也只需
- *            要铭牌（它是那个把两个电感都用上的观测器，所以凸极机是它的主场而不是它的条件），`HFI` 需要一个明确给出的载
- *            波和一台凸极机，`BLENDED` 还需要一条有序的交接带。这台机器满足不了的请求回答 `FOC_ERR_PARAM`。被命名却未接
- *            入的模式回答错误，而不是静默退回默认值——因为静默退回与成功无法区分。 `foc_motor_status_t::observer` 报出实
- *            际在跑的模式，调用方无需从自己请求了什么去推断。此处原来的中文注释说 `HFI` 与 `BLENDED` 仍回答
+ * @note [zh] 五种模式都已接入，每一种都是按事实而非按开关放行的： `NONLINEAR_FLUX` 只需要铭牌， `DUAL_INDUCTANCE` 也只
+ *            需要铭牌（它是那个把两个电感都用上的观测器，所以凸极机是它的主场而不是它的条件）， `HFI` 需要一个明确给出
+ *            的载波和一台凸极机， `BLENDED` 还需要一条有序的交接带。这台机器满足不了的请求回答 `FOC_ERR_PARAM`。被命名
+ *            却未接入的模式回答错误，而不是静默退回默认值——因为静默退回与成功无法区分。 `foc_motor_status_t::observer`
+ *            报出实际在跑的模式，调用方无需从自己请求了什么去推断。此处原来的中文注释说 `HFI` 与 `BLENDED` 仍回答
  *            `FOC_ERR_NOT_IMPL`，与紧邻其上的英文注释直接矛盾，并且已经错了好几个版本。一对彼此不一致的双语注释比单语更
  *            糟：最需要译文的那位读者，拿到的正是陈旧的那一半。
  * @since 0.1.0
@@ -162,8 +162,8 @@ typedef enum foc_observer {
  *   在 0 不是合法取值的字段上（限流、载波、母线电压、带宽），0 表示“使用库默认值”； 其余取值一律采信并校验，因此负数限
  *   流是参数错误而不是静默回落。 `deadtime_ns` 与 `speed_loop_period_s` 的 0 按字面生效，因为 0 对它们都是合法取值。
  *
- *   `align_*` 字段是那条规则的例外：它们按字面生效，`align_current_a == 0` 意为“不做对齐” ——对偏置已知的电机这是一个合
- *   法且常见的选择。但 **半配置** 的对齐会被拒绝：`align_current_a` 为 0 时其余 `align_*` 字段也必须为 0；它非 0 时
+ *   `align_*` 字段是那条规则的例外：它们按字面生效， `align_current_a == 0` 意为“不做对齐” ——对偏置已知的电机这是一个合
+ *   法且常见的选择。但 **半配置** 的对齐会被拒绝： `align_current_a` 为 0 时其余 `align_*` 字段也必须为 0；它非 0 时
  *   `align_hold_s` 与 `align_tolerance_rad` 变成必填。
  * @since 0.1.0
  * @exporter
@@ -308,7 +308,7 @@ typedef struct foc_motor_command {
  *            到调用方对象之外。
  *
  *   两个状态字段故意用 `int32_t` 而不是枚举类型：C 枚举的底层类型由实现决定，而这些数值属于 冻结的 ABI。契约是
- *   `FOC_MOTOR_*`、`FOC_ALIGN_*` 这些常量，字段只是它的存储。
+ *   `FOC_MOTOR_*`、 `FOC_ALIGN_*` 这些常量，字段只是它的存储。
  * @since 0.1.0
  * @exporter
  */
@@ -321,7 +321,7 @@ typedef struct foc_motor_command {
  *            current instead of a magic voltage), and the two cutoffs are the fixed values the envelope sweep measured
  *            -- 200 Hz for demodulation, 200 Hz for the published speed.
  * @note [zh] 每个字段都转达一条实测规则而不是偏好：载波取该控制率能分辨的最高值（也就是实测最好的角度偏差——8000 Hz 比
- *            2000 Hz 好 33 倍），幅值取能拉出 **你** 预算的高频电流所需的那份伏特（`I_hf·ω_h·Ld`，于是幅值变成一个关于
+ *            2000 Hz 好 33 倍），幅值取能拉出 **你** 预算的高频电流所需的那份伏特（ `I_hf·ω_h·Ld`，于是幅值变成一个关于
  *            注入电流的决定，而不是一个魔法电压），两个截止频率是包线扫描量到的固定值——解调 200 Hz、已发布转速 200 Hz。
  * @since 0.1.0
  */
@@ -440,7 +440,7 @@ typedef struct foc_motor_status {
  * @brief [zh] `foc_board_check()` 报告的检查项。
  * @note [en] A C enum, like every other constant in this header: `#define` would be a constant declared by macro, which
  *            this project's tidy gate rejects, and the values are frozen either way.
- * @note [zh] C 枚举，与本头文件里其它常量一致：`#define` 属于"用宏声明常量"，被本项目的 tidy 门拒 绝；两种写法下这些数
+ * @note [zh] C 枚举，与本头文件里其它常量一致： `#define` 属于"用宏声明常量"，被本项目的 tidy 门拒 绝；两种写法下这些数
  *            值同样冻结。
  * @since 0.1.0
  * @exporter
@@ -589,7 +589,7 @@ typedef struct foc_fw_verdict {
  * @note [en] `RAMPING` means the sequence owns the torque command; `RELEASED` and `FAILED` mean it has handed the axis
  *            back. There is no state that means "the torque is half mine": the caller reads the phase and the torque
  *            together, and the phase says which one is in charge.
- * @note [zh] `RAMPING` 表示转矩指令归序列所有；`RELEASED` 与 `FAILED` 表示它已把轴交回。不存在 “转矩一半是我的”这种状
+ * @note [zh] `RAMPING` 表示转矩指令归序列所有； `RELEASED` 与 `FAILED` 表示它已把轴交回。不存在 “转矩一半是我的”这种状
  *            态：调用方要把阶段与转矩一起读，阶段说明哪个在管。
  * @since 0.1.0
  * @exporter
@@ -669,8 +669,8 @@ typedef struct foc_pi_gains {
  * @note [en] `residual` is the part the model could not explain, in the same unit as the samples (V). `valid` is the
  *            honest gate: it is false when there are too few samples or the sweep is too narrow for a slope, and then
  *            `value` means nothing. A caller that ignores `valid` gets a number that looks like a measurement.
- * @note [zh] `residual` 是模型解释不掉的部分，单位与样本一致（V）。`valid` 是那道诚实的门：样本太少或扫描跨度不足以定出
- *            斜率时为 false，此时 `value` 没有意义。忽略 `valid` 的调用方会得到一个看起来像测量值的数字。
+ * @note [zh] `residual` 是模型解释不掉的部分，单位与样本一致（V）。 `valid` 是那道诚实的门：样本太少或扫描跨度不足以定
+ *            出斜率时为 false，此时 `value` 没有意义。忽略 `valid` 的调用方会得到一个看起来像测量值的数字。
  * @since 0.1.0
  * @exporter
  */
@@ -730,7 +730,7 @@ typedef struct foc_protection_input {
 typedef struct foc_protection_output {
     uint32_t struct_size;
     int32_t fault;          ///< FOC_FAULT_*
-    uint32_t active_mask;   ///< bit 1<<code per active fault
+    uint32_t active_mask;   ///< bit `1 << code` per active fault
     uint32_t latched_mask;  ///< the same, faults that will not self-clear
     float i_limit_a;        ///< derated current limit, 0 when tripped
     int32_t output_allowed; ///< 0 = stop switching this step
@@ -887,12 +887,12 @@ typedef struct foc_autotune_result {
  * @brief [en] Start a tuning session.
  * @brief [zh] 开始一次整定会话。
  * @param config [en] non-NULL; `struct_size` must be set by the caller.
- * @param config [zh] 非 NULL；`struct_size` 须由调用方填好。
+ * @param config [zh] 非 NULL； `struct_size` 须由调用方填好。
  * @param out [en] non-NULL receiver of the handle.
  * @param out [zh] 非 NULL 的句柄接收者。
  * @return [en] FOC_OK, FOC_ERR_PARAM for a NULL argument, an uncovered `struct_size` or a configuration that could
  *              never produce an answer, and FOC_ERR_NO_RESOURCE when every session slot is in use.
- * @return [zh] FOC_OK；空指针、`struct_size` 覆盖不住、或配置永远给不出答案时为 FOC_ERR_PARAM；会话槽用尽时为
+ * @return [zh] FOC_OK；空指针、 `struct_size` 覆盖不住、或配置永远给不出答案时为 FOC_ERR_PARAM；会话槽用尽时为
  *              FOC_ERR_NO_RESOURCE。
  * @post [en] `*out` is owned by the caller until `foc_autotune_destroy()`.
  * @post [zh] `*out` 归调用方所有，直到 `foc_autotune_destroy()`。
@@ -908,7 +908,7 @@ typedef struct foc_autotune_result {
  * @note [en] The layout is the C++ `core::TraceSample` field for field, and `bridge.cpp` asserts that at compile time
  *            rather than trusting this comment. Seven numbers, two states, and the platform timestamp truncated to 32
  *            bits; `t_us == 0` on every sample means the HAL has no clock.
- * @note [zh] 布局与 C++ 的 `core::TraceSample` 逐字段一致，`bridge.cpp` 在编译期断言这一点而不靠这条注释。七个数、两个
+ * @note [zh] 布局与 C++ 的 `core::TraceSample` 逐字段一致， `bridge.cpp` 在编译期断言这一点而不靠这条注释。七个数、两个
  *            状态，以及截断到 32 位的平台时间戳；每条 `t_us == 0` 表示 HAL 没有时钟。
  * @since 0.1.0
  * @exporter
@@ -936,9 +936,9 @@ typedef struct foc_trace_sample {
  *            **and the settling numbers are still valid**, because a response can settle without being fittable.
  *            `FOC_ERR_PARAM` means the arguments cannot describe a step at all. A bandwidth of 0 therefore never means
  *            "not measured by accident".
- * @note [zh] `status` 是诊断通道，不是装饰：`FOC_OK` 表示拟合到一阶衰减，`FOC_ERR_STATE` 表示窗口里没有可用的衰减—— 此
- *            时 `bandwidth_rad_s` 为 0， **而稳定时间等数仍然有效** ，因为一段响应可以稳定却不可拟合。`FOC_ERR_PARAM`
- *            表示参数根本描述不了一个阶跃。因此带宽为 0 永远不会是"不小心没测"。
+ * @note [zh] `status` 是诊断通道，不是装饰： `FOC_OK` 表示拟合到一阶衰减， `FOC_ERR_STATE` 表示窗口里没有可用的衰减——
+ *            此时 `bandwidth_rad_s` 为 0， **而稳定时间等数仍然有效** ，因为一段响应可以稳定却不可拟合。
+ *            `FOC_ERR_PARAM` 表示参数根本描述不了一个阶跃。因此带宽为 0 永远不会是"不小心没测"。
  * @since 0.1.0
  * @exporter
  */
@@ -965,9 +965,9 @@ typedef struct foc_step_metrics {
  *            fraction of a cycle produces a number, but not the tone's amplitude), `FOC_ERR_PARAM` means the arguments
  *            are not a sinusoid at all -- including an `omega_rad_s` above Nyquist, where the projection aliases and
  *            the amplitude would be reported at a frequency the signal does not have.
- * @note [zh] `status` 区分"有音"与"有数"：`FOC_OK` 表示良态拟合，`FOC_ERR_STATE` 表示窗口短于所问频率的一个周期（在不足
- *            一周期处拟合也会出数，但那不是这个音的幅值），`FOC_ERR_PARAM` 表示参数根本不是正弦——包括 `omega_rad_s` 超
- *            过 Nyquist，那里投影会混叠，幅值会被报到信号并不具有的频率上。
+ * @note [zh] `status` 区分"有音"与"有数"： `FOC_OK` 表示良态拟合， `FOC_ERR_STATE` 表示窗口短于所问频率的一个周期（在不
+ *            足一周期处拟合也会出数，但那不是这个音的幅值）， `FOC_ERR_PARAM` 表示参数根本不是正弦——包括 `omega_rad_s`
+ *            超过 Nyquist，那里投影会混叠，幅值会被报到信号并不具有的频率上。
  * @since 0.1.0
  * @exporter
  */
@@ -986,8 +986,8 @@ typedef struct foc_sinusoid_fit {
  * @note [en] `status` is the admission channel: `FOC_OK` when the nameplate produces torque at all, `FOC_ERR_PARAM`
  *            when it cannot (`kt <= 0` says the machine produces no torque per amp, which is not a machine) or when the
  *            limits do not describe an interval.
- * @note [zh] `status` 是准入通道：铭牌能产生力矩时为 `FOC_OK`；不能时为 `FOC_ERR_PARAM`（`kt <= 0` 表示这台机器每安培不
- *            产生力矩，那不是一个机器），或两个限幅不构成一个区间时亦然。
+ * @note [zh] `status` 是准入通道：铭牌能产生力矩时为 `FOC_OK`；不能时为 `FOC_ERR_PARAM`（ `kt <= 0` 表示这台机器每安培
+ *            不产生力矩，那不是一个机器），或两个限幅不构成一个区间时亦然。
  * @since 0.1.0
  * @exporter
  */
@@ -1028,8 +1028,9 @@ typedef struct foc_torque_command {
  * @note [en] `amplitude_nm` is always positive and `phase_rad` is the phase at `theta_mech = 0`, so the wheel's shape
  *            is `amplitude_nm * sin(order * theta + phase_rad)`. That is the same type the compensator consumes, which
  *            is what makes a learned table usable without a units conversion in the caller.
- * @note [zh] `amplitude_nm` 恒为正，`phase_rad` 是 `theta_mech = 0` 处的相位，于是轮的形状是 `amplitude_nm·sin(order·θ
- *            + phase_rad)`。它与补偿器消费的是同一类型，这正是学到的表能被调用方不经单位换算直接使用的原因。
+ * @note [zh] `amplitude_nm` 恒为正， `phase_rad` 是 `theta_mech = 0` 处的相位，于是轮的形状是
+ *            `amplitude_nm·sin(order·θ + phase_rad)`。它与补偿器消费的是同一类型，这正是学到的表能被调用方不经单位换算
+ *            直接使用的原因。
  * @since 0.1.0
  * @exporter
  */
@@ -1081,10 +1082,10 @@ typedef struct foc_cogging_learn_config {
  * @brief [zh] 一次学习结束时对自己的交代，以及调用方那张表装不装得下。
  * @note [en] `required` and `capacity` are both echoed on **every** return, including the ones that wrote nothing. That
  *            is the whole capacity contract: a caller that offered too few slots is told how many the answer needs
- *            instead of being handed a shorter table that looks complete, and a caller that asked for a report only
- *            (`out == NULL`) learns the same numbers without owning a buffer.
+ *            instead of being handed a shorter table that looks complete, and a caller that asked for a report only (
+ *            `out == NULL`) learns the same numbers without owning a buffer.
  * @note [zh] `required` 与 `capacity` 在 **每一次** 返回时都报出，包括什么都没写的那些。这就是完整的容量契约：槽位给少
- *            了的调用方会被告知答案需要几条，而不是拿到一张看起来完整的短表；只要报告（`out == NULL`）的调用方则不必持
+ *            了的调用方会被告知答案需要几条，而不是拿到一张看起来完整的短表；只要报告（ `out == NULL`）的调用方则不必持
  *            有缓冲区也能拿到同样的数。
  * @since 0.1.0
  * @exporter

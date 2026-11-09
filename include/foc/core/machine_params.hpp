@@ -27,9 +27,9 @@ namespace core {
  *            the caller means (the plant does not tell you what it is), and `psi_f` is the flux linkage, not the torque
  *            constant -- `psi_f = Kt / (1.5 * pole_pairs)`, which `motor_config.hpp` can compute from a nameplate.
  *            Mixing Kt into a voltage equation is dimensionally wrong and is PRD erratum D24 in this repository.
- * @note [zh] SI 单位，更重要的是 **到处是同一套单位** ：`rs` 是调用方所指温度下的值（plant 不会告诉你 温度），`psi_f`
- *            是磁链而不是转矩常数——`psi_f = Kt / (1.5 * pole_pairs)`，`motor_config.hpp` 可由铭牌算出。把 Kt 塞进电压方
- *            程量纲不对，在本仓库里是 PRD 勘误 D24。
+ * @note [zh] SI 单位，更重要的是 **到处是同一套单位** ： `rs` 是调用方所指温度下的值（plant 不会告诉你 温度）， `psi_f`
+ *            是磁链而不是转矩常数—— `psi_f = Kt / (1.5 * pole_pairs)`， `motor_config.hpp` 可由铭牌算出。把 Kt 塞进电压
+ *            方程量纲不对，在本仓库里是 PRD 勘误 D24。
  * @since 0.1.0
  * @exporter
  */

@@ -78,10 +78,10 @@ struct HomingConfig final {
  *            defect here (F-105): `elapsed_s_ += dt_s` in float ran 12.8 % fast at 512 s and froze past that, so a 512
  *            s recipe fired at 446.664 s and a 520 s recipe never fired at all, which is the exact opposite of the
  *            "give up rather than turn forever" the failure path promises.
- * @note [zh] 超时由 `core::ElapsedClock`——整纳秒计数——判定，而不是浮点的周期累加。这里曾是一个真实缺陷（F-105）：浮点的
- *            `elapsed_s_ += dt_s` 在 512 s 处快 12.8 % 并自此冻结，于是一个 512 s 的配方在 446.664 s 触发、一个 520 s
- *            的配方根本不触发，恰好与失败路径承诺的"放弃而不是一直转"相反。它唯一报告的是超时。搜索期间丢失圈计数在这里
- *            **不是** 失败：搜索之所以存在正是因为原点未知，而标记正是恢复计数的东西（见
+ * @note [zh] 超时由 `core::ElapsedClock` ——整纳秒计数——判定，而不是浮点的周期累加。这里曾是一个真实缺陷（F-105）：浮点
+ *            的 `elapsed_s_ += dt_s` 在 512 s 处快 12.8 % 并自此冻结，于是一个 512 s 的配方在 446.664 s 触发、一个 520
+ *            s 的配方根本不触发，恰好与失败路径承诺的"放弃而不是一直转"相反。它唯一报告的是超时。搜索期间丢失圈计数在这
+ *            里 **不是** 失败：搜索之所以存在正是因为原点未知，而标记正是恢复计数的东西（见
  *            `PositionReference::lost_count()`）。一个因为丢计数就放弃的流程，会在轴回零前被动过时拒绝搜索 ——而那正是常
  *            态。
  * @since 0.1.0
@@ -109,8 +109,8 @@ class HomingRoutine final {
      * @return [en] `FOC_ERR_NOT_IMPL` when every field is zero -- the documented way of saying "no homing was asked
      *              for", as `StartupRoutine::validate()` does; `FOC_ERR_PARAM` for any non-positive or non-finite
      *              value, or a direction that is not +1 or -1; otherwise `Ok`.
-     * @return [zh] 所有字段为零时返回 `FOC_ERR_NOT_IMPL`——与 `StartupRoutine::validate()` 一样，这是"没有要求回零" 的书
-     *              面写法；出现非正、非有限的值或方向不是 +1/-1 时返回 `FOC_ERR_PARAM`；否则 `Ok`。
+     * @return [zh] 所有字段为零时返回 `FOC_ERR_NOT_IMPL` ——与 `StartupRoutine::validate()` 一样，这是"没有要求回零" 的
+     *              书面写法；出现非正、非有限的值或方向不是 +1/-1 时返回 `FOC_ERR_PARAM`；否则 `Ok`。
      * @since 0.1.0
      */
     [[nodiscard]] auto validate() const noexcept -> ErrorCode;
@@ -121,7 +121,7 @@ class HomingRoutine final {
      * @param reference [en] the reference the search is looking for an origin in.
      * @param reference [zh] 搜索要在其中找原点的参考。
      * @return [en] `true` when the search is over before it starts (`Done`), `false` when it has begun creeping.
-     * @return [zh] 搜索尚未开始就已结束（`Done`）时返回 `true`；已开始爬行时返回 `false`。
+     * @return [zh] 搜索尚未开始就已结束（ `Done`）时返回 `true`；已开始爬行时返回 `false`。
      * @note [en] Already homed means already done. Turning a homed axis to look for a mark it is already sitting on
      *            would be a move nobody asked for.
      * @note [zh] 已回零即已完成。让一个已回零的轴转起来去找它已经坐着的标记，是一次没人要求过的运动。

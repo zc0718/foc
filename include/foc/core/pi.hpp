@@ -53,7 +53,7 @@ struct SpeedInput final {
  *
  * @brief [zh] 输出与积分都被限幅的离散 PI 一步。
  *
- *   积分限幅 **就是** 抗饱和手段：本实现没有 back-calculation，`step()` 也拿不到执行器实际施加的输出。积分在加到比例项
+ *   积分限幅 **就是** 抗饱和手段：本实现没有 back-calculation， `step()` 也拿不到执行器实际施加的输出。积分在加到比例项
  *   **之前** 先按 **当前** 窗口重新夹紧，这正是窗口收窄时已存输出能立刻释放的原因：
  *
  *   \f[ e = r - y,\qquad i \leftarrow \mathrm{clamp}(i + k_i\,e\,\Delta t,\; i_{min},\; i_{max}),\qquad u =
@@ -63,7 +63,7 @@ struct SpeedInput final {
  *   误差单位/秒）、\f$\Delta t\f$ 是步长，s。全部取调用方环路的单位；本段不出现机器量，因此不需要符号表。台账
  *   `E-PI-1`。
  *
- *   积分窗口请取成该环的 **稳态输出量级** ——速度环即“维持最高转速所需电流”，而不是 `i_max`——因为按满量程取会让饱和后出
+ *   积分窗口请取成该环的 **稳态输出量级** ——速度环即“维持最高转速所需电流”，而不是 `i_max` ——因为按满量程取会让饱和后出
  *   现明显的慢恢复（电流阶跃与饱和限幅两个场景有实测数字）。状态全部在对象内：无全局、不分配，每个轴一个实例。
  *
  * @warning [en] A negative gain is refused at construction and the controller latches `ErrorCode::Param`; a
@@ -97,7 +97,7 @@ class Pi final {
      *
      * @warning [en] A negative gain or an inverted window is refused at construction, and `reset()` re-runs the same
      *               check, so a latched controller cannot be revived by clearing its state alone.
-     * @warning [zh] 负增益或反向窗口在构造时被拒绝；`reset()` 会重跑同一项检查，所以无法靠清状态把锁存的控制器救活。
+     * @warning [zh] 负增益或反向窗口在构造时被拒绝； `reset()` 会重跑同一项检查，所以无法靠清状态把锁存的控制器救活。
      * @see `test_pi.cpp` (`NegativeGainIsRejectedAtConstruction`)
      * @since 0.1.0
      */

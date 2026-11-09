@@ -102,7 +102,7 @@ class StubPwm final : public hal::Pwm {
      * @param back [zh] 0 为最新一次写入。
      * @return [en] the recorded duty, or an all-zero vector once `back` is outside the recorded range (nothing to
      *              show).
-     * @return [zh] 记录到的占空比；`back` 超出已记录范围时返回全零矢量（无内容可看）。
+     * @return [zh] 记录到的占空比； `back` 超出已记录范围时返回全零矢量（无内容可看）。
      * @post [en] Once the ring is full the oldest entry is dropped, not an error: a control loop must never be asked to
      *            handle a bookkeeping overflow.
      * @post [zh] 环形缓冲满后丢弃最旧的一条， **不报错** ：控制环不该为“记账溢出”付出代价。

@@ -52,8 +52,8 @@ template <typename T> constexpr auto clamp(T value, T low, T high) noexcept -> T
  *               the rate and never validates it, so the layer that builds the limiter from a nameplate is where a bad
  *               rate belongs.
  * @warning [zh] 这里不拒绝任何东西，而有两种情形看起来像错误其实不是。非正 \f$\Delta t\f$ 是没有时间经过的一步，于是值
- *               保持不变、调用方看到上一拍的数。非正速率会让输出冻住，而不是配置被拒绝：`step()` 只乘速率、从不校验它，
- *               所以该拦下坏速率的是用铭牌构造限制器的那一层。
+ *               保持不变、调用方看到上一拍的数。非正速率会让输出冻住，而不是配置被拒绝： `step()` 只乘速率、从不校验
+ *               它，所以该拦下坏速率的是用铭牌构造限制器的那一层。
  * @see `foc/core/limits.hpp` claim row, `test_limits.cpp` (`RampsTowardsTargetAtConfiguredRate`, `NonPositiveDtHoldsValue`), ledger `E-SLEW-1`
  */
 class SlewLimiter final {

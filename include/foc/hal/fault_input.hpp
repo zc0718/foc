@@ -9,7 +9,7 @@ namespace hal {
 
 /**
  * @brief [en] The power stage's fault output (`nFAULT`): one bit saying "the drive has tripped, stop".
- * @brief [zh] 功率级的故障输出（`nFAULT`）：一位，说"驱动器已经保护动作，停"。
+ * @brief [zh] 功率级的故障输出（ `nFAULT`）：一位，说"驱动器已经保护动作，停"。
  *
  * @details [en] This contract exists because of one default value, and that default is dangerous enough to deserve a
  *               type of its own. Everywhere else in this HAL an absent capability means "this host cannot do it" and
@@ -36,14 +36,14 @@ namespace hal {
  *               或驱动电源欠压，是硬件被毁之前的最后一次警告，而一个从没问过的控制器与一个被告知"一切正常"的控制器，从
  *               外面看是一样的。
  *
- *   所以这一成员的缺席是 **在装配时就拒绝** ，而不是取默认值：`Motor::start()` 答 `NotImpl`，轴留在 Idle、输出级保持关
+ *   所以这一成员的缺席是 **在装配时就拒绝** ，而不是取默认值： `Motor::start()` 答 `NotImpl`，轴留在 Idle、输出级保持关
  *   闭。一个确实没有这根引脚的主控方（仿真器、FMU、功率级是桩的试验台）通过装一个 `driver::StubFaultInput` 并且从不拉高
  *   来明说这件事——"这里没有故障通路"这句话要被 **写下来** ，只写一次，写在集成方自己的代码里，让评审看得见。这就是默认
  *   值与决定的全部差别。
  *
- *   这根引脚 **说不出** 的： **为什么** 。`nFAULT` 是一位，成因在驱动器自己的寄存器里。所以库报 `FaultCode::DriveFault`
- *   ——" 功率级说它出事了"——不去假装在去饱和、驱动欠压、驱动过温之间猜一个。把成因读出来是板子的事，属于那块板的诊断，不
- *   属于这里的一个猜测。
+ *   这根引脚 **说不出** 的： **为什么** 。 `nFAULT` 是一位，成因在驱动器自己的寄存器里。所以库报
+ *   `FaultCode::DriveFault` ——" 功率级说它出事了"——不去假装在去饱和、驱动欠压、驱动过温之间猜一个。把成因读出来是板子的
+ *   事，属于那块板的诊断，不属于这里的一个猜测。
  *
  * @context [en] Read once per control period, before anything else: a fault outranks every other status.
  * @context [zh] 每个控制周期读一次，且在所有事情之前：故障压过其余任何状态。
@@ -63,7 +63,7 @@ class FaultInput {
      *            and active-high on some, and a library that assumed either would invert a safety signal on the other
      *            half of the boards. The adapter that knows its own hardware answers "is it faulted", not "what is the
      *            pin level".
-     * @note [zh] 极性属于适配层而不属于这个契约：`nFAULT` 在多数栅极驱动器上是低有效、在少数上高有效，而任何假定其中一
+     * @note [zh] 极性属于适配层而不属于这个契约： `nFAULT` 在多数栅极驱动器上是低有效、在少数上高有效，而任何假定其中一
      *            种的库都会在另一半板子上把安全信号取反。知道自己硬件的那个适配层回答的是"它故障了吗"，不是"引脚电平是
      *            多少 "。
      * @context [en] Control ISR.

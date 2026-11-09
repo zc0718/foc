@@ -16,7 +16,7 @@ namespace {
  * @note [en] A free function rather than a member call from the constructor: `validate()` needs `config_`, and calling
  *            a member function on a half-constructed object is the kind of thing that works until someone reorders the
  *            member list.
- * @note [zh] 用自由函数而不是在构造函数里调用成员：`validate()` 需要 `config_`，而在半构造的对象上调用成员函数，属于那
+ * @note [zh] 用自由函数而不是在构造函数里调用成员： `validate()` 需要 `config_`，而在半构造的对象上调用成员函数，属于那
  *            种"直到有人重排了成员列表才出问题"的做法。
  */
 auto usable(const HomingConfig& config) noexcept -> bool {

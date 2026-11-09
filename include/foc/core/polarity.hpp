@@ -31,11 +31,11 @@ enum class PolarityVerdict : std::int8_t {
 /**
  * @brief [en] Magnet polarity from a pair of d-axis voltage pulses.
  *
- *   Why a separate step rather than something the observer does: a saliency tracking loop has a stable zero at `dtheta
- *   = 0` **and** at `dtheta = pi`, because `sin(2*dtheta)` cannot tell the two apart. The information that separates
- *   them is not in the saliency -- it is in magnetic saturation: `+i_d` reinforces the rotor flux and `-i_d` opposes
- *   it, so the *same* volt-second pulse in the two directions produces two different current rises. The larger rise is
- *   the magnet's `+d`.
+ *   Why a separate step rather than something the observer does: a saliency tracking loop has a stable zero at
+ *   `dtheta = 0` **and** at `dtheta = pi`, because `sin(2*dtheta)` cannot tell the two apart. The information that
+ *   separates them is not in the saliency -- it is in magnetic saturation: `+i_d` reinforces the rotor flux and `-i_d`
+ *   opposes it, so the *same* volt-second pulse in the two directions produces two different current rises. The larger
+ *   rise is the magnet's `+d`.
  *
  *   Why pulses along d and not q: a pulse on the d axis of a converged estimate produces no torque (to first order), so
  *   the rotor stays where the test found it. A q-axis pulse would move it and the second pulse would be measuring a
@@ -44,7 +44,7 @@ enum class PolarityVerdict : std::int8_t {
  * @brief [zh] 用一对 d 轴电压脉冲判断磁钢极性。
  *
  *   为什么是一个单独步骤而不是观测器顺手做的事：凸极跟踪环在 `dtheta = 0` 与 `dtheta = pi` 都有 稳定零点，因为
- *   `sin(2·dtheta)` 区分不了两者。区分它们的信息不在凸极里，而在磁饱和里： `+i_d` 增强转子磁链、`-i_d` 削弱它，于是
+ *   `sin(2·dtheta)` 区分不了两者。区分它们的信息不在凸极里，而在磁饱和里： `+i_d` 增强转子磁链、 `-i_d` 削弱它，于是
  *   **相同** 伏秒的脉冲在两个方向上产生不同的电流上升。 上升更大的那个方向就是磁钢的 `+d`。
  *
  *   为什么沿 d 轴而不是 q 轴脉冲：在已收敛估计的 d 轴上脉冲，(一阶意义上)不产生转矩，转子留在 测试发现它的位置。q 轴脉
@@ -62,10 +62,10 @@ enum class PolarityVerdict : std::int8_t {
  *            where the inductance has already collapsed, so the second rise is larger for a reason unrelated to the
  *            magnet, and the test answers confidently **wrong** (measured: `Reversed` for a machine whose magnet is
  *            `Aligned`, at a zero-length settle).
- * @note [zh] `settle_s` 是前置条件，不是舒适度：`decide()` 会读每个脉冲起点处的电流，若两者相差超过 `min_asymmetry_a`，
- *            答案就是 `Inconclusive` 而不是一个结论。松弛时间短于绕组的 `L/R` 时，第二个脉冲从第一个脉冲的尾巴上出发——
- *            那里的电感已塌陷，于是第二个上升更大，原因与磁钢无关，测试会 **自信地给出错误** 答案（实测：磁钢是
- *            `Aligned` 的机器在零松弛下被判 `Reversed`）。
+ * @note [zh] `settle_s` 是前置条件，不是舒适度： `decide()` 会读每个脉冲起点处的电流，若两者相差超过
+ *            `min_asymmetry_a`，答案就是 `Inconclusive` 而不是一个结论。松弛时间短于绕组的 `L/R` 时，第二个脉冲从第一个
+ *            脉冲的尾巴上出发—— 那里的电感已塌陷，于是第二个上升更大，原因与磁钢无关，测试会 **自信地给出错误** 答案（
+ *            实测：磁钢是 `Aligned` 的机器在零松弛下被判 `Reversed`）。
  * @context [en] Commissioning only: noexcept, no allocation.
  * @context [zh] 仅调试/上电流程：noexcept、不分配。
  * @since 0.1.0

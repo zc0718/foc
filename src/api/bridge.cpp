@@ -214,7 +214,7 @@ constexpr Setup kDefaultSetup{5.0F, 20000.0F, 500.0F, 24.0F, 2000.0F, 200.0F,
 /**
  * @brief [en] The demodulation filter's cutoff in Hz: the value `test_sil_hfi.cpp` fixes for every case, so that a
  *             failure can never be blamed on the filter instead of on the physics.
- * @brief [zh] 解调滤波截止频率，Hz：`test_sil_hfi.cpp` 对所有用例都固定此值，于是失败永远不会被归咎于滤波器而非物理。
+ * @brief [zh] 解调滤波截止频率，Hz： `test_sil_hfi.cpp` 对所有用例都固定此值，于是失败永远不会被归咎于滤波器而非物理。
  */
 constexpr float kHfiDemodLpfHz = 200.0F;
 
@@ -430,7 +430,7 @@ auto resolve_setup(const foc_motor_setup_t* requested) noexcept -> Setup {
  * @brief [zh] 所请求的观测器是否真的可以运行。
  * @return [en] `FOC_OK` for a mode this machine can run, `FOC_ERR_PARAM` for a request it cannot honour -- a value
  *              outside the enumeration, or a mode whose parameters are missing or contradicted by the machine.
- * @return [zh] 这台机器能跑的模式返回 `FOC_OK`；满足不了的请求返回 `FOC_ERR_PARAM`——枚举之外的取值，或参数缺失、或与机
+ * @return [zh] 这台机器能跑的模式返回 `FOC_OK`；满足不了的请求返回 `FOC_ERR_PARAM` ——枚举之外的取值，或参数缺失、或与机
  *              器相矛盾的请求。
  * @note [en] The answers are kept apart on purpose. Answering `FOC_OK` and running the default instead would be a
  *            silent substitution. Every mode in the enumeration is wired today, so nothing here answers
@@ -853,7 +853,7 @@ constexpr std::size_t kMaxAutoTunes = 2U;
  * @note [en] Same reasoning as `ProtectorSlot`: `SpeedTuner` holds two dozen floats and no owned resource, so placement
  *            new into inline bytes is enough and no destructor is called. If it ever grows something that needs
  *            releasing, this note is what makes the omission a bug rather than an oversight.
- * @note [zh] 与 `ProtectorSlot` 同理：`SpeedTuner` 只有二十几个浮点、不持有任何资源，所以内联字节上 placement new 就
+ * @note [zh] 与 `ProtectorSlot` 同理： `SpeedTuner` 只有二十几个浮点、不持有任何资源，所以内联字节上 placement new 就
  *            够、不调析构。若它将来长了需要释放的东西，这段注释会让那次遗漏成为 bug 而不是疏忽。
  */
 struct AutoTuneSlot final {
@@ -1019,23 +1019,23 @@ auto machine_params(const foc_motor_params_t& p) noexcept -> core::MachineParams
  * @param p [zh] 调用方的铭牌。
  * @param kind [en] which of the two the slot starts on.
  * @param kind [zh] 该槽位起始选哪个。
- * @note [en] `psi_f` is **derived**, not requested: `machine_params()` already states the single definition `psi_f = kt
- *            / (1.5 * pole_pairs)` and this function reuses it rather than opening a second one. An earlier version of
- *            this comment claimed the boundary had no way to know the flux linkage and passed zero; that was wrong
- *            twice over -- `pole_pairs` is in `foc_motor_params_t` (it is how the machine's `psi_f` is reached at all),
- *            and the derivation is exact rather than an approximation. The NLFO's three tuning numbers are the ones
- *            this repository already uses everywhere (`gain_ratio` 0.3 is a fraction of `omega_e` and therefore
+ * @note [en] `psi_f` is **derived**, not requested: `machine_params()` already states the single definition
+ *            `psi_f = kt / (1.5 * pole_pairs)` and this function reuses it rather than opening a second one. An earlier
+ *            version of this comment claimed the boundary had no way to know the flux linkage and passed zero; that was
+ *            wrong twice over -- `pole_pairs` is in `foc_motor_params_t` (it is how the machine's `psi_f` is reached at
+ *            all), and the derivation is exact rather than an approximation. The NLFO's three tuning numbers are the
+ *            ones this repository already uses everywhere (`gain_ratio` 0.3 is a fraction of `omega_e` and therefore
  *            dimensionless; the floor `min_gain_rad_s` 3.0 only binds below `3.0/0.3 = 10 rad/s`; `min_flux_wb` is half
  *            the nameplate flux so that "no answer below this flux" sits at 50 % of nominal). They are stated here as
  *            the library's defaults, to be made settable when the caller needs to differ -- not silently re-guessed per
  *            call.
- * @note [zh] `psi_f` 是 **推导** 来的，不向调用方索取：`machine_params()` 已经给出唯一定义 `psi_f = kt /
- *            (1.5·pole_pairs)`，这里复用它而不是另开一个。这段注释的上一版声称该边界无从得知磁链、于是传了 0；那个说法
- *            错了两处——`pole_pairs` 就在 `foc_motor_params_t` 里（电机的 `psi_f` 正是这样得到的），而这个推导是精确的，
- *            不是近似。 NLFO 的三个整定量就是本仓库各处一直在用的那三个（`gain_ratio` 0.3 是 `ω_e` 的比例、因而无量纲；
- *            地板 `min_gain_rad_s` 3.0 只在 `3.0/0.3 = 10 rad/s` 以下起作用；`min_flux_wb` 取铭牌磁链的一半，于是"低于
- *            此磁链不报答案"落在额定的 50 %）。此处作为库默认值写明，等调用方确实需要不同值时再开放，而不是每次调用静默
- *            重新猜一遍。
+ * @note [zh] `psi_f` 是 **推导** 来的，不向调用方索取： `machine_params()` 已经给出唯一定义
+ *            `psi_f = kt / (1.5·pole_pairs)`，这里复用它而不是另开一个。这段注释的上一版声称该边界无从得知磁链、于是传
+ *            了 0；那个说法错了两处—— `pole_pairs` 就在 `foc_motor_params_t` 里（电机的 `psi_f` 正是这样得到的），而这
+ *            个推导是精确的，不是近似。 NLFO 的三个整定量就是本仓库各处一直在用的那三个（ `gain_ratio` 0.3 是 `ω_e` 的
+ *            比例、因而无量纲；地板 `min_gain_rad_s` 3.0 只在 `3.0/0.3 = 10 rad/s` 以下起作用； `min_flux_wb` 取铭牌磁
+ *            链的一半，于是"低于此磁链不报答案"落在额定的 50 %）。此处作为库默认值写明，等调用方确实需要不同值时再开
+ *            放，而不是每次调用静默重新猜一遍。
  * @since 0.1.0
  */
 constexpr auto observer_mode(core::ObserverKind kind) noexcept -> std::int32_t {

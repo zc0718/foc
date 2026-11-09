@@ -46,8 +46,8 @@ struct WatchdogConfig final {
  * @brief [zh] 看门狗处在什么位置：喂狗方能把它留在的四个状态。
  *
  *   `Unarmed` 不是健康状态，也不许读成健康状态。一个从未启动的看门狗没有保护任何东西，而它招来的失效是最安静的那种：主
- *   控方在调试时漏了一个 `kick()`，驱动器就一直跑下去，而所有报告都说 `Ok`，因为从来没有量过任何东西。所以它报
- *   `State`—— 调用方处在错误的状态——而不是报 `Feeding`。
+ *   控方在调试时漏了一个 `kick()`，驱动器就一直跑下去，而所有报告都说 `Ok`，因为从来没有量过任何东西。所以它报 `State`
+ *   —— 调用方处在错误的状态——而不是报 `Feeding`。
  * @since 0.1.0
  * @exporter
  */
@@ -117,27 +117,27 @@ struct WatchdogReport final {
  *
  *   **What it does not do.** It does not call `Motor::fault()`: the drive belongs to the caller, and a library that
  *   reached into it would be making the host's control flow decision. It knows the cause, in `fault_code()`, and the
- *   two-line chain is the host's: `if (watchdog.poll(now).status == ErrorCode::Fault) {
- *   motor.fault(watchdog.fault_code()); }`. It does not arm a hardware watchdog, does not read a register, and does not
- *   decide how often it should be polled.
+ *   two-line chain is the host's:
+ *   `if (watchdog.poll(now).status == ErrorCode::Fault) { motor.fault(watchdog.fault_code()); }`. It does not arm a
+ *   hardware watchdog, does not read a register, and does not decide how often it should be polled.
  *
  * @brief [zh] 把一个时间戳对窗口判一次，并把第一个"驱动器必须停"的答案锁存下来。
  *
  *   **律只有一次减法。** `elapsed = now - last_kick`，判定是 `elapsed > window`。比较是 **严格** 的，所以在截止时刻上恰
- *   好到达的一次喂狗算准时：`k × 25 µs` 的窗口在 `k × 25 µs + 1 ns` 处被判为过期，迟一纳秒而不是迟一个控制周期；而时间
+ *   好到达的一次喂狗算准时： `k × 25 µs` 的窗口在 `k × 25 µs + 1 ns` 处被判为过期，迟一纳秒而不是迟一个控制周期；而时间
  *   戳由调用方提供，这套算术自己不引入误差。调用方 **确实** 引入的是那个时间戳的分辨率：用微秒钟时跳闸判定精确到微秒，
  *   比时钟自身分辨率还短的窗口根本无法判定。那是宿主时钟的性质，不是本类的性质，写在这里是为了"精确"不被读成对别人家计
  *   时器的声明。
  *
- *   **倒退的时钟不是一次很长的沉默。** `uint64_t` 里 `now - last_kick` 把倒退 5 ms 变成 `1.8e19 ns`——584 年的沉默——于是
- *   一份"喂狗方饿死了"的报告说的其实是一个跳变了的时钟。两个答案都会停下驱动器，那是安全的那一半；但事后第一个问题是
+ *   **倒退的时钟不是一次很长的沉默。** `uint64_t` 里 `now - last_kick` 把倒退 5 ms 变成 `1.8e19 ns` ——584 年的沉默——于
+ *   是一份"喂狗方饿死了"的报告说的其实是一个跳变了的时钟。两个答案都会停下驱动器，那是安全的那一半；但事后第一个问题是
  *   **到底哪一个** ，而本类把二者分开：倒退锁存 `ClockLost` 而不是 `Expired`。 **前向** 跳跃大于窗口则不区分，因为没人
  *   能区分 ——向前跳一小时与喂狗方停了一小时是同样的两个数——而编造证据支撑不了的诊断，正是故障字变成传闻的方式。它按过期
  *   报。
  *
  *   **锁存就是功能本身。** 一旦 `Expired` 或 `ClockLost`，状态直到 `reset()` 都不会动，而锁存之后的一次 `kick()` 回答
  *   `State` 而不是重新武装。跳闸之后喂狗方恢复是 **预期** 的事——宿主还在跑，只是迟了——所以一个下一次喂狗就重新武装的看
- *   门狗会自己撤销跳闸，而它的故障字描述的将是"没人看着时发生的事"。`reset()` 是那唯一一次有意的动作。
+ *   门狗会自己撤销跳闸，而它的故障字描述的将是"没人看着时发生的事"。 `reset()` 是那唯一一次有意的动作。
  *
  *   **它不做什么。** 它不调用 `Motor::fault()`：驱动器属于调用方，库若伸手进去就是在替宿主做控制流决定。它知道成因，在
  *   `fault_code()` 里，而那条两行的链是宿主的。它不武装硬件看门狗、不读寄存器、也不决定自己该被多频繁地轮询。
@@ -223,7 +223,7 @@ class Watchdog final {
      * @note [en] `Unarmed` answers `None`: a watchdog nobody feeds must not accuse the drive of a fault it never saw.
      *            The missing feeder is a `State` problem, and `poll()` says so in its status.
      * @note [zh] `Unarmed` 回答 `None`：一个没人喂的看门狗不得指控驱动器犯了它从未见过的故障。缺的是喂狗方，那是
-     *            `State` 问题，`poll()` 在状态字段里说了。
+     *            `State` 问题， `poll()` 在状态字段里说了。
      */
     [[nodiscard]] auto fault_code() const noexcept -> FaultCode;
 

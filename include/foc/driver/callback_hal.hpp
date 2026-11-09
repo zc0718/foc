@@ -35,7 +35,7 @@ namespace driver {
  *
  *   四个回调是必需的，由 `valid()` 检查：占空比送出、相电流读入、机械角读入、母线电压读入。其余是可选的，在声明处逐个说
  *   明。可选项为 NULL 的含义是"这个主控方没有这个能力"， **不是**"假定一个方便的值"： `pwm_fault` 缺省即不报故障，
- *   `velocity_rad_s` 缺省即主控方测不到转速，`now_us` 缺省即调用方信任自己每拍传入的 `dt`。
+ *   `velocity_rad_s` 缺省即主控方测不到转速， `now_us` 缺省即调用方信任自己每拍传入的 `dt`。
  *
  * @note [en] `configure()` on the HAL is a no-op here: the host owns its own carrier frequency and dead time. The
  *            controller's request is a wish, not a command, once the switching hardware belongs to someone else.
@@ -98,8 +98,8 @@ struct HalCallbacks final {
      *            sense you mean, not the pin level.
      * @note [zh] 本结构里唯一一个 **缺席不是能力答复** 的必需输入。一个说不出自己功率级有没有故障的主控方，就是一个可能
      *            去驱动一个已去饱和的桥的主控方；而"我们没接"和"什么都没坏"在这里表现为同一个沉默。所以沉默被拒绝（
-     *            `valid()` 为假、电机创建不出来），而一个确实没有这根引脚的主控方在自己代码里写 `return 0;`——一行，评审
-     *            看得见，而不是一个没人选过的默认值。极性归主控方：返回你 **想表达** 的语义，而不是引脚电平。
+     *            `valid()` 为假、电机创建不出来），而一个确实没有这根引脚的主控方在自己代码里写 `return 0;` ——一行，评
+     *            审看得见，而不是一个没人选过的默认值。极性归主控方：返回你 **想表达** 的语义，而不是引脚电平。
      * @since 0.1.0
      */
     std::int32_t (*read_drive_fault)(void* user);
@@ -425,7 +425,7 @@ class CallbackClock final : public hal::Clock {
  * @note [en] `faulted()` answering false when the callback is NULL is *not* the dangerous default:
  *            `HalCallbacks::valid()` refuses a set without this callback, so a `CallbackHal` that reaches a motor has
  *            already been told, in writing, that this host has no fault path.
- * @note [zh] 回调为 NULL 时 `faulted()` 答 false **不是** 那个危险的默认值：`HalCallbacks::valid()` 拒绝缺这个回调的集
+ * @note [zh] 回调为 NULL 时 `faulted()` 答 false **不是** 那个危险的默认值： `HalCallbacks::valid()` 拒绝缺这个回调的集
  *            合，所以一个真正到达电机的 `CallbackHal` 早已被书面告知：本主控方没有故障通路。
  * @since 0.1.0
  * @exporter

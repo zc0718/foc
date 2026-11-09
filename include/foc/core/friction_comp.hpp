@@ -65,8 +65,8 @@ struct FrictionOutput final {
  *
  *   The law is two terms and a latch: `coulomb_nm * sign + viscous_nm_per_rad_s * omega_meas`. There is no `dt`,
  *   because nothing integrates -- and that is the point. A Coulomb term multiplying `sign(omega_meas)` chatters at
- *   rest, where the measured speed is zero-mean noise, and the chatter is a torque oscillation of amplitude `2 *
- *   coulomb_nm` that shakes the very thing the stage exists to steady. The latch is what removes it: the sign is
+ *   rest, where the measured speed is zero-mean noise, and the chatter is a torque oscillation of amplitude
+ *   `2 * coulomb_nm` that shakes the very thing the stage exists to steady. The latch is what removes it: the sign is
  *   updated from the reference when there is one, from the loop's demand when the demand is larger than the Coulomb
  *   term itself, and otherwise **kept**. The price is a stale direction when neither is informative, and it is stated
  *   rather than hidden.
@@ -83,14 +83,14 @@ struct FrictionOutput final {
  *   一次往哪边动。它也不适配 `FeedForward` 槽：那个槽从 `(omega_e, i_meas)` 发出 **电压** ，永远看不到给定方向，而那正
  *   是库仑项唯一干净的信号。
  *
- *   规律是两项加一个锁存：`coulomb_nm * sign + viscous_nm_per_rad_s * omega_meas`。没有 `dt`，因为没有东西在积分 ——这正
- *   是要点。用 `sign(omega_meas)` 的库仑项在静止处会抖，那里的实测速度是零均值噪声，而抖动是幅度 `2 * coulomb_nm` 的力
- *   矩振荡，恰好摇动这一级存在的目的。锁存去掉它：符号在有速度给定时取给定，在环路力矩指令大于库仑项本身时取指令，其余
- *   情况 **保持** 。代价是两者都无信息时方向可能是旧的，这个代价写出来而不是藏起来。
+ *   规律是两项加一个锁存： `coulomb_nm * sign + viscous_nm_per_rad_s * omega_meas`。没有 `dt`，因为没有东西在积分 —— 这
+ *   正是要点。用 `sign(omega_meas)` 的库仑项在静止处会抖，那里的实测速度是零均值噪声，而抖动是幅度 `2 * coulomb_nm` 的
+ *   力矩振荡，恰好摇动这一级存在的目的。锁存去掉它：符号在有速度给定时取给定，在环路力矩指令大于库仑项本身时取指令，其
+ *   余情况 **保持** 。代价是两者都无信息时方向可能是旧的，这个代价写出来而不是藏起来。
  *
  *   为什么它有用：静止时比例环在 `|kp * 误差| <= 静摩擦` 处停下，于是留下 `静摩擦 / kp` 的稳态误差，加增益也去不掉（只
- *   是把同一条死区按比例缩小）。有了锁存的库仑项，环路在 `|kp * 误差 + 库仑| <= 静摩擦` 处停下，即到达侧的 `(静摩擦 −
- *   库仑) / kp`。这两个数是算术、不是整定，而随这个头文件一起发布的用例在 SIL plant 上把两个都量了。
+ *   是把同一条死区按比例缩小）。有了锁存的库仑项，环路在 `|kp * 误差 + 库仑| <= 静摩擦` 处停下，即到达侧的
+ *   `(静摩擦 − 库仑) / kp`。这两个数是算术、不是整定，而随这个头文件一起发布的用例在 SIL plant 上把两个都量了。
  * @since 0.1.0
  * @exporter
  */
@@ -150,11 +150,11 @@ class FrictionComp final {
     /**
      * @brief [en] One control period: what torque to add.
      * @brief [zh] 一个控制周期：要加多少力矩。
-     * @param speed_ref_rad_s [en] the reference speed if the loop has one, else 0. @param speed_ref_rad_s
+     * @param speed_ref_rad_s [en] the reference speed if the loop has one, else 0.
      * @param speed_ref_rad_s [zh] 环路若有速度给定就传它，否则传 0。
-     * @param speed_meas_rad_s [en] the measured mechanical speed. @param speed_meas_rad_s
+     * @param speed_meas_rad_s [en] the measured mechanical speed.
      * @param speed_meas_rad_s [zh] 实测机械转速。
-     * @param demand_nm [en] what the loop is asking for, before compensation. @param demand_nm
+     * @param demand_nm [en] what the loop is asking for, before compensation.
      * @param demand_nm [zh] 环路在补偿之前要求的力矩。
      * @since 0.1.0
      */

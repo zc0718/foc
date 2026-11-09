@@ -24,9 +24,9 @@ namespace concepts {
  * @brief [en] Compile-time contract checks for the foc_hal interfaces (C++17 detection idiom; the project targets
  *             C++17, so `concept`/`requires` are not available).
  *
- *   Each trait answers two questions at once: does the member exist with the documented signature, and is it
- *   `noexcept`? A stub that forgets a member fails at compile time with the message from the caller's `static_assert`,
- *   never at run time.
+ *   Each trait answers two questions at once: does the member exist with the documented signature, and is it `noexcept`
+ *   ? A stub that forgets a member fails at compile time with the message from the caller's `static_assert`, never at
+ *   run time.
  *
  * @brief [zh] foc_hal 接口的编译期契约检查（C++17 检测惯用法；项目目标是 C++17，没有 concept/requires）。
  *
@@ -360,10 +360,10 @@ struct is_reference_generator<T, std::void_t<decltype(std::declval<T&>().generat
 template <typename T> inline constexpr bool is_reference_generator_v = is_reference_generator<T>::value;
 
 /**
- * @brief [en] `T` satisfies the feedforward policy contract (see feedforward.hpp): it must expose `generate(const
- *             FeedforwardInput&) noexcept -> Dq<float>`.
- * @brief [zh] `T` 满足前馈策略契约（见 feedforward.hpp）：必须提供 `generate(const FeedforwardInput&) noexcept ->
- *             Dq<float>`。
+ * @brief [en] `T` satisfies the feedforward policy contract (see feedforward.hpp): it must expose
+ *             `generate(const FeedforwardInput&) noexcept -> Dq<float>`.
+ * @brief [zh] `T` 满足前馈策略契约（见 feedforward.hpp）：必须提供
+ *             `generate(const FeedforwardInput&) noexcept -> Dq<float>`。
  * @since 0.1.0
  * @exporter
  */
@@ -444,8 +444,8 @@ template <typename T> inline constexpr bool has_fault_input_v = has_fault_input<
  * @brief [en] `T` satisfies the controller-slot contract: `step(setpoint, feedback, dt) noexcept -> float` plus
  *             `reset()`. The same shape fills all four controller slots (current d, current q, speed, position), which
  *             is why one trait covers them all.
- * @brief [zh] `T` 满足控制器槽位契约：`step(setpoint, feedback, dt) noexcept -> float` 与 `reset()`。四个控制器槽位（d
- *             轴电流、q 轴电流、速度、位置）形状相同，所以用一个 trait 覆盖全部。
+ * @brief [zh] `T` 满足控制器槽位契约： `step(setpoint, feedback, dt) noexcept -> float` 与 `reset()`。四个控制器槽位（
+ *             d 轴电流、q 轴电流、速度、位置）形状相同，所以用一个 trait 覆盖全部。
  * @since 0.1.0
  * @exporter
  */
@@ -467,15 +467,15 @@ struct is_controller<
 template <typename T> inline constexpr bool is_controller_v = is_controller<T>::value;
 
 /**
- * @brief [en] `T` satisfies the *widened* modulator contract: `modulate(const ModulatorInput&) noexcept ->
- *             SvpwmResult`.
- * @brief [zh] `T` 满足 **加宽后的** 调制器契约：`modulate(const ModulatorInput&) noexcept -> SvpwmResult`。
- * @note [en] Separate from the two-argument form so every existing modulator keeps working: `Motor` asks the widened
- *            one when it exists and the narrow one otherwise. The difference is a capability, not a preference -- a
- *            modulator that never sees the phase currents cannot linearise the inverter, and saying so in the type
- *            system is cheaper than documenting it.
- * @note [zh] 与两参数形式分开，好让所有既有调制器继续工作：存在加宽形式时 `Motor` 用它，否则用窄的。 这是 **能力** 差异
- *            而非偏好——从不接触相电流的调制器无法线性化逆变器，把它写在类型系统里比写在文档里便宜。
+ * @brief [en] `T` satisfies the *widened* modulator contract.
+ * @brief [zh] `T` 满足 **加宽后的** 调制器契约。
+ * @note [en] The contract is `modulate(const ModulatorInput&) noexcept -> SvpwmResult`. Separate from the two-argument
+ *            form so every existing modulator keeps working: `Motor` asks the widened one when it exists and the narrow
+ *            one otherwise. The difference is a capability, not a preference -- a modulator that never sees the phase
+ *            currents cannot linearise the inverter, and saying so in the type system is cheaper than documenting it.
+ * @note [zh] 契约是 `modulate(const ModulatorInput&) noexcept -> SvpwmResult`。与两参数形式分开，好让所有既有调制器继续
+ *            工作：存在加宽形式时 `Motor` 用它，否则用窄的。 这是 **能力** 差异 而非偏好——从不接触相电流的调制器无法线
+ *            性化逆变器，把它写在类型系统里比写在文档里便宜。
  * @since 0.1.0
  * @exporter
  */
@@ -502,7 +502,7 @@ template <typename T> inline constexpr bool is_modulator_v = is_modulator<T>::va
  *            simply cannot do compliance. `Motor` reports `NotImpl` when a move asks for scaling that the slot cannot
  *            deliver, instead of ignoring the request.
  * @note [zh] 与 `is_controller_v` 分开，这样一个普通的三参数控制器仍能占速度槽位——只是做不到柔顺。当运动要求了槽位交付
- *            不了的缩放时，`Motor` 报 `NotImpl`，而不是把请求忽略掉。
+ *            不了的缩放时， `Motor` 报 `NotImpl`，而不是把请求忽略掉。
  * @since 0.1.0
  * @exporter
  */
@@ -568,7 +568,7 @@ template <typename T> inline constexpr bool is_position_control_v = is_position_
  *
  * @brief [zh] `T` 满足对齐槽位契约。
  *
- *   见 alignment.hpp：`validate()`、`begin(pole_pairs) -> bool`、`step(dt, angle) noexcept -> AlignOutput`、
+ *   见 alignment.hpp： `validate()`、 `begin(pole_pairs) -> bool`、 `step(dt, angle) noexcept -> AlignOutput`、
  *   `reset()`。
  *
  * @note [en] `begin()` returns `bool` rather than `ErrorCode` on purpose: "nothing to do" is a normal answer (a build
@@ -609,7 +609,7 @@ template <typename T> inline constexpr bool is_aligner_v = is_aligner<T>::value;
  *            boot) simply lacks these members and `Motor` leaves it alone. The aligner still reports the offset either
  *            way, through `Motor::aligner()`.
  * @note [zh] 故意做成可选。HAL 契约已声明 `angle_mech_rad()` 已消除安装偏置，所以传感器可以自己 拥有这个校正；不具备这
- *            两个成员的传感器（例如偏置由平台在启动时写入的那种）就按“不存在” 处理，`Motor` 不会去动它。两种情况下对齐
+ *            两个成员的传感器（例如偏置由平台在启动时写入的那种）就按“不存在” 处理， `Motor` 不会去动它。两种情况下对齐
  *            器都仍然通过 `Motor::aligner()` 报出偏置。
  * @since 0.1.0
  * @exporter
@@ -694,8 +694,8 @@ template <typename T> inline constexpr bool has_align_offset_v = has_align_offse
  * @note [en] Deliberately about what the loop *calls*, not about which class it is: `NullTrace` satisfies it (with
  *            no-ops) so the loop has one code path, and a test double that counts pushes satisfies it without being a
  *            ring at all. That is the difference between a policy and a special case.
- * @note [zh] 它描述的是环 **调用** 什么，而不是那个类是谁：`NullTrace` 满足它（全部空操作），于是环只有一条代码路径；一
- *            个只数调用次数的测试替身也满足它，而它根本不是环。这就是策略与特例的区别。
+ * @note [zh] 它描述的是环 **调用** 什么，而不是那个类是谁： `NullTrace` 满足它（全部空操作），于是环只有一条代码路径；
+ *            一个只数调用次数的测试替身也满足它，而它根本不是环。这就是策略与特例的区别。
  * @since 0.1.0
  * @exporter
  */

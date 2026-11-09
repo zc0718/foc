@@ -33,7 +33,7 @@ namespace core {
  *
  * @brief [zh] 会塑造速度指令的位置控制器：对实测误差做比例，再用配置的加速度做速率限制。
  *
- *   它占用与 `Pi` 相同的控制器槽位（`step(setpoint, feedback, dt)` + `reset()`），但回答的 是另一个问题：不只是“为了消
+ *   它占用与 `Pi` 相同的控制器槽位（ `step(setpoint, feedback, dt)` + `reset()`），但回答的 是另一个问题：不只是“为了消
  *   掉这个误差我该跑多快”，而是“我准许多快、以及这个快能变多快”。 输出是速度指令，所以速度跟踪仍由内层速度环负责。
  *
  *   为什么用滤波而不是梯形规划器：规划器必须自持相位机（加速/匀速/减速），且目标一动就要 重规划。本实现不存相位：取“ 比
@@ -54,7 +54,7 @@ class MotionProfile final {
      *             数。
      * @note [en] A zeroed configuration is inert (`step()` always answers 0), which is the safe answer for "nobody
      *            configured me".
-     * @note [zh] 全零配置是惰性的（`step()` 恒返回 0），这正是“没人配置过我”时应有的安全答案。
+     * @note [zh] 全零配置是惰性的（ `step()` 恒返回 0），这正是“没人配置过我”时应有的安全答案。
      * @since 0.1.0
      * @exporter
      */

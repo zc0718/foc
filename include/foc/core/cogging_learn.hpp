@@ -98,13 +98,13 @@ struct CoggingLearnReport final {
  * @brief [zh] 从速度环本来就在供给的电流里学出一张齿槽表，于是没有数据的机器也能造出补偿器。
  *
  *   **律，以及符号为何自洽。** 补偿器关闭、稳态转速下，环路的 q 轴电流 **就是** 反齿槽电流。把它按机械角投影到 `k` 次
- *   上，对 `y = A·sin(k·θ + φ_inj)` 得到 `re = A·sin(φ_inj)`、`im = A·cos(φ_inj)`；把这个电流经 `dT/diq` 换回转矩会得到
- *   **相反** 的符号，而那正是 `CoggingCompensation` 要抵消的东西。所以学到的表可以直接交给补偿器，不需要调用方记住任何
- *   符号约定。
+ *   上，对 `y = A·sin(k·θ + φ_inj)` 得到 `re = A·sin(φ_inj)`、 `im = A·cos(φ_inj)`；把这个电流经 `dT/diq` 换回转矩会得
+ *   到 **相反** 的符号，而那正是 `CoggingCompensation` 要抵消的东西。所以学到的表可以直接交给补偿器，不需要调用方记住任
+ *   何符号约定。
  *
- *   **它拒绝什么，以及每条拒绝为什么存在。** 转数不够（`State`）：一转分不开一个谐波与它骑着的直流。转速出带（
- *   `State`）：低于下界那份不可测，高于上界表里带着环路滞后。窗口内转速变化超过 `speed_tolerance`（`State`）：投影假设
- *   角度均匀推进，一个加速中的运行回答的是另一个问题。窗口内任何一次饱和（`State`）：环路不是在回答齿槽，它在撞限。
+ *   **它拒绝什么，以及每条拒绝为什么存在。** 转数不够（ `State`）：一转分不开一个谐波与它骑着的直流。转速出带（
+ *   `State`）：低于下界那份不可测，高于上界表里带着环路滞后。窗口内转速变化超过 `speed_tolerance`（ `State`）：投影假设
+ *   角度均匀推进，一个加速中的运行回答的是另一个问题。窗口内任何一次饱和（ `State`）：环路不是在回答齿槽，它在撞限。
  *
  *   **它做不到什么。** 它学的是 **若干次的和** ，仅此而已：没被要求的次数在表里是 **缺席** 而不是外插，因为作用在一个编
  *   造出来的谐波上的补偿器会注入自己的纹波。它学的是环路的响应，所以只在上面的带内可信。而且它不判断找到的纹波是不是齿
@@ -148,7 +148,7 @@ class CoggingLearner final {
      * @brief [en] Turn what was accumulated into a table the compensator can cancel.
      * @brief [zh] 把累积的东西变成补偿器能抵消的表。
      * @param out [en] destination, `capacity` entries; may be null when `capacity` is 0 (a dry run that only reports).
-     * @param out [zh] 目标，`capacity` 条；`capacity` 为 0 时可传空指针（只报数的试跑）。
+     * @param out [zh] 目标， `capacity` 条； `capacity` 为 0 时可传空指针（只报数的试跑）。
      * @param capacity [en] how many entries `out` holds.
      * @param capacity [zh] `out` 能装几条。
      * @return [en] `Ok` and the table, or `State` with the reasons above, or `Param` for a configuration that cannot

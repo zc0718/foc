@@ -149,8 +149,8 @@ class StartupRoutine final {
      * @brief [zh] 强制矢量当前的转速，电角速度 rad/s。
      * @note [en] Exposed so a caller can watch the sequence without opening the routine up: `Motor::aligner()` returns
      *            a const reference, and this is the only number in it that changes during the pull.
-     * @note [zh] 暴露它的目的是让调用方能观察序列而无需打开本类：`Motor::aligner()` 给出 const 引用，而拖动期间其中唯一
-     *            在变的数就是它。
+     * @note [zh] 暴露它的目的是让调用方能观察序列而无需打开本类： `Motor::aligner()` 给出 const 引用，而拖动期间其中唯
+     *            一在变的数就是它。
      */
     [[nodiscard]] auto forced_speed_rad_s() const noexcept -> float { return omega_e_; }
 

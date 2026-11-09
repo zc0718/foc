@@ -26,9 +26,9 @@ struct SvpwmResult final {
  * @brief [en] What the modulator is asked for on one step: the voltage to produce, and the currents it may need in
  *             order to produce it honestly.
  *
- *   The currents are here because a real inverter does not deliver what it is told: dead time costs `v_dead *
- *   sign(i_phase)` on every phase, so a modulator that cannot see the current sign cannot compensate for it -- not
- *   "chooses not to", *cannot*. Widening this contract is what makes dead-time compensation expressible at all.
+ *   The currents are here because a real inverter does not deliver what it is told: dead time costs
+ *   `v_dead * sign(i_phase)` on every phase, so a modulator that cannot see the current sign cannot compensate for it
+ *   -- not "chooses not to", *cannot*. Widening this contract is what makes dead-time compensation expressible at all.
  *
  * @brief [zh] 调制器在一步里被要求做什么：该产生的电压，以及为了如实产生这个电压它可能需要的电流。
  *
@@ -72,7 +72,7 @@ class Svpwm final {
      * @param v_bus [zh] 直流母线电压，单位 V。
      * @return [en] duties clamped to [0, 1]; when `v_bus <= 0` the duties are 50% and the status is Param (no crash, no
      *              NaN).
-     * @return [zh] 限幅到 [0, 1] 的占空比；`v_bus <= 0` 时输出 50% 且状态为 Param（不崩溃、不产生 NaN）。
+     * @return [zh] 限幅到 [0, 1] 的占空比； `v_bus <= 0` 时输出 50% 且状态为 Param（不崩溃、不产生 NaN）。
      * @post [en] Linear modulation up to |v_ab| = v_bus / sqrt(3); beyond that `saturated` is true.
      * @post [zh] 在 |v_ab| = v_bus / sqrt(3) 以内为线性调制；超出后 `saturated` 为 true。
      * @note [en] **Overmodulation is a radial projection, not a phase clamp.** Above the hexagon the request vector is
@@ -87,11 +87,11 @@ class Svpwm final {
      *            `test_svpwm.cpp` measures both laws on the same grid so the trade-off can be re-opened with evidence
      *            instead of taste.
      * @note [zh] **过调制是径向投影，不是逐相夹紧。** 越过六边形后，请求矢量被 **整体** 缩放到边界上，于是施加矢量留在
-     *            指令方向上、末端落在六边形上：`|v_applied| = min(|v|, r_hex(θ))`，`r_hex` 是六边形自己的闭式。被替换掉
-     *            的那个夹紧律只修正想出去的那一相，那不是共模修正，所以 Clarke 消不掉它——在三倍母线处实测，它把施加矢量
-     *            **旋转了最多 20 度** ，而对 d-q 驱动来说那正是磁链轴本身。投影的代价是写下来的、不是以后才发现的：基波
-     *            从 `v_bus/√3` 起单调上升，并 **停在 0.6057·v_bus** （六步基波 `2/π·v_bus` 的 95.1 %），因为剩下的
-     *            4.9 % 只能靠把矢量按在顶点上得到，即靠谎报它的角度。`test_svpwm.cpp` 在同一张网格上量两种律，于是这个
+     *            指令方向上、末端落在六边形上： `|v_applied| = min(|v|, r_hex(θ))`， `r_hex` 是六边形自己的闭式。被替换
+     *            掉的那个夹紧律只修正想出去的那一相，那不是共模修正，所以 Clarke 消不掉它——在三倍母线处实测，它把施加矢
+     *            量 **旋转了最多 20 度** ，而对 d-q 驱动来说那正是磁链轴本身。投影的代价是写下来的、不是以后才发现的：
+     *            基波从 `v_bus/√3` 起单调上升，并 **停在 0.6057·v_bus** （六步基波 `2/π·v_bus` 的 95.1 %），因为剩下的
+     *            4.9 % 只能靠把矢量按在顶点上得到，即靠谎报它的角度。 `test_svpwm.cpp` 在同一张网格上量两种律，于是这个
      *            取舍可以用证据重新打开，而不是凭口味。
      * @since 0.1.0
      */

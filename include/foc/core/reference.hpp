@@ -64,7 +64,7 @@ class NullReferenceGenerator final {
      * @param in [zh] 本控制步的输入。
      * @return [en] the dq reference in A; `Motor` clamps it to the nameplate and drops non-finite values before it
      *              reaches the current loop.
-     * @return [zh] dq 参考，A；`Motor` 在送入电流环之前按铭牌限幅并丢弃非有限值。
+     * @return [zh] dq 参考，A； `Motor` 在送入电流环之前按铭牌限幅并丢弃非有限值。
      * @since 0.1.0
      */
     [[nodiscard]] auto generate(const ReferenceInput& in) noexcept -> Dq<float> {
@@ -108,7 +108,7 @@ class NullReferenceGenerator final {
  *   \f[ i_d = \frac{\psi_f - \sqrt{\psi_f^2 + 8\,(L_q - L_d)^2\,i_q^2}}{4\,(L_q - L_d)} \f]
  *
  *   \f$L_q > L_d\f$ 时为负，\f$L_q = L_d\f$ 时退化。退化情形按 \f$i_d = 0\f$ 处理而不是用一个极小量，因为极小量会给出量
- *   级 \f$\psi_f/\epsilon\f$ 的 \f$i_d\f$，把环直接毁掉。台账 `E-MTPA-1`、`E-MTPA-2`；至于这个能力在某台机器上值不值得
+ *   级 \f$\psi_f/\epsilon\f$ 的 \f$i_d\f$，把环直接毁掉。台账 `E-MTPA-1`、 `E-MTPA-2`；至于这个能力在某台机器上值不值得
  *   做，看 `domain.json` 的 C8 行，不在本段。
  *
  *   d 轴用量被 \f$k\,|\omega_e|\f$ 封顶，\f$k\f$ 即 `i_d_per_speed_a_s_per_rad`，默认 \f$0\f$。理由写在字段声明处，而且

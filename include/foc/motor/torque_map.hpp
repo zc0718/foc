@@ -16,16 +16,16 @@ namespace foc {
  *   above the library -- and do it identically, with the same sign convention and the same limit, in every product.
  *   That is the kind of arithmetic that is wrong in exactly one product. This type is that arithmetic once.
  *
- *   `status` is the diagnostic channel: `Ok` when the nameplate can produce a torque at all, `Param` when it cannot
- *   (`kt <= 0` says the machine produces no torque per amp, which is not a machine). A map that failed still has every
+ *   `status` is the diagnostic channel: `Ok` when the nameplate can produce a torque at all, `Param` when it cannot (
+ *   `kt <= 0` says the machine produces no torque per amp, which is not a machine). A map that failed still has every
  *   field written, so a caller that ignores the status gets zeros rather than an uninitialised limit.
  *
  * @brief [zh] 把铭牌换算成客户真正使用的单位：每安培多少 N·m，外加一条力矩指令必须遵守的两个限幅。
  *
- *   为什么有这个类型。`set_torque()` 收的是 **安培** ，于是每个想以 N·m 下指令的调用方都得在库之上自己做换算，而且要在
+ *   为什么有这个类型。 `set_torque()` 收的是 **安培** ，于是每个想以 N·m 下指令的调用方都得在库之上自己做换算，而且要在
  *   每个产品里做得一模一样——同一个符号约定、同一条限幅。这正是"只在一个产品里错掉"的那类算术。本类型把它只写一次。
  *
- *   `status` 是诊断通道：铭牌能产生力矩时为 `Ok`，不能时为 `Param`（`kt <= 0` 表示这台机器每安培不产生力矩，那不是一个
+ *   `status` 是诊断通道：铭牌能产生力矩时为 `Ok`，不能时为 `Param`（ `kt <= 0` 表示这台机器每安培不产生力矩，那不是一个
  *   机器）。失败的地图仍然写满全部字段，因此忽略状态的调用方拿到的是零，而不是未初始化的限幅。
  * @since 0.1.0
  * @exporter
@@ -75,7 +75,7 @@ struct TorqueCommand {
  * @brief [zh] 由铭牌建立力矩地图，并给出调用方将在其中工作的两个限幅。
  * @param config [en] the machine; `kt` and `pole_pairs` must describe a machine that produces torque, and the current
  *                    limit must be positive.
- * @param config [zh] 机器；`kt` 与 `pole_pairs` 必须描述一台能产生力矩的机器，且电流限幅必须为正。
+ * @param config [zh] 机器； `kt` 与 `pole_pairs` 必须描述一台能产生力矩的机器，且电流限幅必须为正。
  * @param min_nm [en] lower torque limit, N*m. Pass 0 with a positive `max_nm` for a **one-way** command: a tensioner or
  *                    a hold that must never pull backwards.
  * @param min_nm [zh] 力矩下限，N·m。与正的 `max_nm` 一起传 0 即 **单向** 指令：张力控制或保持，绝不允许反向拉。
@@ -126,7 +126,7 @@ inline auto torque_map(const motor::MotorConfig& config, float min_nm, float max
  *   comparing an estimate derived from the currents with one derived from `J*dw/dt + B*w` compares two independent
  *   measurements of one quantity rather than two restatements of one formula.
  *
- * @brief [zh] 一对实测（或指令）dq 电流正在产生的力矩：`kt·iq + 1.5·pp·(ld − lq)·id·iq`。
+ * @brief [zh] 一对实测（或指令）dq 电流正在产生的力矩： `kt·iq + 1.5·pp·(ld − lq)·id·iq`。
  *
  *   这与 SIL plant 积分的是同一个表达式，也正因如此它可以对着力学被检验：由电流得到的估计与由 `J·dω_m/dt + B·ω_m` 得到
  *   的估计相比，是两个独立测量相比，而不是同一个公式的两次复述。
@@ -160,9 +160,9 @@ inline auto torque_estimate(const TorqueMap& map, float id_a, float iq_a) noexce
  *
  * @brief [zh] 把请求的力矩变成交付它的电流，并施加双侧限幅。
  *
- *   逆运算是精确的、不是近似的：`id` 已知时 `iq = T / (kt + 1.5·pp·(ld−lq)·id)`。在 `id = 0`——力矩模式下环路所下发的那
- *   个值——它就是熟悉的 `T / kt`。闭式解之所以重要，是因为上面的估计包含凸极项，而忽略它的逆运算会让"指令力矩"与 "实测力
- *   矩"恰好相差估计里包含的那一项。
+ *   逆运算是精确的、不是近似的： `id` 已知时 `iq = T / (kt + 1.5·pp·(ld−lq)·id)`。在 `id = 0` ——力矩模式下环路所下发的
+ *   那个值——它就是熟悉的 `T / kt`。闭式解之所以重要，是因为上面的估计包含凸极项，而忽略它的逆运算会让"指令力矩"与 "实测
+ *   力矩"恰好相差估计里包含的那一项。
  *
  * @param map [en] a map with status `Ok`.
  * @param map [zh] 状态为 `Ok` 的地图。
@@ -171,7 +171,7 @@ inline auto torque_estimate(const TorqueMap& map, float id_a, float iq_a) noexce
  * @param id_a [en] the d-axis current the command will be applied at, A.
  * @param id_a [zh] 指令将在其上下发的 d 轴电流，A。
  * @return [en] the command; `limited` says whether anything was clipped.
- * @return [zh] 指令；`limited` 表示是否有内容被裁剪。
+ * @return [zh] 指令； `limited` 表示是否有内容被裁剪。
  * @since 0.1.0
  * @exporter
  */

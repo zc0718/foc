@@ -52,10 +52,10 @@ template <typename T> constexpr void count_lost(T& counter) noexcept {
  *            fixed 36 bytes and wraps every 71.6 minutes. It is 0 for every sample when the HAL has no clock -- a
  *            constant zero means "no timestamp", which is a fact about the platform rather than a claim that everything
  *            happened at once.
- * @note [zh] 这些是控制环算出来的数，不是硬件实际做了什么。`i_d`/`i_q` 是 PI 作用其上的实测电流，`i_ref_*` 是被要求的
- *            值，`v_*` 是调制前施加的电压。轨迹不能告诉你各相里真实的电流——它告诉你环 **相信** 的电流，而那是唯一能解释
- *            它决策的东西。 `t_us` 是平台时钟截断到 32 位，于是每条记录保持 32 字节，每 71.6 分钟回绕一次。HAL 没有时钟
- *            时每条都是 0 ——恒为 0 意味着"没有时间戳"，这是关于平台的事实，而不是"所有事件同时发生"的声明。
+ * @note [zh] 这些是控制环算出来的数，不是硬件实际做了什么。 `i_d`/`i_q` 是 PI 作用其上的实测电流， `i_ref_*` 是被要求的
+ *            值， `v_*` 是调制前施加的电压。轨迹不能告诉你各相里真实的电流——它告诉你环 **相信** 的电流，而那是唯一能解
+ *            释它决策的东西。 `t_us` 是平台时钟截断到 32 位，于是每条记录保持 32 字节，每 71.6 分钟回绕一次。HAL 没有时
+ *            钟时每条都是 0 ——恒为 0 意味着"没有时间戳"，这是关于平台的事实，而不是"所有事件同时发生"的声明。
  * @since 0.1.0
  * @exporter
  */
@@ -140,7 +140,7 @@ template <std::uint16_t Capacity> class RingTrace final {
      * @brief [zh] 被覆盖掉的样本数，饱和在 `UINT16_MAX`。
      * @return [en] the count; `capacity()` is a lower bound on the number of pushes it took, and a value equal to the
      *              maximum means "at least this many", not "exactly this many".
-     * @return [zh] 该计数；`capacity()` 加上它就是推入次数的下界，而等于最大值意味着"至少这么多"而不是"恰好这么多"。
+     * @return [zh] 该计数； `capacity()` 加上它就是推入次数的下界，而等于最大值意味着"至少这么多"而不是"恰好这么多"。
      * @note [en] Saturating rather than wrapping is a decision about what the number is *for*: it is read by a host
      *            that decides whether the trace it received is complete. A counter that went back to zero would report
      *            a channel that lost nothing, which is the one answer that must not be produced by accident.
@@ -153,7 +153,7 @@ template <std::uint16_t Capacity> class RingTrace final {
      * @brief [en] Sample `index` from the oldest retained, 0-based.
      * @brief [zh] 自最旧保留样本起第 `index` 个，从 0 开始。
      * @return [en] the sample, or a zeroed one when `index` is out of range.
-     * @return [zh] 该样本；`index` 越界时返回全零样本。
+     * @return [zh] 该样本； `index` 越界时返回全零样本。
      */
     [[nodiscard]] auto at(std::uint16_t index) const noexcept -> TraceSample {
         if (index >= count_) {
@@ -200,7 +200,7 @@ template <std::uint16_t Capacity> class RingTrace final {
  *            instead, where the check cannot exist.
  * @note [zh] 两个使用方，都是被约束而不是被偏好塑造的。C ABI 无法把容量当模板参数携带，因为 ABI 对所有调用方都是一个类
  *            型；而想把轨迹放进链接段或内存池的固件作者，不该被迫让库持有一块它看不见的 `static` 数组。因此样本住在调用
- *            方放置它们的地方。未挂载时（`attach(nullptr, 0)` 或默认构造）每个调用都是空操作，什么也不计数：没有窗口可
+ *            方放置它们的地方。未挂载时（ `attach(nullptr, 0)` 或默认构造）每个调用都是空操作，什么也不计数：没有窗口可
  *            谈丢失。挂载后每周期一个空指针检查——这也正是编译期路径用 `RingTrace` 的原因：那里连这个检查都不存在。
  * @since 0.1.0
  * @exporter
@@ -213,7 +213,7 @@ class SpanTrace final {
 
     /**
      * @brief [en] Point the ring at caller storage. `(nullptr, 0)` detaches; the counters start over.
-     * @brief [zh] 把环指向调用方存储。`(nullptr, 0)` 即卸载；计数器从头开始。
+     * @brief [zh] 把环指向调用方存储。 `(nullptr, 0)` 即卸载；计数器从头开始。
      */
     void attach(TraceSample* samples, std::uint32_t capacity) noexcept {
         samples_ = ((samples != nullptr) && (capacity > 0U)) ? samples : nullptr;

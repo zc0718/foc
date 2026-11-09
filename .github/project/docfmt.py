@@ -22,13 +22,13 @@ So the invariant is stated once, here, and checked by a gate:
 6. **An emphasis pair keeps the whitespace boundary Doxygen's Markdown requires on the outside**,
    and it is never split. Two measured facts, both from doxygen 1.9.8 on this tree's own shapes:
    `前**相同**后` publishes the asterisks literally while `前 **相同** 后` renders them, so a pair
-   touching a non-ASCII character on either side gets one space; and `**\`x\` text**` never renders
-   whatever the spacing, so a pair whose body opens with a code span is the one shape this tool
-   cannot repair and `<b>…</b>` is used in the source instead.
+   touching a non-ASCII character on either side gets one space; and a pair whose body opens with a
+   code span never renders whatever the spacing, so that is the one shape this tool cannot repair and
+   `<b>…</b>` is used in the source instead.
    成对标记必须在外侧保住 Doxygen Markdown 要求的空白边界，并且绝不被折行切开。两条实测事实
    （doxygen 1.9.8，用本树自己的形状）：`前**相同**后` 会原样发布星号，而 `前 **相同** 后` 能渲染，
-   因此只要有一侧贴着非 ASCII 字符就补一个空格；而 `**\`x\` 文字**` 无论怎么加空格都不渲染，
-   这种形状本工具修不了，源码里改用 `<b>…</b>`。
+   因此只要有一侧贴着非 ASCII 字符就补一个空格；而正文以代码跨度开头的成对标记无论怎么加空格都不
+   渲染，这种形状本工具修不了，源码里改用 `<b>…</b>`。
 
 Usage:
     python3 .github/project/docfmt.py --check            # exit 1 if anything would change
@@ -103,6 +103,16 @@ NO_LINE_START = "。，、；：！？）》」』】%"
 # 一个成对标记，正文可能是中文、也可能含哨兵隐藏的空格。对折行而言它是原子单元。
 PAIR_UNIT = re.compile(r'\*\*[^*]+\*\*')
 
+# One backticked code span. Also atomic: a span broken across two lines is what produces
+# `found </tt> tag without matching <tt>` in the generated pages -- doxygen opens the span on one
+# line and never closes it.
+# 一个反引号代码跨度。同样是原子单元：跨度被拆到两行，生成页面里就会出现
+# `found </tt> tag without matching <tt>`——doxygen 在一行打开、再也没关上。
+# The trailing punctuation is part of the unit: a `?` that lands on the next line after an
+# atomic span is the same defect as a delimiter at a line edge.
+# 尾随标点属于同一个单元：原子跨度后面的 `?` 被推到下一行，与分隔符落在行边是同一类缺陷。
+CODE_UNIT = re.compile(r'`[^`]+`[.,;:?!]*')
+
 
 def _join_prose(parts: Iterable[str]) -> str:
     """Join the lines of one paragraph without inserting a space inside Chinese.
@@ -174,7 +184,7 @@ def _units(text: str) -> list[tuple[str, bool]]:
             # 成对标记即使内容是中文也是一个单元。下面的逐字符规则否则会把 `**过修**` 切成
             # `**`、`过`、`修`、`**`，让折行落在分隔符与文字之间——那正好发布出字面星号，
             # 而这正是 `_wrap` 里用哨兵隐藏空格想避免的事。
-            pair = PAIR_UNIT.match(token, index)
+            pair = PAIR_UNIT.match(token, index) or CODE_UNIT.match(token, index)
             if pair:
                 units.append((pair.group(0), space))
                 space = False
@@ -187,7 +197,7 @@ def _units(text: str) -> list[tuple[str, bool]]:
                 continue
             stop = index
             while stop < length and not token[stop].isspace() and ord(token[stop]) <= 0x2E7F:
-                if PAIR_UNIT.match(token, stop):
+                if PAIR_UNIT.match(token, stop) or CODE_UNIT.match(token, stop):
                     break
                 stop += 1
             units.append((token[index:stop], space))
@@ -218,7 +228,26 @@ def _pad_emphasis(text: str) -> str:
                 + match.group(0)
                 + (" " if ord(after) > 0x7F else ""))
 
-    return re.sub(r'\*\*[^*\n]+?\*\*', _spaced, text)
+    # A code span needs the same treatment, and for a sharper reason: `存储。`(nullptr, 0)` 即卸载` is
+    # published as `&lt;tt&gt;(nullptr, 0)` -- measured on doxygen 1.9.8, together with four
+    # neighbours that separate the cause from "a full-width mark before the span". Padding both sides
+    # whenever the neighbour is not ASCII covers the shapes that fail and costs nothing on the rest.
+    # 代码跨度要同样的处理，理由更硬：`存储。`(nullptr, 0)` 即卸载` 会被发布成
+    # `&lt;tt&gt;(nullptr, 0)`——在 doxygen 1.9.8 上与四个相邻样例一起量到的，足以把原因和
+    # 「跨度前面是全角标点」区分开。只要邻字符不是 ASCII 就两侧补空格：出问题的形状全覆盖，
+    # 其余形状没有代价。
+    def _span(match: "re.Match[str]") -> str:
+        # Only the left side decides for a code span: `前`x`后` renders, `存储。`(nullptr, 0)` does not,
+        # and the difference is the character in front of the opening backtick. Padding the right side
+        # instead put a space between a span and the Chinese punctuation that follows it, which reads
+        # as a typo in every sentence it touches.
+        # 代码跨度只由左侧决定：`前`x`后` 能渲染，`存储。`(nullptr, 0)` 不能，差别就在开反引号前面那个
+        # 字符。反过来在右侧补空格，会把跨度与它后面的中文标点隔开，那句话读起来就是错字。
+        before = text[match.start() - 1] if match.start() else " "
+        return (" " if ord(before) > 0x7F else "") + match.group(0)
+
+    text = re.sub(r'\*\*[^*\n]+?\*\*', _spaced, text)
+    return re.sub(r'`[^`\n]+`', _span, text)
 
 
 def _wrap(text: str, indent: int) -> list[str]:
@@ -247,6 +276,11 @@ def _wrap(text: str, indent: int) -> list[str]:
         return "**" + body.replace(" ", SENTINEL) + "**"
 
     protected = re.sub(r'\*\*([^*\n]+?)\*\*', _pair, _pad_emphasis(text))
+    # `_units` splits on whitespace, so a code span holding a space would arrive as several tokens and
+    # could be broken between them -- the exact damage the sentinel in `_pair` prevents for `**`.
+    # `_units` 按空白切分，所以含空格的代码跨度会变成几个 token，并可能在它们之间被折断——
+    # 正是 `_pair` 用哨兵为 `**` 挡住的那种损坏。
+    protected = CODE_UNIT.sub(lambda m: m.group(0).replace(' ', SENTINEL), protected)
     lines: list[str] = []
     current = ""
     width = indent
@@ -310,6 +344,14 @@ def _star_line(star_col: int, indent: int, text: str) -> str:
 
 def _fix_block(lines: list[str], start: int, end: int) -> list[str]:
     """Rewrite the body of one Doxygen block (`start`..`end` exclusive of the closer)."""
+    if any(line.strip().startswith('```') for line in lines[start:end]):
+        # A fenced code block is code. Rewrapping it turns `auto step_advance(float) -> void;` into a
+        # sentence and the fence's three backticks into a broken code span -- measured on this tree,
+        # where the surrounding paragraphs had pushed the whole run into the repair path.
+        # 围栏代码块是代码。重排它会把这些声明变成散文，并把围栏的三个反引号拆成坏掉的代码跨度——
+        # 本树的实测就是：周围段落把整段推进了修复路径。
+        return lines
+
     body = lines[start:end]
     if not body:
         return body

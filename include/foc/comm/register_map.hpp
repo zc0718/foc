@@ -132,7 +132,7 @@ struct RegisterEntry final {
 
 /**
  * @brief [en] The table: `kRegisterCount` entries, `RegisterId` order, no holes.
- * @brief [zh] 这张表：`kRegisterCount` 项，按 `RegisterId` 顺序，没有空洞。
+ * @brief [zh] 这张表： `kRegisterCount` 项，按 `RegisterId` 顺序，没有空洞。
  * @note [en] Read-only and static: nothing here allocates, and a host that walks the table costs one function pointer
  *            call per register. It is not in the control path and is not meant to be.
  * @note [zh] 只读且静态：这里什么都不分配，走一遍表的代价是每个寄存器一次函数指针调用。它不在控制路径上，也不打算在。

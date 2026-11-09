@@ -10,12 +10,12 @@ namespace hal {
 /**
  * @brief [en] Rotor position / velocity source.
  * @brief [zh] 转子位置/速度来源。
- * @note [en] An implementation may additionally offer `has_index() const noexcept -> bool` and `index_pulse() noexcept
- *            -> bool` to report an index mark. The pair is optional for the same reason the mechanical-offset pair is:
- *            a sensor without a mark is an ordinary sensor, and it is the *caller's* problem that it cannot establish
- *            an absolute position. `index_pulse()` must be true only on the tick the mark was crossed -- a level rather
- *            than an edge would make a caller count one crossing many times. Detected through
- *            `core::concepts::has_index_v`, never assumed.
+ * @note [en] An implementation may additionally offer `has_index() const noexcept -> bool` and
+ *            `index_pulse() noexcept -> bool ` to report an index mark. The pair is optional for the same reason the
+ *            mechanical-offset pair is: a sensor without a mark is an ordinary sensor, and it is the *caller's* problem
+ *            that it cannot establish an absolute position. ` index_pulse() ` must be true only on the tick the mark
+ *            was crossed -- a level rather than an edge would make a caller count one crossing many times. Detected
+ *            through ` core::concepts::has_index_v`, never assumed.
  * @note [zh] 实现可以额外提供 `has_index() const noexcept -> bool` 与 `index_pulse() noexcept -> bool` 来报告索引标记。
  *            这一对可选的道理和机械偏置那一对相同：没有标记的传感器是正常传感器，"建立不了绝对位置"是 **调用方** 的问
  *            题。 `index_pulse()` 必须 **只在** 越过标记的那一个 tick 为真——若它是一个电平而不是边沿，调用方会把一次通
@@ -37,11 +37,11 @@ class PositionSensor {
      *              制无法还原它没被告知的圈数。
      * @context [en] Current-loop ISR.
      * @context [zh] 电流环 ISR。
-     * @note [en] An implementation may offer `set_offset_mech_rad(float)` and `mech_offset_rad() const noexcept ->
-     *            float` to own that correction itself; when both exist, `Motor` writes the offset captured by the
-     *            alignment routine into them. The pair is optional on purpose -- a sensor whose offset is written
-     *            elsewhere at boot simply omits it, and the motor then leaves it untouched (detected by
-     *            `core::concepts::has_mech_offset_v`, never assumed).
+     * @note [en] An implementation may offer `set_offset_mech_rad(float)` and
+     *            `mech_offset_rad() const noexcept -> float` to own that correction itself; when both exist, `Motor`
+     *            writes the offset captured by the alignment routine into them. The pair is optional on purpose -- a
+     *            sensor whose offset is written elsewhere at boot simply omits it, and the motor then leaves it
+     *            untouched (detected by `core::concepts::has_mech_offset_v`, never assumed).
      * @note [zh] 实现可以提供 `set_offset_mech_rad(float)` 与 `mech_offset_rad() const noexcept -> float` 来自己拥有这
      *            个校正；两者都存在时， `Motor` 会把对齐流程捕获的偏置写进去。这一对故意做成可选——偏置在别处于启动时写
      *            入的 传感器直接不提供即可，电机也不会去动它（由 `core::concepts::has_mech_offset_v` 探测， 从不假设

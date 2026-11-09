@@ -39,10 +39,10 @@ namespace core {
  *   psi = psi_f·e^(jθ) + L0·i + L1·conj(i)·e^(j2θ)，L0 = (Ld+Lq)/2，L1 = (Ld−Lq)/2
  *
  *   `BackEmfObserver` 假设 `L1 = 0`，给出 `θ = arg(psi − L·i)`，这只在 `Ld == Lq` 时精确。凸极机上被丢掉的 `L1` 项是电
- *   角度二次谐波，幅值 `|L1|·|i|`——用 Prius 那对电感（`Ld = 0.13 mH`、`Lq = 0.29 mH`、`psi_f = 0.0947 Wb`）在 100 A 时
- *   达到转子磁链的 8.5%——所以单 `L` 的答案会有一个随电流增长的角度误差，而"`MtpaReference` 不能与单 `L` 观测器配对" 正
- *   是因为这一点。本观测器保留同一个积分器（`dψ/dt = v − Rs·i`，完全不含电感项），并精确反解上式：令 `x = e^(jθ)`，上式
- *   就是关于 `x` 的 **二次方程** ，因此答案是闭式的，不需要迭代、不分配、也没有可调增益。
+ *   角度二次谐波，幅值 `|L1|·|i|` ——用 Prius 那对电感（ `Ld = 0.13 mH`、 `Lq = 0.29 mH`、 `psi_f = 0.0947 Wb`）在 100 A
+ *   时达到转子磁链的 8.5%——所以单 `L` 的答案会有一个随电流增长的角度误差，而"`MtpaReference` 不能与单 `L` 观测器配对"
+ *   正是因为这一点。本观测器保留同一个积分器（ `dψ/dt = v − Rs·i`，完全不含电感项），并精确反解上式：令 `x = e^(jθ)`，
+ *   上式就是关于 `x` 的 **二次方程** ，因此答案是闭式的，不需要迭代、不分配、也没有可调增益。
  *
  * @note [en] **There is no `method=` here, and that is a decision rather than an omission.** A second way to invert the
  *            relation exists -- minimising the residual of the same expression instead of solving the quadratic -- and
@@ -68,7 +68,7 @@ namespace core {
  *               cannot know its integration constant. `seed_flux()` takes the full stator flux (not the rotor flux),
  *               and the two roots of the quadratic are disambiguated by continuity with the previous estimate -- on the
  *               first step after a seed, with the angle the seed implies.
- * @warning [zh] 与它所推广的开环积分器一样， **绝对角** 需要播种：纯积分器无从知道积分常数。`seed_flux()` 接收的是完整
+ * @warning [zh] 与它所推广的开环积分器一样， **绝对角** 需要播种：纯积分器无从知道积分常数。 `seed_flux()` 接收的是完整
  *               定子磁链（不是转子磁链），二次方程的两个根靠"与上一次估计连续"来区分——播种后的第一步，则与种子隐含的角
  *               度连续。
  * @context [en] Current-loop ISR after construction: noexcept, no allocation, no iteration count that depends on data.
@@ -97,15 +97,15 @@ class DualInductanceObserver final {
      *            onto the manifold can do. So the trade is real and the integrator stays the default. same interface,
      *            same inputs, **different failure modes** (see the note on the class for why the other candidate -- a
      *            second inversion -- is not shipped).
-     * @note [zh] 两个选项都积分 `v − Rs·i`；差别在于是否把状态拉回到代数即将反解的那个磁链关系上。`Integrator` 不管它，
-     *            于是 `Rs` 的铭牌误差会随运行时间在状态里累积。`Corrected` 在残差上闭合一个环、把状态按住在流形上，代价
-     *            是一个增益。这才是 `method=` 该有的形状：同接口、同输入、 **失效模式不同** （另一个候选——第二种反解——
-     *            为什么不发布，见类上的注释）。
+     * @note [zh] 两个选项都积分 `v − Rs·i`；差别在于是否把状态拉回到代数即将反解的那个磁链关系上。 `Integrator` 不管
+     *            它，于是 `Rs` 的铭牌误差会随运行时间在状态里累积。 `Corrected` 在残差上闭合一个环、把状态按住在流形
+     *            上，代价是一个增益。这才是 `method=` 该有的形状：同接口、同输入、 **失效模式不同** （另一个候选——第二
+     *            种反解—— 为什么不发布，见类上的注释）。
      * @since 0.1.0
      */
     enum class FluxSource : std::uint8_t {
         /**
-         * @brief [en] pure `integral(v - Rs*i)`: exact, and it never forgets a bad seed. @brief
+         * @brief [en] pure `integral(v - Rs*i)`: exact, and it never forgets a bad seed.
          * @brief [zh] 纯积分：精确，且永不忘记坏种子。
          */
         Integrator = 0,
@@ -143,10 +143,10 @@ class DualInductanceObserver final {
     /**
      * @brief [en] Seed the **stator** flux estimate.
      * @brief [zh] 播种 **定子** 磁链估计。
-     * @param psi_ab [en] the full stator flux in Wb at the current instant -- `psi_f*e^(j*theta) + L0*i + L1*conj(i)
-     *                    *e^(j*2*theta)`, not the rotor flux alone.
-     * @param psi_ab [zh] 当前时刻的 **完整** 定子磁链，Wb——`psi_f·e^(jθ) + L0·i + L1·conj(i)·e^(j2θ)`，不是单独的转子磁
-     *                    链。
+     * @param psi_ab [en] the full stator flux in Wb at the current instant --
+     *                    `psi_f*e^(j*theta) + L0*i + L1*conj(i) *e^(j*2*theta)`, not the rotor flux alone.
+     * @param psi_ab [zh] 当前时刻的 **完整** 定子磁链，Wb—— `psi_f·e^(jθ) + L0·i + L1·conj(i)·e^(j2θ)`，不是单独的转子
+     *                    磁链。
      * @note [en] The seed does not need to be exact: it only breaks the tie between the two roots of the quadratic, and
      *            a wrong seed costs a fixed angle offset exactly as it does in the open-loop observer.
      * @note [zh] 种子不必精确：它只用于在二次方程的两个根之间定夺，种子有偏时带来的就是这个固定角度偏移——与开环观测器完
@@ -163,14 +163,14 @@ class DualInductanceObserver final {
      * @param theta_e [zh] 电角度转子角，rad。
      * @param i_ab [en] stator current in A at the same instant.
      * @param i_ab [zh] 同一时刻的定子电流，A。
-     * @note [en] `psi_f*e^(j*theta) + L0*i + L1*conj(i)*e^(j*2*theta)`, with this observer's own `ld`, `lq` and
-     *            `psi_f`. It exists so a hand-over does not have to know that this observer's state is the **stator**
-     *            flux: a caller that seeds it with the rotor flux alone leaves the current's own flux out of the
-     *            integration constant, and a pure integrator never forgets -- the cost would be a permanent angle
-     *            offset of about `atan(|L0*i| / psi_f)`, not a transient.
-     * @note [zh] `psi_f·e^(jθ) + L0·i + L1·conj(i)·e^(j2θ)`，用本观测器自己的 `ld`、`lq`、`psi_f` 算。它存在的意义是交
-     *            接方不必知道本观测器的状态是 **定子** 磁链：只拿转子磁链播种，会把电流自身的磁链漏在积分常数之外，而纯
-     *            积分器不会遗忘——代价是一个约 `atan(|L0·i|/psi_f)` 的 **永久** 角度偏移，不是暂态。
+     * @note [en] `psi_f*e^(j*theta) + L0*i + L1*conj(i)*e^(j*2*theta)`, with this observer's own `ld`, `lq` and `psi_f`
+     *            . It exists so a hand-over does not have to know that this observer's state is the **stator** flux: a
+     *            caller that seeds it with the rotor flux alone leaves the current's own flux out of the integration
+     *            constant, and a pure integrator never forgets -- the cost would be a permanent angle offset of about
+     *            `atan(|L0*i| / psi_f)`, not a transient.
+     * @note [zh] `psi_f·e^(jθ) + L0·i + L1·conj(i)·e^(j2θ)`，用本观测器自己的 `ld`、 `lq`、 `psi_f` 算。它存在的意义是
+     *            交接方不必知道本观测器的状态是 **定子** 磁链：只拿转子磁链播种，会把电流自身的磁链漏在积分常数之外，而
+     *            纯积分器不会遗忘——代价是一个约 `atan(|L0·i|/psi_f)` 的 **永久** 角度偏移，不是暂态。
      * @since 0.1.0
      */
     void seed_at(float theta_e, Ab<float> i_ab) noexcept;
@@ -182,7 +182,7 @@ class DualInductanceObserver final {
      * @param params [zh] 机器实际的样子。
      * @note [en] `ld`, `lq` and `psi_f` all come from `params`; this is the observer that has no "which inductance?"
      *            question to answer, which is the whole difference from `BackEmfObserver::apply_params`.
-     * @note [zh] `ld`、`lq`、`psi_f` 都取自 `params`；这个观测器没有"用哪个电感"这个问题要回答，这正是它与
+     * @note [zh] `ld`、 `lq`、 `psi_f` 都取自 `params`；这个观测器没有"用哪个电感"这个问题要回答，这正是它与
      *            `BackEmfObserver::apply_params` 的全部区别。
      * @since 0.1.0
      */
@@ -253,7 +253,7 @@ class DualInductanceObserver final {
      *            rather than from the measurement. Near the q axis (where `i_d ~ 0` and the saliency carries almost no
      *            information) the gap is smallest, which is exactly where a caller should trust the angle least.
      * @note [zh] 这是诊断量，不是估计的一部分：两个根是"与实测磁链、电流一致的两个转子位置"，它们的间隔说明这个答案有多
-     *            少来自连续性、多少来自测量。q 轴附近（`i_d ≈ 0`、凸极几乎不携带信息）间隔最小，而那正是调用方最不该相
+     *            少来自连续性、多少来自测量。q 轴附近（ `i_d ≈ 0`、凸极几乎不携带信息）间隔最小，而那正是调用方最不该相
      *            信这个角的地方。
      * @since 0.1.0
      */
@@ -261,7 +261,7 @@ class DualInductanceObserver final {
 
     /**
      * @brief [en] How far the chosen root is from being a unit vector: `norm(x) - 1`.
-     * @brief [zh] 被选中的根离单位矢量有多远：`norm(x) − 1`。
+     * @brief [zh] 被选中的根离单位矢量有多远： `norm(x) − 1`。
      * @return [en] Zero when the flux state and the current are consistent with each other, which is the only case in
      *              which a rotor position exists at all.
      * @return [zh] 磁链状态与电流彼此自洽时为零——而那是存在转子位置的唯一情形。

@@ -22,8 +22,8 @@ namespace core {
  *
  * @brief [zh] 从一段录制窗口里测出的一个单音：幅值、相位，以及"到底有没有音可测"的状态。
  *
- *   两个正弦量与一个状态。`status` 是诊断通道，不是装饰：`Ok` 表示拟合良态，`State` 表示窗口短于所问频率的一个周期（在
- *   不足一个周期的窗口上拟合也能出数，但那不是这个音的幅值），`Param` 表示参数根本不是一段正弦的描述。
+ *   两个正弦量与一个状态。 `status` 是诊断通道，不是装饰： `Ok` 表示拟合良态， `State` 表示窗口短于所问频率的一个周期（
+ *   在不足一个周期的窗口上拟合也能出数，但那不是这个音的幅值）， `Param` 表示参数根本不是一段正弦的描述。
  * @since 0.1.0
  * @exporter
  */
@@ -56,10 +56,10 @@ struct SinusoidFit {
  *
  * @brief [zh] 在已知频率上，对一段录制窗口做单音最小二乘拟合。
  *
- *   为什么有这个函数。`step_metrics.hpp` 里的阶跃带宽是一个 **估计** ：它把一阶模型套在一个并不完全是一阶的响应上，其偏
- *   差与被测缺陷同样大小（实测：速度环增益律 20% 的错误只让它挪动 9.9%，仍在自己 10% 的带内）。而在已知频率上的频域幅值
- *   不是这类估计：它对任何线性系统都有定义、不需要模型，20% 的增益错误就让它挪动约 20%。这正是扫频成为"比例错误"之仪器
- *   的原因，而本函数是扫频唯一的运动部件。
+ *   为什么有这个函数。 `step_metrics.hpp` 里的阶跃带宽是一个 **估计** ：它把一阶模型套在一个并不完全是一阶的响应上，其
+ *   偏差与被测缺陷同样大小（实测：速度环增益律 20% 的错误只让它挪动 9.9%，仍在自己 10% 的带内）。而在已知频率上的频域幅
+ *   值不是这类估计：它对任何线性系统都有定义、不需要模型，20% 的增益错误就让它挪动约 20%。这正是扫频成为"比例错误"之仪
+ *   器的原因，而本函数是扫频唯一的运动部件。
  *
  *   存在的意义是让环路不需要频谱仪就能测自己的频率响应：用 `A*cos(w*t)` 驱动给定，录下响应，两边都拟合，相除。算术是向
  *   `{1, cos, sin}` 的投影，用正规方程求解——对整周期窗口精确，对非整周期窗口无偏。单取 DFT 一个 bin **不** 是一回事，而
@@ -74,9 +74,9 @@ struct SinusoidFit {
  * @param dt_s [en] spacing between samples, s (> 0).
  * @param dt_s [zh] 相邻样本间隔，s（> 0）。
  * @param omega_rad_s [en] the frequency asked about, rad/s (> 0, and below Nyquist: `omega * dt < pi`).
- * @param omega_rad_s [zh] 所问的角频率，rad/s（> 0，且低于 Nyquist：`omega * dt < pi`）。
+ * @param omega_rad_s [zh] 所问的角频率，rad/s（> 0，且低于 Nyquist： `omega * dt < pi`）。
  * @return [en] the fit; `amplitude` and `phase_rad` are written even when the status is not `Ok`.
- * @return [zh] 拟合结果；即使状态不是 `Ok`，`amplitude` 与 `phase_rad` 也会被写入。
+ * @return [zh] 拟合结果；即使状态不是 `Ok`， `amplitude` 与 `phase_rad` 也会被写入。
  * @context [en] Host-side analysis over a recorded window: noexcept, no allocation, O(n), no function pointer.
  * @context [zh] 对录制窗口的主机侧分析：noexcept、不分配、O(n)、无函数指针。
  * @since 0.1.0

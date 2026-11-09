@@ -18,7 +18,7 @@ namespace core {
  *
  * @brief [zh] 反电动势磁链观测器（开环积分），V1 的"真实可用"观测器。
  *
- *   模型：`psi_ab = ∫(v_ab - Rs·i_ab)dt - L·i_ab`，角度 = atan2(psi_beta, psi_alpha)。 SI 单位；V1 假设 `Ld == Lq`（表
+ *   模型： `psi_ab = ∫(v_ab - Rs·i_ab)dt - L·i_ab`，角度 = atan2(psi_beta, psi_alpha)。 SI 单位；V1 假设 `Ld == Lq`（表
  *   贴式 PMSM）。
  *
  * @warning [en] A pure integrator cannot know its integration constant, so the **absolute** angle needs a known initial

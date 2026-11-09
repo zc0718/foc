@@ -13,8 +13,8 @@ namespace {
  *
  *   Shared by `apply()` and `shape()` so the two can never disagree about what the bridge does with a narrow pulse.
  *
- * @brief [zh] 单相的驱动规则，作用在已钳进 [0, 1] 的占空比上。`apply()` 与 `shape()` 共用它，于是两者对「桥臂拿窄脉冲怎
- *             么办」永远不会分歧。
+ * @brief [zh] 单相的驱动规则，作用在已钳进 [0, 1] 的占空比上。 `apply()` 与 `shape()` 共用它，于是两者对「桥臂拿窄脉冲
+ *             怎么办」永远不会分歧。
  * @attacher
  * @since 0.1.0
  */

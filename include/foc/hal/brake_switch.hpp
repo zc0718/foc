@@ -32,8 +32,8 @@ namespace hal {
  *   the numbers unreadable -- the same rule this repository applies to `PlantHal::set_inverter` and the dead-time
  *   knobs.
  *
- * @details [zh] 这是制动斩波器的输出级，不是斩波器本身。`core::BrakeChopper` 决定电阻 **该不该** 被驱动、占空比多少；这
- *               个契约只剩板子拥有的一件事：让一个开关在一个周期里导通一段比例。
+ * @details [zh] 这是制动斩波器的输出级，不是斩波器本身。 `core::BrakeChopper` 决定电阻 **该不该** 被驱动、占空比多少；
+ *               这个契约只剩板子拥有的一件事：让一个开关在一个周期里导通一段比例。
  *
  *   与 `hal::Pwm` 的三个差异都是有意的，而且每一个读者都应当能自己核对而不是接受：
  *
@@ -41,8 +41,8 @@ namespace hal {
  *   出去，而那里让 SVPWM 成立的共模约定会悄悄把它重新缩放。
  *
  *   2. **没有 `enable()`。** `Pwm` 需要显式使能，因为三个半桥可能被使能到短路；而制动开关的危险状态是 **导通** ，所以要
- *   求两次调用才能发热不是安全特性，而是让安全状态取决于两次调用的顺序。`write_duty(0)` 就是安全状态， `disable()` 是把
- *   同一句话说出来。
+ *   求两次调用才能发热不是安全特性，而是让安全状态取决于两次调用的顺序。 `write_duty(0)` 就是安全状态， `disable()` 是
+ *   把同一句话说出来。
  *
  *   3. **没有 `fault()`。** 斩波器的过温是电阻的事，而库已经把它建模成带冷却的 I²t 预算（
  *   `core::BrakeChopperConfig::i2t_limit_a2s`）。一个效应两个来源会让数字无法解读——与 `PlantHal::set_inverter` 和死区旋
@@ -68,7 +68,7 @@ class BrakeSwitch {
      * @brief [en] Configure the chopping frequency.
      * @brief [zh] 配置斩波频率。
      * @param freq_hz [en] switching frequency in Hz; `<= 0` must be refused.
-     * @param freq_hz [zh] 开关频率，Hz；`<= 0` 必须被拒绝。
+     * @param freq_hz [zh] 开关频率，Hz； `<= 0` 必须被拒绝。
      * @return [en] Ok on success; implementations refuse what they cannot do rather than substituting a default.
      * @return [zh] 成功返回 Ok；实现应当拒绝自己做不到的，而不是替换成一个默认值。
      * @pre [en] Not yet writing a duty.
