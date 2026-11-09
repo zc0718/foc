@@ -1,13 +1,13 @@
-// Slice S4 -- above base speed: the voltage ceiling starts to bind, and the
+// Field weakening -- above base speed: the voltage ceiling starts to bind, and the
 // currents have to leave the MTPA curve to keep producing torque.
 //
 // Build with the flags the `strict` gate uses for a C++17 translation unit:
-//   g++ -std=c++17 -fno-exceptions -fno-rtti -Wall -Wextra -Werror -Iinclude docs/doxygen/dox/demos/slice-s4-field-weakening.cxx src/core/mtpv.cpp -o /tmp/slice-s4-field-weakening
+//   g++ -std=c++17 -fno-exceptions -fno-rtti -Wall -Wextra -Werror -Iinclude docs/doxygen/dox/demos/high-speed-field-weakening.cxx src/core/mtpv.cpp -o /tmp/high-speed-field-weakening
 //
 // With `--csv <path>` it writes the sweep as rows; `docs/demos/make_figures.py`
 // draws this slice's figure from that file.
 //
-// 切片 S4 —— 基速以上：电压天花板开始约束，电流必须离开 MTPA 曲线才能继续出力。
+// 弱磁 —— 基速以上：电压天花板开始约束，电流必须离开 MTPA 曲线才能继续出力。
 // 带 `--csv <path>` 时把扫描写成行，供绘图脚本使用。
 
 #include <cmath>

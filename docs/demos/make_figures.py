@@ -1,10 +1,11 @@
-"""Build the demo assets that the Sphinx "Demos" section shows.
+"""Build the servo-loop assets that the Sphinx "Demos" section shows.
 
 The pipeline is three steps, and every step calls the library itself -- nothing is drawn by hand:
 
 1. compile `sil_export.cpp` against the repository sources (same headers a user gets);
 2. run it: it drives the SIL bench through three scenarios and writes a trace and a metrics CSV;
-3. plot the traces into `docs/images/OUT_*.png` (the docs pipeline copies `OUT*` into the Sphinx
+3. plot the traces into `docs/images/ALL_*.png` (the docs pipeline copies every `docs/images/*` into both the
+   Sphinx tree and the Doxygen tree, so one copy serves both)
    image tree) and the metrics into `docs/sphinx/source/demos/metrics_*.csv` (rendered as tables).
 
 Why C++ and not the Python module: `foc_python` (like the whole C API) runs on the stub HAL, whose
@@ -14,7 +15,7 @@ plant, which only exists on the C++ side.
 Usage / 用法:
 
     source ~/venv/build/bin/activate        # matplotlib + numpy
-    python3 docs/demos/make_figures.py      # writes docs/images/OUT_*.png + demos/metrics_*.csv
+    python3 docs/demos/make_figures.py      # writes docs/images/ALL_*.png + demos/metrics_*.csv
 """
 
 import csv
@@ -37,15 +38,15 @@ DEMOS = ROOT / "docs" / "sphinx" / "source" / "demos"
 # not link against `version.c` outside Conan. Nothing in the exporter calls it.
 # `version.cpp` is left out because the recipe wraps the C headers in `extern "C"`
 # when it exports them, and the raw headers are not wrapped -- so that one C++
-# wrapper does not link outside Conan. The C sources are linked in: the C ABI demo
-# calls `foc_api.c`, and a demo that cannot link the path it documents is a lie.
+# wrapper does not link outside Conan. The C sources are linked in: the C ABI servo-loop
+# calls `foc_api.c`, and a servo-loop that cannot link the path it documents is a lie.
 SKIP_SOURCES = {"version.cpp", "version.c"}
 
 COLORS = {"measured": "#1f77b4", "reference": "#d62728", "aux": "#2ca02c"}
 
 
 def build(source: pathlib.Path, target: pathlib.Path) -> None:
-    """Compile one demo program against the repository sources.
+    """Compile one servo-loop program against the repository sources.
 
     The slice examples under `docs/doxygen/dox/demos/` are built by this same
     function, so a figure cannot come from code the reader is not shown: the
@@ -84,7 +85,7 @@ def column(rows: list[dict[str, float]], key: str) -> list[float]:
 
 def save(fig, name: str) -> pathlib.Path:
     IMAGES.mkdir(parents=True, exist_ok=True)
-    target = IMAGES / f"OUT_{name}.png"
+    target = IMAGES / f"ALL_{name}.png"
     fig.tight_layout()
     fig.savefig(target, dpi=150)
     plt.close(fig)
@@ -148,7 +149,7 @@ def read_csv(path: pathlib.Path) -> list[dict[str, str]]:
         return list(csv.DictReader(handle))
 
 
-def plot_slice_s1(rows: list[dict[str, str]]) -> None:
+def plot_startup_sensorless(rows: list[dict[str, str]]) -> None:
     """Hold, ramp, hand over: the two currents and the forced angle."""
     stride = max(1, len(rows) // 4000)
     sample = rows[::stride]
@@ -186,10 +187,10 @@ def plot_slice_s1(rows: list[dict[str, str]]) -> None:
             for axis in (top, bottom):
                 axis.axvline(t[index], color="black", linewidth=0.8, alpha=0.5, linestyle="--")
     top.set_title("Open-loop start: hold 1.5 A, ramp the vector, hand over at 60 rad/s elec")
-    save(fig, "slice_s1_startup")
+    save(fig, "startup_sensorless")
 
 
-def plot_slice_s6(rows: list[dict[str, str]]) -> None:
+def plot_positioning(rows: list[dict[str, str]]) -> None:
     """One position move: the velocity the profile allows, and where it lands."""
     stride = max(1, len(rows) // 4000)
     sample = rows[::stride]
@@ -206,10 +207,10 @@ def plot_slice_s6(rows: list[dict[str, str]]) -> None:
     for axis in (top, bottom):
         axis.grid(True, which="both", alpha=0.3)
     top.set_title("One move, shaped: accel limit sets the ramp, the gain sets the tail")
-    save(fig, "slice_s6_position")
+    save(fig, "positioning")
 
 
-def plot_slice_s5(rows: list[dict[str, str]]) -> None:
+def plot_modulation_limits(rows: list[dict[str, str]]) -> None:
     """Duty span against the requested voltage, at two angles.
 
     The modulator's limit is a hexagon, not a circle, so the two sweeps clamp at
@@ -239,10 +240,10 @@ def plot_slice_s5(rows: list[dict[str, str]]) -> None:
     axis.grid(True, alpha=0.3)
     axis.legend(loc="lower right", fontsize=8)
     axis.set_title("SVPWM: one requested amplitude, two limits -- sector centre vs sector face")
-    save(fig, "slice_s5_modulation")
+    save(fig, "modulation_limits")
 
 
-def plot_slice_s9(rows: list[dict[str, str]]) -> None:
+def plot_callers(rows: list[dict[str, str]]) -> None:
     """What crosses the C ABI: the command, the speed the host reports, and one duty."""
     stride = max(1, len(rows) // 4000)
     sample = rows[::stride]
@@ -259,10 +260,10 @@ def plot_slice_s9(rows: list[dict[str, str]]) -> None:
     for axis in (top, bottom):
         axis.grid(True, which="both", alpha=0.3)
     top.set_title("Through the C ABI: the command in, the state and the duties back out")
-    save(fig, "slice_s9_c_abi")
+    save(fig, "callers")
 
 
-def plot_slice_s4(rows: list[dict[str, str]]) -> None:
+def plot_high_speed_field_weakening(rows: list[dict[str, str]]) -> None:
     """Where the currents go above base speed, and what torque is left."""
     fig, (left, right) = plt.subplots(1, 2, figsize=(9.6, 4.0))
     id_a = [float(row["id_a"]) for row in rows]
@@ -307,10 +308,10 @@ def plot_slice_s4(rows: list[dict[str, str]]) -> None:
     right.set_ylim(bottom=0.0)
     right.grid(True, alpha=0.3)
     fig.tight_layout()
-    save(fig, "slice_s4_field_weakening")
+    save(fig, "high_speed_field_weakening")
 
 
-def plot_slice_s7(rows: list[dict[str, str]]) -> None:
+def plot_current_sampling(rows: list[dict[str, str]]) -> None:
     """Sampling and the power stage: when a single shunt can measure, and what
     the dead-time correction looks like once it is read in the alpha-beta frame.
 
@@ -399,10 +400,10 @@ def plot_slice_s7(rows: list[dict[str, str]]) -> None:
     right.set_title("dead time: step vs ramp")
 
     fig.tight_layout()
-    save(fig, "slice_s7_sampling")
+    save(fig, "current_sampling")
 
 
-def plot_slice_s2(rows: list[dict[str, str]]) -> None:
+def plot_low_speed_injection(rows: list[dict[str, str]]) -> None:
     """Zero speed: whether the estimate moves at all, and why a surface-mount
     rotor never gets one.
 
@@ -471,10 +472,10 @@ def plot_slice_s2(rows: list[dict[str, str]]) -> None:
         right.set_title("what the method has to measure")
 
     fig.tight_layout()
-    save(fig, "slice_s2_zero_speed")
+    save(fig, "low_speed_injection")
 
 
-def plot_slice_s8(rows: list[dict[str, str]]) -> None:
+def plot_protection_and_derating(rows: list[dict[str, str]]) -> None:
     """Protection: how long an overload is allowed to last, and the two numbers
     that look like one decision but are not.
 
@@ -530,7 +531,7 @@ def plot_slice_s8(rows: list[dict[str, str]]) -> None:
         right.set_title("the limit and the trip")
 
     fig.tight_layout()
-    save(fig, "slice_s8_protection")
+    save(fig, "protection_and_derating")
 
 
 def run_slice(name: str, workdir: pathlib.Path, plotter) -> None:
@@ -582,15 +583,15 @@ def main() -> int:
         print("writing tables ...")
         write_tables(metrics_path)
         print("slice figures ...")
-        run_slice("slice-s1-startup", pathlib.Path(workdir), plot_slice_s1)
-        run_slice("slice-s6-position", pathlib.Path(workdir), plot_slice_s6)
-        run_slice("slice-s5-modulation", pathlib.Path(workdir), plot_slice_s5)
-        run_slice("slice-s9-c-abi", pathlib.Path(workdir), plot_slice_s9)
-        run_slice("slice-s4-field-weakening", pathlib.Path(workdir), plot_slice_s4)
-        run_slice("slice-s7-sampling", pathlib.Path(workdir), plot_slice_s7)
-        run_slice("slice-s2-zero-speed", pathlib.Path(workdir), plot_slice_s2)
-        run_slice("slice-s8-protection", pathlib.Path(workdir), plot_slice_s8)
-    print("done: figures in docs/images/OUT_demo_*.png, tables in docs/sphinx/source/demos/")
+        run_slice("startup-sensorless", pathlib.Path(workdir), plot_startup_sensorless)
+        run_slice("positioning", pathlib.Path(workdir), plot_positioning)
+        run_slice("modulation-limits", pathlib.Path(workdir), plot_modulation_limits)
+        run_slice("c-and-cpp-callers", pathlib.Path(workdir), plot_callers)
+        run_slice("high-speed-field-weakening", pathlib.Path(workdir), plot_high_speed_field_weakening)
+        run_slice("current-sampling", pathlib.Path(workdir), plot_current_sampling)
+        run_slice("low-speed-injection", pathlib.Path(workdir), plot_low_speed_injection)
+        run_slice("protection-and-derating", pathlib.Path(workdir), plot_protection_and_derating)
+    print("done: figures in docs/images/ALL_*.png, tables in docs/sphinx/source/demos/")
     return 0
 
 

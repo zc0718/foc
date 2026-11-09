@@ -1,14 +1,14 @@
-// Slice S5 -- high speed and modulation: turn a voltage vector into duties, see
+// Modulation -- high speed and modulation: turn a voltage vector into duties, see
 // where the linear range ends, and see what a real gate driver does to a pulse
 // that is too short to transmit.
 //
 // Build with the flags the `strict` gate uses for a C++17 translation unit:
-//   g++ -std=c++17 -fno-exceptions -fno-rtti -Wall -Wextra -Werror -Iinclude docs/doxygen/dox/demos/slice-s5-modulation.cxx src/core/svpwm.cpp src/core/min_pulse.cpp -o /tmp/slice-s5-modulation
+//   g++ -std=c++17 -fno-exceptions -fno-rtti -Wall -Wextra -Werror -Iinclude docs/doxygen/dox/demos/modulation-limits.cxx src/core/svpwm.cpp src/core/min_pulse.cpp -o /tmp/modulation-limits
 //
 // With `--csv <path>` it writes the sweep as rows; `docs/demos/make_figures.py`
 // draws this slice's figure from that file.
 //
-// 切片 S5 —— 高速与调制：把一个电压矢量变成占空比、看清线性区的边界，以及真实驱动对
+// 调制 —— 高速与调制：把一个电压矢量变成占空比、看清线性区的边界，以及真实驱动对
 // "短到送不出去"的脉冲做了什么。
 // 带 `--csv <path>` 时把扫描写成行；`docs/demos/make_figures.py` 用它画本片的图。
 

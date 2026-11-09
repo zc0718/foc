@@ -1,30 +1,47 @@
-/**
- * @example slice-s5-modulation.cxx
+/*!
+ * @example modulation-limits.cxx
  *
- * @brief [en] High speed and modulation: a voltage vector becomes duties, and the limit is not a circle.
- * @brief [zh] 高速与调制：电压矢量变成占空比，而那个边界不是一个圆。
- *
- * @section s5_shows [en] What the example shows [zh] 这个例子展示了什么
+ * @par [en] High speed and modulation: a voltage vector becomes duties, and the limit is not a circle. [zh] 高速与调制：电压矢量变成占空比，而那个边界不是一个圆。
+ * @section modulation_limits_shows [en] What the example shows [zh] 这个例子展示了什么
  * @par [en] The same amplitude sweep run at two electrical angles. Inside the linear range the duty span grows with the
  *      request at both; the clamp starts at two different amplitudes, because the reachable set is a hexagon and the
  *      request is only guaranteed to fit the circle inscribed in it.
  * @par [zh] 同一条幅值扫描在两个电角度上各跑一遍。线性区内两者的占空比跨度都随请求增长；钳位却发生在两个不同
  *      幅值上，因为可达集是一个六边形，而请求只被保证落在它的内切圆里。
  *
- * @section s5_pulse [en] What the driver does to a pulse that is too short [zh] 驱动对短到送不出去的脉冲做了什么
+ * @section modulation_limits_pulse [en] What the driver does to a pulse that is too short [zh] 驱动对短到送不出去的脉冲做了什么
  * @par [en] `MinPulse` widens or removes the pulse and reports the volt-seconds it did not deliver, per phase and
  *      signed. That number is the difference between a loop that knows what it applied and one that integrates an
  *      error its own feedback cannot see -- the bridge is inside the loop and the phase voltage is not measured.
  * @par [zh] `MinPulse` 把脉冲加宽或去掉，并逐相、带符号地报出它没有交付的伏秒。这个数就是"知道施加了什么"的
  *      环路与"积分了一项自己反馈看不见的误差"的环路之间的差别——桥臂在环内，而相电压没有被测。
  *
- * @section s5_sixstep [en] The table, and its rate limit [zh] 那张表，以及它的速率限制
+ * @section modulation_limits_sixstep [en] The table, and its rate limit [zh] 那张表，以及它的速率限制
  * @par [en] Six-step answers the same modulation question from a hall code. `max_step_sectors` is what keeps a single
  *      false edge from jumping the vector by 120 electrical degrees; without it one bad sample is a torque impulse.
  * @par [zh] 六步从霍尔码出发回答同一个调制问题。`max_step_sectors` 的作用是让一个假边沿不能把矢量一次跳过
  *      120 电角度；没有它，一次坏采样就是一次转矩冲击。
  *
- * @include slice-s5-modulation.cxx
+ * @section modulation_limits_numbers [en] The numbers behind the figure [zh] 图背后的数字
+ * @par [en] The rows below are read out of this example's own `--csv` run -- the same run the figure is drawn from, so the table and the picture cannot disagree.
+ *
+ * | angle (deg) | |v| (pu) | duty span | saturated |
+ * |---|---|---|---|
+ * | 0.0 | 0.6700 | 1.000000 | 1 |
+ * | 30.0 | 0.5800 | 1.000000 | 1 |
+ *
+ * \image html ALL_modulation_limits.png ""
+ *
+ * @par [zh] 下面这些行取自本示例自己的 `--csv` 输出——与图同一次运行，所以表和图不会互相矛盾。
+ *
+ * | angle (deg) | |v| (pu) | duty span | saturated |
+ * |---|---|---|---|
+ * | 0.0 | 0.6700 | 1.000000 | 1 |
+ * | 30.0 | 0.5800 | 1.000000 | 1 |
+ *
+ * \image html ALL_modulation_limits.png ""
+ *
+ * @include modulation-limits.cxx
  *
  * @note [en] Link the aggregate target `foc::foc`; the command on the first line links the two translation units this
  *            demo needs.

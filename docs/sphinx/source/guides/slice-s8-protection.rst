@@ -24,7 +24,7 @@ What you need
 A minimal program
 -----------------
 
-``docs/doxygen/dox/demos/slice-s8-protection.cxx`` sweeps the i2t budget below the
+``docs/doxygen/dox/demos/protection-and-derating.cxx`` sweeps the i2t budget below the
 hard trip, reads the derating curve across the trip temperature, walks the latch
 through a trip and a reset, asks a watchdog past its window, and pushes the bus
 into a brake chopper. The same file produces this slice's figure.
@@ -32,8 +32,8 @@ into a brake chopper. The same file produces this slice's figure.
 .. code-block:: bash
 
    g++ -std=c++17 -fno-exceptions -fno-rtti -Wall -Wextra -Werror -Iinclude \
-       docs/doxygen/dox/demos/slice-s8-protection.cxx src/core/watchdog.cpp \
-       -o /tmp/slice-s8-protection
+       docs/doxygen/dox/demos/protection-and-derating.cxx src/core/watchdog.cpp \
+       -o /tmp/protection-and-derating
 
 Where the numbers come from
 ---------------------------
@@ -93,7 +93,7 @@ set of limits.
 Figure
 ------
 
-.. figure:: ../../images/OUT_slice_s8_protection.png
+.. figure:: ../../images/ALL_protection_and_derating.png
    :name: figure slice s8
    :width: 760
    :align: center

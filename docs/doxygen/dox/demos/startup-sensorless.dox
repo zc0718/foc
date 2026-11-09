@@ -1,17 +1,15 @@
-/**
- * @example slice-s1-startup.cxx
+/*!
+ * @example startup-sensorless.cxx
  *
- * @brief [en] Bringing a sensorless machine up: hold, ramp the forced vector, hand over.
- * @brief [zh] 无感起转：按住、把强制矢量加速、交出控制权。
- *
- * @section s1_shows [en] What the example shows [zh] 这个例子展示了什么
+ * @par [en] Bringing a sensorless machine up: hold, ramp the forced vector, hand over. [zh] 无感起转：按住、把强制矢量加速、交出控制权。
+ * @section startup_sensorless_shows [en] What the example shows [zh] 这个例子展示了什么
  * @par [en] One recipe -- hold current, hold time, pull current, pull acceleration, hand-over speed -- stepped at
  *      the control rate. Every state change is visible in the output, and the two refusals come first: a recipe whose
  *      hand-over speed is zero is rejected by `validate()` instead of being started and stalling.
  * @par [zh] 一份配方——保持电流、保持时长、拖动电流、拖动加速度、交接转速——按控制频率步进。输出里每一次状态
  *      变化都看得见，而两处拒绝放在最前面：交接转速为零的配方由 `validate()` 拒掉，而不是启动了再卡住。
  *
- * @section s1_angle [en] The angle handed over is a forced one [zh] 交出去的角度是强制出来的
+ * @section startup_sensorless_angle [en] The angle handed over is a forced one [zh] 交出去的角度是强制出来的
  * @par [en] `theta_e_rad` is the angle the routine commanded, not a measured one: during the open-loop part there is
  *      nothing to measure it with, which is what open loop means. The example passes `0.0F` as the measured
  *      mechanical angle and says so, because a reader copying it needs to know that the argument is for the policy
@@ -19,14 +17,35 @@
  * @par [zh] `theta_e_rad` 是例行**命令**的角度，不是测出来的：开环那一段没有东西能测它，这就是开环的意思。例子
  *      给实测机械角传 `0.0F`，并把这件事写出来——照抄的人需要知道那个参数是给接管的策略用的，不是给它自己用的。
  *
- * @section s1_done [en] What "finished" means, and what it does not [zh] “结束”是什么意思，以及不是什么
+ * @section startup_sensorless_done [en] What "finished" means, and what it does not [zh] “结束”是什么意思，以及不是什么
  * @par [en] `finished` means the hand-over speed was reached. It does **not** mean the rotor came with the vector --
  *      that judgement needs a speed measurement and lives in `Motor`'s hand-over check, one window later. A drive
  *      that treats this flag as "the motor is spinning" will report success on a rotor that never moved.
  * @par [zh] `finished` 只表示到达了交接转速，**不**表示转子跟着矢量转起来了——那个判断需要一次转速测量，属于
  *      `Motor` 的交接检查，在一个窗口之后。把这个标志当成“电机在转”的驱动，会在转子从未动过的情形上报成功。
  *
- * @include slice-s1-startup.cxx
+ * @section startup_sensorless_numbers [en] The numbers behind the figure [zh] 图背后的数字
+ * @par [en] The rows below are read out of this example's own `--csv` run -- the same run the figure is drawn from, so the table and the picture cannot disagree.
+ *
+ * | t (ms) | state | id (A) |
+ * |---|---|---|
+ * | 0.05 | align | 1.500000 |
+ * | 20 | pull | 1.500000 |
+ * | 1520 | done | 2.000000 |
+ *
+ * \image html ALL_startup_sensorless.png ""
+ *
+ * @par [zh] 下面这些行取自本示例自己的 `--csv` 输出——与图同一次运行，所以表和图不会互相矛盾。
+ *
+ * | t (ms) | state | id (A) |
+ * |---|---|---|
+ * | 0.05 | align | 1.500000 |
+ * | 20 | pull | 1.500000 |
+ * | 1520 | done | 2.000000 |
+ *
+ * \image html ALL_startup_sensorless.png ""
+ *
+ * @include startup-sensorless.cxx
  *
  * @note [en] Link the aggregate target `foc::foc`; the command on the first line links the one translation unit this
  *            demo needs.

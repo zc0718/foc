@@ -4,7 +4,7 @@ _`Sine tracking`
 The speed reference is a 1 Hz sine of 50 rad/s amplitude — the scenario that exposes phase lag and
 amplitude collapse, which a step test cannot see.
 
-.. figure:: ../../images/OUT_demo_sine_tracking.png
+.. figure:: ../../images/ALL_demo_sine_tracking.png
    :name: figure sine tracking
    :width: 720
    :align: center

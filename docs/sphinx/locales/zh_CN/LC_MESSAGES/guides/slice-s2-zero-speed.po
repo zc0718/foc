@@ -85,13 +85,13 @@ msgstr ""
 #: ../../source/guides/slice-s2-zero-speed.rst:24
 #: aecc0ed3ed2d4953a65919b37cf7c878
 msgid ""
-"``docs/doxygen/dox/demos/slice-s2-zero-speed.cxx`` holds a salient "
+"``docs/doxygen/dox/demos/low-speed-injection.cxx`` holds a salient "
 "machine at standstill, drives it with the observer's own injection, and "
 "runs the loop three times: a surface-mount rotor, an interior rotor, and "
 "an interior rotor observed by a controller that cannot resolve the "
 "carrier. The same file produces this slice's figure."
 msgstr ""
-"``docs/doxygen/dox/demos/slice-s2-zero-speed.cxx`` 让一台凸极电机保持静"
+"``docs/doxygen/dox/demos/low-speed-injection.cxx`` 让一台凸极电机保持静"
 "止，用观测器自己的注入去驱动它，并把环跑三次：表贴式转子、内置式转子，以"
 "及由分辨不出载波的控制器观测的内置式转子。本切片的图也由同一个文件产生。"
 

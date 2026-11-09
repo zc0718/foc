@@ -19,14 +19,14 @@ What you need
 A minimal program
 -----------------
 
-``docs/doxygen/dox/demos/slice-s4-field-weakening.cxx`` sweeps the electrical speed
+``docs/doxygen/dox/demos/high-speed-field-weakening.cxx`` sweeps the electrical speed
 through the solver and prints where each ceiling starts to bind:
 
 .. code-block:: bash
 
    g++ -std=c++17 -fno-exceptions -fno-rtti -Wall -Wextra -Werror -Iinclude \
-       docs/doxygen/dox/demos/slice-s4-field-weakening.cxx src/core/mtpv.cpp \
-       -o /tmp/slice-s4-field-weakening
+       docs/doxygen/dox/demos/high-speed-field-weakening.cxx src/core/mtpv.cpp \
+       -o /tmp/high-speed-field-weakening
 
 Three numbers in its output are the whole decision:
 
@@ -79,7 +79,7 @@ those rows and in ``test_mtpv.cpp``, not on this page.
 Figure
 ------
 
-.. figure:: ../../images/OUT_slice_s4_field_weakening.png
+.. figure:: ../../images/ALL_high_speed_field_weakening.png
    :name: figure slice s4
    :width: 960
    :align: center

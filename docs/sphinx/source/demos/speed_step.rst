@@ -5,7 +5,7 @@ The speed reference steps 0 → 100 rad/s while the current loop stays at 20 kHz
 saturates iq, the plant accelerates, and the loop pulls back before the reference is reached — the
 classic cascade behaviour.
 
-.. figure:: ../../images/OUT_demo_speed_step.png
+.. figure:: ../../images/ALL_demo_speed_step.png
    :name: figure speed step
    :width: 720
    :align: center

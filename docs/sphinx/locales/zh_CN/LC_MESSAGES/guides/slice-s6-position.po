@@ -101,11 +101,11 @@ msgstr ""
 #: ../../source/guides/slice-s6-position.rst:28
 #: 29de4b2db4ca4911a3e012854f422e8a
 msgid ""
-"``docs/doxygen/dox/demos/slice-s6-position.cxx`` shows the two refusals, "
+"``docs/doxygen/dox/demos/positioning.cxx`` shows the two refusals, "
 "one gear sample and one shaped move. The same file produces this slice's "
 "figure."
 msgstr ""
-"``docs/doxygen/dox/demos/slice-s6-position.cxx`` 演示两次拒绝、一个传动"
+"``docs/doxygen/dox/demos/positioning.cxx`` 演示两次拒绝、一个传动"
 "比采样和一次带塑形的移动。本切片的图也由同一个文件产生。"
 
 #: ../../source/guides/slice-s6-position.rst:37

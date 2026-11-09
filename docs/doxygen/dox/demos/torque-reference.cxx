@@ -1,13 +1,13 @@
-// Slice S3 -- torque below base speed: the reference policy, the two PIs, the
+// Torque -- torque below base speed: the reference policy, the two PIs, the
 // feedforward, and where the voltage ceiling belongs. No hardware, no plant:
 // the point of the example is the wiring a board shares with the SIL bench.
 //
 // Build with the flags the `strict` gate uses for a C++17 translation unit (one
 // line, because a trailing backslash inside a `//` comment is a warning):
 //   g++ -std=c++17 -fno-exceptions -fno-rtti -Wall -Wextra -Werror -Iinclude
-//   docs/doxygen/dox/demos/slice-s3-torque.cxx -o /tmp/slice-s3-torque
+//   docs/doxygen/dox/demos/torque-reference.cxx -o /tmp/torque-reference
 //
-// 切片 S3 —— 基速以下转矩：参考策略、两个 PI、前馈，以及电压天花板该放在哪。
+// 转矩 —— 基速以下转矩：参考策略、两个 PI、前馈，以及电压天花板该放在哪。
 // 不需要硬件也不需要被控对象：这个例子要展示的是"板子与 SIL
 // 台架共用的那段接线"。
 

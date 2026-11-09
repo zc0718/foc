@@ -20,14 +20,14 @@ What you need
 A minimal program
 -----------------
 
-``docs/doxygen/dox/demos/slice-s1-startup.cxx`` steps the sequence at the control
+``docs/doxygen/dox/demos/startup-sensorless.cxx`` steps the sequence at the control
 rate and prints every state change. The same file produces this slice's figure.
 
 .. code-block:: bash
 
    g++ -std=c++17 -fno-exceptions -fno-rtti -Wall -Wextra -Werror -Iinclude \
-       docs/doxygen/dox/demos/slice-s1-startup.cxx src/core/startup.cpp \
-       -o /tmp/slice-s1-startup
+       docs/doxygen/dox/demos/startup-sensorless.cxx src/core/startup.cpp \
+       -o /tmp/startup-sensorless
 
 Three things in its output are worth reading slowly:
 
@@ -89,7 +89,7 @@ project ``README.md``.
 Figure
 ------
 
-.. figure:: ../../images/OUT_slice_s1_startup.png
+.. figure:: ../../images/ALL_startup_sensorless.png
    :name: figure slice s1
    :width: 720
    :align: center

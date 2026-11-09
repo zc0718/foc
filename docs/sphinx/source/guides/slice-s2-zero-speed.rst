@@ -21,7 +21,7 @@ What you need
 A minimal program
 -----------------
 
-``docs/doxygen/dox/demos/slice-s2-zero-speed.cxx`` holds a salient machine at
+``docs/doxygen/dox/demos/low-speed-injection.cxx`` holds a salient machine at
 standstill, drives it with the observer's own injection, and runs the loop three
 times: a surface-mount rotor, an interior rotor, and an interior rotor observed
 by a controller that cannot resolve the carrier. The same file produces this
@@ -30,9 +30,9 @@ slice's figure.
 .. code-block:: bash
 
    g++ -std=c++17 -fno-exceptions -fno-rtti -Wall -Wextra -Werror -Iinclude \
-       docs/doxygen/dox/demos/slice-s2-zero-speed.cxx \
+       docs/doxygen/dox/demos/low-speed-injection.cxx \
        src/core/observer/hfi_observer.cpp src/core/filters.cpp \
-       -o /tmp/slice-s2-zero-speed
+       -o /tmp/low-speed-injection
 
 Where the numbers come from
 ---------------------------
@@ -91,7 +91,7 @@ settles at -- lives in the header's own measured notes and in those claim rows.
 Figure
 ------
 
-.. figure:: ../../images/OUT_slice_s2_zero_speed.png
+.. figure:: ../../images/ALL_low_speed_injection.png
    :name: figure slice s2
    :width: 760
    :align: center

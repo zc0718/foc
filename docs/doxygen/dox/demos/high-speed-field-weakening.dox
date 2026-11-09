@@ -1,10 +1,8 @@
-/**
- * @example slice-s4-field-weakening.cxx
+/*!
+ * @example high-speed-field-weakening.cxx
  *
- * @brief [en] Above base speed: the voltage ceiling binds, and the currents leave the MTPA curve to keep producing torque.
- * @brief [zh] 基速以上：电压天花板开始约束，电流离开 MTPA 曲线以继续出力。
- *
- * @section s4_shows [en] What the example shows [zh] 这个例子展示了什么
+ * @par [en] Above base speed: the voltage ceiling binds, and the currents leave the MTPA curve to keep producing torque. [zh] 基速以上：电压天花板开始约束，电流离开 MTPA 曲线以继续出力。
+ * @section high_speed_field_weakening_shows [en] What the example shows [zh] 这个例子展示了什么
  * @par [en] One electrical-speed sweep through the operating-region solver. Below base speed the answer does not move,
  *      because the current ceiling is the only one in force and MTPA is its best use. Above it the voltage ellipse
  *      starts to bind, the d current grows negative on purpose, and the q current falls -- the torque lost per amp is
@@ -12,21 +10,42 @@
  * @par [zh] 用运行区求解器扫一遍电角速度。基速以下答案不动，因为只有电流上限生效、而 MTPA 是它最好的用法。基速以上
  *      电压椭圆开始约束，d 轴电流**故意**变负、q 轴电流下降——用"每安培转矩"去换让环路仍然可解的电压余量。
  *
- * @section s4_base [en] Base speed is not `v_max / psi_f` [zh] 基速不是 `v_max / psi_f`
+ * @section high_speed_field_weakening_base [en] Base speed is not `v_max / psi_f` [zh] 基速不是 `v_max / psi_f`
  * @par [en] It is `v_max` over the flux magnitude **at the MTPA point**, which includes the d current MTPA already
  *      spends. Using `psi_f` alone gives a number several times too high on a salient machine, and a drive built on it
  *      discovers the real ceiling only when the current loop saturates above it.
  * @par [zh] 基速是 `v_max` 除以 **MTPA 点处的**磁链幅值，那里面已经包含 MTPA 花掉的 d 轴电流。只拿 `psi_f` 会得到
  *      一个高出好几倍的数，而据此设计的驱动会在电流环饱和的那一刻才发现真正的天花板。
  *
- * @section s4_lambda [en] The number that decides whether any of this is worth doing [zh] 决定这一切值不值得做的那个数
+ * @section high_speed_field_weakening_lambda [en] The number that decides whether any of this is worth doing [zh] 决定这一切值不值得做的那个数
  * @par [en] `lambda = Ld * i_max / psi_f`. Above 1 the characteristic current sits beyond the current ceiling and there
  *      is headroom to trade; below it the machine cannot be weakened into a useful region at all. The example prints it
  *      rather than asserting it, because it is the same ratio the project's own domain check uses.
  * @par [zh] `lambda = Ld * i_max / psi_f`。大于 1 时特征电流在电流上限之外、有余量可换；小于它时这台机器根本弱不进
  *      有用的区域。例子把它打印出来而不是断言，因为计划的 domain 门用的是同一个比值。
  *
- * @include slice-s4-field-weakening.cxx
+ * @section high_speed_field_weakening_numbers [en] The numbers behind the figure [zh] 图背后的数字
+ * @par [en] The rows below are read out of this example's own `--csv` run -- the same run the figure is drawn from, so the table and the picture cannot disagree.
+ *
+ * | speed / base | id (A) | iq (A) | torque (N m) | voltage-limited |
+ * |---|---|---|---|---|
+ * | 0.0000 | -1.586476 | 2.546192 | 0.437008 | 0 |
+ * | 3.3000 | -2.902770 | 0.757580 | 0.171907 | 1 |
+ * | 16.5000 | -2.519511 | 0.156474 | 0.032988 | 1 |
+ *
+ * \image html ALL_high_speed_field_weakening.png ""
+ *
+ * @par [zh] 下面这些行取自本示例自己的 `--csv` 输出——与图同一次运行，所以表和图不会互相矛盾。
+ *
+ * | speed / base | id (A) | iq (A) | torque (N m) | voltage-limited |
+ * |---|---|---|---|---|
+ * | 0.0000 | -1.586476 | 2.546192 | 0.437008 | 0 |
+ * | 3.3000 | -2.902770 | 0.757580 | 0.171907 | 1 |
+ * | 16.5000 | -2.519511 | 0.156474 | 0.032988 | 1 |
+ *
+ * \image html ALL_high_speed_field_weakening.png ""
+ *
+ * @include high-speed-field-weakening.cxx
  *
  * @note [en] Link the aggregate target `foc::foc`; the command on the first line links the one translation unit this
  *            demo needs.

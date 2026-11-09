@@ -18,15 +18,15 @@ What you need
 A minimal program
 -----------------
 
-``docs/doxygen/dox/demos/slice-s5-modulation.cxx`` sweeps a requested amplitude at
+``docs/doxygen/dox/demos/modulation-limits.cxx`` sweeps a requested amplitude at
 two electrical angles, shapes a narrow pulse, and walks the six-step table twice.
 The same file produces this slice's figure.
 
 .. code-block:: bash
 
    g++ -std=c++17 -fno-exceptions -fno-rtti -Wall -Wextra -Werror -Iinclude \
-       docs/doxygen/dox/demos/slice-s5-modulation.cxx src/core/svpwm.cpp \
-       src/core/min_pulse.cpp -o /tmp/slice-s5-modulation
+       docs/doxygen/dox/demos/modulation-limits.cxx src/core/svpwm.cpp \
+       src/core/min_pulse.cpp -o /tmp/modulation-limits
 
 Where the numbers come from
 ---------------------------
@@ -73,7 +73,7 @@ amplitudes live in those rows and in ``test_svpwm.cpp``, not on this page.
 Figure
 ------
 
-.. figure:: ../../images/OUT_slice_s5_modulation.png
+.. figure:: ../../images/ALL_modulation_limits.png
    :name: figure slice s5
    :width: 720
    :align: center

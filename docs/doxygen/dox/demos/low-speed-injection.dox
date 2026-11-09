@@ -1,17 +1,15 @@
-/**
- * @example slice-s2-zero-speed.cxx
+/*!
+ * @example low-speed-injection.cxx
  *
- * @brief [en] Zero and low speed: injection, and the machines it refuses to work on.
- * @brief [zh] 零速与低速：注入，以及它拒绝在哪些机器上工作。
- *
- * @section s2_shows [en] What the example shows [zh] 这个例子展示了什么
+ * @par [en] Zero and low speed: injection, and the machines it refuses to work on. [zh] 零速与低速：注入，以及它拒绝在哪些机器上工作。
+ * @section low_speed_injection_shows [en] What the example shows [zh] 这个例子展示了什么
  * @par [en] A standstill salient machine driven by the observer's own injection, three times: a surface-mount rotor,
  *      an interior rotor, and an interior rotor whose carrier the controller cannot resolve. Only the middle one ever
  *      publishes an estimate that moves.
  * @par [zh] 一台静止的凸极电机，由观测器自己的注入驱动，跑三次：表贴式转子、内置式转子、以及内置式转子但控制器
  *      分辨不了那个载波。只有中间那一次发布出会动的估计。
  *
- * @section s2_gain [en] Why the surface-mount run is not a tuning problem [zh] 为什么表贴式那一次不是调参问题
+ * @section low_speed_injection_gain [en] Why the surface-mount run is not a tuning problem [zh] 为什么表贴式那一次不是调参问题
  * @par [en] The demodulation sensitivity comes from `predicted_gain_a()`, and at a saliency ratio of one it is exactly
  *      zero. A zero is not a small number: there is nothing in the current response for the demodulator to multiply,
  *      so the configuration is refused (`Param`) instead of being run with a gain that would only amplify noise. The
@@ -20,7 +18,7 @@
  *      东西可供解调器相乘，所以配置被拒绝（`Param`），而不是以一个只会放大噪声的增益跑起来。图的右半就是这条
  *      函数在整段上的取值。
  *
- * @section s2_silent [en] The two failures that look like success [zh] 两种看起来像成功的失败
+ * @section low_speed_injection_silent [en] The two failures that look like success [zh] 两种看起来像成功的失败
  * @par [en] The observer's `error()` is the demodulator's residual, not the angle error: it reads zero when the lock is
  *      perfect and zero when there is no signal at all. `locked()` is the separate answer, and it is the one a start-up
  *      must branch on. The carrier has the same shape: past `max_inject_hz(control_hz)` the demodulated amplitude
@@ -31,7 +29,28 @@
  *      解调幅值坍塌、锁定掉出、角度冻住、转速读作零——一个闭环会就此跑飞而没有任何故障被报出，所以 `update()`
  *      选择直接拒绝这个配置。
  *
- * @include slice-s2-zero-speed.cxx
+ * @section low_speed_injection_numbers [en] The numbers behind the figure [zh] 图背后的数字
+ * @par [en] The rows below are read out of this example's own `--csv` run -- the same run the figure is drawn from, so the table and the picture cannot disagree.
+ *
+ * | rotor | t (ms) | angle error (rad) | locked |
+ * |---|---|---|---|
+ * | ipm | 999.0000 | 0.000000 | 1 |
+ * | slow-control | 6660.0000 | 0.700000 | 0 |
+ * | spm | 999.0000 | 0.700000 | 0 |
+ *
+ * \image html ALL_low_speed_injection.png ""
+ *
+ * @par [zh] 下面这些行取自本示例自己的 `--csv` 输出——与图同一次运行，所以表和图不会互相矛盾。
+ *
+ * | rotor | t (ms) | angle error (rad) | locked |
+ * |---|---|---|---|
+ * | ipm | 999.0000 | 0.000000 | 1 |
+ * | slow-control | 6660.0000 | 0.700000 | 0 |
+ * | spm | 999.0000 | 0.700000 | 0 |
+ *
+ * \image html ALL_low_speed_injection.png ""
+ *
+ * @include low-speed-injection.cxx
  *
  * @note [en] Link the aggregate target `foc::foc`; the command on the first line links the two translation units this
  *            demo needs.

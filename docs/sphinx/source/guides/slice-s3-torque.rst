@@ -24,15 +24,15 @@ What you need
 A minimal program
 -----------------
 
-``docs/doxygen/dox/demos/slice-s3-torque.cxx`` is the whole of it, compiled with
+``docs/doxygen/dox/demos/torque-reference.cxx`` is the whole of it, compiled with
 the flags this repository's ``strict`` gate uses. It names one salient machine
 once and asks two reference policies the same q command:
 
 .. code-block:: bash
 
    g++ -std=c++17 -fno-exceptions -fno-rtti -Wall -Wextra -Werror -Iinclude \
-       docs/doxygen/dox/demos/slice-s3-torque.cxx src/core/pi.cpp \
-       src/core/feedforward.cpp -o /tmp/slice-s3-torque
+       docs/doxygen/dox/demos/torque-reference.cxx src/core/pi.cpp \
+       src/core/feedforward.cpp -o /tmp/torque-reference
 
 Two rows of that output are worth reading before the rest:
 
@@ -99,7 +99,7 @@ library stops too.
 Figure
 ------
 
-.. figure:: ../../images/OUT_demo_current_step.png
+.. figure:: ../../images/ALL_demo_current_step.png
    :name: figure slice s3
    :width: 720
    :align: center

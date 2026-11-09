@@ -1,12 +1,8 @@
-/**
- * @example slice-s7-sampling.cxx
+/*!
+ * @example current-sampling.cxx
  *
- * @brief [en] Sampling and the power stage: whether there is time to measure the current, and what the bridge does to
- *      the voltage it was asked for.
- * @brief [zh] 采样与功率级：到底有没有时间测电流，以及桥臂对"它被要求的那个电压"做了什么。
- *
- * @section s7_window [en] A single shunt answers a question about duties, not about the ADC [zh] 单电阻回答的是关于
- *      占空比的问题，不是关于 ADC 的问题
+ * @par [en] Sampling and the power stage: whether there is time to measure the current, and what the bridge does to the voltage it was asked for. [zh] 采样与功率级：到底有没有时间测电流，以及桥臂对"它被要求的那个电压"做了什么。
+ * @section current_sampling_window [en] A question about duties, not about the ADC [zh] 问的是占空比，不是 ADC
  * @par [en] With one shunt in the DC link, the current is visible only while a particular switch pattern is in force:
  *      one phase alone conducting, then two. Both intervals are measured against the settling plus sampling time, and
  *      the answer is three-valued -- measurable, too narrow, or no active vector at all -- because "there is a window"
@@ -15,7 +11,7 @@
  *      区间都要与"建立时间加采样时间"比较，而答案有三种——可测、窗口太窄、根本没有有效矢量——因为"有窗口"与
  *      "窗口是空的"接下来要做的事不一样。
  *
- * @section s7_angle [en] The window depends on where the vector points [zh] 窗口取决于矢量指向哪里
+ * @section current_sampling_angle [en] The window depends on where the vector points [zh] 窗口取决于矢量指向哪里
  * @par [en] Sweeping the modulation index at a fixed angle is not enough: at the sector boundary two phases carry the
  *      same duty, one of the two active intervals is exactly zero, and no modulation index makes it measurable. The
  *      sweep here runs at three angles for that reason, and the flat top of each curve is the modulator clamping, not
@@ -23,7 +19,7 @@
  * @par [zh] 在固定角度上扫调制比是不够的：在扇区边界两相占空比相同，两个有效区间之一恰好为零，无论调制比多大都
  *      不可测。这里因此在三个角度上扫，而每条曲线顶部的平段是调制器钳位，不是采样变好了。
  *
- * @section s7_frames [en] One correction, three places to read it [zh] 一个修正，三个读数位置
+ * @section current_sampling_frames [en] One correction, three places to read it [zh] 一个修正，三个读数位置
  * @par [en] The dead time costs `deadtime_v` on each phase whose current opposes the commanded edge, and the library
  *      corrects in the phase domain. That correction then has to travel back to alpha-beta to reach the modulator, and
  *      the projection drops the part that is common to all three phases -- a floating star point cannot see it anyway.
@@ -33,8 +29,7 @@
  *      才能送到调制器，而投影会丢掉三相共有的那部分——浮动的星点本来就看不见它。再去看某一相的占空比，调制器
  *      自己的共模搬移又咬掉一口。三个读数，一个数：报告里必须写明是在哪个参照系量的，否则复现不了。
  *
- * @section s7_shape [en] Two shapes, and the measurement that chose between them [zh] 两种形状，以及替它们做选择的那次
- *      测量
+ * @section current_sampling_shape [en] Two shapes, one measurement [zh] 两种形状、一次测量
  * @par [en] A fade width turns the correction's step into a ramp that only differs from it between the current where
  *      the sign is trusted and the current where the ramp saturates. It is identifiable, and it still loses: the
  *      header's warning records the comparison and the reason -- the loss on the plant is a soft step, and a linear
@@ -44,7 +39,28 @@
  *      它是可辨识的，而且仍然输：头文件里的警告记了那次比较和原因——plant 上的损失是一个软阶跃，线性斜坡表示不了
  *      这么陡的东西。这个例子是那条警告可以复现的地方，不是重新推导它的地方。
  *
- * @include slice-s7-sampling.cxx
+ * @section current_sampling_numbers [en] The numbers behind the figure [zh] 图背后的数字
+ * @par [en] The rows below are read out of this example's own `--csv` run -- the same run the figure is drawn from, so the table and the picture cannot disagree.
+ *
+ * | angle (deg) | m | window (us) | needed (us) | verdict |
+ * |---|---|---|---|---|
+ * | 0 | 1.0000 | 0.0000 | 0.5000 | 1 |
+ * | 20 | 1.0000 | 8.6824 | 0.5000 | 0 |
+ * | 30 | 1.0000 | 12.5000 | 0.5000 | 0 |
+ *
+ * \image html ALL_current_sampling.png ""
+ *
+ * @par [zh] 下面这些行取自本示例自己的 `--csv` 输出——与图同一次运行，所以表和图不会互相矛盾。
+ *
+ * | angle (deg) | m | window (us) | needed (us) | verdict |
+ * |---|---|---|---|---|
+ * | 0 | 1.0000 | 0.0000 | 0.5000 | 1 |
+ * | 20 | 1.0000 | 8.6824 | 0.5000 | 0 |
+ * | 30 | 1.0000 | 12.5000 | 0.5000 | 0 |
+ *
+ * \image html ALL_current_sampling.png ""
+ *
+ * @include current-sampling.cxx
  *
  * @note [en] Link the aggregate target `foc::foc`; the command on the first line links the two translation units this
  *            demo needs.

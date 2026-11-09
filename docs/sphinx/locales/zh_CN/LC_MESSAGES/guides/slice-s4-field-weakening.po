@@ -80,11 +80,11 @@ msgstr ""
 #: ../../source/guides/slice-s4-field-weakening.rst:22
 #: cb8b32b2874642a4a7c2522c1d16a743
 msgid ""
-"``docs/doxygen/dox/demos/slice-s4-field-weakening.cxx`` sweeps the "
+"``docs/doxygen/dox/demos/high-speed-field-weakening.cxx`` sweeps the "
 "electrical speed through the solver and prints where each ceiling starts "
 "to bind:"
 msgstr ""
-"``docs/doxygen/dox/demos/slice-s4-field-weakening.cxx`` 把电角速度扫过求"
+"``docs/doxygen/dox/demos/high-speed-field-weakening.cxx`` 把电角速度扫过求"
 "解器，并打印每个上限从何处开始起约束："
 
 #: ../../source/guides/slice-s4-field-weakening.rst:31

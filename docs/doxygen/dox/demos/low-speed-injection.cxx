@@ -1,13 +1,13 @@
-// Slice S2 -- zero and low speed: high-frequency injection, and the machines it
+// Low speed -- zero and low speed: high-frequency injection, and the machines it
 // refuses to work on.
 //
 // Build with the flags the `strict` gate uses for a C++17 translation unit:
-//   g++ -std=c++17 -fno-exceptions -fno-rtti -Wall -Wextra -Werror -Iinclude docs/doxygen/dox/demos/slice-s2-zero-speed.cxx src/core/observer/hfi_observer.cpp src/core/transform.cpp -o /tmp/slice-s2-zero-speed
+//   g++ -std=c++17 -fno-exceptions -fno-rtti -Wall -Wextra -Werror -Iinclude docs/doxygen/dox/demos/low-speed-injection.cxx src/core/observer/hfi_observer.cpp src/core/transform.cpp -o /tmp/low-speed-injection
 //
 // With `--csv <path>` it writes both sweeps as rows; `docs/demos/make_figures.py`
 // draws this slice's figure from that file.
 //
-// 切片 S2 —— 零速与低速：高频注入，以及它拒绝在哪些机器上工作。
+// 低速 —— 零速与低速：高频注入，以及它拒绝在哪些机器上工作。
 
 #include <cmath>
 #include <cstdio>

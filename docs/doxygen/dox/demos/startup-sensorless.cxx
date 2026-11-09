@@ -1,16 +1,16 @@
-// Slice S1 -- bringing a sensorless machine up: hold the rotor, drag the vector
+// Startup -- bringing a sensorless machine up: hold the rotor, drag the vector
 // up to a speed, hand over. No plant and no hardware: the sequence itself is a
 // policy, and what it decides (angle, current, when it is finished) is what this
 // program prints.
 //
 // Build with the flags the `strict` gate uses for a C++17 translation unit:
-//   g++ -std=c++17 -fno-exceptions -fno-rtti -Wall -Wextra -Werror -Iinclude docs/doxygen/dox/demos/slice-s1-startup.cxx -o /tmp/slice-s1-startup
+//   g++ -std=c++17 -fno-exceptions -fno-rtti -Wall -Wextra -Werror -Iinclude docs/doxygen/dox/demos/startup-sensorless.cxx -o /tmp/startup-sensorless
 //
 // With `--csv <path>` it writes the same run as rows instead of a table; that is
 // how `docs/demos/make_figures.py` draws this slice's figure, so the figure and
 // the snippet are one program.
 //
-// 切片 S1 —— 无感起转：按住转子、把矢量拖到某个转速、交出控制权。没有硬件也没有被控对象：
+// 起动 —— 无感起转：按住转子、把矢量拖到某个转速、交出控制权。没有硬件也没有被控对象：
 // 这个序列本身就是一条策略，它决定了什么（角度、电流、什么时候结束）就是这个程序打印的东西。
 // 带 `--csv <path>` 时把同一次运行写成行而不是表；`docs/demos/make_figures.py` 正是这样画本片
 // 的图，于是图与片段是同一个程序。

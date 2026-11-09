@@ -25,14 +25,14 @@ What you need
 A minimal program
 -----------------
 
-``docs/doxygen/dox/demos/slice-s9-c-abi.cxx`` is the whole sequence:
+``docs/doxygen/dox/demos/c-and-cpp-callers.cxx`` is the whole sequence:
 
 .. code-block:: bash
 
    g++ -std=c++17 -fno-exceptions -fno-rtti -Wall -Wextra -Werror -Iinclude \
-       docs/doxygen/dox/demos/slice-s9-c-abi.cxx src/api/foc_api.c \
+       docs/doxygen/dox/demos/c-and-cpp-callers.cxx src/api/foc_api.c \
        src/api/bridge.cpp src/core/*.cpp src/motor/*.cpp src/comm/*.cpp \
-       src/driver/*.cpp src/core/observer/*.cpp -o /tmp/slice-s9-c-abi
+       src/driver/*.cpp src/core/observer/*.cpp -o /tmp/c-and-cpp-callers
 
 Two details in it are the ones that cost integrators a day:
 
@@ -88,7 +88,7 @@ because its anchors are closed-form identifications rather than the full model.
 Figure
 ------
 
-.. figure:: ../../images/OUT_slice_s9_c_abi.png
+.. figure:: ../../images/ALL_callers.png
    :name: figure slice s9
    :width: 720
    :align: center

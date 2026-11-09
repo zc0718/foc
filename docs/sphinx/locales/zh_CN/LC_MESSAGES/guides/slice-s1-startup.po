@@ -80,11 +80,11 @@ msgstr ""
 
 #: ../../source/guides/slice-s1-startup.rst:23 192ddd0283fa4329b809b686fde03551
 msgid ""
-"``docs/doxygen/dox/demos/slice-s1-startup.cxx`` steps the sequence at the"
+"``docs/doxygen/dox/demos/startup-sensorless.cxx`` steps the sequence at the"
 " control rate and prints every state change. The same file produces this "
 "slice's figure."
 msgstr ""
-"``docs/doxygen/dox/demos/slice-s1-startup.cxx`` 按控制频率推进这条时序，"
+"``docs/doxygen/dox/demos/startup-sensorless.cxx`` 按控制频率推进这条时序，"
 "并打印每一次状态变化。本切片的图也由同一个文件产生。"
 
 #: ../../source/guides/slice-s1-startup.rst:32 87e7bdb8b71b417aab2854b837e6374e

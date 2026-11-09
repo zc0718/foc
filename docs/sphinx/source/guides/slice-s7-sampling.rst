@@ -22,7 +22,7 @@ What you need
 A minimal program
 -----------------
 
-``docs/doxygen/dox/demos/slice-s7-sampling.cxx`` sweeps the modulation index at
+``docs/doxygen/dox/demos/current-sampling.cxx`` sweeps the modulation index at
 three angles against the shunt verdict, reads the dead-time correction in two
 configurations, and runs the board check twice on the same measurements. The same
 file produces this slice's figure.
@@ -30,8 +30,8 @@ file produces this slice's figure.
 .. code-block:: bash
 
    g++ -std=c++17 -fno-exceptions -fno-rtti -Wall -Wextra -Werror -Iinclude \
-       docs/doxygen/dox/demos/slice-s7-sampling.cxx src/core/svpwm.cpp \
-       src/core/single_shunt.cpp -o /tmp/slice-s7-sampling
+       docs/doxygen/dox/demos/current-sampling.cxx src/core/svpwm.cpp \
+       src/core/single_shunt.cpp -o /tmp/current-sampling
 
 Where the numbers come from
 ---------------------------
@@ -93,7 +93,7 @@ this page.
 Figure
 ------
 
-.. figure:: ../../images/OUT_slice_s7_sampling.png
+.. figure:: ../../images/ALL_current_sampling.png
    :name: figure slice s7
    :width: 760
    :align: center

@@ -4,7 +4,7 @@ _`Current step`
 The q-axis reference jumps 0 → +1 A → −1 A while the motor stays at standstill. This is the
 sharpest test of the current loop: the integrator sees a full step twice, in opposite directions.
 
-.. figure:: ../../images/OUT_demo_current_step.png
+.. figure:: ../../images/ALL_demo_current_step.png
    :name: figure current step
    :width: 720
    :align: center

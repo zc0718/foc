@@ -77,11 +77,11 @@ msgstr ""
 #: ../../source/guides/slice-s5-modulation.rst:21
 #: ffd2985b012d4d82ba8e3ea7b2da6ad3
 msgid ""
-"``docs/doxygen/dox/demos/slice-s5-modulation.cxx`` sweeps a requested "
+"``docs/doxygen/dox/demos/modulation-limits.cxx`` sweeps a requested "
 "amplitude at two electrical angles, shapes a narrow pulse, and walks the "
 "six-step table twice. The same file produces this slice's figure."
 msgstr ""
-"``docs/doxygen/dox/demos/slice-s5-modulation.cxx`` 在两个电角度上扫请求"
+"``docs/doxygen/dox/demos/modulation-limits.cxx`` 在两个电角度上扫请求"
 "幅值，把一个窄脉冲整形，并把六步表走两遍。本切片的图也由同一个文件产生。"
 
 #: ../../source/guides/slice-s5-modulation.rst:32

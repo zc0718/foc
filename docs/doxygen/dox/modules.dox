@@ -1,56 +1,94 @@
-/**
+/*!
  * @page doc_modules Modules
  *
- * @brief [en] The module groups: one per public folder, so the site can be read by area rather than by file.
- * @brief [zh] 模块分组：每个公开目录一组，于是站点能按领域读，而不是按文件读。
- * @note [en] `@defgroup` is what makes a group exist; `@ingroup` in a file's `/*! \@file … */` block is what puts
- *            the file in it. Both were unused in this tree until now, which is why the published site had no Topics
- *            tab at all: 125 file pages, 0 groups. The groups follow the folders `doc_doxygen_folders` already scans,
- *            so a file cannot be in a group its folder is not in.
- * @note [zh] `\@defgroup` 负责让一个组存在；文件 `/*! \@file … */` 块里的 `\@ingroup` 负责把它放进去。此前本树两者
- *            都没用，所以发布出来的站点根本没有「模块」标签页：125 个文件页、0 个分组。分组跟随
- *            `doc_doxygen_folders` 已经在扫的目录，因此文件不可能落在它所在目录之外的分组里。
+ * @par [en] The module groups: one per public folder, so the site can be read by area rather than by
+ *      file.
+ * | Group | What is in it | Folder |
+ * |-------|---------------|--------|
+ * | \ref group_c_api "The C ABI" | handles, structs, enums, and the entry points a C consumer links against | `include/foc/api` |
+ * | \ref group_core "The algorithm core" | transforms, observers, modulators, protection, the tuning primitives | `include/foc/core` |
+ * | \ref group_comm "Communication" | register maps, framing and encoder streams | `include/foc/comm` |
+ * | \ref group_driver "Drivers" | the HAL implementations shipped with the library: stubs and bench drivers | `include/foc/driver` |
+ * | \ref group_hal "Hardware contracts" | what a host must provide, with no platform in it | `include/foc/hal` |
+ * | \ref group_motor "The motor object" | composition and lifecycle: one object owning observer, modulator and loop | `include/foc/motor` |
+ * @par [zh] 模块分组：每个公开目录一组，于是站点能按领域读，而不是按文件读。
+ * | Group | What is in it | Folder |
+ * |-------|---------------|--------|
+ * | \ref group_c_api "The C ABI" | handles, structs, enums, and the entry points a C consumer links against | `include/foc/api` |
+ * | \ref group_core "The algorithm core" | transforms, observers, modulators, protection, the tuning primitives | `include/foc/core` |
+ * | \ref group_comm "Communication" | register maps, framing and encoder streams | `include/foc/comm` |
+ * | \ref group_driver "Drivers" | the HAL implementations shipped with the library: stubs and bench drivers | `include/foc/driver` |
+ * | \ref group_hal "Hardware contracts" | what a host must provide, with no platform in it | `include/foc/hal` |
+ * | \ref group_motor "The motor object" | composition and lifecycle: one object owning observer, modulator and loop | `include/foc/motor` |
+ * @note [en] `@defgroup` is what makes a group exist, and the `@ingroup` tag in a file's own file
+ *      block is what puts the file in it -- a file block being the one that carries `@file` and
+ *      `@ingroup` together. There are six groups, one per folder `doc_doxygen_folders` already
+ *      scans, so a file cannot land in a group its folder is not in. These groups are also the
+ *      third index into this site: the file list answers where `svpwm.cpp` is, the class list
+ *      answers what `Svpwm` does, and a group answers what an area is for.
+ * @note [zh] `@defgroup` 负责让一个组存在，而文件自己的文件块里的 `@ingroup` 负责把它放进去——
+ *      文件块就是同时带 `@file` 与 `@ingroup` 的那个块。六组，与 `doc_doxygen_folders` 已在扫的
+ *      目录一一对应，因此文件不可能落在它所在目录之外的分组。这些分组也是本站的第三个索引：
+ *      文件列表回答 `svpwm.cpp` 在哪，类列表回答 `Svpwm` 做什么，而分组回答一块领域是干什么用的。
+ *
  * @since 0.1.0
  */
 
-/**
+/*!
  * @defgroup group_c_api The C ABI
  *
- * @brief [en] The frozen C surface: handles, structs, enums and the entry points a C consumer links against.
- * @brief [zh] 冻结的 C 表面：句柄、结构体、枚举，以及 C 消费方链接的入口。
+ * @par [en] The frozen C surface: handles, structs, enums and the entry points a C consumer links
+ *      against.
+ * @par [zh] 冻结的 C 表面：句柄、结构体、枚举，以及 C 消费方链接的入口。
+ *
+ * @since 0.1.0
  */
 
-/**
+/*!
  * @defgroup group_core The algorithm core
  *
- * @brief [en] The control kernel: transforms, observers, modulators, protection and the tuning primitives.
- * @brief [zh] 控制内核：变换、观测器、调制器、保护与整定原语。
+ * @par [en] The control kernel: transforms, observers, modulators, protection and the tuning
+ *      primitives.
+ * @par [zh] 控制内核：变换、观测器、调制器、保护与整定原语。
+ *
+ * @since 0.1.0
  */
 
-/**
+/*!
  * @defgroup group_comm Communication
  *
- * @brief [en] Register maps, framing and encoder streams: how a host talks to the library.
- * @brief [zh] 寄存器映射、组帧与编码器数据流：上位机与库对话的方式。
+ * @par [en] Register maps, framing and encoder streams: how a host talks to the library.
+ * @par [zh] 寄存器映射、组帧与编码器数据流：上位机与库对话的方式。
+ *
+ * @since 0.1.0
  */
 
-/**
+/*!
  * @defgroup group_driver Drivers
  *
- * @brief [en] The HAL implementations shipped with the library: board bring-up, stubs and bench drivers.
- * @brief [zh] 库自带的 HAL 实现：板级启动、桩件与台架驱动。
+ * @par [en] The HAL implementations shipped with the library: board bring-up, stubs and bench
+ *      drivers.
+ * @par [zh] 库自带的 HAL 实现：板级启动、桩件与台架驱动。
+ *
+ * @since 0.1.0
  */
 
-/**
+/*!
  * @defgroup group_hal Hardware contracts
  *
- * @brief [en] What a host must provide: the interfaces the library is written against, with no platform in them.
- * @brief [zh] 主控方必须提供什么：库所面向的接口，里面没有任何平台相关的东西。
+ * @par [en] What a host must provide: the interfaces the library is written against, with no
+ *      platform in them.
+ * @par [zh] 主控方必须提供什么：库所面向的接口，里面没有任何平台相关的东西。
+ *
+ * @since 0.1.0
  */
 
-/**
+/*!
  * @defgroup group_motor The motor object
  *
- * @brief [en] Composition and lifecycle: the object that owns an observer, a modulator and the control loop.
- * @brief [zh] 组合与生命周期：持有观测器、调制器与控制环的那个对象。
+ * @par [en] Composition and lifecycle: the object that owns an observer, a modulator and the control
+ *      loop.
+ * @par [zh] 组合与生命周期：持有观测器、调制器与控制环的那个对象。
+ *
+ * @since 0.1.0
  */

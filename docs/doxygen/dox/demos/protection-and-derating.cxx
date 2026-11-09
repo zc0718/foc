@@ -1,13 +1,13 @@
-// Slice S8 -- health and protection: what a drive does when something is wrong,
+// Protection -- health and protection: what a drive does when something is wrong,
 // and how the answers differ from the ones that look like them.
 //
 // Build with the flags the `strict` gate uses for a C++17 translation unit:
-//   g++ -std=c++17 -fno-exceptions -fno-rtti -Wall -Wextra -Werror -Iinclude docs/doxygen/dox/demos/slice-s8-protection.cxx src/core/protection.cpp src/core/watchdog.cpp src/core/brake_chopper.cpp -o /tmp/slice-s8-protection
+//   g++ -std=c++17 -fno-exceptions -fno-rtti -Wall -Wextra -Werror -Iinclude docs/doxygen/dox/demos/protection-and-derating.cxx src/core/protection.cpp src/core/watchdog.cpp src/core/brake_chopper.cpp -o /tmp/protection-and-derating
 //
 // With `--csv <path>` it writes the two sweeps and the latch timeline as rows;
 // `docs/demos/make_figures.py` draws this slice's figure from that file.
 //
-// 切片 S8 —— 健康与保护：驱动器在出问题时会做什么，以及那些看起来一样的答案之间差在哪里。
+// 保护 —— 健康与保护：驱动器在出问题时会做什么，以及那些看起来一样的答案之间差在哪里。
 
 #include <cmath>
 #include <cstdio>

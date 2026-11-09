@@ -1,13 +1,13 @@
-// Slice S7 -- sampling and the power stage: when there is time to measure the
+// Sampling -- sampling and the power stage: when there is time to measure the
 // current at all, and what the dead time does to the voltage the bridge delivers.
 //
 // Build with the flags the `strict` gate uses for a C++17 translation unit:
-//   g++ -std=c++17 -fno-exceptions -fno-rtti -Wall -Wextra -Werror -Iinclude docs/doxygen/dox/demos/slice-s7-sampling.cxx src/core/svpwm.cpp src/core/single_shunt.cpp -o /tmp/slice-s7-sampling
+//   g++ -std=c++17 -fno-exceptions -fno-rtti -Wall -Wextra -Werror -Iinclude docs/doxygen/dox/demos/current-sampling.cxx src/core/svpwm.cpp src/core/single_shunt.cpp -o /tmp/current-sampling
 //
 // With `--csv <path>` it writes both sweeps as rows; `docs/demos/make_figures.py`
 // draws this slice's figure from that file.
 //
-// 切片 S7 —— 采样与功率级：到底有没有时间测电流，以及死区对桥臂交付电压做了什么。
+// 采样 —— 采样与功率级：到底有没有时间测电流，以及死区对桥臂交付电压做了什么。
 
 #include <cmath>
 #include <cstdio>

@@ -88,12 +88,12 @@ msgstr ""
 #: ../../source/guides/slice-s7-sampling.rst:25
 #: 4c000fe949f340d8826af15853bac533
 msgid ""
-"``docs/doxygen/dox/demos/slice-s7-sampling.cxx`` sweeps the modulation "
+"``docs/doxygen/dox/demos/current-sampling.cxx`` sweeps the modulation "
 "index at three angles against the shunt verdict, reads the dead-time "
 "correction in two configurations, and runs the board check twice on the "
 "same measurements. The same file produces this slice's figure."
 msgstr ""
-"``docs/doxygen/dox/demos/slice-s7-sampling.cxx`` 在三个角度上扫调制比并"
+"``docs/doxygen/dox/demos/current-sampling.cxx`` 在三个角度上扫调制比并"
 "对照分流器的判定，在两种配置下读取死区补偿，并对同一组测量跑两遍板级自检"
 "。本切片的图也由同一个文件产生。"
 

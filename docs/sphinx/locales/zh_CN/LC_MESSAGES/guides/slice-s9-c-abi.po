@@ -94,9 +94,9 @@ msgstr ""
 "最小程序"
 
 #: ../../source/guides/slice-s9-c-abi.rst:28 f216e1958f744fec8b97f7c328cbf111
-msgid "``docs/doxygen/dox/demos/slice-s9-c-abi.cxx`` is the whole sequence:"
+msgid "``docs/doxygen/dox/demos/c-and-cpp-callers.cxx`` is the whole sequence:"
 msgstr ""
-"``docs/doxygen/dox/demos/slice-s9-c-abi.cxx`` 就是整条时序："
+"``docs/doxygen/dox/demos/c-and-cpp-callers.cxx`` 就是整条时序："
 
 #: ../../source/guides/slice-s9-c-abi.rst:37 b443e73435e541ce9066912331e40450
 msgid "Two details in it are the ones that cost integrators a day:"

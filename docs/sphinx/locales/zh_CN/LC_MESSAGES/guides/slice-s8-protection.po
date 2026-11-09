@@ -100,13 +100,13 @@ msgstr ""
 #: ../../source/guides/slice-s8-protection.rst:27
 #: 14d4f73b5455425a8454d639322d0950
 msgid ""
-"``docs/doxygen/dox/demos/slice-s8-protection.cxx`` sweeps the i2t budget "
+"``docs/doxygen/dox/demos/protection-and-derating.cxx`` sweeps the i2t budget "
 "below the hard trip, reads the derating curve across the trip "
 "temperature, walks the latch through a trip and a reset, asks a watchdog "
 "past its window, and pushes the bus into a brake chopper. The same file "
 "produces this slice's figure."
 msgstr ""
-"``docs/doxygen/dox/demos/slice-s8-protection.cxx`` 在硬跳闸以下扫 i2t 预"
+"``docs/doxygen/dox/demos/protection-and-derating.cxx`` 在硬跳闸以下扫 i2t 预"
 "算，读跨越跳闸温度的降额曲线，让锁存器走一遍跳闸与复位，向已经超出窗口的"
 "看门狗发问，并把母线推进制动斩波。本切片的图也由同一个文件产生。"
 

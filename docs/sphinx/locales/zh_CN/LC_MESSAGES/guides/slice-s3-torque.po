@@ -83,12 +83,12 @@ msgstr ""
 
 #: ../../source/guides/slice-s3-torque.rst:27 55a5ec3c21a2466bbd336d0038451c8c
 msgid ""
-"``docs/doxygen/dox/demos/slice-s3-torque.cxx`` is the whole of it, "
+"``docs/doxygen/dox/demos/torque-reference.cxx`` is the whole of it, "
 "compiled with the flags this repository's ``strict`` gate uses. It names "
 "one salient machine once and asks two reference policies the same q "
 "command:"
 msgstr ""
-"``docs/doxygen/dox/demos/slice-s3-torque.cxx`` 就是全部，用本仓库 ``"
+"``docs/doxygen/dox/demos/torque-reference.cxx`` 就是全部，用本仓库 ``"
 "strict`` 门禁所用的选项编译。它只声明一台凸极电机一次，用同一个 q 指令去"
 "问两种参考策略："
 
