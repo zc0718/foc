@@ -45,50 +45,50 @@ The slices
      - Bring a sensorless machine up, and know when to trust the observer
      - ``alignment`` ``polarity`` ``startup`` ``stall_start``
        ``observer/blended_observer``
-     - :doc:`slice-s1-startup`
+     - :doc:`startup-sensorless`
      - written
    * - S2
      - Produce torque at zero and low speed, and know when this machine cannot
      - ``observer/hfi_observer`` ``observer/dual_inductance_observer``
-     - :doc:`slice-s2-zero-speed`
+     - :doc:`low-speed-injection`
      - written
    * - S3
      - Turn a torque request into a dq current reference and close both axes
      - ``reference`` ``limits`` ``pi`` ``feedforward``
-     - :doc:`slice-s3-torque`
+     - :doc:`torque-reference`
      - written
    * - S4
      - Keep producing torque above base speed, and decide whether it is worth it
      - ``field_weakening`` ``mtpv`` ``machine_map``
-     - :doc:`slice-s4-field-weakening`
+     - :doc:`high-speed-field-weakening`
      - written
    * - S5
      - Modulate the voltage: overmodulation, minimum pulse, six-step
      - ``svpwm`` ``min_pulse`` ``six_step``
-     - :doc:`slice-s5-modulation`
+     - :doc:`modulation-limits`
      - written
    * - S6
      - Build a position loop, home the axis, stay inside soft limits
      - ``position`` ``position_reference`` ``motion_profile`` ``homing``
        ``soft_limit`` ``gear_ratio``
-     - :doc:`slice-s6-position`
+     - :doc:`positioning`
      - written
    * - S7
      - Sample current accurately: dead time, one shunt, the sampling instant
      - ``deadtime`` ``single_shunt`` ``trace`` ``board_check``
-     - :doc:`slice-s7-sampling`
+     - :doc:`current-sampling`
      - written
    * - S8
      - Know when it has failed, and where the parameters came from
      - ``protection`` ``watchdog`` ``thermal_limit`` ``brake_chopper``
        ``auto_tune`` ``commissioning``
-     - :doc:`slice-s8-protection`
+     - :doc:`protection-and-derating`
      - written
    * - S9
      - Consume the library from C, Python or a simulation master
      - ``api/foc_api.h`` ``comm/frame`` ``comm/register_map``
        ``comm/encoder_stream`` ``api/python_bindings.cpp``
-     - :doc:`slice-s9-c-abi`
+     - :doc:`c-and-cpp-callers`
      - written
 
 A slice is ``written`` when its page carries all seven parts and its example
@@ -100,15 +100,15 @@ not covered here, and the pieces column says what it would take to add it.
    :maxdepth: 1
    :hidden:
 
-   Bringing a sensorless machine up <slice-s1-startup>
-   Torque at zero speed <slice-s2-zero-speed>
-   Torque below base speed <slice-s3-torque>
-   Above base speed <slice-s4-field-weakening>
-   High speed and modulation <slice-s5-modulation>
-   Consuming the library from outside C++ <slice-s9-c-abi>
-   Positioning an axis <slice-s6-position>
-   Sampling and the power stage <slice-s7-sampling>
-   Health and protection <slice-s8-protection>
+   Bringing a sensorless machine up <startup-sensorless>
+   Torque at zero speed <low-speed-injection>
+   Torque below base speed <torque-reference>
+   Above base speed <high-speed-field-weakening>
+   High speed and modulation <modulation-limits>
+   Consuming the library from outside C++ <c-and-cpp-callers>
+   Positioning an axis <positioning>
+   Sampling and the power stage <current-sampling>
+   Health and protection <protection-and-derating>
 
 The figures already on the site
 -------------------------------

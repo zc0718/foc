@@ -57,7 +57,7 @@ Where the numbers come from
   has to guess which defaults it got.
 - **The callbacks are the board**: current sense scaling, dead time and the DC
   link voltage are the integrator's measurements, not the library's. `MinPulse`
-  and `Slice S5 <slice-s5-modulation>` are where the numbers those measurements
+  and :doc:`modulation-limits` are where the numbers those measurements
   imply are used.
 
 How it goes wrong

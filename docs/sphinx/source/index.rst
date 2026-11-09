@@ -42,30 +42,31 @@ _`What V1 does`
 
 All of this is verified in software only — see :ref:`honest limits <honest-limits>`.
 
-_`Quick start`
---------------
+_`Where to start`
+-----------------
 
-.. code-block:: python
-   :caption: conanfile.py
+The site is organised by **what you are trying to do**, not by what the project did. Four
+doors, one per reader:
 
-   def requirements(self):
-       self.requires("foc/0.1.0")
+.. list-table::
+   :header-rows: 1
+   :widths: 26 34 40
 
-.. code-block:: cmake
-   :caption: CMakeLists.txt
-
-   find_package(foc REQUIRED)
-   add_executable(app main.cpp)          # C users write main.c, the link rule is identical
-   target_link_libraries(app PRIVATE foc::foc)
-
-One rule to remember: link the aggregate target :code:`foc::foc`. It carries both
-:code:`foc::foc_c` and :code:`foc::foc_cpp`, and the package metadata guarantees the order.
-
-.. note::
-
-   C consumers still link the C++ runtime. The C ABI is stable, the implementation is C++:
-   set :code:`LINKER_LANGUAGE CXX` (or add one empty :code:`.cpp`), otherwise you will see
-   :code:`undefined reference to __cxa_*`. This boundary is documented, not papered over.
+   * - If you are…
+     - Read
+     - Because
+   * - New to this library
+     - :doc:`quickstart`
+     - four steps from an empty directory to a running loop, ending in a real, executed example
+   * - Holding a task
+     - :doc:`guides/index`
+     - one page per task: what to wire, what the numbers are, and how it goes wrong
+   * - Deciding whether to use it
+     - :doc:`architecture`, :doc:`boundaries`, :doc:`capabilities`
+     - the shape, the limits, and what each capability owes before it may be sold
+   * - Auditing a claim
+     - :doc:`usage`, :doc:`compliance`, :doc:`foundation-log`
+     - the claim rows, the language guarantees, and the record of what was wrong before
 
 _`Project structure`
 --------------------
@@ -122,30 +123,49 @@ test cases -- see :doc:`what this library does not do <boundaries>`.)
      - Would need a stripped link script and hand-written stubs; V1 explicitly requires C
        users to link the C++ runtime.
 
-_`Detailed settings`
---------------------
+_`Contents`
+-----------
+
+Six chapters, in reading order. Nothing in the first three chapters is a changelog: the project's
+own correction history sits in the last one, where a reader goes on purpose rather than by
+accident.
 
 .. toctree::
-   :caption: Using the library
+   :caption: Start here
    :numbered:
 
    Quick start <quickstart>
-   Architecture <architecture>
+
+.. toctree::
+   :caption: Guides
+   :numbered:
+
    Task slices <guides/index>
+   Measured responses <demos/index>
    Outer-loop self-tuning <sop>
+
+.. toctree::
+   :caption: Concepts
+   :numbered:
+
+   Architecture <architecture>
+   Symbols and units <symbols>
+   Convention alignment <conventions>
+
+.. toctree::
+   :caption: Evidence and limits
+   :numbered:
+
    What this library does not do <boundaries>
    What each capability offers <capabilities>
    Usage and verification <usage>
-   Language compliance: what can be claimed today <compliance>
-   Foundation corrections <foundation-log>
-   Demos <demos/index>
+   Language compliance <compliance>
 
 .. toctree::
-   :caption: Reference
+   :caption: Development and provenance
    :numbered:
 
-   Symbols and units <symbols>
-   Convention alignment <conventions>
+   Foundation corrections <foundation-log>
 
 _`License`
 ----------
