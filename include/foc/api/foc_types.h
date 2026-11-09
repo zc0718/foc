@@ -87,8 +87,8 @@ typedef enum foc_err {
     FOC_ERR_NO_RESOURCE = -2,
     FOC_ERR_STATE = -3,
     FOC_ERR_NOT_IMPL = -4,
-    FOC_ERR_FAULT = -5 /* the inverter reported a hardware fault; clear with
-                        foc_motor_clear_fault() */
+    /** the inverter reported a hardware fault; clear with foc_motor_clear_fault() */
+    FOC_ERR_FAULT = -5
 } foc_err_t;
 
 
@@ -135,11 +135,11 @@ typedef struct foc_motor_params {
  */
 // NOLINTNEXTLINE(performance-enum-size) -- a C ABI enum cannot carry a C++ base type.
 typedef enum foc_observer {
-    FOC_OBSERVER_BACK_EMF = 0,       /* back-EMF observer; the shipped default */
-    FOC_OBSERVER_NONLINEAR_FLUX = 1, /* non-linear flux observer */
-    FOC_OBSERVER_HFI = 2,            /* high-frequency injection, zero-speed */
-    FOC_OBSERVER_BLENDED = 3,        /* the blend of the two across speed */
-    FOC_OBSERVER_DUAL_INDUCTANCE = 4 /* both inductances: no d-axis bias, for MTPA and IPM */
+    FOC_OBSERVER_BACK_EMF = 0,       ///< back-EMF observer; the shipped default
+    FOC_OBSERVER_NONLINEAR_FLUX = 1, ///< non-linear flux observer
+    FOC_OBSERVER_HFI = 2,            ///< high-frequency injection, zero-speed
+    FOC_OBSERVER_BLENDED = 3,        ///< the blend of the two across speed
+    FOC_OBSERVER_DUAL_INDUCTANCE = 4 ///< both inductances: no d-axis bias, for MTPA and IPM
 } foc_observer_t;
 
 /**
@@ -169,41 +169,41 @@ typedef enum foc_observer {
  * @exporter
  */
 typedef struct foc_motor_setup {
-    uint32_t struct_size;              /* sizeof(foc_motor_setup_t); smaller = an older header */
-    float i_max_a;                     /* per-axis current limit, A; 0 = library default */
-    float pwm_freq_hz;                 /* carrier frequency, Hz; 0 = library default */
-    float deadtime_ns;                 /* inverter dead time, ns; taken literally */
-    float v_bus_v;                     /* nominal DC link voltage, V; 0 = library default */
-    float current_bandwidth_rad_s;     /* current-loop bandwidth, rad/s; 0 = library
-                                     default */
-    float speed_bandwidth_rad_s;       /* speed-loop bandwidth, rad/s; 0 = library
-                                     default */
-    float speed_loop_period_s;         /* speed-loop period, s; 0 = every tick */
-    float position_bandwidth_rad_s;    /* position-loop bandwidth, rad/s; 0 = library
-                                     default */
-    float velocity_limit_rad_s;        /* speed setpoint ceiling for moves, rad/s; 0 =
-                                   library default */
-    float position_loop_period_s;      /* position-loop period, s; 0 = every tick */
-    float position_accel_limit_rad_s2; /* position velocity-command rate limit,
-                                        rad/s^2; 0 = none */
-    float align_current_a;             /* alignment current, A; 0 = do not align */
-    float align_ramp_s;                /* alignment ramp time, s; 0 = apply at once */
-    float align_hold_s;                /* alignment hold window, s; required when aligning */
-    float align_tolerance_rad;         /* accepted spread during the hold, rad; required
-                                when aligning */
-    float align_verify_s;              /* direction-check hold, s; 0 = skip the check */
-    float align_angle_e_rad;           /* forced electrical angle, rad; 0 = the usual zero */
-    int32_t observer;                  /* foc_observer_t; 0 = FOC_OBSERVER_BACK_EMF, the shipped
-                       default */
-    float inject_v;                    /* HFI carrier amplitude, peak V; required for
-                       FOC_OBSERVER_HFI */
-    float inject_hz;                   /* HFI carrier frequency, Hz; required for FOC_OBSERVER_HFI */
-    float blend_start_rad_s;           /* below this speed only the injection observer runs;
-                              required for BLENDED */
-    float blend_end_rad_s;             /* above this speed only the back-EMF observer runs;
-                              required for BLENDED */
-    float handover_lpf_hz;             /* smoothing of the speed the handover is decided on,
-                              Hz; required for BLENDED */
+    uint32_t struct_size; ///< sizeof(foc_motor_setup_t); smaller = an older header
+    float i_max_a;        ///< per-axis current limit, A; 0 = library default
+    float pwm_freq_hz;    ///< carrier frequency, Hz; 0 = library default
+    float deadtime_ns;    ///< inverter dead time, ns; taken literally
+    float v_bus_v;        ///< nominal DC link voltage, V; 0 = library default
+                          /** current-loop bandwidth, rad/s; 0 = library default */
+    float current_bandwidth_rad_s;
+    /** speed-loop bandwidth, rad/s; 0 = library default */
+    float speed_bandwidth_rad_s;
+    float speed_loop_period_s; ///< speed-loop period, s; 0 = every tick
+                               /** position-loop bandwidth, rad/s; 0 = library default */
+    float position_bandwidth_rad_s;
+    /** speed setpoint ceiling for moves, rad/s; 0 = library default */
+    float velocity_limit_rad_s;
+    float position_loop_period_s; ///< position-loop period, s; 0 = every tick
+                                  /** position velocity-command rate limit, rad/s^2; 0 = none */
+    float position_accel_limit_rad_s2;
+    float align_current_a; ///< alignment current, A; 0 = do not align
+    float align_ramp_s;    ///< alignment ramp time, s; 0 = apply at once
+    float align_hold_s;    ///< alignment hold window, s; required when aligning
+                           /** accepted spread during the hold, rad; required when aligning */
+    float align_tolerance_rad;
+    float align_verify_s;    ///< direction-check hold, s; 0 = skip the check
+    float align_angle_e_rad; ///< forced electrical angle, rad; 0 = the usual zero
+                             /** foc_observer_t; 0 = FOC_OBSERVER_BACK_EMF, the shipped default */
+    int32_t observer;
+    /** HFI carrier amplitude, peak V; required for FOC_OBSERVER_HFI */
+    float inject_v;
+    float inject_hz; ///< HFI carrier frequency, Hz; required for FOC_OBSERVER_HFI
+                     /** below this speed only the injection observer runs; required for BLENDED */
+    float blend_start_rad_s;
+    /** above this speed only the back-EMF observer runs; required for BLENDED */
+    float blend_end_rad_s;
+    /** smoothing of the speed the handover is decided on, Hz; required for BLENDED */
+    float handover_lpf_hz;
     /* 1 when the commutation angle comes from the selected observer instead of
      the position callbacks. Appended and gated by struct_size. Default 0 leaves
      every existing caller where it is: an axis whose angle callbacks are the
@@ -230,10 +230,10 @@ typedef struct foc_motor_setup {
  */
 // NOLINTNEXTLINE(performance-enum-size) -- a C ABI enum cannot carry a C++ base type, and this one is frozen: `foc::MotorState` mirrors these numbers.
 typedef enum foc_motor_state {
-    FOC_MOTOR_IDLE = 0, /* outputs off */
+    FOC_MOTOR_IDLE = 0, ///< outputs off
     FOC_MOTOR_ALIGN = 1,
     FOC_MOTOR_RUN = 2,
-    FOC_MOTOR_FAULT = 3 /* latched; clear with foc_motor_clear_fault() */
+    FOC_MOTOR_FAULT = 3 ///< latched; clear with foc_motor_clear_fault()
 } foc_motor_state_t;
 
 
@@ -277,19 +277,19 @@ typedef enum foc_align_failure {
  * @exporter
  */
 typedef struct foc_motor_command {
-    float position_rad;          /* target mechanical angle, rad */
-    float max_current_a;         /* q-axis ceiling for this move, A; 0 = nameplate limit */
-    float feedforward_current_a; /* q-axis current added after the speed loop, A; speed and position modes
-                                    (ignored in torque mode, where the command is the reference) */
-    float max_velocity_rad_s;    /* speed ceiling for this move, rad/s; 0 = the
-                                controller's own */
-    float max_accel_rad_s2;      /* velocity rate limit for this move, rad/s^2; 0 = the
-                             controller's */
-    float kp_scale;              /* stiffness scale, 1 = configured, 0 = leave it configured */
-    float kd_scale;              /* speed-loop gain scale, 1 = configured, 0 = leave it
-                     configured */
-    float ilimit_scale;          /* speed-loop integral-limit scale, 1 = configured, 0 =
-                         leave it */
+    float position_rad;  ///< target mechanical angle, rad
+    float max_current_a; ///< q-axis ceiling for this move, A; 0 = nameplate limit
+    /** q-axis current added after the speed loop, A; speed and position modes (ignored in torque mode, where the command is the reference) */
+    float feedforward_current_a;
+    /** speed ceiling for this move, rad/s; 0 = the controller's own */
+    float max_velocity_rad_s;
+    /** velocity rate limit for this move, rad/s^2; 0 = the controller's */
+    float max_accel_rad_s2;
+    float kp_scale; ///< stiffness scale, 1 = configured, 0 = leave it configured
+                    /** speed-loop gain scale, 1 = configured, 0 = leave it configured */
+    float kd_scale;
+    /** speed-loop integral-limit scale, 1 = configured, 0 = leave it */
+    float ilimit_scale;
 } foc_motor_command_t;
 
 
@@ -324,28 +324,28 @@ typedef struct foc_motor_command {
  * @since 0.1.7
  */
 typedef struct foc_hfi_sizing {
-    uint32_t struct_size; /* sizeof(foc_hfi_sizing_t) */
-    float inject_hz;      /* the carrier this control rate can resolve, Hz */
-    float inject_v;       /* peak volts that draw `hf_current_a` on this machine's d
-                         axis, V */
-    float demod_lpf_hz;   /* demodulation cutoff, Hz */
-    float speed_lpf_hz;   /* cutoff on the published speed, Hz */
-    float hf_current_a;   /* the peak HF current `inject_v` draws, A */
+    uint32_t struct_size; ///< sizeof(foc_hfi_sizing_t)
+    float inject_hz;      ///< the carrier this control rate can resolve, Hz
+                          /** peak volts that draw `hf_current_a` on this machine's d axis, V */
+    float inject_v;
+    float demod_lpf_hz; ///< demodulation cutoff, Hz
+    float speed_lpf_hz; ///< cutoff on the published speed, Hz
+    float hf_current_a; ///< the peak HF current `inject_v` draws, A
 } foc_hfi_sizing_t;
 
 typedef struct foc_motor_status {
-    uint32_t struct_size;   /* sizeof(foc_motor_status_t) */
-    int32_t mode_state;     /* foc_motor_state_t: Idle / Align / Run / Fault */
-    int32_t error;          /* last sticky error, a foc_err_t value */
-    int32_t align_state;    /* foc_align_state_t */
-    int32_t align_failure;  /* foc_align_failure_t */
-    float align_offset_rad; /* captured mechanical offset, rad in [0, 2*pi); valid
-                             once DONE */
-    float align_spread_rad; /* spread of the accepted capture, rad */
-    uint32_t max_period_us; /* worst control-tick interval seen, us; 0 without a
-                             clock */
-    int32_t observer;       /* the observer actually running (a foc_observer_t);
-                             appended, gated by struct_size */
+    uint32_t struct_size;  ///< sizeof(foc_motor_status_t)
+    int32_t mode_state;    ///< foc_motor_state_t: Idle / Align / Run / Fault
+    int32_t error;         ///< last sticky error, a foc_err_t value
+    int32_t align_state;   ///< foc_align_state_t
+    int32_t align_failure; ///< foc_align_failure_t
+                           /** captured mechanical offset, rad in [0, 2*pi); valid once DONE */
+    float align_offset_rad;
+    float align_spread_rad; ///< spread of the accepted capture, rad
+                            /** worst control-tick interval seen, us; 0 without a clock */
+    uint32_t max_period_us;
+    /** the observer actually running (a foc_observer_t); appended, gated by struct_size */
+    int32_t observer;
     /* 1 when the selected observer says it is producing a measurement, 0 when it
      is holding the last angle. Appended; gated by struct_size. The distinction
      matters because a holding observer is indistinguishable from a stopped
@@ -492,19 +492,19 @@ typedef enum foc_board_report_capacity { FOC_BOARD_MAX_ITEMS = 12 } foc_board_re
  */
 typedef struct foc_board_measurements {
     uint32_t struct_size;
-    float sum_current_a;      /* mean i_u+i_v+i_w under a steady drive, A */
-    float offset_a[3];        /* zero-current reading per phase, A */
-    float response_sign[3];   /* +1 / -1 / +2 = unknown, per phase */
-    float ripple_measured_a;  /* ripple the ADC sees, A */
-    float ripple_expected_a;  /* what the switching period implies, A */
-    float deadtime_v;         /* identified dead-time volts (axis), V */
-    float deadtime_cmd_v;     /* what the board was configured with, V */
-    float encoder_offset_rad; /* residual mount offset, rad */
-    float rs_ohm;             /* identified resistance, ohm */
-    float rs_nameplate_ohm;   /* nameplate resistance, ohm */
-    float psi_f_wb;           /* identified flux linkage, Wb */
-    float psi_f_nameplate_wb; /* nameplate flux linkage, Wb */
-    float observer_error_rad; /* observer angle error on a known trajectory, rad */
+    float sum_current_a;      ///< mean i_u+i_v+i_w under a steady drive, A
+    float offset_a[3];        ///< zero-current reading per phase, A
+    float response_sign[3];   ///< +1 / -1 / +2 = unknown, per phase
+    float ripple_measured_a;  ///< ripple the ADC sees, A
+    float ripple_expected_a;  ///< what the switching period implies, A
+    float deadtime_v;         ///< identified dead-time volts (axis), V
+    float deadtime_cmd_v;     ///< what the board was configured with, V
+    float encoder_offset_rad; ///< residual mount offset, rad
+    float rs_ohm;             ///< identified resistance, ohm
+    float rs_nameplate_ohm;   ///< nameplate resistance, ohm
+    float psi_f_wb;           ///< identified flux linkage, Wb
+    float psi_f_nameplate_wb; ///< nameplate flux linkage, Wb
+    float observer_error_rad; ///< observer angle error on a known trajectory, rad
 } foc_board_measurements_t;
 
 /**
@@ -515,22 +515,22 @@ typedef struct foc_board_measurements {
  */
 typedef struct foc_board_limits {
     uint32_t struct_size;
-    float sum_current_a;      /* |sum| allowed, A */
-    float offset_a;           /* |zero reading| allowed, A */
-    float ripple_ratio;       /* measured/expected ripple ceiling */
-    float deadtime_ratio;     /* dead-time relative error allowed */
-    float encoder_offset_rad; /* residual mount offset allowed, rad */
-    float parameter_ratio;    /* Rs / psi_f relative error allowed */
-    float observer_error_rad; /* observer error allowed, rad */
+    float sum_current_a;      ///< |sum| allowed, A
+    float offset_a;           ///< |zero reading| allowed, A
+    float ripple_ratio;       ///< measured/expected ripple ceiling
+    float deadtime_ratio;     ///< dead-time relative error allowed
+    float encoder_offset_rad; ///< residual mount offset allowed, rad
+    float parameter_ratio;    ///< Rs / psi_f relative error allowed
+    float observer_error_rad; ///< observer error allowed, rad
 } foc_board_limits_t;
 
 /** @brief [en] One row of the report. [zh] 报告的一行。 @since 0.1.1 @exporter */
 typedef struct foc_board_reading {
-    int32_t item;  /* FOC_BOARD_ITEM_* */
-    float value;   /* the measured number */
-    float limit;   /* the number it was compared with */
-    int32_t pass;  /* non-zero = pass */
-    int32_t phase; /* 0..2 for per-phase items, 3 otherwise */
+    int32_t item;  ///< FOC_BOARD_ITEM_*
+    float value;   ///< the measured number
+    float limit;   ///< the number it was compared with
+    int32_t pass;  ///< non-zero = pass
+    int32_t phase; ///< 0..2 for per-phase items, 3 otherwise
 } foc_board_reading_t;
 
 /**
@@ -542,10 +542,10 @@ typedef struct foc_board_reading {
 typedef struct foc_board_report {
     uint32_t struct_size;
     foc_board_reading_t items[FOC_BOARD_MAX_ITEMS];
-    int32_t count;       /* rows filled */
-    int32_t failures;    /* rows that failed */
-    int32_t cause;       /* FOC_BOARD_CAUSE_* */
-    int32_t cause_phase; /* 0..2, or 3 */
+    int32_t count;       ///< rows filled
+    int32_t failures;    ///< rows that failed
+    int32_t cause;       ///< FOC_BOARD_CAUSE_*
+    int32_t cause_phase; ///< 0..2, or 3
 } foc_board_report_t;
 
 /**
@@ -556,11 +556,11 @@ typedef struct foc_board_report {
  */
 typedef struct foc_fw_verdict {
     uint32_t struct_size;
-    float i_char_a;   /* psi_f / Ld, A: where reluctance and magnet terms match
-                       */
-    float ratio;      /* i_char / i_max: the region is worth having when <= 1,
-                       i.e. the current limit can null the flux */
-    float speed_gain; /* speed multiple the flux can buy */
+    /** psi_f / Ld, A: where reluctance and magnet terms match */
+    float i_char_a;
+    /** i_char / i_max: the region is worth having when <= 1, i.e. the current limit can null the flux */
+    float ratio;
+    float speed_gain; ///< speed multiple the flux can buy
     int32_t worthwhile;
 } foc_fw_verdict_t;
 
@@ -580,11 +580,11 @@ typedef struct foc_fw_verdict {
 // 基类型保持 `int`，理由与其余几个相同：C99 的 enum 没有固定底层类型，而它跨的是同一个已冻结的 ABI。
 // NOLINTNEXTLINE(performance-enum-size)
 typedef enum foc_stall_phase {
-    FOC_STALL_IDLE = 0,     /* not started, or cancelled */
-    FOC_STALL_RAMPING = 1,  /* the sequence owns the torque command */
-    FOC_STALL_RELEASED = 2, /* the rotor moved; the hand-over torque is the value
-                             to take over on */
-    FOC_STALL_FAILED = 3    /* the ceiling was held and the rotor never moved */
+    FOC_STALL_IDLE = 0,    ///< not started, or cancelled
+    FOC_STALL_RAMPING = 1, ///< the sequence owns the torque command
+                           /** the rotor moved; the hand-over torque is the value to take over on */
+    FOC_STALL_RELEASED = 2,
+    FOC_STALL_FAILED = 3 ///< the ceiling was held and the rotor never moved
 } foc_stall_phase_t;
 
 /**
@@ -600,13 +600,13 @@ typedef enum foc_stall_phase {
  */
 typedef struct foc_stall_start_config {
     uint32_t struct_size;
-    float breakaway_nm;        /* stiction plus load the rotor must beat, N*m */
-    float max_torque_nm;       /* the ceiling the drive may command, N*m; must exceed
-                          breakaway_nm */
-    float ramp_nm_per_s;       /* how fast the torque is raised, N*m/s */
-    float release_speed_rad_s; /* mechanical speed that counts as "it moved",
-                                rad/s */
-    float give_up_s;           /* how long the ceiling may be held without motion, s */
+    float breakaway_nm; ///< stiction plus load the rotor must beat, N*m
+                        /** the ceiling the drive may command, N*m; must exceed breakaway_nm */
+    float max_torque_nm;
+    float ramp_nm_per_s; ///< how fast the torque is raised, N*m/s
+                         /** mechanical speed that counts as "it moved", rad/s */
+    float release_speed_rad_s;
+    float give_up_s; ///< how long the ceiling may be held without motion, s
 } foc_stall_start_config_t;
 
 /**
@@ -617,10 +617,10 @@ typedef struct foc_stall_start_config {
  */
 typedef struct foc_stall_start_status {
     uint32_t struct_size;
-    int32_t phase;   /* FOC_STALL_* */
-    float torque_nm; /* the torque the sequence last commanded; after RELEASED
-                      this is the hand-over */
-    int32_t limited; /* the ramp is at its ceiling */
+    int32_t phase; ///< FOC_STALL_*
+                   /** the torque the sequence last commanded; after RELEASED this is the hand-over */
+    float torque_nm;
+    int32_t limited; ///< the ramp is at its ceiling
 } foc_stall_start_status_t;
 
 /**
@@ -636,12 +636,12 @@ typedef struct foc_stall_start_status {
  */
 typedef struct foc_pi_gains {
     uint32_t struct_size;
-    float kp;           /* proportional gain */
-    float ki;           /* integral gain */
-    float out_min;      /* clamp on the controller output */
-    float out_max;      /* clamp on the controller output */
-    float integral_min; /* clamp on the integrator state */
-    float integral_max; /* clamp on the integrator state */
+    float kp;           ///< proportional gain
+    float ki;           ///< integral gain
+    float out_min;      ///< clamp on the controller output
+    float out_max;      ///< clamp on the controller output
+    float integral_min; ///< clamp on the integrator state
+    float integral_max; ///< clamp on the integrator state
 } foc_pi_gains_t;
 
 /**
@@ -657,10 +657,10 @@ typedef struct foc_pi_gains {
  */
 typedef struct foc_identify_result {
     uint32_t struct_size;
-    float value;    /* Rs in ohm, or psi_f in Wb, depending on the call */
-    float offset;   /* the constant term the fit found, V */
-    float residual; /* rms of what the model could not explain, V */
-    int32_t valid;  /* non-zero only when the samples could support a slope */
+    float value;    ///< Rs in ohm, or psi_f in Wb, depending on the call
+    float offset;   ///< the constant term the fit found, V
+    float residual; ///< rms of what the model could not explain, V
+    int32_t valid;  ///< non-zero only when the samples could support a slope
     int32_t samples;
 } foc_identify_result_t;
 
@@ -694,12 +694,12 @@ typedef struct foc_protection_config {
 /** @brief [en] One step's measurements. [zh] 一步的测量值。 @since 0.1.1 @exporter */
 typedef struct foc_protection_input {
     uint32_t struct_size;
-    float i_magnitude_a;    /* peak phase current, A */
-    float v_bus_v;          /* DC link, V */
-    float temperature_c;    /* hottest measured point, deg C */
-    float omega_e_rad_s;    /* electrical speed, rad/s */
-    float flux_error_ratio; /* |psi_est - psi_f| / psi_f, 0 = healthy */
-    int32_t flux_valid;     /* non-zero = the observer has an answer */
+    float i_magnitude_a;    ///< peak phase current, A
+    float v_bus_v;          ///< DC link, V
+    float temperature_c;    ///< hottest measured point, deg C
+    float omega_e_rad_s;    ///< electrical speed, rad/s
+    float flux_error_ratio; ///< |psi_est - psi_f| / psi_f, 0 = healthy
+    int32_t flux_valid;     ///< non-zero = the observer has an answer
 } foc_protection_input_t;
 
 /**
@@ -710,12 +710,12 @@ typedef struct foc_protection_input {
  */
 typedef struct foc_protection_output {
     uint32_t struct_size;
-    int32_t fault;          /* FOC_FAULT_* */
-    uint32_t active_mask;   /* bit 1<<code per active fault */
-    uint32_t latched_mask;  /* the same, faults that will not self-clear */
-    float i_limit_a;        /* derated current limit, 0 when tripped */
-    int32_t output_allowed; /* 0 = stop switching this step */
-    float i2t_budget;       /* the thermal budget in A^2*s */
+    int32_t fault;          ///< FOC_FAULT_*
+    uint32_t active_mask;   ///< bit 1<<code per active fault
+    uint32_t latched_mask;  ///< the same, faults that will not self-clear
+    float i_limit_a;        ///< derated current limit, 0 when tripped
+    int32_t output_allowed; ///< 0 = stop switching this step
+    float i2t_budget;       ///< the thermal budget in A^2*s
 } foc_protection_output_t;
 
 /**
@@ -731,27 +731,27 @@ typedef struct foc_protection_output {
  * @exporter
  */
 typedef struct foc_hal_callbacks {
-    uint32_t struct_size; /* sizeof(foc_hal_callbacks_t) */
-    void *user;           /* handed back to every callback unchanged */
+    uint32_t struct_size; ///< sizeof(foc_hal_callbacks_t)
+    void *user;           ///< handed back to every callback unchanged
 
-    /* Required: receive the three phase duties, each in [0, 1]. */
+    /** Required: receive the three phase duties, each in [0, 1]. */
     void (*pwm_write_duty)(void *user, const float duty_uvw[3]);
-    /* Required: phase currents in A, U/V/W. */
+    /** Required: phase currents in A, U/V/W. */
     void (*read_current)(void *user, float uvw_a[3]);
-    /* Required: mechanical angle in rad. */
+    /** Required: mechanical angle in rad. */
     float (*read_angle_mech_rad)(void *user);
-    /* Required: DC link voltage in V. */
+    /** Required: DC link voltage in V. */
     float (*read_voltage_v)(void *user);
 
-    /* Optional: mechanical speed in rad/s; NULL = this host cannot measure it. */
+    /** Optional: mechanical speed in rad/s; NULL = this host cannot measure it. */
     float (*read_velocity_rad_s)(void *user);
-    /* Optional: non-zero when the inverter reports a fault; NULL = no fault path. */
+    /** Optional: non-zero when the inverter reports a fault; NULL = no fault path. */
     int32_t (*pwm_fault)(void *user);
-    /* Optional: enable the output stage, 0 = ok; NULL = nothing to enable. */
+    /** Optional: enable the output stage, 0 = ok; NULL = nothing to enable. */
     int32_t (*pwm_enable)(void *user);
-    /* Optional: disable the output stage; NULL = nothing to disable. */
+    /** Optional: disable the output stage; NULL = nothing to disable. */
     void (*pwm_disable)(void *user);
-    /* Optional: monotonic microseconds; NULL = trust the dt given to each tick. */
+    /** Optional: monotonic microseconds; NULL = trust the dt given to each tick. */
     uint64_t (*now_us)(void *user);
     /* Optional: non-zero when this position source has an index mark at all; NULL
      = no mark. Appended and gated by struct_size, because this is an *input*
@@ -818,16 +818,16 @@ typedef struct foc_autotune_s *foc_autotune_t;
  * @exporter
  */
 typedef struct foc_autotune_config {
-    uint32_t struct_size;   /* sizeof(foc_autotune_config_t) */
-    float kt_nm_per_a;      /* nameplate torque constant, N*m/A */
-    float j_expected_kg_m2; /* the inertia the caller believes in, kg*m^2 */
-    float b_expected_nm_s;  /* the viscous coefficient believed in, N*m*s */
-    float bandwidth_rad_s;  /* requested closed-loop bandwidth, rad/s */
-    float i_max_a;          /* current ceiling for the produced gains, A */
-    float tolerance;        /* relative distance the measured inertia may sit from j_expected */
-    float min_current_a;    /* below this peak current the window carries no information */
-    float max_residual;     /* largest normalised fit residual still called a measurement */
-    int32_t min_samples;    /* shortest window that can be called one */
+    uint32_t struct_size;   ///< sizeof(foc_autotune_config_t)
+    float kt_nm_per_a;      ///< nameplate torque constant, N*m/A
+    float j_expected_kg_m2; ///< the inertia the caller believes in, kg*m^2
+    float b_expected_nm_s;  ///< the viscous coefficient believed in, N*m*s
+    float bandwidth_rad_s;  ///< requested closed-loop bandwidth, rad/s
+    float i_max_a;          ///< current ceiling for the produced gains, A
+    float tolerance;        ///< relative distance the measured inertia may sit from j_expected
+    float min_current_a;    ///< below this peak current the window carries no information
+    float max_residual;     ///< largest normalised fit residual still called a measurement
+    int32_t min_samples;    ///< shortest window that can be called one
 } foc_autotune_config_t;
 
 /**
@@ -844,17 +844,17 @@ typedef struct foc_autotune_config {
  * @exporter
  */
 typedef struct foc_autotune_result {
-    uint32_t struct_size;  /* sizeof(foc_autotune_result_t) */
-    int32_t status;        /* foc_err_t of the configuration itself */
-    int32_t valid;         /* 1 only when the window is a measurement of THIS machine */
-    float kt_over_j;       /* identified acceleration per amp, rad/s^2 per A */
-    float b_over_j;        /* identified mechanical pole, 1/s */
-    float j_kg_m2;         /* kt / (kt/J) from the nameplate kt; 0 when kt was not given */
-    float kp_a_per_rad_s;  /* proportional gain to apply */
-    float ki_a_per_rad_s2; /* integral gain to apply */
-    float residual;        /* normalised RMS residual of the fit; 0 = the model explains the window exactly */
-    const char *reason;    /* why valid is 0, for a log; "" when valid */
-    int32_t samples;       /* periods judged */
+    uint32_t struct_size;  ///< sizeof(foc_autotune_result_t)
+    int32_t status;        ///< foc_err_t of the configuration itself
+    int32_t valid;         ///< 1 only when the window is a measurement of THIS machine
+    float kt_over_j;       ///< identified acceleration per amp, rad/s^2 per A
+    float b_over_j;        ///< identified mechanical pole, 1/s
+    float j_kg_m2;         ///< kt / (kt/J) from the nameplate kt; 0 when kt was not given
+    float kp_a_per_rad_s;  ///< proportional gain to apply
+    float ki_a_per_rad_s2; ///< integral gain to apply
+    float residual;        ///< normalised RMS residual of the fit; 0 = the model explains the window exactly
+    const char *reason;    ///< why valid is 0, for a log; "" when valid
+    int32_t samples;       ///< periods judged
 } foc_autotune_result_t;
 
 /**
@@ -888,17 +888,17 @@ typedef struct foc_autotune_result {
  * @exporter
  */
 typedef struct foc_trace_sample {
-    uint32_t t_us;    /* platform clock, low 32 bits; 0 = this HAL has no clock */
-    float i_d;        /* measured d-axis current, A */
-    float i_q;        /* measured q-axis current, A */
-    float i_ref_d;    /* demanded d-axis current, A */
-    float i_ref_q;    /* demanded q-axis current, A */
-    float v_d;        /* applied d-axis voltage, V */
-    float v_q;        /* applied q-axis voltage, V */
-    float speed_mech; /* mechanical speed, rad/s */
-    uint8_t mode;     /* foc_motor_state_t at the end of the period */
-    uint8_t status;   /* foc_err_t at the end of the period, as its unsigned byte */
-    uint16_t pad;     /* keeps the record a fixed size; written as 0 */
+    uint32_t t_us;    ///< platform clock, low 32 bits; 0 = this HAL has no clock
+    float i_d;        ///< measured d-axis current, A
+    float i_q;        ///< measured q-axis current, A
+    float i_ref_d;    ///< demanded d-axis current, A
+    float i_ref_q;    ///< demanded q-axis current, A
+    float v_d;        ///< applied d-axis voltage, V
+    float v_q;        ///< applied q-axis voltage, V
+    float speed_mech; ///< mechanical speed, rad/s
+    uint8_t mode;     ///< foc_motor_state_t at the end of the period
+    uint8_t status;   ///< foc_err_t at the end of the period, as its unsigned byte
+    uint16_t pad;     ///< keeps the record a fixed size; written as 0
 } foc_trace_sample_t;
 
 
@@ -917,17 +917,17 @@ typedef struct foc_trace_sample {
  * @exporter
  */
 typedef struct foc_step_metrics {
-    uint32_t struct_size;      /* sizeof(foc_step_metrics_t) */
-    int32_t status;            /* foc_err_t of the measurement itself */
-    float bandwidth_rad_s;     /* -3 dB of the fitted first-order loop, rad/s; 0
-                            unless status is FOC_OK */
-    float tau_s;               /* fitted time constant, s; 1 / bandwidth_rad_s */
-    float settling_s;          /* s from the first sample until it stays inside the band;
-                       -1 = never */
-    float overshoot_fraction;  /* peak beyond the target, as a fraction of the step
-                             */
-    float tail_error_fraction; /* mean of the last tenth minus the target, as a
-                                fraction of the step */
+    uint32_t struct_size; ///< sizeof(foc_step_metrics_t)
+    int32_t status;       ///< foc_err_t of the measurement itself
+                          /** -3 dB of the fitted first-order loop, rad/s; 0 unless status is FOC_OK */
+    float bandwidth_rad_s;
+    float tau_s; ///< fitted time constant, s; 1 / bandwidth_rad_s
+                 /** s from the first sample until it stays inside the band; -1 = never */
+    float settling_s;
+    /** peak beyond the target, as a fraction of the step */
+    float overshoot_fraction;
+    /** mean of the last tenth minus the target, as a fraction of the step */
+    float tail_error_fraction;
 } foc_step_metrics_t;
 
 
@@ -946,11 +946,11 @@ typedef struct foc_step_metrics {
  * @exporter
  */
 typedef struct foc_sinusoid_fit {
-    uint32_t struct_size; /* sizeof(foc_sinusoid_fit_t) */
-    int32_t status;       /* foc_err_t of the fit itself */
-    float amplitude;      /* peak amplitude of the fitted tone, same unit as the
-                           samples */
-    float phase_rad;      /* phase of +A*cos(w*t + phase), rad */
+    uint32_t struct_size; ///< sizeof(foc_sinusoid_fit_t)
+    int32_t status;       ///< foc_err_t of the fit itself
+                          /** peak amplitude of the fitted tone, same unit as the samples */
+    float amplitude;
+    float phase_rad; ///< phase of +A*cos(w*t + phase), rad
 } foc_sinusoid_fit_t;
 
 
@@ -966,13 +966,13 @@ typedef struct foc_sinusoid_fit {
  * @exporter
  */
 typedef struct foc_torque_map {
-    uint32_t struct_size; /* sizeof(foc_torque_map_t) */
-    int32_t status;       /* foc_err_t of the map itself */
-    float nm_per_a;       /* torque per q-axis amp, N*m/A */
-    float reluctance;     /* 1.5*pole_pairs*(ld - lq), N*m/A^2 */
-    float i_limit_a;      /* per-axis current limit */
-    float min_nm;         /* lower torque limit after the current limit is applied, N*m */
-    float max_nm;         /* upper torque limit after the current limit is applied, N*m */
+    uint32_t struct_size; ///< sizeof(foc_torque_map_t)
+    int32_t status;       ///< foc_err_t of the map itself
+    float nm_per_a;       ///< torque per q-axis amp, N*m/A
+    float reluctance;     ///< 1.5*pole_pairs*(ld - lq), N*m/A^2
+    float i_limit_a;      ///< per-axis current limit
+    float min_nm;         ///< lower torque limit after the current limit is applied, N*m
+    float max_nm;         ///< upper torque limit after the current limit is applied, N*m
 } foc_torque_map_t;
 
 
@@ -987,12 +987,12 @@ typedef struct foc_torque_map {
  * @exporter
  */
 typedef struct foc_torque_command {
-    uint32_t struct_size; /* sizeof(foc_torque_command_t) */
-    int32_t status;       /* foc_err_t of the command */
-    float torque_nm;      /* the torque actually commanded after both limits */
-    float iq_a;           /* the q-axis current that delivers it */
-    uint8_t limited;      /* 1 when the request was clipped */
-    uint8_t reserved[3];  /* fixed layout; written as 0 */
+    uint32_t struct_size; ///< sizeof(foc_torque_command_t)
+    int32_t status;       ///< foc_err_t of the command
+    float torque_nm;      ///< the torque actually commanded after both limits
+    float iq_a;           ///< the q-axis current that delivers it
+    uint8_t limited;      ///< 1 when the request was clipped
+    uint8_t reserved[3];  ///< fixed layout; written as 0
 } foc_torque_command_t;
 
 
@@ -1008,9 +1008,9 @@ typedef struct foc_torque_command {
  * @exporter
  */
 typedef struct foc_cogging_harmonic {
-    uint32_t order;     /* per mechanical revolution */
-    float amplitude_nm; /* peak of this harmonic, N*m; always >= 0 */
-    float phase_rad;    /* phase at theta_mech = 0, rad, wrapped into (-pi, pi] */
+    uint32_t order;     ///< per mechanical revolution
+    float amplitude_nm; ///< peak of this harmonic, N*m; always >= 0
+    float phase_rad;    ///< phase at theta_mech = 0, rad, wrapped into (-pi, pi]
 } foc_cogging_harmonic_t;
 
 /**
@@ -1037,17 +1037,17 @@ typedef struct foc_cogging_learn_s *foc_cogging_learn_t;
  * @exporter
  */
 typedef struct foc_cogging_learn_config {
-    uint32_t struct_size;  /* sizeof(foc_cogging_learn_config_t) */
-    float psi_f;           /* permanent-magnet flux linkage, Wb */
-    float ld;              /* d-axis inductance, H; > 0 */
-    float lq;              /* q-axis inductance, H; > 0 */
-    uint32_t pole_pairs;   /* pole pairs; 0 is rejected */
-    uint8_t orders[6];     /* which mechanical orders to learn; 0 is rejected */
-    uint32_t count;        /* how many entries of `orders` are valid, 1..6 */
-    int32_t revolutions;   /* how many mechanical revolutions the window must hold, >= 1 */
-    float min_speed_rad_s; /* below this the loop's share is not measurable; refuse */
-    float max_speed_rad_s; /* above this the lag is baked in; refuse; must exceed min_speed_rad_s */
-    float speed_tolerance; /* allowed relative spread of |omega| over the window; > 0 */
+    uint32_t struct_size;  ///< sizeof(foc_cogging_learn_config_t)
+    float psi_f;           ///< permanent-magnet flux linkage, Wb
+    float ld;              ///< d-axis inductance, H; > 0
+    float lq;              ///< q-axis inductance, H; > 0
+    uint32_t pole_pairs;   ///< pole pairs; 0 is rejected
+    uint8_t orders[6];     ///< which mechanical orders to learn; 0 is rejected
+    uint32_t count;        ///< how many entries of `orders` are valid, 1..6
+    int32_t revolutions;   ///< how many mechanical revolutions the window must hold, >= 1
+    float min_speed_rad_s; ///< below this the loop's share is not measurable; refuse
+    float max_speed_rad_s; ///< above this the lag is baked in; refuse; must exceed min_speed_rad_s
+    float speed_tolerance; ///< allowed relative spread of |omega| over the window; > 0
 } foc_cogging_learn_config_t;
 
 /**
@@ -1064,12 +1064,12 @@ typedef struct foc_cogging_learn_config {
  * @exporter
  */
 typedef struct foc_cogging_learn_result {
-    uint32_t struct_size;  /* sizeof(foc_cogging_learn_result_t) */
-    int32_t status;        /* foc_err_t: the library's own verdict on the window */
-    int32_t count;         /* how many harmonics were written; 0 when nothing was */
-    int32_t required;      /* how many entries the answer needs (the config's `count`) */
-    int32_t capacity;      /* how many entries the caller offered */
-    float revolutions;     /* mechanical revolutions the window covered */
-    float speed_min_rad_s; /* smallest |omega| seen, rad/s */
-    float speed_max_rad_s; /* largest |omega| seen, rad/s */
+    uint32_t struct_size;  ///< sizeof(foc_cogging_learn_result_t)
+    int32_t status;        ///< foc_err_t: the library's own verdict on the window
+    int32_t count;         ///< how many harmonics were written; 0 when nothing was
+    int32_t required;      ///< how many entries the answer needs (the config's `count`)
+    int32_t capacity;      ///< how many entries the caller offered
+    float revolutions;     ///< mechanical revolutions the window covered
+    float speed_min_rad_s; ///< smallest |omega| seen, rad/s
+    float speed_max_rad_s; ///< largest |omega| seen, rad/s
 } foc_cogging_learn_result_t;
