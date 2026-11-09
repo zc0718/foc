@@ -9,6 +9,7 @@ namespace foc {
 namespace core {
 
 namespace {
+/** @cond */
 
 constexpr double kSingular = 1.0e-12;
 
@@ -34,6 +35,7 @@ auto solve(const double m[9]) -> double {
            (m[2] * ((m[3] * m[7]) - (m[4] * m[6])));
 }
 
+/** @endcond */
 } // namespace
 
 auto SpeedTuner::validate() const noexcept -> ErrorCode {

@@ -11,6 +11,7 @@ namespace foc {
 namespace core {
 
 namespace {
+/** @cond */
 
 
 /**
@@ -24,6 +25,7 @@ constexpr auto valid_config(const MagnetPolarityTest::Config& config) noexcept -
            (config.min_asymmetry_a >= 0.0F);
 }
 
+/** @endcond */
 } // namespace
 
 MagnetPolarityTest::MagnetPolarityTest(Config config) noexcept

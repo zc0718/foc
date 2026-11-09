@@ -9,6 +9,7 @@ namespace foc {
 namespace core {
 
 namespace {
+/** @cond */
 
 constexpr float kPi = 3.14159265358979F;
 constexpr float kTwoPi = 6.28318530717959F;
@@ -27,6 +28,7 @@ auto wrap_pi(float angle) noexcept -> float {
     return angle;
 }
 
+/** @endcond */
 } // namespace
 
 PositionReference::PositionReference(Config config) noexcept

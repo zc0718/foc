@@ -10,6 +10,7 @@ namespace foc {
 namespace core {
 
 namespace {
+/** @cond */
 
 
 /**
@@ -23,6 +24,7 @@ constexpr auto valid_config(const MotionProfile::Config& config) noexcept -> boo
            (config.accel_limit_rad_s2 > 0.0F);
 }
 
+/** @endcond */
 } // namespace
 
 MotionProfile::MotionProfile(const Config& config) noexcept : config_(config) {}

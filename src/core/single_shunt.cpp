@@ -7,6 +7,7 @@ namespace foc {
 namespace core {
 
 namespace {
+/** @cond */
 
 /**
  * @brief [en] The three duties in descending order, plus which phase each one belongs to.
@@ -64,6 +65,7 @@ auto out_of_range(const Uvw<float>& duty) noexcept -> bool {
     return !(duty.u >= 0.0F && duty.u <= 1.0F && duty.v >= 0.0F && duty.v <= 1.0F && duty.w >= 0.0F && duty.w <= 1.0F);
 }
 
+/** @endcond */
 } // namespace
 
 auto SingleShunt::classify(Uvw<float> duty) const noexcept -> ShuntWindow {

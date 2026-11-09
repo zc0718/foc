@@ -7,9 +7,11 @@ namespace foc {
 namespace core {
 
 namespace {
+/** @cond */
 
 constexpr float kTwoPi = 6.28318530718F;
 
+/** @endcond */
 } // namespace
 
 auto CoggingLearner::validate() const noexcept -> ErrorCode {

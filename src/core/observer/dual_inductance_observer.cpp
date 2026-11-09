@@ -11,6 +11,7 @@ namespace foc {
 namespace core {
 
 namespace {
+/** @cond */
 
 
 /**
@@ -163,6 +164,7 @@ auto arg(Cx a) noexcept -> float { return wrap_two_pi(std::atan2(a.im, a.re)); }
  */
 constexpr float kLinearRatio = 1.0e-4F;
 
+/** @endcond */
 } // namespace
 
 DualInductanceObserver::DualInductanceObserver(Config config) noexcept

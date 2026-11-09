@@ -12,6 +12,7 @@ namespace foc {
 namespace core {
 
 namespace {
+/** @cond */
 
 constexpr auto half() noexcept -> float { return static_cast<float>(1) / static_cast<float>(2); }
 
@@ -31,6 +32,7 @@ auto next_duty(float phase_v, float offset_v, float v_bus) noexcept -> float {
     return clamp(static_cast<float>(half() + ((phase_v - offset_v) / v_bus)), 0.0F, 1.0F);
 }
 
+/** @endcond */
 } // namespace
 
 auto Svpwm::modulate(Ab<float> v_ab, float v_bus) noexcept -> SvpwmResult {

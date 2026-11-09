@@ -7,6 +7,7 @@ namespace foc {
 namespace comm {
 
 namespace {
+/** @cond */
 
 /**
  * @brief [en] `x^6 + x + 1` is `0b1000011`; a six-bit register holds only the **remainder**.
@@ -33,6 +34,7 @@ auto bit_at(const std::uint8_t* bits, int index) noexcept -> std::uint8_t {
     return static_cast<std::uint8_t>((static_cast<unsigned>(bits[byte]) >> shift) & 0x01U);
 }
 
+/** @endcond */
 } // namespace
 
 auto crc6(const std::uint8_t* bits, int bit_count, int bit_offset) noexcept -> std::uint8_t {

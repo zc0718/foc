@@ -9,6 +9,7 @@ namespace foc {
 namespace core {
 
 namespace {
+/** @cond */
 
 /**
  * @brief [en] Whether a recipe describes a search that can be run.
@@ -26,6 +27,7 @@ auto usable(const HomingConfig& config) noexcept -> bool {
            ((config.direction == 1) || (config.direction == -1));
 }
 
+/** @endcond */
 } // namespace
 
 HomingRoutine::HomingRoutine(HomingConfig config) noexcept

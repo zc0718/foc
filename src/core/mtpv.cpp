@@ -7,6 +7,7 @@ namespace foc {
 namespace core {
 
 namespace {
+/** @cond */
 
 /**
  * @brief [en] The `t` that maximises `p*sin t + q*sin 2t`.
@@ -68,6 +69,7 @@ auto max_torque_angle(float p, float q) noexcept -> float {
     return std::atan2(best_s, best_c);
 }
 
+/** @endcond */
 } // namespace
 
 auto Mtpv::validate() const noexcept -> ErrorCode {
@@ -88,6 +90,7 @@ auto Mtpv::validate() const noexcept -> ErrorCode {
 }
 
 namespace {
+/** @cond */
 
 /**
  * @brief [en] Torque from a dq current, in N.m -- the same expression the plant uses, so a comparison between this
@@ -108,6 +111,7 @@ auto make_point(const MtpvConfig& config, float id, float iq, bool voltage_limit
 
 constexpr MtpvPoint kInvalidPoint{ErrorCode::Param, false, 0.0F, 0.0F, 0.0F, 0.0F};
 
+/** @endcond */
 } // namespace
 
 auto Mtpv::mtpa_point() const noexcept -> MtpvPoint {

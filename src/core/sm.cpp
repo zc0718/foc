@@ -7,6 +7,7 @@ namespace foc {
 namespace core {
 
 namespace {
+/** @cond */
 
 constexpr std::uint8_t kStateCount = 4U;
 constexpr std::uint8_t kIdle = 0U;
@@ -39,6 +40,7 @@ static_assert(to_index(MotorState::Run) == kRun, "kLegal's row 2 is Run");
 static_assert(to_index(MotorState::Fault) == kFault, "kLegal's row 3 is Fault");
 static_assert(kStateCount == 4U, "kLegal is written as four rows");
 
+/** @endcond */
 } // namespace
 
 auto StateMachine::state() const noexcept -> MotorState { return state_; }

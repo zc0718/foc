@@ -11,6 +11,7 @@ namespace foc {
 namespace core {
 
 namespace {
+/** @cond */
 
 
 /**
@@ -58,6 +59,7 @@ auto wrap_pi(float angle) noexcept -> float {
     return angle;
 }
 
+/** @endcond */
 } // namespace
 
 NonlinearFluxObserver::NonlinearFluxObserver(Config config) noexcept

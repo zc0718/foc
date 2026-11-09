@@ -9,6 +9,7 @@ namespace foc {
 namespace core {
 
 namespace {
+/** @cond */
 
 
 /**
@@ -22,6 +23,7 @@ constexpr auto valid_config(const Pi::Config& config) noexcept -> bool {
            (config.integral_min <= config.integral_max);
 }
 
+/** @endcond */
 } // namespace
 
 Pi::Pi(Config config) noexcept

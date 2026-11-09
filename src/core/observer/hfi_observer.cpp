@@ -12,6 +12,7 @@ namespace foc {
 namespace core {
 
 namespace {
+/** @cond */
 
 
 /**
@@ -43,6 +44,7 @@ auto wrap_two_pi(float angle) noexcept -> float {
     return angle;
 }
 
+/** @endcond */
 } // namespace
 
 HfiObserver::HfiObserver(Config config) noexcept

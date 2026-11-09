@@ -7,6 +7,7 @@ namespace foc {
 namespace core {
 
 namespace {
+/** @cond */
 
 /**
  * @brief [en] The driver rule for one phase, on a duty already clamped into [0, 1].
@@ -42,6 +43,7 @@ auto lost_volt_seconds(float requested, float applied, float period_s, float v_b
     return (requested - applied) * period_s * v_bus;
 }
 
+/** @endcond */
 } // namespace
 
 auto MinPulse::apply(Uvw<float> duty, float v_bus) const noexcept -> MinPulseOutput {

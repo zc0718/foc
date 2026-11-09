@@ -7,6 +7,7 @@ namespace foc {
 namespace core {
 
 namespace {
+/** @cond */
 
 constexpr float kTwoPi = 6.28318530718F;
 
@@ -48,6 +49,7 @@ auto highest_order(const CoggingCompHarmonic* table, int count) noexcept -> int 
     return order;
 }
 
+/** @endcond */
 } // namespace
 
 void CoggingCompensation::set_table(const CoggingCompHarmonic* harmonics, int count) noexcept {

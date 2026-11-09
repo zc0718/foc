@@ -35,6 +35,7 @@ namespace foc {
 namespace api {
 
 namespace {
+/** @cond */
 
 /**
  * @brief [en] The C path's trace policy: a run-time ring over caller storage.
@@ -759,6 +760,7 @@ template <typename SlotType> void destroy_motor(SlotType& slot) noexcept {
     }
 }
 
+/** @endcond */
 } // namespace
 
 } // namespace api
@@ -787,6 +789,7 @@ namespace api {
 // 能链接到 `foc::api::mint_protector`，而那不是本项目的承诺。`misc-use-internal-linkage` 点了其中 24 个的名字；
 // 无名命名空间靠构造覆盖整块，而不是一处一个属性。
 namespace {
+/** @cond */
 
 // ---------------------------------------------------------------------------------------------
 // ABI 0.1.0: commissioning, protection and the reference policies.
@@ -1319,6 +1322,7 @@ auto to_hal_callbacks(const foc_hal_callbacks_t& c) noexcept -> driver::HalCallb
     return callbacks;
 }
 
+/** @endcond */
 } // namespace
 
 } // namespace api
@@ -2273,6 +2277,7 @@ foc_err_t foc_bridge_sinusoid_fit(const float* y, uint32_t n, float dt_s, float 
 }
 
 namespace {
+/** @cond */
 
 /**
  * @brief The C map and the C++ map must stay the same object, field for field.
@@ -2288,6 +2293,7 @@ auto to_core(const foc_torque_map_t& map) noexcept -> foc::TorqueMap {
     return out;
 }
 
+/** @endcond */
 } // namespace
 
 foc_err_t foc_bridge_torque_map_build(const foc_motor_params_t* params, float i_max_a, float min_nm, float max_nm,

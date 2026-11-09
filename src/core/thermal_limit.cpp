@@ -10,10 +10,12 @@ namespace foc {
 namespace core {
 
 namespace {
+/** @cond */
 
 constexpr double kLossPerAmpSquared = 1.5; // `P = 1.5*i^2*rs`, the same amplitude-invariant 3/2 the torque carries
 constexpr float kInfinity = std::numeric_limits<float>::infinity();
 
+/** @endcond */
 } // namespace
 
 auto ThermalLimit::validate() const noexcept -> ErrorCode {

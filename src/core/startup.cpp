@@ -9,6 +9,7 @@ namespace foc {
 namespace core {
 
 namespace {
+/** @cond */
 
 constexpr float kTwoPi = 6.28318530717958647692F;
 
@@ -22,6 +23,7 @@ auto wrap_two_pi(float angle) noexcept -> float {
     return angle;
 }
 
+/** @endcond */
 } // namespace
 
 
