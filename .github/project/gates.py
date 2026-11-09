@@ -426,7 +426,7 @@ def cmd_ci_policy(_explicit):
 PROJECT_GATES = ('license', 'strict', 'claims', 'docs', 'deps', 'form', 'boundaries', 'capabilities', 'ci-policy',
                  'assume', 'anchor', 'scaffold', 'budget', 'clocks', 'observability', 'combinations', 'domain',
                  'mutants', 'plantref', 'fmu', 'pil', 'mcdc', 'blast', 'wired', 'smoke', 'regmap', 'subset',
-                 'docvoice', 'symbols', 'equations', 'enforce', 'docshape')
+                 'docvoice', 'symbols', 'equations', 'enforce', 'docshape', 'docver')
 
 
 def cmd_subset(_explicit):
@@ -454,6 +454,23 @@ def cmd_equations(_explicit):
     a docstring migration cannot invalidate it), a real `TEST()`, a witness pointer or the word `math`, and a worked
     evaluation this gate redoes. `--selftest` first: seven mutations, each of which must be caught."""
     script = str(ROOT / '.github' / 'project' / 'equations_gate.py')
+    for _args in (['--selftest'], []):
+        _rc = subprocess.run([sys.executable, script, *_args], cwd=ROOT, text=True).returncode
+        if _rc:
+            return _rc
+    return 0
+
+
+def cmd_docver(_explicit):
+    """No documented block may be filtered out of the published doc set.
+
+    Why this is a gate and not a note in the docs skill: `docs/build.py` keeps a block only when its
+    `@since` is at or below the `doc_versions` entry, and it never says when it drops one -- `EXTRACT_ALL`
+    then publishes the symbol with no description, and a `.dox` whose single block is dropped becomes a
+    0-byte mirror file that takes its `@example` directive with it. Measured before the gate existed: 101
+    of 495 blocks and all nine `slice-s*.dox` were missing from both language sites while everything else
+    was green. `--selftest` first: four rules, each caught on its own fixture."""
+    script = str(ROOT / '.github' / 'project' / 'docver_gate.py')
     for _args in (['--selftest'], []):
         _rc = subprocess.run([sys.executable, script, *_args], cwd=ROOT, text=True).returncode
         if _rc:
@@ -836,6 +853,9 @@ def main():
                    'by adding them with --checks so the byte-pinned config is untouched',
         'docshape': 'docstrings use Doxygen fields rather than an invented section template: no `**Model.**`-style '
                     'markers, and a `@brief` is a line rather than a paragraph (ratcheted)',
+        'docver': 'no documented block is filtered out of the published doc set: every `@since` is at or below '
+                  '`doc_versions`, no file is emptied by the language/version filters, every `@example` resolves '
+                  'to a sibling file, and no other version stamp survives in the doc tree',
         'pil': 'run the speed-step scenario on the target ISA under qemu and compare with the host; SKIPPED when its '
                'material is absent',
         'all': ' + '.join(PROJECT_GATES),
@@ -919,6 +939,8 @@ def main():
         return cmd_enforce([])
     if args.gate == 'docshape':
         return cmd_docshape([])
+    if args.gate == 'docver':
+        return cmd_docver([])
     # The chain above is the only thing standing between a single-gate invocation and the aggregate below, and it
     # has now been forgotten twice (`plantref` before, `combinations` and `mcdc` this time). A missing branch does
     # not fail: it runs *every* gate and prints "all N", which reads as success. So the fall-through is refused
@@ -949,6 +971,7 @@ def main():
                   'equations': cmd_equations,
                   'enforce': cmd_enforce,
                   'docshape': cmd_docshape,
+                  'docver': cmd_docver,
                   'pil': lambda _f: cmd_pil([], tolerant=True)}[name]([]) ]
     if failed:
         print(f'[project-gates] FAIL: {", ".join(failed)}', flush=True)
