@@ -21,6 +21,10 @@ you where to look on the next one:
 
 Two rules apply to every page and are worth stating once:
 
+- **The listing *is* the file.** Part 3 is a ``literalinclude`` of the example in
+  ``docs/doxygen/dox/demos/``, not a copy of it: what the page shows is the translation unit
+  that produced part 7's figure, so the two cannot drift. The one compile command lives in
+  :doc:`../demos/index` instead of being repeated on every page.
 - **The evidence level is the minimum of the slice's claim rows**, and the level
   itself lives in the claim table in the project ``README.md``. No page in this
   section repeats a level or a measured number; a number copied into a page is a

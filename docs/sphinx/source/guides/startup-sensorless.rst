@@ -21,13 +21,13 @@ A minimal program
 -----------------
 
 ``docs/doxygen/dox/demos/startup-sensorless.cxx`` steps the sequence at the control
-rate and prints every state change. The same file produces this slice's figure.
+rate and prints every state change. The same file produces this slice's figure. It is
+included below from the repository rather than copied into the page, so the listing here
+**is** the file that ran.
 
-.. code-block:: bash
-
-   g++ -std=c++17 -fno-exceptions -fno-rtti -Wall -Wextra -Werror -Iinclude \
-       docs/doxygen/dox/demos/startup-sensorless.cxx src/core/startup.cpp \
-       -o /tmp/startup-sensorless
+.. literalinclude:: ../../../../docs/doxygen/dox/demos/startup-sensorless.cxx
+   :language: cpp
+   :linenos:
 
 Three things in its output are worth reading slowly:
 

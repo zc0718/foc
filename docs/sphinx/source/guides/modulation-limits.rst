@@ -22,11 +22,9 @@ A minimal program
 two electrical angles, shapes a narrow pulse, and walks the six-step table twice.
 The same file produces this slice's figure.
 
-.. code-block:: bash
-
-   g++ -std=c++17 -fno-exceptions -fno-rtti -Wall -Wextra -Werror -Iinclude \
-       docs/doxygen/dox/demos/modulation-limits.cxx src/core/svpwm.cpp \
-       src/core/min_pulse.cpp -o /tmp/modulation-limits
+.. literalinclude:: ../../../../docs/doxygen/dox/demos/modulation-limits.cxx
+   :language: cpp
+   :linenos:
 
 Where the numbers come from
 ---------------------------

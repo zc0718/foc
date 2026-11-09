@@ -27,12 +27,9 @@ A minimal program
 
 ``docs/doxygen/dox/demos/c-and-cpp-callers.cxx`` is the whole sequence:
 
-.. code-block:: bash
-
-   g++ -std=c++17 -fno-exceptions -fno-rtti -Wall -Wextra -Werror -Iinclude \
-       docs/doxygen/dox/demos/c-and-cpp-callers.cxx src/api/foc_api.c \
-       src/api/bridge.cpp src/core/*.cpp src/motor/*.cpp src/comm/*.cpp \
-       src/driver/*.cpp src/core/observer/*.cpp -o /tmp/c-and-cpp-callers
+.. literalinclude:: ../../../../docs/doxygen/dox/demos/c-and-cpp-callers.cxx
+   :language: cpp
+   :linenos:
 
 Two details in it are the ones that cost integrators a day:
 

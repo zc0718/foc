@@ -28,11 +28,9 @@ A minimal program
 ``docs/doxygen/dox/demos/positioning.cxx`` shows the two refusals, one
 gear sample and one shaped move. The same file produces this slice's figure.
 
-.. code-block:: bash
-
-   g++ -std=c++17 -fno-exceptions -fno-rtti -Wall -Wextra -Werror -Iinclude \
-       docs/doxygen/dox/demos/positioning.cxx src/core/motion_profile.cpp \
-       -o /tmp/positioning
+.. literalinclude:: ../../../../docs/doxygen/dox/demos/positioning.cxx
+   :language: cpp
+   :linenos:
 
 The output to read first is the refusal: a target of ``1.5`` rad against a window
 of ``[-1.0, 1.0]`` comes back as ``Param`` **and** as the previous target. A

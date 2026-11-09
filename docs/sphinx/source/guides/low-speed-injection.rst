@@ -27,12 +27,9 @@ times: a surface-mount rotor, an interior rotor, and an interior rotor observed
 by a controller that cannot resolve the carrier. The same file produces this
 slice's figure.
 
-.. code-block:: bash
-
-   g++ -std=c++17 -fno-exceptions -fno-rtti -Wall -Wextra -Werror -Iinclude \
-       docs/doxygen/dox/demos/low-speed-injection.cxx \
-       src/core/observer/hfi_observer.cpp src/core/filters.cpp \
-       -o /tmp/low-speed-injection
+.. literalinclude:: ../../../../docs/doxygen/dox/demos/low-speed-injection.cxx
+   :language: cpp
+   :linenos:
 
 Where the numbers come from
 ---------------------------

@@ -29,11 +29,9 @@ hard trip, reads the derating curve across the trip temperature, walks the latch
 through a trip and a reset, asks a watchdog past its window, and pushes the bus
 into a brake chopper. The same file produces this slice's figure.
 
-.. code-block:: bash
-
-   g++ -std=c++17 -fno-exceptions -fno-rtti -Wall -Wextra -Werror -Iinclude \
-       docs/doxygen/dox/demos/protection-and-derating.cxx src/core/watchdog.cpp \
-       -o /tmp/protection-and-derating
+.. literalinclude:: ../../../../docs/doxygen/dox/demos/protection-and-derating.cxx
+   :language: cpp
+   :linenos:
 
 Where the numbers come from
 ---------------------------

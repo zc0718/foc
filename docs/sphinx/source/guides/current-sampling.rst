@@ -27,11 +27,9 @@ three angles against the shunt verdict, reads the dead-time correction in two
 configurations, and runs the board check twice on the same measurements. The same
 file produces this slice's figure.
 
-.. code-block:: bash
-
-   g++ -std=c++17 -fno-exceptions -fno-rtti -Wall -Wextra -Werror -Iinclude \
-       docs/doxygen/dox/demos/current-sampling.cxx src/core/svpwm.cpp \
-       src/core/single_shunt.cpp -o /tmp/current-sampling
+.. literalinclude:: ../../../../docs/doxygen/dox/demos/current-sampling.cxx
+   :language: cpp
+   :linenos:
 
 Where the numbers come from
 ---------------------------

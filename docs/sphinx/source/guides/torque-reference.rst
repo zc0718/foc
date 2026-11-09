@@ -28,11 +28,9 @@ A minimal program
 the flags this repository's ``strict`` gate uses. It names one salient machine
 once and asks two reference policies the same q command:
 
-.. code-block:: bash
-
-   g++ -std=c++17 -fno-exceptions -fno-rtti -Wall -Wextra -Werror -Iinclude \
-       docs/doxygen/dox/demos/torque-reference.cxx src/core/pi.cpp \
-       src/core/feedforward.cpp -o /tmp/torque-reference
+.. literalinclude:: ../../../../docs/doxygen/dox/demos/torque-reference.cxx
+   :language: cpp
+   :linenos:
 
 Two rows of that output are worth reading before the rest:
 

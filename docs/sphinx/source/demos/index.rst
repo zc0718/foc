@@ -15,6 +15,18 @@ pipeline is:
    source ~/venv/build/bin/activate        # matplotlib + numpy
    python3 docs/demos/make_figures.py      # regenerate figures and tables
 
+To compile one example by hand instead: every example links against the whole of ``src/``
+minus ``version``, which the Conan recipe wraps in ``extern "C"`` and the raw headers do not.
+
+.. code-block:: bash
+
+   g++ -std=c++17 -O2 -Iinclude -Itest_package/test/unit \
+       docs/doxygen/dox/demos/torque-reference.cxx \
+       $(find src -name '*.cpp' -o -name '*.c' | grep -v '/version\.') \
+       -o /tmp/torque-reference
+
+Swap the stem for the example you want; each slice page below links to the one it uses.
+
 The scenarios mirror the SIL acceptance suite, so what you see here is the same closed
 loop the test suite asserts on.
 

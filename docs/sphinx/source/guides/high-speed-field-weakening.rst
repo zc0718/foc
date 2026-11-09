@@ -22,11 +22,9 @@ A minimal program
 ``docs/doxygen/dox/demos/high-speed-field-weakening.cxx`` sweeps the electrical speed
 through the solver and prints where each ceiling starts to bind:
 
-.. code-block:: bash
-
-   g++ -std=c++17 -fno-exceptions -fno-rtti -Wall -Wextra -Werror -Iinclude \
-       docs/doxygen/dox/demos/high-speed-field-weakening.cxx src/core/mtpv.cpp \
-       -o /tmp/high-speed-field-weakening
+.. literalinclude:: ../../../../docs/doxygen/dox/demos/high-speed-field-weakening.cxx
+   :language: cpp
+   :linenos:
 
 Three numbers in its output are the whole decision:
 
