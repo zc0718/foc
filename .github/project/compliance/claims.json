@@ -1,0 +1,26 @@
+{
+  "_comment": "The four sentences this project never says. Single source for docs/sphinx/source/compliance/index.rst (en) and docs/doxygen/dox/mainpage.dox (en + zh); checked by .github/project/compliance_gate.py --check parity. Chinese wording is verbatim from workspace/compliance/README.md, section '诚实边界', items 2-5.",
+  "version": 1,
+  "claims": [
+    {
+      "id": "no_asil",
+      "en": "This library claims no ASIL, SIL or Class B level.",
+      "zh": "本库不宣称任何 ASIL / SIL / Class B 等级。"
+    },
+    {
+      "id": "no_autosar",
+      "en": "This library claims no conformance to AUTOSAR C++14: it is built as C++17, and the document is a C++14 rule set.",
+      "zh": "本库不宣称「符合 AUTOSAR C++14」：本库构建在 C++17 上，而该文档是 C++14 规则集。"
+    },
+    {
+      "id": "nasa_not_basis",
+      "en": "NASA and JPL coding standards are not a compliance basis here; their use is a free, third-party-readable checklist.",
+      "zh": "NASA 标准不是合规依据；它的作用是免费、公开、可被第三方独立审阅的检查清单。"
+    },
+    {
+      "id": "no_independent",
+      "en": "This library claims reproducibility, not independent verification: a third party can re-run every gate and get the same numbers, which is not the same as having been verified independently.",
+      "zh": "本库只宣称「可复现」，不宣称「已独立验证」：第三人可以重跑每一道门禁并得到同样的数字，这与「被独立验证过」不是一回事。"
+    }
+  ]
+}

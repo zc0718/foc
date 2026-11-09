@@ -427,7 +427,7 @@ PROJECT_GATES = ('license', 'strict', 'claims', 'docs', 'deps', 'form', 'boundar
                  'assume', 'anchor', 'scaffold', 'budget', 'clocks', 'observability', 'combinations', 'domain',
                  'mutants', 'plantref', 'fmu', 'pil', 'mcdc', 'blast', 'wired', 'smoke', 'regmap', 'subset',
                  'docvoice', 'symbols', 'equations', 'enforce', 'docshape', 'docver', 'docannot',
-                 'docscope')
+                 'docscope', 'compliance')
 
 
 def cmd_subset(_explicit):
@@ -489,6 +489,24 @@ def cmd_docannot(_explicit):
     `///<` carried onto a line with no declaration to its left, is red. Banners and code-reader
     notes (`fall through`, `intentionally empty`) are recognised. `--selftest` first."""
     script = str(ROOT / '.github' / 'project' / 'docannot_gate.py')
+    for _args in (['--selftest'], []):
+        _rc = subprocess.run([sys.executable, script, *_args], cwd=ROOT, text=True).returncode
+        if _rc:
+            return _rc
+    return 0
+
+
+def cmd_compliance(_explicit):
+    """The compliance pages are reachable, and the two doc lines say the same four sentences.
+
+    Why one gate for two rules: both are about the same page set. `reach` refuses a compliance page
+    that only the index points at (measured when the rule was written: two references, both in
+    `index.rst`), because such a page exists only if a reader scrolls the right list. `parity`
+    refuses a sentence that drifts between the Sphinx site and the Doxygen front page: the two lines
+    deliberately do not link to each other, so nothing but this check keeps them saying the same
+    thing. `--selftest` first, because a checker that has never said no is a checker nobody has a
+    reason to trust."""
+    script = str(ROOT / '.github' / 'project' / 'compliance_gate.py')
     for _args in (['--selftest'], []):
         _rc = subprocess.run([sys.executable, script, *_args], cwd=ROOT, text=True).returncode
         if _rc:
@@ -895,6 +913,8 @@ def main():
                     'onto a line with no declaration to its left, both of which publish a member with no text',
         'docscope': 'a doc block sits at file scope or in a type body: inside a function it publishes prose with no '
                     'declaration to describe, which `EXTRACT_ALL` makes invisible',
+        'compliance': 'the compliance pages are reachable from more than the index, and the four sentences this '
+                      'project never says are identical in the site and on the Doxygen front page (one JSON source)',
         'pil': 'run the speed-step scenario on the target ISA under qemu and compare with the host; SKIPPED when its '
                'material is absent',
         'all': ' + '.join(PROJECT_GATES),
@@ -984,6 +1004,8 @@ def main():
         return cmd_docannot([])
     if args.gate == 'docscope':
         return cmd_docscope([])
+    if args.gate == 'compliance':
+        return cmd_compliance([])
     # The chain above is the only thing standing between a single-gate invocation and the aggregate below, and it
     # has now been forgotten twice (`plantref` before, `combinations` and `mcdc` this time). A missing branch does
     # not fail: it runs *every* gate and prints "all N", which reads as success. So the fall-through is refused
@@ -1017,6 +1039,7 @@ def main():
                   'docver': cmd_docver,
                   'docannot': cmd_docannot,
                   'docscope': cmd_docscope,
+                  'compliance': cmd_compliance,
                   'pil': lambda _f: cmd_pil([], tolerant=True)}[name]([]) ]
     if failed:
         print(f'[project-gates] FAIL: {", ".join(failed)}', flush=True)
