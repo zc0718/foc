@@ -204,20 +204,22 @@ typedef struct foc_motor_setup {
     float blend_end_rad_s;
     /** smoothing of the speed the handover is decided on, Hz; required for BLENDED */
     float handover_lpf_hz;
-    /* 1 when the commutation angle comes from the selected observer instead of
-     the position callbacks. Appended and gated by struct_size. Default 0 leaves
-     every existing caller where it is: an axis whose angle callbacks are the
-     truth. Setting it is what makes an absolute position reachable through this
-     ABI at all, because `PositionReference` is only advanced while the angle is
-     observer-derived; with a sensor present the library uses the sensor and
-     keeps no origin. When set, `read_angle_mech_rad` may be NULL: commutation
-     does not consult it, and the observer needs voltage and current, not an
-     angle. */
-    /* 换相角来自选中的观测器、而不是位置回调时为 1。追加字段，由 struct_size
-     门控。默认 0 把每个现有调用方留在 原地：它的角度回调就是真值。置 1
-     才是「通过本 ABI 得到绝对位置」的前提，因为 `PositionReference` 只在角度
-     来自观测器时才被推进；有传感器时库用传感器、不维护原点。置 1 时
-     `read_angle_mech_rad` 可为 NULL：换相不看 它，观测器需要的是电压与电流。 */
+    /**
+     * @brief [en] 1 when the commutation angle comes from the observer.
+     *
+     *   Otherwise the angle comes from the position callbacks. Appended and gated by struct_size. Default 0 leaves
+     *   every existing caller where it is: an axis whose angle callbacks are the truth. Setting it is what makes an
+     *   absolute position reachable through this ABI at all, because `PositionReference` is only advanced while the
+     *   angle is observer-derived; with a sensor present the library uses the sensor and keeps no origin. When set,
+     *   `read_angle_mech_rad` may be NULL: commutation does not consult it, and the observer needs voltage and current,
+     *   not an angle.
+     *
+     * @brief [zh] 换相角来自选中的观测器、而不是位置回调时为 1。
+     *
+     *   追加字段，由 struct_size 门控。默认 0 把每个现有调用方留在 原地：它的角度回调就是真值。置 1 才是「通过本 ABI 得
+     *   到绝对位置」的前提，因为 `PositionReference` 只在角度 来自观测器时才被推进；有传感器时库用传感器、不维护原点。
+     *   置 1 时 `read_angle_mech_rad` 可为 NULL：换相不看 它，观测器需要的是电压与电流。
+     */
     int32_t use_observer_angle;
 } foc_motor_setup_t;
 
@@ -346,53 +348,70 @@ typedef struct foc_motor_status {
     uint32_t max_period_us;
     /** the observer actually running (a foc_observer_t); appended, gated by struct_size */
     int32_t observer;
-    /* 1 when the selected observer says it is producing a measurement, 0 when it
-     is holding the last angle. Appended; gated by struct_size. The distinction
-     matters because a holding observer is indistinguishable from a stopped
-     machine by its angle alone -- the injection observer past what the control
-     rate can resolve freezes exactly this way. Observers without a lock
-     detector (back-EMF) answer 1: they have no channel that could withhold a
-     verdict. */
-    /* 选中的观测器表示自己正在产出测量时为 1，正在保持上一个角度时为
-     0。追加字段，由 struct_size 门控。这个区分重要，
-     因为一个正在保持的观测器仅凭它的角度与一台停住的机器无法区分——超出控制率分辨能力的注入观测器正是这样冻结的。
-     没有锁定判据的观测器（反电势）答 1：它们不存在能扣住结论的通道。 */
+    /**
+     * @brief [en] 1 when the selected observer is producing a measurement.
+     *
+     *   It is 0 when the observer is holding the last angle. Appended; gated by struct_size. The distinction matters
+     *   because a holding observer is indistinguishable from a stopped machine by its angle alone -- the injection
+     *   observer past what the control rate can resolve freezes exactly this way. Observers without a lock detector
+     *   (back-EMF) answer 1: they have no channel that could withhold a verdict.
+     *
+     * @brief [zh] 选中的观测器表示自己正在产出测量时为 1，正在保持上一个角度时为 0。
+     *
+     *   追加字段，由 struct_size 门控。这个区分重要， 因为一个正在保持的观测器仅凭它的角度与一台停住的机器无法区分—— 超
+     *   出控制率分辨能力的注入观测器正是这样冻结的。 没有锁定判据的观测器（反电势）答 1：它们不存在能扣住结论的通道。
+     */
     int32_t observer_locked;
-    /* the selected observer's normalised error signal, about -sin(2*angle_error)
-     for the injection observer and 0.0 where that observer publishes none.
-     Appended; gated by struct_size. Zero is ambiguous on purpose: a locked
-     injection observer also sits near zero, so read `observer_locked` alongside
-     it. */
-    /* 选中观测器归一化的误差信号，注入观测器约为
-     -sin(2·角度误差)，不发布该信号的观测器为 0.0。追加字段，由 struct_size
-     门控。零是有意保留歧义的：锁定的注入观测器同样停在零附近，因此要与
-     `observer_locked` 一起读。 */
+    /**
+     * @brief [en] the selected observer's normalised error signal. About -sin(2*angle_error) for the injection
+     *             observer. and 0.0 where that observer publishes none.
+     *
+     *   Appended; gated by struct_size. Zero is ambiguous on purpose: a locked injection observer also sits near zero,
+     *   so read `observer_locked` alongside it.
+     *
+     * @brief [zh] 选中观测器归一化的误差信号，注入观测器约为 -sin(2·角度误差)，不发布该信号的观测器为 0.0。
+     *
+     *   追加字段，由 struct_size 门控。零是有意保留歧义的：锁定的注入观测器同样停在零附近，因此要与 `observer_locked`
+     *   一起读。
+     */
     float observer_error;
-    /* 1 when an index mark has been seen since the motor was created or reset, 0
-     before that. Appended and gated by struct_size. This flag decides whether
-     an *absolute* position means anything: alignment resolves the electrical
-     offset only, and only modulo one pole pitch. */
-    /* 自构造或复位以来是否见过索引标记，见过为 1。追加字段，由 struct_size
-     门控。这个标志决定 **绝对** 位置是否有
-     意义：对齐只解决电角度偏置，而且只能定到一个极距的模。 */
+    /**
+     * @brief [en] 1 when an index mark has been seen since the motor was created or reset, 0 before that.
+     *
+     *   Appended and gated by struct_size. This flag decides whether an *absolute* position means anything: alignment
+     *   resolves the electrical offset only, and only modulo one pole pitch.
+     *
+     * @brief [zh] 自构造或复位以来是否见过索引标记，见过为 1。
+     *
+     *   追加字段，由 struct_size 门控。这个标志决定 **绝对** 位置是否有 意义：对齐只解决电角度偏置，而且只能定到一个极
+     *   距的模。
+     */
     int32_t homed;
-    /* 1 when the reconstruction has seen a step too large to unwrap and is
-     therefore untrustworthy. Appended and gated by struct_size. Sticky until
-     the origin is re-established. */
-    /* 重建遇到过无法解开折返的跳变、因而不可信任时为 1。追加字段，由 struct_size
-   * 门控。一直保持到原点重建为止。 */
+    /**
+     * @brief [en] 1 when the reconstruction has seen a step too large to unwrap.
+     *
+     *   Such a reconstruction is untrustworthy. Appended and gated by struct_size. Sticky until the origin is
+     *   re-established.
+     *
+     * @brief [zh] 重建遇到过无法解开折返的跳变、因而不可信任时为 1。
+     *
+     *   追加字段，由 struct_size * 门控。一直保持到原点重建为止。
+     */
     int32_t lost_count;
-    /* The mechanical angle referred to the index mark, rad. Appended and gated by
-     struct_size. **Valid only when `homed` is 1 and `lost_count` is 0** --
-     before the first mark it reads 0, and 0 is a legal mechanical angle, so the
-     value alone cannot tell a homed axis parked at the origin from one that was
-     never homed. Prefer `foc_motor_get_position_absolute()`, which refuses
-     instead of returning that 0. */
-    /* 以索引标记为基准的机械角，rad。追加字段，由 struct_size 门控。**仅在
-     `homed` 为 1 且 `lost_count` 为 0 时 有效**——第一次索引之前它读 0，而 0
-     是合法机械角，所以单看这个值分不出「回零后停在原点」与「从未回过零」。
-     请优先用
-     `foc_motor_get_position_absolute()`，它在那种情形拒绝而不是返回那个 0。 */
+    /**
+     * @brief [en] The mechanical angle referred to the index mark, rad.
+     *
+     *   Appended and gated by struct_size. **Valid only when `homed` is 1 and `lost_count` is 0** -- before the first
+     *   mark it reads 0, and 0 is a legal mechanical angle, so the value alone cannot tell a homed axis parked at the
+     *   origin from one that was never homed. Prefer `foc_motor_get_position_absolute()`, which refuses instead of
+     *   returning that 0.
+     *
+     * @brief [zh] 以索引标记为基准的机械角，rad。
+     *
+     *   追加字段，由 struct_size 门控。**仅在 `homed` 为 1 且 `lost_count` 为 0 时 有效**——第一次索引之前它读 0，而 0
+     *   是合法机械角，所以单看这个值分不出「回零后停在原点」与「从未回过零」。 请优先用
+     *   `foc_motor_get_position_absolute()`，它在那种情形拒绝而不是返回那个 0。
+     */
     float referenced_mech_rad;
 } foc_motor_status_t;
 
@@ -753,41 +772,48 @@ typedef struct foc_hal_callbacks {
     void (*pwm_disable)(void *user);
     /** Optional: monotonic microseconds; NULL = trust the dt given to each tick. */
     uint64_t (*now_us)(void *user);
-    /* Optional: non-zero when this position source has an index mark at all; NULL
-     = no mark. Appended and gated by struct_size, because this is an *input*
-     struct: a caller built against the previous header never allocated these
-     two pointers, and reading them anyway would read their stack. Without a
-     mark the axis can never be homed, which is a fact rather than an error and
-     comes back as `homed == 0`. */
-    /* 可选：这个位置源是否有索引标记，有为非零；NULL 表示没有。追加字段，由
-     struct_size 门控，因为这是 **输入**
-     结构：按旧头编译的调用方从未分配这两个指针，照旧去读就是读它的栈。没有标记时轴永远无法回零——那是一个事实
-     而不是错误，并以 `homed == 0` 回到调用方。 */
+    /**
+     * @brief [en] Optional: non-zero when this position source has an index mark at all; NULL = no mark.
+     *
+     *   Appended and gated by struct_size, because this is an *input* struct: a caller built against the previous
+     *   header never allocated these two pointers, and reading them anyway would read their stack. Without a mark the
+     *   axis can never be homed, which is a fact rather than an error and comes back as `homed == 0`.
+     *
+     * @brief [zh] 可选：这个位置源是否有索引标记，有为非零；NULL 表示没有。
+     *
+     *   追加字段，由 struct_size 门控，因为这是 **输入** 结构：按旧头编译的调用方从未分配这两个指针，照旧去读就是读它的
+     *   栈。没有标记时轴永远无法回零——那是一个事实 而不是错误，并以 `homed == 0` 回到调用方。
+     */
     int32_t (*position_has_index)(void *user);
-    /* Optional: non-zero **only** on the tick the mark was crossed, never as a
-     level -- a level is counted once per tick spent near the mark. Appended and
-     gated by struct_size. */
-    /* 可选： **仅在** 越过标记的那一拍为非零，绝不能是电平——电平会把一次经过数成很多次。追加字段，由
-     struct_size 门控。 */
+    /**
+     * @brief [en] Optional: non-zero **only** on the tick the mark was crossed, never as a level -- a level is counted
+     *             once per tick spent near the mark.
+     *
+     *   Appended and gated by struct_size.
+     *
+     * @brief [zh] 可选： **仅在** 越过标记的那一拍为非零，绝不能是电平——电平会把一次经过数成很多次。
+     *
+     *   追加字段，由 struct_size 门控。
+     */
     int32_t (*position_index_pulse)(void *user);
-    /* Required: non-zero when the power stage's own nFAULT is asserted. Appended
-     and gated by struct_size like the two fields above, **but with the opposite
-     rule when it is missing**: a caller whose struct does not reach this field
-     is refused with FOC_ERR_NOT_IMPL instead of being given the default "no
-     fault". This is the first field in this header where an old caller is not
-     grandfathered, and the reason is that the grandfather clause *is* the
-     danger: a motor that never asked whether the bridge is desaturated is
-     indistinguishable, from the outside, from one that asked and was told all
-     clear. A host with no such pin returns 0 from its own function -- a line a
-     reviewer can see. Polarity is the host's: return the sense you mean, not
-     the pin level. */
-    /* 必需：功率级自己的 nFAULT 有效时返回非零。与上面两个字段一样是追加的、
-     由 struct_size 门控， **但缺失时的规矩相反** ：结构够不到这个字段的调用方
-     会被 FOC_ERR_NOT_IMPL 拒绝，而不是被塞一个"无故障"的默认值。这是本头文件
-     里第一个不照顾旧调用方的字段，理由是那条照顾条款 **本身就是** 危险：一台从
-     没问过桥是否去饱和的电机，从外面看与一台问过并被告知一切正常的电机一样。
-     没有这根引脚的主控方从自己的函数里 return 0——一行评审看得见的话。极性归
-     主控方：返回你想表达的语义，不是引脚电平。 */
+    /**
+     * @brief [en] Required: non-zero when the power stage's own nFAULT is asserted.
+     *
+     *   Appended and gated by struct_size like the two fields above, **but with the opposite rule when it is missing**:
+     *   a caller whose struct does not reach this field is refused with FOC_ERR_NOT_IMPL instead of being given the
+     *   default "no fault". This is the first field in this header where an old caller is not grandfathered, and the
+     *   reason is that the grandfather clause *is* the danger: a motor that never asked whether the bridge is
+     *   desaturated is indistinguishable, from the outside, from one that asked and was told all clear. A host with no
+     *   such pin returns 0 from its own function -- a line a reviewer can see. Polarity is the host's: return the sense
+     *   you mean, not the pin level.
+     *
+     * @brief [zh] 必需：功率级自己的 nFAULT 有效时返回非零。
+     *
+     *   与上面两个字段一样是追加的、 由 struct_size 门控， **但缺失时的规矩相反** ：结构够不到这个字段的调用方 会被
+     *   FOC_ERR_NOT_IMPL 拒绝，而不是被塞一个"无故障"的默认值。这是本头文件 里第一个不照顾旧调用方的字段，理由是那条照
+     *   顾条款 **本身就是** 危险：一台从 没问过桥是否去饱和的电机，从外面看与一台问过并被告知一切正常的电机一样。没有这
+     *   根引脚的主控方从自己的函数里 return 0——一行评审看得见的话。极性归 主控方：返回你想表达的语义，不是引脚电平。
+     */
     int32_t (*read_drive_fault)(void *user);
 } foc_hal_callbacks_t;
 
