@@ -487,3 +487,7 @@ Twenty-three headers under ``core/`` and ``motor/`` are not listed yet: alignmen
 feedforward, field_weakening, homing, machine_map, machine_map_text, machine_params, motion_profile, polarity, position,
 position_reference, reference, sm, startup, svpwm, traits, types, version, and the two remaining ``motor/`` headers. They
 are named in ``capability-scope.json`` so the count is visible, and so that a *new* header cannot join them silently.
+
+An evidence level answers "how well is this supported". What may be said *to a customer* about a
+capability — the sentence, the tier behind it, and the industry it is said in — is
+:doc:`compliance/index`.

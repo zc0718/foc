@@ -164,3 +164,7 @@ only reason this page can be trusted after the person who wrote it has moved on.
 What is *not* on this page, because it is enforced by a gate rather than by a test case: no exceptions, no RTTI, no
 `new`/`delete`, no `std::vector`/`std::string`, C++17 and C11 only (`strict`), every installed header carrying a README
 claim row (`claims`), and every number in the documentation matching an artefact the build produced (`docs`).
+
+This page says what the library does not do. What it *may* say — the sentences that are allowed,
+the tiers behind them, and the answer each industry gets — is :doc:`compliance/index`; the
+equivalent for a single capability is :doc:`capabilities`.

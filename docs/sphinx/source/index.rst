@@ -65,8 +65,9 @@ doors, one per reader:
      - :doc:`architecture`, :doc:`boundaries`, :doc:`capabilities`
      - the shape, the limits, and what each capability owes before it may be sold
    * - Auditing a claim
-     - :doc:`usage`, :doc:`compliance`, :doc:`foundation-log`
-     - the claim rows, the language guarantees, and the record of what was wrong before
+     - :doc:`usage`, :doc:`compliance/index`, :doc:`foundation-log`
+     - the claim rows, the sentences this project may and may not say, and the record of what was
+       wrong before
 
 _`Project structure`
 --------------------
@@ -161,8 +162,8 @@ accident.
 
    What this library does not do <boundaries>
    What each capability offers <capabilities>
+   What may be claimed, and to whom <compliance/index>
    Usage and verification <usage>
-   Language compliance <compliance>
 
 .. toctree::
    :caption: Reference

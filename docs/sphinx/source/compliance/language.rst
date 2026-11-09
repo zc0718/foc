@@ -1,7 +1,12 @@
-_`Language compliance: what can be claimed today`
-=================================================
+_`Language compliance`
+======================
 
-This page answers one question honestly: **which sentence about language
+This page is the **language half** of the claim: the rule table, its deviations,
+and what each of them can support. The four sentences that no tier and no
+industry change are on :doc:`index`; the tiers themselves are on :doc:`tier`; the
+industry-by-industry answers are on :doc:`industries`.
+
+It answers one question honestly: **which sentence about language
 compliance may this project put in front of a customer today, and which may it
 not put in front of anybody yet.**
 
@@ -173,7 +178,8 @@ What cannot be said yet
        and the deviation permits already carry its five elements -- but the
        mapping from tool check to MISRA rule number does not exist, so N/M/K
        cannot be filled in. That is the ``misra-rule-mapping`` row of the
-       ``open`` register, and it is the difference between T0 and T1.
+       ``open`` register, and it is the difference between the two lowest tiers
+       on :doc:`tier`.
    * - "Compliant with MISRA C++:2023", or any ASIL / SIL / Class B level
      - Levels are derived from the whole machine's hazard analysis and safety
        goals. A library has no such context, so it can supply evidence about its
@@ -218,8 +224,8 @@ Where the evidence lives
      - ``python3 .github/project/compliance/gen_subset.py --check``; the snapshot
        and the pinned block are compared by the ``subset`` gate
    * - The materials the citations come from
-     - ``workspace/compliance/`` -- the ledger, the sha256 of every copy, and
-       which tier each one unlocks
+     - the internal procurement ledger (not part of the delivery package): it records which
+       edition of each document was obtained, the sha256 of the copy, and which claim it supports
 
 Known gaps
 ----------
@@ -244,7 +250,7 @@ Three things are unresolved on purpose, and each costs the sentence it blocks:
 
 .. note::
 
-   ``workspace/`` is not in version control by design: it holds internal
-   material. The consequence is that the ledger is not part of what a customer
-   receives -- but the rule table, the deviation permits and the summary are,
-   because they live in ``.github/project/compliance/``.
+   The procurement ledger is internal by design and is not shipped. The
+   consequence is deliberate: what a customer receives is the rule table, the
+   deviation permits and the summary, not the list of documents this project
+   bought to write them.
