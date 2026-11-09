@@ -426,7 +426,7 @@ def cmd_ci_policy(_explicit):
 PROJECT_GATES = ('license', 'strict', 'claims', 'docs', 'deps', 'form', 'boundaries', 'capabilities', 'ci-policy',
                  'assume', 'anchor', 'scaffold', 'budget', 'clocks', 'observability', 'combinations', 'domain',
                  'mutants', 'plantref', 'fmu', 'pil', 'mcdc', 'blast', 'wired', 'smoke', 'regmap', 'subset',
-                 'docvoice', 'symbols', 'equations', 'enforce', 'docshape', 'docver')
+                 'docvoice', 'symbols', 'equations', 'enforce', 'docshape', 'docver', 'docannot')
 
 
 def cmd_subset(_explicit):
@@ -471,6 +471,23 @@ def cmd_docver(_explicit):
     of 495 blocks and all nine `slice-s*.dox` were missing from both language sites while everything else
     was green. `--selftest` first: four rules, each caught on its own fixture."""
     script = str(ROOT / '.github' / 'project' / 'docver_gate.py')
+    for _args in (['--selftest'], []):
+        _rc = subprocess.run([sys.executable, script, *_args], cwd=ROOT, text=True).returncode
+        if _rc:
+            return _rc
+    return 0
+
+
+def cmd_docannot(_explicit):
+    """A doc comment has to be a doc comment: `/** */` or a single-line `///<`.
+
+    Why: `EXTRACT_ALL = YES` documents every member it can see and stays silent when there is no
+    docstring, so 229 plain `/* */` comments in `foc_types.h`/`foc_api.h` published the field names
+    and none of their meaning. The alternative -- `WARN_IF_UNDOCUMENTED` -- lives in `Doxyfile`,
+    which `scaffold` pins, so the rule is enforced here: a plain block above a declaration, or a
+    `///<` carried onto a line with no declaration to its left, is red. Banners and code-reader
+    notes (`fall through`, `intentionally empty`) are recognised. `--selftest` first."""
+    script = str(ROOT / '.github' / 'project' / 'docannot_gate.py')
     for _args in (['--selftest'], []):
         _rc = subprocess.run([sys.executable, script, *_args], cwd=ROOT, text=True).returncode
         if _rc:
@@ -856,6 +873,8 @@ def main():
         'docver': 'no documented block is filtered out of the published doc set: every `@since` is at or below '
                   '`doc_versions`, no file is emptied by the language/version filters, every `@example` resolves '
                   'to a sibling file, and no other version stamp survives in the doc tree',
+        'docannot': 'a doc comment is shaped like one: no plain `/* */` above a declaration and no `///<` carried '
+                    'onto a line with no declaration to its left, both of which publish a member with no text',
         'pil': 'run the speed-step scenario on the target ISA under qemu and compare with the host; SKIPPED when its '
                'material is absent',
         'all': ' + '.join(PROJECT_GATES),
@@ -941,6 +960,8 @@ def main():
         return cmd_docshape([])
     if args.gate == 'docver':
         return cmd_docver([])
+    if args.gate == 'docannot':
+        return cmd_docannot([])
     # The chain above is the only thing standing between a single-gate invocation and the aggregate below, and it
     # has now been forgotten twice (`plantref` before, `combinations` and `mcdc` this time). A missing branch does
     # not fail: it runs *every* gate and prints "all N", which reads as success. So the fall-through is refused
@@ -972,6 +993,7 @@ def main():
                   'enforce': cmd_enforce,
                   'docshape': cmd_docshape,
                   'docver': cmd_docver,
+                  'docannot': cmd_docannot,
                   'pil': lambda _f: cmd_pil([], tolerant=True)}[name]([]) ]
     if failed:
         print(f'[project-gates] FAIL: {", ".join(failed)}', flush=True)
