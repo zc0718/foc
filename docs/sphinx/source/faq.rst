@@ -133,6 +133,6 @@ and ``graphviz``. A consumer never needs any of them.
 Still stuck?
 ------------
 
-- the API, per group: :doc:`api-index`
+- the API, per group: :doc:`reference/index`
 - what the library does not do, item by item: :doc:`boundaries`
 - where the numbers on any page come from: :doc:`../capabilities`

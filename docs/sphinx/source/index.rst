@@ -166,9 +166,8 @@ accident.
 
 .. toctree::
    :caption: Reference
-   :numbered:
 
-   API index <api-index>
+   Using the API <reference/index>
    Glossary <glossary>
    FAQ <faq>
 

@@ -190,5 +190,5 @@ Next
 ----
 
 - the symbol table an equation may use: :doc:`symbols`
-- the API per group: :doc:`api-index`
+- the API per group: :doc:`reference/index`
 - where each term is *used* rather than defined: :doc:`quickstart` and :doc:`../guides/index`

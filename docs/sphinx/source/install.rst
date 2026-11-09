@@ -136,4 +136,4 @@ Next
 
 - the four-step path: :doc:`quickstart`
 - what "predictable" costs, and what it does not cover: :doc:`cost-model`
-- the API side, per group: :doc:`api-index`
+- the API, one page per group: :doc:`reference/index`
