@@ -18,8 +18,16 @@ documentation and are not.
    description to a `/** ... */` block above the declaration, which is what
    `_shared/code-conventions.md` says.
 
-Both rules are at zero in this tree today, so the gate is a ratchet with no slack -- which is the
-point: the 229 conversions were done by hand and nothing was stopping the next 229.
+3. Any `///<` at all. Documentation is a multi-line `/** ... */` block **above** the declaration: a
+   trailing comment cannot be extended with a second sentence, cannot carry `@note`, and `@param` /
+   `@return` have no meaning inside it. Measured before the change: 618 of them across `include/` and
+   `src/`, of which every one had to be rewritten by hand once the rule was agreed.
+4. A single-line `/** ... */` block that carries `[en]` and `[zh]` on the same line. `docs/build.py`
+   only splits a block that spans lines, so both tags reached **both** builds and the Chinese pages
+   printed `[en] One step's measurements. [zh] 一步的测量值。` verbatim (53 blocks did).
+
+All four rules are at zero in this tree today, so the gate is a ratchet with no slack -- which is the
+point: the conversions were done by hand and nothing was stopping the next 618.
 """
 import argparse
 import pathlib
@@ -77,6 +85,15 @@ def violations(root: pathlib.Path) -> list:
                                     f'is not a docstring -- use `/** */` or `///<`')
                 index = stop + 1
                 continue
+
+            # rule 3: a trailing `///<` is not the agreed shape
+            if '///<' in line:
+                problems.append(f'{rel}:{index + 1}: a `///<` trailing comment -- documentation is a '
+                                f'multi-line `/** */` block above the declaration')
+            # rule 4: both tags on one line never get split, so both builds show the markers
+            if re.match(r'^\s*/\*\*.*\*/\s*$', line) and '[en]' in line:
+                problems.append(f'{rel}:{index + 1}: a one-line block carrying `[en]` -- docs/build.py '
+                                f'splits only multi-line blocks, so the tags are published literally')
             index += 1
     return problems
 
@@ -98,6 +115,8 @@ def selftest() -> int:
         ('a field doc split over two lines',
          '/** @file */\nstruct S {\n    int gain;  ///< the gain\n    ///< continued here\n};\n',
          'no declaration to its left'),
+        ('a one-line bilingual block',
+         '/** @file */\n/** @brief [en] x. [zh] 甲。 */\nstruct S {};\n', 'published literally'),
     ]
     failures = []
     for label, body, expect in cases:
@@ -107,7 +126,8 @@ def selftest() -> int:
             found = violations(root)
             if not any(expect in _ for _ in found):
                 failures.append(f'{label}: not caught ({found})')
-    clean = ('/** @file */\n\n/* ---- section ---- */\nstruct S {\n    int gain;  ///< the gain\n};\n\n'
+    clean = ('/** @file */\n\n/* ---- section ---- */\nstruct S {\n'
+             '    /**\n     * @brief [en] the gain.\n     * @brief [zh] 增益。\n     */\n    int gain;\n};\n\n'
              'int f(void) {\n    /* fall through */\n    return 0;\n}\n')
     with tempfile.TemporaryDirectory() as tmp:
         root = pathlib.Path(tmp)
@@ -139,8 +159,8 @@ def main() -> int:
         print(f'[docannot] FAIL ({len(problems)} comment(s) documented in shape only)', flush=True)
         return 1
     files = _doc_files(ROOT)
-    print(f'[docannot] OK ({len(files)} public header(s): every doc comment is `/** */` or a '
-          f'single-line `///<`, so nothing renders as documented and empty)', flush=True)
+    print(f'[docannot] OK ({len(files)} public header(s): every doc comment is a multi-line '
+          f'`/** */` block above its declaration, both tags on separate lines)', flush=True)
     return 0
 
 
