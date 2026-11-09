@@ -2,7 +2,7 @@
 // proportional loop stops where the torque it can still produce falls under the static friction, so it leaves a band of
 // `static / kp`; a Coulomb term latched onto the direction of travel moves that wall by its own size. If the measurement
 // does not land on those numbers, the mechanism is not the mechanism.
-// 2.4：摩擦补偿，用**死区**来测，而不是用"感觉好多了"。声称是算术——比例环停在"它还能产生的力矩低于静摩擦"的地方，于是
+// 2.4：摩擦补偿，用 **死区** 来测，而不是用"感觉好多了"。声称是算术——比例环停在"它还能产生的力矩低于静摩擦"的地方，于是
 // 留下 `静摩擦 / kp` 的带子；一个锁在运动方向上的库仑项把那堵墙挪动它自己的大小。如果测量不落在那两个数上，那个机理就不是
 // 这个机理。
 
@@ -192,7 +192,7 @@ class Axis final {
  *     quantity friction compensation exists to change, so it is what the case measures -- bisection on the reference
  *     step, from rest, 0.15 s per candidate (well past the 28 ms mechanical period). Single-step residuals were tried
  *     first and abandoned: where inside the band the trajectory happens to stop is not reproducible, and one mechanism
- *     read 2.9, 1.1 and 0.24 mrad at three different step sizes. 比例环在有静摩擦的机器上有一个**死区**而不是平滑的残
+ *     read 2.9, 1.1 and 0.24 mrad at three different step sizes. 比例环在有静摩擦的机器上有一个 **死区** 而不是平滑的残
  *     差：误差低于某值时它还能要到的力矩低于起动点，轴根本不动。那个阈值正是摩擦补偿存在的意义所在，所以用例量它——对参
  *     考阶跃做二分，从静止起步，每个候选 0.15 s（远超过 28 ms 的机械周期）。单次阶跃残差先试过并被放弃：轨迹恰好在带内
  *     哪里停住不可复现，同一个机理在三个不同阶跃下读出 2.9、1.1、0.24 mrad。
@@ -220,9 +220,9 @@ auto deadband_rad(Axis::Law law, float coulomb_comp_nm, float static_comp_nm, bo
  *
  *     `0.020 / 5` = **4.0 mrad** and `0.010 / 5` = **2.0 mrad**, measured as **4.003** and **2.021**. Neither depends
  *     on the loop's bandwidth, the inertia or the bus voltage -- only on the two friction numbers and the gain -- which
- *     is what makes them a criterion rather than a description. `0.020/5` = **4.0 mrad**、`0.010/5` = **2.0 mrad**，实
- *     测 **4.003** 与 **2.021**。两者都不取决于环路带宽、惯量或母线电压 ——只取决于两个摩擦数和增益——这正是它们成为判据
- *     而不是描述的原因。
+ *     is what makes them a criterion rather than a description. `0.020/5` = **4.0 mrad** 、`0.010/5` = **2.0 mrad** ，
+ *     实测 **4.003** 与 **2.021** 。两者都不取决于环路带宽、惯量或母线电压 ——只取决于两个摩擦数和增益——这正是它们成为判
+ *     据而不是描述的原因。
  */
 TEST(FrictionComp, TheDeadBandHalvesBecauseItIsStaticMinusCoulombOverKp) {
     const float off = deadband_rad(Axis::Law::None, 0.0F, 0.0F);
@@ -260,10 +260,10 @@ TEST(FrictionComp, AnOverEstimateUnderTheBreakawayNarrowsTheBandFurther) {
  *     (kinetic above breakaway) and why the honest defence against the version that cannot be seen is an estimate that
  *     came from a measurement. Measured: **5.625 mrad** with `(0.030, 0.030)` against a machine whose breakaway is
  *     0.020, and **0.000 mrad** with the correct `(0.010, 0.020)`. 高于起动点的估计会让补偿变成一台电机：参考保持为零、
- *     **完全没有任何指令**，轴自己走了 5.6 mrad。这不是整定失误，而是定义——大于静摩擦的项在没有任何指令的情况下推动转
+ *     **完全没有任何指令** ，轴自己走了 5.6 mrad。这不是整定失误，而是定义——大于静摩擦的项在没有任何指令的情况下推动转
  *     子。这正是 `validate()` 拒绝那个在数字上看得见的形态（动摩擦高于起动）、而对付看不见的那个形态唯一诚实的办法是量
- *     出来的估计值的原因。实测：`(0.030, 0.030)` 对一台起动点 0.020 的机器走了 **5.625 mrad**，正确的 `(0.010, 0.020)`
- *     是 **0.000 mrad**。
+ *     出来的估计值的原因。实测：`(0.030, 0.030)` 对一台起动点 0.020 的机器走了 **5.625 mrad** ，正确的 `(0.010, 0.020)`
+ *     是 **0.000 mrad** 。
  */
 TEST(FrictionComp, AnEstimateAboveTheBreakawayWalksTheAxisWithNoCommandAtAll) {
     Axis correct(Axis::Law::Compensated, kCoulombNm, kStaticNm, false);
@@ -284,13 +284,13 @@ TEST(FrictionComp, AnEstimateAboveTheBreakawayWalksTheAxisWithNoCommandAtAll) {
  *     A Coulomb term multiplied by `sign(measured speed)` is the obvious implementation and it is wrong at exactly the
  *     place the stage is needed: at rest the measured speed is zero-mean noise, so the sign flips, and a flipping sign
  *     is a torque oscillation of amplitude twice the term. Measured with +-0.01 rad/s of speed noise: **20.03 mN*m
- *     peak-to-peak for the naive law** -- twice the 10 mN*m term, as it must be -- and **0.036 mN*m for the latch**,
+ *     peak-to-peak for the naive law **-- twice the 10 mN*m term, as it must be -- and** 0.036 mN*m for the latch**,
  *     which is only the viscous term acting on the noise it was handed. The latch is 550 times quieter, and both park
- *     the axis within a milliradian of the same place. 静止时补偿是**常数**，而被它替代的那条规律是一条方波：同一段运
+ *     the axis within a milliradian of the same place. 静止时补偿是 **常数** ，而被它替代的那条规律是一条方波：同一段运
  *     行、同一份噪声、两条规律、一个窗口。拿 `sign(实测转速)` 乘库仑项是最直观的实现，而它恰恰在需要这一级的地方是错
  *     的：静止时实测转速是零均值噪声，符号因此翻转，而翻转的符号就是幅度为该项两倍的力矩振荡。在 ±0.01 rad/s 的转速噪声
- *     下实测：**朴素规律峰峰 20.03 mN·m**—— 必然是 10 mN·m 的两倍——而**锁存 0.036 mN·m**，那只是粘性项作用在喂给它的噪
- *     声上。锁存安静 550 倍，而两者把轴停在同一处附近（毫弧度以内）。
+ *     下实测： **朴素规律峰峰 20.03 mN·m** —— 必然是 10 mN·m 的两倍——而 **锁存 0.036 mN·m** ，那只是粘性项作用在喂给它
+ *     的噪声上。锁存安静 550 倍，而两者把轴停在同一处附近（毫弧度以内）。
  */
 TEST(FrictionComp, TheLatchIsWhatKeepsTheCompensationFromBecomingASquareWaveAtRest) {
     Axis naive(Axis::Law::Naive, kCoulombNm, kStaticNm, true);
@@ -421,11 +421,11 @@ TEST(FrictionComp, TheSignComesFromTheReferenceThenTheDemandThenStaysWhereItWas)
  *     2.40 and the corrected form reproduced all three to four digits; the prediction was corrected from a
  *     re-derivation, not from the numbers (A-40, and A-42 before it). P1 巡速 `v`、下凹宽 `vs` 时，补偿后的跟随误差比无
  *     下凹时大 `(Fs − Fc)·exp(−(v/vs)²)/kKp`。v = 0.25 / 1 / 2 rad/s、 vs = 1 rad/s 时分别是 1.879 / 0.7358 / 0.0367
- *     mrad。 P2 不补偿减补偿等于 `(Fc + b·v)/kKp`——库仑项**加**粘性项，因为环路那部分粘性也被抵消了。0.25 / 1 / 2 rad/s
- *     下分别是 2.0500 / 2.2000 / 2.4000 mrad。 P3 这个节省**与有没有下凹完全相同**。这条才是有牙齿的：P1 说补偿在哪里失
- *     效，P3 说它**从来不知道**下凹的存在。这是关于该规律**结构**的断言；任何带下凹模型的补偿器都过不了它。 P2 第一版写
- *     错了——写成 `Fc/kKp` 恒定 2.000 mrad——因为 plant 把 `b·ω` 当作与摩擦律**分开**的一项，抵消它也是节省的一部分。实测
- *     是 2.05 / 2.20 / 2.40，更正后的式子把三个数复现到四位；更正来自重新推导，不是来自这几个数。
+ *     mrad。 P2 不补偿减补偿等于 `(Fc + b·v)/kKp`——库仑项 **加** 粘性项，因为环路那部分粘性也被抵消了。0.25 / 1 / 2
+ *     rad/s 下分别是 2.0500 / 2.2000 / 2.4000 mrad。 P3 这个节省 **与有没有下凹完全相同** 。这条才是有牙齿的：P1 说补偿
+ *     在哪里失效，P3 说它 **从来不知道** 下凹的存在。这是关于该规律 **结构** 的断言；任何带下凹模型的补偿器都过不了它。
+ *     P2 第一版写错了——写成 `Fc/kKp` 恒定 2.000 mrad——因为 plant 把 `b·ω` 当作与摩擦律 **分开** 的一项，抵消它也是节省
+ *     的一部分。实测是 2.05 / 2.20 / 2.40，更正后的式子把三个数复现到四位；更正来自重新推导，不是来自这几个数。
  */
 TEST(FrictionComp, TheStribeckDipIsWhatASignFeedforwardStructurallyCannotReach) {
     constexpr float kDipRadS = 1.0F;

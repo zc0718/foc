@@ -109,7 +109,7 @@ auto HfiObserver::update(Ab<float> v_ab, Ab<float> i_ab, float dt_s) noexcept ->
     // The contract hands the applied voltage over, but a saliency estimate must not depend on the
     // voltage *command*: that would make the angle inherit every current-loop error. The rotor angle
     // is in the current response alone.
-    // 契约会把施加电压交过来，但凸极估计不能依赖电压**指令**：那会让角度继承电流环的一切误差。转子
+    // 契约会把施加电压交过来，但凸极估计不能依赖电压 **指令** ：那会让角度继承电流环的一切误差。转子
     // 角度只在电流响应里。
     static_cast<void>(v_ab);
 
@@ -186,7 +186,7 @@ auto HfiObserver::update(Ab<float> v_ab, Ab<float> i_ab, float dt_s) noexcept ->
     // Blanking is re-armed every time the carrier *comes back*, not only at construction: a caller that
     // winds the injection down (a blending observer does) brings it up again later, and that edge looks
     // exactly like the first one -- a step of current into filters that have been sitting on nothing.
-    // 屏蔽在载波**回来**的每一次都重新武装，而不只在构造时：把注入收掉的调用方（混合观测器就是这样）
+    // 屏蔽在载波 **回来** 的每一次都重新武装，而不只在构造时：把注入收掉的调用方（混合观测器就是这样）
     // 之后会再把它加回来，而那个边沿与第一次完全相同——一记电流阶跃打进一直没东西可看的滤波器里。
     // Blanking is re-armed when the carrier comes back *after having been gone long enough for the
     // filters to have lost their state* -- not on every threshold crossing. Both wrong versions were
@@ -227,7 +227,7 @@ auto HfiObserver::update(Ab<float> v_ab, Ab<float> i_ab, float dt_s) noexcept ->
         // estimate then walks past the +-pi/2 window and locks to the mirror. What the caller needs is a published speed
         // without the carrier in it; what the loop needs is its own dynamics untouched. So `theta_e` integrates the raw
         // `omega` and only what is published is smoothed. See `speed_lpf_hz` for the measurement.
-        // 滤波器坐在**发布**边界上，而不是环路内部。第一次尝试把它放在比例通路上，50 到 400 Hz 每一个截止频率都把轴送飞
+        // 滤波器坐在 **发布** 边界上，而不是环路内部。第一次尝试把它放在比例通路上，50 到 400 Hz 每一个截止频率都把轴送飞
         // （−115 到 −170 rad/s）：比例项就是本环路的阻尼，把它在环路自身 40 Hz 带宽以下拿掉就是拿走阻尼——估计随后走出
         // ±π/2 窗口、锁到镜像上。调用方要的是一条不含载波的已发布转速；环路要的是它自己的动态原封不动。因此 `theta_e`
         // 积分的是原始 `omega`，只有发布出去的那个被平滑。测量见 `speed_lpf_hz`。

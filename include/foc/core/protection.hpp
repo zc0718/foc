@@ -57,8 +57,8 @@ enum class FaultCode : std::uint8_t {
      *            map. This code therefore says "the power stage reports a fault" and does not pretend to choose between
      *            desaturation, driver under-voltage and driver over-temperature.
      * @note [zh] 排在最后，却仍然赢：引脚在 tick 的最前面被读取，早于保护器，所以这个码由控制流选定，而不是由排序选定。
-     *            本枚举中的位置只给**保护器**同一步里能发现的成因排序。选择追加而不是插入，是为了让每个既有码保持自己的
-     *            数字——一个被存下来或记进日志的 `fault` 字段，不得因为一次发版而静默改变含义。这根引脚不带成因：
+     *            本枚举中的位置只给 **保护器** 同一步里能发现的成因排序。选择追加而不是插入，是为了让每个既有码保持自己
+     *            的数字——一个被存下来或记进日志的 `fault` 字段，不得因为一次发版而静默改变含义。这根引脚不带成因：
      *            `nFAULT` 是一位，理由在驱动器的寄存器里。所以这个码的意思是"功率级报故障"，不假装在去饱和、驱动欠压、
      *            驱动过温之间选一个。
      */
@@ -97,8 +97,8 @@ enum class FaultCode : std::uint8_t {
  * @brief [zh] 故障在成因消失后是否自行消失。
  *
  *   这个分法是物理的，不是口味问题。塌下去的母线会自己回来、过热的绕组会凉、`I2t` 预算在电流 停下后自己回填——它们自己会
- *   清，锁存它们等于把一次暂态变成一次报修。硬过流、堵转、失步意味着 有东西**坏了**（绕组短路、轴卡死、偏置设错）：自动
- *   重试正是驱动器把自己反复烧掉的方式。 它们保持锁存，直到有人 `reset()`。
+ *   清，锁存它们等于把一次暂态变成一次报修。硬过流、堵转、失步意味着 有东西 **坏了** （绕组短路、轴卡死、偏置设错）：自
+ *   动重试正是驱动器把自己反复烧掉的方式。 它们保持锁存，直到有人 `reset()`。
  * @since 0.1.0
  * @exporter
  */
@@ -262,15 +262,15 @@ struct ProtectionOutput final {
  *
  * @brief [zh] 分类六类故障、锁存该锁存的、并在跳闸之前先降额。
  *
- *   它做三件单纯阈值检查不会做的事。（1）**跳闸之前先降额**：电流限幅从 `t_derate_start_c` 单调降到 `t_derate_end_c`，
- *   热的机器逐渐失去权限，而不是在悬崖边 上突然失效。（2）**`I2t` 是热模型不是计数器**：`q' = i² − q/τ`，所以电流停下时
- *   预算会 **冷却**。只增不减的计数器会让闲置一小时的机器仍然背着两秒过载的记忆。（3）**只有自恢复 的那些才加迟滞**：母
- *   线悬在阈值上时，否则输出使能会按控制频率反复抖，而抖动正是把一个 保护变成故障源的方式。
+ *   它做三件单纯阈值检查不会做的事。（1） **跳闸之前先降额** ：电流限幅从 `t_derate_start_c` 单调降到
+ *   `t_derate_end_c`，热的机器逐渐失去权限，而不是在悬崖边 上突然失效。（2） **`I2t` 是热模型不是计数器** ：`q' = i² −
+ *   q/τ`，所以电流停下时预算会 **冷却** 。只增不减的计数器会让闲置一小时的机器仍然背着两秒过载的记忆。（3） **只有自恢
+ *   复 的那些才加迟滞** ：母线悬在阈值上时，否则输出使能会按控制频率反复抖，而抖动正是把一个 保护变成故障源的方式。
  *
- *   它**不是**什么，写在这里因为"热模型"容易招来误读。`q` 的单位是 A²·s，不是度： 这段代码不知道绕组温度是多少，它的
- *   `t_derate_*` 阈值是**调用方给的数**，不是本代码能 测出来的量。它用一个时间常数建模一个集总的铜损。它不建模磁钢、不
- *   建模轴承、不建模环境温度、 也不建模远离调用方那个传感器的热点。真实的驱动器需要热敏电阻或温度估计器与它并存，这里怎
- *   么调都替代不了那件事。
+ *   它 **不是** 什么，写在这里因为"热模型"容易招来误读。`q` 的单位是 A²·s，不是度： 这段代码不知道绕组温度是多少，它的
+ *   `t_derate_*` 阈值是 **调用方给的数** ，不是本代码能 测出来的量。它用一个时间常数建模一个集总的铜损。它不建模磁钢、
+ *   不建模轴承、不建模环境温度、 也不建模远离调用方那个传感器的热点。真实的驱动器需要热敏电阻或温度估计器与它并存，这里
+ *   怎么调都替代不了那件事。
  *
  * @context [en] Current-loop ISR, every step.
  * @context [zh] 电流环 ISR，每步。
@@ -294,8 +294,8 @@ class Protector final {
      *            available before the next PWM update. A protection that answers one step late is a protection that
      *            lets one more period of over-current through, and at 20 kHz that is the difference between a trip and
      *            a destroyed bridge.
-     * @note [zh] 判定与测量在**同一步**完成，所以 `output_allowed == false` 在下一次 PWM 更新之前就可用。 晚一步作答的
-     *            保护，等于再放过一个周期的过流；20 kHz 下那就是"跳闸"与"炸桥"的差别。
+     * @note [zh] 判定与测量在 **同一步** 完成，所以 `output_allowed == false` 在下一次 PWM 更新之前就可用。 晚一步作答
+     *            的保护，等于再放过一个周期的过流；20 kHz 下那就是"跳闸"与"炸桥"的差别。
      * @since 0.1.0
      */
     auto step(const ProtectionInput& input, float dt_s) noexcept -> ProtectionOutput {
@@ -316,7 +316,7 @@ class Protector final {
         }
 
         // Stall is a *duration*, so it needs a timer rather than a threshold.
-        // 堵转是一个**持续时长**，所以它需要计时器而不是阈值。
+        // 堵转是一个 **持续时长** ，所以它需要计时器而不是阈值。
         const bool pushing = (std::fabs(input.i_magnitude_a) > config_.stall_current_a) &&
                              (std::fabs(input.omega_e_rad_s) < config_.stall_speed_rad_s);
         if (pushing) {
@@ -422,7 +422,7 @@ class Protector final {
      * @brief [zh] 清除锁存故障。这是运维动作，永不自作主张。
      * @note [en] `I2t` is *not* cleared here: the winding is still hot, and pretending otherwise is how the same
      *            overload happens twice.
-     * @note [zh] 这里**不**清 `I2t`：绕组还热着，假装不热正是同一次过载发生两遍的方式。
+     * @note [zh] 这里 **不** 清 `I2t`：绕组还热着，假装不热正是同一次过载发生两遍的方式。
      * @since 0.1.0
      */
     void reset() noexcept {

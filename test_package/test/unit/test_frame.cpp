@@ -61,7 +61,7 @@ TEST(Frame, TheCrcIsTheStandardsVariantNotJustSomeCrc) {
 //     同一个标准、第二次实现，写它的人没见过这段代码；覆盖每个长度与每一个单比特翻转。上面那个检查值钉的是"我们
 //     以为是哪个变体"，这条钉的是"我们真的实现了它"，而且它是本文件里唯一一个不是被测代码自己算出来的数。
 //
-//     ETL 是一个实装过的嵌入式库（MIT，自带约一万条测试）。它在这里只是**只读证人**：它不出现在 `include/` 里，
+//     ETL 是一个实装过的嵌入式库（MIT，自带约一万条测试）。它在这里只是 **只读证人** ：它不出现在 `include/` 里，
 //     因为实测 `etl/crc16_ccitt.h` 会让一个消费者 TU 多拉 277 个头、多花 242 ms——见
 //     `.github/project/deps.json`。让它留在测试 TU 里，别人一分钱不付。
 TEST(Frame, TheCrcAgreesWithAnIndependentImplementationByteForByte) {

@@ -23,7 +23,7 @@ namespace sil {
  * @brief [zh] 把机器放在哪里，以及对观测器谎报什么。
  * @note [en] The *true* machine is always the nameplate one; only the belief varies. That split is what makes an
  *            Rs-mismatch sweep meaningful -- heating the machine and heating the belief together would measure nothing.
- * @note [zh] **真**机器永远是铭牌电机，只有信念在变。这个分离才让 Rs 失配扫描有意义——把机器和信念一起 加热，什么都量不
+ * @note [zh] **真** 机器永远是铭牌电机，只有信念在变。这个分离才让 Rs 失配扫描有意义——把机器和信念一起 加热，什么都量不
  *            到。
  * @since 0.1.0
  */
@@ -64,7 +64,7 @@ struct SwitchingRigConfig final {
   float seconds{0.4F};
   /**
    * @brief [en] Dead-time volt-seconds to *compensate* for, V; 0 = no compensator in the loop.
-   * @brief [zh] 要**补偿**的死区伏秒，V；0 = 环内没有补偿器。
+   * @brief [zh] 要 **补偿** 的死区伏秒，V；0 = 环内没有补偿器。
    */
   float compensate_v{0.0F};
   /**
@@ -88,8 +88,8 @@ struct SwitchingRigConfig final {
  * @note [en] The observers are handed the **commanded** vector and the **sampled** current, which is all a real
  *            controller knows. Everything else -- ripple, dead-time volt-seconds, the fact that the current is not the
  *            average -- is what they have to cope with.
- * @note [zh] 观测器拿到的是**指令**矢量和**采样**电流，也就是真实控制器知道的全部。其余的一切——纹波、 死区伏秒、电流不
- *            等于平均值——都是它们必须自己应付的。
+ * @note [zh] 观测器拿到的是 **指令** 矢量和 **采样** 电流，也就是真实控制器知道的全部。其余的一切——纹波、 死区伏秒、电
+ *            流不等于平均值——都是它们必须自己应付的。
  * @since 0.1.0
  */
 class SwitchingRig final {
@@ -160,7 +160,7 @@ public:
 
   /**
    * @brief [en] The current the controller *sees*: one sample per control period.
-   * @brief [zh] 控制器**看到**的电流：每 控制周期一个采样。
+   * @brief [zh] 控制器 **看到** 的电流：每 控制周期一个采样。
    */
   [[nodiscard]] auto current() const noexcept -> core::Ab<float> {
     return current_;
@@ -186,7 +186,7 @@ public:
     // the observer is still handed `command()`, because with the loss
     // compensated the delivered voltage *is* the command.
     // 补偿器启用时坐在指令与桥臂之间；观测器拿到的仍是 `command()`，因为损失被
-    // 补掉后交付电压**就是**指令。
+    // 补掉后交付电压 **就是** 指令。
     const core::SvpwmResult modulated = compensator_.modulate(request);
     const int count =
         inverter_.begin_period(modulated.duty, config_.v_bus_v, kControlPeriod);
@@ -244,11 +244,11 @@ auto run_switched(const SwitchingRigConfig &config, Update &&update) -> float {
  * @brief [en] A textbook sliding-mode observer, **a control and not a candidate**: it exists so the gate has something
  *             that can fail. Current-error sliding surface, `z = K * sat(s / layer)` injected as a voltage, and a
  *             first-order filter on `z` to read out the equivalent control (the back-EMF).
- * @brief [zh] 教科书式滑模观测器，**是对照而不是候选**：它的存在是为了让闸有一个能失败的对象。电流误差 滑模面，`z =
+ * @brief [zh] 教科书式滑模观测器， **是对照而不是候选** ：它的存在是为了让闸有一个能失败的对象。电流误差 滑模面，`z =
  *             K·sat(s/layer)` 作为注入电压，再对 `z` 做一阶滤波读出等效控制（反电动势）。
  * @note [en] It is deliberately *sane*: it reaches ~0.03 rad on a plant with neither impairment, so a failure here is
  *            about the structure under disturbance, not about a broken straw man.
- * @note [zh] 它被刻意做得**靠谱**：在没有任何未建模效应的 plant 上它能到 ~0.03 rad，所以这里的失败是结构 在扰动下的问
+ * @note [zh] 它被刻意做得 **靠谱** ：在没有任何未建模效应的 plant 上它能到 ~0.03 rad，所以这里的失败是结构 在扰动下的问
  *            题，而不是稻草人写坏了。
  * @since 0.1.0
  */
@@ -304,7 +304,7 @@ private:
 /**
  * @brief [en] The tuning a sliding-mode observer needs to survive the whole speed range, as a *schedule* rather than a
  *             constant.
- * @brief [zh] 滑模观测器要在整个速度范围活下来所需的调参——是一条**调度**，不是一个常数。
+ * @brief [zh] 滑模观测器要在整个速度范围活下来所需的调参——是一条 **调度** ，不是一个常数。
  * @param omega_e [en] electrical speed in rad/s.
  * @param omega_e [zh] 电角速度，rad/s。
  * @param psi_f [en] rotor flux linkage in Wb.
@@ -320,8 +320,8 @@ private:
  *            these particular numbers are optimal.
  * @note [zh] 两个数来自同一个事实：滑模增益必须大于它要重建的反电动势，`K > |omega_e|·psi_f`；又不能比它大 太多，否则注
  *            入的抖振跟着涨。所以 `K` 有下限且正比于转速。等效控制滤波器是镜像的问题：拐点要明显 高于必须通过的信号（否
- *            则滞后），又要低到能压住开关（否则抖振），所以它也跟随转速。 这些常数是对着 S18 的记录**拟合**的，不是推导
- *            出来的：这份记账要说明的是"单个常数**不可能** 覆盖整个包络"，而不是这几个数字最优。
+ *            则滞后），又要低到能压住开关（否则抖振），所以它也跟随转速。 这些常数是对着 S18 的记录 **拟合** 的，不是推
+ *            导出来的：这份记账要说明的是"单个常数 **不可能** 覆盖整个包络"，而不是这几个数字最优。
  * @since 0.1.0
  */
 struct SmoTuning final {

@@ -135,7 +135,7 @@ struct PyHal final {
         // plant is a simulation: it has no gate driver and therefore nothing to report, and that sentence is written
         // here once rather than being implied by a NULL. A plant that does model a fault output just defines
         // `drive_faulted()` and its answer is used instead.
-        // Python 侧可选，**C 侧必需**：库拒绝一个说不出功率级有没有故障的主控方，所以这个绑定显式地回答那个问题，而不是
+        // Python 侧可选， **C 侧必需** ：库拒绝一个说不出功率级有没有故障的主控方，所以这个绑定显式地回答那个问题，而不是
         // 把它留空。Python 的 plant 是仿真：它没有栅极驱动器，也就没有东西可报，这句话在这里写一次，而不是靠 NULL 暗示。
         // 真的建模了故障输出的 plant 只要定义 `drive_faulted()`，它的答案就会被用上。
         drive_fault = py::getattr(plant, "drive_faulted", py::none());
@@ -963,7 +963,7 @@ PYBIND11_MODULE(foc_python, m) {
 
     // The torque map, as an object rather than three loose functions: the map is a *value* derived from a nameplate,
     // and a caller who has one should not be able to pass a different one to `command` than the one they built.
-    // 力矩地图做成对象而不是三个散落的函数：地图是由铭牌导出的一个**值**，而持有它的调用方不应该有机会把另一份地图传给
+    // 力矩地图做成对象而不是三个散落的函数：地图是由铭牌导出的一个 **值** ，而持有它的调用方不应该有机会把另一份地图传给
     // `command`。
     py::class_<foc_torque_map_t>(m, "TorqueMap",
                                  "[en] The nameplate as N*m per amp, plus the limits a torque command works inside.\n"

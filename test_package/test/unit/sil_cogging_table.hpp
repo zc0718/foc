@@ -21,8 +21,8 @@ namespace sil {
  *   read by another under a different convention. The `order` is **per mechanical revolution**, the quantity a designer
  *   reads off `lcm(slots, poles)`; mixing it with an electrical order is a factor of `pole_pairs`, which is exactly the
  *   kind of error that makes a compensation look like it does not work. 整条链——被控对象注入的、以及补偿器抵消的——共用
- *   这一个类型，于是一张表不可能由一方按一种约定写出、由另一方按另一种约定读入。`order` 是**每机械转** 的次数，即设计师
- *   从 `lcm(slots, poles)` 读到的那个量；把它与电次数混用会差一个极对数，而那正是让补偿「看起来没生效」的那类错误。
+ *   这一个类型，于是一张表不可能由一方按一种约定写出、由另一方按另一种约定读入。`order` 是 **每机械转** 的次数，即设计
+ *   师从 `lcm(slots, poles)` 读到的那个量；把它与电次数混用会差一个极对数，而那正是让补偿「看起来没生效」的那类错误。
  * @since 0.1.9
  */
 using CoggingHarmonic = ::foc::core::CoggingCompHarmonic;
@@ -72,9 +72,9 @@ inline constexpr int kMaxCoggingHarmonics = 6;
  *            instrument, and "it silently used the first six" is visible in the accessor rather than fatal. And an
  *            order of 0 is **dropped, not rejected**: a constant torque is `set_load_torque()`'s job, and accepting it
  *            here would give a load two ways in.
- * @note [zh] 两个决定都是有意的。`count` 超过 `capacity` 时**截断而不拒绝**：这是测试仪器，"它悄悄用了前六个"在访问器里
- *            看得见，不必做成致命错误。而 0 次**被丢弃而不报错**：恒定转矩是 `set_load_torque()` 的活，在这里接受它就等
- *            于给负载开了两个入口。
+ * @note [zh] 两个决定都是有意的。`count` 超过 `capacity` 时 **截断而不拒绝** ：这是测试仪器，"它悄悄用了前六个"在访问器
+ *            里看得见，不必做成致命错误。而 0 次 **被丢弃而不报错** ：恒定转矩是 `set_load_torque()` 的活，在这里接受它
+ *            就等于给负载开了两个入口。
  * @since 0.1.9
  */
 inline auto store_cogging(CoggingHarmonic* out, int capacity, const CoggingHarmonic* in, int count) noexcept -> int {

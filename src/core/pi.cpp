@@ -42,7 +42,7 @@ auto Pi::step(float setpoint, float feedback, float dt_s) noexcept -> float {
 auto Pi::step(const SpeedInput& request, float feedback, float dt_s) noexcept -> float {
     // 0 means "no override". Anything else is a multiplier, and it is applied to the *configuration*
     // rather than accumulated into it, so a compliant call never leaves the controller detuned.
-    // 0 表示“不覆盖”。其余取值是乘数，并且是作用于**配置**而不是累加进配置，因此一次柔顺调用绝不会
+    // 0 表示“不覆盖”。其余取值是乘数，并且是作用于 **配置** 而不是累加进配置，因此一次柔顺调用绝不会
     // 把控制器留在失调状态。
     const float kp_scale = (request.kp_scale > 0.0F) ? request.kp_scale : 1.0F;
     const float ilimit_scale = (request.ilimit_scale > 0.0F) ? request.ilimit_scale : 1.0F;
@@ -72,7 +72,7 @@ auto Pi::run(float setpoint, float feedback, float dt_s, float kp, float integra
     integral_ += static_cast<float>(config_.ki * error) * dt_s;
     // Re-clamped every step against the *current* window: when `ilimit_scale` shrinks it, the torque
     // already stored is released at once instead of leaking out over many steps.
-    // 每一步都按**当前**窗口重新夹紧：`ilimit_scale` 把窗口收窄时，已存的转矩会立刻释放，而不是花
+    // 每一步都按 **当前** 窗口重新夹紧：`ilimit_scale` 把窗口收窄时，已存的转矩会立刻释放，而不是花
     // 很多步慢慢漏掉。
     integral_ = clamp(integral_, integral_min, integral_max);
 

@@ -7,7 +7,7 @@
 // a *procedure* has to be replayable on a second machine, and two implementations of "the bandwidth this loop actually
 // delivered" would make that replay a comparison of two measurements rather than of two machines.
 // 流程型能力判据所需的两项测量只此一份，好让 SOP 驱动与 `MotorConfig` 敏感度那一行不会各走一条路。两者原本是为
-// `test_motor.cpp` 的 F35 那行写的；搬到这里是因为**流程**必须能在第二台机器上重放，而"这个环实际交付的带宽"有两份实现，
+// `test_motor.cpp` 的 F35 那行写的；搬到这里是因为 **流程** 必须能在第二台机器上重放，而"这个环实际交付的带宽"有两份实现，
 // 那次重放就成了两个测量的比较而不是两台机器的比较。
 
 #include <cmath>
@@ -51,7 +51,7 @@ constexpr float kSopGainDt = 5e-5F;
  *            nameplate error is exactly the difference between those two pairs. The current loop is skipped (torque =
  *            kt*i in the same period), so whatever this measures belongs to the **speed** law and not to a cascade.
  * @note [zh] `j_hat`/`b_hat` 进增益、`j_true`/`b_true` 进机器，这正是要点：铭牌误差就是这两对参数之差。电流环被跳过（力
- *            矩在同一周期内就是 kt·i），所以这里量到的一切属于**速度**律而不属于任何级联。
+ *            矩在同一周期内就是 kt·i），所以这里量到的一切属于 **速度** 律而不属于任何级联。
  * @since 0.1.9
  */
 inline auto speed_loop_gain(float bandwidth_rad_s, float j_true, float b_true, float j_hat, float b_hat, float kt,

@@ -17,9 +17,9 @@ namespace hal {
  *            than an edge would make a caller count one crossing many times. Detected through
  *            `core::concepts::has_index_v`, never assumed.
  * @note [zh] 实现可以额外提供 `has_index() const noexcept -> bool` 与 `index_pulse() noexcept -> bool` 来报告索引标记。
- *            这一对可选的道理和机械偏置那一对相同：没有标记的传感器是正常传感器，"建立不了绝对位置"是**调用方**的问题。
- *            `index_pulse()` 必须**只在**越过标记的那一个 tick 为真——若它是一个电平而不是边沿，调用方会把一次通过数很多
- *            次。通过 `core::concepts::has_index_v` 探测，从不假设。
+ *            这一对可选的道理和机械偏置那一对相同：没有标记的传感器是正常传感器，"建立不了绝对位置"是 **调用方** 的问
+ *            题。 `index_pulse()` 必须 **只在** 越过标记的那一个 tick 为真——若它是一个电平而不是边沿，调用方会把一次通
+ *            过数很多次。通过 `core::concepts::has_index_v` 探测，从不假设。
  * @since 0.1.0
  * @exporter
  */
@@ -33,7 +33,7 @@ class PositionSensor {
      * @return [en] Angle in rad. A single-turn sensor may normalise to [0, 2*pi); a sensor that can count turns must
      *              return a continuous angle instead, because position control cannot recover turns it was never told
      *              about.
-     * @return [zh] 角度，单位 rad。单圈传感器可以归一化到 [0, 2*pi)；能计圈数的传感器必须返回**连续** 角度，因为位置控
+     * @return [zh] 角度，单位 rad。单圈传感器可以归一化到 [0, 2*pi)；能计圈数的传感器必须返回 **连续** 角度，因为位置控
      *              制无法还原它没被告知的圈数。
      * @context [en] Current-loop ISR.
      * @context [zh] 电流环 ISR。

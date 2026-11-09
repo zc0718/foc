@@ -2,7 +2,7 @@
 // table, and an angle interpolated from edge timing -- and both criteria are about how *wrong* each one is, because
 // "it turns the motor" is satisfied by a table with two entries swapped.
 // 3.1b：解码器，对着 3.1a 立下的物理来测。一个头文件里两件能力——六步表，和由边沿时刻插值出来的角度——两条判据都
-// 关于各自**错多少**，因为"电机转了"这件事，一张有两项写反的表也能满足。
+// 关于各自 **错多少** ，因为"电机转了"这件事，一张有两项写反的表也能满足。
 
 #include <algorithm>
 #include <cmath>
@@ -211,7 +211,7 @@ TEST(HallSixStep, TheTableIsARotationAtNinetyDegreesPlusSixtyPerSector) {
         // Compared as a *rotation*: the expected angle is unwrapped (it passes 360 at sector 4), and the difference is
         // wrapped to +-180 before it is judged. The first version wrapped the expected value itself and then subtracted
         // the previous wrapped value, which reported a 300-degree step at sector 2 and looked like a table fault.
-        // 按**旋转**比较：期望角不折回（它在扇区 4 越过 360），差值先折到 ±180 再判。第一版把期望值本身折回了，
+        // 按 **旋转** 比较：期望角不折回（它在扇区 4 越过 360），差值先折到 ±180 再判。第一版把期望值本身折回了，
         // 又去减上一个已折回的值，于是在扇区 2 读出 300 度的步进，看起来像表的错。
         const float measured_deg = deg(std::atan2(ab.beta, ab.alpha));
         const float gap_deg = deg(wrap_pi(measured_deg * kDegRad - kExpected[sector] * kDegRad));
@@ -248,7 +248,7 @@ TEST(HallSixStep, TheTableIsARotationAtNinetyDegreesPlusSixtyPerSector) {
  *     The number is the argument for interpolating an angle at all. `cos` over +-30 degrees has a mean of 0.9549 (the
  *     integral of cos over the sector divided by its width), so the peak-to-peak ripple is (1 - 0.866) / 0.9549 =
  *     14.0 % of the mean torque -- analytic here, measured below, and the same number from both routes. 保持在一个换相
- *     状态上，力矩是转子在扇区内位置的 `cos(误差)`：中心最大，**两个边沿 0.866**，永不为负——这就是六步消不掉的 14.0 %
+ *     状态上，力矩是转子在扇区内位置的 `cos(误差)`：中心最大， **两个边沿 0.866** ，永不为负——这就是六步消不掉的 14.0 %
  *     脉动。这个数是"为什么值得插值角度"的全部论据。`cos` 在 ±30° 上均值为 0.9549（扇区内 cos 的积分除以宽度），于是峰
  *     峰脉动是 (1 − 0.866) / 0.9549 = 14.0 % 的均值力矩——这里是解析，下面实测，两条路给出同一个数。
  */
@@ -294,7 +294,7 @@ TEST(HallSixStep, HeldAtOneStateTheTorqueIsTheCosineOfThePositionAndNeverGoesNeg
 
         // Reverse: the *same* rotor at the same sensor code, the opposite vector -- the torque changes sign and keeps
         // its magnitude. Using a different code here would have measured a different rotor position.
-        // 反向：**同一个**转子、同一个传感器编码、相反的矢量——力矩变号且保持大小。这里换一个编码就等于在量另一个转子位置。
+        // 反向： **同一个** 转子、同一个传感器编码、相反的矢量——力矩变号且保持大小。这里换一个编码就等于在量另一个转子位置。
         const float backwards =
             params.kt * held_state_current(params, code, centre, foc::core::HallDirection::Reverse, kAmplitude, kVBus)
                             .q;
@@ -326,7 +326,7 @@ TEST(HallTracker, InterpolationBeatsTheSectorCentreByAnOrderOfMagnitude) {
         EXPECT_NEAR(deg(run.rms_centre_rad), 17.32F, 1.0F) << "the baseline is the quantisation, and it reads right";
         // Measured at these two speeds: 0.019 and 0.053. The bound is 0.15 because the factor is *not* constant -- it
         // is 0.133 at 900 rad/s, where one sampling period is 3.2 degrees and the interpolation has little left to win.
-        // 这两个转速下实测 0.019 与 0.053。界取 0.15 是因为这个倍数**不是**常数——900 rad/s 下是 0.133，那里一个采样周期
+        // 这两个转速下实测 0.019 与 0.053。界取 0.15 是因为这个倍数 **不是** 常数——900 rad/s 下是 0.133，那里一个采样周期
         // 就是 3.2°，插值已经没什么可赢的。
         EXPECT_LT(run.rms_rad / run.rms_centre_rad, 0.15F)
             << "tracker " << deg(run.rms_rad) << " deg RMS against baseline " << deg(run.rms_centre_rad);
@@ -381,8 +381,8 @@ TEST(HallTracker, TheResidualErrorIsTheSamplingPeriodTimesTheSpeedAndNotTheSecto
  *
  *     A forward-only interpolator that always starts from the lower boundary reads perfectly going one way and is a
  *     whole sector out going the other -- and "a whole sector out" is easy to mistake for a sensor problem. 反向不翻转
- *     角度：转子是跨**上**边界进入新扇区的，搞错那不是小误差，是 60°。一个永远从下边界起步的"只会正向"的插值器往一个方
- *     向走读数完美，往另一个方向走整整差一个扇区——而"差一个扇区"很容易被误当成传感器问题。
+ *     角度：转子是跨 **上** 边界进入新扇区的，搞错那不是小误差，是 60°。一个永远从下边界起步的"只会正向"的插值器往一个
+ *     方向走读数完美，往另一个方向走整整差一个扇区——而"差一个扇区"很容易被误当成传感器问题。
  */
 TEST(HallTracker, ReversingEntersThroughTheOtherBoundaryAndDoesNotCostSixtyDegrees) {
     const float dt = 6.25e-5F;
@@ -403,10 +403,10 @@ TEST(HallTracker, ReversingEntersThroughTheOtherBoundaryAndDoesNotCostSixtyDegre
  *     at the start of each doubled sector where the tracker reports `Ok` with an error growing through 10 to 30
  *     degrees. Publishing that number is the point; a fault detector quoted as "catches a dead Hall" without it is a
  *     claim about a machine that does not exist. 卡死一路传感器：非法窗口覆盖六分之一圈，间隔检查覆盖其余的，而诚实的数
- *     字是跟踪器在中间"报 Ok 却错着"有多久。 3.1a 量到坏一路在五分之六圈里不可见。本用例当真地量两条通道**实际**覆盖了
- *     什么：非法编码通道只看得到另两路一致的那一个扇区，间隔通道需要 1.5 个周期才能开口——所以每个被拉长的扇区开头都有一
- *     小段，跟踪器报 `Ok` 而误差从 10° 长到 30°。把这个数公布出来是重点；一个只说"能抓坏霍尔"而不给这个数的故障检测器，
- *     是关于一台不存在的机器的声称。
+ *     字是跟踪器在中间"报 Ok 却错着"有多久。 3.1a 量到坏一路在五分之六圈里不可见。本用例当真地量两条通道 **实际** 覆盖
+ *     了什么：非法编码通道只看得到另两路一致的那一个扇区，间隔通道需要 1.5 个周期才能开口——所以每个被拉长的扇区开头都有
+ *     一小段，跟踪器报 `Ok` 而误差从 10° 长到 30°。把这个数公布出来是重点；一个只说"能抓坏霍尔"而不给这个数的故障检测
+ *     器，是关于一台不存在的机器的声称。
  */
 TEST(HallTracker, AStuckSensorIsCoveredByTwoChannelsAndNeitherAloneIsEnough) {
     foc::sil::HallSetup setup{};
@@ -419,7 +419,7 @@ TEST(HallTracker, AStuckSensorIsCoveredByTwoChannelsAndNeitherAloneIsEnough) {
     EXPECT_NEAR(run.fault_fraction, 1.0F / 6.0F, 0.03F) << "the illegal window is one sector in six";
     // The interval channel sees the doubled sectors, and between the two most of the revolution is *declared* rather
     // than silently wrong. Measured: 0.155 + 0.539 with the sensor stuck low, 0.185 + 0.482 stuck high.
-    // 间隔通道看得到被拉长的扇区，两者合起来把大部分圈数**申报**出来，而不是沉默地错着。实测：低位卡死 0.155 + 0.539，
+    // 间隔通道看得到被拉长的扇区，两者合起来把大部分圈数 **申报** 出来，而不是沉默地错着。实测：低位卡死 0.155 + 0.539，
     // 高位卡死 0.185 + 0.482。
     EXPECT_GT(run.stale_fraction, 0.4F);
     EXPECT_GT(run.fault_fraction + run.stale_fraction, 0.6F);
@@ -472,7 +472,7 @@ TEST(HallTracker, AnIllegalCodeIsReportedAndTheTrackerRelocksWhenTheSensorsRecov
             // not frozen. The first version of this case asserted "frozen" and was wrong about its own subject -- the
             // angle function is a function of time, so it keeps moving until the clamp catches it, and that is the
             // behaviour worth having (a short glitch costs no accuracy; a long one costs at most half a sector).
-            // 没有边沿可用时估计值会自由推进、然后在扇区边界停住：它是**被钳住**的，不是冻结的。本用例第一版断言"冻结"，
+            // 没有边沿可用时估计值会自由推进、然后在扇区边界停住：它是 **被钳住** 的，不是冻结的。本用例第一版断言"冻结"，
             // 那是对它自己的被测对象判断错了——角度是时间的函数，会一直走到钳位为止，而这正是值得要的行为（短毛刺不损失
             // 精度，长故障最多损失半个扇区）。
             const float from_centre =
@@ -557,10 +557,10 @@ TEST(HallTracker, AHardDecelerationAlsoLooksLikeAMissedEdgeWhichIsWhyStateIsNotA
  *   the machine has even moved. That is not hypothetical: the flash calibration of this repository's own
  *   `hall_sector_centre_rad` starts at `90 + k*60`, so sector 2's centre is 210 degrees.
  *
- *   `angle_elec_rad()` 在什么都没看见时返回 `0`，而这个零是**故意**与"转子停在零位"同一个值——契约说调用方必须读
+ *   `angle_elec_rad()` 在什么都没看见时返回 `0`，而这个零是 **故意** 与"转子停在零位"同一个值——契约说调用方必须读
  *   `status()` / `sector()` 来区分两者，而契约诚实的那一半是这个访问器永远不编一个看起来合理的角度。另一半是"一个边沿 "
- *   买到了什么：一个边沿是一个**扇区**，不是一个转速，所以能给出的最好答案是那个扇区的中心，而它不能是 `0` （只有扇区 5
- *   的 `0` 才碰巧落在扇区里）。
+ *   买到了什么：一个边沿是一个 **扇区** ，不是一个转速，所以能给出的最好答案是那个扇区的中心，而它不能是 `0` （只有扇区
+ *   5 的 `0` 才碰巧落在扇区里）。
  *
  *   这一对要紧，因为起动流程读到的第一个数就是这个：把"没有信息"和"转子在 0"都答成 `0` 的跟踪器是对的，而在边沿之后仍答
  *   `0` 的那个，机器还没动就已经偏了 30°。这不是假设：本仓库自己的 `hall_sector_centre_rad` 从 `90 + k*60` 开始，所以扇
@@ -574,7 +574,7 @@ TEST(HallTracker, BeforeTheFirstEdgeThereIsNoAngleAndAfterOneThereIsASector) {
     EXPECT_FLOAT_EQ(0.0F, tracker.period_s());
     EXPECT_FLOAT_EQ(0.0F, tracker.age_s());
     // Not "zero at t = 0": zero at *every* time, because a clock does not create information.
-    // 不是"t=0 时为零"：在**任何**时刻都为零，因为时钟不会创造信息。
+    // 不是"t=0 时为零"：在 **任何** 时刻都为零，因为时钟不会创造信息。
     EXPECT_FLOAT_EQ(0.0F, tracker.angle_elec_rad(0.0F));
     EXPECT_FLOAT_EQ(0.0F, tracker.angle_elec_rad(12.5F)) << "an angle appeared out of an empty tracker";
 
@@ -611,8 +611,8 @@ TEST(HallTracker, BeforeTheFirstEdgeThereIsNoAngleAndAfterOneThereIsASector) {
  *
  *   这条守卫存在，是因为 `now_s` 是 `float` 而时钟由调用方掌握：时基里一个 `NaN` 会悄悄把此后每个 `elapsed` 变成
  *   `NaN`、把每个与间隔带的比较变成 `false`、把发布的角度变成 `NaN`——环路再把它送进 Park，变成 `NaN` 占空比。一条报
- *   `Param` 的守卫只有在它同时**不采纳**该采样时才值得存在，而这正是没人检查的那一半：两个跟踪器，一个每隔 37 拍喂一次
- *   `NaN` 再喂真实采样，两者在角度、转速、周期上必须**逐位**相同。
+ *   `Param` 的守卫只有在它同时 **不采纳** 该采样时才值得存在，而这正是没人检查的那一半：两个跟踪器，一个每隔 37 拍喂一
+ *   次 `NaN` 再喂真实采样，两者在角度、转速、周期上必须 **逐位** 相同。
  *
  *   比较本身就是判据，而且它能红：一个先把 `now_s = NaN` 存下来再判断的版本会在角度上一致（守卫仍然提前返回），但不会在
  *   `age_s()` 上一致——后者正是由存下的时间戳算出来的，所以最后那条有限性断言是它的钉子。
@@ -662,12 +662,12 @@ TEST(HallTracker, ANonFiniteSampleIsRefusedAndDoesNotPoisonTheClock) {
  *   The falsifier is the linear prediction: it is asserted to be *below* the lower edge, so the equality below is a
  *   clamp that had work to do and not a value that happened to land there.
  *
- *   `angle_elec_rad()` 把插值直线钳在传感器仍在指名的那个扇区里，而两条钳位不是同一段代码：正向从**下**边界进入、反向从
- *   **上**边界进入，所以下边界那条只在反向时才会触发。此前每个用例都让转子正向转，也就是说下边界钳位 **从未执行过 **——
- *   而反向那一侧缺一条钳位在只看正向的运行里不可见，在另一个方向上却是无界的角度误差（转子停住时，直线会以最后那个转速
- *   一直走下去）。
+ *   `angle_elec_rad()` 把插值直线钳在传感器仍在指名的那个扇区里，而两条钳位不是同一段代码：正向从 **下** 边界进入、反向
+ *   从 **上** 边界进入，所以下边界那条只在反向时才会触发。此前每个用例都让转子正向转，也就是说下边界钳位 **从未执行过
+ *   ** —— 而反向那一侧缺一条钳位在只看正向的运行里不可见，在另一个方向上却是无界的角度误差（转子停住时，直线会以最后那
+ *   个转速一直走下去）。
  *
- *   伪证是线性预测：断言它落在下边界**之下**，所以下面那个等号是一次"有活可干"的钳位，而不是碰巧落在那里。
+ *   伪证是线性预测：断言它落在下边界 **之下** ，所以下面那个等号是一次"有活可干"的钳位，而不是碰巧落在那里。
  */
 TEST(HallTracker, TheClampHoldsOnTheLowerBoundaryWhichOnlyAReversalVisits) {
     foc::core::HallTracker tracker;
@@ -675,7 +675,7 @@ TEST(HallTracker, TheClampHoldsOnTheLowerBoundaryWhichOnlyAReversalVisits) {
     // Three edges, not two: the interval arithmetic needs the *previous* sample to have been an edge, so the first
     // transition only establishes the direction and the period appears on the second one. Walking the codes down
     // 5 -> 4 -> 3 is one sector backwards each time, which is the only reading the codes allow.
-    // 三个边沿，不是两个：间隔算术要求**上一个**采样本身就是边沿，所以第一次跳变只确立方向，周期在第二次才出现。
+    // 三个边沿，不是两个：间隔算术要求 **上一个** 采样本身就是边沿，所以第一次跳变只确立方向，周期在第二次才出现。
     // 编码 5 -> 4 -> 3 每步倒退一格，这是编码所允许的唯一读法。
     ASSERT_EQ(tracker.update(0.0F, code_of_sector(5U)), foc::ErrorCode::Ok);
     ASSERT_EQ(tracker.update(step_s, code_of_sector(4U)), foc::ErrorCode::Ok);
@@ -689,7 +689,7 @@ TEST(HallTracker, TheClampHoldsOnTheLowerBoundaryWhichOnlyAReversalVisits) {
     const float centre = foc::core::hall_sector_centre_rad(3U);
     const float lower_edge = centre - half;
     // A reversing rotor entered this sector across its *upper* boundary.
-    // 反向的转子是跨它的**上**边界进入这个扇区的。
+    // 反向的转子是跨它的 **上** 边界进入这个扇区的。
     const float entry = centre + half;
     const float linear = entry + (tracker.speed_elec_rad_s() * (later - t_last));
     ASSERT_LT(linear, lower_edge) << "the linear prediction is inside the sector, so this case proves nothing";
@@ -707,8 +707,8 @@ TEST(HallTracker, TheClampHoldsOnTheLowerBoundaryWhichOnlyAReversalVisits) {
  * @brief [en] The sensitivity table for the tracker's own input error: a rigid mounting offset enters one-for-one, and
  *             the *worst* case for the same offset is one misplaced sensor rather than all three shifted.
  *
- * @brief [zh] 跟踪器自身输入误差的敏感度表：刚性安装偏移一比一进入，而同样偏移下**最坏**的情形是单只装歪，不是三只一起
- *             平移。
+ * @brief [zh] 跟踪器自身输入误差的敏感度表：刚性安装偏移一比一进入，而同样偏移下 **最坏** 的情形是单只装歪，不是三只一
+ *             起平移。
  *
  *   Everything measured so far perturbed the tracker's *inputs* -- speed, the sensor being dead -- but nothing moved
  *   the sensors themselves, which is the error a real installation actually has (three sensors fitted by hand on a
@@ -740,18 +740,18 @@ TEST(HallTracker, TheClampHoldsOnTheLowerBoundaryWhichOnlyAReversalVisits) {
  *   `fault_fraction` and `stale_fraction` are asserted to stay zero: a mounting offset is a calibration error, not a
  *   sensor failure, and a detector that reported one as the other would make every installation look broken.
  *
- *   到目前为此所有测量扰动的都是跟踪器的**输入**——转速、某一路卡死——但没有任何一次挪动传感器本身，而真实安装恰恰有这个
- *   误差（三个传感器手工装在一个支架上，各差几度）。`HallSetup::mount_error_rad` 就是为这个存在的，而它从来没被设成过非
- *   零值。
+ *   到目前为此所有测量扰动的都是跟踪器的 **输入** ——转速、某一路卡死——但没有任何一次挪动传感器本身，而真实安装恰恰有这
+ *   个误差（三个传感器手工装在一个支架上，各差几度）。`HallSetup::mount_error_rad` 就是为这个存在的，而它从来没被设成过
+ *   非零值。
  *
  *   实测（健康组、300 rad/s 电角、6.25e-5 s 采样、120 ms 窗口，基线 0.696° rms / 1.211° 最大值）见上表。两个系数：** 刚
  *   性旋转下最坏误差一比一增长**——最大值减基线在 2/4/8° 下是 1.988/3.976/8.002°，即 0.994/0.994/1.000，因为转动传感器组
- *   就是转动坐标；**单只装歪时 rms 约为四分之三**（0.679/0.752/0.751），因为只有它辖下两条边界动了、六个扇区里四个原地
- *   不动。
+ *   就是转动坐标； **单只装歪时 rms 约为四分之三** （0.679/0.752/0.751），因为只有它辖下两条边界动了、六个扇区里四个原
+ *   地不动。
  *
- *   反直觉的那一半也断言，因为它决定支架该怎么造：同样偏移下单只装歪的**最坏**误差比刚性更大（2° 时 5.105° 对 3.199°
- *   ），达到偏移的 1.9–2.6 倍——受影响的两个扇区里插值锚在一条整体偏了一个偏移量的边界上，于是误差先翻倍，直到下一个真边
- *   界把它纠正过来。只列刚性一项的表会把最坏情形低估一半以上。
+ *   反直觉的那一半也断言，因为它决定支架该怎么造：同样偏移下单只装歪的 **最坏** 误差比刚性更大（2° 时 5.105° 对
+ *   3.199° ），达到偏移的 1.9–2.6 倍——受影响的两个扇区里插值锚在一条整体偏了一个偏移量的边界上，于是误差先翻倍，直到下
+ *   一个真边界把它纠正过来。只列刚性一项的表会把最坏情形低估一半以上。
  *
  *   带子宽，是因为"采样窗口上的最大值"不是偏移的光滑函数（取决于采样栅格落在扇区里的位置）；这里声称的是系数，不是某一
  *   位小数。`fault_fraction` 与 `stale_fraction` 断言保持为零：安装偏移是标定误差、不是传感器失效，把一个当另一个报的检

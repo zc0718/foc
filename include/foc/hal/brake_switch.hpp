@@ -32,17 +32,17 @@ namespace hal {
  *   the numbers unreadable -- the same rule this repository applies to `PlantHal::set_inverter` and the dead-time
  *   knobs.
  *
- * @details [zh] 这是制动斩波器的输出级，不是斩波器本身。`core::BrakeChopper` 决定电阻**该不该**被驱动、占空比多少；这个
- *               契约只剩板子拥有的一件事：让一个开关在一个周期里导通一段比例。
+ * @details [zh] 这是制动斩波器的输出级，不是斩波器本身。`core::BrakeChopper` 决定电阻 **该不该** 被驱动、占空比多少；这
+ *               个契约只剩板子拥有的一件事：让一个开关在一个周期里导通一段比例。
  *
  *   与 `hal::Pwm` 的三个差异都是有意的，而且每一个读者都应当能自己核对而不是接受：
  *
  *   1. **一个占空比，不是三个。** 斩波器是跨在母线上的一个开关。给它一个 `Uvw` 会诱使调用方把斩波波形从逆变器的契约里写
  *   出去，而那里让 SVPWM 成立的共模约定会悄悄把它重新缩放。
  *
- *   2. **没有 `enable()`。** `Pwm` 需要显式使能，因为三个半桥可能被使能到短路；而制动开关的危险状态是**导通**，所以要求
- *   两次调用才能发热不是安全特性，而是让安全状态取决于两次调用的顺序。`write_duty(0)` 就是安全状态， `disable()` 是把同
- *   一句话说出来。
+ *   2. **没有 `enable()`。** `Pwm` 需要显式使能，因为三个半桥可能被使能到短路；而制动开关的危险状态是 **导通** ，所以要
+ *   求两次调用才能发热不是安全特性，而是让安全状态取决于两次调用的顺序。`write_duty(0)` 就是安全状态， `disable()` 是把
+ *   同一句话说出来。
  *
  *   3. **没有 `fault()`。** 斩波器的过温是电阻的事，而库已经把它建模成带冷却的 I²t 预算（
  *   `core::BrakeChopperConfig::i2t_limit_a2s`）。一个效应两个来源会让数字无法解读——与 `PlantHal::set_inverter` 和死区旋
@@ -52,9 +52,9 @@ namespace hal {
  *            bus, and it keeps running when the drive is disabled -- which is exactly when a regenerating machine needs
  *            it most. `driver::StubHal` therefore does not contain one; a host composes it beside the motor, from the
  *            same control tick.
- * @note [zh] 有意**不**放进 `Motor` 的 HalPolicy：斩波器不作用于电机，它作用于母线，而且在驱动被关闭之后还在运行——那恰
- *            好是一台回馈中的电机最需要它的时候。所以 `driver::StubHal` 里没有它；调用方在与电机同一个控制拍里把它组合
- *            在电机旁边。
+ * @note [zh] 有意 **不** 放进 `Motor` 的 HalPolicy：斩波器不作用于电机，它作用于母线，而且在驱动被关闭之后还在运行——那
+ *            恰好是一台回馈中的电机最需要它的时候。所以 `driver::StubHal` 里没有它；调用方在与电机同一个控制拍里把它组
+ *            合在电机旁边。
  * @context [en] `write_duty` runs inside the control ISR: no allocation, no blocking.
  * @context [zh] `write_duty` 在控制 ISR 内运行：不分配、不阻塞。
  * @since 0.1.9

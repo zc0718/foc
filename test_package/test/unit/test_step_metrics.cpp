@@ -171,7 +171,7 @@ TEST(StepMetrics, TheSpeedLoopsMeasuredBandwidthIsTheOneTheGainLawAskedFor) {
     // The window starts *at the command*: `y[0]` must be the pre-step value, and the samples the bench yields are all
     // after it. Prepending the held zero is what makes `speed[i]` sit at exactly `i * dt` from the step, which the
     // metric's fit assumes -- without it the fitted origin is one period late and the bias shows up as bandwidth.
-    // 窗口从**发令时刻**开始：`y[0]` 必须是阶跃前的值，而台架给出的样本全在其后。补上那个保持为零的样本，才使
+    // 窗口从 **发令时刻** 开始：`y[0]` 必须是阶跃前的值，而台架给出的样本全在其后。补上那个保持为零的样本，才使
     // `speed[i]` 正好落在距阶跃 `i * dt` 处，这正是指标的拟合所假设的——否则拟合原点晚一个周期，偏差会以带宽的形式出现。
     speed.push_back(0.0F);
     bench.run(0.08F, [&speed](const foc::sil::Bench &b) { speed.push_back(b.sample().speed); });
@@ -209,7 +209,7 @@ TEST(StepMetrics, TheMeasuredBandwidthFollowsTheRequestRatherThanIgnoringIt) {
     // next increment -- but it catches the failure the absolute band is blindest to.
     //
     // 上面那个绝对带是弱的，本用例存在正是因为这一点是被测出来的、不是被假设的：把速度环的比例增益乘 0.8——增益律
-    // 20% 的错误——只把读数挪到 225.31 rad/s，即 -9.88%，**在** 10% 带内。估计量自带 +9.15% 的偏差（把一阶拟合
+    // 20% 的错误——只把读数挪到 225.31 rad/s，即 -9.88%， **在** 10% 带内。估计量自带 +9.15% 的偏差（把一阶拟合
     // 套在级联上），与被测缺陷同量级的偏差会把它藏起来。
     //
     // 这种偏差藏不住的是"增益律根本不看请求"：把请求带宽加倍、减半，测量必须同比例变化，因为两侧用的是同一个估计量，
@@ -317,7 +317,8 @@ auto fitted_ratio(double dt_s, std::size_t n, double gain, double offset, double
  * @brief [en] The fit is exact in its own sample rate, in its window, and in a DC offset -- three coefficients of
  *             exactly zero, and they are the ones that say what kind of estimator this is.
  *
- * @brief [zh] 拟合在自身的采样率、窗口与直流偏置上都是精确的——三个**恰好为零**的系数，而它们说明的正是这是什么估计器。
+ * @brief [zh] 拟合在自身的采样率、窗口与直流偏置上都是精确的——三个 **恰好为零** 的系数，而它们说明的正是这是什么估计
+ *             器。
  *
  *   A sensitivity table with only non-zero rows cannot distinguish a good estimator from a lucky one; the interesting
  *   rows here are the zeros, because each of them is a structural fact that a plausible alternative implementation
@@ -338,14 +339,14 @@ auto fitted_ratio(double dt_s, std::size_t n, double gain, double offset, double
  *   the algebra, which is worth knowing before recording a 20-time-constant window and expecting 1e-6.
  *
  *   只有非零行的敏感度表分不清"好估计器"与"运气好的估计器"；这里有意思的行是那三个零，因为它们每一个都是一条会被貌似合
- *   理的替代实现破坏的结构性事实：采样率（0.2→2 ms）**1.000000 → 0.9999995**、窗口（10→40 ms）**1.000000 → 0.999999**（
- *   理由相同：每个样本都在那条直线上，加样本只加信息不加偏置）、直流偏置 ±1 与 +5（对 10 A 阶跃） **1.000000**（偏置在
- *   `y[0]` 与 `y[i]` 里同时出现、在 `progress` 里约掉——这正是偏置的电流传感器不会污染带宽测量的原因，而一个忘了减
- *   `y[0]` 的版本会立刻显形）。
+ *   理的替代实现破坏的结构性事实：采样率（0.2→2 ms） **1.000000 → 0.9999995** 、窗口（10→40 ms） **1.000000 →
+ *   0.999999** （理由相同：每个样本都在那条直线上，加样本只加信息不加偏置）、直流偏置 ±1 与 +5（对 10 A 阶跃）
+ *   **1.000000** （偏置在 `y[0]` 与 `y[i]` 里同时出现、在 `progress` 里约掉——这正是偏置的电流传感器不会污染带宽测量的原
+ *   因，而一个忘了减 `y[0]` 的版本会立刻显形）。
  *
- *   边界写出来而不是藏起来：**20 个时间常数**（80 ms）处比值是 1.002148，那不是拟合的问题——样本是 `float32`， `1 −
- *   exp(−20)` 无法表示得足够细以让 `ln(1 − progress)` 保持平直。所以长窗口下的精度由**样本格式**而不是代数决定，这一点
- *   在录一段 20τ 的窗口并期待 1e-6 之前值得知道。
+ *   边界写出来而不是藏起来： **20 个时间常数** （80 ms）处比值是 1.002148，那不是拟合的问题——样本是 `float32`， `1 −
+ *   exp(−20)` 无法表示得足够细以让 `ln(1 − progress)` 保持平直。所以长窗口下的精度由 **样本格式** 而不是代数决定，这一
+ *   点在录一段 20τ 的窗口并期待 1e-6 之前值得知道。
  */
 TEST(StepMetrics, TheFitIsExactInItsOwnSampleRateWindowAndDcOffset) {
     // Sample rate: same physical window, tenfold change in spacing.
@@ -400,13 +401,13 @@ TEST(StepMetrics, TheFitIsExactInItsOwnSampleRateWindowAndDcOffset) {
  *   the step buys 1.3 % of tau, which is why this estimator can be run on a bench with ordinary current noise and still
  *   resolve a 10 % tuning change.
  *
- *   拟合在模型能吸收的一切上都是精确的（见上一个用例），所以存活下来的误差源是那些把样本在**远端**推离模型直线的：终值
- *   比 target 低 5 %（比例环静差）**1.438404**、高 5 % **0.735124**、低 10 % **1.767368**、高 10 % **0.660542**；噪声 σ
- *   = 阶跃的 1 %（200 个种子）**0.987336**、2 % 时 **0.982475**。
+ *   拟合在模型能吸收的一切上都是精确的（见上一个用例），所以存活下来的误差源是那些把样本在 **远端** 推离模型直线的：终
+ *   值比 target 低 5 %（比例环静差） **1.438404** 、高 5 % **0.735124** 、低 10 % **1.767368** 、高 10 %
+ *   **0.660542** ；噪声 σ = 阶跃的 1 %（200 个种子） **0.987336** 、2 % 时 **0.982475** 。
  *
- *   两个后果都可操作。**不对称且很大**：环路有静差时把**指令**当 target 传进去是真正要命的错——5 % 就花掉 44 %—— 而这正
- *   是比例速度环招来的错，所以 target 必须是实测的稳态值，不是请求值。**噪声很便宜**：1 % 的阶跃只买 1.3 % 的时间常数，
- *   这正是这个估计器能在有普通电流噪声的台架上跑、还能分辨 10 % 整定变化的原因。
+ *   两个后果都可操作。 **不对称且很大** ：环路有静差时把 **指令** 当 target 传进去是真正要命的错——5 % 就花掉 44 %—— 而
+ *   这正是比例速度环招来的错，所以 target 必须是实测的稳态值，不是请求值。 **噪声很便宜** ：1 % 的阶跃只买 1.3 % 的时间
+ *   常数，这正是这个估计器能在有普通电流噪声的台架上跑、还能分辨 10 % 整定变化的原因。
  */
 TEST(StepMetrics, ADroopInTheFinalValueCostsFarMoreThanNoiseDoes) {
     struct GainRow final {
@@ -454,7 +455,7 @@ TEST(StepMetrics, ADroopInTheFinalValueCostsFarMoreThanNoiseDoes) {
         // Noise biases tau *low*, between one and two times sigma (measured 1.27 % at sigma = 1 %, 1.75 % at 2 %).
         // The first version of this bound claimed "less than 1:1" -- measured 1.27, so the claim was wrong and the
         // band is the measurement rather than the guess.
-        // 噪声把 tau 往**低**推，约在一到两倍 σ 之间（实测 σ=1 % 时 1.27 %，2 % 时 1.75 %）。这条界的第一个版本写的是
+        // 噪声把 tau 往 **低** 推，约在一到两倍 σ 之间（实测 σ=1 % 时 1.27 %，2 % 时 1.75 %）。这条界的第一个版本写的是
         // "小于 1:1"——实测 1.27，所以那个断言是错的，带子改成实测值而不是那个猜的数。
         EXPECT_LT(mean_ratio, 1.0) << "noise was expected to shorten the fitted tau, at sigma " << sigma;
         EXPECT_GT(mean_ratio, 1.0 - (2.0 * sigma)) << "noise cost more than 2:1 at sigma " << sigma;
@@ -477,9 +478,9 @@ TEST(StepMetrics, ADroopInTheFinalValueCostsFarMoreThanNoiseDoes) {
  *   remembered number: measured **18.5000 ms** against `tau*ln(step/band) = 18.4207 ms`, one sample grid apart.
  *
  *   `settling_s` 承诺三件不同的事，而其中两件从未被产出过：起始就在带内为 `0`、永不到达为 `-1`、其余是到达时刻。那个
- *   `0` 看着像退化的角落，直到它被写成契约：对一个根本没动过的环路报"0 s 就稳定了"是朝**有害**方向的错，因为 0 s 读起来
- *   是**完美**。中间那个到达时刻有闭式——一旦 `step·exp(−t/τ) ≤ band` 就进带——所以它对着算术比而不是对着一个记下来的数：
- *   实测 **18.5000 ms** 对 `τ·ln(step/band) = 18.4207 ms`，差一个采样栅格。
+ *   `0` 看着像退化的角落，直到它被写成契约：对一个根本没动过的环路报"0 s 就稳定了"是朝 **有害** 方向的错，因为 0 s 读起
+ *   来是 **完美** 。中间那个到达时刻有闭式——一旦 `step·exp(−t/τ) ≤ band` 就进带——所以它对着算术比而不是对着一个记下来的
+ *   数：实测 **18.5000 ms** 对 `τ·ln(step/band) = 18.4207 ms`，差一个采样栅格。
  *
  *   Stated rather than tested: the fit's `!(slope < 0)` guard is **unreachable**. Every regression sample has `0 <
  *   progress < 1`, hence `0 < w < 1`, hence `ln(w) < 0`, and `t > 0`, so the through-origin slope is a sum of strictly
@@ -488,10 +489,10 @@ TEST(StepMetrics, ADroopInTheFinalValueCostsFarMoreThanNoiseDoes) {
  *   worth keeping as a tripwire, but no test can reach it, and claiming otherwise would be claiming a branch that does
  *   not exist.
  *
- *   写明而不是测出：拟合的 `!(slope < 0)` 守卫**不可达**。每个回归样本都有 `0 < progress < 1`，于是 `0 < w < 1`，于是
- *   `ln(w) < 0`，而 `t > 0`，所以过原点斜率是一串严格负数之和——它不可能非负。因此"退回"的响应是由**更早**那条守卫（可用
- *   样本少于三个）报 `State` 的，而那条已有用例覆盖。这条死守卫无害、值得留着当绊线，但没有任何测试能到达它，声称能到达
- *   就是在声称一个不存在的分支。
+ *   写明而不是测出：拟合的 `!(slope < 0)` 守卫 **不可达** 。每个回归样本都有 `0 < progress < 1`，于是 `0 < w < 1`，于是
+ *   `ln(w) < 0`，而 `t > 0`，所以过原点斜率是一串严格负数之和——它不可能非负。因此"退回"的响应是由 **更早** 那条守卫（可
+ *   用样本少于三个）报 `State` 的，而那条已有用例覆盖。这条死守卫无害、值得留着当绊线，但没有任何测试能到达它，声称能到
+ *   达就是在声称一个不存在的分支。
  */
 TEST(StepMetrics, TheTwoEndsOfTheSettlingRuleAreZeroAndMinusOne) {
     // Already inside: a half-width band as wide as the whole gap, so no sample is ever outside it.

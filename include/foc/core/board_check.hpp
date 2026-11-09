@@ -70,8 +70,8 @@ enum class BoardItem : std::uint8_t {
  *
  * @brief [zh] 最可能需要修的那一件事。
  *
- *   这份清单是**诊断**，不是失败列表："两项失败了"没法处理，"采样时刻错了"可以。从失败模式到 成因的映射就是本文件的全部
- *   价值——见 `check_board()`。
+ *   这份清单是 **诊断** ，不是失败列表："两项失败了"没法处理，"采样时刻错了"可以。从失败模式到 成因的映射就是本文件的全
+ *   部价值——见 `check_board()`。
  * @since 0.1.0
  * @exporter
  */
@@ -117,7 +117,7 @@ enum class BoardCause : std::uint8_t {
  *
  * @brief [zh] 检查量到的全部东西，放在一处。
  *
- *   每个字段都是一个**数**，这正是要点：报告要说"0.041 A"，不是"失败"。
+ *   每个字段都是一个 **数** ，这正是要点：报告要说"0.041 A"，不是"失败"。
  * @since 0.1.0
  * @exporter
  */
@@ -323,9 +323,9 @@ struct movable_trigger<Bench, std::void_t<decltype(std::declval<Bench&>().set_sa
  *
  * @brief [zh] 跑完检查，并指出最可能的那个单一成因。
  *
- *   为什么报一个成因而不是一张表。接错的板子通常**同时**弄坏好几项，而这些项并不独立：一条反 相的电流通道会让三线之和不
- *   为零、让死区辨识出负值、让磁链辨识反号。报三条失败会把用户支到 三个地方；该做的是报那个"解释得最多"的一件。下面的打
- *   分就是这个：每个候选成因数一数它解释 了几条失败，胜者上报。
+ *   为什么报一个成因而不是一张表。接错的板子通常 **同时** 弄坏好几项，而这些项并不独立：一条反 相的电流通道会让三线之和
+ *   不为零、让死区辨识出负值、让磁链辨识反号。报三条失败会把用户支到 三个地方；该做的是报那个"解释得最多"的一件。下面的
+ *   打分就是这个：每个候选成因数一数它解释 了几条失败，胜者上报。
  *
  * @param m [en] what was measured.
  * @param m [zh] 量到了什么。
@@ -352,7 +352,7 @@ struct movable_trigger<Bench, std::void_t<decltype(std::declval<Bench&>().set_sa
     // turns `+i, -i/2, -i/2` into `-i, -i/2, -i/2`, whose sum is `-2i`, so the
     // sum *grows* rather than cancelling.
     // 1. 基尔霍夫。真实相电流之和为零，所以稳态下和不为零要么是零漂、要么是一条通道被取了反——
-    // 取反把 `+i, −i/2, −i/2` 变成 `−i, −i/2, −i/2`，其和是 `−2i`，于是和是**变大**而不是抵消。
+    // 取反把 `+i, −i/2, −i/2` 变成 `−i, −i/2, −i/2`，其和是 `−2i`，于是和是 **变大** 而不是抵消。
     const bool sum_ok = std::fabs(m.sum_current_a) <= limits.sum_current_a;
     add(BoardItem::CurrentSum, m.sum_current_a, limits.sum_current_a, sum_ok, 3);
 
@@ -460,7 +460,7 @@ struct movable_trigger<Bench, std::void_t<decltype(std::declval<Bench&>().set_sa
 /**
  * @brief [en] The standstill half of the board self-test: it **measures** the
  * numbers `check_board()` judges. [zh]
- * 板级自检的堵转半边：它**量出** `check_board()` 要判定的那些数。
+ * 板级自检的堵转半边：它 **量出** `check_board()` 要判定的那些数。
  *
  *        [en] Why a template and not a class with virtuals. The bench is whatever the user's board is, and this project
  *        has no exceptions, no RTTI and no allocation in the control path; a template over a four-call concept costs
@@ -492,14 +492,14 @@ struct movable_trigger<Bench, std::void_t<decltype(std::declval<Bench&>().set_sa
  *          by SFINAE, and when absent `ripple_measured_a` is whatever the caller
  *          supplied.
  *        [zh] 堵转能测什么、不能测什么，先说清楚——静默跳过一半检查的自检比没有更糟：
- *        - **能**：逐相零漂（零电流自己就是基准）、极性（给一个已知矢量读符号）、`Rs` 与
+ *        - **能** ：逐相零漂（零电流自己就是基准）、极性（给一个已知矢量读符号）、`Rs` 与
  *          死区伏秒（两点，见 `RsEstimator`）、以及 ADC 实际看到的开关纹波。
- *        - **不能**：`ψf`、编码器安装偏置、观测器健康度，它们都需要转子转起来。那些来自
+ *        - **不能** ：`ψf`、编码器安装偏置、观测器健康度，它们都需要转子转起来。那些来自
  *          旋转测试与对齐器，由调用方传入。
- *        - **能测 ADC 触发点，前提是台架允许移动触发**：纹波检查拿 ADC 看到的与开关周期应有的比，
+ *        - **能测 ADC 触发点，前提是台架允许移动触发** ：纹波检查拿 ADC 看到的与开关周期应有的比，
  *          而要知道 ADC 到底看到什么，唯一办法是把触发点在整个周期里移动并看读数怎么动。这就是
  *          `set_sample_delay` / `sample_delay` 在前面的概念里的原因。因为"台架不能移触发点"对用户
- *          是完全合理的处境，它们是**可选**的：由 SFINAE 探测，缺省时 `ripple_measured_a` 用调用方
+ *          是完全合理的处境，它们是 **可选** 的：由 SFINAE 探测，缺省时 `ripple_measured_a` 用调用方
  *          给的值。
  *
  * @context [en] Commissioning, standstill, once per board. [zh]
@@ -623,7 +623,7 @@ class BoardSelfTest final {
         const float period = bench.switching_period_s();
 
         // --- 1. zero current: the readings *are* the offsets ---
-        // --- 1. 零电流：读数**就是**零漂 ---
+        // --- 1. 零电流：读数 **就是** 零漂 ---
         bench.set_dq(Dq<float>{0.0F, 0.0F});
         for (int k = 0; k < config_.settle_steps; ++k) {
             bench.advance(period);
@@ -691,7 +691,7 @@ class BoardSelfTest final {
                 // section 2b does *if* the bench can move its trigger. Measuring the ripple by
                 // looking harder at one trigger point would only measure aliasing.
                 // 采样时刻这项不是 `Rs` 扫描的副产品：要找到触发点，得把它在整个周期里移动并看读数怎么动，
-                // 那由第 2b 节在**台架能移触发**时做。只在同一个触发点上看得更仔细，量到的只是混叠。
+                // 那由第 2b 节在 **台架能移触发** 时做。只在同一个触发点上看得更仔细，量到的只是混叠。
             }
         }
 
@@ -751,11 +751,11 @@ class BoardSelfTest final {
      *
      * @brief [zh] 把 ADC 触发点在开关周期里挪一遍，看什么在动。
      *
-     *   同一次扫描给出三个数。读数在**整个周期里的峰峰值**就是 ADC 实际看到的纹波，即 `SamplingInstant` 项与开关周期对
-     *   比的那个量。**板子自己那个触发点上的读数相对周期均值的 偏离**（`sample_error_a`）就是那个位置在安培上让环付出多
-     *   少。**偏离最小处的位置**才是触发点 该在的地方——而它是被**量出来并上报**的，不是被假设的，因为它**并不总是 **周
-     *   期中心：中心对齐的 PWM 把均值放在中心，边沿对齐的把均值放在电流穿过自身平均值的时刻，那取决于占空比。假设 0.5
-     *   是一个披着常数外衣的猜测。
+     *   同一次扫描给出三个数。读数在 **整个周期里的峰峰值** 就是 ADC 实际看到的纹波，即 `SamplingInstant` 项与开关周期
+     *   对比的那个量。 **板子自己那个触发点上的读数相对周期均值的 偏离** （`sample_error_a`）就是那个位置在安培上让环付
+     *   出多少。 **偏离最小处的位置** 才是触发点 该在的地方——而它是被 **量出来并上报** 的，不是被假设的，因为它 **并不
+     *   总是 ** 周期中心：中心对齐的 PWM 把均值放在中心，边沿对齐的把均值放在电流穿过自身平均值的时刻，那取决于占空比。
+     *   假设 0.5 是一个披着常数外衣的猜测。
      *
      * @note [en] Skipped entirely when the bench has no trigger to move; that is detected at compile time, not at run
      *            time, so a bench without it costs nothing and does not need a stub.
@@ -805,7 +805,7 @@ class BoardSelfTest final {
             // The error is read at the setting the board *actually* uses, not at
             // the best one: the sweep is how we learn what the right setting is,
             // the board's own setting is what it has to live with.
-            // 误差按板子**实际**用的那个设置读，不是按最好的那个：扫描用来弄清正确设置是什么，
+            // 误差按板子 **实际** 用的那个设置读，不是按最好的那个：扫描用来弄清正确设置是什么，
             // 而板子得过日子的是它自己的设置。
             const float scaled = saved * static_cast<float>(points);
             const int truncated = static_cast<int>(scaled);

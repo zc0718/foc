@@ -83,7 +83,7 @@ inline auto nominal_spec() -> MachineSpec {
 /**
  * @brief [en] The machine the power-electronics capabilities *can* be exercised on: the nominal one with ten times the
  *             d-axis inductance and a real saliency.
- * @brief [zh] **能**把电力电子类能力真正跑起来的那台机器：标称机的 d 轴电感乘十，并且有真正的凸极。
+ * @brief [zh] **能** 把电力电子类能力真正跑起来的那台机器：标称机的 d 轴电感乘十，并且有真正的凸极。
  * @note [en] Why a second profile exists at all, in one line: on the nominal machine the characteristic current is
  *            `psi_f/Ld = 11.9 A` against a 3 A limit, so field weakening cannot null the flux and MTPV has **no
  *            operating point** -- a capability verified only there is verified on nothing. This profile is the case
@@ -92,7 +92,7 @@ inline auto nominal_spec() -> MachineSpec {
  *            (saliency 2), the **same** `psi_f` and the same 3 A limit, so `lambda = Ld*i_max/psi_f = 2.52` and `i_char
  *            = 1.19 A` -- inside the limit, which is what C7 and C8 in `domain.json` recompute.
  * @note [zh] 为什么需要第二份档案，一句话：标称机的特征电流是 `psi_f/Ld = 11.9 A` 而限幅只有 3 A，于是弱磁削不动磁链、
- *            MTPV **没有工作点**——只在那种机器上验过的能力，等于没验过。这份档案就是 `core/field_weakening.hpp` 早已写
+ *            MTPV **没有工作点** ——只在那种机器上验过的能力，等于没验过。这份档案就是 `core/field_weakening.hpp` 早已写
  *            成散文的那台机器（“同一台机器把电感放大十倍，8000 rad/s 处仍有基速转矩的 36 %”），把话写成参数： `Ld = 4
  *            mH`、`Lq = 8 mH`（凸极比 2）、**同样的** `psi_f` 与 3 A 限幅，于是 `lambda = 2.52`、 `i_char = 1.19 A`——落
  *            在限幅内，这正是 `domain.json` 里 C7 与 C8 重算的东西。

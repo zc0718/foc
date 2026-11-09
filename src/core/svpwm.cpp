@@ -52,7 +52,7 @@ auto Svpwm::modulate(Ab<float> v_ab, float v_bus) noexcept -> SvpwmResult {
     const bool saturated = spread > v_bus;
 
     // Overmodulation: scale the **vector** onto the hexagon instead of clamping each phase to a rail.
-    // 过调制：把**矢量**缩放到六边形上，而不是把每一相各自夹到轨道上。
+    // 过调制：把 **矢量** 缩放到六边形上，而不是把每一相各自夹到轨道上。
     //
     // The difference is not cosmetic and it is the whole reason this line exists. A per-phase clamp is one-sided:
     // only the phase that wanted out gets corrected, so the correction is not a common-mode term, and Clarke does
@@ -65,12 +65,12 @@ auto Svpwm::modulate(Ab<float> v_ab, float v_bus) noexcept -> SvpwmResult {
     // `min(|v|, r_hex(theta))` rather than whatever the clamp happened to leave. It also keeps the asymptotic
     // fundamental: as the request grows the duties become a two-level waveform and the fundamental reaches
     // `2/pi*v_bus`, i.e. six-step, without a second algorithm.
-    // 差别不是美观问题，而是这一行的全部理由。逐相夹紧是**单边**的：只有想出去的那一相被修正，于是修正项不是共模量，
-    // Clarke 也消不掉它——实际施加的矢量既缩短又**旋转**，而且旋转量随请求**增大**、不会饱和：在老律上量到内切圆的
+    // 差别不是美观问题，而是这一行的全部理由。逐相夹紧是 **单边** 的：只有想出去的那一相被修正，于是修正项不是共模量，
+    // Clarke 也消不掉它——实际施加的矢量既缩短又 **旋转** ，而且旋转量随请求 **增大** 、不会饱和：在老律上量到内切圆的
     // 1.02 倍处 0.09 度、3 倍处 18.90 度、5 倍处 23.30 度、10 倍处 26.63 度、100 倍处 29.60 度——它收敛到 30 度，即指令方向
-    // 与被拖向的顶点之间的半个扇区。缩放是三相共同的比例因子，Clarke 看到的只是幅值变化：施加矢量仍**留在指令方向上**、
+    // 与被拖向的顶点之间的半个扇区。缩放是三相共同的比例因子，Clarke 看到的只是幅值变化：施加矢量仍 **留在指令方向上** 、
     // 末端落在六边形上，于是交付幅值成为一条写下来的律 `min(|v|, r_hex(θ))`，而不是夹紧碰巧剩下的东西。它还保住了
-    // 渐近的基波：请求再大，占空比退化成两电平波形，基波到达 `2/π·v_bus`——即六步——**不需要第二套算法**。
+    // 渐近的基波：请求再大，占空比退化成两电平波形，基波到达 `2/π·v_bus`——即六步—— **不需要第二套算法** 。
     const float scale = saturated ? (v_bus / spread) : 1.0F;
     const Uvw<float> phase{requested.u * scale, requested.v * scale, requested.w * scale};
     const float scaled_offset = offset * scale;

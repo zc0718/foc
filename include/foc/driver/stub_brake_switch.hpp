@@ -34,7 +34,7 @@ class StubBrakeSwitch final : public hal::BrakeSwitch {
 
     /**
      * @brief [en] Record the duty **verbatim**, without clamping.
-     * @brief [zh] **原样**记录占空比，不限幅。
+     * @brief [zh] **原样** 记录占空比，不限幅。
      * @note [en] Verbatim on purpose: the contract says the caller clamps, so a stub that silently clamped would hide
      *            exactly the defect it exists to make visible.
      * @note [zh] 故意原样记录：契约说由调用方限幅，所以一个悄悄限幅的桩会把它本该暴露的缺陷藏起来。

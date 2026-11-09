@@ -109,7 +109,7 @@ TEST(PositionP, ResetRestartsTheCommandFromRestNotFromWhereItWas) {
 TEST(PositionP, EveryShippedPositionControllerSatisfiesTheWidenedSlot) {
     // The slot takes `step(const PositionInput&, feedback, dt)`. The three-argument controller shape
     // is *not* enough, and that is deliberate: a move carries limits, not only an endpoint.
-    // 槽位接收 `step(const PositionInput&, feedback, dt)`。三参数的控制器形状**不够**，这是故意的：
+    // 槽位接收 `step(const PositionInput&, feedback, dt)`。三参数的控制器形状 **不够** ，这是故意的：
     // 一次运动带着限制，不只有终点。
     static_assert(foc::core::concepts::is_position_control_v<foc::core::PositionP>,
                   "PositionP must satisfy the position slot");

@@ -19,7 +19,7 @@ namespace core {
  *            motion controller, and the axis already has one. What this cannot do -- keep an axis out of a wall it was
  *            already past -- needs a homing switch, not a wider window.
  * @note [zh] 只有两个数：一个还带减速区、刚度或斜坡的软限位就是一台运动控制器，而这条轴已经有了一个。它做不到的事—— 把
- *            一条**已经**越过去的轴挡在墙外——需要回零开关，而不是更宽的窗口。
+ *            一条 **已经** 越过去的轴挡在墙外——需要回零开关，而不是更宽的窗口。
  * @since 0.1.10
  */
 struct SoftLimitConfig final {
@@ -39,8 +39,8 @@ struct SoftLimitOutput final {
      * @brief [en] `Ok` when the target was inside the window and is passed through unchanged; `Param` when it was
      *             outside and has been *refused* -- the previous target comes back instead, so nothing downstream ever
      *             sees a position it would drive into a wall.
-     * @brief [zh] 目标在窗口内并原样通过时为 `Ok`；目标在窗口外并被**拒绝**时为 `Param`——回来的 是上一个目标，因此下游
-     *             任何东西都不会看到一个会把它驱进墙里的位置。
+     * @brief [zh] 目标在窗口内并原样通过时为 `Ok`；目标在窗口外并被 **拒绝** 时为 `Param`——回来的 是上一个目标，因此下
+     *             游任何东西都不会看到一个会把它驱进墙里的位置。
      */
     ErrorCode status;
     float target_rad; ///< [en] the target to use this period. [zh] 本周期要用的目标。
@@ -76,19 +76,19 @@ struct SoftLimitOutput final {
  *
  * @brief [zh] 把轴留在窗口内：拒绝窗口外的目标，并在靠近墙时限制速度。
  *
- *   两半回答两种不同的失效，把它们混在一起正是软限位名声不好的原因。拒绝窗口外的目标修的是**编程**错误——一次本就不该下
- *   发的运动——而它用状态回答而不是钳位，因为钳位会把一条不可能的命令变成一条看起来合理的命令，调用方永远学不到。靠近墙
- *   时限制速度修的是**物理**错误——轴有动量，需要距离把它耗掉——而它用一个每周期都成立的守恒式回答： `v² <= 2·a·(d −
+ *   两半回答两种不同的失效，把它们混在一起正是软限位名声不好的原因。拒绝窗口外的目标修的是 **编程** 错误——一次本就不该
+ *   下发的运动——而它用状态回答而不是钳位，因为钳位会把一条不可能的命令变成一条看起来合理的命令，调用方永远学不到。靠近
+ *   墙时限制速度修的是 **物理** 错误——轴有动量，需要距离把它耗掉——而它用一个每周期都成立的守恒式回答： `v² <= 2·a·(d −
  *   v·dt)`，`d` 是到墙的剩余距离，`a` 是轴真实具备的减速度，`dt` 是驱动自身的延迟。
  *
  *   为什么用守恒式而不是减速区：区有宽度，宽度得对，而"对"取决于速度。守恒式没有宽度——在任何速度和任何位置它说的都是同
  *   一件事——而且它就在施加它的那个周期里可检，用例因此可以逐点断言，而不是等到最后。
  *
- *   `v·dt` 这一项不是精修，而是能不能用的分界。在 SIL plant 上以 20 rad/s 冲向一面墙：没有这一项时轴越过 **19 mm**，有
- *   它时停在墙前 **1.04 mm**，而 19 mm 恰好是这台驱动把电流送到位所需的 1 ms 里的 `v·dt`。假设瞬时制动的上限等于假设无
+ *   `v·dt` 这一项不是精修，而是能不能用的分界。在 SIL plant 上以 20 rad/s 冲向一面墙：没有这一项时轴越过 **19 mm** ，有
+ *   它时停在墙前 **1.04 mm** ，而 19 mm 恰好是这台驱动把电流送到位所需的 1 ms 里的 `v·dt`。假设瞬时制动的上限等于假设无
  *   限加加速度，而没有哪台驱动有这个。
  *
- *   这条守恒式还有一个**解**，而那个解才是调试时该对着的数：距离 `d` 处上限放过的最大速度是 `sqrt(a²·τ² + 2·a·d) −
+ *   这条守恒式还有一个 **解** ，而那个解才是调试时该对着的数：距离 `d` 处上限放过的最大速度是 `sqrt(a²·τ² + 2·a·d) −
  *   a·τ`，延迟趋零时它退回熟悉的 `sqrt(2·a·d)`。它在 `(d, a)` 上联合一次齐次，所以一台强一倍、行程也长一倍的机器恰好快
  *   一倍而不是 `sqrt(2)` 倍；每个误差源都有一个平实的系数：每弧度墙的位置误差 `a/(v+a·τ)`、每 rad/s² 的制动能力
  *   `v²/(2·a·(v+a·τ))`、每秒延迟 `−a·v/(v+a·τ)`。
@@ -136,8 +136,8 @@ class SoftLimit final {
      * @note [en] The walls are **inclusive**: a target exactly on the wall is accepted and reported through `at_wall`.
      *            An exclusive boundary would make the last usable position depend on the last digit of a float, and
      *            "move to the limit" is the one command a soft limit exists to make safe.
-     * @note [zh] 墙是**含端点**的：正好在墙上的目标被接受，并通过 `at_wall` 报告。用排除边界会让最后一个可用位置取决于
-     *            一个 float 的最后一位，而"走到限位"正是软限位存在的意义所在的那条命令。
+     * @note [zh] 墙是 **含端点** 的：正好在墙上的目标被接受，并通过 `at_wall` 报告。用排除边界会让最后一个可用位置取决
+     *            于一个 float 的最后一位，而"走到限位"正是软限位存在的意义所在的那条命令。
      * @since 0.1.10
      */
     [[nodiscard]] auto apply(float target_rad) noexcept -> SoftLimitOutput {

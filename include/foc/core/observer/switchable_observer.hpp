@@ -60,14 +60,14 @@ enum class ObserverKind : std::uint8_t {
  *   **both**, because a seed given while one is running is still the right seed for the other, and forgetting one of
  *   them is exactly the kind of omission that only shows up at a hand-over.
  *
- * @note [zh] 这个槽位**不包含** `DualInductanceObserver`（0.1.11）。这是关于本类的陈述而不是关于库的：这里的四个成员是"
- *            交接已被量过"的那四个，加第五个意味着重测交接，而不是把枚举加宽。在那之前，需要凸极性的调用方直接按类型选
- *            那个观测器。
+ * @note [zh] 这个槽位 **不包含** `DualInductanceObserver`（0.1.11）。这是关于本类的陈述而不是关于库的：这里的四个成员是
+ *            " 交接已被量过"的那四个，加第五个意味着重测交接，而不是把枚举加宽。在那之前，需要凸极性的调用方直接按类型
+ *            选那个观测器。
  *
- *   两个观测器都会被构造，但**只有被选中的那个会被推进**。另一个是冻结而不是复位：它再次被选中时的状态，就是它上次被选
- *   中时的状态。这是刻意的——静默复位会让交接成败取决于当时哪个成员恰好是活的——但也意味着希望接手者从交出者的估计出发的
- *   调用方必须自己播种，而 `seed_flux()` 就是那个工具。 `seed_flux()` 会同时给**两者**：在其中一个运行时给出的种子对另
- *   一个同样成立，而漏掉一个正是那种只在交接时才会暴露的疏漏。
+ *   两个观测器都会被构造，但 **只有被选中的那个会被推进** 。另一个是冻结而不是复位：它再次被选中时的状态，就是它上次被
+ *   选中时的状态。这是刻意的——静默复位会让交接成败取决于当时哪个成员恰好是活的——但也意味着希望接手者从交出者的估计出发
+ *   的调用方必须自己播种，而 `seed_flux()` 就是那个工具。 `seed_flux()` 会同时给 **两者** ：在其中一个运行时给出的种子
+ *   对另一个同样成立，而漏掉一个正是那种只在交接时才会暴露的疏漏。
  * @since 0.1.5
  * @exporter
  */
@@ -270,10 +270,10 @@ class SwitchableObserver final {
      *            -- there is no second copy of it here. A hand-over *to* the injection observer returns `false`: that
      *            observer acquires the angle itself from the current response and cannot be given one.
      * @note [zh] **交接应当使用这个调用。** `set_kind()` 保留给"调用方确实希望接手者从它上次相信的状态继续"的情形；由于
-     *            闲置的观测器是**冻结**的而非在跟踪，那个"相信"可能任意陈旧，而拿 `set_kind()` 去做交接，正是一条链会毫
-     *            无可见理由地跳出 π 或 π/2 的原因。顺序很关键，这也是它被做成**一个**调用而不是两个的原因：先切换再播种
-     *            会写进一个已经在被推进的观测器，而先播种再切换则是一条需要有人记住的规矩。幅值取自
-     *            `Config::nonlinear_flux.psi_f`，也就是这台机器的磁链——这里不存第二份。交接**给**注入观测器时返回
+     *            闲置的观测器是 **冻结** 的而非在跟踪，那个"相信"可能任意陈旧，而拿 `set_kind()` 去做交接，正是一条链会
+     *            毫无可见理由地跳出 π 或 π/2 的原因。顺序很关键，这也是它被做成 **一个** 调用而不是两个的原因：先切换再
+     *            播种会写进一个已经在被推进的观测器，而先播种再切换则是一条需要有人记住的规矩。幅值取自
+     *            `Config::nonlinear_flux.psi_f`，也就是这台机器的磁链——这里不存第二份。交接 **给** 注入观测器时返回
      *            `false`：那个观测器自己从电流响应里获取角度，无法被给予。
      * @since 0.1.6
      */
@@ -308,7 +308,7 @@ class SwitchableObserver final {
 
     /**
      * @brief [en] Hand over, seeding the incoming observer with the **stator** flux this instant actually has.
-     * @brief [zh] 交接，并用此刻真实的**定子**磁链给接手者播种。
+     * @brief [zh] 交接，并用此刻真实的 **定子** 磁链给接手者播种。
      * @param next [en] the observer to hand over to.
      * @param next [zh] 要交接过去的观测器。
      * @param i_ab [en] the current at the same instant as the angle being carried over, A.
@@ -323,7 +323,7 @@ class SwitchableObserver final {
      *            because their state is the rotor flux (or the blend's, which is one of those two) and, on the `i_d =
      *            0` machines they are allowed on, `psi_f*e^(j*theta)` is that flux to the accuracy they claim.
      * @note [zh] 为什么要有它：`DualInductanceObserver` 积分的是定子磁链、读数时什么都不减，所以交给它 `psi_f·e^(jθ)`
-     *            当种子，恰好漏掉了电流自身的磁链——而纯积分器不会遗忘，这个疏漏就是一个 **永久**的角度偏移（约
+     *            当种子，恰好漏掉了电流自身的磁链——而纯积分器不会遗忘，这个疏漏就是一个 **永久** 的角度偏移（约
      *            `atan(|L0·i|/psi_f)`），不是暂态。本重载给它的是它真正持有的磁链 `psi_f·e^(jθ) + L0·i +
      *            L1·conj(i)·e^(j2θ)`。其余三个与之前完全一样：它们的状态是转子磁链（混合观测器是这两者之一），而在它们
      *            被允许的 `i_d = 0` 机器上，`psi_f·e^(jθ)` 就是那磁链，误差在其主张之内。
@@ -344,7 +344,7 @@ class SwitchableObserver final {
     /**
      * @brief [en] Choose at run time **without** carrying the estimate across. No observer is reset and none is
      *             stepped.
-     * @brief [zh] 在运行时切换，**不**把估计带过去。没有观测器被复位，也没有被推进。
+     * @brief [zh] 在运行时切换， **不** 把估计带过去。没有观测器被复位，也没有被推进。
      * @note [en] For a hand-over use `hand_over_to()` instead -- see the note there for why this one is a trap.
      * @note [zh] 交接请用 `hand_over_to()`——原因见那里：这一个是个陷阱。
      */
@@ -353,7 +353,7 @@ class SwitchableObserver final {
     /**
      * @brief [en] The **configuration** status of the selected member, which is what tells a held output from a wrong
      *             algorithm.
-     * @brief [zh] 被选中成员的**配置**状态——它才是把"保持不动的输出"和"算错的算法"区分开的东西。
+     * @brief [zh] 被选中成员的 **配置** 状态——它才是把"保持不动的输出"和"算错的算法"区分开的东西。
      * @note [en] Added because a rig that selects a member without configuring it reads a constant: an all-zero
      *            `Config` is refused by `valid_config`, `update()` then holds, and at the port a member that is not
      *            running is indistinguishable from one that is wrong. A defect recorded against this class (`A-110` in
@@ -394,9 +394,9 @@ class SwitchableObserver final {
      *            runs. The loop needs the run-time answer: an observer that is not injecting must not have its carrier
      *            read, and an axis whose HAL supplies the angle never steps the observer at all, so the answer there is
      *            "no carrier exists" rather than "a carrier of zero".
-     * @note [zh] 与 `has_injection_v<SwitchableObserver>` 不同：后者对**类型**恒为真，与它跑哪个模式无关。环路需要的是
-     *            运行时答案：没在注入的观测器不该被读取载波；而 HAL 提供角度的轴根本不推进观测器，那里的答案不是"零载波
-     *            " 而是"不存在载波"。
+     * @note [zh] 与 `has_injection_v<SwitchableObserver>` 不同：后者对 **类型** 恒为真，与它跑哪个模式无关。环路需要的
+     *            是运行时答案：没在注入的观测器不该被读取载波；而 HAL 提供角度的轴根本不推进观测器，那里的答案不是"零载
+     *            波 " 而是"不存在载波"。
      * @since 0.1.8
      * @exporter
      */
@@ -426,7 +426,7 @@ class SwitchableObserver final {
      *   useless) or stealthily advanced (and a second carrier phase). The cost is a second copy of two small objects in
      *   a statically sized slot.
      *
-     * @brief [zh] 交接带持有**自己**的两个观测器，而不是借用上面的成员。
+     * @brief [zh] 交接带持有 **自己** 的两个观测器，而不是借用上面的成员。
      *
      *   借用会让交接带的行为取决于那两个成员上次相信了什么，而包装器的全部规则就是"只推进被选中的那个"——借来的副本要么
      *   被冻结（因而无用），要么被偷偷推进（于是多出一个载波相位）。代价是在一个静态定容的槽位里多存两个小对象。
@@ -441,7 +441,7 @@ class SwitchableObserver final {
      *
      * @brief [zh] 凸极机观测器，放在这里好让调用方能在运行时选中它。
      *
-     *   它是唯一一个状态为**定子**磁链而不是转子磁链的成员，这也是 `hand_over_to(next, i_ab)` 存在的原因：只拿
+     *   它是唯一一个状态为 **定子** 磁链而不是转子磁链的成员，这也是 `hand_over_to(next, i_ab)` 存在的原因：只拿
      *   `psi_f·e^(jθ)` 播种会把电流自身的磁链漏在积分常数之外，而纯积分器不会遗忘。
      */
     DualInductanceObserver dual_inductance_;
@@ -452,7 +452,7 @@ class SwitchableObserver final {
      *   `nonlinear_flux.psi_f`, so a hand-over has a magnitude to place the incoming observer's vector at. Not a second
      *   definition of the machine.
      *
-     * @brief [zh] 这台机器的磁链，取自已经写明它的那**一个**字段。
+     * @brief [zh] 这台机器的磁链，取自已经写明它的那 **一个** 字段。
      *
      *   `nonlinear_flux.psi_f`，于是交接有幅值可用来安置接手者的矢量。这不是对这台机器的第二个定义。
      */

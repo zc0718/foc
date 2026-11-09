@@ -210,13 +210,13 @@ static_assert(!foc::core::concepts::is_feedforward_v<FakeReference>,
 // Controller-slot contract: one shape fills the two current axes and the speed loop. The position
 // slot is deliberately *not* that shape any more -- it takes a move (see `PositionInput`), so the
 // assertions for it live next to `motion_profile`/`position` where the widened contract is declared.
-// 控制器槽位契约：一个形状填两个电流轴与速度环。位置槽位**故意**不再使用该形状——它接收的是一次
+// 控制器槽位契约：一个形状填两个电流轴与速度环。位置槽位 **故意** 不再使用该形状——它接收的是一次
 // 运动（见 `PositionInput`），因此针对它的断言放在声明加宽契约的地方。
 static_assert(foc::core::concepts::is_controller_v<foc::core::Pi>, "Pi must satisfy the controller slot");
 // `MotionProfile` keeps the three-argument shape as a convenience overload, so it satisfies this
 // trait too; what matters is that it *also* satisfies the position slot, which is asserted where
 // that contract is declared (test_position_p.cpp).
-// `MotionProfile` 保留了带便利性质的三参数重载，因此它也满足本 trait；真正重要的是它**同时**满足
+// `MotionProfile` 保留了带便利性质的三参数重载，因此它也满足本 trait；真正重要的是它 **同时** 满足
 // 位置槽位，那条断言放在声明该契约的地方（test_position_p.cpp）。
 static_assert(!foc::core::concepts::is_controller_v<FakeObserver>, "an observer is not a controller");
 static_assert(!foc::core::concepts::is_controller_v<FakeDcLink>, "a HAL stub is not a controller");

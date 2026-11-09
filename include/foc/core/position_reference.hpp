@@ -22,18 +22,18 @@ namespace core {
  *
  * @brief [zh] 由电角度估计构造的连续机械角度，并用索引标记把它的原点钉住。
  *
- *   存在的理由：位置控制需要两样观测器自己给不了的东西——**连续** 角度（能数圈，而不是单圈值）和**绝对**角度（已知的零
- *   点）。观测器给出的是每 `2*pi/极对数` 就折一次的机械角度，而且从哪里开始就从哪里开始。把折返解开，就得到连续的相对角
- *   度；再由索引脉冲把零点钉住。两半缺一不可：解开折返的角度说不出自己在第几圈，而没有解折返的索引对两次经过标记之间的
- *   行程一无所知。
+ *   存在的理由：位置控制需要两样观测器自己给不了的东西—— **连续** 角度（能数圈，而不是单圈值）和 **绝对** 角度（已知的
+ *   零点）。观测器给出的是每 `2*pi/极对数` 就折一次的机械角度，而且从哪里开始就从哪里开始。把折返解开，就得到连续的相对
+ *   角度；再由索引脉冲把零点钉住。两半缺一不可：解开折返的角度说不出自己在第几圈，而没有解折返的索引对两次经过标记之间
+ *   的行程一无所知。
  *
  * @note [en] The reconstruction assumes the electrical angle advances by less than `pi` between samples. That is a
  *            constraint on the caller (control period x electrical speed), not a tuning knob, and `update()` reports
  *            having seen an implausible step rather than silently choosing a direction. At the nominal 20 kHz and 7
  *            pole pairs the limit is about 9000 rad/s mechanical, far above any machine this library targets.
  * @note [zh] 重建假定两次采样之间电角度前进不足 `pi`。这是对调用方的约束（控制周期 × 电角速度），不是可调参数；
- *            `update()` 遇到不可能的跳变会**报告**出来，而不是静默地选一个方向。在标称 20 kHz、7 极对下，该上限约为机械
- *            9000 rad/s，远高于本库面向的任何机器。
+ *            `update()` 遇到不可能的跳变会 **报告** 出来，而不是静默地选一个方向。在标称 20 kHz、7 极对下，该上限约为机
+ *            械 9000 rad/s，远高于本库面向的任何机器。
  * @since 0.1.6
  * @exporter
  */

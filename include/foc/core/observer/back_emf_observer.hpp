@@ -25,9 +25,9 @@ namespace core {
  *               flux. Seed it with `seed_flux()` during/after the align phase (the motor layer knows psi_m = Kt / (1.5
  *               * pole_pairs) from the nameplate). Without seeding the estimate keeps a constant offset of `-psi(0)`;
  *               integrator drift over time still needs a PLL or SMO observer.
- * @warning [zh] 纯积分器无法知道积分常数，**绝对角**需要已知初始磁链：在 Align 阶段/之后用 `seed_flux()` 播种（电机层可
- *               从铭牌得到 psi_m = Kt / (1.5 * pole_pairs)）。不播种时 估计值会带一个 `-psi(0)` 的恒定偏移；长期漂移仍
- *               需 PLL 或 SMO 观测器。
+ * @warning [zh] 纯积分器无法知道积分常数， **绝对角** 需要已知初始磁链：在 Align 阶段/之后用 `seed_flux()` 播种（电机层
+ *               可从铭牌得到 psi_m = Kt / (1.5 * pole_pairs)）。不播种时 估计值会带一个 `-psi(0)` 的恒定偏移；长期漂移
+ *               仍需 PLL 或 SMO 观测器。
  * @context [en] Current-loop ISR after construction: noexcept, no allocation.
  * @context [zh] 构造之后的电流环 ISR：noexcept、不分配。
  * @since 0.1.0
@@ -94,7 +94,7 @@ class BackEmfObserver final {
      *            period that just ended instead looks like a harmless half-sample correction and is not one -- measured
      *            against the plant's own flux it costs an extra `w_e * dt / 2` of angle, i.e. 0.042 rad at 800 rad/s
      *            electrical.
-     * @note [zh] `v_ab` 必须与 `i_ab` 取自**同一采样时刻**。本步是以该时刻为锚点的后向欧拉步：它把 `dt*(v - Rs*i)` 与
+     * @note [zh] `v_ab` 必须与 `i_ab` 取自 **同一采样时刻** 。本步是以该时刻为锚点的后向欧拉步：它把 `dt*(v - Rs*i)` 与
      *            `L*(i_k - i_{k-1})` 配对。换成交给它"刚刚结束那一周期"的电压，看起来 只是半个采样的修正，其实不是——以
      *            plant 自己的磁链为基准实测，这会额外多出 `w_e*dt/2` 的角度，也就是 800 rad/s 电角速度下 0.042 rad。
      * @since 0.1.0

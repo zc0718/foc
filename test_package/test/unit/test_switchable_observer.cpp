@@ -6,7 +6,7 @@
 //
 // 可切换观测器：转发是否诚实、种子是否到达两者、切换对状态做了什么。
 // 这三个问题正是 bridge 侦察指出选择器所依赖的。第三个最重要：`set_kind()` 若静默复位，交接成败就会取决于当时哪个成员恰好在
-// 工作；下面的测试钉住实际行为（闲置的观测器是**冻结**而不是复位），于是将来任何改动都必须是有意的决定。
+// 工作；下面的测试钉住实际行为（闲置的观测器是 **冻结** 而不是复位），于是将来任何改动都必须是有意的决定。
 
 #include <cmath>
 #include <cstdio>
@@ -103,7 +103,7 @@ TEST(SwitchableObserver, ForwardsToWhicheverObserverIsSelected) {
     // back-EMF and the NLFO only, and the two it skipped are exactly the ones with an arm of their own in every switch
     // inside the wrapper -- the carrier observer and the blend. A forwarding bug in either of those would have been a
     // bug in the only two modes the loop had nothing to say about.
-    // 判据：包装器的输出与被选中的那种观测器单独驱动时**逐位相同**。否则它就成不了转发器，而是第三种算法。
+    // 判据：包装器的输出与被选中的那种观测器单独驱动时 **逐位相同** 。否则它就成不了转发器，而是第三种算法。
     //
     // 四种而不是"好构造的两种"。这个用例的名字声称"whichever"，却只驱动了反电势与 NLFO，而它跳过的两种恰恰是在包装器内部
     // 每个 switch 里都各有一条分支的那两种——载波观测器与混合观测器。这两者中的转发错误，会正是循环无话可说的那两处的错误。
@@ -173,7 +173,7 @@ TEST(SwitchableObserver, ForwardsToWhicheverObserverIsSelected) {
         // speed), which is why the claim is "seen, and gone by the end" rather than "never seen": a blend that went to
         // zero on the first step would mean the weight had jumped straight to one, and a blend that never reached zero
         // at 59 rad/s would mean the band's top end does not actually close the carrier.
-        // 哪个模式在注入是关于**模式**的问题，而不是关于回来的那个数。载波观测器必须在线上放着一个载波——否则下面那个
+        // 哪个模式在注入是关于 **模式** 的问题，而不是关于回来的那个数。载波观测器必须在线上放着一个载波——否则下面那个
         // 收掉就与"这个模式从不注入"无从区分——而混合一旦把估计交给高速那一半，就把载波收到恰好为零。两者都
         // `injecting()`：零载波不是不存在的载波，这正是头文件 `injecting()` 注释所指的那个区分。
         //
@@ -340,7 +340,7 @@ TEST(SwitchableObserver, AHandOverCarriesTheEstimateAndASwitchDoesNot) {
 
     // A hand-over *to* the injection observer cannot be seeded: it has a carrier phase, not a flux vector. The switch
     // still happens, and the answer says so rather than pretending.
-    // 交接**给**注入观测器无法播种：它有的是载波相位，不是磁链矢量。切换仍然发生，而返回值如实说明这一点。
+    // 交接 **给** 注入观测器无法播种：它有的是载波相位，不是磁链矢量。切换仍然发生，而返回值如实说明这一点。
     EXPECT_FALSE(handed.hand_over_to(foc::core::ObserverKind::Hfi));
     EXPECT_EQ(foc::core::ObserverKind::Hfi, handed.kind());
     // And handing over to what is already selected is not a hand-over.
@@ -399,12 +399,12 @@ TEST(SwitchableObserver, AHandOverToTheBlendCarriesTheEstimateLikeTheOthers) {
     // step for step. Equality of the two runs is the claim; the reference is the hand-over written out by hand.
     // `psi_f` is `Config::nonlinear_flux.psi_f`, the wrapper's one copy of the machine's flux linkage.
     //
-    // `hand_over_to()` 的第三条分支。已有的 A/B 用例交接给 NLFO、并表明交接**给**载波观测器会被拒绝；混合是没人驱动过的
-    // 那条分支，而它恰恰是最容易搞错的那条，因为混合是**转发**种子给它的高速那一半——所以"返回了 true"本身并不等于估计
+    // `hand_over_to()` 的第三条分支。已有的 A/B 用例交接给 NLFO、并表明交接 **给** 载波观测器会被拒绝；混合是没人驱动过的
+    // 那条分支，而它恰恰是最容易搞错的那条，因为混合是 **转发** 种子给它的高速那一半——所以"返回了 true"本身并不等于估计
     // 去了什么有用的地方。
     //
     // 观测量是包装器自己的规则允许的那一个：独立构造、并按交接本应写入的那个矢量（交出角处的 `psi_f`）播种的混合观测器，
-    // 此后必须**逐步逐位**相同。两个运行相等就是主张；参照物是手写出来的那次交接。`psi_f` 取自
+    // 此后必须 **逐步逐位** 相同。两个运行相等就是主张；参照物是手写出来的那次交接。`psi_f` 取自
     // `Config::nonlinear_flux.psi_f`，也就是包装器唯一的那个机器磁链副本。
     constexpr int kSteps = 200;
     constexpr int kSwitch = 150;
@@ -450,7 +450,7 @@ TEST(SwitchableObserver, ApplyParamsIsEquivalentToConstructingWithThoseParams) {
     // 过，所以若它悄悄什么都不做，整个套件里没有一个地方会注意到——而"悄悄什么都不做"正是一个忘了转发某个成员的转发方法
     // 的确切失效方式。
     //
-    // 一次运行里同时给出主张与它的伪证：被告知新机器的观测器必须和用新机器构造的**逐位相同**，而**没**被告知的必须不同
+    // 一次运行里同时给出主张与它的伪证：被告知新机器的观测器必须和用新机器构造的 **逐位相同** ，而 **没** 被告知的必须不同
     // ——否则这个相等只证明了两次运行是同一个对象。重配置之后重新播种，因为种子是状态，而这里的要点是参数而非历史。
     constexpr int kSteps = 200;
     const foc::core::MachineParams machine{kRs, kLq, kLq, kPsiF};
@@ -496,7 +496,7 @@ TEST(SwitchableObserver, AHandOverIntoTheSalientObserverNeedsTheCurrentAsWellAsT
   // omission is a permanent offset rather than a transient. The A/B: two identical runs, handed over with the angle
   // alone and with the angle plus the current, then stepped the same way; the gap that opens up is the defect the
   // overload exists to prevent.
-  // 第五个成员是唯一一个状态为**定子**磁链的，所以只带角度的单参数交接（播种 `psi_f·e^(jθ)`）装进去的种子漏掉了电流自身的
+  // 第五个成员是唯一一个状态为 **定子** 磁链的，所以只带角度的单参数交接（播种 `psi_f·e^(jθ)`）装进去的种子漏掉了电流自身的
   // 磁链。纯积分器不会遗忘，所以这个疏漏是永久偏移而不是暂态。A/B：两次完全相同的运行，分别只带角度、以及带上角度与电流地
   // 交接，然后用同样的输入推进；两者之间张开的差距，就是那个重载存在的理由。
   constexpr int kSteps = 200;
@@ -536,7 +536,7 @@ TEST(SwitchableObserver, AHandOverIntoTheSalientObserverNeedsTheCurrentAsWellAsT
   EXPECT_TRUE(with_i.first);
   // Not zero: at 0.1 A the current's own flux still moves the answer, and it does not decay. Small, but *permanent* is
   // what makes it worth an overload rather than a note.
-  // 不是零：0.1 A 下电流自身的磁链仍能挪动答案，而且它不会衰减。数值不大，但**永久**正是它值得一个重载而不是一句注释的理由。
+  // 不是零：0.1 A 下电流自身的磁链仍能挪动答案，而且它不会衰减。数值不大，但 **永久** 正是它值得一个重载而不是一句注释的理由。
   EXPECT_GT(gap, 1.0e-4F) << "the two seeds are indistinguishable, so this A/B proves nothing";
   EXPECT_LT(gap, 0.2F) << "the gap is far larger than the model difference: something else moved";
 }

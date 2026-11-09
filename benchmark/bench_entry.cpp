@@ -23,7 +23,7 @@
  *
  *     HONEST BOUNDARY: a host (x86_64 Linux) run gives a *relative* cost per operation, not an MCU worst-case execution
  *     time. The target numbers (PRD U6/U7) still require the board, a cycle counter, and the real toolchain — see
- *     benchmark/docs/benchmark-usage.md. 诚实边界：宿主机（x86_64 Linux）跑出来的是**相对**开销，不是 MCU 的 WCET；
+ *     benchmark/docs/benchmark-usage.md. 诚实边界：宿主机（x86_64 Linux）跑出来的是 **相对** 开销，不是 MCU 的 WCET；
  *     U6/U7 仍需上板。
  */
 #include <stdint.h>

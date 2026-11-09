@@ -162,7 +162,7 @@ TEST(BodeSweep, TheThreeDecibelPointIsTheBandwidthTheGainLawWasAskedFor) {
     // Measured at 234.91 rad/s, -6.04 %. The band is the plan's 10 %, and it is a *sharp* criterion in a way the
     // step-response one is not: a 20 % error in the speed loop's proportional gain moves this number by about 20 %
     // (verified by perturbing it), while it moved the step fit by 9.9 %, inside its own band.
-    // 实测 234.91 rad/s，即 -6.04%。带是计划的 10%，而且它比阶跃判据**锐利**：速度环比例增益 20% 的错误会让这个数
+    // 实测 234.91 rad/s，即 -6.04%。带是计划的 10%，而且它比阶跃判据 **锐利** ：速度环比例增益 20% 的错误会让这个数
     // 移动约 20%（经摄动验证），而它只让阶跃拟合移动 9.9%，仍在后者自己的带内。
     EXPECT_NEAR(1.0F, crossing / wb, 0.10F) << "the -3 dB point is not where the gain law was asked to put it";
 }
@@ -191,7 +191,7 @@ auto tone(std::vector<float> &y, std::size_t n, float dt, float omega, float amp
  *   This is not a strawman and it is not a reimplementation of the thing under test: it is the *other* way to do this
  *   job, it is exact on a whole number of cycles, and the header's claim is precisely that it is biased when the window
  *   is not one. Writing it down is what turns that sentence into a measurement. 这不是稻草人，也不是被测对象的另一种写
- *   法：它是做这件事的**另一种**方式，在整周期窗口上是精确的，而头文件的主张恰恰是"窗口不是整周期时它有偏"。把它写下
+ *   法：它是做这件事的 **另一种** 方式，在整周期窗口上是精确的，而头文件的主张恰恰是"窗口不是整周期时它有偏"。把它写下
  *   来，那句话才变成一次测量。
  */
 auto bin_amplitude(const std::vector<float> &y, float dt, float omega) -> float {
@@ -240,7 +240,7 @@ auto amplitude_without_dc(const std::vector<float> &y, float dt, float omega) ->
 TEST(SinusoidFit, AWholeCycleWindowIsRecoveredByBothEstimators) {
     // Baseline for the comparison below. On a whole number of cycles the plain bin is *exact*, so a large error
     // there would mean the comparison estimator is broken rather than the fit being good.
-    // 下面那个比较的基线。整周期上单 bin 是**精确**的，所以若那里出现大误差，说明比较用的估计器坏了，而不是拟合好。
+    // 下面那个比较的基线。整周期上单 bin 是 **精确** 的，所以若那里出现大误差，说明比较用的估计器坏了，而不是拟合好。
     const float dt = 1.0e-4F;
     const float omega = kFitTwoPi * 50.0F;
     const float amp = 3.0F;
@@ -312,7 +312,7 @@ TEST(SinusoidFit, TheFitIsUnbiasedOnAWindowThatIsNotAWholeNumberOfCycles) {
     // it, and macOS returned exactly 0 where Linux returns 1.2e-7 because its libm is more accurate -- so the case
     // failed on the machine where the code did *better*. The rounding floor is not the subject of the claim, and a
     // number at the rounding floor is not a number to assert on.
-    // 两半都写成对 1% 线的**绝对**误差，而不是两个估计器之间的比值。这不是文风选择：第一版为了做除法断言了
+    // 两半都写成对 1% 线的 **绝对** 误差，而不是两个估计器之间的比值。这不是文风选择：第一版为了做除法断言了
     // `part_fit > 0`，而 macOS 返回的正好是 0、Linux 是 1.2e-7——因为那边的 libm 更准，于是**代码更好的那台机器上
     // 反而失败**。舍入地板不是这条主张的主题，处在地板上的数也不是可以断言的对象。
     EXPECT_LT(whole_fit, 0.01F) << "on whole cycles the fit is exact";
@@ -335,8 +335,8 @@ TEST(SinusoidFit, TheSensitivityToBeingAskedAboutTheWrongFrequencyIsMeasured) {
     // within one percentage point of it at every offset.
     // 这个函数在实机上出错的最现实方式：音并不正好在你所问的频率上——驱动器、时钟或机器动了。
     //
-    // 本用例第一版断言误差随偏移**单调**增长。测量拒绝了这个说法：+0.5% 给 0.095%，而 -0.5% 给 0.218%，+1% 比两者都小——
-    // 因为误差取决于窗口结束前失配累积了多少个周期，而不只是失配多大。所以判据换成解析包络，那是**预测**而不是形状：
+    // 本用例第一版断言误差随偏移 **单调** 增长。测量拒绝了这个说法：+0.5% 给 0.095%，而 -0.5% 给 0.218%，+1% 比两者都小——
+    // 因为误差取决于窗口结束前失配累积了多少个周期，而不只是失配多大。所以判据换成解析包络，那是 **预测** 而不是形状：
     // `w+dw` 上的音向 `w` 的基函数投影时被 `|sinc(dw·T/2)|` 衰减，实测误差必须在每个偏移上都落在它 1 个百分点之内。
     const float dt = 1.0e-4F;
     const float omega = kFitTwoPi * 50.0F;
@@ -394,7 +394,7 @@ TEST(SinusoidFit, EveryRefusalIsReportedAndTheResultIsStillWritten) {
     // `Param` again, and this one is the interesting refusal: **above Nyquist the projection aliases**, so the answer
     // would be an amplitude for a tone the recording cannot contain. Reporting a number here would be worse than
     // reporting nothing, because the number is well formed.
-    // 又一次 `Param`，而这一次是耐人寻味的拒绝：**越过 Nyquist 后投影会混叠**，给出的幅值属于这段录制根本装不下的
+    // 又一次 `Param`，而这一次是耐人寻味的拒绝： **越过 Nyquist 后投影会混叠** ，给出的幅值属于这段录制根本装不下的
     // 那个音。在这里报一个数比什么都不报更糟，因为那个数格式完全正常。
     EXPECT_EQ(foc::ErrorCode::Param, foc::core::sinusoid_fit(y.data(), y.size(), dt, kFitTwoPi / (2.0F * dt)).status)
         << "at Nyquist the tone folds onto its own mirror image";

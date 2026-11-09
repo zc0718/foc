@@ -38,9 +38,9 @@ constexpr float kVDead = kSwitchingTDead * kPwmHz * kVBus;
  *             onto `d` gives `(2/3)*(dV + dV/2 + dV/2) = (4/3)*dV`: an axis sees **more** than a phase does, because
  *             the two opposing phases push the same way once projected. Every number measured on an axis is in this
  *             convention; the per-phase number the compensator uses is not, and the difference is exactly this factor.
- * @brief [zh] 同一个损失在 **d 轴上**是什么样。把三相的阶跃 `(+dV, -dV, -dV)` 投影到 `d` 得 `(2/3)·(dV + dV/2 + dV/2) =
- *             (4/3)·dV`：轴上的数**比**每相**大**，因为两相反向的阶跃投影之后同向相加。所有在轴上量到的数都是这个约定；
- *             补偿器用的每相数不是，两者差的正是这个系数。
+ * @brief [zh] 同一个损失在 **d 轴上** 是什么样。把三相的阶跃 `(+dV, -dV, -dV)` 投影到 `d` 得 `(2/3)·(dV + dV/2 + dV/2)
+ *             = (4/3)·dV`：轴上的数 **比** 每相 **大** ，因为两相反向的阶跃投影之后同向相加。所有在轴上量到的数都是这个
+ *             约定；补偿器用的每相数不是，两者差的正是这个系数。
  */
 constexpr float kVAxisDead = (4.0F / 3.0F) * kVDead;
 
@@ -48,7 +48,7 @@ constexpr float kVAxisDead = (4.0F / 3.0F) * kVDead;
  * @brief [en] A standstill bench: the plant plus the switching inverter, driven with a fixed d-q command. `period()`
  *             runs exactly one switching period and returns that period's **mean** current, which is the only quantity
  *             a commissioning sweep should ever look at.
- * @brief [zh] 堵转台架：plant 加开关逆变器，用固定的 d-q 指令驱动。`period()` 正好跑一个开关周期并返回该周期的**均值**
+ * @brief [zh] 堵转台架：plant 加开关逆变器，用固定的 d-q 指令驱动。`period()` 正好跑一个开关周期并返回该周期的 **均值**
  *             电流——整定扫描唯一该看的量。
  */
 class StandstillRig final {
@@ -174,7 +174,7 @@ TEST(Commissioning, ResistanceAndDeadTimeComeOutOfOneDcSweep) {
   // right order of magnitude, or the separation did not happen (a fit that put
   // everything into `rs` would leave this near zero).
   // 截距是逆变器的死区电压，20 %
-  // 以内：它是分离两项的**副产品**，不是扫描专门设计的对象，
+  // 以内：它是分离两项的 **副产品** ，不是扫描专门设计的对象，
   // 所以宽一点的界更诚实。但它仍必须是对的数量级，否则分离根本没发生（把一切都塞进
   // `rs` 的拟合会把它留在零附近）。
   EXPECT_NEAR(kVAxisDead, fit.deadtime_v, 0.2F * kVAxisDead);
@@ -185,7 +185,7 @@ TEST(Commissioning, TheWindingTemperatureIsMeasuredRatherThanAssumed) {
   // nameplate in `nominal_params()` is the cold number; the point of measuring
   // is that the *hot* machine is what the observers will actually run against.
   // 铜的温度系数约 0.4 %/K，+100 K 的绕组读数高 40 %。`nominal_params()`
-  // 里的铭牌是冷态数； "测"的意义就在于观测器实际面对的是一台**热**机。
+  // 里的铭牌是冷态数； "测"的意义就在于观测器实际面对的是一台 **热** 机。
   sil::PlantParams hot = nominal_params();
   hot.rs = 1.4F * nominal_params().rs; // +100 K
 
@@ -204,7 +204,7 @@ TEST(Commissioning, TheWindingTemperatureIsMeasuredRatherThanAssumed) {
   EXPECT_TRUE(fit.valid);
   EXPECT_NEAR(hot.rs, fit.rs, 0.05F * hot.rs);
   // And the nameplate *would* have been wrong -- otherwise this test proves
-  // nothing. 而铭牌**确实**是错的——否则这个测试什么也证明不了。
+  // nothing. 而铭牌 **确实** 是错的——否则这个测试什么也证明不了。
   EXPECT_GT(std::fabs(nominal_params().rs - hot.rs), 0.2F * hot.rs);
 }
 
@@ -325,7 +325,7 @@ TEST(Commissioning, AConstantOffsetShowsUpInTheInterceptAndNotInTheFlux) {
   // volt added to every measurement moves the intercept and leaves the slope
   // alone. This is the property that makes the method usable on real hardware,
   // where some offset always survives.
-  // 之所以两个转速就够，**正因为**偏置是自由参数：给每个测量加一个常数电压只移动截距、不动斜率。
+  // 之所以两个转速就够， **正因为** 偏置是自由参数：给每个测量加一个常数电压只移动截距、不动斜率。
   // 正是这条性质让方法在真实硬件上可用——那里总归会剩一点偏置。
   core::FluxEstimator estimator(core::FluxEstimator::Config{0.02F, 100.0F});
   const float truth = sil::SwitchingRig::psi_f();
@@ -443,7 +443,7 @@ TEST(Commissioning,
   // offsets: measurable with no reference at all. But it is one equation for
   // three unknowns, so it is a diagnostic and not a calibration. Both halves
   // are asserted.
-  // 真实相电流之和为零，所以**读数**之和就是零漂之和：完全不需要基准就能测。但它是三个未知数的
+  // 真实相电流之和为零，所以 **读数** 之和就是零漂之和：完全不需要基准就能测。但它是三个未知数的
   // 一个方程，所以它是诊断而不是标定。两半都在这里断言。
   const float offsets[3] = {0.05F, -0.02F, -0.01F};
   float sum = 0.0F;
@@ -512,8 +512,8 @@ TEST(Commissioning, ASensorOffsetCorruptsTheAlignedAngleSoTheOrderMatters) {
   // half the error. The first version of this assertion said "neutral to four
   // digits" and the measurement said no (0.049958 against 0.049834) -- a
   // concave function, exactly as the geometry requires. 而且它按 `atan`
-  // 的方式缩放，**不是**线性的：误差是 `atan(offset/pull)`，所以零漂减半留下
-  // 的误差略**多于**一半。这个断言的第一版说"四位有效数字内相等"，实测否掉了（0.049958
+  // 的方式缩放， **不是** 线性的：误差是 `atan(offset/pull)`，所以零漂减半留下
+  // 的误差略 **多于** 一半。这个断言的第一版说"四位有效数字内相等"，实测否掉了（0.049958
   // 对 0.049834）——凹函数，正是几何要求的。
   const float half = std::atan2(0.5F * kOffsetA, kPullA);
   EXPECT_GT(half, 0.5F * angle_error)
@@ -542,8 +542,8 @@ auto spread(std::uint32_t &state) noexcept -> float {
  * @brief [en] The admission measurement S18 uses, on an arbitrary machine and at the **nominal** tuning: the flux
  *             observer is told that machine's nameplate numbers (`psi_f = Kt/(1.5*p)`) while `Ks` and `Ki` stay at 0.3
  *             / 3.0. That is what "no retuning" means.
- * @brief [zh] S18 用的准入测量，跑在任意机器上、用**标称**整定：磁链观测器被告知该机器的铭牌数（`psi_f = Kt/(1.5·p)`
- *             ），而 `Ks`、`Ki` 仍是 0.3 / 3.0。这就是"不重调"。
+ * @brief [zh] S18 用的准入测量，跑在任意机器上、用 **标称** 整定：磁链观测器被告知该机器的铭牌数（`psi_f =
+ *             Kt/(1.5·p)` ），而 `Ks`、`Ki` 仍是 0.3 / 3.0。这就是"不重调"。
  */
 auto gate_error(const sil::MachineSpec &spec, float omega_e,
                 float min_gain_rad_s = 3.0F) -> float {
@@ -586,7 +586,7 @@ TEST(Commissioning, ThreeUnrelatedMachinesAtOneTuning) {
     // inverted for `we`), so "the same test" would secretly be a different
     // operating point per machine -- which is what made the first version of
     // this test read kt as the culprit.
-    // 用测功机把转速钉住。否则台架那一个恒定电压会让每台机器**各自**稳定在不同的转速上
+    // 用测功机把转速钉住。否则台架那一个恒定电压会让每台机器 **各自** 稳定在不同的转速上
     // （把 `v_q = rs·iq + ω_e·ψf` 反过来解
     // `ω_e`），于是"同一个测试"其实每台机器都是不同工作点
     // ——这正是本测试第一版把 kt 认成主因的原因。
@@ -625,7 +625,7 @@ TEST(Commissioning, ThreeUnrelatedMachinesAtOneTuning) {
   // recorded on a switching inverter, versus the 0.0676 it recorded on the
   // mean-value plant the gate was set from. An absolute gate carried over from
   // one plant to another is a number without a meaning.
-  // （1）按原文写的判据**不可能**通过，而且与哪台机器无关：**参考**机器——标称机、正是整定它自己的
+  // （1）按原文写的判据 **不可能** 通过，而且与哪台机器无关： **参考** 机器——标称机、正是整定它自己的
   // 那台——已经在闸外。0.10261 对 0.10，就是 S18 在开关逆变器上记下的那 3
   // %，而闸是从均值 plant 的 0.0676 上定下来的。从一个 plant 搬到另一个 plant
   // 的绝对闸，是没有含义的数。
@@ -639,7 +639,7 @@ TEST(Commissioning, ThreeUnrelatedMachinesAtOneTuning) {
   // 这一行原本断言 `same_snr[0] > kGateRad`——"写下来的这道闸不可满足"——依据是 0.10261 对 0.10，余量 2.6 %。plant
   // 改用双精度积分机械角（F-40）后，同一个测量落到 0.09959，在另一侧 0.4 %。一个在仪器变化 3 % 内就翻符号的断言，
   // 不是关于这道闸的断言；本文件已写着原因：闸是从均值 plant 的 0.0676 上定的，绝对阈值从一个 plant 搬到另一个没有
-  // 含义。改断言那个站得住的事实——参考机恰好**落在**闸上——于是写下来的判据是"未定"而不是"被违反"。相对问题在
+  // 含义。改断言那个站得住的事实——参考机恰好 **落在** 闸上——于是写下来的判据是"未定"而不是"被违反"。相对问题在
   // 下面 (2)，那里有答案。
   const float gate_gap = (same_snr[0] > kGateRad) ? (same_snr[0] - kGateRad) : (kGateRad - same_snr[0]);
   EXPECT_LT(gate_gap, 0.03F * kGateRad) << "the reference machine is no longer on the gate: " << same_snr[0];
@@ -648,13 +648,13 @@ TEST(Commissioning, ThreeUnrelatedMachinesAtOneTuning) {
   // only at equal signal-to-disturbance, and there the answer is yes: 0.1026 /
   // 0.1195 / 0.1021 for machines whose `kw`, `L` and `rs` differ by up to 25 %,
   // no retuning. （2）P5-f
-  // **想问**的——"一套整定能不能带走"——只有在等信噪比下才问得出答案，而答案是能：
+  // **想问** 的——"一套整定能不能带走"——只有在等信噪比下才问得出答案，而答案是能：
   // 参数相差 25 % 的三台机器得到 0.1026 / 0.1195 / 0.1021，没有任何重调。
   EXPECT_LT(worst_ratio, 1.25F) << "the tuning travels: the worst machine is "
                                    "within a quarter of the reference";
   // Two-sided: it must also not be *identically* easy, or the machines are not
   // different enough to be evidence of anything.
-  // 双侧：也不能**一模一样**地容易，否则这些机器不够不同，证明不了任何事。
+  // 双侧：也不能 **一模一样** 地容易，否则这些机器不够不同，证明不了任何事。
   EXPECT_GT(worst_ratio, 1.05F) << "the three machines must actually differ";
 
   // (3) The residual debt, named. At the *same speed* (the rig's natural
@@ -662,7 +662,7 @@ TEST(Commissioning, ThreeUnrelatedMachinesAtOneTuning) {
   // same dead-time block: the same failure mode as P5-b's 200 rad/s point. So
   // the honest statement is not "the tuning is machine-free" but "the tuning is
   // machine-free at a fixed back-EMF, and the operating point has to be named."
-  // （3）剩下的债，点名。在**同一转速**下（台架的自然读法）#1 是 0.156，因为 ψf
+  // （3）剩下的债，点名。在 **同一转速** 下（台架的自然读法）#1 是 0.156，因为 ψf
   // 小就是同样死区块下 反电动势小：与 P5-b 那个 200 rad/s
   // 点是同一个失效模式。所以诚实的说法不是"整定与机器无关"，
   // 而是"整定在固定反电动势下与机器无关，工作点必须说出来"。
@@ -765,13 +765,13 @@ TEST(Commissioning,
   //   the two axes erred in
   //      **opposite** directions (d +2.9 %, q -7.0 %), and a single
   //      over-subtraction cannot do that.
-  //      第一个猜想是**过零**偏差。错：两个轴误差**方向相反**（d +2.9 %，q −7.0
+  //      第一个猜想是 **过零** 偏差。错：两个轴误差 **方向相反** （d +2.9 %，q −7.0
   //      %），单一"减多了" 造不出这个。
   //   2. A *mechanical* one (`the q step makes torque, the rotor accelerates,
   //   the back-EMF is missing`)
   //      was the second. Also wrong, and the test that killed it was locking
   //      the shaft: the locked reading was *worse*, -15.7 % against -13.2 %.
-  //      第二个是**机械**猜想（q
+  //      第二个是 **机械** 猜想（q
   //      轴阶跃产生转矩、转子加速、缺反电动势）。也错，杀掉它的实验是锁轴：
   //      锁住之后反而更差，−15.7 % 对 −13.2 %。
   //
@@ -789,8 +789,8 @@ TEST(Commissioning,
   // −i·√3/2)`，有一相不带电流，系数
   // `(2/3)·(√3/2+√3/2) = 2/√3`。24 V 下是 0.640 V 对 0.554 V——差 0.085 V，而
   // 0.085 V 在 2.4 ms 上是 2.0e-4 Wb，正是 `Lq·Δi` 的 16
-  // %。测量与模型三位有效数字都对得上，所以这是一条**发现**而 不是补丁：在 q
-  // 轴上用 d 轴的数，是一个**可预测的** 16 % 误差。
+  // %。测量与模型三位有效数字都对得上，所以这是一条 **发现** 而 不是补丁：在 q
+  // 轴上用 d 轴的数，是一个 **可预测的** 16 % 误差。
   const sil::PlantParams params = salient_params();
   const core::IncrementalInductanceEstimator::Result right =
       step_axis(params, false, 48, true);
@@ -906,14 +906,14 @@ TEST(Commissioning, TheGainFloorIsASafetyBoundAndNotATuningKnob) {
   // The floor is **inert downward**: shrinking it tenfold changes nothing
   // anywhere, which is what a safety bound looks like -- it is not holding a
   // tuning trade-off in place.
-  // 地板向**下**是**惰性**的：缩小十倍在任何速域都不改变任何东西，这正是"安全边界"的样子——
+  // 地板向 **下** 是 **惰性** 的：缩小十倍在任何速域都不改变任何东西，这正是"安全边界"的样子——
   // 它并没有托住某个整定折中。
   EXPECT_LT(worst_smaller, 0.01F)
       << "a floor that is not holding a trade-off must be free to be small";
   // Upward it is not inert, so it is a real limit and the default has to be
   // justified in that direction: 3 rad/s is 0.24 % of `Rs/L = 1250 rad/s`, i.e.
   // small compared with the electrical dynamics, and that is the whole rule.
-  // 向**上**它不是惰性的，所以它是一个真实的约束，默认值必须在这个方向上被论证：3
+  // 向 **上** 它不是惰性的，所以它是一个真实的约束，默认值必须在这个方向上被论证：3
   // rad/s 是 `Rs/L = 1250 rad/s` 的 0.24
   // %，即相对电气动态很小，这就是全部规则。
   EXPECT_GT(worst_larger, 0.02F)

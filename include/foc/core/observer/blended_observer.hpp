@@ -71,8 +71,8 @@ inline auto wrap_full_turn(float angle) noexcept -> float {
  *   rad/s 电角速度处 0.02 rad，而凸极环的趋势正好相反。 两条曲线交叉，本类就是这个交叉。
  *
  *   权重是两个转速之间的线性斜坡而不是开关，且要求带宽不为零。用被估计的转速去驱动的硬开关就是一个 极限环：切换 → 转速
- *   读数变化 → 切回来。此外带宽必须**在低速观测器失效之前结束**，而那是被控对象 的实测属性、不是通用常数——所以它是配置
- *   字段，而不是本类里的某个数字。
+ *   读数变化 → 切回来。此外带宽必须 **在低速观测器失效之前结束** ，而那是被控对象 的实测属性、不是通用常数——所以它是配
+ *   置字段，而不是本类里的某个数字。
  *
  * @note [en] The angle blend is a shortest-arc interpolation, never a plain mix of two numbers in [0, 2*pi): the two
  *            estimates sit on opposite sides of the wrap every time one of them crosses zero, and averaging those raw
@@ -96,8 +96,8 @@ inline auto wrap_full_turn(float angle) noexcept -> float {
  *            not the fix. What would be is an observer that closes a loop on the currents (Luenberger / sliding mode),
  *            so the ripple is rejected before it ever reaches the flux.
  *
- * @note [zh] 角度混合是**最短弧插值**，绝不是把 [0, 2π) 里的两个数字直接按权重相加：只要其中一个跨过零点， 两个估计就分
- *            处环绕的两侧，直接平均会在最不该跳的时刻产生整整一圈的跳变。
+ * @note [zh] 角度混合是 **最短弧插值** ，绝不是把 [0, 2π) 里的两个数字直接按权重相加：只要其中一个跨过零点， 两个估计就
+ *            分处环绕的两侧，直接平均会在最不该跳的时刻产生整整一圈的跳变。
  *
  *   注入按 `1 − 权重` 缩放，于是载波随交接完成而收掉，而不是永远付着这份代价。完全交接时恰为零。
  *
@@ -106,12 +106,12 @@ inline auto wrap_full_turn(float angle) noexcept -> float {
  *   0.033。给高速观测器的电压做滤波可以消掉它，代价 却更大：低到能在载波频率上起作用的极点，在高速时会把基频滞后几十
  *   度。可用的答案是按你能承受的 偏差去定容载波。
  *
- *   **转速**噪声的来源，因为它决定了修法是什么：不是数值微分。本库试过并实测过一个 "磁链 + PLL" 观测器，期待环路的平滑
+ *   **转速** 噪声的来源，因为它决定了修法是什么：不是数值微分。本库试过并实测过一个 "磁链 + PLL" 观测器，期待环路的平滑
  *   转速能让交接可复现。结果是不行：两者的转速纹波完全相同 （电角速度 20 rad/s 处 ±3 rad/s，100–200 处 ±12），而环路的
- *   **角度**在高速反而差 2–3 倍 （400 处 0.030 对 0.011，800 处 0.060 对 0.020）。原因是纹波本来就在磁链估计里—— 积分器
- *   的输入是 `v − Rs·i`，它把电流的开关纹波一并吞了进去——于是任何从该磁链导出的角度都继承它，而环路的比例 通道又把它直
- *   接变回转速。所以"对同一条磁链加环"不是修法；修法是让观测器**对电流闭环** （Luenberger / 滑模），在纹波到达磁链之前
- *   就把它压掉。
+ *   **角度** 在高速反而差 2–3 倍 （400 处 0.030 对 0.011，800 处 0.060 对 0.020）。原因是纹波本来就在磁链估计里—— 积分
+ *   器的输入是 `v − Rs·i`，它把电流的开关纹波一并吞了进去——于是任何从该磁链导出的角度都继承它，而环路的比例 通道又把它
+ *   直接变回转速。所以"对同一条磁链加环"不是修法；修法是让观测器 **对电流闭环** （Luenberger / 滑模），在纹波到达磁链之
+ *   前就把它压掉。
  *
  * @context [en] Current-loop ISR after construction: noexcept, no allocation.
  * @context [zh] 构造之后的电流环 ISR： noexcept、不分配。
@@ -200,7 +200,7 @@ template <typename LowSpeed, typename HighSpeed> class BlendedObserver final {
         // own output could hold itself anywhere. Using the high-speed speed and not the low-speed one
         // matters for the failure that actually happens -- a saliency loop that locks to the mirror
         // reports zero speed, and a weight computed from that would hand back to the broken observer.
-        // 权重由**高速**观测器自己的转速经滤波后决定。用它而不是融合转速，使这个决定不在反馈回路里：
+        // 权重由 **高速** 观测器自己的转速经滤波后决定。用它而不是融合转速，使这个决定不在反馈回路里：
         // 对自己输出做出反应的交接可以把自己停在任意位置。用高速而不是低速的转速，则针对真正会发生的失效
         // ——锁到镜像的凸极环报零速，以它算出的权重会把控制权交还给坏掉的那个观测器。
         //
@@ -249,7 +249,7 @@ template <typename LowSpeed, typename HighSpeed> class BlendedObserver final {
             // is left alone -- then it is the one doing the measuring, and seeding it from a blend it
             // contributes to would be feeding it its own output.
             // 两种情形、一个动作：完全休眠，或尚未重新捕获。两者中低速观测器都没有在测量，若让它停在冻结
-            // 的那个角度上，它就会跑到自己的 ±π/2 牵引窗口之外、回来时落到镜像上。它**锁定**时则不动它
+            // 的那个角度上，它就会跑到自己的 ±π/2 牵引窗口之外、回来时落到镜像上。它 **锁定** 时则不动它
             // ——那时它才是测量的那一方，用一个它自己也参与合成的结果去播种，等于喂它自己的输出。
             bool measuring = false;
             if constexpr (concepts::has_locked_v<LowSpeed>) {
@@ -349,7 +349,7 @@ template <typename LowSpeed, typename HighSpeed> class BlendedObserver final {
         // usable in, so that alone is the answer. Checking the *weight* instead would make this flicker
         // at the end of the handover: by then the carrier has been wound down, the low-speed observer
         // honestly reports that it is blind, and a weight of 0.99 would still fall through to it.
-        // 到了带起点之上，高速观测器就处在带宽声明它可用的工况里，单凭这一点即有答案。若改看**权重**，
+        // 到了带起点之上，高速观测器就处在带宽声明它可用的工况里，单凭这一点即有答案。若改看 **权重** ，
         // 交接末尾就会抖动：那时载波已收掉、低速观测器诚实地报告自己看不见，而 0.99 的权重仍会落到它那里。
         if (speed_ >= config_.blend_start_rad_s) {
             return true;

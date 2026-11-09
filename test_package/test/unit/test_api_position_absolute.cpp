@@ -20,7 +20,7 @@
 //   2. 越过标记之后，同一次调用答 FOC_OK，且角度跟着参考走。
 //
 // 只满足第一半既容易又无用：一个只会拒绝的查询，等于删掉的功能加了几步手续。所以台架必须能走到第二半，而真正的发现
-// 就在这里：`PositionReference` 只在换相角来自**观测器**时才被推进，而回调 HAL 过去无条件报 `has_sensor()` 为
+// 就在这里：`PositionReference` 只在换相角来自 **观测器** 时才被推进，而回调 HAL 过去无条件报 `has_sensor()` 为
 // true。通过这个 ABI，原点根本不可能存在。setup 里的 `use_observer_angle` 让它成为可能，而本文件负责让它继续可能。
 
 #include <cmath>
@@ -65,9 +65,9 @@ struct PlantHost final {
      *            crossing then re-established the origin, which pinned the referenced angle at `index_mech_rad` forever
      *            -- the measured 0.0000 -> 0.0000 over 10 ms of rotation. `hal/position.hpp` warns about exactly this
      *            ("a level would count one pass thousands of times"); the warning was right and the rig was wrong.
-     * @note [zh] 本台架的第一版返回 `index_edges > 0`，也就是一个**电平**。越过之后每一拍都重新建立原点，把 referenced
-     *            角度永久钉在 `index_mech_rad` 上——实测 10 ms 的转动里 0.0000 -> 0.0000。`hal/position.hpp` 早就警告过
-     *            这一点（"电平会把一次经过数成几千次"）；警告是对的，台架错了。
+     * @note [zh] 本台架的第一版返回 `index_edges > 0`，也就是一个 **电平** 。越过之后每一拍都重新建立原点，把
+     *            referenced 角度永久钉在 `index_mech_rad` 上——实测 10 ms 的转动里 0.0000 -> 0.0000。`hal/position.hpp`
+     *            早就警告过这一点（"电平会把一次经过数成几千次"）；警告是对的，台架错了。
      */
     bool index_pulse_now{false};
     float previous_angle_rad{0.0F};
@@ -236,7 +236,7 @@ TEST(ApiCPositionAbsolute, RefusesBeforeAnOriginAndAnswersAfterOne) {
     ASSERT_EQ(foc_motor_get_position_absolute(motor, &first_angle), FOC_OK);
     // The motor configures `index_mech_rad` as 0, so the origin reads 0 *at the mark* -- an arbitrary but declared
     // zero, which is the whole point of an origin: it is where the machine says zero is.
-    // 电机把 `index_mech_rad` 配成 0，所以**在标记处**原点读 0——一个任意但被声明的零点，这正是原点的意义：机器说
+    // 电机把 `index_mech_rad` 配成 0，所以 **在标记处** 原点读 0——一个任意但被声明的零点，这正是原点的意义：机器说
     // 零在哪，零就在哪。
     EXPECT_NEAR(first_angle, 0.0F, 0.05F) << "the origin reads `index_mech_rad` at the mark";
     for (int tick = 0; tick < 200; ++tick) {

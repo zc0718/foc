@@ -26,8 +26,8 @@ constexpr double kTwoPiRad = 6.283185307179586476925286766559;
  * @note [en] `pulses_per_rev` is the whole reason this is not a plain multiplication: with an integer count per
  *            revolution the mapping to radians is **exact**, and an encoder that reports something else (or a gearbox
  *            that does not divide) has to be refused rather than approximated.
- * @note [zh] `pulses_per_rev` 正是这里不能只是乘一下的理由：每圈整数个脉冲时，到弧度的映射是**精确**的；报别的数（或齿
- *            轮箱除不尽）的接口应当被拒绝，而不是被近似。
+ * @note [zh] `pulses_per_rev` 正是这里不能只是乘一下的理由：每圈整数个脉冲时，到弧度的映射是 **精确** 的；报别的数（或
+ *            齿轮箱除不尽）的接口应当被拒绝，而不是被近似。
  * @since 0.1.9
  * @exporter
  */
@@ -48,8 +48,8 @@ struct StepCommandConfig final {
    * @note [en] This is not a limit and it does not clamp: it is the question "is this more than one period of motion?",
    *            and the answer is reported beside an exactly-counted position rather than replacing it. Clamping here
    *            would hide a lost count behind a plausible number.
-   * @note [zh] 它不是限幅、也不做钳位：它问的是“这是不是超过了一个周期的运动量？”，答案与**精确计数**的位置并列报出，而
-   *            不是取代它。在这里钳位，会把丢掉的计数藏到一个看起来很合理的数字后面。
+   * @note [zh] 它不是限幅、也不做钳位：它问的是“这是不是超过了一个周期的运动量？”，答案与 **精确计数** 的位置并列报出，
+   *            而不是取代它。在这里钳位，会把丢掉的计数藏到一个看起来很合理的数字后面。
    */
     float max_step_rad;
 };
@@ -206,8 +206,8 @@ struct AnalogCommandConfig final {
    * @brief [zh] 零点附近不产生指令的死区带，V（>= 0）。
    * @note [en] It is *subtracted*, not merely gated: a band that only zeroed its inside would leave a step at its own
    *            edge, so a slowly rising input would jump from nothing to a finite command.
-   * @note [zh] 它是被**减掉**的，不只是把内部清零：只把带内清零的写法会在带边留下一个台阶，于是缓慢上升的输入会从零直接
-   *            跳到一个有限指令。
+   * @note [zh] 它是被 **减掉** 的，不只是把内部清零：只把带内清零的写法会在带边留下一个台阶，于是缓慢上升的输入会从零直
+   *            接跳到一个有限指令。
    */
     float deadband_v;
 };

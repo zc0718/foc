@@ -18,9 +18,9 @@
 //      library's `telemetry().max_period_us` are computed by two independent pieces of code from two different inputs
 //      (the model knows the schedule; the library only sees a clock) and they must agree exactly.
 //
-// 第一条是显然的那个问题；第三条才是这一项的承重墙。判据写在跑前（见上）：空载时两种驱动**逐位一致**（否则桥在加语义）；
-// 恒定偏移也逐位一致（它改变**何时**跑而不改变**相隔多久**，这条把"抖动"与"迟到"分开）；**传实测经过时间而不是标称周期**
-// ——占空比打架时，喂 `tick(T)` 等于告诉环路"轴在 50 us 里动过"而实际动了 75 us；最后，过载必须被**报出来**：调度模型的
+// 第一条是显然的那个问题；第三条才是这一项的承重墙。判据写在跑前（见上）：空载时两种驱动 **逐位一致** （否则桥在加语义）；
+// 恒定偏移也逐位一致（它改变 **何时** 跑而不改变 **相隔多久** ，这条把"抖动"与"迟到"分开）； **传实测经过时间而不是标称周期**
+// ——占空比打架时，喂 `tick(T)` 等于告诉环路"轴在 50 us 里动过"而实际动了 75 us；最后，过载必须被 **报出来** ：调度模型的
 // `worst_interval_us` 与库的 `max_period_us` 由两段独立代码、两份不同输入算出，必须相等。
 
 #include <cmath>
@@ -76,7 +76,7 @@ struct Trajectory final {
 
 /**
  * @brief [en] Run the scenario at the given instants; `nominal_dt` decides which period the loop is *told*.
- * @brief [zh] 在给定时刻跑这个场景；`nominal_dt` 决定**告诉**环路的是哪个周期。
+ * @brief [zh] 在给定时刻跑这个场景；`nominal_dt` 决定 **告诉** 环路的是哪个周期。
  */
 auto run(const foc::sil::RtosSchedule& schedule, bool nominal_dt) -> Trajectory {
     foc::motor::MotorConfig mc{0.5F, 4.0e-4F, 4.0e-4F, 0.05F, 1.0e-4F, 1.0e-4F, kPolePairs, 3.0F, 20000.0F, 0.0F};
@@ -98,7 +98,7 @@ auto run(const foc::sil::RtosSchedule& schedule, bool nominal_dt) -> Trajectory 
     // comes back `Param`. That is the library being right, not an inconvenience -- a period that covers no time cannot
     // describe motion. So the run is the intervals *between* releases, and there are `count - 1` of them.
     // 第一次释放是时间基准、不打 tick：`t = 0` 时什么都没经过，而 `dt = 0` 的 tick 会答 `Param`。那是库对的，不是不便——
-    // 一段不覆盖任何时间的周期描述不了运动。所以跑的是释放**之间**的间隔，共 `count - 1` 个。
+    // 一段不覆盖任何时间的周期描述不了运动。所以跑的是释放 **之间** 的间隔，共 `count - 1` 个。
     if (schedule.count < 2U) {
         return out;
     }
@@ -214,9 +214,9 @@ TEST(RtosBridge, MeasuringTheElapsedTimeIsWhatKeepsTheLoopHonestUnderJitter) {
     //     error is harmless: an under-integrated acceleration grows with the window, and this run stops at 0.012 rad of
     //     travel. Asserting a large angle error here would have been a criterion the physics does not support, which
     //     is why the first version's 1e-3 was wrong and had to be replaced by a measured floor.
-    // 两个阈值都是把测量写下来，而且刻意**性质不同**：电流是缺陷立刻显形的地方（每次过载都让环路用 50 us 去解释一段
+    // 两个阈值都是把测量写下来，而且刻意 **性质不同** ：电流是缺陷立刻显形的地方（每次过载都让环路用 50 us 去解释一段
     // 75 us 的运动），实测 0.0435 A / 0.5 A 指令 = 8.7 %，这才是让这条规则承重的数，界取 2 %，低四倍；角度差是 6e-5 rad，
-    // 它小**是因为十毫秒很短**，不是因为误差无害——被欠积分的加速度会随窗口增长，而这次只走到 0.012 rad。在这里断言一个
+    // 它小 **是因为十毫秒很短** ，不是因为误差无害——被欠积分的加速度会随窗口增长，而这次只走到 0.012 rad。在这里断言一个
     // 大的角度误差会是一条物理并不支持的判据，这也正是第一版的 1e-3 是错的、必须换成实测下界的原因。
     EXPECT_GT(between.worst_current_a, 1e-2F)
         << "a driver that hands `tick(T)` through an overrun is not a slower driver, it is a wrong one";

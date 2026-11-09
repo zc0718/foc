@@ -42,14 +42,15 @@ namespace sil = foc::sil;
  *   torque gain bought with a broken angle estimate is not a gain.
  *
  * @note [zh] `i_char = ψf/Ld` 是决定 MTPA 值不值钱的那个无量纲开关：它就是磁阻项与磁钢项同量级 的电流。`i_char/i_max =
- *            4`（标称表贴机）时最好也就 3 %；`i_char/i_max = 1` 时是 30 %。 所以判据写在 MTPA **该**值钱的那个点上，并
+ *            4`（标称表贴机）时最好也就 3 %；`i_char/i_max = 1` 时是 30 %。 所以判据写在 MTPA **该** 值钱的那个点上，并
  *            用标称机说明它在哪儿不值钱。
  *
  *   1. `Lq/Ld = 2`、`i_char = i_max` → 满电流下转矩比 `i_d = 0` 至少 **+20 %** （闭式解是 30.2 %；留 20 % 是给二分和"
- *   两者是在等**电流**而不是等**电压**下比较的" 这件事留余量）。 2. 任何给定下 `|i|` 都不超过 `i_max`，包括荒谬的给定。
+ *   两者是在等 **电流** 而不是等 **电压** 下比较的" 这件事留余量）。 2. 任何给定下 `|i|` 都不超过 `i_max`，包括荒谬的给
+ *   定。
  *
- *   3. `Lq = Ld` 下 `i_d` **恰好**为 0，不是"接近 0"。 4. 打开 MTPA 不得把观测器推过天花板：在凸极机上，出厂的单 `L` 观
- *   测器角度误差 ≤ 0.15 rad。若超了，MTPA 不出厂——用坏掉的角度估计换来的转矩增益不是增益。
+ *   3. `Lq = Ld` 下 `i_d` **恰好** 为 0，不是"接近 0"。 4. 打开 MTPA 不得把观测器推过天花板：在凸极机上，出厂的单 `L`
+ *   观测器角度误差 ≤ 0.15 rad。若超了，MTPA 不出厂——用坏掉的角度估计换来的转矩增益不是增益。
  */
 constexpr float kMinTorqueGain = 1.20F;
 constexpr float kAngleCeilingRad = 0.15F;
@@ -86,7 +87,7 @@ constexpr float kCurveSpeedRad = 3200.0F;
 /**
  * @brief [en] The allowance these tests declare. These cases are about the *curve*, so the guard is opened far wider
  *             than any operating point here could reach; the guard itself is tested on its own.
- * @brief [zh] 这些测试声明的许可量。这些用例考的是**曲线**，所以把门开到远超此处任何工作点的程度；门本身另有测试。
+ * @brief [zh] 这些测试声明的许可量。这些用例考的是 **曲线** ，所以把门开到远超此处任何工作点的程度；门本身另有测试。
  */
 constexpr float kCurveAllowance = 1.0F;
 
@@ -204,7 +205,7 @@ TEST(Mtpa, ASurfaceMachineGetsExactlyZeroNotAnEpsilon) {
   // The nominal machine is the case MTPA should NOT pay on, and it is worth
   // recording the number so nobody later claims a gain there.
   // 标称机是 MTPA
-  // **不该**值钱的情形，把这个数记下来，免得以后有人在那儿声称有增益。
+  // **不该** 值钱的情形，把这个数记下来，免得以后有人在那儿声称有增益。
   sil::MachineSpec nominal = sil::nominal_spec();
   const float i_char = psi_f_of(nominal) / nominal.ld;
   std::printf("[P10] nominal machine i_char = %.2f A, i_char/i_max = %.2f "

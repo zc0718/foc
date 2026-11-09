@@ -133,7 +133,7 @@ TEST(BoardCheck,
   print_report("phase v inverted", report);
 
   // P7-a: named, and named as *one* thing.
-  // P7-a：被指名，而且是指名为**一件**事。
+  // P7-a：被指名，而且是指名为 **一件** 事。
   EXPECT_EQ(core::BoardCause::PolarityReversed, report.cause);
   EXPECT_EQ(1, report.cause_phase) << "the report has to say which phase";
   // Three items failed but only one cause is reported -- that is the point of
@@ -172,7 +172,7 @@ TEST(BoardCheck, AnOffsetIsAlsoWhatBreaksTheAlignmentAndTheReportSaysSo) {
   // 1 A pull -- six times the alignment gate. A report that listed "encoder
   // offset out of tolerance" on its own would send the user to the encoder,
   // which is the one thing that is not wrong.
-  // 三条通道都有零漂。两项因为**同一个**原因失败，而第二项并不显然：对齐器把电流矢量强制到已知
+  // 三条通道都有零漂。两项因为 **同一个** 原因失败，而第二项并不显然：对齐器把电流矢量强制到已知
   // 角度上，零漂把它按 `atan(offset/pull)` 偏 0.12 rad（1 A
   // 拉力下）——是对齐闸的六倍。单独报
   // "编码器偏置超差"会把用户支到编码器那里，而那恰恰是唯一没坏的东西。
@@ -251,8 +251,8 @@ namespace sil = foc::sil;
  * @brief [en] A standstill board that can be mis-wired the ways P7-a names. The faults live in the **sensor path** --
  *             sign, offset -- because that is where they live on real hardware: the power stage is fine, the reading of
  *             it is not. `read_uvw()` returns the sample the ISR would see, taken at the trigger point, not "now".
- * @brief [zh] 一块可以按 P7-a 点名的方式接错的堵转板子。故障在**传感器路径**——符号、零漂——因为真实硬件上它们就在那里：
- *             功率级是好的，读数不是。`read_uvw()` 返回 ISR 会看到的那个采样，取自触发 点，而不是"现在"。
+ * @brief [zh] 一块可以按 P7-a 点名的方式接错的堵转板子。故障在 **传感器路径** ——符号、零漂——因为真实硬件上它们就在那
+ *             里：功率级是好的，读数不是。`read_uvw()` 返回 ISR 会看到的那个采样，取自触发 点，而不是"现在"。
  */
 class FaultyBoard final {
 public:
@@ -388,7 +388,7 @@ auto spinning_truth() -> core::BoardMeasurements {
   // measures: a per-phase step of `dV` projects onto the d axis as `(4/3)*dV`.
   // Comparing a per-phase number with an axis number is a 33 % error that looks
   // exactly like a bad board -- finding 17 of the plan, met again here.
-  // 用**轴上**的约定，因为辨识量到的就是轴上的量：每相的 `dV` 投影到 d 轴是
+  // 用 **轴上** 的约定，因为辨识量到的就是轴上的量：每相的 `dV` 投影到 d 轴是
   // `(4/3)·dV`。拿每相数 和轴上数比，是一个 33 %
   // 的误差，看起来和一块坏板子一模一样——plan 的发现 17 在这里又遇到一次。
   m.deadtime_cmd_v = core::axis_deadtime_v(1.0e-6F * 20000.0F * 24.0F, 0.0F);
@@ -408,8 +408,8 @@ auto spinning_truth() -> core::BoardMeasurements {
 TEST(BoardCheck, TheSelfTestMeasuresAndTheChecklistNamesTheCause) {
   // P7-a end to end: the sequence **measures**, `check_board` **judges**, and
   // the answer names the thing the operator has to touch. Three boards, one
-  // `Fault` setting each. P7-a 端到端：序列**测量**，`check_board`
-  // **判定**，答案点名运维要动手的那个东西。三块板子，各一个 `Fault` 设置。
+  // `Fault` setting each. P7-a 端到端：序列 **测量** ，`check_board`
+  // **判定** ，答案点名运维要动手的那个东西。三块板子，各一个 `Fault` 设置。
   struct Case final {
     const char *label;
     FaultyBoard::Fault fault;
@@ -459,7 +459,7 @@ TEST(BoardCheck, TheSelfTestFindsWhereTheAdcTriggerSits) {
   // a movable trigger the standstill sequence reports **where** the trigger is,
   // and what that position is worth in amps.
   // T4：只有当台架能移动触发点时，纹波检查才有信号。触发点可动之后，堵转序列就能报出触发点
-  // **在哪**、以及那个位置值多少安培的误差。
+  // **在哪** 、以及那个位置值多少安培的误差。
   auto config = self_test_config();
   core::BoardSelfTest self_test(config);
   const core::BoardMeasurements spinning = spinning_truth();
@@ -508,7 +508,7 @@ TEST(BoardCheck, TheSelfTestFindsWhereTheAdcTriggerSits) {
   //    which is *not* necessarily the centre of the period, and is exactly why
   //    the self-test measures it instead of assuming 0.5.
   // 3. 同一个纹波、不同的采样误差：这就是该项存在的判别力。最优点对两块板相同，因为它是"在这
-  //    个驱动下电流在哪里穿过周期均值"的性质——而那**不一定**是周期中心，这也正是自检要量它
+  //    个驱动下电流在哪里穿过周期均值"的性质——而那 **不一定** 是周期中心，这也正是自检要量它
   //    而不是假设 0.5 的原因。
   EXPECT_NEAR(ripple[0], ripple[1], 0.01F * ripple[0]);
   EXPECT_NEAR(best[0], best[1], 1.0e-6F);

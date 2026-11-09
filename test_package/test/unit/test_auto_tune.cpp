@@ -2,7 +2,7 @@
 // caller described. The baseline this sits on was measured first (`-3 dB` against the requested bandwidth: 1.034 at 20 Hz,
 // 1.072 at 40 Hz, 1.184 at 80 Hz), so "the gains are right" means "they reproduce the law that baseline was measured with",
 // not "the ratio is 1".
-// F35：一个从测量里自己整定的外环，并在测量不是对调用方所描述的那台机器时拒绝。它脚下的基线是**先**量的（−3 dB 对请求带宽：
+// F35：一个从测量里自己整定的外环，并在测量不是对调用方所描述的那台机器时拒绝。它脚下的基线是 **先** 量的（−3 dB 对请求带宽：
 // 20 Hz 处 1.034、40 Hz 处 1.072、80 Hz 处 1.184），所以"增益是对的"意思是"它们复现了那条基线被量出来的律"，而不是"比值等于 1"。
 
 #include <cmath>
@@ -73,7 +73,7 @@ auto tune_with(float j_scale, float detent_amplitude_nm, bool vary_current) -> S
             const auto state = plant.state();
             // The harness plays the current loop, decoupled: `id` held at 0 and `iq` driven to the reference. That is what a
             // drive's current loop does, and it keeps the identification about the *mechanics*, which is what is being tuned.
-            // 夹具扮演电流环并做解耦：`id` 保持在 0、`iq` 被驱动到参考。这是驱动器电流环所做的事，而它让辨识只关于**机械**，
+            // 夹具扮演电流环并做解耦：`id` 保持在 0、`iq` 被驱动到参考。这是驱动器电流环所做的事，而它让辨识只关于 **机械** ，
             // 也就是真正被整定的那一部分。
             const float v_d = -omega_e * lq * reference;
             const float v_q = (reference * rs) + (omega_e * ld * state.id_a) + (omega_e * psi);
@@ -90,7 +90,7 @@ auto tune_with(float j_scale, float detent_amplitude_nm, bool vary_current) -> S
 // The headline: on the machine it was told about, the pass identifies the two ratios it needs and lands on the **same gains**
 // `speed_pi_config()` computes -- one from a measurement of the plant, the other from the nameplate. Two independent routes to
 // the same number, which is what makes "the tuner works" a measurement rather than a restatement.
-// 要点：在被告知的那台机器上，这次整定辨识出它需要的两个比值，并落在与 `speed_pi_config()` **相同的增益**上——一个来自对 plant 的
+// 要点：在被告知的那台机器上，这次整定辨识出它需要的两个比值，并落在与 `speed_pi_config()` **相同的增益** 上——一个来自对 plant 的
 // 测量，另一个来自铭牌。两条独立的路给出同一个数，这才让"整定器能用"成为一次测量而不是一句复述。
 TEST(AutoTune, IdentifiesTheMachineItWasToldAboutAndLandsOnTheNameplateGains) {
     const SpeedTuneResult tuned = tune_with(1.0F, 0.0F, true);
@@ -119,7 +119,7 @@ TEST(AutoTune, IdentifiesTheMachineItWasToldAboutAndLandsOnTheNameplateGains) {
 
 // It follows the machine, not the nameplate: a machine 20 % heavier -- still inside the tolerance, so it *is* the machine the
 // caller described -- gets gains 20 % larger, because `kp = bandwidth/(kt/J)` and the identified ratio moved by that much.
-// 它跟着机器走，不跟着铭牌走：一台重 20 % 的机器——仍在容差内，所以它**就是**调用方描述的那台——拿到大 20 % 的增益，因为
+// 它跟着机器走，不跟着铭牌走：一台重 20 % 的机器——仍在容差内，所以它 **就是** 调用方描述的那台——拿到大 20 % 的增益，因为
 // `kp = bandwidth/(kt/J)` 而辨识出的比值正好动了那么多。
 TEST(AutoTune, FollowsAMachineThatIsHeavierThanTheNameplateButStillWithinTolerance) {
     const SpeedTuneResult nominal = tune_with(1.0F, 0.0F, true);
@@ -136,7 +136,7 @@ TEST(AutoTune, FollowsAMachineThatIsHeavierThanTheNameplateButStillWithinToleran
 // silently re-tune to a machine nobody described. "Refuse" has to mean something concrete, so the gains it hands back are
 // asserted **bit-identical** to the nameplate ones: a caller that applies whatever it gets applies nothing new.
 // 计划点名的那条能红的证明：把对象的惯量翻倍而不告诉整定器，它必须拒绝，而不是悄悄整定到一台没人描述过的机器上。"拒绝"必须有具体
-// 含义，所以它交回的增益被断言与铭牌增益**逐位相同**：拿到什么就施加什么的调用方，什么新东西都没施加。
+// 含义，所以它交回的增益被断言与铭牌增益 **逐位相同** ：拿到什么就施加什么的调用方，什么新东西都没施加。
 TEST(AutoTune, ADoubledInertiaIsRefusedAndTheGainsComeBackUntouched) {
     const SpeedTuneResult doubled = tune_with(2.0F, 0.0F, true);
     ASSERT_EQ(ErrorCode::Ok, doubled.status);
@@ -156,8 +156,8 @@ TEST(AutoTune, ADoubledInertiaIsRefusedAndTheGainsComeBackUntouched) {
 // identifies the machine from it (measured 0.5158 against the nameplate 0.5000, and it comes back `valid`). What is *not* a
 // measurement is a window where nothing happened at all -- constant current, constant speed -- which no plant can produce,
 // so that half is fed to the tuner directly. The guard is about the tuner, and this is the shape it has to catch.
-// 两个事实，而第一个是对本用例原预期的**更正**：**参考**不动的窗口仍然是一次测量——窗口起点那一步从静止出发，把整条斜率带了进来，
-// 整定器据此辨识出了机器（实测 0.5158 对铭牌 0.5000，并返回 `valid`）。真正的"不是测量"是**什么都没发生**的窗口——电流恒定、
+// 两个事实，而第一个是对本用例原预期的 **更正** ： **参考** 不动的窗口仍然是一次测量——窗口起点那一步从静止出发，把整条斜率带了进来，
+// 整定器据此辨识出了机器（实测 0.5158 对铭牌 0.5000，并返回 `valid`）。真正的"不是测量"是 **什么都没发生** 的窗口——电流恒定、
 // 转速恒定——而那没有任何 plant 能产生，所以这一半直接喂给整定器。护栏是关于整定器的，而这正是它必须挡住的形状。
 TEST(AutoTune, ASingleStepIsAlreadyAMeasurementButAWindowWhereNothingMovesIsNot) {
     const SpeedTuneResult one_step = tune_with(1.0F, 0.0F, false);
@@ -194,7 +194,7 @@ TEST(AutoTune, APositionDependentDetentShowsUpInTheResidualAndIsRefused) {
 // A constant unknown load is the case the three-parameter fit is *built* to survive: it lands in the intercept, which is why
 // the ratios come out the same and the pass stays valid. Stating it as a criterion keeps someone from "improving" the fit by
 // dropping the intercept, which would quietly attribute the load to the current and move `kp`.
-// 一个未知的恒定负载，正是这个三参数拟合**生来**要扛住的情形：它落在截距里，于是两个比值不变、整定仍然有效。把它写成判据，是为了
+// 一个未知的恒定负载，正是这个三参数拟合 **生来** 要扛住的情形：它落在截距里，于是两个比值不变、整定仍然有效。把它写成判据，是为了
 // 防止有人为了"改进"拟合而丢掉截距——那会把负载悄悄归到电流上，并移动 `kp`。
 TEST(AutoTune, AConstantUnknownLoadLandsInTheInterceptAndLeavesTheGainsAlone) {
     const SpeedTuneResult clean = tune_with(1.0F, 0.0F, true);

@@ -1,5 +1,5 @@
 // S17 - the realism knobs, and the reverse assertions that prove they are connected.
-// S17 - 真实性旋钮，以及证明它们**真的接上了**的反向断言。
+// S17 - 真实性旋钮，以及证明它们 **真的接上了** 的反向断言。
 
 #include <cmath>
 #include <cstdio>
@@ -79,8 +79,8 @@ class FluxRig final {
     /**
      * @brief [en] Heat the winding AND re-solve the steady-state voltage for it. Without the second half, heating would
      *             quietly move the operating point (iq sags) and the test would be measuring the wrong thing.
-     * @brief [zh] 加热绕组，并**为它重解**稳态电压。少了后半句，升温会悄悄把工作点挪走（iq 塌下去），测试量到的就是另一
-     *             回事了。
+     * @brief [zh] 加热绕组，并 **为它重解** 稳态电压。少了后半句，升温会悄悄把工作点挪走（iq 塌下去），测试量到的就是另
+     *             一回事了。
      */
     void set_temperature(float temperature_c, float alpha_per_k) noexcept {
         plant_.set_winding_temperature(temperature_c, alpha_per_k);
@@ -170,7 +170,7 @@ TEST(SilRealism, WindingHeatMakesTheFluxObserverWorse) {
     // The observer keeps believing Rs at 20 C while the winding heats up. This is the assertion that
     // gives a future parameter identifier something to fix -- without it, "identify Rs" would be a
     // solution looking for a problem.
-    // 观测器始终相信 20 °C 的 Rs，而绕组在升温。这条断言给了将来的参数辨识一个**待修的东西**——
+    // 观测器始终相信 20 °C 的 Rs，而绕组在升温。这条断言给了将来的参数辨识一个 **待修的东西** ——
     // 没有它，"辨识 Rs" 就是在给一个不存在的问题找解法。
     constexpr float kOmega = 200.0F;
 
@@ -241,7 +241,7 @@ TEST(SilRealism, RightParametersFromTheStartAreEightTimesBetter) {
     // P1's payoff, stated as a number, and stated the way it actually works. Measured at 200 rad/s with
     // the winding at 140 C: an observer believing Rs 10 % high lands at 0.0398 rad, one believing the
     // true hot value at 0.0050. Parameter accuracy is not a refinement here, it is a factor of eight.
-    // P1 的兑现，用数字说，而且按它**实际生效**的方式说。200 rad/s、绕组 140 °C 实测：相信 Rs 偏高 10% 的
+    // P1 的兑现，用数字说，而且按它 **实际生效** 的方式说。200 rad/s、绕组 140 °C 实测：相信 Rs 偏高 10% 的
     // 观测器落在 0.0398 rad，相信真实热态值的落在 0.0050。参数准确性在这里不是"精细化"，是八倍。
     constexpr float kOmega = 200.0F;
 
@@ -273,7 +273,7 @@ TEST(SilRealism, AnUpdateMidRunDoesNotUndoWhatTheIntegratorAlreadyAccumulated) {
     // vector and the newly-correct rate stop cancelling.
     // 不舒服的那一半，也正是"只做 `apply_params` 不算修好"的原因。磁链观测器积分 `v − Rs·i`，Rs 的误差会留下
     // 一个磁链误差，而积分器没有复位。告诉它正确的 Rs 只修正从此往后的被积函数，清不掉已经积出来的东西——而且
-    // 实测角度误差大约**翻倍**（0.0402 → 0.0803），因为残留矢量与新变正确的变化率不再相互抵消。
+    // 实测角度误差大约 **翻倍** （0.0402 → 0.0803），因为残留矢量与新变正确的变化率不再相互抵消。
     constexpr float kOmega = 200.0F;
     constexpr float kSwitchAt = 0.2F;
 
@@ -321,7 +321,7 @@ TEST(SilRealism, TheMagnitudeCorrectionBeatsTheOpenLoopObserverOnAverage) {
     // The judgement the plan fixed in advance: NLFO's mean angle error over the speed set must be *strictly*
     // lower than the open-loop observer's. Both run on the same fixture, at the same points, with Rs believed
     // 10 % high. Recorded per point so a future regression shows where it happened, not just that a mean moved.
-    // 计划事先定死的判决：NLFO 在该速度集上的平均角度误差必须**严格**低于开环观测器。两者在同一台架、同一批
+    // 计划事先定死的判决：NLFO 在该速度集上的平均角度误差必须 **严格** 低于开环观测器。两者在同一台架、同一批
     // 点、Rs 信念偏高 10% 下运行。逐点记录，这样将来回退时能看到是哪一点坏了，而不是只知道均值动了。
     const float beliefs[] = {1.10F, 1.30F};
     const float speeds[] = {20.0F, 50.0F, 100.0F, 200.0F, 400.0F, 800.0F};

@@ -33,13 +33,13 @@ namespace {
 //     row -- the "no producer" failure mode this item exists to catch cannot come back quietly;
 //   * each row either **injects** the condition here or **cites** the case that already measures it, because a row that
 //     did neither would be a claim with no measurement behind it.
-// 一条规矩，写在用例之前：**没有任何东西能产生的故障码不是保护，而是枚举里的一个词。** `fault_code()` 是运维问的第
-// 一个问题，所以每个码都必须能从某个**条件**到达，而 harness 的职责就是逐码说清是哪个条件、经过哪条缝。由此有两条推论，
+// 一条规矩，写在用例之前： **没有任何东西能产生的故障码不是保护，而是枚举里的一个词。** `fault_code()` 是运维问的第
+// 一个问题，所以每个码都必须能从某个 **条件** 到达，而 harness 的职责就是逐码说清是哪个条件、经过哪条缝。由此有两条推论，
 // 两条都是机械的而不是文档的：
 //
 //   * 下面每个枚举值一行，一旦有人加了一个码却没加行，计数检查就让构建变红——本项要防的「没有生产者」那种失效，
 //     不会安静地回来；
-//   * 每一行要么在这里**真的注入**那个条件，要么**引用**已经在量它的用例，因为两者都不做的那一行是没有测量支撑的声明。
+//   * 每一行要么在这里 **真的注入** 那个条件，要么 **引用** 已经在量它的用例，因为两者都不做的那一行是没有测量支撑的声明。
 
 using foc::ErrorCode;
 using foc::core::FaultCode;
@@ -187,7 +187,7 @@ static_assert(static_cast<std::size_t>(FaultCode::ClockLost) + 1U == kEnumerator
 //    measures the *whole chain* and the hop is one line here. That is the finding this item records: five of the eight
 //    codes have no producer inside `Motor`, and the composition is the integrator's.
 // 1. 保护器分类的那五个码。库把这个跳写成文档而不执行——`Protector` 是主控方运行的一段、`Motor::fault(code)` 是它的结论
-//    变成驱动成因的方式——所以 harness 量的是**整条链**，而那一步在这里是一行。这就是本项记录的发现：八个码里有五个在
+//    变成驱动成因的方式——所以 harness 量的是 **整条链** ，而那一步在这里是一行。这就是本项记录的发现：八个码里有五个在
 //    `Motor` 内部没有生产者，组合是集成方的。
 TEST(FaultInjection, TheProtectorCodesReachTheFaultCodeThroughTheDocumentedHop) {
     struct Case final {
@@ -309,7 +309,7 @@ TEST(FaultInjection, TheMotorsOwnStallDetectorReachesTheFaultCode) {
 // 2b. The other fault the motor produces from its own inputs: a forced-angle start that never catches the rotor. The
 //     hand-over check compares the speed the loop *publishes* against the rate the forced vector was ramping at, so a
 //     rotor that cannot follow fails the check instead of being handed a commutation angle it was never at.
-// 2b. 电机从自己的输入里产生的另一个故障：一次永远没抓住转子的强制角起动。交接检查拿环路**发布**的转速去比强制矢量
+// 2b. 电机从自己的输入里产生的另一个故障：一次永远没抓住转子的强制角起动。交接检查拿环路 **发布** 的转速去比强制矢量
 //     当时的爬升速率，于是跟不上来的转子会在检查里失败，而不是被交去一个它从未在过的换相角。
 TEST(FaultInjection, TheHandoverCheckCatchesARotorThatNeverFollowed) {
     foc::sil::PlantParams params = foc::sil::nominal_plant_params();

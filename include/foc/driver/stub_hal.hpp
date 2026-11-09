@@ -41,8 +41,8 @@ struct StubHal final {
      * @note [en] Present because it is **required**: a HalPolicy without it cannot start a motor (`Motor::start()`
      *            answers `NotImpl`). Quiet because a stub power stage has nothing to report -- which is a statement
      *            this struct makes explicitly rather than a default the library assumed.
-     * @note [zh] 它在，是因为它是**必需的**：没有它的 HalPolicy 无法启动电机（`Motor::start()` 答 `NotImpl`）。它安静，
-     *            是因为桩功率级没有东西可报——这句话由这个结构**明说**，而不是由库默认。
+     * @note [zh] 它在，是因为它是 **必需的** ：没有它的 HalPolicy 无法启动电机（`Motor::start()` 答 `NotImpl`）。它安
+     *            静，是因为桩功率级没有东西可报——这句话由这个结构 **明说** ，而不是由库默认。
      * @since 0.1.9
      */
     FaultInput fault_input;

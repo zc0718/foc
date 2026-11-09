@@ -1,8 +1,8 @@
 // 2.3a: the soft limit, as two claims rather than one knob. An out-of-range target is *refused* (a programming fault,
 // answered by status and not by a clamp that makes it look plausible), and a fast axis near a wall is *slowed* so that
 // `v^2 <= 2*a*d` holds at every sample -- an invariant with no width to tune, checkable in the period that applies it.
-// 2.3a：软限位，作为两条主张而不是一个旋钮。越界目标是**被拒绝**的（编程错误，用状态回答，而不是用钳位让它看起来合理），
-// 而靠近墙的快轴会被**放慢**，使 `v² <= 2·a·d` 在每个采样上成立——一条没有宽度可调的守恒式，在施加它的那个周期就可检。
+// 2.3a：软限位，作为两条主张而不是一个旋钮。越界目标是 **被拒绝** 的（编程错误，用状态回答，而不是用钳位让它看起来合理），
+// 而靠近墙的快轴会被 **放慢** ，使 `v² <= 2·a·d` 在每个采样上成立——一条没有宽度可调的守恒式，在施加它的那个周期就可检。
 
 #include <algorithm>
 #include <cmath>
@@ -109,9 +109,9 @@ TEST(SoftLimit, TheTargetInForceNeverLeavesTheWindowHoweverHardTheCallerPushes) 
  *     deceleration to arrive, and while it arrives the axis keeps travelling at `v`. 19 mm at 19.5 rad/s is 1 ms of
  *     travel, which is this drive's delay (one control period plus the 0.8 ms current rise). With that term the axis
  *     stops 1.04 mm short; without it, 19 mm past; and with no shaper at all it crosses the wall and keeps going. 本用
- *     例第一版在**plant 状态**上断言理想守恒式 `v² <= 2·a·d`，以 19 mm 失败：上限从咬合那一刻起就被指令遵守了，但环路需
- *     要制动力矩到位，而它在到位的这段时间里轴仍以 `v` 前进。19.5 rad/s 下的 19 mm 就是 1 ms 的行程，正是这台驱动的延迟
- *     （一个控制周期加 0.8 ms 电流上升）。有这一项时轴停在墙前 1.04 mm，没有时越过 19 mm，而完全不整形时它穿过墙继续
+ *     例第一版在 **plant 状态** 上断言理想守恒式 `v² <= 2·a·d`，以 19 mm 失败：上限从咬合那一刻起就被指令遵守了，但环路
+ *     需要制动力矩到位，而它在到位的这段时间里轴仍以 `v` 前进。19.5 rad/s 下的 19 mm 就是 1 ms 的行程，正是这台驱动的延
+ *     迟（一个控制周期加 0.8 ms 电流上升）。有这一项时轴停在墙前 1.04 mm，没有时越过 19 mm，而完全不整形时它穿过墙继续
  *     走。
  */
 TEST(SoftLimit, TheDelayTermIsTheDifferenceBetweenNineteenMillimetresPastAndOneShort) {
@@ -143,7 +143,7 @@ TEST(SoftLimit, TheDelayTermIsTheDifferenceBetweenNineteenMillimetresPastAndOneS
             // 1e-4 rad, which shows up as a 0.13 % overshoot. The API is float; the check has to use the same float.
             // 位置只收窄一次，收窄到整形器真正收到的那个值。在这里用 double 算 `kMaxRad − theta`，等于拿一个比整形器
             // 能作用的距离更精确的值去量上限；而贴墙处那是灾难性相消：`0.5 − theta` 是两个相近数相减，`theta` 上 6e-8
-            // 的舍入就是剩下 1e-4 rad 上 6e-4 的**相对**误差，表现为 0.13 % 的越限。API 是 float，检查就得用同一个
+            // 的舍入就是剩下 1e-4 rad 上 6e-4 的 **相对** 误差，表现为 0.13 % 的越限。API 是 float，检查就得用同一个
             // float。
             const float position_rad = static_cast<float>(now.theta_mech);
             const float velocity = shaped ? limit.shape(command, position_rad, a_max, delay) : command;
@@ -188,7 +188,7 @@ TEST(SoftLimit, TheDelayTermIsTheDifferenceBetweenNineteenMillimetresPastAndOneS
     // spellings of `v^2 <= 2*a*d`, and in the periods where the ceiling first bites they differ in the last bits, so a
     // count reports a breach of one period in four thousand whose magnitude no plant can see. The size is the physical
     // quantity; the count is a boundary artefact in either direction.
-    // 理想指令用越限的**大小**来查，而不是用计数。整形器自己的护栏与本检查器是 `v² ≤ 2·a·d` 的两种写法，在上限开始
+    // 理想指令用越限的 **大小** 来查，而不是用计数。整形器自己的护栏与本检查器是 `v² ≤ 2·a·d` 的两种写法，在上限开始
     // 咬合的那几个周期里它们差在末几位，于是计数会报"四千个周期里有一个越限"，量级小到任何 plant 都看不见。物理量
     // 是越限的大小；计数无论正反都是边界假象。
     std::printf("[soft] worst relative overshoot: shaped %.3e (%d periods), ideal %.3e (%d), unshaped %.3e (%d)\n",
@@ -288,14 +288,15 @@ auto largest_accepted(double distance, double decel, double delay) -> double {
  *   `-a*v_seam/(v_seam + a*tau)`, which is the sensitivity table the registry asked for: one coefficient per error
  *   source (wall position, deceleration, drive delay).
  *
- *   头文件只给出守恒式 `v² ≤ 2·a·(d − v·延迟)` 就停了。一条只被**检查**的守恒式没有回答"这段距离到底给我换来多少速度
+ *   头文件只给出守恒式 `v² ≤ 2·a·(d − v·延迟)` 就停了。一条只被 **检查** 的守恒式没有回答"这段距离到底给我换来多少速度
  *   "，而那正是调试工程师要问的。答案是这个映射的不动点：让不等式取等号的最大 `v`。解二次式 `v² + 2·a·τ·v − 2·a·d = 0`
  *   得 `v* = sqrt(a²τ² + 2·a·d) − a·τ`。
  *
- *   三个后果，每个都可单独量。它在 `(d, a)` 上是**联合的一次齐次**：把窗口与制动能力一起放大，每个被接受的速度都随之放
- *   大，所以一台强一倍、行程也长一倍的机器恰好快一倍——而不是 `sqrt(2)` 倍，那是不带延迟的式子会说的。`τ → 0` 时它退化为
- *   `sqrt(2·a·d)`，所以延迟项是一个永远不改变主行为的修正。它的三个偏导是 `a/(v_seam+aτ)`、 `v_seam²/(2a(v_seam+aτ))`、
- *   `−a·v_seam/(v_seam+aτ)`，这就是登记册要的那张敏感度表：每个误差源（墙的位置、减速度、驱动延迟）一个系数。
+ *   三个后果，每个都可单独量。它在 `(d, a)` 上是 **联合的一次齐次** ：把窗口与制动能力一起放大，每个被接受的速度都随之
+ *   放大，所以一台强一倍、行程也长一倍的机器恰好快一倍——而不是 `sqrt(2)` 倍，那是不带延迟的式子会说的。`τ → 0` 时它退化
+ *   为 `sqrt(2·a·d)`，所以延迟项是一个永远不改变主行为的修正。它的三个偏导是 `a/(v_seam+aτ)`、
+ *   `v_seam²/(2a(v_seam+aτ))`、 `−a·v_seam/(v_seam+aτ)`，这就是登记册要的那张敏感度表：每个误差源（墙的位置、减速度、驱
+ *   动延迟）一个系数。
  */
 TEST(SoftLimit, TheCapHasAFixedPointAndThreeSensitivityCoefficients) {
     const struct {
@@ -458,13 +459,13 @@ auto approach(double command, double decel, double delay, bool shaped) -> Approa
  *   between the two closest approaches is the delay travel, and that difference can be measured to four digits because
  *   both runs share the same plant.
  *
- *   已有用例只测了一个速度，二十弧度每秒，它证明延迟项是承重的。它没说**换来了多少**，而那才是使用方要的数；而单个速度
- *   说不出来，因为任何候选律都能过一点。这里分辨两条律，它们都是关于驱动的、不是关于整形器的：
+ *   已有用例只测了一个速度，二十弧度每秒，它证明延迟项是承重的。它没说 **换来了多少** ，而那才是使用方要的数；而单个速
+ *   度说不出来，因为任何候选律都能过一点。这里分辨两条律，它们都是关于驱动的、不是关于整形器的：
  *
  *   1. 上限在 `d = v²/(2a) + v·延迟` 处开始咬合——这是不动点的反函数，量它就是在空间里量接缝，而不是在速度里；
  *
- *   2. 延迟项把最近接近点推开恰好 `v·延迟`——制动电流到位之前轴不可避免要走的距离。它的收益因此**与接近速度成正比**，这
- *   就是它在 5 rad/s 处几乎一文不值（4.6 mm）、在 20 处是全部的原因。
+ *   2. 延迟项把最近接近点推开恰好 `v·延迟`——制动电流到位之前轴不可避免要走的距离。它的收益因此 **与接近速度成正比** ，
+ *   这就是它在 5 rad/s 处几乎一文不值（4.6 mm）、在 20 处是全部的原因。
  *
  *   三个速度、每个速度两趟。第二条律才是让第一条可检的东西：它说两个最近接近点之差就是延迟行程，而这个差能测到四位有效
  *   数字，因为两趟共用同一个 plant。
@@ -576,7 +577,7 @@ TEST(SoftLimit, ResetForgetsTheTargetSoTheFirstTargetRuleAppliesAgain) {
     EXPECT_EQ(after_reset.status, foc::ErrorCode::Param);
     EXPECT_FLOAT_EQ(after_reset.target_rad, 0.0F);
     // A target inside the window is a legal *first* target again, which is what "the limit can be re-armed" means.
-    // 窗口内的目标重新成为一个合法的**首个**目标，这正是"限位可以重新上膛"的意思。
+    // 窗口内的目标重新成为一个合法的 **首个** 目标，这正是"限位可以重新上膛"的意思。
     EXPECT_EQ(limit.apply(0.2F).status, foc::ErrorCode::Ok);
     EXPECT_FLOAT_EQ(limit.target_rad(), 0.2F);
 }

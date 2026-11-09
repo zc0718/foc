@@ -24,7 +24,7 @@ using foc::core::WatchdogState;
 // numbers here, and the second one is the half that is easy to get wrong: a watchdog built on `float t += dt` inherits
 // the drift `ElapsedClock`'s own note measures (12.8 % fast at 512 s, frozen after), which turns a 25 us deadline into a
 // deadline nobody can state. These cases pin the arithmetic instead of the intention.
-// 计划里的判据是"喂狗间隔超过窗口则进入 `Fault` 且桥关断；窗口是 25 µs 整数倍时必须**精确**判定——不允许浮点累加"。两半
+// 计划里的判据是"喂狗间隔超过窗口则进入 `Fault` 且桥关断；窗口是 25 µs 整数倍时必须 **精确** 判定——不允许浮点累加"。两半
 // 在这里都是关于数字的断言，而第二半正是容易做错的那一半：建立在 `float t += dt` 上的看门狗会继承 `ElapsedClock` 自己记下的
 // 那点漂移（512 s 处快 12.8 %、之后冻结），于是一个 25 µs 的截止时刻变成一个谁也说不清的时刻。这些用例锁的是算术，不是意图。
 
@@ -163,7 +163,7 @@ TEST(Watchdog, AClockThatGoesBackwardsIsAClockFaultNotAFiveHundredYearSilence) {
 // A forward jump larger than the window is **not** a clock fault, because nothing can tell it apart from a feeder that
 // starved for exactly that long: the two produce the same two numbers. Reporting it as a clock fault would be inventing
 // a diagnosis, so it is reported as the silence it looks like.
-// 前向跳跃大于窗口**不是**时钟故障，因为没有任何东西能把它与"喂狗方正好饿了那么久"区分开：两者给出同样的两个数。把它报成
+// 前向跳跃大于窗口 **不是** 时钟故障，因为没有任何东西能把它与"喂狗方正好饿了那么久"区分开：两者给出同样的两个数。把它报成
 // 时钟故障等于编造诊断，所以按它看起来的样子报成沉默。
 TEST(Watchdog, AForwardJumpIsJudgedAsASilenceBecauseNothingCanTellItFromOne) {
     Watchdog dog;

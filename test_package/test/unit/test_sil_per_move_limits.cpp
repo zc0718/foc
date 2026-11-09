@@ -115,7 +115,7 @@ TEST(SilPerMoveLimits, ATighterPerMoveAccelLimitIsVisiblyGentlerAndStillArrives)
 TEST(SilPerMoveLimits, AZeroPerMoveLimitFallsBackToTheMechanismConfiguration) {
     // 0 means "no override". The move is then shaped by `MotionProfile::Config`, so its peak speed is
     // the one the *mechanism* allows, not the gentle one.
-    // 0 表示"不覆盖"。此时运动由 `MotionProfile::Config` 塑造，于是峰值速度是**机构**允许的那个，
+    // 0 表示"不覆盖"。此时运动由 `MotionProfile::Config` 塑造，于是峰值速度是 **机构** 允许的那个，
     // 而不是温和的那个。
     const MoveResult configured = run_move(0.0F, 1.0F);
     EXPECT_GT(configured.peak_speed_rad_s, 1.0F);

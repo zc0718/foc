@@ -1,6 +1,6 @@
 // The dual-inductance observer, measured against the single-`L` one it generalises. The saliency term the single-`L`
 // model discards is a **closed-form** angle bias; this file holds the algebra, the law, and the floor it is read on.
-// 双电感观测器，对着它所推广的单 `L` 观测器量。单 `L` 模型丢掉的凸极项是一个**闭式**角度偏置；
+// 双电感观测器，对着它所推广的单 `L` 观测器量。单 `L` 模型丢掉的凸极项是一个 **闭式** 角度偏置；
 // 本文件留下代数、定律，以及它被读在其上的那个地板。
 
 #include <cmath>
@@ -50,7 +50,7 @@ constexpr float kDt = 5.0e-5F;
  *               Euler step, so the angle it reports lags the truth by about `w_e*dt/2`, which is 0.0025 rad here and
  *               0.02 rad at 800 rad/s -- the latter comparable to the bias under test. Measurements at 800 rad/s were
  *               made and are not quoted, because at that speed the harness is part of the answer.
- * @details [zh] 取在夹具地板**之下**而不是与它相抵：磁链积分器是后向欧拉步，报出的角度比真值滞后约 `ω_e·dt/2`，这里是
+ * @details [zh] 取在夹具地板 **之下** 而不是与它相抵：磁链积分器是后向欧拉步，报出的角度比真值滞后约 `ω_e·dt/2`，这里是
  *               0.0025 rad，800 rad/s 时 0.02 rad——后者与被测偏置同量级。800 rad/s 也量过但没有引用，因为那个速度下夹具
  *               本身已经是答案的一部分。
  */
@@ -144,7 +144,7 @@ auto plant_error(Observer& observer, float omega_e, float id_a, float iq_a) -> f
     // Seed with the stator flux the machine actually has, which is what the align phase can compute from the nameplate
     // and the measured current. The seed sets the integration constant only: the model error under test is a *readout*
     // error and is present at every step either way.
-    // 用机器实际的定子磁链播种，那是对齐阶段能从铭牌和实测电流算出来的。种子只决定积分常数：被测的模型误差是**读数**
+    // 用机器实际的定子磁链播种，那是对齐阶段能从铭牌和实测电流算出来的。种子只决定积分常数：被测的模型误差是 **读数**
     // 误差，无论如何每一步都在。
     observer.seed_flux(stator_flux(spec, wrap_two_pi(plant.theta_mech_rad() * static_cast<float>(spec.pole_pairs)),
                                   id_a, iq_a));
@@ -186,7 +186,7 @@ auto dual_l_error_at(float omega_e, float id_a) -> float {
  *   that ratio's arctangent, **independent of speed**: no integration time makes it go away, so a drive that pairs
  *   `MtpaReference` with a single-`L` observer carries a fixed steering error proportional to the `i_d` the reference
  *   itself asks for. 在转子坐标系里推。从定子磁链里减去 `Lq·i` 后，转子轴上剩下 `psi_f + (ld − lq)·i_d`——`j·Lq·i_q` 部
- *   分精确抵消，这就是 `i_q` 不出现的原因——所以报出的角度偏这个比值的反正切，而且**与转速无关 **：没有任何积分时间能让
+ *   分精确抵消，这就是 `i_q` 不出现的原因——所以报出的角度偏这个比值的反正切，而且 **与转速无关** ：没有任何积分时间能让
  *   它消失，所以把 `MtpaReference` 与单 `L` 观测器配在一起的驱动，带着一个正比于参考自己要求的 `i_d` 的固定指向误差。
  */
 auto single_l_law(float id_a) -> float {
@@ -281,7 +281,7 @@ TEST(DualInductanceObserver, InTheSurfaceMountedLimitItIsTheShippedAlgebra) {
   // the same thing in exact arithmetic but not in float over thousands of steps). No integration, no plant: this is the
   // algebra, which is what a cross-check of new algebra should be.
   // `Ld == Lq` 时二次式退化，答案必须就是出厂观测器已经在算的那个——这里是 `arg(psi − L·i)`，那里是 `−c/b`。
-  // 比较时**不积分**，因为两者积累磁链的方式不同（一个把 `L·di` 放进积分器，另一个只在读数时减 `L0·i`；精确算术
+  // 比较时 **不积分** ，因为两者积累磁链的方式不同（一个把 `L·di` 放进积分器，另一个只在读数时减 `L0·i`；精确算术
   // 里等价，float 下几千步后不等价）。不积分、不接 plant：这才是代数，而交叉校验新代数就该如此。
   const sil::MachineSpec spec = sil::nominal_spec();
   const float psi_f = psi_f_of(spec);
@@ -317,7 +317,7 @@ TEST(DualInductanceObserver, SeedAtInstallsTheStatorFluxThisObserverHolds) {
   // Checked the only way that means anything: seed from an angle and a current, then hand it a voltage that leaves the
   // flux where it is (`v = Rs*i`) -- the answer must be that angle, at every current. Seeding with `psi_f*e^(j*theta)`
   // instead leaves the current's own flux out of the integration constant, and a pure integrator never forgets.
-  // `seed_at(θ, i)` 存在的意义，是交接方不必知道本观测器的状态是**定子**磁链。只用一个有意义的方式检查：由角度和电流播种，
+  // `seed_at(θ, i)` 存在的意义，是交接方不必知道本观测器的状态是 **定子** 磁链。只用一个有意义的方式检查：由角度和电流播种，
   // 再交给它一个不改变磁链的电压（`v = Rs·i`）——答案必须是那个角度，在每个电流下都是。若改用 `psi_f·e^(jθ)` 播种，就把
   // 电流自身的磁链漏在积分常数之外，而纯积分器不会遗忘。
   const sil::MachineSpec spec = salient_spec();
@@ -364,14 +364,14 @@ TEST(DualInductanceObserver, TheSecondRootIsNotARotorPositionAndAWrongSeedIsPerm
   // about pi away, long before continuity has to be delicate. The hole was written as "continuity might pick wrong";
   // measured, there is almost nothing to pick.
   // (1) **二次方程的第二个根不是转子位置。** 这里试过的每个电流下它的模都远离 1——`i_d = −2 A` 时是 24.8——所以它是代数的
-  // 解而不是机器的解。这意味着在同一个 `(psi, i)` 对内部，选根几乎是多余的：伪根靠它的**角度**（相差约 π）就被排除了，还轮
+  // 解而不是机器的解。这意味着在同一个 `(psi, i)` 对内部，选根几乎是多余的：伪根靠它的 **角度** （相差约 π）就被排除了，还轮
   // 不到连续性去做精细判断。空洞原写作"连续性可能选错"；实测下来，几乎没有可供选错的东西。
   //
   // (2) **A wrong seed is nevertheless permanent**, because the seed is not a tie-breaker -- it *is* the integration
   // constant, and a flux integrator has no feedback. Seeded half a turn out, the observer reports half a turn out after
   // 200 steps to three decimals. So the obligation is real and belongs where it already is: `seed_at(theta, i)`, from an
   // angle the caller knows (the align phase), not from a guess.
-  // (2) **而错误的种子依然是永久的**，因为种子不是"破平局"用的——它就是积分常数，而磁链积分器没有反馈。偏半圈播种，200 步
+  // (2) **而错误的种子依然是永久的** ，因为种子不是"破平局"用的——它就是积分常数，而磁链积分器没有反馈。偏半圈播种，200 步
   // 之后它仍报出偏半圈，三位小数不变。所以那项义务是真的，而且就在它现在该在的地方：`seed_at(theta, i)`，来自调用方知道的
   // 角度（对齐阶段），而不是猜的。
   const sil::MachineSpec spec = salient_spec();
@@ -408,8 +408,8 @@ TEST(DualInductanceObserver, TheSecondRootIsNotARotorPositionAndAWrongSeedIsPerm
   // inconsistent seed has nowhere to land. What the seed can still do is choose between two *physical* candidates -- and
   // (1) says there is no second physical candidate for this machine at any current tried. The hole is therefore
   // unreachable, and `root_gap_rad()` is what would show it if a machine ever made it reachable.
-  // (2) **没有任何角度能解释的种子，会在第一步被纠正**——这与空洞原先担心的情况相反。磁链在方程里是**已知量**，而唯一模为 1 的
-  // 根就是真角度，所以不一致的种子无处落脚。种子仍能做的是在两个**物理**候选之间挑——而 (1) 说在这台机器的任何电流下都没有
+  // (2) **没有任何角度能解释的种子，会在第一步被纠正** ——这与空洞原先担心的情况相反。磁链在方程里是 **已知量** ，而唯一模为 1 的
+  // 根就是真角度，所以不一致的种子无处落脚。种子仍能做的是在两个 **物理** 候选之间挑——而 (1) 说在这台机器的任何电流下都没有
   // 第二个物理候选。于是那条空洞不可达，而万一某台机器让它可达，`root_gap_rad()` 就是把这件事显示出来的那个量。
   const float id = -2.0F;
   const float iq = 0.5F;
@@ -444,7 +444,7 @@ TEST(DualInductanceObserver, AWrongSeedIsVisibleInTheRadiusEvenThoughItIsPermane
   // exactly when** the state came from a real rotor position. So `radius_error()` turns the silent permanence of the
   // previous case into something a caller can refuse to use -- and it is measured here against the angle error it
   // accompanies, so the threshold is chosen from numbers rather than from taste.
-  // 磁链积分器改不了坏种子，但代数仍然知道：二次方程**当且仅当**状态来自真实转子位置时才有一个**模为 1** 的根。于是
+  // 磁链积分器改不了坏种子，但代数仍然知道：二次方程 **当且仅当** 状态来自真实转子位置时才有一个 **模为 1** 的根。于是
   // `radius_error()` 把上一节那个静默的永久偏差变成"调用方可以拒绝使用"的东西——这里把它与相应的角度误差一起量出来，
   // 好让阈值取自有依据的数字。
   const sil::MachineSpec spec = salient_spec();
@@ -492,7 +492,7 @@ TEST(DualInductanceObserver, AWrongSeedIsVisibleInTheRadiusEvenThoughItIsPermane
   // And this is the point: the *angle* error of the inconsistent case is permanent (see the case above), so the radius is
   // the only thing that says anything. It is small in angle yet large in radius, which is exactly why counting on a small
   // angle error cannot detect it.
-  // 而这才是要点：不一致情形下的**角度**误差是永久的（见上一节），所以半径是唯一还在说话的东西。它的角度不大而半径很大，
+  // 而这才是要点：不一致情形下的 **角度** 误差是永久的（见上一节），所以半径是唯一还在说话的东西。它的角度不大而半径很大，
   // 这正是"靠角度误差小"无法发现它的原因。
   std::printf("[dual-L] the inconsistent seed: %.4f rad of angle error, %.3e of radius error\n",
               static_cast<double>(bad.second), static_cast<double>(bad.first));
@@ -500,7 +500,7 @@ TEST(DualInductanceObserver, AWrongSeedIsVisibleInTheRadiusEvenThoughItIsPermane
   // The honest limit, measured rather than hoped for: a seed only a tenth of a turn out reads 5.8e-03 of radius, i.e.
   // it **passes** the tolerance while its angle is 0.28 rad wrong. So this is a gross-fault detector and not an accuracy
   // guarantee, and the case records that instead of raising the threshold to make it look like one.
-  // 诚实的边界，量出来的而不是希望出来的：偏十分之一圈的种子读到 5.8e-03 的半径，即它**通过**容差，而角度错了 0.28 rad。
+  // 诚实的边界，量出来的而不是希望出来的：偏十分之一圈的种子读到 5.8e-03 的半径，即它 **通过** 容差，而角度错了 0.28 rad。
   // 所以这是粗略故障检出器，不是精度保证；用例把这一条记下来，而不是把阈值调高好让它看起来像保证。
   const auto tenth = probe(theta + (0.1F * core::kPi<float>), id, iq);
   std::printf("[dual-L] a tenth of a turn out: radius %.3e (passes), angle error %.4f rad\n",
@@ -525,7 +525,7 @@ TEST(DualInductanceObserver, AnLqErrorMovesTheAngleAndAnLdErrorMovesTheRadius) {
   // The sensitivity leg the plant could not resolve (a 10 % `Ld` error is far under the harness's 13 mrad floor), measured
   // **statically**: seed at a known angle and current, then hand it `v = Rs*i`, which leaves the flux untouched -- so
   // there is no integration and therefore no floor.
-  // plant 分辨不了的那条敏感度腿（10 % 的 `Ld` 远在夹具 13 mrad 地板之下），改在**静态**下量：用已知角度与电流播种，再
+  // plant 分辨不了的那条敏感度腿（10 % 的 `Ld` 远在夹具 13 mrad 地板之下），改在 **静态** 下量：用已知角度与电流播种，再
   // 交给它 `v = Rs·i`（磁链不变）——于是没有积分，也就没有地板。
   //
   // **The law I derived first was wrong, and the measurement says so.** I wrote that an `Ld` error acts on the *angle* as
@@ -535,10 +535,10 @@ TEST(DualInductanceObserver, AnLqErrorMovesTheAngleAndAnLdErrorMovesTheRadius) {
   // root is second-order insensitive to that. What it does move is the **radius**: 3.888e-3 against the same
   // `dLd*i_d/psi_f` = 4.2e-3, ratio 0.93. So the two inductances are separable in two different observables, and this
   // is why `radius_error()` earns its place: it is where an `Ld` error shows at all.
-  // **我先推的定律是错的，而测量如此说。** 我写过 `Ld` 误差按 `dLd·i_d/psi_f` 作用于**角度**，依据与 `Lq` 误差按
-  // `dLq·i_q/psi_f` 作用相同。实测：`Lq` 定律成立（2.871e-3 对预测 3.150e-3，比 0.91），而 `Ld` 定律差了 **58 倍**——
-  // 预测 4.2e-3 的地方只有 7.2e-5。`Ld` 误差主要是**转动并缩放**磁链而不是重新指向它，而解出根的角度对那是二阶不敏感的。
-  // 它真正挪动的是**半径**：3.888e-3 对同一个 `dLd·i_d/psi_f` = 4.2e-3，比 0.93。于是两个电感在两个不同的可观测量上可
+  // **我先推的定律是错的，而测量如此说。** 我写过 `Ld` 误差按 `dLd·i_d/psi_f` 作用于 **角度** ，依据与 `Lq` 误差按
+  // `dLq·i_q/psi_f` 作用相同。实测：`Lq` 定律成立（2.871e-3 对预测 3.150e-3，比 0.91），而 `Ld` 定律差了 **58 倍** ——
+  // 预测 4.2e-3 的地方只有 7.2e-5。`Ld` 误差主要是 **转动并缩放** 磁链而不是重新指向它，而解出根的角度对那是二阶不敏感的。
+  // 它真正挪动的是 **半径** ：3.888e-3 对同一个 `dLd·i_d/psi_f` = 4.2e-3，比 0.93。于是两个电感在两个不同的可观测量上可
   // 分离，而这正是 `radius_error()` 值得存在的原因：`Ld` 误差只在那里露面。
   const sil::MachineSpec spec = salient_spec();
   const float psi_f = psi_f_of(spec);
@@ -595,7 +595,7 @@ TEST(DualInductanceObserver, TheTwoFluxSourcesDifferExactlyWhereTheyShould) {
   // The `method=` earns its place only if the options fail differently, so both differences are measured here: with the
   // machine's own `Rs` they must be the **same observer** (the correction has nothing to correct), and with a nameplate
   // error in `Rs` the pure integrator must drift while the corrected one holds.
-  // `method=` 只有在两个选项失效方式不同时才值得存在，所以两种差别都在这里量：用机器自己的 `Rs` 时它们必须是**同一个观测器**
+  // `method=` 只有在两个选项失效方式不同时才值得存在，所以两种差别都在这里量：用机器自己的 `Rs` 时它们必须是 **同一个观测器**
   // （修正项无事可做），而 `Rs` 有铭牌误差时纯积分器必须漂移、修正版必须按得住。
   const sil::MachineSpec spec = salient_spec();
   const float psi_f = psi_f_of(spec);
@@ -662,9 +662,9 @@ TEST(DualInductanceObserver, TheTwoFluxSourcesDifferExactlyWhereTheyShould) {
   //    the manifold can do and what the note in the header warned about without a number. So the two sources are a real
   //    trade, not an upgrade, and the integrator stays the default.
   // **我的预测在这里错了两次，而两次更正本身就是结论。**
-  // 1. 我原以为 `Rs` 精确时修正项无事可做。并非如此：它**好 7.7 倍**（0.002580 对 0.019895 rad），因为积分了 40000 步的
+  // 1. 我原以为 `Rs` 精确时修正项无事可做。并非如此：它 **好 7.7 倍** （0.002580 对 0.019895 rad），因为积分了 40000 步的
   //    状态自带累积误差，而投影把那个也一起去掉了。所以这个增益不只关乎铭牌。
-  // 2. 我原以为铭牌误差下修正会帮忙。它**毁掉**了估计：3.080 rad 对积分器的 0.167——它锁到一个**错但自洽**的状态上，这
+  // 2. 我原以为铭牌误差下修正会帮忙。它 **毁掉** 了估计：3.080 rad 对积分器的 0.167——它锁到一个 **错但自洽** 的状态上，这
   //    正是"向流形投影"能做出的坏事，也正是头文件那条注释警告过、但没有数字的东西。所以两种来源是一笔真实的交易，不是
   //    一次升级，积分器仍然是默认值。
   std::printf("[dual-L] exact Rs: integrator %.6f rad against corrected %.6f rad (%.2fx better)\n",
@@ -685,7 +685,7 @@ TEST(DualInductanceObserver, ASeedErrorTakesTheCorrectionTermToTheOtherBranch) {
   // error -- *given an exact seed*, which is how it was measured. This case asks what happens to it when the seed is
   // wrong, because that is the situation a hand-over creates, and the answer is that the pull is a nearest-point
   // search on a curve: an angular seed error lands it on the other branch and it stays there.
-  // 修正版把磁链拉回模型流形，在 `Rs` 有铭牌误差时值 7.7 倍——但那是在**种子准确**的前提下量的。本例问的是种子错的时候它
+  // 修正版把磁链拉回模型流形，在 `Rs` 有铭牌误差时值 7.7 倍——但那是在 **种子准确** 的前提下量的。本例问的是种子错的时候它
   // 怎么样，因为交接造成的正是这个局面；答案是这把"拉"本质上是曲线上的一次最近点搜索：一个角度上的种子误差会把它落到
   // 另一支上，然后它就停在那里。
   const sil::MachineSpec spec = salient_spec();
@@ -757,13 +757,13 @@ TEST(DualInductanceObserver, TheClosedFormAgreesWithANumericalInversionOfTheFlux
   // instead of by solving: no discriminant, no roots, no branch. If the closed form had a sign or a factor wrong, the
   // two would part company on some sample.
   // 同一个反解的第二种实现，放在测试里而不是发布出去：它从同样的输入给出同样的答案，作为公开选项就只是一个"决定哪条代码路径
-  // 舍入得不同"的旋钮——正是 F-107 / F-43 所讲的那种死重量。而作为**检查**它有活干，因为它靠搜索而不是靠求解来反解：没有
+  // 舍入得不同"的旋钮——正是 F-107 / F-43 所讲的那种死重量。而作为 **检查** 它有活干，因为它靠搜索而不是靠求解来反解：没有
   // 判别式、没有求根、没有分支。闭式里若有一个符号或系数错，两者会在某个样本上分道扬镳。
   //
   // And the two do not share their *forward* statement either: the flux is built from the physical d-q definition
   // (`psi = e^(j*theta) * (psi_f + Ld*i_d + j*Lq*i_q)`), while the search minimises the alpha-beta relation the class
   // uses. So this compares two ways of writing the machine as well as two ways of inverting it.
-  // 而且两者连**正向**表述也不共享：磁链按物理的 d-q 定义构造（`psi = e^(jθ)·(psi_f + Ld·i_d + j·Lq·i_q)`），而搜索最小化的是
+  // 而且两者连 **正向** 表述也不共享：磁链按物理的 d-q 定义构造（`psi = e^(jθ)·(psi_f + Ld·i_d + j·Lq·i_q)`），而搜索最小化的是
   // 本类使用的 αβ 关系。所以这里同时比较了机器的两种写法与两种反解。
   const sil::MachineSpec spec = salient_spec();
   const float psi_f = psi_f_of(spec);

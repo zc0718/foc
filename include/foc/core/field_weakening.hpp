@@ -24,12 +24,12 @@ namespace core {
  *
  *   \f[ \frac{\omega_{max}}{\omega_{base}} = \frac{\psi_f}{\psi_f - L_d\,i_{max}} \f]
  *
- * @brief [zh] 对**这台**机器来说弱磁值不值得做，用数说话，不用观点。
+ * @brief [zh] 对 **这台** 机器来说弱磁值不值得做，用数说话，不用观点。
  *
- *   决定它的是**特征电流** \f$i_{char} = \psi_f / L_d\f$：把转子磁链削到零所需的 d 轴电流。如果它远高于电流限幅，驱动器
- *   根本削不动磁链，弱磁只买到 \f$i_{max}/i_{char}\f$ 那一点点——SIL 标称机上实测是 2910 → 3850 rad/s （**+32 %** ），顶
- *   端转矩塌到零。如果它低于电流限幅，这台机器就有真正的恒功率区：同一台机器把电感放大十倍， 8000 rad/s 处仍有基速转矩
- *   的 36 %。
+ *   决定它的是 **特征电流** \f$i_{char} = \psi_f / L_d\f$：把转子磁链削到零所需的 d 轴电流。如果它远高于电流限幅，驱动
+ *   器根本削不动磁链，弱磁只买到 \f$i_{max}/i_{char}\f$ 那一点点——SIL 标称机上实测是 2910 → 3850 rad/s （ **+32 %**
+ *   ），顶端转矩塌到零。如果它低于电流限幅，这台机器就有真正的恒功率区：同一台机器把电感放大十倍， 8000 rad/s 处仍有基
+ *   速转矩的 36 %。
  *
  *   做/不做的判据就是单一比较 \f$i_{char} \le i_{max}\f$，即 \f$L_d\,i_{max} \ge \psi_f\f$；过闸后它报告的转速上限是
  *   \f$i_q = 0\f$ 处的闭式：
@@ -82,14 +82,14 @@ struct FieldWeakeningAdvice final {
  *
  *   规则如下：
  *
- *   \li **电流限幅必须至少能把磁链削到零**：`i_char <= i_max`，即 `Ld·i_max >= ψf`。这条线以下是有限的小转速上限、那个
+ *   \li **电流限幅必须至少能把磁链削到零** ：`i_char <= i_max`，即 `Ld·i_max >= ψf`。这条线以下是有限的小转速上限、那个
  *   区只是一条缝；线上及以上的模型转速上限是无界的。目前量过的机器都远在线的下面（见 `test_field_weakening.cpp`： 2004
  *   Prius 牵引电机——一台正为此而造的机器——差 3.3 倍）。
  *
  *   这里原先写着两个阈值 `ratio < 0.6` 与 `speed_gain >= 1.5`，各配一条理由。两者都被上面那一条蕴含（`ratio <= 1`、增益
  *   无穷），因此都不可 能成为决定性的检验——函数是从早返回分支返回 `worthwhile = true` 的，那条两条件表达式**永远不可能
- *   为真**。已删除而不 是留在原地：一个不可能生效的阈值读起来像策略，其实是装饰（F-107）。它当初存在的**理由**已并入上
- *   一句。
+ *   为真 **。已删除而不 是留在原地：一个不可能生效的阈值读起来像策略，其实是装饰（F-107）。它当初存在的** 理由**已并入
+ *   上一句。
  *
  * @param params [en] the machine, SI.
  * @param params [zh] 机器，SI。
@@ -141,9 +141,9 @@ struct FieldWeakeningAdvice final {
  *
  * @brief [zh] 当驱动器把电流花在 `i_d` 上时，观测器该把幅值拉向多少。
  *
- *   单独的 `psi_f` 是**转子**磁链。只要 `i_d != 0`，定子磁链矢量在 d 轴上就是 `ψf + Ld·i_d`，而让幅值修正去瞄准 `psi_f`
- *   就是让它瞄错数：SIL 实测 `i_d = −2.95 A` 时 真实幅值是 `ψf` 的 75 %，角度误差从 0.0467 rad 走到 0.0709 rad。那仍在
- *   0.10 rad 闸内， 所以这是**refinement**而不是前置条件——但它是一个大小可测的 refinement。
+ *   单独的 `psi_f` 是 **转子** 磁链。只要 `i_d != 0`，定子磁链矢量在 d 轴上就是 `ψf + Ld·i_d`，而让幅值修正去瞄准
+ *   `psi_f` 就是让它瞄错数：SIL 实测 `i_d = −2.95 A` 时 真实幅值是 `ψf` 的 75 %，角度误差从 0.0467 rad 走到 0.0709
+ *   rad。那仍在 0.10 rad 闸内， 所以这是 **refinement** 而不是前置条件——但它是一个大小可测的 refinement。
  * @since 0.1.0
  * @exporter
  */
@@ -169,16 +169,16 @@ struct FieldWeakeningAdvice final {
  * @brief [zh] 用电流去买磁链（而不是转矩），从而把驱动器留在电压上限以内的 d 轴参考。
  *
  *   `NullReferenceGenerator` 的直接替代：同样的形状、同样的调用点，这正是要点—— `ReferenceInput` 已经带着 `omega_e`、
- *   `v_bus` 和实测电流，所以弱磁**不需要改 `Motor`、 不需要给既有实例化加模板参数、也不需要状态**。实测（SIL）：标称机
- *   在基速处 `i_d` 到 `−1.55 A`，3500 rad/s 处到 `−2.70 A`，同时守住 `i_q = 1.24 A`，而 `i_d = 0` 在那里是零转矩。
+ *   `v_bus` 和实测电流，所以弱磁 **不需要改 `Motor`、 不需要给既有实例化加模板参数、也不需要状态** 。实测（SIL）：标称
+ *   机在基速处 `i_d` 到 `−1.55 A`，3500 rad/s 处到 `−2.70 A`，同时守住 `i_q = 1.24 A`，而 `i_d = 0` 在那里是零转矩。
  *
  * @note [en] The decision is solved **without `Rs`**, and then verified against the full voltage equation in the tests.
  *            That is deliberate: the resistor's contribution to the ellipse is small compared with `omega*L` in the
  *            region where this matters, the closed form is what makes the policy a dozen lines, and the test that
  *            measures `|v|` against `v_max` is what keeps the approximation honest instead of hidden.
- * @note [zh] 判定**不含 `Rs`**，然后在测试里对着完整电压方程验证。这是有意的：在真正需要它的区域， 电阻对椭圆的贡献相对
- *            `ωL` 很小，闭式解才让这个策略只有十几行，而"把 `|v|` 对着 `v_max` 量" 的那条测试让近似保持诚实而不是隐藏起
- *            来。
+ * @note [zh] 判定 **不含 `Rs`** ，然后在测试里对着完整电压方程验证。这是有意的：在真正需要它的区域， 电阻对椭圆的贡献相
+ *            对 `ωL` 很小，闭式解才让这个策略只有十几行，而"把 `|v|` 对着 `v_max` 量" 的那条测试让近似保持诚实而不是隐
+ *            藏起来。
  * @since 0.1.0
  * @exporter
  */
@@ -221,9 +221,9 @@ class FieldWeakeningReference final {
      *            continuity is what the continuity requirement is about -- a discontinuous reference would wind the
      *            current PI up and cost an overshoot on the way back down, which is the classic way a field-weakening
      *            implementation damages a machine it was supposed to help.
-     * @note [zh] `i_d` 在基速处对 `omega_e` 是**连续**的：一旦工作点装不下，椭圆解就从零连续 长出来，所以积分器没有台阶
-     *            可被震。这个连续性正是那条要求的来由——不连续的参考会把电流 PI 积分上去，回程时付出一个过冲，那正是弱磁
-     *            实现伤到它本该帮助的机器时的经典方式。
+     * @note [zh] `i_d` 在基速处对 `omega_e` 是 **连续** 的：一旦工作点装不下，椭圆解就从零连续 长出来，所以积分器没有台
+     *            阶可被震。这个连续性正是那条要求的来由——不连续的参考会把电流 PI 积分上去，回程时付出一个过冲，那正是弱
+     *            磁实现伤到它本该帮助的机器时的经典方式。
      * @since 0.1.0
      */
     [[nodiscard]] auto generate(const ReferenceInput& in) noexcept -> Dq<float> {
@@ -290,7 +290,7 @@ class FieldWeakeningReference final {
         // is the constant-power corner. Bisection because the feasible set is an
         // interval and 24 halvings of a 3 A span land inside float precision --
         // deterministic, no allocation, no table.
-        // 2. 装不下：沿着**电流圆**把 `i_q` 换成 `i_d`，这就是恒功率拐角。用二分，因为可行集是一个
+        // 2. 装不下：沿着 **电流圆** 把 `i_q` 换成 `i_d`，这就是恒功率拐角。用二分，因为可行集是一个
         // 区间，3 A 跨度上 24 次折半已经落到 float 精度之内——确定、不分配、不用表。
         float low = 0.0F;
         float high = i_q_want;

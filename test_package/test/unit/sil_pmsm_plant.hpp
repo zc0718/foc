@@ -70,9 +70,9 @@ struct PlantParams final {
      *            remains inside the dip stays. With `0` the moving branch returns exactly `t_coulomb_nm`, so every
      *            existing scenario is bit-for-bit unchanged.
      * @note [zh] 为什么有这一项。库里的 `FrictionComp` 是库仑加粘性前馈，而在此之前 plant 的摩擦也是库仑加粘性——于是对
-     *            补偿器的任何检查都是**模型检查自己**。Stribeck 下凹是已发表的机理，而一个按速度符号给量的前馈在结构上
-     *            够不着它：它没有状态，除粘性项外没有速度依赖，所以下凹里剩下的摩擦一点都消不掉。取 `0` 时运动分支原样
-     *            返回 `t_coulomb_nm`，于是所有既有场景逐位不变。
+     *            补偿器的任何检查都是 **模型检查自己** 。Stribeck 下凹是已发表的机理，而一个按速度符号给量的前馈在结构
+     *            上够不着它：它没有状态，除粘性项外没有速度依赖，所以下凹里剩下的摩擦一点都消不掉。取 `0` 时运动分支原
+     *            样返回 `t_coulomb_nm`，于是所有既有场景逐位不变。
      */
     float stribeck_speed_rad_s{0.0F};
 };
@@ -172,7 +172,7 @@ class PmsmPlant final {
      *            `-i_d` opposes it, so the *same* volt-second pulse produces two different current rises -- which is
      *            the only thing `MagnetPolarityTest` has to measure. The model is a local fit near `+-current_a`, not a
      *            magnetics reference: the `dL/di` term in the voltage equation is deliberately ignored.
-     * @note [zh] 它存在的理由：没有它就看不出磁钢极性。`+i_d` 增强转子磁链、`-i_d` 削弱它，于是**相同** 的伏秒脉冲会产
+     * @note [zh] 它存在的理由：没有它就看不出磁钢极性。`+i_d` 增强转子磁链、`-i_d` 削弱它，于是 **相同** 的伏秒脉冲会产
      *            生两个不同的电流上升——这是 `MagnetPolarityTest` 唯一可测的现象。该模型是 `±current_a` 附近的局部拟合，
      *            不是磁学参考：电压方程里的 `dL/di` 项被故意忽略。
      * @since 0.1.0
@@ -197,8 +197,8 @@ class PmsmPlant final {
      * @note [en] Separate from the d-axis knob because the two are physically different: d-axis saturation bites the
      *            *uphill* direction of the magnet, q-axis saturation bites the flux produced by the stator. A model
      *            with only the first can look complete while being blind to the second.
-     * @note [zh] 与 d 轴旋钮分开，因为两者物理上不同：d 轴饱和咬的是磁钢的**上坡**方向，q 轴饱和 咬的是定子自己产生的磁
-     *            通。只有前者的模型看起来完整，却对后者完全盲。
+     * @note [zh] 与 d 轴旋钮分开，因为两者物理上不同：d 轴饱和咬的是磁钢的 **上坡** 方向，q 轴饱和 咬的是定子自己产生的
+     *            磁通。只有前者的模型看起来完整，却对后者完全盲。
      * @since 0.1.0
      */
     void set_q_axis_saturation(float depth, float current_a) noexcept;
@@ -217,8 +217,8 @@ class PmsmPlant final {
      * @note [en] This is not a torque loss term bolted onto the shaft -- it is the reason the *sensed* current is not
      *            the current that makes torque. That distinction is the whole point: a torque-loss term cannot perturb
      *            an observer, and this can.
-     * @note [zh] 这不是往轴上贴一项转矩损失——它说明**被传感的**电流不是产生转矩的电流。这个区别 才是重点：转矩损失项扰
-     *            动不了观测器，而这一项可以。
+     * @note [zh] 这不是往轴上贴一项转矩损失——它说明 **被传感的** 电流不是产生转矩的电流。这个区别 才是重点：转矩损失项
+     *            扰动不了观测器，而这一项可以。
      * @since 0.1.0
      */
     void set_iron_loss(float rm_ohm) noexcept;
@@ -254,12 +254,12 @@ class PmsmPlant final {
     /**
      * @brief [en] Parameters of the lumped thermal model: how hot the winding actually gets, not how hot the caller
      *             says it is.
-     * @brief [zh] 集总热模型的参数：绕组**实际**会有多热，而不是调用方说它多热。
+     * @brief [zh] 集总热模型的参数：绕组 **实际** 会有多热，而不是调用方说它多热。
      * @note [en] `set_winding_temperature` above is the *constant* version of this -- a number, with no dynamics. A
      *            derating scheduler cannot be argued with against a constant: the whole claim is about where the
      *            temperature goes, so the plant has to be able to make it go somewhere.
-     * @note [zh] 上面的 `set_winding_temperature` 是它的**常数**版本——一个数，没有动力学。降额调度无法对着常数论证：那
-     *            条主张就是关于温度走向的，所以 plant 必须能让它走。
+     * @note [zh] 上面的 `set_winding_temperature` 是它的 **常数** 版本——一个数，没有动力学。降额调度无法对着常数论证：
+     *            那条主张就是关于温度走向的，所以 plant 必须能让它走。
      * @since 0.1.9
      */
     struct ThermalConfig final {
@@ -287,14 +287,14 @@ class PmsmPlant final {
      *   stays exactly what `set_winding_temperature` put there.
      *
      *   `P_cu = 1.5·(id² + iq²)·Rs(T)`——那个 1.5 与转矩用的是同一个幅值不变约定，`Rs(T)` 就是本 plant 自己的
-     *   `effective_rs()`，于是模型具备真实绕组具备的**正反馈**：更热→损耗更大→更热。这个反馈让稳态是**非线性**的而不是
-     *   一个比例关系，而且当 `Rt·P·α = 1` 以上**根本不存在稳态**——这是一个应该在 SIL 里看得见、而不是在台架上才发现的性
-     *   质。
+     *   `effective_rs()`，于是模型具备真实绕组具备的 **正反馈** ：更热→损耗更大→更热。这个反馈让稳态是 **非线性** 的而
+     *   不是一个比例关系，而且当 `Rt·P·α = 1` 以上 **根本不存在稳态** ——这是一个应该在 SIL 里看得见、而不是在台架上才发
+     *   现的性质。
      *
-     *   步进用单节点方程的**精确解**（损耗取该步自身状态）：`T ← T_eq + (T − T_eq)·exp(−dt/τ)`，`τ = Rt·Ct`，而不是欧拉
-     *   步：热时间常数是秒、电步长是微秒，显式格式只能靠运气稳定。
+     *   步进用单节点方程的 **精确解** （损耗取该步自身状态）：`T ← T_eq + (T − T_eq)·exp(−dt/τ)`，`τ = Rt·Ct`，而不是欧
+     *   拉步：热时间常数是秒、电步长是微秒，显式格式只能靠运气稳定。
      *
-     *   **默认关闭，关闭时逐位不变**：`rt <= 0` 或 `ct <= 0` 时什么都不积分，`temp_c_` 精确停在
+     *   **默认关闭，关闭时逐位不变** ：`rt <= 0` 或 `ct <= 0` 时什么都不积分，`temp_c_` 精确停在
      *   `set_winding_temperature` 放进去的那个值。
      *
      * @param config [en] the three parameters above; any non-positive `rt` or `ct` turns the model off.
@@ -348,7 +348,8 @@ class PmsmPlant final {
      * @brief [en] Inject a cogging torque into the mechanical equation, as a table of harmonics (order per
      *             **mechanical** revolution, `amplitude * sin(order*theta_mech + phase)`, N*m).
      *
-     * @brief [zh] 把齿槽转矩以谐波表注入机械方程（次数按**每机械转**，`amplitude · sin(order·θ_mech + phase)`，N·m）。
+     * @brief [zh] 把齿槽转矩以谐波表注入机械方程（次数按 **每机械转** ，`amplitude · sin(order·θ_mech + phase)`，N·m
+     *             ）。
      *
      *   Additive on the rotor: `J*dwm/dt = (Te + Tcog - B*wm - friction - load) / J`, and it is handed to the friction
      *   model as part of the driving torque because that is what a detent is -- at rest, cogging alone can move the
@@ -456,8 +457,8 @@ class PmsmPlant final {
      *            can pair it with a current from a different instant -- which is the one mistake that makes a power
      *            measurement silently wrong instead of loudly wrong.
      * @note [zh] 这是一个读数而不是输入：它就是上一次 `set_voltage_dq()` 被给到的值。它存在的理由是母线电流是
-     *            `1.5*(v_d*i_d + v_q*i_q)/v_bus`，而一个必须自己另存一份电压的调用方，可能把电压和**另一个时刻**的电流
-     *            配在一起——那正是让功率测量"悄悄错"而不是"明显错"的那个错误。
+     *            `1.5*(v_d*i_d + v_q*i_q)/v_bus`，而一个必须自己另存一份电压的调用方，可能把电压和 **另一个时刻** 的电
+     *            流配在一起——那正是让功率测量"悄悄错"而不是"明显错"的那个错误。
      * @since 0.1.9
      */
     [[nodiscard]] auto voltage_dq() const noexcept -> core::Dq<float>;
@@ -505,7 +506,7 @@ class PmsmPlant final {
      * @brief [en] Winding temperature, C -- carried in `double` **because of how the node is integrated**, not for
      *             precision in general.
      *
-     * @brief [zh] 绕组温度，°C——用 `double` **是因为节点的积分方式**，不是一般意义上的精度考虑。
+     * @brief [zh] 绕组温度，°C——用 `double` **是因为节点的积分方式** ，不是一般意义上的精度考虑。
      *
      *   The exact exponential step adds `(T_eq - T)*(1 - exp(-dt/tau))` per step, which for a seconds-long thermal
      *   constant against a microsecond electrical step is about `1.25e-5` of the remaining gap. In `float`, one ulp at
@@ -572,7 +573,7 @@ auto PmsmPlant::friction_nm(float omega_mech, float driving_nm) const noexcept -
     // has only the first one always creeps when the torque is small -- which is exactly the behaviour a stall-start
     // control law has to be tested against, and it cannot be tested against a model that does not have it.
     //
-    // 库仑摩擦阻碍**运动**，静摩擦阻碍**起步**。二者是不同机理，而只有前者的机器在小力矩下总会缓慢蠕动——那正是
+    // 库仑摩擦阻碍 **运动** ，静摩擦阻碍 **起步** 。二者是不同机理，而只有前者的机器在小力矩下总会缓慢蠕动——那正是
     // "带载起动"控制律必须被检验的行为，而一个没有该现象的模型检验不出来。
     const float net_at_rest = driving_nm - load_nm_;
     if (std::fabs(omega_mech) <= params_.omega_eps_rad_s) {
@@ -691,7 +692,7 @@ inline auto PmsmPlant::derivative(const PlantState& s) const noexcept -> Derivat
     // from `v - Rs*i` instead would give a numerator that is identically zero at
     // steady state -- the resistor would draw nothing and the model would be
     // silently inert. That mistake was made and caught by this test.
-    // 并联支路跨在励磁支路上，即跨在**内部**电压 `v − Rs·i` 上，稳态时它就是交叉耦合加反电势：
+    // 并联支路跨在励磁支路上，即跨在 **内部** 电压 `v − Rs·i` 上，稳态时它就是交叉耦合加反电势：
     // d 上是 `−ω·lq·iq`，q 上是 `ω·(ld·id + ψf)`。若改成用 `v − Rs·i` 驱动，分子在稳态恒为零
     // ——电阻什么都不抽，模型静默失效。这个错犯过，并被本测试抓到。
     const float icd = (rm_ohm_ > 0.0F) ? ((-omega_e * lq * s.iq_a) / rm_ohm_) : 0.0F;
@@ -706,8 +707,8 @@ inline auto PmsmPlant::derivative(const PlantState& s) const noexcept -> Derivat
     // The injected cogging torque, evaluated at the RK4 stage's own angle so the integrator sees its slope rather than a
     // value frozen at the start of the step. `friction_nm` receives the *driving* torque including cogging, because at
     // rest it is cogging that decides whether the rotor is held or moves -- that is what a detent is.
-    // 注入的齿槽转矩在 RK4 各阶**各自的**角度上求值，好让积分器看到它的斜率而不是一步步冻结的值。`friction_nm` 收到的是
-    // **含齿槽**的驱动力矩，因为静止时决定转子被卡住还是动起来的正是齿槽——定位点就是这个意思。
+    // 注入的齿槽转矩在 RK4 各阶 **各自的** 角度上求值，好让积分器看到它的斜率而不是一步步冻结的值。`friction_nm` 收到的是
+    // **含齿槽** 的驱动力矩，因为静止时决定转子被卡住还是动起来的正是齿槽——定位点就是这个意思。
     const float tcog = evaluate_cogging(cogging_, cogging_count_, static_cast<float>(s.theta_mech));
     const float driving = torque + tcog;
     const double domega =
@@ -801,7 +802,7 @@ inline auto PmsmPlant::current_uvw() const noexcept -> core::Uvw<float> {
     // PIL leg compare host against target with noise switched on. The noise belongs to the *reading*,
     // not to the plant state, hence `mutable`.
     // 只用整数运算的 xorshift32：在任何 ISA 上序列都相同，这正是 PIL 腿可以在打开噪声后比对 host 与
-    // target 的前提。噪声属于**读数**而非 plant 状态，故用 mutable。
+    // target 的前提。噪声属于 **读数** 而非 plant 状态，故用 mutable。
     const auto next_sample = [this]() noexcept -> float {
         noise_state_ ^= noise_state_ << 13U;
         noise_state_ ^= noise_state_ >> 17U;

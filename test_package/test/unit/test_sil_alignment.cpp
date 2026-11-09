@@ -167,7 +167,7 @@ TEST(SilAlignment, TheRotorSettlesOnTheForcedFieldAndTheOffsetIsCaptured) {
     // Only the electrical part is observable: the rotor parks at the *nearest* pole, so the captured
     // offset is right modulo one pole pitch. Asserting equality in rad would be asserting that the
     // rotor happened to start in the right pole sector.
-    // 只有电角度部分可观测：转子停在**最近的**极上，因此捕获的偏置在一个极距的模下正确。断言 rad 相等
+    // 只有电角度部分可观测：转子停在 **最近的** 极上，因此捕获的偏置在一个极距的模下正确。断言 rad 相等
     // 等于断言转子恰好起始在正确的极扇区里。
     EXPECT_NEAR(0.0F, wrap_pitch(captured - kMountOffset), 0.02F)
         << "captured " << captured << " expected " << kMountOffset << " mod " << pitch_rad();

@@ -18,7 +18,7 @@
 //
 // 判据写在跑前（见上），每一条都是守恒律或恒等式，因为替代品——「母线电流看起来差不多」——是没人能证伪的数：d-q 功率与
 // 三相电压乘电流两种独立算法必须一致（后者不经 Park、不经 3/2）；有电容时能量账必须闭合，界由积分格式推出（O(h²)）而不是
-// 凑；符号必须是物理的那一个；反事实：理想源下这本账**不可能出错**，于是能量只能以残差出现，而 `accountable == false`
+// 凑；符号必须是物理的那一个；反事实：理想源下这本账 **不可能出错** ，于是能量只能以残差出现，而 `accountable == false`
 // 把它说出来；最后，这个端口默认关闭——不挂 meter 的台架必须与它存在之前完全一致。
 
 #include <cmath>
@@ -161,7 +161,7 @@ TEST(SilBus, TheEnergyBooksCloseToTheIntegratorsOwnAccuracy) {
     // worth a bug report.
     // **这里的梯形是精确的，这是推导不是期望。** 子步内电流恒定，于是 `v1 − v0 = i·h/C`，因此
     // `0.5·C·(v1² − v0²) = 0.5·(v0 + v1)·C·(v1 − v0) = v_mean·i·h` 恒等成立——储能变化与记账的能量是同一个表达式。
-    // 所以残差就是舍入，而端口里任何真实缺陷（漏一个符号、某条通路上掉了一个电流）都远在它之上。因此这个界是**锐的**：
+    // 所以残差就是舍入，而端口里任何真实缺陷（漏一个符号、某条通路上掉了一个电流）都远在它之上。因此这个界是 **锐的** ：
     // 相对值 1e-9，比实测高十二个数量级，却仍远低于任何值得报一个 bug 的误差。
     EXPECT_LT(relative, 1e-9) << "the account must close to round-off: the trapezoid is exact for a piecewise-constant "
                                  "current, so a bigger residual is a defect and not a format";

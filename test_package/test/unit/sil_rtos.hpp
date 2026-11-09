@@ -17,7 +17,7 @@ namespace sil {
 /**
  * @brief [en] A monotonic clock the schedule drives, so that the library's own overrun metric sees the scheduler's
  *             timing rather than the caller's intention.
- * @brief [zh] 由调度模型驱动的单调时钟，使库自己的过载指标看到的是**调度器**的时序，而不是调用方的意图。
+ * @brief [zh] 由调度模型驱动的单调时钟，使库自己的过载指标看到的是 **调度器** 的时序，而不是调用方的意图。
  * @note [en] This is the whole trick of the item: the library already measures `max_period_us` from the platform clock.
  *            A test that hands it a virtual clock it can move is measuring the same code path a real RTOS would drive,
  *            instead of a reimplementation of it.
@@ -42,8 +42,8 @@ class VirtualClock final {
  * @note [en] `PlantHal` is `final` and deletes its copy and move operations, so this holds **references** to its four
  *            members rather than containing it. That is deliberate: a copy would be a second inverter with its own held
  *            duty, and the test would then be measuring the copy.
- * @note [zh] `PlantHal` 是 `final` 且删除了拷贝与移动，所以这里**引用**它的四个成员而不是包含它。这是有意的：一份拷贝就
- *            是第二台带自己保持占空比的逆变器，而测试随后量到的会是那份拷贝。
+ * @note [zh] `PlantHal` 是 `final` 且删除了拷贝与移动，所以这里 **引用** 它的四个成员而不是包含它。这是有意的：一份拷贝
+ *            就是第二台带自己保持占空比的逆变器，而测试随后量到的会是那份拷贝。
  * @since 0.1.9
  */
 class ClockedPlantHal final {
@@ -80,7 +80,7 @@ struct RtosTask final {
 
 /**
  * @brief [en] When the control task actually got the CPU, and whether that met its period.
- * @brief [zh] 控制任务**实际**拿到 CPU 的时刻，以及是否守住了周期。
+ * @brief [zh] 控制任务 **实际** 拿到 CPU 的时刻，以及是否守住了周期。
  * @note [en] `worst_interval_us` is the number the library has to agree with, and `overruns` is the number that must
  *            not be zero when the schedule cannot meet the deadline -- a silent overrun is the failure this item exists
  *            to prevent, and silence is what a schedule model makes visible.
@@ -102,7 +102,7 @@ struct RtosSchedule final {
 
 /**
  * @brief [en] Simulate a preemptive fixed-priority schedule and report when the control task actually ran.
- * @brief [zh] 仿真一个抢占式固定优先级调度，并报告控制任务**实际**在什么时候跑。
+ * @brief [zh] 仿真一个抢占式固定优先级调度，并报告控制任务 **实际** 在什么时候跑。
  * @param blockers [en] higher-priority periodic tasks.
  * @param blockers [zh] 更高优先级的周期任务。
  * @param blocker_count [en] how many.
@@ -121,8 +121,8 @@ struct RtosSchedule final {
  *            answer anything else. Blocking from shared resources would be a different model with different numbers,
  *            and pretending to cover it with this one is how a test ends up asserting something nobody measured.
  * @note [zh] 只有抢占式固定优先级这一层：任务拿到 CPU 就跑完，更高优先级在它释放时抢占，没有锁。这足以回答本项唯一要问
- *            的问题——**控制任务什么时候才跑得上**——并且刻意不足以回答别的。共享资源造成的阻塞是另一个模型、另一组数字，
- *            用这个模型假装覆盖它，正是一条用例最后断言了没人量过的东西的方式。
+ *            的问题—— **控制任务什么时候才跑得上** ——并且刻意不足以回答别的。共享资源造成的阻塞是另一个模型、另一组数
+ *            字，用这个模型假装覆盖它，正是一条用例最后断言了没人量过的东西的方式。
  * @since 0.1.9
  */
 inline auto simulate_control_task(const RtosTask* blockers, std::size_t blocker_count,
@@ -245,7 +245,7 @@ inline auto simulate_control_task(const RtosTask* blockers, std::size_t blocker_
         // late" indistinguishable from "nothing is late" -- and the first version of this metric reported exactly
         // that. Lateness is an absolute statement about the timeline; jitter is a relative one, and they are the
         // two things this item exists to keep apart.
-        // 从绝对的理想时刻 `k * period` 量，**不是**从第一次启动量：把恒定偏移从"相对第一次启动"的数里减掉，会让"每次
+        // 从绝对的理想时刻 `k * period` 量， **不是** 从第一次启动量：把恒定偏移从"相对第一次启动"的数里减掉，会让"每次
         // 都晚 20 us"与"一点都不晚"无法区分——这个指标的第一版报的正是后者。迟到是关于时间轴的绝对陈述，抖动是相对
         // 的那一个，而这正是本项要分开的两件事。
         const std::uint32_t ideal = k * control_period_us;

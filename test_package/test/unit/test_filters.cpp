@@ -208,8 +208,8 @@ TEST(FirstOrderLowPass, TheCornerIsBelowTheRequestAndTheShortfallGrowsWithTheSam
   // than the analogue prototype, so the real corner sits **below** the request, by 1.5 % at `fc*dt = 0.005` and by a
   // third at `fc*dt = 0.25`.
   // `configure(fc, dt)` 用 `alpha = w/(1+w)`（`w = 2π·fc·dt`）做预畸变，它不是精确指数。后果值得公布，因为使用者读
-  // `cutoff_hz` 时读的是"−3 dB 点"：并不是。在解析 z 域响应上量出——而且**方向与最直觉的猜测相反**：这个递推比模拟原型
-  // **更快**，所以真实转折点在请求值**以下**，`fc·dt = 0.005` 时低 1.5 %，`0.25` 时低三分之一。
+  // `cutoff_hz` 时读的是"−3 dB 点"：并不是。在解析 z 域响应上量出——而且 **方向与最直觉的猜测相反** ：这个递推比模拟原型
+  // **更快** ，所以真实转折点在请求值 **以下** ，`fc·dt = 0.005` 时低 1.5 %，`0.25` 时低三分之一。
   const double dt = 50.0e-6; // 20 kHz
   double previous = 1.0;
   for (const double fc : {100.0, 500.0, 1000.0, 2000.0, 5000.0}) {
@@ -218,7 +218,7 @@ TEST(FirstOrderLowPass, TheCornerIsBelowTheRequestAndTheShortfallGrowsWithTheSam
     std::printf("[filters] fc %6.1f Hz at 20 kHz (fc*dt %.4f) -> real -3 dB %8.2f Hz = %.4f x the request\n", fc,
                 fc * dt, corner, ratio);
     // Always *below* the request, and the shortfall grows with `fc*dt` -- the direction is what a user needs.
-    // 永远**低于**请求值，且缺口随 `fc·dt` 增大——方向正是使用者需要知道的。
+    // 永远 **低于** 请求值，且缺口随 `fc·dt` 增大——方向正是使用者需要知道的。
     EXPECT_LT(ratio, 1.0) << "fc " << fc;
     EXPECT_LT(ratio, previous) << "the shortfall stopped growing with fc*dt at fc " << fc;
     previous = ratio;
@@ -276,7 +276,7 @@ TEST(FirstOrderLowPass, ATenthOfAPeriodWrongMovesTheCornerByRoughlyThatMuch) {
   const double nominal = lowpass_corner_hz(alpha_of(fc, dt), dt);
   for (const double k : {0.9, 0.95, 1.05, 1.1}) {
     // The *configured* period is `k*dt`; the loop still samples at `dt`, so the response is evaluated at `dt`.
-    // **配置**的周期是 `k·dt`；环仍然按 `dt` 采样，所以响应在 `dt` 上取值。
+    // **配置** 的周期是 `k·dt`；环仍然按 `dt` 采样，所以响应在 `dt` 上取值。
     const double wrong = lowpass_corner_hz(alpha_of(fc, k * dt), dt);
     std::printf("[filters] period x%.2f | corner %.2f Hz | ratio %.4f vs k %.4f\n", k, wrong, wrong / nominal, k);
     EXPECT_NEAR(k, wrong / nominal, 0.06) << "period x" << k;

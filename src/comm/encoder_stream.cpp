@@ -13,9 +13,9 @@ namespace {
 // truncates it, and the encoder and decoder then disagree exactly when that bit is set -- measured at position 2047, where the
 // recomputed value was `0x7B` against `0x3B` on the wire. The case that caught it was the exhaustive one, and it caught it as a
 // *decode failure* rather than as a bad CRC, which is why the sum was worth checking by hand.
-// `x^6 + x + 1` 是 `0b1000011`，但六位寄存器只装**余数**，`x^6` 那一项隐含在移出位里，所以常数是 `0b000011`。写成 `0x43`
+// `x^6 + x + 1` 是 `0b1000011`，但六位寄存器只装 **余数** ，`x^6` 那一项隐含在移出位里，所以常数是 `0b000011`。写成 `0x43`
 // 会折入一个寄存器装不下的位：它漏进第 6 位、线上被截断，于是只要该位被置上，编码侧与解码侧就不一致——实测出现在位置 2047，
-// 重算值 `0x7B` 对线上 `0x3B`。抓到它的是那条穷举用例，而且它表现为一次**解码失败**而不是一次坏 CRC，所以把这个和手工核对一遍是值得的。
+// 重算值 `0x7B` 对线上 `0x3B`。抓到它的是那条穷举用例，而且它表现为一次 **解码失败** 而不是一次坏 CRC，所以把这个和手工核对一遍是值得的。
 constexpr std::uint8_t kCrcPoly = 0x03U;
 constexpr int kBitsPerByte = 8;
 
@@ -129,7 +129,7 @@ auto TurnAssembler::push(std::uint32_t position, bool crc_ok) noexcept -> Step {
     // **can** move between two frames, which is the caller's knowledge; that is why `max_step` is a construction parameter and
     // why it is capped at half a turn (above that the two readings are both plausible and the question is undecidable).
     // 原始差值本身分不清"正向回绕"与"反向跳变"——`4090 -> 5` 在正向时是 +11 个计数、反向时是 −4085，而两者是同样的两个数。唯一能
-    // 决定的是轴在两帧之间**能**走多远，那是调用方的知识；这就是 `max_step` 是构造参数的原因，也是它被限制在半圈以内的原因
+    // 决定的是轴在两帧之间 **能** 走多远，那是调用方的知识；这就是 `max_step` 是构造参数的原因，也是它被限制在半圈以内的原因
     // （超过半圈，两种读法都成立，问题本身不可判定）。
     if (difference > half) {
         difference -= static_cast<std::int64_t>(span);

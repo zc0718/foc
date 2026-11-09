@@ -15,7 +15,7 @@
  *            per compiler; today nothing forks.
  * @note [zh] 两个宏，不是一个可移植性库。C 面恰好只需要一个属性——"别忽略这个返回值"——而它的写在本库支持的每个编译器上都
  *            只是三行。quirks 库会买来一百个别的属性，这里一个都没有调用方，还会在每个 C 使用方前面多放一条包含路径。等
- *            到需要写**第四个**宏且它非按编译器分叉不可时再重开这个问题；今天没有任何东西分叉。
+ *            到需要写 **第四个** 宏且它非按编译器分叉不可时再重开这个问题；今天没有任何东西分叉。
  * @since 0.1.12
  */
 #if defined(__has_attribute)
@@ -39,10 +39,10 @@
  *            form warns, the bind-then-void form is silent.
  * @note [zh] 在这个存在之前，`foc_motor_create()` 的 `foc_err_t` 可以被无声丢掉：句柄保持空，之后每个调用都答
  *            `FOC_ERR_PARAM`，而调用方的构建里一个字都不说。这正是本库拒绝接受的那类缺陷的特征——一个看起来像对的错误答
- *            案。有意丢掉返回码必须**写出来**：`(void)foc_set_speed(m, v);` 在 GCC 上**并不能**消除这个告警——
+ *            案。有意丢掉返回码必须 **写出来** ：`(void)foc_set_speed(m, v);` 在 GCC 上 **并不能** 消除这个告警——
  *            `__attribute__((warn_unused_result))` 不认这个 void 转换（`[[nodiscard]]` 才认）。真正能过的写法是先绑一个
- *            变量：`foc_err_t e = foc_set_speed(m, v); (void)e;`——而且它**故意**不是最省事的那种写法。用 `gcc -std=c11
- *            -Wall -Wextra` 即可复现：转 void 那种告警，绑变量那种静默。
+ *            变量：`foc_err_t e = foc_set_speed(m, v); (void)e;`——而且它 **故意** 不是最省事的那种写法。用 `gcc
+ *            -std=c11 -Wall -Wextra` 即可复现：转 void 那种告警，绑变量那种静默。
  * @since 0.1.12
  */
 #if defined(__cplusplus) && (__cplusplus >= 201703L)
@@ -163,7 +163,7 @@ typedef enum foc_observer {
  *   流是参数错误而不是静默回落。 `deadtime_ns` 与 `speed_loop_period_s` 的 0 按字面生效，因为 0 对它们都是合法取值。
  *
  *   `align_*` 字段是那条规则的例外：它们按字面生效，`align_current_a == 0` 意为“不做对齐” ——对偏置已知的电机这是一个合
- *   法且常见的选择。但**半配置**的对齐会被拒绝：`align_current_a` 为 0 时其余 `align_*` 字段也必须为 0；它非 0 时
+ *   法且常见的选择。但 **半配置** 的对齐会被拒绝：`align_current_a` 为 0 时其余 `align_*` 字段也必须为 0；它非 0 时
  *   `align_hold_s` 与 `align_tolerance_rad` 变成必填。
  * @since 0.1.0
  * @exporter
@@ -319,8 +319,8 @@ typedef struct foc_motor_command {
  *            current instead of a magic voltage), and the two cutoffs are the fixed values the envelope sweep measured
  *            -- 200 Hz for demodulation, 200 Hz for the published speed.
  * @note [zh] 每个字段都转达一条实测规则而不是偏好：载波取该控制率能分辨的最高值（也就是实测最好的角度偏差——8000 Hz 比
- *            2000 Hz 好 33 倍），幅值取能拉出**你**预算的高频电流所需的那份伏特（`I_hf·ω_h·Ld`，于是幅值变成一个关于注
- *            入电流的决定，而不是一个魔法电压），两个截止频率是包线扫描量到的固定值——解调 200 Hz、已发布转速 200 Hz。
+ *            2000 Hz 好 33 倍），幅值取能拉出 **你** 预算的高频电流所需的那份伏特（`I_hf·ω_h·Ld`，于是幅值变成一个关于
+ *            注入电流的决定，而不是一个魔法电压），两个截止频率是包线扫描量到的固定值——解调 200 Hz、已发布转速 200 Hz。
  * @since 0.1.7
  */
 typedef struct foc_hfi_sizing {
@@ -373,7 +373,7 @@ typedef struct foc_motor_status {
      an *absolute* position means anything: alignment resolves the electrical
      offset only, and only modulo one pole pitch. */
     /* 自构造或复位以来是否见过索引标记，见过为 1。追加字段，由 struct_size
-     门控。这个标志决定**绝对**位置是否有
+     门控。这个标志决定 **绝对** 位置是否有
      意义：对齐只解决电角度偏置，而且只能定到一个极距的模。 */
     int32_t homed;
     /* 1 when the reconstruction has seen a step too large to unwrap and is
@@ -405,7 +405,7 @@ typedef struct foc_motor_status {
  * not reach at all: `protection.hpp`, `commissioning.hpp`, `board_check.hpp`,
  * `field_weakening.hpp` and `MtpaReference`. A "stable C11 ABI" that only covers
  * the motor object is a promise about half the library.
- * [zh] 这些之所以存在，是因为 C++ 侧长出了五个 C 消费方**根本够不到**的模块：
+ * [zh] 这些之所以存在，是因为 C++ 侧长出了五个 C 消费方 **根本够不到** 的模块：
  * `protection.hpp`、`commissioning.hpp`、`board_check.hpp`、`field_weakening.hpp` 与
  * `MtpaReference`。只覆盖电机对象的"稳定 C11 ABI"是关于半个库的承诺。
  *
@@ -668,7 +668,7 @@ typedef struct foc_identify_result {
  * @brief [en] Protection thresholds. Every field is used exactly as given -- a zero is a zero and it will trip
  *             immediately. Pass NULL to `foc_protector_create()` to get the library defaults for the nominal 24 V / 3 A
  *             machine instead of guessing them.
- * @brief [zh] 保护阈值。每个字段**按原样**使用——零就是零，它会立刻跳闸。要标称 24 V / 3 A 机器上的库默认值，给
+ * @brief [zh] 保护阈值。每个字段 **按原样** 使用——零就是零，它会立刻跳闸。要标称 24 V / 3 A 机器上的库默认值，给
  *             `foc_protector_create()` 传 NULL，而不是自己猜。
  * @since 0.1.1
  * @exporter
@@ -760,14 +760,14 @@ typedef struct foc_hal_callbacks {
      mark the axis can never be homed, which is a fact rather than an error and
      comes back as `homed == 0`. */
     /* 可选：这个位置源是否有索引标记，有为非零；NULL 表示没有。追加字段，由
-     struct_size 门控，因为这是**输入**
+     struct_size 门控，因为这是 **输入**
      结构：按旧头编译的调用方从未分配这两个指针，照旧去读就是读它的栈。没有标记时轴永远无法回零——那是一个事实
      而不是错误，并以 `homed == 0` 回到调用方。 */
     int32_t (*position_has_index)(void *user);
     /* Optional: non-zero **only** on the tick the mark was crossed, never as a
      level -- a level is counted once per tick spent near the mark. Appended and
      gated by struct_size. */
-    /* 可选：**仅在**越过标记的那一拍为非零，绝不能是电平——电平会把一次经过数成很多次。追加字段，由
+    /* 可选： **仅在** 越过标记的那一拍为非零，绝不能是电平——电平会把一次经过数成很多次。追加字段，由
      struct_size 门控。 */
     int32_t (*position_index_pulse)(void *user);
     /* Required: non-zero when the power stage's own nFAULT is asserted. Appended
@@ -782,9 +782,9 @@ typedef struct foc_hal_callbacks {
      reviewer can see. Polarity is the host's: return the sense you mean, not
      the pin level. */
     /* 必需：功率级自己的 nFAULT 有效时返回非零。与上面两个字段一样是追加的、
-     由 struct_size 门控，**但缺失时的规矩相反**：结构够不到这个字段的调用方
+     由 struct_size 门控， **但缺失时的规矩相反** ：结构够不到这个字段的调用方
      会被 FOC_ERR_NOT_IMPL 拒绝，而不是被塞一个"无故障"的默认值。这是本头文件
-     里第一个不照顾旧调用方的字段，理由是那条照顾条款**本身就是**危险：一台从
+     里第一个不照顾旧调用方的字段，理由是那条照顾条款 **本身就是** 危险：一台从
      没问过桥是否去饱和的电机，从外面看与一台问过并被告知一切正常的电机一样。
      没有这根引脚的主控方从自己的函数里 return 0——一行评审看得见的话。极性归
      主控方：返回你想表达的语义，不是引脚电平。 */
@@ -800,8 +800,8 @@ typedef struct foc_protector_s *foc_protector_t;
  * @note [en] Marked **experimental**: the procedure is stable, the struct layout is not promised across releases. A
  *            session is a *procedure*, not a register -- there is no way to read it tick by tick, only to feed it a
  *            window and ask for an answer, which is why it is a handle of its own rather than a motor register.
- * @note [zh] 标记为 **experimental**：流程是稳定的，结构布局不承诺跨版本不变。一次会话是一个**过程**而不是一个寄存器——
- *            没法逐拍读它，只能喂一段窗口再要一个答案，所以它是自己的句柄而不是电机寄存器。
+ * @note [zh] 标记为 **experimental** ：流程是稳定的，结构布局不承诺跨版本不变。一次会话是一个 **过程** 而不是一个寄存器
+ *            —— 没法逐拍读它，只能喂一段窗口再要一个答案，所以它是自己的句柄而不是电机寄存器。
  * @since 0.1.9
  * @exporter
  */
@@ -812,7 +812,7 @@ typedef struct foc_autotune_s *foc_autotune_t;
  * @brief [zh] 调用方对这台机器的认知，以及测量结果允许偏离多少。
  * @note [en] `kt_nm_per_a` is used only for the fallback gains and for `j_kg_m2`; the fit identifies two **ratios**, so
  *            a wrong nameplate cannot move the gains -- it can only make `valid` come back false, which is the point.
- * @note [zh] `kt_nm_per_a` 只用于回退增益与 `j_kg_m2`；拟合辨识的是两个**比值**，所以铭牌错了不会移动增益——它只会让
+ * @note [zh] `kt_nm_per_a` 只用于回退增益与 `j_kg_m2`；拟合辨识的是两个 **比值** ，所以铭牌错了不会移动增益——它只会让
  *            `valid` 变假，而这正是它的用途。
  * @since 0.1.9
  * @exporter
@@ -837,8 +837,8 @@ typedef struct foc_autotune_config {
  *            produced -- so a caller that applies whatever it gets applies nothing new. A fallback of zero would be a
  *            drive that cannot produce torque; a fallback of the measured value would be a silent re-tune to a machine
  *            nobody described.
- * @note [zh] `valid` 为 0 时携带的是**铭牌**增益——正是 `foc_speed_pi_config()` 会产出的那些——于是"拿到什么就用什么" 的
- *            调用方什么都没换。回退成零是一台出不了力矩的驱动器；回退成实测值则是悄悄把驱动器整到一台没人描述过的机器
+ * @note [zh] `valid` 为 0 时携带的是 **铭牌** 增益——正是 `foc_speed_pi_config()` 会产出的那些——于是"拿到什么就用什么"
+ *            的调用方什么都没换。回退成零是一台出不了力矩的驱动器；回退成实测值则是悄悄把驱动器整到一台没人描述过的机器
  *            上。
  * @since 0.1.9
  * @exporter
@@ -911,8 +911,8 @@ typedef struct foc_trace_sample {
  *            arguments cannot describe a step at all. A bandwidth of 0 therefore never means "not measured by
  *            accident".
  * @note [zh] `status` 是诊断通道，不是装饰：`FOC_OK` 表示拟合到一阶衰减，`FOC_ERR_STATE` 表示窗口里没有可用的衰减—— 此
- *            时 `bandwidth_rad_s` 为 0，**而稳定时间等数仍然有效**，因为一段响应可以稳定却不可拟合。`FOC_ERR_PARAM` 表
- *            示参数根本描述不了一个阶跃。因此带宽为 0 永远不会是"不小心没测"。
+ *            时 `bandwidth_rad_s` 为 0， **而稳定时间等数仍然有效** ，因为一段响应可以稳定却不可拟合。`FOC_ERR_PARAM`
+ *            表示参数根本描述不了一个阶跃。因此带宽为 0 永远不会是"不小心没测"。
  * @since 0.1.8
  * @exporter
  */
@@ -1018,8 +1018,8 @@ typedef struct foc_cogging_harmonic {
  * @brief [zh] 一次齿槽学习会话的句柄。
  * @note [en] Marked **experimental**, like `foc_autotune_t`: the procedure is stable, the layout is not promised across
  *            releases. A session exists because learning is a *window* rather than a value.
- * @note [zh] 与 `foc_autotune_t` 一样标记为 **experimental**：流程稳定，布局不承诺跨版本不变。会话之所以存在，是因为学
- *            习是一段**窗口**而不是一个值。
+ * @note [zh] 与 `foc_autotune_t` 一样标记为 **experimental** ：流程稳定，布局不承诺跨版本不变。会话之所以存在，是因为学
+ *            习是一段 **窗口** 而不是一个值。
  * @since 0.1.9
  * @exporter
  */
@@ -1031,8 +1031,8 @@ typedef struct foc_cogging_learn_s *foc_cogging_learn_t;
  * @note [en] The speed band is not a safety check bolted on: the learner reads the current a *speed loop* supplies, so
  *            what it learns carries that loop's gain and lag. Inside the band the lag is a few degrees; above it the
  *            table bakes in a phase error no averaging removes.
- * @note [zh] 转速带不是外挂的安全检查：学习器读的是**速度环**供给的电流，所以它学到的带着那个环路的增益与滞后。带内滞后
- *            只有几度；带外则把一个再怎么平均也去不掉的相位误差烘进表里。
+ * @note [zh] 转速带不是外挂的安全检查：学习器读的是 **速度环** 供给的电流，所以它学到的带着那个环路的增益与滞后。带内滞
+ *            后只有几度；带外则把一个再怎么平均也去不掉的相位误差烘进表里。
  * @since 0.1.9
  * @exporter
  */
@@ -1057,9 +1057,9 @@ typedef struct foc_cogging_learn_config {
  *            is the whole capacity contract: a caller that offered too few slots is told how many the answer needs
  *            instead of being handed a shorter table that looks complete, and a caller that asked for a report only
  *            (`out == NULL`) learns the same numbers without owning a buffer.
- * @note [zh] `required` 与 `capacity` 在**每一次**返回时都报出，包括什么都没写的那些。这就是完整的容量契约：槽位给少了
- *            的调用方会被告知答案需要几条，而不是拿到一张看起来完整的短表；只要报告（`out == NULL`）的调用方则不必持有
- *            缓冲区也能拿到同样的数。
+ * @note [zh] `required` 与 `capacity` 在 **每一次** 返回时都报出，包括什么都没写的那些。这就是完整的容量契约：槽位给少
+ *            了的调用方会被告知答案需要几条，而不是拿到一张看起来完整的短表；只要报告（`out == NULL`）的调用方则不必持
+ *            有缓冲区也能拿到同样的数。
  * @since 0.1.9
  * @exporter
  */

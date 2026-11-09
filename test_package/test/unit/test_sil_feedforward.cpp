@@ -2,7 +2,7 @@
 // scenario proves the first optional stage actually does something on a coupled machine, and that it
 // does not cost stability. Both runs use the same plant, nameplate and tuning, so the only variable
 // is the feedforward policy.
-// S6 - 闭环下的前馈。S1/S2/S5 证明的是**默认组合**（无前馈）；本场景证明第一个可选阶段在一台
+// S6 - 闭环下的前馈。S1/S2/S5 证明的是 **默认组合** （无前馈）；本场景证明第一个可选阶段在一台
 // 存在轴间耦合的电机上确实起作用，并且不以稳定性为代价。两次运行共用同一 plant、同一铭牌、同一
 // 整定，唯一变量就是前馈策略。
 
@@ -230,7 +230,7 @@ auto psi_f_wb() -> double {
  *   没有前馈时电流环必须提供全部电压，于是它稳定下来的数就是对电机的一次测量： `vq = Rs*iq + ω_e*(Ld*id + ψ_f)`。这里的
  *   模型是 plant 自己的稳态（`diq/dt = 0`），它与 `DecouplingFeedforward` 内部的任何东西都是独立来源。
  *
- *   **不可分**的是那个配对：`Ld` 与 `ψ_f` 只以 `Ld*id + ψ_f` 的形式出现，所以 `id = 0` 时这个方程量到的是磁链、对 `Ld`
+ *   **不可分** 的是那个配对：`Ld` 与 `ψ_f` 只以 `Ld*id + ψ_f` 的形式出现，所以 `id = 0` 时这个方程量到的是磁链、对 `Ld`
  *   一无所知。这就是本用例要跑第二个 `id = -1 A` 工作点的原因，也是"从一个工作点辨识电感" 的调试流程实际在量一个它拆不
  *   开的和的原因。
  */
@@ -340,8 +340,8 @@ TEST(SilFeedforward, AParameterMismatchLeavesExactlyItsFractionOfTheTermBehind) 
  *   leave the *same* residual. That is an exact identity, not an approximation, and it is the reason "the feedforward
  *   matched at this point" is not evidence that its inductance is right.
  *
- *   `id = 0` 时 q 轴那一项是 `omega_e*psi_f`，与 `Ld` 说什么无关，于是两个只在 `Ld` 上不同的配置留下**相同** 的残差。这
- *   是一条恒等式而不是近似，也正是"前馈在这个点上对上了"不能证明它的电感是对的原因。
+ *   `id = 0` 时 q 轴那一项是 `omega_e*psi_f`，与 `Ld` 说什么无关，于是两个只在 `Ld` 上不同的配置留下 **相同** 的残差。
+ *   这是一条恒等式而不是近似，也正是"前馈在这个点上对上了"不能证明它的电感是对的原因。
  */
 TEST(SilFeedforward, AtOneOperatingPointTheInductanceIsInvisibleOnTheQAxis) {
     const foc::motor::MotorConfig mc = machine();
@@ -401,13 +401,13 @@ TEST(SilFeedforward, AtOneOperatingPointTheInductanceIsInvisibleOnTheQAxis) {
  *   `omega*Lq*iq/vq`, i.e. about 0.033 rad here, and it explains why commissioning identifies inductance from the *q*
  *   axis and never from d.
  *
- *   d 轴稳态是 `vd = Rs*id - ω_e*Lq*iq`，看上去是辨识 `Lq` 的干净途径。通过闭环它**不是**：指令在**估计** 坐标系里构
- *   造、在 plant 的**真实**坐标系里施加，于是电机收到的是被估计器角误差 `delta` 旋转过的指令。一阶上这给 d 轴加上了
+ *   d 轴稳态是 `vd = Rs*id - ω_e*Lq*iq`，看上去是辨识 `Lq` 的干净途径。通过闭环它 **不是** ：指令在 **估计** 坐标系里构
+ *   造、在 plant 的 **真实** 坐标系里施加，于是电机收到的是被估计器角误差 `delta` 旋转过的指令。一阶上这给 d 轴加上了
  *   `vq*delta`——而 `vq` 是环里最大的那个数。
  *
- *   在这台电机上实测：交叉项是 `-ω*Lq*iq`，混淆量达到它的 **41 %**。用两轴解出 `delta` 得 **0.0131 rad（0.75°）**，是合
- *   理的观测器误差，且在 q 轴上不可见（`vd*delta` 只占 `vq` 的约 3 %）—— 这正是上面那个 q 轴辨识能到 0.06 %、而同样的步
- *   骤在 d 轴上差 41 % 的原因。
+ *   在这台电机上实测：交叉项是 `-ω*Lq*iq`，混淆量达到它的 **41 %** 。用两轴解出 `delta` 得 **0.0131 rad（0.75°）** ，是
+ *   合理的观测器误差，且在 q 轴上不可见（`vd*delta` 只占 `vq` 的约 3 %）—— 这正是上面那个 q 轴辨识能到 0.06 %、而同样的
+ *   步骤在 d 轴上差 41 % 的原因。
  *
  *   于是预算是显式的：从 d 轴电压辨识 `Lq` 要求角度已知到 `ω*Lq*iq/vq`，这里约 0.033 rad；这也解释了为什么调试流程从
  *   **q** 轴辨识电感、而不从 d 轴。
@@ -447,7 +447,7 @@ TEST(SilFeedforward, TheDAxisIsConfoundedByTheAngleErrorMoreThanByTheTermItself)
  * @brief [en] Each inductance multiplies **its own** cross term, which is what makes the feedforward dual-inductance
  *             rather than a single-`L` approximation wearing two names.
  *
- * @brief [zh] 每个电感乘的是**它自己**的交叉项，这正是这个前馈是双电感、而不是一个披着两个名字的单 `L` 近似的意思。
+ * @brief [zh] 每个电感乘的是 **它自己** 的交叉项，这正是这个前馈是双电感、而不是一个披着两个名字的单 `L` 近似的意思。
  *
  *   `v_d -= omega*Lq*iq` and `v_q += omega*Ld*id` is an asymmetry worth testing rather than reading: a single-`L`
  *   implementation would put the same letter in both places, and on a machine with `Lq/Ld = 3` that is a
@@ -461,11 +461,11 @@ TEST(SilFeedforward, TheDAxisIsConfoundedByTheAngleErrorMoreThanByTheTermItself)
  *   moves*, which is the property that makes dual inductance worth having.
  *
  *   `v_d -= ω·Lq·iq` 与 `v_q += ω·Ld·id` 这个不对称值得测而不是读：单 `L` 的实现会在两处放同一个字母，而在 `Lq/Ld = 3`
- *   的机器上那是两项之一的**三倍**误差。测法是**两次只差一个参数的运行相减**——因为 d 轴带着一个混淆量（`vq·δ`，实测占交
- *   叉项的 55.5 %），它会把 10 % 的失配彻底淹没；两次运行工作点相同，相减即抵消。
+ *   的机器上那是两项之一的 **三倍** 误差。测法是 **两次只差一个参数的运行相减** ——因为 d 轴带着一个混淆量（`vq·δ`，实测
+ *   占交叉项的 55.5 %），它会把 10 % 的失配彻底淹没；两次运行工作点相同，相减即抵消。
  *
  *   两条预测各一行：`Lq` 缩放 `(1+eps)` 在 d 轴留下 `+eps·ω·Lq·iq`、q 轴不留；`Ld` 缩放则在 q 轴留下 `-eps·ω·Ld·id`、 d
- *   轴不留。于是两个参数靠**哪个轴动**就能分开——这正是双电感值得拥有的性质。
+ *   轴不留。于是两个参数靠 **哪个轴动** 就能分开——这正是双电感值得拥有的性质。
  */
 TEST(SilFeedforward, EachInductanceMultipliesItsOwnCrossTerm) {
     const foc::motor::MotorConfig mc = machine();
@@ -522,7 +522,7 @@ TEST(SilFeedforward, EachInductanceMultipliesItsOwnCrossTerm) {
     // not say which mismatch is more dangerous, because the *current* on each axis does half the work. Writing the
     // relation out is what stops the saliency ratio from being quoted as if it were the answer.
     // 而两个系数之比是 `(Lq/Ld)·(iq/|id|)`，不是 `Lq/Ld`：只看电感比说不清哪种失配更危险，因为每个轴上的
-    // **电流**也出了一半力。把关系写出来，才不会把凸极比当成答案去引用。
+    // **电流** 也出了一半力。把关系写出来，才不会把凸极比当成答案去引用。
     const double predicted_ratio = (lq / ld) * (exact.i_q / std::fabs(exact.i_d));
     const double measured_ratio = std::fabs(d_shift_lq) / std::fabs(q_shift_ld);
     std::printf("[dual] coefficient ratio %.4f, and (Lq/Ld)*(iq/|id|) = %.4f (Lq/Ld alone is %.3f, which is "

@@ -4,7 +4,7 @@
 // number CI can print, which is what turns the known gap into a measured one.
 // S13 - 逆变器死区。本场景只为一件事存在：PRD 的 U1 说"死区畸变在 SIL
 // 里无法验证"，而那是一句关于
-// **被控对象**的话。加上死区模型之后，畸变变成 CI
+// **被控对象** 的话。加上死区模型之后，畸变变成 CI
 // 能打印出来的数字——这才把"已知缺口"变成"已测缺口"。
 
 #include <algorithm>
@@ -171,10 +171,10 @@ TEST(SilDeadtime, LowCurrentTrackingDegradesOnceDeadTimeIsModelled) {
   // the dead time removes; at the very lowest amplitudes this model's `sign(0)
   // = 0` makes the zero-crossing neighbourhood *better* than hardware --
   // exactly the idealisation U1 warns about.
-  // 畸变对幅值**不是单调的**，所以本用例取 2 rad/s 而不是"越慢越好"——1 us
+  // 畸变对幅值 **不是单调的** ，所以本用例取 2 rad/s 而不是"越慢越好"——1 us
   // 死区下实测最差 误差比值：1 rad/s → x1.00，2 rad/s → x1.48，5 rad/s →
   // x1.13，10 rad/s → x1.03。 幅值大时电阻压降与反电动势远大于死区拿走的 0.48
-  // V；幅值极低时本模型的 `sign(0) = 0` 让零电流附近比真实硬件**更好**——这正是
+  // V；幅值极低时本模型的 `sign(0) = 0` 让零电流附近比真实硬件 **更好** ——这正是
   // U1 所警告的那层理想化。
   const SineResult ideal = run_low_amplitude_sine(0.0F);
   const SineResult with_deadtime =
@@ -210,7 +210,7 @@ TEST(SilDeadtime, CompensatingTheDeadTimeClosesTheGapItOpened) {
   // is *closable* by a library stage rather than by hand-tuning, and by how
   // much. Same scenario, same plant, same dead time -- only the modulator
   // differs.
-  // 上一条用例的意义在于它量出了一个缺口。这一条证明缺口可以**被库里的一个环节**关掉而不是靠手调，
+  // 上一条用例的意义在于它量出了一个缺口。这一条证明缺口可以 **被库里的一个环节** 关掉而不是靠手调，
   // 并量化关掉了多少。同样的场景、同样的 plant、同样的死区——只有调制器不同。
   const float v_dead = deadtime_voltage(24.0F);
   const SineResult ideal = run_low_amplitude_sine(0.0F);
@@ -251,7 +251,7 @@ TEST(SilDeadtime, ASmoothZeroCrossingIsNotWhatSignCompensationAssumes) {
   // not modelling what is happening. 补偿器把逆变器建模成
   // `v_dead·sign(i)`。真实逆变器钳位到母线并平滑趋近，因此在过零附近模型会**过修
   // 正**——那正是本库消不掉的那 14%
-  // 里的成因。用测量说明：打开平滑性，**补偿后**的结果必须变差，因为
+  // 里的成因。用测量说明：打开平滑性， **补偿后** 的结果必须变差，因为
   // 补偿没有在建模真实发生的事情。
   const float v_dead = deadtime_voltage(24.0F);
   std::printf("[S13] sweep of the dead-zone transition width (compensated):\n");
@@ -283,11 +283,11 @@ TEST(SilDeadtime, TheRampFadesTheCorrectionWhereTheSignIsNotYetInformation) {
   // legacy column still reproduces the recorded numbers (otherwise the
   // comparison is against a moving target). 从另一侧修掉发现
   // 1。上面的扫描显示：只要过零不是理想阶跃，`sign()`
-  // 修正就**比不补更差**——它在
+  // 修正就 **比不补更差** ——它在
   // 逆变器自身损耗已经淡到一小部分的电流处，仍命令了一个完整的 ±0.48 V
   // 方波。斜坡 `clamp(i/I_ripple)` 才是死区误差平均值本身（推导见
   // `DeadTimeCompensator`），所以它恰好在阶跃过修的地方淡出。
-  // 两件事必须**一起**断言：斜坡从不输给不补偿（"什么都不做"也能通过这一条），以及旧的那一列仍复现
+  // 两件事必须 **一起** 断言：斜坡从不输给不补偿（"什么都不做"也能通过这一条），以及旧的那一列仍复现
   // 记录值（否则就是拿一个会动的靶子做比较）。
   const float v_dead = deadtime_voltage(24.0F);
   const float ripple =
@@ -370,7 +370,7 @@ constexpr float kSwitchingTDead = 1.0e-6F;
 /**
  * @brief [en] Closed-loop current hold through a *switching* inverter, with the dead-time stage set to one of three
  *             states.
- * @brief [zh] 经**开关**逆变器的闭环电流保持，死区环节取三种状态之一。
+ * @brief [zh] 经 **开关** 逆变器的闭环电流保持，死区环节取三种状态之一。
  */
 auto hold_current_switched(float iq_ref_a, float v_dead, float ripple_a)
     -> float {
@@ -469,8 +469,8 @@ TEST(SilDeadtime,
   // was taken from the wrong quantity (the switching ripple, rather than
   // the width over which the loss actually fades).
   // 中间电流：阶跃是对的，斜坡差 6.6 倍，因为淡出太宽——硬件已经 100%
-  // 的地方它才 80%。如实记为回归：A2 淡出的**形状**是对的（见 S19
-  // V6），**尺度**取错了量（取的是开关纹波，而不是损失真正淡出的宽度）。
+  // 的地方它才 80%。如实记为回归：A2 淡出的 **形状** 是对的（见 S19
+  // V6）， **尺度** 取错了量（取的是开关纹波，而不是损失真正淡出的宽度）。
   EXPECT_LT(rows[1].step, rows[1].off) << "the step does help mid-range";
   EXPECT_GT(rows[1].ramp, 2.0F * rows[1].step)
       << "the ramp under-compensates mid-range";
@@ -479,7 +479,7 @@ TEST(SilDeadtime,
   // stage is *worse than nothing* -- and the ramp is the least bad, which
   // is all a fade of the wrong width can be. 近零电流：A2
   // 原来的结论仍然成立——`sign()`
-  // 环节**比不补更差**——而斜坡是三者中最不坏的，这正是"宽度
+  // 环节 **比不补更差** ——而斜坡是三者中最不坏的，这正是"宽度
   // 取错的淡出"能做到的全部。
   EXPECT_GT(rows[2].step, 10.0F * rows[2].off)
       << "sign() must remain worse than nothing near zero";
@@ -497,7 +497,7 @@ constexpr float kDt =
  * @brief [en] One settled operating point of a *rotating* current: the plant is locked, the commanded vector spins at
  *             `kSweepHz`, and the fundamental is recovered by lock-in. Returns the current amplitude and the mean
  *             projection of the command along it.
- * @brief [zh] **旋转**电流下的一个稳定工作点：plant 锁住、指令矢量以 `kSweepHz` 旋转，基波用锁相取回。返回电流幅值，以
+ * @brief [zh] **旋转** 电流下的一个稳定工作点：plant 锁住、指令矢量以 `kSweepHz` 旋转，基波用锁相取回。返回电流幅值，以
  *             及指令在电流方向上的平均投影。
  */
 auto rotate_point(float v_mag, float v_bus) -> std::pair<float, float> {
@@ -579,8 +579,8 @@ TEST(SilDeadtime,
   // rotor with a DC command is a relay (the loss pins the current at zero
   // until the command exceeds 1.33*dV), which is why the first attempt at
   // this -- a DC d-axis sweep -- returned `valid = 0`.
-  // P4。这个宽度是补偿级唯一需要的数、也是唯一没人能从铭牌算出来的数，所以必须**测**。实验必须是
-  // **旋转**电流：锁转子加直流指令是一个继电器（指令不超过 1.33·dV
+  // P4。这个宽度是补偿级唯一需要的数、也是唯一没人能从铭牌算出来的数，所以必须 **测** 。实验必须是
+  // **旋转** 电流：锁转子加直流指令是一个继电器（指令不超过 1.33·dV
   // 之前损失把电流钉在零），这就是 最初那个 d 轴直流扫描返回 `valid = 0`
   // 的原因。
   const float deadtime_v_at_24 = kSwitchingTDead * kPwmHz * 24.0F;
@@ -634,8 +634,8 @@ TEST(SilDeadtime, TheIdentifiedWidthIsNotBetterThanTheStep) {
   // saturation. 为什么换宽度也救不了：plant 上量到的损失曲线在 |I| 从 21
   // mA 到 86 mA 之间 从 `(4/π)·dV` 的 2.7 % 跳到 97 %。铺在 `If`
   // 上的线性斜坡表示不了这么陡的
-  // 过渡——形状是**软阶跃**，不是斜坡，一个参数救不了错的形状。斜坡真正擅长的是
-  // **宽**的淡出，而这台 plant 在自己的饱和点以下并没有。
+  // 过渡——形状是 **软阶跃** ，不是斜坡，一个参数救不了错的形状。斜坡真正擅长的是
+  // **宽** 的淡出，而这台 plant 在自己的饱和点以下并没有。
   const float v_dead = kSwitchingTDead * kPwmHz * 24.0F;
   const float fade = identify_fade(24.0F).fade_a;
 
@@ -666,7 +666,7 @@ TEST(SilDeadtime, TheIdentifiedWidthIsNotBetterThanTheStep) {
   // What is now on record: the identified width is *worse* than the step
   // at both ends. Written two-sided so the day someone finds a shape that
   // fixes it, this test says so instead of silently agreeing.
-  // 现在记录在案的是：辨识出来的宽度在两端都**输给**阶跃。双侧写法，将来有人找到
+  // 现在记录在案的是：辨识出来的宽度在两端都 **输给** 阶跃。双侧写法，将来有人找到
   // 能修好它的形状时，这个测试会说出来，而不是默默点头。
   EXPECT_GT(ramp_rated, 1.1F * step_rated)
       << "P4-d as written: the identified width does not match the step";

@@ -19,7 +19,7 @@ namespace core {
  * @brief [zh] 按次增益缩放：这一次驱动要抵抗多少。
  *
  *   零或负的缩放表示"不覆盖"，会被取成 \f$1\f$，与项目其余部分对按次传值的规则一致；在这里它还防止一个被值初始化的聚合
- *   体要求零刚度。缩放乘的是**配置**、绝不累加进配置，所以一次柔顺调用不会把控制器留在失调状态。
+ *   体要求零刚度。缩放乘的是 **配置** 、绝不累加进配置，所以一次柔顺调用不会把控制器留在失调状态。
  * @see `test_pi.cpp` (`AZeroIntegralScaleMeansNoOverrideRatherThanAnEmptyWindow`)
  * @since 0.1.0
  * @exporter
@@ -53,8 +53,8 @@ struct SpeedInput final {
  *
  * @brief [zh] 输出与积分都被限幅的离散 PI 一步。
  *
- *   积分限幅**就是**抗饱和手段：本实现没有 back-calculation，`step()` 也拿不到执行器实际施加的输出。积分在加到比例项 **
- *   之前**先按**当前**窗口重新夹紧，这正是窗口收窄时已存输出能立刻释放的原因：
+ *   积分限幅 **就是** 抗饱和手段：本实现没有 back-calculation，`step()` 也拿不到执行器实际施加的输出。积分在加到比例项
+ *   **之前** 先按 **当前** 窗口重新夹紧，这正是窗口收窄时已存输出能立刻释放的原因：
  *
  *   \f[ e = r - y,\qquad i \leftarrow \mathrm{clamp}(i + k_i\,e\,\Delta t,\; i_{min},\; i_{max}),\qquad u =
  *   \mathrm{clamp}(k_p\,e + i,\; u_{min},\; u_{max}) \f]
@@ -63,8 +63,8 @@ struct SpeedInput final {
  *   误差单位/秒）、\f$\Delta t\f$ 是步长，s。全部取调用方环路的单位；本段不出现机器量，因此不需要符号表。台账
  *   `E-PI-1`。
  *
- *   积分窗口请取成该环的**稳态输出量级**——速度环即“维持最高转速所需电流”，而不是 `i_max`——因为按满量程取会让饱和后出现
- *   明显的慢恢复（电流阶跃与饱和限幅两个场景有实测数字）。状态全部在对象内：无全局、不分配，每个轴一个实例。
+ *   积分窗口请取成该环的 **稳态输出量级** ——速度环即“维持最高转速所需电流”，而不是 `i_max`——因为按满量程取会让饱和后出
+ *   现明显的慢恢复（电流阶跃与饱和限幅两个场景有实测数字）。状态全部在对象内：无全局、不分配，每个轴一个实例。
  *
  * @warning [en] A negative gain is refused at construction and the controller latches `ErrorCode::Param`; a
  *               non-positive `dt` is refused at the step and the output holds at its previous value. A latched `Param`
@@ -152,7 +152,7 @@ class Pi final {
      *            into the scaled window, which is what makes `ilimit_scale` release stored torque instead of holding it
      *            until it leaks away.
      * @note [zh] 配置从不被改动：缩放只在本次调用生效，下一次刚性调用直接拿回配置的增益，不需要恢复 步骤。积分项会被重
-     *            新夹进缩放后的窗口——这正是 `ilimit_scale` 能**释放**已存转矩、而不是 等它慢慢漏掉的机制。
+     *            新夹进缩放后的窗口——这正是 `ilimit_scale` 能 **释放** 已存转矩、而不是 等它慢慢漏掉的机制。
      * @since 0.1.0
      */
     auto step(const SpeedInput& request, float feedback, float dt_s) noexcept -> float;

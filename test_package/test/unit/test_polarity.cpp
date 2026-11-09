@@ -219,14 +219,14 @@ TEST(MagnetPolarityTest, RejectsNonPositivePeriod) {
  *   fixture: `FakeDx` used to have no decay at all, so every case here was silently exercising the degenerate path and
  *   getting the right label for the wrong reason.
  *
- *   `decide()` 比较两次上升，把更大的那次当成磁钢的 `+d`。前提是两个脉冲是**同一个**伏秒脉冲在两个方向上的施加，这要求
- *   两者从同一个电流出发。松弛时间短于绕组的 `L/R` 时，第二个脉冲从第一个脉冲的尾巴上出发，那里的增量电感已塌陷——于是第
- *   二个上升更大，原因与磁钢无关。在 plant 上这不是细微偏差：零松弛时磁钢为 `Aligned` 的机器算出 **-0.5496 A** 的不对
+ *   `decide()` 比较两次上升，把更大的那次当成磁钢的 `+d`。前提是两个脉冲是 **同一个** 伏秒脉冲在两个方向上的施加，这要
+ *   求两者从同一个电流出发。松弛时间短于绕组的 `L/R` 时，第二个脉冲从第一个脉冲的尾巴上出发，那里的增量电感已塌陷——于是
+ *   第二个上升更大，原因与磁钢无关。在 plant 上这不是细微偏差：零松弛时磁钢为 `Aligned` 的机器算出 **-0.5496 A** 的不对
  *   称，即自信的 `Reversed`。
  *
  *   护栏用调用方自己声明的分辨力当尺子——两个起点相差超过 `min_asymmetry_a` 时，那个分辨力下的任何结论都不成立。下面的用
- *   例同时检查护栏**与夹具**：`FakeDx` 原本完全没有衰减，于是这里的每个用例都在悄悄走那条退化路径，并以错误的理由得到正
- *   确的标签。
+ *   例同时检查护栏 **与夹具** ：`FakeDx` 原本完全没有衰减，于是这里的每个用例都在悄悄走那条退化路径，并以错误的理由得到
+ *   正确的标签。
  */
 TEST(MagnetPolarityTest, AWindingThatNeverRelaxesGetsInconclusiveInsteadOfAWrongAnswer) {
     // The motor is the one that is `Aligned`; only the winding's relaxation changes.

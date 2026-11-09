@@ -18,8 +18,8 @@ namespace core {
  * @note [en] Direction is **not** a property of the sensors. The code says where the rotor is; producing torque in one
  *            direction or the other is the drive's decision, and it is the same code read against the opposite vector
  *            -- exactly 180 degrees away, which on a six-vector star is three places.
- * @note [zh] 方向**不是**传感器的性质。编码只说转子在哪；往哪个方向出力矩是驱动的决定，而它就是同一个编码对着相反的矢量
- *            读——恰好相差 180°，在六矢量星上就是隔三格。
+ * @note [zh] 方向 **不是** 传感器的性质。编码只说转子在哪；往哪个方向出力矩是驱动的决定，而它就是同一个编码对着相反的矢
+ *            量读——恰好相差 180°，在六矢量星上就是隔三格。
  * @since 0.1.9
  * @exporter
  */
@@ -51,7 +51,7 @@ inline constexpr std::uint8_t kHallNoSector = 0xFFU;
  *            that is where the three sensors place their edges: sensors at 0/120/240 switch at 30/90/150/... and never
  *            at zero. Measured in `test_hall_physics.cpp` rather than assumed -- an earlier version of that file
  *            assumed the edges fell on multiples of 60 and straddled one (ledger C-7).
- * @note [zh] 扇区 `k` 覆盖电角度 `[k*60 − 30, k*60 + 30)`，即**以 `k*60` 为中心**，因为三个传感器正是把边沿放在那里：
+ * @note [zh] 扇区 `k` 覆盖电角度 `[k*60 − 30, k*60 + 30)`，即 **以 `k*60` 为中心** ，因为三个传感器正是把边沿放在那里：
  *            0/120/240 的传感器在 30/90/150/…处切换，从不在零处。这是 `test_hall_physics.cpp` 里量出来的，不是假设的——
  *            那个文件更早的一版假设边沿落在 60 的倍数上，结果跨过了一条边沿（台账 C-7）。
  * @since 0.1.9
@@ -86,9 +86,9 @@ inline constexpr std::uint8_t kHallNoSector = 0xFFU;
  *            in `test_hall_decoder.cpp`; the point of an interpolated angle is to remove exactly this. An illegal code
  *            answers all three phases at mid-rail -- a zero vector, which produces no torque, rather than a guess that
  *            produces the wrong torque.
- * @note [zh] 两相驱动、第三相留在中点——这就是六步**本身**：矢量只能是六个之一，对编码所指的扇区 `k` 在 `90° + k*60°`（
- *            正向）。90° 不是可调的偏置——它是最大力矩所在，而六个矢量夹着它，这正是六步不可消除的力矩脉动来源：扇区内转
- *            矩角从 +30° 走到 −30°，力矩在 `cos(30°)` = 0.866 到 1 之间，即均值的 14.0 % 峰峰。在
+ * @note [zh] 两相驱动、第三相留在中点——这就是六步 **本身** ：矢量只能是六个之一，对编码所指的扇区 `k` 在 `90° + k*60°`
+ *            （正向）。90° 不是可调的偏置——它是最大力矩所在，而六个矢量夹着它，这正是六步不可消除的力矩脉动来源：扇区内
+ *            转矩角从 +30° 走到 −30°，力矩在 `cos(30°)` = 0.866 到 1 之间，即均值的 14.0 % 峰峰。在
  *            `test_hall_decoder.cpp` 里对 plant 实测；插值角度的意义就是消掉这一项。非法编码回答三相全在中点——零矢量，
  *            不产生力矩，而不是一个产生错误力矩的猜测。
  * @since 0.1.9
@@ -116,14 +116,14 @@ inline constexpr std::uint8_t kHallNoSector = 0xFFU;
  *            labour as `torque_map`'s `limited`).
  *
  * @note [zh] 为什么要有跟踪器而不是 `atan2`。只看编码只能把转子定位到一个扇区内，即 ±30°（半个扇区，靠算术改不了
- *            ——`test_hall_physics.cpp` 实测）。剩下的是边沿**什么时候**到：匀速转子穿过 60° 扇区的时间是已知的，所以两
- *            个边沿之间角度是一条直线，误差从 30° 塌缩为"定时分辨率 × 转速"——62.5 µs 周期、900 rad/s 电角下是 3.2°，而
- *            且这是**采样**极限，不是传感器极限。
+ *            ——`test_hall_physics.cpp` 实测）。剩下的是边沿 **什么时候** 到：匀速转子穿过 60° 扇区的时间是已知的，所以
+ *            两个边沿之间角度是一条直线，误差从 30° 塌缩为"定时分辨率 × 转速"——62.5 µs 周期、900 rad/s 电角下是 3.2°，
+ *            而且这是 **采样** 极限，不是传感器极限。
  *
  *   它做不到什么，并且会说出来。卡死的传感器冻结自己那一位，于是转过五分之六圈编码都合法，而角度分辨率悄悄减半、边沿间
  *   隔翻倍。两条通道都看不全：300 rad/s 下对坏一路实测，`Fault`（非法窗口）覆盖 15.5 %， `State`（间隔检查）另占 53.9
  *   %，剩下 8.4 % 报 `Ok` 而误差最多 59°——高位卡死时是 13.7 % 与 120°。所以大约三分之一的圈数没有被申报，建在霍尔上的驱
- *   动需要第二个意见（电流或力矩的合理性、索引信号），而不是在编码上更聪明的检查。两条通道都分不清**堵转**与 **丢边沿
+ *   动需要第二个意见（电流或力矩的合理性、索引信号），而不是在编码上更聪明的检查。两条通道都分不清 **堵转** 与 **丢边沿
  *   **——都是"太久没有边沿"——所以 `status()` 报 `State` 而不是 `Fault`。
  *
  *   读数只计数、不锁存：`illegal_reads()` 与 `stale_reads()` 累加，而"单次毛刺是否该停轴"是本层不做的决定（与
@@ -145,8 +145,8 @@ class HallTracker final {
      *            interval afterwards looks late (measured: 375 us against 3.5 ms, `State` from then on).
      * @note [zh] 1.5 是健康间隔（1.0）与坏一路产生的间隔（2.0，`test_hall_physics.cpp` 实测）之间的算术中点：健康一侧留
      *            50 % 余量，故障一侧 25 %。它是双边的，因为两侧实测都会咬人：被当成新参照的翻倍间隔会在此后的整段运行里
-     *            把坏掉的一路藏起来，而过**短**的间隔——故障刚消失后一个真实但极窄的扇区留下的六次采样——会把参照带偏，使
-     *            此后每个真实间隔都显得迟到（实测：375 µs 对 3.5 ms，从此永远 `State`）。
+     *            把坏掉的一路藏起来，而过 **短** 的间隔——故障刚消失后一个真实但极窄的扇区留下的六次采样——会把参照带偏，
+     *            使此后每个真实间隔都显得迟到（实测：375 µs 对 3.5 ms，从此永远 `State`）。
      */
     static constexpr float kIntervalRatio = 1.5F;
 
@@ -277,9 +277,9 @@ namespace detail {
  *            Keeping the name and the single address across TUs both work out only with `inline`.
  * @note [zh] 具名作用域而不是无名命名空间：头文件里的无名命名空间会给每个 TU 各生成一份内部链接的函数，于是这个头文件式
  *            库在每个 TU 里都带一份函数体，且辅助函数的地址在不同 TU 间不相等。`cert-dcl59-cpp` 说的就是这件事，也正是
- *            本项目现在开始强制的那个族。 `inline`，而这不是细节：具名命名空间仍然让定义具备**外部**链接，于是两个包含
- *            此头的翻译单元会产生同一个符号的两份定义，链接器直接拒绝。`misc-definitions-in-headers` 在这棵树里只报了一
- *            个函数，就是它。既要保住名字、又要让各 TU 看到同一个地址，只有 `inline` 能同时成立。
+ *            本项目现在开始强制的那个族。 `inline`，而这不是细节：具名命名空间仍然让定义具备 **外部** 链接，于是两个包
+ *            含此头的翻译单元会产生同一个符号的两份定义，链接器直接拒绝。`misc-definitions-in-headers` 在这棵树里只报了
+ *            一个函数，就是它。既要保住名字、又要让各 TU 看到同一个地址，只有 `inline` 能同时成立。
  */
 inline auto hall_wrap(float angle_rad) noexcept -> float {
     float wrapped = std::fmod(angle_rad, kHallTwoPiRad);
@@ -389,7 +389,7 @@ inline auto HallTracker::update(float now_s, std::uint8_t code) noexcept -> Erro
         // The period *before* this edge is the only thing that can say whether this interval was too long. Measuring
         // it against the period this same edge just produced would compare the interval with itself and could never
         // fire -- the kind of criterion that is green because it cannot fail.
-        // 只有这次边沿**之前**的周期才能说这次间隔是不是太长。拿它和这次边沿刚算出的周期比，等于把间隔与它自己比，永远
+        // 只有这次边沿 **之前** 的周期才能说这次间隔是不是太长。拿它和这次边沿刚算出的周期比，等于把间隔与它自己比，永远
         // 不会触发——那种"因为不可能失败而变绿"的判据。
         const float previous_period = period_;
 
@@ -399,7 +399,7 @@ inline auto HallTracker::update(float now_s, std::uint8_t code) noexcept -> Erro
         // measured, 36 % of the revolution reporting `Ok` with an error up to 120 degrees, against 0.4 % once the
         // implausible interval is refused. The price is stated rather than hidden: a deceleration that changes the
         // speed by a third inside one sector is also refused, which is why `State` is not a fault.
-        // 只有当间隔**两端**都是边沿时它才是一个扇区，而且只有它还不构成故障证据时，它的长度才被采信。把翻倍的间隔当成新
+        // 只有当间隔 **两端** 都是边沿时它才是一个扇区，而且只有它还不构成故障证据时，它的长度才被采信。把翻倍的间隔当成新
         // 周期，正是坏一路藏身所需的东西：它把整个扇区变成沉默的错误答案而不是被报告的答案——实测 36% 的圈数报 `Ok` 而
         // 误差最多 120°，拒收不可信间隔之后是 0.4%。代价写出来而不是藏起来：在一个扇区内把转速改变三分之一的减速同样被
         // 拒收，这正是 `State` 不是故障的原因。
@@ -428,7 +428,7 @@ inline auto HallTracker::update(float now_s, std::uint8_t code) noexcept -> Erro
         // The status follows the interval verdict, not the fact that a code arrived. A transition with an untrustworthy
         // interval is *not* an `Ok` sample: the first version reported `Ok` here and the next period said `State`, and
         // the single `Ok` sample was the one carrying the 119-degree error -- the worst possible place for it.
-        // 状态跟着间隔的判决走，而不是跟着"编码到了"这件事。间隔不可信时的跳变**不是**一个 `Ok` 采样：第一版在这里报
+        // 状态跟着间隔的判决走，而不是跟着"编码到了"这件事。间隔不可信时的跳变 **不是** 一个 `Ok` 采样：第一版在这里报
         // `Ok`，下一个周期才报 `State`，而那个唯一的 `Ok` 采样正是带着 119° 误差的那个——最糟糕的位置。
         status_ = stale_latched_ ? ErrorCode::State : ErrorCode::Ok;
         return status_;

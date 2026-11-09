@@ -204,7 +204,7 @@ TEST(SilInverter, V2_TheDeadTimeVoltSecondsFallOutOfTheSwitching) {
   // device is chosen by the current", not an input. So the number the model
   // produces has to match `-(t_dead/T)*v_bus*sign(i)`, which the model never
   // sees.
-  // 让这个模型值得被写出来的那句话：死区误差是"关断立即、开通延迟、导通器件由电流决定"的**推论**，
+  // 让这个模型值得被写出来的那句话：死区误差是"关断立即、开通延迟、导通器件由电流决定"的 **推论** ，
   // 不是输入。所以模型给出的数必须等于
   // `−(t_dead/T)·v_bus·sign(i)`——而模型从来没见过这个式子。
   float loss_at_one_us = 0.0F;
@@ -237,7 +237,7 @@ TEST(SilInverter, V2_TheDeadTimeVoltSecondsFallOutOfTheSwitching) {
       // Within 1 % of the volt-seconds the dead time removes: the *mean* is
       // exact (windows are integrated as fractions), so anything larger would
       // be a bookkeeping bug, not resolution. 与死区拿走的伏秒相差 1%
-      // 以内：**均值**是精确的（窗口按比例积分），所以更大的误差是记账错误，
+      // 以内： **均值** 是精确的（窗口按比例积分），所以更大的误差是记账错误，
       // 不是分辨率不足。
       EXPECT_LT(error_pct, 1.0F);
       // Same quantity, same sign: the model loses exactly the volt-seconds the
@@ -320,7 +320,7 @@ TEST(SilInverter, V4_SubStepsChangeTheRippleNotTheMean) {
   // resolution knob for the *ripple* only, because the mean over a sub-step is
   // integrated exactly. If the mean moved with the sub-step count, every number
   // in the repository would depend on a fidelity setting. 这条性质才让 CI
-  // 付得起这个模型：子步数只是**纹波**的分辨率旋钮，因为子步内的均值是精确积分的。
+  // 付得起这个模型：子步数只是 **纹波** 的分辨率旋钮，因为子步内的均值是精确积分的。
   // 若均值随子步数变，仓库里每个数字都会依赖一个保真度设置。
   const RippleResult coarse = ripple(3.0F, kTDead, 40);
   const RippleResult fine = ripple(3.0F, kTDead, 400);
@@ -382,7 +382,7 @@ TEST(SilInverter,
   // matter, which is 4 % of the period, so the real fade is steeper. Measuring
   // it is the point: the formula is a design aid, the model is the referee. A2
   // 通过在整个周期上平均母线占用，推出 `loss =
-  // dV·clamp(i/I_ripple)`。开关模型说只有**死区窗口**算数， 而那是周期的
+  // dV·clamp(i/I_ripple)`。开关模型说只有 **死区窗口** 算数， 而那是周期的
   // 4%，所以真实的淡出更陡。量出这件事就是本检验的意义：公式是设计辅助，模型是裁判。
   std::printf("[S19] V6 dead-time loss vs current (ripple ~0.006-0.02 A)\n%10s "
               "%12s %12s %12s %10s\n",
@@ -399,7 +399,7 @@ TEST(SilInverter,
     // The loss and the current have to come from the *same* period: the loss
     // depends on the current, so measuring them separately would be measuring
     // two different operating points.
-    // 损失与电流必须取自**同一个**周期：损失依赖电流，分开量等于量了两个不同的工作点。
+    // 损失与电流必须取自 **同一个** 周期：损失依赖电流，分开量等于量了两个不同的工作点。
     const LowCurrentPoint settled = low_current_point(item.v_d);
     sil::DiscreteInverter inverter(
         sil::InverterConfig{kFSw, kTDead, 0.0F, 400});

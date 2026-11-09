@@ -57,8 +57,8 @@ enum class AlignFailure : std::uint8_t {
  * @note [zh] `current_a`、`hold_s`、`settle_tolerance_rad` 必须严格为正；那里的 0 会被 `validate()` 拒绝，而不是被换成
  *            一个看起来合理的常数。可以合法取 0 的三项在下面各自说明。
  *
- *   **默认构造**的配方（全零）是另一回事：调用方没有请求过对齐，`validate()` 答 `NotImpl` 而不是 `Param`。这就是"对齐器
- *   编进来了，但在被配置之前保持静默"的实现方式。其余任何半配置 的配方都是 `Param` 错误——"配置了一半的对齐"不存在。
+ *   **默认构造** 的配方（全零）是另一回事：调用方没有请求过对齐，`validate()` 答 `NotImpl` 而不是 `Param`。这就是"对齐
+ *   器编进来了，但在被配置之前保持静默"的实现方式。其余任何半配置 的配方都是 `Param` 错误——"配置了一半的对齐"不存在。
  * @since 0.1.0
  * @exporter
  */
@@ -90,8 +90,8 @@ struct AlignOutput final {
      *               at all -- with 0 there is nothing to lose sync with, and a drive that faults on a stationary
      *               alignment would be unusable.
      * @details [zh] 只有对齐器自己知道转子是被拖到了某个转速、还是仅仅被按住：纯对齐把矢量转到目标就停，它自己的角速度
-     *               与转子无关。`Motor` 用它判断这次交接是否**可以**被判为"抓住了"——为 0 时没有同步可失，否则一个静止对
-     *               齐就会报故障，这样的驱动无法使用。
+     *               与转子无关。`Motor` 用它判断这次交接是否 **可以** 被判为"抓住了"——为 0 时没有同步可失，否则一个静止
+     *               对齐就会报故障，这样的驱动无法使用。
      */
     float handover_speed_e_rad_s{0.0F};
     bool finished; ///< [en] accepted on this tick. [zh] 本次 tick 捕获通过。
@@ -161,9 +161,9 @@ class NullAlignment final {
  *
  * @brief [zh] 锁轴对齐：把转子拉到已知的磁场方向，从而求出传感器的电角度偏置。
  *
- *   方法三句话：把定子电流矢量**固定在静止坐标系**的电角度 `align_angle_e_rad` 上，转子会被 拖到其 d 轴与之一致，因此静
- *   止时真实电角度就等于强制角。此时传感器读到的机械角是 `align_angle_e_rad/pole_pairs + offset`，于是 `offset = 读数 -
- *   align_angle_e_rad/pole_pairs`。 因为转子停靠在**最近的**平衡点，只有电角度部分可观测：偏置只能确定到
+ *   方法三句话：把定子电流矢量 **固定在静止坐标系** 的电角度 `align_angle_e_rad` 上，转子会被 拖到其 d 轴与之一致，因此
+ *   静止时真实电角度就等于强制角。此时传感器读到的机械角是 `align_angle_e_rad/pole_pairs + offset`，于是 `offset = 读数
+ *   - align_angle_e_rad/pole_pairs`。 因为转子停靠在 **最近的** 平衡点，只有电角度部分可观测：偏置只能确定到
  *   `2*pi/pole_pairs` 的模，所以绝对多圈位置仍然需要一个索引信号。
  *
  * @note [en] The angle must be forced, not read back. Regulating `id` against the *uncorrected* sensor angle produces a
@@ -174,11 +174,12 @@ class NullAlignment final {
  *            the rotor followed in the same direction is what separates "aligned" from "aligned backwards". Set
  *            `verify_s` to 0 only when the wiring is already known-good and the extra hold is unacceptable.
  *
- * @note [zh] 角度必须被**强制**，不能回读。拿**未校正**的传感器角去调 `id`，等效转矩误差恒为 `sin(offset)`：磁场追着转
- *            子跑，电机只会一直转，永远对不齐。这就是本流程除了电流之外还要 返回角度的原因。
+ * @note [zh] 角度必须被 **强制** ，不能回读。拿 **未校正** 的传感器角去调 `id`，等效转矩误差恒为 `sin(offset)`：磁场追
+ *            着转子跑，电机只会一直转，永远对不齐。这就是本流程除了电流之外还要 返回角度的原因。
  *
- *   校验不是装饰。传感器符号接反会得到一个差 180 电角度、却**看起来**收敛得很好的偏置； 把强制角前进四分之一圈并检查转
- *   子是否同向跟随，才是"对齐"与"反向对齐"的分界。只有在接线 已知正确、且不接受额外保持时间时，才把 `verify_s` 设为 0。
+ *   校验不是装饰。传感器符号接反会得到一个差 180 电角度、却 **看起来** 收敛得很好的偏置； 把强制角前进四分之一圈并检查
+ *   转子是否同向跟随，才是"对齐"与"反向对齐"的分界。只有在接线 已知正确、且不接受额外保持时间时，才把 `verify_s` 设为
+ *   0。
  *
  * @context [en] step() is called from the current-loop ISR: noexcept, no allocation, no I/O.
  * @context [zh] step() 由电流环 ISR 调用：noexcept、不分配、无 I/O。

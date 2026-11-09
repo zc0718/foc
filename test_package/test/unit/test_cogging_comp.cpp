@@ -1,7 +1,7 @@
 // F33 - the cogging compensator as a torque-ripple feedforward. The criteria are all "the residue after cancellation", because
 // a compensator is the one kind of policy whose failure mode is *looking* fine: a wrong phase cancels nothing and a naive gain
 // over-compensates by a ratio that is easy to mistake for "close enough".
-// F33——齿槽补偿器，做成转矩纹波前馈。所有判据都是「抵消之后的残差」，因为补偿器正是那种失效时会**看起来正常**的策略：相位错
+// F33——齿槽补偿器，做成转矩纹波前馈。所有判据都是「抵消之后的残差」，因为补偿器正是那种失效时会 **看起来正常** 的策略：相位错
 // 则什么都不抵消，而用一个天真的增益则按一个很容易被当成「差不多」的比例过补偿。
 
 #include <cmath>
@@ -25,7 +25,7 @@ constexpr float kTwoPi = 6.28318530718F;
 
 // A surface machine first: `ld == lq`, so `dT/diq` is exactly `1.5*p*psi_f` and the law can be checked against the
 // nameplate constant. The salient case is a *separate* test, because that is where the naive gain fails.
-// 先来一台表贴机：`ld == lq`，于是 `dT/diq` 正好是 `1.5·p·ψf`，律可以对着铭牌常数核对。凸极是**另一个**用例，因为天真的增益
+// 先来一台表贴机：`ld == lq`，于是 `dT/diq` 正好是 `1.5·p·ψf`，律可以对着铭牌常数核对。凸极是 **另一个** 用例，因为天真的增益
 // 就是在那儿失效的。
 auto surface_config(float psi_f) -> CoggingCompConfig {
     CoggingCompConfig config{};
@@ -100,7 +100,7 @@ TEST(CoggingComp, ASalientMachineNeedsTheActualTorquePerAmpNotTheNameplateKt) {
     const float kt_nameplate = torque_per_amp(config, 0.0F);
     // With `lq > ld` a negative `id` *adds* reluctance torque, so the true torque per amp is **larger** than the nameplate
     // constant -- and the naive gain therefore asks for more current than the machine needs.
-    // `lq > ld` 时负 `id` **增加**磁阻转矩，所以真实的每安培转矩**大于**铭牌常数——于是天真的增益要的电流比机器需要的更多。
+    // `lq > ld` 时负 `id` **增加** 磁阻转矩，所以真实的每安培转矩 **大于** 铭牌常数——于是天真的增益要的电流比机器需要的更多。
     ASSERT_GT(kt_eff, kt_nameplate);
 
     const float theta = 0.4F;
@@ -117,11 +117,11 @@ TEST(CoggingComp, ASalientMachineNeedsTheActualTorquePerAmpNotTheNameplateKt) {
     // 用铭牌常数，残差恰好是那个比例——而那个数就是天真的实现会交付的东西。
     // With the nameplate constant, the residue is the cogging **inverted and amplified** by `kt_eff/kt_nameplate - 1` -- and
     // that number is what a naive implementation would have shipped.
-    // 用铭牌常数时，残差是被 `kt_eff/kt_nameplate − 1` **反向并放大**的齿槽——那个数就是天真的实现会交付的东西。
+    // 用铭牌常数时，残差是被 `kt_eff/kt_nameplate − 1` **反向并放大** 的齿槽——那个数就是天真的实现会交付的东西。
     const float naive_offset = -cog / kt_nameplate;
     const float residual_fraction = (cog + (kt_eff * naive_offset)) / cog;
     // `1 - kt_eff/kt_nameplate`, i.e. negative: the residue is the cogging *inverted* and 1.5x larger.
-    // 即 `1 − kt_eff/kt_nameplate`，是负的：残差是**反向**、且大 1.5 倍的齿槽。
+    // 即 `1 − kt_eff/kt_nameplate`，是负的：残差是 **反向** 、且大 1.5 倍的齿槽。
     const float predicted = 1.0F - (kt_eff / kt_nameplate);
     EXPECT_NEAR(predicted, residual_fraction, 1.0e-6F);
     EXPECT_LT(residual_fraction, -1.0F); // bigger than the thing it was supposed to remove 比它本该去掉的东西还大
@@ -130,7 +130,7 @@ TEST(CoggingComp, ASalientMachineNeedsTheActualTorquePerAmpNotTheNameplateKt) {
 // The classic silent failure: a table whose phase is wrong cancels **nothing**. The amplitude of the compensated torque is
 // then exactly the amplitude of the injected one -- not smaller, which is what distinguishes "the compensator is
 // mis-phased" from "the compensator works a little".
-// 经典的静默失效：相位错的表**什么都不**抵消。此时补偿后的转矩幅值正好等于注入的幅值——不是更小，而这正是「补偿器相位错」与
+// 经典的静默失效：相位错的表 **什么都不** 抵消。此时补偿后的转矩幅值正好等于注入的幅值——不是更小，而这正是「补偿器相位错」与
 // 「补偿器起了一点作用」的区别。
 TEST(CoggingComp, ATableWithTheWrongPhaseCancelsNothingAtAll) {
     const CoggingCompConfig config = surface_config(0.0047619F);
@@ -152,7 +152,7 @@ TEST(CoggingComp, ATableWithTheWrongPhaseCancelsNothingAtAll) {
     // A quadrature error does not leave the ripple where it was: it adds a second sinusoid at right angles, so the residue is
     // `sqrt(2)` times the original amplitude -- **worse than doing nothing**, which is the fact that makes the phase worth
     // measuring rather than assuming.
-    // 正交误差不会让纹波停在原处：它加了一条正交的正弦，于是残差是原幅值的 `√2` 倍——**比什么都不做更糟**，而这正是让相位值得
+    // 正交误差不会让纹波停在原处：它加了一条正交的正弦，于是残差是原幅值的 `√2` 倍—— **比什么都不做更糟** ，而这正是让相位值得
     // 测量、而不是假设的原因。
     EXPECT_NEAR(4.0e-3F * std::sqrt(2.0F), worst, 1.0e-2F * 4.0e-3F);
 }
@@ -187,7 +187,7 @@ TEST(CoggingComp, TheFadeIsMonotoneAndDisappearsAtItsUpperEdge) {
     EXPECT_FLOAT_EQ(0.0F, at_90hz);
 
     // Halfway through the band the gain is 1/2, which pins the fade's shape rather than only its direction.
-    // 带子中点处增益是 1/2，这钉住的是淡出的**形状**而不只是方向。
+    // 带子中点处增益是 1/2，这钉住的是淡出的 **形状** 而不只是方向。
     const CoggingCompOutput mid = with_fade.offset(command(faded, theta, 0.0F, (60.0F * kTwoPi) / 6.0F));
     EXPECT_NEAR(0.5F, mid.gain, 1.0e-5F);
 
@@ -200,7 +200,7 @@ TEST(CoggingComp, TheFadeIsMonotoneAndDisappearsAtItsUpperEdge) {
 
 // The ceiling applies to the sum, not to the offset: what the current loop sees is `iq_command + offset`, so trimming the
 // offset alone would report a happy number while the total exceeded the limit.
-// 上限作用在**和**上而不是偏置上：电流环看到的是 `iq_command + offset`，所以只削偏置会报出一个愉快的数、而总和越限。
+// 上限作用在 **和** 上而不是偏置上：电流环看到的是 `iq_command + offset`，所以只削偏置会报出一个愉快的数、而总和越限。
 TEST(CoggingComp, TheCurrentCeilingAppliesToTheSumNotToTheOffset) {
     const CoggingCompConfig config = salient_config(0.0047619F);
     CoggingCompensation comp{config};
@@ -221,7 +221,7 @@ TEST(CoggingComp, TheCurrentCeilingAppliesToTheSumNotToTheOffset) {
     EXPECT_TRUE(out.clipped);
     EXPECT_NEAR(3.0F, in.iq_command_a + out.iq_a, 1.0e-6F);
     // 0.05 A survived out of the 0.5 A asked for: the ceiling trimmed the **sum**, and the offset alone would have fitted.
-    // 0.5 A 的要求里只活下来 0.05 A：上限削的是**和**，而偏置自己本来是装得下的。
+    // 0.5 A 的要求里只活下来 0.05 A：上限削的是 **和** ，而偏置自己本来是装得下的。
     const float unclipped = -out.torque_nm / torque_per_amp(config, 0.0F);
     EXPECT_NEAR(0.5F, unclipped, 1.0e-4F);
     EXPECT_NEAR(0.05F, out.iq_a, 1.0e-4F);
@@ -251,7 +251,7 @@ TEST(CoggingComp, RefusesWhatItCannotAnswer) {
     EXPECT_FLOAT_EQ(0.0F, none.iq_a);
 
     // Flux nulling: `psi_f + (ld-lq)*id = 0` solves to `id = -psi_f/(ld-lq)`, which is **positive** when `lq > ld`.
-    // 削磁：`ψf + (Ld−Lq)·id = 0` 解出 `id = −ψf/(Ld−Lq)`，在 `lq > ld` 时它是**正的**。
+    // 削磁：`ψf + (Ld−Lq)·id = 0` 解出 `id = −ψf/(Ld−Lq)`，在 `lq > ld` 时它是 **正的** 。
     const float null_id = -good.params.psi_f / (good.params.ld - good.params.lq);
     EXPECT_GT(null_id, 0.0F);
     // The residue is a *cancellation*, so its floor is the rounding of the two terms rather than zero: measured 1.3e-9 N*m/A --
@@ -260,8 +260,8 @@ TEST(CoggingComp, RefusesWhatItCannotAnswer) {
     // instead of `Param` on macOS, where clang landed the residue at 1.1e-9. Both the bound here and the library's own refusal
     // threshold are now a millionth of `1.5*p*psi_f`, which is above every rounding and below any real torque per amp by
     // orders of magnitude.
-    // 残差是**相消**的结果，所以它的地板是两项的舍入而不是零：实测 1.3e-9 N·m/A——机器自身尺度的 2.6e-8——而它在不同编译器之间会
-    // 差一位。它两次弄坏过构建：写死的 `1e-9` 先在 MC/DC 插桩构建下翻车，随后同一个绝对界让**库**在 macOS 上答了 `Ok` 而不是
+    // 残差是 **相消** 的结果，所以它的地板是两项的舍入而不是零：实测 1.3e-9 N·m/A——机器自身尺度的 2.6e-8——而它在不同编译器之间会
+    // 差一位。它两次弄坏过构建：写死的 `1e-9` 先在 MC/DC 插桩构建下翻车，随后同一个绝对界让 **库** 在 macOS 上答了 `Ok` 而不是
     // `Param`（clang 的残差落在 1.1e-9）。现在这里的界与库自己的拒绝阈值都是 `1.5·p·ψf` 的百万分之一，高于任何舍入、又低于任何
     // 真实的每安培转矩好几个数量级。
     const float torque_scale = 1.5F * static_cast<float>(good.pole_pairs) * good.params.psi_f;

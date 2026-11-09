@@ -222,7 +222,7 @@ TEST(Pi, ScalingIsExactOnBothWindowEndsAndZeroLeavesThemUntouched) {
     // case drives the integral positive, so `integral_min * scale` could be a division and the "no override"
     // fallback could be 1.001 instead of 1.0 without changing a single asserted number. The window here is
     // asymmetric and the integral is wound negative, so each end and each scale factor is observable.
-    // 有两个存活体没有任何用例能看见，都在积分窗口的**下端**：现有用例只把积分往正向推，因此把
+    // 有两个存活体没有任何用例能看见，都在积分窗口的 **下端** ：现有用例只把积分往正向推，因此把
     // `integral_min * scale` 改成除法、或把"不覆盖"的回退值从 1.0 改成 1.001，都不会改变任何一个被断言的数。
     // 这里窗口不对称、积分往负向积，于是两端与两档缩放都变得可观测。
     foc::core::Pi controller{foc::core::Pi::Config{0.0F, 1000.0F, -100.0F, 100.0F, -0.2F, 0.5F}};
@@ -249,7 +249,7 @@ namespace {
 // A first-order plant driven by the controller under test: `J*dx/dt = u - d`. Stepped with an *independent* Euler
 // integrator so the controller's own period can be wrong on purpose (`dt_pi` vs `dt_true`), which is the error source
 // that actually exists in a drive: nobody's control period is exactly what the code was told.
-// 由被测控制器驱动的一阶对象：`J·dx/dt = u − d`。用**独立**的 Euler 积分推进，好让控制器自己的周期被故意写错
+// 由被测控制器驱动的一阶对象：`J·dx/dt = u − d`。用 **独立** 的 Euler 积分推进，好让控制器自己的周期被故意写错
 // （`dt_pi` 与 `dt_true` 不同）——这才是驱动里真实存在的误差源：没有人的控制周期恰好等于代码被告知的数。
 struct LoopResult final {
     double peak;
@@ -340,10 +340,10 @@ TEST(Pi, TheTextbookSecondOrderLawMispredictsTheOvershootAndTheZeroIsWhy) {
   // at `kp = 0.01` it says 16.3 % and the loop does 29.8 %; at `kp = 0.02` it says 0 % (critical damping) and the loop
   // does 13.5 %. The second model that settles it is the same loop written as two ODEs and integrated at 10 ns -- which
   // contains the zero by construction -- and it agrees to **0.06 %**.
-  // 本控制器在一阶对象上闭出的环，传递函数是 `(kp·s + ki)/(J·s² + kp·s + ki)`——**在 `−ki/kp` 有一个零点**，因为比例项
-  // 对给定也起作用。教科书的 `ζ = kp/(2√(ki·J))`、`Mp = exp(−πζ/√(1−ζ²))` 是**只看极点**的答案，在这里是错的：
+  // 本控制器在一阶对象上闭出的环，传递函数是 `(kp·s + ki)/(J·s² + kp·s + ki)`—— **在 `−ki/kp` 有一个零点** ，因为比例项
+  // 对给定也起作用。教科书的 `ζ = kp/(2√(ki·J))`、`Mp = exp(−πζ/√(1−ζ²))` 是 **只看极点** 的答案，在这里是错的：
   // `kp = 0.01` 它说 16.3 %，环跑出 29.8 %；`kp = 0.02` 它说 0 %（临界阻尼），环跑出 13.5 %。判定的第二个模型是同一个
-  // 环写成两个 ODE、用 10 ns 积分——零点按构造就在里面——两者一致到 **0.06 %**。
+  // 环写成两个 ODE、用 10 ns 积分——零点按构造就在里面——两者一致到 **0.06 %** 。
   const float j = 1.0e-4F;
   const float dt = 1.0e-4F;
   const float ki = 1.0F;
@@ -378,7 +378,7 @@ TEST(Pi, APeriodTheCallerGetsWrongMovesTheLoopByHalfOfIt) {
   // and the loop's frequency moves as `sqrt(k)` -- **half** of the mismatch, in the other direction, measured on the
   // time to the first peak.
   // 每个驱动里都存在的误差源：控制器被告知一个周期，硬件是另一个。积分项积的是 `ki·e·dt`，于是周期大 `k` 倍就等于
-  // 有效 `ki` 大 `k` 倍，环的频率按 `sqrt(k)` 移动——**一半**、方向相反，在到达第一个峰的时间上量出来。
+  // 有效 `ki` 大 `k` 倍，环的频率按 `sqrt(k)` 移动—— **一半** 、方向相反，在到达第一个峰的时间上量出来。
   const float j = 1.0e-4F;
   const float dt = 1.0e-4F;
   const float nominal = static_cast<float>(drive_loop(0.01F, 1.0F, j, 0.0F, dt, dt, 200000).t_peak);

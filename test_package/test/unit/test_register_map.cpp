@@ -15,7 +15,7 @@
 //   4. an id that is not in the table is refused rather than guessed at.
 //
 // 判据写在跑前（见上）：编号恰为 1..kRegisterCount 各一次；真实电机上的读取与它指名的 C 入口一致（`enable()` 之后
-// `State` 是 `Run`，`FloatBits` 解出来的是 `foc_get_state` 返回的**同一个** float，逐位相同而不是打印相同）；两类 C 函数对
+// `State` 是 `Run`，`FloatBits` 解出来的是 `foc_get_state` 返回的 **同一个** float，逐位相同而不是打印相同）；两类 C 函数对
 // NULL 句柄的行为不同而表不得抹平（`foc_motor_get_status` 拒绝，于是读取失败且字不被触碰；`foc_motor_trace_size` 文档里
 // NULL 就是 0，于是读取成功且得 0）——把两者归一成一个答案就是发明了第三种行为；表里没有的编号被拒绝，不猜。
 

@@ -7,11 +7,11 @@
 //   no encoder at any tick -> the injection observer acquires the angle at standstill -> torque accelerates the rotor ->
 //   the index mark fixes the origin during ordinary motion -> the flux observer takes over -> a position command holds.
 //
-// W7-a 增量 4：在**整条链上都没有编码器**的情况下保持位置。
+// W7-a 增量 4：在 **整条链上都没有编码器** 的情况下保持位置。
 // 本波此前每个用例都孤立地测一部分：参考对着手工摆放的角度、标记对着手工摆放的转子、门控对着已经回零的参考。
 // 这一个把它们按真实驱动遇到的顺序串起来，不为方便而关掉任何东西：
 //
-//   任何一个 tick 都没有编码器 → 注入观测器在静止时获取角度 → 转矩把转子加速 → 索引标记在**正常运动过程中**钉住原点
+//   任何一个 tick 都没有编码器 → 注入观测器在静止时获取角度 → 转矩把转子加速 → 索引标记在 **正常运动过程中** 钉住原点
 //   → 磁链观测器接手 → 位置指令保持住。
 //
 // The criterion, fixed before the numbers below were measured:
@@ -25,7 +25,7 @@
 //   C3  `sensor_present` is never enabled, asserted rather than described.
 //
 // 判据在量之前定下：
-//   C1 原点是在**正常运动过程中**捕获的：不需要专门的回零动作 `homed()` 就变为真，且脉冲出现在标记真实位置一个 tick
+//   C1 原点是在 **正常运动过程中** 捕获的：不需要专门的回零动作 `homed()` 就变为真，且脉冲出现在标记真实位置一个 tick
 //      行程之内。一条"必须先做一个特殊动作位置模式才能用"的链，在现场就是不可用的。
 //   C2 指令下达后，真实机械位置稳定在 **0.02 rad** 带内，并在最后 0.2 s 持续保持。这个带就是对齐流程自己的收敛容差，
 //      是本仓库已经当作"稳住了"的数字，不是为这次新编的；参考重建只贡献 0.0003 rad，小两个量级。
@@ -185,8 +185,8 @@ TEST(SilPositionHold, AHoldWithNoEncoderAnywhereInTheChain) {
     // crossing that falls exactly on a period boundary shows up as one tick of apparent displacement, and a crossing
     // inside the period adds up to another. The first version of this criterion allowed one tick and failed at 1.33 --
     // measuring the sampling order, not the mark.
-    // C1：脉冲必须出现在标记自己的位置上。允许值取**两个** tick 而不是一个，理由是采样顺序而非放宽：
-    // `Motor::tick` 读到的脉冲由**周期开始**时的 plant 位置算出，而测试在 `hal.advance` 把 plant 推到周期末之后才读。
+    // C1：脉冲必须出现在标记自己的位置上。允许值取 **两个** tick 而不是一个，理由是采样顺序而非放宽：
+    // `Motor::tick` 读到的脉冲由 **周期开始** 时的 plant 位置算出，而测试在 `hal.advance` 把 plant 推到周期末之后才读。
     // 于是即便跨越正好落在周期边界，也会显示为一个 tick 的位移，落在周期中间则再多一个。本判据的第一版只允许一个 tick，
     // 在 1.33 处失败——量到的是采样顺序，不是标记。
     const float tick_travel = std::fabs(plant.omega_mech_rad_s()) * kDt;
@@ -223,7 +223,7 @@ TEST(SilPositionHold, AHoldWithNoEncoderAnywhereInTheChain) {
     // Reported as a relation rather than a subtraction: when the position error is *smaller* than the angle source's
     // own error, "what the loop added" is not a number anyone can read off -- the two maxima need not occur at the same
     // instant. The claim is the ordering, and that is what is printed.
-    // 报成一种关系而不是一个减法：当位置误差**小于**角度源自身的误差时，"环路加了多少"不是任何人能直接读出的数——
+    // 报成一种关系而不是一个减法：当位置误差 **小于** 角度源自身的误差时，"环路加了多少"不是任何人能直接读出的数——
     // 两个最大值未必出现在同一时刻。要说的是这个大小关系，打印的就是它。
     std::printf("[hold] the angle source was itself off by up to %.4f rad, so the position error of %.4f rad is %s\n",
                 static_cast<double>(worst_observer_error), static_cast<double>(worst_after_settling),
@@ -236,9 +236,9 @@ TEST(SilPositionHold, AHoldWithNoEncoderAnywhereInTheChain) {
     // order, so the band was asking the loop to be more accurate than its input. The claim worth making is the one the
     // loop can keep: **the position loop adds no more than the settle tolerance on top of the angle it was given**,
     // with the angle source's own error measured in the same window rather than assumed.
-    // C2，而它的第一版量错了东西。0.02 rad 的带子取自**参考**重建的误差（0.0003 rad），却在 0.0401 处失败——但参考并不
+    // C2，而它的第一版量错了东西。0.02 rad 的带子取自 **参考** 重建的误差（0.0003 rad），却在 0.0401 处失败——但参考并不
     // 产生角度，它只是给拿到的角度数圈。机械 73 rad/s 处磁链观测器自身的误差就是这个量级，那个带子等于要求环路比它的输入
-    // 更准。值得做的承诺是环路能守住的那条：**位置环在它拿到的角度之上，最多再加一个收敛容差**，且角度源自身的误差在同一
+    // 更准。值得做的承诺是环路能守住的那条： **位置环在它拿到的角度之上，最多再加一个收敛容差** ，且角度源自身的误差在同一
     // 窗口内测量、而非假设。
     EXPECT_LE(worst_after_settling, worst_observer_error + kSettleBandRad)
         << "the position loop added more than its own tolerance on top of the angle it was given";

@@ -36,18 +36,18 @@ namespace sil {
  *     source**: the voltage stays where it was put and the books still run, which is what makes the counterfactual
  *     measurable -- the energy that should have moved the voltage shows up as a residual instead.
  *
- * @details [zh] 在这个文件存在之前，母线是一个**常数**：`PlantDcLink` 返回被设进去的那个值，
+ * @details [zh] 在这个文件存在之前，母线是一个 **常数** ：`PlantDcLink` 返回被设进去的那个值，
  *               `DiscreteInverter::begin_period()` 把它锁存。仓库里没有任何东西问过「这一拍有多少电荷离开了母线」，于是
- *               母线跌落不可观测，斩波器工不工作也不可观测。缺的不是板子，是一个**端口**：逆变器知道自己的极电压，plant
- *               知道自己的电流，而没有人把它们乘起来。
+ *               母线跌落不可观测，斩波器工不工作也不可观测。缺的不是板子，是一个 **端口** ：逆变器知道自己的极电压，
+ *               plant 知道自己的电流，而没有人把它们乘起来。
  *
- *   符号约定只说一次，因为下面每条判据都依赖它：`i_dc` 为正表示**流入逆变器**（电动）。节点方程是
+ *   符号约定只说一次，因为下面每条判据都依赖它：`i_dc` 为正表示 **流入逆变器** （电动）。节点方程是
  *
  *   C * dv/dt = i_source - i_dc - i_load - i_chopper
  *
  *   所以电动时电容放电、回馈时电容充电。`i_load` 是辅助负载电流，`i_chopper` 是制动电阻，两者都是"流入器件为正"。
- *   `capacitance_f <= 0` 时母线是**理想源**：电压停在原处，账照记——这正是让反事实可测的原因：本该把电压推动的那份能量，
- *   会以残差的形式露出来。
+ *   `capacitance_f <= 0` 时母线是 **理想源** ：电压停在原处，账照记——这正是让反事实可测的原因：本该把电压推动的那份能
+ *   量，会以残差的形式露出来。
  * @since 0.1.9
  * @exporter
  */
@@ -101,9 +101,9 @@ struct BusParams final {
  *            have absorbed, and a run that reports `residual_j == 0` against an ideal source has not measured anything
  *            -- it has an account that cannot go wrong, which is the shape this repository keeps finding. `accountable`
  *            says which of the two this run is, so a reader does not have to infer it.
- * @note [zh] `residual_j` 才是重点：它是守恒律**解释不了**的那部分。有电容时它是积分误差，必须很小；理想源时它是一个真
- *            实电容本该吸收的能量，而一段对理想源报出 `residual_j == 0` 的运行什么都没有测到——它只有一本**不可能出错**
- *            的账，而这正是本仓库反复发现的形状。`accountable` 直接说明这次运行属于哪一种，读者不必去推断。
+ * @note [zh] `residual_j` 才是重点：它是守恒律 **解释不了** 的那部分。有电容时它是积分误差，必须很小；理想源时它是一个
+ *            真实电容本该吸收的能量，而一段对理想源报出 `residual_j == 0` 的运行什么都没有测到——它只有一本 **不可能出错
+ *            ** 的账，而这正是本仓库反复发现的形状。`accountable` 直接说明这次运行属于哪一种，读者不必去推断。
  * @since 0.1.9
  * @exporter
  */
@@ -120,7 +120,7 @@ struct BusReport final {
     float v_max;         ///< [en] highest bus voltage seen, V. [zh] 见过的最高母线电压，V。
     std::uint32_t steps; ///< [en] integration sub-steps booked. [zh] 记账的积分子步数。
     bool
-        accountable; ///< [en] a capacitance was given, so the books can be wrong. [zh] 给了电容，因此这本账**可能**出错。
+        accountable; ///< [en] a capacitance was given, so the books can be wrong. [zh] 给了电容，因此这本账 **可能** 出错。
 };
 
 
@@ -131,8 +131,8 @@ struct BusReport final {
  *            while the state itself advances explicitly. That asymmetry is deliberate and it is what makes the residual
  *            a usable number: the two schemes differ by O(h^2), so the conservation check measures the quadrature error
  *            rather than the model, and a defect of any size stands out against it.
- * @note [zh] 能量用**梯形**累加（子步两端电压的平均），而状态本身是显式推进的。这个不对称是有意的，也正是让残差可用的原
- *            因：两种格式相差 O(h²)，于是守恒检查量到的是求积误差而不是模型，任何量级的缺陷都会在它上面显出来。
+ * @note [zh] 能量用 **梯形** 累加（子步两端电压的平均），而状态本身是显式推进的。这个不对称是有意的，也正是让残差可用的
+ *            原因：两种格式相差 O(h²)，于是守恒检查量到的是求积误差而不是模型，任何量级的缺陷都会在它上面显出来。
  * @since 0.1.9
  * @exporter
  */
@@ -179,7 +179,7 @@ class BusMeter final {
             voltage_ += (net_a * h_s) / static_cast<double>(params_.capacitance_f);
         }
         // Trapezoid on the energy, so the quadrature error is O(h^2) and the residual stays a *measurement*.
-        // 能量用梯形，于是求积误差是 O(h²)，残差才是一个**测量**。
+        // 能量用梯形，于是求积误差是 O(h²)，残差才是一个 **测量** 。
         const double v_mean = 0.5 * (v_before + voltage_);
         drawn_j_ += v_mean * i_dc_a * h_s;
         load_j_ += v_mean * static_cast<double>(params_.load_current_a) * h_s;

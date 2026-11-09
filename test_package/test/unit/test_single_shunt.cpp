@@ -128,7 +128,7 @@ TEST(SingleShunt, OutsideTheWindowThereIsNoAnswerAndTheTypeSaysSo) {
     EXPECT_EQ(0.0F, out.i_uvw.w);
 
     // And the pure zero vector is a *different* answer: nothing is flowing, so there is nothing to miss.
-    // 而纯零矢量是**另一个**答案：没有电流在流，也就没有东西被漏掉。
+    // 而纯零矢量是 **另一个** 答案：没有电流在流，也就没有东西被漏掉。
     EXPECT_EQ(ShuntVerdict::NoActiveVector, shunt.classify(Uvw<float>{0.5F, 0.5F, 0.5F}).verdict);
 }
 
@@ -175,7 +175,7 @@ TEST(SingleShunt, TwoReadingsRecoverThreeCurrentsAndSwappingThemDoesNot) {
 // The error structure, measured rather than assumed: the middle phase is a **difference** of the two readings, so its
 // noise is sqrt(2) times theirs. A design that writes one bound and uses it for all three is 41 % optimistic on the
 // phase it matters most for.
-// 误差结构，量出来而不是假定：中间那一相是两个读数之**差**，噪声是它们的 sqrt(2) 倍。只写一条界、三相共用的设计，
+// 误差结构，量出来而不是假定：中间那一相是两个读数之 **差** ，噪声是它们的 sqrt(2) 倍。只写一条界、三相共用的设计，
 // 在它最要紧的那一相上乐观 41 %。
 TEST(SingleShunt, TheMiddlePhasesNoiseIsRootTwoTimesTheOuterOnes) {
     const SingleShunt shunt = make();
@@ -221,9 +221,9 @@ TEST(SingleShunt, TheMiddlePhasesNoiseIsRootTwoTimesTheOuterOnes) {
 // assertion now states the measured direction, and the threshold it crosses is derived from the timings rather than
 // fitted (and that derivation was wrong the first time too: I had written `4*needed/T`, the bisection said 0.0346 where
 // the formula said 0.06, because `(T1+T2)/T` is `sqrt(3)*|v|` per unit and not `|v|`).
-// 这个拓扑的代价，数出来而不是争出来——而这条用例的第一版把答案写**反**了。我以为盲区在电压极限处（那里每个扇区边界上都有
-// 一个有效区间塌掉），于是断言整圈**大部分**读不出来。测量说的是反面：可读比例随幅值**上升**，0.2 倍内切圆处 71 %、极限处
-// 94 %，而真正的盲区是**低调制**——两个有效区间一起变短的地方。那正是驱动起步所在的区域。现在的断言写的是量到的方向，而
+// 这个拓扑的代价，数出来而不是争出来——而这条用例的第一版把答案写 **反** 了。我以为盲区在电压极限处（那里每个扇区边界上都有
+// 一个有效区间塌掉），于是断言整圈 **大部分** 读不出来。测量说的是反面：可读比例随幅值 **上升** ，0.2 倍内切圆处 71 %、极限处
+// 94 %，而真正的盲区是 **低调制** ——两个有效区间一起变短的地方。那正是驱动起步所在的区域。现在的断言写的是量到的方向，而
 // 它跨过的那条阈值由时序推出，不是拟合出来的（这条推导第一次也错了：我写的是 `4·needed/T`，二分给出 0.0346 而公式说
 // 0.06，因为归一化后 `(T1+T2)/T` 是 `√3·|v|` 而不是 `|v|`）。
 TEST(SingleShunt, TheBlindSpotIsLowModulationNotTheVoltageLimit) {

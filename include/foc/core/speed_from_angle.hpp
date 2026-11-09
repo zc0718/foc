@@ -22,10 +22,10 @@ namespace core {
  *
  * @brief [zh] 由角度求机械转速：跨固定延迟做差分。
  *
- *   存在的理由：观测器自己的 `omega_e` 是一个**环路状态**—— 锁在解调载波上的 PLL——而低速时即便**角度**极好，这个状态也
- *   很差。在注入观测器上实测机械 20 rad/s：角度只差 0.0015 rad，而它报出的转速差到 0.7995 rad/s，且对该环路的带宽与阻尼
- *   做十五点扫描也只能改善 2.75 倍。改为对角度做差分，是对同一个信号问另一个问题，而它带的噪声可以由角度自身的误差预
- *   测：`σ_v = σ_θ·√2/(window_ticks·dt)`。
+ *   存在的理由：观测器自己的 `omega_e` 是一个 **环路状态** —— 锁在解调载波上的 PLL——而低速时即便 **角度** 极好，这个状
+ *   态也很差。在注入观测器上实测机械 20 rad/s：角度只差 0.0015 rad，而它报出的转速差到 0.7995 rad/s，且对该环路的带宽与
+ *   阻尼做十五点扫描也只能改善 2.75 倍。改为对角度做差分，是对同一个信号问另一个问题，而它带的噪声可以由角度自身的误差
+ *   预测：`σ_v = σ_θ·√2/(window_ticks·dt)`。
  *
  * @note [en] Deliberately the cheapest form that can be measured: a delayed difference rather than a least-squares
  *            slope. The slope over the same window would be quieter by `sqrt(6N/((N+1)(N+2)))`, a factor of **5.82** at
@@ -36,11 +36,11 @@ namespace core {
  *            exactly `sqrt(2)` (F-42). The output is 0 until the window has filled. A speed that starts by reporting
  *            the difference across a partly-filled window would report a number divided by the wrong interval, which is
  *            worse than reporting nothing.
- * @note [zh] 刻意做成**能被测量**的最便宜形式：延迟差分，而不是最小二乘斜率。同一窗口上的斜率会比它安静 `√(12/N)` 倍，
- *            闭式是 `√(6N/((N+1)(N+2)))`，在 N = 200 时是 **5.82** 倍——值得有，但在便宜形式证明"对角度做差分"方向正确之
- *            前不值得先建。两条闭式都在 `test_sil_speed_from_angle.cpp` 里对着出货的估计器核过，所以这里的系数是 5.82
- *            而不是本注更早版本写的 4.1：那一版漏了差分自身带的 `√2`，错了整整 `√2` 倍（F-42）。窗口填满之前输出为 0。
- *            一开始就用半满窗口报差分，等于把一个数除以错误的区间——那比什么都不报更糟。
+ * @note [zh] 刻意做成 **能被测量** 的最便宜形式：延迟差分，而不是最小二乘斜率。同一窗口上的斜率会比它安静 `√(12/N)`
+ *            倍，闭式是 `√(6N/((N+1)(N+2)))`，在 N = 200 时是 **5.82** 倍——值得有，但在便宜形式证明"对角度做差分"方向正
+ *            确之前不值得先建。两条闭式都在 `test_sil_speed_from_angle.cpp` 里对着出货的估计器核过，所以这里的系数是
+ *            5.82 而不是本注更早版本写的 4.1：那一版漏了差分自身带的 `√2`，错了整整 `√2` 倍（F-42）。窗口填满之前输出为
+ *            0。一开始就用半满窗口报差分，等于把一个数除以错误的区间——那比什么都不报更糟。
  * @since 0.1.6
  * @exporter
  */

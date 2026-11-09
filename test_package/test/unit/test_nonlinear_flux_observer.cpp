@@ -77,7 +77,7 @@ TEST(NonlinearFluxObserver, RejectsEachUnusableConfiguration) {
     // The gain is a *fraction* of the estimated speed with a floor, so both halves have to be positive: a
     // negative ratio would push the flux away from the nameplate instead of towards it, which looks like a
     // diverging observer rather than a typo.
-    // 增益是估计转速的一个**比例**加一个下限，因此两者都必须为正：负比例会把磁链推离铭牌而不是推向它，
+    // 增益是估计转速的一个 **比例** 加一个下限，因此两者都必须为正：负比例会把磁链推离铭牌而不是推向它，
     // 看起来像观测器发散，而不像一个笔误。
     for (int field = 0; field < 6; ++field) {
         foc::core::NonlinearFluxObserver::Config bad = config(0.35F);
@@ -134,14 +134,14 @@ TEST(NonlinearFluxObserver, TheInductiveDropIsSubtractedWhenTheCurrentChanges) {
     // `d(psi)/dt = v - Rs*i - L*di/dt`, and the last term is taken from the current *difference*. Every
     // other case in this file feeds a constant current, so `i - i_prev` is identically zero and the term
     // never acts: the mutation run changed its subtraction into an addition and no case noticed.
-    // 这一项是 `d(psi)/dt = v - Rs*i - L*di/dt` 的末项，取自电流**差分**。本文件其余用例喂的都是恒定电流，
+    // 这一项是 `d(psi)/dt = v - Rs*i - L*di/dt` 的末项，取自电流 **差分** 。本文件其余用例喂的都是恒定电流，
     // 于是 `i - i_prev` 恒为零、该项从不生效：变异测试把它的减法改成加法，没有一个用例察觉。
     //
     // Two properties of this observer decide whether the term is observable at all, both measured while
     // writing this case: (1) the flux must be seeded *along the same direction* as the current steps, or the
     // angle jumps on the first real sample and the radial gain follows that fake speed; (2) the steps must be
     // proportional, so the direction never changes and the radial correction stays negligible.
-    // 观测器的两个性质决定该项是否可观测，都是写这条用例时实测到的：(1) 磁链初值必须与电流步进**同向**，
+    // 观测器的两个性质决定该项是否可观测，都是写这条用例时实测到的：(1) 磁链初值必须与电流步进 **同向** ，
     // 否则第一个真实采样就会造成角度跳变、径向增益跟着那个假转速走；(2) 步子必须等比例，方向不变，
     // 径向修正才可忽略。
     const float step_alpha = 0.05F;
@@ -245,7 +245,7 @@ TEST(NonlinearFluxObserver, LockedNeedsTheFluxToBeAboveTheFloor) {
 
     // Seeded along +beta, so the *beta* radial term is the only one that can do the work. Every other case
     // is seeded along +alpha, where that term is multiplied by zero and cannot be wrong.
-    // 沿 +beta 播种，于是**beta** 的径向项是唯一起作用的项。其余用例都沿 +alpha 播种，那里 beta 项乘以零，
+    // 沿 +beta 播种，于是 **beta** 的径向项是唯一起作用的项。其余用例都沿 +alpha 播种，那里 beta 项乘以零，
     // 错也看不出来。
     {
         foc::core::NonlinearFluxObserver observer(config(0.35F));

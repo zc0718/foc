@@ -20,10 +20,10 @@ namespace core {
  *
  * @brief [zh] 一次速度环整定被要求什么，以及它被允许相信什么。
  *
- *   **速度环真正需要的两个数都是可测的比值**，而且都不是单独的 `kt` 或 `J`。由 `J·dω_m/dt = kt·iq − b·ω_m` 得，每安培加
- *   速度是 `kt/J`、机械极点是 `b/J`。库自己的 `speed_pi_config()` 抵消那个极点后落在 `kp = bandwidth·J/kt`、 `ki =
+ *   **速度环真正需要的两个数都是可测的比值** ，而且都不是单独的 `kt` 或 `J`。由 `J·dω_m/dt = kt·iq − b·ω_m` 得，每安培
+ *   加速度是 `kt/J`、机械极点是 `b/J`。库自己的 `speed_pi_config()` 抵消那个极点后落在 `kp = bandwidth·J/kt`、 `ki =
  *   bandwidth·b/kt`——写成比值就是 `kp = bandwidth/(kt/J)` 与 `ki = bandwidth·(b/J)/(kt/J)`。所以整定器根本不需要知道
- *   `kt` 或 `J` 才能给出正确的增益；它需要**量出这两个比值**。铭牌只通过 `j_expected` 参与，而它的职责是回答另一个问
+ *   `kt` 或 `J` 才能给出正确的增益；它需要 **量出这两个比值** 。铭牌只通过 `j_expected` 参与，而它的职责是回答另一个问
  *   题：这台机器是不是调用方以为自己在整定的那一台？
  * @since 0.1.9
  * @exporter
@@ -52,9 +52,9 @@ struct SpeedTuneConfig final {
  *            `speed_pi_config()` would have produced -- so a caller that applies whatever it gets applies nothing new.
  *            That is deliberate: a fallback of zero would be a drive that cannot produce torque, and a fallback of the
  *            measured value would be a silent re-tune to a machine nobody described.
- * @note [zh] `valid` 为假时，本结构里的增益是**铭牌**增益——即 `speed_pi_config()` 会给的同一组值——于是"拿到什么就用什么
- *            "的调用方等于什么都没换。这是刻意的：回退成零会得到一个出不了力矩的驱动器，回退成实测值则是悄悄整定到一台
- *            没人描述过的机器上。
+ * @note [zh] `valid` 为假时，本结构里的增益是 **铭牌** 增益——即 `speed_pi_config()` 会给的同一组值——于是"拿到什么就用什
+ *            么 "的调用方等于什么都没换。这是刻意的：回退成零会得到一个出不了力矩的驱动器，回退成实测值则是悄悄整定到一
+ *            台没人描述过的机器上。
  * @since 0.1.9
  * @exporter
  */
@@ -62,7 +62,7 @@ struct SpeedTuneResult final {
     ErrorCode
         status; ///< [en] `Ok` when the configuration could be evaluated, `Param` when it could not. [zh] 配置能评估时为 `Ok`，否则 `Param`。
     bool
-        valid; ///< [en] whether the measurement is a measurement of *this* machine. [zh] 这次测量是否是对**这台**机器的测量。
+        valid; ///< [en] whether the measurement is a measurement of *this* machine. [zh] 这次测量是否是对 **这台** 机器的测量。
     float kt_over_j; ///< [en] identified acceleration per amp, rad/s^2 per A. [zh] 辨识出的每安培加速度，rad/s²/A。
     float b_over_j;  ///< [en] identified mechanical pole, 1/s. [zh] 辨识出的机械极点，1/s。
     float
@@ -96,13 +96,13 @@ struct SpeedTuneResult final {
  * @brief [zh] 从一个转矩阶跃窗口辨识速度环需要的两个比值，并在窗口不构成测量时拒绝。
  *
  *   **拟合。** `dω_m/dt = (kt/J)·iq − (b/J)·ω_m` 对 `(iq, ω_m)` 是线性的，所以窗口上的两参数最小二乘同时给出两个比值，
- *   而不需要假设转速不变：`kt/J` 是对 `iq` 的斜率，`b/J` 是对 `ω_m` 的斜率。拟合**刻意带截距**——一个未知的恒定负载会落
- *   在那里，这是本次整定能区分"机器比你说的重"与"有东西在拉它"的方式。
+ *   而不需要假设转速不变：`kt/J` 是对 `iq` 的斜率，`b/J` 是对 `ω_m` 的斜率。拟合 **刻意带截距** ——一个未知的恒定负载会
+ *   落在那里，这是本次整定能区分"机器比你说的重"与"有东西在拉它"的方式。
  *
  *   **拒绝，各有理由。** 窗口太短、电流没有变化（没有斜率可测）、出现饱和样本（环路没在送出参考要的东西）、残差过大（模
  *   型解释不了这个窗口——随位置变化的摩擦、齿槽定位点、在动的负载）、机械极点不成立或为负、实测惯量离 `j_expected` 超过
- *   `tolerance`。以上每一种，结果里带的都是**铭牌**增益且 `valid == false`，于是"拿到什么就用什么"的调用方等于什么都没
- *   换。
+ *   `tolerance`。以上每一种，结果里带的都是 **铭牌** 增益且 `valid == false`，于是"拿到什么就用什么"的调用方等于什么都
+ *   没换。
  * @since 0.1.9
  * @exporter
  */

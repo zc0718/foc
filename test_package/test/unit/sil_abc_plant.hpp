@@ -22,10 +22,10 @@ namespace sil {
  *   two models agree at six operating points, both derivations are almost certainly right; if they disagree, one is
  *   wrong and the disagreement points at which.
  *
- * @brief [zh] 第二台**独立推导**的相变量 PMSM 被控对象，只用于与 dq plant 对拍。
+ * @brief [zh] 第二台 **独立推导** 的相变量 PMSM 被控对象，只用于与 dq plant 对拍。
  *
- *   为什么要有它、它替代什么。没有电机专家来评审 dq 推导时， `sil_pmsm_plant.hpp` 里一个符号或系数错误会让**所有** SIL
- *   结论朝同一个方向错，而内部 完全自洽——项目内部没有任何东西能看见它。本模型**从不构造 dq 量**：它直接按 `v = Rs·i +
+ *   为什么要有它、它替代什么。没有电机专家来评审 dq 推导时， `sil_pmsm_plant.hpp` 里一个符号或系数错误会让 **所有** SIL
+ *   结论朝同一个方向错，而内部 完全自洽——项目内部没有任何东西能看见它。本模型 **从不构造 dq 量** ：它直接按 `v = Rs·i +
  *   dλ/dt` 积分三相磁链，`λ_p = (Ls − M)·i_p + λm·cos(θ_p)`， 并由磁共能给出转矩 `Te = −p·λm·Σ(i_p·sin θ_p)`。两个模型
  *   在六个工作点上一致， 则两个推导几乎必然都对；若不一致，其中一个错了，而不一致的位置会指出是哪一个。
  *
@@ -33,9 +33,9 @@ namespace sil {
  *            case where the phase-variable form is unambiguous; a salient abc model needs an angle-dependent inductance
  *            matrix and would reintroduce the very transformation being checked. The mechanical equation is
  *            deliberately frozen: mechanics is not where derivation errors hide, and the dq plant already covers it.
- * @note [zh] 范围，写清楚以免被过度解读。这是**非凸极**机器（`Ld = Lq`），因为那正是相变量 形式无歧义的情形；凸极的 abc
- *            模型需要随角度变化的电感矩阵，会把正要检查的那个变换 又引回来。机械方程故意冻结：推导错误不藏在力学里，而
- *            dq plant 已经覆盖了它。
+ * @note [zh] 范围，写清楚以免被过度解读。这是 **非凸极** 机器（`Ld = Lq`），因为那正是相变量 形式无歧义的情形；凸极的
+ *            abc 模型需要随角度变化的电感矩阵，会把正要检查的那个变换 又引回来。机械方程故意冻结：推导错误不藏在力学
+ *            里，而 dq plant 已经覆盖了它。
  * @context [en] Host-side SIL only: never part of the shipped library.
  * @context [zh] 仅 host 侧 SIL：绝不进入发布库。
  * @since 0.1.0
@@ -84,8 +84,8 @@ class AbcPlant final {
      *            frozen-speed model cannot witness, and it is where this project's open-loop start claim lives. Here it
      *            is computed without ever forming a d-q quantity, and without ever using `Kt`.
      * @note [zh] **默认关闭，这一点很重要。** 关闭时转速与角度完全等于 `set_state()` 放进去的值，也就是六点对拍所对着的
-     *            冻结转速模型；打开它是另一个实验，不能悄悄把它改掉。存在的理由：机械侧与电气侧之间的**瞬态**交换，正是
-     *            冻结转速模型无法见证的东西，而本项目的开环起动主张就住在那里。这里的计算从不构造 d-q 量，也从不使用
+     *            冻结转速模型；打开它是另一个实验，不能悄悄把它改掉。存在的理由：机械侧与电气侧之间的 **瞬态** 交换，正
+     *            是冻结转速模型无法见证的东西，而本项目的开环起动主张就住在那里。这里的计算从不构造 d-q 量，也从不使用
      *            `Kt`。
      * @since 0.1.0
      */
@@ -113,7 +113,7 @@ class AbcPlant final {
      * @brief [en] Inject a cogging torque: a rotor torque that exists with no current, is periodic in the
      *             **mechanical** angle, and averages to zero over a revolution.
      *
-     * @brief [zh] 注入齿槽转矩：一个**不通电流也存在**、随**机械**角周期变化、一转平均为零的转子转矩。
+     * @brief [zh] 注入齿槽转矩：一个 **不通电流也存在** 、随 **机械** 角周期变化、一转平均为零的转子转矩。
      *
      *   It enters the mechanical equation **additively** (`J*w' = Te - b*w - load + Tcog`), which fixes the sign a
      *   compensator must produce: to cancel it, a controller has to make `Te` carry `-Tcog`. Writing it as a load that
@@ -121,8 +121,8 @@ class AbcPlant final {
      *   writes the compensator.
      *
      *   **Off by default (no harmonics), and bit-identical when off** -- the same rule the other injection ports
-     *   follow: an error source that changes the frozen scenarios cannot be told apart from a regression. 它**加性** 进
-     *   入机械方程（`J·ω' = Te − b·ω − load + Tcog`），这就固定了补偿器必须产出的符号：要抵消它，控制器得让 `Te` 带上
+     *   follow: an error source that changes the frozen scenarios cannot be told apart from a regression. 它 **加性**
+     *   进入机械方程（`J·ω' = Te − b·ω − load + Tcog`），这就固定了补偿器必须产出的符号：要抵消它，控制器得让 `Te` 带上
      *   `-Tcog`。若把它写成「恰好随角度变化的负载」，算术上等价，却把那个符号留给写补偿的人重新发现一遍。 **默认关闭（
      *   无谐波），关闭时逐位不变**——与其它注入端口同一条规矩：会改变冻结场景的误差源无法与回归区分。
      *
@@ -216,7 +216,7 @@ class AbcPlant final {
                 // The injected cogging torque is added here and nowhere else: it is a rotor torque, so it belongs in the
                 // mechanical equation and must NOT be folded into `torque_at()`, which is the electromagnetic torque the
                 // cross-check and the compensation are both measured against.
-                // 注入的齿槽转矩只加在这里，不加别处：它是转子转矩，属于机械方程，**不能**并进 `torque_at()`——后者是对拍与
+                // 注入的齿槽转矩只加在这里，不加别处：它是转子转矩，属于机械方程， **不能** 并进 `torque_at()`——后者是对拍与
                 // 补偿共同对照的那个电磁转矩。
                 const float te = torque_at(iu, iv, theta);
                 const float tcog = ::foc::sil::evaluate_cogging(
@@ -254,7 +254,7 @@ class AbcPlant final {
 
     /**
      * @brief [en] Electromagnetic torque from magnetic co-energy, **without Park**: N*m.
-     * @brief [zh] 由磁共能给出的电磁转矩，**不经 Park**：N·m。
+     * @brief [zh] 由磁共能给出的电磁转矩， **不经 Park** ：N·m。
      */
     [[nodiscard]] auto torque() const noexcept -> float { return torque_at(i_u_, i_v_, theta_e_); }
 

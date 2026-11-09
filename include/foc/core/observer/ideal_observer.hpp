@@ -15,8 +15,8 @@ namespace core {
  * @warning [en] **Cheat channel.** This class deliberately bypasses the electrical model and is never allowed on a real
  *               motor: its purpose is to isolate controller behaviour from observer error in the simulation. Must not
  *               be used in a `HalPolicy` that ships.
- * @warning [zh] **作弊通道**。本类刻意绕过电气模型，绝不允许用于真实电机：它存在的意义是把 控制器行为与观测器误差在仿真
- *               中解耦。不得用于任何要出厂的 `HalPolicy`。
+ * @warning [zh] **作弊通道** 。本类刻意绕过电气模型，绝不允许用于真实电机：它存在的意义是把 控制器行为与观测器误差在仿
+ *               真中解耦。不得用于任何要出厂的 `HalPolicy`。
  * @context [en] SIL / tests only.
  * @context [zh] 仅 SIL / 测试。
  * @since 0.1.0

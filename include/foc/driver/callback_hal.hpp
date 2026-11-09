@@ -34,7 +34,7 @@ namespace driver {
  *   函数指针而不是虚函数，是因为需要它的调用方是 C ABI、Python 扩展与 FMU——它们都无法跨边界传 C++ 对象。
  *
  *   四个回调是必需的，由 `valid()` 检查：占空比送出、相电流读入、机械角读入、母线电压读入。其余是可选的，在声明处逐个说
- *   明。可选项为 NULL 的含义是"这个主控方没有这个能力"，**不是**"假定一个方便的值"： `pwm_fault` 缺省即不报故障，
+ *   明。可选项为 NULL 的含义是"这个主控方没有这个能力"， **不是**"假定一个方便的值"： `pwm_fault` 缺省即不报故障，
  *   `velocity_rad_s` 缺省即主控方测不到转速，`now_us` 缺省即调用方信任自己每拍传入的 `dt`。
  *
  * @note [en] `configure()` on the HAL is a no-op here: the host owns its own carrier frequency and dead time. The
@@ -53,25 +53,25 @@ struct HalCallbacks final {
 
     /**
      * @brief [en] Receive the three phase duties, each in [0, 1]. **Required.**
-     * @brief [zh] 接收三相占空比，各在 [0, 1]。**必需**。
+     * @brief [zh] 接收三相占空比，各在 [0, 1]。 **必需** 。
      */
     void (*pwm_write_duty)(void* user, const float duty_uvw[3]);
 
     /**
      * @brief [en] Phase currents in A, U/V/W. **Required.**
-     * @brief [zh] 三相电流，A，U/V/W。**必需**。
+     * @brief [zh] 三相电流，A，U/V/W。 **必需** 。
      */
     void (*read_current)(void* user, float uvw_a[3]);
 
     /**
      * @brief [en] Mechanical angle in rad. **Required.**
-     * @brief [zh] 机械角，rad。**必需**。
+     * @brief [zh] 机械角，rad。 **必需** 。
      */
     float (*read_angle_mech_rad)(void* user);
 
     /**
      * @brief [en] DC link voltage in V. **Required.**
-     * @brief [zh] 母线电压，V。**必需**。
+     * @brief [zh] 母线电压，V。 **必需** 。
      */
     float (*read_voltage_v)(void* user);
 
@@ -89,17 +89,17 @@ struct HalCallbacks final {
 
     /**
      * @brief [en] Non-zero when the power stage's own `nFAULT` is asserted. **Required**, unlike `pwm_fault`.
-     * @brief [zh] 功率级自己的 `nFAULT` 有效时返回非零。**必需**，与 `pwm_fault` 不同。
+     * @brief [zh] 功率级自己的 `nFAULT` 有效时返回非零。 **必需** ，与 `pwm_fault` 不同。
      * @note [en] The one required input in this struct whose absence is not a capability answer. A host that cannot say
      *            whether its power stage is faulted is a host that might drive a desaturated bridge, and "we did not
      *            wire it" and "nothing is wrong" arrive here as the same silence. So silence is refused (`valid()` is
      *            false and no motor can be created) and a host with no such pin writes `return 0;` in its own code --
      *            one line, visible to a reviewer, instead of a default nobody chose. Polarity is the host's: return the
      *            sense you mean, not the pin level.
-     * @note [zh] 本结构里唯一一个**缺席不是能力答复**的必需输入。一个说不出自己功率级有没有故障的主控方，就是一个可能去
-     *            驱动一个已去饱和的桥的主控方；而"我们没接"和"什么都没坏"在这里表现为同一个沉默。所以沉默被拒绝（
+     * @note [zh] 本结构里唯一一个 **缺席不是能力答复** 的必需输入。一个说不出自己功率级有没有故障的主控方，就是一个可能
+     *            去驱动一个已去饱和的桥的主控方；而"我们没接"和"什么都没坏"在这里表现为同一个沉默。所以沉默被拒绝（
      *            `valid()` 为假、电机创建不出来），而一个确实没有这根引脚的主控方在自己代码里写 `return 0;`——一行，评审
-     *            看得见，而不是一个没人选过的默认值。极性归主控方：返回你**想表达**的语义，而不是引脚电平。
+     *            看得见，而不是一个没人选过的默认值。极性归主控方：返回你 **想表达** 的语义，而不是引脚电平。
      * @since 0.1.9
      */
     std::int32_t (*read_drive_fault)(void* user);
@@ -127,7 +127,7 @@ struct HalCallbacks final {
      * @brief [zh] 主控方的位置源是否有索引标记；NULL = 没有。
      * @note [en] Optional, and its absence is a *capability* answer rather than a degradation: a host without a mark
      *            simply cannot home, so `PositionReference::homed()` stays false and an absolute position is refused.
-     * @note [zh] 可选，而它的缺失是一个**能力**答复而不是降级：没有标记的主控方就是无法回零，于是
+     * @note [zh] 可选，而它的缺失是一个 **能力** 答复而不是降级：没有标记的主控方就是无法回零，于是
      *            `PositionReference::homed()` 恒为 false、绝对位置被拒绝。
      */
     std::int32_t (*position_has_index)(void* user);
@@ -326,8 +326,8 @@ class CallbackPosition final : public hal::PositionSensor {
      * @brief [zh] 本主控方是否提供索引标记。
      * @note [en] The method always exists, so the compile-time concept probe always approves; the *answer* is a runtime
      *            fact about the host. Keeping both is what lets one `Motor` serve a host with a mark and one without.
-     * @note [zh] 方法总是存在，所以编译期概念探测总是通过；**答案**是关于主控方的运行期事实。两者都保留，同一个 `Motor`
-     *            才能既服务带标记的主控方、又服务不带的。
+     * @note [zh] 方法总是存在，所以编译期概念探测总是通过； **答案** 是关于主控方的运行期事实。两者都保留，同一个
+     *            `Motor` 才能既服务带标记的主控方、又服务不带的。
      */
     [[nodiscard]] auto has_index() const noexcept -> bool {
         return (callbacks_.position_has_index != nullptr) && (callbacks_.position_has_index(callbacks_.user) != 0);
@@ -425,7 +425,7 @@ class CallbackClock final : public hal::Clock {
  * @note [en] `faulted()` answering false when the callback is NULL is *not* the dangerous default:
  *            `HalCallbacks::valid()` refuses a set without this callback, so a `CallbackHal` that reaches a motor has
  *            already been told, in writing, that this host has no fault path.
- * @note [zh] 回调为 NULL 时 `faulted()` 答 false **不是**那个危险的默认值：`HalCallbacks::valid()` 拒绝缺这个回调的集
+ * @note [zh] 回调为 NULL 时 `faulted()` 答 false **不是** 那个危险的默认值：`HalCallbacks::valid()` 拒绝缺这个回调的集
  *            合，所以一个真正到达电机的 `CallbackHal` 早已被书面告知：本主控方没有故障通路。
  * @since 0.1.9
  * @exporter

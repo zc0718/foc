@@ -73,7 +73,7 @@ static_assert(offsetof(foc_trace_sample_t, speed_mech) == offsetof(core::TraceSa
 // template parameters, so the choice has to be made here; the defaults (`NullAlignment` etc.) would
 // silently cap the C API at a subset of the C++ one, which is the "library that only serves one
 // scenario" trap this project keeps refusing to fall into.
-// C 路径给的是**完整**电机：位置环与对齐器都在。C 调用方无法追加模板参数，因此这个选择必须在这里
+// C 路径给的是 **完整** 电机：位置环与对齐器都在。C 调用方无法追加模板参数，因此这个选择必须在这里
 // 做定；用默认的空策略（`NullAlignment` 等）会把 C API 静默地封成 C++ API 的子集，而那正是本项目
 // 一直在拒绝的"只服务一种场景的库"陷阱。
 using MotorT =
@@ -203,8 +203,8 @@ struct Setup final {
  *            silently, so the next field appended to `Setup` would also have been absorbed by the omission. A default
  *            that is correct only because something was forgotten is a default nobody can review.
  * @note [zh] `use_observer_angle` 写成显式的 `0`，而不是从列表末尾省掉。省掉得到的是同一个值（聚合体未写的成员会被值初
- *            始化）——但那是**静默**得到的：下一个加到 `Setup` 末尾的字段也会被这个漏写吞掉。一个"只是因为忘了写才正确"
- *            的默认值，是没人能审的默认值。
+ *            始化）——但那是 **静默** 得到的：下一个加到 `Setup` 末尾的字段也会被这个漏写吞掉。一个"只是因为忘了写才正确
+ *            " 的默认值，是没人能审的默认值。
  */
 constexpr Setup kDefaultSetup{5.0F, 20000.0F, 500.0F, 24.0F, 2000.0F, 200.0F,
                               0.0F, 20.0F,    50.0F,  0.0F,  0.0F,    0.0F,
@@ -594,11 +594,11 @@ constexpr std::uint32_t kSlotBits = 8U;
 
 /**
  * @brief [en] Mint a handle token: magic | generation | slot, as a pointer that is *never* dereferenced.
- * @brief [zh] 签发句柄令牌：magic | 代际 | 槽位，形式上是**永不解引用**的指针。
+ * @brief [zh] 签发句柄令牌：magic | 代际 | 槽位，形式上是 **永不解引用** 的指针。
  * @note [en] An earlier version pointed the handle at a per-slot control block; because the block is reused by the next
  *            occupation, a stale handle then read the *new* generation and passed validation. The generation has to
  *            live in the handle value itself.
- * @note [zh] 早先的版本让句柄指向每个槽位的控制块；由于控制块会被下一次占用复用，旧句柄会读到 **新**代际从而通过校验。
+ * @note [zh] 早先的版本让句柄指向每个槽位的控制块；由于控制块会被下一次占用复用，旧句柄会读到 **新** 代际从而通过校验。
  *            代际必须放在句柄值本身里。
  * @since 0.1.0
  */
@@ -787,7 +787,7 @@ constexpr std::size_t kMaxProtectors = 4U;
  *            member that needs releasing, this comment is the thing that makes the omission a bug instead of an
  *            oversight.
  * @note [zh] `Protector` 没有默认构造函数，且只含浮点与枚举，所以内联字节上 placement new 就够， 不需要调析构。这一点是
- *            **写明的**而不是假定的：若该类型将来长了需要释放的成员，这段注释会让 那次遗漏成为 bug 而不是疏忽。
+ *            **写明的** 而不是假定的：若该类型将来长了需要释放的成员，这段注释会让 那次遗漏成为 bug 而不是疏忽。
  * @since 0.1.1
  */
 struct ProtectorSlot final {
@@ -1029,7 +1029,7 @@ auto machine_params(const foc_motor_params_t& p) noexcept -> core::MachineParams
  *            the nameplate flux so that "no answer below this flux" sits at 50 % of nominal). They are stated here as
  *            the library's defaults, to be made settable when the caller needs to differ -- not silently re-guessed per
  *            call.
- * @note [zh] `psi_f` 是**推导**来的，不向调用方索取：`machine_params()` 已经给出唯一定义 `psi_f = kt /
+ * @note [zh] `psi_f` 是 **推导** 来的，不向调用方索取：`machine_params()` 已经给出唯一定义 `psi_f = kt /
  *            (1.5·pole_pairs)`，这里复用它而不是另开一个。这段注释的上一版声称该边界无从得知磁链、于是传了 0；那个说法
  *            错了两处——`pole_pairs` 就在 `foc_motor_params_t` 里（电机的 `psi_f` 正是这样得到的），而这个推导是精确的，
  *            不是近似。 NLFO 的三个整定量就是本仓库各处一直在用的那三个（`gain_ratio` 0.3 是 `ω_e` 的比例、因而无量纲；
@@ -1074,7 +1074,7 @@ constexpr auto observer_kind(std::int32_t observer) noexcept -> core::ObserverKi
 /**
  * @brief [en] A `foc_motor_params_t` view of a running motor, so run-time admission uses the same predicate as
  *             construction instead of a second copy of it.
- * @brief [zh] 对一个运行中电机的 `foc_motor_params_t` 视图，于是运行时准入用的是与构造时**同一个**判据，而不是它的副
+ * @brief [zh] 对一个运行中电机的 `foc_motor_params_t` 视图，于是运行时准入用的是与构造时 **同一个** 判据，而不是它的副
  *             本。
  */
 inline auto params_of(const motor::MotorConfig& cfg) noexcept -> foc_motor_params_t {
@@ -1112,7 +1112,7 @@ template <typename Slot> auto set_observer(Slot& slot, foc_observer_t observer) 
     // as 0.0525 rad of permanent offset at 2.5 A in `test_switchable_observer.cpp`. Every other member ignores the
     // argument. (This was once justified here by "a hand-over that landed pi away"; that number was the rig leaving the
     // member unconfigured, i.e. `A-110`, and the reason above stands on its own.)
-    // 用双参数版本：`DualInductanceObserver` 积分的是**定子**磁链，只给 `psi_f·e^(jθ)` 会把电流自身的磁链漏在积分常数之外，
+    // 用双参数版本：`DualInductanceObserver` 积分的是 **定子** 磁链，只给 `psi_f·e^(jθ)` 会把电流自身的磁链漏在积分常数之外，
     // 而纯积分器不会遗忘——在本仓库自己的链路上，它表现为交接后落在偏 π 的位置。其余成员会忽略这个参数。
     const motor::Telemetry hand_over_tm = instance.telemetry();
     const core::Ab<float> i_ab_now =
@@ -1135,7 +1135,7 @@ inline auto make_observer(const foc_motor_params_t& p, const Setup& setup) noexc
     // The salient-machine observer, configured from the same nameplate and nothing else: it is the member whose model
     // *wants* a salient machine, so `ld == lq` is a fine configuration rather than a refused one -- there it reduces to
     // the back-EMF algebra bit for bit.
-    // 凸极机观测器，同样只用铭牌配置：它是那个**希望**有凸极的成员，所以 `ld == lq` 是可以的配置而不是被拒绝的——
+    // 凸极机观测器，同样只用铭牌配置：它是那个 **希望** 有凸极的成员，所以 `ld == lq` 是可以的配置而不是被拒绝的——
     // 那种情况下它逐位退化为反电势观测器的代数。
     config.dual_inductance = core::DualInductanceObserver::Config{machine.rs, machine.ld, machine.lq, psi_f};
     // The injection half is configured exactly the way `test_sil_hfi.cpp` does, because those are the numbers that were
@@ -1262,7 +1262,7 @@ auto to_hal_callbacks(const foc_hal_callbacks_t& c) noexcept -> driver::HalCallb
     // caller built against the previous header would have us read two pointers it never allocated -- a stack overrun in
     // the one direction the output-side clamp cannot protect. No caller can truthfully declare less than the original
     // layout, so 0 is treated as full size, matching the rule stated for the output structs.
-    // 这是**输入**结构，追加字段必须按调用方声明的大小门控。没有这道门，按旧头编译的调用方会让我们去读它从未分配的
+    // 这是 **输入** 结构，追加字段必须按调用方声明的大小门控。没有这道门，按旧头编译的调用方会让我们去读它从未分配的
     // 两个指针——而输出侧的钳位保护不了这个方向。没有调用方能诚实地声明小于原始布局，因此 0 按完整大小处理，
     // 与输出结构的规矩一致。
     const std::size_t declared = (c.struct_size == 0U) ? sizeof(foc_hal_callbacks_t) : c.struct_size;
@@ -1423,7 +1423,7 @@ foc_err_t foc_bridge_create_host(const foc_motor_params_t* params, const foc_mot
         // The setup decides where the commutation angle comes from, and it has to be decided *before* the motor is
         // constructed: the motor reads `has_sensor()` every tick, and the reference it maintains is advanced only when
         // the angle is observer-derived.
-        // 换相角来自哪里由 setup 决定，而这件事必须在电机构造**之前**定下：电机每拍读 `has_sensor()`，而它维护的
+        // 换相角来自哪里由 setup 决定，而这件事必须在电机构造 **之前** 定下：电机每拍读 `has_sensor()`，而它维护的
         // 参考角只在角度来自观测器时才被推进。
         slot.hal.position.set_sensor_present(resolved.use_observer_angle == 0);
         slot.setup = resolved;
@@ -1758,7 +1758,7 @@ foc_err_t foc_bridge_get_status(foc_motor_t motor, foc_motor_status_t* out) {
         // struct an undeclared size cannot mean "I want no fields" -- the call would be pointless -- so 0 keeps the
         // historical meaning of "the version I have", while any declared size is respected as a ceiling. Without this
         // the field below would be written past the end of a caller built against the previous header.
-        // 调用方声明自己拥有多大，与 setup 一致。在**输出**结构上，"未声明"不可能表示"我不要任何字段"——那样这次调用毫无
+        // 调用方声明自己拥有多大，与 setup 一致。在 **输出** 结构上，"未声明"不可能表示"我不要任何字段"——那样这次调用毫无
         // 意义——因此 0 沿用"我手头的那个版本"的历史含义，而任何已声明的大小都被当作上限。没有这一步，下面新增的字段会被
         // 写到按旧头编译的调用方结构体之外。
         const std::uint32_t declared = out->struct_size;
@@ -1815,7 +1815,7 @@ foc_err_t foc_bridge_get_position_absolute(foc_motor_t motor, float* position_me
         // writes nothing, so the caller's variable keeps whatever it had -- a bug they can see rather than a plausible
         // zero they cannot.
         // 这个入口的全部意义就在这里。第一次索引之前 `referenced_mech_rad()` 答 0，而 0 是合法机械角，所以配着
-        // FOC_OK 返回它等于交给调用方一个与"已回零且停在原点"无法区分的数。缺原点是一个**状态**而不是一个取值：
+        // FOC_OK 返回它等于交给调用方一个与"已回零且停在原点"无法区分的数。缺原点是一个 **状态** 而不是一个取值：
         // 它答 FOC_ERR_STATE 且什么都不写，调用方的变量保持原样——那是一个能看见的 bug，而不是一个看不出来的合理零。
         const foc::core::PositionReference& reference = slot.instance->position_reference();
         if (!reference.homed() || reference.lost_count()) {
@@ -1891,7 +1891,7 @@ foc_err_t foc_bridge_mtpa_reference(const foc_motor_params_t* params, float i_ma
     // stable-ABI documentation promise. An infinite rate is how the curve is asked for without a limit;
     // a caller that wants the guard asks the C++ policy, which knows the speed.
     // 这个入口没有转速参数，所以施加不了 `MtpaReference` 用转速施加的那道 d 轴许可——它回答的是 MTPA
-    // **曲线**，这正是它的名字与稳定 ABI 文档所承诺的。无限比率就是“不带上限地问曲线”的写法；想要那道
+    // **曲线** ，这正是它的名字与稳定 ABI 文档所承诺的。无限比率就是“不带上限地问曲线”的写法；想要那道
     // 门的调用方去问知道转速的 C++ 策略。
     const foc::core::MtpaReference reference(
         foc::core::MtpaReference::Config{m.ld, m.lq, m.psi_f, i_max_a, std::numeric_limits<float>::infinity()});

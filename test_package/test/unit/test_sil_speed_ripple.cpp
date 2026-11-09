@@ -19,7 +19,7 @@
 // W7-c 增量 2：低速的转速纹波到底是谁的？
 //
 // 增量 1 收在一个让整波转向的数字上。20 rad/s 机械下低速伺服的稳定值是 0.1717 rad/s，但拆开来看：稳态偏差 0.0039
-// rad/s（0.02%），**纹波** 0.0900。于是估计器、角度、解调窗口都没有可做的东西了——剩下的是一个纹波。本文件回答的是
+// rad/s（0.02%）， **纹波** 0.0900。于是估计器、角度、解调窗口都没有可做的东西了——剩下的是一个纹波。本文件回答的是
 // 这个纹波属于谁，因为答案决定 W7 还要不要继续。
 //
 // 只有两个候选，而且可以分开：
@@ -50,33 +50,33 @@
 //   C2  （谁的纹波）惯量提高十倍，转速纹波必须至少降到五分之一，即跟随 `1/J` 到两倍以内。按 `1/J` 下降即机械必然、就此
 //       收口；不下降即环路在自己振荡，下一个增量在库里面。
 //   C3  （链条闭不闭）由实测电流纹波经机械方程、在实测主导频率上推算出的转矩纹波，必须落在实测转速纹波的两倍之内。
-//       这条检查的是电流确实是**原因**，而不是与它巧合同步。
-//   C4  （是不是观测器）带传感器那一跑的纹波不超过无感那跑的五分之一，则观测器在通路上。**这条结论后来被撤回了**：
+//       这条检查的是电流确实是 **原因** ，而不是与它巧合同步。
+//   C4  （是不是观测器）带传感器那一跑的纹波不超过无感那跑的五分之一，则观测器在通路上。 **这条结论后来被撤回了** ：
 //       那一臂把注入连同观测器一起去掉了，两臂差的是两件事。详见用例正文。
-//   C5  （是不是角度）角度纹波的主导频率与电流纹波的一致，且由角度纹波推出的电流落在实测的三倍之内。**否证**：角度在
+//   C5  （是不是角度）角度纹波的主导频率与电流纹波的一致，且由角度纹波推出的电流落在实测的三倍之内。 **否证** ：角度在
 //       该频率上没有音调，预测偏差 4.97 倍。
-//   C6  （是不是注入幅值）伏特降到三分之一，转速纹波至多降到 60%。**否证**：电流纹波确实减半了（0.54），转速纹波几乎不动
+//   C6  （是不是注入幅值）伏特降到三分之一，转速纹波至多降到 60%。 **否证** ：电流纹波确实减半了（0.54），转速纹波几乎不动
 //       （0.98），而音调从 418 Hz 挪到 92 Hz。
-//   C7  （是不是在追自己的测量）已发布转速的纹波至少是真实转速的 3 倍、且在同一音调上。**一半成立**：倍数 4.48，但音调
+//   C7  （是不是在追自己的测量）已发布转速的纹波至少是真实转速的 3 倍、且在同一音调上。 **一半成立** ：倍数 4.48，但音调
 //       在 0 Hz——缓慢游走而非 418 Hz 振荡。
 //
-//   C8  （是不是钳位造成的继电振荡）误差至少十分之一的窗口撞在 ±1 钳位上。**否证**：两种幅值下占用率都是 0.000，环路在这里
+//   C8  （是不是钳位造成的继电振荡）误差至少十分之一的窗口撞在 ±1 钳位上。 **否证** ：两种幅值下占用率都是 0.000，环路在这里
 //       是线性的；418/92 Hz 的频率移动是过零计数器读多音调信号的产物。
-//   C9  （哪个频率拥有它）六个栅格对齐的候选里最大者要比中位数大 1.5 倍。**成立**：2.0000 Hz 就是载波，9.41 倍。
+//   C9  （哪个频率拥有它）六个栅格对齐的候选里最大者要比中位数大 1.5 倍。 **成立** ：2.0000 Hz 就是载波，9.41 倍。
 //
-//   C10a 已发布转速上的载波音调在选定截止频率上至少降 5 倍。**成立**：200 Hz 下 10.1 倍。
-//   C10b 闭环转速纹波随之至少降 2 倍。**否证**：0.0900 → 0.0879，几乎没有变化——那条音调与测量量相关，但它没有一条穿过环路的
+//   C10a 已发布转速上的载波音调在选定截止频率上至少降 5 倍。 **成立** ：200 Hz 下 10.1 倍。
+//   C10b 闭环转速纹波随之至少降 2 倍。 **否证** ：0.0900 → 0.0879，几乎没有变化——那条音调与测量量相关，但它没有一条穿过环路的
 //       通路。已发布转速变干净是"应用读到的数"的改善，不是轴纹波的修法。
-//   C10c 稳态偏差不得因滤波变大。**成立**：0.0039 → 0.0023，反而更小（判据初稿写成对称区间，已改为单边并注明）。
+//   C10c 稳态偏差不得因滤波变大。 **成立** ：0.0039 → 0.0023，反而更小（判据初稿写成对称区间，已改为单边并注明）。
 //
-//   C11 载波频率上的转速音调线性于 `inject_v`。**成立**：三分之一的伏特剩 0.36（预测 0.33）。
-//   C12 同样伏特下凸极减半，音调随之减半。**否证**：剩 0.97——转矩纹波不是凸极积 `(Ld−Lq)·id·iq`。（第一版的旋钮把伏特
+//   C11 载波频率上的转速音调线性于 `inject_v`。 **成立** ：三分之一的伏特剩 0.36（预测 0.33）。
+//   C12 同样伏特下凸极减半，音调随之减半。 **否证** ：剩 0.97——转矩纹波不是凸极积 `(Ld−Lq)·id·iq`。（第一版的旋钮把伏特
 //       随 `Lq` 缩放来"保持高频电流"，但 d 轴高频电流由 `Ld` 决定，那个旋钮同时动了两个量，什么也没测到。）
-//   C13 实测转矩音调经 `1/(J·ω)` 推算的转速音调落在实测的 0.7–1.4 倍内。**成立**：1.03 倍。
-//   C14 转矩音调除以角度误差，在 20 与 5 rad/s 之间一致。**成立**：0.8035 对 0.8016，1.00 倍。
+//   C13 实测转矩音调经 `1/(J·ω)` 推算的转速音调落在实测的 0.7–1.4 倍内。 **成立** ：1.03 倍。
+//   C14 转矩音调除以角度误差，在 20 与 5 rad/s 之间一致。 **成立** ：0.8035 对 0.8016，1.00 倍。
 //
 // 于是本文件结束时的事实：纹波 0.09 rad/s，只要注入在跑就在，注入一停就是 0.0000；它不在转子惯量里、不在已发布角度里、
-// 不在注入幅值里、不是钳位造成的振荡。**它最大的单条音调是载波本身**，而观测器发布出来的转速带着这条音调的力度是转子的
+// 不在注入幅值里、不是钳位造成的振荡。 **它最大的单条音调是载波本身** ，而观测器发布出来的转速带着这条音调的力度是转子的
 // 10.4 倍——环路不是在自己生成它，而是在被喂它：`omega_e = omega_int + kp·error`，而 `error` 按构造携带载波频率的成分，
 // 在速度环闭上去之前没有任何东西滤过它。
 
@@ -154,8 +154,8 @@ using SensorlessMotor = foc::motor::Motor<core::SwitchableObserver, core::Svpwm,
  *   Goertzel below reads each one with no leakage from its neighbours. That is not pedantry: a candidate half a bin off
  *   would report the *sum* of the leakage from whatever is near it, and the whole point of this table is to decide
  *   which frequency owns the ripple. 栅格是 `control_hz / 窗口样本数` = 3.333 Hz，每个候选都是它的整数倍，于是下面的
- *   Goertzel 读每一个都不受邻居泄漏影响。这不是学究气：偏半个栅格的候选会把邻近内容的泄漏**加**进来，而这张表要决定的恰
- *   恰是哪个频率拥有这个纹波。
+ *   Goertzel 读每一个都不受邻居泄漏影响。这不是学究气：偏半个栅格的候选会把邻近内容的泄漏 **加** 进来，而这张表要决定的
+ *   恰恰是哪个频率拥有这个纹波。
  */
 constexpr int kToneBins[6] = {10, 12, 28, 95, 125, 600};
 constexpr float kToneHz[6] = {33.33F, 40.0F, 93.33F, 316.67F, 416.67F, 2000.0F};
@@ -205,7 +205,7 @@ struct RippleResult final {
     float implied_speed_ripple{0.0F};  ///< [en] what that torque ripple would produce at that frequency. [zh] 该转矩纹波在该频率上会产生的转速纹波。
     float angle_mean_rad{0.0F};        ///< [en] mean observer angle error in the window. [zh] 窗口内观测器角度误差均值。
     float angle_std_rad{0.0F};         ///< [en] its spread. [zh] 其离散。
-    float angle_ripple_hz{0.0F};       ///< [en] dominant frequency of the angle *ripple* (crossings about a 5 Hz average). [zh] 角度**纹波**的主导频率（相对 5 Hz 均值过零）。
+    float angle_ripple_hz{0.0F};       ///< [en] dominant frequency of the angle *ripple* (crossings about a 5 Hz average). [zh] 角度 **纹波** 的主导频率（相对 5 Hz 均值过零）。
     float iq_ripple_predicted{0.0F};   ///< [en] what that angle ripple should produce in the q current. [zh] 该角度纹波应在 q 轴电流上产生的量。
     float omega_est_mean{0.0F};        ///< [en] mean published speed from the observer. [zh] 观测器发布的转速均值。
     float omega_est_ripple{0.0F};      ///< [en] its spread -- what the loop actually chases. [zh] 其离散——即环路真正追逐的量。
@@ -302,7 +302,7 @@ auto run_ripple(float inertia, bool use_sensor, float inject_v, float speed_lpf_
     // The crossings for the angle are taken about a 5 Hz one-pole of the angle itself, because the angle error has a
     // *mean* (the lag, 0.006 rad at speed) that is twelve times its spread: crossing about zero would count the lag and
     // report zero crossings. The filter is the online stand-in for "mean removed in a second pass".
-    // 角度的过零是相对角度自身的 5 Hz 一阶滤波取的，因为角度误差有一个**均值**（恒速下的滞后，0.006 rad），是它离散的
+    // 角度的过零是相对角度自身的 5 Hz 一阶滤波取的，因为角度误差有一个 **均值** （恒速下的滞后，0.006 rad），是它离散的
     // 十二倍：相对零过零会去数那个滞后、报出零次。这个滤波器是"第二遍去均值"的在线替身。
     float angle_slow = 0.0F;
     const float angle_alpha = std::min(1.0F, kTwoPiLocal * 5.0F * kDt);
@@ -325,7 +325,7 @@ auto run_ripple(float inertia, bool use_sensor, float inject_v, float speed_lpf_
                     // after the pass. The two differ by the bias, 0.004 rad/s against a ripple of 0.09, so the crossing
                     // count is the same either way -- and if that ever stops being true the bias line in the output
                     // says so.
-                    // 过零是按**指令**而不是按均值计数的，因为均值要等这一遍走完才知道。两者相差一个偏差，0.004 对 0.09 的
+                    // 过零是按 **指令** 而不是按均值计数的，因为均值要等这一遍走完才知道。两者相差一个偏差，0.004 对 0.09 的
                     // 纹波，故两种数法给出同样的过零数——若哪天不再如此，输出里的偏差那一行会说明。
                     const float centred = speed - command;
                     const float previous_centred = previous_sub - command;
@@ -360,7 +360,7 @@ auto run_ripple(float inertia, bool use_sensor, float inject_v, float speed_lpf_
         if (in_window) {
             // The current in the rotor's own frame: the plant's instantaneous currents projected with the *true* angle.
             // This is the torque-producing current, which is what the mechanical equation sees.
-            // 转子自身坐标系里的电流：用**真实**角度把 plant 的瞬时电流投影过去。这是产生转矩的那份电流，也正是机械方程
+            // 转子自身坐标系里的电流：用 **真实** 角度把 plant 的瞬时电流投影过去。这是产生转矩的那份电流，也正是机械方程
             // 所看到的量。
             const core::Dq<float> i_dq =
                 core::park(core::clarke(plant.current_uvw()), static_cast<float>(kPoles) * plant.theta_mech_rad());
@@ -521,7 +521,7 @@ TEST(SilSpeedRipple, TheFigureSurvivesSubstepResolution) {
 
     // C1: the two samplings must agree. A control-rate figure that is much *lower* than the substep one was aliased
     // away, and one that is much higher means something in the sampling itself is the signal.
-    // C1：两种采样必须一致。控制率下的数字远**低于**子步的，说明它被混叠掉了；远高于则说明采样本身成了信号。
+    // C1：两种采样必须一致。控制率下的数字远 **低于** 子步的，说明它被混叠掉了；远高于则说明采样本身成了信号。
     const float ratio = (result.speed_ripple_sub > 0.0F) ? (result.speed_ripple_ctrl / result.speed_ripple_sub) : 0.0F;
     std::printf("[ripple] C1 control-rate over substep ripple %.3f (needs 0.80..1.20) -> %s\n",
                 static_cast<double>(ratio), ((ratio >= 0.8F) && (ratio <= 1.2F)) ? "met" : "NOT met");
@@ -570,10 +570,10 @@ TEST(SilSpeedRipple, TheRippleIsMechanicalOrItIsTheController) {
     // (5.9x q-ripple growth) and read as a real finding -- described the simulator, not the machine. **A falsification
     // is only as good as the instrument that produced it**, and this is the second time in this file that the answer
     // changed when the instrument did.
-    // C2 的判据**成立**：十倍惯量换来 9.16 倍的转速纹波下降，而 q 轴纹波根本没动（0.0201 A 对 0.0200 A），所以没有
+    // C2 的判据 **成立** ：十倍惯量换来 9.16 倍的转速纹波下降，而 q 轴纹波根本没动（0.0201 A 对 0.0200 A），所以没有
     // 任何东西抵消 `1/J` 的好处——这条链是机械的。
     //
-    // 这**推翻**了本用例第一版的结论，而推翻本身比结论更要紧。plant 用 float32 积分机械角时，亚 ulp 的步长被舍掉，
+    // 这 **推翻** 了本用例第一版的结论，而推翻本身比结论更要紧。plant 用 float32 积分机械角时，亚 ulp 的步长被舍掉，
     // 轴冻住而转速仍非零（F-40）；轻转子先冻住，它的纹波被测大，比值塌到 0.71 倍。那个"惯量无关"的说法——有机理
     // （增益由惯量导出）、有数字（q 纹波涨 5.9 倍）、读起来像个真发现——描述的是仿真器而不是机器。**否证的价值不超
     // 过产生它的那台仪器**，而这已经是本文件里第三次换仪器就换答案。
@@ -618,8 +618,8 @@ TEST(SilSpeedRipple, TheRippleComesFromTheObserverOrFromTheLoop) {
     // *and* the 12 V carrier. The 0.000 below therefore says only "a drive with no injection has no ripple", which is
     // true and nearly useless; it does not say the observer is in the path. The next case separates the two by moving
     // the injection's amplitude while leaving the angle source alone.
-    // C4 的结论**撤回**，撤回的理由是本用例给出的最有用的东西。带传感器那一臂把注入连同观测器一起去掉了——策略必须是反电势，
-    // 因为不被推进的注入观测器会把载波冻结成直流电压。于是两臂差的不是一件事而是两件：角度**和** 12 V 载波。因此下面的
+    // C4 的结论 **撤回** ，撤回的理由是本用例给出的最有用的东西。带传感器那一臂把注入连同观测器一起去掉了——策略必须是反电势，
+    // 因为不被推进的注入观测器会把载波冻结成直流电压。于是两臂差的不是一件事而是两件：角度 **和** 12 V 载波。因此下面的
     // 0.000 只说明"没有注入的驱动没有纹波"，这句话成立且几乎无用；它并不说明观测器在通路上。下一条用例用"只动注入幅值、
     // 不动角度来源"把两者分开。
     EXPECT_LT(share, 1.0F) << "the sensored arm should be quieter, since it has neither an observer nor a carrier";
@@ -631,7 +631,7 @@ TEST(SilSpeedRipple, TheAngleCarriesTheSameToneTheCurrentDoes) {
     // current, and the current the angle ripple should produce against the current that is actually there. If the
     // frequencies disagree, or the prediction misses by more than 3x, the angle is not what the loop is chewing on and
     // the mechanism is somewhere else.
-    // C4 说纹波属于观测器。这条问它是否**具体地**属于角度，办法是同时比较两个互相独立的量：音调的频率在角度上看到的
+    // C4 说纹波属于观测器。这条问它是否 **具体地** 属于角度，办法是同时比较两个互相独立的量：音调的频率在角度上看到的
     // 与在 q 轴电流上看到的，以及角度纹波应产生的电流与实际存在的电流。若频率不符、或预测偏差超过 3 倍，则环路嚼的不是
     // 角度，机理在别处。
     const RippleResult result = run_ripple(kBaseJ, false, kInjectV);
@@ -664,8 +664,8 @@ TEST(SilSpeedRipple, TheAngleCarriesTheSameToneTheCurrentDoes) {
     // the loop chews on -- the current ripple is created *inside* the current loop, from the carrier it is asked to
     // track, and not by the angle the carrier is oriented with. That is what the case now asserts, because that is what
     // was measured.
-    // 该假设被**否证**：角度误差在电流那个频率上完全没有音调（相对自身 5 Hz 均值零次过零），而它的离散把电流高估了 5 倍。
-    // 所以已发布的角度不是环路咀嚼的东西——电流纹波是**在电流环内部**产生的，来自它被要求跟踪的载波，而不是来自载波所对齐的
+    // 该假设被 **否证** ：角度误差在电流那个频率上完全没有音调（相对自身 5 Hz 均值零次过零），而它的离散把电流高估了 5 倍。
+    // 所以已发布的角度不是环路咀嚼的东西——电流纹波是 **在电流环内部** 产生的，来自它被要求跟踪的载波，而不是来自载波所对齐的
     // 角度。用例现在断言的就是这个，因为量到的就是这个。
     EXPECT_LT(result.angle_ripple_hz, 0.5F * result.dominant_hz)
         << "the angle does carry the current's tone after all, which would put the mechanism back in the observer";
@@ -709,7 +709,7 @@ TEST(SilSpeedRipple, TheRippleBelongsToTheInjectionNotToTheAngle) {
     // halves while its speed stays put, at a frequency that depends on the loop gain, is not the carrier's own current:
     // it is the loop re-exciting itself through the number it measures with. That number is the observer's published
     // speed, and the next case looks straight at it.
-    // C6 也**没有**成立，而它打印出来的拆分才是要点：电流纹波跟着幅值走了（0.54），转速纹波却不动（0.98），音调从 418 挪到
+    // C6 也 **没有** 成立，而它打印出来的拆分才是要点：电流纹波跟着幅值走了（0.54），转速纹波却不动（0.98），音调从 418 挪到
     // 92 Hz。电流减半而转速不动、且频率随环路增益变化——这不是载波自身电流的纹波，而是环路通过它用来测量的那个数把自己重新
     // 激励起来。那个数是观测器发布的转速，下一条用例直接看它。
     EXPECT_LT(iq_share, 0.6F) << "the current ripple should follow the amplitude, since the HF current does";
@@ -798,7 +798,7 @@ TEST(SilSpeedRipple, TheSpectrumNamesTheToneOrSaysThereIsNone) {
     // crossing counter reading a multi-tone signal; the exact amplitudes below show three tones at once. Pinning the
     // absence is worth as much as pinning a presence: if a future change ever drives the error into its clamp, this is
     // the case that says so.
-    // C8 被**否证**：两种幅值下钳位都没有到达，因此这里环路是线性的，而 418/92 Hz 的频率移动所暗示的那个继电说法作废。
+    // C8 被 **否证** ：两种幅值下钳位都没有到达，因此这里环路是线性的，而 418/92 Hz 的频率移动所暗示的那个继电说法作废。
     // 那个移动本身是过零计数器读一个多音调信号的产物；下面的精确幅值一次显示出三条音调。钉住"不存在"与钉住"存在"一样有
     // 价值：若以后某个改动真的把误差驱入钳位，说出这件事的就是本用例。
     EXPECT_LT(full.clamp_fraction, 0.10F) << "the error now reaches its clamp, so the loop is a nonlinearity and the "
@@ -840,7 +840,7 @@ TEST(SilSpeedRipple, TheSpectrumNamesTheToneOrSaysThereIsNone) {
     // speed carries it ten times harder than the rotor does. So the rotor is not generating it -- the loop is being fed
     // it. `omega_e` is `omega_int + kp*error` and `error` is the demodulated signal, which carries carrier-frequency
     // content by construction; nothing filters it before a speed loop closes on it.
-    // 而让这条从"有名"变成"可动手"的数字是：音调就是载波，而**已发布的**转速带着它的力度是转子的十倍。所以转子不是在生成
+    // 而让这条从"有名"变成"可动手"的数字是：音调就是载波，而 **已发布的** 转速带着它的力度是转子的十倍。所以转子不是在生成
     // 它——是环路在被喂它。`omega_e` 等于 `omega_int + kp·error`，而 `error` 就是解调信号，按构造携带载波频率的成分；在
     // 一个速度环闭上去之前，没有任何东西滤过它。
     const float published_over_rotor = (full.speed_tone[5] > 0.0F) ? (full.omega_tone[5] / full.speed_tone[5]) : 0.0F;
@@ -862,7 +862,7 @@ TEST(SilSpeedRipple, ThePublishedSpeedCanBeCleanedAndTheRotorDoesNotCare) {
     // Where the filter goes was measured too. The first version put it on the proportional path *inside* the loop and
     // every cutoff from 50 to 400 Hz ran the axis away (-115 to -170 rad/s): the proportional term is what damps this PLL
     // below its own 40 Hz bandwidth. It now sits at the publication boundary and `theta_e` integrates the raw `omega`.
-    // 滤波器放在哪里也是量出来的。第一版把它放在环路**内部**的比例通路上，50 到 400 Hz 每一个截止频率都把轴送飞（−115 到
+    // 滤波器放在哪里也是量出来的。第一版把它放在环路 **内部** 的比例通路上，50 到 400 Hz 每一个截止频率都把轴送飞（−115 到
     // −170 rad/s）：比例项正是在 40 Hz 带宽以下给这个 PLL 提供阻尼的东西。它现在坐在发布边界上，`theta_e` 积分原始 `omega`。
     //
     //   C10a the published carrier tone must fall by at least 5x at the chosen cutoff;
@@ -916,9 +916,9 @@ TEST(SilSpeedRipple, ThePublishedSpeedCanBeCleanedAndTheRotorDoesNotCare) {
     // story. One caveat is left open rather than hidden: this bias is measured at the run's window, and the loop is
     // known to carry a ~1 s settling tail, so part of the 1.87x may be settling time rather than a permanent offset;
     // separating the two is not done here (foundation-log A-42).
-    // C10c 被**违反**，而且在修正后的 plant 上，整个扫频范围里每一档截止频率都违反，不只是选中的那一档：把已发布
+    // C10c 被 **违反** ，而且在修正后的 plant 上，整个扫频范围里每一档截止频率都违反，不只是选中的那一档：把已发布
     // 转速洗干净是要拿稳态精度换的。所以 C10 声称的三向交易——音调没了、转子不受影响、精度保住——在这里不存在，
-    // 用例把这个记下来，而不是挑一个输得最少的截止频率。写成断言，是为了将来某个**真的**三者兼得的改动会在这里表
+    // 用例把这个记下来，而不是挑一个输得最少的截止频率。写成断言，是为了将来某个 **真的** 三者兼得的改动会在这里表
     // 现为故事的改变。一个限定不藏起来：这个偏差是在本次运行的窗口上量的，而环路已知带一条约 1 s 的收敛尾巴，所以
     // 1.87 倍里可能有一部分是收敛时间而不是永久偏置；拆开这两者这次没做（foundation-log A-42）。
     EXPECT_GT(bias_change, 1.2F) << "the filter now keeps steady accuracy as well: the trade recorded here no longer "
@@ -930,10 +930,10 @@ TEST(SilSpeedRipple, ThePublishedSpeedCanBeCleanedAndTheRotorDoesNotCare) {
     // measurement is not a path through the loop. What survives is that the published speed is *cleaner*, which is a
     // property of the number the application reads and not of the axis. The case asserts the falsification so that a
     // future change which *does* move the axis shows up here as a change of story rather than as a quiet improvement.
-    // C10b 被**否证**，而这是本用例更有价值的那一半。把已发布转速里的载波音调拿走 10 倍，闭环纹波从 0.0900 变到 0.0879
+    // C10b 被 **否证** ，而这是本用例更有价值的那一半。把已发布转速里的载波音调拿走 10 倍，闭环纹波从 0.0900 变到 0.0879
     // ——什么也没发生。所以转子上那条音调从来不是环路在追自己发布的转速，无论两者在 2000 Hz 上相关得多强：与测量量相关不等于
-    // 存在一条穿过环路的通路。留下的结论是已发布转速**更干净**了，那是"应用读到的那个数"的性质，不是轴的性质。用例把这次
-    // 否证断言下来，于是以后某个**真的**推动轴的改动会在这里表现为故事的改变，而不是一次悄然的改善。
+    // 存在一条穿过环路的通路。留下的结论是已发布转速 **更干净** 了，那是"应用读到的那个数"的性质，不是轴的性质。用例把这次
+    // 否证断言下来，于是以后某个 **真的** 推动轴的改动会在这里表现为故事的改变，而不是一次悄然的改善。
     EXPECT_LT(ripple_fall, 1.5F) << "filtering the published speed now moves the axis, so the tone had a path through "
                                     "the loop after all and this conclusion needs rewriting";
 }
@@ -951,10 +951,10 @@ TEST(SilSpeedRipple, TheToneIsTheInjectionsOwnCrossCouplingNotAReluctanceTorque)
     //      tested neither. Recorded because it is the kind of error that looks like a refutation.
     // A third check closes the chain without asking the same question twice: the measured torque tone, pushed through the
     // mechanical equation at 2 kHz, must reproduce the measured speed tone.
-    // 最后一个候选，也是载波到达转子**不经过库所发布的任何东西**的唯一通路：注入的 d 轴电流乘上负载电流、经凸极，产生
+    // 最后一个候选，也是载波到达转子 **不经过库所发布的任何东西** 的唯一通路：注入的 d 轴电流乘上负载电流、经凸极，产生
     // 一个载波频率上的转矩 `1.5·p·(Ld−Lq)·id·iq`。两个独立旋钮检验它，两者都预测线性：
     //   1. 伏特。`id` 正比于 `inject_v`，转矩音调亦然。
-    //   2. 凸极。在**同样伏特**下注入的 d 轴电流不变——它由 `Ld` 决定，而这个旋钮不动 `Ld`——于是 `(Ld−Lq)` 减半必然使
+    //   2. 凸极。在 **同样伏特** 下注入的 d 轴电流不变——它由 `Ld` 决定，而这个旋钮不动 `Ld`——于是 `(Ld−Lq)` 减半必然使
     //      转矩音调减半。这个旋钮的第一版把 `inject_v` 随 `lq` 缩放，理由是 `V/(ω·L)` 保持不变；那是错的，因为注入电流
     //      走的是 **d** 轴、由 `Ld` 决定，于是那个旋钮同时动了电流与凸极，两个都没测到。记下来，因为这类错误看起来像否证。
     // 第三项检查闭合链条而不把同一个问题问两遍：实测转矩音调经机械方程在 2 kHz 上推算，必须还原出实测转速音调。
@@ -1016,13 +1016,13 @@ TEST(SilSpeedRipple, TheToneIsTheInjectionsOwnCrossCouplingNotAReluctanceTorque)
     // is the injected current leaking onto the *torque* axis: the estimate is off by `delta`, so `id_hf*sin(delta)` lands
     // on q and earns `kt` of torque. That is proportional to `inject_v` and indifferent to the saliency, which is what
     // the two knobs measured. The next case tests it directly instead of leaving it as the last explanation standing.
-    // C12 被**否证**，而且是在旋钮改对、只动凸极之后。同样伏特下凸极减半，音调还剩 0.97：转矩纹波不是凸极积
+    // C12 被 **否证** ，而且是在旋钮改对、只动凸极之后。同样伏特下凸极减半，音调还剩 0.97：转矩纹波不是凸极积
     // `(Ld−Lq)·id·iq`。存活下来的是 C11 确立的那条——音调线性于注入电流——而同时具备这两个签名的机理正是注入电流漏到
-    // **转矩**轴上：估计偏了 `delta`，于是 `id_hf·sin(delta)` 落到 q 轴、挣到 `kt` 的转矩。它正比于 `inject_v`、与凸极
+    // **转矩** 轴上：估计偏了 `delta`，于是 `id_hf·sin(delta)` 落到 q 轴、挣到 `kt` 的转矩。它正比于 `inject_v`、与凸极
     // 无关，这正是两个旋钮量到的。下一条用例直接检验它，而不是把它留成"最后一个还站着的解释"。
     // Recorded as the falsification it is: the tone is essentially *indifferent* to the saliency, so the reluctance
     // product is not its source. The assertion pins the measurement, not the wish.
-    // 作为它本来就是的否证记录下来：音调对凸极基本**无所谓**，所以凸极积不是它的来源。断言钉住的是测量，不是愿望。
+    // 作为它本来就是的否证记录下来：音调对凸极基本 **无所谓** ，所以凸极积不是它的来源。断言钉住的是测量，不是愿望。
     EXPECT_GT(saliency_share, 0.85F) << "the tone does move with the saliency, so the reluctance product is its source "
                                         "after all and this conclusion has to be rewritten";
     EXPECT_GT(chain, 0.7F) << "the torque tone under-predicts the speed tone";
@@ -1035,7 +1035,7 @@ TEST(SilSpeedRipple, TheToneIsTheInjectedCurrentLeakingOntoTorque) {
     // reports `delta`: the torque tone divided by the mean angle error must be the *same* at two different speeds, where
     // `delta` differs by a factor of four while `id_hf` does not.
     // C12 之后最后一个还站着的解释：转矩纹波是 `kt·id_hf·sin(delta)`，`delta` 是换相角偏了多少。它给出一个尖锐的预测，
-    // 且不需要新的常数，因为台架本来就报出 `delta`：**两个不同转速**下，转矩音调除以角度误差均值必须相同——那里 `delta`
+    // 且不需要新的常数，因为台架本来就报出 `delta`： **两个不同转速** 下，转矩音调除以角度误差均值必须相同——那里 `delta`
     // 差四倍，而 `id_hf` 不变。
     //
     //   C14 the ratio torque_tone / |angle error| must agree between 20 and 5 rad/s within 35 %. A ratio that scales with

@@ -2,7 +2,7 @@
 // no-angle edge below 50 rad/s can be delivered as a *procedure* -- identify, propose, measure, refuse -- the way the
 // outer loop's could. The answer this file measures is **no**, and it says exactly which part fails.
 // SOP 的第二个系统（F19）：把流程在无感地板上重放一遍。计划问的是"50 rad/s 以下没有角度"那条边缘能不能像外环那样作为
-// **流程**交付——辨识、提议、测量、拒绝。本文件量出来的答案是**不能**，并指出是哪一步失败。
+// **流程** 交付——辨识、提议、测量、拒绝。本文件量出来的答案是 **不能** ，并指出是哪一步失败。
 
 #include <cmath>
 #include <cstdio>
@@ -34,8 +34,8 @@ constexpr sil::SopMachine kMachineB{1.25F};
  * @note [en] This is the **prediction** the F19 row carries, and the point of this file is that it is a lower bound
  *            rather than the answer: it says where the distortion becomes comparable, not where an angle becomes
  *            usable.
- * @note [zh] 这就是 F19 那一行携带的**预测**，而本文件的要点是：它是下界而不是答案——它说的是畸变什么时候变得可比，而不
- *            是角度什么时候变得可用。
+ * @note [zh] 这就是 F19 那一行携带的 **预测** ，而本文件的要点是：它是下界而不是答案——它说的是畸变什么时候变得可比，而
+ *            不是角度什么时候变得可用。
  */
 auto predicted_crossing(const sil::SopMachine& machine, float dead_v) -> float {
     return dead_v / foc::psi_f_wb(sil::sop_motor_config(machine));
@@ -47,7 +47,7 @@ auto predicted_crossing(const sil::SopMachine& machine, float dead_v) -> float {
  * @brief [en] Stage 1 identifies a **constant**, and the boundary the row predicts is not the boundary the measurement
  *             finds: the settled-window error is **not monotone in speed**.
  *
- * @brief [zh] 第 1 步辨识出一个**常数**，而那一行预测的边界不是测量找到的边界：稳态窗口内的误差**对转速不单调**。
+ * @brief [zh] 第 1 步辨识出一个 **常数** ，而那一行预测的边界不是测量找到的边界：稳态窗口内的误差 **对转速不单调** 。
  *
  *   Two facts, both measured on machine A, and the second one is the reason this procedure cannot be delivered.
  *
@@ -70,9 +70,9 @@ auto predicted_crossing(const sil::SopMachine& machine, float dead_v) -> float {
  *   度）。那是一个真实、可辨识的量，第 1 步成功。
  *
  *   **测量拒绝成为判据。** 1 µs 死区下，稳态窗口内的最坏误差在 60 / 80 / 90 / 120 / 200 / 300 rad/s 处分别是 0.1591 /
- *   0.0679 / 0.0835 / 0.0757 / 0.0410 / 0.0898 rad：**先降后升**。窗口量到的是一个轻阻尼振荡的幅值，而幅值与转速没有单
- *   调关系，于是"离失败多远"在这里不是转速的函数，"可以声称角度的最低转速"也不作为一个区间存在。那一行预测的 101 rad/s
- *   是一个**下界**：真正通过 0.05 rad 那道闸的第一个转速是 200 rad/s，大约它的两倍。
+ *   0.0679 / 0.0835 / 0.0757 / 0.0410 / 0.0898 rad： **先降后升** 。窗口量到的是一个轻阻尼振荡的幅值，而幅值与转速没有
+ *   单调关系，于是"离失败多远"在这里不是转速的函数，"可以声称角度的最低转速"也不作为一个区间存在。那一行预测的 101
+ *   rad/s 是一个 **下界** ：真正通过 0.05 rad 那道闸的第一个转速是 200 rad/s，大约它的两倍。
  */
 TEST(SopSensorlessFloor, TheDelayIsIdentifiedButTheBoundaryIsNotAMonotoneCriterion) {
     // Stage 1: the transport delay, on an ideal inverter.
@@ -126,7 +126,8 @@ TEST(SopSensorlessFloor, TheDelayIsIdentifiedButTheBoundaryIsNotAMonotoneCriteri
  * @brief [en] Stage 2 on a **second machine**: a stronger magnet must move the predicted boundary **down** -- and the
  *             measurement moves the other way. The prediction is refuted, and the case keeps the numbers.
  *
- * @brief [zh] 第 2 步换一台**机器**：更强的磁钢应当把预测边界往**下**推——而测量往反方向走。预测被否证，用例把数字留下。
+ * @brief [zh] 第 2 步换一台 **机器** ：更强的磁钢应当把预测边界往 **下** 推——而测量往反方向走。预测被否证，用例把数字留
+ *             下。
  *
  *   Machine B is the same machine with a 25 % stronger magnet, described correctly to the drive (plant and model
  *   alike), so this is a comparison of two machines and not of two descriptions. `psi_f` rises 25 %, so `V_dead/psi_f`
@@ -140,13 +141,13 @@ TEST(SopSensorlessFloor, TheDelayIsIdentifiedButTheBoundaryIsNotAMonotoneCriteri
  *   cannot be delivered as a criterion: its one closed form does not survive a change of machine.
  *
  *   机器 B 是同一台机器换 25 % 更强的磁钢，并且被正确地描述给驱动器（plant 与模型同时缩放），所以这是两台机器之间的比
- *   较，不是两份描述之间的比较。`psi_f` 升 25 %，于是 `V_dead/psi_f` 从 **100.8** 落到 **80.6 rad/s**：在 90 rad/s 处机
- *   器 B 本该站在自己边界的安全侧，而机器 A 不是。
+ *   较，不是两份描述之间的比较。`psi_f` 升 25 %，于是 `V_dead/psi_f` 从 **100.8** 落到 **80.6 rad/s** ：在 90 rad/s 处
+ *   机器 B 本该站在自己边界的安全侧，而机器 A 不是。
  *
- *   实测机器 B **在每个试过的转速上都更差**：90 rad/s 处 0.1738 对 0.0835、120 处 0.1140 对 0.0757、200 处 0.0618 对
+ *   实测机器 B **在每个试过的转速上都更差** ：90 rad/s 处 0.1738 对 0.0835、120 处 0.1140 对 0.0757、200 处 0.0618 对
  *   0.0410。所以 `V_dead/psi_f` 不是那条律：`psi_f` 同时移动观测器的模型、环路要读的反电势、以及速度环拿住机器的增益，
- *   而那些项赢了。这是一个**被否证的假设**，记录下来而不是悄悄丢掉——它也是 F19 这条流程不能作为判据交付的第二个原因：它
- *   唯一的闭式解经不起换一台机器。
+ *   而那些项赢了。这是一个 **被否证的假设** ，记录下来而不是悄悄丢掉——它也是 F19 这条流程不能作为判据交付的第二个原因：
+ *   它唯一的闭式解经不起换一台机器。
  */
 TEST(SopSensorlessFloor, AStrongerMagnetMovesThePredictionDownAndTheMeasurementUp) {
     const float crossing_a = predicted_crossing(kMachineA, kDeadV);

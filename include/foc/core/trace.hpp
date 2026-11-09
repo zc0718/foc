@@ -53,9 +53,9 @@ template <typename T> constexpr void count_lost(T& counter) noexcept {
  *            constant zero means "no timestamp", which is a fact about the platform rather than a claim that everything
  *            happened at once.
  * @note [zh] 这些是控制环算出来的数，不是硬件实际做了什么。`i_d`/`i_q` 是 PI 作用其上的实测电流，`i_ref_*` 是被要求的
- *            值，`v_*` 是调制前施加的电压。轨迹不能告诉你各相里真实的电流——它告诉你环**相信**的电流，而那是唯一能解释它
- *            决策的东西。 `t_us` 是平台时钟截断到 32 位，于是每条记录保持 32 字节，每 71.6 分钟回绕一次。HAL 没有时钟时
- *            每条都是 0 ——恒为 0 意味着"没有时间戳"，这是关于平台的事实，而不是"所有事件同时发生"的声明。
+ *            值，`v_*` 是调制前施加的电压。轨迹不能告诉你各相里真实的电流——它告诉你环 **相信** 的电流，而那是唯一能解释
+ *            它决策的东西。 `t_us` 是平台时钟截断到 32 位，于是每条记录保持 32 字节，每 71.6 分钟回绕一次。HAL 没有时钟
+ *            时每条都是 0 ——恒为 0 意味着"没有时间戳"，这是关于平台的事实，而不是"所有事件同时发生"的声明。
  * @since 0.1.8
  * @exporter
  */
@@ -144,8 +144,8 @@ template <std::uint16_t Capacity> class RingTrace final {
      * @note [en] Saturating rather than wrapping is a decision about what the number is *for*: it is read by a host
      *            that decides whether the trace it received is complete. A counter that went back to zero would report
      *            a channel that lost nothing, which is the one answer that must not be produced by accident.
-     * @note [zh] 选饱和而不是回绕，是关于这个数**用来干什么**的决定：读它的是一个判断"收到的轨迹完不完整"的宿主。一个会
-     *            回到零的计数器会报出一个什么也没丢的通道——而这是唯一一种绝不能被误发的答案。
+     * @note [zh] 选饱和而不是回绕，是关于这个数 **用来干什么** 的决定：读它的是一个判断"收到的轨迹完不完整"的宿主。一个
+     *            会回到零的计数器会报出一个什么也没丢的通道——而这是唯一一种绝不能被误发的答案。
      */
     [[nodiscard]] auto dropped() const noexcept -> std::uint16_t { return dropped_; }
 
@@ -173,7 +173,7 @@ template <std::uint16_t Capacity> class RingTrace final {
 
     /**
      * @brief [en] Forget the samples; the drop counter is kept, because it is the record of what was already lost.
-     * @brief [zh] 丢弃样本；丢帧计数保留，因为它记录的是**已经**丢掉的东西。
+     * @brief [zh] 丢弃样本；丢帧计数保留，因为它记录的是 **已经** 丢掉的东西。
      */
     void reset() noexcept {
         head_ = 0;

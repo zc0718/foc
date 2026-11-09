@@ -1,7 +1,7 @@
 // F47 - learning a cogging table from the current a speed loop already supplies. The criteria all compare the learned table to
 // the one that was **injected**, because "it learned something" is satisfied by learning the wrong thing, and the whole point of a
 // self-learning piece is that nobody knows the answer in advance.
-// F47——从速度环本来就在供给的电流里学出一张齿槽表。所有判据都把学到的表与**注入的**表相比，因为"它学到了东西"这个条件，学到错的
+// F47——从速度环本来就在供给的电流里学出一张齿槽表。所有判据都把学到的表与 **注入的** 表相比，因为"它学到了东西"这个条件，学到错的
 // 东西也满足，而自学习这件的全部意义就是事先没人知道答案。
 
 #include <cmath>
@@ -86,7 +86,7 @@ auto learn_from_bench(float amplitude_nm, float phase_rad, std::uint8_t order, f
 // injected, and its phase is the phase that was injected. The phase is where a wrong sign convention shows up, so it is asserted
 // at three injected phases rather than one -- a sign error is invisible at `phi = 0` and at `phi = pi/2` it looks like an
 // amplitude swap.
-// 要点，且是它唯一有意义的形式：学到的表幅值等于注入的幅值，相位等于注入的相位。符号约定错就错在相位上，所以在**三个**注入相位上断言
+// 要点，且是它唯一有意义的形式：学到的表幅值等于注入的幅值，相位等于注入的相位。符号约定错就错在相位上，所以在 **三个** 注入相位上断言
 // 而不是一个——符号错误在 `φ = 0` 处看不见，而在 `φ = π/2` 处看起来像幅值被调换了。
 TEST(CoggingLearn, TheLearnedTableIsTheInjectedOne) {
     constexpr float kAmplitude = 4.0e-3F;
@@ -246,10 +246,10 @@ TEST(CoggingLearn, RefusesRunsItCannotLearnFrom) {
 // cogging itself, so `iq` stays at `T_cog/Kt` whether the compensator helps or not -- it **replaces** the loop's share rather than
 // adding to it (measured in `test_sil_cogging_loop.cpp`). The motion is where it shows, and the composition that can measure it is
 // a position ramp, which this file instantiates for itself the same way that one does.
-// --- 链条：在一个转速学出的表，经**已有的那个槽**用在另一个转速 -------------------------
+// --- 链条：在一个转速学出的表，经 **已有的那个槽** 用在另一个转速 -------------------------
 //
-// 速度环是**看**回报的错误位置：慢转速产生的纹波频率上环路自己就回答了齿槽，所以无论补偿器帮没帮上忙，`iq` 都停在 `T_cog/Kt`——它是
-// **替换**环路那份而不是加上去（`test_sil_cogging_loop.cpp` 量过）。纹波要在运动里看，而能量到它的组合是位置斜坡，本文件照那一份的做法
+// 速度环是 **看** 回报的错误位置：慢转速产生的纹波频率上环路自己就回答了齿槽，所以无论补偿器帮没帮上忙，`iq` 都停在 `T_cog/Kt`——它是
+// **替换** 环路那份而不是加上去（`test_sil_cogging_loop.cpp` 量过）。纹波要在运动里看，而能量到它的组合是位置斜坡，本文件照那一份的做法
 // 自己实例化一份。
 
 using PositionMotor = foc::motor::Motor<foc::core::BackEmfObserver, foc::core::Svpwm, foc::core::Pi, foc::sil::PlantHal,
@@ -337,7 +337,7 @@ auto run_ramp(float inject_nm, float rate_rad_s, const CoggingCompHarmonic* appl
 // learned from the current a 5 rad/s ramp makes the loop supply, then applied to a 10 rad/s ramp. The residual is not zero by
 // construction -- the learned phase carries the loop's own lag from the learning speed, which leaves `2*sin(d/2)` of the cogging --
 // so the criterion is that the motion lands inside the clean run's band rather than exactly on it.
-// 链条闭合，用的是**学到的**表而不是注入的，而且用在它从未学习过的转速上：表从 5 rad/s 斜坡下环路供给的电流里学出来，再用于 10 rad/s
+// 链条闭合，用的是 **学到的** 表而不是注入的，而且用在它从未学习过的转速上：表从 5 rad/s 斜坡下环路供给的电流里学出来，再用于 10 rad/s
 // 的斜坡。残差在构造上就不是零——学到的相位带着学习转速下环路自己的滞后，于是剩下 `2·sin(d/2)` 的齿槽——所以判据是运动落进干净那一跑的
 // 带内，而不是精确落在它上面。
 TEST(CoggingLearn, TheLearnedTableCancelsTheInjectionItWasLearnedFrom) {
@@ -345,7 +345,7 @@ TEST(CoggingLearn, TheLearnedTableCancelsTheInjectionItWasLearnedFrom) {
     constexpr float kApplyRate = 10.0F;
 
     // 1. Learn, at 5 rad/s, from the current a **speed** loop makes itself supply -- the configuration the learner is for.
-    // 1. 学：在 5 rad/s 处，从**速度**环自己供给的电流里学——学习器就是为这个构型写的。
+    // 1. 学：在 5 rad/s 处，从 **速度** 环自己供给的电流里学——学习器就是为这个构型写的。
     const auto [report, learned] = learn_from_bench(kAmplitude, 0.3F, 6U, 5.0F);
     ASSERT_EQ(ErrorCode::Ok, report.status);
     ASSERT_GT(learned.amplitude_nm, 0.0F);
@@ -355,7 +355,7 @@ TEST(CoggingLearn, TheLearnedTableCancelsTheInjectionItWasLearnedFrom) {
     // speed the table was never learned at. The learning run could not have used this composition: its speed is far outside the
     // band the learner accepts, and demanding the band is the refusal that keeps a table from being learned where the loop is not
     // faithful.
-    // 2. 在**能看见**回报的组合上跑三次——位置斜坡，向机器要约 37 rad/s，也就是表从未学习过的转速。学习那一跑不可能用这个组合：它的转速
+    // 2. 在 **能看见** 回报的组合上跑三次——位置斜坡，向机器要约 37 rad/s，也就是表从未学习过的转速。学习那一跑不可能用这个组合：它的转速
     // 远在学习器接受的带外，而要求这个带正是那条拒绝，它挡住"在环路不可信的地方学表"。
     const RampRun clean = run_ramp(0.0F, kApplyRate, nullptr);
     const RampRun injected = run_ramp(kAmplitude, kApplyRate, nullptr);
@@ -394,7 +394,7 @@ TEST(CoggingLearn, TheLearnedTableCancelsTheInjectionItWasLearnedFrom) {
 // can never work -- otherwise a caller gets `State` ("spin longer") for a machine whose numbers are simply wrong, and spins
 // forever. Each branch is asserted separately because they call for different actions: a bad machine description is fixed in
 // the configuration, and a NaN sample is not a sample at all.
-// 学习器是调试工具会用**不止一次**的资源，而它的拒绝集合必须覆盖那些永远不可能成立的配置——否则调用方会为一份本身就是错的机器参数
+// 学习器是调试工具会用 **不止一次** 的资源，而它的拒绝集合必须覆盖那些永远不可能成立的配置——否则调用方会为一份本身就是错的机器参数
 // 拿到 `State`（"再转久一点"），然后一直转下去。每个分支单独断言，因为它们要的动作不同：错的机器描述在配置里改，而 NaN 样本根本
 // 不是样本。
 TEST(CoggingLearn, RefusesImpossibleConfigurationsAndForgetsEverythingOnReset) {

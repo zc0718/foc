@@ -29,7 +29,7 @@ struct Point final {
 
 /**
  * @brief [en] The dq voltage the dq model says this point needs -- the *prediction under test*.
- * @brief [zh] dq 模型说这个点需要的 dq 电压——即**被测的预测**。
+ * @brief [zh] dq 模型说这个点需要的 dq 电压——即 **被测的预测** 。
  */
 auto dq_voltage(const Point &p) -> core::Dq<float> {
   const sil::MachineSpec s = sil::nominal_spec();
@@ -90,7 +90,7 @@ TEST(AbcPlantCrossCheck,
     const core::Dq<float> i_dq = core::park(ab, theta_end);
 
     // The dq model's torque at the *same* point, from the formula the library
-    // uses. dq 模型在**同一个**点上的转矩，用库里那条公式。
+    // uses. dq 模型在 **同一个** 点上的转矩，用库里那条公式。
     const sil::MachineSpec s = sil::nominal_spec();
     const float psi = s.kt / (1.5F * static_cast<float>(s.pole_pairs));
     const float torque_dq =

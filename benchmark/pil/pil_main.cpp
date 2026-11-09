@@ -6,10 +6,10 @@
 // The scenario itself is *not* copied: the include below reaches the single definition the unit
 // tests use, so a change to the plant or the bench reaches PIL automatically.
 //
-// PIL 入口：与宿主 GTest **同一个**速度阶跃场景，按目标 ISA 编译。
+// PIL 入口：与宿主 GTest **同一个** 速度阶跃场景，按目标 ISA 编译。
 // 放在 benchmark/ 而不是 test_package/：test-conventions.md 把 test_package 给宿主 GTest、
 // 把 benchmark/ 给目标侧。PIL 属于目标侧，所以借目标槽位，而不是发明一个模板里没有的测试目录。
-// 场景本身**不复制**：下面的 include 直接取单元测试用的那一份定义，plant 或台架改了，PIL 自动跟上。
+// 场景本身 **不复制** ：下面的 include 直接取单元测试用的那一份定义，plant 或台架改了，PIL 自动跟上。
 
 #include <cstdio>
 

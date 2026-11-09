@@ -18,8 +18,8 @@
 //   7. a chopper that cannot act is **refused**, and the refusal leaves the state exactly as it was.
 //
 // 判据写在跑前（见上）：间隔就是滞环（缓慢扫过区间只切一次，且发生在越过阈值的第一拍）；区间内保持状态（所以边界是 `>`
-// 而不是 `>=`）；占空比与电流有界且 `i = duty·v/r` 逐位成立；预算**锁存**并且母线回落到平静电压时**不**自行恢复（电阻还是
-// 热的）；预算会**冷却**（所以锁存不是一辈子一次），但"冷却过了"与"清除了"是两件事；`min_on_s` 是脉冲下限而不是装饰；动不了
+// 而不是 `>=`）；占空比与电流有界且 `i = duty·v/r` 逐位成立；预算 **锁存** 并且母线回落到平静电压时 **不** 自行恢复（电阻还是
+// 热的）；预算会 **冷却** （所以锁存不是一辈子一次），但"冷却过了"与"清除了"是两件事；`min_on_s` 是脉冲下限而不是装饰；动不了
 // 的斩波器被拒绝，而拒绝不改任何状态。
 
 #include <cmath>
@@ -149,7 +149,7 @@ TEST(BrakeChopper, TheDutyAndTheCurrentAreTheLawAndNothingElse) {
 //     version of this header integrated `current_a^2`, so a chopper driven at 35 % duty spent 2.9x the budget it was
 //     given while every number it reported looked conservative. Found in SIL, where the bus meter books the same
 //     energy from the other end (`r * i2t` must equal the energy the resistor actually took).
-// 3b. 热量是**均方**，不是周期平均值的平方。同一个量的两次计算，差别恰好是 `1/duty_max`——整个用例存在的理由：这个头
+// 3b. 热量是 **均方** ，不是周期平均值的平方。同一个量的两次计算，差别恰好是 `1/duty_max`——整个用例存在的理由：这个头
 //     文件的第一版积的是 `current_a²`，于是一个按 35 % 占空比驱动的斩波器会花掉预算的 2.9 倍，而它报出的每个数字都显
 //     得是保守的。在 SIL 里发现：母线 meter 从另一端记着同一份能量（`r * i²t` 必须等于电阻真正取走的能量）。
 TEST(BrakeChopper, TheHeatIsTheMeanSquareAndNotTheSquareOfTheMean) {
@@ -218,9 +218,9 @@ TEST(BrakeChopper, TheBudgetLatchesAndDoesNotResumeWhenTheBusGoesQuiet) {
 // budget, i.e. at `t = -tau*ln(1 - limit/(I^2*tau))`. `I^2` there is the **mean square** -- `duty*(v/r)^2`, not the
 // square of the period average; see case 3b for why those are not the same number.
 // 第一版这个用例要的是 0.5 A²s 的预算配 50 ms 的冷却常数，而锁存从来没跳过。那不是缺陷：带冷却时热量稳定在 `I²·τ`
-// （热量进来、`q/τ` 出去之间的平衡），所以高于这个值的预算是电阻**永远花不掉**的预算。8.1 × 0.05 = 0.405，低于
+// （热量进来、`q/τ` 出去之间的平衡），所以高于这个值的预算是电阻 **永远花不掉** 的预算。8.1 × 0.05 = 0.405，低于
 // 0.5——是夹具在要求一件物理上不可能的事，用例拒绝它是对的。所以判据改成推导：`q(t) = I²τ(1 − e^{-t/τ})` 达到预算时跳，
-// 即 `t = −τ·ln(1 − limit/(I²τ))`。这里的 `I²` 是**均方**——`duty·(v/r)²`，不是周期平均值的平方；两者为何不同见用例 3b。
+// 即 `t = −τ·ln(1 − limit/(I²τ))`。这里的 `I²` 是 **均方** ——`duty·(v/r)²`，不是周期平均值的平方；两者为何不同见用例 3b。
 TEST(BrakeChopper, TheBudgetTripsAtTheClosedFormTimeAndCoolsAfterwards) {
     // The mean square current, not the square of the period average: `duty*(v/r)^2` = 0.9*9 = 8.1 A^2.
     const float closed_current_a = 30.0F / 10.0F; // 3 A while the switch is closed

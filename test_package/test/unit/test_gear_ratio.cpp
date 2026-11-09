@@ -2,8 +2,8 @@
 // encoder reads [0, 2*pi) and a gear that multiplies what it is given hands the slave a reference that walks backwards
 // twice every three revolutions. And the point of the capability is the *measurement*: comparing against a wrapped master
 // is how a perfectly synchronised pair reports 6.28 rad of error once a revolution.
-// 2.3b：电子齿轮与两轴同步。全部难点在一个词里——**去卷绕**——因为编码器读的是 [0, 2π)，而一个直接乘下去的齿轮会给从轴
-// 一个每三圈倒退两次的参考。这条能力的要点是那个**测量**：拿卷绕的主轴去比，正是一对完全同步的轴每转一圈报出 6.28 rad
+// 2.3b：电子齿轮与两轴同步。全部难点在一个词里—— **去卷绕** ——因为编码器读的是 [0, 2π)，而一个直接乘下去的齿轮会给从轴
+// 一个每三圈倒退两次的参考。这条能力的要点是那个 **测量** ：拿卷绕的主轴去比，正是一对完全同步的轴每转一圈报出 6.28 rad
 // 误差的方式。
 
 #include <algorithm>
@@ -163,11 +163,11 @@ TEST(ElectronicGear, TheRatioAndTheOffsetAreExact) {
  *     master axis where the extra 4 mrad is the master's own tracking -- the gear is measuring a machine, not a number.
  *     Halving the master's rate halves the error and a tenth of the slave's gain multiplies it by ten, which is the
  *     formula asserted in both of its arguments. The gear's velocity output then removes most of it, and what is left
- *     is the finite difference of a *measured* position. 一对**完全**同步的轴仍然显示误差，而且那不是缺陷：跟随移动参考
- *     的位置环有一个 `v · kd / kp` 的稳态滞后，在 10 rad/s、 kd 0.02、kp 8 下就是 **25 mrad**。用例先在理想斜坡（完全没
- *     有主轴 plant）上量它，那里预测是精确的；再通过一根真实主轴量，多出的 4 mrad 是主轴自己的跟随误差——齿轮量的是机
- *     器，不是一个数。主轴速率减半则误差减半，从轴增益减到十分之一则误差涨十倍，这正是对公式两个自变量的断言。齿轮的速
- *     度输出随后去掉其中大部分，剩下的是**实测位置**的有限差分。
+ *     is the finite difference of a *measured* position. 一对 **完全** 同步的轴仍然显示误差，而且那不是缺陷：跟随移动参
+ *     考的位置环有一个 `v · kd / kp` 的稳态滞后，在 10 rad/s、 kd 0.02、kp 8 下就是 **25 mrad** 。用例先在理想斜坡（完
+ *     全没有主轴 plant）上量它，那里预测是精确的；再通过一根真实主轴量，多出的 4 mrad 是主轴自己的跟随误差——齿轮量的是
+ *     机器，不是一个数。主轴速率减半则误差减半，从轴增益减到十分之一则误差涨十倍，这正是对公式两个自变量的断言。齿轮的
+ *     速度输出随后去掉其中大部分，剩下的是 **实测位置** 的有限差分。
  */
 TEST(ElectronicGear, TheSyncErrorIsTheRampLagInBothOfItsTerms) {
     struct Run final {
@@ -267,11 +267,11 @@ TEST(ElectronicGear, AZeroRatioIsRefusedRatherThanSilentlyDecoupling) {
  *     sample leaves the unwrapped reference permanently short by one step, so the sync error is `|ratio| * omega * dt`
  *     and stays there.
  *
- *     四条预言，测量之前写下来： P1 0.9π 以上的主轴步长无法从环绕角度解出，必须**报告**而不是猜。`kMaxStepRad` 就是为这
- *     个声明和注释的，而在 F-43 之前它没有消费者。 P2 把主轴量化到 `q`，同步误差至多 `|ratio|·q` 且**不随时间增长**，因
- *     为相邻差分是望远镜式相消：累积的去卷绕角度只差 `e_k − e_0`，不是 `k` 个误差的随机游走。四秒行程上成立的上界就是这
- *     条结构的证据；一个缓慢增长的误差会是反证。 P3 采样间隔偏了比例 `j`，速度参考就偏 `ratio·ω·j/(1+j)`——精确，因为
- *     `v_ref = ratio·delta/dt`，只有 `dt` 错。 P4 丢掉一个主轴采样，去卷绕参考会永久短一步，于是同步误差是
+ *     四条预言，测量之前写下来： P1 0.9π 以上的主轴步长无法从环绕角度解出，必须 **报告** 而不是猜。`kMaxStepRad` 就是为
+ *     这个声明和注释的，而在 F-43 之前它没有消费者。 P2 把主轴量化到 `q`，同步误差至多 `|ratio|·q` 且 **不随时间增长
+ *     ** ，因为相邻差分是望远镜式相消：累积的去卷绕角度只差 `e_k − e_0`，不是 `k` 个误差的随机游走。四秒行程上成立的上
+ *     界就是这条结构的证据；一个缓慢增长的误差会是反证。 P3 采样间隔偏了比例 `j`，速度参考就偏 `ratio·ω·j/(1+j)`——精
+ *     确，因为 `v_ref = ratio·delta/dt`，只有 `dt` 错。 P4 丢掉一个主轴采样，去卷绕参考会永久短一步，于是同步误差是
  *     `|ratio|·ω·dt` 并停在那里。
  */
 TEST(ElectronicGear, EveryMasterErrorSourceHasAClosedFormAndTheAssumptionIsChecked) {
@@ -348,7 +348,7 @@ TEST(ElectronicGear, EveryMasterErrorSourceHasAClosedFormAndTheAssumptionIsCheck
     // dropped *sample* did the same, and the measurement said zero -- correctly, because the next sample carries the full
     // accumulated angle and the unwrap recovers it exactly. Both halves are asserted, because the half that cannot fail
     // is what makes the half that can meaningful.
-    // P4 编码器**没数到的一个计数**会留下一个永久步差。这条预言的第一版说丢掉一个**采样**也一样，而实测是零——正确，
+    // P4 编码器 **没数到的一个计数** 会留下一个永久步差。这条预言的第一版说丢掉一个 **采样** 也一样，而实测是零——正确，
     // 因为下一个采样带着完整的累积角度，去卷绕会精确恢复它。两半都断言，因为"不可能失败"的那一半才让"可能失败"的那一半
     // 有意义。
     {

@@ -160,8 +160,8 @@ auto feedforward_config(const motor::MotorConfig& config) noexcept -> core::Deco
  * @brief [zh] 位置环配置：`增益 = 带宽`，外加两道限制。
  *
  *   速度环远快于位置环时，`gain = w` 让位置环闭环成一阶系统、带宽 `w`（`1/s` 由速度环 提供）。这里没有积分项：恒定负载
- *   转矩是速度环**内部**的扰动，速度环积分器已经消掉它，再加 一个积分器只会带来积分饱和。所以这个控制器是 P，辅助函数叫
- *   `position_p_config`——旧名字 声称的 PI 从来没有 I。
+ *   转矩是速度环 **内部** 的扰动，速度环积分器已经消掉它，再加 一个积分器只会带来积分饱和。所以这个控制器是 P，辅助函数
+ *   叫 `position_p_config`——旧名字 声称的 PI 从来没有 I。
  *
  * @param config [en] nameplate parameters.
  * @param config [zh] 铭牌参数。

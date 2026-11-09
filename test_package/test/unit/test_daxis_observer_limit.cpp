@@ -43,8 +43,8 @@ namespace sil = foc::sil;
  *
  *   下表说的。`i_d = 0` 时从 100 rad/s 往上都在 0.15 rad 以内；再低就不在了，而这正是 README 已经写下的那条 地板（"< 50
  *   rad/s 不给角度主张"，50 处读到 0.16 rad 以上）。`i_d = −1 A` 时同一个观测器在 200 rad/s 读到 三倍天花板，在 3200
- *   rad/s 却无害——所以约束**不是**"不许有 d 轴电流"，而是"某个转速以下不许有"，且安全的 `|i_d|` 随转速增大。这就是本库
- *   强制的是一条**比率**（A 每 rad/s）而不是常数的原因，也是默认比率为零的原因： 一个常数不可能在两端都对。
+ *   rad/s 却无害——所以约束 **不是**"不许有 d 轴电流"，而是"某个转速以下不许有"，且安全的 `|i_d|` 随转速增大。这就是本库
+ *   强制的是一条 **比率** （A 每 rad/s）而不是常数的原因，也是默认比率为零的原因： 一个常数不可能在两端都对。
  */
 constexpr float kCeilingRad = 0.15F;
 constexpr float kIqA = 0.5F;
@@ -82,7 +82,7 @@ TEST(DaxisObserverLimit, TheZeroDaxisClaimHoldsOnlyAboveTheDocumentedFloor) {
   // 100 rad/s upward, and the absence of the claim is asserted below it -- both directions are
   // the finding, and asserting only the good half would quietly extend the claim.
   // 表量出来之前就写下的判据，对着 README 已经写下的合同："< 50 rad/s（约 480 rpm）不给角度主张"。
-  // 所以 0.15 rad 天花板从 100 rad/s 往上断言，而在它之下断言**没有**这个主张——两个方向都是结论，
+  // 所以 0.15 rad 天花板从 100 rad/s 往上断言，而在它之下断言 **没有** 这个主张——两个方向都是结论，
   // 只断言好看的那一半，等于悄悄把主张扩大。
   std::printf("\n[d-axis] single-L observer, nominal machine, iq = %.1f A\n",
               static_cast<double>(kIqA));

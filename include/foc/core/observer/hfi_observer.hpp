@@ -51,14 +51,14 @@ namespace core {
  *
  * @warning [zh] 三条方法本身的限制，不是以后才会发现的 bug：
  *
- *   1. **pi/2 包络**：`sin(2·dtheta)` 只在 `|dtheta| < pi/2` 内正确牵引。初值在此窗口内会收敛， 窗口外会漂到 `dtheta =
+ *   1. **pi/2 包络** ：`sin(2·dtheta)` 只在 `|dtheta| < pi/2` 内正确牵引。初值在此窗口内会收敛， 窗口外会漂到 `dtheta =
  *   pi` 的镜像点。请用对齐脉冲或上一次估计作为起点。
  *
- *   2. **不解决磁极极性**：`dtheta = pi` 也是稳定平衡点（d 轴对了、磁钢装反，于是转矩符号反）。 区分二者需要单独的脉冲/
- *   饱和测试，**此处未实现**。
+ *   2. **不解决磁极极性** ：`dtheta = pi` 也是稳定平衡点（d 轴对了、磁钢装反，于是转矩符号反）。 区分二者需要单独的脉冲
+ *   / 饱和测试， **此处未实现** 。
  *
- *   3. **仅低速**：基频电流与反电动势经解调滤波后仍有低频残留，电频率超过几 Hz 后信号就被淹没。 常规做法是与反电动势观
- *   测器混合，**此处未实现**。
+ *   3. **仅低速** ：基频电流与反电动势经解调滤波后仍有低频残留，电频率超过几 Hz 后信号就被淹没。 常规做法是与反电动势观
+ *   测器混合， **此处未实现** 。
  *
  * @context [en] Current-loop ISR after construction: noexcept, no allocation.
  * @context [zh] 构造之后的电流环 ISR： noexcept、不分配。
@@ -114,12 +114,12 @@ class HfiObserver final {
      * @note [zh] 每个字段都是物理量。没有 `enabled` 开关：注入幅值 0 会被拒绝而不是当作“关闭”， 因为一个静默无作为的观
      *            测器与一个坏掉的观测器无法区分。
      *
-     *   定容 `inject_v`：注入载波不是免费的。与它并行的**任何其他**观测器——比如反电动势磁链 积分器——都分不清载波与真正
-     *   的反电动势，而积分器没有复位，留下的东西就一直留着。残余量约为 一个载波周期的伏秒，即 `inject_v /
+     *   定容 `inject_v`：注入载波不是免费的。与它并行的 **任何其他** 观测器——比如反电动势磁链 积分器——都分不清载波与真
+     *   正的反电动势，而积分器没有复位，留下的东西就一直留着。残余量约为 一个载波周期的伏秒，即 `inject_v /
      *   (2π·inject_hz)`，单位 Wb；换算成角度偏差就是 `inject_v / (2π·inject_hz·ψf)` rad。实测：4.8 mWb 转子上 2 V / 2
      *   kHz 给出 0.031 rad， 预测 0.033。因此幅值是一笔交易——大到能读出凸极，小到它在别处留下的偏差在应用可接受范围内。
      *
-     *   `current_hp_hz` 存在的理由：解调器把实测电流与载波相乘，于是电流中**任何**直流成分 都会以载波频率漏过后级滤波
+     *   `current_hp_hz` 存在的理由：解调器把实测电流与载波相乘，于是电流中 **任何** 直流成分 都会以载波频率漏过后级滤波
      *   器，变成误差信号上的固定偏置。静止时的负载阶跃正好如此：凭空 出现一个直流电流。在台架上实测，0.5 A 的 q 轴电流
      *   使误差偏置 0.034——足以把一次起动 推过 `pi/2` 边界、锁到镜像上。高通在解调前去掉基频，且由于滤波器在第一个采样上
      *   自播种， 恒定电流根本到不了乘法器。取值应在“HFI 预期工作的最高电频率”之上、`inject_hz` 之下。
@@ -137,8 +137,8 @@ class HfiObserver final {
      *   -19.5 rad/s 的转速偏 差。因此 `update()` 会拒绝这个控制率分辨不了的载波，而不是把冻结的角度留给调用方。
      *
      *   **`demod_lpf_hz` 不该由 任何东西调度。** 0/5/20/50 rad/s 机械 × 100/200/400 Hz 的网格显示，窗口在转速下的影响不
-     *   到 0.5%，而静止时**最 窄**的窗口好 14 倍（0.00011 对 0.00154 rad）。因此窗口是一个有固定答案的噪声/ 保护折中，
-     *   不是按转速调度的量； 早先某一版里"窄窗在高速下会崩 "其实是一个起动瞬态，那正是下面 `blank_s_` 的用途。
+     *   到 0.5%，而静止时 **最 窄** 的窗口好 14 倍（0.00011 对 0.00154 rad）。因此窗口是一个有固定答案的噪声/ 保护折
+     *   中，不是按转速调度的量； 早先某一版里"窄窗在高速下会崩 "其实是一个起动瞬态，那正是下面 `blank_s_` 的用途。
      * @since 0.1.0
      */
     /**
@@ -153,8 +153,8 @@ class HfiObserver final {
      *            damps this PLL below its own 40 Hz bandwidth. `0` publishes the raw value.
      * @note [zh] `speed_lpf_hz` 为什么存在，以及定容它的那次测量。环路发布 `omega_int + kp·e`，而 `e` 就是解调信号，按
      *            构造携带载波频率成分——积分器把它平均掉，比例通路不会。在 20 rad/s 机械的闭环速度环上实测：已发布转速在
-     *            2000 Hz 上带 0.4180 rad/s，而转子只带 0.0384，说明这条音调不是环路生成的，而是它**被喂**的、并且就闭在
-     *            上面。只滤比例通路让积分器仍看原始误差，因此稳态行为不变；200 Hz 把已发布音调从 0.4180 压到 0.0110
+     *            2000 Hz 上带 0.4180 rad/s，而转子只带 0.0384，说明这条音调不是环路生成的，而是它 **被喂** 的、并且就闭
+     *            在上面。只滤比例通路让积分器仍看原始误差，因此稳态行为不变；200 Hz 把已发布音调从 0.4180 压到 0.0110
      *            rad/s、把闭环转速纹波压小 6.3 倍，而稳态偏差三位数字不变。设为 `0` 即关闭，理由是一个需要原始比例项来
      *            要相位裕度的环：200 Hz 在 32 Hz 速度环带宽上的实测代价约 9 度。
      * @since 0.1.7
@@ -169,7 +169,7 @@ class HfiObserver final {
         float pll_bandwidth_hz; ///< [en] PLL natural frequency in Hz, > 0. [zh] PLL 自然频率，Hz，> 0。
         float pll_zeta; ///< [en] PLL damping ratio, > 0 (0.7..1.0 typical). [zh] PLL 阻尼比，> 0（常用 0.7..1.0）。
         float
-            speed_lpf_hz; ///< [en] low-pass on the *published* speed, in Hz; 0 publishes it unfiltered, see the note. [zh] **已发布**转速的低通截止频率，Hz；0 表示原样发布，见注释。
+            speed_lpf_hz; ///< [en] low-pass on the *published* speed, in Hz; 0 publishes it unfiltered, see the note. [zh] **已发布** 转速的低通截止频率，Hz；0 表示原样发布，见注释。
         float
             demod_gain_a; ///< [en] signed sensitivity, see predicted_gain_a(); != 0. [zh] 带符号灵敏度，见 predicted_gain_a()；!= 0。
         float
@@ -190,13 +190,13 @@ class HfiObserver final {
      * @brief [en] The small-signal sensitivity of the demodulated signal: `V_h*(Ld-Lq)/(2*w_h*Ld*Lq)` in A. Signed,
      *             because the sign *is* the saliency direction: negative for a normal interior machine (`Lq > Ld`),
      *             positive when `Ld > Lq`.
-     * @brief [zh] 解调信号的小信号灵敏度：`V_h·(Ld-Lq)/(2·w_h·Ld·Lq)`，单位 A。带符号，因为符号**就是** 凸极方向：常规
+     * @brief [zh] 解调信号的小信号灵敏度：`V_h·(Ld-Lq)/(2·w_h·Ld·Lq)`，单位 A。带符号，因为符号 **就是** 凸极方向：常规
      *             内置式（`Lq > Ld`）为负，`Ld > Lq` 时为正。
      * @note [en] This is a *first-order* prediction: it ignores `Rs`, which is why it is only a starting value for
      *            Config::demod_gain_a. The error is `w_h*Ld/(Rs^2 + (w_h*Ld)^2)`-ish and shrinks as the injection
      *            frequency rises -- at `w_h*Ld = 7*Rs` the measured value was 10% below this formula. Measure it when
      *            the machine is on the bench.
-     * @note [zh] 这是**一阶**预测：忽略了 `Rs`，因此只作 Config::demod_gain_a 的起点。误差量级约 `w_h·Ld/(Rs² +
+     * @note [zh] 这是 **一阶** 预测：忽略了 `Rs`，因此只作 Config::demod_gain_a 的起点。误差量级约 `w_h·Ld/(Rs² +
      *            (w_h·Ld)²)`，注入频率越高越小——在 `w_h·Ld = 7·Rs` 时实测比本式低 10%。 有台架时实测为准。
      * @since 0.1.0
      */
@@ -231,8 +231,8 @@ class HfiObserver final {
      * @return [zh] 天花板的 Hz 值；非正或非有限频率返回 0，此时什么都不准入。
      * @note [en] Public so that a caller can size `inject_hz` before construction. It is a property of the *rate*, not
      *            of the machine, which is why it is static and why it is not a config field.
-     * @note [zh] 公开是为了让调用方在构造之前就能定容 `inject_hz`。它是**控制率**的性质而不是机器的性质，这也是它为何是
-     *            静态的、而不是一个配置字段。
+     * @note [zh] 公开是为了让调用方在构造之前就能定容 `inject_hz`。它是 **控制率** 的性质而不是机器的性质，这也是它为何
+     *            是静态的、而不是一个配置字段。
      * @since 0.1.4
      */
     [[nodiscard]] static auto max_inject_hz(float control_hz) noexcept -> float;
@@ -243,8 +243,8 @@ class HfiObserver final {
      * @param v_ab [en] applied stator voltage in V. Deliberately *unused*: the observer knows the injection it asked
      *                  for, and a saliency estimate that depended on the voltage command would inherit the current
      *                  loop's error. Named for the contract.
-     * @param v_ab [zh] 施加的定子电压，V。**故意不用**：观测器知道自己请求的注入量，而依赖电压指令的 凸极估计会继承电流
-     *                  环的误差。保留名字是为了契约。
+     * @param v_ab [zh] 施加的定子电压，V。 **故意不用** ：观测器知道自己请求的注入量，而依赖电压指令的 凸极估计会继承电
+     *                  流环的误差。保留名字是为了契约。
      * @param i_ab [en] measured stator current in A -- the only input that carries the rotor angle.
      * @param i_ab [zh] 实测定子电流，A——唯一携带转子角度信息的输入。
      * @param dt_s [en] step length in s; <= 0 is rejected (status Param, state holds).

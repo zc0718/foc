@@ -47,7 +47,7 @@ constexpr float kFSw =
  *             8.6 degrees of electrical angle, i.e. under 3 % of one pole pair on this machine, and it sits 45 % above
  *             the shipped observer's switching-plant figure (0.1037) so the thing that ships has margin rather than
  *             scraping by.
- * @brief [zh] **绝对天花板**：超过它答案就完全不可用，别的都无从谈起。0.15 rad 是 8.6 电角度， 在本机上一个极距的 3 %
+ * @brief [zh] **绝对天花板** ：超过它答案就完全不可用，别的都无从谈起。0.15 rad 是 8.6 电角度， 在本机上一个极距的 3 %
  *             以内，并且比出厂观测器在开关 plant 上的数（0.1037）高 45 %，所以出厂的东西有余量，而不是刚好擦着过。
  */
 constexpr float kAbsoluteCeilingRad = 0.15F;
@@ -59,7 +59,7 @@ constexpr float kAbsoluteCeilingRad = 0.15F;
  *             reads 0.1037 on a switching one, so the gate failed its own incumbent the moment the bench changed (P5-f
  *             found this the hard way). A ratio does not go stale when the bench changes, because both sides move
  *             together.
- * @brief [zh] **准入规则**，也是本文件需要的重定：候选被准入，当且仅当它不差于**已经出厂**的那个观测器——**在同一台
+ * @brief [zh] **准入规则** ，也是本文件需要的重定：候选被准入，当且仅当它不差于 **已经出厂** 的那个观测器——**在同一台
  *             plant、同一个工作点**上量。绝对数干不了这件事：0.10 是在均值 plant 上 定的，而同一个观测器在开关 plant 上
  *             读 0.1037，于是台架一换，闸就卡住了它自己的在位者 （P5-f 就是撞在这上面）。比值不会因为台架变化而过期，因
  *             为两边一起动。
@@ -85,7 +85,7 @@ auto psi_f_value() noexcept -> float {
  * @brief [zh] 恒速台架，把 S17 与 S13 量过的两种未建模效应同时打开。
  * @note [en] The observer is handed the *commanded* voltage, because that is all a real controller knows; the inverter
  *            keeps the dead-time volt-seconds for itself.
- * @note [zh] 观测器拿到的是**指令**电压，因为真实控制器只知道这个；死区的伏秒被逆变器留下了。
+ * @note [zh] 观测器拿到的是 **指令** 电压，因为真实控制器只知道这个；死区的伏秒被逆变器留下了。
  * @since 0.1.0
  */
 class GateRig final {
@@ -236,7 +236,7 @@ TEST(SilAdmission,
   // gate*. So 0.05 was not a requirement, it was a guess, and it has been
   // replaced by 0.10 -- above the incumbent with room, not tuned to any
   // challenger. 一个数字的诚实履历。闸在任何东西跑起来之前写成 0.05
-  // rad；出厂观测器给出 0.068，**没通过它自己的闸**。 所以 0.05
+  // rad；出厂观测器给出 0.068， **没通过它自己的闸** 。 所以 0.05
   // 不是需求，是猜测，已改为
   // 0.10——高于在位者且有余量，而不是为任何挑战者量身定做。
   const float clean = incumbent_error(false, false);
@@ -249,7 +249,7 @@ TEST(SilAdmission,
 
   // The incumbent has to be inside the ceiling with room -- that is what makes
   // the ceiling a *ceiling* and not a target.
-  // 在位者必须在天花板以内且有余量——这才让天花板是**天花板**而不是目标。
+  // 在位者必须在天花板以内且有余量——这才让天花板是 **天花板** 而不是目标。
   EXPECT_LT(impairments, kAbsoluteCeilingRad);
   EXPECT_LT(impairments, 0.75F * kAbsoluteCeilingRad)
       << "and with room, not scraping by";
@@ -267,7 +267,7 @@ TEST(SilAdmission,
   // best combination, it lands at 0.048 -- below the shipped observer's 0.068.
   // This test records that, because a plan that keeps a falsified premise in
   // its "explicitly not doing" table is worse than no plan.
-  // A3-b 原本写成"理想化 SMO 会撞闸失败"。**它没有。**
+  // A3-b 原本写成"理想化 SMO 会撞闸失败"。 **它没有。**
   // 在同样三个旋钮（增益、滤波带宽、边界层）下取它 最好的一组，它落在
   // 0.048——低于出厂观测器的
   // 0.068。本用例记录这一点，因为一份把已被证伪的前提留在
@@ -389,7 +389,7 @@ TEST(SilAdmission, ItsTuningIsBoundToTheDisturbanceAndSoIsTheIncumbents) {
   EXPECT_GT(clean_tuning_under_disturbance / best_clean,
             1.5F * (impaired / clean));
   // The incumbent is *not* a constant either. Saying so is part of the record.
-  // 在位者**也**不是常数。把这句写下来是记录的一部分。
+  // 在位者 **也** 不是常数。把这句写下来是记录的一部分。
   EXPECT_GT(impaired, 3.0F * clean);
 }
 
@@ -402,7 +402,7 @@ TEST(SilAdmission, TheRankingSurvivesASwitchingInverterAndTheGapWidens) {
   // (0.048 -> 0.046). The mean-value plant was flattering the flux integrator,
   // not the sliding-mode observer. S19 计划的 V8，也是建这个模型的理由。§5
   // 原本跳过 SMO 的理由是"抖振是硬件现象，SIL 里会把 SMO 显得
-  // 太好"。在一个死区与纹波都来自开关过程（而非公式）的模型上实测，结果**相反**：在位者变差
+  // 太好"。在一个死区与纹波都来自开关过程（而非公式）的模型上实测，结果 **相反** ：在位者变差
   // （0.068 → 0.104），SMO 原地不动（0.048 →
   // 0.046）。一直在美化磁链积分器的是平均值 plant。
   const float mean_value_incumbent = incumbent_error(true, true);
@@ -437,7 +437,7 @@ TEST(SilAdmission, TheRankingSurvivesASwitchingInverterAndTheGapWidens) {
   // Under the re-derived rule there is no absolute pass/fail to print: the
   // question is whether the candidate is no worse than the incumbent *here*,
   // and by how much.
-  // 在重定之后的规则下没有绝对的"过/不过"可打：问题是候选在**此处**是否不差于在位者，以及差多少。
+  // 在重定之后的规则下没有绝对的"过/不过"可打：问题是候选在 **此处** 是否不差于在位者，以及差多少。
   std::printf("[S18]   ceiling %.2f: incumbent %s, SMO %s; SMO/incumbent = "
               "%.2fx, ranking %s\n",
               static_cast<double>(kAbsoluteCeilingRad),
@@ -470,7 +470,7 @@ TEST(SilAdmission, C1_TheCandidateRecordAcrossSpeedsAndMismatches) {
   // V8 answered "which is more accurate" at **one** point. One point is not a
   // library-level statement, so this is the record: five speeds, three Rs
   // beliefs. V8
-  // 只回答了**一个**点上的"谁更准"。一个点不构成库级陈述，所以这里是记录：五个速度、三种
+  // 只回答了 **一个** 点上的"谁更准"。一个点不构成库级陈述，所以这里是记录：五个速度、三种
   // Rs 信念。
   //
   // Two candidate columns, and the second one is the lesson:
@@ -487,17 +487,17 @@ TEST(SilAdmission, C1_TheCandidateRecordAcrossSpeedsAndMismatches) {
   // 两列候选，第二列是教训：
   //  * `SMO sched` 用 `scheduled_smo()`
   //  的调度——增益高于它要重建的反电动势，滤波拐点高于它要通过的信号。
-  //    这才是**公平**的比较，因为出厂 NLFO 自己的增益本来就是调度的（`g =
+  //    这才是 **公平** 的比较，因为出厂 NLFO 自己的增益本来就是调度的（`g =
   //    max(min_gain, ratio·|w_e|)`，发现 4）。
   //  * `SMO fixed` 是前面测试用的单个常数（K 2 V / fc 1 kHz）。我原来的 C1-c
   //  说挑战者只能有一套配置；
-  //    那条判据是**错的**，这一列就是原因：800 rad/s 处反电动势 3.8 V，2 V
+  //    那条判据是 **错的** ，这一列就是原因：800 rad/s 处反电动势 3.8 V，2 V
   //    的增益根本建立不了滑模。
   //
   // What this table is *not*: 0 / very low speed (no back-EMF to observe --
   // HFI's territory), field weakening (above 3970 rpm, not implemented),
   // current saturation (above 3 A), temperature drift (S17).
-  // 这张表**不是**什么：0 / 极低速（没有反电动势可观，那是 HFI
+  // 这张表 **不是** 什么：0 / 极低速（没有反电动势可观，那是 HFI
   // 的地盘）、弱磁（3970 rpm 以上，未实现）、 电流饱和（3 A
   // 以上）、温度漂移（S17）。
   std::printf("\n[S18] C1 candidate record: switching bench, 1 us dead time, "
@@ -546,7 +546,7 @@ TEST(SilAdmission, C1_TheCandidateRecordAcrossSpeedsAndMismatches) {
       // C1-c revised: with a single constant the challenger loses at the top of
       // the range, and that is a sizing failure, not an opinion -- the gain has
       // to exceed the back-EMF it is reconstructing. C1-c
-      // 改写：用单个常数时挑战者在上端输掉，而那是**选型失败**，不是观点——增益必须大于它要重建的
+      // 改写：用单个常数时挑战者在上端输掉，而那是 **选型失败** ，不是观点——增益必须大于它要重建的
       // 反电动势。
       if (omega >= 400.0F) {
         EXPECT_LT(candidate, fixed)
@@ -565,7 +565,7 @@ TEST(SilAdmission, C1_TheCandidateRecordAcrossSpeedsAndMismatches) {
   // at 800. Asserting the shape rather than the average is the point -- an
   // average would hide the reversal, which is the most decision-relevant fact
   // here. C1-b 原文（"SMO
-  // 在每个速度点都赢"）被**证伪**，这是取代它的形状：20–400 rad/s 赢，800
+  // 在每个速度点都赢"）被 **证伪** ，这是取代它的形状：20–400 rad/s 赢，800
   // 输。断言形状
   // 而不是均值正是要点——均值会掩盖这次反转，而反转才是这里最影响决策的事实。
   EXPECT_EQ(15, cells);
@@ -583,7 +583,7 @@ TEST(SilAdmission,
   // disturbance, so tell the observer about it" turns out to be
   // **observer-specific**, and the sign of the effect flips:
   //  "逆变器非线性是未建模扰动，所以告诉观测器"
-  //  这个看起来平淡的说法其实是**分观测器的**，而且效果会反号：
+  //  这个看起来平淡的说法其实是 **分观测器的** ，而且效果会反号：
   //   * the NLFO is bandwidth-limited, so the loss looks like a DC offset it
   //   cannot reject: compensation
   //     takes 800 rad/s from 0.0563 to 0.0111, a 5x win.
@@ -596,9 +596,9 @@ TEST(SilAdmission,
   //   从 0.0563 打到 0.0111，
   //     赢 5 倍。
   //   * SMO
-  //   的切换项**本身**就是一个未知输入估计器，它已经在跟踪这个损失；再把同一个估计喂给它就是重复
+  //   的切换项 **本身** 就是一个未知输入估计器，它已经在跟踪这个损失；再把同一个估计喂给它就是重复
   //     计入，20 rad/s 从 0.0673 变成 0.1637，差 2.4
-  //     倍。这不是整定问题，这正是滑模观测器的**用途**。
+  //     倍。这不是整定问题，这正是滑模观测器的 **用途** 。
   const float v_dead =
       1.0e-6F * 20000.0F * 24.0F; // 1 us at 24 V, the bench setting
 

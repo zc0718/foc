@@ -93,7 +93,7 @@ struct StartupRun final {
 
 /**
  * @brief [en] Oscillation frequency of the slip, in rad/s, from the crossing *times* rather than their count.
- * @brief [zh] 滑差的振荡角频率（rad/s），由过零**时刻**给出而不是只数次数。
+ * @brief [zh] 滑差的振荡角频率（rad/s），由过零 **时刻** 给出而不是只数次数。
  * @note [en] Counting crossings over the whole window quantises the answer at `pi / pull_s`, which is 3.14 rad/s -- 5 %
  *            of the value being measured. That is coarse enough to make "this error source does not move the frequency"
  *            a statement about the counting, not about the machine. Two crossings and the time between them give the
@@ -447,13 +447,13 @@ TEST(SilStartup, TheSlipOscillatesAtTheElectricalPendulumFrequency) {
     // the measurement sits at 0.97 of the corrected prediction. The assertion is on the *frequency*, because that is
     // the quantity the missing factor controls; the amplitude is set by the initial mismatch and is not claimed.
     // 三次"稳态负载角"的尝试都被证否，第三次找到了原因：滑差根本不是稳定角，而是轻阻尼振荡。说清这一点之后，闭式
-    // 解反而很短：滑差是**电角**而惯量是机械量，于是转子方程的刚度里带着极对数：
+    // 解反而很短：滑差是 **电角** 而惯量是机械量，于是转子方程的刚度里带着极对数：
     //
     //     delta'' = alpha_电 - (p * Kt * i / J) sin(delta) + (b / J)(omega_e - delta')
     //     omega_n  = sqrt(p * Kt * i * cos(delta*) / J)，  sin(delta*) = (J * alpha_电 / p) / (Kt * i)
     //
     // 此前每一次尝试都在刚度上漏了 `p`——这正好是频率上的 sqrt(p) = 2.65，而实测落在修正后预测的 0.97 处。断言写在
-    // **频率**上，因为那正是漏掉的因子所控制的量；幅值由初始失配决定，不在声称之内。
+    // **频率** 上，因为那正是漏掉的因子所控制的量；幅值由初始失配决定，不在声称之内。
     const foc::sil::MachineSpec spec = foc::sil::nominal_spec();
     const foc::sil::PlantParams plant = foc::sil::nominal_plant_params();
     const float p = static_cast<float>(spec.pole_pairs);
@@ -503,13 +503,13 @@ TEST(SilStartup, TheSameDutyTrainReproducesThePullOnThePhaseVariablePlant) {
     //     sqrt(p) = 2.65).
     // The tolerance is not widened to make it pass. If it disagrees, the model is wrong and every SIL number on this
     // page has to be re-measured -- that is the whole point of asking.
-    // 上一条用例断言的规律，是比较 d-q plant 得到的，而那段拖动正是**由同一台**模型做出来的：d-q plant 里一个符号或
+    // 上一条用例断言的规律，是比较 d-q plant 得到的，而那段拖动正是 **由同一台** 模型做出来的：d-q plant 里一个符号或
     // 系数错，预测与实测会一起动，比值仍旧停在 0.97。相变量台架把这个环闭掉：它直接积分三相磁链、由磁共能给出转矩，
-    // 从不构造 d-q 量，也从不使用 `Kt`。把同一次起动**录下来的占空比**喂给它，问的是一个很简单的问题——在模型本身
+    // 从不构造 d-q 量，也从不使用 `Kt`。把同一次起动 **录下来的占空比** 喂给它，问的是一个很简单的问题——在模型本身
     // 根本不知道 `Kt` 或 `p*Kt` 是什么的前提下，同一串电压是否给出同一个机电交换。
     //
     // 判据（写在测量之前）：
-    //   * 回放得到的滑差过零频率，与 d-q 那一轮在**同一批拍**上的结果相差 ≤10 %；
+    //   * 回放得到的滑差过零频率，与 d-q 那一轮在 **同一批拍** 上的结果相差 ≤10 %；
     //   * 回放频率与电学摆的闭式解同样相差 ≤10 %；
     //   * 反证仍然成立：去掉极对数必须偏出 10 %（应当偏 sqrt(p) = 2.65 倍）。
     // 不为让它通过而放宽容差。若不一致，就是模型错了，本页所有 SIL 数字都要重测——问这一句就是为了这个。
@@ -566,7 +566,7 @@ TEST(SilStartup, TheSameDutyTrainReproducesThePullOnThePhaseVariablePlant) {
             // must be handed the zero-sequence-free vector -- which is also what the d-q path effectively gets,
             // because Clarke drops that component. Removing it here with plain arithmetic keeps this model free of
             // every library transform it is meant to check.
-            // SVPWM 的共模偏置不是相电压。星点是浮动的，所以相变量模型必须拿到**去掉零序**的矢量——d-q 通路实际上
+            // SVPWM 的共模偏置不是相电压。星点是浮动的，所以相变量模型必须拿到 **去掉零序** 的矢量——d-q 通路实际上
             // 也是这样，因为 Clarke 把那一分量丢掉了。这里用最朴素的算术去掉它，好让这个模型不碰任何它本该检验的
             // 库内变换。
             const float u = tick.duty.u * kVBus;
@@ -666,9 +666,9 @@ TEST(SilStartup, TheSameDutyTrainReproducesThePullOnThePhaseVariablePlant) {
     // was, since 0.82 rad is already half way to pull-out and the frequency still lands at 0.972. What separates them
     // is whether the rotor stays *locked*: 20 crossings at J, 3 at 2J, i.e. at double inertia the rotor never
     // completes an oscillation at all, and the pendulum is a law about a locked rotor.
-    // 主张停在哪里，是测出来的。注意**不能**用来区分这两种情形的东西：峰值滑差在机器自身惯量下是 0.820 rad、
+    // 主张停在哪里，是测出来的。注意 **不能** 用来区分这两种情形的东西：峰值滑差在机器自身惯量下是 0.820 rad、
     // 两倍惯量下是 0.711 rad，所以"滑差很小"不是那条边界——它也从来不是，0.82 rad 已经到失步角的一半，频率仍落在
-    // 0.972。区分两者的是转子是否**保持同步**：J 下 20 次过零，2J 下 3 次，也就是说惯量翻倍时转子连一次完整振荡都
+    // 0.972。区分两者的是转子是否 **保持同步** ：J 下 20 次过零，2J 下 3 次，也就是说惯量翻倍时转子连一次完整振荡都
     // 走不完，而摆是一条关于同步转子的规律。
     EXPECT_LT(heavy.crossings, 4) << "at double inertia the rotor never completes an oscillation, which is where the "
                                      "pendulum stops applying";
@@ -704,20 +704,20 @@ TEST(SilStartup, EveryModelErrorSourceHasAMeasuredEffectOnTheClaim) {
     // moved the slip by 2 %-20 % was to be a red state ("neither negligible nor actionable"). It went red on exactly
     // the two sensor-gain rows -- which says the rule was a statement about where *I* put two thresholds, not about
     // the machine. What replaced it is item 5, which is arithmetic and can be wrong in only one direction.
-    // S4：上一条主张是关于**模型**的，因此唯一诚实的发表方式，是给每一个已知的"模型与真机的偏差"一个数。
+    // S4：上一条主张是关于 **模型** 的，因此唯一诚实的发表方式，是给每一个已知的"模型与真机的偏差"一个数。
     // 规则写在扫描之前：每个可注入误差源一行（"显然很小"不是入场券，那个词只允许与一个测量并排出现）；频率主张
-    // 必须在每个**单一**误差源的合理最坏取值下仍成立（`kFrequencyBand`，即主张本身用的 10 %），破坏它的就是主张
+    // 必须在每个 **单一** 误差源的合理最坏取值下仍成立（`kFrequencyBand`，即主张本身用的 10 %），破坏它的就是主张
     // 的边界，必须点名而不是被平均掉；使最坏滑差增长超过 `kMaterialRatio` 的误差源进入"必须由用户在自家硬件上
     // 实测"清单；任何单一误差源都不得把一次起动变成故障——那意味着这套时序需要一个标定步骤才能用，那是能力发现。
     //
-    // **有一条规则是先写后删的，删除本身也是发现**：原先规定"滑差挪动 2 %–20 % 是红色状态"（既非可忽略也无动作）。
-    // 它恰好在两行传感增益上变红——这说明那条规则讲的是**我把两个阈值放在哪里**，而不是机器。取代它的是第 5 条：
+    // **有一条规则是先写后删的，删除本身也是发现** ：原先规定"滑差挪动 2 %–20 % 是红色状态"（既非可忽略也无动作）。
+    // 它恰好在两行传感增益上变红——这说明那条规则讲的是 **我把两个阈值放在哪里** ，而不是机器。取代它的是第 5 条：
     // 两个来自算术的锚点，只可能朝一个方向出错。
     //
     // The magnitudes are the ones `test_sil_sensitivity.cpp` already uses, so the two tables read side by side.
-    // S4：上一条主张是关于**模型**的，因此唯一诚实的发表方式，是给每一个已知的"模型与真机的偏差"一个数。
+    // S4：上一条主张是关于 **模型** 的，因此唯一诚实的发表方式，是给每一个已知的"模型与真机的偏差"一个数。
     // 规则写在扫描之前：每个可注入误差源一行；"显然很小"不是入场券，只有量到低于 `kNegligibleRatio` 才允许
-    // 用那个词；频率主张必须在每个**单一**误差源的合理最坏取值下仍成立（`kFrequencyBand`，即主张本身用的
+    // 用那个词；频率主张必须在每个 **单一** 误差源的合理最坏取值下仍成立（`kFrequencyBand`，即主张本身用的
     // 10 %），破坏它的就是主张的边界，必须点名而不是被平均掉；使最坏滑差增长超过 `kMaterialRatio` 的误差源
     // 进入"必须由用户在自家硬件上实测"清单；任何单一误差源都不得把一次起动变成故障——那意味着这套时序需要
     // 一个标定步骤才能用，那是能力发现，不是敏感度发现。
@@ -855,7 +855,7 @@ TEST(SilStartup, EveryModelErrorSourceHasAMeasuredEffectOnTheClaim) {
     // component that the loop then regulates against, which a uniform gain error does not. If either anchor ever
     // stops holding, the table is measuring the harness and the rest of it is not evidence.
     // 这张表必须能区分"真缺陷"与"不是缺陷"，否则它那列"无影响"什么也不说明。两个锚点都来自算术而不是来自这次运行：
-    // **共模**偏置在 Clarke 里严格抵消，因此根本不可能移动任何 d-q 量；而**差分**增益失配会造出一个虚假负序分量，
+    // **共模** 偏置在 Clarke 里严格抵消，因此根本不可能移动任何 d-q 量；而 **差分** 增益失配会造出一个虚假负序分量，
     // 环路随后会去调节它，均匀增益误差不会。任一锚点一旦不成立，这张表就是在量台架，其余部分也不是证据。
     // Two definitions of "the frequency" live in this project: the claim test above counts crossings over the window
     // (the measure it was proved on, foundation-log A-34) and this table times them, because it compares rows to each
@@ -914,7 +914,7 @@ TEST(SilStartup, ALoadStepAfterHandoverIsHeldOrReported) {
     // point of the whole fault work: **every** outcome is either held or reported. A drive that quietly falls out of
     // step is worse than one that stops with a reason, so a failure with no fault code counts as a failure of the test.
     // C2 的最后一项：交接之后驱动已是闭环，问题不再是"转子被抓住了吗"，而是"负载变化时还抓得住吗"。判据有两半，
-    // 第二半正是这套故障工作的意义：**每一个**结局要么被保持、要么被报告。悄悄失步的驱动比带原因停机的驱动更糟，
+    // 第二半正是这套故障工作的意义： **每一个** 结局要么被保持、要么被报告。悄悄失步的驱动比带原因停机的驱动更糟，
     // 因此"失败但没有故障码"算测试失败。
     const foc::sil::MachineSpec spec = foc::sil::nominal_spec();
     const float kt = 1.5F * static_cast<float>(spec.pole_pairs) * psi_f_of(spec);
@@ -961,7 +961,7 @@ TEST(SilStartup, ALoadStepAfterHandoverIsHeldOrReported) {
     const bool beyond_held = (!beyond.faulted) && (std::fabs(beyond.speed_end_rad_s - target) <= 0.10F * target);
     // Beyond the loop's authority the drive must now *report* as well as not hold: `Stall` used to have a definition and
     // no producer, exactly like `LostSync`, and this is the case that shows it is wired.
-    // 超出环路权限时，驱动现在还必须**报告**，而不只是保不住：`Stall` 从前和 `LostSync` 一样有定义、没有生产者，
+    // 超出环路权限时，驱动现在还必须 **报告** ，而不只是保不住：`Stall` 从前和 `LostSync` 一样有定义、没有生产者，
     // 这个用例证明它已经接上。
     EXPECT_TRUE(beyond.faulted) << "overload has to latch a fault, not reverse silently";
     EXPECT_EQ(static_cast<int>(foc::core::FaultCode::Stall), beyond.fault_code)

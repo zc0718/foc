@@ -163,7 +163,7 @@ TEST(Svpwm, ExactlyAtTheLinearLimitIsNotYetSaturated) {
     // For an axis-aligned vector u = m, v = w = -m/2: offset = m/4, v_max = m, v_min = -m/2, and the trip is at
     // m = 2/3 * v_bus. At v_bus = 24 that is m = 16, a value float represents exactly, so the equality is real
     // and not a rounding accident.
-    // `saturated` 的含义是"某一相在夹紧之前**想要**离开 [0,1]"，因此边界本身不算：比较是严格的。把共模
+    // `saturated` 的含义是"某一相在夹紧之前 **想要** 离开 [0,1]"，因此边界本身不算：比较是严格的。把共模
     // 偏置并进去后，检查的两侧都化简为 `(v_max - v_min) > v_bus`——它们总是同时触发，这正是这里 `||` 与
     // `&&` 等价、而只有相等点能区分 `>` 与 `>=` 的原因。轴向矢量 u = m、v = w = −m/2 时 offset = m/4，
     // 触发点在 m = 2/3·v_bus；v_bus = 24 时 m = 16，float 可精确表示，所以这个相等是真实的、不是舍入巧合。
@@ -196,7 +196,7 @@ auto realised_ab(const foc::core::Uvw<float>& duty, float v_bus) -> foc::core::A
 
 /**
  * @brief [en] The largest amplitude that does **not** saturate, bisected on the modulator itself at a given angle.
- * @brief [zh] 在给定角度上**不**饱和的最大幅值，直接在调制器上二分。
+ * @brief [zh] 在给定角度上 **不** 饱和的最大幅值，直接在调制器上二分。
  */
 auto saturation_amplitude(float angle_rad, float v_bus) -> double {
     double lo = 0.0;
@@ -223,7 +223,7 @@ TEST(Svpwm, TheLinearRangeIsAHexagonNotACircleAndItsBoundaryIsExact) {
     // inscribed circle `v_bus/sqrt(3) = 13.856 V`, and the reachable amplitude at a sector centre is `2/3*v_bus = 16.0 V`
     // -- 15 % more, available only at six angles. Measured by bisecting the modulator at six angles and compared to the
     // hexagon's own closed form `(2/3*v_bus)*cos(30)/cos(theta' - 30)`.
-    // 头文件说"线性区"，读起来像一个数。并不是：可复现矢量的集合是**六边形**——六个顶点落在六个有效矢量方向上的
+    // 头文件说"线性区"，读起来像一个数。并不是：可复现矢量的集合是 **六边形** ——六个顶点落在六个有效矢量方向上的
     // `2/3·v_bus`，平边离原点 `2/3·v_bus·cos30 = v_bus/√3`。所以整圈都保证的幅值是内切圆 `v_bus/√3 = 13.856 V`，
     // 而扇区中心可达 `2/3·v_bus = 16.0 V`——多 15 %，只在六个角度上。用二分在六个角度上量出，并对着六边形自己的闭式
     // `(2/3·v_bus)·cos30/cos(θ′ − 30)` 比较。
@@ -235,7 +235,7 @@ TEST(Svpwm, TheLinearRangeIsAHexagonNotACircleAndItsBoundaryIsExact) {
         std::printf("[svpwm] theta %4.1f deg | saturation at %8.5f V | hexagon law %8.5f V | ratio %.6f\n", deg,
                     measured, law, measured / law);
         // The model is the *geometry*, not a fit: six points to 1e-6 of a boundary found by bisection on the code.
-        // 模型是**几何**，不是拟合：六个点在代码上二分出来的边界上一致到 1e-6。
+        // 模型是 **几何** ，不是拟合：六个点在代码上二分出来的边界上一致到 1e-6。
         EXPECT_NEAR(law, measured, 1.0e-5 * law) << "theta " << deg;
     }
     // The two limits, named: `v_bus/sqrt(3)` where the sides are, `2/3*v_bus` where the vertices are.
@@ -294,7 +294,7 @@ TEST(Svpwm, WhatComesOutOfTheInverterIsTheVectorThatWentIn) {
     // modulator has **no gain error** inside its range.
     // 定义级的恒等式，且沿代码并不计算的那个方向量：拿它产出的占空比，重建相电压，Clarke 回去，与请求比较。
     // 共模偏置在重建中被去掉（必须去掉——那正是 SVPWM 加进去的东西），剩下就是这条主张本身：本调制器在其范围内
-    // **没有增益误差**。
+    // **没有增益误差** 。
     for (const float deg : {0.0F, 17.0F, 30.0F, 60.0F, 123.0F, 200.0F, 359.0F}) {
         const double angle = static_cast<double>(deg) * M_PI / 180.0;
         const foc::core::Ab<float> request{static_cast<float>(8.0 * std::cos(angle)),
@@ -324,7 +324,7 @@ TEST(Svpwm, ABusVoltageThatIsWrongComesOutAsExactlyThatError) {
     // `0.5 + (v - offset)/v_bus_assumed`, so realising them at the true bus scales the vector by `1/k` -- exactly, and
     // **the wrong way round**: telling the modulator the bus is low makes it deliver *more* voltage.
     // 驱动永远有的误差源：量到的母线不是调制器用来做除法的那一个。占空比是 `0.5 + (v − offset)/v_bus_被告知`，于是
-    // 在真实母线上实现它们会把矢量缩放 `1/k`——精确地，而且**方向是反的**：告诉调制器母线偏低，它反而输出更多电压。
+    // 在真实母线上实现它们会把矢量缩放 `1/k`——精确地，而且 **方向是反的** ：告诉调制器母线偏低，它反而输出更多电压。
     const foc::core::Ab<float> request{8.0F, 0.0F};
     for (const float k : {0.90F, 0.95F, 1.05F, 1.10F}) {
         const auto result = foc::core::Svpwm::modulate(request, kBusV * k);
@@ -345,9 +345,9 @@ namespace {
  *            overmodulation laws are compared on the same grid, so "the new one is better" is a measurement rather than
  *            a preference. And it is the record: the numbers in the claim row that were measured before this change
  *            were measured under this law, so the file that replaces it has to be able to reproduce them.
- * @note [zh] 留在**测试**里，两个理由，都不是怀旧。它是证伪器——两种过调制律在同一张网格上比较，于是"新的更好"是一次测量
- *            而不是一种偏好。它也是记录：这条 claim 行里在这次改动之前量到的数字是在这条律下量的，替换它的文件必须能把
- *            它们复现出来。
+ * @note [zh] 留在 **测试** 里，两个理由，都不是怀旧。它是证伪器——两种过调制律在同一张网格上比较，于是"新的更好"是一次测
+ *            量而不是一种偏好。它也是记录：这条 claim 行里在这次改动之前量到的数字是在这条律下量的，替换它的文件必须能
+ *            把它们复现出来。
  */
 auto clamp_law_ab(const foc::core::Ab<float>& request, float v_bus) -> foc::core::Ab<float> {
     const foc::core::Uvw<float> phase = foc::core::inv_clarke(request);
@@ -371,7 +371,7 @@ auto hex_radius(double angle_rad, double v_bus) -> double {
     // saturation bisection finds `2/3*v_bus` -- so a sector runs from 0 to 60 degrees and is centred at 30. Writing the
     // sector as centred at 0 instead is a 30-degree rotation of the boundary and it makes the law look violated at every
     // angle; that mistake was in the first version of this helper and the `EXPECT_NEAR` below is what caught it.
-    // 本调制器的六边形**在 α 轴上有一个顶点**——六个有效矢量正是二分找到 `2/3·v_bus` 的地方——所以扇区从 0 到 60 度、
+    // 本调制器的六边形 **在 α 轴上有一个顶点** ——六个有效矢量正是二分找到 `2/3·v_bus` 的地方——所以扇区从 0 到 60 度、
     // 中心在 30。若把扇区写成以 0 为中心，边界就被转了 30 度，于是这条律在每个角度上看起来都被违反；这个错在助手函数的
     // 第一版里，是下面那条 `EXPECT_NEAR` 抓住的。
     const double sector = std::fmod(angle_rad, M_PI / 3.0);
@@ -391,7 +391,7 @@ struct Fundamental final {
  * @param radial [zh] true = 出厂律；false = 它替换掉的夹紧律。
  * @note [en] The harmonics come from the **duties**, read back through the inverter, not from the request: a law that
  *            distorts the vector would otherwise be scored on its intentions.
- * @note [zh] 谐波从**占空比**经逆变器读回得到，而不是从请求得到：否则一条扭曲矢量的律会被按它的**意图**打分。
+ * @note [zh] 谐波从 **占空比** 经逆变器读回得到，而不是从请求得到：否则一条扭曲矢量的律会被按它的 **意图** 打分。
  */
 auto probe(const float request_v, float v_bus, bool radial, int samples = 3600) -> Fundamental {
     Fundamental out{0.0, 0.0, 0.0};
@@ -426,7 +426,7 @@ constexpr double kSixStepPerBus = 2.0 / M_PI; // 0.6366: the six-step fundamenta
 // F03, first half: above the hexagon the request is **scaled**, not clamped per phase. The difference is measurable and
 // it is the angle: a clamp corrects only the phase that wanted out, so its correction is not common-mode and Clarke does
 // not remove it, while a scale is a common factor that Clarke sees as a magnitude change only.
-// F03 前半：越过六边形后，请求是被**缩放**的，而不是逐相夹紧。差别是可量的，而且就在角度上：夹紧只修正想出去的那一相，
+// F03 前半：越过六边形后，请求是被 **缩放** 的，而不是逐相夹紧。差别是可量的，而且就在角度上：夹紧只修正想出去的那一相，
 // 于是它的修正不是共模量、Clarke 消不掉；而缩放是三相共同的比例因子，Clarke 只看到幅值变化。
 TEST(Svpwm, OvermodulationKeepsTheCommandedAngleAndLandsOnTheHexagon) {
     const double v_bus = static_cast<double>(kBusV);
@@ -466,10 +466,10 @@ TEST(Svpwm, OvermodulationKeepsTheCommandedAngleAndLandsOnTheHexagon) {
     // it scores 0.412 rad (23.6 deg). The first version of this case printed the coarse number and it went into the
     // claim row, where it was wrong by 15 %. The angle *law* may be checked on a coarse grid because it holds
     // everywhere; a worst case may not.
-    // 证伪器需要自己、更细的网格，这是一条教训而不是细节。夹紧律造成的旋转是**一个尖峰函数的最大值**，于是五度的
+    // 证伪器需要自己、更细的网格，这是一条教训而不是细节。夹紧律造成的旋转是 **一个尖峰函数的最大值** ，于是五度的
     // 网格只会报出尖峰恰好落在哪一格旁边——在上面那张网格上夹紧律得 0.349 rad（20.0 度），而同一个请求用 0.1 度
-    // 扫一遍得 0.412 rad（23.6 度）。这条用例的第一版印的是那个粗值，它还进了 claim 行，错了 15 %。角度**律**可以在
-    // 粗网格上查，因为它处处成立；**最坏值**不可以。
+    // 扫一遍得 0.412 rad（23.6 度）。这条用例的第一版印的是那个粗值，它还进了 claim 行，错了 15 %。角度 **律** 可以在
+    // 粗网格上查，因为它处处成立； **最坏值** 不可以。
     for (const double ratio : {1.50, 3.00}) {
         for (int step = 0; step < 3600; ++step) {
             const double angle = (2.0 * M_PI * static_cast<double>(step)) / 3600.0;
@@ -511,7 +511,7 @@ TEST(Svpwm, OvermodulationKeepsTheCommandedAngleAndLandsOnTheHexagon) {
 
 // F03, second half: the utilisation curve. Monotone from the linear range into overmodulation, exact below the inscribed
 // circle (`delivered == requested`), continuous at both boundaries, and it **stops** at the mode-I ceiling.
-// F03 后半：利用率曲线。从线性区进入过调制**单调**，内切圆以内**精确等于请求**，两个边界都**连续**，并且它**停在**
+// F03 后半：利用率曲线。从线性区进入过调制 **单调** ，内切圆以内 **精确等于请求** ，两个边界都 **连续** ，并且它 **停在**
 // mode-I 上限上。
 TEST(Svpwm, TheFundamentalRisesMonotonicallyAndStopsAtTheModeOneCeiling) {
     const double v_bus = static_cast<double>(kBusV);
@@ -540,7 +540,7 @@ TEST(Svpwm, TheFundamentalRisesMonotonicallyAndStopsAtTheModeOneCeiling) {
         // The tolerance is the quadrature's, not the law's: once the request is past the ceiling the delivered vector is
         // the *same* vector every time, so the only thing left to disagree is the 3600-sample sum of a smooth periodic
         // function (measured jitter 9e-8 V = 6e-9 relative). A real non-monotonicity would be orders of magnitude larger.
-        // 容差是**求积**的，不是律的：请求越过上限后交付的是**同一个**矢量，剩下能不一致的只有那条 3600 点求和（实测抖动
+        // 容差是 **求积** 的，不是律的：请求越过上限后交付的是 **同一个** 矢量，剩下能不一致的只有那条 3600 点求和（实测抖动
         // 9e-8 V = 6e-9 相对）。真正的不单调要大好几个量级。
         EXPECT_GE(f.amplitude_v, previous - (1.0e-6 * previous)) << "utilisation must never fall as the request grows";
         previous = f.amplitude_v;
@@ -550,8 +550,8 @@ TEST(Svpwm, TheFundamentalRisesMonotonicallyAndStopsAtTheModeOneCeiling) {
     //    `request - delivered`. It is zero below the boundary (the modulator is the identity there) and it must leave zero
     //    without a step, or the loop would see its own limit appear as a discontinuity. Comparing two *different* requests
     //    instead -- which is what the first version of this case did -- measures the request difference, not a jump.
-    // 3. 边界的连续性，写成那个必须连续的量：**欠额** `request − delivered`。边界以下它为 0（调制器在那里是恒等映射），
-    //    而它离开 0 时不许有台阶，否则环路会看到自己的极限像一次跳变。第一版比较的是**两个不同请求**的交付值——那量到的是
+    // 3. 边界的连续性，写成那个必须连续的量： **欠额** `request − delivered`。边界以下它为 0（调制器在那里是恒等映射），
+    //    而它离开 0 时不许有台阶，否则环路会看到自己的极限像一次跳变。第一版比较的是 **两个不同请求** 的交付值——那量到的是
     //    请求之差，不是跳变。
     const auto deficit = [&](double ratio) {
         const double request_v = ratio * inscribed;
@@ -602,17 +602,17 @@ TEST(Svpwm, TheClampLawBuysTheSixStepFundamentalByRotatingTheVector) {
 // F03: what the limit *looks like* when it is asked for far more than it has. A two-level waveform -- every phase at a
 // rail, never in between -- whose fundamental is the mode-I ceiling. This is the assertion that would notice a "fix"
 // that merely reduced the amplitude, and it is a shape rather than a value.
-// F03：当请求远大于能力时，极限**长什么样**。两电平波形——每一相都在轨道上、从不居中——其基波是 mode-I 上限。这条断言
-// 会发现一个"只降低了幅值"的假修法，而它是一条**形状**断言而不是数值断言。
+// F03：当请求远大于能力时，极限 **长什么样** 。两电平波形——每一相都在轨道上、从不居中——其基波是 mode-I 上限。这条断言
+// 会发现一个"只降低了幅值"的假修法，而它是一条 **形状** 断言而不是数值断言。
 TEST(Svpwm, AskedFarEnoughTheWaveformIsTwoLevel) {
     // The shape of the limit is not "every phase on a rail" -- with midpoint injection exactly one phase is at 1 and one at
     // 0 at every instant, and the third sits in between, which is what makes the *line-to-line* voltage the full bus. The
     // claim is therefore about the **span**: the duties must use the whole [0, 1] range at every angle, and the middle
     // phase may only touch a rail at the six vertices. Asking for a thousand times the bus must look exactly like asking
     // for three times it -- overmodulation saturates in shape, not in magnitude.
-    // 极限的形状不是"每一相都在轨道上"——中点注入下每个瞬间恰好一相在 1、一相在 0、第三相在中间，正是这一点让**线电压**
-    // 用满母线。所以论断是关于**跨度**的：占空比在每个角度上都必须用满 [0,1]，而中间那一相只允许在六个顶点上碰到轨道。
-    // 请求一千倍母线必须与请求三倍看起来完全一样——过调制饱和在**形状**上，而不是幅值上。
+    // 极限的形状不是"每一相都在轨道上"——中点注入下每个瞬间恰好一相在 1、一相在 0、第三相在中间，正是这一点让 **线电压**
+    // 用满母线。所以论断是关于 **跨度** 的：占空比在每个角度上都必须用满 [0,1]，而中间那一相只允许在六个顶点上碰到轨道。
+    // 请求一千倍母线必须与请求三倍看起来完全一样——过调制饱和在 **形状** 上，而不是幅值上。
     const int samples = 720;
     int middle_at_rail = 0;
     bool span_full = true;

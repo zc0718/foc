@@ -4,7 +4,7 @@
 // `reset()` were never executed by anything. These cases assert what the header promises in each of them.
 //
 // 开环起动：配方能给出的四种答案，以及每个状态输出什么。
-// `StartupRoutine` 之前**没有**单元测试，只有 SIL 运行，因此 Align 之后的状态、拒绝路径与 `reset()` 从未被执行过。
+// `StartupRoutine` 之前 **没有** 单元测试，只有 SIL 运行，因此 Align 之后的状态、拒绝路径与 `reset()` 从未被执行过。
 //
 // The criteria, fixed before the numbers below were measured:
 //   C1  an all-zero recipe is `NotImpl`, not `Param` -- "this build does not start this way" is an answer the

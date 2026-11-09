@@ -14,7 +14,7 @@
 //   if the best grid point beats the default by a factor of 4 or more, the limit is the parameters and the next step is
 //   tuning; if it does not, the limit is structural and the next step is a different estimator.
 //
-// W7-b 第二个增量：低速转速估计差，是**调参问题**还是**结构问题**？
+// W7-b 第二个增量：低速转速估计差，是 **调参问题** 还是 **结构问题** ？
 // W7-b 第一个增量量出了残差并做了归因：机械 20 rad/s 处，速度环闭合所用的估计本身差到 0.7995 rad/s，而它所依据的角度
 // 好到 0.0015 rad。这留下两种解释，而它们指向相反的下一步：
 //
@@ -23,7 +23,7 @@
 //   (b) 结构受限——一大片 (带宽, 阻尼) 网格里没有任何一点能实质改善，那么问题在结构：由载波解调出的角度再微分得到的
 //       转速，继承了那个角度的噪声除以环路周期，滤波取不回从未被分辨出来的东西。
 //
-// 判定规则在运行**之前**定死，于是结果无法被事后拟合：
+// 判定规则在运行 **之前** 定死，于是结果无法被事后拟合：
 //   若网格最优点比默认点好 4 倍及以上，限制在参数，下一步是整定；若没有，限制在结构，下一步是换估计器。
 //
 // The criteria, fixed before the numbers below were measured:

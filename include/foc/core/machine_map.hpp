@@ -66,7 +66,7 @@ struct MachinePoint final {
  * @details [zh] 容量是静态的：它住在控制路径上，而"能增长的表格"就是"可能分配失败的表格"。九行足以描述一个饱和拐点加两
  *               端，格式要求行按电流升序，于是插值只是扫几个 float。
  *
- *   超出实测范围时**钳到端行**，不做外推。把饱和曲线外推到最后一个测点之外，正是模型凭空发明没人测过的行为的做法。
+ *   超出实测范围时 **钳到端行** ，不做外推。把饱和曲线外推到最后一个测点之外，正是模型凭空发明没人测过的行为的做法。
  *
  * @note [en] A one-row map is legal and means "constant, this is all I know" -- the honest representation of a
  *            nameplate parameter set.
@@ -122,7 +122,7 @@ struct MachineMap final {
      *            rather than been misled. Reporting the clamp through the returned point would have changed what `at()`
      *            returns for every existing caller; a second question costs one comparison.
      * @note [zh] `at()` 会钳位，而钳位后的答案在算术上与一次实测无法区分——这正是这个类型存在的目的所要防的那种混淆。所
-     *            以钳位必须是**可以问的**：想知道自己是不是在外推的调用方先问一句，而不问的调用方是做了决定，不是被骗
+     *            以钳位必须是 **可以问的** ：想知道自己是不是在外推的调用方先问一句，而不问的调用方是做了决定，不是被骗
      *            了。把钳位塞进返回的点里会改变 `at()` 对所有既有调用方的返回值；多问一句只花一次比较。
      * @since 0.1.9
      * @exporter

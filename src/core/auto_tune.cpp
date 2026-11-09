@@ -89,7 +89,7 @@ auto SpeedTuner::accumulate(float dt_s, float iq_a, float omega_mech_rad_s, bool
     // The acceleration is formed from the *previous* speed, and it is paired with the previous current and speed, so every
     // term of the fit describes the same interval. Pairing the new acceleration with the new current would attribute one
     // period's cause to the next period's effect.
-    // 加速度由**上一个**转速构成，并与上一个电流、上一个转速配对，于是拟合的每一项描述的都是同一个区间。把新加速度与新电流配对，
+    // 加速度由 **上一个** 转速构成，并与上一个电流、上一个转速配对，于是拟合的每一项描述的都是同一个区间。把新加速度与新电流配对，
     // 等于把这一周期的原因归给下一周期的结果。
     if (previous_has_) {
         const double alpha =
@@ -221,7 +221,7 @@ auto SpeedTuner::finish() const noexcept -> SpeedTuneResult {
 
     // The gains come from the **ratios**, which is why a wrong nameplate `kt` or `J` cannot move them: `kp = bw/(kt/J)` and
     // `ki = bw*(b/J)/(kt/J)`.
-    // 增益来自**比值**，这正是错误的铭牌 `kt` 或 `J` 动不了它们的原因：`kp = bw/(kt/J)`、`ki = bw·(b/J)/(kt/J)`。
+    // 增益来自 **比值** ，这正是错误的铭牌 `kt` 或 `J` 动不了它们的原因：`kp = bw/(kt/J)`、`ki = bw·(b/J)/(kt/J)`。
     out.valid = true;
     out.kp_a_per_rad_s = config_.bandwidth_rad_s / out.kt_over_j;
     out.ki_a_per_rad_s2 = (config_.bandwidth_rad_s * out.b_over_j) / out.kt_over_j;

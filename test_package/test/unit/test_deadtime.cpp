@@ -2,7 +2,7 @@
 // it reports when the model is wrong. Synthetic data here comes from an
 // **independent** implementation of the model, so these tests check the fit
 // rather than checking the code against itself.
-// 死区淡出估计器：能恢复什么、拒绝什么、模型不对时报告什么。这里的合成数据来自模型的**独立**实现，
+// 死区淡出估计器：能恢复什么、拒绝什么、模型不对时报告什么。这里的合成数据来自模型的 **独立** 实现，
 // 所以这些用例检查的是拟合本身，而不是代码自己对自己。
 
 #include <cmath>
@@ -24,8 +24,8 @@ constexpr float kDeadtimeV = 0.48F;
  * @brief [en] The identification model, written out here from the physics: a *rotating* current of amplitude `I` sees
  *             the fundamental of the phase losses `dV*clamp(i/If)`, i.e. `(4/pi)*dV` along the current, so the vector
  *             relation collapses to one scalar equation `|v| = rs*|i| + (4/pi)*dV*clamp(|i|/If)`.
- * @brief [zh] 辨识模型，这里按物理独立写出：**旋转**电流（幅值 `I`）看到的是每相损失 `dV·clamp(i/If)` 的 基波，即沿电流
- *             方向的 `(4/π)·dV`，于是矢量关系退化成一个标量方程 `|v| = rs·|i| + (4/π)·dV·clamp(|i|/If)`。
+ * @brief [zh] 辨识模型，这里按物理独立写出： **旋转** 电流（幅值 `I`）看到的是每相损失 `dV·clamp(i/If)` 的 基波，即沿电
+ *             流方向的 `(4/π)·dV`，于是矢量关系退化成一个标量方程 `|v| = rs·|i| + (4/π)·dV·clamp(|i|/If)`。
  */
 auto loss_magnitude(float i_mag, float fade, float v_dead) -> float {
   const auto clamp_unit = [](float value) -> float {
@@ -153,7 +153,7 @@ TEST(DeadTimeFade, ReportsAWrongResistanceInsteadOfAbsorbingItSilently) {
   // *residual* grows, and the caller is told. A 2x `rs` error has to be
   // visible; a 10 % one is allowed to hide (documented on the class).
   // 这个拟合分不开的一件事：`rs`
-  // 的错与淡出的错弯的是同一条曲线。所以诚实的契约是**残差**变大并告知
+  // 的错与淡出的错弯的是同一条曲线。所以诚实的契约是 **残差** 变大并告知
   // 调用方。2 倍的 `rs` 错误必须可见；10 % 的允许被吸收（类文档已写明）。
   core::DeadTimeFadeEstimator good(
       core::DeadTimeFadeEstimator::Config{kRs, kDeadtimeV, 0.25F});

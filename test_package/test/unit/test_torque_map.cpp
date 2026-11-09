@@ -87,7 +87,7 @@ TEST(TorqueMap, TheCommandPathRoundTripsThroughTheEstimate) {
 TEST(TorqueMap, AOneWayLimitRefusesToPullBackwards) {
     // The tensioner case: 0 N*m on the bottom, and a request below it must be *reported* as clipped rather than
     // silently obeyed or silently ignored.
-    // 张力控制的情形：下限 0 N·m，而低于它的请求必须被**报告**为裁剪，而不是静默执行或静默忽略。
+    // 张力控制的情形：下限 0 N·m，而低于它的请求必须被 **报告** 为裁剪，而不是静默执行或静默忽略。
     const auto map = foc::torque_map(config_with(0.05F, 4e-4F, 8e-4F, 5.0F), 0.0F, 1.0F);
     ASSERT_EQ(foc::ErrorCode::Ok, map.status);
     EXPECT_FLOAT_EQ(0.0F, map.min_nm);
@@ -260,7 +260,7 @@ TEST(TorqueMap, TheNameplateErrorBarPropagatesAndIsReported) {
     // smaller than `kt*iq`: the error can only be amplified. With `e = 8.93 %` the result is therefore above
     // 8.93 % and so above the map's own 5 % band. That is the finding this case exists to produce, and it is
     // not a defect in the map: the map converts a nameplate, so its absolute accuracy is the nameplate's.
-    // L3 要求的前一半：**实测**敏感度——当铭牌以已知的方式错时，这个数会移动多远。
+    // L3 要求的前一半： **实测** 敏感度——当铭牌以已知的方式错时，这个数会移动多远。
     const float ld = 4e-4F;
     const float lq = 8e-4F;
     const float kt = 0.05F;

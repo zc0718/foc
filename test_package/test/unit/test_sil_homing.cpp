@@ -6,7 +6,7 @@
 // the library.
 //
 // W7-a 增量 5 的闭环：让回零策略驱动一台真实的、无感的电机去找它自己的索引标记。
-// 单元用例证明这个流程**决定**了什么。这一个证明调用方可以照着它在中间不加任何东西：从 `step()` 取出转速、交给电机、
+// 单元用例证明这个流程 **决定** 了什么。这一个证明调用方可以照着它在中间不加任何东西：从 `step()` 取出转速、交给电机、
 // 把电机的参考喂回去，搜索就停在标记所在的地方。如果这场只靠台架专用的胶水才能成立，那这个策略就只是一条建议，
 // 而不是库的一部分。
 //
@@ -21,8 +21,8 @@
 //       is the injection observer at a few rad/s, which is exactly the regime it claims.
 //
 // 判据在量之前定下：
-//   C1 搜索以**找到标记**结束，而不是超时：`Done` 且原点已捕获，捕获位置在标记真值的两个 tick 行程之内。（取两个而
-//      不是一个：脉冲由周期**开始**时的 plant 位置算出、在周期末读取——与让位置保持那条判据第一版出错的采样顺序相同。）
+//   C1 搜索以 **找到标记** 结束，而不是超时：`Done` 且原点已捕获，捕获位置在标记真值的两个 tick 行程之内。（取两个而
+//      不是一个：脉冲由周期 **开始** 时的 plant 位置算出、在周期末读取——与让位置保持那条判据第一版出错的采样顺序相同。）
 //   C2 搜索在它说停的时候就停：`Done` 之后指令为零、状态保持 `Done`。
 //   C3 轴随后停下来的那个位置被保持住，全程无编码器：最后 0.2 s 内最差误差落在这台机器对齐流程自己的收敛容差之内。
 //      与高速保持不同，这里角度源是几 rad/s 下的注入观测器，而那是它声称的区间。
@@ -176,7 +176,7 @@ TEST(SilHoming, ThePolicyDrivesASensorlessMotorToItsOwnMarkAndItHolds) {
     // the start of a period and read at its end, one because the search's own loop only learns that the origin exists on
     // the iteration *after* the tick that set it, and one for a crossing that falls inside a period rather than on its
     // boundary. Each of those is a property of where the numbers are read, not slack in the mark.
-    // C1。允许值是**三个** tick，且要拆开说：一个因为脉冲由周期开始时的 plant 位置算出、在周期末读取；一个因为搜索
+    // C1。允许值是 **三个** tick，且要拆开说：一个因为脉冲由周期开始时的 plant 位置算出、在周期末读取；一个因为搜索
     // 自己的循环要到"设置原点那一 tick 之后"的那次迭代才知道原点存在；一个留给跨越落在周期内部而非边界的情形。
     // 这三条都是"数字在哪里被读到"的性质，不是标记本身的余量。
     const float tick_travel = std::fabs(plant.omega_mech_rad_s()) * kDt;

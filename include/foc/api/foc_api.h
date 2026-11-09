@@ -110,7 +110,7 @@ FOC_WARN_UNUSED foc_err_t foc_motor_get_setup(foc_motor_t motor, foc_motor_setup
  * @note [zh] 在改变选择之前，接手的观测器会用交出者当前的估计播种，这正是它必须是一个函数而不是一个字段的全部理由。库中
  *            除注入观测器以外都是积分器：自电机起动以来没被推进过的观测器，保留的是起动时播下的东西，而那不是转子所在的
  *            位置。少了这份种子就切换，正是一条链会跳四分之一圈或半圈、看起来像约定错误的原因。注入观测器无法被播种、自
- *            己获取角度，因此交接**给**它会从零信息开始——在静止时可以接受，并且与其他模式一样由
+ *            己获取角度，因此交接 **给** 它会从零信息开始——在静止时可以接受，并且与其他模式一样由
  *            `foc_motor_get_status()` 报出。
  * @context [en] Control context or a task that is not ticking at the same time; not ISR-safe against `foc_tick()`.
  * @context [zh] 控制上下文，或一个不与 `foc_tick()` 同时运行的任务；不可与 `foc_tick()` 并发。
@@ -270,7 +270,7 @@ FOC_WARN_UNUSED foc_err_t foc_set_speed(foc_motor_t motor, float rad_per_s);
  * @return [zh] FOC_OK；句柄为 NULL 或数值非有限返回 FOC_ERR_PARAM。
  * @note [en] The library computes in single precision: the double path avoids a lossy conversion at the *call site*, it
  *            does not raise the internal precision.
- * @note [zh] 库内以单精度计算：double 通道避免的是**调用点**的隐式收窄，并不提高内部精度。
+ * @note [zh] 库内以单精度计算：double 通道避免的是 **调用点** 的隐式收窄，并不提高内部精度。
  * @since 0.1.0
  * @exporter
  */
@@ -321,8 +321,8 @@ FOC_WARN_UNUSED foc_err_t foc_set_torque_f64(foc_motor_t motor, double iq_a);
  * @note [en] The target is expressed in the frame the sensor reports, which is the one *after* the offset captured by
  *            alignment. Absolute multi-turn position still needs an index signal: alignment resolves the electrical
  *            offset only, and only modulo one pole pitch.
- * @note [zh] 目标用传感器汇报的坐标系表达，也就是**扣除**对齐捕获的偏置之后的那一个。绝对多圈位置 仍需要索引信号：对齐
- *            只解决电角度偏置，而且只能定到一个极距的模。
+ * @note [zh] 目标用传感器汇报的坐标系表达，也就是 **扣除** 对齐捕获的偏置之后的那一个。绝对多圈位置 仍需要索引信号：对
+ *            齐只解决电角度偏置，而且只能定到一个极距的模。
  * @since 0.1.0
  * @exporter
  */
@@ -383,11 +383,11 @@ FOC_WARN_UNUSED foc_err_t foc_motor_get_status(foc_motor_t motor, foc_motor_stat
 
 /**
  * @brief [en] Read the absolute mechanical position, or refuse when the axis has no origin.
- * @brief [zh] 读绝对机械位置；轴没有原点时**拒绝**，而不是返回一个数。
+ * @brief [zh] 读绝对机械位置；轴没有原点时 **拒绝** ，而不是返回一个数。
  * @param motor [en] valid handle.
  * @param motor [zh] 有效句柄。
  * @param position_mech_rad [en] non-NULL receiver, written only on FOC_OK.
- * @param position_mech_rad [zh] 非 NULL 的接收者，**仅在 FOC_OK 时被写入**。
+ * @param position_mech_rad [zh] 非 NULL 的接收者， **仅在 FOC_OK 时被写入** 。
  * @return [en] FOC_OK with the angle; FOC_ERR_STATE when no index has been seen yet or the turn count was lost;
  *              FOC_ERR_PARAM for a NULL / stale handle or a NULL receiver.
  * @return [zh] FOC_OK 并给出角度；尚未见过索引、或圈计数已丢失时返回 FOC_ERR_STATE；句柄为 NULL/已失效或接收者为 NULL
@@ -398,10 +398,10 @@ FOC_WARN_UNUSED foc_err_t foc_motor_get_status(foc_motor_t motor, foc_motor_stat
  *            state error and leaves the receiver untouched. There is deliberately **no** matching setter: an absolute
  *            target would have to close on the referenced angle, and with a position sensor present the loop closes on
  *            the sensor's frame instead. Adding the setter means adding a control mode, not an entry point.
- * @note [zh] 为什么这不只是"读一个字段"。`foc_motor_status_t::referenced_mech_rad` 在第一次索引之前答 **0**，而 0 是一
+ * @note [zh] 为什么这不只是"读一个字段"。`foc_motor_status_t::referenced_mech_rad` 在第一次索引之前答 **0** ，而 0 是一
  *            个合法的机械角——因此拿它去和目标比的调用方，分不出"已回零且停在原点"与"从未回过零"。缺原点是一个状态，所以
- *            它答一个状态错误，并且不去动接收者。故意**没有**配套的 setter：绝对目标必须闭环在 referenced 角度上，而存
- *            在位置传感器时环路闭环在传感器坐标系上。加那个 setter 等于加一个控制模式，而不是加一个入口。
+ *            它答一个状态错误，并且不去动接收者。故意 **没有** 配套的 setter：绝对目标必须闭环在 referenced 角度上，而
+ *            存在位置传感器时环路闭环在传感器坐标系上。加那个 setter 等于加一个控制模式，而不是加一个入口。
  * @since 0.1.8
  * @exporter
  */
@@ -533,13 +533,13 @@ FOC_WARN_UNUSED foc_err_t foc_field_weakening_worthwhile(const foc_motor_params_
  * @return [zh] FOC_OK，或 FOC_ERR_PARAM。
  * @note [en] On a surface machine (`Ld == Lq`) `*id_a` is exactly 0, not an epsilon: an epsilon divides by nothing
  *            meaningful.
- * @note [zh] 表贴机（`Ld == Lq`）上 `*id_a` **恰好**为 0，不是极小量：极小量除的是一个没有 意义的数。
+ * @note [zh] 表贴机（`Ld == Lq`）上 `*id_a` **恰好** 为 0，不是极小量：极小量除的是一个没有 意义的数。
  * @warning [en] This answers the MTPA *curve*. It takes no speed, so it cannot know what the sensorless observer can
  *               see: with `i_d = -1 A` that observer reads 0.5079 rad at 200 rad/s against its 0.15 rad ceiling, while
  *               the same current is harmless at 3200 rad/s. A control loop that will actually apply the result must go
  *               through `MtpaReference`, whose `i_d_per_speed_a_s_per_rad` refuses d-axis current below the speed where
  *               the back-EMF carries the observer.
- * @warning [zh] 这个函数回答的是 MTPA **曲线**。它没有转速入参，因此无从知道无感观测器看得见什么：`i_d = −1 A` 时 该观
+ * @warning [zh] 这个函数回答的是 MTPA **曲线** 。它没有转速入参，因此无从知道无感观测器看得见什么：`i_d = −1 A` 时 该观
  *               测器在 200 rad/s 读到 0.5079 rad，而它公开的天花板是 0.15 rad；同一个电流在 3200 rad/s 却无害。 要真正
  *               施加这个结果的闭环必须走 `MtpaReference`，它的 `i_d_per_speed_a_s_per_rad` 会在反电势撑起观测器 的转速
  *               以下拒绝 d 轴电流。
@@ -795,11 +795,11 @@ FOC_WARN_UNUSED foc_err_t foc_protector_destroy(foc_protector_t protector);
  *            catch. The 2.5 is measured: at 20 kHz, 8000 Hz (2.50 control periods per carrier period) held in every
  *            cell of the envelope sweep, 8400 Hz (2.38) already failed at the widest demodulation cutoff, and 9200 Hz
  *            (2.17) failed at all of them.
- * @note [zh] 在选 `foc_motor_setup_t::inject_hz` **之前**问它。越过天花板后注入观测器会静默失效——解调幅值塌掉、锁定判据
- *            脱落、角度冻结、转速读零，环无法把它与堵转区分开。`foc_motor_create_ex()` 会直接拒绝这样的请求，而它没能拦
- *            下的情况由 `foc_motor_get_status()` 的 `observer_locked` 报出。 2.5 是实测的：20 kHz 下 8000 Hz（每载波周
- *            期 2.50 个控制周期）在包线扫描的每一格都站住，8400 Hz（2.38）在最宽解调截止频率上已经失败，9200 Hz（2.17）
- *            在三个上全部失败。
+ * @note [zh] 在选 `foc_motor_setup_t::inject_hz` **之前** 问它。越过天花板后注入观测器会静默失效——解调幅值塌掉、锁定判
+ *            据脱落、角度冻结、转速读零，环无法把它与堵转区分开。`foc_motor_create_ex()` 会直接拒绝这样的请求，而它没能
+ *            拦下的情况由 `foc_motor_get_status()` 的 `observer_locked` 报出。 2.5 是实测的：20 kHz 下 8000 Hz（每载波
+ *            周期 2.50 个控制周期）在包线扫描的每一格都站住，8400 Hz（2.38）在最宽解调截止频率上已经失败，9200 Hz（
+ *            2.17）在三个上全部失败。
  * @since 0.1.7
  * @exporter
  */
@@ -827,10 +827,10 @@ float foc_hfi_max_inject_hz(float pwm_freq_hz);
  *            documented where it is derived: the carrier is `foc_hfi_max_inject_hz(pwm_freq_hz)`, the amplitude is
  *            `hf_current_a * 2*pi*inject_hz * ld`, and the two cutoffs are 200 Hz each -- the values the SIL envelope
  *            sweep measured as good across standstill to 50 rad/s mechanical.
- * @note [zh] 结果是**可准入的**：填进 `foc_motor_setup_t` 会得到一个 `foc_motor_create_ex()` 接受的配置。这正是 C 侧用
- *            例断言的性质，因为一个建议出库随后会拒绝的配置的定容工具，比没有工具更糟。它返回的数字都是实测的，每一个都
- *            在其推导处有文档：载波是 `foc_hfi_max_inject_hz(pwm_freq_hz)`，幅值是 `hf_current_a · 2π·inject_hz · ld`，
- *            两个截止频率各 200 Hz——即 SIL 包线扫描在静止到 50 rad/s 机械范围内实测良好的那些值。
+ * @note [zh] 结果是 **可准入的** ：填进 `foc_motor_setup_t` 会得到一个 `foc_motor_create_ex()` 接受的配置。这正是 C 侧
+ *            用例断言的性质，因为一个建议出库随后会拒绝的配置的定容工具，比没有工具更糟。它返回的数字都是实测的，每一个
+ *            都在其推导处有文档：载波是 `foc_hfi_max_inject_hz(pwm_freq_hz)`，幅值是 `hf_current_a · 2π·inject_hz ·
+ *            ld`，两个截止频率各 200 Hz——即 SIL 包线扫描在静止到 50 rad/s 机械范围内实测良好的那些值。
  * @since 0.1.7
  * @exporter
  */
@@ -883,7 +883,7 @@ uint32_t foc_motor_trace_size(foc_motor_t motor);
  * @param motor [en] motor handle; NULL yields 0.
  * @param motor [zh] 电机句柄；NULL 返回 0。
  * @return [en] the drop count, which survives a reset: it records what was already lost.
- * @return [zh] 丢帧计数，且不随复位清零：它记录的是**已经**丢掉的东西。
+ * @return [zh] 丢帧计数，且不随复位清零：它记录的是 **已经** 丢掉的东西。
  * @since 0.1.8
  * @exporter
  */
@@ -1090,7 +1090,7 @@ FOC_WARN_UNUSED foc_err_t foc_autotune_accumulate(foc_autotune_t handle, float d
  * @param out [en] non-NULL receiver; `struct_size` must be set by the caller.
  * @param out [zh] 非 NULL 接收者；`struct_size` 须由调用方填好。
  * @return [en] FOC_OK (which does **not** mean `valid`), FOC_ERR_PARAM, or FOC_ERR_STATE on a stale handle.
- * @return [zh] FOC_OK（**不**表示 `valid`）、FOC_ERR_PARAM，或过期句柄时的 FOC_ERR_STATE。
+ * @return [zh] FOC_OK（ **不** 表示 `valid`）、FOC_ERR_PARAM，或过期句柄时的 FOC_ERR_STATE。
  * @note [en] A refusal is an answer: `status` stays FOC_OK, `valid` is 0 and `reason` says which of the refusals fired.
  *            Returning an error code instead would make "this is not the machine you described" indistinguishable from
  *            "you called me wrong", and those are different actions for the caller.
@@ -1137,7 +1137,7 @@ FOC_WARN_UNUSED foc_err_t foc_autotune_destroy(foc_autotune_t handle);
  * @return [zh] FOC_OK；配置本身不成立时 FOC_ERR_PARAM（由库自己的判据驳回，而不是这里的一份拷贝）；两个会话槽都被占用时
  *              为 FOC_ERR_NO_RESOURCE。
  * @note [en] **Experimental**: the procedure is stable, the layout is not promised across releases.
- * @note [zh] **experimental**：流程稳定，布局不承诺跨版本不变。
+ * @note [zh] **experimental** ：流程稳定，布局不承诺跨版本不变。
  * @since 0.1.9
  * @exporter
  */
@@ -1160,7 +1160,7 @@ FOC_WARN_UNUSED foc_err_t foc_cogging_learn_create(const foc_cogging_learn_confi
  * @param saturated [zh] 本周期电流环撞限时非零。
  * @return [en] FOC_OK; FOC_ERR_PARAM when a sample is not finite (**the sample is not taken**, and saying so beats a
  *              window that silently grew); FOC_ERR_STATE on a stale handle.
- * @return [zh] FOC_OK；样本非有限时 FOC_ERR_PARAM（**该样本不被采信**——说出来胜过让窗口悄悄长大）；过期句柄时为
+ * @return [zh] FOC_OK；样本非有限时 FOC_ERR_PARAM（ **该样本不被采信** ——说出来胜过让窗口悄悄长大）；过期句柄时为
  *              FOC_ERR_STATE。
  * @since 0.1.9
  * @exporter
@@ -1200,7 +1200,7 @@ FOC_WARN_UNUSED foc_err_t foc_cogging_learn_ready(foc_cogging_learn_t handle, in
  *              answer). FOC_ERR_PARAM also covers an `out_result` whose `struct_size` does not match this build, and a
  *              null `out_result`.
  * @return [zh] `struct_size` 与本构建不符的 `out_result`、以及空的 `out_result`，同样答 FOC_ERR_PARAM。 FOC_OK：`count
- *              == required`（一张表）或 `count == 0`（只要报告的那次调用，意思是**窗口是好的**）；窗口不是一次测量时
+ *              == required`（一张表）或 `count == 0`（只要报告的那次调用，意思是 **窗口是好的** ）；窗口不是一次测量时
  *              FOC_ERR_STATE，`result.status` 指明是四条拒绝里的哪一条；`capacity` 小于 `required` 时 FOC_ERR_PARAM（**
  *              此时不评估窗口**——先修缓冲区，否则"缓冲区太小"与"窗口不好"会是同一个答案）。
  * @note [en] **Never truncates.** A table shorter than `required` would make the caller believe it asked for fewer

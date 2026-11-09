@@ -59,7 +59,7 @@ auto read_voltage(void* user) -> float { return static_cast<Host*>(user)->v_bus_
 
 // Not a host capability but a host *statement*: this bench has no gate driver, so there is never a fault to report.
 // Required by the library, which refuses a host that cannot answer -- see `hal::FaultInput`.
-// 这不是一个宿主能力，而是一句宿主**陈述**：本台架没有栅极驱动器，所以永远没有故障可报。库要求它在，并拒绝一个答不上来
+// 这不是一个宿主能力，而是一句宿主 **陈述** ：本台架没有栅极驱动器，所以永远没有故障可报。库要求它在，并拒绝一个答不上来
 // 的主控方——见 `hal::FaultInput`。
 auto read_drive_fault(void* /*user*/) -> std::int32_t { return 0; }
 

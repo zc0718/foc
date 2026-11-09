@@ -16,8 +16,8 @@ namespace core {
  *
  * @brief [zh] 位置槽位在一步里被要求做什么：去哪里，以及用多大力。
  *
- *   两个限制字段而不是一个目标，因为一次**运动**有形状而不只有终点：同样距离的慢速接近 与快速穿越是两种运动。限制按次给
- *   出，所以同一个控制器服务两者而不必重建。
+ *   两个限制字段而不是一个目标，因为一次 **运动** 有形状而不只有终点：同样距离的慢速接近 与快速穿越是两种运动。限制按次
+ *   给出，所以同一个控制器服务两者而不必重建。
  *
  * @note [en] `0` means "no override, use the controller's own configured value". That is the same rule the rest of the
  *            project uses: 0 is only ever a default where 0 is not a legal value. A negative limit is the caller's bug
@@ -28,8 +28,8 @@ namespace core {
  * @note [zh] `0` 表示"不覆盖，用控制器自己配置的值"。这与项目其余部分同一条规则：0 只在 0 本身 不合法的地方才表示默认
  *            值。负数限制是调用方的 bug，按 0 处理，而不是"反向运动"。
  *
- *   `kp_scale` 是柔顺旋钮：1 是配置的刚度，0.2 是被推时会退让的关节，0（默认）则完全保持 配置。它缩放的是**增益**而非限
- *   值，因此柔顺的关节仍然不能越限。
+ *   `kp_scale` 是柔顺旋钮：1 是配置的刚度，0.2 是被推时会退让的关节，0（默认）则完全保持 配置。它缩放的是 **增益** 而非
+ *   限值，因此柔顺的关节仍然不能越限。
  * @since 0.1.0
  * @exporter
  */
@@ -92,7 +92,7 @@ class NullPositionControl final {
  *   rate-limited by the acceleration limit. It honours per-move limits exactly like `MotionProfile` does, so a move
  *   never silently loses its shape.
  *
- * @brief [zh] 比例位置控制：速度需求加两道限制，但**没有**制动曲线。
+ * @brief [zh] 比例位置控制：速度需求加两道限制，但 **没有** 制动曲线。
  *
  *   这是位置槽位的简单一半：`速度 = 增益 × 误差`，按速度上限钳位、按加速度上限限速率。 它和 `MotionProfile` 一样遵守按
  *   次给出的限制，因此一次运动不会悄悄丢掉形状。
@@ -101,9 +101,9 @@ class NullPositionControl final {
  *            roughly the braking distance, because the proportional term only starts easing off when the error is
  *            already small -- measured at 0.108 rad on a 1 rad step in the position-step scenario. `MotionProfile`
  *            exists for exactly that reason; pick it whenever a limit will actually bind.
- * @note [zh] 它**不做**的是向前看。速度或加速度限制真正起作用时，它会冲过目标大约一个制动距离， 因为比例项要等误差已经
- *            很小才开始回落——在 1 rad 位置阶跃上实测为 0.108 rad。 `MotionProfile` 正是为此存在的；只要限制会真正生效，
- *            就用它。
+ * @note [zh] 它 **不做** 的是向前看。速度或加速度限制真正起作用时，它会冲过目标大约一个制动距离， 因为比例项要等误差已
+ *            经很小才开始回落——在 1 rad 位置阶跃上实测为 0.108 rad。 `MotionProfile` 正是为此存在的；只要限制会真正生
+ *            效，就用它。
  * @since 0.1.0
  * @exporter
  */

@@ -29,7 +29,7 @@ auto request(float u, float v, float w) -> Uvw<float> { return Uvw<float>{u, v, 
 
 /**
  * @brief [en] Mean pole voltages over **one** switching period, V, with the current held at the sub-step value.
- * @brief [zh] **一个**开关周期内的平均极电压，V，电流在每个子步保持不变。
+ * @brief [zh] **一个** 开关周期内的平均极电压，V，电流在每个子步保持不变。
  * @note [en] The inverter is stateless across periods by construction (section "carrier" in its own header), so one
  *            period is a complete measurement and no settling is needed.
  * @note [zh] 按构造这个逆变器不跨周期存状态（见它自己头文件里的「载波」一节），所以一个周期就是一次完整测量，不需要任何
@@ -64,7 +64,7 @@ auto mean_poles(Uvw<float> duty, float t_min_s, Uvw<float> i_uvw, float t_dead_s
 // gap too short to exist, one is in the middle. The mean pole voltages are the *transmitted* duties times the bus, and
 // the error against the request is the policy's `lost_vs / T`, to the last digit.
 // 律，这次在 plant 里而不是在策略里：一相被要求送一个短到不存在的脉冲，一相被要求留一个短到不存在的间隔，一相落在中间。
-// 平均极电压就是**送出**的占空比乘母线，而它与请求之差正好等于策略的 `lost_vs / T`，到最后一位。
+// 平均极电压就是 **送出** 的占空比乘母线，而它与请求之差正好等于策略的 `lost_vs / T`，到最后一位。
 TEST(SilMinPulse, ThePlantTransmitsWhatTheDriverAllowsAndThePolicyKnowsThePrice) {
     const float min_pulse_s = 0.10F * kPeriodS;
     const Uvw<float> duty = request(0.02F, 0.50F, 0.98F);
@@ -81,7 +81,7 @@ TEST(SilMinPulse, ThePlantTransmitsWhatTheDriverAllowsAndThePolicyKnowsThePrice)
 
     // What the bridge ran, read straight off the plant, is the policy's answer -- including the phase that was stretched
     // to a full period because its *gap* was too short.
-    // 桥臂实际跑的，直接从 plant 读出来，就是策略的答案——包括那一相因为**间隔**太短而被拉成整周期的。
+    // 桥臂实际跑的，直接从 plant 读出来，就是策略的答案——包括那一相因为 **间隔** 太短而被拉成整周期的。
     EXPECT_NEAR(static_cast<double>(predicted.duty.u), static_cast<double>(measured.u / kBusV), 1.0e-6);
     EXPECT_NEAR(static_cast<double>(predicted.duty.v), static_cast<double>(measured.v / kBusV), 1.0e-6);
     EXPECT_NEAR(static_cast<double>(predicted.duty.w), static_cast<double>(measured.w / kBusV), 1.0e-6);
@@ -95,7 +95,7 @@ TEST(SilMinPulse, ThePlantTransmitsWhatTheDriverAllowsAndThePolicyKnowsThePrice)
     // The two that are actually wrong are the two that straddle the rail: 0.48 V short and 0.48 V long, which cancel in the
     // *vector* for this particular request -- stated because a reader will otherwise assume a dropped pulse is visible in
     // the Clarke transform, and here it is not.
-    // 真正错掉的两相正好一正一反：少 0.48 V、多 0.48 V，对**这个**请求它们在矢量上互相抵消——写下来是因为否则读的人会以为
+    // 真正错掉的两相正好一正一反：少 0.48 V、多 0.48 V，对 **这个** 请求它们在矢量上互相抵消——写下来是因为否则读的人会以为
     // 丢脉冲在 Clarke 变换里看得见，而这里恰好看不见。
     EXPECT_NEAR(0.48, static_cast<double>(duty.u * kBusV) - static_cast<double>(measured.u), 0.01);
     EXPECT_NEAR(-0.48, static_cast<double>(duty.w * kBusV) - static_cast<double>(measured.w), 0.01);
@@ -103,7 +103,7 @@ TEST(SilMinPulse, ThePlantTransmitsWhatTheDriverAllowsAndThePolicyKnowsThePrice)
 
 // The batch's falsifier, now on the plant: ten times the limit and the delivered voltage leaves the bound that was
 // written down first. The pulse is not "a bit worse" -- it is gone.
-// 本批次的证伪，这回在 plant 上：极限抬十倍，交付电压就离开**事先**写下的界。脉冲不是「差一点」，而是没了。
+// 本批次的证伪，这回在 plant 上：极限抬十倍，交付电压就离开 **事先** 写下的界。脉冲不是「差一点」，而是没了。
 TEST(SilMinPulse, TenTimesTheLimitTakesThePulseOffThePlant) {
     const Uvw<float> duty = request(0.12F, 0.12F, 0.12F);
     const Uvw<float> currents = request(1.0F, 1.0F, -2.0F);
@@ -154,7 +154,7 @@ TEST(SilMinPulse, TheCarryHoldsThePlantAverageWhereTheRequestAskedForIt) {
 // claiming they are independent. With dead time on, a dropped pulse also removes the two edges its windows sat on, so the
 // textbook `-(t_dead/T)*v_bus*sign(i)` no longer describes the period. The remainder is bounded by one dead window, and
 // that bound is what is asserted.
-// 两个机制**不能**靠相减分离，这条用例量的是它们差多少，而不是宣称它们独立。死区开着时，一个被丢掉的脉冲同时去掉了死区
+// 两个机制 **不能** 靠相减分离，这条用例量的是它们差多少，而不是宣称它们独立。死区开着时，一个被丢掉的脉冲同时去掉了死区
 // 窗口所在的两个边沿，于是教科书的 `−(t_dead/T)·v_bus·sign(i)` 不再描述这个周期。残差被一个死区窗口界住，断言的是那条界。
 TEST(SilMinPulse, ADroppedPulseAndTheDeadTimeDoNotSeparateBySubtraction) {
     const Uvw<float> duty = request(0.01F, 0.50F, 0.70F);

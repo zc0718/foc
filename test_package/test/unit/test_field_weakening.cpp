@@ -63,7 +63,7 @@ auto exact_voltage(const core::MachineParams &p, float i_d, float i_q,
 TEST(FieldWeakening, TheAdviceSaysDoNotBuildItForThisMachine) {
   // P8-d. The whole point of this test is that it says **no** with numbers: an
   // advisory that always says yes is not an advisory.
-  // P8-d。这个测试的全部意义是它**用数说不**：永远说"该做"的建议不是建议。
+  // P8-d。这个测试的全部意义是它 **用数说不** ：永远说"该做"的建议不是建议。
   const core::MachineParams nominal = nominal_params();
   const core::FieldWeakeningAdvice advice =
       core::is_field_weakening_worthwhile(nominal, sil::nominal_spec().i_max_a);
@@ -103,7 +103,7 @@ TEST(FieldWeakening, TheAdviceSaysDoNotBuildItForThisMachine) {
 TEST(FieldWeakening, ThePolicyFindsTheEnvelopeAndTheExactVoltageAgrees) {
   // P8-a. The policy solves the ellipse **without `Rs`**; this test is what
   // keeps that approximation honest, by evaluating the full voltage equation at
-  // the point the policy chose. P8-a。策略**不含 `Rs`**
+  // the point the policy chose. P8-a。策略 **不含 `Rs`**
   // 地解椭圆；本测试就是让这个近似保持诚实的东西——在策略选出的点上算完整
   // 电压方程。
   const core::MachineParams params = nominal_params();
@@ -210,7 +210,7 @@ TEST(FieldWeakening, TheObserverStaysInsideTheGateInTheWeakFluxRegion) {
   // while the observer pulls its magnitude towards `psi_f`; the question is
   // whether that is fatal. Measured: it is not, but it costs -- and the
   // corrected reference buys most of it back (P8-f).
-  // P8-b。弱磁区把**定子**磁链改成 `ψf + Ld·i_d`，而观测器把幅值拉向
+  // P8-b。弱磁区把 **定子** 磁链改成 `ψf + Ld·i_d`，而观测器把幅值拉向
   // `ψf`；问题是这致不致命。实测：
   // 不致命，但有代价——而修正后的参考能把大部分买回来（P8-f）。
   const core::MachineParams params = nominal_params();
@@ -290,11 +290,11 @@ TEST(FieldWeakening, TheObserverStaysInsideTheGateInTheWeakFluxRegion) {
   // keeps the *angle* honest, so lowering the target weakens the thing that was
   // holding the estimate together. Recorded as a measured negative and not
   // pursued -- the plain reference is already inside the gate.
-  // P8-f，答案是**不**。把幅值修正瞄向 `ψf +
-  // Ld·i_d`（物理上正确的定子磁链）会让角度误差**变差**，
+  // P8-f，答案是 **不** 。把幅值修正瞄向 `ψf +
+  // Ld·i_d`（物理上正确的定子磁链）会让角度误差 **变差** ，
   // 差一倍以上。机理不在幅值本身：修正项 `k·(目标 − |ψ̂|)`
-  // 同时也是让**角度**保持诚实的那个权限，
-  // 所以压低目标等于削弱了原本撑住估计的东西。作为**实测的否定结果**记录并不再追——朴素参考本就在闸内。
+  // 同时也是让 **角度** 保持诚实的那个权限，
+  // 所以压低目标等于削弱了原本撑住估计的东西。作为 **实测的否定结果** 记录并不再追——朴素参考本就在闸内。
   EXPECT_GT(corrected, plain) << "the physically correct flux reference "
                                  "measured worse: keep the plain one";
 }
@@ -308,7 +308,7 @@ TEST(FieldWeakening, ItIsADropInPolicyAndNothingElseChanges) {
   // the policy in place and makes it produce torque.
   // P8-e。整个架构主张：`Motor` 本来就把 `{iq, ω_e, v_bus, i_meas}`
   // 交给参考发生器，所以弱磁只是
-  // **一个模板实参**。没有新槽位、没有新状态、既有实例化不需要迁移。本测试就是证明——它带着这个
+  // **一个模板实参** 。没有新槽位、没有新状态、既有实例化不需要迁移。本测试就是证明——它带着这个
   // 策略建一台能跑的电机并让它出转矩。
   using MotorT = foc::motor::Motor<core::BackEmfObserver, core::Svpwm, core::Pi,
                                    sil::PlantHal, core::FieldWeakeningReference,
@@ -368,8 +368,8 @@ TEST(FieldWeakening, OneNumberDecidesItAndEveryRealMachineHereFailsIt) {
   // parameters for. The interesting part is not that it says no -- the single-machine case already did that -- but
   // that it says no to all of them, including a traction motor designed by people who knew what they were doing, and
   // that the two-condition rule in the header is really one condition.
-  // C7 第（1）步：把做/不做做成**选型函数**，跑在本项目真正有参数的机器上。有价值的不是它说"不"——单机用例
-  // 已经说过——而是它对**全部**这些机器都说"不"，包括一台由懂行的人设计的牵引电机；以及头文件里那条"两条件"
+  // C7 第（1）步：把做/不做做成 **选型函数** ，跑在本项目真正有参数的机器上。有价值的不是它说"不"——单机用例
+  // 已经说过——而是它对 **全部** 这些机器都说"不"，包括一台由懂行的人设计的牵引电机；以及头文件里那条"两条件"
   // 规则其实只是一条。
   struct Row final {
     const char* name;
@@ -438,7 +438,7 @@ TEST(FieldWeakening, OneNumberDecidesItAndEveryRealMachineHereFailsIt) {
   // weakening, and the closest is the Prius traction motor -- a machine built for exactly this -- at lambda = 0.51,
   // i.e. 3.3x short of the 5/3 the criterion asks for. So "field weakening" is a niche feature for low-flux,
   // high-inductance designs, and claiming it in general would be claiming it for machines that do not exist here.
-  // **这就是发现**：四台真实机器里没有一台的"每单位磁链的电感"足以撑起弱磁，最接近的是 Prius 牵引电机——一台
+  // **这就是发现** ：四台真实机器里没有一台的"每单位磁链的电感"足以撑起弱磁，最接近的是 Prius 牵引电机——一台
   // 正为此而造的机器——λ = 0.51，比判据要的 5/3 差 3.3 倍。所以弱磁是一个面向"低磁链、高电感"设计的窄众特性，
   // 泛泛地声称它，等于为这里并不存在的机器声称。
   EXPECT_EQ(0, worthwhile) << "a real machine passed; the table's conclusion needs rewriting, not the assertion";
@@ -450,7 +450,7 @@ TEST(FieldWeakening, TheVerdictIsOneComparisonAndTheOldThresholdsCouldNeverDecid
   // -- so the two-condition expression was unreachable-as-true and the thresholds were decoration (F-107). This case
   // pins the boundary the function really has, and pins that the old pair could never have moved it.
   // 头文件原先把规则写成 `ratio < 0.6 && speed_gain >= 1.5`，并为每一半给理由。两半都被真正决定它的那个分支
-  // ——`i_char <= i_max`，即 `λ = Ld·i_max/ψf >= 1`——所**蕴含**，于是那条两条件表达式永远不可能为真、两个阈值只是
+  // ——`i_char <= i_max`，即 `λ = Ld·i_max/ψf >= 1`——所 **蕴含** ，于是那条两条件表达式永远不可能为真、两个阈值只是
   // 装饰（F-107）。本用例钉住函数真正的边界，并钉住那对旧阈值从来不可能移动它。
   const float psi = 4.762e-3F;
   const float i_max = 3.0F;
@@ -510,13 +510,13 @@ TEST(FieldWeakening, TheVerdictIsOneComparisonAndTheOldThresholdsCouldNeverDecid
   // Stated where it bites: the ceiling is *infinite* on one side of that line and finite on the other, so the model's
   // verdict is a step. A machine 1 % inside is not 1 % better than one 1 % outside; it is the point where this
   // closed form stops having a finite answer.
-  // 在它真正咬人的地方说清楚：这条线一侧的上限是**无穷**、另一侧是有限，所以模型给出的结论是一个台阶。
+  // 在它真正咬人的地方说清楚：这条线一侧的上限是 **无穷** 、另一侧是有限，所以模型给出的结论是一个台阶。
   // 差 1 % 进线的机器并不比差 1 % 出线的机器好 1 %；那是这个闭式解不再有有限答案的那个点。
   // Both ends are read *away* from the knife edge on purpose: `lambda = 1` and `lambda = 0.99` are computed as
   // `psi - Ld*i_max`, a subtraction of two nearly equal floats, so whether the residual lands just above or exactly
   // on zero depends on the platform's rounding -- macOS answered differently from Linux here, which is a property of
   // the arithmetic and not of the rule. `lambda = 2` and `lambda = 0.9` carry the same statement with room around them.
-  // 两端都刻意**离开**刀刃读：`λ = 1` 与 `λ = 0.99` 都算作 `ψ − Ld·i_max`，两个几乎相等的 float 相减，余量是
+  // 两端都刻意 **离开** 刀刃读：`λ = 1` 与 `λ = 0.99` 都算作 `ψ − Ld·i_max`，两个几乎相等的 float 相减，余量是
   // 略大于零还是恰好为零取决于平台的舍入——macOS 与 Linux 在这里给出了不同答案，那是算术的性质而不是规则的性质。
   // `λ = 2` 与 `λ = 0.9` 把同一句话带上了余量。
   EXPECT_EQ(INFINITY, core::is_field_weakening_worthwhile(machine_at(2.0F), i_max).speed_gain);
@@ -542,11 +542,11 @@ TEST(FieldWeakening, TheFluxSensitivityIsAsymmetricAndTheCurrentCircleIsWhy) {
   // field weakening is doing the work.
   //
   // C7 第（2）步：`Rs ± 20 %` 与 `ψf ± 10 %` 下的工作点，也就是 S4 要的那张表。这里出来两件单个对称系数会掩盖的事。
-  // **第一**，那条朴素定律是永远达不到的上界：实测磁链摆幅只把它推动 **0.67 / 0.50 / 0.24 / 0.01**（2910/3200/
-  // 3500/3800 rad/s），因为策略在**每一个**这些转速上都顶在电流限幅上（`|i| = i_max` 到四位小数），d 轴吃不下
-  // 全部被交过来的磁链变化。**第二，也是可行动的那一半**：两个方向并不对称。把 `ψf` 高估 10 % 在基速只推动
-  // −0.795 A，到 3800 rad/s 只推动 **−0.016 A**——那里工作点已经在 3 A 预算的 −2.98 上、`i_q` 被吃到 0.31，
-  // 没有东西可让了；而低估它同转速下仍推动 +0.49 A。**不对称度在基速 1.31 倍，到包络顶端 30.4 倍。** 所以读高的
+  // **第一** ，那条朴素定律是永远达不到的上界：实测磁链摆幅只把它推动 **0.67 / 0.50 / 0.24 / 0.01** （2910/3200/
+  // 3500/3800 rad/s），因为策略在 **每一个** 这些转速上都顶在电流限幅上（`|i| = i_max` 到四位小数），d 轴吃不下
+  // 全部被交过来的磁链变化。 **第二，也是可行动的那一半** ：两个方向并不对称。把 `ψf` 高估 10 % 在基速只推动
+  // −0.795 A，到 3800 rad/s 只推动 **−0.016 A** ——那里工作点已经在 3 A 预算的 −2.98 上、`i_q` 被吃到 0.31，
+  // 没有东西可让了；而低估它同转速下仍推动 +0.49 A。 **不对称度在基速 1.31 倍，到包络顶端 30.4 倍。** 所以读高的
   // `ψf` 才是危险的方向，而它恰好在弱磁真正干活的地方最危险。
   const core::MachineParams params = nominal_params();
   const float i_max = sil::nominal_spec().i_max_a;

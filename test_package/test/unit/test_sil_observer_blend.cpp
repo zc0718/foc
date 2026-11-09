@@ -45,7 +45,7 @@ constexpr float kRsSeenByFluxObserver = 1.10F * kRs;
 // Inside the band the two estimates differ by a little, so the blend is an
 // average of two nearly-equal numbers and is slightly *worse* than either
 // alone. The threshold says so instead of pretending the handover is free.
-// 带内两个估计略有差异，融合就是两个近乎相等的数的平均，因此比单独任一个都**略差**。阈值如实反映这一点，
+// 带内两个估计略有差异，融合就是两个近乎相等的数的平均，因此比单独任一个都 **略差** 。阈值如实反映这一点，
 // 而不是假装交接没有代价。
 constexpr float kBlendTolerance = 0.05F;
 
@@ -106,7 +106,7 @@ auto blend_config() -> Blend::Config {
   // the edge is not possible either. 60..120 leaves both margins. 60–120 rad/s
   // 电角速度，上端由两个方向相反、都是实测的事实决定：凸极环在 160 与 200
   // 之间锁到镜像，
-  // 因此交接必须明显**结束**在那个边界之前；而判据读的是反电动势观测器自己的转速，它按来路偏低或偏高
+  // 因此交接必须明显 **结束** 在那个边界之前；而判据读的是反电动势观测器自己的转速，它按来路偏低或偏高
   // 约 6%，所以也没法正好卡在边界上结束。60–120 两边都留了余量。
   return Blend::Config{60.0F, 120.0F, 20.0F};
 }
@@ -312,7 +312,7 @@ TEST(SilObserverBlend, ARampThroughTheBandNeverLosesTheRotor) {
   // afterwards. Ramping at 500 rad/s^2 electrical, the saliency loop alone was
   // measured at 0.01 rad all the way from 0 to 150, so what is left here is the
   // handover.
-  // 真实轨迹。此前那版把转速**阶跃**上去，量到的是自己的伪迹：转速阶跃不是关节会做的事，观测器在阶跃后
+  // 真实轨迹。此前那版把转速 **阶跃** 上去，量到的是自己的伪迹：转速阶跃不是关节会做的事，观测器在阶跃后
   // 合法地会振几个周期。以 500 rad/s² 电角加速度上升时，单独测凸极环从 0 到 150
   // 全程 0.01 rad，于是 这里剩下的问题就是交接本身。
   SpeedRig rig(0.0F);
@@ -388,7 +388,7 @@ TEST(SilObserverBlend, ARampThroughTheBandNeverLosesTheRotor) {
   // ("integrator drift still needs a PLL/SMO observer"). A PLL-type back-EMF
   // observer is what removes it; the handover is not the cause and cannot
   // compensate for it.
-  // 这些数字允许说的，不多不少。峰值偏移来自**反电动势观测器自己**在 500 rad/s²
+  // 这些数字允许说的，不多不少。峰值偏移来自 **反电动势观测器自己** 在 500 rad/s²
   // 斜坡、10% 铭牌误差下的 暂态——它出现在权重 1.0
   // 处，即融合尚未介入，而且正是出厂头文件早已写明的既有局限（"积分漂移仍需
   // PLL/SMO 观测器"）。去掉它需要 PLL

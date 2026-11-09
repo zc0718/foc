@@ -69,7 +69,7 @@ TEST(StallStart, TheRampReleasesTheAxisTheMomentTheTorqueIsEnough) {
 TEST(StallStart, ALimitUnderTheBreakawayPointIsRefusedRatherThanRampedIntoAWall) {
     // A recipe whose ceiling is below the breakaway torque can only ever produce `Failed`. Accepting it would be
     // accepting a sequence that is known in advance not to work, and a caller would find out 200 ms later.
-    // 上限低于起动力矩的配方只可能产出 `Failed`。接受它就等于接受一条**事先已知不工作**的序列，而调用方要 200 ms 后
+    // 上限低于起动力矩的配方只可能产出 `Failed`。接受它就等于接受一条 **事先已知不工作** 的序列，而调用方要 200 ms 后
     // 才知道。
     foc::core::StallStart impossible(recipe(0.030F, 0.020F));
     EXPECT_EQ(foc::ErrorCode::Param, impossible.validate());
@@ -186,11 +186,11 @@ TEST(StallStart, TheSequenceBreaksARealStuckMachineAndSaysWhen) {
     // rotor did not move at `last_at_rest` and did move at `first_moving`. Demanding that they straddle the configured
     // value is the physics claim; demanding that one of them equal it to the last digit would be demanding a threshold
     // crossing land exactly on a sample.
-    // 起动点被 plant 报出的两个力矩**夹住**，且间隔一个斜坡步：在 `last_at_rest` 时没动，在 `first_moving` 时动了。要求
+    // 起动点被 plant 报出的两个力矩 **夹住** ，且间隔一个斜坡步：在 `last_at_rest` 时没动，在 `first_moving` 时动了。要求
     // 两者夹住配置值是物理断言；要求其中一个逐位等于它，等于要求一次阈值穿越正好落在采样点上。
     // 1 mN*m of slack is the *observation* lag, measured at 0.5 mN*m: the plant's threshold is exact inside the model,
     // but `state()` is read before the step that crosses it, so the crossing is seen about ten periods late.
-    // 1 mN·m 的余量是**观测**滞后，实测 0.5 mN·m：plant 内部阈值是精确的，但 `state()` 在读它的那一步之前被读取，于是
+    // 1 mN·m 的余量是 **观测** 滞后，实测 0.5 mN·m：plant 内部阈值是精确的，但 `state()` 在读它的那一步之前被读取，于是
     // 穿越点晚约十个周期才被看见。
     EXPECT_LE(last_at_rest_nm, breakaway_nm + 0.001F) << "it was still at rest at the breakaway point";
     EXPECT_GT(first_moving_nm, breakaway_nm - 0.001F) << "and it moved just above it";
@@ -230,8 +230,8 @@ struct BreakawayRun final {
  *   `true_breakaway_nm` is the plant's stiction plus the constant load; `recipe_breakaway_nm` is what the caller *told*
  *   the sequence. They are separate arguments because every sensitivity row below is about the difference between them.
  *
- *   `true_breakaway_nm` 是 plant 的静摩擦加恒定负载；`recipe_breakaway_nm` 是调用方**告诉**序列的那个数。两者是分开的参
- *   数，因为下面每一行敏感度关心的都是它们之差。
+ *   `true_breakaway_nm` 是 plant 的静摩擦加恒定负载；`recipe_breakaway_nm` 是调用方 **告诉** 序列的那个数。两者是分开的
+ *   参数，因为下面每一行敏感度关心的都是它们之差。
  */
 auto run_breakaway(float recipe_breakaway_nm, float true_breakaway_nm, float ramp_nm_per_s,
                    int max_ticks = 40000) -> BreakawayRun {
@@ -338,7 +338,7 @@ TEST(StallStart, AStepBeforeBeginReportsStateAndCommandsNothing) {
  * @brief [en] The ramp rate sets *when* the axis goes, not *how much* torque it takes -- the plateau is flat while the
  *             release instant moves as `1/rate`.
  *
- * @brief [zh] 斜坡速率决定轴**何时**动，不决定**要多少**力矩——平台是平的，而松脱时刻按 `1/速率` 移动。
+ * @brief [zh] 斜坡速率决定轴 **何时** 动，不决定 **要多少** 力矩——平台是平的，而松脱时刻按 `1/速率` 移动。
  *
  *   This is the one property that makes the handover value usable: if the reported torque moved with the ramp rate,
  *   then "0.0307 N*m at 61 ms" would be a fact about a tuning constant rather than about the machine, and a
@@ -358,7 +358,7 @@ TEST(StallStart, AStepBeforeBeginReportsStateAndCommandsNothing) {
  *   关于这台机器的事实，换一个速率做调试就会对同一台电机读出不同的起动点。
  *
  *   在静摩擦 plant 上实测（真实起动点 0.030 N·m）见上表。所以时间随速率翻倍而减半（121.3/61.3 = 1.98， 61.3/31.3 =
- *   1.96），而力矩在 4 倍速率变化下只动 1 mN·m。那点残留是**观测**滞后而不是物理：环路在跨阈值的那一拍之前读
+ *   1.96），而力矩在 4 倍速率变化下只动 1 mN·m。那点残留是 **观测** 滞后而不是物理：环路在跨阈值的那一拍之前读
  *   `state()`，所以 1 N·m/s 时十个周期的"看不见"就是十倍的力矩。因此下面的界写成实测的那个数，而不是一个百分比。
  */
 TEST(StallStart, TheRampRateSetsWhenTheAxisGoesAndNotHowMuchTorqueItTakes) {
@@ -395,7 +395,7 @@ TEST(StallStart, TheRampRateSetsWhenTheAxisGoesAndNotHowMuchTorqueItTakes) {
  * @brief [en] The recipe's breakaway number is checked and then never steers: a 50 % error in it changes the handover
  *             torque by **0.0000 N*m**, while the same sweep on a different plant moves it by 10 mN*m.
  *
- * @brief [zh] 配方里的起动点被检查、然后从不参与操纵：它有 50 % 的错，交接力矩改变 **0.0000 N·m**；而同样的扫描换一台
+ * @brief [zh] 配方里的起动点被检查、然后从不参与操纵：它有 50 % 的错，交接力矩改变 **0.0000 N·m** ；而同样的扫描换一台
  *             plant，它就动了 10 mN·m。
  *
  *   Found by asking which field of `StallStartConfig` a sensitivity table could be built for, and then reading the
@@ -414,16 +414,16 @@ TEST(StallStart, TheRampRateSetsWhenTheAxisGoesAndNotHowMuchTorqueItTakes) {
  *   Both halves are asserted, because "the number is harmless" and "the number is ignored" are different statements.
  *
  *   这是靠"`StallStartConfig` 里哪个字段能建敏感度表"这个问题找到的，然后去读代码：`breakaway_nm` 只出现在 `validate()`
- *   里，别处没有。斜坡不用它、松脱判定不用它、`Failed` 不用它。所以序列对**自己听起来最重要的那个输入** 不敏感——这要么
+ *   里，别处没有。斜坡不用它、松脱判定不用它、`Failed` 不用它。所以序列对 **自己听起来最重要的那个输入** 不敏感——这要么
  *   是一条值得写下来的设计属性，要么是一个缺陷，而本用例的后半段就是用来分开这两者的。
  *
- *   它是属性，理由正是头文件声称的机理：交接值就是转子真正动起来的那个力矩，是**测出来的**，所以任何配方数字都偏不了
- *   它。实测（真实起动点 0.030 N·m，配方 0.015/0.030/0.045）：三个都是 **61.3 ms 时 0.0307 N·m**。再把同样三份配方打到
- *   起动点为 0.040 N·m 的 plant 上：三个都是 **81.0 ms 时 0.0405 N·m**——所以这个数跟着机器走、不跟着配方走，而一个报
+ *   它是属性，理由正是头文件声称的机理：交接值就是转子真正动起来的那个力矩，是 **测出来的** ，所以任何配方数字都偏不了
+ *   它。实测（真实起动点 0.030 N·m，配方 0.015/0.030/0.045）：三个都是 **61.3 ms 时 0.0307 N·m** 。再把同样三份配方打到
+ *   起动点为 0.040 N·m 的 plant 上：三个都是 **81.0 ms 时 0.0405 N·m** ——所以这个数跟着机器走、不跟着配方走，而一个报
  *   `config_.breakaway_nm` 的版本会过第一轮、败在第二轮。
  *
- *   配方真正决定的是序列**允不允许跑**（`max_torque_nm > breakaway_nm`），所以离谱的高估并非免费：0.199 N·m 对 0.2 N·m
- *   的限幅能过校验，0.201 就被拒。两半都断言，因为"这个数无害"与"这个数被忽略"是两句不同的话。
+ *   配方真正决定的是序列 **允不允许跑** （`max_torque_nm > breakaway_nm`），所以离谱的高估并非免费：0.199 N·m 对 0.2
+ *   N·m 的限幅能过校验，0.201 就被拒。两半都断言，因为"这个数无害"与"这个数被忽略"是两句不同的话。
  */
 TEST(StallStart, TheRecipeBreakawayIsCheckedButNeverSteersTheHandoverValue) {
     constexpr float kTrueNm = 0.030F;
@@ -445,7 +445,7 @@ TEST(StallStart, TheRecipeBreakawayIsCheckedButNeverSteersTheHandoverValue) {
 
     // The falsifier: change the *machine*, not the recipe, and the number follows. A configuration-driven value cannot
     // do this.
-    // 伪证：改**机器**而不是配方，这个数就跟着动。由配置决定的数做不到这一点。
+    // 伪证：改 **机器** 而不是配方，这个数就跟着动。由配置决定的数做不到这一点。
     const BreakawayRun heavier = run_breakaway(0.030F, 0.040F, 0.5F);
     ASSERT_TRUE(heavier.released);
     EXPECT_NEAR(0.040F, heavier.release_nm, 0.001F) << "the handover value did not follow the machine";
@@ -472,7 +472,7 @@ TEST(StallStart, TheRecipeBreakawayIsCheckedButNeverSteersTheHandoverValue) {
  *   0.55 s".
  *
  *   Measured with 0.2 N*m at 0.5 N*m/s and a 1e-4 s period: clipping at 4000 ticks (400.0 ms) and `Failed` at **exactly
- *   6000** ticks for a 0.2 s grace. With a 0.4 s grace it is **8001**, not 8000: `hold_s_` is a float32 accumulator,
+ *   6000 **ticks for a 0.2 s grace. With a 0.4 s grace it is** 8001**, not 8000: `hold_s_` is a float32 accumulator,
  *   and 4000 additions of 1e-4 s do not land on 0.4 exactly. That one tick is recorded rather than tuned away -- the
  *   accumulator cannot be made exact for every period, and a criterion that demanded 8000 would be a criterion about
  *   float32 rather than about the sequence.

@@ -207,7 +207,7 @@ TEST(SilHfi, TheFirstOrderFormulaDegradesAsTheInductiveReactanceFalls) {
     // with wh*Ld = 0.63 it is half. The signal stays *proportional* either way -- that is the fact
     // this case exists to pin down: a wrong sensitivity is a loop-gain error, not a broken method.
     // 这里要钉住的事实：`predicted_gain_a` 忽略 Rs。wh·Ld = 2.5 Ω 对 Rs = 0.35 时预测接近；wh·Ld =
-    // 0.63 时只有一半。两种情况下信号都**保持正比**——灵敏度偏差是环路增益误差，不是方法失效。
+    // 0.63 时只有一半。两种情况下信号都 **保持正比** ——灵敏度偏差是环路增益误差，不是方法失效。
     const float ideal = -std::sin(0.20F);
     const float at_2k = open_loop_error(2000.0F, 0.10F) / ideal;
     const float at_500 = open_loop_error(500.0F, 0.10F) / ideal;
@@ -324,7 +324,7 @@ namespace {
  *
  *   The rig above pins the machine because its cases are about the loop; the sensitivity table below is about the
  *   *physics*, and its independent variable is one of those parameters. 上面的台架把电机钉死了，因为它的用例关心的是环
- *   路；下面的敏感度表关心的是**物理**，而它的自变量正是那些参数之一。
+ *   路；下面的敏感度表关心的是 **物理** ，而它的自变量正是那些参数之一。
  */
 class ParameterisedRig final {
   public:
@@ -405,17 +405,17 @@ auto hf_amplitude(float ld, float lq, float inject_v, float inject_hz) -> double
  *   accepted carrier is 8000 Hz and 8001 is refused by status rather than left to collapse.
  *
  *   `hf_current_a` 是解调幅值，而 `predicted_gain_a` 是观测被归一化所依据的闭式：`V_h*(Ld-Lq)/(2*ω_h*Ld*Lq)`。这个式子
- *   不是拟合——它是**两个导纳之差** `(V_h/(2ω_h))*(1/Lq − 1/Ld)`，即高频电流响应中与转子位置有关的那一部分。所以下面两个
- *   系数是对着算术核对的，不是对着上一次运行：
+ *   不是拟合——它是 **两个导纳之差** `(V_h/(2ω_h))*(1/Lq − 1/Ld)`，即高频电流响应中与转子位置有关的那一部分。所以下面两
+ *   个系数是对着算术核对的，不是对着上一次运行：
  *
- *   1. **注入幅值**——幅值对 `V_h` 线性（实测 6/12/24 V：两段比值 2.000 与 2.000），而**角度**估计是不变量，因为归一化把
- *   同一个因子又除了回去。这就是幅值变化时调试脚本无需重新标定的原因，也是更小的幅值只是一个信噪比决定的原因。
+ *   1. **注入幅值** ——幅值对 `V_h` 线性（实测 6/12/24 V：两段比值 2.000 与 2.000），而 **角度** 估计是不变量，因为归一
+ *   化把同一个因子又除了回去。这就是幅值变化时调试脚本无需重新标定的原因，也是更小的幅值只是一个信噪比决定的原因。
  *
- *   2. **凸极**——三台机器走过同一 `(Ld, Lq)` 比例的一条线：幅值除以闭式保持不变，于是 plant 量到的是 `(Ld-Lq)/(Ld*Lq)`
+ *   2. **凸极** ——三台机器走过同一 `(Ld, Lq)` 比例的一条线：幅值除以闭式保持不变，于是 plant 量到的是 `(Ld-Lq)/(Ld*Lq)`
  *   而不是比如说 `Ld-Lq`。
  *
- *   3. **采样时序**——`max_inject_hz(control_hz)` 就是 `control_hz / kMinSamplesPerCarrier`：20 kHz 下最后一个被接受的载
- *   波是 8000 Hz，8001 由状态拒绝，而不是留给它塌掉。
+ *   3. **采样时序** ——`max_inject_hz(control_hz)` 就是 `control_hz / kMinSamplesPerCarrier`：20 kHz 下最后一个被接受的
+ *   载波是 8000 Hz，8001 由状态拒绝，而不是留给它塌掉。
  */
 TEST(SilHfi, TheCarrierHasThreeSensitivityCoefficientsAndEachIsAClosedForm) {
     // (1) Injection amplitude: the amplitude is linear, the angle is not affected.
@@ -441,9 +441,9 @@ TEST(SilHfi, TheCarrierHasThreeSensitivityCoefficientsAndEachIsAClosedForm) {
         // normalisation by `demod_gain_a`). What is falsifiable -- and what the physics actually says -- is that
         // the factor is the *same* one at every amplitude, so the formula's dependence on `V_h` is the machine's
         // and the rest is the demodulator's.
-        // 闭式的**值**不是 `hf_current_a`，而且它不该是：`hf_current_a` 是解调器自己的幅值，自带一个固定刻度
+        // 闭式的 **值** 不是 `hf_current_a`，而且它不该是：`hf_current_a` 是解调器自己的幅值，自带一个固定刻度
         // （乘法器的 1/2、滤波器、以及按 `demod_gain_a` 的归一化）。可证伪的、也是物理真正说的，是这个因子
-        // 在每个幅值上都**相同**——于是公式对 `V_h` 的依赖属于电机，剩下的属于解调器。
+        // 在每个幅值上都 **相同** ——于是公式对 `V_h` 的依赖属于电机，剩下的属于解调器。
         EXPECT_NEAR(demodulator_scale, scale, 1.0e-6)
             << "the demodulator's scale is a constant, so the formula is verified in shape rather than in value";
     }
@@ -472,7 +472,7 @@ TEST(SilHfi, TheCarrierHasThreeSensitivityCoefficientsAndEachIsAClosedForm) {
         // the closed form ignores `Rs`, so it holds where `w_h*L >> Rs` (about 14 and 29 here), and the case below
         // it -- `1e-4` against a 0.35 ohm stator -- is already off by 9 %. That side is not this case's job: the
         // next one along documents the degradation, and a table that straddled both would be testing neither.
-        // 同一比例、电感成倍缩放：每翻一倍信号减半，因为量的是**导纳**差而不是电感差。机器刻意**往上**缩放：
+        // 同一比例、电感成倍缩放：每翻一倍信号减半，因为量的是 **导纳** 差而不是电感差。机器刻意 **往上** 缩放：
         // 闭式忽略 `Rs`，所以它只在 `ω_h·L >> Rs` 处成立（这里约 14 与 29），而它下面那一档——`1e-4` 对 0.35 Ω
         // 定子——已经差了 9 %。那一侧不是本用例的职责：相邻的用例记录了退化，一张横跨两侧的表则两边都没测。
         EXPECT_NEAR(predicted, measured / base, 0.05) << "the law is (Ld-Lq)/(Ld*Lq), not Ld-Lq";
@@ -489,7 +489,7 @@ TEST(SilHfi, TheCarrierHasThreeSensitivityCoefficientsAndEachIsAClosedForm) {
         << "the boundary is the control rate divided by the samples a carrier period needs";
     // The control rate is not known until the first period arrives, which is where the check lives: a
     // configuration is legal or not *against a rate*, and the rate is an argument of `update()`.
-    // 控制率要等第一个周期到来才知道，而检查就在那里：一份配置是**对着某个速率**合法或不合法，而速率是
+    // 控制率要等第一个周期到来才知道，而检查就在那里：一份配置是 **对着某个速率** 合法或不合法，而速率是
     // `update()` 的参数。
     {
         core::HfiObserver::Config accepted = make_config(limit, 12.0F, 40.0F, 1.0F);

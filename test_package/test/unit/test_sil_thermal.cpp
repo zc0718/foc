@@ -2,7 +2,7 @@
 // the one-node equation it claims to integrate, because "the temperature goes up when current flows" is satisfied by any
 // monotone mistake, and the interesting part -- what the steady state actually is, and when there is none -- is exactly
 // what a proportionality would get wrong.
-// F36 的端口半：会自己发热的绕组。这里每条判据都把 plant 与它所声称积分的那条单节点方程的**闭式解**相比，因为"有电流温度
+// F36 的端口半：会自己发热的绕组。这里每条判据都把 plant 与它所声称积分的那条单节点方程的 **闭式解** 相比，因为"有电流温度
 // 就上升"这个条件，任何单调的错误都满足，而真正有意思的部分——稳态到底是多少、以及什么时候根本没有稳态——恰恰是"正比
 // 关系"这种实现会算错的东西。
 
@@ -97,7 +97,7 @@ TEST(SilThermal, SettlesAtTaPlusRtTimesLossAndReachesSixtyThreePercentAtOneTau) 
 // the same volts draw less current, and the loss falls. So the settle is *below* the no-drift prediction, and it is the
 // root of a quadratic rather than a product. A model that treats the loss as a constant would pass the case above and fail
 // here by the whole gap between the two numbers.
-// 反馈，方向由物理决定：电压供电的绕组是**自限的**——它变热、`Rs` 升高、同样的电压抽出更小的电流、损耗反而下降。所以稳态**低于**
+// 反馈，方向由物理决定：电压供电的绕组是 **自限的** ——它变热、`Rs` 升高、同样的电压抽出更小的电流、损耗反而下降。所以稳态 **低于**
 // 不漂时的预测，而且是二次方程的根而不是一个乘积。把损耗当常数处理的模型能通过上面那条，在这里会整整差出两个数之间的那个间隙。
 TEST(SilThermal, AVoltageFedWindingIsSelfLimitingAndSettlesOnTheQuadraticRoot) {
     const auto nameplate = foc::sil::nominal_plant_params();
@@ -131,8 +131,8 @@ TEST(SilThermal, AVoltageFedWindingIsSelfLimitingAndSettlesOnTheQuadraticRoot) {
 // denominator changes sign and there is no steady state at all. Both sides are measured with the same loss and only the
 // cooling changed, so the boundary is found rather than asserted -- and the same machine is stable or not depending on how
 // it is cooled.
-// 另一个方向，也是后果更严重的那个：把**电流**握住，损耗就随温度增长，于是稳态是一个除以 `1 − Rt·P·α` 的结果。边界以下它收敛，
-// 边界以上分母变号、**根本不存在稳态**。两侧用同一个损耗、只改散热，所以边界是被量出来的而不是被断言的——同一台机器是否稳
+// 另一个方向，也是后果更严重的那个：把 **电流** 握住，损耗就随温度增长，于是稳态是一个除以 `1 − Rt·P·α` 的结果。边界以下它收敛，
+// 边界以上分母变号、 **根本不存在稳态** 。两侧用同一个损耗、只改散热，所以边界是被量出来的而不是被断言的——同一台机器是否稳
 // 定，取决于它怎么被冷却。
 TEST(SilThermal, ACurrentFedWindingSettlesBelowRtTimesPLossTimesAlphaAndRunsAwayAboveIt) {
     const auto nameplate = foc::sil::nominal_plant_params();
@@ -181,7 +181,7 @@ TEST(SilThermal, ACurrentFedWindingSettlesBelowRtTimesPLossTimesAlphaAndRunsAway
     // `1 - Rt*P20*alpha` has changed sign, so the only root it can offer is a negative temperature -- and the simulation
     // has to agree by not settling: still climbing after 20 s, and climbing *faster* than the cooled machine was.
     // 边界以上同一台机器没有稳态。闭式解用它自己的方式说明了这件事——分母 `1 − Rt·P20·α` 变了号，于是它能给出的唯一根是一个负温
-    // 度——而仿真必须以"不收敛"来同意：20 s 之后还在爬，而且比那台冷得好的机器爬得**更快**。
+    // 度——而仿真必须以"不收敛"来同意：20 s 之后还在爬，而且比那台冷得好的机器爬得 **更快** 。
     const auto [early_starved, late_starved] = run(starved_rt);
     const float starved_root = settle_current_fed(nameplate.rs, current_a, starved_rt, kAlphaCopper, 20.0F);
     EXPECT_GT(starved_rt * p20 * kAlphaCopper, 1.0F) << "the starved case must be past the boundary";
@@ -198,7 +198,7 @@ TEST(SilThermal, ACurrentFedWindingSettlesBelowRtTimesPLossTimesAlphaAndRunsAway
 
 // Off by default, and off means *exactly* off: the same trajectory bit for bit. This is the criterion that keeps the port
 // from moving every number in the repository that was measured through this plant before it existed.
-// 默认关闭，而且关闭意味着**精确**关闭：同一条轨迹逐位相同。正是这条判据让本端口不影响它出现之前经这台 plant 量出的每一个数。
+// 默认关闭，而且关闭意味着 **精确** 关闭：同一条轨迹逐位相同。正是这条判据让本端口不影响它出现之前经这台 plant 量出的每一个数。
 TEST(SilThermal, OffIsBitIdenticalToThePlantWithoutThePort) {
     const auto nameplate = foc::sil::nominal_plant_params();
     auto run = [&](bool with_port) -> PmsmPlant {
@@ -240,10 +240,10 @@ TEST(SilThermal, OffIsBitIdenticalToThePlantWithoutThePort) {
 // and a derating scheduler has to know which one it is looking at.
 // --- 链条：本端口产出的温度，正是 `Protector` 降额时读的那个数 -----------------------------------------
 //
-// 计划里 F36 的判据是"降额曲线与 3.00 A@45 ℃ / 1.80 A@80 ℃ / 0 A@105 ℃ 逐点一致"。**我先把它读成了矛盾，而它不是。** 我第一版
-// 探针用了自己发明的阈值（45→105 的斜坡），在 80 ℃ 处读到 1.25 A，"证明"了三点不共线。对着本仓库**实际出货**的配置
+// 计划里 F36 的判据是"降额曲线与 3.00 A@45 ℃ / 1.80 A@80 ℃ / 0 A@105 ℃ 逐点一致"。 **我先把它读成了矛盾，而它不是。** 我第一版
+// 探针用了自己发明的阈值（45→105 的斜坡），在 80 ℃ 处读到 1.25 A，"证明"了三点不共线。对着本仓库 **实际出货** 的配置
 // （`test_protection.cpp`：`i_max` 3 A、斜坡 60→110 ℃、105 ℃ 跳闸）量，三点全部成立，而第三条成立的理由才是有意思的地方：
-// 45 ℃ 处曲线还是平的（拐点是 60 ℃ 而不是 45），80 ℃ 处正好读到 1.80 A，而 **105 ℃ 的那个 0 A 是跳闸、不是曲线**——
+// 45 ℃ 处曲线还是平的（拐点是 60 ℃ 而不是 45），80 ℃ 处正好读到 1.80 A，而 **105 ℃ 的那个 0 A 是跳闸、不是曲线** ——
 // `step()` 报 `OverTemperature`、`output_allowed = false`、`i_limit_a = 0`，而单看 `derated_limit(105)` 仍是 0.30 A。
 // 两个不同的量，而做降额调度的人必须知道自己看的是哪一个。
 TEST(SilThermal, TheTrajectoryReachesTheDeratingCurveTheProtectorActuallyHas) {
@@ -276,8 +276,8 @@ TEST(SilThermal, TheTrajectoryReachesTheDeratingCurveTheProtectorActuallyHas) {
     // "0 A and no output at 105 C" is true just above it, and true at 105 C once the trip has latched. Both are asserted
     // here rather than argued, and the boundary is the interesting part: one comparison decides whether a winding at its
     // own trip temperature is allowed to keep pushing.
-    // 第三个数字需要比那一行多一个区分。`derated_limit(105)` 是 0.30 A，而**新建的**保护器在恰好 105.000 ℃ 处仍然允许输出，
-    // 因为跳闸判定是严格的 `> t_trip_c`；行里那句"105 ℃ 时 0 A 且无输出"在略高于它时成立，在**已跳闸**之后 105 ℃ 处也成立。
+    // 第三个数字需要比那一行多一个区分。`derated_limit(105)` 是 0.30 A，而 **新建的** 保护器在恰好 105.000 ℃ 处仍然允许输出，
+    // 因为跳闸判定是严格的 `> t_trip_c`；行里那句"105 ℃ 时 0 A 且无输出"在略高于它时成立，在 **已跳闸** 之后 105 ℃ 处也成立。
     // 两者都在这里被断言而不是被论证，而边界本身才是有意思的部分：一个比较符决定了处在自身跳闸温度上的绕组还能不能继续使劲。
     ProtectionInput hot{};
     hot.i_magnitude_a = 0.5F;
@@ -336,7 +336,7 @@ TEST(SilThermal, TheTrajectoryReachesTheDeratingCurveTheProtectorActuallyHas) {
 
     // The chain bites: at the temperature the winding actually reaches, the drive is allowed **less** than the current that
     // heated it there. That is the whole reason a scheduler exists, and it is a number rather than a worry.
-    // 链条确实咬住了：在绕组实际达到的温度上，驱动器被允许的电流**小于**把它加热到那里的那个电流。这正是调度存在的全部理由，
+    // 链条确实咬住了：在绕组实际达到的温度上，驱动器被允许的电流 **小于** 把它加热到那里的那个电流。这正是调度存在的全部理由，
     // 而且它是一个数，不是一个担忧。
     EXPECT_LT(allowed_a, current_a) << "allowed " << allowed_a << " A at " << settled_c << " C against " << current_a
                                     << " A";

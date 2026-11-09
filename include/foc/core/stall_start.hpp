@@ -98,10 +98,10 @@ struct StallStartOutput final {
  *
  * @brief [zh] 主动把卡住的转子挣脱，然后在积分仍然干净的情况下交给速度环。
  *
- *   为什么这不是"让速度环自己干"。速度 PI 确实**最终**能把卡住的轴弄动——它的积分把电流顶到力矩超过起动点 ——而这正是问题
- *   所在：等它发生时，积分已经存下了整个饱和量，于是转子一松脱，存下的力矩就把它推过给定，环路要用同样长的时间收回来。
- *   本序列把同一件事**有意地**做：以已知速率抬升力矩，报告转子动起来的那一刻，而它报告的数值就是交接力矩——于是速度环从
- *   一个已知电流起步，而不是从一个饱和的积分起步。
+ *   为什么这不是"让速度环自己干"。速度 PI 确实 **最终** 能把卡住的轴弄动——它的积分把电流顶到力矩超过起动点 ——而这正是问
+ *   题所在：等它发生时，积分已经存下了整个饱和量，于是转子一松脱，存下的力矩就把它推过给定，环路要用同样长的时间收回
+ *   来。本序列把同一件事 **有意地** 做：以已知速率抬升力矩，报告转子动起来的那一刻，而它报告的数值就是交接力矩——于是速
+ *   度环从一个已知电流起步，而不是从一个饱和的积分起步。
  *
  *   `Failed` 是一等答案，不是错误路径。驱动在限幅内搬不动的负载是关于这台机器的事实，而一条"永远爬升、什么也不说" 的序
  *   列会让操作者盯着一根沉默的轴。
@@ -134,7 +134,7 @@ class StallStart final {
      *            breakaway point can only ever produce `Failed`, so accepting it would be accepting a recipe that is
      *            known in advance not to work.
      * @note [zh] 要紧的拒绝是 `max_torque_nm <= breakaway_nm`：限幅在起动点之下的序列只可能产出 `Failed`，接受它就等于
-     *            接受一份**事先就知道不工作**的配方。
+     *            接受一份 **事先就知道不工作** 的配方。
      */
     [[nodiscard]] auto validate() const noexcept -> ErrorCode {
         if (!(config_.breakaway_nm > 0.0F) || !std::isfinite(config_.breakaway_nm) ||
@@ -190,7 +190,7 @@ class StallStart final {
                 // stops rising once `ulp(torque) > ramp*dt`, which for a gentle recipe is inside the working range --
                 // at 0.01 N*m/s and a 25 us period the float version froze at 4.19 N*m and could never reach a
                 // ceiling above it, so the give-up branch was unreachable for exactly the slow recipes that need it.
-                // 力矩是由爬升时钟**算出来的**，不是累加进 float 的：一旦 `ulp(力矩) > 爬升率*dt`，浮点积分就不再
+                // 力矩是由爬升时钟 **算出来的** ，不是累加进 float 的：一旦 `ulp(力矩) > 爬升率*dt`，浮点积分就不再
                 // 上升，而对温和的配方这个点就落在工作范围内——0.01 N·m/s、25 us 周期下浮点版在 4.19 N·m 冻结，
                 // 永远到不了更高的上限，于是"放弃"分支偏偏对需要它的慢配方不可达。
                 ramp_.add_sample(dt_s);

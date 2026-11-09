@@ -20,16 +20,16 @@ namespace core {
  * @brief [zh] 算法所需的电机电气事实：电阻、两个电感、转子磁链。
  *
  *   为什么要有这个类型，而不是让每个观测器自带一套数字：参数辨识产出的正是这四个，没有共享的值类型， 结果就无处可去——
- *   每个策略会各存一份本该描述**同一台**机器的数字。观测器若能接受更新就实现 `apply_params(const MachineParams&)`，电机
- *   层用 `has_apply_params_v` 来发现。
+ *   每个策略会各存一份本该描述 **同一台** 机器的数字。观测器若能接受更新就实现 `apply_params(const MachineParams&)`，电
+ *   机层用 `has_apply_params_v` 来发现。
  *
  * @note [en] Units are SI and, more importantly, they are *the same units everywhere*: `rs` is at whatever temperature
  *            the caller means (the plant does not tell you what it is), and `psi_f` is the flux linkage, not the torque
  *            constant -- `psi_f = Kt / (1.5 * pole_pairs)`, which `motor_config.hpp` can compute from a nameplate.
  *            Mixing Kt into a voltage equation is dimensionally wrong and is PRD erratum D24 in this repository.
- * @note [zh] SI 单位，更重要的是**到处是同一套单位**：`rs` 是调用方所指温度下的值（plant 不会告诉你 温度），`psi_f` 是
- *            磁链而不是转矩常数——`psi_f = Kt / (1.5 * pole_pairs)`，`motor_config.hpp` 可由铭牌算出。把 Kt 塞进电压方程
- *            量纲不对，在本仓库里是 PRD 勘误 D24。
+ * @note [zh] SI 单位，更重要的是 **到处是同一套单位** ：`rs` 是调用方所指温度下的值（plant 不会告诉你 温度），`psi_f`
+ *            是磁链而不是转矩常数——`psi_f = Kt / (1.5 * pole_pairs)`，`motor_config.hpp` 可由铭牌算出。把 Kt 塞进电压方
+ *            程量纲不对，在本仓库里是 PRD 勘误 D24。
  * @since 0.1.0
  * @exporter
  */

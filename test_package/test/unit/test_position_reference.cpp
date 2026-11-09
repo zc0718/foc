@@ -6,7 +6,7 @@
 //
 // W7-a：把一个电角度估计变成位置环可用的位置。
 // 观测器给出的角度每 `2*pi/极对数` 折一次，而且从哪里开始就从哪里开始。解开折返使它连续；索引标记把零点钉住。
-// 下面分别测这两半、再测它们合起来——因为任何一半单独都是**以不同方式**无用的。
+// 下面分别测这两半、再测它们合起来——因为任何一半单独都是 **以不同方式** 无用的。
 //
 // The criterion, fixed before the numbers below were measured:
 //   C1  over five mechanical turns the unwrapped angle tracks the truth within 1e-3 rad at every sample, with no report
@@ -24,9 +24,9 @@
 //   C1 五个机械圈内，解开折返的角度在每次采样都与真值相差不超过 1e-3 rad，且不报告丢计数。会漂的重建不是重建。
 //   C2 索引之前没有原点：`homed()` 为假、`referenced_mech_rad()` 读 0，这是写明的占位值——也是调用方必须查
 //      `homed()` 而不是直接信这个数的原因。
-//   C3 在索引处基准角**恰好**读 `index_mech_rad`；一圈之后读它加 2π，也就是说标记是**开始计数**，而不是把角度永久
+//   C3 在索引处基准角 **恰好** 读 `index_mech_rad`；一圈之后读它加 2π，也就是说标记是 **开始计数** ，而不是把角度永久
 //      钉成一个单圈值。
-//   C4 标记重复经过时消除漂移、且**不**让计数倒退。漂移以电角度上刻意加偏置的方式注入；要求基准值原地不动，正是把
+//   C4 标记重复经过时消除漂移、且 **不** 让计数倒退。漂移以电角度上刻意加偏置的方式注入；要求基准值原地不动，正是把
 //      "吸附"与"重新定义"区分开的那一条。
 //   C5 大到无法解开折返的跳变会被报告（`lost_count()`），并由下一次索引清除——标记正是丢失掉的那个信息。
 
@@ -134,7 +134,7 @@ TEST(PositionReference, ARepeatPassOfTheMarkRemovesDriftWithoutRewinding) {
     // be **larger than one tick of travel** (1.0 rad electrical = 0.143 rad mechanical against a 0.02 rad step), because
     // a smaller drift cannot be separated from the ordinary advance between the sample before the mark and the mark
     // itself -- the first version of this case injected 0.01 rad and measured exactly that ambiguity.
-    // C4：索引之后电角度带上偏置，即重建正在漂移。偏置刻意取得**大于一个 tick 的行程**
+    // C4：索引之后电角度带上偏置，即重建正在漂移。偏置刻意取得 **大于一个 tick 的行程**
     // （电 1.0 rad = 机械 0.143 rad，而每 tick 走 0.02 rad），因为更小的漂移无法与"标记前那一 tick 的正常前进"
     // 区分开——这个用例的第一版注入 0.01 rad，量到的正是那个歧义。
     core::PositionReference reference = make_reference();
@@ -199,7 +199,7 @@ TEST(PositionReference, C6_AZeroPoleCountIsOnePoleNotADivision) {
 
 // C7  `reset()` forgets the origin *and* the unwrap. After it, the first sample re-primes the estimator, so an
 //     angle far from the pre-reset one is a new starting point rather than a jump of several turns.
-// C7  `reset()` 同时忘掉原点与折返累积。重置后第一次采样重新预置，因此与重置前相差很大的角度是**新的起点**，
+// C7  `reset()` 同时忘掉原点与折返累积。重置后第一次采样重新预置，因此与重置前相差很大的角度是 **新的起点** ，
 //     而不是几圈的跳变。
 TEST(PositionReference, C7_ResetForgetsTheOriginAndTheUnwrap) {
   core::PositionReference reference = make_reference();
@@ -328,20 +328,20 @@ auto run_ramp(core::PositionReference& reference, double turns, float mech_step,
  *   count, which costs a whole turn.
  *
  *   登记册要的是一张敏感度表，而计数通道给出的表是连续角度通道给不出的：每个系数都精确，因为这个通道就是整数求和加一次
- *   除法。所以本用例核对的是四条**恒等式**而不是四个量级。
+ *   除法。所以本用例核对的是四条 **恒等式** 而不是四个量级。
  *
- *   1. **折返率**。电角度每 `2*pi/p` 机械弧度折一次，所以 `s` 机械弧度里经过 `p*s/(2*pi)` 个电周期。这是输入信号而不是
+ *   1. **折返率** 。电角度每 `2*pi/p` 机械弧度折一次，所以 `s` 机械弧度里经过 `p*s/(2*pi)` 个电周期。这是输入信号而不是
  *   重建；把它写清楚，后面三条才读得懂。
  *
- *   2. **极对数误差**。每个电步长除以**配置的**极对数，所以重建出来的**一圈长度是 `2*pi*p/p'`** 而不是 `2*pi`。这是比例
- *   误差，而索引是唯一能看见它的东西，因为标记量的正是一圈。它在下一次标记处的残差是 `2*pi*|1 − p/p'|`，对任何整数误差
- *   都不小于通道声明分辨力的 `2.22*|p'−p|` 倍——所以有了下面那条护栏，标记会被**拒绝并报告**，而不是每圈把计数静默锯回去
- *   一次。于是极对数配错从第二个标记起就是**可检出**的：这是本行此前没有的能力。
+ *   2. **极对数误差** 。每个电步长除以 **配置的** 极对数，所以重建出来的 **一圈长度是 `2*pi*p/p'`** 而不是 `2*pi`。这是
+ *   比例误差，而索引是唯一能看见它的东西，因为标记量的正是一圈。它在下一次标记处的残差是 `2*pi*|1 − p/p'|`，对任何整数
+ *   误差都不小于通道声明分辨力的 `2.22*|p'−p|` 倍——所以有了下面那条护栏，标记会被 **拒绝并报告** ，而不是每圈把计数静默
+ *   锯回去一次。于是极对数配错从第二个标记起就是 **可检出** 的：这是本行此前没有的能力。
  *
- *   3. **标记抖动**。吸附把原点移到**脉冲**上，所以晚 `j` 的标记每次经过都把原点移动恰好 `j`。量的是吸附本身，而不是终
- *   点误差——后者还带着解折返自己的漂移。
+ *   3. **标记抖动** 。吸附把原点移到 **脉冲** 上，所以晚 `j` 的标记每次经过都把原点移动恰好 `j`。量的是吸附本身，而不是
+ *   终点误差——后者还带着解折返自己的漂移。
  *
- *   4. **漏掉一个标记**不损失任何计数。计数由解折返携带，标记只消除漂移。所以漏一个标记的代价是一圈的漂移，量级 1e-3
+ *   4. **漏掉一个标记** 不损失任何计数。计数由解折返携带，标记只消除漂移。所以漏一个标记的代价是一圈的漂移，量级 1e-3
  *   rad——这正是它与"丢计数"（损失整整一圈）的区别。
  */
 TEST(PositionReference, TheCountingChannelHasFourErrorSourcesAndEachHasAClosedForm) {
@@ -382,7 +382,7 @@ TEST(PositionReference, TheCountingChannelHasFourErrorSourcesAndEachHasAClosedFo
     // passes only remove drift -- so "the last snap" measures drift, not the jitter. Differencing two
     // runs that share every other detail isolates it: both runs do the same arithmetic on the same
     // number of samples, so the drift cancels and what is left is the mark's own displacement.
-    // 抖动在**第一次**重复经过时就被吸收进原点，此后不再出现——之后的经过只消除漂移——所以"最后一次
+    // 抖动在 **第一次** 重复经过时就被吸收进原点，此后不再出现——之后的经过只消除漂移——所以"最后一次
     // 吸附"量到的是漂移而不是抖动。把两次除这一项外完全相同的运行相减即可隔离它：两次运行对同样多的
     // 采样做同样的算术，于是漂移抵消，剩下的就是标记自身的位移。
     std::printf("\n%-10s %16s %16s\n", "jitter", "run - clean", "ratio");
@@ -430,14 +430,14 @@ TEST(PositionReference, TheCountingChannelHasFourErrorSourcesAndEachHasAClosedFo
  *   boundary is stated rather than hidden: at `p = 7` the threshold is 0.404 rad, which is the resolution floor the
  *   channel already declares for the electrical step and 400 times the drift measured over five turns.
  *
- *   电角度通路本来就不猜：达到或超过电 `0.9*pi` 的步长被**报告**而不是被解掉，因为选一个方向会给出一个看起来没问题、却
- *   差了整整一圈的角度。索引通路没有这条规则，而它才是更危险的那条：一个虚假脉冲产生的吸附是 `wrap_pi(相位)`——最多 3.14
- *   **机械**弧度，是它本该防住的电步长的七倍——而且没有任何东西报告它。下一次真实标记又把它移回来，于是这个缺陷表现为一
- *   个没人能复现的瞬变。
+ *   电角度通路本来就不猜：达到或超过电 `0.9*pi` 的步长被 **报告** 而不是被解掉，因为选一个方向会给出一个看起来没问题、
+ *   却差了整整一圈的角度。索引通路没有这条规则，而它才是更危险的那条：一个虚假脉冲产生的吸附是 `wrap_pi(相位)`——最多
+ *   3.14 **机械** 弧度，是它本该防住的电步长的七倍——而且没有任何东西报告它。下一次真实标记又把它移回来，于是这个缺陷表
+ *   现为一个没人能复现的瞬变。
  *
  *   修法就是同一条规则、同一个单位：机械残差超过 `0.9*pi/p` 时两个源描述的不是同一个事件，于是脉冲被拒绝并置旗。低于它
- *   时脉冲是**被相信的**，而这条边界写在这里而不是藏着：`p = 7` 时阈值是 0.404 rad，正是该通道为电步长已经声明过的分辨
- *   力下限，也是五圈实测漂移的 400 倍。
+ *   时脉冲是 **被相信的** ，而这条边界写在这里而不是藏着：`p = 7` 时阈值是 0.404 rad，正是该通道为电步长已经声明过的分
+ *   辨力下限，也是五圈实测漂移的 400 倍。
  */
 TEST(PositionReference, AMarkThatCannotBeTheMarkIsReportedInsteadOfMovingTheOrigin) {
     const float resolution = 0.9F * kPi / static_cast<float>(kPoles);

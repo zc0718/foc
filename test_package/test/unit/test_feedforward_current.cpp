@@ -75,7 +75,7 @@ struct Rig final {
 // The headline, measured in the only place a constant offset is visible: the **transient**. A step of 0.2 A lifts the measured
 // current to +0.174 A within about 0.85 ms and then the loop unwinds it -- so the field does reach the reference path, and the
 // steady state below is a separate fact rather than a contradiction.
-// 要点，量在恒定偏置唯一可见的地方：**瞬态**。0.2 A 的阶跃在约 0.85 ms 内把实测电流抬到 +0.174 A，随后环路把它收回——所以这个字段
+// 要点，量在恒定偏置唯一可见的地方： **瞬态** 。0.2 A 的阶跃在约 0.85 ms 内把实测电流抬到 +0.174 A，随后环路把它收回——所以这个字段
 // 确实到了参考路径，而下面的稳态是另一个事实，不是矛盾。
 TEST(FeedforwardCurrent, SpeedModeCarriesTheOffsetIntoTheCurrent) {
     Rig rig{40.0F};
@@ -98,7 +98,7 @@ TEST(FeedforwardCurrent, SpeedModeCarriesTheOffsetIntoTheCurrent) {
 // absorbed -- after a second the measured current is back on the baseline to six decimals. That is not a defect of the slot; it
 // is why a constant gravity or friction term is not what this slot is for, and why the cogging case (a ripple, which no
 // integrator can absorb) is the one that shows it working.
-// 而本用例第一版弄错的那个事实：在带积分作用的环路里，**恒定**偏置会被吸收——一秒之后实测电流回到基线，到六位小数。这不是槽的缺陷；
+// 而本用例第一版弄错的那个事实：在带积分作用的环路里， **恒定** 偏置会被吸收——一秒之后实测电流回到基线，到六位小数。这不是槽的缺陷；
 // 这正是"恒定重力/摩擦项不是这个槽的用途"的原因，也是齿槽那件（纹波，任何积分器都吸收不了）才看得出它工作的原因。
 TEST(FeedforwardCurrent, AConstantOffsetInSpeedModeIsAbsorbedByTheIntegrator) {
     Rig rig{40.0F};

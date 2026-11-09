@@ -131,9 +131,9 @@ TEST(ApiCHostMotor, AnIncompleteCallbackSetIsRejectedRatherThanDegraded) {
     // right size, a NULL fault output is *known* to be a host saying "I did not wire it", not an old caller, and it is
     // answered with `FOC_ERR_NOT_IMPL` instead of being defaulted to "no fault". Every other required callback keeps
     // `FOC_ERR_PARAM`, because "your argument set is malformed" is exactly what is wrong with it.
-    // 两种拒绝，而差别就是重点。**输入**结构必须正好是当前大小（`foc_api.c` 先查这一条），所以按旧头编译的调用方直接被
+    // 两种拒绝，而差别就是重点。 **输入** 结构必须正好是当前大小（`foc_api.c` 先查这一条），所以按旧头编译的调用方直接被
     // 拒，根本走不到"它有哪些字段"这个问题。正是这条精确大小规则让下一行成为可能：在一个尺寸正确的结构里，NULL 的故障
-    // 输出**已知**是主控方在说"我没接"，而不是旧调用方——于是它答 `FOC_ERR_NOT_IMPL`，而不是被默认成"无故障"。其余必需
+    // 输出 **已知** 是主控方在说"我没接"，而不是旧调用方——于是它答 `FOC_ERR_NOT_IMPL`，而不是被默认成"无故障"。其余必需
     // 回调保持 `FOC_ERR_PARAM`，因为"你的参数集合不完整"正是它们的问题。
     callbacks = callbacks_for(host);
     callbacks.struct_size = sizeof(foc_hal_callbacks_t) - 1U;
@@ -152,7 +152,7 @@ TEST(ApiCHostMotor, AnIncompleteCallbackSetIsRejectedRatherThanDegraded) {
 TEST(ApiCHostMotor, TheHostPoolIsBoundedAndRecoversAfterDestroy) {
     // The pool is static storage, so exhausting it is a defined answer (`FOC_ERR_NO_RESOURCE`), not a heap failure --
     // and destroying a motor has to give the slot back, or a long-lived Python session would leak capacity.
-    // 池是静态存储，用尽是一个**有定义的答案**（`FOC_ERR_NO_RESOURCE`）而不是堆分配失败——而且销毁必须把槽位还回来，
+    // 池是静态存储，用尽是一个 **有定义的答案** （`FOC_ERR_NO_RESOURCE`）而不是堆分配失败——而且销毁必须把槽位还回来，
     // 否则长命的 Python 会话会漏掉容量。
     const foc_motor_params_t params = nominal_params();
     Host hosts[4]{};

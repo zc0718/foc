@@ -336,9 +336,9 @@ TEST(SilDiscretization, C2b_TheRankingDoesNotComeFromTheIntegrator) {
   // at 800 rad/s under Euler, so that criterion could never have been met, and
   // keeping it would have been a way of never writing the answer down. What is
   // tested instead is that the **sign** of the ranking at each speed survives
-  // the change of scheme. 注意判据是**改写过**的：原 C2-b 说"梯形下 SMO
+  // the change of scheme. 注意判据是 **改写过** 的：原 C2-b 说"梯形下 SMO
   // 在每个点仍然赢"。C1 已经显示欧拉下 800 rad/s 处排序就是
-  // 反的，所以那条判据不可能被满足，留着它等于永远不写答案。现在检验的是：每个速度点上排序的**符号**在换
+  // 反的，所以那条判据不可能被满足，留着它等于永远不写答案。现在检验的是：每个速度点上排序的 **符号** 在换
   // 积分格式之后是否保持不变。
   std::printf(
       "[S20] C2-b: Euler vs Heun/Tustin, same bench, same tuning schedule\n");
@@ -399,7 +399,7 @@ TEST(SilDiscretization, C2b_TheRankingDoesNotComeFromTheIntegrator) {
       static_cast<double>(100.0F * shrink[4]));
 
   // C2-b: the *sign* of the ranking is a property of the observers, not of the
-  // integrator. C2-b：排序的**符号**是观测器的性质，不是积分器的。
+  // integrator. C2-b：排序的 **符号** 是观测器的性质，不是积分器的。
   EXPECT_EQ(5, sign_matches);
 
   // C2-d, and this is what the batch was for: the *size* of the advantage is
@@ -408,7 +408,7 @@ TEST(SilDiscretization, C2b_TheRankingDoesNotComeFromTheIntegrator) {
   // is the incumbent's own Euler lag, i.e. an artefact of the current
   // discretisation. The low band is different: under 15 % at 20 and 100 rad/s,
   // so there the advantage is real.
-  // C2-d，这才是本批真正要找的东西：优势的**大小**不是。两边都换细格式之后，400
+  // C2-d，这才是本批真正要找的东西：优势的 **大小** 不是。两边都换细格式之后，400
   // rad/s 处要被拿回 25%，800 处 52%——那些转速下"SMO
   // 更准"有很大一部分是在位者自己的欧拉滞后，也就是当前离散化的伪迹。低端不同：
   // 20 与 100 rad/s 处不到 15%，那里优势是真的。

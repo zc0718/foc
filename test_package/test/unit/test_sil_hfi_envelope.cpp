@@ -16,7 +16,7 @@
 //
 // W7-c 增量 1：HFI 的包线，在动手建两条候选之前先量。
 //
-// 增量 3d（提交 2c3e1b5）已经关掉了**转速估计器**那个问题：低速转速误差是角度源在漂，不是估计器噪声，所以该动手的是
+// 增量 3d（提交 2c3e1b5）已经关掉了 **转速估计器** 那个问题：低速转速误差是角度源在漂，不是估计器噪声，所以该动手的是
 // 角度。围绕角度提出了两个候选：
 //
 //   A. 提高载波频率——同样的解调滞后下更多信号，每个窗口的平均更干净；
@@ -24,7 +24,7 @@
 //
 // 两者都不是自明的对，而且两者的机理都可以被否证：A 在同样电压下要拿高频电流幅值去换（`V_h / (w_h·Ld)`），并且终将
 // 撞上采样率；B 只有在"最佳窗口真的随转速变"时才付得起代价。因此两者都不先建。本文件把两者要作用的那条包线先量出来，
-// 并且让 HFI **当乘客**：观测器照常推进、估计照常与真值比较，但驱动里没有任何一处用它——电流环与转速保持都走传感器的
+// 并且让 HFI **当乘客** ：观测器照常推进、估计照常与真值比较，但驱动里没有任何一处用它——电流环与转速保持都走传感器的
 // 角度与转速。于是一个格子是该工作点下观测器的性质，而不是某个闭环在它上面的性质。
 //
 // The criteria, fixed before the numbers were measured / 判据在量之前定下：
@@ -44,13 +44,13 @@
 //   R1a  提高载波在采样天花板以下有可赢之处：在 20 rad/s 机械转速下，某个严格低于 `fs/4` 的载波，其角度误差 rms 要比
 //        2000 Hz 好 2 倍以上。若一个都没有，路线 A 就没有便宜的收益，剩下只有 R1b 里的那条天花板。
 //   R1b  天花板是真的、且可推导，不是偏好：处在或高于 `fs/4` 的载波（20 kHz 环下即 5000 Hz，因为解调器自身的产物在
-//        `2·f_h`，超过奈奎斯特就会折回）必须比天花板以下最好的载波**差**至少 1.5 倍。若不差，天花板就不是机理， 就不得
+//        `2·f_h`，超过奈奎斯特就会折回）必须比天花板以下最好的载波 **差** 至少 1.5 倍。若不差，天花板就不是机理， 就不得
 //        被写成机理。
 //   R1c  **在第一轮量完之后补的一条，理由写在下面。** 载波一直往上加，到哪一点开始变差：在 20 kHz 控制环下扫到
 //        9600 Hz，取第一个比它下面最好的那个差 1.5 倍的点作为实测天花板。一条"越高越好"的说法必须有个掉头的点， 否则它
 //        不是一条规律而是一段被截断的数据。
 //
-//   第一轮的记录（不抹）：R1b **没有成立**——6000 与 8000 Hz 不是更差，而是更好（0.00038 与 0.00013 对 4800 Hz 的
+//   第一轮的记录（不抹）：R1b **没有成立** ——6000 与 8000 Hz 不是更差，而是更好（0.00038 与 0.00013 对 4800 Hz 的
 //   0.00074）。机理上的猜测错了：解调产物虽然在 `2·f_h` 超过奈奎斯特后折回，但它落在 4 kHz 这样的地方，被 200 Hz 的
 //   解调滤波器压掉 52 dB，折回到哪里都无所谓。折回只有在落进滤波器通带内才有害，而那只发生在 `2·f_h` 贴着 `fs` 的整数倍
 //   时。所以候选 A 的"天花板"不是 `fs/4`，得实测（R1c）。
@@ -58,14 +58,14 @@
 //   第一轮台架的两个缺陷（同样不抹）：静止那一格的转子与估计都从 0 开始且都不动，误差恒为 0，那一格什么也没量；20 与
 //   50 rad/s 时转速保持器的动态也混进了格子（指令 50、实际 46）。两者都在下面改掉了：被控对象改成"测功机"（惯量取到
 //   极大、无粘性），转子严格按指令转速转、角度从非零处起步，于是工作点是给定的事实而不是控制器努力的结果，且静止那一格
-//   必须真的去**获取**一次角度。
-//   R2   按转速调度窗口有前提，当且仅当两件事同时成立：最佳解调截止频率**随转速不同**，且逐转速取最佳在包线最坏点 上
+//   必须真的去 **获取** 一次角度。
+//   R2   按转速调度窗口有前提，当且仅当两件事同时成立：最佳解调截止频率 **随转速不同** ，且逐转速取最佳在包线最坏点 上
 //        比最好的单一固定截止频率好 2 倍。2 倍是这一波其余部分用过的门槛；更小的收益付不起一个运行时会自重建的 滤波器。
 //
 // Every cell also reports the *mean* angle error apart from its spread, because a lag is a bias and noise is a spread,
 // and the two call for different fixes. Reporting only the rms would let a pure lag look like noise, which is the exact
 // mistake 3d was about.
-// 每个格子还分开报角度误差的**均值**与离散度，因为滞后是偏置、噪声是离散，两者对应的修法不同。只报 rms 会让一个纯滞后
+// 每个格子还分开报角度误差的 **均值** 与离散度，因为滞后是偏置、噪声是离散，两者对应的修法不同。只报 rms 会让一个纯滞后
 // 看起来像噪声，而那正是 3d 犯过的那类错误。
 
 #include <algorithm>
@@ -205,15 +205,15 @@ struct Cell final {
  *   were measuring the holder as much as the observer. Here the mechanical speed is *imposed*: the rotor follows a
  *   profile and the torque equation is never asked. What is lost is speed ripple caused by torque ripple; what is
  *   gained is that the operating point is exactly the number printed. **没有转速环。** 第一版用 PI 保持转速，指令 50 只
- *   到 46，于是格子里量到的一部分是保持器而不是观测器。这里机械转速是**被施加的**：转子跟随一条曲线，转矩方程从不被问
+ *   到 46，于是格子里量到的一部分是保持器而不是观测器。这里机械转速是 **被施加的** ：转子跟随一条曲线，转矩方程从不被问
  *   及。失去的是转矩纹波引起的转速纹波，得到的是工作点就是打印出来的那个数。
  *
  *   2. **A ramp, not a step.** The second draft started the rotor already turning and the observer at zero, and the
  *   loop locked to the mirror at 20 rad/s and above — because it was being *kicked*, not because the window was wrong.
  *   Handing a PLL a frequency it has never seen is an acquisition problem with its own case below. Every cell here
  *   therefore locks at standstill first and is brought up to speed along a ramp. **是斜坡，不是阶跃。** 第二版让转子已
- *   经在转、观测器停在零，于是环路在 20 rad/s 及以上锁到镜像上——因为它是被**踢**过去的，不是因为窗口不对。把一个从未见
- *   过的频率丢给 PLL 是获取问题，另有下面的用例。因此这里每一格先在静止锁定，再沿斜坡升到目标转速。
+ *   经在转、观测器停在零，于是环路在 20 rad/s 及以上锁到镜像上——因为它是被 **踢** 过去的，不是因为窗口不对。把一个从未
+ *   见过的频率丢给 PLL 是获取问题，另有下面的用例。因此这里每一格先在静止锁定，再沿斜坡升到目标转速。
  *
  *   3. **A standstill that is not degenerate.** The first draft's standstill cell had rotor and estimate at the same
  *   angle with nothing moving, which measures zero error for a good observer and for a broken one. Here the rotor
@@ -223,8 +223,8 @@ struct Cell final {
  *   器必须先真的获取一次才能被测量。
  *
  *   And it is a *loaded* machine: 1 A of q-axis current. The fundamental current is what the demodulation has to
- *   reject, so an unloaded bench would hide the mechanism that decides the window question. 而且它是**带载**的电机：1 A
- *   的 q 轴电流。基频电流正是解调必须压住的东西，空载台架会把决定窗口问题的机理藏起来。
+ *   reject, so an unloaded bench would hide the mechanism that decides the window question. 而且它是 **带载** 的电机：1
+ *   A 的 q 轴电流。基频电流正是解调必须压住的东西，空载台架会把决定窗口问题的机理藏起来。
  */
 class PassengerRig final {
   public:
@@ -480,8 +480,8 @@ TEST(SilHfiEnvelope, TheCarrierHasACeilingSetByTheSamplingRate) {
     //      fraction of `fs` and the cutoff has nothing to do with it.
     // Walking the boundary at three cutoffs separates them: the story that is right is the one whose quantity stays
     // constant while the cutoff changes.
-    // 天花板到底在哪，以及是**哪个机理**把它放在那里。两个说法都能解释 `fs/2` 附近的失败，而它们对应不同的库规则：
-    //   1. 折回。`2·f_h` 折回到 `fs − 2·f_h`，落到解调截止频率附近就被读成信号。边界于是位于**截止频率**的固定倍数上，
+    // 天花板到底在哪，以及是 **哪个机理** 把它放在那里。两个说法都能解释 `fs/2` 附近的失败，而它们对应不同的库规则：
+    //   1. 折回。`2·f_h` 折回到 `fs − 2·f_h`，落到解调截止频率附近就被读成信号。边界于是位于 **截止频率** 的固定倍数上，
     //      加宽截止频率必然压低可用的最高载波。
     //   2. 采样。每载波周期只有两点几个样本，无法分辨相位；边界位于 `fs` 的一个固定比例上，与截止频率无关。
     // 在三个截止频率上走一遍边界即可分开：对的那一个，是"切换截止频率时保持不变"的那个量。
@@ -674,7 +674,7 @@ TEST(SilHfiEnvelope, AcquiringARotorAlreadyRunningNeedsASeed) {
     // that is already turning, it therefore either catches it or lands on the mirror, and which one it does is a
     // property of how fast the rotor is going, not of the window.
     // 上面的格子都是带种子的，本用例说明为什么必须如此：观测器持有一个角度与一个转速，而它只能把角度拉进 ±π/2 之内
-    // ——它没有办法去拉一个从未见过的**频率**。于是面对一个已经在转的转子，它要么追上、要么落到镜像上，而落在哪一边是
+    // ——它没有办法去拉一个从未见过的 **频率** 。于是面对一个已经在转的转子，它要么追上、要么落到镜像上，而落在哪一边是
     // 转子有多快的性质，不是窗口的性质。
     std::printf("\n[seed] unseeded acquisition at the default carrier and window\n");
     std::printf("[seed] %10s %12s %12s %10s\n", "speed", "angle_mean", "angle_std", "verdict");
@@ -810,7 +810,7 @@ TEST(SilHfiEnvelope, DoesRaisingTheCarrierHelpTheAxisOrOnlyTheAngle) {
     // The angle table says a higher carrier is much better *at the angle*. W7-b already taught that this does not
     // automatically mean a better axis -- a quieter estimate that was late made the loop worse. So the carrier only
     // earns a place in the library if it shows up here.
-    // 角度表说更高的载波在**角度上**好得多。W7-b 已经教过一次：这不自动意味着轴更好——一个更安静但更迟的估计把环弄差了。
+    // 角度表说更高的载波在 **角度上** 好得多。W7-b 已经教过一次：这不自动意味着轴更好——一个更安静但更迟的估计把环弄差了。
     // 所以载波只有在下面这张表里表现出来，才配进库。
     //
     // The criterion, fixed before the run:

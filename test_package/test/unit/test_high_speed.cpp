@@ -3,7 +3,7 @@
 // ceiling sets the speed and field weakening moves it by a computable factor, and the crossover observer's error is a
 // function of *samples per electrical cycle* rather than of the speed.
 // 3.3：高速区，而且是在限制真正所在的地方去量。三条主张，没有一条是"高速下能用"：plant 在高电频率下守恒功率（这是库里其余
-// 一切所立足的地基）；电压上限决定转速，弱磁按一个可算的倍数把它挪开；而交叉观测器的误差是**每个电周期的采样数**的函数，
+// 一切所立足的地基）；电压上限决定转速，弱磁按一个可算的倍数把它挪开；而交叉观测器的误差是 **每个电周期的采样数** 的函数，
 // 不是转速的函数。
 
 #include <cmath>

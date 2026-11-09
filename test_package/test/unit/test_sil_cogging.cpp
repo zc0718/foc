@@ -3,7 +3,7 @@
 // the accessor reports, the torque that reaches the *mechanical equation* is the same function with the sign a compensator
 // must cancel, and a coasting rotor's speed ripple has an analytic peak-to-peak.
 // F33 的前置——齿槽转矩注入端口。没有注入就没有补偿器的真值，所以端口先行；本文件用三种方式钉住它：要的转矩就是访问器
-// 报告的那个、进入**机械方程**的转矩是同一个函数且符号是补偿器要抵消的那个、以及惰行转子的转速纹波有解析峰峰值。
+// 报告的那个、进入 **机械方程** 的转矩是同一个函数且符号是补偿器要抵消的那个、以及惰行转子的转速纹波有解析峰峰值。
 
 #include <cmath>
 #include <vector>
@@ -36,7 +36,7 @@ struct CoggingEffects final {
 // is identically zero. That leaves the injected cogging as the **only** torque in the model, which is what makes the
 // coast below a one-line closed form instead of a coupled electromechanical problem.
 // 有意选一台无源转子：`lambda_m = 0` 意味着没有反电势，于是零电压下不流电流、`torque_at()` 恒为零。这样注入的齿槽就是
-// 模型里**唯一**的转矩，下面的惰行才有资格写成一行闭式，而不是一个耦合的机电问题。
+// 模型里 **唯一** 的转矩，下面的惰行才有资格写成一行闭式，而不是一个耦合的机电问题。
 auto passive_rotor(float inertia) -> AbcPlant {
     const AbcPlant::Params params{1.0F, 1.0e-3F, 0.0F, 2U};
     AbcPlant plant{params};
@@ -98,7 +98,7 @@ TEST(SilCogging, TheInjectedTorqueIsTheOneAskedFor) {
 // The order is **per mechanical revolution**, and that is not pedantry: `order` in an electrical frame differs by a factor
 // of `pole_pairs`, and a compensator indexed by the wrong one looks like it simply does not work. At `pole_pairs = 2` the
 // two periods differ by 2x, so one of them can be confirmed and the other refuted in the same case.
-// 次数是**每机械转**的，这不是吹毛求疵：电坐标系里的次数差一个极对数，而按错的那个索引的补偿器看起来就是"没生效"。在
+// 次数是 **每机械转** 的，这不是吹毛求疵：电坐标系里的次数差一个极对数，而按错的那个索引的补偿器看起来就是"没生效"。在
 // `pole_pairs = 2` 下两个周期差 2 倍，所以同一个用例里可以确认一个、否证另一个。
 TEST(SilCogging, TheOrderIsPerMechanicalRevolutionNotPerElectricalOne) {
     AbcPlant plant = passive_rotor(1.0e-4F);
@@ -110,13 +110,13 @@ TEST(SilCogging, TheOrderIsPerMechanicalRevolutionNotPerElectricalOne) {
     const float here = plant.cogging_torque_nm();
 
     // One mechanical period of the 6th harmonic: the same torque.
-    // 6 次的**机械**周期：同一个转矩。
+    // 6 次的 **机械** 周期：同一个转矩。
     plant.reset(theta + (kTwoPi / 6.0F), 0.0F);
     EXPECT_NEAR(here, plant.cogging_torque_nm(), 1.0e-9F);
 
     // The *electrical* period is half of that at two pole pairs, and the torque there is a different number -- so a table
     // interpreted as an electrical order cannot pass both assertions.
-    // 两极对下**电**周期是它的一半，那里的转矩是另一个值——所以把表当成电次数解释，两条断言不可能同时成立。
+    // 两极对下 **电** 周期是它的一半，那里的转矩是另一个值——所以把表当成电次数解释，两条断言不可能同时成立。
     plant.reset(theta + (kTwoPi / (6.0F * 2.0F)), 0.0F);
     EXPECT_GT(std::fabs(plant.cogging_torque_nm() - here), 1.0e-4F);
 }
@@ -124,7 +124,7 @@ TEST(SilCogging, TheOrderIsPerMechanicalRevolutionNotPerElectricalOne) {
 // The part that matters: the torque reaches the *mechanical equation* with the sign a compensator has to cancel. Measured
 // by integrating one tiny step from rest and reading `domega = dt*T/J` -- i.e. through the whole mechanical half, not
 // through the accessor -- and then compared against the accessor, so the two routes have to agree.
-// 要紧的那一半：转矩以补偿器必须抵消的那个符号进入**机械方程**。从静止积分一小步、读 `dω = dt·T/J` 来量——走的是整个
+// 要紧的那一半：转矩以补偿器必须抵消的那个符号进入 **机械方程** 。从静止积分一小步、读 `dω = dt·T/J` 来量——走的是整个
 // 机械半而不是访问器——再与访问器对照，于是两条路径必须一致。
 TEST(SilCogging, TheTorqueReachesTheMechanicalEquationWithTheSignToCancel) {
     constexpr float kJ = 1.0e-4F;
@@ -212,17 +212,17 @@ TEST(SilCogging, TheCoastSpeedRippleHasTheAnalyticPeakToPeak) {
     // secular energy error, and over this five-period run it comes to 3.0e-5 of `J*Omega^2/2`. 1e-4 is three times that,
     // so a correct implementation has room and a leaking one does not: a first-order scheme an order of magnitude coarser
     // would land at 1e-3.
-    // 是能量，不是"平均转速不漂移"：在 `+A·sin(k·θ)` 下定位点落在 `k·θ = π`，于是转速会**升到** `Ω` 以上、并在 `k·θ = 0`
+    // 是能量，不是"平均转速不漂移"：在 `+A·sin(k·θ)` 下定位点落在 `k·θ = π`，于是转速会 **升到** `Ω` 以上、并在 `k·θ = 0`
     // 处精确回到 `Ω`——因此两个极值的中点在 `Ω` 之上半个纹波，断言那个中点是在断言我自己的错误，而不是模型的行为。
     //
-    // 这个界是**量出来的，不是猜的**：被控对象的机械半是 `h = dt/8` 的前向欧拉，其能量误差是长期累积型，在这五次纹波周期的
+    // 这个界是 **量出来的，不是猜的** ：被控对象的机械半是 `h = dt/8` 的前向欧拉，其能量误差是长期累积型，在这五次纹波周期的
     // 运行里达到 `J·Ω²/2` 的 3.0e-5。1e-4 是它的三倍——正确实现有余量、漏能量的实现没有：再粗一个量级的一阶格式会落在 1e-3。
     EXPECT_LT(energy_max - energy_min, (0.5F * kJ * kOmega * kOmega) * 1.0e-4F);
 }
 
 // Off by default, and off is **bit-identical** to a build that never had the port. An error source that moves the frozen
 // scenarios cannot be told apart from a regression, which is the rule every other injection port in this repository follows.
-// 默认关闭，而且关闭时与"从来没有这个端口"**逐位相同**。会移动冻结场景的误差源无法与回归区分——这是本仓库其它每个注入端口
+// 默认关闭，而且关闭时与"从来没有这个端口"**逐位相同** 。会移动冻结场景的误差源无法与回归区分——这是本仓库其它每个注入端口
 // 都遵守的规矩。
 TEST(SilCogging, ZeroAmplitudeAndNoTableAreBitIdenticalToOneAnother) {
     constexpr float kDt = 1.0e-4F;
@@ -279,7 +279,7 @@ TEST(SilCogging, TwoInjectedOrdersAreSeparableByAProjectionOverOneRevolution) {
     EXPECT_NEAR(3.0e-3F, harmonic_amplitude(theta, torque, 2), 3.0e-5F);
     EXPECT_NEAR(1.0e-3F, harmonic_amplitude(theta, torque, 6), 1.0e-5F);
     // The orders that were NOT injected are empty, which is what makes the two numbers above meaningful.
-    // **没有**注入的次数是空的，这才让上面两个数有意义。
+    // **没有** 注入的次数是空的，这才让上面两个数有意义。
     EXPECT_LT(harmonic_amplitude(theta, torque, 4), 1.0e-5F);
     EXPECT_LT(harmonic_amplitude(theta, torque, 8), 1.0e-5F);
 }

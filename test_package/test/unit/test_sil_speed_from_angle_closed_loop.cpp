@@ -4,7 +4,7 @@
 // it had not been wired into a loop. That is the claim this case makes: the same low-speed servo, closed on each of the
 // two speed signals in turn, with everything else held identical.
 //
-// W7-b 增量 3b：更好的转速**估计**是否等于更好的转速**环**？
+// W7-b 增量 3b：更好的转速 **估计** 是否等于更好的转速 **环** ？
 // 增量 3a 量到差分角度 0.1960 rad/s、观测器自有 0.7995，并明说它还没接进环路。本用例要做的正是那条主张：同一个低速伺服，
 // 依次闭在两路转速信号上，其余一切保持相同。
 //
@@ -26,7 +26,7 @@
 //
 // 判据在量之前定下：
 //   C1 闭在差分转速上的环，稳定后不比闭在观测器自有转速上的环更差：最后 0.3 s 内最差误差在 1e-3 rad/s 的地板之内。
-//      这是一条**大小关系**而不是阈值——与位置保持、增量 1 的主张同形，因为这是本仓库能为之辩护的唯一一种带子。
+//      这是一条 **大小关系** 而不是阈值——与位置保持、增量 1 的主张同形，因为这是本仓库能为之辩护的唯一一种带子。
 //   C2 两个环都必须真的到达指令（终点在 0.5 rad/s 内）。否则"不更差"可以由"两个都失败"来满足。
 //   C3 差分环的峰值不得高出另一个超过 1 rad/s。以超调为代价换来的更好估计不是改善，而只看稳定后的数字看不出来。
 
@@ -192,11 +192,11 @@ TEST(SilSpeedFromAngleClosedLoop, TheBetterEstimateMakesABetterLoop) {
     // today, so that shortening the window -- the obvious next attempt -- shows up as a change here rather than as a
     // quiet different behaviour nobody notices.
     //
-    // 上面的判据**没有**被满足，而数字说明了原因。闭在观测器自有转速上，伺服稳定到 0.1717 rad/s、峰值 1.9%；闭在差分
+    // 上面的判据 **没有** 被满足，而数字说明了原因。闭在观测器自有转速上，伺服稳定到 0.1717 rad/s、峰值 1.9%；闭在差分
     // 角度上稳定到 0.1982——略差——而峰值达 62%。一个安静了十毫秒的估计在环里不是更好的估计：窗口就是反馈通路里的
     // 传输延迟，而在 200 rad/s（32 Hz）的环带宽下，十毫秒约合 115 度相位，那是相位裕度的大半。
     //
-    // 因此本用例写成**特性描述**而不是愿望：它钉住今天闭在两路信号上各自是什么结果，于是"缩短窗口"——最显然的下一次
+    // 因此本用例写成 **特性描述** 而不是愿望：它钉住今天闭在两路信号上各自是什么结果，于是"缩短窗口"——最显然的下一次
     // 尝试——会在这里显示为一条改变，而不是变成一个没人注意到的、悄悄不同的行为。
 
     // Both must actually reach the command, or neither number means anything.
@@ -226,10 +226,10 @@ TEST(SilSpeedFromAngleClosedLoop, AWindowShortEnoughToBeOnTimeIsTheOnlyWayThisRo
     //   at this bandwidth and increment 4 has to be structural -- a speed that is neither late nor derived from a PLL.
     //
     // 3b 闭在 200 tick（10 ms）窗口上输了：更安静但更晚，62% 超调对 1.9%。显然的退路是缩短窗口，用噪声换相位。本扫描
-    // 测量这个折中并**决定**这条路线，而不是把它留成一个意见。
+    // 测量这个折中并 **决定** 这条路线，而不是把它留成一个意见。
     //
     // 判定规则在运行前定死，两种结果都是结果：
-    //   若某个窗口在**稳定精度与峰值两项上同时**胜过闭在观测器自有转速上的环，则差分路线在那个窗口上可行，下一步是采用
+    //   若某个窗口在 **稳定精度与峰值两项上同时** 胜过闭在观测器自有转速上的环，则差分路线在那个窗口上可行，下一步是采用
     //   它；若没有，则这条路线在本带宽下关闭，增量 4 必须是结构性的——一个既不晚、也不来自 PLL 的转速。
     struct Row final {
         int window_ticks;

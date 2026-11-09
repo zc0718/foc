@@ -18,7 +18,7 @@
 // Not in the table, and said out loud rather than omitted: **torsional elasticity**. It needs a two-mass model, the
 // plant is single-inertia, and an effect with no injection point cannot be bounded here -- recording it as a number
 // would be inventing one. Same for gear-ratio error, which is a frame transformation this rig does not model.
-// 表里没有的两项，明说而不是略去：**扭转弹性**需要两质量模型，而 plant 是单惯量，没有注入口的效应在这里给不出界——
+// 表里没有的两项，明说而不是略去： **扭转弹性** 需要两质量模型，而 plant 是单惯量，没有注入口的效应在这里给不出界——
 // 编一个数就是造假。齿轮比误差同理，它是本台架不建模的坐标变换。
 //
 // 为什么是预算而不是再加一条断言。单独一条"末端误差 < 5 mrad"只能说明环路今天不错，说不出那 5 mrad 由哪些物理效应
@@ -115,8 +115,8 @@ auto run_step(const Effects& fx, float target_rad) -> Outcome {
  *            the target falls between two counts: the first run of this table measured -0.26 mrad for a 2 mrad encoder,
  *            i.e. it made the result *better* by cancelling the loop's own residual. A budget cannot be built from one
  *            lucky target, so the target is swept across a count and the worst case is taken.
- * @note [zh] 不是为了周全而周全。量化误差是**带符号**的，符号取决于目标落在两个计数之间的哪里：本表第一次运行时， 2
- *            mrad 的编码器量出 -0.26 mrad——也就是把结果变得**更好**，抵掉了环路自身残差。预算不能建立在一个碰巧的目标
+ * @note [zh] 不是为了周全而周全。量化误差是 **带符号** 的，符号取决于目标落在两个计数之间的哪里：本表第一次运行时， 2
+ *            mrad 的编码器量出 -0.26 mrad——也就是把结果变得 **更好** ，抵掉了环路自身残差。预算不能建立在一个碰巧的目标
  *            上，所以在一个计数内扫过目标并取最坏。
  */
 auto worst_over_targets(const Effects& fx, float lsb, int points) -> Outcome {
@@ -156,7 +156,7 @@ TEST(SilPositionBudget, EveryContributorHasABoundAndTheirSumBracketsTheMeasureme
 
     // Each row is the worst *increase* over the clean run, floored at zero: a source cannot make the budget smaller, or
     // it would be a source that improves accuracy.
-    // 每一行是相对干净基线的**最坏增量**，并以零为下限：误差源不能把预算变小，否则它就是一个能提高精度的误差源。
+    // 每一行是相对干净基线的 **最坏增量** ，并以零为下限：误差源不能把预算变小，否则它就是一个能提高精度的误差源。
     const float e_res = std::fmax(0.0F, resolution.true_error_rad - clean.true_error_rad);
     const float e_fric = std::fmax(0.0F, friction.true_error_rad - clean.true_error_rad);
     const float e_dead = std::fmax(0.0F, deadtime.true_error_rad - clean.true_error_rad);

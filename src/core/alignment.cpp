@@ -70,7 +70,7 @@ auto AlignRoutine::validate() const noexcept -> ErrorCode {
     // A default-constructed recipe is the documented "nobody asked for alignment" state. It is
     // deliberately distinct from a *broken* recipe: answering Param here would make every motor
     // that merely carries an aligner refuse to start.
-    // 默认构造的配方就是文档化的“没人请求对齐”状态。它故意与**坏掉**的配方区分开：这里若答 Param，
+    // 默认构造的配方就是文档化的“没人请求对齐”状态。它故意与 **坏掉** 的配方区分开：这里若答 Param，
     // 会让每个只不过带了个对齐器的电机都拒绝启动。
     const bool unset = (config_.current_a == 0.0F) && (config_.ramp_s == 0.0F) && (config_.hold_s == 0.0F) &&
                        (config_.settle_tolerance_rad == 0.0F) && (config_.verify_s == 0.0F) &&

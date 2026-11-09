@@ -35,7 +35,7 @@ void MagnetPolarityTest::begin(float theta_e) noexcept {
     // Beginning again is how a caller retries after an Inconclusive answer, so it has to clear the
     // *conclusion* as well as the counters: keeping a stale verdict would turn "ask again" into
     // "you already have an answer".
-    // 重新开始是调用方在 Inconclusive 之后补试的方式，因此它必须把**结论**也清掉而不只是计数器：
+    // 重新开始是调用方在 Inconclusive 之后补试的方式，因此它必须把 **结论** 也清掉而不只是计数器：
     // 留着旧结论会把“再问一次”变成“你已经有答案了”。
     stage_ = Stage::SettlePositive;
     verdict_ = PolarityVerdict::Inconclusive;
@@ -123,7 +123,7 @@ auto MagnetPolarityTest::decide() noexcept -> void {
     // The comparison is between magnitudes, and it has to be: the negative pulse drives the current
     // negative, so its signed change is negative by construction and a signed comparison would answer
     // "Aligned" for every machine, including the ones with no asymmetry at all.
-    // 比较的是**幅值**，而且必须如此：负脉冲把电流推向负方向，其带符号变化按构造就是负的，用带符号比较会
+    // 比较的是 **幅值** ，而且必须如此：负脉冲把电流推向负方向，其带符号变化按构造就是负的，用带符号比较会
     // 对每一台电机都回答“Aligned”，包括根本没有不对称的那些。
     const float positive = std::fabs(delta_positive_a_);
     const float negative = std::fabs(delta_negative_a_);
@@ -140,9 +140,9 @@ auto MagnetPolarityTest::decide() noexcept -> void {
     // to do with the magnet, and the answer comes out confidently **wrong**. The yardstick is the
     // caller's own declared resolution: if the two start more than one answer-resolution apart, they
     // are not the same pulse and no verdict at that resolution can be supported.
-    // 只有在两个脉冲从同一工作点出发时比较才有意义：这个方法的前提是“**相同**伏秒的脉冲在两个
+    // 只有在两个脉冲从同一工作点出发时比较才有意义：这个方法的前提是“ **相同** 伏秒的脉冲在两个
     // 方向上”。松弛时间短于电流衰减时间时，第二个脉冲从第一个脉冲的尾巴上出发，那里的电感已经塌
-    // 陷——于是第二个上升更大，原因与磁钢无关，而答案会**自信地错**。判据用调用方自己声明的分辨
+    // 陷——于是第二个上升更大，原因与磁钢无关，而答案会 **自信地错** 。判据用调用方自己声明的分辨
     // 力：两个起点相差超过一个答案分辨力时，它们就不是同一个脉冲，那个分辨力下的任何结论都不成立。
     const float start_spread = std::fabs(i_before_positive_a_ - i_before_a_);
     if (start_spread >= config_.min_asymmetry_a) {

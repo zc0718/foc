@@ -20,9 +20,9 @@
 //       first 200 ticks would satisfy C1 trivially -- a criterion that a silent output can pass is not a criterion.
 //
 // 判据在量之前定下：
-//   C1 差分得到的转速比观测器自己报的至少好 **4 倍**（<= 0.20 rad/s 对 0.7995）——与扫描用同一个倍数，于是两个结果可比，
+//   C1 差分得到的转速比观测器自己报的至少好 **4 倍** （<= 0.20 rad/s 对 0.7995）——与扫描用同一个倍数，于是两个结果可比，
 //      而不是各自往自己脸上贴金。
-//   C2 落在预测值 `σ_θ·√2/(window_ticks·dt)` = 机械 0.030 rad/s 的 **10 倍**范围之内，即 0.003 到 0.30 之间。
+//   C2 落在预测值 `σ_θ·√2/(window_ticks·dt)` = 机械 0.030 rad/s 的 **10 倍** 范围之内，即 0.003 到 0.30 之间。
 //      在范围内，噪声模型成立、下一步已知；在范围外，说明角度的误差不是白噪声，需要修的是模型。
 //   C3 估计器在测量窗口打开之前已经填满窗口。缺这一条，前 200 tick 输出 0 就能轻易满足 C1——一条"沉默的输出"也能通过的
 //      判据不是判据。
@@ -197,9 +197,9 @@ TEST(SilSpeedFromAngle, DifferencingTheAngleBeatsTheObserversOwnSpeed) {
  *     closed form **and** outside 5 % of the one that was there before. At N = 50 the two candidates are 0.3363 and
  *     0.4899, 46 % apart, so the band is not doing the deciding -- the data is. 这个头文件对噪声说了两件事：出货的延迟
  *     差分是 `σ_v = √2·σ_θ/(N·dt)`，而同窗口的最小二乘斜率会安静 `√(6N/((N+1)(N+2)))` 倍——N = 200 时 5.82 倍。第二个数
- *     在 F-42 之前写的是 `√(12/N)`（4.1 倍），错了整整 `√2`。测量只有在能**区分竞争公式**时才值得做，所以本用例在**同一
- *     段**合成角度流上同时算两个估计器，并断言实测比值与正确闭式差 5 % 以内、**同时**落在旧公式的 5 % 之外。N = 50 时两
- *     个候选是 0.3363 与 0.4899，相差 46 %——做判断的是数据，不是带宽。
+ *     在 F-42 之前写的是 `√(12/N)`（4.1 倍），错了整整 `√2`。测量只有在能 **区分竞争公式** 时才值得做，所以本用例在**同
+ *     一段 **合成角度流上同时算两个估计器，并断言实测比值与正确闭式差 5 % 以内、** 同时**落在旧公式的 5 % 之外。N = 50
+ *     时两个候选是 0.3363 与 0.4899，相差 46 %——做判断的是数据，不是带宽。
  */
 TEST(SilSpeedFromAngle, BothNoiseGainsAreTheOnesTheClosedFormsPredict) {
     constexpr float kDt = 5e-5F;
@@ -322,9 +322,9 @@ TEST(SilSpeedFromAngle, BothNoiseGainsAreTheOnesTheClosedFormsPredict) {
     // predicts, by however much the staircase correlates its own endpoints. Measuring the factor would need phase
     // dithering across runs; it is not done here, and this comment is the record that the simple formula does not apply
     // (the same lesson as A-39, where a signed quantisation error made a budget row negative).
-    // P4 原本写成"量化角度就是把 `sigma` 换成 `q/√12`"，实测只有它的 0.616 倍。错的又是预言不是代码：`q/√12` 是**独立**
-    // 量化误差序列的方差，而一个量化的斜坡是确定性阶梯，第 `k` 个采样的误差由该点的相位决定。于是窗口两端的误差**相关**，
-    // `Var(diff) = 2σ²(1−ρ)` 严格低于独立样本值。站得住的是那个不等式，它就是诚实的说法：量化角度给出的输出噪声**少于**
+    // P4 原本写成"量化角度就是把 `sigma` 换成 `q/√12`"，实测只有它的 0.616 倍。错的又是预言不是代码：`q/√12` 是 **独立**
+    // 量化误差序列的方差，而一个量化的斜坡是确定性阶梯，第 `k` 个采样的误差由该点的相位决定。于是窗口两端的误差 **相关** ，
+    // `Var(diff) = 2σ²(1−ρ)` 严格低于独立样本值。站得住的是那个不等式，它就是诚实的说法：量化角度给出的输出噪声 **少于**
     // 独立样本公式的预测，差额由阶梯自身的端点相关性决定。要量出那个系数需要对多次运行做相位抖动；这里没做，本注释就是
     // "简单公式不适用"的记录（与 A-39 同一课：带符号的量化误差让一行预算变成负数）。
     constexpr float kLsb = 4.0e-3F;

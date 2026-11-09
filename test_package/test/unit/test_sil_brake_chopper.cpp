@@ -23,7 +23,7 @@ using foc::sil::BusParams;
 
 // The scenario the chopper exists for: a machine held at speed by a prime mover and commanded to a **regenerating**
 // torque, on a bus that has nothing but a capacitor to absorb it.
-// 斩波器为之存在的场景：一台被原动机拖住在恒速、被命令去产生**回馈**转矩的电机，母线只有一个电容去吸收。
+// 斩波器为之存在的场景：一台被原动机拖住在恒速、被命令去产生 **回馈** 转矩的电机，母线只有一个电容去吸收。
 //
 // Two fixture decisions are load-bearing and are stated rather than buried:
 //
@@ -38,7 +38,7 @@ using foc::sil::BusParams;
 //
 //   * `j = 1e6` kg·m²。轴被模型之外的东西拖着，机械能来自母线账本之外，所以电账上只有一个来源要解释。它同时让运行
 //     可比：真实的 1e-4 kg·m² 转子会以 3000 rad/s² 减速，工作点撑不到两次运行可以互相比对。
-//   * 斩波器**每控制周期被推进一次，位置在控制器与 plant 之间**——固件里母线监督就运行在那里。它不在 `Motor` 的策略
+//   * 斩波器 **每控制周期被推进一次，位置在控制器与 plant 之间** ——固件里母线监督就运行在那里。它不在 `Motor` 的策略
 //     列表里，因为它不作用于电机：驱动被关闭之后它还在工作，而那恰好是回馈中的电机最需要它的时候。
 
 constexpr float kVBusInitial = 24.0F;
@@ -53,7 +53,7 @@ constexpr float kBudget = 1.0F; // A^2*s, generous on purpose: this case is not 
 // energy dissipated *minus* what the resistor radiated away, so the two numbers would differ by a real physical term and
 // the cross-check would have to be padded to accommodate it. The cooling law has its own closed-form case in
 // `test_brake_chopper.cpp`; here the question is whether the policy and the bus agree about one resistor.
-// 本夹具不冷却，这正是电阻热量可核对的原因：开着冷却时 `r·i²t` 是耗散掉的能量**减去**电阻辐射掉的那部分，两个数字会
+// 本夹具不冷却，这正是电阻热量可核对的原因：开着冷却时 `r·i²t` 是耗散掉的能量 **减去** 电阻辐射掉的那部分，两个数字会
 // 相差一个真实的物理项，对账就必须放宽容差来迁就它。冷却律在 `test_brake_chopper.cpp` 里有自己的闭式用例；这里问的是
 // 策略与母线对同一个电阻是否达成一致。
 constexpr float kCoolTau = 0.0F; // s
@@ -112,7 +112,7 @@ class RegenRig final {
 
     /**
      * @brief [en] Bring the current loop up **at zero speed**, zero the books, and only then let the shaft turn.
-     * @brief [zh] 在**零速**下把电流环带起来，清零账面，然后才让轴转起来。
+     * @brief [zh] 在 **零速** 下把电流环带起来，清零账面，然后才让轴转起来。
      * @param iq_a [en] the current this run will hold.
      * @param iq_a [zh] 本次运行将保持的电流。
      * @note [en] The order matters and the reason is measured rather than argued. A PI starts with an empty integrator,
@@ -125,9 +125,9 @@ class RegenRig final {
      *            machine to speed and the machine starts pushing back.
      * @note [zh] 顺序是要紧的，而理由是量出来的、不是辩出来的。PI 的积分器从空开始，所以在 300 rad/s 上冷启动时，电机实
      *            际上经桥臂被短路：在环路建立起它需要的 9.25 V 之前，它从母线抽出 -3.1 A，并在第一毫秒里把母线充高 0.8
-     *            V。那个暂态与待测效应无法区分——它让**电动**用例凭空"上升 0.37 V"——所以它不能待在窗口里。零速时没有反电
-     *            势，环路白送就收敛了（实测 23.844 V，即 1.5 A 在 0.5 Ω 上的铜损），之后再把轴升到 300 rad/s，那就是场
-     *            景本身：原动机把电机带到转速，电机开始往回推。
+     *            V。那个暂态与待测效应无法区分——它让 **电动** 用例凭空"上升 0.37 V"——所以它不能待在窗口里。零速时没有反
+     *            电势，环路白送就收敛了（实测 23.844 V，即 1.5 A 在 0.5 Ω 上的铜损），之后再把轴升到 300 rad/s，那就是
+     *            场景本身：原动机把电机带到转速，电机开始往回推。
      */
     auto start(float iq_a) -> ErrorCode {
         bench_.hal().set_bus(&meter_);
@@ -286,7 +286,7 @@ TEST(SilBrakeChopper, TheChopperDoesNotFireWhileTheMachineMotors) {
 
 // 4. The latch's consequence, measured on the bus instead of on a flag. A spent budget is allowed to be a failure --
 //    what is not allowed is for it to be a *quiet* one, and the honest failure is a bus that keeps climbing.
-// 4. 锁存的后果，在母线上量而不是在一个标志上量。预算是允许花完的——不允许的是它**安静地**花完，而诚实的失败就是一条
+// 4. 锁存的后果，在母线上量而不是在一个标志上量。预算是允许花完的——不允许的是它 **安静地** 花完，而诚实的失败就是一条
 //    继续上升的母线。
 TEST(SilBrakeChopper, ASpentBudgetIsVisibleOnTheBus) {
     RegenRig rig(/*budget*/ 0.02F); // trips after about 2 ms of chopping, well inside the window

@@ -63,7 +63,7 @@ TEST(IdealObserver, TheCheatChannelCannotQuietlyBecomeAnEstimator) {
     // comparison between two estimators instead of against the truth. So the three properties that make it usable as
     // a reference are asserted against inputs chosen to break them.
     // 这一行留在 L2，而它留在 L2 的理由值得钉住而不是反复陈述：L3 要求对某个误差源有敏感度，而本类没有可错的模型——
-    // 它直接报告被控对象的真值。真正可能出问题的是它**不再是一个作弊通道**：一个滤波、一个周期延迟，或一个看起来
+    // 它直接报告被控对象的真值。真正可能出问题的是它 **不再是一个作弊通道** ：一个滤波、一个周期延迟，或一个看起来
     // 合理的"改进"去读电气输入，都会让所有以它为参照的比较变成两个估计器之间的比较。所以此处用专门挑来破坏这三个
     // 性质 的输入，断言让它可当参照的三条性质。
     foc::core::IdealObserver observer;

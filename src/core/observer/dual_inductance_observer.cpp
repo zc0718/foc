@@ -267,7 +267,7 @@ auto DualInductanceObserver::update(Ab<float> v_ab, Ab<float> i_ab, float dt_s) 
         // stops accumulating in the state. It does **not** repair a wrong seed -- the nearest consistent state to a
         // mis-seeded one is still the wrong one -- and that is why both sources exist instead of one replacing the other.
         // 把状态按增益所要求的那部分残差拉回磁链关系上。不动点是 `radius == 1`，即一个能被转子位置解释的状态；它买到的是
-        // `Rs` 的铭牌误差不再在状态里累积。它**不会**修复错误的种子——离一个错种子"最近的自洽状态"仍然是错的那个——这正是
+        // `Rs` 的铭牌误差不再在状态里累积。它 **不会** 修复错误的种子——离一个错种子"最近的自洽状态"仍然是错的那个——这正是
         // 两种来源并存、而不是一种取代另一种的原因。
         const Cx unit = scale(1.0F / radius, chosen);
         const Cx target =

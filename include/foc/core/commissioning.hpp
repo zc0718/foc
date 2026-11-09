@@ -19,7 +19,7 @@ namespace core {
  *   is `(2/3)*(sqrt(3)/2 + sqrt(3)/2) = 2/sqrt(3)` times -- 0.554 V instead of 0.64 V at 24 V. That 13 % difference is
  *   not cosmetic: using the d-axis number on a q-axis step leaves `Lq` reading 16 % low (SIL the two-point sweep).
  *
- * @brief [zh] 由每相阶跃和电流在转子系里的角度，算出**一个轴**看到的死区电压。
+ * @brief [zh] 由每相阶跃和电流在转子系里的角度，算出 **一个轴** 看到的死区电压。
  *
  *   为什么这不是每相的数值。逆变器从每相拿走 `deadtime_v·sign(i_phase)`， 三个这样的量投影到一个轴上，取决于电流在哪
  *   里：电流在 d 轴上时相电流是 `(+i, −i/2, −i/2)`，投影是 `(2/3)·(1 + 1/2 + 1/2)·deadtime_v = (4/3)·deadtime_v`； 电流
@@ -78,24 +78,24 @@ namespace core {
  *   `rs` downwards. (2) **One polarity**: `sign(i)` has to be constant across the sweep, or the intercept flips sign
  *   half way through and the fit means nothing.
  *
- * @brief [zh] 从一个稳定的直流电流扫描里同时把定子电阻**和**逆变器死区电压辨识出来。
+ * @brief [zh] 从一个稳定的直流电流扫描里同时把定子电阻 **和** 逆变器死区电压辨识出来。
  *
  *   办法是把电压方程里那两项分开。
  *
  *   为什么是两个未知数而不是一个。堵转、电流稳定时，指令满足 `v = rs·i + deadtime_v`：绕组吃掉 `rs·i`，逆变器不管电流大
- *   小都吃掉 `deadtime_v`。 在**一个**电流上测是分不开这两项的——死区电压差 10 % 和在那个点上 `rs` 差 10 % 完全等价。两
- *   个电流就能分开：随 `i` 的斜率是 `rs`，截距是 `deadtime_v`。
+ *   小都吃掉 `deadtime_v`。 在 **一个** 电流上测是分不开这两项的——死区电压差 10 % 和在那个点上 `rs` 差 10 % 完全等价。
+ *   两个电流就能分开：随 `i` 的斜率是 `rs`，截距是 `deadtime_v`。
  *
- *   两个它离不开的条件，都是物理的而不是数值的。（1）**电流要在淡出带以上**： 几十毫安以下损失还不是阶跃（实测它在 21
+ *   两个它离不开的条件，都是物理的而不是数值的。（1） **电流要在淡出带以上** ： 几十毫安以下损失还不是阶跃（实测它在 21
  *   mA 到 86 mA 之间从 `(4/π)·deadtime_v` 的 2.7 % 走到 97 %），所以小电流样本量的是淡出、不是阶跃， 会把 `rs` 往下带。
- *   （2）**单极性**：`sign(i)` 在整个扫描里必须不变，否则截距中途 变号，拟合没有意义。
+ *   （2） **单极性** ：`sign(i)` 在整个扫描里必须不变，否则截距中途 变号，拟合没有意义。
  *
  * @note [en] `rs` is measured at **whatever temperature the winding is at**; the plant does not report it. That is the
  *            point of measuring instead of reading a nameplate: copper moves about 0.4 %/K, so a 20 K error in the
  *            assumed temperature is an 8 % error in `rs`, which is larger than the whole tolerance of the observers
  *            built on it.
- * @note [zh] `rs` 是在**绕组当时的温度**下测出来的；plant 不会告诉你温度。这正是"测"而不是 "抄铭牌"的理由：铜的温度系数
- *            约 0.4 %/K，假设温度差 20 K 就是 `rs` 差 8 %，比建立 在它上面的观测器的整个容差还大。
+ * @note [zh] `rs` 是在 **绕组当时的温度** 下测出来的；plant 不会告诉你温度。这正是"测"而不是 "抄铭牌"的理由：铜的温度系
+ *            数约 0.4 %/K，假设温度差 20 K 就是 `rs` 差 8 %，比建立 在它上面的观测器的整个容差还大。
  * @context [en] Commissioning, standstill, once per board.
  * @context [zh] 整定阶段，堵转，每块板一次。
  * @since 0.1.0
@@ -166,8 +166,8 @@ class RsEstimator final {
      * @param v_command [zh] 当时命令的电压幅值，V。
      * @param i_current [en] the settled current **magnitude** in A; it must be the same component `v_command` refers to
      *                       (the projection along the current), because that is the pair the voltage equation joins.
-     * @param i_current [zh] 稳定后的电流**幅值**，A；它必须与 `v_command` 指的是同一个分量（沿电流方向的 投影），因为电
-     *                       压方程连接的是这一对。
+     * @param i_current [zh] 稳定后的电流 **幅值** ，A；它必须与 `v_command` 指的是同一个分量（沿电流方向的 投影），因为
+     *                       电压方程连接的是这一对。
      * @return [en] true if the sample was used.
      * @return [zh] 该采样是否被采用。
      * @since 0.1.0
@@ -270,11 +270,11 @@ class RsEstimator final {
  *   the measurement chain has (sensor gain, a residual current, an inverter drop that survives at zero current). The
  *   offset is reported rather than assumed away.
  *
- * @brief [zh] 从**零电流**旋转所需电压在两个以上转速下的值，把转子磁链辨识出来。
+ * @brief [zh] 从 **零电流** 旋转所需电压在两个以上转速下的值，把转子磁链辨识出来。
  *
  *   为什么零电流、为什么两个转速。电流保持为零时电压方程塌成 `v = ω_e·ψf`—— 没有 `rs·i` 项、也没有死区项，因为不过电流
- *   的桥臂没有损失可藏。如果 `v` 是准的， 一个转速就够；两个转速给的是**斜率**，它把测量链上任何固定偏置都吸收掉（传感
- *   器 增益、残余电流、零电流下依然存在的逆变器压降）。偏置是**报出来**的，不是假设掉 的。
+ *   的桥臂没有损失可藏。如果 `v` 是准的， 一个转速就够；两个转速给的是 **斜率** ，它把测量链上任何固定偏置都吸收掉（传
+ *   感器 增益、残余电流、零电流下依然存在的逆变器压降）。偏置是 **报出来** 的，不是假设掉 的。
  *
  * @note [en] The caller must actually hold the current at zero; that is not something this estimator can check, and it
  *            is the whole assumption. What it *can* check is that the samples it is handed are within `i_zero_max_a` of
@@ -444,22 +444,22 @@ class FluxEstimator final {
  *   therefore reports the two separately and refuses the one it cannot support, rather than fitting a slope to noise
  *   and calling it a gain.
  *
- * @brief [zh] 不需要基准就能得到一条电流通道的**零漂**，有基准才能得到它的**增益**。
+ * @brief [zh] 不需要基准就能得到一条电流通道的 **零漂** ，有基准才能得到它的 **增益** 。
  *
- *   为什么两者不对称，以及为什么这正是要点。零漂有一个免费的基准：命令零电流，通道读到的 **就是**它的零漂，因为真值已知
- *   为零。增益没有：`reading = gain·truth + offset` 而 `truth` 未知时，在**任何**电流上都是欠定的，所以增益需要一个外部
- *   真值（钳形表、串联 分流器，或另一条已经校正过的通道）。于是估计器把两者分开报，并且拒绝它支持不了的那个， 而不是拿
- *   噪声拟合一条斜率再叫它增益。
+ *   为什么两者不对称，以及为什么这正是要点。零漂有一个免费的基准：命令零电流，通道读到的 **就是** 它的零漂，因为真值已
+ *   知为零。增益没有：`reading = gain·truth + offset` 而 `truth` 未知时，在 **任何** 电流上都是欠定的，所以增益需要一个
+ *   外部真值（钳形表、串联 分流器，或另一条已经校正过的通道）。于是估计器把两者分开报，并且拒绝它支持不了的那个， 而不
+ *   是拿噪声拟合一条斜率再叫它增益。
  *
  * @note [en] The three-wire constraint is a diagnostic, not a calibration. The true phase currents sum to zero, so the
  *            **readings** sum to the sum of the offsets: `sum(offset)` is measurable with no reference at all. But it
  *            is one equation for three unknowns -- it can tell you that something is wrong, and not which phase is
  *            wrong. Splitting it needs the per-channel `add_zero()`.
- * @note [zh] 三线约束是**诊断**，不是标定。真实相电流之和为零，所以**读数**之和就是 零漂之和：`Σoffset` 完全不需要基准
- *            就能测出来。但那是三个未知数的一个方程——它能告诉你 "有问题"，不能告诉你"哪一相"。要拆开就得用逐通道的
+ * @note [zh] 三线约束是 **诊断** ，不是标定。真实相电流之和为零，所以 **读数** 之和就是 零漂之和：`Σoffset` 完全不需要
+ *            基准就能测出来。但那是三个未知数的一个方程——它能告诉你 "有问题"，不能告诉你"哪一相"。要拆开就得用逐通道的
  *            `add_zero()`。
  * @context [en] Commissioning, first, before any angle alignment: an offset corrupts the alignment (
- * @context [zh] 整定阶段，**最先做**，在任何角度对齐之前：零漂会污染 对齐全过程).
+ * @context [zh] 整定阶段， **最先做** ，在任何角度对齐之前：零漂会污染 对齐全过程).
  * @since 0.1.0
  * @exporter
  */
@@ -685,14 +685,14 @@ class CurrentSenseCalibrator final {
  *   4e-4 V*s` for a 1 A step, that is 2.4 % -- inside the tolerance, but it is a *known direction*, so it is documented
  *   rather than hoped away.
  *
- * @brief [zh] 从电压阶跃交付的**磁链**求增量电感，`L = ∫(v − rs·i)/Δi`，而不是靠微分电流。
+ * @brief [zh] 从电压阶跃交付的 **磁链** 求增量电感，`L = ∫(v − rs·i)/Δi`，而不是靠微分电流。
  *
  *   为什么用积分。20 kHz 电流传感器的 `di/dt` 是两个几乎相等的带噪数之差再乘 `1/dt`： 噪声被放大 `1/dt` 倍，要有滤波
  *   器，而滤波器的群延迟又会带来偏差。积分形式每个样本 用一次、不加权、不用滤波：`∫(v_delivered − rs·i)dt = L·Δi` 是 **
  *   精确**的，因为 `L·di/dt` 这一项就是 `L·i` 的导数。
  *
  *   `v_delivered` 是什么，以及随之而来的误差。逆变器交付 `v_cmd − deadtime_v·sign(i)`， 本积分器用 `RsEstimator` 量到的
- *   `deadtime_v` 把它减掉。电流过零期间真实损失**小** 于 `deadtime_v`（那就是淡出带），所以积分在穿越时间 `t_cross` 内
+ *   `deadtime_v` 把它减掉。电流过零期间真实损失 **小** 于 `deadtime_v`（那就是淡出带），所以积分在穿越时间 `t_cross` 内
  *   减多了， 磁链偏低约 `deadtime_v·t_cross`。0.48 V、20 µs，对 1 A 阶跃的 `L·Δi = 4e-4 V·s` 是 2.4 %——在容差内，但**方
  *   向是已知的**，所以要写下来而不是 指望它不存在。
  *
@@ -781,7 +781,7 @@ class IncrementalInductanceEstimator final {
      * @param v_command [en] the voltage commanded on the axis being stepped, V.
      * @param v_command [zh] 被阶跃的那个轴上的电压指令，V。
      * @param i_mean [en] the current on that axis **averaged over the period**, A -- not an instantaneous sample.
-     * @param i_mean [zh] 该轴上的电流在该周期上的**平均值**， A——不是瞬时采样。
+     * @param i_mean [zh] 该轴上的电流在该周期上的 **平均值** ， A——不是瞬时采样。
      * @param dt_s [en] the length of that period, s.
      * @param dt_s [zh] 该周期的长度，s。
      * @return [en] true if the sample was used.

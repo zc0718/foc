@@ -5,7 +5,7 @@
 // independent of whatever correction offset the drive happens to be applying.
 //
 // W7-a 增量 2：索引标记作为 HAL 的可选能力。
-// 标记是把连续角度变成绝对角度的东西，因此要紧的不是"它存在"，而是它表现得像**边沿**、像**物理特征**：
+// 标记是把连续角度变成绝对角度的东西，因此要紧的不是"它存在"，而是它表现得像 **边沿** 、像 **物理特征** ：
 // 每圈恰好一个脉冲、转子静止时没有脉冲、并且与驱动器当时应用的校正偏置无关。
 //
 // The criterion, fixed before the numbers below were measured:
@@ -140,7 +140,7 @@ TEST(PositionIndex, APositionCommandNeedsAReferenceRatherThanASensor) {
     // to "an absolute angle exists". Whether the loop then tracks is a different question, measured on the fusion-chain
     // rig where a real sensor-less rotation exists; asserting it here would need a rotation this rig does not produce,
     // and the rotor is placed by hand precisely so that the reference and the mark can be driven independently.
-    // 增量 3 的主张，且仅是这一条：位置指令的**准入**从"有传感器"变为"有绝对角度"。闭环随后是否跟踪是另一个问题，
+    // 增量 3 的主张，且仅是这一条：位置指令的 **准入** 从"有传感器"变为"有绝对角度"。闭环随后是否跟踪是另一个问题，
     // 在有真实无感旋转的融合链路台架上测量；在这里断言它需要本台架产生不了的旋转，而转子刻意是手工摆放的，正是为了让
     // 参考与标记能被独立驱动。
     sil::PmsmPlant plant(nominal_spec_params());
@@ -172,7 +172,7 @@ TEST(PositionIndex, APositionCommandNeedsAReferenceRatherThanASensor) {
 
     // Install the mark and walk the rotor across it. The observer is not producing a rotation here, so what this
     // establishes is the origin, not a tractable angle -- see the note above.
-    // 装上一个标记并把转子移过它。此处观测器没有产生旋转，因此这一步建立的是**原点**，不是可用的角度——见上方说明。
+    // 装上一个标记并把转子移过它。此处观测器没有产生旋转，因此这一步建立的是 **原点** ，不是可用的角度——见上方说明。
     hal.position.set_index_position_mech_rad(0.5F);
     for (int i = 0; i <= 200; ++i) {
         place_rotor(plant, 0.0F + (0.005F * static_cast<float>(i)));

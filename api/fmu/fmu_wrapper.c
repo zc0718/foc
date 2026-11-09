@@ -66,7 +66,7 @@ typedef struct {
     // The step this slave *is*: one control period of the motor it just created, read back from the motor rather
     // than written here twice. A gains tuning belongs to a period, so a master that changes the period is not
     // driving the same controller -- see `fmi2DoStep`.
-    // 这个 slave **就是**的步长：它所创建的那台电机的一个控制周期，从电机里读回来而不是在这里再写一遍。
+    // 这个 slave **就是** 的步长：它所创建的那台电机的一个控制周期，从电机里读回来而不是在这里再写一遍。
     // 一套增益属于一个周期，所以改变周期的主控开动的已经不是同一个控制器了——见 `fmi2DoStep`。
     fmi2Real fixed_step_s;
     fmi2Real expected_point_s;
@@ -98,7 +98,7 @@ static float on_read_velocity(void *user) { return (float)((Instance *)user)->sp
  * report. Required by the library rather than optional, so this function is the FMU *saying* that -- one line here
  * instead of a NULL that would mean the same thing by accident. */
 /* 功率级的故障输出。FMU 建模的是一个健康逆变器：没有栅极驱动器、没有去饱和、没有东西可报。库把它当必需而不是可
- * 选，所以这个函数就是 FMU 在**说**这件事——一行写在这里，而不是一个碰巧含义相同的 NULL。 */
+ * 选，所以这个函数就是 FMU 在 **说** 这件事——一行写在这里，而不是一个碰巧含义相同的 NULL。 */
 static int32_t on_read_drive_fault(void *user) {
     (void)user;
     return 0;
@@ -244,7 +244,7 @@ fmi2Status fmi2DoStep(fmi2Component c, fmi2Real currentCommunicationPoint, fmi2R
     // were computed for. The refusal is what makes the declaration true, and it is deliberately loud (an error, not
     // a warning): a master that needs a different rate must be told, not accommodated with a different controller.
     // 这个 slave 声明了 `canHandleVariableCommunicationStepSize="false"`，而一个没人执行的声明正是本检查要消除的
-    // 缺陷：0.1.12 之前 XML 说 `true`，而步长被直接喂给 `foc_tick`，于是一个变步长主控会**掠静地**重新调参控制器
+    // 缺陷：0.1.12 之前 XML 说 `true`，而步长被直接喂给 `foc_tick`，于是一个变步长主控会 **掠静地** 重新调参控制器
     // ——增益属于它们当初计算时用的那个周期。让声明成真的是那次拒绝，而它故意是大声的（错误而不是警告）：需要别的
     // 速率的主控应该被告知，而不是被一个不同的控制器迎过去。
     if (s->fixed_step_s > 0.0) {

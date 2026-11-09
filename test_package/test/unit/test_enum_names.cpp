@@ -17,20 +17,20 @@
 // could *receive* 8 and could not *name* it. `-Wswitch` cannot see this (the naming switch was complete), and a
 // reflection library could not see it either. A test that walks the shipped ABI can.
 //
-// 这个文件针对的不是一个错的数，而是一个**缺失**的数：C++ 侧加了枚举值、给它命名的 switch 没跟上，ABI 就回答 "?" ——
+// 这个文件针对的不是一个错的数，而是一个 **缺失** 的数：C++ 侧加了枚举值、给它命名的 switch 没跟上，ABI 就回答 "?" ——
 // 而 "?" 是一个完全合法的字符串，于是下游所有比较照旧工作，什么都不会红。计划里为此准备引入一个反射库
 // （`magic_enum`）。实测两次否掉了它：
 //
-//   1. `-Wall -Werror` 里已经让"漏一个 `case`"成为**编译错误**：命名 switch 没有 `default:` 标签，`-Wswitch` 会开火。
+//   1. `-Wall -Werror` 里已经让"漏一个 `case`"成为 **编译错误** ：命名 switch 没有 `default:` 标签，`-Wswitch` 会开火。
 //      2026-11-06 实测：给 `FaultCode` 加一个 `InjectedGap`，`bridge.cpp` 拒绝编译，报
 //      `error: enumeration value 'InjectedGap' not handled in switch [-Werror=switch]`。
-//   2. 真正需要检查的面不是 C++ 枚举，而是**镜像它的那个 C 枚举** —— 而任何反射库都看不见那个镜像，因为它与 C++ 类型
+//   2. 真正需要检查的面不是 C++ 枚举，而是 **镜像它的那个 C 枚举** —— 而任何反射库都看不见那个镜像，因为它与 C++ 类型
 //      之间唯一的联系是一条注释。
 //
 // 第 2 点不是假想：`foc_fault_t` 停在 `FOC_FAULT_LOST_SYNC = 7`，而 `FaultCode` 已经带上了 `DriveFault`、
 // `Watchdog`、`ClockLost`（8、9、10）。三个都有生产者（nFAULT 引脚、看门狗），三个都经
 // `bridge.cpp` 的 `out->fault = static_cast<std::int32_t>(result.fault)` 交到调用方手里 —— 也就是说一个 C 客户端
-// **收得到** 8，却**叫不出**它。`-Wswitch` 看不见这件事（命名 switch 是完整的），反射库同样看不见。只有穿过
+// **收得到** 8，却 **叫不出** 它。`-Wswitch` 看不见这件事（命名 switch 是完整的），反射库同样看不见。只有穿过
 // 发布 ABI 走一遍的用例能看见。
 
 #include <cstdint>
@@ -128,9 +128,9 @@ auto report(const char* what, const Walk& result) -> std::string {
  *   三条腿，而第三条正是计划里缺的那条。(a) 命名 switch 对 `0..FOC_FAULT_CLOCK_LOST` 每个值都完整，且名字互不相同 —— 不
  *   重复是要紧的，因为调用方拿这个字符串去打印、去和日志做差异。(b) `FOC_FAULT_CLOCK_LOST + 1` 回答 `"?"`，于是声明的取
  *   值域与 switch 在边界上和在中间都一致。(c) 每个 C 宏等于它镜像的 C++ 枚举值。第 (c) 条正是 `-Wswitch` 与任何反射库都
- *   看不见的那条，而它在 2026-11-06 对 `DriveFault`/`Watchdog`/`ClockLost` 是**不成立**的：那三个宏根本不存在。
+ *   看不见的那条，而它在 2026-11-06 对 `DriveFault`/`Watchdog`/`ClockLost` 是 **不成立** 的：那三个宏根本不存在。
  *
- *   **不宣称**：一个追加在末值之后的新枚举值，**并且**给 switch 加了 `default:` 标签，**并且**把
+ *   **不宣称** ：一个追加在末值之后的新枚举值， **并且** 给 switch 加了 `default:` 标签， **并且** 把
  *   `foc_bridge_fault_name` 里的范围检查放宽——这三件事凑齐了仍能过本用例。没有反射就抓不到这种组合，而它需要的三步里有
  *   两步半都被编译器盯着；而关闭这个角落的代价是一个让每个消费者多编 277 个头的依赖（见 `.github/project/deps.json`），
  *   这个仓库不为剩下的那个角付这个价。

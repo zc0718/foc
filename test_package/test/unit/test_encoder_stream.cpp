@@ -2,7 +2,7 @@
 // plausible angle", because a position controller will act on that. So every criterion below is about a *refusal* producing
 // no value at all, and the CRC's teeth are proved by flipping every single bit rather than by spot-checking one.
 // F20：面向位链路上的绝对值编码器帧。这里危险的失败不是"崩了"——而是"给出了一个看起来合理的角度"，因为位置控制器会据此动作。
-// 所以下面每条判据都是关于"拒绝且不产生任何值"的，而 CRC 的牙齿靠**逐位翻转**证明，不靠抽查一位。
+// 所以下面每条判据都是关于"拒绝且不产生任何值"的，而 CRC 的牙齿靠 **逐位翻转** 证明，不靠抽查一位。
 
 #include <cmath>
 #include <cstring>
@@ -83,7 +83,7 @@ TEST(EncoderStream, DecodesTheTransmittedCountsExactly) {
 // The CRC's teeth, proved exhaustively: a six-bit CRC detects **every** single-bit error, so every one of the 24 positions must
 // be caught. A spot check of one bit would also pass for a CRC that happened to be an identity on that bit, and the exhaustive
 // version costs nothing at this frame size.
-// CRC 的牙齿，用穷举证明：六位 CRC 检出**每一个**单比特错误，所以 24 个位置一个都不能漏。抽查一位也能被那种"恰好在该位上等价于
+// CRC 的牙齿，用穷举证明：六位 CRC 检出 **每一个** 单比特错误，所以 24 个位置一个都不能漏。抽查一位也能被那种"恰好在该位上等价于
 // 恒等"的 CRC 通过，而在这个帧长下穷举不要任何代价。
 TEST(EncoderStream, EverySingleBitFlipIsCaught) {
     const EncoderLayout shape = layout();
@@ -113,9 +113,9 @@ TEST(EncoderStream, EverySingleBitFlipIsCaught) {
 // alignment has to be the *framing* layer's job: the length check refuses a stream that is not this frame's length, and the
 // protocol's own start/stop bits are what a real link uses to know where a frame begins. Recording this as a measured boundary is
 // what stops the next person from "strengthening the CRC" to fix a problem the CRC was never able to see.
-// 靠"值看起来对不对"抓不住的失败，是**错开一位**的码流，而本用例的诚实结果是：**CRC 抓不住它**。六位 CRC 检出每一个单比特错误
-// （上面那条用例穷举证明了这一点）以及长度不超过六位的突发，但错位两者都不是——它是另一条报文，而在实测的这一帧上它**通过**。
-// 所以对齐只能是**成帧**层的活：长度检查拒绝长度不对的码流，而协议自己的起始/停止位才是真实链路用来知道帧从哪里开始的东西。
+// 靠"值看起来对不对"抓不住的失败，是 **错开一位** 的码流，而本用例的诚实结果是： **CRC 抓不住它** 。六位 CRC 检出每一个单比特错误
+// （上面那条用例穷举证明了这一点）以及长度不超过六位的突发，但错位两者都不是——它是另一条报文，而在实测的这一帧上它 **通过** 。
+// 所以对齐只能是 **成帧** 层的活：长度检查拒绝长度不对的码流，而协议自己的起始/停止位才是真实链路用来知道帧从哪里开始的东西。
 // 把它记成一条量出来的边界，是为了让下一个人不去"加固 CRC"来修一个 CRC 本来就看不见的问题。
 TEST(EncoderStream, TheLengthIsRefusedAndAShiftIsTheFramingLayersProblemNotTheCrc) {
     const EncoderLayout shape = layout();
@@ -168,7 +168,7 @@ TEST(EncoderStream, TheLengthIsRefusedAndAShiftIsTheFramingLayersProblemNotTheCr
 // while a **gap** is not (`4090 -> 5` could be +11 or +4107, and the frames in between are gone). Both are asserted, because a
 // version that treated every decrease as a wrap would quietly invent a revolution, and a version that treated a wrap as a gap
 // would refuse a perfectly healthy rotation.
-// 拼接器的两个难例，而它们彼此相反：**回绕**是算术（`4090 -> 5` 是 +11 个计数），而**缺口**不是（`4090 -> 5` 可能是 +11，也可能是
+// 拼接器的两个难例，而它们彼此相反： **回绕** 是算术（`4090 -> 5` 是 +11 个计数），而 **缺口** 不是（`4090 -> 5` 可能是 +11，也可能是
 // +4107，中间那些帧已经不在了）。两者都断言，因为"把每一次下降都当回绕"的版本会悄悄编造一圈，而"把回绕当缺口"的版本会拒绝一次
 // 完全健康的转动。
 TEST(EncoderStream, AWrapIsArithmeticButAGapIsReportedAndNotGuessed) {
@@ -200,7 +200,7 @@ TEST(EncoderStream, AWrapIsArithmeticButAGapIsReportedAndNotGuessed) {
     // 2500` is -1590 raw, i.e. +2506 as a wrap), and *both* readings exceed the declared 500 counts -- which is what makes it a
     // gap rather than a fast move.
     // 现在是一个真的缺口：远于轴在一帧内能走的距离。原始差值还要先解释一次（`4090 -> 2500` 原样是 −1590，按回绕是 +2506），而
-    // **两种**读法都超过声称的 500 个计数——这才让它成为缺口而不是一次快速移动。
+    // **两种** 读法都超过声称的 500 个计数——这才让它成为缺口而不是一次快速移动。
     const auto before_gap = assembler.unwrapped();
     const auto gap = assembler.push(2500U, true);
     EXPECT_EQ(ErrorCode::State, gap.status);
@@ -305,11 +305,11 @@ TEST(EncoderStream, RefusesLayoutsAndBuffersThatCannotDescribeAFrame) {
 //
 // 线上格式，用一个本仓库没人写过的写端核对。
 //
-// 上面所有用例都是**对着自己**钉 MSB-first 约定的：`pack()` 用自己的 lambda 移位写出、`decode_biss()` 经 `bit_at()`
+// 上面所有用例都是 **对着自己** 钉 MSB-first 约定的：`pack()` 用自己的 lambda 移位写出、`decode_biss()` 经 `bit_at()`
 // 读回，于是一个"自洽但与世界不同"的约定——比如 LSB-first——会让它们全部保持绿色，因为两侧一起挪了。对面向位的协议
-// 来说这不是假想风险：约定就是接口，而它恰恰是电缆另一端的调用方**无法重新协商**的那件东西。
+// 来说这不是假想风险：约定就是接口，而它恰恰是电缆另一端的调用方 **无法重新协商** 的那件东西。
 //
-// 所以这条用例用 `etl::bit_stream_writer`——一个没见过本文件的人写的、实装过的实现——拼同一帧，并要求**字节**相同，
+// 所以这条用例用 `etl::bit_stream_writer`——一个没见过本文件的人写的、实装过的实现——拼同一帧，并要求 **字节** 相同，
 // 而不只是双方各自往返一次。ETL 在这里是证人不是依赖：它只活在测试树里，因为实测 `etl/bit_stream.h` 会让一个消费者
 // TU 多拉 348 个头、多花 391 ms（`.github/project/deps.json`）。CRC 位仍由我们的 `crc6` 给出：这条用例见证的是位的
 // *布局*，假装不是，它就变成了第二个 CRC 测试而不是第一个码流测试。

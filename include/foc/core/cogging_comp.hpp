@@ -20,8 +20,8 @@ namespace core {
  *
  * @brief [zh] 补偿器要抵消的齿槽转矩的一个谐波：`amplitude · sin(order·θ_mech + phase)`。
  *
- *   是**每机械转**的次数。补偿器与注入它的被控对象必须用同一套索引，否则补偿会悄无声息地什么都不抵消——而 "错一个极对数"
- *   是弄错它的最自然方式，所以这个类型与 SIL 注入共用，而不是在这里重新声明一遍。
+ *   是 **每机械转** 的次数。补偿器与注入它的被控对象必须用同一套索引，否则补偿会悄无声息地什么都不抵消——而 "错一个极对
+ *   数" 是弄错它的最自然方式，所以这个类型与 SIL 注入共用，而不是在这里重新声明一遍。
  * @since 0.1.9
  * @exporter
  */
@@ -49,7 +49,7 @@ struct CoggingCompHarmonic final {
  * @note [zh] `fade_from_hz` / `fade_to_hz` 是 SIL 测量给出数字的那条频率边界：速度环守住 10 rad/s 机械时，注入的 4 mN·m
  *            以 `T_cog/Kt` 重现于 q 轴电流（实测 0.079 A，预测 0.080 A），但 80 rad/s（6 次 76 Hz，远高于 250 rad/s 的
  *            速度环）处只剩那份份额的 49 %。超过电流环带宽之后，要求纹波电流买到的是热和相移的电流而不是平稳的运动，所
- *            以淡出是一个 **在哪里停**的决定，而且它是配置出来的，不是假设出来的。`fade_from_hz == 0` 表示不淡出。
+ *            以淡出是一个 **在哪里停** 的决定，而且它是配置出来的，不是假设出来的。`fade_from_hz == 0` 表示不淡出。
  * @since 0.1.9
  * @exporter
  */
@@ -76,7 +76,7 @@ struct CoggingCompConfig final {
  */
 struct CoggingCompOutput final {
     ErrorCode status; ///< [en] `Ok`, or why not. [zh] `Ok`，或为什么不是。
-    float iq_a;       ///< [en] current to **add** to the q-axis reference, A. [zh] 要**加**到 q 轴参考上的电流，A。
+    float iq_a;       ///< [en] current to **add** to the q-axis reference, A. [zh] 要 **加** 到 q 轴参考上的电流，A。
     float torque_nm;  ///< [en] the cancelled torque before any limit, N*m. [zh] 未被任何限制影响前的被抵消转矩，N·m。
     float gain;       ///< [en] the frequency fade in [0, 1]. [zh] 频率淡出系数，[0, 1]。
     bool clipped;     ///< [en] the current ceiling trimmed the answer. [zh] 电流上限削掉了答案的一部分。
@@ -124,16 +124,16 @@ struct CoggingCompInput final {
  *   and at the flux-nulling current `psi_f + (ld-lq)*id = 0` the machine cannot produce torque at all, so the offset is
  *   refused rather than divided by.
  *
- * @brief [zh] 转矩纹波前馈：由角度算出能产生齿槽**负值**的电流，从参考侧抵消一张齿槽表，**不等速度误差**。
+ * @brief [zh] 转矩纹波前馈：由角度算出能产生齿槽 **负值** 的电流，从参考侧抵消一张齿槽表， **不等速度误差** 。
  *
  *   **为什么是前馈而不是修正。** 闭环实测（一整转的采样按机械角投影）：10 rad/s 处注入 4 mN·m 的 6 次分量，实测 q 轴电
- *   流里重现 **0.079 A**，而 `T_cog/Kt` 预测 **0.080 A**。所以环路**确实**会回答齿槽——但只在转子已经被推动之后，代价是
- *   那一路上它引起的速度纹波。前馈一点也不用付：它早一个周期就从角度算出同一份电流，从不给误差发生的机会。
+ *   流里重现 **0.079 A** ，而 `T_cog/Kt` 预测 **0.080 A** 。所以环路 **确实** 会回答齿槽——但只在转子已经被推动之后，代
+ *   价是那一路上它引起的速度纹波。前馈一点也不用付：它早一个周期就从角度算出同一份电流，从不给误差发生的机会。
  *
  *   **增益是凸极机的，不是铭牌的。** `T = 1.5·p·(ψf + (Ld−Lq)·id)·iq`，所以产生某个转矩所需的电流取决于 `id`。只用 `Kt
- *   = 1.5·p·ψf` 会把答案按 `(ψf + (Ld−Lq)·id)/ψf` 的比例缩放——在 F32 那台档案机上 `id = −1.8 A` 时该比例是 **2.64**，于
- *   是天真的增益要了机器实际需要的 **2.64 倍**电流，纹波**被翻到反向、幅值是原来的 1.5 倍**。比什么都不做更糟，而且它恰
- *   好落在最需要补偿的地方（高速、d 轴有电流）。
+ *   = 1.5·p·ψf` 会把答案按 `(ψf + (Ld−Lq)·id)/ψf` 的比例缩放——在 F32 那台档案机上 `id = −1.8 A` 时该比例是 **2.64** ，
+ *   于是天真的增益要了机器实际需要的 **2.64 倍** 电流，纹波 **被翻到反向、幅值是原来的 1.5 倍** 。比什么都不做更糟，而
+ *   且它恰好落在最需要补偿的地方（高速、d 轴有电流）。
  *
  *   **在哪里停。** 超过电流环带宽之后，要求到的纹波电流买到的是热与相移电流而不是平稳运动：同一次测量显示环路自己那份齿
  *   槽在 76 Hz 纹波处已降到 49 %。`fade_from_hz`/`fade_to_hz` 把这个决定做成配置项，并把淡出量报出来，好让轨迹区分「我
@@ -190,8 +190,8 @@ class CoggingCompensation final {
      * @note [en] The offset is **added** to `iq_command_a`, and the ceiling is applied to the *sum*, because that is
      *            what the current loop will see. Clipping the offset alone would let the total exceed the limit while
      *            reporting a happy offset.
-     * @note [zh] 偏置是**加**到 `iq_command_a` 上的，上限作用在**和**上，因为电流环看到的就是那个和。只对偏置削顶会让总
-     *            电流越限，却报出一个愉快的偏置。
+     * @note [zh] 偏置是 **加** 到 `iq_command_a` 上的，上限作用在 **和** 上，因为电流环看到的就是那个和。只对偏置削顶会
+     *            让总电流越限，却报出一个愉快的偏置。
      * @since 0.1.9
      */
     [[nodiscard]] auto offset(const CoggingCompInput& in) const noexcept -> CoggingCompOutput;

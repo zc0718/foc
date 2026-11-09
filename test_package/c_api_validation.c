@@ -291,7 +291,7 @@ int main(void) {
          * everything, and the two positive assertions were the only ones that could tell. They did: this block was
          * written against `motor` and `c_api_validation` failed on exactly those two lines. A refusal that a dead
          * handle also produces is not evidence about the API.
-         * 需要一个**新句柄**，而这正是这一段的意义：`motor` 在本文件开头就销毁了，于是下面每一行 `== FOC_ERR_PARAM`
+         * 需要一个 **新句柄** ，而这正是这一段的意义：`motor` 在本文件开头就销毁了，于是下面每一行 `== FOC_ERR_PARAM`
          * 都会因为错误的原因通过——失效句柄对一切问题都答 PARAM，只有那两条正向断言能分辨。它们确实分辨出来了：这一段
          * 原先是用 `motor` 写的，`c_api_validation` 恰好在这两行上失败。一个失效句柄也会产生的拒绝，不是关于 API 的
          * 证据。 */

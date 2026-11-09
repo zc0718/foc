@@ -126,13 +126,13 @@ TEST(Mtpv, TheCurrentLimitedPointIsTheMaximumOnTheCircle) {
     // On the circle the two gradients are not parallel -- the current ceiling is not a curve the torque is tangent to --
     // so the MTPA point must NOT pass the tangency test. Without this the test above could be satisfied by a point that
     // happens to be stationary for the voltage ellipse. 在圆上两梯度并不平行——电流上限不是转矩与之相切的曲线——所以 MTPA
-    // 点必须**不能**通过相切检验。没有这一条， 上面那条测试可能被"恰好对电压椭圆驻定"的点满足。
+    // 点必须 **不能** 通过相切检验。没有这一条， 上面那条测试可能被"恰好对电压椭圆驻定"的点满足。
     EXPECT_GT(tangency_residual(config, mtpa.id_a, mtpa.iq_a), 1.0e-3F);
 }
 
 // The base speed is *derived*: `v_max` over the flux magnitude at the current-limited point. The check is that the
 // point that decides it really does sit on the ellipse at that speed, i.e. the formula and the geometry agree.
-// 基速是**算出来的**：`v_max` 除以电流受限点处的磁链幅值。检验的是"决定它的那个点在那个转速下真的落在椭圆上"，
+// 基速是 **算出来的** ：`v_max` 除以电流受限点处的磁链幅值。检验的是"决定它的那个点在那个转速下真的落在椭圆上"，
 // 即公式与几何一致。
 TEST(Mtpv, TheBaseSpeedIsWhereTheCurrentLimitedPointTouchesTheVoltageEllipse) {
     const MtpvConfig config = in_domain_config();
@@ -220,7 +220,7 @@ TEST(Mtpv, EveryReturnedPointIsInsideBothCeilings) {
 // point the torque gradient is parallel to the voltage-ellipse gradient. It is checked on the *returned* point,
 // against gradients computed here from the same nameplate -- so a sign error, a swapped `ld`/`lq`, or a missed
 // reluctance term all break it. 这项能力以之命名的那条判据，用无法藏住错误规律的容差写出来：在 MTPV
-// 点上转矩梯度与电压椭圆梯度平行。它检验的是 **返回的**点，梯度在这里由同一套铭牌独立算出——所以符号错误、`ld`/`lq`
+// 点上转矩梯度与电压椭圆梯度平行。它检验的是 **返回的** 点，梯度在这里由同一套铭牌独立算出——所以符号错误、`ld`/`lq`
 // 写反、漏掉磁阻项，都会让它红。
 TEST(Mtpv, InTheVoltageOnlyRegionTheTwoGradientsAreParallel) {
     const MtpvConfig config = in_domain_config();
@@ -336,7 +336,7 @@ TEST(Mtpv, TheReferenceHasNoStepAcrossTheRegionBoundaries) {
 // The falsifier for the middle region: the point that a drive would hold if it only ever looked at the current limit
 // is not merely suboptimal there, it is *unreachable*. This is the mistake the first version made, written down so
 // that removing the knee cannot be done quietly.
-// 中间区的反证：一台只看电流上限的驱动器在那里守住的点不只是次优，而是**够不到**。这正是第一版犯的错误，写在这里，
+// 中间区的反证：一台只看电流上限的驱动器在那里守住的点不只是次优，而是 **够不到** 。这正是第一版犯的错误，写在这里，
 // 好让删掉拐点这件事无法悄悄发生。
 TEST(Mtpv, StayingOnTheCurrentLimitThereWouldOvervoltTheDrive) {
     const MtpvConfig config = in_domain_config();
@@ -360,7 +360,7 @@ TEST(Mtpv, StayingOnTheCurrentLimitThereWouldOvervoltTheDrive) {
 // flux, which is the statement the law actually makes; asserting equal currents would be asserting the wrong physics.
 // 同步磁阻机没有磁钢，磁钢项消失，磁阻解必须自己出来。`psi_f = 0` 时转矩是 `(Ld−Lq)·id·iq`、约束是 `(Ld·id)² +
 // (Lq·iq)² = V²`，所以极大值在**磁链**上两轴相等处——`|Ld·id| = |Lq·iq| = V/√2`——那是磁链空间的 45°，
-// 而由于电感不等，它在电流空间里**不是** 45°。断言写在磁链上，那才是这条律真正说的；断言电流相等是在断言错的物理。
+// 而由于电感不等，它在电流空间里 **不是** 45°。断言写在磁链上，那才是这条律真正说的；断言电流相等是在断言错的物理。
 TEST(Mtpv, ASynchronousReluctanceMachineSplitsItsFluxEvenly) {
     MtpvConfig config = in_domain_config();
     config.params.psi_f = 0.0F;

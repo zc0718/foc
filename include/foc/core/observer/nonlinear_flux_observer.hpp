@@ -23,9 +23,9 @@ namespace core {
  *
  * @brief [zh] 非线性磁链观测器：与 `BackEmfObserver` 相同的积分，外加一项把估计的永磁磁链幅值拉回铭牌值的修正。
  *
- *   差别就一行，用文字说：开环观测器积分 `v − Rs·i`，然后**指望**结果停在半径 `psi_f` 的圆上。没有 任何东西在保证这一点
- *   ——`Rs` 偏了会把那个圆拉歪、载波会让它抖、而积分器从不忘记收到过什么。 本观测器沿磁链矢量加一项修正：`|eta| = psi_f`
- *   时为零，否则往回推，于是那个圆有了恢复力。
+ *   差别就一行，用文字说：开环观测器积分 `v − Rs·i`，然后 **指望** 结果停在半径 `psi_f` 的圆上。没有 任何东西在保证这一
+ *   点 ——`Rs` 偏了会把那个圆拉歪、载波会让它抖、而积分器从不忘记收到过什么。 本观测器沿磁链矢量加一项修正：`|eta| =
+ *   psi_f` 时为零，否则往回推，于是那个圆有了恢复力。
  *
  * @note [en] Structure follows the nonlinear observer for surface-mount PMSMs described by Lee, Hong, Nam, Ortega and
  *            Praly (*IEEE Transactions on Power Electronics*, 2010): a flux prediction, an `eta` that removes the
@@ -89,8 +89,8 @@ class NonlinearFluxObserver final {
      * @note [en] Unlike the open-loop observer this one does *not* need a re-seed to shed the error a wrong parameter
      *            left behind: the correction keeps pulling towards `psi_f`, so it converges on its own. That is the
      *            whole point of the extra term, and it is measured.
-     * @note [zh] 与开环观测器不同，这一个**不需要**重新播种来摆脱错误参数留下的误差：修正会持续把幅值拉向 `ψf`，因此它
-     *            自行收敛。这正是那一项存在的意义，有实测。
+     * @note [zh] 与开环观测器不同，这一个 **不需要** 重新播种来摆脱错误参数留下的误差：修正会持续把幅值拉向 `ψf`，因此
+     *            它自行收敛。这正是那一项存在的意义，有实测。
      * @since 0.1.0
      */
     void apply_params(const MachineParams& params) noexcept;

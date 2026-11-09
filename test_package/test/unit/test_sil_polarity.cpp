@@ -209,7 +209,7 @@ TEST(SilPolarity, ItSaysAlignedWhenTheSaliencyLoopAlreadyLandedOnTheMagnet) {
 TEST(SilPolarity, StartingOutsideTheWindowIsCaughtRatherThanTrusted) {
     // Two radians out is past the +-pi/2 window, so the saliency loop locks to the pi mirror: it
     // converges *confidently* and wrongly. That is the failure the polarity test exists for.
-    // 偏两弧度超出 ±π/2 窗口，于是凸极环锁到 π 镜像：它**自信地**收敛到了错的地方。这正是极性测试要
+    // 偏两弧度超出 ±π/2 窗口，于是凸极环锁到 π 镜像：它 **自信地** 收敛到了错的地方。这正是极性测试要
     // 抓的失效。
     Commissioning run(2.0F, true);
     run.converge(1.0F);
@@ -349,8 +349,8 @@ struct PulseResult final {
  * @brief [zh] 沿刻意偏移的 d 轴估计脉冲，前面不接凸极环。
  *
  *   The sweep is *about* the angle the caller hands in, so converging HFI first would defeat it: the loop's job is to
- *   land on the d-axis line, and this case asks what happens when it does not. 这次扫描**就是**关于调用方给出的角度的，
- *   所以先让 HFI 收敛会毁掉它：那个环的职责正是落在 d 轴线上，而本用例问的是它没落准时会怎样。
+ *   land on the d-axis line, and this case asks what happens when it does not. 这次扫描 **就是** 关于调用方给出的角度
+ *   的，所以先让 HFI 收敛会毁掉它：那个环的职责正是落在 d 轴线上，而本用例问的是它没落准时会怎样。
  */
 auto pulse_at(double delta_rad, double settle_s) -> PulseResult {
     sil::PmsmPlant plant = saturating_plant(0.0F);
@@ -387,7 +387,7 @@ auto pulse_at(double delta_rad, double settle_s) -> PulseResult {
  * @brief [en] The answer is attenuated by `cos^2` of the d-axis error, and the window is then closed by the rotor
  *             moving before it is closed by the signal fading.
  *
- * @brief [zh] 答案按 d 轴误差的 `cos²` 衰减，而窗口是先被**转子被推走**关上的，不是先被信号淡出关上的。
+ * @brief [zh] 答案按 d 轴误差的 `cos²` 衰减，而窗口是先被 **转子被推走** 关上的，不是先被信号淡出关上的。
  *
  *   Both pulses are applied along the *estimate*, so the d-axis volt-seconds are cut by `cos(delta)` and the measured
  *   projection cuts them again -- two factors, hence `cos^2`. The saliency term `sin^2(delta)/Lq` is common to both
@@ -405,14 +405,14 @@ auto pulse_at(double delta_rad, double settle_s) -> PulseResult {
  *   point. Lengthening the settle to 20 ms restores the answer at 60 degrees, which is what identifies the binding
  *   limit.
  *
- *   两个脉冲都沿**估计**施加，所以 d 轴伏秒被 `cos(delta)` 砍一次、测量投影再砍一次——两个因子，因此是 `cos²`。凸极项
+ *   两个脉冲都沿 **估计** 施加，所以 d 轴伏秒被 `cos(delta)` 砍一次、测量投影再砍一次——两个因子，因此是 `cos²`。凸极项
  *   `sin²(delta)/Lq` 对两个脉冲共模、在差值里抵消，所以凸极只衰减答案而不污染它：这是方法成立的结构性原因，而 `cos²` 是
  *   它窗口有限的原因。
  *
- *   对照 `cos²` 实测比值：**15° 0.987、30° 0.943、45° 0.850**，60° 处 0.658，那里一阶律明显过预测—— 大 `delta` 下脉冲推
- *   动的电流更小，激起的电感塌陷也更少，真实衰减更快。这是一阶律的小信号边界，写成域而不是拟合掉。
+ *   对照 `cos²` 实测比值： **15° 0.987、30° 0.943、45° 0.850** ，60° 处 0.658，那里一阶律明显过预测—— 大 `delta` 下脉冲
+ *   推动的电流更小，激起的电感塌陷也更少，真实衰减更快。这是一阶律的小信号边界，写成域而不是拟合掉。
  *
- *   窗口本身是被别的东西定下的，这是本用例**发现**的而不是假设的：60° 处不对称仍有 0.093 A，是 0.02 A 阈值的 **4.6 倍
+ *   窗口本身是被别的东西定下的，这是本用例 **发现** 的而不是假设的：60° 处不对称仍有 0.093 A，是 0.02 A 阈值的 **4.6 倍
  *   **，而答案照样被拒——因为脉冲现在有很大的 q 分量，转子被推走 14 mrad 电角度，两个脉冲不再从同一个工作点出发。把松弛
  *   加到 20 ms 后 60° 又能作答，这就指出了真正的限制项。
  */
@@ -490,12 +490,12 @@ TEST(SilPolarity, TheAnswerFadesAsTheCosineSquaredAndTheRotorClosesTheWindow) {
  *   is therefore not a comfort margin; it is a number, and one the caller can compute for their own winding.
  *
  *   这就是 F-47。没有护栏时的失效形态是最糟的那种：零松弛下第二个脉冲从第一个脉冲的尾巴上出发，磁钢为 `Aligned` 的机器
- *   算出 **-0.5404 A** 的不对称——符号错，幅值还比诚实的 0.5651 A **大 96 %**。一个比正确答案更"响"的错误答案，下游任何
+ *   算出 **-0.5404 A** 的不对称——符号错，幅值还比诚实的 0.5651 A **大 96 %** 。一个比正确答案更"响"的错误答案，下游任何
  *   幅值检查都看不见。
  *
  *   交界可以只用绕组推出来：残余按 `exp(-t/tau)` 衰减，`tau = Ld/Rs = 571 us`，护栏在它落到 `min_asymmetry_a = 0.02 A`
- *   以下时放开，即 `tau*ln(1.791/0.020) = 2.57 ms`。实测：**2 ms 被拒、 3 ms 作答**——预测之上的第一个栅格点。所以这条前
- *   置条件不是舒适裕度；它是一个数，而且调用方可以按自己的绕组算出来。
+ *   以下时放开，即 `tau*ln(1.791/0.020) = 2.57 ms`。实测： **2 ms 被拒、 3 ms 作答** ——预测之上的第一个栅格点。所以这条
+ *   前置条件不是舒适裕度；它是一个数，而且调用方可以按自己的绕组算出来。
  */
 TEST(SilPolarity, ASettleShorterThanTheWindingDecayIsRefusedAndTheCrossingIsTheClosedForm) {
     const double tau_s = static_cast<double>(kLd) / static_cast<double>(kRs);
@@ -545,7 +545,7 @@ TEST(SilPolarity, ASettleShorterThanTheWindingDecayIsRefusedAndTheCrossingIsTheC
     // the same order, which is the point -- the sign is the only thing that separates them, and nothing
     // downstream can check a sign it was never given.)
     // 错误答案不是那种能被幅值检查滤掉的小值：它的幅值与诚实值只差几个百分点，符号相反。（在这台绕组上
-    // 是诚实值的 95.6 %；在 `L/R` 更短的绕组上它会**更大**。两种情况下量级都相同，这才是要点——隔开两者
+    // 是诚实值的 95.6 %；在 `L/R` 更短的绕组上它会 **更大** 。两种情况下量级都相同，这才是要点——隔开两者
     // 的只有符号，而下游无法检查一个它从未被告知的符号。）
     EXPECT_GT(std::fabs(unsettled.asymmetry_a), 0.5 * settled.asymmetry_a)
         << "the wrong answer is the same order of magnitude, so no magnitude check could catch it";

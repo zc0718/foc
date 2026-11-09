@@ -2,7 +2,7 @@
 // on, and the question of where it shows up. If the loop merely *absorbs* it, a compensator is unnecessary; if it shows up
 // in the current demand, a compensator has something to do and a known size; and if that size shrinks with speed, the
 // compensator has a frequency boundary. All three are measured here.
-// F33 里决定补偿器形状的实验：把齿槽转矩注入闭环真正跑的那台 plant，问它出现在哪里。若环路只是**吸收**了它，补偿器就不
+// F33 里决定补偿器形状的实验：把齿槽转矩注入闭环真正跑的那台 plant，问它出现在哪里。若环路只是 **吸收** 了它，补偿器就不
 // 必要；若它出现在电流需求里，补偿器就有活干、而且有已知的量级；若这个量级随转速缩小，补偿器就有频率边界。三条都在这里量。
 
 #include <cmath>
@@ -77,7 +77,7 @@ auto run_loop(float omega_mech, float amplitude_nm) -> LoopResult {
 // The compensator's rationale, as a number: at a slow rotation the cogging torque reappears in the q-axis current almost
 // exactly as `T_cog / Kt`. That is the quantity a compensator has to supply *without waiting for a speed error* -- the loop
 // produces it too, but only after the rotor has already been pushed, which is what "cogging" feels like.
-// 补偿器的理由，一个数：在慢转时齿槽转矩几乎正好以 `T_cog / Kt` 重现于 q 轴电流。这正是补偿器要**不等速度误差**就供给的量
+// 补偿器的理由，一个数：在慢转时齿槽转矩几乎正好以 `T_cog / Kt` 重现于 q 轴电流。这正是补偿器要 **不等速度误差** 就供给的量
 // ——环路也会产出它，但只在转子已经被推动之后，而那正是「齿槽」的手感。
 TEST(SilCoggingLoop, AtLowSpeedTheCoggingReappearsInTheCurrentAsTorqueOverKt) {
     constexpr float kAmplitude = 4.0e-3F;
@@ -100,7 +100,7 @@ TEST(SilCoggingLoop, AtLowSpeedTheCoggingReappearsInTheCurrentAsTorqueOverKt) {
 // The boundary: the loop's ability to deliver that current falls off with the ripple frequency, because the ripple it is
 // answering is a *speed* ripple and the speed loop is what answers it. Measured monotonically decreasing, so a compensator
 // is not redundant at any of these speeds -- it is the only thing left when the loop can no longer follow.
-// 边界：环路交付那份电流的能力随纹波频率下降，因为它回答的那个纹波是**速度**纹波、而回答它的是速度环。实测单调下降，所以补偿器
+// 边界：环路交付那份电流的能力随纹波频率下降，因为它回答的那个纹波是 **速度** 纹波、而回答它的是速度环。实测单调下降，所以补偿器
 // 在这些转速上都不是多余的——当环路跟不上时，它是唯一剩下的东西。
 TEST(SilCoggingLoop, TheLoopsShareOfTheCoggingFallsAsTheRippleFrequencyRises) {
     constexpr float kAmplitude = 4.0e-3F;
@@ -123,7 +123,7 @@ TEST(SilCoggingLoop, TheLoopsShareOfTheCoggingFallsAsTheRippleFrequencyRises) {
 // A second, independent reading of the same event: the average q-axis current does not move when cogging is injected,
 // because cogging averages to zero over a revolution. If it did move, the injection would be a load in disguise and every
 // number above would be measuring a steady-state offset rather than a ripple.
-// 同一件事的第二个独立读数：注入齿槽时 q 轴电流的**平均值**不动，因为齿槽在一转上平均为零。若它动了，注入就是伪装的负载，上面
+// 同一件事的第二个独立读数：注入齿槽时 q 轴电流的 **平均值** 不动，因为齿槽在一转上平均为零。若它动了，注入就是伪装的负载，上面
 // 每个数量的都会是稳态偏置而不是纹波。
 TEST(SilCoggingLoop, TheInjectionMovesTheRippleAndNotTheAverage) {
     constexpr float kAmplitude = 4.0e-3F;
@@ -148,7 +148,7 @@ TEST(SilCoggingLoop, TheInjectionMovesTheRippleAndNotTheAverage) {
 // 每个 tick 都返回 `NotImpl`。本段实例化第四种组合——台架那台 motor 换成带 `core::PositionP` 的——并用补偿器的输出作为 iq 前馈驱动一条
 // 慢速位置斜坡。
 //
-// 观测量取**速度**纹波而不是电流：在这个转速产生的纹波频率上环路跟不上，于是补偿器买到的东西出现在运动里。窗口断言覆盖**十转**，
+// 观测量取 **速度** 纹波而不是电流：在这个转速产生的纹波频率上环路跟不上，于是补偿器买到的东西出现在运动里。窗口断言覆盖 **十转** ，
 // 因为非整数转的投影会把直流按 `1/k` 泄漏进来、可能比待测效应还大——这条弯路在写这个用例之前已经量过了。
 
 using PositionMotor = foc::motor::Motor<foc::core::BackEmfObserver, foc::core::Svpwm, foc::core::Pi, foc::sil::PlantHal,
@@ -228,8 +228,8 @@ auto run_ramp(float amplitude_nm, bool compensate) -> RampResult {
 // exists, and the motion comes back clean. Without the compensator the injected cogging makes the speed ripple measurably
 // larger; with it, the ripple returns to what it is with **nothing injected at all** -- which is the only comparison that
 // cannot be satisfied by a compensator that merely perturbs the drive in some other way.
-// 整条链：表进 plant，补偿器的输出经**真实存在的那个槽**进 iq 参考，运动干净地回来。没有补偿器时注入的齿槽让速度纹波明显变大；有它时，
-// 纹波回到**完全不注入**时的数值——这是唯一一种"只是用别的方式扰动驱动器"的补偿器无法满足的比较。
+// 整条链：表进 plant，补偿器的输出经 **真实存在的那个槽** 进 iq 参考，运动干净地回来。没有补偿器时注入的齿槽让速度纹波明显变大；有它时，
+// 纹波回到 **完全不注入** 时的数值——这是唯一一种"只是用别的方式扰动驱动器"的补偿器无法满足的比较。
 TEST(SilCoggingLoop, ThroughTheIqFeedforwardSlotTheMotionComesBackClean) {
     constexpr float kAmplitude = 4.0e-3F;
     const RampResult clean = run_ramp(0.0F, false);
@@ -262,8 +262,8 @@ TEST(SilCoggingLoop, ThroughTheIqFeedforwardSlotTheMotionComesBackClean) {
 // `set_feedforward_current()` every period.
 // --- iq 槽的回报：速度模式、纹波、不需要第四种组合 -------------------------------------------------------------
 //
-// 带积分的环路会吸收**恒定**偏置（已在 `test_feedforward_current.cpp` 量过），所以如果只拿它扛恒定项，这个槽看起来没用。
-// **纹波**才是任何积分器吸收不了的东西，而这也正是真实驱动器所处的构型：速度控制、注入齿槽、补偿器每周期把输出送进
+// 带积分的环路会吸收 **恒定** 偏置（已在 `test_feedforward_current.cpp` 量过），所以如果只拿它扛恒定项，这个槽看起来没用。
+// **纹波** 才是任何积分器吸收不了的东西，而这也正是真实驱动器所处的构型：速度控制、注入齿槽、补偿器每周期把输出送进
 // `set_feedforward_current()`。
 
 namespace {
@@ -311,7 +311,7 @@ auto run_speed_mode(float amplitude_nm, bool compensate) -> SpeedModeResult {
 // Two facts in one case, and the two of them together are the claim: the compensator supplies the anti-cogging current itself
 // (`iq` keeps its `T_cog/Kt` of 0.079 A, i.e. the loop's own share was **replaced**, not doubled), and the speed ripple falls
 // with it. A version that added to the loop's own share would read about 0.16 A -- which is why the band is [0.06, 0.12].
-// 一个用例两个事实，合起来才是主张：补偿器**自己**供给反齿槽电流（`iq` 仍保持 `T_cog/Kt` 的 0.079 A，即环路那份是被**替换**的，
+// 一个用例两个事实，合起来才是主张：补偿器 **自己** 供给反齿槽电流（`iq` 仍保持 `T_cog/Kt` 的 0.079 A，即环路那份是被 **替换** 的，
 // 不是翻倍），而速度纹波随之下降。叠加到环路自己那份上的版本会读到约 0.16 A——所以判据带取 [0.06, 0.12]。
 TEST(SilCoggingLoop, InSpeedModeTheSlotReplacesTheLoopsShare) {
     constexpr float kAmplitude = 4.0e-3F;
@@ -332,7 +332,7 @@ TEST(SilCoggingLoop, InSpeedModeTheSlotReplacesTheLoopsShare) {
     // inertia is the same size -- measured 0.1015 uncompensated against 0.1027 compensated, i.e. the two runs are inside each
     // other's noise. The motion claim lives in `ThroughTheIqFeedforwardSlotTheMotionComesBackClean`, where the rotation is fast
     // enough (37 rad/s) for the cogging to be 24 % of the ripple rather than 0 %.
-    // **运动**那条主张不在这里断言，这是测量结果而不是遗漏：10 rad/s 机械处不注入时速度的 6 次底噪就约 0.1 rad/s，而这个惯量下齿槽
+    // **运动** 那条主张不在这里断言，这是测量结果而不是遗漏：10 rad/s 机械处不注入时速度的 6 次底噪就约 0.1 rad/s，而这个惯量下齿槽
     // 自己的贡献同样大小——实测未补偿 0.1015 对已补偿 0.1027，两跑落在彼此的噪声里。运动那条主张在
     // `ThroughTheIqFeedforwardSlotTheMotionComesBackClean` 里，那里转速够快（37 rad/s），齿槽占纹波的 24 % 而不是 0 %。
     EXPECT_NEAR(off.speed_order_rad_s, on.speed_order_rad_s, off.speed_order_rad_s * 0.3F)

@@ -18,8 +18,8 @@ namespace core {
  * @note [en] These are *estimates of a machine*, not tuning knobs: a value twice the truth drives the axis instead of
  *            cancelling it, and `validate()` refuses the one case it can see coming -- a Coulomb term larger than the
  *            breakaway point, which is a machine that cannot exist and would make the compensation a motor.
- * @note [zh] 这些是对**一台机器的估计**，不是整定旋钮：取真值的两倍就不再是抵消而是驱动，而 `validate()` 会拒绝它唯一能
- *            预见的那种情形——库仑项大于起动点，那是一台不可能存在的机器，也会让补偿变成一个电机。
+ * @note [zh] 这些是对 **一台机器的估计** ，不是整定旋钮：取真值的两倍就不再是抵消而是驱动，而 `validate()` 会拒绝它唯一
+ *            能预见的那种情形——库仑项大于起动点，那是一台不可能存在的机器，也会让补偿变成一个电机。
  * @since 0.1.9
  */
 struct FrictionConfig final {
@@ -80,13 +80,13 @@ struct FrictionOutput final {
  * @brief [zh] 抵消环路不得不对抗的摩擦，同时不让自己变成电机。
  *
  *   为什么这是独立一级而不是电流 PI 的一部分。摩擦是力矩，而 PI 调节的是电流；把库仑项塞进去会让积分器的状态取决于轴上
- *   一次往哪边动。它也不适配 `FeedForward` 槽：那个槽从 `(omega_e, i_meas)` 发出**电压**，永远看不到给定方向，而那正是
- *   库仑项唯一干净的信号。
+ *   一次往哪边动。它也不适配 `FeedForward` 槽：那个槽从 `(omega_e, i_meas)` 发出 **电压** ，永远看不到给定方向，而那正
+ *   是库仑项唯一干净的信号。
  *
  *   规律是两项加一个锁存：`coulomb_nm * sign + viscous_nm_per_rad_s * omega_meas`。没有 `dt`，因为没有东西在积分 ——这正
  *   是要点。用 `sign(omega_meas)` 的库仑项在静止处会抖，那里的实测速度是零均值噪声，而抖动是幅度 `2 * coulomb_nm` 的力
  *   矩振荡，恰好摇动这一级存在的目的。锁存去掉它：符号在有速度给定时取给定，在环路力矩指令大于库仑项本身时取指令，其余
- *   情况**保持**。代价是两者都无信息时方向可能是旧的，这个代价写出来而不是藏起来。
+ *   情况 **保持** 。代价是两者都无信息时方向可能是旧的，这个代价写出来而不是藏起来。
  *
  *   为什么它有用：静止时比例环在 `|kp * 误差| <= 静摩擦` 处停下，于是留下 `静摩擦 / kp` 的稳态误差，加增益也去不掉（只
  *   是把同一条死区按比例缩小）。有了锁存的库仑项，环路在 `|kp * 误差 + 库仑| <= 静摩擦` 处停下，即到达侧的 `(静摩擦 −

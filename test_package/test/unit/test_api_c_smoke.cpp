@@ -3,7 +3,7 @@
 // purpose: the *pure C* consumer is covered by test_package/c_api_c11.c, which
 // also exercises the _Generic entry points. G6 - C
 // 路径端到端：生命周期、池满、失效/ABA 句柄、错误码映射与 §13.5
-// 双路径隔离。这里故意用 C++ 编译单元；**纯 C** 消费者由
+// 双路径隔离。这里故意用 C++ 编译单元； **纯 C** 消费者由
 // test_package/c_api_c11.c 覆盖，那里同时验证 _Generic 入口。
 
 #include <cmath>
@@ -627,7 +627,7 @@ TEST(ApiCAbi011, TheProtectorPoolRefusesToOverbookAndReusesSlotsSafely) {
   // somebody else. The second is the ABA case; it is the reason the generation
   // lives in the handle value. C
   // 消费者自己检查不了的两件事：池子耗尽时给错误而不是绕回；已销毁保护器的句柄在其槽位被
-  // 别人接手之后**永远**解析不了。后者就是 ABA
+  // 别人接手之后 **永远** 解析不了。后者就是 ABA
   // 情形，也是代际放在句柄值里的原因。
   foc_protector_t handles[8]{};
   int alive = 0;

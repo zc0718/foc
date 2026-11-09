@@ -62,7 +62,7 @@ TEST(MachineMap, OutsideTheMeasuredRangeTheAnswerIsClampedNotExtrapolated) {
   EXPECT_FLOAT_EQ(map.at(-9.0F).ld_h, map.rows[2].ld_h);
   EXPECT_FLOAT_EQ(map.at(0.0F).ld_h, map.rows[0].ld_h);
   // -3 A has magnitude 3 A, which is *inside* the measured range: the sign does not matter, the magnitude does.
-  // −3 A 的幅值是 3 A，**在**实测范围之内：符号无关，幅值有关。
+  // −3 A 的幅值是 3 A， **在** 实测范围之内：符号无关，幅值有关。
   EXPECT_NEAR(map.at(-3.0F).ld_h, 2.5e-4F, 1.0e-9F);
 }
 
@@ -138,7 +138,7 @@ TEST(MachineMap, TheInterpolationErrorIsTheChordErrorAndItGoesAsTheSquareOfTheSp
   // it at the midpoint of each interval. That is the number a user needs -- with rows every `h` amperes, how wrong is
   // the inductance between them -- and it is checked against an analytic saturation curve, not against a second
   // interpolation. The h^2 is what makes the law falsifiable: halving the spacing must quarter the error.
-  // 线性插值是有**已知**误差的近似：在光滑曲线上，弦在每个区间中点离曲线 `f″·h²/8`。这正是使用者要的那个数——每 `h`
+  // 线性插值是有 **已知** 误差的近似：在光滑曲线上，弦在每个区间中点离曲线 `f″·h²/8`。这正是使用者要的那个数——每 `h`
   // 安培一行时，行与行之间电感错多少——而它是对着解析饱和曲线验的，不是对着第二份插值。`h²` 正是让定律可被否证的东西：
   // 间距减半，误差必须降到四分之一。
   const double l0 = 4.0e-4;
@@ -172,7 +172,7 @@ TEST(MachineMap, TheInterpolationErrorIsTheChordErrorAndItGoesAsTheSquareOfTheSp
                 rows[k].measured / rows[k].law);
     // The law is leading order in `h^2`, so at coarse spacing it is 8 % off and at fine spacing 0.5 %: what is
     // asserted is a 10 % band **plus** the convergence, which is the part that cannot be a coincidence.
-    // 这条定律是 `h²` 的领头阶，所以粗间距下差 8 %、细间距下差 0.5 %：断言的是 10 % 的带**加上**收敛性——
+    // 这条定律是 `h²` 的领头阶，所以粗间距下差 8 %、细间距下差 0.5 %：断言的是 10 % 的带 **加上** 收敛性——
     // 后者才是无法巧合的部分。
     EXPECT_NEAR(rows[k].law, rows[k].measured, 0.10 * std::fabs(rows[k].law)) << "h " << h;
     ++k;

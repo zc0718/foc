@@ -41,7 +41,7 @@ auto limit_config(float rt_k_per_w, float ct_j_per_k, float t_allowed_c) -> Ther
 }
 
 /** @brief What the naive law gives: the feedback factor dropped. The number the module has to be *different* from. */
-// 天真的律给出的数：丢掉反馈因子。模块必须与它**不同**的那个数。
+// 天真的律给出的数：丢掉反馈因子。模块必须与它 **不同** 的那个数。
 auto naive_continuous_a(float rs20, float rt, float t_ambient_c, float t_allowed_c) -> float {
     return std::sqrt((t_allowed_c - t_ambient_c) / (1.5F * rt * rs20));
 }
@@ -76,7 +76,7 @@ auto settle_on_plant(float current_a, float plant_rt, float plant_ct, float seco
 // The definition, measured from both sides: the current this module calls continuous settles the plant **exactly** at the
 // temperature the reserve was sized against -- and one 5 % above it does not. A module that was 15 % optimistic would still
 // pass "it settles near 105" and fail the second half.
-// 定义，从两侧量：本模块称为"可持续"的电流让 plant **恰好**收敛到定余量时用的那个温度上——而高 5 % 的那个不会。一个乐观 15 % 的模块
+// 定义，从两侧量：本模块称为"可持续"的电流让 plant **恰好** 收敛到定余量时用的那个温度上——而高 5 % 的那个不会。一个乐观 15 % 的模块
 // 仍能通过"大体收敛在 105 附近"，但通不过后半条。
 TEST(ThermalLimit, TheContinuousCurrentSettlesThePlantAtTheAllowedTemperatureAndFivePercentMoreDoesNot) {
     constexpr float kRt = 4.0F;
@@ -93,7 +93,7 @@ TEST(ThermalLimit, TheContinuousCurrentSettlesThePlantAtTheAllowedTemperatureAnd
     EXPECT_NEAR(105.0F, settled, 2.0F) << "continuous " << report.continuous_a << " A settled at " << settled << " C";
 
     // And 5 % more is *not* sustainable: it settles above the reserve, which is what "continuous" has to mean.
-    // 而多 5 % **不**可持续：它收敛在余量之上，这才是"可持续"必须意味着的东西。
+    // 而多 5 % **不** 可持续：它收敛在余量之上，这才是"可持续"必须意味着的东西。
     const float hotter = settle_on_plant(report.continuous_a * 1.05F, kRt, 0.5F, 80.0F);
     EXPECT_GT(hotter, 105.0F + 2.0F) << "1.05x settled at " << hotter << " C";
 }
@@ -102,7 +102,7 @@ TEST(ThermalLimit, TheContinuousCurrentSettlesThePlantAtTheAllowedTemperatureAnd
 // `sqrt((T-Ta)/(1.5*Rt*rs))` reads **15.5 %** high at 105 C on copper, and the plant proves which one is right by settling
 // above the reserve when the naive current is held. The case asserts the ratio *and* the consequence.
 // 反馈因子就是本模块与"任何人一分钟就能写出来的算术"之间的全部差别：天真的 `sqrt((T−Ta)/(1.5·Rt·rs))` 在铜的 105 ℃ 处读到
-// **高 15.5 %**，而 plant 用"保持天真电流时收敛在余量之上"证明了谁对。本用例既断言比值，也断言后果。
+// **高 15.5 %** ，而 plant 用"保持天真电流时收敛在余量之上"证明了谁对。本用例既断言比值，也断言后果。
 TEST(ThermalLimit, TheNaiveLawReadsFifteenPercentHighAndThePlantSaysSo) {
     constexpr float kRt = 4.0F;
     const auto params = foc::sil::nominal_plant_params();
@@ -160,7 +160,7 @@ TEST(ThermalLimit, TheBudgetPredictsWhenThePlantActuallyCrosses) {
 
 // The other half of the answer, and the one that keeps a scheduler from throttling a machine that is fine: a current whose
 // settle is at or below the reserve is reported as **never** crossing, with an infinite budget -- not as a large number.
-// 答案的另一半，也是让调度不去压一台本来没问题的机器的那个：稳态在余量处或以下的电流被报成**永不**穿越、预算为无穷——而不是一个
+// 答案的另一半，也是让调度不去压一台本来没问题的机器的那个：稳态在余量处或以下的电流被报成 **永不** 穿越、预算为无穷——而不是一个
 // 大数字。
 TEST(ThermalLimit, ASustainableCurrentIsReportedAsNeverCrossingRatherThanAsALongTime) {
     constexpr float kRt = 4.0F;
@@ -221,7 +221,7 @@ TEST(ThermalLimit, RefusesConfigurationsThatCannotAnswer) {
 
     // A missing `Ct` is *not* a configuration error: the continuous current does not need it, and only the time budget has
     // to say that it cannot name a time.
-    // 缺 `Ct` **不是**配置错误：持续电流不需要它，只有时间预算必须说明它报不出时间。
+    // 缺 `Ct` **不是** 配置错误：持续电流不需要它，只有时间预算必须说明它报不出时间。
     config = limit_config(4.0F, 0.0F, 105.0F);
     EXPECT_EQ(ErrorCode::Ok, ThermalLimit{config}.validate());
     const ThermalLimit no_time{config};
@@ -235,7 +235,7 @@ TEST(ThermalLimit, RefusesConfigurationsThatCannotAnswer) {
 // The chain the two halves were built for: the temperature the plant will actually reach at the *continuous* current leaves
 // the protector at full authority, while an overshoot current walks into the derating band. That is what "scheduling" buys
 // over "derating": the drive stays out of the band instead of being cut down inside it.
-// 这两半为之而建的链条：在**可持续**电流下 plant 实际会达到的温度让保护器保持全权限，而一个过冲电流会走进降额带。这就是"调度"
+// 这两半为之而建的链条：在 **可持续** 电流下 plant 实际会达到的温度让保护器保持全权限，而一个过冲电流会走进降额带。这就是"调度"
 // 相对"降额"买到的东西：驱动器留在带外，而不是在带内被切。
 TEST(ThermalLimit, TheContinuousCurrentKeepsTheProtectorAtFullAuthorityWhileAnOvershootWalksIntoTheBand) {
     using foc::core::ProtectionConfig;

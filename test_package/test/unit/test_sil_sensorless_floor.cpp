@@ -6,11 +6,11 @@
 // proportional to `lq - ld`), which removes the only mechanism that works at standstill and leaves a model observer whose
 // accuracy grows with speed. This file measures where that leaves the drive instead of asserting the sentence.
 //
-// F19 —— 上界：在**理想** plant 上，50 rad/s 以下到底有没有闭环角度？
+// F19 —— 上界：在 **理想** plant 上，50 rad/s 以下到底有没有闭环角度？
 //
-// 计划要的是一条**否证**而不是一句声称："50 rad/s 以下没有闭环角度，在理想 plant（已知 ψf、无凸极）上量——那里做不到，
+// 计划要的是一条 **否证** 而不是一句声称："50 rad/s 以下没有闭环角度，在理想 plant（已知 ψf、无凸极）上量——那里做不到，
 // 真机就更做不到。" 理由是结构性的，不是经验性的：SPM 没有凸极，注入观测器没有东西可注（`predicted_gain_a` 正比于
-// `lq − ld`），于是唯一能在静止工作的机理被排除，只剩一个精度随转速增长的模型观测器。本文件去**量**它到底停在哪里，
+// `lq − ld`），于是唯一能在静止工作的机理被排除，只剩一个精度随转速增长的模型观测器。本文件去 **量** 它到底停在哪里，
 // 而不是把那句话写成断言。
 //
 // The rig, fixed before the numbers were read:
@@ -26,10 +26,10 @@
 //
 // 台架在读到数字之前就定下：
 //   * plant 是 SPM——`lq == ld`——而观测器的模型拿到的正是这两个数，所以这里没有"参数配错了却看起来像极限"；
-//   * 传感器撤掉时转子**已经在转**（`PlantState` 里带着转速）：要问的是"从一次升速中能不能捕获并保持"，而"没有注入能不能
+//   * 传感器撤掉时转子 **已经在转** （`PlantState` 里带着转速）：要问的是"从一次升速中能不能捕获并保持"，而"没有注入能不能
 //     从静止起动"是另一个问题，已由 `test_sil_alignment.cpp` 与开环强拖回答；
 //   * 观测器从零种子开始，即最大程度地错，这是诚实的下界，也与既有那条 90° 种子实验同一个起点；
-//   * 被测的量是"1.5 s 运行的**最后 0.5 s**"内电角度对 plant 真值的误差——是"稳下来了吗"的窗口，不是捕获瞬态。
+//   * 被测的量是"1.5 s 运行的 **最后 0.5 s**"内电角度对 plant 真值的误差——是"稳下来了吗"的窗口，不是捕获瞬态。
 
 #include <cmath>
 #include <cstdio>
@@ -46,7 +46,7 @@ namespace sil = foc::sil;
 // The rig moved to `sil_sensorless_bench.hpp` so that the SOP replay can drive **the same** measurement on a second
 // machine: one rig, two questions. The defaults there reproduce this file's numbers exactly -- the twelve `[f19]` lines
 // this test prints were diffed before and after the move and are identical.
-// 台架搬到 `sil_sensorless_bench.hpp`，好让 SOP 重放能在第二台机器上驱动**同一个**测量：一份台架，两个问题。那边的默认值
+// 台架搬到 `sil_sensorless_bench.hpp`，好让 SOP 重放能在第二台机器上驱动 **同一个** 测量：一份台架，两个问题。那边的默认值
 // 逐字复现本文件的数字——本用例打印的十二行 `[f19]` 在搬动前后逐行 diff 过，完全相同。
 constexpr float kEdgeRadS = 50.0F; // the edge the plan names 计划点名的边缘
 constexpr float kGateRad = sil::kSopGateRad;
@@ -73,10 +73,10 @@ auto run_at(float target_rad_s, float load_nm, float dead_v) -> sil::SensorlessR
 // **1.1 control periods per electrical cycle** -- the error is an electrical angle and the speed is mechanical, so the
 // 7 pole pairs must be divided out (3.8e-4 * 7 = 2.7 ms/s, against a 50 us tick). The observer reports the angle of the
 // previous tick, and that is the whole of what is left once the plant is ideal.
-// 计划以为"50 rad/s 以下做不到，而理想 plant 正是证明它的地方"。量出来恰好相反：理想 plant 是它**做得到**的那个地方——
-// `lq == ld`、无死区、无传感器噪声、观测器拿到的就是 plant 自己的参数，5 rad/s 处误差 2 mrad。剩下的**只有传输延时**，而它
-// 表现为一个恒定比值而不是地板：5 到 354 rad/s 之间 `误差/机械转速` 都是 3.8e-4 s，即**每个电周期 1.1 个控制周期**
-// ——误差是电角度而转速是机械的，所以要把 7 对极除出来（3.8e-4 × 7 = 2.7 ms/s，对 50 µs 的一拍）。观测器报出的是**上一拍**
+// 计划以为"50 rad/s 以下做不到，而理想 plant 正是证明它的地方"。量出来恰好相反：理想 plant 是它 **做得到** 的那个地方——
+// `lq == ld`、无死区、无传感器噪声、观测器拿到的就是 plant 自己的参数，5 rad/s 处误差 2 mrad。剩下的 **只有传输延时** ，而它
+// 表现为一个恒定比值而不是地板：5 到 354 rad/s 之间 `误差/机械转速` 都是 3.8e-4 s，即 **每个电周期 1.1 个控制周期**
+// ——误差是电角度而转速是机械的，所以要把 7 对极除出来（3.8e-4 × 7 = 2.7 ms/s，对 50 µs 的一拍）。观测器报出的是 **上一拍**
 // 的角度，这就是 plant 理想之后剩下的全部。
 TEST(SilSensorlessFloor, AnIdealPlantHasNoLowSpeedFloorAndWhatIsLeftIsOneTickOfDelay) {
     const float targets[] = {5.0F, 10.0F, 20.0F, 40.0F};
@@ -113,7 +113,7 @@ TEST(SilSensorlessFloor, AnIdealPlantHasNoLowSpeedFloorAndWhatIsLeftIsOneTickOfD
 // ~100 rad/s, and that is what "no claim below 50 rad/s" is actually about.
 // 24 V 下 1 µs 死区是 0.48 V 的每拍电压误差，而机器 20 rad/s 时的反电势只有 `ω·ψf` = 0.095 V：畸变是观测器要读的那个信号的
 // 五倍。把这一个非理想项加进去实测：20 rad/s 直接丢掉机器（3.14 rad，估计反了），40 rad/s 读到 1.03 rad，而在 200 rad/s
-// 处同一个畸变**什么都不花**（0.041 对干净的 0.073——甚至更好，因为那里 `ω·ψf` = 0.95 V 是畸变的两倍）。所以边界不是观测器
+// 处同一个畸变 **什么都不花** （0.041 对干净的 0.073——甚至更好，因为那里 `ω·ψf` = 0.95 V 是畸变的两倍）。所以边界不是观测器
 // 拥有的某个转速，而是"反电势不再小于逆变量自身误差"的那个转速，本机约 100 rad/s——"50 rad/s 以下不作声称"说的其实是这件事。
 TEST(SilSensorlessFloor, TheFloorIsTheDeadTimeVoltageAgainstTheBackEmfAndNotTheObserversStructure) {
     constexpr float kDeadV = 0.48F; // 1 us of dead time at 24 V 24 V 下 1 µs 死区
@@ -142,7 +142,7 @@ TEST(SilSensorlessFloor, TheFloorIsTheDeadTimeVoltageAgainstTheBackEmfAndNotTheO
     // The crossing itself, as a prediction rather than an observation: `omega*psi_f == kDeadV` names the speed where the
     // two become comparable. The test asserts the *order* (100 rad/s is where the ratio is ~1) rather than a tuned
     // number, so a change in psi_f moves the prediction with the machine instead of invalidating a constant.
-    // 交点本身作为**预测**而不是观测：`ω·ψf == kDeadV` 给出两者可比的那个转速。用例断言的是**量级**（100 rad/s 处比值约 1），
+    // 交点本身作为 **预测** 而不是观测：`ω·ψf == kDeadV` 给出两者可比的那个转速。用例断言的是 **量级** （100 rad/s 处比值约 1），
     // 而不是一个调出来的常数，于是 ψf 变化时预测随机器一起移动，而不是让一个常数失效。
     const float psi_f = foc::psi_f_wb(sil::sop_motor_config(kMachine));
     const float crossing_rad_s = kDeadV / psi_f;

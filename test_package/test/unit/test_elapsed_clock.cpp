@@ -95,7 +95,7 @@ TEST(ElapsedClock, TheSumOfTwentyMillionPeriodsIsFiveHundredAndTwelveSeconds) {
   // each addition advances the sum by an ULP rather than by `dt`. It then sits
   // there: by the end of the loop it still reads 512, which is the freeze. A
   // timer built on that number fires a 512 s timeout 65 s early, and a 520 s
-  // timeout never fires at all. 反证。浮点累加**提前**到达 512 s——实测第 17 866
+  // timeout never fires at all. 反证。浮点累加 **提前** 到达 512 s——实测第 17 866
   // 579 tick，即真实 446.66 s，快 12.8%——因为越过 `2^23*dt`
   // 之后每次加法推进的是一个 ULP 而不是
   // `dt`。然后它就停在那里：循环结束时读数仍是 512，这就是冻结。建在这个

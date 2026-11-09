@@ -181,15 +181,15 @@ auto wrap_pi_probe(float angle_rad) -> float {
  *   machine whose voltage never had the term the observer subtracts. The distinguishing test was that the damage did
  *   not move when `dt` changed by 10x, while a numerical instability would have.
  *
- *   端电压取**完整**的那个：`Rs·i + dψ/dt + L·di/dt`。第一版本的工具漏了电感压降，于是观测器看起来是坏的—— |ψ| 在真值的
- *   0.60 与 1.63 之间摆动、角度误差到 0.94 rad。那不是观测器把 `L·di` 算了两遍，而是工具喂给了一台电压里从来没有那一项
- *   的机器，而观测器又确实要减它。区分方法很干脆：把 `dt` 改 10 倍，损害一动不动；数值不稳定则会跟着变。
+ *   端电压取 **完整** 的那个：`Rs·i + dψ/dt + L·di/dt`。第一版本的工具漏了电感压降，于是观测器看起来是坏的—— |ψ| 在真值
+ *   的 0.60 与 1.63 之间摆动、角度误差到 0.94 rad。那不是观测器把 `L·di` 算了两遍，而是工具喂给了一台电压里从来没有那一
+ *   项的机器，而观测器又确实要减它。区分方法很干脆：把 `dt` 改 10 倍，损害一动不动；数值不稳定则会跟着变。
  *
  *   `i_offset_a` is a DC offset on the *measured* current, so the observer's `Rs*i` term carries a constant voltage
  *   error in every step. That is the one input error that does not average out over a revolution.
  *
- *   `i_offset_a` 是**实测**电流上的直流偏置，于是观测器的 `Rs·i` 项每一步都带着一个恒定的电压误差。那是唯一一个不会在一
- *   圈里自己平均掉的输入误差。
+ *   `i_offset_a` 是 **实测** 电流上的直流偏置，于是观测器的 `Rs·i` 项每一步都带着一个恒定的电压误差。那是唯一一个不会在
+ *   一圈里自己平均掉的输入误差。
  */
 struct ProbeRun final {
     float err_max_rad{0.0F};
@@ -224,7 +224,8 @@ auto probe_run(float omega, float iq, float rs_hat, float i_offset_a, int steps)
  * @brief [en] On an exact model the residue is one step of rotation, a resistance error stays **bounded** at about
  *             `eps*Rs*iq/(omega*psi_f)`, and a DC offset is the one error that runs away.
  *
- * @brief [zh] 精确模型下残差是**一步的旋转**；电阻误差被**界住**在约 `ε·Rs·iq/(ω·ψf)`；而直流偏置是唯一会跑掉的那一个。
+ * @brief [zh] 精确模型下残差是 **一步的旋转** ；电阻误差被 **界住** 在约 `ε·Rs·iq/(ω·ψf)`；而直流偏置是唯一会跑掉的那一
+ *             个。
  *
  *   This observer is pure integration -- `psi += (v - Rs*i)*dt - L*di` with **no correction term** -- so the only
  *   question that matters is which input errors accumulate and which do not. Measured here, at `Rs = 0.5`, `L = 8e-4`,
@@ -246,12 +247,12 @@ auto probe_run(float omega, float iq, float rs_hat, float i_offset_a, int steps)
  *   reversing, and a 50 mA offset puts the estimate 0.71 rad out in 100 ms. That is why a current-sense offset has to
  *   be calibrated out before this observer is trusted, and it is the number the README row now carries.
  *
- *   这个观测器是纯积分——`ψ += (v − Rs·i)·dt − L·di`，**没有修正项**——所以唯一要紧的问题是哪些输入误差会累积、哪些不会。
- *   实测（`Rs = 0.5`、`L = 8e-4`、`ψf = 4.7619e-3`、`dt = 50 µs`）见上表。两个可操作的结论：**参数误差是偏置而不是跑飞
- *   **——10 % 的 `Rs` 误差在 200 rad/s 花 0.19 rad、转速更高时更小，所以诚实的规格是"有界， `ε·Rs·iq/(ω·ψf)`（在它还很小
- *   时）"，而本用例把这条律失效的地方也记下来了（50 rad/s 那行，误差饱和到 π）。 **传感器偏置才是跑飞的那一个 **：它每
- *   步都以恒定电压误差进入、永不反向地积分，50 mA 的偏置 100 ms 就把估计推出 0.71 rad。所以信任这个观测器之前必须先把电
- *   流零偏标定掉，而这个数就是 README 行现在带着的那个。
+ *   这个观测器是纯积分——`ψ += (v − Rs·i)·dt − L·di`， **没有修正项** ——所以唯一要紧的问题是哪些输入误差会累积、哪些不
+ *   会。实测（`Rs = 0.5`、`L = 8e-4`、`ψf = 4.7619e-3`、`dt = 50 µs`）见上表。两个可操作的结论：**参数误差是偏置而不是
+ *   跑飞 **——10 % 的 `Rs` 误差在 200 rad/s 花 0.19 rad、转速更高时更小，所以诚实的规格是"有界， `ε·Rs·iq/(ω·ψf)`（在它
+ *   还很小时）"，而本用例把这条律失效的地方也记下来了（50 rad/s 那行，误差饱和到 π）。 **传感器偏置才是跑飞的那一个
+ *   ** ：它每步都以恒定电压误差进入、永不反向地积分，50 mA 的偏置 100 ms 就把估计推出 0.71 rad。所以信任这个观测器之前
+ *   必须先把电流零偏标定掉，而这个数就是 README 行现在带着的那个。
  */
 TEST(BackEmfObserver, TheResidueIsOneStepAndOnlyADcOffsetRunsAway) {
     // Row 1: the exact model leaves exactly one step of rotation, whatever the speed.
@@ -306,7 +307,7 @@ TEST(BackEmfObserver, TheResidueIsOneStepAndOnlyADcOffsetRunsAway) {
  * @brief [en] `apply_params()` takes the **q-axis** inductance, and a parameter set that cannot describe a machine
  *             disables the observer instead of leaving it running on the old one.
  *
- * @brief [zh] `apply_params()` 取的是**q 轴**电感，而一组描述不了机器的参数会把观测器关掉，而不是让它带着旧的继续跑。
+ * @brief [zh] `apply_params()` 取的是 **q 轴** 电感，而一组描述不了机器的参数会把观测器关掉，而不是让它带着旧的继续跑。
  *
  *   Nothing had ever called `apply_params()` on this observer, which matters more here than elsewhere: the method sets
  *   `config_.l = params.lq` on a *single-L* model, so on any machine with `Ld != Lq` the observer is deliberately told
@@ -318,13 +319,13 @@ TEST(BackEmfObserver, TheResidueIsOneStepAndOnlyADcOffsetRunsAway) {
  *   one constructed with that `lq`, and (the falsifier) *differently* from one constructed with `ld`, on a machine
  *   where the two are far apart. The second half is what proves the case can tell the two apart at all.
  *
- *   此前没有任何东西调用过这个观测器的 `apply_params()`，而这里比别处更要紧：该方法在**单一 L** 模型上设置 `config_.l =
- *   params.lq`，所以在任何 `Ld != Lq` 的机器上，观测器是被**有意**告知用 q 轴值的。这个选择正是 `i_d != 0` 工况由
+ *   此前没有任何东西调用过这个观测器的 `apply_params()`，而这里比别处更要紧：该方法在 **单一 L** 模型上设置 `config_.l
+ *   = params.lq`，所以在任何 `Ld != Lq` 的机器上，观测器是被**有意**告知用 q 轴值的。这个选择正是 `i_d != 0` 工况由
  *   `combinations.json` 里的比率额度而不是由模型处理的原因，而它从未被一个用例钉住——一个取 `ld` 的版本会通过所有已有测
  *   试。
  *
- *   检查是行为式的而不是比对字段：被重配置到 `lq` 的观测器，必须与用那个 `lq` 构造的观测器**逐位相同**，并且（伪证）与
- *   用 `ld` 构造的那个**不同**——在两者相差很远的机器上。后一半才证明本用例分得开这两个。
+ *   检查是行为式的而不是比对字段：被重配置到 `lq` 的观测器，必须与用那个 `lq` 构造的观测器 **逐位相同** ，并且（伪证）
+ *   与用 `ld` 构造的那个 **不同** ——在两者相差很远的机器上。后一半才证明本用例分得开这两个。
  */
 TEST(BackEmfObserver, ApplyParamsUsesTheQAxisInductanceAndRefusesAnImpossibleMachine) {
     constexpr float kLq = 8.0e-4F;

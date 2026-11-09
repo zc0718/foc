@@ -18,8 +18,8 @@ namespace driver {
  *            instead of leaving the question unanswered -- `Motor::start()` refuses silence. A **test or a
  *            fault-injection harness** raises it and checks that the drive stops, that `fault_code()` names the cause,
  *            and that the latch survives the pin going quiet again.
- * @note [zh] 两个角色，而第二个才是它在 `driver/` 而不在测试里的理由。**仿真器**装上它、从不拉高——这就是没有功率级的主
- *            控方把"这里没有故障通路"写下来的方式，而不是把问题悬着不管：`Motor::start()` 拒绝沉默。**测试或故障注入
+ * @note [zh] 两个角色，而第二个才是它在 `driver/` 而不在测试里的理由。 **仿真器** 装上它、从不拉高——这就是没有功率级的
+ *            主控方把"这里没有故障通路"写下来的方式，而不是把问题悬着不管：`Motor::start()` 拒绝沉默。**测试或故障注入
  *            harness** 拉高它，然后检查驱动停了、`fault_code()` 说出了成因、以及引脚恢复安静之后锁存仍在。
  * @since 0.1.9
  * @exporter

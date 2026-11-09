@@ -88,7 +88,7 @@ auto sag_under_load(float kp_scale, float ilimit_scale) -> float {
  *            proportional, so it can only answer a load by commanding a velocity, and the speed integrator absorbs that
  *            load only while there is a velocity error to integrate. The sag is therefore the integral's wind-up
  *            transient, and it settles slowly.
- * @note [zh] 刚性工况也不是 0，而且写下**为什么**比写下数字更重要：位置环是比例环节，它只能靠"发出一个 速度"来回应负
+ * @note [zh] 刚性工况也不是 0，而且写下 **为什么** 比写下数字更重要：位置环是比例环节，它只能靠"发出一个 速度"来回应负
  *            载，而速度积分器只在存在速度误差时才吸收负载。所以这段下垂就是积分器的建立过程， 收敛得很慢。
  */
 TEST(SilCompliance, AConstantLoadAlwaysProducesSomeSag) {

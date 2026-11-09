@@ -159,7 +159,7 @@ TEST(ApiObserverSelector, TheNonlinearFluxModeIsWiredAndItIsWhatActuallyRuns) {
     // (`instance.observer().kind()`), not from the request. So each mode has to report *itself*, and the two have to
     // report differently -- identical answers would mean the field is echoing the enum back.
     // "创建成功"不能证明选择生效：一个接受该模式却仍构造默认值的实现也能通过。这里的判据是状态字段，bridge 用活着的
-    // 观测器（`instance.observer().kind()`）填它，而不是用请求值。于是每种模式必须报出**它自己**，且两者必须不同——
+    // 观测器（`instance.observer().kind()`）填它，而不是用请求值。于是每种模式必须报出 **它自己** ，且两者必须不同——
     // 若相同，说明这个字段只是把枚举原样回显。
     const foc_motor_params_t params = params_struct();
 
@@ -273,7 +273,7 @@ TEST(ApiObserverSelector, ACarrierTheControlRateCannotResolveIsRefusedAtSetup) {
     // `kMinSamplesPerCarrier` control periods per cycle to be resolvable. Below that the observer is not noisy, it is
     // dead -- the demodulated amplitude collapses, the lock drops out, the angle freezes and the speed reads zero, which
     // a loop cannot tell from a stalled rotor (measured: -19.5 rad/s of speed bias on the SIL fixture).
-    // 第四个放行 HFI 的事实，也是唯一关于**控制率**而非机器的那一个：载波每个周期需要 `kMinSamplesPerCarrier` 个控制
+    // 第四个放行 HFI 的事实，也是唯一关于 **控制率** 而非机器的那一个：载波每个周期需要 `kMinSamplesPerCarrier` 个控制
     // 周期才分辨得出来。低于此观测器不是变吵，而是死了——解调幅值塌掉、锁定脱落、角度冻结、转速读零，环无法把它与堵转
     // 区分开（SIL 台架实测转速偏差 -19.5 rad/s）。
     //

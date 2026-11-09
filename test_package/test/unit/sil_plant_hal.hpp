@@ -35,8 +35,8 @@ using motor::MotorConfig;
  *
  *   The duty is held in the **stationary** frame for a whole control period (zero-order hold on the applied stator
  *   voltage vector), which is what a real inverter does. Disabled or not-yet-enabled states hold 50% duty, i.e. zero
- *   voltage. 占空比在整个控制周期内保持于**静止**坐标系（作用到定子电压矢量上的零阶保持），这才是真实 逆变器的行为。未
- *   使能/已关闭状态保持 50% 占空比，即零电压。
+ *   voltage. 占空比在整个控制周期内保持于 **静止** 坐标系（作用到定子电压矢量上的零阶保持），这才是真实 逆变器的行为。
+ *   未使能/已关闭状态保持 50% 占空比，即零电压。
  * @since 0.1.0
  */
 class PlantPwm final : public hal::Pwm {
@@ -95,8 +95,8 @@ class PlantCurrentSense final : public hal::CurrentSense {
    * @note [en] `u+10 v-10 %` is the *differential* case on purpose: a uniform gain error is a loop-gain error and
    *            scales with the current, while a mismatch creates a phantom negative-sequence component that the loop
    *            then tries to regulate away. The two are not the same defect, so the knobs are separate per phase.
-   * @note [zh] `u+10 v-10 %` 是**差分**情形，故意与均匀增益分开：均匀增益是环路增益误差，随电流成比例；相间失配会造出一
-   *            个虚假负序分量，环路随后会去调节它。两者不是同一个缺陷，所以每相分开。
+   * @note [zh] `u+10 v-10 %` 是 **差分** 情形，故意与均匀增益分开：均匀增益是环路增益误差，随电流成比例；相间失配会造出
+   *            一个虚假负序分量，环路随后会去调节它。两者不是同一个缺陷，所以每相分开。
    * @since 0.1.0
    */
     void set_phase_gain(Uvw<float> gain_uvw) noexcept;
@@ -106,7 +106,7 @@ class PlantCurrentSense final : public hal::CurrentSense {
    * @brief [zh] 加到每相读数上的偏置，A；0 表示已校准。
    * @note [en] A *common* offset cancels identically in Clarke, so it cannot be the source of a d-q error -- that is
    *            measured, not assumed, and it is why this knob exists at all rather than being left out.
-   * @note [zh] **共模**偏置在 Clarke 里严格相互抵消，因此它不可能成为 d-q 误差的来源——这一点是量出来的、不是假设的，也
+   * @note [zh] **共模** 偏置在 Clarke 里严格相互抵消，因此它不可能成为 d-q 误差的来源——这一点是量出来的、不是假设的，也
    *            正是保留这个旋钮（而不是干脆不提供）的原因。
    * @since 0.1.0
    */
@@ -145,9 +145,9 @@ class PlantPosition final : public hal::PositionSensor {
    *            to it and sit there, so it costs the same at every target. Quantisation is a *resolution*: the loop
    *            closes on a staircase, so the residual depends on where the target happens to fall between two counts.
    *            Tying them together would make one number explain two different behaviours.
-   * @note [zh] 为什么它与安装误差是两个旋钮。安装误差是**偏置**：环路会收敛到它并停在那里，所以每个目标处代价相同。量化
-   *            是**分辨率**：环路在一个台阶上闭环，残差取决于目标恰好落在两个计数之间的哪里。把两者绑在一起，一个数字就
-   *            要解释两种不同的行为。
+   * @note [zh] 为什么它与安装误差是两个旋钮。安装误差是 **偏置** ：环路会收敛到它并停在那里，所以每个目标处代价相同。量
+   *            化是 **分辨率** ：环路在一个台阶上闭环，残差取决于目标恰好落在两个计数之间的哪里。把两者绑在一起，一个数
+   *            字就要解释两种不同的行为。
    */
     void set_resolution_rad(float lsb_rad) noexcept;
 
@@ -196,7 +196,7 @@ class PlantPosition final : public hal::PositionSensor {
    * @brief [zh] 真实机械角越过标记的那一个 tick 为真。
    * @note [en] An edge, not a level, and computed from the *plant* angle rather than the reported one: the mark is a
    *            property of the rotor and must not move when the offset correction does.
-   * @note [zh] 是边沿而不是电平，并且由**plant 角度**而非报出的角度计算：标记是转子的属性，不该随偏置校正一起移动。
+   * @note [zh] 是边沿而不是电平，并且由 **plant 角度** 而非报出的角度计算：标记是转子的属性，不该随偏置校正一起移动。
    */
     auto index_pulse() noexcept -> bool;
 
@@ -286,10 +286,10 @@ class PlantHal final {
    *            limitation: `sign(0) = 0` here, so the zero-current neighbourhood is modelled as *better* than real
    *            hardware, where the transition is a finite slope with ringing. Numbers from this model are a lower bound
    *            on the real distortion.
-   * @note [zh] 这个模型换来的是：没有它，PRD 的 U1（"死区在 SIL 里无法验证"）是一个关于**被控对象** 的陈述，而不是关于
+   * @note [zh] 这个模型换来的是：没有它，PRD 的 U1（"死区在 SIL 里无法验证"）是一个关于 **被控对象** 的陈述，而不是关于
    *            库的。有了它，死区畸变在 CI 里成为可测量的量——这正是"我们知道自己没 补偿"与"我们能说出差多少"之间的区
-   *            别。 诚实的局限：这里 `sign(0) = 0`，因此零电流附近被建模得比真实硬件**更好**——真实的 过渡是一段有限斜率
-   *            并伴随振荡。本模型给出的数字是真实畸变的**下界**。
+   *            别。 诚实的局限：这里 `sign(0) = 0`，因此零电流附近被建模得比真实硬件 **更好** ——真实的 过渡是一段有限斜
+   *            率并伴随振荡。本模型给出的数字是真实畸变的 **下界** 。
    * @since 0.1.0
    */
     void set_deadtime_voltage(float v_dead) noexcept;
@@ -312,7 +312,7 @@ class PlantHal final {
    *            sources would make the numbers unreadable. If the model refuses the request (control period not a whole
    *            number of switching periods), `advance()` falls back to the mean-value path rather than quietly doing
    *            nothing.
-   * @note [zh] 挂上模型之后 `set_deadtime_voltage()` / `set_deadtime_transition()` **不再生效**：死区 效应从开关过程里
+   * @note [zh] 挂上模型之后 `set_deadtime_voltage()` / `set_deadtime_transition()` **不再生效** ：死区 效应从开关过程里
    *            出来，而不是加到它上面；两个来源会让数字无法解读。 若模型拒绝该请求（控制周期不是开关周期的整数倍），
    *            `advance()` 退回平均值通路，而不是 悄悄什么都不做。
    * @since 0.1.0
@@ -325,7 +325,7 @@ class PlantHal final {
    * @brief [zh] 挂上母线 meter：此后直流母线电压由它给出，逆变器抽取的电流也记在它的账上。
    * @note [en] Optional and off by default. With no meter, `advance()` is byte for byte what it was -- the port adds a
    *            measurement, not a behaviour.
-   * @note [zh] 可选，默认关闭。不挂 meter 时 `advance()` 与从前逐字节相同——这个端口加的是**测量**，不是行为。
+   * @note [zh] 可选，默认关闭。不挂 meter 时 `advance()` 与从前逐字节相同——这个端口加的是 **测量** ，不是行为。
    * @since 0.1.9
    */
     void set_bus(BusMeter* meter) noexcept;
@@ -342,7 +342,7 @@ class PlantHal final {
      *            plant is byte for byte what it was before this member existed. Attaching a *meter* stays optional
      *            because that is what turns a stiff bus into an integrated one.
      * @note [zh] 是 HAL 成员而不是 `set_brake()` 指针，因为开关是功率级的一部分、不是可选的测量端口：它一直在，没有东西
-     *            写它时占空比为 0，plant 与这个成员存在之前逐字节相同。而**挂 meter** 仍然可选，因为那才是把一条刚性母
+     *            写它时占空比为 0，plant 与这个成员存在之前逐字节相同。而 **挂 meter** 仍然可选，因为那才是把一条刚性母
      *            线变成被积分的母线的那件事。
      * @since 0.1.9
      */
@@ -547,7 +547,7 @@ inline void PlantHal::advance(float dt_ctrl_s, int substeps) noexcept {
                 // v and i at the **same instant**: the voltage is the one just applied and the current is the one it acts on.
                 // Book after `advance()` would pair this sub-step's voltage with the next one's current, which is the
                 // misalignment the whole port exists to avoid.
-                // v 与 i 取**同一时刻**：电压是刚施加的那个，电流是它作用的那个。放在 `advance()` 之后记，会把本子步的电压与
+                // v 与 i 取 **同一时刻** ：电压是刚施加的那个，电流是它作用的那个。放在 `advance()` 之后记，会把本子步的电压与
                 // 下一子步的电流配在一起，而那正是这个端口要避免的错位。
                 const Dq<float> i_dq = plant_->current_dq();
                 if (bus_ != nullptr) {

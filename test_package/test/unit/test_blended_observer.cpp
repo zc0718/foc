@@ -237,11 +237,11 @@ TEST(BlendedObserver, RejectsNonPositivePeriodAndResetClearsTheHandover) {
  *   / 85 rad/s against a 10..110 band, which is `(speed - start)/span` to the last digit the float carries.
  *
  *   输出是 `θ_low + w*shortest_arc(θ_high, θ_low)`，一行代数，整张敏感度表由此掉落：低速源的误差以 `1−w` 到达输出、高速
- *   源的误差以 `w` 到达，而**判据失准**（转速读数差 `dω`）把角度移动 `dω·分歧/带宽`，因为权重自身的斜率是 `1/带宽 `。三
- *   个系数都用答案由手设定的桩观测器量出，因此这里没有任何东西依赖 plant。
+ *   源的误差以 `w` 到达，而 **判据失准** （转速读数差 `dω`）把角度移动 `dω·分歧/带宽`，因为权重自身的斜率是 `1/带宽 `。
+ *   三个系数都用答案由手设定的桩观测器量出，因此这里没有任何东西依赖 plant。
  *
- *   下面的数是**系数**而不是拟合值：在 10..110 的带上，35/60/85 rad/s 给出 `w` 恰好 0.25000 / 0.50000 / 0.75000，即 `(
- *   转速 − 起点)/带宽` 到最后一位 float。
+ *   下面的数是 **系数** 而不是拟合值：在 10..110 的带上，35/60/85 rad/s 给出 `w` 恰好 0.25000 / 0.50000 / 0.75000，即
+ *   `( 转速 − 起点)/带宽` 到最后一位 float。
  */
 TEST(BlendedObserver, EveryBlendCoefficientIsTheWeightOrOneMinusIt) {
     constexpr float kStart = 10.0F;
@@ -297,7 +297,7 @@ TEST(BlendedObserver, EveryBlendCoefficientIsTheWeightOrOneMinusIt) {
  * @brief [en] The blend is an interpolation **on the circle**: two answers either side of the wrap blend across the
  *             short arc, not the long way round.
  *
- * @brief [zh] 混合是**圆上的**插值：折返两侧的两个答案沿短弧混合，而不是绕远路。
+ * @brief [zh] 混合是 **圆上的** 插值：折返两侧的两个答案沿短弧混合，而不是绕远路。
  *
  *   `theta_low + w*(theta_high - theta_low)` with a plain subtraction would take the long way whenever the two answers
  *   sit either side of the wrap, swinging the output by almost a full turn -- and it would do it precisely at the
@@ -333,7 +333,7 @@ TEST(BlendedObserver, TheInterpolationHappensOnTheCircleAndNotOnTheLine) {
  * @brief [en] A handover sweeps the published angle by the disagreement while neither observer moves -- and the
  *             published **speed** does not show it.
  *
- * @brief [zh] 一次交接会在两个观测器都不动的情况下把发布角扫过整个分歧量——而发布**转速**不体现它。
+ * @brief [zh] 一次交接会在两个观测器都不动的情况下把发布角扫过整个分歧量——而发布 **转速** 不体现它。
  *
  *   The weight depends on speed, so when the decision speed crosses the band the output angle moves from `theta_low` to
  *   `theta_high` even though neither observer changed its answer. That excursion is real and it is bounded by the
@@ -350,9 +350,9 @@ TEST(BlendedObserver, TheInterpolationHappensOnTheCircleAndNotOnTheLine) {
  *   的，且被两者的分歧量封顶——但它是交接的产物，不是转子的。这里把两个桩冻结在相距 0.6 rad 处实测：输出扫过 0.6 rad，而
  *   物理上什么都没动。
  *
- *   后半句是给使用方的：发布**转速**是两个转速的同一个凸组合，所以扫动期间它停在（共同的）转速上。一个在动而一个不动的
- *   角度与转速彼此不自洽，用转速积分重建位置的消费者会与直接读角度的人在交接期间不一致，差值恰好是那个分歧量。这是 **该
- *   知道的性质**而不是要修的缺陷：角度是更好的估计，扫动就是交接的工作方式。
+ *   后半句是给使用方的：发布 **转速** 是两个转速的同一个凸组合，所以扫动期间它停在（共同的）转速上。一个在动而一个不动
+ *   的角度与转速彼此不自洽，用转速积分重建位置的消费者会与直接读角度的人在交接期间不一致，差值恰好是那个分歧量。这是 **
+ *   该知道的性质**而不是要修的缺陷：角度是更好的估计，扫动就是交接的工作方式。
  */
 TEST(BlendedObserver, AHandoverSweepsTheAngleWithoutMovingTheSpeed) {
     constexpr float kStart = 10.0F;

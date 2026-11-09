@@ -30,9 +30,9 @@ namespace {
  *            machine (no saliency: pure q-axis current) needs no special case, its roots going off to infinity and
  *            being dropped by the range check.
  * @note [zh] 驻点条件是 `p·cos t + 2·q·cos 2t = 0`，即 `c = cos t` 的 `4·q·c² + p·c − 2·q = 0`。两根一正一负，哪一个是
- *            **极大**取决于 `p`、`q` 的符号，所以这里不去推理分支，而是把四个候选点（`c = 0` 与两个根，各自配上 `sin t`
- *            的两种符号）都代进目标函数取最好。圆上的光滑函数没有边界，最大值必在其中——把 `c = 0` 也放进去，是为了让退
- *            化的 `q → 0` 机器（没有凸极：纯 q 轴电流）不需要特例，它的根跑到无穷远，被范围检查丢掉。
+ *            **极大** 取决于 `p`、`q` 的符号，所以这里不去推理分支，而是把四个候选点（`c = 0` 与两个根，各自配上 `sin
+ *            t` 的两种符号）都代进目标函数取最好。圆上的光滑函数没有边界，最大值必在其中——把 `c = 0` 也放进去，是为了让
+ *            退化的 `q → 0` 机器（没有凸极：纯 q 轴电流）不需要特例，它的根跑到无穷远，被范围检查丢掉。
  * @attacher
  * @since 0.1.9
  */
@@ -167,7 +167,7 @@ auto Mtpv::at_speed(float omega_e_rad_s) const noexcept -> MtpvPoint {
     // instead of as a branch on speed is what keeps the three regions straight: the same code covers current-limited,
     // both-constraints-active, and voltage-limited, and the region boundaries come out of the feasibility tests rather
     // than out of a formula someone has to get right.
-    // 每个候选点都是一个点，按转矩打分；返回的是其中**可行**的最好者。这样写而不是按转速分支，是三个区间保持正确的
+    // 每个候选点都是一个点，按转矩打分；返回的是其中 **可行** 的最好者。这样写而不是按转速分支，是三个区间保持正确的
     // 原因：同一段代码覆盖电流受限、两个约束同时生效、以及电压受限，而区间边界是从可行性判定里自然出来的，不是从一条
     // 必须有人写对的公式里出来的。
     const MtpvPoint mtpa = mtpa_point();

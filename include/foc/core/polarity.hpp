@@ -64,8 +64,8 @@ enum class PolarityVerdict : std::int8_t {
  *            `Aligned`, at a zero-length settle).
  * @note [zh] `settle_s` 是前置条件，不是舒适度：`decide()` 会读每个脉冲起点处的电流，若两者相差超过 `min_asymmetry_a`，
  *            答案就是 `Inconclusive` 而不是一个结论。松弛时间短于绕组的 `L/R` 时，第二个脉冲从第一个脉冲的尾巴上出发——
- *            那里的电感已塌陷，于是第二个上升更大，原因与磁钢无关，测试会**自信地给出错误**答案（实测：磁钢是 `Aligned`
- *            的机器在零松弛下被判 `Reversed`）。
+ *            那里的电感已塌陷，于是第二个上升更大，原因与磁钢无关，测试会 **自信地给出错误** 答案（实测：磁钢是
+ *            `Aligned` 的机器在零松弛下被判 `Reversed`）。
  * @context [en] Commissioning only: noexcept, no allocation.
  * @context [zh] 仅调试/上电流程：noexcept、不分配。
  * @since 0.1.0
@@ -170,7 +170,7 @@ class MagnetPolarityTest final {
  *
  *   Kept so `decide()` can check that the two pulses really started from one operating point.
  *
- * @brief [zh] 在**正**脉冲之前记下的同一个量。
+ * @brief [zh] 在 **正** 脉冲之前记下的同一个量。
  *
  *   留着让 `decide()` 能检查两个脉冲确实从同一个工作点出发。
      */

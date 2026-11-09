@@ -60,7 +60,7 @@ auto PositionReference::update(float theta_e_rad, bool index_pulse) noexcept -> 
 
         // A step at or beyond half an electrical turn cannot be distinguished from a wrap, so it is reported instead of
         // guessed at: picking a direction here would produce an angle that looks fine and is a whole turn out.
-        // 半个电角度以上的跳变无法与一次折返区分，因此**报告**而不是猜：在这里选一个方向会给出一个看起来没问题、却差了
+        // 半个电角度以上的跳变无法与一次折返区分，因此 **报告** 而不是猜：在这里选一个方向会给出一个看起来没问题、却差了
         // 整整一圈的角度。
         if (std::fabs(delta_e) >= (0.9F * kPi)) {
             lost_count_ = true;
@@ -70,7 +70,7 @@ auto PositionReference::update(float theta_e_rad, bool index_pulse) noexcept -> 
 
     // Bring the referenced angle up to date *before* the pulse is handled, so a repeat pass snaps from this tick's
     // value rather than from the previous one -- otherwise the correction carries one tick of travel as an error.
-    // 在处理脉冲**之前**先把基准角更新到本 tick，于是重复经过是从本 tick 的值吸附、而不是从上一 tick，否则这次修正会
+    // 在处理脉冲 **之前** 先把基准角更新到本 tick，于是重复经过是从本 tick 的值吸附、而不是从上一 tick，否则这次修正会
     // 把一 tick 的行程当成误差带进来。
     if (homed_) {
         referenced_mech_rad_ = unwrapped_mech_rad_ - index_offset_rad_;
@@ -81,13 +81,13 @@ auto PositionReference::update(float theta_e_rad, bool index_pulse) noexcept -> 
 
     if (!homed_) {
         // First index: the only moment where the origin is *defined* rather than corrected.
-        // 第一次索引：原点被**定义**而不是被修正的唯一时刻。
+        // 第一次索引：原点被 **定义** 而不是被修正的唯一时刻。
         index_offset_rad_ = unwrapped_mech_rad_ - config_.index_mech_rad;
         homed_ = true;
     } else {
         // A later pass: snap to the nearest index position instead of redefining zero. Redefining would subtract a whole
         // turn and make the reported angle go backwards; on a repeat pass the mark's job is to remove accumulated drift.
-        // 之后的经过：吸附到**最近的**索引位置，而不是重新定义零点。重新定义会减掉整整一圈、让报出的角度倒退；重复经过
+        // 之后的经过：吸附到 **最近的** 索引位置，而不是重新定义零点。重新定义会减掉整整一圈、让报出的角度倒退；重复经过
         // 时标记的职责是消除累积漂移。
         const float residual = wrap_pi(referenced_mech_rad_ - config_.index_mech_rad);
         // The mark says where the axis is and the residual says how far the count disagrees. Past the step the unwrap
@@ -96,7 +96,7 @@ auto PositionReference::update(float theta_e_rad, bool index_pulse) noexcept -> 
         // Reporting it is the only honest answer, and it is the same rule the electrical step already follows, in the
         // same units.
         // 标记说轴在哪、残差说计数差多少。超过解折返已声明无法分辨的那个步长时，两者描述的不是同一个事件——索引线上
-        // 一个虚假脉冲会把原点静默地移走最多半个机械圈，再由下一次真实标记移回来。**报告**是唯一诚实的答案，而这
+        // 一个虚假脉冲会把原点静默地移走最多半个机械圈，再由下一次真实标记移回来。 **报告** 是唯一诚实的答案，而这
         // 就是电角度跳变已经在遵守的同一条规则，用的是同一个单位。
         if (std::fabs(residual) >= (0.9F * kPi / poles)) {
             lost_count_ = true;
@@ -107,7 +107,7 @@ auto PositionReference::update(float theta_e_rad, bool index_pulse) noexcept -> 
     // Recomputed rather than set to `index_mech_rad`: the mark says *which turn* this is, and the residual above already
     // moved the origin onto it. Assigning the bare index position would rewind the count by a whole turn on every pass,
     // which is the difference this case was written to catch -- 6.26 rad reading back as 0.0.
-    // 重新计算而不是赋成 `index_mech_rad`：标记说明的是**第几圈**，上面的残差已经把原点移到了它上面。直接赋索引位置
+    // 重新计算而不是赋成 `index_mech_rad`：标记说明的是 **第几圈** ，上面的残差已经把原点移到了它上面。直接赋索引位置
     // 会在每次经过时把计数倒退整整一圈——这正是本用例要抓的区别：6.26 rad 读回成 0.0。
     referenced_mech_rad_ = unwrapped_mech_rad_ - index_offset_rad_;
 

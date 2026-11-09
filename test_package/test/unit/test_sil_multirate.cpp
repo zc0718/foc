@@ -134,7 +134,7 @@ struct Decimated final {
 /**
  * @brief [en] A speed step with the outer loop's *instants* observed through the trace channel.
  *
- * @brief [zh] 一次速度阶跃，外环的**步进时刻**通过轨迹通道观测。
+ * @brief [zh] 一次速度阶跃，外环的 **步进时刻** 通过轨迹通道观测。
  *
  *   The spacing is read from where `i_ref_q` moves, because the current reference is recomputed only on an outer tick:
  *   between them the motor holds it. That makes the decimation a measured quantity rather than a restatement of the
@@ -204,8 +204,8 @@ auto decimated_step(float speed_loop_period_s, foc::core::TraceSample* buffer) -
  * @brief [en] The requested period is a *lower bound*: the loop runs on whole control ticks, so the actual period is
  *             `dt*ceil(T/dt)`, and the float accumulation of `dt` can add one more.
  *
- * @brief [zh] 请求的周期是一个**下界**：环路按整控制拍运行，所以实际周期是 `dt*ceil(T/dt)`，而 `dt` 的浮点累加还可能再
- *             加一拍。
+ * @brief [zh] 请求的周期是一个 **下界** ：环路按整控制拍运行，所以实际周期是 `dt*ceil(T/dt)`，而 `dt` 的浮点累加还可能
+ *             再加一拍。
  *
  *   This is the row's sensitivity coefficient for the loop period, and it is a trap rather than a nicety: asking for
  *   1.2 ticks gets 2. The accumulation is the second half. `speed_elapsed_s_` is a float32 that accumulates `dt` and
@@ -284,9 +284,9 @@ TEST(SilMultirate, TheRequestedPeriodIsALowerBoundAndTheTickIsTheUnit) {
  *   z 域模型是本行的第二来源，且与代码无关：把 plant 归约为惯量（`Kt/(J*s)`，速度环自身的设计把 `J/b` 极点对消掉了）并
  *   加零阶保持，开环为 `L(z) = [omega_b*T*(z-1) + omega_b*T^2/tau_b]/(z-1)^2`，于是
  *
- *   - **慢**根位于 `z = 1 - omega_b*T`，即实时时间常数 `T/(1-z) = 1/omega_b`——**与 T 无关**。这正是降采样可以这么粗的全
- *   部理由：积分按经过时间重新标度，所以环路的快慢是增益的属性、不是采样的属性。 - **快**根在 `omega_b*T = 2` 处跑到 `z
- *   = -1`，即临界稳定。`omega_b = 250 rad/s`、`dt = 50 µs` 对应 `T = 8 ms`，也就是 **160×** 降采样。
+ *   - **慢** 根位于 `z = 1 - omega_b*T`，即实时时间常数 `T/(1-z) = 1/omega_b`—— **与 T 无关** 。这正是降采样可以这么粗
+ *   的全部理由：积分按经过时间重新标度，所以环路的快慢是增益的属性、不是采样的属性。 - **快** 根在 `omega_b*T = 2` 处跑
+ *   到 `z = -1`，即临界稳定。`omega_b = 250 rad/s`、`dt = 50 µs` 对应 `T = 8 ms`，也就是 **160×** 降采样。
  *
  *   实测：稳定时间从 1× 到 140× 都是平的（0.0685 对 0.0690，差 0.7 %），之后断掉——160× 时 0.1058 s、180× 时 0.5000 s，
  *   超调 1.73 % → 3.62 % → 7.28 %。这条边界不是代码里的任何整定常数，它是从模型里掉出来的。

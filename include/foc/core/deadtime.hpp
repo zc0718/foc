@@ -23,11 +23,11 @@ namespace core {
  *
  * @brief [zh] 把逆变器死区吃掉的电压加回去，再把请求交给真正的调制器。
  *
- *   死区在每个 `t_dead` 内把该相钳位到电流来自的那条母线，因此在电流**较大**时逆变器每相交付 `v_cmd −
+ *   死区在每个 `t_dead` 内把该相钳位到电流来自的那条母线，因此在电流 **较大** 时逆变器每相交付 `v_cmd −
  *   v_dead·sign(i_phase)`。于是命令 `v_desired + v_dead·sign(i_phase)` 就能落到 `v_desired`——前提是这一级看得到相电流，
  *   这正是 `ModulatorInput` 带着它们的原因。
  *
- *   它是**装饰器**而不是 `Svpwm` 上的一个开关：空间矢量调制与逆变器线性化是两件事，而且任何 调制器都能用这种方式被补
+ *   它是 **装饰器** 而不是 `Svpwm` 上的一个开关：空间矢量调制与逆变器线性化是两件事，而且任何 调制器都能用这种方式被补
  *   偿。
  *
  * @note [en] The correction is applied in the **phase** domain (inverse Clarke, per-phase shape, Clarke back), because
@@ -37,8 +37,8 @@ namespace core {
  *            `sign()` step *over-corrects* -- measured on a switching plant, the step is worse than no compensation at
  *            all near zero (measured on the switching plant).
  *
- * @note [zh] 修正在**相域**进行（逆 Clarke、按相整形、再 Clarke 回去），因为物理机制就在那里：损失属于 每一相，而不属于
- *            矢量。按矢量幅值补偿等于在补偿另一台电机。
+ * @note [zh] 修正在 **相域** 进行（逆 Clarke、按相整形、再 Clarke 回去），因为物理机制就在那里：损失属于 每一相，而不属
+ *            于矢量。按矢量幅值补偿等于在补偿另一台电机。
  *
  *   它做不到的：损失不会像 `sign()` 说的那样在过零处瞬间换极性，而是在一段电流范围内淡出； 在这个范围内 `sign()` 会**
  *   过修**——开关 plant 上实测，近零处阶跃补偿比不补偿还差。
@@ -73,13 +73,13 @@ template <typename Modulator> class DeadTimeCompensator final {
         /**
      * @brief [en] The current at which the correction saturates -- i.e. the **width of the fade** in A; 0 keeps the
      *             legacy `sign()` step.
-     * @brief [zh] 修正饱和处的电流——也就是**淡出宽度**，A；0 保持旧的 `sign()` 阶跃。
+     * @brief [zh] 修正饱和处的电流——也就是 **淡出宽度** ，A；0 保持旧的 `sign()` 阶跃。
      * @note [en] This is *not* the switching ripple: measured on a switching plant the two differ by more than an order
      *            of magnitude (0.375 A vs about 0.03 A here), and feeding the ripple makes the correction far too weak
      *            at intermediate currents (6.6x the step's error at 0.3 A, on the switching plant). It is identifiable
      *            -- see `DeadTimeFadeEstimator`.
-     * @note [zh] 这**不是**开关纹波：开关 plant 上实测两者差一个数量级以上（本机 0.375 A vs 约 0.03 A），填纹波会让修正
-     *            在中间电流处过弱得多（0.3 A 处误差是阶跃的 6.6 倍，开关 plant 实测）。它是**可辨识**的——见
+     * @note [zh] 这 **不是** 开关纹波：开关 plant 上实测两者差一个数量级以上（本机 0.375 A vs 约 0.03 A），填纹波会让修
+     *            正在中间电流处过弱得多（0.3 A 处误差是阶跃的 6.6 倍，开关 plant 实测）。它是 **可辨识** 的——见
      *            `DeadTimeFadeEstimator`。
      * @warning [en] **Not recommended.** The width can be identified (measured: 0.0355 A at 24 V, and it halves exactly
      *               when the bus halves), but the identified number still loses to the plain `sign()` step: 1.16x its
@@ -89,10 +89,10 @@ template <typename Modulator> class DeadTimeCompensator final {
      *               this at 0 unless a measurement on *your* hardware says the transition really is broad; and note
      *               that a ramp's advantage, when it exists, is at low current, where the PI already holds the mean.
      * @warning [zh] **不建议使用。** 宽度是可辨识的（实测：24 V 下 0.0355 A，且母线 减半时它正好减半），但辨识出来的数
-     *               仍然输给朴素的 `sign()` 阶跃：0.3 A 处 误差是它的 1.16 倍，20 mA 处 1.58 倍。原因是**形状**错而不是
-     *               数错——plant 上 损失在 |i| 从 21 mA 到 86 mA 之间从 `(4/π)·deadtime_v` 的 2.7 % 跳到 97 %， 那是一个
-     *               软阶跃，铺在 `If` 上的线性斜坡表示不了这么陡的东西。所以除非**你的** 硬件上量出来过渡确实很宽，这一
-     *               项保持 0；而且要注意斜坡的优势（如果存在）都在 小电流处，而那里 PI 本来就已经把均值守住了。
+     *               仍然输给朴素的 `sign()` 阶跃：0.3 A 处 误差是它的 1.16 倍，20 mA 处 1.58 倍。原因是 **形状** 错而不
+     *               是数错——plant 上 损失在 |i| 从 21 mA 到 86 mA 之间从 `(4/π)·deadtime_v` 的 2.7 % 跳到 97 %， 那是一
+     *               个软阶跃，铺在 `If` 上的线性斜坡表示不了这么陡的东西。所以除非 **你的** 硬件上量出来过渡确实很宽，
+     *               这一项保持 0；而且要注意斜坡的优势（如果存在）都在 小电流处，而那里 PI 本来就已经把均值守住了。
      * @since 0.1.0
      */
         float i_fade_a;
@@ -114,8 +114,8 @@ template <typename Modulator> class DeadTimeCompensator final {
    *               sees less than a single leg would. It is kept because its *scaling* is right: measure the fade once
    *               and this tells you how it moves with bus voltage and inductance.
    * @warning [zh] **不是 `i_fade_a` 的取值。** 它是单条桥臂对母线的纹波上界；淡出更窄（死区窗口只在特定 时刻对纹波取
-   *               样），而三相电机看到的比单条腿更少。保留它只是因为它的**缩放关系**对：量过一次 之后，它告诉你淡出宽度
-   *               随母线电压与电感怎么变。
+   *               样），而三相电机看到的比单条腿更少。保留它只是因为它的 **缩放关系** 对：量过一次 之后，它告诉你淡出宽
+   *               度随母线电压与电感怎么变。
    * @since 0.1.0
    */
     [[nodiscard]] static constexpr auto predicted_ripple_a(float v_bus, float dt_s, float l_h) noexcept -> float {
@@ -155,7 +155,7 @@ template <typename Modulator> class DeadTimeCompensator final {
         // i/i_fade` while |i| < i_fade, and `deadtime_v * sign(i)` beyond it. The
         // step is only the limit of that ramp at zero width -- which is why it
         // over-corrects wherever the current is comparable to the fade.
-        // 有了淡出宽度，修正就是**平均**误差所服从的那条斜坡：死区窗口内相电流落在自身纹波里的某个位置，
+        // 有了淡出宽度，修正就是 **平均** 误差所服从的那条斜坡：死区窗口内相电流落在自身纹波里的某个位置，
         // 因此留下的伏秒在 |i| < i_fade 时是 `deadtime_v·i/i_fade`，超出后是
         // `deadtime_v·sign(i)`。
         // 阶跃只是这条斜坡在宽度趋于零时的极限——这就是为什么凡是电流与淡出可比的地方它都会过修。
@@ -235,13 +235,13 @@ template <typename Modulator> class DeadTimeCompensator final {
  *   `(4/pi)*deadtime_v*clamp(|I|/If)`: again one equation per sample and one unknown, but in the region the machine
  *   actually operates in.
  *
- * @brief [zh] 从锁定转子的旋转电流扫描里拟合一个参数，把死区的**淡出宽度**辨识出来。
+ * @brief [zh] 从锁定转子的旋转电流扫描里拟合一个参数，把死区的 **淡出宽度** 辨识出来。
  *
  *   存在的理由：这个宽度是补偿级唯一需要的数，也是唯一没人能从铭牌算出来的数 （`predicted_ripple_a()` 是差一个数量级的
- *   上界）。但它**可测**，而且很便宜： 定住转子、扫一个缓慢旋转电流的幅值、看电流怎么响应。若损失是理想阶跃， `|v|` 就
- *   该正好是 `rs·|i| + deadtime_v`；偏离它的那部分就是淡出。
+ *   上界）。但它 **可测** ，而且很便宜： 定住转子、扫一个缓慢旋转电流的幅值、看电流怎么响应。若损失是理想阶跃， `|v|`
+ *   就该正好是 `rs·|i| + deadtime_v`；偏离它的那部分就是淡出。
  *
- *   为什么是**旋转**而不是 d 轴直流扫描。直流指令下损失是一个继电器：死区把电流 钉在零，直到指令超过
+ *   为什么是 **旋转** 而不是 d 轴直流扫描。直流指令下损失是一个继电器：死区把电流 钉在零，直到指令超过
  *   `(4/π)·deadtime_v`，所以扫描根本没进到能看见淡出的 区域——本估计器的第一版正是这么做的，在开关 plant 上返回 `valid
  *   == false`， 而且是对的。旋转电流有的是**幅值**而不是符号，它的损失是基波 `(4/π)·deadtime_v·clamp(|I|/If)`：仍然每样
  *   本一个方程、一个未知数，但落在 机器真正工作的区域里。
@@ -254,8 +254,8 @@ template <typename Modulator> class DeadTimeCompensator final {
  *            narrower than the current sensor's noise -- in that case `valid` stays false rather than inventing a
  *            number, which is the honest outcome: use the `sign()` step there.
  *
- * @note [zh] 实现：一组固定的候选宽度，各自累加残差平方和，因此估计器是**流式**的——不存样本、不分配。 胜出者用对数空间
- *            里相邻三点做抛物线细化。确定性：同样的样本给出逐位相同的结果。
+ * @note [zh] 实现：一组固定的候选宽度，各自累加残差平方和，因此估计器是 **流式** 的——不存样本、不分配。 胜出者用对数空
+ *            间里相邻三点做抛物线细化。确定性：同样的样本给出逐位相同的结果。
  *
  *   它需要什么、做不到什么。它需要 `rs`；错的 `rs` 会被吸收进 `If`（这个偏差由 `residual_v` 报告）。 它需要高于噪声地板
  *   的电流，所以分辨不出比电流传感器噪声更窄的淡出——那种情况下 `valid` 保持 false， 而不是编一个数出来，这才是诚实的结
@@ -330,13 +330,13 @@ class DeadTimeFadeEstimator final {
    * @param v_magnitude [en] the *amplitude* of the rotating voltage vector, V; this is the projection of the command
    *                         onto the current, `v . i/|i|`, which is the component the loss acts on (the `wL` term is
    *                         perpendicular to it and cancels exactly).
-   * @param v_magnitude [zh] 旋转电压矢量的**幅值**，V；这里是命令在电流方向 上的投影 `v·i/|i|`，即损失作用的那个分量（
-   *                         `ωL` 项垂直于它，正好抵消）。
+   * @param v_magnitude [zh] 旋转电压矢量的 **幅值** ，V；这里是命令在电流方向 上的投影 `v·i/|i|`，即损失作用的那个分量
+   *                         （ `ωL` 项垂直于它，正好抵消）。
    * @param i_magnitude [en] the *fundamental* amplitude of the current, A, with the switching ripple removed -- a
    *                         lock-in at the sweep frequency, not a peak of the instantaneous samples, or the ripple is
    *                         mistaken for signal.
-   * @param i_magnitude [zh] 电流的**基波**幅值，A，已去掉开关纹波——要用在扫描频率上的锁相， 而不是瞬时采样的峰值，否则
-   *                         纹波会被当成信号。
+   * @param i_magnitude [zh] 电流的 **基波** 幅值，A，已去掉开关纹波——要用在扫描频率上的锁相， 而不是瞬时采样的峰值，否
+   *                         则纹波会被当成信号。
    * @return [en] true if the sample was used.
    * @return [zh] 该采样是否被采用。
    * @note [en] "Settled" matters: the model has no `di/dt` term, so a sample taken during a transient biases the fit.
@@ -442,7 +442,7 @@ class DeadTimeFadeEstimator final {
     /**
      * @brief [en] The dead-time loss seen by a *rotating* current of amplitude `i_mag`: the fundamental of
      *             `deadtime_v*sign(i)` is `(4/pi)*deadtime_v` along the current, faded by `clamp(i_mag/i_fade)`.
-     * @brief [zh] **旋转**电流（幅值 `i_mag`）看到的死区损失：`deadtime_v·sign(i)` 的基波是沿电流方向的
+     * @brief [zh] **旋转** 电流（幅值 `i_mag`）看到的死区损失：`deadtime_v·sign(i)` 的基波是沿电流方向的
      *             `(4/π)·deadtime_v`，再乘上 `clamp(i_mag/i_fade)` 的淡出。
      */
     [[nodiscard]] static auto loss_magnitude(float i_mag, float fade, float deadtime_v) noexcept -> float {

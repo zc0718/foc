@@ -282,8 +282,8 @@ template <typename T> inline constexpr bool has_seed_angle_v = has_seed_angle<T>
  *            has to be told what the machine turned out to be, without the caller rebuilding the whole motor. A policy
  *            without this hook simply keeps its construction-time numbers, which is the right answer for anything that
  *            does not model the machine at all.
- * @note [zh] 因为辨识发生在策略**构建之后**：按铭牌整定的观测器需要被告知这台机器实际上是什么样，而调用方不必重建整个电
- *            机。没有这个钩子的策略就保持构造时的数字——对任何不建模机器的组件来说，这就是正确答案。
+ * @note [zh] 因为辨识发生在策略 **构建之后** ：按铭牌整定的观测器需要被告知这台机器实际上是什么样，而调用方不必重建整个
+ *            电机。没有这个钩子的策略就保持构造时的数字——对任何不建模机器的组件来说，这就是正确答案。
  * @since 0.1.0
  * @exporter
  */
@@ -420,9 +420,9 @@ template <typename T> inline constexpr bool has_clock_v = has_clock<T>::value;
  *
  * @brief [zh] `T`（HalPolicy）是否暴露了满足 `hal::FaultInput` 的 `fault_input` 成员。
  *
- *   与 `has_clock` 不同，这里的缺席**不是**静默的：它为 false 时 `Motor::start()` 以 `NotImpl` 拒绝，因为一个缺席的故障
- *   输入唯一可能代表的值就是"功率级没事"，而没有哪个库有资格替驱动器回答这一句。完整论证、以及没有这根引脚的主控方该写
- *   什么，见 `hal::FaultInput`。
+ *   与 `has_clock` 不同，这里的缺席 **不是** 静默的：它为 false 时 `Motor::start()` 以 `NotImpl` 拒绝，因为一个缺席的故
+ *   障输入唯一可能代表的值就是"功率级没事"，而没有哪个库有资格替驱动器回答这一句。完整论证、以及没有这根引脚的主控方该
+ *   写什么，见 `hal::FaultInput`。
  * @since 0.1.9
  * @exporter
  */
@@ -469,13 +469,13 @@ template <typename T> inline constexpr bool is_controller_v = is_controller<T>::
 /**
  * @brief [en] `T` satisfies the *widened* modulator contract: `modulate(const ModulatorInput&) noexcept ->
  *             SvpwmResult`.
- * @brief [zh] `T` 满足**加宽后的**调制器契约：`modulate(const ModulatorInput&) noexcept -> SvpwmResult`。
+ * @brief [zh] `T` 满足 **加宽后的** 调制器契约：`modulate(const ModulatorInput&) noexcept -> SvpwmResult`。
  * @note [en] Separate from the two-argument form so every existing modulator keeps working: `Motor` asks the widened
  *            one when it exists and the narrow one otherwise. The difference is a capability, not a preference -- a
  *            modulator that never sees the phase currents cannot linearise the inverter, and saying so in the type
  *            system is cheaper than documenting it.
- * @note [zh] 与两参数形式分开，好让所有既有调制器继续工作：存在加宽形式时 `Motor` 用它，否则用窄的。 这是**能力**差异而
- *            非偏好——从不接触相电流的调制器无法线性化逆变器，把它写在类型系统里比写在文档里便宜。
+ * @note [zh] 与两参数形式分开，好让所有既有调制器继续工作：存在加宽形式时 `Motor` 用它，否则用窄的。 这是 **能力** 差异
+ *            而非偏好——从不接触相电流的调制器无法线性化逆变器，把它写在类型系统里比写在文档里便宜。
  * @since 0.1.0
  * @exporter
  */
@@ -529,7 +529,7 @@ template <typename T> inline constexpr bool is_speed_control_v = is_speed_contro
  *
  *   `step(const PositionInput&, float, float) noexcept -> float` plus `reset()`.
  *
- * @brief [zh] `T` 满足**位置**槽位契约。
+ * @brief [zh] `T` 满足 **位置** 槽位契约。
  *
  *   `step(const PositionInput&, float, float) noexcept -> float` 与 `reset()`。
  *
@@ -537,8 +537,9 @@ template <typename T> inline constexpr bool is_speed_control_v = is_speed_contro
  *            a measurement, a step. The position slot is a trajectory shaper too, and a move has a velocity and an
  *            acceleration, not just an endpoint. Widening this one slot is what makes per-move limits possible without
  *            teaching every `Pi` about acceleration.
- * @note [zh] 与电流、速度槽位的形状**故意不同**。那三个是调节器：给定、实测、步长。位置槽位同时还是轨迹塑造器，而一次运
- *            动有速度和加速度，不只有一个终点。把这个槽位加宽，才能在不让每个 `Pi` 都去理解加速度的前提下支持按次限制。
+ * @note [zh] 与电流、速度槽位的形状 **故意不同** 。那三个是调节器：给定、实测、步长。位置槽位同时还是轨迹塑造器，而一次
+ *            运动有速度和加速度，不只有一个终点。把这个槽位加宽，才能在不让每个 `Pi` 都去理解加速度的前提下支持按次限
+ *            制。
  * @since 0.1.0
  * @exporter
  */
@@ -638,8 +639,8 @@ template <typename T> inline constexpr bool has_mech_offset_v = has_mech_offset<
  *            told rather than sold a number that means something else. Both members are required together, because a
  *            mark that can be asked about but never pulses is not a mark.
  * @note [zh] 可选，理由记在 `hal/position.hpp`：没有标记的传感器是完全正常的传感器，它只是无法建立绝对位置，而需要绝对
- *            位置的调用方必须**被告知**这件事，而不是拿到一个含义不同的数字。两个成员必须成对存在——能问"有没有标记"却永
- *            远不会给出脉冲的，不算标记。
+ *            位置的调用方必须 **被告知** 这件事，而不是拿到一个含义不同的数字。两个成员必须成对存在——能问"有没有标记"却
+ *            永远不会给出脉冲的，不算标记。
  * @since 0.1.6
  * @exporter
  */
@@ -667,8 +668,8 @@ template <typename T> inline constexpr bool has_index_v = has_index<T>::value;
  * @note [en] Separate from `is_aligner_v` because the offset is the aligner's *result*, not part of the contract the
  *            motor needs to drive the sequence. An aligner that only diagnoses (or one that writes the offset itself)
  *            has nothing to hand back.
- * @note [zh] 与 `is_aligner_v` 分开：偏置是对齐器的**结果**，不是电机驱动流程所必需的契约。只做诊断、或自己写回偏置的对
- *            齐器没有东西要交回来。
+ * @note [zh] 与 `is_aligner_v` 分开：偏置是对齐器的 **结果** ，不是电机驱动流程所必需的契约。只做诊断、或自己写回偏置的
+ *            对齐器没有东西要交回来。
  * @since 0.1.0
  * @exporter
  */
@@ -693,8 +694,8 @@ template <typename T> inline constexpr bool has_align_offset_v = has_align_offse
  * @note [en] Deliberately about what the loop *calls*, not about which class it is: `NullTrace` satisfies it (with
  *            no-ops) so the loop has one code path, and a test double that counts pushes satisfies it without being a
  *            ring at all. That is the difference between a policy and a special case.
- * @note [zh] 它描述的是环**调用**什么，而不是那个类是谁：`NullTrace` 满足它（全部空操作），于是环只有一条代码路径；一个
- *            只数调用次数的测试替身也满足它，而它根本不是环。这就是策略与特例的区别。
+ * @note [zh] 它描述的是环 **调用** 什么，而不是那个类是谁：`NullTrace` 满足它（全部空操作），于是环只有一条代码路径；一
+ *            个只数调用次数的测试替身也满足它，而它根本不是环。这就是策略与特例的区别。
  * @since 0.1.8
  * @exporter
  */
@@ -720,8 +721,8 @@ template <typename T> inline constexpr bool is_trace_sink_v = is_trace_sink<T>::
  * @note [en] `has_injection_v` answers a question about a *type*; a policy that can switch modes answers a different
  *            one at run time, and the two are not the same question. A slot holding an injector but running back-EMF
  *            injects nothing, so anything that has to decide "will this inject?" needs this trait to ask.
- * @note [zh] `has_injection_v` 回答的是关于**类型**的问题；能切换模式的策略在运行时回答的是另一个问题，两者并不相同。一
- *            个装着注入器却在跑反电势的槽位不注入任何东西，因此任何要判断"它会不会注入"的地方都需要这个特型来提问。
+ * @note [zh] `has_injection_v` 回答的是关于 **类型** 的问题；能切换模式的策略在运行时回答的是另一个问题，两者并不相同。
+ *            一个装着注入器却在跑反电势的槽位不注入任何东西，因此任何要判断"它会不会注入"的地方都需要这个特型来提问。
  * @since 0.1.8
  * @exporter
  */
@@ -739,7 +740,7 @@ template <typename T> inline constexpr bool has_kind_v = has_kind<T>::value;
 
 /**
  * @brief [en] `T` can say whether it is injecting *right now*, as opposed to whether it could.
- * @brief [zh] `T` 能说出它**此刻**是否在注入，而不是它是否具备注入能力。
+ * @brief [zh] `T` 能说出它 **此刻** 是否在注入，而不是它是否具备注入能力。
  * @since 0.1.8
  * @exporter
  */

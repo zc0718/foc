@@ -34,11 +34,11 @@ namespace {
 //      first question to ask.
 // 两条论断，写的顺序就是它们重要的顺序。
 //
-//   1. **答不上来的 HAL 被拒绝。** 本 HAL 的其他地方，能力缺席会诚实降级——没有时钟就没有时基。而**故障**输入的
+//   1. **答不上来的 HAL 被拒绝。** 本 HAL 的其他地方，能力缺席会诚实降级——没有时钟就没有时基。而 **故障** 输入的
 //      缺席是朝"功率级没事"降级的，那是没有人有资格替驱动器给出的答案。所以 `start()` 答 `NotImpl`，轴留在 Idle、输出级
 //      保持关闭。这条放在最前面写，因为它是唯一可能被悄悄做错的一条：一台从不提问的电机，从外面看与一台问过并被告知
 //      "一切正常"的电机一样。
-//   2. **拉高的输入要落到 `fault_code()` 上**，而不只是状态字。这个区别就是 F42 判据的全部：只让状态机动的故障，会给
+//   2. **拉高的输入要落到 `fault_code()` 上** ，而不只是状态字。这个区别就是 F42 判据的全部：只让状态机动的故障，会给
 //      运维留下"驱动器跳了"和没有一个可以问的第一个问题。
 
 using foc::ErrorCode;
@@ -151,7 +151,7 @@ TEST(FaultInput, TheAssertedPinReachesTheFaultCodeAndTheLatchOutlivesThePin) {
     // The pin going quiet does *not* resume the drive: the fault is latched, so a driver that reported a desaturation and
     // then reset itself still needs somebody to clear the fault. This is the half that a state-only implementation gets
     // wrong, because it re-reads the pin and finds nothing.
-    // 引脚恢复安静**不会**让驱动复活：故障是锁存的，所以一个报了去饱和、随后自己复位的驱动器仍然需要有人来清除故障。
+    // 引脚恢复安静 **不会** 让驱动复活：故障是锁存的，所以一个报了去饱和、随后自己复位的驱动器仍然需要有人来清除故障。
     // 这正是"只看状态"的实现做错的那一半——它会重读引脚，什么也没看到。
     hal.fault_input.set_faulted(false);
     EXPECT_EQ(ErrorCode::Fault, motor.tick(kDt)) << "the latch is the answer, not the pin";
@@ -224,7 +224,7 @@ TEST(FaultInput, TheStubRecordsInjectionSoAHarnessCannotProveNothingHappened) {
 // 5. The cause has a name on the C surface and it is the *first* question an operator asks. The range check in
 //    `foc_bridge_fault_name` used to stop at `LostSync`; a new code that is appended without widening it would answer "?"
 //    for a fault the library itself can raise, which is the shape this project keeps finding.
-// 5. 这个成因在 C 表面上有名字，而那是运维问的**第一个**问题。`foc_bridge_fault_name` 的范围检查原来停在 `LostSync`；
+// 5. 这个成因在 C 表面上有名字，而那是运维问的 **第一个** 问题。`foc_bridge_fault_name` 的范围检查原来停在 `LostSync`；
 //    追加一个新码而不放宽它，就会为一个库自己就会报的故障答 "?"，而这正是本项目反复发现的形状。
 TEST(FaultInput, TheNewCauseIsLastAndStillLatched) {
     using foc::core::fault_is_latched;

@@ -177,9 +177,9 @@ class MtpaReference final {
      *            magnitude fits, which keeps "most torque per amp" true at every point including the clamp. The walk is
      *            a bisection on `i_q` because magnitude is monotone in `i_q` along the curve, and 24 halvings is the
      *            same budget the field-weakening solver uses.
-     * @note [zh] 装不下时**不是**把两个分量一起缩小：那会离开 MTPA 曲线，多丢了本可以拿到的转矩。 正确做法是**沿曲线往
-     *            下走**直到幅值装得下，这样"每安培转矩最大"在包括限幅点的每一点都 仍成立。走法是对 `i_q` 二分，因为沿曲
-     *            线幅值对 `i_q` 单调，而 24 次折半正是弱磁求解器 用的同一预算。
+     * @note [zh] 装不下时 **不是** 把两个分量一起缩小：那会离开 MTPA 曲线，多丢了本可以拿到的转矩。 正确做法是**沿曲线
+     *            往下走**直到幅值装得下，这样"每安培转矩最大"在包括限幅点的每一点都 仍成立。走法是对 `i_q` 二分，因为沿
+     *            曲线幅值对 `i_q` 单调，而 24 次折半正是弱磁求解器 用的同一预算。
      * @since 0.1.0
      */
     [[nodiscard]] auto generate(const ReferenceInput& in) const noexcept -> Dq<float> {
@@ -193,7 +193,7 @@ class MtpaReference final {
         // The d-axis allowance for this speed. Clipping happens after the walk, never inside it: a
         // smaller `|i_d|` only shrinks the magnitude, so a reference that fitted the current limit
         // before the clip still fits after it.
-        // 本转速下的 d 轴许可量。夹紧发生在走曲线**之后**，绝不在其中：`|i_d|` 变小只会让幅值更小，
+        // 本转速下的 d 轴许可量。夹紧发生在走曲线 **之后** ，绝不在其中：`|i_d|` 变小只会让幅值更小，
         // 所以夹紧前装得下电流限幅的参考，夹紧后依然装得下。
         const float allowance = i_d_limit_a(in.omega_e_rad_s);
         // The unconstrained answer first; it is the common case.

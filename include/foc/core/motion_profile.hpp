@@ -27,9 +27,9 @@ namespace core {
  *   after covering `v^2/(2a)` plus whatever it travels while the inner loop catches up, so a plant that lags the
  *   command passes the threshold and overshoots by an amount this class cannot bound -- measured at 13.7 % of the
  *   threshold on the SIL axis. The command itself cannot overshoot: both ceilings fall monotonically in `|error|` and
- *   the sign follows the error. 那个制动距离是**指令**的属性，不是轴的属性。轴走完 `v^2/(2a)` 之后还要加上内层环追赶期
- *   间走过的距离，因此跟随滞后的 plant 会越过阈值，并超出这个类无法约束的量——在 SIL 轴上测得阈值的 13.7 %。指令本身不会
- *   过冲：两个上限都随 `|error|` 单调下降，符号跟着误差走。
+ *   the sign follows the error. 那个制动距离是 **指令** 的属性，不是轴的属性。轴走完 `v^2/(2a)` 之后还要加上内层环追赶
+ *   期间走过的距离，因此跟随滞后的 plant 会越过阈值，并超出这个类无法约束的量——在 SIL 轴上测得阈值的 13.7 %。指令本身不
+ *   会过冲：两个上限都随 `|error|` 单调下降，符号跟着误差走。
  *
  * @brief [zh] 会塑造速度指令的位置控制器：对实测误差做比例，再用配置的加速度做速率限制。
  *
@@ -95,7 +95,7 @@ class MotionProfile final {
      * @param dt_s [zh] 步长，s；<= 0 被拒绝。
      * @note [en] A non-zero per-move limit *replaces* the configured one for the duration of the call; the
      *            configuration is untouched, so the next move can ask for something else without any restore step.
-     * @note [zh] 非零的本次限制在本次调用内**替换**配置里的那一个；配置本身不被改动，因此下一次运动 可以直接要求别的
+     * @note [zh] 非零的本次限制在本次调用内 **替换** 配置里的那一个；配置本身不被改动，因此下一次运动 可以直接要求别的
      *            值，不需要任何恢复步骤。
      * @since 0.1.0
      */

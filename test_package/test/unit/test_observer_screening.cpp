@@ -10,7 +10,7 @@
 //
 // 用两个真正决定答案的轴来筛观测器：电角速度与 d 轴电流。
 // 仓库里已有各自的测量（`test_salient_observer`、`test_daxis_observer_limit`、`test_nonlinear_flux_observer`、
-// `test_hfi_observer`），其中一条**推翻了**本表原本要据以建立的信念：`i_d = 0` 时单 `L` 观测器的误差与凸极比完全无关，
+// `test_hfi_observer`），其中一条 **推翻了** 本表原本要据以建立的信念：`i_d = 0` 时单 `L` 观测器的误差与凸极比完全无关，
 // 因为它的模型误差恰好是 `(Ld − Lq)·id`。所以凸极比不是筛选轴；轴是转速与 `i_d`。
 //
 // 本文件把整个决定放在一处：一张表，每一格都对着 0.15 rad 天花板断言，而它建立的阈值正是"仅凭铭牌给判定"所要引用的。
@@ -106,7 +106,7 @@ TEST(ObserverScreening, SpeedAndDaxisCurrentDecideWhereTheCeilingIsRespected) {
     // assertions below are the boundaries the run established rather than the ones it was expected to show.
     // 判据在跑之前写成"库在用的观测器在 i_d = 0 时于每个转速都留在 0.15 rad 内"，而运行推翻了它：20 rad/s 读到 0.9668 rad。
     // 那条判据假定的是仓库做过刻画的观测器 `NonlinearFluxObserver` 的特性，而 `sil::Bench` 与 C ABI 里真正在用的是
-    // `BackEmfObserver`。两者在此并排测量，下面的断言是运行**确立**的边界，而不是它被期望展示的边界。
+    // `BackEmfObserver`。两者在此并排测量，下面的断言是运行 **确立** 的边界，而不是它被期望展示的边界。
     const foc::sil::MachineSpec spec = spec_with_ratio(1.0F); // a surface machine: no saliency to hide behind
     const float speeds[] = {20.0F, 50.0F, 200.0F, 800.0F, 3200.0F};
 
@@ -136,7 +136,7 @@ TEST(ObserverScreening, SpeedAndDaxisCurrentDecideWhereTheCeilingIsRespected) {
 
     // 2. With -1 A of d-axis current the shipping observer leaves the ceiling until 800 rad/s, which is the screening
     //    rule in one number: the constraint is on d-axis current *at low speed*, not on d-axis current.
-    //    d 轴电流为 −1 A 时，库在用的观测器要 800 rad/s 才回到天花板内；这条筛选规则压缩成一个数：限制在于**低速下的** d 轴
+    //    d 轴电流为 −1 A 时，库在用的观测器要 800 rad/s 才回到天花板内；这条筛选规则压缩成一个数：限制在于 **低速下的** d 轴
     //    电流，而不在于 d 轴电流本身。
     EXPECT_GT(back_emf_loaded[2], kCeilingRad);
     EXPECT_LE(back_emf_loaded[3], kCeilingRad);
@@ -183,7 +183,7 @@ TEST(ObserverScreening, TheSwitchingRigCannotSeparateTheDualInductanceObserverFr
   // dead time is already 0.1 rad of flux angle at this `psi_f`, so on this rig both columns are measuring the inverter.
   // That is worth recording as a negative result: the screening table cannot separate these two observers, and nothing in
   // the table's other columns should be read as if it could. The separation needs the plant measurement.
-  // 为这张表试过的那一列。前提是双电感观测器会在带 d 轴电流的凸极机上显出价值；在这里量**并没有**，而原因是仪器不是观测器：
+  // 为这张表试过的那一列。前提是双电感观测器会在带 d 轴电流的凸极机上显出价值；在这里量 **并没有** ，而原因是仪器不是观测器：
   // 2 A 时单 `L` 读 0.1708 rad、双电感 0.1699，而两者模型上的差是 0.105 rad（`test_dual_inductance_observer.cpp` 的偏置定
   // 律）。这个 `psi_f` 下几百毫伏的死区就已经是 0.1 rad 磁链角，所以在这台架子上两列都在量逆变器。这个否定结果值得记下：本
   // 筛选表分不开这两个观测器，表里其它列也不该被读成它分得开。要分离得靠 plant 测量。

@@ -169,9 +169,9 @@ TEST(HallPhysics, EveryEdgeFlipsExactlyOneBitSoTwoFlipsAtOnceIsAFault) {
  *     degrees wide and exactly 60 degrees -- not wider (the code does change), not narrower (it does not change for
  *     less). A model that returned a fine angle by accident would fail (a); one that was stuck would fail (b). 一个扇区
  *     内编码什么也不说：转子可以在 60° 内任何位置，所以只看编码的解码器最多错 30°，再聪明也改不了。判据是两条测量，不是
- *     口号：(a) 相隔 59.9° 的两个角度给出**同一个**编码；(b) 跨过边界相隔 0.1° 给出**不同**编码。合起来说明量化宽度是
- *     60° 且正好 60°——不会更宽（编码确实变了），不会更窄（更小的间隔不会变）。一个不小心返回了细角度的模型会挂在 (a)，
- *     一个卡住的模型会挂在 (b)。
+ *     口号：(a) 相隔 59.9° 的两个角度给出 **同一个** 编码；(b) 跨过边界相隔 0.1° 给出 **不同** 编码。合起来说明量化宽度
+ *     是 60° 且正好 60°——不会更宽（编码确实变了），不会更窄（更小的间隔不会变）。一个不小心返回了细角度的模型会挂在
+ *     (a)，一个卡住的模型会挂在 (b)。
  */
 TEST(HallPhysics, InsideOneSectorTheCodeCarriesNoAngleInformation) {
     const foc::sil::HallSensorModel model{};
@@ -182,7 +182,7 @@ TEST(HallPhysics, InsideOneSectorTheCodeCarriesNoAngleInformation) {
     // the edges land at 30/90/150/... and *no* sector begins at zero; the first version of this case assumed a
     // sector 0..60 and straddled an edge, which is a claim about the arrangement dressed up as a claim about the
     // sensors.
-    // 从扫描结果里读出扇区，而不是假设它从哪开始。传感器在 0/120/240°，因此边沿落在 30/90/150/…，**没有**哪个扇区
+    // 从扫描结果里读出扇区，而不是假设它从哪开始。传感器在 0/120/240°，因此边沿落在 30/90/150/…， **没有** 哪个扇区
     // 从零开始；本用例第一版假设了 0..60 的扇区，结果跨过了一条边沿——那是把关于排布的说法打扮成关于传感器的说法。
     const HallRun *widest = &runs.front();
     for (const HallRun &run : runs) {
@@ -212,9 +212,9 @@ TEST(HallPhysics, InsideOneSectorTheCodeCarriesNoAngleInformation) {
  *     wiring, which is why it has to be found by measuring the sector widths (or by a once-per-revolution index), not
  *     by looking for illegal codes. This case is the reason that sentence is in the documentation. 一个传感器装偏 10°，
  *     会把两个扇区撑到 70°、把两个压到 50°，并且——要紧的是——让每个编码仍然合法，所以任何非法状态检查都看不见它。装偏的
- *     传感器没有谎报**哪些位**是开的，只谎报了**什么时候**变，因此编码序列仍是合法的格雷行走，只是边沿挪了。它造成的角
- *     度误差因此有限、且对连线不可见——这就是为什么必须靠测量扇区宽度（或每转一次的索引）来发现它，而不能靠找非法编码。
- *     用例名的这句话正是这条用例存在的理由。
+ *     传感器没有谎报 **哪些位** 是开的，只谎报了 **什么时候** 变，因此编码序列仍是合法的格雷行走，只是边沿挪了。它造成
+ *     的角度误差因此有限、且对连线不可见——这就是为什么必须靠测量扇区宽度（或每转一次的索引）来发现它，而不能靠找非法编
+ *     码。用例名的这句话正是这条用例存在的理由。
  */
 TEST(HallPhysics, TenDegreesOfMisplacementWidensTwoSectorsAndStaysLegalThroughout) {
     foc::sil::HallSetup setup{};
@@ -263,13 +263,13 @@ TEST(HallPhysics, TenDegreesOfMisplacementWidensTwoSectorsAndStaysLegalThroughou
  *     Gray cycle rather than breaking the rule. The measurement is asserted below as a fact, because a decoder that
  *     checked only adjacency would believe a dead sensor to its grave: the channels that do see it are the illegal
  *     window (one sixth of the time) and the doubled edge interval (all of the time). 一路传感器坏掉，在一圈里有六分之
- *     一的时间无处可藏，其余六分之五看起来完全健康——只是分辨率掉到 120°；而格雷校验 **抓不到**它。这个数决定了霍尔故障
+ *     一的时间无处可藏，其余六分之五看起来完全健康——只是分辨率掉到 120°；而格雷校验 **抓不到** 它。这个数决定了霍尔故障
  *     必须怎么处理。卡死的传感器无法改变自己那一位，所以它本该参与切分的五个扇区继续产生合法编码；角度信息悄悄从 60° 掉
  *     到 120°，边沿间隔翻倍。接线只在另两路与坏的那路不一致处暴露故障——每圈恰好一个 60° 窗口，也就是六分之一的时间。本
  *     用例的第一版断言与现在测到的相反：它声称坏一路会让两位同时翻转（6 -> 4），因此相邻性校验能抓住它。抓不住。坏掉的
- *     那一位是**冻结**的，所以每次幸存下来的跳变仍然只翻一位——行走退化到一个更小的格雷环上，而不是破坏了规则。下面把这
- *     次测量当作事实断言，因为只查相邻性的解码器会把一路坏掉的传感器信到底：真正看得见它的通道是非法窗口（六分之一的时
- *     间）和翻倍的边沿间隔（全部时间）。
+ *     那一位是 **冻结** 的，所以每次幸存下来的跳变仍然只翻一位——行走退化到一个更小的格雷环上，而不是破坏了规则。下面把
+ *     这次测量当作事实断言，因为只查相邻性的解码器会把一路坏掉的传感器信到底：真正看得见它的通道是非法窗口（六分之一的
+ *     时间）和翻倍的边沿间隔（全部时间）。
  */
 TEST(HallPhysics, ADeadSensorIsSilentForFiveSixthsOfTheRevolutionAndKeepsEveryRemainingCodeLegal) {
     for (const bool stuck_high : {false, true}) {
@@ -315,7 +315,7 @@ TEST(HallPhysics, ADeadSensorIsSilentForFiveSixthsOfTheRevolutionAndKeepsEveryRe
         // And the sequence does **not** betray it: a frozen bit keeps every surviving transition Gray-adjacent, so
         // the adjacency rule every decoder carries is satisfied all the way round. This is the assertion that costs
         // a designer their afternoon if they assumed otherwise.
-        // 而序列**不会**揭发它：冻结的那一位让每次幸存跳变都保持格雷相邻，于是每个解码器都带着的那条相邻规则，在整圈里
+        // 而序列 **不会** 揭发它：冻结的那一位让每次幸存跳变都保持格雷相邻，于是每个解码器都带着的那条相邻规则，在整圈里
         // 都被满足。这条断言正是"假设相反"会让设计者赔上一下午的地方。
         int flips_seen[4] = {0, 0, 0, 0};
         for (std::size_t i = 0; i < runs.size(); ++i) {

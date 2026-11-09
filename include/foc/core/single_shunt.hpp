@@ -17,7 +17,7 @@ namespace core {
  * @note [en] The two active intervals are the ones a 7-segment pattern applies **twice** per period, so the usable
  *            window is half of each: `min(t_active1, t_active2)/2`. That half is not a detail -- it is where an
  *            otherwise-correct design fails by a factor of two at the modulation edge.
- * @note [zh] 两个有效区间在七段式图样里每个周期被**分两次**施加，所以可用窗口是它们各自的一半： `min(t_active1,
+ * @note [zh] 两个有效区间在七段式图样里每个周期被 **分两次** 施加，所以可用窗口是它们各自的一半： `min(t_active1,
  *            t_active2)/2`。这个「一半」不是细节——正是在这里，一个别的方面都正确的设计会在调制边界上差一个两倍。
  * @since 0.1.9
  * @exporter
@@ -38,8 +38,8 @@ struct ShuntTimes final {
  *            measurable": the first says *this* period cannot be measured and the next one probably can (the reference
  *            is somewhere near a sector boundary), the second says no current is flowing through the shunt at all, so
  *            there is nothing to measure and nothing to miss.
- * @note [zh] `WindowTooNarrow` 与 `NoActiveVector` 不是一回事，不许合并成「测不了」：前者说的是**这个**周期测不了、下一
- *            个大概就行（给定落在扇区边界附近），后者说的是电流根本不流经采样电阻，没什么可测、也没什么可漏。
+ * @note [zh] `WindowTooNarrow` 与 `NoActiveVector` 不是一回事，不许合并成「测不了」：前者说的是 **这个** 周期测不了、下
+ *            一个大概就行（给定落在扇区边界附近），后者说的是电流根本不流经采样电阻，没什么可测、也没什么可漏。
  * @since 0.1.9
  * @exporter
  */
@@ -73,8 +73,8 @@ struct ShuntWindow final {
  *            at the numbers -- which is exactly why the flag exists. A reconstructed zero that is really a refusal is
  *            the defect this type is shaped to prevent: it looks like a motor drawing no current, and a loop will act
  *            on it.
- * @note [zh] 拒绝时 `i_uvw` 留零**并且** `valid` 为假，而调用方单看数字是分不出这两者的——这正是那个标志存在的原因。「其
- *            实是拒绝」的重构零值，正是这个类型要防的缺陷：它看起来像一台不取电流的电机，而环路会照它动作。
+ * @note [zh] 拒绝时 `i_uvw` 留零 **并且** `valid` 为假，而调用方单看数字是分不出这两者的——这正是那个标志存在的原因。「
+ *            其实是拒绝」的重构零值，正是这个类型要防的缺陷：它看起来像一台不取电流的电机，而环路会照它动作。
  * @since 0.1.9
  * @exporter
  */
@@ -113,22 +113,22 @@ struct ShuntCurrents final {
  *   written for the first two and used for the third is 41 % too optimistic, which is why the test asserts two
  *   different bounds rather than one.
  *
- * @details [zh] 一个采样电阻放在直流回路里，于是它量到的是**有效矢量**恰好让它经过的那个电流：`V_k` 期间是占空比最大的
- *               那一相单独，`V_{k+1}` 期间是最大的两相（等价地，最小的那一相的相反数）。所以三次电流只需要两个读数，因
- *               为电机是浮地星形、三者和为零：
+ * @details [zh] 一个采样电阻放在直流回路里，于是它量到的是 **有效矢量** 恰好让它经过的那个电流：`V_k` 期间是占空比最大
+ *               的那一相单独，`V_{k+1}` 期间是最大的两相（等价地，最小的那一相的相反数）。所以三次电流只需要两个读数，
+ *               因为电机是浮地星形、三者和为零：
  *
  *   `i_max = i_dc(V_k)`、`i_min = −i_dc(V_{k+1})`、`i_mid = −(i_max + i_min)`。
  *
- *   这就是全部重构；而通常随它一起出现的那张扇区表被**刻意**省掉了：答案只取决于哪一相的占空比排在哪个位置，所以一张按
- *   扇区号索引的表只会给「扇区约定写错」多一个地方，却不多一条测量。
+ *   这就是全部重构；而通常随它一起出现的那张扇区表被 **刻意** 省掉了：答案只取决于哪一相的占空比排在哪个位置，所以一张
+ *   按扇区号索引的表只会给「扇区约定写错」多一个地方，却不多一条测量。
  *
  *   决定能不能做的是窗口。七段式图样每个周期把每个有效矢量施加两次，所以振铃建立之后、下一个边沿之前可用的时间是
- *   `min(t_active1, t_active2)/2`，它必须不小于 `t_settle + t_sample`。靠近扇区边界时其中一个区间趋于零，**那里**才是单
- *   电阻没有答案的工作区——不是近似不好，是没有。策略的回答就是把它说出来：`classify()` 返回 `WindowTooNarrow`，
+ *   `min(t_active1, t_active2)/2`，它必须不小于 `t_settle + t_sample`。靠近扇区边界时其中一个区间趋于零， **那里** 才是
+ *   单电阻没有答案的工作区——不是近似不好，是没有。策略的回答就是把它说出来：`classify()` 返回 `WindowTooNarrow`，
  *   `reconstruct()` 返回 `valid == false`，而不是拿一个在换向过程中读到的数拼出一个看起来合理的电流。
  *
- *   误差结构值得写下来，因为它并不均匀：最大和最小两相各承担一个读数的 ADC 误差，而中间那一相是一个**差**，噪声大
- *   `sqrt(2)` 倍。按前两相写的界用在第三相上会乐观 41 %，这也是测试断言**两条**不同的界而不是一条的原因。
+ *   误差结构值得写下来，因为它并不均匀：最大和最小两相各承担一个读数的 ADC 误差，而中间那一相是一个 **差** ，噪声大
+ *   `sqrt(2)` 倍。按前两相写的界用在第三相上会乐观 41 %，这也是测试断言 **两条** 不同的界而不是一条的原因。
  *
  * @context [en] Current-loop ISR: noexcept, no allocation, no state.
  * @context [zh] 电流环 ISR：noexcept、不分配、无状态。

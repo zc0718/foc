@@ -13,7 +13,7 @@
 // 于是观测器从不被推进——而没被推进的观测器不会推进载波相位，所以 `injection_ab()` 返回恒零。模式被准入、
 // `status()["observer"]` 说 `HFI`，而逆变器从未被要求注入任何东西。
 //
-// 比零更糟的是同一个洞的另一半：从任何非零初相读出未推进观测器的注入，得到的是一个**常矢量**，即电流上的直流偏置。
+// 比零更糟的是同一个洞的另一半：从任何非零初相读出未推进观测器的注入，得到的是一个 **常矢量** ，即电流上的直流偏置。
 // 这正是对齐路径已经为自己记录过的隐患；传感器那条路形状相同，却没有门控。
 
 #include <cmath>
@@ -123,7 +123,7 @@ TEST(MotorInjection, ASensoredAxisInjectsWithoutSurrenderingTheAngle) {
     // What is required instead: the carrier is applied (the swing), and the sensor keeps the commutation angle -- the
     // observer runs for its own demodulation, not to sell the loop an angle it already has. That is a hybrid drive, and
     // it is the only reading that makes the mode real on a rig with an encoder.
-    // 判据，以及它所记录的历史。HAL 提供角度的轴过去走传感器分支、从不推进观测器——于是注入模式**完全不施加任何载波**：
+    // 判据，以及它所记录的历史。HAL 提供角度的轴过去走传感器分支、从不推进观测器——于是注入模式 **完全不施加任何载波** ：
     // 被准入、被上报为 `HFI`、毫无作用。本用例的第一版把这个零断言成正确答案，而没人测量时，缺陷就是这样变成"已记录的
     // 行为"的。
     //

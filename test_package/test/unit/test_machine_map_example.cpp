@@ -11,7 +11,7 @@
 //   4. the map is even in current: a negative current is the same point as its magnitude.
 //
 // 第一个用例就是批次要的那个示例——从文档到一台跑起来的 `Motor` 二十来行。其余是判据，写在跑前：示例是真的（文档的
-// `rs` 与行确实到了电机上，且驱动器真的在 tick）；超出最后一行的电流**恰好**用最后一行作答且 `covers()` 说出来；
+// `rs` 与行确实到了电机上，且驱动器真的在 tick）；超出最后一行的电流 **恰好** 用最后一行作答且 `covers()` 说出来；
 // 朴素实现会给出的外推值在这里被算出来并要求与钳位值不同，于是这条不可能靠"钳位与外推恰好同值"而通过；表对电流是偶
 // 函数。
 
@@ -90,7 +90,7 @@ TEST(MachineMapExample, TheDocumentsNumbersReachTheObserver) {
     // nothing -- which is what this test found when it was first written: the declaration had no definition anywhere in
     // the tree, and nothing called it, so it linked only because nobody asked -- the two estimates would be equal.
     // 两台完全一样搭起来的驱动器；一台被告知文档描述的那台机器，另一台被告知的机器 q 轴电感是它的十倍。然后给两个观测器
-    // 喂**相同**的电压与电流。如果 `apply_params` 什么都没转发——这正是这条用例第一次写出来时发现的：那个声明在整棵树里
+    // 喂 **相同** 的电压与电流。如果 `apply_params` 什么都没转发——这正是这条用例第一次写出来时发现的：那个声明在整棵树里
     // 没有定义，也没有人调用，于是它只因为没人问起才"链接得过"——两次估计就会相等。
     core::MachineDocument document{};
     ASSERT_TRUE(core::read_document(kDocument, std::strlen(kDocument), &document, nullptr));

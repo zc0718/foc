@@ -39,7 +39,7 @@ template <typename T> constexpr auto clamp(T value, T low, T high) noexcept -> T
  *
  * @brief [zh] 让输出以不超过配置速率的步进逼近目标，正反两个方向对称。
  *
- *   一步的预算 \f$\rho\,\Delta t\f$ 作用在**状态**上而不是误差上：
+ *   一步的预算 \f$\rho\,\Delta t\f$ 作用在 **状态** 上而不是误差上：
  *
  *   \f[ y \leftarrow \mathrm{clamp}(r,\; y - \rho\,\Delta t,\; y + \rho\,\Delta t) \qquad \Delta t > 0 \f]
  *

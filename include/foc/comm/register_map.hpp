@@ -25,7 +25,7 @@
 // "C" in the test") -- so this header is joining a recorded problem rather than
 // creating one. Adding the guards changes the linkage of every symbol in the
 // public C surface, which is its own change with its own measurement.
-// 这道保护是**欠着的**，而且是量出来的：出厂的 `libfoc_c.a` 导出的
+// 这道保护是 **欠着的** ，而且是量出来的：出厂的 `libfoc_c.a` 导出的
 // `foc_motor_trace_size` 是未修饰的，而包含本头文件并 链接那个归档的 C++
 // 编译单元会报 237
 // 个未定义引用。这笔账已经记在案上了——`.github/project/mcdc.json` 的
@@ -47,8 +47,8 @@ namespace comm {
  *            number is written down. Everything that wants to read one of these through a link names it by this enum,
  *            so "the protocol grew a second vocabulary" shows up as a compile error rather than as two tables that
  *            disagree.
- * @note [zh] 这些编号是**协议**的，不是 C ABI 的，而且它们是整棵树里唯一写下寄存器编号的地方。任何想通过链路读这些东西
- *            的代码都用这个枚举来指代，于是"协议长出了第二套词汇"表现为一个编译错误，而不是两张互相矛盾的表格。
+ * @note [zh] 这些编号是 **协议** 的，不是 C ABI 的，而且它们是整棵树里唯一写下寄存器编号的地方。任何想通过链路读这些东
+ *            西的代码都用这个枚举来指代，于是"协议长出了第二套词汇"表现为一个编译错误，而不是两张互相矛盾的表格。
  * @since 0.1.9
  * @exporter
  */
@@ -115,10 +115,10 @@ enum class RegisterKind : std::uint8_t {
  *            the gate is wired in. `abi` is carried for the diagnostics and for the completeness check, and it is the
  *            *name of the function whose address is in `read`* -- the two are written on the same line so they cannot
  *            drift.
- * @note [zh] `read` 是**编译期取得的函数指针**，不是一张稍后要查的名字表。这就是整个设计：改了 C 函数名而没更新这张表，
- *            在每一条构建腿里都是编译错误，早于任何门禁。以字符串为键的表需要门禁才能发现，而门禁只在它被接上的地方跑。
- *            `abi` 是为了诊断与完整性检查而携带的，它**就是 `read` 里那个函数的地址所属的函数名**——两者写在同一行，所以
- *            漂不开。
+ * @note [zh] `read` 是 **编译期取得的函数指针** ，不是一张稍后要查的名字表。这就是整个设计：改了 C 函数名而没更新这张
+ *            表，在每一条构建腿里都是编译错误，早于任何门禁。以字符串为键的表需要门禁才能发现，而门禁只在它被接上的地方
+ *            跑。 `abi` 是为了诊断与完整性检查而携带的，它 **就是 `read` 里那个函数的地址所属的函数名** ——两者写在同一
+ *            行，所以漂不开。
  * @since 0.1.9
  * @exporter
  */

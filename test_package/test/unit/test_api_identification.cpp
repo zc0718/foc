@@ -5,7 +5,7 @@
 // identification entry points recover a parameter that was injected into synthetic samples.
 //
 // 整定与辨识入口，用实测而不是"与它调用的辅助函数一致"来检查。
-// 一个返回与 C++ 辅助函数相同数值的增益查询什么也证明不了：那是同一段代码。必须成立的是：用给定带宽**构造**出来的
+// 一个返回与 C++ 辅助函数相同数值的增益查询什么也证明不了：那是同一段代码。必须成立的是：用给定带宽 **构造** 出来的
 // 电机确实以那个带宽闭合环路，以及辨识入口能从合成样本里把注入的参数找回来。
 
 #include <cmath>
@@ -207,7 +207,7 @@ TEST(ApiPiGains, TheGainsFollowTheDesignRuleAndTheLoopDeliversThem) {
     // Below the floor the requested bandwidth is *not* delivered, and saying so is the useful half of the finding: at
     // 200 rad/s the loop takes 31 ms where 1/w is 5 ms. A tuning tool that trusts the request blindly would ship a loop
     // six times slower than its own documentation says.
-    // 门槛以下，所请求的带宽**并没有**被交付，而这个事实才是有用的一半：200 rad/s 时环路要 31 ms，而 1/w 是 5 ms。
+    // 门槛以下，所请求的带宽 **并没有** 被交付，而这个事实才是有用的一半：200 rad/s 时环路要 31 ms，而 1/w 是 5 ms。
     // 盲信请求的整定工具会交付一个比自己文档所说的慢六倍的环。
     const int slow = rise_ticks(200.0F, 1200);
     ASSERT_GT(slow, 0);

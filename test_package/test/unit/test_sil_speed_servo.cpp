@@ -11,7 +11,7 @@
 // 本用例需要的带子不是编的。仓库里已经有这个区间所依赖的角度误差表——`test_sil_observer_blend.cpp` 的 `[S16]`，
 // 覆盖 0..800 rad/s 电角度——在伺服一生的低速段，注入观测器读到静止 0.0011 rad、电 20 rad/s 时 0.0011、50 时 0.0012、
 // 160 时 0.0016，直到 200 才崩到 3.1397。这些数比 W7-a 里高速保持的 0.0595 rad 小两个量级，所以这里要问的不是
-// "角度够不够准"，而是"建在它上面的伺服是否和建在编码器上的一样好"——那是一次**对比**，不是一个阈值。
+// "角度够不够准"，而是"建在它上面的伺服是否和建在编码器上的一样好"——那是一次 **对比** ，不是一个阈值。
 //
 // The criterion, fixed before the numbers below were measured:
 //   C1  the sensor-less servo reaches the commanded low speed and holds it: over the last 0.3 s the true mechanical
@@ -22,7 +22,7 @@
 //       speed error, so a failure can be attributed to the angle or to the loop instead of being argued about.
 //
 // 判据在量之前定下：
-//   C1 无感伺服到达并保持指令的低速：最后 0.3 s 内真实机械转速的偏差不超过**带传感器**伺服自身的最差偏差再加
+//   C1 无感伺服到达并保持指令的低速：最后 0.3 s 内真实机械转速的偏差不超过 **带传感器** 伺服自身的最差偏差再加
 //      1e-3 rad/s 的地板。地板是对比的分辨率，不是容差：20 rad/s 指令上的千分之一。唯一的差别是角度来源的伺服，
 //      不该比读编码器的那个有可测的更差。
 //   C2 理由要报出来而不是假设：把实际使用的角度源误差与速度误差并排打印，于是失败能被归因到角度或环路，而不必争辩。
@@ -97,8 +97,9 @@ auto hfi_config() -> core::HfiObserver::Config {
  *            pitch. Comparing it to the plant's continuous angle with a full-turn wrap reports nonsense once the rotor
  *            has turned past a fraction of a revolution -- which is how this case first "found" a 2.69 rad angle error
  *            that was the measurement's own.
- * @note [zh] 观测器报的是**电**角度，因此其机械当量只在一个极距内定义。用整圈折返去和 plant 的连续角比较，转子转过一小
- *            部分圈之后就会报出无意义的值——本用例第一次就是这样"发现"了一个 2.69 rad 的角度误差，而那正是测量自己的错。
+ * @note [zh] 观测器报的是 **电** 角度，因此其机械当量只在一个极距内定义。用整圈折返去和 plant 的连续角比较，转子转过一
+ *            小部分圈之后就会报出无意义的值——本用例第一次就是这样"发现"了一个 2.69 rad 的角度误差，而那正是测量自己的
+ *            错。
  */
 auto wrap_pole_pitch(float angle) noexcept -> float {
     const float pitch = kTwoPi / static_cast<float>(kPoles);
@@ -245,11 +246,11 @@ TEST(SilSpeedServo, TheSensorlessLowSpeedServoIsAsGoodAsTheSensoredOne) {
     // accounted for by the quality of the speed it was given**, measured in the same window. What remains is the
     // estimate, not the loop. Improving this means improving the low-speed speed estimate.
     // C1，而它的第一版又量错了东西——这是本波第三次，这件事本身就是发现。它要求无感伺服追平有感伺服，而它做不到：
-    // 0.168 rad/s 对 0.000057，差 3000 倍，而**角度**只差 0.0015 rad——与 `[S16]` 在电 140 rad/s 报的数字一致，
+    // 0.168 rad/s 对 0.000057，差 3000 倍，而 **角度** 只差 0.0015 rad——与 `[S16]` 在电 140 rad/s 报的数字一致，
     // 且小到无关紧要（cos(0.0015) 的转矩误差是百万分之一）。速度环闭的不是角度，而是 `omega_e / 极对数`，而那正是
     // 注入观测器驱动的 PLL 在低速时糟糕的地方。
     //
-    // 因此伺服在这里能守的仍是那条大小关系：**速度误差由它被给予的转速质量来解释**，在同一窗口内测量。剩下的是估计，
+    // 因此伺服在这里能守的仍是那条大小关系： **速度误差由它被给予的转速质量来解释** ，在同一窗口内测量。剩下的是估计，
     // 不是环路。要改善它，就得改善低速下的转速估计。
     EXPECT_LE(sensorless.worst_speed_error_rad_s, sensorless.worst_speed_estimate_error_rad_s + kComparisonFloorRadS)
         << "the speed loop added more than the resolution on top of the speed it was given";

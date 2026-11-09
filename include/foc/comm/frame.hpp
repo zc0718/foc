@@ -27,9 +27,9 @@ namespace comm {
  *
  *   六个字节的额外开销加负载，每一个都不是白占的。起始字节是接收方在坏帧之后重新同步的依据——没有它，一个坏字节就会把之
  *   后每一帧都错开一个位置，而这条流永远恢复不过来。`len` 是携带的而不是推出来的，因为接收方没有别的办法知道 CRC 从哪里
- *   开始；与缓冲区不符的长度是**拒绝**而不是钳位，钳位正是解码器越界读的方式。`seq` 是让**接收方**发现一帧它从未见过的
- *   帧的依据——CRC 无法报告一帧根本没有到达的帧。CRC 覆盖 `seq..payload` 而故意不含起始字节：起始字节坏了第一道检查就不
- *   过，而把它算进去会让同一帧的 CRC 取决于它是从哪次重新同步开始的。
+ *   开始；与缓冲区不符的长度是 **拒绝** 而不是钳位，钳位正是解码器越界读的方式。`seq` 是让 **接收方** 发现一帧它从未见
+ *   过的帧的依据——CRC 无法报告一帧根本没有到达的帧。CRC 覆盖 `seq..payload` 而故意不含起始字节：起始字节坏了第一道检查
+ *   就不过，而把它算进去会让同一帧的 CRC 取决于它是从哪次重新同步开始的。
  * @since 0.1.9
  * @exporter
  */
@@ -52,8 +52,8 @@ struct FrameLayout final {
  * @brief [zh] 一段字节为什么不是一帧。
  * @note [en] Five reasons and no "generic error": a receiver that cannot say *which* check failed cannot decide whether
  *            to resynchronise, to ask for a retransmission, or to count a link loss -- and those are different actions.
- * @note [zh] 五个原因，没有"一般性错误"：说不清**哪一道**检查失败的接收方，无法决定是重新同步、请求重传，还是记一次链路
- *            丢失——而那是三种不同的动作。
+ * @note [zh] 五个原因，没有"一般性错误"：说不清 **哪一道** 检查失败的接收方，无法决定是重新同步、请求重传，还是记一次链
+ *            路丢失——而那是三种不同的动作。
  * @since 0.1.9
  * @exporter
  */
@@ -82,8 +82,8 @@ enum class FrameStatus : std::uint8_t {
  * @brief [zh] 一帧解码结果：头字段，以及留在调用方原处的负载。
  * @note [en] `payload` points **into the caller's buffer**. Copying it out would need a size the decoder cannot know,
  *            and a decoder that copies is a decoder that can fail to fit; a pointer cannot fail.
- * @note [zh] `payload` **指向调用方的缓冲区**。把它拷出来需要一个解码器无从得知的容量，而会拷贝的解码器就是可能装不下的
- *            解码器；指针不会失败。
+ * @note [zh] `payload` **指向调用方的缓冲区** 。把它拷出来需要一个解码器无从得知的容量，而会拷贝的解码器就是可能装不下
+ *            的解码器；指针不会失败。
  * @since 0.1.9
  * @exporter
  */
@@ -120,9 +120,9 @@ struct Frame final {
  *            for the same bytes. The one number that says which variant this is, is `0x29B1` for the ASCII string
  *            `"123456789"` -- the standard's own check value, asserted in the test. Without it "it is a CRC" is not a
  *            claim that transfers to anyone else's implementation.
- * @note [zh] 具体变体很重要，所以是**点名**而不是描述：至少六种东西都叫"CRC-16 CCITT"，它们在初值、反射、末尾异或上各不
- *            相同，对同样字节给出不同的校验值。能说明这是哪一种的那个数，是 ASCII 串 `"123456789"` 的 `0x29B1`——标准自
- *            己的检查值，由用例断言。没有它，"它是个 CRC"这句话不可移植到别人的实现。
+ * @note [zh] 具体变体很重要，所以是 **点名** 而不是描述：至少六种东西都叫"CRC-16 CCITT"，它们在初值、反射、末尾异或上各
+ *            不相同，对同样字节给出不同的校验值。能说明这是哪一种的那个数，是 ASCII 串 `"123456789"` 的 `0x29B1`——标准
+ *            自己的检查值，由用例断言。没有它，"它是个 CRC"这句话不可移植到别人的实现。
  * @since 0.1.9
  * @exporter
  */
@@ -209,8 +209,8 @@ struct Frame final {
  *           得知自己找错了的方式。
  * @note [en] `out` is untouched on failure. A decoder that fills the receiver and *then* reports a bad CRC hands the
  *            caller a plausible frame with one bit wrong, which is worse than no frame at all.
- * @note [zh] 失败时 `out` 不被触碰。先填好接收者**再**报 CRC 错的解码器，会把一帧"只错了一位、看起来很合理"的帧交给调用
- *            方，那比没有帧更糟。
+ * @note [zh] 失败时 `out` 不被触碰。先填好接收者 **再** 报 CRC 错的解码器，会把一帧"只错了一位、看起来很合理"的帧交给调
+ *            用方，那比没有帧更糟。
  * @since 0.1.9
  * @exporter
  */
@@ -278,8 +278,8 @@ struct SequenceResult final {
  *            `missing` counts the frames between the one expected and the one that arrived, so a single skipped frame
  *            reports 1 and not 0. That off-by-one is the whole usefulness of the number -- a report of "0 missing" that
  *            arrives with a gap in the counter is worse than no report.
- * @note [zh] 半量程这条分界是这个类里诚实的那一部分。差值达到 128 及以上被读作**倒退**，因为向前跳了 128 帧以上与一次倒
- *            退无法区分——而两者之中，倒退才是意味着"对端重启了，或者有什么在重放帧"的那一个。这里做了一个默不作声的选
+ * @note [zh] 半量程这条分界是这个类里诚实的那一部分。差值达到 128 及以上被读作 **倒退** ，因为向前跳了 128 帧以上与一次
+ *            倒退无法区分——而两者之中，倒退才是意味着"对端重启了，或者有什么在重放帧"的那一个。这里做了一个默不作声的选
  *            择，并把它写下来，而不是留给代码恰好用到的那次比较。 `missing` 数的是"期望的那一帧"与"到达的那一帧"之间的
  *            帧，所以跳过一帧报 1 而不是 0。这个差一就是整个数字的价值所在——在计数明明有缺口时却报" 没丢"，比不报更糟。
  * @since 0.1.9

@@ -5,7 +5,7 @@
 // and when it stops.
 //
 // W7-a 增量 5：把"找索引标记"做成策略，而不是散在某个需要它的调用方里。
-// 这个流程只做**决定**，不做驱动。正是这个切分让同一段代码能驱动真实驱动、SIL 台架或试验台，也是这些用例不必带 plant
+// 这个流程只做 **决定** ，不做驱动。正是这个切分让同一段代码能驱动真实驱动、SIL 台架或试验台，也是这些用例不必带 plant
 // 就能有分辨力的原因：全部主张都在于它下达什么指令、以及在什么时候停下。
 //
 // The criterion, fixed before the numbers below were measured:
@@ -23,7 +23,7 @@
 // 判据在量之前定下：
 //   C1 已经回零的轴在开始之前就结束：`begin()` 报已完成、状态 `Done`、不下达任何指令。让一个已回零的轴转起来去找它
 //      已经坐着的标记，是一次没人要求过的运动。
-//   C2 搜索期间每个周期都下达 `direction * creep_speed`，在标记到来的那一个周期**恰好**下达 0 并报完成。指令不超调：
+//   C2 搜索期间每个周期都下达 `direction * creep_speed`，在标记到来的那一个周期 **恰好** 下达 0 并报完成。指令不超调：
 //      调用方施加什么，就是这里给出的什么。
 //   C3 永远不来的标记以 `TimedOut` 结束、指令为 0，且超时正是在它声称的那个周期被跨过——一个宣布失败后还在继续转的
 //      搜索，比一个从未开始的更糟。
@@ -166,7 +166,7 @@ namespace {
 // budget*. The search can only ever find a mark that lies inside it -- there is no retry, no second direction, no
 // slowing down on approach. So the budget is the first thing to measure, and it turns out to be one sample smaller than
 // the arithmetic says, because the tick that gives up commands nothing.
-// 配方同时决定两件事：爬行多快、试多久；两者合起来是一个**行程预算**。搜索只能找到落在其中的标记——没有重试、没有反向
+// 配方同时决定两件事：爬行多快、试多久；两者合起来是一个 **行程预算** 。搜索只能找到落在其中的标记——没有重试、没有反向
 // 再找一次、没有接近时减速。所以预算是要量的第一件事，而它比算术结果小一个采样，因为放弃的那个 tick 什么都不命令。
 struct Sweep final {
     bool found_the_mark;
@@ -330,7 +330,7 @@ TEST(HomingRoutine, TheOriginErrorIsThePulseDelayMeasuredInCreepSpeed) {
     // The origin cannot be better than where the axis was when the pulse arrived, so the error is the pulse delay
     // *expressed as distance*, and the distance per tick is the creep speed. One sample is spent finding the crossing.
     // L3：O-1 要的第三个误差源——索引抖动——而它和前两个共用同一个旋钮。零点不可能比"脉冲到达时轴所在的位置"更准，
-    // 所以误差就是脉冲延迟**折算成距离**，而每个 tick 的距离就是爬行转速。另有一个采样花在发现越界上。
+    // 所以误差就是脉冲延迟 **折算成距离** ，而每个 tick 的距离就是爬行转速。另有一个采样花在发现越界上。
     const float dt = 1.0e-4F;
     for (const long jitter : {0L, 1L, 5L, 20L}) {
         const double offset = origin_offset(1.0F, 1.0F, dt, 0.5, jitter);
@@ -344,7 +344,7 @@ TEST(HomingRoutine, TheOriginErrorIsThePulseDelayMeasuredInCreepSpeed) {
 
     // And it is one-for-one in the creep speed, which is the whole trade: the search *time* goes as 1/creep, so
     // error x time is fixed. Slowing down buys accuracy in exactly the proportion it costs time.
-    // 而且它对爬行转速是一比一的，这正是全部取舍：搜索**时间**按 1/creep 走，所以 误差 x 时间 是定值。
+    // 而且它对爬行转速是一比一的，这正是全部取舍：搜索 **时间** 按 1/creep 走，所以 误差 x 时间 是定值。
     // 减速买到的精度，与它花掉的时间完全成比例。
     double reference_offset = 0.0;
     for (const float creep : {0.5F, 1.0F, 2.0F, 4.0F}) {
@@ -359,7 +359,7 @@ TEST(HomingRoutine, TheOriginErrorIsThePulseDelayMeasuredInCreepSpeed) {
     }
     // Creep 1 rad/s over 0.5 rad of travel takes 0.5 s and 21 samples of error; 4 rad/s takes 0.125 s and the same 21
     // samples *of its own travel*, so the error x time product is what a recipe actually buys.
-    // 1 rad/s 走 0.5 rad 用 0.5 s、错 21 个采样；4 rad/s 用 0.125 s、错同样 21 个**它自己的**行程采样，
+    // 1 rad/s 走 0.5 rad 用 0.5 s、错 21 个采样；4 rad/s 用 0.125 s、错同样 21 个 **它自己的** 行程采样，
     // 所以配方真正买到的是 误差 x 时间 这个乘积。
     EXPECT_GT(reference_offset, 0.0) << "the 1 rad/s reference row was never measured";
 }

@@ -43,10 +43,10 @@ constexpr int kSubsteps = 8;
  *
  * @note [zh] 三条规则，第三条才是要紧的。
  *
- *   1. 任何单一效应在**合理最坏**取值下，角度误差必须 ≤ `kCeilingRad`。 破坏这一条的效应，文档里任何地方都不得写成"可忽
- *   略"。 2. 相对干净基线抬高超过 `kMaterialRatio` 的效应进入"必须由用户实测"清单——它不是建模 上的讲究，而是"在用户的硬
- *   件上基准有效还是无效"的区别。 3. 只有在本文件里量到误差变化小于 `kNegligibleRatio` 的效应，才允许被称作"可忽略"。 "
- *   显然很小"不是入场券。
+ *   1. 任何单一效应在 **合理最坏** 取值下，角度误差必须 ≤ `kCeilingRad`。 破坏这一条的效应，文档里任何地方都不得写成"可
+ *   忽略"。 2. 相对干净基线抬高超过 `kMaterialRatio` 的效应进入"必须由用户实测"清单——它不是建模 上的讲究，而是"在用户的
+ *   硬件上基准有效还是无效"的区别。 3. 只有在本文件里量到误差变化小于 `kNegligibleRatio` 的效应，才允许被称作"可忽略"。
+ *   " 显然很小"不是入场券。
  */
 constexpr float kCeilingRad = 0.15F;
 constexpr float kMaterialRatio = 1.15F;
@@ -94,7 +94,7 @@ struct Effects final {
 
 /**
  * @brief [en] Constant-speed rig, one effect set at a time, sensor errors applied on the *reading*.
- * @brief [zh] 恒速台架，一次只开一组效应，传感误差作用在**读数**上。
+ * @brief [zh] 恒速台架，一次只开一组效应，传感误差作用在 **读数** 上。
  * @note [en] The profile switches, then the voltages are set, so the sample the observer sees is taken after the
  *            switching period -- the same order as the switching rig, and the same order a real controller runs in.
  * @note [zh] 先切开关、再给电压，所以观测器看到的采样点取在开关周期之后——与开关台架同序， 也与真实控制器的运行同序。
@@ -166,7 +166,7 @@ public:
     // current one: reading `ic` back from the plant closes a loop with gain
     // `omega*L/Rs` (2.24 here), which walks the operating point away instead of
     // pinning it. That was v1 of this rig, and the test caught it.
-    // 这个指令把**平衡点**放在目标状态上，并把并联支路的需求前馈进去。要在目标状态上求解，不能
+    // 这个指令把 **平衡点** 放在目标状态上，并把并联支路的需求前馈进去。要在目标状态上求解，不能
     // 从 plant 读回 `ic`：那会闭成一个增益
     // `ω·L/Rs`（这里是 2.24）的环，把工作点越推越远而不是
     // 钉住。这是本台架的第一版，测试抓到了。
@@ -367,7 +367,7 @@ TEST(SilSensitivity, EachUnmodelledEffectHasAMeasuredBound) {
   // above the ceiling, so that column says nothing about any effect -- it is
   // measuring the observer's own low-speed floor, which is a separate and
   // already-known limit (handover below ~50 rad/s).
-  // 规则 0，第一次跑完才加的那条：表只在**基线**通过的转速上读。20 rad/s 时理想
+  // 规则 0，第一次跑完才加的那条：表只在 **基线** 通过的转速上读。20 rad/s 时理想
   // plant
   // 就已经高于天花板，那一列对任何效应都不说明问题——它量的是观测器自己的低速地板，
   // 那是另一个已知道限制（~50 rad/s 以下的切换）。
@@ -438,7 +438,7 @@ TEST(SilSensitivity, EachUnmodelledEffectHasAMeasuredBound) {
   // d-axis saturation is *identically* inert here because `i_d = 0`: this row
   // is a null test of the rig, not evidence that d-saturation never matters (at
   // 50 rad/s with `i_d < 0` the same knob moved the error 16-fold).
-  // 这里 `i_d = 0`，d 轴饱和**恒等**不动：这一行是台架的空测，不是 d
+  // 这里 `i_d = 0`，d 轴饱和 **恒等** 不动：这一行是台架的空测，不是 d
   // 轴饱和永远无关的证据 （在 50 rad/s、`i_d < 0` 时同一个旋钮把误差推高了 16
   // 倍）。
   EXPECT_NEAR(dsat.at_mid.angle_rad, base.at_mid.angle_rad, 1.0e-4F);
@@ -447,9 +447,9 @@ TEST(SilSensitivity, EachUnmodelledEffectHasAMeasuredBound) {
   // measurement lands inside 0.1 % because it is an algebraic identity, not an
   // approximation. That is exactly why the board self-test measures a per-phase
   // offset (P7) rather than a common one: the common case is invisible.
-  // 三相共模零偏在 Clarke 里**恒等**抵消——量到的差别在 0.1 %
+  // 三相共模零偏在 Clarke 里 **恒等** 抵消——量到的差别在 0.1 %
   // 以内，因为它是代数恒等式
-  // 而不是近似。这正是板级自检要量**逐相**零偏（P7）的原因：共模那种根本看不见。
+  // 而不是近似。这正是板级自检要量 **逐相** 零偏（P7）的原因：共模那种根本看不见。
   EXPECT_NEAR(offset.at_fast.angle_rad, base.at_fast.angle_rad,
               1.0e-3F * base.at_fast.angle_rad);
   // Differential gain mismatch turned out far smaller than predicted -- it

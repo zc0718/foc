@@ -34,7 +34,7 @@ namespace core {
  *
  *   链。
  *
- *   凸极电机的定子磁链是**与位置相关**的量，不是"转子磁链加上 `L·i`"：
+ *   凸极电机的定子磁链是 **与位置相关** 的量，不是"转子磁链加上 `L·i`"：
  *
  *   psi = psi_f·e^(jθ) + L0·i + L1·conj(i)·e^(j2θ)，L0 = (Ld+Lq)/2，L1 = (Ld−Lq)/2
  *
@@ -42,7 +42,7 @@ namespace core {
  *   角度二次谐波，幅值 `|L1|·|i|`——用 Prius 那对电感（`Ld = 0.13 mH`、`Lq = 0.29 mH`、`psi_f = 0.0947 Wb`）在 100 A 时
  *   达到转子磁链的 8.5%——所以单 `L` 的答案会有一个随电流增长的角度误差，而"`MtpaReference` 不能与单 `L` 观测器配对" 正
  *   是因为这一点。本观测器保留同一个积分器（`dψ/dt = v − Rs·i`，完全不含电感项），并精确反解上式：令 `x = e^(jθ)`，上式
- *   就是关于 `x` 的**二次方程**，因此答案是闭式的，不需要迭代、不分配、也没有可调增益。
+ *   就是关于 `x` 的 **二次方程** ，因此答案是闭式的，不需要迭代、不分配、也没有可调增益。
  *
  * @note [en] **There is no `method=` here, and that is a decision rather than an omission.** A second way to invert the
  *            relation exists -- minimising the residual of the same expression instead of solving the quadratic -- and
@@ -57,9 +57,9 @@ namespace core {
  *            surface change with it). That is a different observer with its own measurements, not a flag on this one.
  * @note [zh] **这里没有 `method=`，那是决定而不是遗漏。** 反解同一个关系确实还有第二种做法——不去解二次方程，而是最小化
  *            同一个表达式的残差——而它被留在该在的地方：测试里。因为它从同样的输入给出同一个数：60 组 (角度, `i_d`,
- *            `i_q`) 样本上实测一致到 **2.384e-07 rad**。一个公开开关，若它的选项只在"哪条代码路径舍入得不同"上有别，就
+ *            `i_q`) 样本上实测一致到 **2.384e-07 rad** 。一个公开开关，若它的选项只在"哪条代码路径舍入得不同"上有别，就
  *            是死重量—— 本项目已经删过两次同类东西（一个永远不可能为真的阈值、一个没有消费者的常量）。它遵循的规则是：
- *            **当选择改变行为时才提供 `method=`，当选择只改变写法时不提供。** 这个类真正会长出来的开关是关于**磁链来源
+ *            **当选择改变行为时才提供 `method=`，当选择只改变写法时不提供。** 这个类真正会长出来的开关是关于** 磁链来源
  *            **的——现在的纯积分器需要种子、且永不忘记坏种子，对上一种不需要种子、带修正增益的磁链——因为那个选择改变失效
  *            模式（从未知角度起动成为可能；低速行为与整定面随之改变）。那是一个需要自己测量表的另一个观测器，不是本类上
  *            的一个标志位。
@@ -67,9 +67,9 @@ namespace core {
  *               cannot know its integration constant. `seed_flux()` takes the full stator flux (not the rotor flux),
  *               and the two roots of the quadratic are disambiguated by continuity with the previous estimate -- on the
  *               first step after a seed, with the angle the seed implies.
- * @warning [zh] 与它所推广的开环积分器一样，**绝对角**需要播种：纯积分器无从知道积分常数。`seed_flux()` 接收的是完整定
- *               子磁链（不是转子磁链），二次方程的两个根靠"与上一次估计连续"来区分——播种后的第一步，则与种子隐含的角度
- *               连续。
+ * @warning [zh] 与它所推广的开环积分器一样， **绝对角** 需要播种：纯积分器无从知道积分常数。`seed_flux()` 接收的是完整
+ *               定子磁链（不是转子磁链），二次方程的两个根靠"与上一次估计连续"来区分——播种后的第一步，则与种子隐含的角
+ *               度连续。
  * @context [en] Current-loop ISR after construction: noexcept, no allocation, no iteration count that depends on data.
  * @context [zh] 构造之后的电流环 ISR：noexcept、不分配、迭代次数不依赖数据。
  * @since 0.1.11
@@ -84,7 +84,7 @@ class DualInductanceObserver final {
      */
     /**
      * @brief [en] Where the flux state comes from -- the one choice on this class that changes *behaviour*.
-     * @brief [zh] 磁链状态从哪来——本类上唯一改变**行为**的选择。
+     * @brief [zh] 磁链状态从哪来——本类上唯一改变 **行为** 的选择。
      * @note [en] Both options integrate `v - Rs*i`; what differs is whether the state is pulled back onto the flux
      *            relation that the algebra is about to invert. `Integrator` leaves it alone, so a nameplate error in
      *            `Rs` accumulates in the state for as long as the drive runs. `Corrected` closes a loop on the residual
@@ -98,8 +98,8 @@ class DualInductanceObserver final {
      *            second inversion -- is not shipped).
      * @note [zh] 两个选项都积分 `v − Rs·i`；差别在于是否把状态拉回到代数即将反解的那个磁链关系上。`Integrator` 不管它，
      *            于是 `Rs` 的铭牌误差会随运行时间在状态里累积。`Corrected` 在残差上闭合一个环、把状态按住在流形上，代价
-     *            是一个增益。这才是 `method=` 该有的形状：同接口、同输入、**失效模式不同**（另一个候选——第二种反解—— 为
-     *            什么不发布，见类上的注释）。
+     *            是一个增益。这才是 `method=` 该有的形状：同接口、同输入、 **失效模式不同** （另一个候选——第二种反解——
+     *            为什么不发布，见类上的注释）。
      * @since 0.1.11
      */
     enum class FluxSource : std::uint8_t {
@@ -113,8 +113,8 @@ class DualInductanceObserver final {
          *             The pull is a nearest-point search on the flux curve, so an angular seed error moves it to the
          *             other branch (measured: 1.5 rad mean error from a 0.30 rad seed error, against 0.20 rad for the
          *             pure integrator).
-         * @brief [zh] 同一个积分，但每步被拉回磁链关系上——**只限种子忠实**。这把"拉"是磁链曲线上的一次最近点搜索，所以
-         *             角度上的种子误差会把它挪到另一支（实测：0.30 rad 的种子误差下平均误差 1.5 rad，纯积分器是 0.20
+         * @brief [zh] 同一个积分，但每步被拉回磁链关系上—— **只限种子忠实** 。这把"拉"是磁链曲线上的一次最近点搜索，所
+         *             以角度上的种子误差会把它挪到另一支（实测：0.30 rad 的种子误差下平均误差 1.5 rad，纯积分器是 0.20
          *             rad）。
          */
         Corrected = 1,
@@ -141,10 +141,10 @@ class DualInductanceObserver final {
 
     /**
      * @brief [en] Seed the **stator** flux estimate.
-     * @brief [zh] 播种**定子**磁链估计。
+     * @brief [zh] 播种 **定子** 磁链估计。
      * @param psi_ab [en] the full stator flux in Wb at the current instant -- `psi_f*e^(j*theta) + L0*i + L1*conj(i)
      *                    *e^(j*2*theta)`, not the rotor flux alone.
-     * @param psi_ab [zh] 当前时刻的**完整**定子磁链，Wb——`psi_f·e^(jθ) + L0·i + L1·conj(i)·e^(j2θ)`，不是单独的转子磁
+     * @param psi_ab [zh] 当前时刻的 **完整** 定子磁链，Wb——`psi_f·e^(jθ) + L0·i + L1·conj(i)·e^(j2θ)`，不是单独的转子磁
      *                    链。
      * @note [en] The seed does not need to be exact: it only breaks the tie between the two roots of the quadratic, and
      *            a wrong seed costs a fixed angle offset exactly as it does in the open-loop observer.
@@ -168,8 +168,8 @@ class DualInductanceObserver final {
      *            integration constant, and a pure integrator never forgets -- the cost would be a permanent angle
      *            offset of about `atan(|L0*i| / psi_f)`, not a transient.
      * @note [zh] `psi_f·e^(jθ) + L0·i + L1·conj(i)·e^(j2θ)`，用本观测器自己的 `ld`、`lq`、`psi_f` 算。它存在的意义是交
-     *            接方不必知道本观测器的状态是**定子**磁链：只拿转子磁链播种，会把电流自身的磁链漏在积分常数之外，而纯积
-     *            分器不会遗忘——代价是一个约 `atan(|L0·i|/psi_f)` 的**永久**角度偏移，不是暂态。
+     *            接方不必知道本观测器的状态是 **定子** 磁链：只拿转子磁链播种，会把电流自身的磁链漏在积分常数之外，而纯
+     *            积分器不会遗忘——代价是一个约 `atan(|L0·i|/psi_f)` 的 **永久** 角度偏移，不是暂态。
      * @since 0.1.11
      */
     void seed_at(float theta_e, Ab<float> i_ab) noexcept;
@@ -269,8 +269,8 @@ class DualInductanceObserver final {
      *            algebra still says something, because the quadratic has a root of unit modulus **iff** the state came
      *            from a real rotor position. Measured: 4.4e-16 for a consistent state and 3.4e-02 for a seed built from
      *            another current -- twelve orders of magnitude apart, which is why a threshold can be stated at all.
-     * @note [zh] 这是**唯一**能告诉调用方"种子错了"的信号。磁链积分器没有反馈，所以坏种子是永久的（实测 0.1128 rad，
-     *            200 步后不变）；但代数仍然说了话——二次方程**当且仅当**状态来自真实转子位置时才有一个模为 1 的根。实
+     * @note [zh] 这是 **唯一** 能告诉调用方"种子错了"的信号。磁链积分器没有反馈，所以坏种子是永久的（实测 0.1128 rad，
+     *            200 步后不变）；但代数仍然说了话——二次方程 **当且仅当** 状态来自真实转子位置时才有一个模为 1 的根。实
      *            测：自洽状态 4.4e-16，用另一个电流构造的种子 3.4e-02——相差十二个数量级，这才使阈值可以被写下来。
      * @since 0.1.11
      */
@@ -286,8 +286,8 @@ class DualInductanceObserver final {
      *            them; 1e-2 keeps a margin of three orders on the good side and half an order on the bad one. It is
      *            *not* an angle tolerance -- it is a statement that the state can be explained at all.
      * @note [zh] 容差取 1e-2，取自测量而不是为了好看：这台机器上自洽情形读 4.4e-16、不一致的种子读 3.4e-02，两者之间任
-     *            何值都能分开它们；1e-2 在好的一侧留三个数量级、坏的一侧留半个数量级。它**不是**角度容差——它说的是 "这
-     *            个状态到底能不能被解释"。
+     *            何值都能分开它们；1e-2 在好的一侧留三个数量级、坏的一侧留半个数量级。它 **不是** 角度容差——它说的是 "
+     *            这个状态到底能不能被解释"。
      * @since 0.1.11
      */
     [[nodiscard]] auto flux_plausible() const noexcept -> bool {

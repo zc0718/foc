@@ -172,7 +172,7 @@ inline auto write_document(const MachineDocument& document, char* out, std::size
  * @return [zh] 整个文档被理解时为 true。
  * @note [en] Unknown keys are counted and ignored on purpose: a reader that rejects what it does not know can never be
  *            given a newer file, and a format that cannot grow is a format that gets bypassed.
- * @note [zh] 未知键**有意**计数并忽略：拒绝未知内容的读方永远收不到更新的文件，而不能演进的格式最终会被绕开。
+ * @note [zh] 未知键 **有意** 计数并忽略：拒绝未知内容的读方永远收不到更新的文件，而不能演进的格式最终会被绕开。
  * @since 0.1.2
  */
 inline auto read_document(const char* text, std::size_t length, MachineDocument* document, TextError* error) noexcept

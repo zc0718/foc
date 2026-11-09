@@ -38,7 +38,7 @@ auto decoupled_source(const foc::sil::PlantParams &params, float omega_mech, flo
     // plant happened to have, which makes the current a free integrator: it holds wherever the transient left it
     // (measured: iq settled at 0.90988 A against a 1.0 A setpoint, and the case read 35.49 rad/s against the 40.00 the
     // arithmetic promises). Regulating a derivative is not regulating a value.
-    // 用**给定值**而不是实测电流。第一版在 plant 恰好所处的电流上把导数置零，这使电流变成一个自由积分器：它停在
+    // 用 **给定值** 而不是实测电流。第一版在 plant 恰好所处的电流上把导数置零，这使电流变成一个自由积分器：它停在
     // 暂态把它留下的位置（实测：1.0 A 的给定下 iq 稳在 0.90988 A，用例读出 35.49 rad/s，而算术承诺 40.00）。
     // 调节导数不是调节数值。
     return foc::core::Dq<float>{-(omega_e * params.lq * iq_setpoint), (params.rs * iq_setpoint) + (omega_e * psi_f)};
@@ -111,7 +111,7 @@ TEST(PlantFriction, OnceMovingTheSteadySpeedIsTheTorqueMinusCoulombOverViscous) 
 TEST(PlantFriction, ALoadStepChangesTheSteadySpeedByTheLoadOverViscous) {
     // The third piece of 3.2's physics -- load torque -- already existed; this asserts it *quantitatively*, which no case
     // did: a step of `dT` at steady state must move the speed by `dT / b`.
-    // 3.2 物理的第三块——负载力矩——本来就有；本用例断言它**定量**成立，而此前没有用例这么做：稳态下 `ΔT` 的阶跃必须让
+    // 3.2 物理的第三块——负载力矩——本来就有；本用例断言它 **定量** 成立，而此前没有用例这么做：稳态下 `ΔT` 的阶跃必须让
     // 转速变化 `ΔT / b`。
     const auto params = friction_rig();
     const float drive_nm = 0.050F;
@@ -144,7 +144,7 @@ TEST(PlantFriction, ALoadStepChangesTheSteadySpeedByTheLoadOverViscous) {
 TEST(PlantFriction, WithTheFrictionTermsAtZeroThePlantIsExactlyWhatItWas) {
     // The physics is default-off, and that has to be *measurable*: every existing case and every recorded window in the
     // ledger was produced by the plant without friction, so a stray non-zero default would move all of them.
-    // 该物理默认关闭，而这必须能被**测量**：所有既有用例与台账里每一个窗口都由无摩擦的 plant 产出，因此一个多余的非零
+    // 该物理默认关闭，而这必须能被 **测量** ：所有既有用例与台账里每一个窗口都由无摩擦的 plant 产出，因此一个多余的非零
     // 默认值会把它们全部挪动。
     const auto nominal = foc::sil::nominal_plant_params();
     EXPECT_FLOAT_EQ(0.0F, nominal.t_static_nm);

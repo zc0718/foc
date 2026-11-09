@@ -172,7 +172,7 @@ TEST(HfiObserver, ThePredictedGainCarriesTheSaliencyDirectionInItsSign) {
 
     // Degenerate inputs answer zero rather than dividing by it. The constructor rejects a zero gain,
     // so this is the value a caller gets when *asking* for a prediction it should not use.
-    // 退化输入返回零而不是除以它。构造函数会拒绝零增益，因此这是调用方**询问**一个自己不该使用的预测
+    // 退化输入返回零而不是除以它。构造函数会拒绝零增益，因此这是调用方 **询问** 一个自己不该使用的预测
     // 时得到的值。
     EXPECT_FLOAT_EQ(0.0F, foc::core::HfiObserver::predicted_gain_a(12.0F, 2000.0F, 0.0F, 4e-4F));
     EXPECT_FLOAT_EQ(0.0F, foc::core::HfiObserver::predicted_gain_a(12.0F, 0.0F, 2e-4F, 4e-4F));

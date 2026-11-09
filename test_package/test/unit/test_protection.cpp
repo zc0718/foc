@@ -67,7 +67,7 @@ auto config() -> core::ProtectionConfig {
 
 /**
  * @brief [en] How far the *input* has to move for a fault of this class to appear.
- * @brief [zh] 让某类故障出现，**输入**需要偏到哪里。
+ * @brief [zh] 让某类故障出现， **输入** 需要偏到哪里。
  */
 auto perturbed(core::FaultCode code) -> core::ProtectionInput {
   core::ProtectionInput input = healthy();
@@ -106,7 +106,7 @@ auto perturbed(core::FaultCode code) -> core::ProtectionInput {
 /**
  * @brief [en] Run one perturbation to steady state and report what the protector said. The thermal budget and the stall
  *             timer are durations, so "steady state" is `steps` steps of holding the input.
- * @brief [zh] 把一次扰动跑到稳态，报告保护器说了什么。热预算与堵转计时是**时长**，所以"稳态"是保持该输入 `steps` 步。
+ * @brief [zh] 把一次扰动跑到稳态，报告保护器说了什么。热预算与堵转计时是 **时长** ，所以"稳态"是保持该输入 `steps` 步。
  */
 auto classify(core::FaultCode target, int steps = 1) -> core::FaultCode {
   core::Protector protector(config());
@@ -152,7 +152,7 @@ constexpr float kStallSteps = 0.5F / kDt; // stall_time_s
  *             `tau*ln(1/(1-limit/(i^2*tau)))`. At 3.5 A against a 4.5 A^2*s budget and a 0.5 s constant that is 0.663 s
  *             against the naive 0.367 s -- nearly twice -- and a test written with the naive number would conclude the
  *             protection was broken.
- * @brief [zh] `I2t` 在恒定电流下实际要多久才跳，含冷却。朴素答案 `预算/i²` **偏短**：预算一边充 一边漏，所以跳闸来得更
+ * @brief [zh] `I2t` 在恒定电流下实际要多久才跳，含冷却。朴素答案 `预算/i²` **偏短** ：预算一边充 一边漏，所以跳闸来得更
  *             晚，晚 `τ·ln(1/(1−limit/(i²τ)))`。3.5 A、4.5 A²·s 预算、0.5 s 时间常数下是 0.663 s 对朴素的 0.367 s——差了
  *             近一倍——用朴素数写的测试会得出"保护坏了"。
  */
@@ -208,7 +208,7 @@ TEST(Protection, ATripRemovesOutputAuthorityInTheSameStepItIsDetected) {
   // "Within one control period" means *this* step, not the next one. The
   // measurement and the decision share a step, so the PWM update that follows
   // already has no authority.
-  // "一个控制周期之内"指的是**这一步**，不是下一步。测量与判定共用一步，所以紧随其后的
+  // "一个控制周期之内"指的是 **这一步** ，不是下一步。测量与判定共用一步，所以紧随其后的
   // PWM 更新 已经没有权限。
   core::Protector protector(config());
   const core::ProtectionInput before = healthy();
@@ -331,11 +331,11 @@ TEST(Protection, TheTemperatureLadderIsGradedRatherThanACliff) {
   // The discriminating assertion is the middle rung: inside the band the output is **still allowed** and the limit is
   // strictly between zero and nominal. That is precisely what "skip the derating and trip" cannot produce.
   //
-  // 计划给分级动作定的判据，也正是缺失的那个用例：上面的降额测试断言的是**曲线** `derated_limit(T)`，那是个纯函数，
+  // 计划给分级动作定的判据，也正是缺失的那个用例：上面的降额测试断言的是 **曲线** `derated_limit(T)`，那是个纯函数，
   // 而从来没有让保护器在带内的温度上走过一步。一个在 `t_derate_start_c` 就跳闸的实现——完全不做降额——会通过本文件
   // 原有的每一个用例，因为它从不查询的那条曲线本身是对的。
   //
-  // 判别性的断言是中间那一级：带内输出**仍然被允许**、限幅严格落在 0 与额定之间。这正是"跳过降额直接跳闸"给不出的。
+  // 判别性的断言是中间那一级：带内输出 **仍然被允许** 、限幅严格落在 0 与额定之间。这正是"跳过降额直接跳闸"给不出的。
   core::Protector protector(config());
   const float t_start = config().t_derate_start_c;
   const float t_trip = config().t_trip_c;
@@ -427,9 +427,9 @@ TEST(Protection, TheThermalBudgetCoolsAndTheStallNeedsItsDuration) {
   // be wrong as plain counters. (1) `I2t` has to cool, or an idle machine
   // carries a stale memory. (2) A stall is current-without-motion for a *time*;
   // 0.4 s of it is normal acceleration, 0.6 s is a jammed axis.
-  // 两个**时长**型而非阈值型的故障，两者写成朴素计数器都错。（1）`I2t`
+  // 两个 **时长** 型而非阈值型的故障，两者写成朴素计数器都错。（1）`I2t`
   // 必须会冷却，否则闲置的
-  // 机器会背着过期的记忆。（2）堵转是"有力气没运动"持续**一段时长**；0.4 s
+  // 机器会背着过期的记忆。（2）堵转是"有力气没运动"持续 **一段时长** ；0.4 s
   // 是正常加速，0.6 s 是 轴卡了。
   core::Protector protector(config());
 
@@ -470,9 +470,9 @@ TEST(Protection, TheThermalBudgetCoolsAndTheStallNeedsItsDuration) {
   // `sqrt(q/tau)` it keeps filling, however small the current looks. The first
   // version of this test held 1.5 A and expected cooling, and the measurement
   // said the budget had gone **up** -- which is the model being right. 1.5 A
-  // **低于**连续安全电流 `√(4.5/0.5) = 3 A`，这是预算唯一会冷却的区间：在
+  // **低于** 连续安全电流 `√(4.5/0.5) = 3 A`，这是预算唯一会冷却的区间：在
   // `√(q/τ)` 之上， 无论电流看着多小它都在继续充。本测试第一版保持 1.5 A
-  // 并期望冷却，实测说预算**涨了**——那正是 模型在正确地做事。
+  // 并期望冷却，实测说预算 **涨了** ——那正是 模型在正确地做事。
   core::ProtectionInput cool = healthy();
   cool.i_magnitude_a = 1.5F;
   for (int k = 0; k < static_cast<int>(0.5F / kDt); ++k) {
@@ -592,8 +592,8 @@ TEST(Protection,
   // the *command*: the PWM is disabled in the same step, and the current then
   // decays with the plant's own `L/R`. At 0.4 mH and 0.5 ohm that is 0.8 ms,
   // sixteen control periods.
-  // 上面那个策略层测试说的是**判定**发生在同一步。这一个问它在物理上意味着什么，而答案不是计划
-  // 假设的那样：**电流不可能在一个控制周期内被钳到零**，因为它流过一个电感。能被钳住的是**指令**：
+  // 上面那个策略层测试说的是 **判定** 发生在同一步。这一个问它在物理上意味着什么，而答案不是计划
+  // 假设的那样： **电流不可能在一个控制周期内被钳到零** ，因为它流过一个电感。能被钳住的是 **指令** ：
   // PWM 在同一步被关掉，然后电流按 plant 自己的 `L/R` 衰减。0.4 mH、0.5 Ω 下是
   // 0.8 ms，十六个 控制周期。
   TripRig rig;
@@ -625,7 +625,7 @@ TEST(Protection,
   EXPECT_EQ(core::MotorState::Fault, rig.motor().state());
 
   // And one control period later the current is *not* zero -- it cannot be.
-  // 一个控制周期之后电流**不是**零——不可能是。
+  // 一个控制周期之后电流 **不是** 零——不可能是。
   rig.step_for(rig.dt());
   const float after_one = rig.current_a();
   // The decay: measure the time constant and compare it with `L/R` rather than
@@ -672,9 +672,9 @@ TEST(Protection,
  *   answer.
  *
  *   那个判定是 `(!input.flux_valid) || (abs(flux_error_ratio) > sync_error_ratio)`。既有用例全部喂 `flux_valid =
- *   true`，于是第一项从未为真、它的独立作用从未被演示：短路意味着一台说"我的磁链估计无效" 的机器**根本不需要误差比** 就
- *   会落到 `LostSync`，而这件事没有任何用例测过。所以这一对是边界对——同一个输入跑两次，只差 `flux_valid`，两次的误差比
- *   都很小——于是第一项是唯一能改变答案的东西。
+ *   true`，于是第一项从未为真、它的独立作用从未被演示：短路意味着一台说"我的磁链估计无效" 的机器 **根本不需要误差比**
+ *   就会落到 `LostSync`，而这件事没有任何用例测过。所以这一对是边界对——同一个输入跑两次，只差 `flux_valid`，两次的误差
+ *   比都很小——于是第一项是唯一能改变答案的东西。
  */
 TEST(Protection, AnInvalidFluxTripsLostSyncWithoutAnyErrorRatio) {
   foc::core::Protector protection(config());
@@ -709,9 +709,9 @@ TEST(Protection, AnInvalidFluxTripsLostSyncWithoutAnyErrorRatio) {
  *   `t_trip = 100, h = 0.05` the product is 94.999999... and no assertion can stand on it.
  *
  *   变异测试发现的：四条清除表达式里的十一个变异体全部存活，全是 `x*(1 ∓ h)` 上的算术。原因不是断言写弱了，是根本没写
- *   ——没有任何用例让已跳闸的故障**停止**跳闸，于是 `keep()` 的清除那一半整体未被测量。头文件把迟滞列为本块的三个特性之
- *   一（"母线悬在阈值上会反复抖"），而这个主张没有用例。这里的阈值取二进制可精确表示的值（`128*0.5 = 64`），边界才是测
- *   试能精确指定的数；若用出厂值 `t_trip = 100, h = 0.05`，乘积是 94.999999…，没有断言能站在上面。
+ *   ——没有任何用例让已跳闸的故障 **停止** 跳闸，于是 `keep()` 的清除那一半整体未被测量。头文件把迟滞列为本块的三个特性
+ *   之一（"母线悬在阈值上会反复抖"），而这个主张没有用例。这里的阈值取二进制可精确表示的值（`128*0.5 = 64`），边界才是
+ *   测试能精确指定的数；若用出厂值 `t_trip = 100, h = 0.05`，乘积是 94.999999…，没有断言能站在上面。
  */
 auto band_config() -> core::ProtectionConfig {
   core::ProtectionConfig band = config();
@@ -775,9 +775,9 @@ TEST(Protection, TheClearingBandIsWhereTheFaultStopsBeingReported) {
  *   float32 accumulation, so the test uses `1/64 s` steps, which are exact, and can therefore stand on 0.5 exactly
  *   after 32 of them.
  *
- *   六个 `>`/`<` 变异体改成 `>=`/`<=` 后存活，因为没有用例把输入放在阈值**正上**。这是规格问题不是容差： "硬限 4.0 A 时
- *   4.0 A 跳不跳"只有一个正确答案，代码答"不跳"。堵转计时更有意思——它是 float32 累加，所以用例用 `1/64 s` 的步长（可精
- *   确表示），于是能精确站在 32 步之后的 0.5 上。
+ *   六个 `>`/`<` 变异体改成 `>=`/`<=` 后存活，因为没有用例把输入放在阈值 **正上** 。这是规格问题不是容差： "硬限 4.0 A
+ *   时 4.0 A 跳不跳"只有一个正确答案，代码答"不跳"。堵转计时更有意思——它是 float32 累加，所以用例用 `1/64 s` 的步长（可
+ *   精确表示），于是能精确站在 32 步之后的 0.5 上。
  */
 TEST(Protection, EachTripThresholdIsStrictAndTheLimitItselfDoesNotTrip) {
   constexpr float kExactDt = 1.0F / 64.0F;
@@ -871,7 +871,7 @@ TEST(Protection, TheLatchedMaskSaysWhichFaultsWillNotClearOnTheirOwn) {
  *   step is the first that spends past it.
  *
  *   守卫是 `(i2t_cooling_s > 0) ? q*(dt/i2t_cooling_s) : 0`，变异体把它改成 `>=`，于是 `dt / 0` 变成 `inf`，每步把预算
- *   清空。没人抓到，因为套件里所有配置都给了正的散热常数，那个**为**零值而存在的分支从未走到。不冷却时预算正好是
+ *   清空。没人抓到，因为套件里所有配置都给了正的散热常数，那个 **为** 零值而存在的分支从未走到。不冷却时预算正好是
  *   `i²·t`：3 A 走 32 个 1/64 s 步恰为 4.5 A²·s（预算本身），第 33 步才是第一步花过头。
  */
 TEST(Protection, AZeroCoolingConstantMeansTheBudgetOnlyAccumulates) {
@@ -896,7 +896,7 @@ TEST(Protection, AZeroCoolingConstantMeansTheBudgetOnlyAccumulates) {
  * @brief [en] The `I2t` clear is hysteresis too, and its band is in A^2*s: a spent budget that is decaying must stay
  *             spent until it is *below* `budget*(1-h)`.
  *
- * @brief [zh] `I2t` 的清除也是迟滞，只是它的带在 A²·s 里：正在衰减的已花预算必须一直算"已花"，直到它**低于**
+ * @brief [zh] `I2t` 的清除也是迟滞，只是它的带在 A²·s 里：正在衰减的已花预算必须一直算"已花"，直到它 **低于**
  *             `budget*(1-h)`。
  *
  *   Two more mutants survived here -- the `*` turned into `/` and the `-` into `+` in `budget*(1-h)` -- because the
@@ -907,9 +907,9 @@ TEST(Protection, AZeroCoolingConstantMeansTheBudgetOnlyAccumulates) {
  *   are 9 and 6.75 -- both of which clear while the budget is still well inside the band, so one step in the middle
  *   tells them apart.
  *
- *   这里又有两个变异体存活——`budget*(1-h)` 里的 `*` 变 `/`、`-` 变 `+`——因为套件里唯一的 `I2t` 用例只把预算 **推上去 **
- *   跳到闸就停了，衰减那一半从未跑过。充电电流必须**高于** `budget/tau`（3 A 只会渐近逼近 4.5 A²·s 而永远不越过——这条用
- *   例的第一版就犯了这个错，被它自己的跳闸断言挡住了），所以用 4 A，30 步到 4.9。 `budget = 4.5`、`h = 0.5` 时带是
+ *   这里又有两个变异体存活——`budget*(1-h)` 里的 `*` 变 `/`、`-` 变 `+`——因为套件里唯一的 `I2t` 用例只把预算 **推上去**
+ *   跳到闸就停了，衰减那一半从未跑过。充电电流必须 **高于** `budget/tau`（3 A 只会渐近逼近 4.5 A²·s 而永远不越过——这条
+ *   用例的第一版就犯了这个错，被它自己的跳闸断言挡住了），所以用 4 A，30 步到 4.9。 `budget = 4.5`、`h = 0.5` 时带是
  *   2.25..4.5，而变异的阈值是 9 与 6.75——两者都会在预算还稳稳落在带内时就清除，所以带中间走一步就能分开它们。
  */
 TEST(Protection, TheSpentBudgetStaysSpentUntilItIsBelowTheBand) {
@@ -941,7 +941,7 @@ TEST(Protection, TheSpentBudgetStaysSpentUntilItIsBelowTheBand) {
 /**
  * @brief [en] Past the end of the derating ramp the limit is exactly zero -- not slightly negative.
  *
- * @brief [zh] 越过降额斜坡的终点后，限幅**恰好**为零，而不是一个很小的负数。
+ * @brief [zh] 越过降额斜坡的终点后，限幅 **恰好** 为零，而不是一个很小的负数。
  *
  *   `used >= 1` returns 0 and the next line would return `i_max*(1-used)`, which is negative for any `used` just above
  *
@@ -951,7 +951,7 @@ TEST(Protection, TheSpentBudgetStaysSpentUntilItIsBelowTheBand) {
  *   needs a case that calls `derated_limit()` directly.
  *
  *   `used >= 1` 返回 0，而下一行会返回 `i_max*(1-used)`——对任何略大于 1 的 `used` 都是负数。变异体把比较挪到 `>
- *   1.001`，于是落在两者之间的温度会给调用方一个很小的**负**限幅；调用方拿它做钳位，就把指令钳成了反向。这条路径从
+ *   1.001`，于是落在两者之间的温度会给调用方一个很小的 **负** 限幅；调用方拿它做钳位，就把指令钳成了反向。这条路径从
  *   `step()` 走不到（任何合理配置下 `t_trip < t_derate_end`，先跳闸），所以它需要一条直接调用 `derated_limit()` 的用
  *   例。
  */
@@ -963,7 +963,7 @@ TEST(Protection, PastTheEndOfTheDeratingRampTheLimitIsExactlyZero) {
   // end, so the case walks the first tenth of a degree in 5 mK steps. A 0.1 % shift of the `used >= 1` comparison
   // turns into a small negative limit at 110.02 C, which is inside this sweep and outside a test that only probes
   // 110.5.
-  // 这里是扫而不是只取一个魔法温度：主张是越过终点后**处处**为零，所以用例把最初 0.1 度按 5 mK 走一遍。
+  // 这里是扫而不是只取一个魔法温度：主张是越过终点后 **处处** 为零，所以用例把最初 0.1 度按 5 mK 走一遍。
   // 把 `used >= 1` 挪动 0.1 % 后，110.02 C 处会出现一个很小的负限幅——它落在这个扫的范围里，却跑得出只探 110.5 的用例。
   for (int k = 0; k <= 20; ++k) {
     const float temperature_c = 110.0F + (0.005F * static_cast<float>(k));
@@ -987,7 +987,7 @@ TEST(Protection, PastTheEndOfTheDeratingRampTheLimitIsExactlyZero) {
  *
  *   在 AddressSanitizer 下，`reset()`/`reset_cold()` 里那两个循环是最后一批算术解释不了的存活体，而原因并不微妙：**本模
  *   块的用例从未调用过它们**。它们从 C ABI 走得到（`bridge.cpp` 调 `reset_cold()`），所以行覆盖率是满足的，而主张从未被
- *   检查——一个运维动作的完整契约（"清掉锁存的故障"、"这里**不**清 `I2t`，绕组还热着"）没有直接证词。
+ *   检查——一个运维动作的完整契约（"清掉锁存的故障"、"这里 **不** 清 `I2t`，绕组还热着"）没有直接证词。
  */
 TEST(Protection, ResetClearsTheLatchedOnesButKeepsTheHeatUntilResetCold) {
   core::Protector protector(config());
@@ -1052,7 +1052,7 @@ TEST(Protection, TheClosedFormAndTheSteppingLoopAgreeOnWhenI2tTrips) {
   // Criterion, written before the run: agreement within 1 %. Explicit Euler over 0.663 s at a 50 us step has a
   // discretisation error of order `dt/tau` = 1e-4, so 1 % is a loose band that the correct pair cannot miss and an
   // off-by-a-term implementation cannot pass.
-  // L3 要求的第二条腿，也是本模块第一次有：**步进递推**得到的跳闸时刻与**解微分方程**得到的跳闸时刻，是同一个数的两条
+  // L3 要求的第二条腿，也是本模块第一次有： **步进递推** 得到的跳闸时刻与 **解微分方程** 得到的跳闸时刻，是同一个数的两条
   // 不同路径。环路积分 `q += i²·dt − q·dt/τ`；闭式解解的是 `dq/dt = i² − q/τ`。
   //
   // 判据写在跑之前：一致到 1% 以内。50 µs 步长、0.663 s 上的显式欧拉离散误差量级是 `dt/τ` = 1e-4，所以 1% 是一条
@@ -1090,7 +1090,7 @@ TEST(Protection, TheSensitivityOfTheTripInstantToAWrongCurrentOrClockIsMeasured)
   // 当保护背后的模型错了，保护会怎样——L3 的另一半。这里两个误差都是真会发生的：电流传感器增益不准，以及环路的真实周期
   // 不是它被告知的那个。
   //
-  // 判据先写，且两条都是**预测**而不是形状。电流增益偏 `+g` 让保护器去积分 `(i(1+g))²`，所以它必须在那个更大电流对应的
+  // 判据先写，且两条都是 **预测** 而不是形状。电流增益偏 `+g` 让保护器去积分 `(i(1+g))²`，所以它必须在那个更大电流对应的
   // 闭式时间跳闸。真实周期 `dt_real` 而代码被告知 `dt`，则每真实秒累积的是真实能量的 `dt/dt_real`，于是跳闸时刻必须正好
   // 被拉伸 `dt_real/dt` 倍。
   std::printf("\n[L3] what a wrong model does to the protection decision\n");
@@ -1177,10 +1177,10 @@ TEST(Protection, TheRankingIsTheOnlyOrderThePhysicsSupplies) {
   // or it does not.
   //
   // 这一行留在 L2 的原因是"两个故障同时发生时如何排名就是枚举顺序，一个没有独立推导的设计选择"——这是 O-13 与
-  // O-18 都点名的缺失腿。本用例给出**存在的**那份推导，并量出它在哪里停住；这比"这是设计选择"或凭空借来的严重度
+  // O-18 都点名的缺失腿。本用例给出 **存在的** 那份推导，并量出它在哪里停住；这比"这是设计选择"或凭空借来的严重度
   // 次序都更窄、也更有用。
-  // 可用的推导：一个码只有在物理能区分它的时候才能被物理排序。七个里有四个是**阈值**检测器——量在到来的那一步就
-  // 越限——于是它们在同一步全部为真，机器没有任何说法指出哪个更糟。两个是**时长**检测器（I2t 积分、Stall 计窗），
+  // 可用的推导：一个码只有在物理能区分它的时候才能被物理排序。七个里有四个是 **阈值** 检测器——量在到来的那一步就
+  // 越限——于是它们在同一步全部为真，机器没有任何说法指出哪个更糟。两个是 **时长** 检测器（I2t 积分、Stall 计窗），
   // 因此只可能更晚断言。这是一条真实的陈述，而枚举要么遵守它、要么不遵守。
 
   // (1) Every threshold code asserts in the same step, so the physics is silent among them.
@@ -1250,7 +1250,7 @@ TEST(Protection, TheRankingIsTheOnlyOrderThePhysicsSupplies) {
   // motion". `LostSync` is the sharpest case -- it is a *model* failing, which is the least trustworthy measurement in
   // the library, and it is ranked last.
   // 推导到此为止，这一点要说出来而不是糊过去：在四个阈值码之间、以及两个时长码之间，枚举顺序只是一个设计选择，
-  // 背后只有"电流先于热度先于运动"。`LostSync` 最尖锐——它是一个**模型**失效，是本库里最不可信的测量，却排最后。
+  // 背后只有"电流先于热度先于运动"。`LostSync` 最尖锐——它是一个 **模型** 失效，是本库里最不可信的测量，却排最后。
 
   // (3) Path independence, which the enum order alone does not give: raising A then B must report the same code and
   // the same mask as raising B then A. This is what a reader of a fault log relies on, and latching is where it could
@@ -1258,7 +1258,7 @@ TEST(Protection, TheRankingIsTheOnlyOrderThePhysicsSupplies) {
   // fault's whole input row over the first, which silently un-violated the first one and made the library look
   // order-dependent when the harness was.
   // （3）路径无关性，单靠枚举顺序给不出：先抬 A 再抬 B，必须与先抬 B 再抬 A 报出同一个码和同一张掩码。读故障日志的
-  // 人依赖的正是这个，而锁存正是它可能破掉的地方。一对故障按两个违规的**并集**构造——这一段的第一版把第二个故障整行
+  // 人依赖的正是这个，而锁存正是它可能破掉的地方。一对故障按两个违规的 **并集** 构造——这一段的第一版把第二个故障整行
   // 输入盖到第一个上，静默地取消了第一个故障，于是库看起来依赖顺序，其实是夹具的问题。
   const auto bit = [](core::FaultCode code) {
     return static_cast<std::uint16_t>(1U << static_cast<std::uint8_t>(code));

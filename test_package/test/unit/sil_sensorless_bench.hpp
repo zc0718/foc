@@ -8,7 +8,7 @@
 // machine's magnet and the inverter's dead time as **parameters** -- the defaults reproduce the F19 file exactly.
 // 一个无感台架，两个问题。`test_sil_sensorless_floor.cpp` 问角度从哪里开始不可用（一条否证）；
 // `test_sop_sensorless_floor.cpp` 在同一流程上换一台机器重放（一条流程）。两份台架会让那次重放变成两个测量的比较而不是
-// 两台机器的比较，所以它在这里，并把机器的磁钢与逆变的死区做成**参数**——默认值逐字复现 F19 那个文件。
+// 两台机器的比较，所以它在这里，并把机器的磁钢与逆变的死区做成 **参数** ——默认值逐字复现 F19 那个文件。
 
 #include <algorithm>
 #include <cmath>
@@ -69,8 +69,8 @@ inline auto sop_wrap_pi(float angle) noexcept -> float {
  * @brief [zh] 被测机器：一份铭牌，可以选择换一块更强的磁钢。
  * @param psi_scale [en] multiplier on the magnet's strength, **applied to plant and model alike** -- the second machine
  *                       is correctly described, so the replay compares two machines and not two descriptions.
- * @param psi_scale [zh] 磁钢强度的倍数，**plant 与模型同时缩放**——第二台机器是被正确描述的，于是那次重放比较的是两台机
- *                       器而不是两份描述。
+ * @param psi_scale [zh] 磁钢强度的倍数， **plant 与模型同时缩放** ——第二台机器是被正确描述的，于是那次重放比较的是两台
+ *                       机器而不是两份描述。
  * @since 0.1.9
  */
 struct SopMachine final {
@@ -142,7 +142,7 @@ struct SensorlessRow final {
  * @return [zh] 测得的一行。
  * @note [en] 1.5 s at 20 kHz; the **last 0.5 s** is the window, i.e. "has it settled", not the acquisition transient.
  *            The observer starts from a zero seed -- maximally wrong -- which is the honest worst case.
- * @note [zh] 20 kHz 下跑 1.5 s，**最后 0.5 s** 是窗口，即"稳下来了吗"，不是捕获瞬态。观测器从零种子开始——最大程度地错
+ * @note [zh] 20 kHz 下跑 1.5 s， **最后 0.5 s** 是窗口，即"稳下来了吗"，不是捕获瞬态。观测器从零种子开始——最大程度地错
  *            ——这是诚实的下界。
  * @since 0.1.9
  */

@@ -6,9 +6,9 @@
 // whether anything jumps at the moment the selection changes. Those are properties of the *chain*, so the criterion has
 // to be stated over the whole run and then measured on it.
 //
-// W6-c —— 整条起动链路在**一次运行**里走完：对齐、静止时用注入观测器、转子转起来后换成磁链观测器。
-// 为什么必须一次跑完而不是三段分开测：每个观测器单独都测过了，而那些数字对**交接**一无所知——接手的观测器是否离交出者的
-// 估计足够近以握住机器、切换那一刻有没有跳变。这些是**整条链**的性质，因此判据必须写在整段运行上，也必须在整段上测量。
+// W6-c —— 整条起动链路在 **一次运行** 里走完：对齐、静止时用注入观测器、转子转起来后换成磁链观测器。
+// 为什么必须一次跑完而不是三段分开测：每个观测器单独都测过了，而那些数字对 **交接** 一无所知——接手的观测器是否离交出者的
+// 估计足够近以握住机器、切换那一刻有没有跳变。这些是 **整条链** 的性质，因此判据必须写在整段运行上，也必须在整段上测量。
 //
 // The criterion, fixed here before any of it was run:
 //   C1  the electrical angle error never exceeds **0.30 rad** once alignment has finished. This is a loose ceiling on
@@ -23,12 +23,12 @@
 //       the end of the run.
 //
 // 判据在运行之前定下：
-//   C1 对齐完成之后，电角度误差**从不超过 0.30 rad**。这是刻意的宽松上限：两半各自都测到远在其内（静止台架上注入锁定到
+//   C1 对齐完成之后，电角度误差 **从不超过 0.30 rad** 。这是刻意的宽松上限：两半各自都测到远在其内（静止台架上注入锁定到
 //      0.02 rad；README 对出厂观测器在各转速的判据是 0.15 rad）。0.30 给交接瞬态留了余量，同时仍比"估计反了或丢了一个
 //      磁极"所对应的 3.14 rad 小一个量级。
-//   C2 **切换处不跳**：切换那一 tick 的误差变化量，不超过切换前 4000 个 tick 里最大单 tick 变化的**三倍**。若发生等于两个
+//   C2 **切换处不跳** ：切换那一 tick 的误差变化量，不超过切换前 4000 个 tick 里最大单 tick 变化的 **三倍** 。若发生等于两个
 //      观测器估计之差的阶跃，会直接越过这条线。
-//   C3 链路终点的误差落在仓库既有的单观测器判据内：**0.15 rad**。
+//   C3 链路终点的误差落在仓库既有的单观测器判据内： **0.15 rad** 。
 
 #include <cmath>
 #include <cstdio>
@@ -79,7 +79,7 @@ constexpr float kJ = 1.0e-5F;
 // the no-load speed at the 3 A limit is ~150 rad/s, so the band is comfortably inside reach.
 // 机械阻尼。两个约束在此相遇，且都是量出来的：
 //   - 对齐需要转子在保持窗口内停住。`test_sil_alignment.cpp` 对减速关节用 5e-3，而 1e-5 时自由振荡两秒后仍在响；
-//   - 驱动必须能进入交接带。取 5e-3 时机器停在 **20.09 rad/s**、`iq = 2.017 A`，因为
+//   - 驱动必须能进入交接带。取 5e-3 时机器停在 **20.09 rad/s** 、`iq = 2.017 A`，因为
 //     `kt·iq = 0.05×2.017 = 0.1008 N·m` 正好与 `b·ω = 5e-3×20.09 = 0.1005 N·m` 平衡。那就是该电流下的空载转速，
 //     于是 60 rad/s 不可达，整次运行从未切换。
 // 1e-3 同时满足两者：`J = 1e-5` 时 `ζ = b/(2√(k·J)) ≈ 1.0`，对齐段处于临界阻尼；而 3 A 限流下的空载转速约 150 rad/s，
@@ -104,7 +104,7 @@ constexpr float kRampTorqueA = 3.0F;
 // The terminal speed is what this machine can actually hold, not a nominal figure: with `b = 1e-3` and a 3 A limit the
 // no-load speed is ~150 rad/s, so asking for 400 would have measured nothing. Restated here, before the run that uses it.
 // 终点转速取这台机器实际能保持的值，而不是一个标称数字：`b = 1e-3`、限流 3 A 时空载转速约 150 rad/s，
-// 要求 400 只会量到空。此处在使用它的那次运行**之前**重述。
+// 要求 400 只会量到空。此处在使用它的那次运行 **之前** 重述。
 constexpr float kTargetRadS = 100.0F;
 
 // The boundary between "acquiring" and "operating". Five times tighter than the ceiling it guards, so a run cannot
@@ -223,7 +223,7 @@ auto run_chain(float switch_at_rad_s, core::ObserverKind kind_after, int freeze_
     // is false, so a sensorless alignment averages a constant and reports `NotSettled` with a spread of zero. That is
     // what this rig measured before the sensor was put back for the alignment stage: failure code 2, spread 0.
     // 这条链是"先用编码器确定位置、再脱开编码器运行"，而不是"无编码器对齐"——后者并不存在。`Motor::tick` 每 tick 读
-    // `has_sensor`，为假时喂给对齐器的 `angle_mech` 是**常量 0**，于是无感对齐平均到的是一串零、报 `NotSettled`、
+    // `has_sensor`，为假时喂给对齐器的 `angle_mech` 是 **常量 0** ，于是无感对齐平均到的是一串零、报 `NotSettled`、
     // 离散度为 0。这正是本台架在把编码器放回对齐段之前测到的：失败码 2、离散度 0。
     hal.position.set_sensor_present(true);
 
@@ -263,7 +263,7 @@ auto run_chain(float switch_at_rad_s, core::ObserverKind kind_after, int freeze_
     // --- alignment ----------------------------------------------------------------------------------------
     // Wait for the machine to *leave* Align rather than for it to arrive in Run: a failed alignment leaves Align too,
     // and treating that as success would let the rest of the chain measure an angle nobody captured.
-    // 等机器**离开** Align，而不是等它到达 Run：失败的对齐同样会离开 Align，把它当作成功会让链路后续去测量一个没人
+    // 等机器 **离开** Align，而不是等它到达 Run：失败的对齐同样会离开 Align，把它当作成功会让链路后续去测量一个没人
     // 捕获过的角度。
     int align_ticks = 0;
     unsigned states_seen = 0U;
@@ -328,7 +328,7 @@ auto run_chain(float switch_at_rad_s, core::ObserverKind kind_after, int freeze_
     // speed output, which is the one quantity that observer does not claim to produce at standstill. A torque ramp is
     // the physically honest way to get a sensorless rotor moving from rest -- and the measurement below is exactly that
     // the speed loop was never the thing under test here.
-    // 用转矩而不是转速指令：靠 `set_speed()` 加速会把速度环闭在**注入**观测器报出的转速上，而那正是该观测器在静止时
+    // 用转矩而不是转速指令：靠 `set_speed()` 加速会把速度环闭在 **注入** 观测器报出的转速上，而那正是该观测器在静止时
     // 不声称能给的量。转矩斜坡才是让无感转子从静止动起来的诚实做法——而下面的测量本身说明，速度环从来不是这里被测的东西。
     motor.set_torque(kRampTorqueA);
 
@@ -374,7 +374,7 @@ auto run_chain(float switch_at_rad_s, core::ObserverKind kind_after, int freeze_
                 // with hand-written seeding; the fix is now `SwitchableObserver::hand_over_to()`, so the rig has to
                 // prove that the library primitive reproduces the same numbers -- otherwise the repair lives in a test
                 // and every real caller still steps by a quarter turn.
-                // 一个库调用，而不是两行本地配方。本台架用**手写**的播种发现了缺陷、量出了修复；而修复现在在
+                // 一个库调用，而不是两行本地配方。本台架用 **手写** 的播种发现了缺陷、量出了修复；而修复现在在
                 // `SwitchableObserver::hand_over_to()` 里，因此台架必须证明库原语能重现同样的数字——否则这个修复
                 // 只活在测试里，每一个真实调用方仍然会跳四分之一圈。
                 // The current goes with the angle. The dual-L member's state is the stator flux, and handing it the
@@ -412,7 +412,7 @@ auto run_chain(float switch_at_rad_s, core::ObserverKind kind_after, int freeze_
         // 50 rad/s. Recording it separately keeps the ceiling about the regime each observer claims, instead of holding
         // the injection observer to a standard the design never offered -- which is why this phase is reported and not
         // asserted.
-        // 斜坡恰恰是注入观测器**不**声称的区间：它自己的记录把地板放在 50 rad/s 附近。分开记录，才让上限说的是每个
+        // 斜坡恰恰是注入观测器 **不** 声称的区间：它自己的记录把地板放在 50 rad/s 附近。分开记录，才让上限说的是每个
         // 观测器各自声称的区间，而不是拿一个设计从未给出的标准去要求注入观测器——这就是这一段只报不断言的原因。
         result.max_error_during_ramp_rad = std::max(result.max_error_during_ramp_rad, std::fabs(now));
         last_error = now;
@@ -460,13 +460,13 @@ TEST(SilFusionChain, ACriterionThatWasWithdrawnAsVacuousIsRefutedWhenItIsAskedPr
     // rig never filled in `config.dual_inductance`, so the member ran with an all-zero configuration, `valid_config`
     // refused it, `update()` held and the readout was a constant -- which this rig printed as a pi-sized error. With
     // the member configured the two land 0.6543 and 0.7244 rad out, i.e. the same inherited error.
-    // C2 原话是"0 → 50 rad/s，交接后 20 ms 内角度在 0.05 rad 以内"。撤回首因为写它的那个 SIL 台架是**带传感器**的：环路用的
+    // C2 原话是"0 → 50 rad/s，交接后 20 ms 内角度在 0.05 rad 以内"。撤回首因为写它的那个 SIL 台架是 **带传感器** 的：环路用的
     // 就是编码器角度，观测器对传感器的误差恒为零，这条判据不可能失败。本台架是无感的，所以这条判据终于问得出来——而答案是
-    // **否**，两个高速成员都是。
+    // **否** ，两个高速成员都是。
     //
-    // 测量还说明了**为什么**，而那不是交接的问题。切换用 plant 的真实转速触发，而在 50 rad/s 机械处注入观测器已经越过它自己的
-    // 地板，于是它交出的角度偏了 0.56 rad——而两个接任者都没法在 20 ms 内忘掉继承来的角度。所以判据是在**交出端**被否掉的，
-    // 这与"交接坏了"是不同的陈述；用例断言的是后者那个**真的**陈述：切换后 20 ms 出来的，就是进去的那个，两个成员都是，且相差
+    // 测量还说明了 **为什么** ，而那不是交接的问题。切换用 plant 的真实转速触发，而在 50 rad/s 机械处注入观测器已经越过它自己的
+    // 地板，于是它交出的角度偏了 0.56 rad——而两个接任者都没法在 20 ms 内忘掉继承来的角度。所以判据是在 **交出端** 被否掉的，
+    // 这与"交接坏了"是不同的陈述；用例断言的是后者那个 **真的** 陈述：切换后 20 ms 出来的，就是进去的那个，两个成员都是，且相差
     // 不到 10 %。
     //
     // A-110 最初在这里记成"双电感成员落在偏 π 的地方"。那是本文件自己的缺陷：台架从未填写 `config.dual_inductance`，成员带着

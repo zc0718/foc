@@ -18,9 +18,9 @@ namespace core {
  *            pulses, and the datasheet gives one number covering both edges. `switching_period_s` is here only because
  *            the modulator works in duty: `t_min / T` is the smallest duty that survives, and it is the whole of the
  *            configuration once that division is done.
- * @note [zh] `min_pulse_s` 是**驱动器**的属性，不是调制器的。自举高侧驱动器需要最小导通时间给电容充电，隔离驱动器的传输
- *            延迟会吞掉短脉冲，而数据手册只给一个覆盖两个边沿的数。`switching_period_s` 在这里只是因为调制器用占空比工
- *            作：`t_min / T` 是能活下来的最小占空比，做完这个除法之后整个配置就只剩这一个数。
+ * @note [zh] `min_pulse_s` 是 **驱动器** 的属性，不是调制器的。自举高侧驱动器需要最小导通时间给电容充电，隔离驱动器的传
+ *            输延迟会吞掉短脉冲，而数据手册只给一个覆盖两个边沿的数。`switching_period_s` 在这里只是因为调制器用占空比
+ *            工作：`t_min / T` 是能活下来的最小占空比，做完这个除法之后整个配置就只剩这一个数。
  * @since 0.1.9
  * @exporter
  */
@@ -37,8 +37,8 @@ struct MinPulseConfig final {
  *            is the quantity a caller needs in order to stop lying about its own output: a control loop that assumes
  *            its commands are realised will integrate a voltage error that nothing in its feedback loop can see,
  *            because the bridge is inside the loop and the voltage is not measured.
- * @note [zh] `lost_vs` 是**每相**带符号的，正数表示桥臂**少**交付。调用方需要它，才能停止对自己的输出撒谎：一个假定指令
- *            被如实执行的环路，会积分一项反馈里看不见的电压误差，因为桥臂在环内、电压却没被量。
+ * @note [zh] `lost_vs` 是 **每相** 带符号的，正数表示桥臂 **少** 交付。调用方需要它，才能停止对自己的输出撒谎：一个假定
+ *            指令被如实执行的环路，会积分一项反馈里看不见的电压误差，因为桥臂在环内、电压却没被量。
  * @since 0.1.9
  * @exporter
  */
@@ -80,17 +80,17 @@ struct MinPulseOutput final {
  *               谈。
  *
  *   **律。** 单相，`m = t_min/T`，请求 `d` ∈ [0, 1]：`d < m` 时 `applied = 0`（导通脉冲短到不存在），`1 − d < m` 时
- *   `applied = 1`（**关断**脉冲太短，高侧关不掉），其余 `applied = d`。于是周期平均相电压少了 `(d − applied)·v_bus`——
- *   一个调用方**在它发生之前**就能写下来的数。`apply()` 的全部意义就在这里：不改变任何东西，只说桥臂会怎么做。
+ *   `applied = 1`（ **关断** 脉冲太短，高侧关不掉），其余 `applied = d`。于是周期平均相电压少了 `(d − applied)·v_bus`——
+ *   一个调用方 **在它发生之前** 就能写下来的数。`apply()` 的全部意义就在这里：不改变任何东西，只说桥臂会怎么做。
  *
  *   **余量。** `shape()` 把丢掉的那份占空比加到下一周期的请求上，并记住还欠多少，于是在任何窗口上 `Σapplied =
  *   Σrequested − carry`：**平均**是精确的，剩下的只是余量。余量被一个最小脉冲界住（占空比上 `abs(carry) ≤ m`，即一个
  *   `t_min` 窗口），所以 `N` 个周期的平均误差至多 `m/N`——`m = 2 %`、`N = 100` 时是全占空比的 0.024 %，而每个周期都把脉
  *   冲丢掉的做法要付 2 %。一个调在脉宽上的 delta-sigma 调制器。
  *
- *   这个类**做不到**什么，写下来是因为不写就会有调用方以为它做得到：它无法让驱动器送出一个它拒绝送的脉冲；它不建模两个
- *   边沿的传输延迟**抖动**；余量假定下一周期的 `t_min` 相同——一个极限会变的驱动器（温度、母线电压）破坏的是 **精确性
- *   **，不是那条界。
+ *   这个类 **做不到** 什么，写下来是因为不写就会有调用方以为它做得到：它无法让驱动器送出一个它拒绝送的脉冲；它不建模两
+ *   个边沿的传输延迟 **抖动** ；余量假定下一周期的 `t_min` 相同——一个极限会变的驱动器（温度、母线电压）破坏的是 **精确
+ *   性 **，不是那条界。
  *
  * @context [en] Current-loop ISR: noexcept, no allocation, one branch per phase when disabled.
  * @context [zh] 电流环 ISR：noexcept、不分配、未启用时每相一个分支。
@@ -120,9 +120,9 @@ class MinPulse final {
      *            every measurement in this repository is taken with the feature off. What is refused is a limit that
      *            cannot be a limit: a negative one (a typo), or `2*t_min > T`, where a pulse and the gap after it are
      *            both too short and no duty whatsoever is transmissible.
-     * @note [zh] **不**拒绝 `min_pulse_s <= 0`：那是没有极限的驱动器，也就是默认值，本仓库里所有「关掉这个功能」的实测
-     *            都是这么做的。被拒绝的是**不能算作极限**的极限：负值（打错了），或者 `2·t_min > T`——那时脉冲和它后面的
-     *            间隔都太短，任何占空比都传不出去。
+     * @note [zh] **不** 拒绝 `min_pulse_s <= 0`：那是没有极限的驱动器，也就是默认值，本仓库里所有「关掉这个功能」的实测
+     *            都是这么做的。被拒绝的是 **不能算作极限** 的极限：负值（打错了），或者 `2·t_min > T`——那时脉冲和它后面
+     *            的间隔都太短，任何占空比都传不出去。
      */
     [[nodiscard]] auto validate() const noexcept -> ErrorCode {
         if (!std::isfinite(config_.min_pulse_s) || !std::isfinite(config_.switching_period_s)) {
@@ -147,7 +147,7 @@ class MinPulse final {
 
     /**
      * @brief [en] What the bridge will do with this request, with **no memory**: the pure driver rule.
-     * @brief [zh] 桥臂会拿这个请求做什么，**不带记忆**：纯粹的驱动规则。
+     * @brief [zh] 桥臂会拿这个请求做什么， **不带记忆** ：纯粹的驱动规则。
      * @param duty [en] per-phase request in [0, 1]; outside is clamped and reported as Param.
      * @param duty [zh] 每相请求，[0, 1]；越界会被钳住并报 Param。
      * @param v_bus [en] DC link in V, used only to convert duty into volt-seconds.
@@ -170,9 +170,9 @@ class MinPulse final {
      *            is what is *still* lost after the carry, and over a window it sums to `carry[window end]` -- that
      *            identity is the thing a test can hold the class to, and it is the reason the residue is exposed at
      *            all.
-     * @note [zh] 结果里的 `duty` 是**该命令什么**，即请求加上带过来的余量；`lost_vs` 是带上余量之后**仍然**丢掉的部分，
-     *            它在任意窗口上求和等于 `carry[窗口末]`——这条恒等式是测试能拿来卡住这个类的东西，也正是余量被暴露出来的
-     *            原因。
+     * @note [zh] 结果里的 `duty` 是 **该命令什么** ，即请求加上带过来的余量；`lost_vs` 是带上余量之后 **仍然** 丢掉的部
+     *            分，它在任意窗口上求和等于 `carry[窗口末]`——这条恒等式是测试能拿来卡住这个类的东西，也正是余量被暴露出
+     *            来的原因。
      * @since 0.1.9
      * @exporter
      */

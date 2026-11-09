@@ -46,7 +46,7 @@ TEST(SlewLimiter, ReachesTargetWhenInsideOneStep) {
 /**
  * @brief [en] The step is the *difference* `target - value`, and its sign decides which way the output moves.
  *
- * @brief [zh] 步进是**差** `target - value`，它的符号决定输出往哪边走。
+ * @brief [zh] 步进是 **差** `target - value`，它的符号决定输出往哪边走。
  *
  *   Mutation testing found this: replacing `target - value_` with `target + value_` in the slew limiter survived the
  *   whole suite. Every existing case starts from zero or has a target large enough to dominate the current value, so
@@ -56,8 +56,8 @@ TEST(SlewLimiter, ReachesTargetWhenInsideOneStep) {
  *
  *   变异测试发现的：把斜率限制器里的 `target - value_` 换成 `target + value_` 后整个套件都活着。现有用例要么从零开始，
  *   要么目标大到压过当前值，于是两个表达式落在同一个分支上，任何断言都分不开它们。这里当前值是 5、目标是 3：差是 -2，是
- *   单步预算 1 的两倍，所以输出必须落到 4——而 `target + value_` 读到 +8，会把输出**往上**推到 6，朝着与它自己的目标相反
- *   的方向。
+ *   单步预算 1 的两倍，所以输出必须落到 4——而 `target + value_` 读到 +8，会把输出 **往上** 推到 6，朝着与它自己的目标相
+ *   反的方向。
  */
 TEST(SlewLimiter, TheErrorTermIsADifferenceSoItsSignIsObservable) {
     foc::core::SlewLimiter limiter(10.0F);
@@ -124,7 +124,7 @@ TEST(SlewLimiter, RateTimesPeriodTimesStepsIsTheTravelAndItIsExact) {
     // the ceiling has one arrangement. The two factors enter one-for-one -- the product `steps*rate*dt` is the travel
     // whenever the budget divides it -- and the last grid point is the one that shows the ceiling is a ceiling.
     // 两个因子乘成一个数，所以定律写成乘积而不是两个比值：行程为 1.0 时，`步数 × rate × dt = 1` 在每一组速率与周期下
-    // **精确**成立。这与"两者各按一比一进入"是同一句话，却不会把反了的比值藏在代数里；而这正是斜坡排程的构造单位。
+    // **精确** 成立。这与"两者各按一比一进入"是同一句话，却不会把反了的比值藏在代数里；而这正是斜坡排程的构造单位。
     const auto steps_for = [](float rate, float dt) {
         foc::core::SlewLimiter limiter(rate);
         int steps = 0;
@@ -159,7 +159,7 @@ TEST(SlewLimiter, InsideTheBudgetItPassesTheTargetThroughAndNeverOvershoots) {
     // The two sides of the `min`: inside the budget the output **is** the target on that same call (no lag, no filtering),
     // and outside it the output is the previous value plus exactly one budget -- never past the target. Both measured at
     // the boundary itself, where a `>=` for a `>` would show.
-    // `min` 的两侧：预算内输出**就是**当次的目标（无延迟、无滤波），预算外则是前一值加上恰好一份预算——绝不超过目标。
+    // `min` 的两侧：预算内输出 **就是** 当次的目标（无延迟、无滤波），预算外则是前一值加上恰好一份预算——绝不超过目标。
     // 两者都在边界处量，那里把 `>` 写成 `>=` 就会露出来。
     foc::core::SlewLimiter limiter(1.0F);
     EXPECT_FLOAT_EQ(0.05F, limiter.step(0.05F, 0.1F)) << "inside the budget the value is the target on the same call";
@@ -177,7 +177,7 @@ TEST(SlewLimiter, InsideTheBudgetItPassesTheTargetThroughAndNeverOvershoots) {
 
 /**
  * @brief [en] At exactly one step the target is **assigned**, not accumulated -- and ordinary numbers cannot see it.
- * @brief [zh] 恰好相差一步时，输出是**赋值**上去的目标而不是累加出来的——而普通数值看不见这一点。
+ * @brief [zh] 恰好相差一步时，输出是 **赋值** 上去的目标而不是累加出来的——而普通数值看不见这一点。
  *
  * @note [en] The case above asserts the same intent ("must land on the target") and passes for *both* branches: with
  *            `value = 0.05`, `step = 0.1`, `target = 0.15`, the sum `0.05 + 0.1` rounds to the very same float as
@@ -191,7 +191,7 @@ TEST(SlewLimiter, InsideTheBudgetItPassesTheTargetThroughAndNeverOvershoots) {
  *   any axis whose limiter is asked for a step comparable to its own position, which is what a reset to a large value
  *   plus a long period produces.
  *
- * @note [zh] 上面那条用例断言的是同一个意图（"必须落在目标上"），而它对**两个分支都通过**：`value = 0.05`、 `step =
+ * @note [zh] 上面那条用例断言的是同一个意图（"必须落在目标上"），而它对 **两个分支都通过** ：`value = 0.05`、 `step =
  *            0.1`、`target = 0.15` 时，`0.05 + 0.1` 与 `0.15` 舍入到同一个 float，于是 `value += max_delta` 与 `value =
  *            target` 在那里无法区分。变异日志说的正是这件事：这个分支序上的两个 `>` -> `>=` 都存活，而基线把它们记成了
  *            等价。

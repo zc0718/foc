@@ -86,7 +86,7 @@ enum class ReferenceMode : std::uint8_t {
  *            cannot exceed `max_current_a` or the motion limits.
  *
  * @note [zh] 限制与缩放字段默认 0，含义是"用控制器自身配置的那个"。机构自己的限制仍在 `core::MotionProfile::Config`
- *            里；这些是**这次运动**的，非零值只在本次运动内替换配置值， 不需要任何恢复步骤。
+ *            里；这些是 **这次运动** 的，非零值只在本次运动内替换配置值， 不需要任何恢复步骤。
  *
  *   三个缩放是柔顺旋钮。`kp_scale` 决定关节抵抗被推动的程度；`ilimit_scale` 决定速度 积分器被允许保有多少转矩，于是被手
  *   推的关节会退让而不是对抗；`kd_scale` 决定其周围的阻尼。 它们缩放增益而非限值，因此柔顺的关节仍然不能越过
@@ -194,8 +194,8 @@ struct Command final {
  *   \li `FeedForward` 提供 `generate(const FeedforwardInput&) noexcept -> Dq<float>`；默认的 `core::NullFeedforward` 不
  *   贡献任何项。
  *
- *   \li `PositionControl` 提供 `step(setpoint, feedback, dt) noexcept -> float` 与 `reset()`，且下发的是**速度**；默认
- *   的 `core::NullPositionControl` 让位置模式回 `ErrorCode::NotImpl`，而不是假装成功。
+ *   \li `PositionControl` 提供 `step(setpoint, feedback, dt) noexcept -> float` 与 `reset()`，且下发的是 **速度** ；默
+ *   认的 `core::NullPositionControl` 让位置模式回 `ErrorCode::NotImpl`，而不是假装成功。
  *
  *   \li `Aligner` 提供 `validate()`、`begin(pole_pairs) -> bool`、`step(dt, angle_mech) noexcept -> AlignOutput` 与
  *   `reset()`；默认的 `core::NullAlignment` 的 `begin()` 回 `false`，于是 `start()` 直接从 Align 进 Run。
@@ -343,9 +343,9 @@ class Motor final {
      *            so it does not fight the integrator, and it is clamped with everything else by the move's current
      *            ceiling. `set_command()` is the position-mode entry point, but the field itself is now honoured in
      *            speed mode too -- see `Command`.
-     * @note [zh] `feedforward_current_a` 就是重力或摩擦项该去的地方：它加在速度环**之后**，所以不会和积分器打架，并且和
-     *            其余量一起受本次运动的电流上限约束。`set_command()` 是位置模式的入口，但这个字段现在在速度模式下也生效
-     *            ——见 `Command`。
+     * @note [zh] `feedforward_current_a` 就是重力或摩擦项该去的地方：它加在速度环 **之后** ，所以不会和积分器打架，并且
+     *            和其余量一起受本次运动的电流上限约束。`set_command()` 是位置模式的入口，但这个字段现在在速度模式下也生
+     *            效 ——见 `Command`。
      * @since 0.1.0
      */
     void set_command(const Command& command) noexcept;
@@ -363,13 +363,13 @@ class Motor final {
      *   says it once. It is deliberately *not* cleared by `set_speed()`: clearing it there would break the one-shot
      *   usage.
      *
-     * @brief [zh] 更新前馈 iq，**不改变模式**。
+     * @brief [zh] 更新前馈 iq， **不改变模式** 。
      *
      *   `set_command()` 会把轴切到位置模式，这就是速度模式宿主完全没法用这个字段的原因：唯一的写入者也改变了被控对象。
      *   齿槽或摩擦补偿器每个周期更新它的偏置，而轴继续做它原本在做的事，所以这个设置器与指令分开。
      *
-     *   该值**保持**到下一次写入——与速度参考同一条规矩——因为一个必须每拍重述恒定重力项的补偿器，是比只说一次的接口更差
-     *   的接口。它有意**不**被 `set_speed()` 清零：在那里清零会破坏"设一次"的用法。
+     *   该值 **保持** 到下一次写入——与速度参考同一条规矩——因为一个必须每拍重述恒定重力项的补偿器，是比只说一次的接口更
+     *   差的接口。它有意 **不** 被 `set_speed()` 清零：在那里清零会破坏"设一次"的用法。
      *
      * @param iq_a [en] the offset in A; clamped with the reference by the current ceiling, not here.
      * @param iq_a [zh] 偏置，A；它随参考一起被电流上限约束，不在这里约束。
@@ -694,7 +694,7 @@ class Motor final {
     MotorConfig config_;
     /**
      * @brief [en] Will the observer inject a carrier right now -- answered on the *mode*, not on the type.
-     * @brief [zh] 观测器此刻会注入载波吗——按**模式**回答，而不是按类型。
+     * @brief [zh] 观测器此刻会注入载波吗——按 **模式** 回答，而不是按类型。
      * @note [en] The distinction is the whole reason this exists: a slot holding an injection observer but running
      *            back-EMF injects nothing, so a type-level trait answers "yes" about a situation that is "no". The
      *            first version of the admission rule in `init()` used the type-level answer and refused every motor
@@ -728,10 +728,10 @@ class Motor final {
     // bounded by `kStallWindowS` because reaching it faults. A float is exact enough for a value that never leaves
     // hundredths of a second -- but a *timeout* is not bounded that way, which is why the routines that own one no
     // longer accumulate it in float (F-105), and `gates.py clocks` holds the line.
-    // 这三个故意留作 float，与各流程用的 `core::ElapsedClock` 不是一回事：它们都**不是只增不减**的。
+    // 这三个故意留作 float，与各流程用的 `core::ElapsedClock` 不是一回事：它们都 **不是只增不减** 的。
     // `speed_elapsed_s_` 与 `position_elapsed_s_` 是分频相位，它们所门控的环每跑一次就清零，量级被配置的周期兜住；
     // `stall_elapsed_s_` 被 `kStallWindowS` 兜住（达到即故障）。一个永不超出百分之几秒的量，float 足够精确——
-    // 但**超时**不是这样被兜住的，所以拥有超时的流程不再用 float 累加它（F-105），并由 `gates.py clocks` 守住。
+    // 但 **超时** 不是这样被兜住的，所以拥有超时的流程不再用 float 累加它（F-105），并由 `gates.py clocks` 守住。
     float speed_elapsed_s_;
     bool speed_step_due_;
     float position_ref_rad_;
@@ -773,7 +773,7 @@ class Motor final {
     // would ever substitute.
     // 起步序列。具体成员而不是第十一个策略槽：序列是有状态的，每周期都要 `dt`
     // 与实测转速，且它在一段时间内就是
-    // **转矩来源**——而这正是模式已经表达的事。加第十一个模板参数会弄脏 `src/`
+    // **转矩来源** ——而这正是模式已经表达的事。加第十一个模板参数会弄脏 `src/`
     // 里每个实例化与每个点名它的用例， 而那个策略没有人会去替换。
     core::StallStart stall_start_{};
     core::StallStartPhase stall_phase_{core::StallStartPhase::Idle};
@@ -836,7 +836,7 @@ auto Motor<Observer, Modulator, Controller, HalPolicy, RefGenerator, FeedForward
     // fault input could stand for is the dangerous one, so it stands for nothing and the axis does not start. A host
     // with no such pin says so with `driver::StubFaultInput` and never raises it -- one line, in the integrator's own
     // code, where a reviewer can see it. See `hal::FaultInput`.
-    // 这是 HAL 里唯一一个**缺席也不许静默**的能力，而且在这里拒绝而不是在调用点写文档，是因为失效是看不见的：一台从不
+    // 这是 HAL 里唯一一个 **缺席也不许静默** 的能力，而且在这里拒绝而不是在调用点写文档，是因为失效是看不见的：一台从不
     // 提问的电机，从外面看与一台问过并被告知"一切正常"的电机是一样的。一个缺席的故障输入唯一可能代表的值恰好是危险的
     // 那一个，所以它什么也不代表，轴不会启动。没有这根引脚的主控方用 `driver::StubFaultInput` 明说这件事、并且从不拉高
     // ——一行，写在集成方自己的代码里，评审看得见。见 `hal::FaultInput`。
@@ -1091,7 +1091,7 @@ auto Motor<Observer, Modulator, Controller, HalPolicy, RefGenerator, FeedForward
     // inverter flag does not: `DriveFault` says the *driver* tripped, which is hardware telling on itself rather than
     // the protector inferring from currents. The member is guaranteed to exist by the refusal in `start()`; the
     // `if constexpr` is what keeps this compilable for a HalPolicy that never got that far.
-    // 功率级自己的故障输出，与逆变器标志并列、理由相同。它带着逆变器标志没有的成因：`DriveFault` 说的是**驱动器**跳了，
+    // 功率级自己的故障输出，与逆变器标志并列、理由相同。它带着逆变器标志没有的成因：`DriveFault` 说的是 **驱动器** 跳了，
     // 即硬件自己开口，而不是保护器从电流里推出来。这个成员由 `start()` 里的拒绝保证存在；`if constexpr` 只是让一个还没
     // 走到那一步的 HalPolicy 仍然能编译。
     if constexpr (core::concepts::has_fault_input_v<HalPolicy>) {
@@ -1141,7 +1141,7 @@ auto Motor<Observer, Modulator, Controller, HalPolicy, RefGenerator, FeedForward
         // rotor travels to it, and the sensor angle is precisely the unknown being measured, so it
         // cannot be the input here. Regulating id against a wrong angle instead yields a constant
         // torque error of sin(offset) and spins the machine rather than aligning it.
-        // 对齐必须强制角度。转子走过去的过程中磁场要固定在**定子**坐标系里，而传感器角度正是待测的
+        // 对齐必须强制角度。转子走过去的过程中磁场要固定在 **定子** 坐标系里，而传感器角度正是待测的
         // 未知量，不能作为这里的输入。改用错角度去调 id 会得到恒为 sin(offset) 的转矩误差，结果是把
         // 电机转起来而不是对齐。
         const core::AlignOutput align_out = policies_.align.step(dt_s, angle_mech);
@@ -1209,7 +1209,7 @@ auto Motor<Observer, Modulator, Controller, HalPolicy, RefGenerator, FeedForward
         // a capability the build does not have, so it is reported as `NotImpl` and deliberately
         // *not* latched: a missing feature is not a fault the caller has to clear.
         // 位置模式既需要位置环，也需要可闭环的角度。缺任何一项都属于“这次构建没有这个能力”，因此报
-        // `NotImpl` 且**故意不锁存**：缺功能不是调用方需要清除的故障。
+        // `NotImpl` 且 **故意不锁存** ：缺功能不是调用方需要清除的故障。
         if (mode_ == ReferenceMode::Position) {
             if constexpr (std::is_same_v<PositionControl, core::NullPositionControl>) {
                 return ErrorCode::NotImpl;
@@ -1219,7 +1219,7 @@ auto Motor<Observer, Modulator, Controller, HalPolicy, RefGenerator, FeedForward
                 // constant zero without one, not a rule about what position control needs; with a reference the
                 // requirement becomes what it always meant. `lost_count()` refuses too: a count that was lost is not
                 // a count, and a loop closing on it would drive to a position one turn out.
-                // 位置指令需要**绝对**角度：传感器给得出，圈计数在原点被钉住之后也给得出。原先要求 `has_sensor` 是
+                // 位置指令需要 **绝对** 角度：传感器给得出，圈计数在原点被钉住之后也给得出。原先要求 `has_sensor` 是
                 // "无传感器时 `angle_mech` 恒为 0"的后果，而不是关于位置控制需要什么的规矩；有了参考，这条要求才回到
                 // 它本来的含义。`lost_count()` 同样拒绝：丢掉的计数不算计数，闭环在它上面会把轴开到一个差一整圈的位置。
                 const bool position_angle_available =
@@ -1289,7 +1289,7 @@ auto Motor<Observer, Modulator, Controller, HalPolicy, RefGenerator, FeedForward
         // *replaces* whatever the torque mode was holding: the point of the
         // sequence is that the commanded torque is known at every instant, which a
         // value the caller set by hand is not.
-        // 起步序列在爬升期间拥有转矩指令，并**替换**转矩模式原本保持的值：序列的意义在于每一刻的指令力矩都是
+        // 起步序列在爬升期间拥有转矩指令，并 **替换** 转矩模式原本保持的值：序列的意义在于每一刻的指令力矩都是
         // 已知的，而调用方手设的值不是。
         if (stall_phase_ == core::StallStartPhase::Ramping) {
             const core::StallStartOutput out = stall_start_.step(dt_s, speed_mech);
@@ -1359,7 +1359,7 @@ auto Motor<Observer, Modulator, Controller, HalPolicy, RefGenerator, FeedForward
     // outran the rotor still reaches its hand-over speed: the routine only knows the angle it commands. Half the
     // commanded rate is the threshold, and it is stated rather than tuned: a caught rotor sits at the commanded rate,
     // one that was never caught sits at a few percent of it.
-    // 强制角交接之后的窗口，检查的是环路**发布**的转速——不论角度归传感器还是归观测器——因为开环起动完全看不见转子。
+    // 强制角交接之后的窗口，检查的是环路 **发布** 的转速——不论角度归传感器还是归观测器——因为开环起动完全看不见转子。
     // 跑得比转子快的斜坡照样会到达交接速度：例程只知道它下发的角度。阀值取命令速率的一半，并且是写下来的而不是调出来的：
     // 被抓住的转子就坐在命令速率上，从未被抓住的只有它的几个百分点。
     if (handover_check_s_ > 0.0F) {
@@ -1380,7 +1380,7 @@ auto Motor<Observer, Modulator, Controller, HalPolicy, RefGenerator, FeedForward
     // current *and* the wrong speed *and* sustained -- because the alternative is a drive that trips on every large
     // speed step, and a protection nobody trusts gets disabled.
     // 堵转：环路已经在要求它能给出的全部，而机器仍没有按指令方向运动。这是第二个"有定义、没有生产者"的故障码。
-    // 条件刻意写得窄——满电流**且**转速不对**且**持续——因为另一种写法会让每一次大的速度阶跃都跳闸，而没人信任的保护
+    // 条件刻意写得窄——满电流 **且** 转速不对 **且** 持续——因为另一种写法会让每一次大的速度阶跃都跳闸，而没人信任的保护
     // 最终会被关掉。
     if (mode_ != ReferenceMode::Torque) {
         const float command = std::abs(speed_ref_rad_s_);

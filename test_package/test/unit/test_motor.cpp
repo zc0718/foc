@@ -1044,8 +1044,8 @@ using foc::sil::speed_loop_gain;
  *             equal partners: an **inertia** error moves the bandwidth one-for-one, a **friction** error does not move
  *             it at all.
  *
- * @brief [zh] 增益律把闭环 -3 dB 放在请求值的 3.5 % 以内，而两个铭牌项并不对等：**惯量**误差一比一移动带宽， **摩擦**误
- *             差完全不动它。
+ * @brief [zh] 增益律把闭环 -3 dB 放在请求值的 3.5 % 以内，而两个铭牌项并不对等： **惯量** 误差一比一移动带宽， **摩擦**
+ *             误差完全不动它。
  *
  *   This is the row that has to explain the number `step_metrics` reports: the SIL bench measures the loop at 243.57
  *   rad/s against a 250 rad/s request through the Python plant (-2.57 %) and +9.15 % through the C++ bench. Measured
@@ -1062,7 +1062,7 @@ using foc::sil::speed_loop_gain;
  *   The sensitivity is the actionable half, and it is lopsided:
  *
  *   | nameplate error at 200 rad/s | measured -3 dB / requested | |---|---| | inertia -20 % / +20 % / +50 % | **0.82262
- *   / 1.23666 / 1.54877** | | friction -50 % / +50 % / +200 % | **1.02948 / 1.02949 / 1.02951** |
+ *   / 1.23666 / 1.54877 **| | friction -50 % / +50 % / +200 % |** 1.02948 / 1.02949 / 1.02951** |
  *
  *   Divided by the error-free 1.02948 those inertia rows read 0.799 / 1.201 / 1.504: **the bandwidth you get is the
  *   bandwidth you asked for times `J_hat/J`**. The friction rows move the fourth digit -- because `kp = wb*J/kt` alone
@@ -1071,7 +1071,7 @@ using foc::sil::speed_loop_gain;
  *   here a user can act on: a 20 % inertia error is a 20 % bandwidth error, one for one.
  *
  *   这一行必须解释 `step_metrics` 报出的那个数：SIL 台架测到 243.57 rad/s 对 250 rad/s 的请求（Python plant −2.57 %
- *   ），而 C++ 台架是 +9.15 %。这里在**理想电流环**上实测（见上表）：律在一个十倍带宽范围内好到 **3.5 %**，残差随
+ *   ），而 C++ 台架是 +9.15 %。这里在 **理想电流环** 上实测（见上表）：律在一个十倍带宽范围内好到 **3.5 %** ，残差随
  *   `wb·dt` 增长（50 rad/s 时 0.0025、400 时 0.02）——那是 20 kHz 采样一个连续时间设计的结果，不是消去不精确。台架在此之
  *   外看到的东西属于内环与被控对象，不属这一行。
  *
@@ -1110,7 +1110,7 @@ TEST(MotorConfig, TheInertiaEstimateIsTheBandwidthAndTheFrictionEstimateIsNot) {
     // Friction: real, but an order of magnitude cheaper -- and only measurable with a `b` that is not negligible. The
     // first version of this block scaled `b` *down* by 1e-3 and measured an exact zero, which proved nothing except
     // that a negligible term is negligible; at `b = 1 N*m*s/rad` (1000x the nominal) the coefficient is measurable.
-    // 摩擦：真实存在，但便宜一个数量级——而且只有在 `b` 不可忽略时才测得出。这一段的第一个版本把 `b` **缩小**了
+    // 摩擦：真实存在，但便宜一个数量级——而且只有在 `b` 不可忽略时才测得出。这一段的第一个版本把 `b` **缩小** 了
     // 1e-3 并量到一个精确的零，那只证明了可忽略的项可忽略；在 `b = 1 N·m·s/rad`（标称的 1000 倍）下系数才可测。
     constexpr float kHeavyB = 1.0e-3F;
     const double heavy_clean = minus3db_over_requested(200.0F, kJ, kHeavyB, kJ, kHeavyB, kKt);

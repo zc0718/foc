@@ -162,7 +162,7 @@ TEST(StateMachine, LegalTransitionTableMatchesExpectation) {
  * @brief [en] A transition target outside the state set is refused, and the refusal is a *different* condition from an
  *             illegal transition between two real states.
  *
- * @brief [zh] 状态集合之外的迁移目标被拒绝，而这个拒绝与"两个真实状态之间的非法迁移"是**不同**的条件。
+ * @brief [zh] 状态集合之外的迁移目标被拒绝，而这个拒绝与"两个真实状态之间的非法迁移"是 **不同** 的条件。
  *
  *   `request()` rejects for two reasons: the target is not a state at all (`to >= kStateCount`), or it is a state but
  *   the edge is illegal (`!kLegal[from][to]`). MC/DC found that the existing table case only ever exercises the second:
@@ -230,7 +230,7 @@ TEST(StateMachine, TheTransitionGraphHasSevenEdgesAndFaultIsTheOnlySink) {
   // then the graph properties are computed from it: every state reachable from Idle, `Fault` the only state with no
   // outgoing edge, and exactly the seven edges the documented rule accounts for -- `Idle -> Align`, `Idle -> Fault`,
   // `Align -> Run`, `Align -> Idle`, `Align -> Fault`, `Run -> Idle`, `Run -> Fault`.
-  // 上面的表用例检查格子；这一个检查格子构成的**形状**，而读类文档的人真正依赖的就是形状。关系在代码上量出（四个起始
+  // 上面的表用例检查格子；这一个检查格子构成的 **形状** ，而读类文档的人真正依赖的就是形状。关系在代码上量出（四个起始
   // 状态 × 四个目标），再从它计算图性质：每个状态都可从 Idle 到达、`Fault` 是唯一没有出边的状态、且恰好是文档规则解释
   // 得通的七条边。
   const foc::core::MotorState states[4] = {foc::core::MotorState::Idle, foc::core::MotorState::Align,
@@ -318,7 +318,7 @@ TEST(StateMachine, ARefusalChangesNothingButTheCounter) {
   // The sensitivity that matters for a safety-subset state machine is a **zero**: an illegal request must leave the
   // state exactly where it was and move the counter by exactly one, for every illegal cell and for targets outside the
   // enum. Measured over all sixteen cells plus two out-of-range targets.
-  // 对安全子集里的状态机，要紧的敏感度是一个**零**：非法请求必须把状态原地不动、把计数器恰好加一，对每个非法格子、以及
+  // 对安全子集里的状态机，要紧的敏感度是一个 **零** ：非法请求必须把状态原地不动、把计数器恰好加一，对每个非法格子、以及
   // 枚举之外的目标都成立。对全部十六个格子加两个越界目标量出。
   const foc::core::MotorState states[4] = {foc::core::MotorState::Idle, foc::core::MotorState::Align,
                                            foc::core::MotorState::Run, foc::core::MotorState::Fault};

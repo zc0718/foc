@@ -22,8 +22,8 @@ namespace foc {
  *
  * @brief [zh] 把铭牌换算成客户真正使用的单位：每安培多少 N·m，外加一条力矩指令必须遵守的两个限幅。
  *
- *   为什么有这个类型。`set_torque()` 收的是**安培**，于是每个想以 N·m 下指令的调用方都得在库之上自己做换算，而且要在每
- *   个产品里做得一模一样——同一个符号约定、同一条限幅。这正是"只在一个产品里错掉"的那类算术。本类型把它只写一次。
+ *   为什么有这个类型。`set_torque()` 收的是 **安培** ，于是每个想以 N·m 下指令的调用方都得在库之上自己做换算，而且要在
+ *   每个产品里做得一模一样——同一个符号约定、同一条限幅。这正是"只在一个产品里错掉"的那类算术。本类型把它只写一次。
  *
  *   `status` 是诊断通道：铭牌能产生力矩时为 `Ok`，不能时为 `Param`（`kt <= 0` 表示这台机器每安培不产生力矩，那不是一个
  *   机器）。失败的地图仍然写满全部字段，因此忽略状态的调用方拿到的是零，而不是未初始化的限幅。
@@ -78,7 +78,7 @@ struct TorqueCommand {
  * @param config [zh] 机器；`kt` 与 `pole_pairs` 必须描述一台能产生力矩的机器，且电流限幅必须为正。
  * @param min_nm [en] lower torque limit, N*m. Pass 0 with a positive `max_nm` for a **one-way** command: a tensioner or
  *                    a hold that must never pull backwards.
- * @param min_nm [zh] 力矩下限，N·m。与正的 `max_nm` 一起传 0 即**单向**指令：张力控制或保持，绝不允许反向拉。
+ * @param min_nm [zh] 力矩下限，N·m。与正的 `max_nm` 一起传 0 即 **单向** 指令：张力控制或保持，绝不允许反向拉。
  * @param max_nm [en] upper torque limit, N*m; must be >= `min_nm`.
  * @param max_nm [zh] 力矩上限，N·m；必须 >= `min_nm`。
  * @return [en] the map; every field is written even when the status is `Param`.

@@ -102,7 +102,7 @@ TEST(MotionProfile, TheProportionalTermAndTheBrakingCurveCrossAtTwoASquareOverGa
             // crossover (`a/g^2`) and the proportional term binds in both readings, so a probe
             // there would prove nothing. That is why the teeth check starts at `k = 1`.
             // 在比例交叉点以上两个公式相差很远，所以这条量测有牙齿。在 `k = 0.5` 处它们是一致的
-            // ——那个点正是**错**公式自己的交叉点（`a/g^2`），两种读法都由比例项生效，在那里探
+            // ——那个点正是 **错** 公式自己的交叉点（`a/g^2`），两种读法都由比例项生效，在那里探
             // 什么也证明不了。这就是牙齿检查从 `k = 1` 开始的原因。
             if (k >= 1.0F) {
                 EXPECT_GT(std::fabs(expected - wrong) / expected, 0.25F)
@@ -187,8 +187,8 @@ TEST(MotionProfile, TheCruiseEndsAtVelocitySquaredOverTwiceTheAcceleration) {
  *   moves to `v/g`, where the gain is the whole story. A-40 记的是一个负结果：shaping gain 加倍时巡航间隙停在 0.496
  *   rad，从而否掉了 `e = v/g`。否掉是对的，但那只是"没有解释"。条件是：在巡航退出点 `e_c = v^2/(2a)` 处比例上限是
  *   `g*e_c`，它只有在 `g*e_c < v`（即 `g < 2a/v`）时才生效。在 `g = 20, a = 10, v = 2` 时边界正好是 10，所以增益在安全
- *   一侧，**任何**改动都动不了退出点——这就是"在其所谓参数加倍时不动的数就不是那个参数的"在写下原因之后的形状。边界以下
- *   生效的是比例上限，退出点移到 `v/g`，那里增益就是全部故事。
+ *   一侧， **任何** 改动都动不了退出点——这就是"在其所谓参数加倍时不动的数就不是那个参数的"在写下原因之后的形状。边界以
+ *   下生效的是比例上限，退出点移到 `v/g`，那里增益就是全部故事。
  */
 TEST(MotionProfile, TheShapingGainIsAbsentFromTheCruiseExitAboveTwiceTheAccelerationOverVelocity) {
     constexpr float kGain = 20.0F;

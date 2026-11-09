@@ -28,11 +28,11 @@ constexpr float kThirdTurnRad = 2.09439510239319549230F;
  *            modelled. A real sensor's latch width only matters when there is noise or dither at the edge, and this
  *            model has neither, so a hysteresis knob would be a knob with no observable effect -- the shape of defect
  *            the ledger's A-13 records. It arrives together with a noise model or not at all.
- * @note [zh] 三个传感器在**电角度**上相隔 120°，每个高电平持续 180°，也就是所有三霍尔无刷驱动用的那种排布。
+ * @note [zh] 三个传感器在 **电角度** 上相隔 120°，每个高电平持续 180°，也就是所有三霍尔无刷驱动用的那种排布。
  *            `mount_error_rad[i]` 把第 `i` 个传感器从它的标称位置 `i*120°` 挪开，正向为旋转方向。 `stuck_sensor == 3`
- *            表示没有故障——合法的传感器下标里没有 3，所以这个值不会被误撞上。回差（滞环）**故意**没有建模。真实传感器的
- *            锁存宽度只在边沿处有噪声或抖动时才有意义，而这个模型两者都没有，所以一个回差旋钮会是个没有可观测效果的旋钮
- *            ——正是台账 A-13 记的那种缺陷形态。它要么与噪声模型一起到位，要么就不来。
+ *            表示没有故障——合法的传感器下标里没有 3，所以这个值不会被误撞上。回差（滞环） **故意** 没有建模。真实传感器
+ *            的锁存宽度只在边沿处有噪声或抖动时才有意义，而这个模型两者都没有，所以一个回差旋钮会是个没有可观测效果的旋
+ *            钮 ——正是台账 A-13 记的那种缺陷形态。它要么与噪声模型一起到位，要么就不来。
  * @since 0.1.9
  */
 struct HallSetup final {
@@ -50,9 +50,9 @@ struct HallSetup final {
  *            healthy set of sensors can produce. That is why every driver in the field tests `state == 0 || state ==
  *            7`: it is not a convention, it is the arithmetic of the encoding.
  * @note [zh] 第 `i` 个传感器在 `cos(theta - phi_i) > 0` 时为高，即围绕自身位置 180°，其中 `phi_i = i*120° +
- *            mount_error_rad[i]`。编码的第 `i` 位就是第 `i` 个传感器，因此六个可达编码恰好是 **1..6**，而三位字段剩下的
- *            两个编码 0 和 7 正是任何健康传感器组都产生不出来的。这就是为什么现场每个驱动都会判 `state == 0 || state ==
- *            7`：这不是约定，是这种编码的算术。
+ *            mount_error_rad[i]`。编码的第 `i` 位就是第 `i` 个传感器，因此六个可达编码恰好是 **1..6** ，而三位字段剩下
+ *            的两个编码 0 和 7 正是任何健康传感器组都产生不出来的。这就是为什么现场每个驱动都会判 `state == 0 || state
+ *            == 7`：这不是约定，是这种编码的算术。
  * @since 0.1.9
  */
 class HallSensorModel final {

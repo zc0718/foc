@@ -123,7 +123,7 @@ TEST(Trace, TheRingNeverLosesAnIndexAcrossTheWrap) {
     // The criterion: after more pushes than the capacity, `at(i)` returns the i-th oldest *retained* sample in order, and
     // `dropped()` counts exactly what fell off. A ring that returns samples out of order after wrapping is the classic
     // defect, and it produces a plot that looks plausible -- which is why it needs a case rather than a reading.
-    // 判据：推入次数超过容量后，`at(i)` 依序返回第 i 个最旧**保留**样本，`dropped()` 恰好统计被挤掉的个数。回绕之后顺序
+    // 判据：推入次数超过容量后，`at(i)` 依序返回第 i 个最旧 **保留** 样本，`dropped()` 恰好统计被挤掉的个数。回绕之后顺序
     // 错乱的环是经典缺陷，而它画出来的图看起来还挺合理——所以这需要用例而不是阅读。
     foc::core::RingTrace<4> ring;
     ASSERT_EQ(ring.size(), 0U);
@@ -151,7 +151,7 @@ TEST(Trace, TheRingNeverLosesAnIndexAcrossTheWrap) {
     EXPECT_EQ(beyond.i_q, 0.0F);
 
     // The drop counter is the record of what was already lost, so `reset()` must not hide it.
-    // 丢帧计数器记录的是**已经**丢掉的东西，因此 `reset()` 不得把它藏起来。
+    // 丢帧计数器记录的是 **已经** 丢掉的东西，因此 `reset()` 不得把它藏起来。
     ring.reset();
     EXPECT_EQ(ring.size(), 0U);
     EXPECT_EQ(ring.dropped(), 3U);
@@ -221,7 +221,7 @@ TEST(Trace, OffCostsNoMemoryAndNoBranch) {
     // frequency ramping and cache warming, and the first version of this case duly reported recording as *faster* than
     // not recording -- 204 ns against 168 ns -- which is not a result, it is noise with a unit. The honest statement is
     // that one 36-byte store per period is below the resolution of a host measurement, and that is what the case says.
-    // 实测的一半：同一场景，一次用空通道、一次用环形缓冲，同一台机器上。各测三轮，比较的是**最小值**：宿主上单轮结果被
+    // 实测的一半：同一场景，一次用空通道、一次用环形缓冲，同一台机器上。各测三轮，比较的是 **最小值** ：宿主上单轮结果被
     // 频率爬升和缓存预热主导，本用例的第一版因此报出"记录比不记录更快"——204 ns 对 168 ns——那不是结果，是带了单位的噪声。
     // 诚实的说法是：每周期一次 36 字节写入低于宿主测量的分辨率，本用例说的就是这一句。
     constexpr int kSteps = 20000;
@@ -376,8 +376,8 @@ namespace {
  *   wrap, and an implementation that never wraps cannot make that error. It costs O(n) storage, which is why it lives
  *   in a test and not in the library.
  *
- *   它与循环下标是**结构上不同**的东西——没有回绕、没有 `head_`、没有取模——而这正是它作为参照有用的原因：环的经典缺陷是
- *   回绕之后的索引算术错误，而一个永不回绕的实现犯不了那种错。它花 O(n) 存储，所以它住在测试里而不是库里。
+ *   它与循环下标是 **结构上不同** 的东西——没有回绕、没有 `head_`、没有取模——而这正是它作为参照有用的原因：环的经典缺陷
+ *   是回绕之后的索引算术错误，而一个永不回绕的实现犯不了那种错。它花 O(n) 存储，所以它住在测试里而不是库里。
  */
 template <std::size_t N> struct PlainLog final {
     std::array<foc::core::TraceSample, N> all{};
@@ -445,11 +445,11 @@ auto same_sample(const foc::core::TraceSample& a, const foc::core::TraceSample& 
  *   written down rather than invented per class.
  *
  *   `RingTrace` 只有一个容量 4 的用例，而它通过了：回绕、顺序、`dropped()` 在那里都对。覆盖率说出了用例说不出的事：时钟
- *   电机实例化的 `RingTrace<8>` 与被追踪电机实例化的 `RingTrace<64>` 是**各自的函数**，两者都从未覆盖过一个样本。模板的
- *   契约只被"产品用到的每个实例化"测到多少算多少——这正是手写用例清单会藏住、而按实例化测量藏不住的东西。
+ *   电机实例化的 `RingTrace<8>` 与被追踪电机实例化的 `RingTrace<64>` 是 **各自的函数** ，两者都从未覆盖过一个样本。模板
+ *   的契约只被"产品用到的每个实例化"测到多少算多少——这正是手写用例清单会藏住、而按实例化测量藏不住的东西。
  *
  *   参照物是 `PlainLog`：它保留每次推入、投影尾部，没有回绕、没有 head、没有取模。容量 8 上推 100 次，环保留 8 个、丢掉
- *   92 个，而 `at(i)` 对**每个** `i` 都必须等于 `log.at(8, i)`——整个环，不是抽查——`latest()` 必须等于第 100 个。对调用
+ *   92 个，而 `at(i)` 对 **每个** `i` 都必须等于 `log.at(8, i)`——整个环，不是抽查——`latest()` 必须等于第 100 个。对调用
  *   方数组上的 `SpanTrace` 也这么做不是重复：它们是同一份契约的两种实现，而这一对正是"契约是写下来的、不是每个类各自发
  *   明"的证据。
  */
@@ -469,7 +469,7 @@ TEST(Trace, BothRingsAgreeWithAModelThatCannotWrap) {
         const bool span_overwrote = span.push(sample);
         // Both must report the overwrite before they do it, not after: a caller uses the flag to know that its own
         // earlier read is stale.
-        // 两者都必须在覆盖**之前**报出覆盖，而不是之后：调用方用这个标志知道自己更早的读已经过期。
+        // 两者都必须在覆盖 **之前** 报出覆盖，而不是之后：调用方用这个标志知道自己更早的读已经过期。
         const bool expect_overwrite = (k >= kSpanCapacity);
         EXPECT_EQ(ring_overwrote, expect_overwrite) << "ring push " << k;
         EXPECT_EQ(span_overwrote, expect_overwrite) << "span push " << k;
@@ -527,8 +527,8 @@ TEST(Trace, BothRingsAgreeWithAModelThatCannotWrap) {
  *   的时刻把第一个答错：`uint16_t` 上丢够 65536 个之后它读作 0，而那正是健康通道报的数。一个症状是"看起来正常"的缺陷，
  *   是本库唯一不接受的那一类，所以计数器停在最大值并说明这一点。
  *
- *   判据是一条**性质**而不是一个边界值：往容量 1 的环里推 65537 次，计数器在**每一步**都必须单调、都必须等于 `min(推入
- *   次数 - 1, 65535)`，并且再过 1000 次推入仍然停在最大值。"它曾经饱和过"不是主张；"它再也降不下来"才是。
+ *   判据是一条 **性质** 而不是一个边界值：往容量 1 的环里推 65537 次，计数器在 **每一步** 都必须单调、都必须等于 `min(
+ *   推入次数 - 1, 65535)`，并且再过 1000 次推入仍然停在最大值。"它曾经饱和过"不是主张；"它再也降不下来"才是。
  */
 TEST(Trace, TheLossCounterSaturatesInsteadOfWrapping) {
     constexpr std::uint32_t kPushes = 65537U;          // 1 to fill + 65536 overwrites => one past UINT16_MAX
@@ -559,7 +559,7 @@ TEST(Trace, TheLossCounterSaturatesInsteadOfWrapping) {
 
     // The same rule through the 32-bit path. It cannot be driven to its own boundary in a test (4.29e9 pushes), so
     // what is checkable here is that it is the *same* rule: exact while below the maximum, and monotone throughout.
-    // 同一条规则走 32 位那条路。它自己的边界在用例里推不到（42.9 亿次），所以这里能查的是"它是**同一条**规则"：
+    // 同一条规则走 32 位那条路。它自己的边界在用例里推不到（42.9 亿次），所以这里能查的是"它是 **同一条** 规则"：
     // 未到最大值时精确，全程单调。
     std::array<foc::core::TraceSample, 1> storage{};
     foc::core::SpanTrace span(storage.data(), 1U);

@@ -4,7 +4,7 @@
 // the flux it is correcting is genuinely changed by the operating point?
 // P11——弱磁作为产品而不是求解器。两个问题：装上该策略的驱动器是否守得住它承诺解锁的
 // 那个基速以上的转速；以及一旦工作点真的改变了它要修正的那个磁链，观测器幅值修正律的
-// **形状**还对不对。
+// **形状** 还对不对。
 
 #include <cmath>
 #include <cstdio>
@@ -52,15 +52,15 @@ constexpr float kAngleCeilingRad = 0.15F;
  *
  * @brief [zh] 判据，写在测量之前。
  *
- *   1. **停在**目标转速上并被告知保持，装 `FieldWeakeningReference` 的驱动器守得住 （≥ 目标的 0.97）并为此花掉 `i_d <
+ *   1. **停在** 目标转速上并被告知保持，装 `FieldWeakeningReference` 的驱动器守得住 （≥ 目标的 0.97）并为此花掉 `i_d <
  *   −2 A`；同样的驱动器换成 `d = 0` 参考会掉到目标的 0.95 以下。对比才是结论：只说"它守住了 3200"也可能意味着目标没超过
  *   基速。 2. 归一化假设：若把幅值修正归一化，弱磁区角误差降到 ≤ 0.055 rad；否则维持现状， 并记录下反驳它的那个数。
  *
  * @note [en] What hypothesis 2 actually is. Normalising by `psi_target` is the *same* law with the gain divided by
  *            `psi_target` -- a factor of 210 on this machine. It is not a new law; it is a 210x gain increase wearing a
  *            dimensionless hat, and it is testable with the knob that already exists.
- * @note [zh] 假设 2 到底是什么。按 `psi_target` 归一化就是**同一个律**把增益除以 `psi_target` ——在本机上是 210 倍。它不
- *            是新律，是一个戴了无量纲帽子的 210 倍增益，用现成的旋钮就能测。
+ * @note [zh] 假设 2 到底是什么。按 `psi_target` 归一化就是 **同一个律** 把增益除以 `psi_target` ——在本机上是 210 倍。它
+ *            不是新律，是一个戴了无量纲帽子的 210 倍增益，用现成的旋钮就能测。
  */
 auto psi_f_of(const sil::MachineSpec &s) -> float {
   return s.kt / (1.5F * static_cast<float>(s.pole_pairs));
@@ -196,8 +196,8 @@ auto fw_angle_error(core::Dq<float> current, float gain_ratio) -> float {
  *            is asked for, and then the **vector is clamped to what SVPWM can deliver**. So the only thing that can
  *            stop the drive is the voltage budget, which is exactly the quantity field weakening exists to manage.
  *            Modelling a PI here would measure the PI's tuning instead.
- * @note [zh] 电流环故意做成**完美**的：它按给定算出精确稳态电压，然后把**矢量夹到 SVPWM 能 交付的上限**。于是能拦住驱动
- *            器的只剩电压预算，而那正是弱磁存在的理由。在这里建一个 PI， 量到的会是 PI 的整定。
+ * @note [zh] 电流环故意做成 **完美** 的：它按给定算出精确稳态电压，然后把 **矢量夹到 SVPWM 能 交付的上限** 。于是能拦住
+ *            驱动器的只剩电压预算，而那正是弱磁存在的理由。在这里建一个 PI， 量到的会是 PI 的整定。
  * @since 0.1.0
  */
 struct SpeedRun final {
@@ -258,11 +258,11 @@ TEST(FieldWeakeningMotor, ThePolicyEngagesEndToEndThroughMotor) {
   // setpoint above it, `i_d` is already -2 A. P11-d pins the moment instead of
   // the aftermath, which is the only window in which the claim is even
   // meaningful. P11-d 存在，是因为 P11-a
-  // 的第一版是错的、而且结论反过来。它跑了 1.5 s 去读**终态**， 那时台架的纯 P
+  // 的第一版是错的、而且结论反过来。它跑了 1.5 s 去读 **终态** ， 那时台架的纯 P
   // 速度环已经让电机衰减到不需要弱磁的转速，`i_d` 读到 ~0，测试于是断言 "策略在
   // `Motor` 里从未生效"。它生效了：停在 3200 rad/s、给定在上方，2 ms 后 `i_d`
   // 已经是 −2 A。P11-d
-  // 钉住**那一刻**而不是事后——只有那个窗口里这个主张才有意义。
+  // 钉住 **那一刻** 而不是事后——只有那个窗口里这个主张才有意义。
   using MotorT =
       foc::motor::Motor<core::NonlinearFluxObserver, core::Svpwm, core::Pi,
                         sil::PlantHal, core::FieldWeakeningReference,
@@ -437,8 +437,8 @@ TEST(FieldWeakeningMotor, TheWorthItTestIsAvailableBeforeYouTuneAnything) {
   // Productisation means the library answers "is this worth doing on my motor"
   // before the user spends a day tuning it. The answer for the nominal machine
   // is *no*, and saying so is the feature.
-  // 产品化意味着库能在用户花一天调参**之前**回答"我这台电机值不值得做"。标称机的答案是
-  // **不值得**，把这个说出来才是那个功能。
+  // 产品化意味着库能在用户花一天调参 **之前** 回答"我这台电机值不值得做"。标称机的答案是
+  // **不值得** ，把这个说出来才是那个功能。
   const sil::MachineSpec s = sil::nominal_spec();
   const core::MachineParams machine{s.rs, s.ld, s.lq, psi_f_of(s)};
   const auto verdict = core::is_field_weakening_worthwhile(machine, s.i_max_a);
