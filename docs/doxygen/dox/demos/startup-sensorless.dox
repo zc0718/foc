@@ -27,23 +27,23 @@
  * @section startup_sensorless_numbers [en] The numbers behind the figure [zh] 图背后的数字
  * @par [en] The rows below are read out of this example's own `--csv` run -- the same run the figure is drawn from, so the table and the picture cannot disagree.
  *
+ * \image html ALL_startup_sensorless.png "Drawn from the same run the table below lists" width=760px
+ *
  * | t (ms) | state | id (A) |
  * |---|---|---|
  * | 0.05 | align | 1.500000 |
  * | 20 | pull | 1.500000 |
  * | 1520 | done | 2.000000 |
- *
- * \image html ALL_startup_sensorless.png ""
  *
  * @par [zh] 下面这些行取自本示例自己的 `--csv` 输出——与图同一次运行，所以表和图不会互相矛盾。
  *
- * | t (ms) | state | id (A) |
+ * \image html ALL_startup_sensorless.png "由下表所列的同一次运行绘制" width=760px
+ *
+ * | t (ms) | 状态 | id (A) |
  * |---|---|---|
  * | 0.05 | align | 1.500000 |
  * | 20 | pull | 1.500000 |
  * | 1520 | done | 2.000000 |
- *
- * \image html ALL_startup_sensorless.png ""
  *
  * @include startup-sensorless.cxx
  *

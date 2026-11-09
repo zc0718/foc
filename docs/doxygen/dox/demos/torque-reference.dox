@@ -32,27 +32,25 @@
  * @par [zh] 没有被控对象，也不算转矩。在这里算一个转矩数会是某条已有实现的律的第二份实现，所以例子止步于电流参考与
  *      电压指令。闭环转矩由 SIL 台架测量，它是一条带用例的 claim 行。
  *
- * @section torque_reference_numbers [en] What the two policies answer [zh] 两种策略给出的答案
+ * @section torque_reference_numbers [en] The numbers behind the figure [zh] 图背后的数字
  * @par [en] Printed by the example itself on one salient machine (`lq = 2 * ld`): the `d = 0`
  *      column is the plain policy, `mtpa(0)` is MTPA left at its default (which refuses d current
  *      outright), `mtpa(allow)` is the same policy once a d-current budget is written down.
  *
- *
  * | iq command (A) | mtpa(0) id (A) | mtpa(allow) id (A) | d = 0 id (A) | iq (A) |
  * |---|---|---|---|---|
  * | 0.50 | -0.0000 | -0.0100 | 0.0000 | 0.5000 |
  * | 1.50 | -0.0000 | -0.0894 | 0.0000 | 1.5000 |
  * | 3.00 | -0.0000 | -0.3457 | 0.0000 | 2.9800 |
-
- * @par [zh] 由示例自己在一台凸极机（`lq = 2 * ld`）上打印：`d = 0` 列是朴素策略，`mtpa(0)` 是留在默认
- *      值的 MTPA 策略（完全不施加 d 轴电流），`mtpa(allow)` 是写明 d 轴电流预算之后的同一策略。
  *
- * | iq command (A) | mtpa(0) id (A) | mtpa(allow) id (A) | d = 0 id (A) | iq (A) |
+ * @par [zh] 由示例自己在一台凸极机（`lq = 2 * ld`）上打印：`d = 0` 列是朴素策略，`mtpa(0)` 是留在默认值的 MTPA 策略（完全不施加 d 轴电流），`mtpa(allow)` 是写明 d 轴电流预算之后的同一策略。
+ *
+ * | iq 给定 (A) | mtpa(0) 的 id (A) | mtpa(allow) 的 id (A) | d = 0 的 id (A) | iq (A) |
  * |---|---|---|---|---|
  * | 0.50 | -0.0000 | -0.0100 | 0.0000 | 0.5000 |
  * | 1.50 | -0.0000 | -0.0894 | 0.0000 | 1.5000 |
  * | 3.00 | -0.0000 | -0.3457 | 0.0000 | 2.9800 |
-
+ *
  * @include torque-reference.cxx
  *
  * @note [en] Link the aggregate target `foc::foc`; the command on the first line of the example links the two

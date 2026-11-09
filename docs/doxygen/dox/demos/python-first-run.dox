@@ -1,0 +1,58 @@
+/*!
+ * @example python-first-run.py
+ *
+ * @par [en] The third door: the same loop, reached from Python through `foc_python`, which is
+ *      built on the C ABI -- and the C ABI is built on the same C++ object the
+ *      `c-and-cpp-callers` page measures against. Three doors, one implementation.
+ * @par [zh] 第三道门：同一条环路，从 Python 经 `foc_python` 到达；`foc_python` 建在 C ABI 之上，
+ *      而 C ABI 又建在 `c-and-cpp-callers` 页面实测的那个 C++ 对象上。三道门，一份实现。
+ *
+ * @section python_first_surface [en] What the binding exposes [zh] 绑定暴露了什么
+ * @par [en] The surface is the C ABI's, named for Python: a constructor that takes the nameplate
+ *      and an optional setup, then the calls in the order the loop needs them.
+ * | Call | What it does | What you read back |
+ * |------|--------------|--------------------|
+ * | `Motor(params[, setup][, plant])` | builds the object; `plant` is duck-typed, not wrapped | the object |
+ * | `enable()` / `disable()` | the output stage | nothing; a refusal raises `FocError` |
+ * | `set_speed(rad_per_s)` / `set_torque(iq_a)` | the command for the next tick | nothing |
+ * | `tick(dt_s)` | one control step; asks the `plant` for measurements | nothing |
+ * | `telemetry()` | the last step | `speed_mech_rad_s`, `id_a`, `iq_a` |
+ * | `status()` | mode, sticky error, alignment result | a dict of enums |
+ * @par [zh] 暴露面就是 C ABI 的那一套，只是按 Python 的习惯命名：先给铭牌（可选再给 setup），
+ *      然后是按环路需要的顺序排列的调用。
+ * | 调用 | 做什么 | 读回什么 |
+ * |------|--------|----------|
+ * | `Motor(params[, setup][, plant])` | 建对象；`plant` 是鸭子类型，不做包装 | 对象本身 |
+ * | `enable()` / `disable()` | 输出级 | 无；被拒时抛 `FocError` |
+ * | `set_speed(rad_per_s)` / `set_torque(iq_a)` | 下一拍的指令 | 无 |
+ * | `tick(dt_s)` | 推进一个控制步；向 `plant` 要测量值 | 无 |
+ * | `telemetry()` | 最近一步 | `speed_mech_rad_s`、`id_a`、`iq_a` |
+ * | `status()` | 模式、粘滞错误、对齐结果 | 一个枚举字典 |
+ *
+ * @section python_first_plant [en] The plant is the script, and that is the point
+ *      [zh] 台架就是脚本本身，这正是要点
+ * @par [en] The binding looks up `read_current`, `angle_mech_rad`, `velocity_rad_s`, `voltage_v`
+ *      and `write_duty` on whatever object you pass. So the physics can stay in Python -- no
+ *      wrapper, no code generation -- and the library still sees a real closed loop. This is a
+ *      stand-in model (L/R, magnet flux, inertia), said as such: it exists so the loop has
+ *      something to regulate.
+ * @par [zh] 绑定会在你传入的对象上查找 `read_current`、`angle_mech_rad`、`velocity_rad_s`、
+ *      `voltage_v` 与 `write_duty`。于是物理可以留在 Python 里——不需要包装器、不需要代码生成——
+ *      而库看到的仍是一条真正的闭环。这是一个替身模型（L/R、磁链、惯量），页面如实说明：它
+ *      存在的意义是让环路有东西可调。
+ *
+ * @section python_first_numbers [en] What it prints [zh] 它打印什么
+ * @par [en] Measured on this build: a 50.0 rad/s command settles at **50.282 rad/s** (0.56 %),
+ *      with `id` at 0 and `iq` at 0.500 A -- the friction term, and nothing else. The script
+ *      asserts a 5 % band, so a sign error or a swapped dq axis cannot pass silently.
+ * @par [zh] 本机构建上实测：给定 50.0 rad/s，稳定在 **50.282 rad/s**（0.56 %），`id` 为 0、
+ *      `iq` 为 0.500 A——正好是摩擦项，没有别的。脚本断言 5 % 的带，所以符号写反或 dq 轴接错
+ *      都不可能悄悄通过。
+ *
+ * @note [en] A package without the module (`metadata.enable_python_bindings = false`) cannot run
+ *      this: the binding is optional, the C ABI is not.
+ * @note [zh] 没有该模块的包（`metadata.enable_python_bindings = false`）跑不了这段：绑定是
+ *      可选的，C ABI 不是。
+ *
+ * @since 0.1.0
+ */

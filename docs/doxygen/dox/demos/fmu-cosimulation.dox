@@ -1,0 +1,57 @@
+/*!
+ * @example fmu-cosimulation.py
+ *
+ * @par [en] The controller packaged behind FMI 2.0 for co-simulation, driven by a master that
+ *      knows nothing about this repository. Building a zip is not the claim; being loadable is.
+ * @par [zh] 控制器以 FMI 2.0 协同仿真接口封装，由一个对本仓库一无所知的主控驱动。打包成 zip
+ *      不是主张，能被装载才是。
+ *
+ * @section fmu_cosim_shape [en] Who owns what [zh] 谁拥有什么
+ * @par [en] The master owns the truth: it moves the rotor, reports the currents it measured and
+ *      decides the time step. The FMU owns only the loop. That division is what makes the block
+ *      usable inside someone else's plant model, and it is why the example never simulates
+ *      electronics -- it feeds measurements and reads duties.
+ * @par [zh] 真值归主控：它转动转子、报出它测到的电流，并决定时间步。FMU 只拥有环路。正是这个
+ *      划分让它能嵌进别人的 plant 模型里，也是为什么例子从不模拟电子学——它只喂测量、读占空比。
+ *
+ * @section fmu_cosim_vars [en] The interface, all of it [zh] 接口，一个不漏
+ * @par [en] Sixteen variables, eight each way, read out of `modelDescription.xml`. A master
+ *      cannot drive a variable it cannot name, so the script checks the names before instantiating.
+ * | Input | Unit | Output | Unit |
+ * |-------|------|--------|------|
+ * | `iq_command_a` | A | `duty_u` | - |
+ * | `enable` | - | `duty_v` | - |
+ * | `v_bus_v` | V | `duty_w` | - |
+ * | `i_u_a` | A | `state` | enum |
+ * | `i_v_a` | A | `error` | enum |
+ * | `i_w_a` | A | `id_a` | A |
+ * | `angle_mech_rad` | rad | `iq_a` | A |
+ * | `speed_mech_rad_s` | rad/s | `speed_est_rad_s` | rad/s |
+ * @par [zh] 十六个变量，进出各八个，取自 `modelDescription.xml`。主控驱动不了它叫不出名字的
+ *      变量，所以脚本在实例化之前先核对名字。
+ * | 输入 | 单位 | 输出 | 单位 |
+ * |------|------|------|------|
+ * | `iq_command_a` | A | `duty_u` | - |
+ * | `enable` | - | `duty_v` | - |
+ * | `v_bus_v` | V | `duty_w` | - |
+ * | `i_u_a` | A | `state` | 枚举 |
+ * | `i_v_a` | A | `error` | 枚举 |
+ * | `i_w_a` | A | `id_a` | A |
+ * | `angle_mech_rad` | rad | `iq_a` | A |
+ * | `speed_mech_rad_s` | rad/s | `speed_est_rad_s` | rad/s |
+ *
+ * @section fmu_cosim_limits [en] What it deliberately does not model [zh] 它故意不建模什么
+ * @par [en] No bridge, no dead time, no sensor quantisation: those belong to the host's plant.
+ *      The block is the loop, so a result that depends on the power stage has to be reproduced in
+ *      the master -- which is exactly where a co-simulation should put it.
+ * @par [zh] 不含桥臂、不含死区、不含传感器量化：那些属于宿主方的 plant。这个块就是环路，所以
+ *      任何依赖功率级的结果都必须在主控侧重现——协同仿真本来就该把它放在那里。
+ *
+ * @note [en] The `fmu` gate loads this block through FMPy, and refuses a variable-step master: a
+ *      step fed straight into the loop silently re-tuned the controller, so the declaration says
+ *      fixed-step and the wrapper enforces it.
+ * @note [zh] 门禁 `fmu` 通过 FMPy 装载这个块，并拒绝变步长主控：步长被直接喂进环路曾静默地把
+ *      控制器重新整定了一遍，所以声明里写死步长，包装器强制执行。
+ *
+ * @since 0.1.0
+ */

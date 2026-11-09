@@ -18,34 +18,32 @@
  * @par [en] One run of the SIL bench, the same executable the figure comes from: a PMSM plant in
  *      the loop, the current and speed PIs closed at the rates the library is tuned for.
  *
+ * \image html ALL_demo_current_step.png "Current step on the SIL bench" width=760px
  *
  * | Scenario | Metric | Value |
  * |----------|--------|-------|
- * | current step +1 A then -1 A | settling time (5 %) | 0.9 ms |
- * | current step +1 A then -1 A | overshoot | 0.00 % |
- * | current step +1 A then -1 A | steady-state error | 0.0101 A |
+ * | current step, +1 A then -1 A | settling time (5 %) | 0.9 ms |
+ * | current step, +1 A then -1 A | overshoot | 0.00 % |
+ * | current step, +1 A then -1 A | steady-state error | 0.0101 A |
  * | speed step | settling time (2 %) | 69 ms |
  * | speed step | overshoot | 1.08 % |
  * | speed step | steady-state error | -0.9067 rad/s |
  * | sine tracking | worst error, of amplitude | 2.54 % |
  *
- * \image html ALL_demo_current_step.png ""
-
- * @par [zh] SIL 台架的一次运行，与图同一个可执行文件：PMSM plant 在环内，电流环与速度环按库调好的
- *      速率闭合。
+ * @par [zh] SIL 台架的一次运行，与图同一个可执行文件：PMSM plant 在环内，电流环与速度环按库调好的速率闭合。
  *
- * | Scenario | Metric | Value |
- * |----------|--------|-------|
- * | current step +1 A then -1 A | settling time (5 %) | 0.9 ms |
- * | current step +1 A then -1 A | overshoot | 0.00 % |
- * | current step +1 A then -1 A | steady-state error | 0.0101 A |
- * | speed step | settling time (2 %) | 69 ms |
- * | speed step | overshoot | 1.08 % |
- * | speed step | steady-state error | -0.9067 rad/s |
- * | sine tracking | worst error, of amplitude | 2.54 % |
+ * \image html ALL_demo_current_step.png "SIL 台架上的电流阶跃" width=760px
  *
- * \image html ALL_demo_current_step.png ""
-
+ * | 场景 | 指标 | 数值 |
+ * |------|------|------|
+ * | 电流阶跃，先 +1 A 再 −1 A | 调节时间（5 %） | 0.9 ms |
+ * | 电流阶跃，先 +1 A 再 −1 A | 超调 | 0.00 % |
+ * | 电流阶跃，先 +1 A 再 −1 A | 稳态误差 | 0.0101 A |
+ * | 转速阶跃 | 调节时间（2 %） | 69 ms |
+ * | 转速阶跃 | 超调 | 1.08 % |
+ * | 转速阶跃 | 稳态误差 | -0.9067 rad/s |
+ * | 正弦跟踪 | 最大误差（占幅值） | 2.54 % |
+ *
  * @include servo-loop.cxx
  *
  * @note [en] Link the aggregate target `foc::foc`; a C consumer additionally needs LINKER_LANGUAGE CXX. [zh] 链接聚合目标 `foc::foc`；C 使用者另外需要把 LINKER_LANGUAGE 设为 CXX。

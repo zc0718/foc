@@ -25,21 +25,21 @@
  * @section modulation_limits_numbers [en] The numbers behind the figure [zh] 图背后的数字
  * @par [en] The rows below are read out of this example's own `--csv` run -- the same run the figure is drawn from, so the table and the picture cannot disagree.
  *
- * | angle (deg) | |v| (pu) | duty span | saturated |
+ * \image html ALL_modulation_limits.png "Drawn from the same run the table below lists" width=760px
+ *
+ * | angle (deg) | V (pu) | duty span | saturated |
  * |---|---|---|---|
  * | 0.0 | 0.6700 | 1.000000 | 1 |
  * | 30.0 | 0.5800 | 1.000000 | 1 |
- *
- * \image html ALL_modulation_limits.png ""
  *
  * @par [zh] 下面这些行取自本示例自己的 `--csv` 输出——与图同一次运行，所以表和图不会互相矛盾。
  *
- * | angle (deg) | |v| (pu) | duty span | saturated |
+ * \image html ALL_modulation_limits.png "由下表所列的同一次运行绘制" width=760px
+ *
+ * | 角度 (°) | 电压 (pu) | 占空比跨度 | 饱和 |
  * |---|---|---|---|
  * | 0.0 | 0.6700 | 1.000000 | 1 |
  * | 30.0 | 0.5800 | 1.000000 | 1 |
- *
- * \image html ALL_modulation_limits.png ""
  *
  * @include modulation-limits.cxx
  *

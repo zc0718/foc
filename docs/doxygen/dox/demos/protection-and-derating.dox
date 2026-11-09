@@ -29,23 +29,23 @@
  * @section protection_and_derating_numbers [en] The numbers behind the figure [zh] 图背后的数字
  * @par [en] The rows below are read out of this example's own `--csv` run -- the same run the figure is drawn from, so the table and the picture cannot disagree.
  *
+ * \image html ALL_protection_and_derating.png "Drawn from the same run the table below lists" width=760px
+ *
  * | current (A) | trip time (s) | tripped |
  * |---|---|---|
  * | 3.020 | 2.16365 | 1 |
  * | 3.340 | 0.82192 | 1 |
  * | 3.660 | 0.55718 | 1 |
- *
- * \image html ALL_protection_and_derating.png ""
  *
  * @par [zh] 下面这些行取自本示例自己的 `--csv` 输出——与图同一次运行，所以表和图不会互相矛盾。
  *
- * | current (A) | trip time (s) | tripped |
+ * \image html ALL_protection_and_derating.png "由下表所列的同一次运行绘制" width=760px
+ *
+ * | 电流 (A) | 跳闸时间 (s) | 已跳闸 |
  * |---|---|---|
  * | 3.020 | 2.16365 | 1 |
  * | 3.340 | 0.82192 | 1 |
  * | 3.660 | 0.55718 | 1 |
- *
- * \image html ALL_protection_and_derating.png ""
  *
  * @include protection-and-derating.cxx
  *

@@ -12,14 +12,14 @@
  * | \ref group_hal "Hardware contracts" | what a host must provide, with no platform in it | `include/foc/hal` |
  * | \ref group_motor "The motor object" | composition and lifecycle: one object owning observer, modulator and loop | `include/foc/motor` |
  * @par [zh] 模块分组：每个公开目录一组，于是站点能按领域读，而不是按文件读。
- * | Group | What is in it | Folder |
- * |-------|---------------|--------|
- * | \ref group_c_api "The C ABI" | handles, structs, enums, and the entry points a C consumer links against | `include/foc/api` |
- * | \ref group_core "The algorithm core" | transforms, observers, modulators, protection, the tuning primitives | `include/foc/core` |
- * | \ref group_comm "Communication" | register maps, framing and encoder streams | `include/foc/comm` |
- * | \ref group_driver "Drivers" | the HAL implementations shipped with the library: stubs and bench drivers | `include/foc/driver` |
- * | \ref group_hal "Hardware contracts" | what a host must provide, with no platform in it | `include/foc/hal` |
- * | \ref group_motor "The motor object" | composition and lifecycle: one object owning observer, modulator and loop | `include/foc/motor` |
+ * | 分组 | 里面是什么 | 目录 |
+ * |------|-----------|------|
+ * | \ref group_c_api "C 表面" | 句柄、结构体、枚举，以及 C 消费方链接的入口 | `include/foc/api` |
+ * | \ref group_core "算法内核" | 变换、观测器、调制器、保护、整定原语 | `include/foc/core` |
+ * | \ref group_comm "通信" | 寄存器映射、组帧与编码器数据流 | `include/foc/comm` |
+ * | \ref group_driver "驱动" | 库自带的 HAL 实现：桩件与台架驱动 | `include/foc/driver` |
+ * | \ref group_hal "硬件契约" | 主控方必须提供什么，里面不含任何平台相关的东西 | `include/foc/hal` |
+ * | \ref group_motor "电机对象" | 组合与生命周期：持有一个观测器、一个调制器与一条控制环的对象 | `include/foc/motor` |
  * @note [en] `@defgroup` is what makes a group exist, and the `@ingroup` tag in a file's own file
  *      block is what puts the file in it -- a file block being the one that carries `@file` and
  *      `@ingroup` together. There are six groups, one per folder `doc_doxygen_folders` already

@@ -26,23 +26,23 @@
  * @section positioning_numbers [en] The numbers behind the figure [zh] 图背后的数字
  * @par [en] The rows below are read out of this example's own `--csv` run -- the same run the figure is drawn from, so the table and the picture cannot disagree.
  *
+ * \image html ALL_positioning.png "Drawn from the same run the table below lists" width=760px
+ *
  * | t (ms) | target (rad) | velocity (rad/s) | position (rad) |
  * |---|---|---|---|
  * | 250 | 0.500000 | 1.013908 | 0.373312 |
  * | 500 | 0.500000 | 0.137216 | 0.482855 |
  * | 1250 | 0.500000 | 0.000306 | 0.499962 |
- *
- * \image html ALL_positioning.png ""
  *
  * @par [zh] 下面这些行取自本示例自己的 `--csv` 输出——与图同一次运行，所以表和图不会互相矛盾。
  *
- * | t (ms) | target (rad) | velocity (rad/s) | position (rad) |
+ * \image html ALL_positioning.png "由下表所列的同一次运行绘制" width=760px
+ *
+ * | t (ms) | 目标 (rad) | 速度 (rad/s) | 位置 (rad) |
  * |---|---|---|---|
  * | 250 | 0.500000 | 1.013908 | 0.373312 |
  * | 500 | 0.500000 | 0.137216 | 0.482855 |
  * | 1250 | 0.500000 | 0.000306 | 0.499962 |
- *
- * \image html ALL_positioning.png ""
  *
  * @include positioning.cxx
  *

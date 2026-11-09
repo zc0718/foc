@@ -5,9 +5,19 @@
   "team": "HeT-FTI",
   "license": "Apache-2.0",
   "description": "A hardware-agnostic FOC algorithm core: C++17 template policy kernel with a stable C11 ABI path",
-  "authors": ["Chen Zhang <chen2.zhang@szhittech.com>"],
-  "maintainers": ["Chen Zhang <chen2.zhang@szhittech.com>"],
-  "topics": ["foc", "motor-control", "embedded", "library", "test"],
+  "authors": [
+    "Chen Zhang <chen2.zhang@szhittech.com>"
+  ],
+  "maintainers": [
+    "Chen Zhang <chen2.zhang@szhittech.com>"
+  ],
+  "topics": [
+    "foc",
+    "motor-control",
+    "embedded",
+    "library",
+    "test"
+  ],
   "url": "https://github.com/HeT-FTI/foc.git",
   "homepage": "https://github.com/HeT-FTI",
   "cmake_version": "4.2.3",
@@ -23,25 +33,71 @@
   "dependencies": {
     "common": {},
     "c": {},
-    "cpp": {"etl": ["etl::etl"]},
-    "infra": {"GTest": ["gtest::gtest"], "pybind11": ["pybind11::module"]}
+    "cpp": {
+      "etl": [
+        "etl::etl"
+      ]
+    },
+    "infra": {
+      "GTest": [
+        "gtest::gtest"
+      ],
+      "pybind11": [
+        "pybind11::module"
+      ]
+    }
   },
-  "component_requires": {"foc_c": ["foc_cpp"]},
-  "baremetal_white_list": ["etl"],
-  "doc_languages": ["en", "zh"],
-  "doc_versions": ["0.1.0"],
-  "doc_doxygen_folders": ["include", "src", "docs/doxygen/dox"],
-  "doc_doxygen_suffix": ["h", "c", "hpp", "cpp", "dox", "cxx"],
+  "component_requires": {
+    "foc_c": [
+      "foc_cpp"
+    ]
+  },
+  "baremetal_white_list": [
+    "etl"
+  ],
+  "doc_languages": [
+    "en",
+    "zh"
+  ],
+  "doc_versions": [
+    "0.1.0"
+  ],
+  "doc_doxygen_folders": [
+    "include",
+    "src",
+    "docs/doxygen/dox"
+  ],
+  "doc_doxygen_suffix": [
+    "h",
+    "c",
+    "hpp",
+    "cpp",
+    "dox",
+    "cxx",
+    "py"
+  ],
   "trigger_tests": true,
   "saving_tests_log": true,
   "enable_python_bindings": true,
   "coverage": {
-    "core_scopes": ["include/foc/core/", "src/core/"],
+    "core_scopes": [
+      "include/foc/core/",
+      "src/core/"
+    ],
     "floors": {
-      "Linux": {"core": 95.6, "all": 94.0},
-      "macOS": {"core": 90.9, "all": 87.7}
+      "Linux": {
+        "core": 95.6,
+        "all": 94.0
+      },
+      "macOS": {
+        "core": 90.9,
+        "all": 87.7
+      }
     },
-    "default_floor": {"core": 90.0, "all": 70.0}
+    "default_floor": {
+      "core": 90.0,
+      "all": 70.0
+    }
   },
   "workflow_triggers": {
     "build": true,

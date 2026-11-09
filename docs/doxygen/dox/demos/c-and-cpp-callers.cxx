@@ -17,11 +17,21 @@
 #include <cstdio>
 #include <cstring>
 
+#include <array>
+
 #include <foc/api/foc_api.h>
+#include <foc/core/observer/back_emf_observer.hpp>
+#include <foc/core/pi.hpp>
+#include <foc/core/svpwm.hpp>
+#include <foc/driver/callback_hal.hpp>
+#include <foc/motor/motor.hpp>
+#include <foc/motor/motor_config.hpp>
 
 namespace {
 
 constexpr float kDtS = 5.0e-5F; // the loop the host ticks at
+constexpr int kTicks = 1200;    // 60 ms: two current steps, the same for both paths
+constexpr float kStepAtS = 0.03F;
 constexpr float kTwoPi = 6.28318530718F;
 constexpr std::uint8_t kPolePairs = 7U;
 
@@ -79,6 +89,56 @@ auto read_angle(void* user) -> float { return static_cast<Board*>(user)->angle_m
 auto read_v_bus(void* user) -> float { return static_cast<Board*>(user)->v_bus_v; }
 
 auto read_fault(void* user) -> int32_t { return static_cast<Board*>(user)->faults; }
+
+/**
+ * @brief [en] The same experiment through the C++ API: the class, not the handle.
+ *
+ *     It shares the callbacks, the plant and the tick count with the C path above -- only the
+ *     entry surface differs, which is the whole point of putting the two in one file.
+ * @brief [zh] 同一个实验，走 C++ 接口：用类，而不是句柄。
+ *
+ *     回调、台架与拍数和上面的 C 路径共用，区别只在入口表面——把两条路放进一个文件，正是
+ *     为了说明这一点。
+ */
+auto run_cpp_path(Board& board, std::array<float, kTicks>& span_out) -> bool {
+    // The same four operations, wired to the same functions the C path hands over. `CallbackHal`
+    // is the C++-side struct; the C struct is its spelling across the ABI.
+    foc::driver::HalCallbacks callbacks{};
+    callbacks.user = &board;
+    callbacks.pwm_write_duty = &write_duty;
+    callbacks.read_current = &read_current;
+    callbacks.read_angle_mech_rad = &read_angle;
+    callbacks.read_voltage_v = &read_v_bus;
+    callbacks.pwm_fault = &read_fault;
+    callbacks.read_drive_fault = &read_fault;
+    // The numbers the C constructor resolves to with a null setup, written out: same nameplate,
+    // same limits, same two gain helpers. Anything else would compare two different controllers.
+    const foc::motor::MotorConfig config{0.5F, 4.0e-4F, 8.0e-4F, 0.01F, 1.0e-4F, 1.0e-4F, kPolePairs,
+                                         5.0F, 20000.0F, 500.0F, 0.0F, 0.0F};
+    using CppMotor = foc::motor::Motor<foc::core::BackEmfObserver, foc::core::Svpwm, foc::core::Pi,
+                                       foc::driver::CallbackHal>;
+    foc::driver::CallbackHal hal{callbacks};
+    CppMotor motor(config,
+                   CppMotor::Policies{foc::core::BackEmfObserver({0.5F, 4.0e-4F}), foc::core::Svpwm{},
+                                      foc::core::Pi{foc::current_pi_config(config, 2000.0F, 24.0F)},
+                                      foc::core::Pi{foc::current_pi_config(config, 2000.0F, 24.0F)},
+                                      foc::core::Pi{foc::speed_pi_config(config, 200.0F)}},
+                   hal);
+    if (motor.init() != foc::ErrorCode::Ok || motor.start() != foc::ErrorCode::Ok) {
+        return false;
+    }
+    for (int i = 0; i < kTicks; ++i) {
+        const float iq_command_a = (static_cast<float>(i) * kDtS < kStepAtS) ? 1.5F : -1.5F;
+        motor.set_torque(iq_command_a);
+        if (motor.tick(kDtS) != foc::ErrorCode::Ok) {
+            return false;
+        }
+        const float high = std::fmax(board.duty[0], std::fmax(board.duty[1], board.duty[2]));
+        const float low = std::fmin(board.duty[0], std::fmin(board.duty[1], board.duty[2]));
+        span_out[static_cast<std::size_t>(i)] = high - low;
+    }
+    return true;
+}
 
 } // namespace
 
@@ -153,18 +213,18 @@ auto main(int argc, char** argv) -> int {
     // and what comes back out is the duty the host has to apply.
     // 故意用转矩模式：本页讲的是"什么东西穿过 ABI"，而速度环会把一个机械模型摆在那个问题
     // 前面。指令是电流，环路对着宿主的绕组把它调住，出来的是宿主必须施加的占空比。
-    float t_s = 0.0F;
+    std::array<float, kTicks> span_c{};
     int rows = 0;
 
-    while (t_s < 0.06F) {
+    for (int i = 0; i < kTicks; ++i) {
+        const float t_s = static_cast<float>(i) * kDtS;
         // Two steps, so the picture has a shape: a duty trace from a constant
         // current would be a flat line, and a flat line teaches nothing about
         // what crosses the boundary.
         // 两个阶跃，图才有形状：恒定电流的占空比会是一条直线，而直线教不会你边界上过去了什么。
-        const float iq_command_a = (t_s < 0.03F) ? 1.5F : -1.5F;
+        const float iq_command_a = (t_s < kStepAtS) ? 1.5F : -1.5F;
         static_cast<void>(foc_set_torque(motor, iq_command_a));
         static_cast<void>(foc_tick(motor, kDtS));
-        t_s += kDtS;
 
         float speed_rad_s = 0.0F;
         float id_a = 0.0F;
@@ -179,6 +239,7 @@ auto main(int argc, char** argv) -> int {
         const float high = std::fmax(board.duty[0], std::fmax(board.duty[1], board.duty[2]));
         const float low = std::fmin(board.duty[0], std::fmin(board.duty[1], board.duty[2]));
         const float duty_span = high - low;
+        span_c[static_cast<std::size_t>(i)] = duty_span;
         if (csv != nullptr) {
             std::fprintf(csv, "%.6f,%.4f,%.4f,%.4f\n", static_cast<double>(t_s), static_cast<double>(iq_command_a),
                          static_cast<double>(iq_a), static_cast<double>(duty_span));
@@ -204,6 +265,23 @@ auto main(int argc, char** argv) -> int {
                     static_cast<int>(status.observer), static_cast<int>(status.observer_locked),
                     static_cast<unsigned>(status.max_period_us));
     }
+
+    // The equivalence check: the same experiment through the C++ class, against a fresh copy of
+    // the same plant. One number decides whether the two entry surfaces are one implementation.
+    // 等效性检查：同一个实验改走 C++ 类，台架重新取一份拷贝。一个数就足以判断两个入口是不是
+    // 同一份实现。
+    Board board_cpp{};
+    std::array<float, kTicks> span_cpp{};
+    const bool cpp_ok = run_cpp_path(board_cpp, span_cpp);
+    float worst = 0.0F;
+    if (cpp_ok) {
+        for (int i = 0; i < kTicks; ++i) {
+            worst = std::fmax(worst, std::fabs(span_cpp[static_cast<std::size_t>(i)] -
+                                               span_c[static_cast<std::size_t>(i)]));
+        }
+    }
+    std::printf("\ncpp path: %s, worst |duty span difference| over %d ticks = %.3e\n",
+                cpp_ok ? "ran" : "refused", kTicks, static_cast<double>(worst));
 
     // The handle owns a pool slot until it is destroyed: a program that leaks one
     // leaks the ability to create another motor.

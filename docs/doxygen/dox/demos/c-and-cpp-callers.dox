@@ -29,23 +29,45 @@
  * @section c_and_cpp_callers_numbers [en] The numbers behind the figure [zh] 图背后的数字
  * @par [en] The rows below are read out of this example's own `--csv` run -- the same run the figure is drawn from, so the table and the picture cannot disagree.
  *
+ * \image html ALL_callers.png "Drawn from the same run the table below lists" width=760px
+ *
  * | t (ms) | iq cmd (A) | iq measured (A) | duty span |
  * |---|---|---|---|
  * | 0.05 | 1.5000 | 0.0000 | 0.1277 |
  * | 10.05 | 1.5000 | 1.5000 | 0.0541 |
  * | 40.05 | -1.5000 | -1.5000 | 0.0541 |
- *
- * \image html ALL_callers.png ""
  *
  * @par [zh] 下面这些行取自本示例自己的 `--csv` 输出——与图同一次运行，所以表和图不会互相矛盾。
  *
- * | t (ms) | iq cmd (A) | iq measured (A) | duty span |
+ * \image html ALL_callers.png "由下表所列的同一次运行绘制" width=760px
+ *
+ * | t (ms) | iq 给定 (A) | iq 实测 (A) | 占空比跨度 |
  * |---|---|---|---|
  * | 0.05 | 1.5000 | 0.0000 | 0.1277 |
  * | 10.05 | 1.5000 | 1.5000 | 0.0541 |
  * | 40.05 | -1.5000 | -1.5000 | 0.0541 |
  *
- * \image html ALL_callers.png ""
+ * @section callers_same [en] One implementation, two doors, and the number that shows it
+ *      [zh] 一份实现、两个门，以及证明它的那个数
+ * @par [en] The program runs the same 60 ms experiment twice: once through the C handle
+ *      (`foc_motor_create_host` -> `foc_set_torque` -> `foc_tick` -> `foc_get_state`), once through
+ *      the C++ class (`foc::motor::Motor<...>::tick`), against two copies of the same stand-in plant
+ *      with the same callbacks and the same nameplate. It then subtracts the two duty-span traces
+ *      tick by tick. Measured on this build: **worst difference 0.000e+00 over 1200 ticks** -- the
+ *      two doors reach the same object, so a C team and a C++ team on one product are running the
+ *      same loop, and a Python user goes through `foc_python`, which sits on the C door.
+ * @par [zh] 程序把同一个 60 ms 实验跑两遍：一遍走 C 句柄（`foc_motor_create_host` ->
+ *      `foc_set_torque` -> `foc_tick` -> `foc_get_state`），一遍走 C++ 类
+ *      （`foc::motor::Motor<...>::tick`），各自对着同一套替身台架的一份拷贝，回调相同、铭牌
+ *      相同。然后把两条占空比跨度轨迹逐拍相减。本机构建上实测：**1200 拍内最大差
+ *      0.000e+00**——两个门到的是同一个对象，所以同一个产品里的 C 组与 C++ 组跑的是同一条环，
+ *      而 Python 用户经 `foc_python` 走的正是 C 这道门。
+ *
+ * @par [en] What differs is only what the door owns: the C handle owns a pool slot, so it must be
+ *      destroyed; the C++ object owns its policies as members, so its lifetime is the scope. The
+ *      loop, the refusals and the numbers are one implementation.
+ * @par [zh] 不同的只是门所拥有的东西：C 句柄拥有一个池槽，所以必须销毁；C++ 对象把策略作为成员
+ *      持有，生命周期就是作用域。环路、拒绝与数字都是同一份实现。
  *
  * @include c-and-cpp-callers.cxx
  *
