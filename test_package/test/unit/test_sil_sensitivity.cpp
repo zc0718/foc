@@ -34,19 +34,19 @@ constexpr int kSubsteps = 8;
  *
  * @note [en] Three rules, and the third is the one that matters.
  *
- *     Any single effect at a *plausible worst case* must leave the angle error at or below `kCeilingRad`. An effect
- *     that breaks this must not be described as "negligible" anywhere in the docs. An effect that raises the error by
- *     more than `kMaterialRatio` over the clean baseline goes on the "the user must measure this" list -- it is not a
- *     modelling nicety, it is the difference between a valid and an invalid benchmark on their hardware. An effect may
- *     only be called "negligible" if it moves the error by less than `kNegligibleRatio` **and** that was measured here.
- *     "Obviously small" is not an entry point.
+ *   Any single effect at a *plausible worst case* must leave the angle error at or below `kCeilingRad`. An effect that
+ *   breaks this must not be described as "negligible" anywhere in the docs. An effect that raises the error by more
+ *   than `kMaterialRatio` over the clean baseline goes on the "the user must measure this" list -- it is not a
+ *   modelling nicety, it is the difference between a valid and an invalid benchmark on their hardware. An effect may
+ *   only be called "negligible" if it moves the error by less than `kNegligibleRatio` **and** that was measured here.
+ *   "Obviously small" is not an entry point.
  *
  * @note [zh] 三条规则，第三条才是要紧的。
  *
- *     1. 任何单一效应在**合理最坏**取值下，角度误差必须 ≤ `kCeilingRad`。 破坏这一条的效应，文档里任何地方都不得写成"可
- *     忽略"。 2. 相对干净基线抬高超过 `kMaterialRatio` 的效应进入"必须由用户实测"清单——它不是建模 上的讲究，而是"在用户
- *     的硬件上基准有效还是无效"的区别。 3. 只有在本文件里量到误差变化小于 `kNegligibleRatio` 的效应，才允许被称作"可忽
- *     略"。 "显然很小"不是入场券。
+ *   1. 任何单一效应在**合理最坏**取值下，角度误差必须 ≤ `kCeilingRad`。 破坏这一条的效应，文档里任何地方都不得写成"可忽
+ *   略"。 2. 相对干净基线抬高超过 `kMaterialRatio` 的效应进入"必须由用户实测"清单——它不是建模 上的讲究，而是"在用户的硬
+ *   件上基准有效还是无效"的区别。 3. 只有在本文件里量到误差变化小于 `kNegligibleRatio` 的效应，才允许被称作"可忽略"。 "
+ *   显然很小"不是入场券。
  */
 constexpr float kCeilingRad = 0.15F;
 constexpr float kMaterialRatio = 1.15F;

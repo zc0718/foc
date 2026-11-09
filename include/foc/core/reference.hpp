@@ -13,14 +13,14 @@ namespace core {
 /**
  * @brief [en] Everything a reference generator may look at, filled once per current-loop step.
  *
- *     `iq_command_a` carries the torque setpoint in torque mode and the speed loop's output in speed mode: the
- *     generator never has to know which mode is active, because by the time it runs the outer loop has already
- *     collapsed the command onto the q axis.
+ *   `iq_command_a` carries the torque setpoint in torque mode and the speed loop's output in speed mode: the generator
+ *   never has to know which mode is active, because by the time it runs the outer loop has already collapsed the
+ *   command onto the q axis.
  *
  * @brief [zh] 参考生成器可以看的全部输入，每个电流环周期填一次。
  *
- *     `iq_command_a` 在转矩模式下是转矩给定，在速度模式下是速度环的输出：参考生成器 不需要知道当前是哪种模式，因为它运
- *     行时外环已经把给定归约到 q 轴上了。
+ *   `iq_command_a` 在转矩模式下是转矩给定，在速度模式下是速度环的输出：参考生成器 不需要知道当前是哪种模式，因为它运行
+ *   时外环已经把给定归约到 q 轴上了。
  *
  * @context [en] Current-loop ISR, read-only for the policy.
  * @context [zh] 电流环 ISR；对策略只读。
@@ -38,14 +38,14 @@ struct ReferenceInput final {
 /**
  * @brief [en] The default reference generator: d axis held at zero, q axis passed through.
  *
- *     "d = 0" is optimal for a surface-mounted machine and nothing more: an interior-PM machine earns extra torque from
- *     a negative d current (MTPA), and any machine needs d current to run past its base speed (field weakening). That
- *     is why the split is a policy with an input struct, rather than a `0.0F` written into the current loop.
+ *   "d = 0" is optimal for a surface-mounted machine and nothing more: an interior-PM machine earns extra torque from a
+ *   negative d current (MTPA), and any machine needs d current to run past its base speed (field weakening). That is
+ *   why the split is a policy with an input struct, rather than a `0.0F` written into the current loop.
  *
  * @brief [zh] 默认参考生成器：d 轴恒为 0，q 轴直通。
  *
- *     “d = 0”只对表贴式电机最优，仅此而已：内嵌式电机靠负 d 轴电流拿到额外转矩（MTPA）， 任何电机超过基速后都要靠 d 轴
- *     电流做弱磁。所以这个“拆分”是一个带输入结构的策略，而不是 写死在电流环里的 `0.0F`。
+ *   “d = 0”只对表贴式电机最优，仅此而已：内嵌式电机靠负 d 轴电流拿到额外转矩（MTPA）， 任何电机超过基速后都要靠 d 轴电
+ *   流做弱磁。所以这个“拆分”是一个带输入结构的策略，而不是 写死在电流环里的 `0.0F`。
  *
  * @note [en] A reference generator must be default constructible: the five-policy aggregate form leaves this member
  *            defaulted, which is what keeps existing assembly points source-compatible.
@@ -75,46 +75,46 @@ class NullReferenceGenerator final {
 /**
  * @brief [en] MTPA: the d-axis current that gets the most torque per amp.
  *
- *     Why a policy and not a constant. On a surface-mounted machine \f$i_d = 0\f$ *is* MTPA, so the whole saliency
- *     story looks like a detail; on an interior-PM machine it is not: reluctance torque is worth a third of the total,
- *     and every amp spent on the wrong \f$i_d\f$ is an amp not making torque. The distance between those two machines
- *     is the difference between needing a bigger drive and not.
+ *   Why a policy and not a constant. On a surface-mounted machine \f$i_d = 0\f$ *is* MTPA, so the whole saliency story
+ *   looks like a detail; on an interior-PM machine it is not: reluctance torque is worth a third of the total, and
+ *   every amp spent on the wrong \f$i_d\f$ is an amp not making torque. The distance between those two machines is the
+ *   difference between needing a bigger drive and not.
  *
- *     Setting \f$dT/di_d = 0\f$ on \f$T = 1.5\,p\,(\psi_f i_q + (L_d - L_q)\,i_d i_q)\f$ subject to \f$i_d^2 + i_q^2 =
- *     |i|^2\f$ gives the curve
+ *   Setting \f$dT/di_d = 0\f$ on \f$T = 1.5\,p\,(\psi_f i_q + (L_d - L_q)\,i_d i_q)\f$ subject to \f$i_d^2 + i_q^2 =
+ *   |i|^2\f$ gives the curve
  *
- *     \f[ i_d = \frac{\psi_f - \sqrt{\psi_f^2 + 8\,(L_q - L_d)^2\,i_q^2}}{4\,(L_q - L_d)} \f]
+ *   \f[ i_d = \frac{\psi_f - \sqrt{\psi_f^2 + 8\,(L_q - L_d)^2\,i_q^2}}{4\,(L_q - L_d)} \f]
  *
- *     which is negative for \f$L_q > L_d\f$ and degenerate at \f$L_q = L_d\f$. The degenerate case is \f$i_d = 0\f$
- *     rather than a tiny epsilon, because an epsilon produces an \f$i_d\f$ of order \f$\psi_f/\epsilon\f$ and destroys
- *     the loop. Ledger `E-MTPA-1` and `E-MTPA-2`; whether the capability is worth having on a given machine at all is
- *     `domain.json` row C8, not this block.
+ *   which is negative for \f$L_q > L_d\f$ and degenerate at \f$L_q = L_d\f$. The degenerate case is \f$i_d = 0\f$
+ *   rather than a tiny epsilon, because an epsilon produces an \f$i_d\f$ of order \f$\psi_f/\epsilon\f$ and destroys
+ *   the loop. Ledger `E-MTPA-1` and `E-MTPA-2`; whether the capability is worth having on a given machine at all is
+ *   `domain.json` row C8, not this block.
  *
- *     The d-axis amount is capped at \f$k\,|\omega_e|\f$ with \f$k\f$ = `i_d_per_speed_a_s_per_rad`, defaulting to
- *     \f$0\f$. The reason is stated where the field is declared and it is a measured one: on the shipped single-\f$L\f$
- *     observer, \f$i_d = -1\f$ A reads 0.5079 rad of angle error at 200 rad/s against a published 0.15 rad ceiling,
- *     while the same current is harmless at 3200 rad/s. So the allowance scales with speed, and zero -- no d-axis
- *     current, therefore the plain curve -- is what this class does until the caller says how the angle is measured.
+ *   The d-axis amount is capped at \f$k\,|\omega_e|\f$ with \f$k\f$ = `i_d_per_speed_a_s_per_rad`, defaulting to
+ *   \f$0\f$. The reason is stated where the field is declared and it is a measured one: on the shipped single-\f$L\f$
+ *   observer, \f$i_d = -1\f$ A reads 0.5079 rad of angle error at 200 rad/s against a published 0.15 rad ceiling, while
+ *   the same current is harmless at 3200 rad/s. So the allowance scales with speed, and zero -- no d-axis current,
+ *   therefore the plain curve -- is what this class does until the caller says how the angle is measured.
  *
  * @brief [zh] MTPA：每安培转矩最大的那个 d 轴电流。
  *
- *     为什么是策略而不是常数。表贴机上 \f$i_d = 0\f$ **就是** MTPA，于是整个凸极性故事看起来像个细节；内嵌机上它不是细
- *     节：磁阻转矩占总量的三分之一，花在错误 \f$i_d\f$ 上的每一安培都是没在做转矩的安培。两台机器之间的这段距离，就是"
- *     需要换更大驱动器"与"不需要"之差。
+ *   为什么是策略而不是常数。表贴机上 \f$i_d = 0\f$ **就是** MTPA，于是整个凸极性故事看起来像个细节；内嵌机上它不是细
+ *   节：磁阻转矩占总量的三分之一，花在错误 \f$i_d\f$ 上的每一安培都是没在做转矩的安培。两台机器之间的这段距离，就是" 需
+ *   要换更大驱动器"与"不需要"之差。
  *
- *     在 \f$i_d^2 + i_q^2 = |i|^2\f$ 约束下对 \f$T = 1.5\,p\,(\psi_f i_q + (L_d - L_q)\,i_d i_q)\f$ 令 \f$dT/di_d =
- *     0\f$，得到曲线
+ *   在 \f$i_d^2 + i_q^2 = |i|^2\f$ 约束下对 \f$T = 1.5\,p\,(\psi_f i_q + (L_d - L_q)\,i_d i_q)\f$ 令 \f$dT/di_d =
+ *   0\f$，得到曲线
  *
- *     \f[ i_d = \frac{\psi_f - \sqrt{\psi_f^2 + 8\,(L_q - L_d)^2\,i_q^2}}{4\,(L_q - L_d)} \f]
+ *   \f[ i_d = \frac{\psi_f - \sqrt{\psi_f^2 + 8\,(L_q - L_d)^2\,i_q^2}}{4\,(L_q - L_d)} \f]
  *
- *     \f$L_q > L_d\f$ 时为负，\f$L_q = L_d\f$ 时退化。退化情形按 \f$i_d = 0\f$ 处理而不是用一个极小量，因为极小量会给出
- *     量级 \f$\psi_f/\epsilon\f$ 的 \f$i_d\f$，把环直接毁掉。台账 `E-MTPA-1`、`E-MTPA-2`；至于这个能力在某台机器上值不
- *     值得做，看 `domain.json` 的 C8 行，不在本段。
+ *   \f$L_q > L_d\f$ 时为负，\f$L_q = L_d\f$ 时退化。退化情形按 \f$i_d = 0\f$ 处理而不是用一个极小量，因为极小量会给出量
+ *   级 \f$\psi_f/\epsilon\f$ 的 \f$i_d\f$，把环直接毁掉。台账 `E-MTPA-1`、`E-MTPA-2`；至于这个能力在某台机器上值不值得
+ *   做，看 `domain.json` 的 C8 行，不在本段。
  *
- *     d 轴用量被 \f$k\,|\omega_e|\f$ 封顶，\f$k\f$ 即 `i_d_per_speed_a_s_per_rad`，默认 \f$0\f$。理由写在字段声明处，而
- *     且是量出来的：出厂单 \f$L\f$ 观测器下，\f$i_d = -1\f$ A 在 200 rad/s 读到 0.5079 rad 角度误差，而公开天花板是
- *     0.15 rad；同一个电流在 3200 rad/s 却无害。所以许可量随转速放大，而零——不施加 d 轴电流、于是走原曲线——就是本类在调
- *     用方声明角度怎么测之前的全部行为。
+ *   d 轴用量被 \f$k\,|\omega_e|\f$ 封顶，\f$k\f$ 即 `i_d_per_speed_a_s_per_rad`，默认 \f$0\f$。理由写在字段声明处，而且
+ *   是量出来的：出厂单 \f$L\f$ 观测器下，\f$i_d = -1\f$ A 在 200 rad/s 读到 0.5079 rad 角度误差，而公开天花板是 0.15
+ *   rad；同一个电流在 3200 rad/s 却无害。所以许可量随转速放大，而零——不施加 d 轴电流、于是走原曲线——就是本类在调用方声
+ *   明角度怎么测之前的全部行为。
  *
  * @warning [en] The guard costs torque and that is stated rather than hidden: clipping \f$i_d\f$ toward zero leaves the
  *               MTPA curve, so the reference returns fewer newton-metres than the curve promises. With the default \f$k

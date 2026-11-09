@@ -20,11 +20,11 @@ constexpr float kSettleDt = 5e-4F;
  *
  * @brief [zh] 误差保持恒定时，一个全新的规划器最终稳定到的指令。
  *
- *     With nothing moving the demand is a constant, so the rate limiter walks the command onto it and stops there. That
- *     makes `min(g*|e|, sqrt(2*a*|e|), v_limit)` readable one ceiling at a time, with no plant and without
- *     re-implementing the law: the number measured is the law's own output. 反馈不动时需求是常数，于是限速率把指令走到
- *     它上面并停住。这让 `min(g*|e|, sqrt(2*a*|e|), v_limit)` 可以逐个上限读出来——不需要 plant，也不需要重写那条律：量
- *     到的就是律自己的输出。
+ *   With nothing moving the demand is a constant, so the rate limiter walks the command onto it and stops there. That
+ *   makes `min(g*|e|, sqrt(2*a*|e|), v_limit)` readable one ceiling at a time, with no plant and without
+ *   re-implementing the law: the number measured is the law's own output. 反馈不动时需求是常数，于是限速率把指令走到它
+ *   上面并停住。这让 `min(g*|e|, sqrt(2*a*|e|), v_limit)` 可以逐个上限读出来——不需要 plant，也不需要重写那条律：量到的
+ *   就是律自己的输出。
  */
 auto settled_command(float gain, float velocity_limit, float accel_limit, float error) -> float {
     foc::core::MotionProfile profile{
@@ -65,13 +65,13 @@ auto cruise_exit(float gain, float velocity_limit, float accel_limit) -> float {
  *
  * @brief [zh] 比例项与制动曲线在 `2a/g^2` 处交叉，且那里的量测能分辨代码用的是哪个公式。
  *
- *     The crossover solves `g*e = sqrt(2*a*e)`, i.e. `e* = 2a/g^2`. Below it the proportional term is the smaller of
- *     the two, above it the braking curve is -- and the two differ by more than 40 % at the outer probe points, so
- *     agreeing with one is not agreeing with the other. The competing reading `sqrt(a*e)` (the constant 2 dropped) puts
- *     its crossover at `a/g^2`, half of this one, and is therefore excluded by the same measurement. 交叉点是 `g*e =
- *     sqrt(2*a*e)` 的解，即 `e* = 2a/g^2`。低于它在两者中更小的是比例项，高于它更小的是制动曲线；而外侧探点上两者相差
- *     40 % 以上，所以"与其中一个相符"不等于"与另一个也相符"。竞争读法 `sqrt(a*e)`（丢掉常数 2）的交叉点在 `a/g^2`，是这
- *     里的一半，因此被同一次量测排除。
+ *   The crossover solves `g*e = sqrt(2*a*e)`, i.e. `e* = 2a/g^2`. Below it the proportional term is the smaller of the
+ *   two, above it the braking curve is -- and the two differ by more than 40 % at the outer probe points, so agreeing
+ *   with one is not agreeing with the other. The competing reading `sqrt(a*e)` (the constant 2 dropped) puts its
+ *   crossover at `a/g^2`, half of this one, and is therefore excluded by the same measurement. 交叉点是 `g*e =
+ *   sqrt(2*a*e)` 的解，即 `e* = 2a/g^2`。低于它在两者中更小的是比例项，高于它更小的是制动曲线；而外侧探点上两者相差
+ *   40 % 以上，所以"与其中一个相符"不等于"与另一个也相符"。竞争读法 `sqrt(a*e)`（丢掉常数 2）的交叉点在 `a/g^2`，是这里
+ *   的一半，因此被同一次量测排除。
  */
 TEST(MotionProfile, TheProportionalTermAndTheBrakingCurveCrossAtTwoASquareOverGainSquared) {
     const struct {
@@ -123,11 +123,11 @@ TEST(MotionProfile, TheProportionalTermAndTheBrakingCurveCrossAtTwoASquareOverGa
  *
  * @brief [zh] 巡航在 `v^2/(2a)` 处结束，这个式子里既没有 shaping gain 也没有行程。
  *
- *     Found by bisection, not by evaluating a formula, so the exponents below are measured rather than restated:
- *     doubling the acceleration halves the exit, halving the velocity limit quarters it (the square), and multiplying
- *     the move by four leaves it untouched. The competing reading `v^2/a` (the constant 2 dropped again) is a factor of
- *     two away and is excluded. 用二分找出而不是代公式，所以下面的指数是量出来的而不是复述的：加速度加倍使退出点减半，
- *     速度上限减半使它变为四分之一（平方），行程乘四则完全不动。竞争读法 `v^2/a`（又丢掉常数 2）相差一倍，被排除。
+ *   Found by bisection, not by evaluating a formula, so the exponents below are measured rather than restated: doubling
+ *   the acceleration halves the exit, halving the velocity limit quarters it (the square), and multiplying the move by
+ *   four leaves it untouched. The competing reading `v^2/a` (the constant 2 dropped again) is a factor of two away and
+ *   is excluded. 用二分找出而不是代公式，所以下面的指数是量出来的而不是复述的：加速度加倍使退出点减半，速度上限减半使它
+ *   变为四分之一（平方），行程乘四则完全不动。竞争读法 `v^2/a`（又丢掉常数 2）相差一倍，被排除。
  */
 TEST(MotionProfile, TheCruiseEndsAtVelocitySquaredOverTwiceTheAcceleration) {
     const struct {
@@ -178,17 +178,17 @@ TEST(MotionProfile, TheCruiseEndsAtVelocitySquaredOverTwiceTheAcceleration) {
  *
  * @brief [zh] shaping gain 只通过 `g >= 2a/v` 这一个不等式进入结构，这就是加倍它什么都没动的原因（A-40）。
  *
- *     A-40 recorded a negative result: the cruise gap stayed at 0.496 rad when the shaping gain doubled, and that
- *     refuted `e = v/g`. The refutation is right but it was an absence of explanation. The condition is this: at the
- *     cruise exit `e_c = v^2/(2a)` the proportional ceiling is `g*e_c`, and it binds only if `g*e_c < v`, i.e. `g <
- *     2a/v`. At `g = 20, a = 10, v = 2` the boundary is exactly 10, so the gain sits on the safe side and *no* change
- *     to it can move the exit -- which is what "a number that does not move when its parameter doubles is not that
- *     parameter's" looks like once the reason is written down. Below the boundary the ceiling that binds is the
- *     proportional one and the exit moves to `v/g`, where the gain is the whole story. A-40 记的是一个负结果：shaping
- *     gain 加倍时巡航间隙停在 0.496 rad，从而否掉了 `e = v/g`。否掉是对的，但那只是"没有解释"。条件是：在巡航退出点
- *     `e_c = v^2/(2a)` 处比例上限是 `g*e_c`，它只有在 `g*e_c < v`（即 `g < 2a/v`）时才生效。在 `g = 20, a = 10, v = 2`
- *     时边界正好是 10，所以增益在安全一侧，**任何**改动都动不了退出点——这就是"在其所谓参数加倍时不动的数就不是那个参数
- *     的"在写下原因之后的形状。边界以下生效的是比例上限，退出点移到 `v/g`，那里增益就是全部故事。
+ *   A-40 recorded a negative result: the cruise gap stayed at 0.496 rad when the shaping gain doubled, and that refuted
+ *   `e = v/g`. The refutation is right but it was an absence of explanation. The condition is this: at the cruise exit
+ *   `e_c = v^2/(2a)` the proportional ceiling is `g*e_c`, and it binds only if `g*e_c < v`, i.e. `g < 2a/v`. At `g =
+ *   20, a = 10, v = 2` the boundary is exactly 10, so the gain sits on the safe side and *no* change to it can move the
+ *   exit -- which is what "a number that does not move when its parameter doubles is not that parameter's" looks like
+ *   once the reason is written down. Below the boundary the ceiling that binds is the proportional one and the exit
+ *   moves to `v/g`, where the gain is the whole story. A-40 记的是一个负结果：shaping gain 加倍时巡航间隙停在 0.496
+ *   rad，从而否掉了 `e = v/g`。否掉是对的，但那只是"没有解释"。条件是：在巡航退出点 `e_c = v^2/(2a)` 处比例上限是
+ *   `g*e_c`，它只有在 `g*e_c < v`（即 `g < 2a/v`）时才生效。在 `g = 20, a = 10, v = 2` 时边界正好是 10，所以增益在安全
+ *   一侧，**任何**改动都动不了退出点——这就是"在其所谓参数加倍时不动的数就不是那个参数的"在写下原因之后的形状。边界以下
+ *   生效的是比例上限，退出点移到 `v/g`，那里增益就是全部故事。
  */
 TEST(MotionProfile, TheShapingGainIsAbsentFromTheCruiseExitAboveTwiceTheAccelerationOverVelocity) {
     constexpr float kGain = 20.0F;

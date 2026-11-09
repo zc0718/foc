@@ -58,39 +58,39 @@ struct FrictionOutput final {
 /**
  * @brief [en] Cancel the friction the loop has to fight, without becoming a motor.
  *
- *     Why this is a separate stage and not part of the current PI. Friction is a torque, and the PI regulates a
- *     current; adding a Coulomb term inside it would make the integrator's own state depend on which way the axis last
- *     moved. It does not fit the `FeedForward` slot either: that slot emits a *voltage* from `(omega_e, i_meas)` and
- *     never sees the reference direction, which is the only clean signal a Coulomb term has.
+ *   Why this is a separate stage and not part of the current PI. Friction is a torque, and the PI regulates a current;
+ *   adding a Coulomb term inside it would make the integrator's own state depend on which way the axis last moved. It
+ *   does not fit the `FeedForward` slot either: that slot emits a *voltage* from `(omega_e, i_meas)` and never sees the
+ *   reference direction, which is the only clean signal a Coulomb term has.
  *
- *     The law is two terms and a latch: `coulomb_nm * sign + viscous_nm_per_rad_s * omega_meas`. There is no `dt`,
- *     because nothing integrates -- and that is the point. A Coulomb term multiplying `sign(omega_meas)` chatters at
- *     rest, where the measured speed is zero-mean noise, and the chatter is a torque oscillation of amplitude `2 *
- *     coulomb_nm` that shakes the very thing the stage exists to steady. The latch is what removes it: the sign is
- *     updated from the reference when there is one, from the loop's demand when the demand is larger than the Coulomb
- *     term itself, and otherwise **kept**. The price is a stale direction when neither is informative, and it is stated
- *     rather than hidden.
+ *   The law is two terms and a latch: `coulomb_nm * sign + viscous_nm_per_rad_s * omega_meas`. There is no `dt`,
+ *   because nothing integrates -- and that is the point. A Coulomb term multiplying `sign(omega_meas)` chatters at
+ *   rest, where the measured speed is zero-mean noise, and the chatter is a torque oscillation of amplitude `2 *
+ *   coulomb_nm` that shakes the very thing the stage exists to steady. The latch is what removes it: the sign is
+ *   updated from the reference when there is one, from the loop's demand when the demand is larger than the Coulomb
+ *   term itself, and otherwise **kept**. The price is a stale direction when neither is informative, and it is stated
+ *   rather than hidden.
  *
- *     Why it helps at all: at rest a proportional loop stops when `|kp * error| <= static`, so it leaves a standing
- *     error of `static / kp` and no amount of gain removes it (raising the gain only scales the same dead band down).
- *     With a latched Coulomb term the loop stops when `|kp * error + coulomb| <= static`, i.e. at `(static - coulomb) /
- *     kp` on the arrival side. Those two numbers are arithmetic, not tuning, and the case that ships with this header
- *     measures both of them on the SIL plant.
+ *   Why it helps at all: at rest a proportional loop stops when `|kp * error| <= static`, so it leaves a standing error
+ *   of `static / kp` and no amount of gain removes it (raising the gain only scales the same dead band down). With a
+ *   latched Coulomb term the loop stops when `|kp * error + coulomb| <= static`, i.e. at `(static - coulomb) / kp` on
+ *   the arrival side. Those two numbers are arithmetic, not tuning, and the case that ships with this header measures
+ *   both of them on the SIL plant.
  *
  * @brief [zh] 抵消环路不得不对抗的摩擦，同时不让自己变成电机。
  *
- *     为什么这是独立一级而不是电流 PI 的一部分。摩擦是力矩，而 PI 调节的是电流；把库仑项塞进去会让积分器的状态取决于轴
- *     上一次往哪边动。它也不适配 `FeedForward` 槽：那个槽从 `(omega_e, i_meas)` 发出**电压**，永远看不到给定方向，而那
- *     正是库仑项唯一干净的信号。
+ *   为什么这是独立一级而不是电流 PI 的一部分。摩擦是力矩，而 PI 调节的是电流；把库仑项塞进去会让积分器的状态取决于轴上
+ *   一次往哪边动。它也不适配 `FeedForward` 槽：那个槽从 `(omega_e, i_meas)` 发出**电压**，永远看不到给定方向，而那正是
+ *   库仑项唯一干净的信号。
  *
- *     规律是两项加一个锁存：`coulomb_nm * sign + viscous_nm_per_rad_s * omega_meas`。没有 `dt`，因为没有东西在积分 ——这
- *     正是要点。用 `sign(omega_meas)` 的库仑项在静止处会抖，那里的实测速度是零均值噪声，而抖动是幅度 `2 * coulomb_nm`
- *     的力矩振荡，恰好摇动这一级存在的目的。锁存去掉它：符号在有速度给定时取给定，在环路力矩指令大于库仑项本身时取指
- *     令，其余情况**保持**。代价是两者都无信息时方向可能是旧的，这个代价写出来而不是藏起来。
+ *   规律是两项加一个锁存：`coulomb_nm * sign + viscous_nm_per_rad_s * omega_meas`。没有 `dt`，因为没有东西在积分 ——这正
+ *   是要点。用 `sign(omega_meas)` 的库仑项在静止处会抖，那里的实测速度是零均值噪声，而抖动是幅度 `2 * coulomb_nm` 的力
+ *   矩振荡，恰好摇动这一级存在的目的。锁存去掉它：符号在有速度给定时取给定，在环路力矩指令大于库仑项本身时取指令，其余
+ *   情况**保持**。代价是两者都无信息时方向可能是旧的，这个代价写出来而不是藏起来。
  *
- *     为什么它有用：静止时比例环在 `|kp * 误差| <= 静摩擦` 处停下，于是留下 `静摩擦 / kp` 的稳态误差，加增益也去不掉（
- *     只是把同一条死区按比例缩小）。有了锁存的库仑项，环路在 `|kp * 误差 + 库仑| <= 静摩擦` 处停下，即到达侧的 `(静摩擦
- *     − 库仑) / kp`。这两个数是算术、不是整定，而随这个头文件一起发布的用例在 SIL plant 上把两个都量了。
+ *   为什么它有用：静止时比例环在 `|kp * 误差| <= 静摩擦` 处停下，于是留下 `静摩擦 / kp` 的稳态误差，加增益也去不掉（只
+ *   是把同一条死区按比例缩小）。有了锁存的库仑项，环路在 `|kp * 误差 + 库仑| <= 静摩擦` 处停下，即到达侧的 `(静摩擦 −
+ *   库仑) / kp`。这两个数是算术、不是整定，而随这个头文件一起发布的用例在 SIL plant 上把两个都量了。
  * @since 0.1.9
  * @exporter
  */
@@ -102,12 +102,12 @@ class FrictionComp final {
     /**
      * @brief [en] Replace the estimate.
      *
-     *     The latched direction survives: changing a friction estimate says nothing about which way the axis last
-     *     moved, and restarting the latch would make the first period after a re-tune chatter.
+     *   The latched direction survives: changing a friction estimate says nothing about which way the axis last moved,
+     *   and restarting the latch would make the first period after a re-tune chatter.
      *
      * @brief [zh] 换估计值。
      *
-     *     锁存的方向保留：改一个摩擦估计并不说明轴上次往哪边动，而重启锁存会让重新整定后的第一个周期抖动。
+     *   锁存的方向保留：改一个摩擦估计并不说明轴上次往哪边动，而重启锁存会让重新整定后的第一个周期抖动。
      */
     void set_config(const FrictionConfig& config) noexcept { config_ = config; }
 
@@ -139,11 +139,11 @@ class FrictionComp final {
     /**
      * @brief [en] Forget the latched direction, keeping the estimate.
      *
-     *     The next period takes its sign from the reference or the demand, or starts pushing the positive way.
+     *   The next period takes its sign from the reference or the demand, or starts pushing the positive way.
      *
      * @brief [zh] 忘掉锁存的方向，估计值保留。
      *
-     *     下一个周期的符号取自给定或指令，都没有则从正向开始。
+     *   下一个周期的符号取自给定或指令，都没有则从正向开始。
      */
     void reset() noexcept { sign_ = 1.0F; }
 

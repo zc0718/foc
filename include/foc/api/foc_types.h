@@ -57,12 +57,12 @@
 /**
  * @brief [en] Opaque motor handle of the C path.
  *
- *     Created by `foc_motor_create()`, invalidated by `foc_motor_destroy()`; a stale handle is detected through an
- *     internal generation counter.
+ *   Created by `foc_motor_create()`, invalidated by `foc_motor_destroy()`; a stale handle is detected through an
+ *   internal generation counter.
  *
  * @brief [zh] C 路径的不透明电机句柄。
  *
- *     由 `foc_motor_create()` 创建、`foc_motor_destroy()` 失效；内部用代际计数识别失效句柄。
+ *   由 `foc_motor_create()` 创建、`foc_motor_destroy()` 失效；内部用代际计数识别失效句柄。
  * @since 0.1.0
  * @exporter
  */
@@ -159,13 +159,12 @@ typedef enum foc_observer {
  * @note [zh] `struct_size` 必须是 `sizeof(foc_motor_setup_t)`。用旧头编译的调用方会传更小的值， 库只读取该值覆盖到的字
  *            段，因此本结构以后增长也绝不会读到调用方内存之外。
  *
- *     在 0 不是合法取值的字段上（限流、载波、母线电压、带宽），0 表示“使用库默认值”； 其余取值一律采信并校验，因此负数
- *     限流是参数错误而不是静默回落。 `deadtime_ns` 与 `speed_loop_period_s` 的 0 按字面生效，因为 0 对它们都是合法取
- *     值。
+ *   在 0 不是合法取值的字段上（限流、载波、母线电压、带宽），0 表示“使用库默认值”； 其余取值一律采信并校验，因此负数限
+ *   流是参数错误而不是静默回落。 `deadtime_ns` 与 `speed_loop_period_s` 的 0 按字面生效，因为 0 对它们都是合法取值。
  *
- *     `align_*` 字段是那条规则的例外：它们按字面生效，`align_current_a == 0` 意为“不做对齐” ——对偏置已知的电机这是一个
- *     合法且常见的选择。但**半配置**的对齐会被拒绝：`align_current_a` 为 0 时其余 `align_*` 字段也必须为 0；它非 0 时
- *     `align_hold_s` 与 `align_tolerance_rad` 变成必填。
+ *   `align_*` 字段是那条规则的例外：它们按字面生效，`align_current_a == 0` 意为“不做对齐” ——对偏置已知的电机这是一个合
+ *   法且常见的选择。但**半配置**的对齐会被拒绝：`align_current_a` 为 0 时其余 `align_*` 字段也必须为 0；它非 0 时
+ *   `align_hold_s` 与 `align_tolerance_rad` 变成必填。
  * @since 0.1.0
  * @exporter
  */
@@ -306,8 +305,8 @@ typedef struct foc_motor_command {
  * @note [zh] `struct_size` 必须是 `sizeof(foc_motor_status_t)`；库只写入该值覆盖到的字段，因此本结构 以后增长也绝不会写
  *            到调用方对象之外。
  *
- *     两个状态字段故意用 `int32_t` 而不是枚举类型：C 枚举的底层类型由实现决定，而这些数值属于 冻结的 ABI。契约是
- *     `FOC_MOTOR_*`、`FOC_ALIGN_*` 这些常量，字段只是它的存储。
+ *   两个状态字段故意用 `int32_t` 而不是枚举类型：C 枚举的底层类型由实现决定，而这些数值属于 冻结的 ABI。契约是
+ *   `FOC_MOTOR_*`、`FOC_ALIGN_*` 这些常量，字段只是它的存储。
  * @since 0.1.0
  * @exporter
  */

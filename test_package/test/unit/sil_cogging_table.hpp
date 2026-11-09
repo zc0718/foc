@@ -17,13 +17,12 @@ namespace sil {
  *
  * @brief [zh] 谐波类型，取自库而不是在这里重新声明一遍。
  *
- *     One type for the whole chain -- planted, injected and cancelled -- so a table cannot be written by one part and
- *     read by another under a different convention. The `order` is **per mechanical revolution**, the quantity a
- *     designer reads off `lcm(slots, poles)`; mixing it with an electrical order is a factor of `pole_pairs`, which is
- *     exactly the kind of error that makes a compensation look like it does not work. 整条链——被控对象注入的、以及补偿
- *     器抵消的——共用这一个类型，于是一张表不可能由一方按一种约定写出、由另一方按另一种约定读入。`order` 是**每机械转**
- *     的次数，即设计师从 `lcm(slots, poles)` 读到的那个量；把它与电次数混用会差一个极对数，而那正是让补偿「看起来没生
- *     效」的那类错误。
+ *   One type for the whole chain -- planted, injected and cancelled -- so a table cannot be written by one part and
+ *   read by another under a different convention. The `order` is **per mechanical revolution**, the quantity a designer
+ *   reads off `lcm(slots, poles)`; mixing it with an electrical order is a factor of `pole_pairs`, which is exactly the
+ *   kind of error that makes a compensation look like it does not work. 整条链——被控对象注入的、以及补偿器抵消的——共用
+ *   这一个类型，于是一张表不可能由一方按一种约定写出、由另一方按另一种约定读入。`order` 是**每机械转** 的次数，即设计师
+ *   从 `lcm(slots, poles)` 读到的那个量；把它与电次数混用会差一个极对数，而那正是让补偿「看起来没生效」的那类错误。
  * @since 0.1.9
  */
 using CoggingHarmonic = ::foc::core::CoggingCompHarmonic;

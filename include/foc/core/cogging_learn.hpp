@@ -14,27 +14,27 @@ namespace core {
 /**
  * @brief [en] What the learner is asked for: which orders, over how many revolutions, and at what speed.
  *
- *     **The speed band is the whole point, and it is measured rather than assumed.** The learner reads the q-axis
- *     current the speed loop supplies, so what it learns is the loop's *answer* to the cogging, and that answer has the
- *     loop's own frequency response in it. Measured on the SIL bench, sixth order, injected phase 0.3 rad (negative lag
- *     = the loop answers late): 2 rad/s -> 1.9 Hz, gain 1.02, lag -4.8 deg; 5 -> 4.8 Hz, 0.99, -7.8 deg; 10 -> 9.6 Hz,
- *     0.99, -14.6 deg; 20 -> 19.1 Hz, 0.92, -26.3 deg; 40 -> 38.2 Hz, 0.76, -46.1 deg.
+ *   **The speed band is the whole point, and it is measured rather than assumed.** The learner reads the q-axis current
+ *   the speed loop supplies, so what it learns is the loop's *answer* to the cogging, and that answer has the loop's
+ *   own frequency response in it. Measured on the SIL bench, sixth order, injected phase 0.3 rad (negative lag = the
+ *   loop answers late): 2 rad/s -> 1.9 Hz, gain 1.02, lag -4.8 deg; 5 -> 4.8 Hz, 0.99, -7.8 deg; 10 -> 9.6 Hz, 0.99,
+ *   -14.6 deg; 20 -> 19.1 Hz, 0.92, -26.3 deg; 40 -> 38.2 Hz, 0.76, -46.1 deg.
  *
- *     A table learned where the lag is `d` cancels only to `2*sin(d/2)` of the original ripple: 13.6 % at 5 rad/s, 25 %
- *     at 10, 46 % at 20, 78 % at 40. So learning above `max_speed_rad_s` is not "a bit worse" -- it is baking a phase
- *     error into the table that no amount of averaging removes. The residual is not zero even inside the band, and that
- *     is a property of the method rather than a defect: the table carries the lag of where it was learned.
+ *   A table learned where the lag is `d` cancels only to `2*sin(d/2)` of the original ripple: 13.6 % at 5 rad/s, 25 %
+ *   at 10, 46 % at 20, 78 % at 40. So learning above `max_speed_rad_s` is not "a bit worse" -- it is baking a phase
+ *   error into the table that no amount of averaging removes. The residual is not zero even inside the band, and that
+ *   is a property of the method rather than a defect: the table carries the lag of where it was learned.
  *
  * @brief [zh] 向学习器要什么：学哪几次、跨多少转、在什么转速下。
  *
- *     **转速带是全部要点，而且是量出来的、不是假设的。** 学习器读的是速度环供给的 q 轴电流，所以它学到的是环路对齿槽的
- *     **回答**，而那个回答里带着环路自己的频率响应。SIL 台架实测（6 次，注入相位 0.3 rad；负号表示环路答得晚）：2 rad/s
- *     → 1.9 Hz、增益 1.02、滞后 −4.8°；5 → 4.8 Hz、0.99、−7.8°；10 → 9.6 Hz、0.99、−14.6°；20 → 19.1 Hz、0.92、
- *     −26.3°；40 → 38.2 Hz、0.76、−46.1°。
+ *   **转速带是全部要点，而且是量出来的、不是假设的。** 学习器读的是速度环供给的 q 轴电流，所以它学到的是环路对齿槽的 **
+ *   回答**，而那个回答里带着环路自己的频率响应。SIL 台架实测（6 次，注入相位 0.3 rad；负号表示环路答得晚）：2 rad/s →
+ *   1.9 Hz、增益 1.02、滞后 −4.8°；5 → 4.8 Hz、0.99、−7.8°；10 → 9.6 Hz、0.99、−14.6°；20 → 19.1 Hz、0.92、 −26.3°；40
+ *   → 38.2 Hz、0.76、−46.1°。
  *
- *     在滞后为 `d` 处学到的表只能抵消到原纹波的 `2·sin(d/2)`：5 rad/s 处 13.6 %、10 rad/s 25 %、20 rad/s 46 %、40 rad/s
- *     78 %。所以高于 `max_speed_rad_s` 去学不是"稍差一点"，而是把一个相位误差烘进表里，再怎么平均也去不掉。带内残差也不
- *     是零，那是方法本身的性质而不是缺陷：表带着学习处的滞后。
+ *   在滞后为 `d` 处学到的表只能抵消到原纹波的 `2·sin(d/2)`：5 rad/s 处 13.6 %、10 rad/s 25 %、20 rad/s 46 %、40 rad/s
+ *   78 %。所以高于 `max_speed_rad_s` 去学不是"稍差一点"，而是把一个相位误差烘进表里，再怎么平均也去不掉。带内残差也不是
+ *   零，那是方法本身的性质而不是缺陷：表带着学习处的滞后。
  * @since 0.1.9
  * @exporter
  */
@@ -74,41 +74,41 @@ struct CoggingLearnReport final {
 /**
  * @brief [en] Learn a cogging table from the current a speed loop already supplies.
  *
- *     So a compensator can be built for a machine nobody has data for.
+ *   So a compensator can be built for a machine nobody has data for.
  *
- *     **The law, and why the sign is self-consistent.** With the compensator off and at steady speed, the loop's q-axis
- *     current *is* the anti-cogging current. Projecting it on the mechanical angle at order `k` gives `re =
- *     A*sin(phi)`, `im = A*cos(phi)` for `y = A*sin(k*theta + phi)`; converting that current back through `dT/diq`
- *     gives the torque with the **opposite** sign, which is exactly what `CoggingCompensation` wants to cancel. So a
- *     learned table can be handed straight to the compensator without a sign convention for the caller to remember.
+ *   **The law, and why the sign is self-consistent.** With the compensator off and at steady speed, the loop's q-axis
+ *   current *is* the anti-cogging current. Projecting it on the mechanical angle at order `k` gives `re = A*sin(phi)`,
+ *   `im = A*cos(phi)` for `y = A*sin(k*theta + phi)`; converting that current back through `dT/diq` gives the torque
+ *   with the **opposite** sign, which is exactly what `CoggingCompensation` wants to cancel. So a learned table can be
+ *   handed straight to the compensator without a sign convention for the caller to remember.
  *
- *     **What it refuses, and why each refusal exists.** Fewer revolutions than asked (`State`): one revolution cannot
- *     separate a harmonic from the DC it rides on. Speed outside `[min, max]` (`State`): below it the loop's share is
- *     not measurable, above it the table carries the loop's lag. Speed that moved more than `speed_tolerance` over the
- *     window (`State`): a projection assumes the angle advances uniformly, and a run that accelerated is answering a
- *     different question. A saturated sample anywhere in the window (`State`): the loop was not answering the cogging,
- *     it was railing.
+ *   **What it refuses, and why each refusal exists.** Fewer revolutions than asked (`State`): one revolution cannot
+ *   separate a harmonic from the DC it rides on. Speed outside `[min, max]` (`State`): below it the loop's share is not
+ *   measurable, above it the table carries the loop's lag. Speed that moved more than `speed_tolerance` over the window
+ *   (`State`): a projection assumes the angle advances uniformly, and a run that accelerated is answering a different
+ *   question. A saturated sample anywhere in the window (`State`): the loop was not answering the cogging, it was
+ *   railing.
  *
- *     **What it cannot do.** It learns a *sum of orders*, never more: an order that was not asked for is absent from
- *     the table rather than extrapolated, because a compensator acting on an invented harmonic would inject a ripple of
- *     its own. It learns the loop's response, so it is faithful only inside the band above. And it does not know
- *     whether the ripple it found is cogging at all -- a dead-time or sensor ripple at the same order would be learned
- *     just as happily.
+ *   **What it cannot do.** It learns a *sum of orders*, never more: an order that was not asked for is absent from the
+ *   table rather than extrapolated, because a compensator acting on an invented harmonic would inject a ripple of its
+ *   own. It learns the loop's response, so it is faithful only inside the band above. And it does not know whether the
+ *   ripple it found is cogging at all -- a dead-time or sensor ripple at the same order would be learned just as
+ *   happily.
  *
  * @brief [zh] 从速度环本来就在供给的电流里学出一张齿槽表，于是没有数据的机器也能造出补偿器。
  *
- *     **律，以及符号为何自洽。** 补偿器关闭、稳态转速下，环路的 q 轴电流**就是**反齿槽电流。把它按机械角投影到 `k` 次
- *     上，对 `y = A·sin(k·θ + φ_inj)` 得到 `re = A·sin(φ_inj)`、`im = A·cos(φ_inj)`；把这个电流经 `dT/diq` 换回转矩会得
- *     到**相反**的符号，而那正是 `CoggingCompensation` 要抵消的东西。所以学到的表可以直接交给补偿器，不需要调用方记住任
- *     何符号约定。
+ *   **律，以及符号为何自洽。** 补偿器关闭、稳态转速下，环路的 q 轴电流**就是**反齿槽电流。把它按机械角投影到 `k` 次上，
+ *   对 `y = A·sin(k·θ + φ_inj)` 得到 `re = A·sin(φ_inj)`、`im = A·cos(φ_inj)`；把这个电流经 `dT/diq` 换回转矩会得到**相
+ *   反**的符号，而那正是 `CoggingCompensation` 要抵消的东西。所以学到的表可以直接交给补偿器，不需要调用方记住任何符号约
+ *   定。
  *
- *     **它拒绝什么，以及每条拒绝为什么存在。** 转数不够（`State`）：一转分不开一个谐波与它骑着的直流。转速出带（
- *     `State`）：低于下界那份不可测，高于上界表里带着环路滞后。窗口内转速变化超过 `speed_tolerance`（`State`）：投影假
- *     设角度均匀推进，一个加速中的运行回答的是另一个问题。窗口内任何一次饱和（`State`）：环路不是在回答齿槽，它在撞限。
+ *   **它拒绝什么，以及每条拒绝为什么存在。** 转数不够（`State`）：一转分不开一个谐波与它骑着的直流。转速出带（
+ *   `State`）：低于下界那份不可测，高于上界表里带着环路滞后。窗口内转速变化超过 `speed_tolerance`（`State`）：投影假设
+ *   角度均匀推进，一个加速中的运行回答的是另一个问题。窗口内任何一次饱和（`State`）：环路不是在回答齿槽，它在撞限。
  *
- *     **它做不到什么。** 它学的是**若干次的和**，仅此而已：没被要求的次数在表里是**缺席**而不是外插，因为作用在一个编造
- *     出来的谐波上的补偿器会注入自己的纹波。它学的是环路的响应，所以只在上面的带内可信。而且它不判断找到的纹波是不是齿
- *     槽——同一次上的死区或传感器纹波也会被同样高兴地学进去。
+ *   **它做不到什么。** 它学的是**若干次的和**，仅此而已：没被要求的次数在表里是**缺席**而不是外插，因为作用在一个编造出
+ *   来的谐波上的补偿器会注入自己的纹波。它学的是环路的响应，所以只在上面的带内可信。而且它不判断找到的纹波是不是齿槽——
+ *   同一次上的死区或传感器纹波也会被同样高兴地学进去。
  * @since 0.1.9
  * @exporter
  */

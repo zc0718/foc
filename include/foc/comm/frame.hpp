@@ -14,22 +14,22 @@ namespace comm {
  *
  * @details [en] `A5 | seq | type | len | payload[len] | crc_hi | crc_lo`
  *
- *     Six bytes of overhead plus the payload, and every one of them earns its place. The start byte is what a receiver
- *     resynchronises on after a corrupt frame -- without it, one bad byte shifts every following frame by one position
- *     and the stream never recovers. `len` is carried rather than derived because the receiver has no other way to know
- *     where the CRC begins; a length that disagrees with the buffer is refused rather than clamped, since clamping is
- *     how a decoder over-reads. `seq` is what lets the *receiver* notice a frame it never saw -- a CRC cannot report a
- *     frame that never arrived. The CRC covers `seq..payload` and deliberately not the start byte: a corrupted start
- *     byte fails the first check anyway, and including it would make the CRC of an otherwise identical frame depend on
- *     which resynchronisation produced it.
+ *   Six bytes of overhead plus the payload, and every one of them earns its place. The start byte is what a receiver
+ *   resynchronises on after a corrupt frame -- without it, one bad byte shifts every following frame by one position
+ *   and the stream never recovers. `len` is carried rather than derived because the receiver has no other way to know
+ *   where the CRC begins; a length that disagrees with the buffer is refused rather than clamped, since clamping is how
+ *   a decoder over-reads. `seq` is what lets the *receiver* notice a frame it never saw -- a CRC cannot report a frame
+ *   that never arrived. The CRC covers `seq..payload` and deliberately not the start byte: a corrupted start byte fails
+ *   the first check anyway, and including it would make the CRC of an otherwise identical frame depend on which
+ *   resynchronisation produced it.
  *
  * @details [zh] `A5 | seq | type | len | payload[len] | crc_hi | crc_lo`
  *
- *     六个字节的额外开销加负载，每一个都不是白占的。起始字节是接收方在坏帧之后重新同步的依据——没有它，一个坏字节就会把
- *     之后每一帧都错开一个位置，而这条流永远恢复不过来。`len` 是携带的而不是推出来的，因为接收方没有别的办法知道 CRC 从
- *     哪里开始；与缓冲区不符的长度是**拒绝**而不是钳位，钳位正是解码器越界读的方式。`seq` 是让**接收方**发现一帧它从未
- *     见过的帧的依据——CRC 无法报告一帧根本没有到达的帧。CRC 覆盖 `seq..payload` 而故意不含起始字节：起始字节坏了第一道
- *     检查就不过，而把它算进去会让同一帧的 CRC 取决于它是从哪次重新同步开始的。
+ *   六个字节的额外开销加负载，每一个都不是白占的。起始字节是接收方在坏帧之后重新同步的依据——没有它，一个坏字节就会把之
+ *   后每一帧都错开一个位置，而这条流永远恢复不过来。`len` 是携带的而不是推出来的，因为接收方没有别的办法知道 CRC 从哪里
+ *   开始；与缓冲区不符的长度是**拒绝**而不是钳位，钳位正是解码器越界读的方式。`seq` 是让**接收方**发现一帧它从未见过的
+ *   帧的依据——CRC 无法报告一帧根本没有到达的帧。CRC 覆盖 `seq..payload` 而故意不含起始字节：起始字节坏了第一道检查就不
+ *   过，而把它算进去会让同一帧的 CRC 取决于它是从哪次重新同步开始的。
  * @since 0.1.9
  * @exporter
  */

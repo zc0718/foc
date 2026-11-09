@@ -207,26 +207,26 @@ TEST(MagnetPolarityTest, RejectsNonPositivePeriod) {
  * @brief [zh] 电流永不松弛的绕组得到 `Inconclusive` 而不是一个自信的错误答案，而"从不松弛的夹具" 正是这件事一直没被发现
  *             的原因。
  *
- *     `decide()` compares two rises and calls the larger one the magnet's `+d`. The premise is that both pulses are the
- *     *same* volt-second pulse in two directions, which requires both to start from the same current. With a settle
- *     shorter than the winding's `L/R` the second pulse starts on the first pulse's tail, where the incremental
- *     inductance has already collapsed -- so the second rise is larger for a reason that has nothing to do with the
- *     magnet. On the plant this is not a subtle bias: at a zero-length settle the asymmetry came out at **-0.5496 A**
- *     for a machine whose magnet is `Aligned`, i.e. a confident `Reversed`.
+ *   `decide()` compares two rises and calls the larger one the magnet's `+d`. The premise is that both pulses are the
+ *   *same* volt-second pulse in two directions, which requires both to start from the same current. With a settle
+ *   shorter than the winding's `L/R` the second pulse starts on the first pulse's tail, where the incremental
+ *   inductance has already collapsed -- so the second rise is larger for a reason that has nothing to do with the
+ *   magnet. On the plant this is not a subtle bias: at a zero-length settle the asymmetry came out at **-0.5496 A** for
+ *   a machine whose magnet is `Aligned`, i.e. a confident `Reversed`.
  *
- *     The guard uses the caller's own declared resolution as its yardstick -- if the two start points differ by more
- *     than `min_asymmetry_a`, no verdict at that resolution can be supported. The case below checks the guard *and* the
- *     fixture: `FakeDx` used to have no decay at all, so every case here was silently exercising the degenerate path
- *     and getting the right label for the wrong reason.
+ *   The guard uses the caller's own declared resolution as its yardstick -- if the two start points differ by more than
+ *   `min_asymmetry_a`, no verdict at that resolution can be supported. The case below checks the guard *and* the
+ *   fixture: `FakeDx` used to have no decay at all, so every case here was silently exercising the degenerate path and
+ *   getting the right label for the wrong reason.
  *
- *     `decide()` 比较两次上升，把更大的那次当成磁钢的 `+d`。前提是两个脉冲是**同一个**伏秒脉冲在两个方向上的施加，这要
- *     求两者从同一个电流出发。松弛时间短于绕组的 `L/R` 时，第二个脉冲从第一个脉冲的尾巴上出发，那里的增量电感已塌陷——于
- *     是第二个上升更大，原因与磁钢无关。在 plant 上这不是细微偏差：零松弛时磁钢为 `Aligned` 的机器算出 **-0.5496 A** 的
- *     不对称，即自信的 `Reversed`。
+ *   `decide()` 比较两次上升，把更大的那次当成磁钢的 `+d`。前提是两个脉冲是**同一个**伏秒脉冲在两个方向上的施加，这要求
+ *   两者从同一个电流出发。松弛时间短于绕组的 `L/R` 时，第二个脉冲从第一个脉冲的尾巴上出发，那里的增量电感已塌陷——于是第
+ *   二个上升更大，原因与磁钢无关。在 plant 上这不是细微偏差：零松弛时磁钢为 `Aligned` 的机器算出 **-0.5496 A** 的不对
+ *   称，即自信的 `Reversed`。
  *
- *     护栏用调用方自己声明的分辨力当尺子——两个起点相差超过 `min_asymmetry_a` 时，那个分辨力下的任何结论都不成立。下面的
- *     用例同时检查护栏**与夹具**：`FakeDx` 原本完全没有衰减，于是这里的每个用例都在悄悄走那条退化路径，并以错误的理由得
- *     到正确的标签。
+ *   护栏用调用方自己声明的分辨力当尺子——两个起点相差超过 `min_asymmetry_a` 时，那个分辨力下的任何结论都不成立。下面的用
+ *   例同时检查护栏**与夹具**：`FakeDx` 原本完全没有衰减，于是这里的每个用例都在悄悄走那条退化路径，并以错误的理由得到正
+ *   确的标签。
  */
 TEST(MagnetPolarityTest, AWindingThatNeverRelaxesGetsInconclusiveInsteadOfAWrongAnswer) {
     // The motor is the one that is `Aligned`; only the winding's relaxation changes.

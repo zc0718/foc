@@ -10,14 +10,14 @@ namespace core {
 /**
  * @brief [en] What the position slot is asked for on one step: where to go, and how hard.
  *
- *     Two limit fields instead of one target, because a *move* has a shape, not just an endpoint: a slow approach and a
- *     fast traverse of the same distance are different motions. The limits are per move, so the same controller serves
- *     both without being rebuilt.
+ *   Two limit fields instead of one target, because a *move* has a shape, not just an endpoint: a slow approach and a
+ *   fast traverse of the same distance are different motions. The limits are per move, so the same controller serves
+ *   both without being rebuilt.
  *
  * @brief [zh] 位置槽位在一步里被要求做什么：去哪里，以及用多大力。
  *
- *     两个限制字段而不是一个目标，因为一次**运动**有形状而不只有终点：同样距离的慢速接近 与快速穿越是两种运动。限制按次
- *     给出，所以同一个控制器服务两者而不必重建。
+ *   两个限制字段而不是一个目标，因为一次**运动**有形状而不只有终点：同样距离的慢速接近 与快速穿越是两种运动。限制按次给
+ *   出，所以同一个控制器服务两者而不必重建。
  *
  * @note [en] `0` means "no override, use the controller's own configured value". That is the same rule the rest of the
  *            project uses: 0 is only ever a default where 0 is not a legal value. A negative limit is the caller's bug
@@ -28,8 +28,8 @@ namespace core {
  * @note [zh] `0` 表示"不覆盖，用控制器自己配置的值"。这与项目其余部分同一条规则：0 只在 0 本身 不合法的地方才表示默认
  *            值。负数限制是调用方的 bug，按 0 处理，而不是"反向运动"。
  *
- *     `kp_scale` 是柔顺旋钮：1 是配置的刚度，0.2 是被推时会退让的关节，0（默认）则完全保持 配置。它缩放的是**增益**而非
- *     限值，因此柔顺的关节仍然不能越限。
+ *   `kp_scale` 是柔顺旋钮：1 是配置的刚度，0.2 是被推时会退让的关节，0（默认）则完全保持 配置。它缩放的是**增益**而非限
+ *   值，因此柔顺的关节仍然不能越限。
  * @since 0.1.0
  * @exporter
  */
@@ -44,14 +44,14 @@ struct PositionInput final {
 /**
  * @brief [en] The "position mode is not compiled in" placeholder for the position-loop slot.
  *
- *     It satisfies the controller shape (`step(setpoint, feedback, dt)` + `reset()`), so it can serve as the default
- *     template argument; `Motor` recognises it and answers `ErrorCode::NotImpl` instead of silently holding zero
- *     velocity. A mode that was not compiled in has to say so.
+ *   It satisfies the controller shape (`step(setpoint, feedback, dt)` + `reset()`), so it can serve as the default
+ *   template argument; `Motor` recognises it and answers `ErrorCode::NotImpl` instead of silently holding zero
+ *   velocity. A mode that was not compiled in has to say so.
  *
  * @brief [zh] 位置环槽位的「位置模式未编入」占位实现。
  *
- *     它满足控制器形状（`step(setpoint, feedback, dt)` + `reset()`），因此可以作为默认模板 实参；`Motor` 认得它并以
- *     `ErrorCode::NotImpl` 作答，而不是静默保持零速度。没编进来的模式 必须自己说出来。
+ *   它满足控制器形状（`step(setpoint, feedback, dt)` + `reset()`），因此可以作为默认模板 实参；`Motor` 认得它并以
+ *   `ErrorCode::NotImpl` 作答，而不是静默保持零速度。没编进来的模式 必须自己说出来。
  *
  * @note [en] The slot takes `step(const PositionInput&, feedback, dt)`, not the plain controller shape: a move has a
  *            velocity and an acceleration, not only an endpoint (see `PositionInput`). Two implementations ship:
@@ -88,14 +88,14 @@ class NullPositionControl final {
 /**
  * @brief [en] Proportional position control: velocity demand plus both limits, without the braking curve.
  *
- *     This is the simple half of the position slot: `velocity = gain * error`, clamped to the velocity limit and
- *     rate-limited by the acceleration limit. It honours per-move limits exactly like `MotionProfile` does, so a move
- *     never silently loses its shape.
+ *   This is the simple half of the position slot: `velocity = gain * error`, clamped to the velocity limit and
+ *   rate-limited by the acceleration limit. It honours per-move limits exactly like `MotionProfile` does, so a move
+ *   never silently loses its shape.
  *
  * @brief [zh] 比例位置控制：速度需求加两道限制，但**没有**制动曲线。
  *
- *     这是位置槽位的简单一半：`速度 = 增益 × 误差`，按速度上限钳位、按加速度上限限速率。 它和 `MotionProfile` 一样遵守
- *     按次给出的限制，因此一次运动不会悄悄丢掉形状。
+ *   这是位置槽位的简单一半：`速度 = 增益 × 误差`，按速度上限钳位、按加速度上限限速率。 它和 `MotionProfile` 一样遵守按
+ *   次给出的限制，因此一次运动不会悄悄丢掉形状。
  *
  * @note [en] What it does *not* do is look ahead. With a velocity or acceleration limit binding it overshoots by
  *            roughly the braking distance, because the proportional term only starts easing off when the error is

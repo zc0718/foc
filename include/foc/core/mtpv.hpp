@@ -13,17 +13,17 @@ namespace core {
 /**
  * @brief [en] The machine and the two ceilings that bound its operating point.
  *
- *     The voltage the drive can put on the terminals, and the current it is allowed to push through them. `pole_pairs`
- *     is here because torque is not the quantity this module is about -- the *locus* is -- but the caller needs torque
- *     to decide whether a point is worth going to, and a torque in N.m requires the pair count. The voltage ceiling is
- *     a magnitude at the terminals, not a bus ratio: whoever builds this from a bus voltage owns the modulation limit,
- *     and this module does not guess it.
+ *   The voltage the drive can put on the terminals, and the current it is allowed to push through them. `pole_pairs` is
+ *   here because torque is not the quantity this module is about -- the *locus* is -- but the caller needs torque to
+ *   decide whether a point is worth going to, and a torque in N.m requires the pair count. The voltage ceiling is a
+ *   magnitude at the terminals, not a bus ratio: whoever builds this from a bus voltage owns the modulation limit, and
+ *   this module does not guess it.
  *
  * @brief [zh] 机器，以及限制其工作点的两个上限。
  *
- *     驱动器能加到端子上的电压，和允许推过去的电流。`pole_pairs` 在这里是因为转矩不是本模块的主题（**轨迹**才是），但调
- *     用方需要转矩来判断一个点值不值得去，而 N·m 的转矩需要极对数。电压上限是端子上的幅值而不是母线比例：从母线电压构造
- *     它的人拥有调制上限，本模块不去猜它。
+ *   驱动器能加到端子上的电压，和允许推过去的电流。`pole_pairs` 在这里是因为转矩不是本模块的主题（**轨迹**才是），但调用
+ *   方需要转矩来判断一个点值不值得去，而 N·m 的转矩需要极对数。电压上限是端子上的幅值而不是母线比例：从母线电压构造它的
+ *   人拥有调制上限，本模块不去猜它。
  * @since 0.1.9
  * @exporter
  */
@@ -37,17 +37,17 @@ struct MtpvConfig final {
 /**
  * @brief [en] One point on the maximum-torque map.
  *
- *     What the drive should hold at this speed, and whether the voltage or the current is what decided it.
- *     `voltage_limited` is the honest half of the answer: below the base speed the optimum is the current-limited MTPA
- *     point and the voltage ceiling is not what stops the drive -- reporting an MTPV point there would be reporting a
- *     number computed from a constraint that is not active, which is how a policy ends up "working" on a machine it
- *     does not describe.
+ *   What the drive should hold at this speed, and whether the voltage or the current is what decided it.
+ *   `voltage_limited` is the honest half of the answer: below the base speed the optimum is the current-limited MTPA
+ *   point and the voltage ceiling is not what stops the drive -- reporting an MTPV point there would be reporting a
+ *   number computed from a constraint that is not active, which is how a policy ends up "working" on a machine it does
+ *   not describe.
  *
  * @brief [zh] 最大转矩地图上的一个点。
  *
- *     这个转速下驱动器该守住什么，以及是电压还是电流决定了它。`voltage_limited` 是这个答案里诚实的那一半：基速以下最优
- *     点是被电流限幅的 MTPA 点，电压上限并非拦住驱动器的东西——在那里报一个 MTPV 点，就是用一条**没有生效**的约束算出来
- *     的数，而那正是一条策略"在一台它并不描述的机器上也能跑通"的来路。
+ *   这个转速下驱动器该守住什么，以及是电压还是电流决定了它。`voltage_limited` 是这个答案里诚实的那一半：基速以下最优点
+ *   是被电流限幅的 MTPA 点，电压上限并非拦住驱动器的东西——在那里报一个 MTPV 点，就是用一条**没有生效**的约束算出来的
+ *   数，而那正是一条策略"在一台它并不描述的机器上也能跑通"的来路。
  * @since 0.1.9
  * @exporter
  */
@@ -64,48 +64,48 @@ struct MtpvPoint final {
  * @brief [en] Maximum torque per volt, and the base speed that says where it begins -- both as closed forms on the
  *             voltage ellipse.
  *
- *     **The law.** With `Rs` dropped (verified against the full equation elsewhere, and the error is `Rs*i` against
- *     `omega*L*i` in the region that matters) the steady-state voltage ceiling is the ellipse `(Ld*i_d + psi_f)^2 +
- *     (Lq*i_q)^2 = V^2` with `V = v_max/w`. Parametrising it by the angle `t` -- `i_d = (V*cos t - psi_f)/Ld`, `i_q =
- *     V*sin t/Lq` -- the torque along the ellipse becomes
+ *   **The law.** With `Rs` dropped (verified against the full equation elsewhere, and the error is `Rs*i` against
+ *   `omega*L*i` in the region that matters) the steady-state voltage ceiling is the ellipse `(Ld*i_d + psi_f)^2 +
+ *   (Lq*i_q)^2 = V^2` with `V = v_max/w`. Parametrising it by the angle `t` -- `i_d = (V*cos t - psi_f)/Ld`, `i_q =
+ *   V*sin t/Lq` -- the torque along the ellipse becomes
  *
- *     `T(t) / (1.5*p) = (V/Lq) * [ p_r*sin t + q_r*sin 2t ]`, `p_r = psi_f*Lq/Ld`, `q_r = (Ld-Lq)*V/(2*Ld)`,
+ *   `T(t) / (1.5*p) = (V/Lq) * [ p_r*sin t + q_r*sin 2t ]`, `p_r = psi_f*Lq/Ld`, `q_r = (Ld-Lq)*V/(2*Ld)`,
  *
- *     **which is a single sinusoid in `t` plus its second harmonic, so its stationary points are a quadratic in `cos
- *     t`**: `4*q_r*c^2 + p_r*c - 2*q_r = 0`. Two roots, one of each sign; the torque-maximising one is the one whose
- *     `sin t` carries the sign that makes the reluctance term add to the magnet term. No iteration, and the **same**
- *     quadratic on the current circle gives MTPA with `p_r = psi_f`, `q_r = (Ld-Lq)*i_max/2` -- the two candidates of
- *     the whole constant-torque map are the same three lines of arithmetic.
+ *   **which is a single sinusoid in `t` plus its second harmonic, so its stationary points are a quadratic in `cos
+ *   t`**: `4*q_r*c^2 + p_r*c - 2*q_r = 0`. Two roots, one of each sign; the torque-maximising one is the one whose `sin
+ *   t` carries the sign that makes the reluctance term add to the magnet term. No iteration, and the **same** quadratic
+ *   on the current circle gives MTPA with `p_r = psi_f`, `q_r = (Ld-Lq)*i_max/2` -- the two candidates of the whole
+ *   constant-torque map are the same three lines of arithmetic.
  *
- *     The maximum of `T` along the ellipse **is** the tangency point of the torque hyperbola with the ellipse, so the
- *     criterion "the two gradients are parallel" is not an extra check bolted on: it is what the quadratic solves.
- *     `test_mtpv.cpp` verifies it against gradients computed independently, and against a brute-force scan.
+ *   The maximum of `T` along the ellipse **is** the tangency point of the torque hyperbola with the ellipse, so the
+ *   criterion "the two gradients are parallel" is not an extra check bolted on: it is what the quadratic solves.
+ *   `test_mtpv.cpp` verifies it against gradients computed independently, and against a brute-force scan.
  *
- *     **Why this returns MTPA below the base speed instead of an MTPV point.** The ellipse grows without bound as `w ->
- *     0`, so its interior maximum runs off to `i_d -> -inf`. Below the base speed the current circle is what actually
- *     binds, the optimum is the MTPA point, and this class returns it with `voltage_limited = false`. At exactly the
- *     base speed the ellipse passes through that point, so the two branches agree and the reference is continuous in
- *     speed -- which is the property field weakening also had to have, for the same reason: an integrator upstream of a
- *     step pays for it in overshoot.
+ *   **Why this returns MTPA below the base speed instead of an MTPV point.** The ellipse grows without bound as `w ->
+ *   0`, so its interior maximum runs off to `i_d -> -inf`. Below the base speed the current circle is what actually
+ *   binds, the optimum is the MTPA point, and this class returns it with `voltage_limited = false`. At exactly the base
+ *   speed the ellipse passes through that point, so the two branches agree and the reference is continuous in speed --
+ *   which is the property field weakening also had to have, for the same reason: an integrator upstream of a step pays
+ *   for it in overshoot.
  *
  * @brief [zh] 每伏最大转矩，以及说明它从哪开始的基速——两者都是电压椭圆上的闭式解。
  *
- *     **规律。** 丢掉 `Rs`（别处已对着完整方程验证过，且在真正要紧的区域 `Rs·i` 相对 `ω_e·L·i` 很小），稳态电压上限就是
- *     椭圆 `(Ld·i_d + ψf)² + (Lq·i_q)² = V²`，`V = v_max/ω_e`。用角度 `t` 参数化—— `i_d = (V·cos t − ψf)/Ld`、`i_q =
- *     V·sin t/Lq`——椭圆上的转矩变成
+ *   **规律。** 丢掉 `Rs`（别处已对着完整方程验证过，且在真正要紧的区域 `Rs·i` 相对 `ω_e·L·i` 很小），稳态电压上限就是椭
+ *   圆 `(Ld·i_d + ψf)² + (Lq·i_q)² = V²`，`V = v_max/ω_e`。用角度 `t` 参数化—— `i_d = (V·cos t − ψf)/Ld`、`i_q = V·sin
+ *   t/Lq`——椭圆上的转矩变成
  *
- *     `T(t) / (1.5·p) = (V/Lq) · [ p_r·sin t + q_r·sin 2t ]`，`p_r = ψf·Lq/Ld`、`q_r = (Ld−Lq)·V/(2·Ld)`，
+ *   `T(t) / (1.5·p) = (V/Lq) · [ p_r·sin t + q_r·sin 2t ]`，`p_r = ψf·Lq/Ld`、`q_r = (Ld−Lq)·V/(2·Ld)`，
  *
- *     **即一个正弦项加它的二次谐波，于是极值点是 `cos t` 的二次方程**：`4·q_r·c² + p_r·c − 2·q_r = 0`。两个根一正一负；
- *     极大值那个根是让 `sin t` 的符号使磁阻项与磁钢项同向相加的那个。无需迭代，而且 **同一个二次方程**在电流圆上给出的
- *     就是 MTPA，只需 `p_r = ψf`、`q_r = (Ld−Lq)·i_max/2`——整张等转矩地图的两个候选点是同三行算术。
+ *   **即一个正弦项加它的二次谐波，于是极值点是 `cos t` 的二次方程**：`4·q_r·c² + p_r·c − 2·q_r = 0`。两个根一正一负；极
+ *   大值那个根是让 `sin t` 的符号使磁阻项与磁钢项同向相加的那个。无需迭代，而且 **同一个二次方程**在电流圆上给出的就是
+ *   MTPA，只需 `p_r = ψf`、`q_r = (Ld−Lq)·i_max/2`——整张等转矩地图的两个候选点是同三行算术。
  *
- *     椭圆上 `T` 的极大值**就是**转矩双曲线与椭圆的切点，所以"两梯度平行"这条判据不是外加的检查：它正是那个二次方程在解
- *     的东西。`test_mtpv.cpp` 拿独立算出的梯度去验证它，也拿暴力扫描去验证它。
+ *   椭圆上 `T` 的极大值**就是**转矩双曲线与椭圆的切点，所以"两梯度平行"这条判据不是外加的检查：它正是那个二次方程在解的
+ *   东西。`test_mtpv.cpp` 拿独立算出的梯度去验证它，也拿暴力扫描去验证它。
  *
- *     **为什么基速以下返回 MTPA 而不是 MTPV 点。** `ω_e → 0` 时椭圆无界增长，其内部极大值跑到 `i_d → −∞`。基速以下真正
- *     生效的是电流圆，最优点是 MTPA 点，本类返回它并置 `voltage_limited = false`。恰在基速处椭圆穿过那个点，于是两支重
- *     合、参考对转速连续——这也是弱磁当初必须具备的性质，理由相同：积分器上游的一个台阶，要用过冲来偿还。
+ *   **为什么基速以下返回 MTPA 而不是 MTPV 点。** `ω_e → 0` 时椭圆无界增长，其内部极大值跑到 `i_d → −∞`。基速以下真正生
+ *   效的是电流圆，最优点是 MTPA 点，本类返回它并置 `voltage_limited = false`。恰在基速处椭圆穿过那个点，于是两支重合、
+ *   参考对转速连续——这也是弱磁当初必须具备的性质，理由相同：积分器上游的一个台阶，要用过冲来偿还。
  *
  * @note [en] `psi_f = 0` is a supported machine (synchronous reluctance): the magnet term vanishes and the quadratic
  *            keeps its reluctance solution at `cos t = 1/sqrt(2)`.

@@ -11,8 +11,8 @@ namespace {
 /**
  * @brief [en] The three duties in descending order, plus which phase each one belongs to.
  *
- *     One pass, no sorting of an array, because "which phase is the largest" is the thing the reconstruction needs and
- *     sorting indices is the place a sector table would have crept back in.
+ *   One pass, no sorting of an array, because "which phase is the largest" is the thing the reconstruction needs and
+ *   sorting indices is the place a sector table would have crept back in.
  *
  * @brief [zh] 三个占空比按从大到小，以及每一个属于哪一相。一次遍历、不排数组，因为重构需要的正是「哪一相最大」，而排序
  *             索引正是扇区表会趁机溜回来的地方。

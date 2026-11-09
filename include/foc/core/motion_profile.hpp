@@ -12,34 +12,33 @@ namespace core {
  * @brief [en] A position controller that shapes its velocity command: proportional on the measured error, then
  *             rate-limited by a configured acceleration.
  *
- *     It fills the same controller slot as `Pi` (`step(setpoint, feedback, dt)` + `reset()`), but it answers a
- *     different question: not "how fast should I go to kill this error" alone, but "how fast may I go, and how quickly
- *     may that change". The output is a velocity command, so the inner speed loop still owns velocity tracking.
+ *   It fills the same controller slot as `Pi` (`step(setpoint, feedback, dt)` + `reset()`), but it answers a different
+ *   question: not "how fast should I go to kill this error" alone, but "how fast may I go, and how quickly may that
+ *   change". The output is a velocity command, so the inner speed loop still owns velocity tracking.
  *
- *     Why a filtered command rather than a trapezoid planner: a planner has to own a phase machine (accelerate / cruise
- *     / decelerate) and re-plan every time the target moves. This keeps no phases: it takes the smallest of the
- *     proportional demand, the physical braking curve `sqrt(2*a*|error|)` and the velocity limit, then rate-limits the
- *     result. That gives accel-limited motion with a stopping distance that matches the deceleration it is allowed,
- *     retargeting for free, and no overshoot when a limit binds. It is not time-optimal against a moving target, and it
- *     does not pretend to be.
+ *   Why a filtered command rather than a trapezoid planner: a planner has to own a phase machine (accelerate / cruise /
+ *   decelerate) and re-plan every time the target moves. This keeps no phases: it takes the smallest of the
+ *   proportional demand, the physical braking curve `sqrt(2*a*|error|)` and the velocity limit, then rate-limits the
+ *   result. That gives accel-limited motion with a stopping distance that matches the deceleration it is allowed,
+ *   retargeting for free, and no overshoot when a limit binds. It is not time-optimal against a moving target, and it
+ *   does not pretend to be.
  *
- *     That stopping distance is a property of the *command*, not of the axis. The axis reaches the deceleration
- *     threshold after covering `v^2/(2a)` plus whatever it travels while the inner loop catches up, so a plant that
- *     lags the command passes the threshold and overshoots by an amount this class cannot bound -- measured at 13.7 %
- *     of the threshold on the SIL axis. The command itself cannot overshoot: both ceilings fall monotonically in
- *     `|error|` and the sign follows the error. 那个制动距离是**指令**的属性，不是轴的属性。轴走完 `v^2/(2a)` 之后还要
- *     加上内层环追赶期间走过的距离，因此跟随滞后的 plant 会越过阈值，并超出这个类无法约束的量——在 SIL 轴上测得阈值的
- *     13.7 %。指令本身不会过冲：两个上限都随 `|error|` 单调下降，符号跟着误差走。
+ *   That stopping distance is a property of the *command*, not of the axis. The axis reaches the deceleration threshold
+ *   after covering `v^2/(2a)` plus whatever it travels while the inner loop catches up, so a plant that lags the
+ *   command passes the threshold and overshoots by an amount this class cannot bound -- measured at 13.7 % of the
+ *   threshold on the SIL axis. The command itself cannot overshoot: both ceilings fall monotonically in `|error|` and
+ *   the sign follows the error. 那个制动距离是**指令**的属性，不是轴的属性。轴走完 `v^2/(2a)` 之后还要加上内层环追赶期
+ *   间走过的距离，因此跟随滞后的 plant 会越过阈值，并超出这个类无法约束的量——在 SIL 轴上测得阈值的 13.7 %。指令本身不会
+ *   过冲：两个上限都随 `|error|` 单调下降，符号跟着误差走。
  *
  * @brief [zh] 会塑造速度指令的位置控制器：对实测误差做比例，再用配置的加速度做速率限制。
  *
- *     它占用与 `Pi` 相同的控制器槽位（`step(setpoint, feedback, dt)` + `reset()`），但回答的 是另一个问题：不只是“为了
- *     消掉这个误差我该跑多快”，而是“我准许多快、以及这个快能变多快”。 输出是速度指令，所以速度跟踪仍由内层速度环负责。
+ *   它占用与 `Pi` 相同的控制器槽位（`step(setpoint, feedback, dt)` + `reset()`），但回答的 是另一个问题：不只是“为了消
+ *   掉这个误差我该跑多快”，而是“我准许多快、以及这个快能变多快”。 输出是速度指令，所以速度跟踪仍由内层速度环负责。
  *
- *     为什么用滤波而不是梯形规划器：规划器必须自持相位机（加速/匀速/减速），且目标一动就要 重规划。本实现不存相位：取“
- *     比例需求、物理制动曲线 `sqrt(2*a*|error|)`、速度上限”三者最小， 再对结果做速率限制。这样既得到加速度受限的运动，
- *     制动距离又与允许的减速度相匹配；中途改 目标天然支持，限幅生效时也不会冲过头。它对移动目标不是时间最优的，也没有假
- *     装是。
+ *   为什么用滤波而不是梯形规划器：规划器必须自持相位机（加速/匀速/减速），且目标一动就要 重规划。本实现不存相位：取“ 比
+ *   例需求、物理制动曲线 `sqrt(2*a*|error|)`、速度上限”三者最小， 再对结果做速率限制。这样既得到加速度受限的运动，制动
+ *   距离又与允许的减速度相匹配；中途改 目标天然支持，限幅生效时也不会冲过头。它对移动目标不是时间最优的，也没有假装是。
  *
  * @context [en] Called once per position-loop step: noexcept, no allocation.
  * @context [zh] 每个位置环周期调用一次：noexcept、不分 配。

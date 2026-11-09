@@ -227,21 +227,21 @@ TEST(BlendedObserver, RejectsNonPositivePeriodAndResetClearsTheHandover) {
  *
  * @brief [zh] 混合是一个凸组合，于是每个敏感度系数都是 `w` 或 `1−w`，而判据转速的系数是 `分歧/带宽`。
  *
- *     The output is `theta_low + w*shortest_arc(theta_high, theta_low)`, which is one line of algebra and makes the
- *     whole sensitivity table fall out: an error in the low source reaches the output at `1-w`, an error in the high
- *     source at `w`, and a *miscalibrated decision* (a speed reading off by `d omega`) moves the angle by `d omega *
- *     disagreement / span`, because the weight's own slope is `1/span`. The three coefficients are measured with stub
- *     observers whose answers are set by hand, so nothing here depends on a plant.
+ *   The output is `theta_low + w*shortest_arc(theta_high, theta_low)`, which is one line of algebra and makes the whole
+ *   sensitivity table fall out: an error in the low source reaches the output at `1-w`, an error in the high source at
+ *   `w`, and a *miscalibrated decision* (a speed reading off by `d omega`) moves the angle by `d omega * disagreement /
+ *   span`, because the weight's own slope is `1/span`. The three coefficients are measured with stub observers whose
+ *   answers are set by hand, so nothing here depends on a plant.
  *
- *     The numbers below are the coefficients, not a fit: `w` comes out at exactly 0.25000 / 0.50000 / 0.75000 for 35 /
- *     60 / 85 rad/s against a 10..110 band, which is `(speed - start)/span` to the last digit the float carries.
+ *   The numbers below are the coefficients, not a fit: `w` comes out at exactly 0.25000 / 0.50000 / 0.75000 for 35 / 60
+ *   / 85 rad/s against a 10..110 band, which is `(speed - start)/span` to the last digit the float carries.
  *
- *     输出是 `θ_low + w*shortest_arc(θ_high, θ_low)`，一行代数，整张敏感度表由此掉落：低速源的误差以 `1−w` 到达输出、高
- *     速源的误差以 `w` 到达，而**判据失准**（转速读数差 `dω`）把角度移动 `dω·分歧/带宽`，因为权重自身的斜率是 `1/带宽
- *     `。三个系数都用答案由手设定的桩观测器量出，因此这里没有任何东西依赖 plant。
+ *   输出是 `θ_low + w*shortest_arc(θ_high, θ_low)`，一行代数，整张敏感度表由此掉落：低速源的误差以 `1−w` 到达输出、高速
+ *   源的误差以 `w` 到达，而**判据失准**（转速读数差 `dω`）把角度移动 `dω·分歧/带宽`，因为权重自身的斜率是 `1/带宽 `。三
+ *   个系数都用答案由手设定的桩观测器量出，因此这里没有任何东西依赖 plant。
  *
- *     下面的数是**系数**而不是拟合值：在 10..110 的带上，35/60/85 rad/s 给出 `w` 恰好 0.25000 / 0.50000 / 0.75000，即
- *     `(转速 − 起点)/带宽` 到最后一位 float。
+ *   下面的数是**系数**而不是拟合值：在 10..110 的带上，35/60/85 rad/s 给出 `w` 恰好 0.25000 / 0.50000 / 0.75000，即 `(
+ *   转速 − 起点)/带宽` 到最后一位 float。
  */
 TEST(BlendedObserver, EveryBlendCoefficientIsTheWeightOrOneMinusIt) {
     constexpr float kStart = 10.0F;
@@ -299,15 +299,15 @@ TEST(BlendedObserver, EveryBlendCoefficientIsTheWeightOrOneMinusIt) {
  *
  * @brief [zh] 混合是**圆上的**插值：折返两侧的两个答案沿短弧混合，而不是绕远路。
  *
- *     `theta_low + w*(theta_high - theta_low)` with a plain subtraction would take the long way whenever the two
- *     answers sit either side of the wrap, swinging the output by almost a full turn -- and it would do it precisely at
- *     the boundary the two observers disagree about. Taking the difference on the short arc is what makes the blend
- *     continuous in its inputs; this case pins it with stubs at 3.0 and 3.2832 rad, which are 0.283 apart across the
- *     wrap and 6.000 apart the other way.
+ *   `theta_low + w*(theta_high - theta_low)` with a plain subtraction would take the long way whenever the two answers
+ *   sit either side of the wrap, swinging the output by almost a full turn -- and it would do it precisely at the
+ *   boundary the two observers disagree about. Taking the difference on the short arc is what makes the blend
+ *   continuous in its inputs; this case pins it with stubs at 3.0 and 3.2832 rad, which are 0.283 apart across the wrap
+ *   and 6.000 apart the other way.
  *
- *     若用普通减法算 `θ_low + w*(θ_high − θ_low)`，两个答案落在折返两侧时就会绕远路，把输出甩出将近一整圈——而且恰好发生
- *     在两个观测器意见不一致的那个边界上。在短弧上取差值才是混合对输入连续的原因；本用例用 3.0 与 3.2832 rad 的桩把它钉
- *     住——两个点在折返两侧相距 0.283，另一边则有 6.000。
+ *   若用普通减法算 `θ_low + w*(θ_high − θ_low)`，两个答案落在折返两侧时就会绕远路，把输出甩出将近一整圈——而且恰好发生在
+ *   两个观测器意见不一致的那个边界上。在短弧上取差值才是混合对输入连续的原因；本用例用 3.0 与 3.2832 rad 的桩把它钉住——
+ *   两个点在折返两侧相距 0.283，另一边则有 6.000。
  */
 TEST(BlendedObserver, TheInterpolationHappensOnTheCircleAndNotOnTheLine) {
     constexpr float kStart = 10.0F;
@@ -335,24 +335,24 @@ TEST(BlendedObserver, TheInterpolationHappensOnTheCircleAndNotOnTheLine) {
  *
  * @brief [zh] 一次交接会在两个观测器都不动的情况下把发布角扫过整个分歧量——而发布**转速**不体现它。
  *
- *     The weight depends on speed, so when the decision speed crosses the band the output angle moves from `theta_low`
- *     to `theta_high` even though neither observer changed its answer. That excursion is real and it is bounded by the
- *     observers' disagreement -- but it is an artefact of the handover, not of the rotor. Measured here with both stubs
- *     frozen 0.6 rad apart: the output sweeps 0.6 rad while nothing physical moved.
+ *   The weight depends on speed, so when the decision speed crosses the band the output angle moves from `theta_low` to
+ *   `theta_high` even though neither observer changed its answer. That excursion is real and it is bounded by the
+ *   observers' disagreement -- but it is an artefact of the handover, not of the rotor. Measured here with both stubs
+ *   frozen 0.6 rad apart: the output sweeps 0.6 rad while nothing physical moved.
  *
- *     The second half is for consumers: the published *speed* is the same convex combination of the two speeds, so it
- *     stays at the (common) speed during the sweep. An angle that moves and a speed that does not are not consistent
- *     with each other, and a consumer that reconstructs position by integrating the speed will disagree with one that
- *     reads the angle -- for the duration of a handover, by exactly the disagreement. That is a property to be known,
- *     not a bug to be fixed: the angle is the better estimate and the sweep is how a handover works.
+ *   The second half is for consumers: the published *speed* is the same convex combination of the two speeds, so it
+ *   stays at the (common) speed during the sweep. An angle that moves and a speed that does not are not consistent with
+ *   each other, and a consumer that reconstructs position by integrating the speed will disagree with one that reads
+ *   the angle -- for the duration of a handover, by exactly the disagreement. That is a property to be known, not a bug
+ *   to be fixed: the angle is the better estimate and the sweep is how a handover works.
  *
- *     权重依赖转速，于是当判据转速穿过交接带时，即使两个观测器都没改口，输出角也会从 `θ_low` 走到 `θ_high`。这个扫动是
- *     真的，且被两者的分歧量封顶——但它是交接的产物，不是转子的。这里把两个桩冻结在相距 0.6 rad 处实测：输出扫过 0.6
- *     rad，而物理上什么都没动。
+ *   权重依赖转速，于是当判据转速穿过交接带时，即使两个观测器都没改口，输出角也会从 `θ_low` 走到 `θ_high`。这个扫动是真
+ *   的，且被两者的分歧量封顶——但它是交接的产物，不是转子的。这里把两个桩冻结在相距 0.6 rad 处实测：输出扫过 0.6 rad，而
+ *   物理上什么都没动。
  *
- *     后半句是给使用方的：发布**转速**是两个转速的同一个凸组合，所以扫动期间它停在（共同的）转速上。一个在动而一个不动
- *     的角度与转速彼此不自洽，用转速积分重建位置的消费者会与直接读角度的人在交接期间不一致，差值恰好是那个分歧量。这是
- *     **该知道的性质**而不是要修的缺陷：角度是更好的估计，扫动就是交接的工作方式。
+ *   后半句是给使用方的：发布**转速**是两个转速的同一个凸组合，所以扫动期间它停在（共同的）转速上。一个在动而一个不动的
+ *   角度与转速彼此不自洽，用转速积分重建位置的消费者会与直接读角度的人在交接期间不一致，差值恰好是那个分歧量。这是 **该
+ *   知道的性质**而不是要修的缺陷：角度是更好的估计，扫动就是交接的工作方式。
  */
 TEST(BlendedObserver, AHandoverSweepsTheAngleWithoutMovingTheSpeed) {
     constexpr float kStart = 10.0F;

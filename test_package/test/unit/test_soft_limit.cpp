@@ -238,12 +238,12 @@ namespace {
  *
  * @brief [zh] 距离 `d` 处上限原样放过的最大指令。
  *
- *     The observable is exact, which is why this is a bisection and not a tolerance: below the seam the cap returns the
- *     caller's float unchanged (it is the same value, not a computation of it), above it it returns something strictly
- *     smaller. So "the largest accepted command" is a well-defined number and can be compared to a closed form without
- *     arguing about rounding. 这个观测量是精确的，这正是它用二分而不是容差的原因：接缝以下上限原样返回调用方的那个
- *     float（是同一个值，不是它的计算结果），接缝以上返回严格更小的东西。所以"被接受的最大指令" 是个良定义的数，可以不
- *     带舍入争论地去和一个闭式比较。
+ *   The observable is exact, which is why this is a bisection and not a tolerance: below the seam the cap returns the
+ *   caller's float unchanged (it is the same value, not a computation of it), above it it returns something strictly
+ *   smaller. So "the largest accepted command" is a well-defined number and can be compared to a closed form without
+ *   arguing about rounding. 这个观测量是精确的，这正是它用二分而不是容差的原因：接缝以下上限原样返回调用方的那个 float
+ *   （是同一个值，不是它的计算结果），接缝以上返回严格更小的东西。所以"被接受的最大指令" 是个良定义的数，可以不带舍入争
+ *   论地去和一个闭式比较。
  */
 auto largest_accepted(double distance, double decel, double delay) -> double {
     foc::core::SoftLimit limit(
@@ -274,29 +274,28 @@ auto largest_accepted(double distance, double decel, double delay) -> double {
  * @brief [zh] 上限的接缝是 `sqrt(a²τ² + 2·a·d) − a·τ`，在 `(d, a)` 上是一次齐次的，而它的三个灵敏度系数就是对那个式子求
  *             导得到的。
  *
- *     The header states the invariant `v^2 <= 2*a*(d - v*delay)` and stops there. An invariant that is only ever
- *     *checked* leaves the question "how much speed does this distance actually buy me" unanswered, and that is the
- *     question a commissioning engineer asks. The answer is the fixed point of the map: the largest `v` that satisfies
- *     the inequality with equality. Solving the quadratic `v^2 + 2*a*tau*v - 2*a*d = 0` gives `v* = sqrt(a^2*tau^2 +
- *     2*a*d) - a*tau`.
+ *   The header states the invariant `v^2 <= 2*a*(d - v*delay)` and stops there. An invariant that is only ever
+ *   *checked* leaves the question "how much speed does this distance actually buy me" unanswered, and that is the
+ *   question a commissioning engineer asks. The answer is the fixed point of the map: the largest `v` that satisfies
+ *   the inequality with equality. Solving the quadratic `v^2 + 2*a*tau*v - 2*a*d = 0` gives `v* = sqrt(a^2*tau^2 +
+ *   2*a*d) - a*tau`.
  *
- *     Three consequences, each measurable on its own. It is **homogeneous of degree one in `(d, a)` jointly**: scale
- *     both the window and the braking capability and every accepted speed scales with them, so a machine twice as
- *     strong working over twice the distance is exactly twice as fast -- not `sqrt(2)` times, which is what the
- *     delay-free form would say. It reduces to `sqrt(2*a*d)` as `tau -> 0`, so the delay term is a correction that
- *     never changes the leading behaviour. And its three partials are `a/(v_seam + a*tau)`, `v_seam^2/(2*a*(v_seam +
- *     a*tau))` and `-a*v_seam/(v_seam + a*tau)`, which is the sensitivity table the registry asked for: one coefficient
- *     per error source (wall position, deceleration, drive delay).
+ *   Three consequences, each measurable on its own. It is **homogeneous of degree one in `(d, a)` jointly**: scale both
+ *   the window and the braking capability and every accepted speed scales with them, so a machine twice as strong
+ *   working over twice the distance is exactly twice as fast -- not `sqrt(2)` times, which is what the delay-free form
+ *   would say. It reduces to `sqrt(2*a*d)` as `tau -> 0`, so the delay term is a correction that never changes the
+ *   leading behaviour. And its three partials are `a/(v_seam + a*tau)`, `v_seam^2/(2*a*(v_seam + a*tau))` and
+ *   `-a*v_seam/(v_seam + a*tau)`, which is the sensitivity table the registry asked for: one coefficient per error
+ *   source (wall position, deceleration, drive delay).
  *
- *     头文件只给出守恒式 `v² ≤ 2·a·(d − v·延迟)` 就停了。一条只被**检查**的守恒式没有回答"这段距离到底给我换来多少速度
- *     "，而那正是调试工程师要问的。答案是这个映射的不动点：让不等式取等号的最大 `v`。解二次式 `v² + 2·a·τ·v − 2·a·d =
- *     0` 得 `v* = sqrt(a²τ² + 2·a·d) − a·τ`。
+ *   头文件只给出守恒式 `v² ≤ 2·a·(d − v·延迟)` 就停了。一条只被**检查**的守恒式没有回答"这段距离到底给我换来多少速度
+ *   "，而那正是调试工程师要问的。答案是这个映射的不动点：让不等式取等号的最大 `v`。解二次式 `v² + 2·a·τ·v − 2·a·d = 0`
+ *   得 `v* = sqrt(a²τ² + 2·a·d) − a·τ`。
  *
- *     三个后果，每个都可单独量。它在 `(d, a)` 上是**联合的一次齐次**：把窗口与制动能力一起放大，每个被接受的速度都随之
- *     放大，所以一台强一倍、行程也长一倍的机器恰好快一倍——而不是 `sqrt(2)` 倍，那是不带延迟的式子会说的。`τ → 0` 时它退
- *     化为 `sqrt(2·a·d)`，所以延迟项是一个永远不改变主行为的修正。它的三个偏导是 `a/(v_seam+aτ)`、
- *     `v_seam²/(2a(v_seam+aτ))`、`−a·v_seam/(v_seam+aτ)`，这就是登记册要的那张敏感度表：每个误差源（墙的位置、减速度、
- *     驱动延迟）一个系数。
+ *   三个后果，每个都可单独量。它在 `(d, a)` 上是**联合的一次齐次**：把窗口与制动能力一起放大，每个被接受的速度都随之放
+ *   大，所以一台强一倍、行程也长一倍的机器恰好快一倍——而不是 `sqrt(2)` 倍，那是不带延迟的式子会说的。`τ → 0` 时它退化为
+ *   `sqrt(2·a·d)`，所以延迟项是一个永远不改变主行为的修正。它的三个偏导是 `a/(v_seam+aτ)`、 `v_seam²/(2a(v_seam+aτ))`、
+ *   `−a·v_seam/(v_seam+aτ)`，这就是登记册要的那张敏感度表：每个误差源（墙的位置、减速度、驱动延迟）一个系数。
  */
 TEST(SoftLimit, TheCapHasAFixedPointAndThreeSensitivityCoefficients) {
     const struct {
@@ -443,32 +442,32 @@ auto approach(double command, double decel, double delay, bool shaped) -> Approa
  *
  * @brief [zh] 在 plant 上：延迟项把最近接近点推开恰好等于延迟行程的距离，而上限恰好在 `v²/(2a) + v·延迟` 处开始咬合。
  *
- *     The existing case measures one speed, twenty radians per second, and it proves the delay term is load-bearing. It
- *     does not say *how much* it buys, which is the number a user needs, and a single speed cannot say it because every
- *     candidate law fits one point. Two laws are being separated here, and both are statements about the drive, not
- *     about the shaper:
+ *   The existing case measures one speed, twenty radians per second, and it proves the delay term is load-bearing. It
+ *   does not say *how much* it buys, which is the number a user needs, and a single speed cannot say it because every
+ *   candidate law fits one point. Two laws are being separated here, and both are statements about the drive, not about
+ *   the shaper:
  *
- *     1. the cap begins to bite at `d = v^2/(2a) + v*delay` -- the inverse of the fixed point, so measuring it is
- *     measuring the seam in space rather than in speed;
+ *   1. the cap begins to bite at `d = v^2/(2a) + v*delay` -- the inverse of the fixed point, so measuring it is
+ *   measuring the seam in space rather than in speed;
  *
- *     2. the delay term shifts the closest approach forward by exactly `v*delay` -- the distance the axis covers,
- *     unavoidably, before the braking current arrives. Its gain is therefore **linear in the approach speed**, which is
- *     why it is worth almost nothing at 5 rad/s (4.6 mm) and everything at 20 (20 mm).
+ *   2. the delay term shifts the closest approach forward by exactly `v*delay` -- the distance the axis covers,
+ *   unavoidably, before the braking current arrives. Its gain is therefore **linear in the approach speed**, which is
+ *   why it is worth almost nothing at 5 rad/s (4.6 mm) and everything at 20 (20 mm).
  *
- *     Two runs per speed at three speeds. The second law is what makes the first one checkable: it says the difference
- *     between the two closest approaches is the delay travel, and that difference can be measured to four digits
- *     because both runs share the same plant.
+ *   Two runs per speed at three speeds. The second law is what makes the first one checkable: it says the difference
+ *   between the two closest approaches is the delay travel, and that difference can be measured to four digits because
+ *   both runs share the same plant.
  *
- *     已有用例只测了一个速度，二十弧度每秒，它证明延迟项是承重的。它没说**换来了多少**，而那才是使用方要的数；而单个速
- *     度说不出来，因为任何候选律都能过一点。这里分辨两条律，它们都是关于驱动的、不是关于整形器的：
+ *   已有用例只测了一个速度，二十弧度每秒，它证明延迟项是承重的。它没说**换来了多少**，而那才是使用方要的数；而单个速度
+ *   说不出来，因为任何候选律都能过一点。这里分辨两条律，它们都是关于驱动的、不是关于整形器的：
  *
- *     1. 上限在 `d = v²/(2a) + v·延迟` 处开始咬合——这是不动点的反函数，量它就是在空间里量接缝，而不是在速度里；
+ *   1. 上限在 `d = v²/(2a) + v·延迟` 处开始咬合——这是不动点的反函数，量它就是在空间里量接缝，而不是在速度里；
  *
- *     2. 延迟项把最近接近点推开恰好 `v·延迟`——制动电流到位之前轴不可避免要走的距离。它的收益因此**与接近速度成正比**，
- *     这就是它在 5 rad/s 处几乎一文不值（4.6 mm）、在 20 处是全部的原因。
+ *   2. 延迟项把最近接近点推开恰好 `v·延迟`——制动电流到位之前轴不可避免要走的距离。它的收益因此**与接近速度成正比**，这
+ *   就是它在 5 rad/s 处几乎一文不值（4.6 mm）、在 20 处是全部的原因。
  *
- *     三个速度、每个速度两趟。第二条律才是让第一条可检的东西：它说两个最近接近点之差就是延迟行程，而这个差能测到四位有
- *     效数字，因为两趟共用同一个 plant。
+ *   三个速度、每个速度两趟。第二条律才是让第一条可检的东西：它说两个最近接近点之差就是延迟行程，而这个差能测到四位有效
+ *   数字，因为两趟共用同一个 plant。
  */
 TEST(SoftLimit, TheDelayTermShiftsTheClosestApproachByExactlyTheDelayTravel) {
     const foc::sil::PlantParams params = foc::sil::nominal_plant_params();
@@ -507,16 +506,15 @@ TEST(SoftLimit, TheDelayTermShiftsTheClosestApproachByExactlyTheDelayTravel) {
  *
  * @brief [zh] 不是一个区间的窗口，在它失败的每一种方式上都被拒绝；而访问器报出的是真正生效的那个窗口。
  *
- *     The three failures are separate arithmetic accidents -- reversed, and non-finite on either end -- and the
- *     non-finite ones are the ones that matter downstream, because `NaN` compares false against everything: a `min <=
- *     target <= max` test written against a `NaN` wall refuses every target for a reason nothing reports. The accessor
- *     half is the other direction: `set_config()` claims to replace the window, and the only way to see that it did is
- *     to ask for the window back and to watch the new one start refusing.
+ *   The three failures are separate arithmetic accidents -- reversed, and non-finite on either end -- and the
+ *   non-finite ones are the ones that matter downstream, because `NaN` compares false against everything: a `min <=
+ *   target <= max` test written against a `NaN` wall refuses every target for a reason nothing reports. The accessor
+ *   half is the other direction: `set_config()` claims to replace the window, and the only way to see that it did is to
+ *   ask for the window back and to watch the new one start refusing.
  *
- *     这三种失败是三起彼此独立的算术事故——反了、以及任一端非有限——而其中非有限的那几个才是下游真正要紧的，因为 `NaN` 与
- *     任何东西比较都为假：用一面 `NaN` 的墙去写 `min <= target <= max`，会以一件没人报出的事情为由拒绝每一个目标。访问
- *     器那一半是另一个方向：`set_config()` 声称换掉了窗口，而要看它真换了，唯一的办法就是把窗口要回来，再看新窗口开始拒
- *     绝。
+ *   这三种失败是三起彼此独立的算术事故——反了、以及任一端非有限——而其中非有限的那几个才是下游真正要紧的，因为 `NaN` 与任
+ *   何东西比较都为假：用一面 `NaN` 的墙去写 `min <= target <= max`，会以一件没人报出的事情为由拒绝每一个目标。访问器那
+ *   一半是另一个方向：`set_config()` 声称换掉了窗口，而要看它真换了，唯一的办法就是把窗口要回来，再看新窗口开始拒绝。
  */
 TEST(SoftLimit, AWindowThatIsNotAnIntervalIsRefusedHoweverItIsBroken) {
     const float inf = std::numeric_limits<float>::infinity();
@@ -588,21 +586,21 @@ TEST(SoftLimit, ResetForgetsTheTargetSoTheFirstTargetRuleAppliesAgain) {
  *
  * @brief [zh] 上限对行进方向是对称的，而零指令永远不被改写。
  *
- *     The header states the cap in terms of `|v|`, so a reader is entitled to expect the low wall to behave like the
- *     high one mirrored. Until this case the negative direction had never been driven, which means half of the claim
- *     "the axis can always stop before the wall it is heading for" was untested -- the low wall is the wall a negative
- *     coordinate moves toward, and a test that only ever drives `+` cannot see a sign error there.
+ *   The header states the cap in terms of `|v|`, so a reader is entitled to expect the low wall to behave like the high
+ *   one mirrored. Until this case the negative direction had never been driven, which means half of the claim "the axis
+ *   can always stop before the wall it is heading for" was untested -- the low wall is the wall a negative coordinate
+ *   moves toward, and a test that only ever drives `+` cannot see a sign error there.
  *
- *     The distances used are exact: -0.5 + 0.0625 is representable, so `position - min` is exactly 0.0625 and both
- *     sides of the comparison compute `sqrt` of the same float. That is why the equality below is bit-exact and not a
- *     tolerance -- the comparison is of two computations of one number, not of a measurement.
+ *   The distances used are exact: -0.5 + 0.0625 is representable, so `position - min` is exactly 0.0625 and both sides
+ *   of the comparison compute `sqrt` of the same float. That is why the equality below is bit-exact and not a tolerance
+ *   -- the comparison is of two computations of one number, not of a measurement.
  *
- *     头文件是用 `|v|` 陈述这条上限的，所以读者有权期望低墙表现得像高墙的镜像。在这个用例之前，负方向从未被驱动过，这意
- *     味着"轴总能在它正驶向的那面墙之前停住"这条主张有一半未被测——低墙正是负坐标移动过去的那面墙，而一个永远只驱动 `+`
- *     的测试看不出那里的符号错误。
+ *   头文件是用 `|v|` 陈述这条上限的，所以读者有权期望低墙表现得像高墙的镜像。在这个用例之前，负方向从未被驱动过，这意味
+ *   着"轴总能在它正驶向的那面墙之前停住"这条主张有一半未被测——低墙正是负坐标移动过去的那面墙，而一个永远只驱动 `+` 的测
+ *   试看不出那里的符号错误。
  *
- *     所用的距离是精确的：-0.5 + 0.0625 可精确表示，于是 `position - min` 恰好是 0.0625，比较两边算的是同一个 float 的
- *     `sqrt`。这就是下面的等号逐位成立、而不是一个容差的原因——被比较的是一个数的两次计算，不是一次测量。
+ *   所用的距离是精确的：-0.5 + 0.0625 可精确表示，于是 `position - min` 恰好是 0.0625，比较两边算的是同一个 float 的
+ *   `sqrt`。这就是下面的等号逐位成立、而不是一个容差的原因——被比较的是一个数的两次计算，不是一次测量。
  */
 TEST(SoftLimit, TheCapIsSymmetricInTheDirectionOfTravel) {
     constexpr float kDecel = 1500.0F;

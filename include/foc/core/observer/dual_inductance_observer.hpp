@@ -15,35 +15,34 @@ namespace core {
 /**
  * @brief [en] Dual-inductance flux observer.
  *
- *     The same integrator as `BackEmfObserver`, but the rotor angle is recovered from the saliency instead of from a
- *     single `L`.
+ *   The same integrator as `BackEmfObserver`, but the rotor angle is recovered from the saliency instead of from a
+ *   single `L`.
  *
- *     The stator flux of a salient machine is a **position-dependent** quantity, not "rotor flux plus `L*i`":
+ *   The stator flux of a salient machine is a **position-dependent** quantity, not "rotor flux plus `L*i`":
  *
- *     psi = psi_f * e^(j*theta) + L0 * i + L1 * conj(i) * e^(j*2*theta), L0 = (Ld + Lq) / 2, L1 = (Ld - Lq) / 2
+ *   psi = psi_f * e^(j*theta) + L0 * i + L1 * conj(i) * e^(j*2*theta), L0 = (Ld + Lq) / 2, L1 = (Ld - Lq) / 2
  *
- *     `BackEmfObserver` assumes `L1 = 0` and answers `theta = arg(psi - L*i)`, which is **exact only for Ld == Lq**. On
- *     a salient machine the neglected `L1` term is a second harmonic of the electrical angle whose amplitude is
- *     `|L1|*|i|` -- 8.5 % of the rotor flux at 100 A with the Prius pair (`Ld = 0.13 mH`, `Lq = 0.29 mH`, `psi_f =
- *     0.0947 Wb`) -- so the single-`L` answer is wrong by an angle that grows with current, and with it the whole
- *     reason `MtpaReference` may not be paired with a single-`L` observer. This observer keeps the same integrator (`d
- *     psi / dt = v - Rs * i`, with no inductance term at all) and inverts the relation above exactly: with `x =
- *     e^(j*theta)` the relation is a **quadratic in `x`**, so the answer is closed form and needs no iteration, no
- *     allocation and no tuning.
+ *   `BackEmfObserver` assumes `L1 = 0` and answers `theta = arg(psi - L*i)`, which is **exact only for Ld == Lq**. On a
+ *   salient machine the neglected `L1` term is a second harmonic of the electrical angle whose amplitude is `|L1|*|i|`
+ *   -- 8.5 % of the rotor flux at 100 A with the Prius pair (`Ld = 0.13 mH`, `Lq = 0.29 mH`, `psi_f = 0.0947 Wb`) -- so
+ *   the single-`L` answer is wrong by an angle that grows with current, and with it the whole reason `MtpaReference`
+ *   may not be paired with a single-`L` observer. This observer keeps the same integrator (`d psi / dt = v - Rs * i`,
+ *   with no inductance term at all) and inverts the relation above exactly: with `x = e^(j*theta)` the relation is a
+ *   **quadratic in `x`**, so the answer is closed form and needs no iteration, no allocation and no tuning.
  *
  * @brief [zh] 双电感磁链观测器：与 `BackEmfObserver` 相同的积分器，但转子角从凸极性反解，而不是靠单一 `L` 减掉电流磁
  *
- *     链。
+ *   链。
  *
- *     凸极电机的定子磁链是**与位置相关**的量，不是"转子磁链加上 `L·i`"：
+ *   凸极电机的定子磁链是**与位置相关**的量，不是"转子磁链加上 `L·i`"：
  *
- *     psi = psi_f·e^(jθ) + L0·i + L1·conj(i)·e^(j2θ)，L0 = (Ld+Lq)/2，L1 = (Ld−Lq)/2
+ *   psi = psi_f·e^(jθ) + L0·i + L1·conj(i)·e^(j2θ)，L0 = (Ld+Lq)/2，L1 = (Ld−Lq)/2
  *
- *     `BackEmfObserver` 假设 `L1 = 0`，给出 `θ = arg(psi − L·i)`，这只在 `Ld == Lq` 时精确。凸极机上被丢掉的 `L1` 项是
- *     电角度二次谐波，幅值 `|L1|·|i|`——用 Prius 那对电感（`Ld = 0.13 mH`、`Lq = 0.29 mH`、`psi_f = 0.0947 Wb`）在 100 A
- *     时达到转子磁链的 8.5%——所以单 `L` 的答案会有一个随电流增长的角度误差，而"`MtpaReference` 不能与单 `L` 观测器配对"
- *     正是因为这一点。本观测器保留同一个积分器（`dψ/dt = v − Rs·i`，完全不含电感项），并精确反解上式：令 `x = e^(jθ)`，
- *     上式就是关于 `x` 的**二次方程**，因此答案是闭式的，不需要迭代、不分配、也没有可调增益。
+ *   `BackEmfObserver` 假设 `L1 = 0`，给出 `θ = arg(psi − L·i)`，这只在 `Ld == Lq` 时精确。凸极机上被丢掉的 `L1` 项是电
+ *   角度二次谐波，幅值 `|L1|·|i|`——用 Prius 那对电感（`Ld = 0.13 mH`、`Lq = 0.29 mH`、`psi_f = 0.0947 Wb`）在 100 A 时
+ *   达到转子磁链的 8.5%——所以单 `L` 的答案会有一个随电流增长的角度误差，而"`MtpaReference` 不能与单 `L` 观测器配对" 正
+ *   是因为这一点。本观测器保留同一个积分器（`dψ/dt = v − Rs·i`，完全不含电感项），并精确反解上式：令 `x = e^(jθ)`，上式
+ *   就是关于 `x` 的**二次方程**，因此答案是闭式的，不需要迭代、不分配、也没有可调增益。
  *
  * @note [en] **There is no `method=` here, and that is a decision rather than an omission.** A second way to invert the
  *            relation exists -- minimising the residual of the same expression instead of solving the quadratic -- and

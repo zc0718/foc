@@ -23,20 +23,20 @@ struct ObsState final {
 /**
  * @brief [en] Observer policy contract.
  *
- *     Every observer exposes `auto update(Ab<float> v_ab, Ab<float> i_ab, float dt_s) noexcept -> ObsState` and is
- *     checked by `hal::concepts::is_observer_v` (or by a static_assert at the assembly point).
+ *   Every observer exposes `auto update(Ab<float> v_ab, Ab<float> i_ab, float dt_s) noexcept -> ObsState` and is
+ *   checked by `hal::concepts::is_observer_v` (or by a static_assert at the assembly point).
  *
- *     Why alpha-beta and not d-q: the whole point of an observer is to produce the angle that the d-q transform needs,
- *     so its inputs cannot already be in the rotating frame.
+ *   Why alpha-beta and not d-q: the whole point of an observer is to produce the angle that the d-q transform needs, so
+ *   its inputs cannot already be in the rotating frame.
  *
  * @brief [zh] 观测器策略契约。
  *
- *     每个观测器都提供 `auto update(Ab<float> v_ab, Ab<float> i_ab, float dt_s) noexcept -> ObsState`，并由
- *     `is_observer_v`（或组装点的 static_assert）检查。
+ *   每个观测器都提供 `auto update(Ab<float> v_ab, Ab<float> i_ab, float dt_s) noexcept -> ObsState`，并由
+ *   `is_observer_v`（或组装点的 static_assert）检查。
  *
- *     ObsState`， 并由 `is_observer_v`（或组装点的 static_assert）检查。
+ *   ObsState`， 并由 `is_observer_v`（或组装点的 static_assert）检查。
  *
- *     为什么用 αβ 而不是 dq：观测器的职责正是给出 dq 变换所需的角，输入不可能已经在旋转系里。
+ *   为什么用 αβ 而不是 dq：观测器的职责正是给出 dq 变换所需的角，输入不可能已经在旋转系里。
  *
  * @context [en] Current-loop ISR: noexcept, no allocation.
  * @context [zh] 电流环 ISR：noexcept、不分配。

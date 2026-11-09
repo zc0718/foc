@@ -83,18 +83,18 @@ struct StepCommandOutput final {
 /**
  * @brief [en] Turn a pulse train plus a direction line into a position reference, exactly.
  *
- *     The integer count is the truth and the radians are derived from it, not the other way round. That ordering is
- *     what makes the mapping exact at every whole turn: `pulses / pulses_per_rev` is counted in revolutions and
- *     `pulses % pulses_per_rev` is the remainder inside the turn, so a full revolution adds exactly `2*pi` and never
- *     accumulates a rounding residue. Converting to float first and integrating would drift, and at a large enough
- *     count it would stop advancing at all -- the same shape as F-40 and F-105, which is why the counter here is an
- *     integer and the floating point only appears at the end.
+ *   The integer count is the truth and the radians are derived from it, not the other way round. That ordering is what
+ *   makes the mapping exact at every whole turn: `pulses / pulses_per_rev` is counted in revolutions and `pulses %
+ *   pulses_per_rev` is the remainder inside the turn, so a full revolution adds exactly `2*pi` and never accumulates a
+ *   rounding residue. Converting to float first and integrating would drift, and at a large enough count it would stop
+ *   advancing at all -- the same shape as F-40 and F-105, which is why the counter here is an integer and the floating
+ *   point only appears at the end.
  *
  * @brief [zh] 把脉冲串加方向线变成一个位置参考，而且是精确的。
  *
- *     整数计数是真值，弧度由它导出，而不是反过来。这个次序正是整圈处映射精确的原因：`pulses / pulses_per_rev` 数的是圈
- *     数，`pulses % pulses_per_rev` 是圈内余量，于是整圈恰好加 `2*pi`，永远不会积累舍入残差。先转成 float 再积分会漂
- *     移，计数一大还会彻底停止推进——与 F-40、F-105 同形，所以这里计数器是整数，浮点只在最后出现。
+ *   整数计数是真值，弧度由它导出，而不是反过来。这个次序正是整圈处映射精确的原因：`pulses / pulses_per_rev` 数的是圈
+ *   数，`pulses % pulses_per_rev` 是圈内余量，于是整圈恰好加 `2*pi`，永远不会积累舍入残差。先转成 float 再积分会漂移，
+ *   计数一大还会彻底停止推进——与 F-40、F-105 同形，所以这里计数器是整数，浮点只在最后出现。
  *
  * @note [en] `jump` is a report, not a limit: an exactly counted position that moved further than one period of motion
  *            allows is information the caller needs, and clamping it would erase it.
@@ -235,11 +235,11 @@ struct AnalogCommandOutput final {
 /**
  * @brief [en] Map an analogue voltage onto a command.
  *
- *     The dead band is subtracted rather than written as a threshold that switches.
+ *   The dead band is subtracted rather than written as a threshold that switches.
  *
  * @brief [zh] 把一个模拟电压映射成指令。
  *
- *     死区是被减掉的，而不是一个开关阈值。
+ *   死区是被减掉的，而不是一个开关阈值。
  * @since 0.1.9
  * @exporter
  */

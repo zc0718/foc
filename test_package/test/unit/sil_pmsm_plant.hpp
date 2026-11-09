@@ -94,14 +94,14 @@ struct PlantState final {
  *
  * @brief [zh] 用于 SIL 测试的参数化 PMSM 被控对象模型。
  *
- *     Equations (d-q, SI). Note the back-EMF term uses the rotor flux linkage `psi_f`, not the torque constant: `Kt =
- *     1.5 * pole_pairs * psi_f`, so `psi_f = Kt / (1.5 * pole_pairs)`. Using `Kt` directly in the voltage equation is
- *     dimensionally wrong (PRD erratum D24). 方程（d-q，SI）。注意反电动势项用的是转子磁链 `psi_f`，不是转矩常数： `Kt
- *     = 1.5 * pole_pairs * psi_f`，即 `psi_f = Kt / (1.5 * pole_pairs)`。 在电压方程里直接用 `Kt` 量纲不对（PRD 勘误
- *     D24）。
+ *   Equations (d-q, SI). Note the back-EMF term uses the rotor flux linkage `psi_f`, not the torque constant: `Kt = 1.5
+ *   * pole_pairs * psi_f`, so `psi_f = Kt / (1.5 * pole_pairs)`. Using `Kt` directly in the voltage equation is
+ *   dimensionally wrong (PRD erratum D24). 方程（d-q，SI）。注意反电动势项用的是转子磁链 `psi_f`，不是转矩常数： `Kt =
+ *   1.5 * pole_pairs * psi_f`，即 `psi_f = Kt / (1.5 * pole_pairs)`。 在电压方程里直接用 `Kt` 量纲不对（PRD 勘误 D24
+ *   ）。
  *
- *     did/dt = (vd - Rs*id + we*Lq*iq) / Ld diq/dt = (vq - Rs*iq - we*Ld*id - we*psi_f) / Lq Te = 1.5 * p * (psi_f*iq +
- *     (Ld - Lq)*id*iq) dwm/dt = (Te - B*wm - T_load) / J dthm/dt = wm, we = p * wm
+ *   did/dt = (vd - Rs*id + we*Lq*iq) / Ld diq/dt = (vq - Rs*iq - we*Ld*id - we*psi_f) / Lq Te = 1.5 * p * (psi_f*iq +
+ *   (Ld - Lq)*id*iq) dwm/dt = (Te - B*wm - T_load) / J dthm/dt = wm, we = p * wm
  *
  * @context [en] Host-side SIL only: never part of the shipped library.
  * @context [zh] 仅 host 侧 SIL：绝不进入发布库。
@@ -273,29 +273,29 @@ class PmsmPlant final {
      *
      * @brief [zh] 打开单节点热模型：`Ct·dT/dt = P_cu − (T − T_amb)/Rt`，默认关闭。
      *
-     *     `P_cu = 1.5*(id^2 + iq^2)*Rs(T)` -- the 1.5 is the same amplitude-invariant convention the torque uses, and
-     *     `Rs(T)` is this plant's own `effective_rs()`, so the model has the **positive feedback** a real winding has:
-     *     hotter means more loss means hotter. That feedback makes the steady state non-linear rather than a
-     *     proportionality, and above `Rt*P*alpha = 1` there is no steady state at all -- which is a property worth
-     *     being able to see in SIL rather than discovering on a bench.
+     *   `P_cu = 1.5*(id^2 + iq^2)*Rs(T)` -- the 1.5 is the same amplitude-invariant convention the torque uses, and
+     *   `Rs(T)` is this plant's own `effective_rs()`, so the model has the **positive feedback** a real winding has:
+     *   hotter means more loss means hotter. That feedback makes the steady state non-linear rather than a
+     *   proportionality, and above `Rt*P*alpha = 1` there is no steady state at all -- which is a property worth being
+     *   able to see in SIL rather than discovering on a bench.
      *
-     *     The step is the **exact** solution of the one-node equation with the loss held at the step's own state (`T <-
-     *     T_eq + (T - T_eq)*exp(-dt/tau)`, `tau = Rt*Ct`), not an Euler step: a thermal time constant is seconds while
-     *     the electrical step is microseconds, so an explicit form would be stable only by luck.
+     *   The step is the **exact** solution of the one-node equation with the loss held at the step's own state (`T <-
+     *   T_eq + (T - T_eq)*exp(-dt/tau)`, `tau = Rt*Ct`), not an Euler step: a thermal time constant is seconds while
+     *   the electrical step is microseconds, so an explicit form would be stable only by luck.
      *
-     *     **Off by default, and bit-identical when off**: with `rt <= 0` or `ct <= 0` nothing is integrated and
-     *     `temp_c_` stays exactly what `set_winding_temperature` put there.
+     *   **Off by default, and bit-identical when off**: with `rt <= 0` or `ct <= 0` nothing is integrated and `temp_c_`
+     *   stays exactly what `set_winding_temperature` put there.
      *
-     *     `P_cu = 1.5·(id² + iq²)·Rs(T)`——那个 1.5 与转矩用的是同一个幅值不变约定，`Rs(T)` 就是本 plant 自己的
-     *     `effective_rs()`，于是模型具备真实绕组具备的**正反馈**：更热→损耗更大→更热。这个反馈让稳态是**非线性**的而不
-     *     是一个比例关系，而且当 `Rt·P·α = 1` 以上**根本不存在稳态**——这是一个应该在 SIL 里看得见、而不是在台架上才发现
-     *     的性质。
+     *   `P_cu = 1.5·(id² + iq²)·Rs(T)`——那个 1.5 与转矩用的是同一个幅值不变约定，`Rs(T)` 就是本 plant 自己的
+     *   `effective_rs()`，于是模型具备真实绕组具备的**正反馈**：更热→损耗更大→更热。这个反馈让稳态是**非线性**的而不是
+     *   一个比例关系，而且当 `Rt·P·α = 1` 以上**根本不存在稳态**——这是一个应该在 SIL 里看得见、而不是在台架上才发现的性
+     *   质。
      *
-     *     步进用单节点方程的**精确解**（损耗取该步自身状态）：`T ← T_eq + (T − T_eq)·exp(−dt/τ)`，`τ = Rt·Ct`，而不是欧
-     *     拉步：热时间常数是秒、电步长是微秒，显式格式只能靠运气稳定。
+     *   步进用单节点方程的**精确解**（损耗取该步自身状态）：`T ← T_eq + (T − T_eq)·exp(−dt/τ)`，`τ = Rt·Ct`，而不是欧拉
+     *   步：热时间常数是秒、电步长是微秒，显式格式只能靠运气稳定。
      *
-     *     **默认关闭，关闭时逐位不变**：`rt <= 0` 或 `ct <= 0` 时什么都不积分，`temp_c_` 精确停在
-     *     `set_winding_temperature` 放进去的那个值。
+     *   **默认关闭，关闭时逐位不变**：`rt <= 0` 或 `ct <= 0` 时什么都不积分，`temp_c_` 精确停在
+     *   `set_winding_temperature` 放进去的那个值。
      *
      * @param config [en] the three parameters above; any non-positive `rt` or `ct` turns the model off.
      * @param config [zh] 上面三个参数；`rt` 或 `ct` 非正即关闭模型。
@@ -350,18 +350,18 @@ class PmsmPlant final {
      *
      * @brief [zh] 把齿槽转矩以谐波表注入机械方程（次数按**每机械转**，`amplitude · sin(order·θ_mech + phase)`，N·m）。
      *
-     *     Additive on the rotor: `J*dwm/dt = (Te + Tcog - B*wm - friction - load) / J`, and it is handed to the
-     *     friction model as part of the driving torque because that is what a detent is -- at rest, cogging alone can
-     *     move the rotor. Writing it as a load would have been the same arithmetic with the sign left to the
-     *     compensator's author to rediscover.
+     *   Additive on the rotor: `J*dwm/dt = (Te + Tcog - B*wm - friction - load) / J`, and it is handed to the friction
+     *   model as part of the driving torque because that is what a detent is -- at rest, cogging alone can move the
+     *   rotor. Writing it as a load would have been the same arithmetic with the sign left to the compensator's author
+     *   to rediscover.
      *
-     *     **Off by default, and bit-identical when off**: no table means no term at all, so every scenario that
-     *     predates this port integrates exactly what it integrated before. The mechanism is shared with `AbcPlant`
-     *     through `sil_cogging_table.hpp`, so the two models cannot disagree about what a given table means. 加性作用在
-     *     转子上：`J·dωm/dt = (Te + Tcog − B·ωm − friction − load)/J`，并且它作为驱动力矩的一部分交给摩擦模型 —— 因为定
-     *     位点本来就是这样：静止时齿槽单独就能推动转子。写成"负载"是同一份算术，只是把符号留给写补偿的人重新发现。 **默
-     *     认关闭，关闭时逐位不变**：没有表就完全没有这一项，所以本端口之前的所有场景积分的仍是原来那个东西。机制经
-     *     `sil_cogging_table.hpp` 与 `AbcPlant` 共享，因此两台模型对同一张表的含义不可能分歧。
+     *   **Off by default, and bit-identical when off**: no table means no term at all, so every scenario that predates
+     *   this port integrates exactly what it integrated before. The mechanism is shared with `AbcPlant` through
+     *   `sil_cogging_table.hpp`, so the two models cannot disagree about what a given table means. 加性作用在转子上：
+     *   `J·dωm/dt = (Te + Tcog − B·ωm − friction − load)/J`，并且它作为驱动力矩的一部分交给摩擦模型 —— 因为定位点本来就
+     *   是这样：静止时齿槽单独就能推动转子。写成"负载"是同一份算术，只是把符号留给写补偿的人重新发现。 **默认关闭，关闭
+     *   时逐位不变**：没有表就完全没有这一项，所以本端口之前的所有场景积分的仍是原来那个东西。机制经
+     *   `sil_cogging_table.hpp` 与 `AbcPlant` 共享，因此两台模型对同一张表的含义不可能分歧。
      *
      * @param harmonics [en] table, at most `kMaxCoggingHarmonics` entries; null clears.
      * @param harmonics [zh] 表，最多 `kMaxCoggingHarmonics` 条；空指针表示清空。
@@ -507,16 +507,16 @@ class PmsmPlant final {
      *
      * @brief [zh] 绕组温度，°C——用 `double` **是因为节点的积分方式**，不是一般意义上的精度考虑。
      *
-     *     The exact exponential step adds `(T_eq - T)*(1 - exp(-dt/tau))` per step, which for a seconds-long thermal
-     *     constant against a microsecond electrical step is about `1.25e-5` of the remaining gap. In `float`, one ulp
-     *     at 26 C is `1.9e-6`, so the update stops being representable while the gap is still **0.076 K** -- measured,
-     *     and the node then sits at 25.92 C forever against a `T_eq` of 26.00. Nothing about that stall looks like a
-     *     bug in a plot; it looks like a different (and plausible) steady state.
+     *   The exact exponential step adds `(T_eq - T)*(1 - exp(-dt/tau))` per step, which for a seconds-long thermal
+     *   constant against a microsecond electrical step is about `1.25e-5` of the remaining gap. In `float`, one ulp at
+     *   26 C is `1.9e-6`, so the update stops being representable while the gap is still **0.076 K** -- measured, and
+     *   the node then sits at 25.92 C forever against a `T_eq` of 26.00. Nothing about that stall looks like a bug in a
+     *   plot; it looks like a different (and plausible) steady state.
      *
-     *     精确指数步每步加 `(T_eq − T)·(1 − exp(−dt/τ))`，对"秒级热时间常数配微秒级电学步长"来说约是剩余间隙的
-     *     `1.25e-5`。在 `float` 里 26 °C 处一个 ulp 是 `1.9e-6`，于是当间隙还剩 **0.076 K** 时这个增量就已经无法表示——
-     *     实测值，节点自此永远停在 25.92 °C，而 `T_eq` 是 26.00。这个停滞在图上完全不像 bug，它像一个不同的（而且合理
-     *     的）稳态。
+     *   精确指数步每步加 `(T_eq − T)·(1 − exp(−dt/τ))`，对"秒级热时间常数配微秒级电学步长"来说约是剩余间隙的
+     *   `1.25e-5`。在 `float` 里 26 °C 处一个 ulp 是 `1.9e-6`，于是当间隙还剩 **0.076 K** 时这个增量就已经无法表示—— 实
+     *   测值，节点自此永远停在 25.92 °C，而 `T_eq` 是 26.00。这个停滞在图上完全不像 bug，它像一个不同的（而且合理的）稳
+     *   态。
      */
     double temp_c_{20.0};
     float temp_alpha_{0.0F};  ///< [en] Rs temperature coefficient, 1/K; 0 = no drift. [zh] Rs 温度系数，1/K；0 = 不漂。

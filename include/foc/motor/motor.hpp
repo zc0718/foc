@@ -88,9 +88,9 @@ enum class ReferenceMode : std::uint8_t {
  * @note [zh] 限制与缩放字段默认 0，含义是"用控制器自身配置的那个"。机构自己的限制仍在 `core::MotionProfile::Config`
  *            里；这些是**这次运动**的，非零值只在本次运动内替换配置值， 不需要任何恢复步骤。
  *
- *     三个缩放是柔顺旋钮。`kp_scale` 决定关节抵抗被推动的程度；`ilimit_scale` 决定速度 积分器被允许保有多少转矩，于是被
- *     手推的关节会退让而不是对抗；`kd_scale` 决定其周围的阻尼。 它们缩放增益而非限值，因此柔顺的关节仍然不能越过
- *     `max_current_a` 或运动限制。
+ *   三个缩放是柔顺旋钮。`kp_scale` 决定关节抵抗被推动的程度；`ilimit_scale` 决定速度 积分器被允许保有多少转矩，于是被手
+ *   推的关节会退让而不是对抗；`kd_scale` 决定其周围的阻尼。 它们缩放增益而非限值，因此柔顺的关节仍然不能越过
+ *   `max_current_a` 或运动限制。
  * @since 0.1.0
  * @exporter
  */
@@ -151,56 +151,56 @@ struct Command final {
 /**
  * @brief [en] Policy-composed motor: no globals, no allocation, no virtual calls in the loop.
  *
- *     All state lives in this object, so multiple instances are independent by construction. The contract a member
- *     policy has to meet:
+ *   All state lives in this object, so multiple instances are independent by construction. The contract a member policy
+ *   has to meet:
  *
- *     \li `Observer` provides `update(Ab<float>, Ab<float>, float) noexcept -> ObsState`, and optionally
- *     `seed_flux(Ab<float>)` which `start()` uses.
+ *   \li `Observer` provides `update(Ab<float>, Ab<float>, float) noexcept -> ObsState`, and optionally
+ *   `seed_flux(Ab<float>)` which `start()` uses.
  *
- *     \li `Modulator` provides `modulate(Ab<float>, float) noexcept -> SvpwmResult`.
+ *   \li `Modulator` provides `modulate(Ab<float>, float) noexcept -> SvpwmResult`.
  *
- *     \li `Controller` provides `step(float, float, float) noexcept -> float` and `reset()`.
+ *   \li `Controller` provides `step(float, float, float) noexcept -> float` and `reset()`.
  *
- *     \li `RefGenerator` provides `generate(const ReferenceInput&) noexcept -> Dq<float>`; the default
- *     `core::NullReferenceGenerator` holds the d axis at zero.
+ *   \li `RefGenerator` provides `generate(const ReferenceInput&) noexcept -> Dq<float>`; the default
+ *   `core::NullReferenceGenerator` holds the d axis at zero.
  *
- *     \li `FeedForward` provides `generate(const FeedforwardInput&) noexcept -> Dq<float>`; the default
- *     `core::NullFeedforward` contributes no term.
+ *   \li `FeedForward` provides `generate(const FeedforwardInput&) noexcept -> Dq<float>`; the default
+ *   `core::NullFeedforward` contributes no term.
  *
- *     \li `PositionControl` provides `step(setpoint, feedback, dt) noexcept -> float` and `reset()`, and commands a
- *     *velocity*; the default `core::NullPositionControl` makes position mode answer `ErrorCode::NotImpl` instead of
- *     pretending.
+ *   \li `PositionControl` provides `step(setpoint, feedback, dt) noexcept -> float` and `reset()`, and commands a
+ *   *velocity*; the default `core::NullPositionControl` makes position mode answer `ErrorCode::NotImpl` instead of
+ *   pretending.
  *
- *     \li `Aligner` provides `validate()`, `begin(pole_pairs) -> bool`, `step(dt, angle_mech) noexcept -> AlignOutput`
- *     and `reset()`; the default `core::NullAlignment` answers `false` from `begin()`, so `start()` goes straight from
- *     Align to Run.
+ *   \li `Aligner` provides `validate()`, `begin(pole_pairs) -> bool`, `step(dt, angle_mech) noexcept -> AlignOutput`
+ *   and `reset()`; the default `core::NullAlignment` answers `false` from `begin()`, so `start()` goes straight from
+ *   Align to Run.
  *
- *     \li `HalPolicy` exposes the members `pwm`, `current_sense`, `position` and `dc_link`.
+ *   \li `HalPolicy` exposes the members `pwm`, `current_sense`, `position` and `dc_link`.
  *
  * @brief [zh] 策略组合的电机：无全局状态、不分配、控制环内无虚函数调用。
  *
- *     状态全在对象内，因此多实例天然相互独立。成员策略须满足的契约：
+ *   状态全在对象内，因此多实例天然相互独立。成员策略须满足的契约：
  *
- *     \li `Observer` 提供 `update(Ab<float>, Ab<float>, float) noexcept -> ObsState`，并可选提供 `seed_flux(Ab<float>)`
- *     供 `start()` 使用。
+ *   \li `Observer` 提供 `update(Ab<float>, Ab<float>, float) noexcept -> ObsState`，并可选提供 `seed_flux(Ab<float>)`
+ *   供 `start()` 使用。
  *
- *     \li `Modulator` 提供 `modulate(Ab<float>, float) noexcept -> SvpwmResult`。
+ *   \li `Modulator` 提供 `modulate(Ab<float>, float) noexcept -> SvpwmResult`。
  *
- *     \li `Controller` 提供 `step(float, float, float) noexcept -> float` 与 `reset()`。
+ *   \li `Controller` 提供 `step(float, float, float) noexcept -> float` 与 `reset()`。
  *
- *     \li `RefGenerator` 提供 `generate(const ReferenceInput&) noexcept -> Dq<float>`；默认的
- *     `core::NullReferenceGenerator` 把 d 轴恒置零。
+ *   \li `RefGenerator` 提供 `generate(const ReferenceInput&) noexcept -> Dq<float>`；默认的
+ *   `core::NullReferenceGenerator` 把 d 轴恒置零。
  *
- *     \li `FeedForward` 提供 `generate(const FeedforwardInput&) noexcept -> Dq<float>`；默认的 `core::NullFeedforward`
- *     不贡献任何项。
+ *   \li `FeedForward` 提供 `generate(const FeedforwardInput&) noexcept -> Dq<float>`；默认的 `core::NullFeedforward` 不
+ *   贡献任何项。
  *
- *     \li `PositionControl` 提供 `step(setpoint, feedback, dt) noexcept -> float` 与 `reset()`，且下发的是**速度**；默
- *     认的 `core::NullPositionControl` 让位置模式回 `ErrorCode::NotImpl`，而不是假装成功。
+ *   \li `PositionControl` 提供 `step(setpoint, feedback, dt) noexcept -> float` 与 `reset()`，且下发的是**速度**；默认
+ *   的 `core::NullPositionControl` 让位置模式回 `ErrorCode::NotImpl`，而不是假装成功。
  *
- *     \li `Aligner` 提供 `validate()`、`begin(pole_pairs) -> bool`、`step(dt, angle_mech) noexcept -> AlignOutput` 与
- *     `reset()`；默认的 `core::NullAlignment` 的 `begin()` 回 `false`，于是 `start()` 直接从 Align 进 Run。
+ *   \li `Aligner` 提供 `validate()`、`begin(pole_pairs) -> bool`、`step(dt, angle_mech) noexcept -> AlignOutput` 与
+ *   `reset()`；默认的 `core::NullAlignment` 的 `begin()` 回 `false`，于是 `start()` 直接从 Align 进 Run。
  *
- *     \li `HalPolicy` 暴露成员 `pwm`、`current_sense`、`position`、`dc_link`。
+ *   \li `HalPolicy` 暴露成员 `pwm`、`current_sense`、`position`、`dc_link`。
  *
  * @context [en] tick() is the ISR entry: noexcept, no allocation, no I/O.
  * @context [zh] tick() 是 ISR 入口：noexcept、不分配、无 I/O。
@@ -353,23 +353,23 @@ class Motor final {
     /**
      * @brief [en] Update the feedforward iq **without changing the mode**.
      *
-     *     `set_command()` switches the axis to position mode, which is why a speed-mode host had no way to use this
-     *     field at all: the only writer also changed what was being controlled. A cogging or friction compensator
-     *     updates its offset every period while the axis keeps doing whatever it was doing, so the setter is separate
-     *     from the command.
+     *   `set_command()` switches the axis to position mode, which is why a speed-mode host had no way to use this field
+     *   at all: the only writer also changed what was being controlled. A cogging or friction compensator updates its
+     *   offset every period while the axis keeps doing whatever it was doing, so the setter is separate from the
+     *   command.
      *
-     *     The value **persists** until it is written again -- the same rule the speed reference follows -- because a
-     *     compensator that has to re-state a constant gravity term every tick would be a worse interface than one that
-     *     says it once. It is deliberately *not* cleared by `set_speed()`: clearing it there would break the one-shot
-     *     usage.
+     *   The value **persists** until it is written again -- the same rule the speed reference follows -- because a
+     *   compensator that has to re-state a constant gravity term every tick would be a worse interface than one that
+     *   says it once. It is deliberately *not* cleared by `set_speed()`: clearing it there would break the one-shot
+     *   usage.
      *
      * @brief [zh] 更新前馈 iq，**不改变模式**。
      *
-     *     `set_command()` 会把轴切到位置模式，这就是速度模式宿主完全没法用这个字段的原因：唯一的写入者也改变了被控对
-     *     象。齿槽或摩擦补偿器每个周期更新它的偏置，而轴继续做它原本在做的事，所以这个设置器与指令分开。
+     *   `set_command()` 会把轴切到位置模式，这就是速度模式宿主完全没法用这个字段的原因：唯一的写入者也改变了被控对象。
+     *   齿槽或摩擦补偿器每个周期更新它的偏置，而轴继续做它原本在做的事，所以这个设置器与指令分开。
      *
-     *     该值**保持**到下一次写入——与速度参考同一条规矩——因为一个必须每拍重述恒定重力项的补偿器，是比只说一次的接口更
-     *     差的接口。它有意**不**被 `set_speed()` 清零：在那里清零会破坏"设一次"的用法。
+     *   该值**保持**到下一次写入——与速度参考同一条规矩——因为一个必须每拍重述恒定重力项的补偿器，是比只说一次的接口更差
+     *   的接口。它有意**不**被 `set_speed()` 清零：在那里清零会破坏"设一次"的用法。
      *
      * @param iq_a [en] the offset in A; clamped with the reference by the current ceiling, not here.
      * @param iq_a [zh] 偏置，A；它随参考一起被电流上限约束，不在这里约束。
@@ -380,12 +380,12 @@ class Motor final {
     /**
    * @brief [en] Start a breakaway sequence on a known torque ramp.
    *
-   *     It reports the instant the rotor moves and leaves that hand-over torque readable, so the speed loop starts from
-   *     a known current instead of a wound-up integrator.
+   *   It reports the instant the rotor moves and leaves that hand-over torque readable, so the speed loop starts from a
+   *   known current instead of a wound-up integrator.
    *
    * @brief [zh] 开始一条起步序列：以已知斜率抬升力矩。
    *
-   *     它报告转子动起来的那一刻，并把交接力矩留在可读处，于是速度环从一个已知电流起步，而不是从一个饱和的积分起步。
+   *   它报告转子动起来的那一刻，并把交接力矩留在可读处，于是速度环从一个已知电流起步，而不是从一个饱和的积分起步。
    *
    * @param recipe [en] the machine's breakaway estimate and the drive's limits.
    * @param recipe [zh] 机器的起动点估计与驱动的限幅。
@@ -624,12 +624,12 @@ class Motor final {
     /**
      * @brief [en] Below this rate the hand-over is a *hold*, not a pull.
      *
-     *     There is nothing to lose sync with: a plain alignment hands over at zero speed by design and must not be
-     *     judged against a fraction of zero.
+     *   There is nothing to lose sync with: a plain alignment hands over at zero speed by design and must not be judged
+     *   against a fraction of zero.
      *
      * @brief [zh] 低于这个强制速率时，交接是"按住"而不是"拖动"。
      *
-     *     没有同步可失：纯对齐按设计就在零速交接，不能用零的几分之一去评判它。
+     *   没有同步可失：纯对齐按设计就在零速交接，不能用零的几分之一去评判它。
      */
     static constexpr float kLostSyncMinHandoverRadS = 1.0F;
 
@@ -742,12 +742,12 @@ class Motor final {
     /**
      * @brief [en] Kept always, not only in the sensor-less case.
      *
-     *     A position command may arrive at any time, and building the counter lazily would mean the turn count starts
-     *     from wherever the first position command happened to land.
+     *   A position command may arrive at any time, and building the counter lazily would mean the turn count starts
+     *   from wherever the first position command happened to land.
      *
      * @brief [zh] 始终保留，而不只是无感时才建。
      *
-     *     位置指令随时可能到来，懒建会让圈计数从"第一条位置指令恰好落在哪里"开始。
+     *   位置指令随时可能到来，懒建会让圈计数从"第一条位置指令恰好落在哪里"开始。
      */
     core::PositionReference position_reference_;
     std::uint32_t max_period_us_;

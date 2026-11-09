@@ -13,29 +13,28 @@ namespace core {
 /**
  * @brief [en] Whether field weakening is worth building for *this* machine, as numbers rather than an opinion.
  *
- *     The number that decides it is the characteristic current \f$i_{char} = \psi_f / L_d\f$: the d-axis current that
- *     would null the rotor flux. If it sits far above the current limit the drive cannot null the flux, and field
- *     weakening buys only the sliver \f$i_{max}/i_{char}\f$ of it -- measured on the SIL machine as 2910 -> 3850 rad/s
- *     (**+32 %**) with torque collapsing to zero at the top. If it sits below the limit the machine has a real
- *     constant-power region: the same machine with ten times the inductance holds 36 % of its base torque at 8000
- *     rad/s.
+ *   The number that decides it is the characteristic current \f$i_{char} = \psi_f / L_d\f$: the d-axis current that
+ *   would null the rotor flux. If it sits far above the current limit the drive cannot null the flux, and field
+ *   weakening buys only the sliver \f$i_{max}/i_{char}\f$ of it -- measured on the SIL machine as 2910 -> 3850 rad/s
+ *   (**+32 %**) with torque collapsing to zero at the top. If it sits below the limit the machine has a real
+ *   constant-power region: the same machine with ten times the inductance holds 36 % of its base torque at 8000 rad/s.
  *
- *     The go/no-go rule is the single comparison \f$i_{char} \le i_{max}\f$, i.e. \f$L_d\,i_{max} \ge \psi_f\f$; once
- *     it passes, the ceiling it reports is the \f$i_q = 0\f$ closed form
+ *   The go/no-go rule is the single comparison \f$i_{char} \le i_{max}\f$, i.e. \f$L_d\,i_{max} \ge \psi_f\f$; once it
+ *   passes, the ceiling it reports is the \f$i_q = 0\f$ closed form
  *
- *     \f[ \frac{\omega_{max}}{\omega_{base}} = \frac{\psi_f}{\psi_f - L_d\,i_{max}} \f]
+ *   \f[ \frac{\omega_{max}}{\omega_{base}} = \frac{\psi_f}{\psi_f - L_d\,i_{max}} \f]
  *
  * @brief [zh] 对**这台**机器来说弱磁值不值得做，用数说话，不用观点。
  *
- *     决定它的是**特征电流** \f$i_{char} = \psi_f / L_d\f$：把转子磁链削到零所需的 d 轴电流。如果它远高于电流限幅，驱动
- *     器根本削不动磁链，弱磁只买到 \f$i_{max}/i_{char}\f$ 那一点点——SIL 标称机上实测是 2910 → 3850 rad/s （**+32 %**
- *     ），顶端转矩塌到零。如果它低于电流限幅，这台机器就有真正的恒功率区：同一台机器把电感放大十倍， 8000 rad/s 处仍有
- *     基速转矩的 36 %。
+ *   决定它的是**特征电流** \f$i_{char} = \psi_f / L_d\f$：把转子磁链削到零所需的 d 轴电流。如果它远高于电流限幅，驱动器
+ *   根本削不动磁链，弱磁只买到 \f$i_{max}/i_{char}\f$ 那一点点——SIL 标称机上实测是 2910 → 3850 rad/s （**+32 %** ），顶
+ *   端转矩塌到零。如果它低于电流限幅，这台机器就有真正的恒功率区：同一台机器把电感放大十倍， 8000 rad/s 处仍有基速转矩
+ *   的 36 %。
  *
- *     做/不做的判据就是单一比较 \f$i_{char} \le i_{max}\f$，即 \f$L_d\,i_{max} \ge \psi_f\f$；过闸后它报告的转速上限是
- *     \f$i_q = 0\f$ 处的闭式：
+ *   做/不做的判据就是单一比较 \f$i_{char} \le i_{max}\f$，即 \f$L_d\,i_{max} \ge \psi_f\f$；过闸后它报告的转速上限是
+ *   \f$i_q = 0\f$ 处的闭式：
  *
- *     \f[ \frac{\omega_{max}}{\omega_{base}} = \frac{\psi_f}{\psi_f - L_d\,i_{max}} \f]
+ *   \f[ \frac{\omega_{max}}{\omega_{base}} = \frac{\psi_f}{\psi_f - L_d\,i_{max}} \f]
  *
  * @note [en] That ceiling is an upper bound: carrying torque needs more voltage, so the measured envelope sits below
  *            it. That is why it is safe as a *go/no-go* number and wrong as a target.
@@ -66,31 +65,31 @@ struct FieldWeakeningAdvice final {
 /**
  * @brief [en] The go/no-go test, from nameplate numbers alone.
  *
- *     The rule, and why each half of it exists:
+ *   The rule, and why each half of it exists:
  *
- *     \li **the current limit has to be able to null the flux at all**: `i_char <= i_max`, i.e. `Ld*i_max >= psi_f`.
- *     Below that line the speed ceiling is finite and modest, and the region is a sliver; at and above it the ceiling
- *     is unbounded in the model. Every machine measured so far sits far below it (see `test_field_weakening.cpp`: the
- *     2004 Prius traction motor, a machine designed for this, is 3.3x short).
+ *   \li **the current limit has to be able to null the flux at all**: `i_char <= i_max`, i.e. `Ld*i_max >= psi_f`.
+ *   Below that line the speed ceiling is finite and modest, and the region is a sliver; at and above it the ceiling is
+ *   unbounded in the model. Every machine measured so far sits far below it (see `test_field_weakening.cpp`: the 2004
+ *   Prius traction motor, a machine designed for this, is 3.3x short).
  *
- *     Two thresholds used to be written here, `ratio < 0.6` and `speed_gain >= 1.5`, each with a rationale. They are
- *     both **implied** by the clause above (`ratio <= 1` and an infinite gain), so neither could ever be the deciding
- *     test -- the function returned `worthwhile = true` from the early branch and the two-condition expression was
- *     unreachable-as-true. Removed rather than left in place: a threshold that cannot bind reads as a policy and is
- *     decoration (F-107). The *reason* it existed is kept in the sentence above.
+ *   Two thresholds used to be written here, `ratio < 0.6` and `speed_gain >= 1.5`, each with a rationale. They are both
+ *   **implied** by the clause above (`ratio <= 1` and an infinite gain), so neither could ever be the deciding test --
+ *   the function returned `worthwhile = true` from the early branch and the two-condition expression was
+ *   unreachable-as-true. Removed rather than left in place: a threshold that cannot bind reads as a policy and is
+ *   decoration (F-107). The *reason* it existed is kept in the sentence above.
  *
  * @brief [zh] 只用铭牌数字做的"做/不做"判定。
  *
- *     规则如下：
+ *   规则如下：
  *
- *     \li **电流限幅必须至少能把磁链削到零**：`i_char <= i_max`，即 `Ld·i_max >= ψf`。这条线以下是有限的小转速上限、那
- *     个区只是一条缝；线上及以上的模型转速上限是无界的。目前量过的机器都远在线的下面（见 `test_field_weakening.cpp`：
- *     2004 Prius 牵引电机——一台正为此而造的机器——差 3.3 倍）。
+ *   \li **电流限幅必须至少能把磁链削到零**：`i_char <= i_max`，即 `Ld·i_max >= ψf`。这条线以下是有限的小转速上限、那个
+ *   区只是一条缝；线上及以上的模型转速上限是无界的。目前量过的机器都远在线的下面（见 `test_field_weakening.cpp`： 2004
+ *   Prius 牵引电机——一台正为此而造的机器——差 3.3 倍）。
  *
- *     这里原先写着两个阈值 `ratio < 0.6` 与 `speed_gain >= 1.5`，各配一条理由。两者都被上面那一条蕴含（`ratio <= 1`、增
- *     益无穷），因此都不可 能成为决定性的检验——函数是从早返回分支返回 `worthwhile = true` 的，那条两条件表达式**永远不
- *     可能为真**。已删除而不 是留在原地：一个不可能生效的阈值读起来像策略，其实是装饰（F-107）。它当初存在的**理由**已
- *     并入上一句。
+ *   这里原先写着两个阈值 `ratio < 0.6` 与 `speed_gain >= 1.5`，各配一条理由。两者都被上面那一条蕴含（`ratio <= 1`、增益
+ *   无穷），因此都不可 能成为决定性的检验——函数是从早返回分支返回 `worthwhile = true` 的，那条两条件表达式**永远不可能
+ *   为真**。已删除而不 是留在原地：一个不可能生效的阈值读起来像策略，其实是装饰（F-107）。它当初存在的**理由**已并入上
+ *   一句。
  *
  * @param params [en] the machine, SI.
  * @param params [zh] 机器，SI。
@@ -134,17 +133,17 @@ struct FieldWeakeningAdvice final {
 /**
  * @brief [en] The flux magnitude the observer should pull towards when the drive is spending current on `i_d`.
  *
- *     `psi_f` alone is the *rotor* linkage. As soon as `i_d != 0` the stator flux vector is `psi_f + Ld*i_d` on the d
- *     axis, and telling a magnitude correction to aim at `psi_f` is telling it to aim at the wrong number: measured in
- *     SIL, at `i_d = -2.95 A` the true magnitude is 75 % of `psi_f` and the resulting angle error goes from 0.0467 rd
- *     to 0.0709 rd. That is still inside the 0.10 rd gate, which is why this is a *refinement* and not a prerequisite
- *     -- but it is a refinement with a measurable size.
+ *   `psi_f` alone is the *rotor* linkage. As soon as `i_d != 0` the stator flux vector is `psi_f + Ld*i_d` on the d
+ *   axis, and telling a magnitude correction to aim at `psi_f` is telling it to aim at the wrong number: measured in
+ *   SIL, at `i_d = -2.95 A` the true magnitude is 75 % of `psi_f` and the resulting angle error goes from 0.0467 rd to
+ *   0.0709 rd. That is still inside the 0.10 rd gate, which is why this is a *refinement* and not a prerequisite -- but
+ *   it is a refinement with a measurable size.
  *
  * @brief [zh] 当驱动器把电流花在 `i_d` 上时，观测器该把幅值拉向多少。
  *
- *     单独的 `psi_f` 是**转子**磁链。只要 `i_d != 0`，定子磁链矢量在 d 轴上就是 `ψf + Ld·i_d`，而让幅值修正去瞄准
- *     `psi_f` 就是让它瞄错数：SIL 实测 `i_d = −2.95 A` 时 真实幅值是 `ψf` 的 75 %，角度误差从 0.0467 rad 走到 0.0709
- *     rad。那仍在 0.10 rad 闸内， 所以这是**refinement**而不是前置条件——但它是一个大小可测的 refinement。
+ *   单独的 `psi_f` 是**转子**磁链。只要 `i_d != 0`，定子磁链矢量在 d 轴上就是 `ψf + Ld·i_d`，而让幅值修正去瞄准 `psi_f`
+ *   就是让它瞄错数：SIL 实测 `i_d = −2.95 A` 时 真实幅值是 `ψf` 的 75 %，角度误差从 0.0467 rad 走到 0.0709 rad。那仍在
+ *   0.10 rad 闸内， 所以这是**refinement**而不是前置条件——但它是一个大小可测的 refinement。
  * @since 0.1.0
  * @exporter
  */
@@ -159,19 +158,19 @@ struct FieldWeakeningAdvice final {
 /**
  * @brief [en] The d-axis reference that stays inside the voltage ceiling.
  *
- *     It spends current on flux instead of on torque.
+ *   It spends current on flux instead of on torque.
  *
- *     Drop-in for `NullReferenceGenerator`: same shape, same call site, which is the point -- `ReferenceInput` already
- *     carries `omega_e`, `v_bus` and the measured current, so field weakening needs **no change to `Motor`, no new
- *     template parameter on the existing instantiations, and no state**. Measured (SIL): the nominal machine's `i_d`
- *     goes to `-1.55 A` at the base speed and `-2.70 A` at 3500 rad/s, holding `i_q = 1.24 A` where `i_d = 0` would
- *     give zero torque.
+ *   Drop-in for `NullReferenceGenerator`: same shape, same call site, which is the point -- `ReferenceInput` already
+ *   carries `omega_e`, `v_bus` and the measured current, so field weakening needs **no change to `Motor`, no new
+ *   template parameter on the existing instantiations, and no state**. Measured (SIL): the nominal machine's `i_d` goes
+ *   to `-1.55 A` at the base speed and `-2.70 A` at 3500 rad/s, holding `i_q = 1.24 A` where `i_d = 0` would give zero
+ *   torque.
  *
  * @brief [zh] 用电流去买磁链（而不是转矩），从而把驱动器留在电压上限以内的 d 轴参考。
  *
- *     `NullReferenceGenerator` 的直接替代：同样的形状、同样的调用点，这正是要点—— `ReferenceInput` 已经带着 `omega_e`、
- *     `v_bus` 和实测电流，所以弱磁**不需要改 `Motor`、 不需要给既有实例化加模板参数、也不需要状态**。实测（SIL）：标称
- *     机在基速处 `i_d` 到 `−1.55 A`，3500 rad/s 处到 `−2.70 A`，同时守住 `i_q = 1.24 A`，而 `i_d = 0` 在那里是零转矩。
+ *   `NullReferenceGenerator` 的直接替代：同样的形状、同样的调用点，这正是要点—— `ReferenceInput` 已经带着 `omega_e`、
+ *   `v_bus` 和实测电流，所以弱磁**不需要改 `Motor`、 不需要给既有实例化加模板参数、也不需要状态**。实测（SIL）：标称机
+ *   在基速处 `i_d` 到 `−1.55 A`，3500 rad/s 处到 `−2.70 A`，同时守住 `i_q = 1.24 A`，而 `i_d = 0` 在那里是零转矩。
  *
  * @note [en] The decision is solved **without `Rs`**, and then verified against the full voltage equation in the tests.
  *            That is deliberate: the resistor's contribution to the ellipse is small compared with `omega*L` in the

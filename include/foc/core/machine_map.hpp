@@ -60,13 +60,13 @@ struct MachinePoint final {
  *               fail to allocate. Nine rows is enough for a saturation knee plus the ends, and the format keeps the
  *               rows sorted so interpolation is a scan of a handful of floats.
  *
- *     Outside the measured range the answer is **clamped to the end row**, not extrapolated. Extrapolating a saturation
- *     curve past the last measurement is how a model invents behaviour nobody measured.
+ *   Outside the measured range the answer is **clamped to the end row**, not extrapolated. Extrapolating a saturation
+ *   curve past the last measurement is how a model invents behaviour nobody measured.
  *
  * @details [zh] 容量是静态的：它住在控制路径上，而"能增长的表格"就是"可能分配失败的表格"。九行足以描述一个饱和拐点加两
  *               端，格式要求行按电流升序，于是插值只是扫几个 float。
  *
- *     超出实测范围时**钳到端行**，不做外推。把饱和曲线外推到最后一个测点之外，正是模型凭空发明没人测过的行为的做法。
+ *   超出实测范围时**钳到端行**，不做外推。把饱和曲线外推到最后一个测点之外，正是模型凭空发明没人测过的行为的做法。
  *
  * @note [en] A one-row map is legal and means "constant, this is all I know" -- the honest representation of a
  *            nameplate parameter set.

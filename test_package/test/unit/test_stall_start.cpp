@@ -227,12 +227,11 @@ struct BreakawayRun final {
  *
  * @brief [zh] 用序列自己的力矩驱动一台带静摩擦的 plant，并报出两个时钟。
  *
- *     `true_breakaway_nm` is the plant's stiction plus the constant load; `recipe_breakaway_nm` is what the caller
- *     *told* the sequence. They are separate arguments because every sensitivity row below is about the difference
- *     between them.
+ *   `true_breakaway_nm` is the plant's stiction plus the constant load; `recipe_breakaway_nm` is what the caller *told*
+ *   the sequence. They are separate arguments because every sensitivity row below is about the difference between them.
  *
- *     `true_breakaway_nm` 是 plant 的静摩擦加恒定负载；`recipe_breakaway_nm` 是调用方**告诉**序列的那个数。两者是分开的
- *     参数，因为下面每一行敏感度关心的都是它们之差。
+ *   `true_breakaway_nm` 是 plant 的静摩擦加恒定负载；`recipe_breakaway_nm` 是调用方**告诉**序列的那个数。两者是分开的参
+ *   数，因为下面每一行敏感度关心的都是它们之差。
  */
 auto run_breakaway(float recipe_breakaway_nm, float true_breakaway_nm, float ramp_nm_per_s,
                    int max_ticks = 40000) -> BreakawayRun {
@@ -296,21 +295,21 @@ auto run_breakaway(float recipe_breakaway_nm, float true_breakaway_nm, float ram
  *
  * @brief [zh] `begin()` 之前的一步答 `State` 且什么都不下发——它不会顺手把序列启动起来。
  *
- *     `step()` is called from a control loop, and a loop calls it every period whether or not the sequence was started,
- *     because the sequence's recipe is validated at configuration time and the loop has no reason to ask again. So the
- *     Idle branch is the one that decides whether an un-started sequence is harmless: a version that ramped from the
- *     first `step()` would push a torque into the axis the moment the object exists, with no `begin()` anywhere -- and
- *     a caller that only ever reads `torque_nm` would never see why.
+ *   `step()` is called from a control loop, and a loop calls it every period whether or not the sequence was started,
+ *   because the sequence's recipe is validated at configuration time and the loop has no reason to ask again. So the
+ *   Idle branch is the one that decides whether an un-started sequence is harmless: a version that ramped from the
+ *   first `step()` would push a torque into the axis the moment the object exists, with no `begin()` anywhere -- and a
+ *   caller that only ever reads `torque_nm` would never see why.
  *
- *     The falsifier is the same call after `begin()`: it must ramp. Without that half, a `step()` that always answered
- *     `State` would pass the first assertion and the module would be dead.
+ *   The falsifier is the same call after `begin()`: it must ramp. Without that half, a `step()` that always answered
+ *   `State` would pass the first assertion and the module would be dead.
  *
- *     `step()` 由控制环每周期调用，不管序列有没有启动，因为配方是在配置时校验的、环路没有理由再问一次。所以 Idle 那一条
- *     分支决定了"未启动的序列是否无害"：一个从第一次 `step()` 就开始爬升的版本，会在对象一存在时就把力矩推进轴里，而整
- *     个过程中没有任何 `begin()`——只读 `torque_nm` 的调用方永远看不出原因。
+ *   `step()` 由控制环每周期调用，不管序列有没有启动，因为配方是在配置时校验的、环路没有理由再问一次。所以 Idle 那一条分
+ *   支决定了"未启动的序列是否无害"：一个从第一次 `step()` 就开始爬升的版本，会在对象一存在时就把力矩推进轴里，而整个过
+ *   程中没有任何 `begin()`——只读 `torque_nm` 的调用方永远看不出原因。
  *
- *     伪证是 `begin()` 之后的同一次调用：它必须爬升。没有这一半，一个永远答 `State` 的 `step()` 也能过第一条断言，而那
- *     样整个模块就是死的。
+ *   伪证是 `begin()` 之后的同一次调用：它必须爬升。没有这一半，一个永远答 `State` 的 `step()` 也能过第一条断言，而那样
+ *   整个模块就是死的。
  */
 TEST(StallStart, AStepBeforeBeginReportsStateAndCommandsNothing) {
     foc::core::StallStart sequence(recipe(0.030F, 0.200F));
@@ -341,26 +340,26 @@ TEST(StallStart, AStepBeforeBeginReportsStateAndCommandsNothing) {
  *
  * @brief [zh] 斜坡速率决定轴**何时**动，不决定**要多少**力矩——平台是平的，而松脱时刻按 `1/速率` 移动。
  *
- *     This is the one property that makes the handover value usable: if the reported torque moved with the ramp rate,
- *     then "0.0307 N*m at 61 ms" would be a fact about a tuning constant rather than about the machine, and a
- *     commissioning run at a different rate would read a different breakaway point for the same motor.
+ *   This is the one property that makes the handover value usable: if the reported torque moved with the ramp rate,
+ *   then "0.0307 N*m at 61 ms" would be a fact about a tuning constant rather than about the machine, and a
+ *   commissioning run at a different rate would read a different breakaway point for the same motor.
  *
- *     Measured on the stiction plant (true breakaway 0.030 N*m):
+ *   Measured on the stiction plant (true breakaway 0.030 N*m):
  *
- *     | ramp (N*m/s) | released at | handover torque | |--------------|-------------|-----------------| | 0.25 | 121.3
- *     ms | 0.0303 N*m | | 0.50 | 61.3 ms | 0.0307 N*m | | 1.00 | 31.3 ms | 0.0313 N*m |
+ *   | ramp (N*m/s) | released at | handover torque | |--------------|-------------|-----------------| | 0.25 | 121.3 ms
+ *   | 0.0303 N*m | | 0.50 | 61.3 ms | 0.0307 N*m | | 1.00 | 31.3 ms | 0.0313 N*m |
  *
- *     So the time halves with the doubled rate (121.3/61.3 = 1.98, 61.3/31.3 = 1.96) while the torque moves by 1 mN*m
- *     over a 4x rate change. That residual is *observation* lag, not physics: the loop reads `state()` before the step
- *     that crosses the threshold, so at 1 N*m/s ten periods of blindness are ten times the torque. The bound below is
- *     therefore `one observation lag`, written as the number it was measured at rather than as a percentage.
+ *   So the time halves with the doubled rate (121.3/61.3 = 1.98, 61.3/31.3 = 1.96) while the torque moves by 1 mN*m
+ *   over a 4x rate change. That residual is *observation* lag, not physics: the loop reads `state()` before the step
+ *   that crosses the threshold, so at 1 N*m/s ten periods of blindness are ten times the torque. The bound below is
+ *   therefore `one observation lag`, written as the number it was measured at rather than as a percentage.
  *
- *     这是让交接值可用的唯一属性：如果报告的力矩跟着斜坡速率走，那"61 ms 时 0.0307 N·m"就是关于一个整定常数的事实、而不
- *     是关于这台机器的事实，换一个速率做调试就会对同一台电机读出不同的起动点。
+ *   这是让交接值可用的唯一属性：如果报告的力矩跟着斜坡速率走，那"61 ms 时 0.0307 N·m"就是关于一个整定常数的事实、而不是
+ *   关于这台机器的事实，换一个速率做调试就会对同一台电机读出不同的起动点。
  *
- *     在静摩擦 plant 上实测（真实起动点 0.030 N·m）见上表。所以时间随速率翻倍而减半（121.3/61.3 = 1.98， 61.3/31.3 =
- *     1.96），而力矩在 4 倍速率变化下只动 1 mN·m。那点残留是**观测**滞后而不是物理：环路在跨阈值的那一拍之前读
- *     `state()`，所以 1 N·m/s 时十个周期的"看不见"就是十倍的力矩。因此下面的界写成实测的那个数，而不是一个百分比。
+ *   在静摩擦 plant 上实测（真实起动点 0.030 N·m）见上表。所以时间随速率翻倍而减半（121.3/61.3 = 1.98， 61.3/31.3 =
+ *   1.96），而力矩在 4 倍速率变化下只动 1 mN·m。那点残留是**观测**滞后而不是物理：环路在跨阈值的那一拍之前读
+ *   `state()`，所以 1 N·m/s 时十个周期的"看不见"就是十倍的力矩。因此下面的界写成实测的那个数，而不是一个百分比。
  */
 TEST(StallStart, TheRampRateSetsWhenTheAxisGoesAndNotHowMuchTorqueItTakes) {
     constexpr float kTrueBreakawayNm = 0.030F;
@@ -399,34 +398,32 @@ TEST(StallStart, TheRampRateSetsWhenTheAxisGoesAndNotHowMuchTorqueItTakes) {
  * @brief [zh] 配方里的起动点被检查、然后从不参与操纵：它有 50 % 的错，交接力矩改变 **0.0000 N·m**；而同样的扫描换一台
  *             plant，它就动了 10 mN·m。
  *
- *     Found by asking which field of `StallStartConfig` a sensitivity table could be built for, and then reading the
- *     code: `breakaway_nm` appears in `validate()` and nowhere else. The ramp does not use it, the release test does
- *     not use it, `Failed` does not use it. So the sequence is *insensitive to its own brightest-sounding input* --
- *     which is either a design property worth stating or a bug, and the second half of this case is what decides
- *     between them.
+ *   Found by asking which field of `StallStartConfig` a sensitivity table could be built for, and then reading the
+ *   code: `breakaway_nm` appears in `validate()` and nowhere else. The ramp does not use it, the release test does not
+ *   use it, `Failed` does not use it. So the sequence is *insensitive to its own brightest-sounding input* -- which is
+ *   either a design property worth stating or a bug, and the second half of this case is what decides between them.
  *
- *     It is a property, and the reason is the mechanism the header claims: the handover value is the torque the rotor
- *     actually moved on, measured, so no recipe number can bias it. Measured, true breakaway 0.030 N*m, recipes at
- *     0.015 / 0.030 / 0.045: **0.0307 N*m at 61.3 ms, all three**. Then the same three recipes against a plant whose
- *     breakaway is 0.040 N*m: **0.0405 N*m at 81.0 ms, all three** -- so the number tracks the machine and not the
- *     recipe, and a version that reported `config_.breakaway_nm` would fail the second sweep while passing the first.
+ *   It is a property, and the reason is the mechanism the header claims: the handover value is the torque the rotor
+ *   actually moved on, measured, so no recipe number can bias it. Measured, true breakaway 0.030 N*m, recipes at 0.015
+ *   / 0.030 / 0.045: **0.0307 N*m at 61.3 ms, all three**. Then the same three recipes against a plant whose breakaway
+ *   is 0.040 N*m: **0.0405 N*m at 81.0 ms, all three** -- so the number tracks the machine and not the recipe, and a
+ *   version that reported `config_.breakaway_nm` would fail the second sweep while passing the first.
  *
- *     What the recipe *does* do is decide whether the sequence is allowed to run at all (`max_torque_nm >
- *     breakaway_nm`), so a wild over-estimate is not free: at 0.199 N*m against a 0.2 N*m limit it validates, and at
- *     0.201 it is refused. Both halves are asserted, because "the number is harmless" and "the number is ignored" are
- *     different statements.
+ *   What the recipe *does* do is decide whether the sequence is allowed to run at all (`max_torque_nm > breakaway_nm`),
+ *   so a wild over-estimate is not free: at 0.199 N*m against a 0.2 N*m limit it validates, and at 0.201 it is refused.
+ *   Both halves are asserted, because "the number is harmless" and "the number is ignored" are different statements.
  *
- *     这是靠"`StallStartConfig` 里哪个字段能建敏感度表"这个问题找到的，然后去读代码：`breakaway_nm` 只出现在
- *     `validate()` 里，别处没有。斜坡不用它、松脱判定不用它、`Failed` 不用它。所以序列对**自己听起来最重要的那个输入**
- *     不敏感——这要么是一条值得写下来的设计属性，要么是一个缺陷，而本用例的后半段就是用来分开这两者的。
+ *   这是靠"`StallStartConfig` 里哪个字段能建敏感度表"这个问题找到的，然后去读代码：`breakaway_nm` 只出现在 `validate()`
+ *   里，别处没有。斜坡不用它、松脱判定不用它、`Failed` 不用它。所以序列对**自己听起来最重要的那个输入** 不敏感——这要么
+ *   是一条值得写下来的设计属性，要么是一个缺陷，而本用例的后半段就是用来分开这两者的。
  *
- *     它是属性，理由正是头文件声称的机理：交接值就是转子真正动起来的那个力矩，是**测出来的**，所以任何配方数字都偏不了
- *     它。实测（真实起动点 0.030 N·m，配方 0.015/0.030/0.045）：三个都是 **61.3 ms 时 0.0307 N·m**。再把同样三份配方打
- *     到起动点为 0.040 N·m 的 plant 上：三个都是 **81.0 ms 时 0.0405 N·m**——所以这个数跟着机器走、不跟着配方走，而一个
- *     报 `config_.breakaway_nm` 的版本会过第一轮、败在第二轮。
+ *   它是属性，理由正是头文件声称的机理：交接值就是转子真正动起来的那个力矩，是**测出来的**，所以任何配方数字都偏不了
+ *   它。实测（真实起动点 0.030 N·m，配方 0.015/0.030/0.045）：三个都是 **61.3 ms 时 0.0307 N·m**。再把同样三份配方打到
+ *   起动点为 0.040 N·m 的 plant 上：三个都是 **81.0 ms 时 0.0405 N·m**——所以这个数跟着机器走、不跟着配方走，而一个报
+ *   `config_.breakaway_nm` 的版本会过第一轮、败在第二轮。
  *
- *     配方真正决定的是序列**允不允许跑**（`max_torque_nm > breakaway_nm`），所以离谱的高估并非免费：0.199 N·m 对 0.2
- *     N·m 的限幅能过校验，0.201 就被拒。两半都断言，因为"这个数无害"与"这个数被忽略"是两句不同的话。
+ *   配方真正决定的是序列**允不允许跑**（`max_torque_nm > breakaway_nm`），所以离谱的高估并非免费：0.199 N·m 对 0.2 N·m
+ *   的限幅能过校验，0.201 就被拒。两半都断言，因为"这个数无害"与"这个数被忽略"是两句不同的话。
  */
 TEST(StallStart, TheRecipeBreakawayIsCheckedButNeverSteersTheHandoverValue) {
     constexpr float kTrueNm = 0.030F;
@@ -469,24 +466,24 @@ TEST(StallStart, TheRecipeBreakawayIsCheckedButNeverSteersTheHandoverValue) {
  *
  * @brief [zh] 卡住的轴在 `限幅/速率 + 宽限` 被判定失败，精确到拍，而那个时刻随 `give_up` 一比一移动。
  *
- *     The existing jam case asserts that it fails and that it did not fail too early. Both are weak in the same
- *     direction: a `Failed` that arrived twice as late as it should would pass. The instant is closed-form -- the ramp
- *     clips at `max/rate` and the grace starts there -- so it can be compared to arithmetic instead of to "later than
- *     0.55 s".
+ *   The existing jam case asserts that it fails and that it did not fail too early. Both are weak in the same
+ *   direction: a `Failed` that arrived twice as late as it should would pass. The instant is closed-form -- the ramp
+ *   clips at `max/rate` and the grace starts there -- so it can be compared to arithmetic instead of to "later than
+ *   0.55 s".
  *
- *     Measured with 0.2 N*m at 0.5 N*m/s and a 1e-4 s period: clipping at 4000 ticks (400.0 ms) and `Failed` at
- *     **exactly 6000** ticks for a 0.2 s grace. With a 0.4 s grace it is **8001**, not 8000: `hold_s_` is a float32
- *     accumulator, and 4000 additions of 1e-4 s do not land on 0.4 exactly. That one tick is recorded rather than tuned
- *     away -- the accumulator cannot be made exact for every period, and a criterion that demanded 8000 would be a
- *     criterion about float32 rather than about the sequence.
+ *   Measured with 0.2 N*m at 0.5 N*m/s and a 1e-4 s period: clipping at 4000 ticks (400.0 ms) and `Failed` at **exactly
+ *   6000** ticks for a 0.2 s grace. With a 0.4 s grace it is **8001**, not 8000: `hold_s_` is a float32 accumulator,
+ *   and 4000 additions of 1e-4 s do not land on 0.4 exactly. That one tick is recorded rather than tuned away -- the
+ *   accumulator cannot be made exact for every period, and a criterion that demanded 8000 would be a criterion about
+ *   float32 rather than about the sequence.
  *
- *     已有的卡死用例断言了它会失败、且没有太早失败。两者在同一种意义上是弱的：一个迟到一倍的 `Failed` 也会通过。这个时
- *     刻是闭式的——斜坡在 `限幅/速率` 处削平、宽限从那里开始——所以它可以对着算术比，而不是对着"晚于 0.55 s"。
+ *   已有的卡死用例断言了它会失败、且没有太早失败。两者在同一种意义上是弱的：一个迟到一倍的 `Failed` 也会通过。这个时刻
+ *   是闭式的——斜坡在 `限幅/速率` 处削平、宽限从那里开始——所以它可以对着算术比，而不是对着"晚于 0.55 s"。
  *
- *     实测（0.2 N·m、0.5 N·m/s、1e-4 s 周期）：4000 拍（400.0 ms）削平，0.2 s 宽限下 `Failed` 正好落在第 **6000** 拍；
- *     0.4 s 宽限下是 **8001** 而不是 8000——`hold_s_` 是 float32 累加器，1e-4 s 加 4000 次不会正好落在 0.4 上。这一拍是
- *     **记录**而不是调掉的：累加器不可能对每个周期都精确，而一条要求 8000 的判据就成了关于 float32 的判据，而不是关于这
- *     个序列的判据。
+ *   实测（0.2 N·m、0.5 N·m/s、1e-4 s 周期）：4000 拍（400.0 ms）削平，0.2 s 宽限下 `Failed` 正好落在第 **6000** 拍；
+ *   0.4 s 宽限下是 **8001** 而不是 8000——`hold_s_` 是 float32 累加器，1e-4 s 加 4000 次不会正好落在 0.4 上。这一拍是 **
+ *   记录**而不是调掉的：累加器不可能对每个周期都精确，而一条要求 8000 的判据就成了关于 float32 的判据，而不是关于这个序
+ *   列的判据。
  */
 TEST(StallStart, AFailedAxisIsDeclaredAtTheClippingTimePlusTheGrace) {
     auto jammed_ticks = [](float give_up_s) {

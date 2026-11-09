@@ -14,14 +14,14 @@ namespace core {
  * @brief [en] One harmonic of the cogging torque a compensator will cancel: `amplitude * sin(order*theta_mech +
  *             phase)`.
  *
- *     `order` is **per mechanical revolution**. The compensator and the plant that injects it must speak the same
- *     indexing or the compensation silently cancels nothing -- and a factor of `pole_pairs` is the natural way to get
- *     that wrong, so the type is shared with the SIL injection rather than re-declared here. `order`
+ *   `order` is **per mechanical revolution**. The compensator and the plant that injects it must speak the same
+ *   indexing or the compensation silently cancels nothing -- and a factor of `pole_pairs` is the natural way to get
+ *   that wrong, so the type is shared with the SIL injection rather than re-declared here. `order`
  *
  * @brief [zh] 补偿器要抵消的齿槽转矩的一个谐波：`amplitude · sin(order·θ_mech + phase)`。
  *
- *     是**每机械转**的次数。补偿器与注入它的被控对象必须用同一套索引，否则补偿会悄无声息地什么都不抵消——而 "错一个极对
- *     数"是弄错它的最自然方式，所以这个类型与 SIL 注入共用，而不是在这里重新声明一遍。
+ *   是**每机械转**的次数。补偿器与注入它的被控对象必须用同一套索引，否则补偿会悄无声息地什么都不抵消——而 "错一个极对数"
+ *   是弄错它的最自然方式，所以这个类型与 SIL 注入共用，而不是在这里重新声明一遍。
  * @since 0.1.9
  * @exporter
  */
@@ -34,11 +34,11 @@ struct CoggingCompHarmonic final {
 /**
  * @brief [en] The compensator's machine and its two limits.
  *
- *     How much current it may add, and where it stops asking.
+ *   How much current it may add, and where it stops asking.
  *
  * @brief [zh] 补偿器的机器与两个限制。
  *
- *     能加多少电流，以及从哪里开始不再要求。
+ *   能加多少电流，以及从哪里开始不再要求。
  *
  * @note [en] `fade_from_hz` / `fade_to_hz` are the frequency boundary the SIL measurement puts a number on: with the
  *            speed loop holding 10 rad/s mechanical, an injected 4 mN*m reappears in the q-axis current at `T_cog/Kt`
@@ -63,14 +63,14 @@ struct CoggingCompConfig final {
 /**
  * @brief [en] One control period's worth of compensation, and which of the limits bound it.
  *
- *     `gain` is reported separately from `iq_a` because the two failure modes are different and a trace has to tell
- *     them apart: `gain` is "the frequency fade decided not to ask for this", `clipped` is "the current ceiling refused
- *     it". A compensator that hides either one looks like a compensator that works. `gain`
+ *   `gain` is reported separately from `iq_a` because the two failure modes are different and a trace has to tell them
+ *   apart: `gain` is "the frequency fade decided not to ask for this", `clipped` is "the current ceiling refused it". A
+ *   compensator that hides either one looks like a compensator that works. `gain`
  *
  * @brief [zh] 一个控制周期的补偿量，以及是哪个上限限制住了它。
  *
- *     与 `iq_a` 分开报告，是因为两种失效不同、轨迹必须能分开：`gain` 是「频率淡出决定不要这个」，`clipped` 是「电流上限
- *     不让」。把任一藏起来的补偿器，看起来都像一个能用的补偿器。
+ *   与 `iq_a` 分开报告，是因为两种失效不同、轨迹必须能分开：`gain` 是「频率淡出决定不要这个」，`clipped` 是「电流上限不
+ *   让」。把任一藏起来的补偿器，看起来都像一个能用的补偿器。
  * @since 0.1.9
  * @exporter
  */
@@ -100,47 +100,47 @@ struct CoggingCompInput final {
  * @brief [en] Torque-ripple feedforward: cancel a cogging table by asking for the current that would produce its
  *             negative, from the angle, **without waiting for a speed error**.
  *
- *     **Why feedforward and not a correction.** Measured on the closed loop (25 % of a revolution's worth of samples,
- *     projected on the mechanical angle): a 4 mN*m sixth harmonic injected at 10 rad/s reappears in the measured q-axis
- *     current at 0.079 A against the 0.080 A that `T_cog/Kt` predicts. The loops therefore *do* answer cogging -- but
- *     only after the rotor has already been pushed, and the price is the speed ripple the torque caused on the way. A
- *     feedforward pays none of that: it computes the same current from the angle a period earlier and never lets the
- *     error happen.
+ *   **Why feedforward and not a correction.** Measured on the closed loop (25 % of a revolution's worth of samples,
+ *   projected on the mechanical angle): a 4 mN*m sixth harmonic injected at 10 rad/s reappears in the measured q-axis
+ *   current at 0.079 A against the 0.080 A that `T_cog/Kt` predicts. The loops therefore *do* answer cogging -- but
+ *   only after the rotor has already been pushed, and the price is the speed ripple the torque caused on the way. A
+ *   feedforward pays none of that: it computes the same current from the angle a period earlier and never lets the
+ *   error happen.
  *
- *     **The gain is the salient machine's, not the nameplate's.** `T = 1.5*p*(psi_f + (ld-lq)*id)*iq`, so the current
- *     that produces a wanted torque depends on `id`. Using `Kt = 1.5*p*psi_f` alone scales the answer by the ratio
- *     `(psi_f + (ld-lq)*id)/psi_f` -- on the F32 profile at `id = -1.8 A` that ratio is **2.64**, so the naive gain
- *     asks for 2.64x the current the machine actually needs and the ripple comes back **inverted at 1.5x its original
- *     amplitude**. Worse than doing nothing, and it lands exactly where compensation is most wanted (high speed, d-axis
- *     current flowing).
+ *   **The gain is the salient machine's, not the nameplate's.** `T = 1.5*p*(psi_f + (ld-lq)*id)*iq`, so the current
+ *   that produces a wanted torque depends on `id`. Using `Kt = 1.5*p*psi_f` alone scales the answer by the ratio
+ *   `(psi_f + (ld-lq)*id)/psi_f` -- on the F32 profile at `id = -1.8 A` that ratio is **2.64**, so the naive gain asks
+ *   for 2.64x the current the machine actually needs and the ripple comes back **inverted at 1.5x its original
+ *   amplitude**. Worse than doing nothing, and it lands exactly where compensation is most wanted (high speed, d-axis
+ *   current flowing).
  *
- *     **Where it stops.** Above the current loop's bandwidth the demand buys heat and phase-shifted current instead of
- *     smooth motion: the same measurement shows the loop's own share of the cogging falling to 49 % at a 76 Hz ripple.
- *     `fade_from_hz`/`fade_to_hz` make that a configured decision, and the fade is reported so a trace can tell "we
- *     chose not to ask" from "we asked and the ceiling refused".
+ *   **Where it stops.** Above the current loop's bandwidth the demand buys heat and phase-shifted current instead of
+ *   smooth motion: the same measurement shows the loop's own share of the cogging falling to 49 % at a 76 Hz ripple.
+ *   `fade_from_hz`/`fade_to_hz` make that a configured decision, and the fade is reported so a trace can tell "we chose
+ *   not to ask" from "we asked and the ceiling refused".
  *
- *     **What it cannot do.** It cancels a torque ripple. It does not find the table (that is the self-learning piece),
- *     it does not correct for a table whose phase is wrong (a wrong phase cancels *nothing* -- the falsifier in the
- *     test), and at the flux-nulling current `psi_f + (ld-lq)*id = 0` the machine cannot produce torque at all, so the
- *     offset is refused rather than divided by.
+ *   **What it cannot do.** It cancels a torque ripple. It does not find the table (that is the self-learning piece), it
+ *   does not correct for a table whose phase is wrong (a wrong phase cancels *nothing* -- the falsifier in the test),
+ *   and at the flux-nulling current `psi_f + (ld-lq)*id = 0` the machine cannot produce torque at all, so the offset is
+ *   refused rather than divided by.
  *
  * @brief [zh] 转矩纹波前馈：由角度算出能产生齿槽**负值**的电流，从参考侧抵消一张齿槽表，**不等速度误差**。
  *
- *     **为什么是前馈而不是修正。** 闭环实测（一整转的采样按机械角投影）：10 rad/s 处注入 4 mN·m 的 6 次分量，实测 q 轴
- *     电流里重现 **0.079 A**，而 `T_cog/Kt` 预测 **0.080 A**。所以环路**确实**会回答齿槽——但只在转子已经被推动之后，代
- *     价是那一路上它引起的速度纹波。前馈一点也不用付：它早一个周期就从角度算出同一份电流，从不给误差发生的机会。
+ *   **为什么是前馈而不是修正。** 闭环实测（一整转的采样按机械角投影）：10 rad/s 处注入 4 mN·m 的 6 次分量，实测 q 轴电
+ *   流里重现 **0.079 A**，而 `T_cog/Kt` 预测 **0.080 A**。所以环路**确实**会回答齿槽——但只在转子已经被推动之后，代价是
+ *   那一路上它引起的速度纹波。前馈一点也不用付：它早一个周期就从角度算出同一份电流，从不给误差发生的机会。
  *
- *     **增益是凸极机的，不是铭牌的。** `T = 1.5·p·(ψf + (Ld−Lq)·id)·iq`，所以产生某个转矩所需的电流取决于 `id`。只用
- *     `Kt = 1.5·p·ψf` 会把答案按 `(ψf + (Ld−Lq)·id)/ψf` 的比例缩放——在 F32 那台档案机上 `id = −1.8 A` 时该比例是
- *     **2.64**，于是天真的增益要了机器实际需要的 **2.64 倍**电流，纹波**被翻到反向、幅值是原来的 1.5 倍**。比什么都不做
- *     更糟，而且它恰好落在最需要补偿的地方（高速、d 轴有电流）。
+ *   **增益是凸极机的，不是铭牌的。** `T = 1.5·p·(ψf + (Ld−Lq)·id)·iq`，所以产生某个转矩所需的电流取决于 `id`。只用 `Kt
+ *   = 1.5·p·ψf` 会把答案按 `(ψf + (Ld−Lq)·id)/ψf` 的比例缩放——在 F32 那台档案机上 `id = −1.8 A` 时该比例是 **2.64**，于
+ *   是天真的增益要了机器实际需要的 **2.64 倍**电流，纹波**被翻到反向、幅值是原来的 1.5 倍**。比什么都不做更糟，而且它恰
+ *   好落在最需要补偿的地方（高速、d 轴有电流）。
  *
- *     **在哪里停。** 超过电流环带宽之后，要求到的纹波电流买到的是热与相移电流而不是平稳运动：同一次测量显示环路自己那份
- *     齿槽在 76 Hz 纹波处已降到 49 %。`fade_from_hz`/`fade_to_hz` 把这个决定做成配置项，并把淡出量报出来，好让轨迹区分
- *     「我们选择不要」与「要了但被上限拒了」。
+ *   **在哪里停。** 超过电流环带宽之后，要求到的纹波电流买到的是热与相移电流而不是平稳运动：同一次测量显示环路自己那份齿
+ *   槽在 76 Hz 纹波处已降到 49 %。`fade_from_hz`/`fade_to_hz` 把这个决定做成配置项，并把淡出量报出来，好让轨迹区分「我
+ *   们选择不要」与「要了但被上限拒了」。
  *
- *     **它做不到什么。** 它抵消的是转矩纹波；它不负责找表（那是自学习那件），也不纠正相位错的表（相位错则**什么都不抵消
- *     ** ——用例里的反证），而在削磁电流处 `ψf + (Ld−Lq)·id = 0`，机器根本出不了转矩，于是偏置被拒绝而不是被除。
+ *   **它做不到什么。** 它抵消的是转矩纹波；它不负责找表（那是自学习那件），也不纠正相位错的表（相位错则**什么都不抵消
+ *   ** ——用例里的反证），而在削磁电流处 `ψf + (Ld−Lq)·id = 0`，机器根本出不了转矩，于是偏置被拒绝而不是被除。
  * @since 0.1.9
  * @exporter
  */

@@ -169,17 +169,17 @@ auto identified_margin(const SpeedTuneResult& result) -> float {
  *
  * @brief [zh] 辨识、提议、测量，并记录一个**距离失败多远**的目标：在库拒绝的那一点上正好归零。
  *
- *     The objective the plan allows is not "how small is the error" but "how far is this from failing". Here the
- *     failure is not invented: `SpeedTuner` refuses when the identified inertia leaves `tolerance`, so `tolerance -
- *     |j_hat/j - 1|` is a number that **crosses zero at the library's own refusal point** and nowhere else. Measured on
- *     the way there (0.25 tolerance): 1.00 -> +0.2498, 1.12 -> +0.1298, 1.20 -> +0.0498, 1.24 -> +0.0098, 1.26 ->
- *     -0.0102 and *refused*. The last two rows are the teeth: the objective is not a monotone decoration, it is the
- *     sign that predicts the answer.
+ *   The objective the plan allows is not "how small is the error" but "how far is this from failing". Here the failure
+ *   is not invented: `SpeedTuner` refuses when the identified inertia leaves `tolerance`, so `tolerance - |j_hat/j -
+ *   1|` is a number that **crosses zero at the library's own refusal point** and nowhere else. Measured on the way
+ *   there (0.25 tolerance): 1.00 -> +0.2498, 1.12 -> +0.1298, 1.20 -> +0.0498, 1.24 -> +0.0098, 1.26 -> -0.0102 and
+ *   *refused*. The last two rows are the teeth: the objective is not a monotone decoration, it is the sign that
+ *   predicts the answer.
  *
- *     计划允许的目标不是"误差多小"，而是"离失败还有多远"。这里的失败不是我编的：辨识出的惯量离开 `tolerance` 时
- *     `SpeedTuner` 就拒绝，于是 `tolerance − |j_hat/j − 1|` 是一个**在库自己的拒绝点上穿越零**的数。沿途实测（容差
- *     0.25）：1.00 → +0.2498、1.12 → +0.1298、1.20 → +0.0498、1.24 → +0.0098、1.26 → −0.0102 且**被拒绝**。最后两行就是
- *     牙齿：这个目标不是单调的装饰，它是预测答案的那个符号。
+ *   计划允许的目标不是"误差多小"，而是"离失败还有多远"。这里的失败不是我编的：辨识出的惯量离开 `tolerance` 时
+ *   `SpeedTuner` 就拒绝，于是 `tolerance − |j_hat/j − 1|` 是一个**在库自己的拒绝点上穿越零**的数。沿途实测（容差
+ *   0.25 ）：1.00 → +0.2498、1.12 → +0.1298、1.20 → +0.0498、1.24 → +0.0098、1.26 → −0.0102 且**被拒绝**。最后两行就是
+ *   牙齿：这个目标不是单调的装饰，它是预测答案的那个符号。
  */
 TEST(Sop, TheObjectiveIsTheDistanceToTheRefusalBoundaryNotTheErrorMagnitude) {
     const SpeedTuneResult nominal = identify(1.0F);
@@ -233,28 +233,28 @@ TEST(Sop, TheObjectiveIsTheDistanceToTheRefusalBoundaryNotTheErrorMagnitude) {
  * @brief [zh] 同一流程在**第二台**机器上重放：提议的增益随机器本身的比例改变，而判据仍然成立——这话之所以值得说，是因为
  *             用错机器的增益会被测出来。
  *
- *     Machine A is the nominal plant, machine B is 20 % heavier -- still inside the 25 % tolerance, so B is a machine
- *     somebody could legitimately have described, and the procedure must serve both. Measured:
+ *   Machine A is the nominal plant, machine B is 20 % heavier -- still inside the 25 % tolerance, so B is a machine
+ *   somebody could legitimately have described, and the procedure must serve both. Measured:
  *
- *     | | A's gains on A | A's gains on B | B's gains on A | B's gains on B | |---|---|---|---| | delivered ratio |
- *     **1.03136** | **0.85898** | **1.23787** | **1.03114** |
+ *   | | A's gains on A | A's gains on B | B's gains on A | B's gains on B | |---|---|---|---| | delivered ratio |
+ *   **1.03136** | **0.85898** | **1.23787** | **1.03114** |
  *
- *     Two readings, and they are different claims. **The criterion moves**: `kp_B/kp_A` = 1.20000, because `kp =
- *     bandwidth/(kt/J)` and B's ratio is 1.2 times A's. **And it still holds**: each machine's own pass lands on 1.031
- *     of the request, i.e. the same law, so the band built from the law accepts both. What makes the second column a
- *     *held-out* measurement rather than a restatement is the third claim -- A's gains on B deliver 0.859, **outside
- *     the band**, and strictly less than B's own gains deliver. The fourth column closes the other direction: B's gains
- *     on A deliver 1.238, **also outside the band** -- which corrected this case's first draft, where I had assumed a
- *     24 % overshoot was still close enough. It is not: the band rejects *both* cross-applications and accepts only the
- *     machine's own pair. If someone replaces B with a copy of A, the ratios become the same number and the strict
- *     inequalities go red: that is the plan's red proof, and it is a case rather than a paragraph.
+ *   Two readings, and they are different claims. **The criterion moves**: `kp_B/kp_A` = 1.20000, because `kp =
+ *   bandwidth/(kt/J)` and B's ratio is 1.2 times A's. **And it still holds**: each machine's own pass lands on 1.031 of
+ *   the request, i.e. the same law, so the band built from the law accepts both. What makes the second column a
+ *   *held-out* measurement rather than a restatement is the third claim -- A's gains on B deliver 0.859, **outside the
+ *   band**, and strictly less than B's own gains deliver. The fourth column closes the other direction: B's gains on A
+ *   deliver 1.238, **also outside the band** -- which corrected this case's first draft, where I had assumed a 24 %
+ *   overshoot was still close enough. It is not: the band rejects *both* cross-applications and accepts only the
+ *   machine's own pair. If someone replaces B with a copy of A, the ratios become the same number and the strict
+ *   inequalities go red: that is the plan's red proof, and it is a case rather than a paragraph.
  *
- *     A 是标称 plant，B 重 20 %——仍在 25 % 容差内，所以 B 是一台有人可以正当地描述过的机器，流程必须同时服务两者。实测
- *     见上表。两种读法，是两个不同的断言。**判据会动**：`kp_B/kp_A` = 1.20000，因为 `kp = bandwidth/(kt/J)` 而 B 的比值
- *     为 A 的 1.2 倍。**而且仍然成立**：每台机器自己的整定都落在请求的 1.031，也就是同一条律，于是由律造出的带会接受两
- *     者。让第二列成为**留出集**测量而不是复述的，是第三个断言——A 的增益用在 B 上交付 0.859、**在带外**，且严格低于 B
- *     自己增益交付的量（0.833 倍）。若把 B 换成 A 的一份拷贝，两个比值变成同一个数，那条严格不等式立刻红：这就是计划要
- *     的能红证明，而且它是一个用例而不是一段话。
+ *   A 是标称 plant，B 重 20 %——仍在 25 % 容差内，所以 B 是一台有人可以正当地描述过的机器，流程必须同时服务两者。实测见
+ *   上表。两种读法，是两个不同的断言。**判据会动**：`kp_B/kp_A` = 1.20000，因为 `kp = bandwidth/(kt/J)` 而 B 的比值为 A
+ *   的 1.2 倍。**而且仍然成立**：每台机器自己的整定都落在请求的 1.031，也就是同一条律，于是由律造出的带会接受两者。让第
+ *   二列成为**留出集**测量而不是复述的，是第三个断言——A 的增益用在 B 上交付 0.859、**在带外**，且严格低于 B 自己增益交
+ *   付的量（0.833 倍）。若把 B 换成 A 的一份拷贝，两个比值变成同一个数，那条严格不等式立刻红：这就是计划要的能红证明，
+ *   而且它是一个用例而不是一段话。
  */
 TEST(Sop, TheSameProcedureOnASecondMachineMovesTheCriterionAndStillHolds) {
     const SpeedTuneResult a = identify(1.0F);
@@ -305,15 +305,15 @@ TEST(Sop, TheSameProcedureOnASecondMachineMovesTheCriterionAndStillHolds) {
  *
  * @brief [zh] 不描述这台机器的数据答 `valid == false`，并交回**任何可能被误当成一次整定的数**。
  *
- *     A machine 50 % heavier than the nameplate is not a subtle case, and that is the point: the refusal has to be
- *     boring. Measured: `valid` false, `reason` non-empty, and the gains **bit-identical** to `speed_pi_config()`'s
- *     nameplate pair -- a caller that applies whatever it gets applies nothing new. The measured ratio is still
- *     reported (1.50026), because "I measured 1.5x of what you told me" is the useful half, and it is a statement
- *     **about the measurement**, not a gain.
+ *   A machine 50 % heavier than the nameplate is not a subtle case, and that is the point: the refusal has to be
+ *   boring. Measured: `valid` false, `reason` non-empty, and the gains **bit-identical** to `speed_pi_config()`'s
+ *   nameplate pair -- a caller that applies whatever it gets applies nothing new. The measured ratio is still reported
+ *   (1.50026), because "I measured 1.5x of what you told me" is the useful half, and it is a statement **about the
+ *   measurement**, not a gain.
  *
- *     一台比铭牌重 50 % 的机器不是微妙的情形，而这正是要点：拒绝必须是无聊的。实测：`valid` 为假、`reason` 非空，增益与
- *     `speed_pi_config()` 的铭牌对**逐位相同**——拿到什么就施加什么的调用方什么都没换。测量到的比值仍报出（1.50026），因
- *     为"我量到的是你说的 1.5 倍"是有用的那一半，而它是**关于测量**的一句话，不是一条增益。
+ *   一台比铭牌重 50 % 的机器不是微妙的情形，而这正是要点：拒绝必须是无聊的。实测：`valid` 为假、`reason` 非空，增益与
+ *   `speed_pi_config()` 的铭牌对**逐位相同**——拿到什么就施加什么的调用方什么都没换。测量到的比值仍报出（1.50026），因为
+ *   "我量到的是你说的 1.5 倍"是有用的那一半，而它是**关于测量**的一句话，不是一条增益。
  */
 TEST(Sop, DataThatDoesNotDescribeThisMachineIsRefusedWithoutANumber) {
     const SpeedTuneResult refused = identify(1.5F);
@@ -347,26 +347,26 @@ TEST(Sop, DataThatDoesNotDescribeThisMachineIsRefusedWithoutANumber) {
  *
  * @brief [zh] HPO 那一行：对着**留出集余量**搜**过程**参数，并证明"误差更小"会挑到一个更差的流程。
  *
- *     Two facts measured over five window lengths, with the injection amplitude swept separately:
+ *   Two facts measured over five window lengths, with the injection amplitude swept separately:
  *
- *     1. **The residual and the held-out delivered ratio disagree, and the residual wins the wrong way.** Residual is
- *     smallest at 2 levels (0.00675) and largest at 6 (0.00869); the held-out ratio `r_AB` is *best* at 3 levels
- *     (0.85961) and *worst* at 2 (0.85866). So the setting a "smaller residual" objective would pick is the one that
- *     delivers the least on the machine that took no part in the fit. The gap is small (0.1 %) because this plant is a
- *     clean two-parameter machine -- the point is the **ordering**, not the size.
+ *   1. **The residual and the held-out delivered ratio disagree, and the residual wins the wrong way.** Residual is
+ *   smallest at 2 levels (0.00675) and largest at 6 (0.00869); the held-out ratio `r_AB` is *best* at 3 levels
+ *   (0.85961) and *worst* at 2 (0.85866). So the setting a "smaller residual" objective would pick is the one that
+ *   delivers the least on the machine that took no part in the fit. The gap is small (0.1 %) because this plant is a
+ *   clean two-parameter machine -- the point is the **ordering**, not the size.
  *
- *     2. **The injection amplitude is not a parameter at all.** 0.6x, 1.0x and 1.5x the current levels give the *same*
- *     identified ratios, because the fit is linear and scale-invariant. A search over amplitude would be searching a
- *     flat objective -- which is worth recording, since the plan lists injection amplitude as a live knob.
+ *   2. **The injection amplitude is not a parameter at all.** 0.6x, 1.0x and 1.5x the current levels give the *same*
+ *   identified ratios, because the fit is linear and scale-invariant. A search over amplitude would be searching a flat
+ *   objective -- which is worth recording, since the plan lists injection amplitude as a live knob.
  *
- *     五个窗长上的两项实测，注入幅值另外扫：
+ *   五个窗长上的两项实测，注入幅值另外扫：
  *
- *     1. **残差与留出集的交付比值不一致，而残差赢在错的那一边。** 残差在 2 级最小（0.00675）、6 级最大（0.00869）；留出
- *     集比值 `r_AB` 在 3 级**最好**（0.85961）、2 级**最差**（0.85866）。于是"误差更小"这个目标会挑中在没参与拟合的那台
- *     机器上交付最少的那个设置。差距很小（0.1 %），因为这台 plant 是一台干净的两参数机器——要点是**排序**，不是幅度。
+ *   1. **残差与留出集的交付比值不一致，而残差赢在错的那一边。** 残差在 2 级最小（0.00675）、6 级最大（0.00869）；留出集
+ *   比值 `r_AB` 在 3 级**最好**（0.85961）、2 级**最差**（0.85866）。于是"误差更小"这个目标会挑中在没参与拟合的那台机器
+ *   上交付最少的那个设置。差距很小（0.1 %），因为这台 plant 是一台干净的两参数机器——要点是**排序**，不是幅度。
  *
- *     2. **注入幅值根本不是参数。** 电流级的 0.6×、1.0×、1.5× 给出**相同**的辨识比值，因为拟合是线性且尺度不变的。对着
- *     幅值搜索就是在搜一个平坦的目标——这条值得记下来，因为计划把注入幅值列为可动的旋钮。
+ *   2. **注入幅值根本不是参数。** 电流级的 0.6×、1.0×、1.5× 给出**相同**的辨识比值，因为拟合是线性且尺度不变的。对着幅
+ *   值搜索就是在搜一个平坦的目标——这条值得记下来，因为计划把注入幅值列为可动的旋钮。
  */
 TEST(Sop, OptimisingTheResidualWouldHavePickedTheWorseProcedure) {
     struct Row final {

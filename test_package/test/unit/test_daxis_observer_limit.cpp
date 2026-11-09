@@ -25,26 +25,26 @@ namespace sil = foc::sil;
 /**
  * @brief [en] The d-axis current the shipped observer can tolerate, as a function of speed.
  *
- *     MTPA asks for a negative `i_d` by definition; field weakening asks for a larger one. The shipped observer's flux
- *     target is the constant `psi_f`, so any `i_d` moves the flux it believes it is tracking, and at low speed the
- *     back-EMF is too small to outvote that error. The published boundary is 0.15 rad.
+ *   MTPA asks for a negative `i_d` by definition; field weakening asks for a larger one. The shipped observer's flux
+ *   target is the constant `psi_f`, so any `i_d` moves the flux it believes it is tracking, and at low speed the
+ *   back-EMF is too small to outvote that error. The published boundary is 0.15 rad.
  *
- *     What the table below says. At `i_d = 0` the error is inside 0.15 rad from 100 rad/s upward; below that it is not,
- *     which is the same floor the README already states ("< 50 rad/s: no angle claim", and 0.16 rad and above at 50).
- *     At `i_d = -1 A` the same observer reads three times the ceiling at 200 rad/s and is harmless at 3200 rad/s -- so
- *     the constraint is **not** "no d-axis current", it is "no d-axis current below a speed", and the safe `|i_d|`
- *     grows with speed. That is why the limit this library enforces is a rate (A per rad/s) rather than a constant, and
- *     why the default rate is zero: a constant cannot be right at both ends.
+ *   What the table below says. At `i_d = 0` the error is inside 0.15 rad from 100 rad/s upward; below that it is not,
+ *   which is the same floor the README already states ("< 50 rad/s: no angle claim", and 0.16 rad and above at 50). At
+ *   `i_d = -1 A` the same observer reads three times the ceiling at 200 rad/s and is harmless at 3200 rad/s -- so the
+ *   constraint is **not** "no d-axis current", it is "no d-axis current below a speed", and the safe `|i_d|` grows with
+ *   speed. That is why the limit this library enforces is a rate (A per rad/s) rather than a constant, and why the
+ *   default rate is zero: a constant cannot be right at both ends.
  *
  * @brief [zh] 出厂观测器能容忍的 d 轴电流，作为转速的函数。
  *
- *     MTPA 按定义就要负 `i_d`，弱磁要得更多。出厂观测器的磁链目标是常数 `ψf`，所以任何 `i_d` 都会挪动它以为自己 在跟踪
- *     的那个磁链，而低速下反电势太小，压不住这个误差。公开边界是 0.15 rad。
+ *   MTPA 按定义就要负 `i_d`，弱磁要得更多。出厂观测器的磁链目标是常数 `ψf`，所以任何 `i_d` 都会挪动它以为自己 在跟踪的
+ *   那个磁链，而低速下反电势太小，压不住这个误差。公开边界是 0.15 rad。
  *
- *     下表说的。`i_d = 0` 时从 100 rad/s 往上都在 0.15 rad 以内；再低就不在了，而这正是 README 已经写下的那条 地板（"<
- *     50 rad/s 不给角度主张"，50 处读到 0.16 rad 以上）。`i_d = −1 A` 时同一个观测器在 200 rad/s 读到 三倍天花板，在
- *     3200 rad/s 却无害——所以约束**不是**"不许有 d 轴电流"，而是"某个转速以下不许有"，且安全的 `|i_d|` 随转速增大。这就
- *     是本库强制的是一条**比率**（A 每 rad/s）而不是常数的原因，也是默认比率为零的原因： 一个常数不可能在两端都对。
+ *   下表说的。`i_d = 0` 时从 100 rad/s 往上都在 0.15 rad 以内；再低就不在了，而这正是 README 已经写下的那条 地板（"< 50
+ *   rad/s 不给角度主张"，50 处读到 0.16 rad 以上）。`i_d = −1 A` 时同一个观测器在 200 rad/s 读到 三倍天花板，在 3200
+ *   rad/s 却无害——所以约束**不是**"不许有 d 轴电流"，而是"某个转速以下不许有"，且安全的 `|i_d|` 随转速增大。这就是本库
+ *   强制的是一条**比率**（A 每 rad/s）而不是常数的原因，也是默认比率为零的原因： 一个常数不可能在两端都对。
  */
 constexpr float kCeilingRad = 0.15F;
 constexpr float kIqA = 0.5F;

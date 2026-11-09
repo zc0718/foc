@@ -49,30 +49,30 @@ auto predicted_crossing(const sil::SopMachine& machine, float dead_v) -> float {
  *
  * @brief [zh] 第 1 步辨识出一个**常数**，而那一行预测的边界不是测量找到的边界：稳态窗口内的误差**对转速不单调**。
  *
- *     Two facts, both measured on machine A, and the second one is the reason this procedure cannot be delivered.
+ *   Two facts, both measured on machine A, and the second one is the reason this procedure cannot be delivered.
  *
- *     **The identification is clean.** With an ideal inverter the angle error is exactly one tick of transport delay:
- *     `error/omega_mech` = 3.77e-4 s at 10 rad/s and 3.80e-4 s at 40, i.e. a constant to 1 %, and it is a delay
- *     (multiply by the 7 pole pairs and divide by the 50 us tick to get 54 control periods of electrical angle per
- *     second of lag). That is a real, identifiable quantity and stage 1 succeeds.
+ *   **The identification is clean.** With an ideal inverter the angle error is exactly one tick of transport delay:
+ *   `error/omega_mech` = 3.77e-4 s at 10 rad/s and 3.80e-4 s at 40, i.e. a constant to 1 %, and it is a delay (multiply
+ *   by the 7 pole pairs and divide by the 50 us tick to get 54 control periods of electrical angle per second of lag).
+ *   That is a real, identifiable quantity and stage 1 succeeds.
  *
- *     **The measurement refuses to be a criterion.** With 1 us of dead time the worst error over the settled window is
- *     0.1591 / 0.0679 / 0.0835 / 0.0757 / 0.0410 / 0.0898 rad at 60 / 80 / 90 / 120 / 200 / 300 rad/s: it **goes down
- *     and then up again**. What the window measures is the amplitude of a lightly damped oscillation, and an amplitude
- *     has no monotone relation to speed, so "how far is this from failing" is not a function of speed here and the
- *     "smallest speed at which an angle may be claimed" does not exist as an interval. The 101 rad/s the row predicts
- *     is a **lower bound**: the first speed that passes the 0.05 rad gate at all is 200 rad/s, roughly twice it.
+ *   **The measurement refuses to be a criterion.** With 1 us of dead time the worst error over the settled window is
+ *   0.1591 / 0.0679 / 0.0835 / 0.0757 / 0.0410 / 0.0898 rad at 60 / 80 / 90 / 120 / 200 / 300 rad/s: it **goes down and
+ *   then up again**. What the window measures is the amplitude of a lightly damped oscillation, and an amplitude has no
+ *   monotone relation to speed, so "how far is this from failing" is not a function of speed here and the "smallest
+ *   speed at which an angle may be claimed" does not exist as an interval. The 101 rad/s the row predicts is a **lower
+ *   bound**: the first speed that passes the 0.05 rad gate at all is 200 rad/s, roughly twice it.
  *
- *     两条事实，都在机器 A 上测，而第二条正是这条流程交付不了的原因。
+ *   两条事实，都在机器 A 上测，而第二条正是这条流程交付不了的原因。
  *
- *     **辨识是干净的。** 理想逆变下角度误差正好是一拍传输延时：10 rad/s 处 `误差/机械转速` = 3.77e-4 s、40 rad/s 处
- *     3.80e-4 s，即 1 % 以内的一个常数，而且它是延时（乘 7 对极、除 50 µs 一拍，得到每秒钟滞后折合 54 个控制周期的电角
- *     度）。那是一个真实、可辨识的量，第 1 步成功。
+ *   **辨识是干净的。** 理想逆变下角度误差正好是一拍传输延时：10 rad/s 处 `误差/机械转速` = 3.77e-4 s、40 rad/s 处
+ *   3.80e-4 s，即 1 % 以内的一个常数，而且它是延时（乘 7 对极、除 50 µs 一拍，得到每秒钟滞后折合 54 个控制周期的电角
+ *   度）。那是一个真实、可辨识的量，第 1 步成功。
  *
- *     **测量拒绝成为判据。** 1 µs 死区下，稳态窗口内的最坏误差在 60 / 80 / 90 / 120 / 200 / 300 rad/s 处分别是 0.1591 /
- *     0.0679 / 0.0835 / 0.0757 / 0.0410 / 0.0898 rad：**先降后升**。窗口量到的是一个轻阻尼振荡的幅值，而幅值与转速没有
- *     单调关系，于是"离失败多远"在这里不是转速的函数，"可以声称角度的最低转速"也不作为一个区间存在。那一行预测的 101
- *     rad/s 是一个**下界**：真正通过 0.05 rad 那道闸的第一个转速是 200 rad/s，大约它的两倍。
+ *   **测量拒绝成为判据。** 1 µs 死区下，稳态窗口内的最坏误差在 60 / 80 / 90 / 120 / 200 / 300 rad/s 处分别是 0.1591 /
+ *   0.0679 / 0.0835 / 0.0757 / 0.0410 / 0.0898 rad：**先降后升**。窗口量到的是一个轻阻尼振荡的幅值，而幅值与转速没有单
+ *   调关系，于是"离失败多远"在这里不是转速的函数，"可以声称角度的最低转速"也不作为一个区间存在。那一行预测的 101 rad/s
+ *   是一个**下界**：真正通过 0.05 rad 那道闸的第一个转速是 200 rad/s，大约它的两倍。
  */
 TEST(SopSensorlessFloor, TheDelayIsIdentifiedButTheBoundaryIsNotAMonotoneCriterion) {
     // Stage 1: the transport delay, on an ideal inverter.
@@ -128,25 +128,25 @@ TEST(SopSensorlessFloor, TheDelayIsIdentifiedButTheBoundaryIsNotAMonotoneCriteri
  *
  * @brief [zh] 第 2 步换一台**机器**：更强的磁钢应当把预测边界往**下**推——而测量往反方向走。预测被否证，用例把数字留下。
  *
- *     Machine B is the same machine with a 25 % stronger magnet, described correctly to the drive (plant and model
- *     alike), so this is a comparison of two machines and not of two descriptions. `psi_f` rises 25 %, so
- *     `V_dead/psi_f` falls from **100.8** to **80.6 rad/s**: at 90 rad/s machine B should be on the safe side of its
- *     own boundary while machine A is not.
+ *   Machine B is the same machine with a 25 % stronger magnet, described correctly to the drive (plant and model
+ *   alike), so this is a comparison of two machines and not of two descriptions. `psi_f` rises 25 %, so `V_dead/psi_f`
+ *   falls from **100.8** to **80.6 rad/s**: at 90 rad/s machine B should be on the safe side of its own boundary while
+ *   machine A is not.
  *
- *     Measured, machine B is **worse at every speed tried**: 0.1738 against 0.0835 rad at 90, 0.1140 against 0.0757 at
- *     120, 0.0618 against 0.0410 at 200. So `V_dead/psi_f` is not the law: `psi_f` also moves the observer's model, the
- *     back-EMF the loop has to read, and the gains the speed loop holds the machine with, and those terms win. That is
- *     a **refuted hypothesis**, recorded rather than quietly dropped -- and it is the second reason the F19 procedure
- *     cannot be delivered as a criterion: its one closed form does not survive a change of machine.
+ *   Measured, machine B is **worse at every speed tried**: 0.1738 against 0.0835 rad at 90, 0.1140 against 0.0757 at
+ *   120, 0.0618 against 0.0410 at 200. So `V_dead/psi_f` is not the law: `psi_f` also moves the observer's model, the
+ *   back-EMF the loop has to read, and the gains the speed loop holds the machine with, and those terms win. That is a
+ *   **refuted hypothesis**, recorded rather than quietly dropped -- and it is the second reason the F19 procedure
+ *   cannot be delivered as a criterion: its one closed form does not survive a change of machine.
  *
- *     机器 B 是同一台机器换 25 % 更强的磁钢，并且被正确地描述给驱动器（plant 与模型同时缩放），所以这是两台机器之间的比
- *     较，不是两份描述之间的比较。`psi_f` 升 25 %，于是 `V_dead/psi_f` 从 **100.8** 落到 **80.6 rad/s**：在 90 rad/s 处
- *     机器 B 本该站在自己边界的安全侧，而机器 A 不是。
+ *   机器 B 是同一台机器换 25 % 更强的磁钢，并且被正确地描述给驱动器（plant 与模型同时缩放），所以这是两台机器之间的比
+ *   较，不是两份描述之间的比较。`psi_f` 升 25 %，于是 `V_dead/psi_f` 从 **100.8** 落到 **80.6 rad/s**：在 90 rad/s 处机
+ *   器 B 本该站在自己边界的安全侧，而机器 A 不是。
  *
- *     实测机器 B **在每个试过的转速上都更差**：90 rad/s 处 0.1738 对 0.0835、120 处 0.1140 对 0.0757、200 处 0.0618 对
- *     0.0410。所以 `V_dead/psi_f` 不是那条律：`psi_f` 同时移动观测器的模型、环路要读的反电势、以及速度环拿住机器的增
- *     益，而那些项赢了。这是一个**被否证的假设**，记录下来而不是悄悄丢掉——它也是 F19 这条流程不能作为判据交付的第二个原
- *     因：它唯一的闭式解经不起换一台机器。
+ *   实测机器 B **在每个试过的转速上都更差**：90 rad/s 处 0.1738 对 0.0835、120 处 0.1140 对 0.0757、200 处 0.0618 对
+ *   0.0410。所以 `V_dead/psi_f` 不是那条律：`psi_f` 同时移动观测器的模型、环路要读的反电势、以及速度环拿住机器的增益，
+ *   而那些项赢了。这是一个**被否证的假设**，记录下来而不是悄悄丢掉——它也是 F19 这条流程不能作为判据交付的第二个原因：它
+ *   唯一的闭式解经不起换一台机器。
  */
 TEST(SopSensorlessFloor, AStrongerMagnetMovesThePredictionDownAndTheMeasurementUp) {
     const float crossing_a = predicted_crossing(kMachineA, kDeadV);

@@ -11,17 +11,17 @@ namespace core {
 /**
  * @brief [en] What went wrong, one code per physical mechanism.
  *
- *     Why an enum and not `ErrorCode::Fault`. A single latched fault code is enough to stop a bench test and useless in
- *     a robot: "the drive tripped" tells an operator to send the unit back, while "the DC link went under 18 V" tells
- *     them the supply sagged. The codes are listed in the order the protector ranks them, so a step that trips two
- *     things reports the outer one -- `OverCurrent` before `I2t` before `Stall`, because the current is what breaks
- *     hardware first.
+ *   Why an enum and not `ErrorCode::Fault`. A single latched fault code is enough to stop a bench test and useless in a
+ *   robot: "the drive tripped" tells an operator to send the unit back, while "the DC link went under 18 V" tells them
+ *   the supply sagged. The codes are listed in the order the protector ranks them, so a step that trips two things
+ *   reports the outer one -- `OverCurrent` before `I2t` before `Stall`, because the current is what breaks hardware
+ *   first.
  *
  * @brief [zh] 出了什么事，每种物理机理一个码。
  *
- *     为什么要枚举而不是只用 `ErrorCode::Fault`。一个锁存故障码够停下一次台架测试，在机器人里 没用："驱动器跳了"只能让
- *     运维把机器寄回厂；"母线掉到 18 V 以下"告诉他供电塌了。 这些码按保护器的排序列出，所以一步里同时触发两件事时报最外
- *     层那个——`OverCurrent` 先于 `I2t` 先于 `Stall`，因为先坏硬件的总是电流。
+ *   为什么要枚举而不是只用 `ErrorCode::Fault`。一个锁存故障码够停下一次台架测试，在机器人里 没用："驱动器跳了"只能让运
+ *   维把机器寄回厂；"母线掉到 18 V 以下"告诉他供电塌了。 这些码按保护器的排序列出，所以一步里同时触发两件事时报最外层那
+ *   个——`OverCurrent` 先于 `I2t` 先于 `Stall`，因为先坏硬件的总是电流。
  * @since 0.1.0
  * @exporter
  */
@@ -88,17 +88,17 @@ enum class FaultCode : std::uint8_t {
 /**
  * @brief [en] Whether a fault clears by itself once its cause goes away.
  *
- *     The split is physical, not a matter of taste. A bus that sagged lifts again, a winding that overheated cools, and
- *     an `I2t` budget refills when the current stops -- those clear themselves, and latching them would turn a
- *     transient into a service call. A hard over-current, a stall and a lost angle mean something is **wrong** (a
- *     shorted winding, a jammed axis, a mis-set offset): retrying those automatically is how a drive destroys itself in
- *     a loop. They stay latched until somebody calls `reset()`.
+ *   The split is physical, not a matter of taste. A bus that sagged lifts again, a winding that overheated cools, and
+ *   an `I2t` budget refills when the current stops -- those clear themselves, and latching them would turn a transient
+ *   into a service call. A hard over-current, a stall and a lost angle mean something is **wrong** (a shorted winding,
+ *   a jammed axis, a mis-set offset): retrying those automatically is how a drive destroys itself in a loop. They stay
+ *   latched until somebody calls `reset()`.
  *
  * @brief [zh] 故障在成因消失后是否自行消失。
  *
- *     这个分法是物理的，不是口味问题。塌下去的母线会自己回来、过热的绕组会凉、`I2t` 预算在电流 停下后自己回填——它们自己
- *     会清，锁存它们等于把一次暂态变成一次报修。硬过流、堵转、失步意味着 有东西**坏了**（绕组短路、轴卡死、偏置设错）：
- *     自动重试正是驱动器把自己反复烧掉的方式。 它们保持锁存，直到有人 `reset()`。
+ *   这个分法是物理的，不是口味问题。塌下去的母线会自己回来、过热的绕组会凉、`I2t` 预算在电流 停下后自己回填——它们自己会
+ *   清，锁存它们等于把一次暂态变成一次报修。硬过流、堵转、失步意味着 有东西**坏了**（绕组短路、轴卡死、偏置设错）：自动
+ *   重试正是驱动器把自己反复烧掉的方式。 它们保持锁存，直到有人 `reset()`。
  * @since 0.1.0
  * @exporter
  */
@@ -246,31 +246,31 @@ struct ProtectionOutput final {
 /**
  * @brief [en] Classifies six faults, latches what should stay latched, and derates before it trips.
  *
- *     Three things it does that a plain threshold check does not. (1) **Derating before tripping**: the current limit
- *     falls monotonically from `t_derate_start_c` to `t_derate_end_c`, so a hot machine loses authority gradually
- *     instead of failing at a cliff edge. (2) **`I2t` as a thermal model, not a counter**: `q' = i^2 - q/tau`, so the
- *     budget *cools* while the current is off. A counter that only increments would make a machine that has been idle
- *     for an hour still carry the memory of a two-second overload. (3) **Hysteresis on exactly the faults that
- *     self-clear**: a bus hovering on the threshold would otherwise chatter the output enable at the control rate, and
- *     chatter is how a protection becomes a failure source.
+ *   Three things it does that a plain threshold check does not. (1) **Derating before tripping**: the current limit
+ *   falls monotonically from `t_derate_start_c` to `t_derate_end_c`, so a hot machine loses authority gradually instead
+ *   of failing at a cliff edge. (2) **`I2t` as a thermal model, not a counter**: `q' = i^2 - q/tau`, so the budget
+ *   *cools* while the current is off. A counter that only increments would make a machine that has been idle for an
+ *   hour still carry the memory of a two-second overload. (3) **Hysteresis on exactly the faults that self-clear**: a
+ *   bus hovering on the threshold would otherwise chatter the output enable at the control rate, and chatter is how a
+ *   protection becomes a failure source.
  *
- *     What it is **not**, said here because "thermal model" invites the wrong reading. `q` is in A^2*s, not degrees:
- *     the block has no idea what the winding temperature is, and its `t_derate_*` thresholds are a *number the caller
- *     supplies*, not a measurement this code can make. It models one lumped copper loss with one time constant. It does
- *     not model the magnet, the bearings, the ambient, or a hot spot away from whatever sensor the caller has. A real
- *     drive needs a thermistor or an estimator alongside this, and no amount of tuning here replaces that.
+ *   What it is **not**, said here because "thermal model" invites the wrong reading. `q` is in A^2*s, not degrees: the
+ *   block has no idea what the winding temperature is, and its `t_derate_*` thresholds are a *number the caller
+ *   supplies*, not a measurement this code can make. It models one lumped copper loss with one time constant. It does
+ *   not model the magnet, the bearings, the ambient, or a hot spot away from whatever sensor the caller has. A real
+ *   drive needs a thermistor or an estimator alongside this, and no amount of tuning here replaces that.
  *
  * @brief [zh] 分类六类故障、锁存该锁存的、并在跳闸之前先降额。
  *
- *     它做三件单纯阈值检查不会做的事。（1）**跳闸之前先降额**：电流限幅从 `t_derate_start_c` 单调降到
- *     `t_derate_end_c`，热的机器逐渐失去权限，而不是在悬崖边 上突然失效。（2）**`I2t` 是热模型不是计数器**：`q' = i² −
- *     q/τ`，所以电流停下时预算会 **冷却**。只增不减的计数器会让闲置一小时的机器仍然背着两秒过载的记忆。（3）**只有自恢
- *     复 的那些才加迟滞**：母线悬在阈值上时，否则输出使能会按控制频率反复抖，而抖动正是把一个 保护变成故障源的方式。
+ *   它做三件单纯阈值检查不会做的事。（1）**跳闸之前先降额**：电流限幅从 `t_derate_start_c` 单调降到 `t_derate_end_c`，
+ *   热的机器逐渐失去权限，而不是在悬崖边 上突然失效。（2）**`I2t` 是热模型不是计数器**：`q' = i² − q/τ`，所以电流停下时
+ *   预算会 **冷却**。只增不减的计数器会让闲置一小时的机器仍然背着两秒过载的记忆。（3）**只有自恢复 的那些才加迟滞**：母
+ *   线悬在阈值上时，否则输出使能会按控制频率反复抖，而抖动正是把一个 保护变成故障源的方式。
  *
- *     它**不是**什么，写在这里因为"热模型"容易招来误读。`q` 的单位是 A²·s，不是度： 这段代码不知道绕组温度是多少，它的
- *     `t_derate_*` 阈值是**调用方给的数**，不是本代码能 测出来的量。它用一个时间常数建模一个集总的铜损。它不建模磁钢、
- *     不建模轴承、不建模环境温度、 也不建模远离调用方那个传感器的热点。真实的驱动器需要热敏电阻或温度估计器与它并存，这
- *     里 怎么调都替代不了那件事。
+ *   它**不是**什么，写在这里因为"热模型"容易招来误读。`q` 的单位是 A²·s，不是度： 这段代码不知道绕组温度是多少，它的
+ *   `t_derate_*` 阈值是**调用方给的数**，不是本代码能 测出来的量。它用一个时间常数建模一个集总的铜损。它不建模磁钢、不
+ *   建模轴承、不建模环境温度、 也不建模远离调用方那个传感器的热点。真实的驱动器需要热敏电阻或温度估计器与它并存，这里怎
+ *   么调都替代不了那件事。
  *
  * @context [en] Current-loop ISR, every step.
  * @context [zh] 电流环 ISR，每步。

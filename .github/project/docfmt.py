@@ -548,13 +548,25 @@ def _canonical_language(lines: list[str]) -> list[str]:
             continue
         prefix = f"{star_spaces}* {entry.field}{(' ' + entry.args) if entry.args else ''} [{entry.lang}] "
         # Two columns, as in the template this follows. A wrapped continuation of the tag line aligns
-        # under the field's own text; a *separate* body paragraph gets a fixed block indent five
+        # under the field's own text; a *separate* body paragraph gets a fixed block indent three
         # columns in from the star, which is what makes a long body read as a block rather than as a
         # hanging line.
+        #
+        # **Three, not five, and the number is load-bearing.** Doxygen's Markdown support reads four or
+        # more leading spaces as an *indented code block*; a body paragraph sitting at five columns was
+        # therefore emitted as `<pre class="fragment">`, where nothing is interpreted at all -- `\f$`
+        # formulas, `**bold**`, backticked code spans and lists all came out as their source characters
+        # on 71 of 774 published pages, and no gate said anything because the text was "there". Three
+        # keeps the visual block and stays one column below the threshold. Do not raise it back.
         # 两个列，与所遵循的模板一致：标签行的折行续行对齐到字段自身的文字之下；而**独立**的正文
-        # 段落用星号后固定五格的块缩进——那正是让长正文读起来像一块而不是悬挂行的原因。
+        # 段落用星号后固定三格的块缩进——那正是让长正文读起来像一块而不是悬挂行的原因。
+        #
+        # **三格而不是五格，这个数字是有作用的。** Doxygen 的 Markdown 把行首四个及以上空格读成
+        # **缩进代码块**；五格正文因此被输出成 `<pre class="fragment">`，其中什么都不解释——`\f$`
+        # 公式、`**粗体**`、反引号代码跨度和列表全按源码字符打印，774 个已发布页面里有 71 个是这样，
+        # 而门禁一声不吭，因为"文字确实在"。三格保住视觉块感，又比阈值低一格。不要改回去。
         indent = len(prefix)
-        body_indent = len(star_spaces) + 6
+        body_indent = len(star_spaces) + 4
         has_bodies = len(joined) > 1
         if not first_group and (previous_had_bodies or has_bodies):
             out.append(f"{star_spaces}*")

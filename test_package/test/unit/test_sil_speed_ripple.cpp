@@ -150,12 +150,12 @@ using SensorlessMotor = foc::motor::Motor<core::SwitchableObserver, core::Svpwm,
  *
  * @brief [zh] 六个候选音调，每一个都对应一个有名有姓的机理，且都落在窗口自己的频率栅格上。
  *
- *     The grid is `control_hz / window_samples` = 3.333 Hz, and every candidate is an exact multiple of it, so the
- *     Goertzel below reads each one with no leakage from its neighbours. That is not pedantry: a candidate half a bin
- *     off would report the *sum* of the leakage from whatever is near it, and the whole point of this table is to
- *     decide which frequency owns the ripple. 栅格是 `control_hz / 窗口样本数` = 3.333 Hz，每个候选都是它的整数倍，于是
- *     下面的 Goertzel 读每一个都不受邻居泄漏影响。这不是学究气：偏半个栅格的候选会把邻近内容的泄漏**加**进来，而这张表
- *     要决定的恰恰是哪个频率拥有这个纹波。
+ *   The grid is `control_hz / window_samples` = 3.333 Hz, and every candidate is an exact multiple of it, so the
+ *   Goertzel below reads each one with no leakage from its neighbours. That is not pedantry: a candidate half a bin off
+ *   would report the *sum* of the leakage from whatever is near it, and the whole point of this table is to decide
+ *   which frequency owns the ripple. 栅格是 `control_hz / 窗口样本数` = 3.333 Hz，每个候选都是它的整数倍，于是下面的
+ *   Goertzel 读每一个都不受邻居泄漏影响。这不是学究气：偏半个栅格的候选会把邻近内容的泄漏**加**进来，而这张表要决定的恰
+ *   恰是哪个频率拥有这个纹波。
  */
 constexpr int kToneBins[6] = {10, 12, 28, 95, 125, 600};
 constexpr float kToneHz[6] = {33.33F, 40.0F, 93.33F, 316.67F, 416.67F, 2000.0F};

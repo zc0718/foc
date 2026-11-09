@@ -43,10 +43,10 @@ struct Point final {
  *
  * @brief [zh] 用 `A*cos(w t)` 驱动给定，并在同一批节拍上同时拟合给定与响应。
  *
- *     The command is fitted out of a recorded array rather than assumed analytically: both windows then share one time
- *     origin, so the fitted phases subtract directly and the answer does not depend on bookkeeping about where the
- *     recording started. 给定从录下来的数组里拟合，而不是解析地假设：两侧因此共享同一个时间原点，拟合相位可以直接相减，
- *     答案也就不再依赖 "录制从哪儿开始"的记账。
+ *   The command is fitted out of a recorded array rather than assumed analytically: both windows then share one time
+ *   origin, so the fitted phases subtract directly and the answer does not depend on bookkeeping about where the
+ *   recording started. 给定从录下来的数组里拟合，而不是解析地假设：两侧因此共享同一个时间原点，拟合相位可以直接相减，答
+ *   案也就不再依赖 "录制从哪儿开始"的记账。
  */
 auto measure(const foc::sil::BenchConfig &base, float omega_rad_s) -> Point {
     foc::sil::Bench bench(base, foc::sil::nominal_plant_params());
@@ -188,11 +188,11 @@ auto tone(std::vector<float> &y, std::size_t n, float dt, float omega, float amp
  *
  * @brief [zh] 头文件声称比它更好的那个估计器：矩形窗只取一个 DFT bin，`2/N·|bin|`。
  *
- *     This is not a strawman and it is not a reimplementation of the thing under test: it is the *other* way to do this
- *     job, it is exact on a whole number of cycles, and the header's claim is precisely that it is biased when the
- *     window is not one. Writing it down is what turns that sentence into a measurement. 这不是稻草人，也不是被测对象的
- *     另一种写法：它是做这件事的**另一种**方式，在整周期窗口上是精确的，而头文件的主张恰恰是"窗口不是整周期时它有偏"。
- *     把它写下来，那句话才变成一次测量。
+ *   This is not a strawman and it is not a reimplementation of the thing under test: it is the *other* way to do this
+ *   job, it is exact on a whole number of cycles, and the header's claim is precisely that it is biased when the window
+ *   is not one. Writing it down is what turns that sentence into a measurement. 这不是稻草人，也不是被测对象的另一种写
+ *   法：它是做这件事的**另一种**方式，在整周期窗口上是精确的，而头文件的主张恰恰是"窗口不是整周期时它有偏"。把它写下
+ *   来，那句话才变成一次测量。
  */
 auto bin_amplitude(const std::vector<float> &y, float dt, float omega) -> float {
     double c = 0.0;
@@ -210,9 +210,9 @@ auto bin_amplitude(const std::vector<float> &y, float dt, float omega) -> float 
  *
  * @brief [zh] 同一个投影，但去掉 `c0` 列，也就是没有直流项。
  *
- *     Exists only so the "a DC offset is harmless because the fit carries a constant column" claim has something that
- *     would fail if the column were not there. Two normal equations instead of three. 只为让"直流偏置无害，因为拟合带常
- *     数项"这条主张有一个"若没有那一列就会失败"的对照。两个正规方程而不是三个。
+ *   Exists only so the "a DC offset is harmless because the fit carries a constant column" claim has something that
+ *   would fail if the column were not there. Two normal equations instead of three. 只为让"直流偏置无害，因为拟合带常数
+ *   项"这条主张有一个"若没有那一列就会失败"的对照。两个正规方程而不是三个。
  */
 auto amplitude_without_dc(const std::vector<float> &y, float dt, float omega) -> float {
     double cc = 0.0;

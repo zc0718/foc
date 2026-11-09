@@ -13,19 +13,19 @@ namespace core {
 /**
  * @brief [en] Nonlinear flux observer.
  *
- *     The same integral as `BackEmfObserver`, plus a term that pulls the estimated permanent-magnet flux magnitude back
- *     to the nameplate value.
+ *   The same integral as `BackEmfObserver`, plus a term that pulls the estimated permanent-magnet flux magnitude back
+ *   to the nameplate value.
  *
- *     The one line that differs, in words: the open-loop observer integrates `v - Rs*i` and hopes the result stays a
- *     circle of radius `psi_f`. Nothing makes it -- a wrong `Rs` tilts and stretches that circle, an injected carrier
- *     wobbles it, and an integrator never forgets what it was given. This observer adds a correction along the flux
- *     vector that vanishes when `|eta| = psi_f` and pushes otherwise, so the circle has a restoring force.
+ *   The one line that differs, in words: the open-loop observer integrates `v - Rs*i` and hopes the result stays a
+ *   circle of radius `psi_f`. Nothing makes it -- a wrong `Rs` tilts and stretches that circle, an injected carrier
+ *   wobbles it, and an integrator never forgets what it was given. This observer adds a correction along the flux
+ *   vector that vanishes when `|eta| = psi_f` and pushes otherwise, so the circle has a restoring force.
  *
  * @brief [zh] 非线性磁链观测器：与 `BackEmfObserver` 相同的积分，外加一项把估计的永磁磁链幅值拉回铭牌值的修正。
  *
- *     差别就一行，用文字说：开环观测器积分 `v − Rs·i`，然后**指望**结果停在半径 `psi_f` 的圆上。没有 任何东西在保证这一
- *     点——`Rs` 偏了会把那个圆拉歪、载波会让它抖、而积分器从不忘记收到过什么。 本观测器沿磁链矢量加一项修正：`|eta| =
- *     psi_f` 时为零，否则往回推，于是那个圆有了恢复力。
+ *   差别就一行，用文字说：开环观测器积分 `v − Rs·i`，然后**指望**结果停在半径 `psi_f` 的圆上。没有 任何东西在保证这一点
+ *   ——`Rs` 偏了会把那个圆拉歪、载波会让它抖、而积分器从不忘记收到过什么。 本观测器沿磁链矢量加一项修正：`|eta| = psi_f`
+ *   时为零，否则往回推，于是那个圆有了恢复力。
  *
  * @note [en] Structure follows the nonlinear observer for surface-mount PMSMs described by Lee, Hong, Nam, Ortega and
  *            Praly (*IEEE Transactions on Power Electronics*, 2010): a flux prediction, an `eta` that removes the

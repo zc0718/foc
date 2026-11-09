@@ -28,9 +28,9 @@ namespace sil = foc::sil;
  *
  * @brief [zh] 一台内嵌式电机：铭牌与标称机相同，只把两个电感分开。
  *
- *     `Lq/Ld = 3` at `psi_f = 4.76 mWb` makes the discarded `L1` term worth `(ld - lq) * i_d / psi_f` in angle -- 0.063
- *     rad at 1.5 A, which is four times the harness floor measured below. `Lq/Ld = 3`、`psi_f = 4.76 mWb` 时，被丢掉的
- *     `L1` 项折算成角度是 `(ld − lq)·i_d/psi_f`——1.5 A 时 0.063 rad，是下面量到的夹具地板的四倍。
+ *   `Lq/Ld = 3` at `psi_f = 4.76 mWb` makes the discarded `L1` term worth `(ld - lq) * i_d / psi_f` in angle -- 0.063
+ *   rad at 1.5 A, which is four times the harness floor measured below. `Lq/Ld = 3`、`psi_f = 4.76 mWb` 时，被丢掉的
+ *   `L1` 项折算成角度是 `(ld − lq)·i_d/psi_f`——1.5 A 时 0.063 rad，是下面量到的夹具地板的四倍。
  */
 auto salient_spec() -> sil::MachineSpec {
     sil::MachineSpec spec = sil::nominal_spec();
@@ -112,13 +112,13 @@ auto stator_flux(const sil::MachineSpec& spec, float theta, float id_a, float iq
  *
  * @brief [zh] 转速锁定、加精确稳态 d-q 电压的 plant 上，某个观测器的平均角度误差，rad。
  *
- *     Why not the switching rig: at `psi_f = 4.76 mWb` the back-EMF at 800 rad/s is 3.8 V, so a few tenths of a volt of
- *     dead-time volt-seconds is already 0.1 rad of flux angle -- the size of the saliency term under test and common to
- *     both observers, which buries exactly the difference this file is about. Measured there, both read 0.13 to 0.15
- *     rad and the dual-`L` looks useless; the impairment was the instrument. The inverter's own contribution is a
- *     different row's claim. 为什么不用开关台架：`psi_f = 4.76 mWb` 时 800 rad/s 的反电势只有 3.8 V，几百毫伏的死区伏秒
- *     就已经是 0.1 rad 磁链角 ——与被测的凸极项同量级且两个观测器共有，正好埋掉本文件要谈的差别。在那里量，两者都读到
- *     0.13~0.15 rad，双电感看起来一无是处；那是仪器坏了。逆变器自身的贡献是另一行主张。
+ *   Why not the switching rig: at `psi_f = 4.76 mWb` the back-EMF at 800 rad/s is 3.8 V, so a few tenths of a volt of
+ *   dead-time volt-seconds is already 0.1 rad of flux angle -- the size of the saliency term under test and common to
+ *   both observers, which buries exactly the difference this file is about. Measured there, both read 0.13 to 0.15 rad
+ *   and the dual-`L` looks useless; the impairment was the instrument. The inverter's own contribution is a different
+ *   row's claim. 为什么不用开关台架：`psi_f = 4.76 mWb` 时 800 rad/s 的反电势只有 3.8 V，几百毫伏的死区伏秒就已经是 0.1
+ *   rad 磁链角 ——与被测的凸极项同量级且两个观测器共有，正好埋掉本文件要谈的差别。在那里量，两者都读到 0.13~0.15 rad，双
+ *   电感看起来一无是处；那是仪器坏了。逆变器自身的贡献是另一行主张。
  *
  * @param observer [en] Anything with `seed_flux` and `update`; it is stepped once per plant step.
  * @param omega_e [en] electrical speed, rad/s (the rotor is speed-locked).
@@ -181,14 +181,13 @@ auto dual_l_error_at(float omega_e, float id_a) -> float {
  *
  * @brief [zh] 单 `L` 模型无法避免的偏置，rad：`atan((ld − lq)·i_d/psi_f)`。
  *
- *     Derived in the rotor frame. Subtracting `Lq*i` from the stator flux leaves `psi_f + (ld - lq)*i_d` along the
- *     rotor axis -- the `j*Lq*i_q` part cancels exactly, which is why `i_q` does not appear -- so the reported angle is
- *     off by that ratio's arctangent, **independent of speed**: no integration time makes it go away, so a drive that
- *     pairs `MtpaReference` with a single-`L` observer carries a fixed steering error proportional to the `i_d` the
- *     reference itself asks for. 在转子坐标系里推。从定子磁链里减去 `Lq·i` 后，转子轴上剩下 `psi_f + (ld −
- *     lq)·i_d`——`j·Lq·i_q` 部分精确抵消，这就是 `i_q` 不出现的原因——所以报出的角度偏这个比值的反正切，而且**与转速无关
- *     **：没有任何积分时间能让它消失，所以把 `MtpaReference` 与单 `L` 观测器配在一起的驱动，带着一个正比于参考自己要求
- *     的 `i_d` 的固定指向误差。
+ *   Derived in the rotor frame. Subtracting `Lq*i` from the stator flux leaves `psi_f + (ld - lq)*i_d` along the rotor
+ *   axis -- the `j*Lq*i_q` part cancels exactly, which is why `i_q` does not appear -- so the reported angle is off by
+ *   that ratio's arctangent, **independent of speed**: no integration time makes it go away, so a drive that pairs
+ *   `MtpaReference` with a single-`L` observer carries a fixed steering error proportional to the `i_d` the reference
+ *   itself asks for. 在转子坐标系里推。从定子磁链里减去 `Lq·i` 后，转子轴上剩下 `psi_f + (ld − lq)·i_d`——`j·Lq·i_q` 部
+ *   分精确抵消，这就是 `i_q` 不出现的原因——所以报出的角度偏这个比值的反正切，而且**与转速无关 **：没有任何积分时间能让
+ *   它消失，所以把 `MtpaReference` 与单 `L` 观测器配在一起的驱动，带着一个正比于参考自己要求的 `i_d` 的固定指向误差。
  */
 auto single_l_law(float id_a) -> float {
     const sil::MachineSpec spec = salient_spec();

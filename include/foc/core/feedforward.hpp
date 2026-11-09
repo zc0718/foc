@@ -43,20 +43,20 @@ class NullFeedforward final {
 /**
  * @brief [en] The two classical voltage feedforwards of a PMSM: axis cross-coupling and back-EMF.
  *
- *     It is applied *after* the current PI, as a summation node. The PI keeps its own-axis job (resistance and
- *     inductance); the feedforward removes what couples the two axes. Putting the terms inside the PI would force the
- *     `step(ref, fb, dt)` contract to carry the other axis, the speed and the flux -- three inputs it deliberately does
- *     not have.
+ *   It is applied *after* the current PI, as a summation node. The PI keeps its own-axis job (resistance and
+ *   inductance); the feedforward removes what couples the two axes. Putting the terms inside the PI would force the
+ *   `step(ref, fb, dt)` contract to carry the other axis, the speed and the flux -- three inputs it deliberately does
+ *   not have.
  *
- *     The measured current is used rather than the reference: what has to be cancelled is the coupling that actually
- *     exists in the machine this step.
+ *   The measured current is used rather than the reference: what has to be cancelled is the coupling that actually
+ *   exists in the machine this step.
  *
  * @brief [zh] PMSM 的两项经典电压前馈：轴间交叉耦合与反电动势。
  *
- *     它加在电流 PI **之后**的求和节点上。PI 继续负责本轴的电阻与电感，前馈负责剥掉两轴 之间的耦合。若把这几项塞进 PI，
- *     `step(ref, fb, dt)` 契约就必须携带另一轴电流、转速与 磁链——这三个输入是它特意没有的。
+ *   它加在电流 PI **之后**的求和节点上。PI 继续负责本轴的电阻与电感，前馈负责剥掉两轴 之间的耦合。若把这几项塞进 PI，
+ *   `step(ref, fb, dt)` 契约就必须携带另一轴电流、转速与 磁链——这三个输入是它特意没有的。
  *
- *     使用实测电流而非给定：需要抵消的是本步电机里**真实存在**的耦合。
+ *   使用实测电流而非给定：需要抵消的是本步电机里**真实存在**的耦合。
  * @since 0.1.0
  * @exporter
  */
@@ -65,11 +65,11 @@ class DecouplingFeedforward final {
     /**
      * @brief [en] Which terms to include.
      *
-     *     Kept as a value, not as `#ifdef`s, so one build can compare the terms against each other in the same SIL run.
+     *   Kept as a value, not as `#ifdef`s, so one build can compare the terms against each other in the same SIL run.
      *
      * @brief [zh] 包含哪些项。
      *
-     *     它是取值而不是 `#ifdef`，因此同一次 SIL 运行里就能互相比较。
+     *   它是取值而不是 `#ifdef`，因此同一次 SIL 运行里就能互相比较。
      * @since 0.1.0
      */
     enum class Terms : std::uint8_t {

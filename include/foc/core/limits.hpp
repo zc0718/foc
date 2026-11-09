@@ -26,26 +26,25 @@ template <typename T> constexpr auto clamp(T value, T low, T high) noexcept -> T
 /**
  * @brief [en] Moves its output towards a target no faster than a configured rate.
  *
- *     Symmetrically in both directions.
+ *   Symmetrically in both directions.
  *
- *     The budget for one step, \f$\rho\,\Delta t\f$, is applied to the **state** rather than to the error:
+ *   The budget for one step, \f$\rho\,\Delta t\f$, is applied to the **state** rather than to the error:
  *
- *     \f[ y \leftarrow \mathrm{clamp}(r,\; y - \rho\,\Delta t,\; y + \rho\,\Delta t) \qquad \text{for } \Delta t > 0
- *     \f]
+ *   \f[ y \leftarrow \mathrm{clamp}(r,\; y - \rho\,\Delta t,\; y + \rho\,\Delta t) \qquad \text{for } \Delta t > 0 \f]
  *
- *     That is what makes this a rate limit rather than a first-order lag -- the limiter keeps no memory of how far
- *     behind it was. \f$y\f$ is the limited value (the object's state), \f$r\f$ the requested value, \f$\rho\f$ the
- *     rate per second and \f$\Delta t\f$ the step length. All in the caller's units; the rate carries them per second.
- *     Ledger `E-SLEW-1`.
+ *   That is what makes this a rate limit rather than a first-order lag -- the limiter keeps no memory of how far behind
+ *   it was. \f$y\f$ is the limited value (the object's state), \f$r\f$ the requested value, \f$\rho\f$ the rate per
+ *   second and \f$\Delta t\f$ the step length. All in the caller's units; the rate carries them per second. Ledger
+ *   `E-SLEW-1`.
  *
  * @brief [zh] 让输出以不超过配置速率的步进逼近目标，正反两个方向对称。
  *
- *     一步的预算 \f$\rho\,\Delta t\f$ 作用在**状态**上而不是误差上：
+ *   一步的预算 \f$\rho\,\Delta t\f$ 作用在**状态**上而不是误差上：
  *
- *     \f[ y \leftarrow \mathrm{clamp}(r,\; y - \rho\,\Delta t,\; y + \rho\,\Delta t) \qquad \Delta t > 0 \f]
+ *   \f[ y \leftarrow \mathrm{clamp}(r,\; y - \rho\,\Delta t,\; y + \rho\,\Delta t) \qquad \Delta t > 0 \f]
  *
- *     这正是它是速率限制而不是一阶滞后的原因——限制器不记得自己落后多少。\f$y\f$ 是限幅后的值（对象状态）、 \f$r\f$ 是请
- *     求值、\f$\rho\f$ 是每秒变化量、\f$\Delta t\f$ 是步长。全部取调用方单位；速率自带“每秒”。台账 `E-SLEW-1`。
+ *   这正是它是速率限制而不是一阶滞后的原因——限制器不记得自己落后多少。\f$y\f$ 是限幅后的值（对象状态）、 \f$r\f$ 是请求
+ *   值、\f$\rho\f$ 是每秒变化量、\f$\Delta t\f$ 是步长。全部取调用方单位；速率自带“每秒”。台账 `E-SLEW-1`。
  *
  * @warning [en] Nothing is refused here, and two cases look like errors but are not. A non-positive \f$\Delta t\f$ is a
  *               step in which no time passed, so the value holds and the caller sees the same number as last time. A

@@ -161,19 +161,19 @@ inline auto went_backwards(std::uint32_t delta_us) noexcept -> bool { return del
 /**
  * @brief [en] Read a trace window and say what is missing from it, and whether it is the whole run.
  *
- *     The parser exists because a trace out of a ring is not a recording: it is the *last* `capacity` periods, and
- *     every number in it is correct while the window as a whole can quietly be the wrong window. Two things make that
- *     visible. The cadence is checked against the period the caller states -- not guessed from the samples, because a
- *     window with one gap in it would teach the parser the wrong period -- and the timestamp difference is taken modulo
- *     2^32, since `t_us` is a 32-bit truncation that wraps every 71.6 minutes. A parser that subtracts naively reports
- *     a hole of four billion microseconds at every wrap.
+ *   The parser exists because a trace out of a ring is not a recording: it is the *last* `capacity` periods, and every
+ *   number in it is correct while the window as a whole can quietly be the wrong window. Two things make that visible.
+ *   The cadence is checked against the period the caller states -- not guessed from the samples, because a window with
+ *   one gap in it would teach the parser the wrong period -- and the timestamp difference is taken modulo 2^32, since
+ *   `t_us` is a 32-bit truncation that wraps every 71.6 minutes. A parser that subtracts naively reports a hole of four
+ *   billion microseconds at every wrap.
  *
  * @brief [zh] 读取一段轨迹窗口，说出它缺了什么，以及它是否就是整段运行。
  *
- *     解析器的存在是因为从环里取出的轨迹并不是一份录音：它是**最近** `capacity` 个周期，里面每个数字都对，而窗口整体可
- *     能悄悄是错的那个窗口。有两件事让这一点可见。节拍是拿调用方给定的周期来检查的——不从样本里猜，因为一个带缺口的窗口
- *     会教给解析器错误的周期；时间戳差按模 2^32 取，因为 `t_us` 是每 71.6 分钟回绕一次的 32 位截断。直接相减的解析器会
- *     在每次回绕处报出一个四十多亿微秒的空洞。
+ *   解析器的存在是因为从环里取出的轨迹并不是一份录音：它是**最近** `capacity` 个周期，里面每个数字都对，而窗口整体可能
+ *   悄悄是错的那个窗口。有两件事让这一点可见。节拍是拿调用方给定的周期来检查的——不从样本里猜，因为一个带缺口的窗口会教
+ *   给解析器错误的周期；时间戳差按模 2^32 取，因为 `t_us` 是每 71.6 分钟回绕一次的 32 位截断。直接相减的解析器会在每次
+ *   回绕处报出一个四十多亿微秒的空洞。
  *
  * @param span [en] the window and the loss the recorder declared.
  * @param span [zh] 窗口，以及记录器声明的丢失量。

@@ -198,34 +198,33 @@ struct Cell final {
  *
  * @brief [zh] 测功机上的 HFI 乘客：驱动从不使用该估计，转速是给定的事实而非控制器的成果。
  *
- *     Three things this bench deliberately does differently from the obvious rig, each one paid for by a wrong answer
- *     in an earlier draft of this file: 这个台架在三处刻意不同于显而易见的做法，每一处都是被本文件早先某一版的错答案换
- *     来的：
+ *   Three things this bench deliberately does differently from the obvious rig, each one paid for by a wrong answer in
+ *   an earlier draft of this file: 这个台架在三处刻意不同于显而易见的做法，每一处都是被本文件早先某一版的错答案换来的：
  *
- *     1. **No speed loop.** The first draft held the speed with a PI and reached 46 rad/s when asked for 50, so the
- *     cells were measuring the holder as much as the observer. Here the mechanical speed is *imposed*: the rotor
- *     follows a profile and the torque equation is never asked. What is lost is speed ripple caused by torque ripple;
- *     what is gained is that the operating point is exactly the number printed. **没有转速环。** 第一版用 PI 保持转速，
- *     指令 50 只到 46，于是格子里量到的一部分是保持器而不是观测器。这里机械转速是**被施加的**：转子跟随一条曲线，转矩方
- *     程从不被问及。失去的是转矩纹波引起的转速纹波，得到的是工作点就是打印出来的那个数。
+ *   1. **No speed loop.** The first draft held the speed with a PI and reached 46 rad/s when asked for 50, so the cells
+ *   were measuring the holder as much as the observer. Here the mechanical speed is *imposed*: the rotor follows a
+ *   profile and the torque equation is never asked. What is lost is speed ripple caused by torque ripple; what is
+ *   gained is that the operating point is exactly the number printed. **没有转速环。** 第一版用 PI 保持转速，指令 50 只
+ *   到 46，于是格子里量到的一部分是保持器而不是观测器。这里机械转速是**被施加的**：转子跟随一条曲线，转矩方程从不被问
+ *   及。失去的是转矩纹波引起的转速纹波，得到的是工作点就是打印出来的那个数。
  *
- *     2. **A ramp, not a step.** The second draft started the rotor already turning and the observer at zero, and the
- *     loop locked to the mirror at 20 rad/s and above — because it was being *kicked*, not because the window was
- *     wrong. Handing a PLL a frequency it has never seen is an acquisition problem with its own case below. Every cell
- *     here therefore locks at standstill first and is brought up to speed along a ramp. **是斜坡，不是阶跃。** 第二版让
- *     转子已经在转、观测器停在零，于是环路在 20 rad/s 及以上锁到镜像上——因为它是被**踢**过去的，不是因为窗口不对。把一
- *     个从未见过的频率丢给 PLL 是获取问题，另有下面的用例。因此这里每一格先在静止锁定，再沿斜坡升到目标转速。
+ *   2. **A ramp, not a step.** The second draft started the rotor already turning and the observer at zero, and the
+ *   loop locked to the mirror at 20 rad/s and above — because it was being *kicked*, not because the window was wrong.
+ *   Handing a PLL a frequency it has never seen is an acquisition problem with its own case below. Every cell here
+ *   therefore locks at standstill first and is brought up to speed along a ramp. **是斜坡，不是阶跃。** 第二版让转子已
+ *   经在转、观测器停在零，于是环路在 20 rad/s 及以上锁到镜像上——因为它是被**踢**过去的，不是因为窗口不对。把一个从未见
+ *   过的频率丢给 PLL 是获取问题，另有下面的用例。因此这里每一格先在静止锁定，再沿斜坡升到目标转速。
  *
- *     3. **A standstill that is not degenerate.** The first draft's standstill cell had rotor and estimate at the same
- *     angle with nothing moving, which measures zero error for a good observer and for a broken one. Here the rotor
- *     starts 0.1 rad mech (0.7 rad electrical) away, inside the +-pi/2 window the method can pull from, so the observer
- *     has to actually acquire before it can be measured. **静止格不是退化的。** 第一版静止格的转子与估计同角且都不动，
- *     好的观测器和坏的观测器都量到零。这里转子起步就偏 0.1 rad 机械（0.7 rad 电），落在该方法能牵引的 ±π/2 窗口内，于是
- *     观测器必须先真的获取一次才能被测量。
+ *   3. **A standstill that is not degenerate.** The first draft's standstill cell had rotor and estimate at the same
+ *   angle with nothing moving, which measures zero error for a good observer and for a broken one. Here the rotor
+ *   starts 0.1 rad mech (0.7 rad electrical) away, inside the +-pi/2 window the method can pull from, so the observer
+ *   has to actually acquire before it can be measured. **静止格不是退化的。** 第一版静止格的转子与估计同角且都不动，好
+ *   的观测器和坏的观测器都量到零。这里转子起步就偏 0.1 rad 机械（0.7 rad 电），落在该方法能牵引的 ±π/2 窗口内，于是观测
+ *   器必须先真的获取一次才能被测量。
  *
- *     And it is a *loaded* machine: 1 A of q-axis current. The fundamental current is what the demodulation has to
- *     reject, so an unloaded bench would hide the mechanism that decides the window question. 而且它是**带载**的电机：1
- *     A 的 q 轴电流。基频电流正是解调必须压住的东西，空载台架会把决定窗口问题的机理藏起来。
+ *   And it is a *loaded* machine: 1 A of q-axis current. The fundamental current is what the demodulation has to
+ *   reject, so an unloaded bench would hide the mechanism that decides the window question. 而且它是**带载**的电机：1 A
+ *   的 q 轴电流。基频电流正是解调必须压住的东西，空载台架会把决定窗口问题的机理藏起来。
  */
 class PassengerRig final {
   public:

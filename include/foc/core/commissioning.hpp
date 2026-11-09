@@ -10,21 +10,21 @@ namespace core {
 /**
  * @brief [en] The dead-time voltage an **axis** sees.
  *
- *     From the per-phase step and the angle of the current in the rotor frame.
+ *   From the per-phase step and the angle of the current in the rotor frame.
  *
- *     Why this is not the per-phase number. The inverter takes `deadtime_v * sign(i_phase)` from each phase, and
- *     projecting three of those onto an axis depends on where the current is: with the current on the d axis the phases
- *     carry `(+i, -i/2, -i/2)`, and the projection is `(2/3)*(1 + 1/2 + 1/2)*deadtime_v = (4/3)*deadtime_v`. With the
- *     current on the q axis they carry `(0, +i*sqrt(3)/2, -i*sqrt(3)/2)`: one phase carries nothing, and the projection
- *     is `(2/3)*(sqrt(3)/2 + sqrt(3)/2) = 2/sqrt(3)` times -- 0.554 V instead of 0.64 V at 24 V. That 13 % difference
- *     is not cosmetic: using the d-axis number on a q-axis step leaves `Lq` reading 16 % low (SIL the two-point sweep).
+ *   Why this is not the per-phase number. The inverter takes `deadtime_v * sign(i_phase)` from each phase, and
+ *   projecting three of those onto an axis depends on where the current is: with the current on the d axis the phases
+ *   carry `(+i, -i/2, -i/2)`, and the projection is `(2/3)*(1 + 1/2 + 1/2)*deadtime_v = (4/3)*deadtime_v`. With the
+ *   current on the q axis they carry `(0, +i*sqrt(3)/2, -i*sqrt(3)/2)`: one phase carries nothing, and the projection
+ *   is `(2/3)*(sqrt(3)/2 + sqrt(3)/2) = 2/sqrt(3)` times -- 0.554 V instead of 0.64 V at 24 V. That 13 % difference is
+ *   not cosmetic: using the d-axis number on a q-axis step leaves `Lq` reading 16 % low (SIL the two-point sweep).
  *
  * @brief [zh] 由每相阶跃和电流在转子系里的角度，算出**一个轴**看到的死区电压。
  *
- *     为什么这不是每相的数值。逆变器从每相拿走 `deadtime_v·sign(i_phase)`， 三个这样的量投影到一个轴上，取决于电流在哪
- *     里：电流在 d 轴上时相电流是 `(+i, −i/2, −i/2)`，投影是 `(2/3)·(1 + 1/2 + 1/2)·deadtime_v = (4/3)·deadtime_v`； 电
- *     流在 q 轴上时是 `(0, +i·√3/2, −i·√3/2)`：有一相根本不带电流，投影是 `(2/3)·(√3/2 + √3/2) = 2/√3` 倍——24 V 下是
- *     0.554 V 而不是 0.64 V。这 13 % 不是 无关紧要：在 q 轴阶跃上用 d 轴的数，会让 `Lq` 读低 16 %（两点扫描实测）。
+ *   为什么这不是每相的数值。逆变器从每相拿走 `deadtime_v·sign(i_phase)`， 三个这样的量投影到一个轴上，取决于电流在哪
+ *   里：电流在 d 轴上时相电流是 `(+i, −i/2, −i/2)`，投影是 `(2/3)·(1 + 1/2 + 1/2)·deadtime_v = (4/3)·deadtime_v`； 电流
+ *   在 q 轴上时是 `(0, +i·√3/2, −i·√3/2)`：有一相根本不带电流，投影是 `(2/3)·(√3/2 + √3/2) = 2/√3` 倍——24 V 下是 0.554
+ *   V 而不是 0.64 V。这 13 % 不是 无关紧要：在 q 轴阶跃上用 d 轴的数，会让 `Lq` 读低 16 %（两点扫描实测）。
  *
  * @param deadtime_v [en] (t_dead/T_pwm)*v_bus per phase, V.
  * @param deadtime_v [zh] (t_dead/T_pwm)*v_bus，每相，V。
@@ -65,30 +65,30 @@ namespace core {
 /**
  * @brief [en] Recovers stator resistance **and** the inverter's dead-time voltage from a settled DC current sweep.
  *
- *     By separating the two terms the voltage equation contains.
+ *   By separating the two terms the voltage equation contains.
  *
- *     Why two unknowns and not one. At standstill with a settled current, the command obeys `v = rs*i + deadtime_v`:
- *     the winding drops `rs*i` and the inverter eats `deadtime_v` regardless of current. Measuring at a single current
- *     cannot tell them apart -- a 10 % error in the dead-time voltage looks exactly like a 10 % error in `rs` at that
- *     one point. Two currents can: the slope in `i` is `rs`, the intercept is `deadtime_v`.
+ *   Why two unknowns and not one. At standstill with a settled current, the command obeys `v = rs*i + deadtime_v`: the
+ *   winding drops `rs*i` and the inverter eats `deadtime_v` regardless of current. Measuring at a single current cannot
+ *   tell them apart -- a 10 % error in the dead-time voltage looks exactly like a 10 % error in `rs` at that one point.
+ *   Two currents can: the slope in `i` is `rs`, the intercept is `deadtime_v`.
  *
- *     Two conditions it cannot work without, both physical rather than numerical. (1) **Currents above the fade band**:
- *     below a few tens of milliamps the loss is not yet a step (measured: it goes from 2.7 % to 97 % of
- *     `(4/pi)*deadtime_v` between 21 mA and 86 mA), so a low-current sample measures the fade, not the step, and biases
- *     `rs` downwards. (2) **One polarity**: `sign(i)` has to be constant across the sweep, or the intercept flips sign
- *     half way through and the fit means nothing.
+ *   Two conditions it cannot work without, both physical rather than numerical. (1) **Currents above the fade band**:
+ *   below a few tens of milliamps the loss is not yet a step (measured: it goes from 2.7 % to 97 % of
+ *   `(4/pi)*deadtime_v` between 21 mA and 86 mA), so a low-current sample measures the fade, not the step, and biases
+ *   `rs` downwards. (2) **One polarity**: `sign(i)` has to be constant across the sweep, or the intercept flips sign
+ *   half way through and the fit means nothing.
  *
  * @brief [zh] 从一个稳定的直流电流扫描里同时把定子电阻**和**逆变器死区电压辨识出来。
  *
- *     办法是把电压方程里那两项分开。
+ *   办法是把电压方程里那两项分开。
  *
- *     为什么是两个未知数而不是一个。堵转、电流稳定时，指令满足 `v = rs·i + deadtime_v`：绕组吃掉 `rs·i`，逆变器不管电流
- *     大小都吃掉 `deadtime_v`。 在**一个**电流上测是分不开这两项的——死区电压差 10 % 和在那个点上 `rs` 差 10 % 完全等
- *     价。两个电流就能分开：随 `i` 的斜率是 `rs`，截距是 `deadtime_v`。
+ *   为什么是两个未知数而不是一个。堵转、电流稳定时，指令满足 `v = rs·i + deadtime_v`：绕组吃掉 `rs·i`，逆变器不管电流大
+ *   小都吃掉 `deadtime_v`。 在**一个**电流上测是分不开这两项的——死区电压差 10 % 和在那个点上 `rs` 差 10 % 完全等价。两
+ *   个电流就能分开：随 `i` 的斜率是 `rs`，截距是 `deadtime_v`。
  *
- *     两个它离不开的条件，都是物理的而不是数值的。（1）**电流要在淡出带以上**： 几十毫安以下损失还不是阶跃（实测它在 21
- *     mA 到 86 mA 之间从 `(4/π)·deadtime_v` 的 2.7 % 走到 97 %），所以小电流样本量的是淡出、不是阶跃， 会把 `rs` 往下
- *     带。（2）**单极性**：`sign(i)` 在整个扫描里必须不变，否则截距中途 变号，拟合没有意义。
+ *   两个它离不开的条件，都是物理的而不是数值的。（1）**电流要在淡出带以上**： 几十毫安以下损失还不是阶跃（实测它在 21
+ *   mA 到 86 mA 之间从 `(4/π)·deadtime_v` 的 2.7 % 走到 97 %），所以小电流样本量的是淡出、不是阶跃， 会把 `rs` 往下带。
+ *   （2）**单极性**：`sign(i)` 在整个扫描里必须不变，否则截距中途 变号，拟合没有意义。
  *
  * @note [en] `rs` is measured at **whatever temperature the winding is at**; the plant does not report it. That is the
  *            point of measuring instead of reading a nameplate: copper moves about 0.4 %/K, so a 20 K error in the
@@ -262,19 +262,19 @@ class RsEstimator final {
 /**
  * @brief [en] Recovers the rotor flux linkage from the voltage a **zero-current** spin needs.
  *
- *     At two or more speeds.
+ *   At two or more speeds.
  *
- *     Why zero current, and why two speeds. With the current held at zero the voltage equation collapses to `v =
- *     we*psi_f` -- there is no `rs*i` term and no dead-time term, because a leg carrying no current has no loss to
- *     hide. One speed would give `psi_f` if `v` were exact; two give it as a *slope*, which absorbs whatever constant
- *     offset the measurement chain has (sensor gain, a residual current, an inverter drop that survives at zero
- *     current). The offset is reported rather than assumed away.
+ *   Why zero current, and why two speeds. With the current held at zero the voltage equation collapses to `v =
+ *   we*psi_f` -- there is no `rs*i` term and no dead-time term, because a leg carrying no current has no loss to hide.
+ *   One speed would give `psi_f` if `v` were exact; two give it as a *slope*, which absorbs whatever constant offset
+ *   the measurement chain has (sensor gain, a residual current, an inverter drop that survives at zero current). The
+ *   offset is reported rather than assumed away.
  *
  * @brief [zh] 从**零电流**旋转所需电压在两个以上转速下的值，把转子磁链辨识出来。
  *
- *     为什么零电流、为什么两个转速。电流保持为零时电压方程塌成 `v = ω_e·ψf`—— 没有 `rs·i` 项、也没有死区项，因为不过电
- *     流的桥臂没有损失可藏。如果 `v` 是准的， 一个转速就够；两个转速给的是**斜率**，它把测量链上任何固定偏置都吸收掉（
- *     传感器 增益、残余电流、零电流下依然存在的逆变器压降）。偏置是**报出来**的，不是假设掉 的。
+ *   为什么零电流、为什么两个转速。电流保持为零时电压方程塌成 `v = ω_e·ψf`—— 没有 `rs·i` 项、也没有死区项，因为不过电流
+ *   的桥臂没有损失可藏。如果 `v` 是准的， 一个转速就够；两个转速给的是**斜率**，它把测量链上任何固定偏置都吸收掉（传感
+ *   器 增益、残余电流、零电流下依然存在的逆变器压降）。偏置是**报出来**的，不是假设掉 的。
  *
  * @note [en] The caller must actually hold the current at zero; that is not something this estimator can check, and it
  *            is the whole assumption. What it *can* check is that the samples it is handed are within `i_zero_max_a` of
@@ -437,19 +437,19 @@ class FluxEstimator final {
 /**
  * @brief [en] Recovers one current channel's **offset** without a reference and its **gain** with one.
  *
- *     Why the two are not symmetric, and why that is the whole point. An offset has a free reference: command zero
- *     current, and whatever a channel reads *is* its offset, because the true value is known to be zero. A gain has
- *     none -- `reading = gain*truth + offset` with `truth` unknown is underdetermined at any current, so a gain needs
- *     an external truth (a clamp meter, a series shunt, or a second channel that has already been calibrated). The
- *     estimator therefore reports the two separately and refuses the one it cannot support, rather than fitting a slope
- *     to noise and calling it a gain.
+ *   Why the two are not symmetric, and why that is the whole point. An offset has a free reference: command zero
+ *   current, and whatever a channel reads *is* its offset, because the true value is known to be zero. A gain has none
+ *   -- `reading = gain*truth + offset` with `truth` unknown is underdetermined at any current, so a gain needs an
+ *   external truth (a clamp meter, a series shunt, or a second channel that has already been calibrated). The estimator
+ *   therefore reports the two separately and refuses the one it cannot support, rather than fitting a slope to noise
+ *   and calling it a gain.
  *
  * @brief [zh] 不需要基准就能得到一条电流通道的**零漂**，有基准才能得到它的**增益**。
  *
- *     为什么两者不对称，以及为什么这正是要点。零漂有一个免费的基准：命令零电流，通道读到的 **就是**它的零漂，因为真值已
- *     知为零。增益没有：`reading = gain·truth + offset` 而 `truth` 未知时，在**任何**电流上都是欠定的，所以增益需要一个
- *     外部真值（钳形表、串联 分流器，或另一条已经校正过的通道）。于是估计器把两者分开报，并且拒绝它支持不了的那个， 而
- *     不是拿噪声拟合一条斜率再叫它增益。
+ *   为什么两者不对称，以及为什么这正是要点。零漂有一个免费的基准：命令零电流，通道读到的 **就是**它的零漂，因为真值已知
+ *   为零。增益没有：`reading = gain·truth + offset` 而 `truth` 未知时，在**任何**电流上都是欠定的，所以增益需要一个外部
+ *   真值（钳形表、串联 分流器，或另一条已经校正过的通道）。于是估计器把两者分开报，并且拒绝它支持不了的那个， 而不是拿
+ *   噪声拟合一条斜率再叫它增益。
  *
  * @note [en] The three-wire constraint is a diagnostic, not a calibration. The true phase currents sum to zero, so the
  *            **readings** sum to the sum of the offsets: `sum(offset)` is measurable with no reference at all. But it
@@ -673,28 +673,28 @@ class CurrentSenseCalibrator final {
  * @brief [en] Recovers an incremental inductance from the **flux** a voltage step delivers, `L = integral(v -
  *             rs*i)/delta_i`, instead of from a differentiated current.
  *
- *     Why integrate. `di/dt` from a 20 kHz current sensor is a difference of two nearly equal noisy numbers scaled by
- *     1/dt: it amplifies the noise by `1/dt` and needs a filter whose group delay then biases the result. The integral
- *     form uses every sample once, weights nothing, and needs no filter: `integral(v_delivered - rs*i) dt = L *
- *     delta_i` exactly, because the `L*di/dt` term is the derivative of `L*i`.
+ *   Why integrate. `di/dt` from a 20 kHz current sensor is a difference of two nearly equal noisy numbers scaled by
+ *   1/dt: it amplifies the noise by `1/dt` and needs a filter whose group delay then biases the result. The integral
+ *   form uses every sample once, weights nothing, and needs no filter: `integral(v_delivered - rs*i) dt = L * delta_i`
+ *   exactly, because the `L*di/dt` term is the derivative of `L*i`.
  *
- *     What `v_delivered` is, and the error that follows. The inverter delivers `v_command - deadtime_v*sign(i)`, which
- *     is what this integrator subtracts using the `deadtime_v` measured by `RsEstimator`. While the current crosses
- *     zero the true loss is *less* than `deadtime_v` (that is the fade band), so the integrator over-subtracts for the
- *     crossing time `t_cross` and the flux comes out low by about `deadtime_v * t_cross`. At 0.48 V and 20 us against
- *     `L*delta_i = 4e-4 V*s` for a 1 A step, that is 2.4 % -- inside the tolerance, but it is a *known direction*, so
- *     it is documented rather than hoped away.
+ *   What `v_delivered` is, and the error that follows. The inverter delivers `v_command - deadtime_v*sign(i)`, which is
+ *   what this integrator subtracts using the `deadtime_v` measured by `RsEstimator`. While the current crosses zero the
+ *   true loss is *less* than `deadtime_v` (that is the fade band), so the integrator over-subtracts for the crossing
+ *   time `t_cross` and the flux comes out low by about `deadtime_v * t_cross`. At 0.48 V and 20 us against `L*delta_i =
+ *   4e-4 V*s` for a 1 A step, that is 2.4 % -- inside the tolerance, but it is a *known direction*, so it is documented
+ *   rather than hoped away.
  *
  * @brief [zh] 从电压阶跃交付的**磁链**求增量电感，`L = ∫(v − rs·i)/Δi`，而不是靠微分电流。
  *
- *     为什么用积分。20 kHz 电流传感器的 `di/dt` 是两个几乎相等的带噪数之差再乘 `1/dt`： 噪声被放大 `1/dt` 倍，要有滤波
- *     器，而滤波器的群延迟又会带来偏差。积分形式每个样本 用一次、不加权、不用滤波：`∫(v_delivered − rs·i)dt = L·Δi` 是
- *     **精确**的，因为 `L·di/dt` 这一项就是 `L·i` 的导数。
+ *   为什么用积分。20 kHz 电流传感器的 `di/dt` 是两个几乎相等的带噪数之差再乘 `1/dt`： 噪声被放大 `1/dt` 倍，要有滤波
+ *   器，而滤波器的群延迟又会带来偏差。积分形式每个样本 用一次、不加权、不用滤波：`∫(v_delivered − rs·i)dt = L·Δi` 是 **
+ *   精确**的，因为 `L·di/dt` 这一项就是 `L·i` 的导数。
  *
- *     `v_delivered` 是什么，以及随之而来的误差。逆变器交付 `v_cmd − deadtime_v·sign(i)`， 本积分器用 `RsEstimator` 量到
- *     的 `deadtime_v` 把它减掉。电流过零期间真实损失**小** 于 `deadtime_v`（那就是淡出带），所以积分在穿越时间
- *     `t_cross` 内减多了， 磁链偏低约 `deadtime_v·t_cross`。0.48 V、20 µs，对 1 A 阶跃的 `L·Δi = 4e-4 V·s` 是 2.4 %——在
- *     容差内，但**方向是已知的**，所以要写下来而不是 指望它不存在。
+ *   `v_delivered` 是什么，以及随之而来的误差。逆变器交付 `v_cmd − deadtime_v·sign(i)`， 本积分器用 `RsEstimator` 量到的
+ *   `deadtime_v` 把它减掉。电流过零期间真实损失**小** 于 `deadtime_v`（那就是淡出带），所以积分在穿越时间 `t_cross` 内
+ *   减多了， 磁链偏低约 `deadtime_v·t_cross`。0.48 V、20 µs，对 1 A 阶跃的 `L·Δi = 4e-4 V·s` 是 2.4 %——在容差内，但**方
+ *   向是已知的**，所以要写下来而不是 指望它不存在。
  *
  * @note [en] `begin()` is what makes this a measurement rather than a running average: the rotor frame has to be
  *            aligned, the axis has to be named (d or q is chosen by which voltage component the caller steps), and the

@@ -136,10 +136,10 @@ struct Decimated final {
  *
  * @brief [zh] 一次速度阶跃，外环的**步进时刻**通过轨迹通道观测。
  *
- *     The spacing is read from where `i_ref_q` moves, because the current reference is recomputed only on an outer
- *     tick: between them the motor holds it. That makes the decimation a measured quantity rather than a restatement of
- *     the configuration. 间距从 `i_ref_q` 发生变化的位置读出，因为电流给定只在外环步进时重算，两步之间电机保持它。于是
- *     降采样成为一个被量出来的量，而不是把配置复述一遍。
+ *   The spacing is read from where `i_ref_q` moves, because the current reference is recomputed only on an outer tick:
+ *   between them the motor holds it. That makes the decimation a measured quantity rather than a restatement of the
+ *   configuration. 间距从 `i_ref_q` 发生变化的位置读出，因为电流给定只在外环步进时重算，两步之间电机保持它。于是降采样
+ *   成为一个被量出来的量，而不是把配置复述一遍。
  */
 auto decimated_step(float speed_loop_period_s, foc::core::TraceSample* buffer) -> Decimated {
     using MotorT = foc::motor::Motor<foc::core::BackEmfObserver, foc::core::Svpwm, foc::core::Pi,
@@ -207,16 +207,16 @@ auto decimated_step(float speed_loop_period_s, foc::core::TraceSample* buffer) -
  * @brief [zh] 请求的周期是一个**下界**：环路按整控制拍运行，所以实际周期是 `dt*ceil(T/dt)`，而 `dt` 的浮点累加还可能再
  *             加一拍。
  *
- *     This is the row's sensitivity coefficient for the loop period, and it is a trap rather than a nicety: asking for
- *     1.2 ticks gets 2. The accumulation is the second half. `speed_elapsed_s_` is a float32 that accumulates `dt` and
- *     compares against the period, so when the rounded sum falls just short of the request the loop waits an extra tick
- *     -- measured at 20x, 50x, 100x and 160x, where 8.000 ms becomes 8.050 ms, while 5x and 10x land exactly. A float32
- *     sum of twenty 50 us steps is not 1 ms to the last bit, and the difference shows up as one control tick.
+ *   This is the row's sensitivity coefficient for the loop period, and it is a trap rather than a nicety: asking for
+ *   1.2 ticks gets 2. The accumulation is the second half. `speed_elapsed_s_` is a float32 that accumulates `dt` and
+ *   compares against the period, so when the rounded sum falls just short of the request the loop waits an extra tick
+ *   -- measured at 20x, 50x, 100x and 160x, where 8.000 ms becomes 8.050 ms, while 5x and 10x land exactly. A float32
+ *   sum of twenty 50 us steps is not 1 ms to the last bit, and the difference shows up as one control tick.
  *
- *     这就是本行关于环路周期的敏感度系数，而且它是陷阱而不是细节：要 1.2 拍会得到 2 拍。浮点累加是另一半。
- *     `speed_elapsed_s_` 是一个累加 `dt` 并与周期比较的 float32，于是当舍入后的和比请求略小时，环路会多等一拍——在 20×、
- *     50×、100×、160× 上量到，8.000 ms 变成 8.050 ms，而 5× 与 10× 恰好落在点上。二十个 50 µs 的 float32 之和不是精确的
- *     1 ms，差一拍就是这么来的。
+ *   这就是本行关于环路周期的敏感度系数，而且它是陷阱而不是细节：要 1.2 拍会得到 2 拍。浮点累加是另一半。
+ *   `speed_elapsed_s_` 是一个累加 `dt` 并与周期比较的 float32，于是当舍入后的和比请求略小时，环路会多等一拍——在 20×、
+ *   50×、100×、160× 上量到，8.000 ms 变成 8.050 ms，而 5× 与 10× 恰好落在点上。二十个 50 µs 的 float32 之和不是精确的 1
+ *   ms，差一拍就是这么来的。
  */
 TEST(SilMultirate, TheRequestedPeriodIsALowerBoundAndTheTickIsTheUnit) {
     static foc::core::TraceSample buffer[kTraceCapacity];
@@ -267,29 +267,29 @@ TEST(SilMultirate, TheRequestedPeriodIsALowerBoundAndTheTickIsTheUnit) {
  *
  * @brief [zh] 外环采样在 `omega_b*T` 到达 2 之前什么也不改变，而响应恰在那里坏掉。
  *
- *     The z-domain model is the row's second source, and it is independent of the code: with the plant reduced to its
- *     inertia (`Kt/(J*s)`, the speed loop's own design cancels the `J/b` pole) and a zero-order hold, the open loop is
- *     `L(z) = [omega_b*T*(z-1) + omega_b*T^2/tau_b]/(z-1)^2`, so
+ *   The z-domain model is the row's second source, and it is independent of the code: with the plant reduced to its
+ *   inertia (`Kt/(J*s)`, the speed loop's own design cancels the `J/b` pole) and a zero-order hold, the open loop is
+ *   `L(z) = [omega_b*T*(z-1) + omega_b*T^2/tau_b]/(z-1)^2`, so
  *
- *     - the **slow** root sits at `z = 1 - omega_b*T`, i.e. a real-time time constant of `T/(1-z) = 1/omega_b` --
- *     **independent of T**. That is the whole reason decimation is allowed to be coarse: the integral is rescaled by
- *     the elapsed time, so the loop's speed is a property of the gains and not of the sampling. - the **fast** root
- *     runs off to `z = -1` at `omega_b*T = 2`, which is marginal stability. With `omega_b = 250 rad/s` and `dt = 50 us`
- *     that is `T = 8 ms`, i.e. **160x** decimation.
+ *   - the **slow** root sits at `z = 1 - omega_b*T`, i.e. a real-time time constant of `T/(1-z) = 1/omega_b` --
+ *   **independent of T**. That is the whole reason decimation is allowed to be coarse: the integral is rescaled by the
+ *   elapsed time, so the loop's speed is a property of the gains and not of the sampling. - the **fast** root runs off
+ *   to `z = -1` at `omega_b*T = 2`, which is marginal stability. With `omega_b = 250 rad/s` and `dt = 50 us` that is `T
+ *   = 8 ms`, i.e. **160x** decimation.
  *
- *     Measured: the settle time is flat from 1x to 140x (0.0685 s against 0.0690 s, 0.7 %) and then breaks -- 0.1058 s
- *     at 160x and 0.5000 s at 180x, with the overshoot going 1.73 % -> 3.62 % -> 7.28 %. The boundary is not a tuning
- *     constant anywhere in the code; it falls out of the model.
+ *   Measured: the settle time is flat from 1x to 140x (0.0685 s against 0.0690 s, 0.7 %) and then breaks -- 0.1058 s at
+ *   160x and 0.5000 s at 180x, with the overshoot going 1.73 % -> 3.62 % -> 7.28 %. The boundary is not a tuning
+ *   constant anywhere in the code; it falls out of the model.
  *
- *     z 域模型是本行的第二来源，且与代码无关：把 plant 归约为惯量（`Kt/(J*s)`，速度环自身的设计把 `J/b` 极点对消掉了）
- *     并加零阶保持，开环为 `L(z) = [omega_b*T*(z-1) + omega_b*T^2/tau_b]/(z-1)^2`，于是
+ *   z 域模型是本行的第二来源，且与代码无关：把 plant 归约为惯量（`Kt/(J*s)`，速度环自身的设计把 `J/b` 极点对消掉了）并
+ *   加零阶保持，开环为 `L(z) = [omega_b*T*(z-1) + omega_b*T^2/tau_b]/(z-1)^2`，于是
  *
- *     - **慢**根位于 `z = 1 - omega_b*T`，即实时时间常数 `T/(1-z) = 1/omega_b`——**与 T 无关**。这正是降采样可以这么粗的
- *     全部理由：积分按经过时间重新标度，所以环路的快慢是增益的属性、不是采样的属性。 - **快**根在 `omega_b*T = 2` 处跑
- *     到 `z = -1`，即临界稳定。`omega_b = 250 rad/s`、`dt = 50 µs` 对应 `T = 8 ms`，也就是 **160×** 降采样。
+ *   - **慢**根位于 `z = 1 - omega_b*T`，即实时时间常数 `T/(1-z) = 1/omega_b`——**与 T 无关**。这正是降采样可以这么粗的全
+ *   部理由：积分按经过时间重新标度，所以环路的快慢是增益的属性、不是采样的属性。 - **快**根在 `omega_b*T = 2` 处跑到 `z
+ *   = -1`，即临界稳定。`omega_b = 250 rad/s`、`dt = 50 µs` 对应 `T = 8 ms`，也就是 **160×** 降采样。
  *
- *     实测：稳定时间从 1× 到 140× 都是平的（0.0685 对 0.0690，差 0.7 %），之后断掉——160× 时 0.1058 s、180× 时 0.5000
- *     s，超调 1.73 % → 3.62 % → 7.28 %。这条边界不是代码里的任何整定常数，它是从模型里掉出来的。
+ *   实测：稳定时间从 1× 到 140× 都是平的（0.0685 对 0.0690，差 0.7 %），之后断掉——160× 时 0.1058 s、180× 时 0.5000 s，
+ *   超调 1.73 % → 3.62 % → 7.28 %。这条边界不是代码里的任何整定常数，它是从模型里掉出来的。
  */
 TEST(SilMultirate, TheResponseIsFlatUntilOmegaBandTReachesTwo) {
     static foc::core::TraceSample buffer[kTraceCapacity];

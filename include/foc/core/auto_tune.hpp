@@ -11,21 +11,20 @@ namespace core {
 /**
  * @brief [en] What a speed-loop tuning pass is asked for, and what it is allowed to trust.
  *
- *     **The two numbers a speed loop actually needs are both measurable ratios**, and neither is `kt` or `J` on its
- *     own. From `J*dw/dt = kt*iq - b*w` the acceleration per amp is `kt/J` and the mechanical pole is `b/J`. The
- *     library's own `speed_pi_config()` cancels that pole and lands at `kp = bandwidth*J/kt`, `ki = bandwidth*b/kt` --
- *     which, written in the ratios, is `kp = bandwidth/(kt/J)` and `ki = bandwidth*(b/J)/(kt/J)`. So a tuner never has
- *     to know `kt` or `J` to produce the right gains; it has to *measure the two ratios*. The nameplate enters only
- *     through `j_expected`, whose job is to answer a different question: is this the machine the caller thinks it is
- *     tuning?
+ *   **The two numbers a speed loop actually needs are both measurable ratios**, and neither is `kt` or `J` on its own.
+ *   From `J*dw/dt = kt*iq - b*w` the acceleration per amp is `kt/J` and the mechanical pole is `b/J`. The library's own
+ *   `speed_pi_config()` cancels that pole and lands at `kp = bandwidth*J/kt`, `ki = bandwidth*b/kt` -- which, written
+ *   in the ratios, is `kp = bandwidth/(kt/J)` and `ki = bandwidth*(b/J)/(kt/J)`. So a tuner never has to know `kt` or
+ *   `J` to produce the right gains; it has to *measure the two ratios*. The nameplate enters only through `j_expected`,
+ *   whose job is to answer a different question: is this the machine the caller thinks it is tuning?
  *
  * @brief [zh] 一次速度环整定被要求什么，以及它被允许相信什么。
  *
- *     **速度环真正需要的两个数都是可测的比值**，而且都不是单独的 `kt` 或 `J`。由 `J·dω_m/dt = kt·iq − b·ω_m` 得，每安培
- *     加速度是 `kt/J`、机械极点是 `b/J`。库自己的 `speed_pi_config()` 抵消那个极点后落在 `kp = bandwidth·J/kt`、 `ki =
- *     bandwidth·b/kt`——写成比值就是 `kp = bandwidth/(kt/J)` 与 `ki = bandwidth·(b/J)/(kt/J)`。所以整定器根本不需要知道
- *     `kt` 或 `J` 才能给出正确的增益；它需要**量出这两个比值**。铭牌只通过 `j_expected` 参与，而它的职责是回答另一个问
- *     题：这台机器是不是调用方以为自己在整定的那一台？
+ *   **速度环真正需要的两个数都是可测的比值**，而且都不是单独的 `kt` 或 `J`。由 `J·dω_m/dt = kt·iq − b·ω_m` 得，每安培加
+ *   速度是 `kt/J`、机械极点是 `b/J`。库自己的 `speed_pi_config()` 抵消那个极点后落在 `kp = bandwidth·J/kt`、 `ki =
+ *   bandwidth·b/kt`——写成比值就是 `kp = bandwidth/(kt/J)` 与 `ki = bandwidth·(b/J)/(kt/J)`。所以整定器根本不需要知道
+ *   `kt` 或 `J` 才能给出正确的增益；它需要**量出这两个比值**。铭牌只通过 `j_expected` 参与，而它的职责是回答另一个问
+ *   题：这台机器是不是调用方以为自己在整定的那一台？
  * @since 0.1.9
  * @exporter
  */
@@ -80,30 +79,30 @@ struct SpeedTuneResult final {
 /**
  * @brief [en] Identify the two ratios a speed loop needs from a torque-step window.
  *
- *     And refuse when the window is not a measurement.
+ *   And refuse when the window is not a measurement.
  *
- *     **The fit.** `dw/dt = (kt/J)*iq - (b/J)*w` is linear in `(iq, w)`, so a two-parameter least squares over the
- *     window gives both ratios without ever assuming the speed held still: `kt/J` is the slope on `iq` and `b/J` is the
- *     slope on `w`, and the fit carries an **intercept** on purpose -- an unknown constant load lands there, which is
- *     how the pass can tell "the machine is heavier than you said" from "something is pulling on it".
+ *   **The fit.** `dw/dt = (kt/J)*iq - (b/J)*w` is linear in `(iq, w)`, so a two-parameter least squares over the window
+ *   gives both ratios without ever assuming the speed held still: `kt/J` is the slope on `iq` and `b/J` is the slope on
+ *   `w`, and the fit carries an **intercept** on purpose -- an unknown constant load lands there, which is how the pass
+ *   can tell "the machine is heavier than you said" from "something is pulling on it".
  *
- *     **Refusals, each with its own reason.** Too short a window, a current that did not vary (no slope to measure), a
- *     saturated sample (the loop was not delivering what the reference asked), a residual too large (the model does not
- *     explain the window -- friction that changes with position, a cogging detent, a load that moves), a negative or
- *     implausible mechanical pole, and a measured inertia further than `tolerance` from `j_expected`. In every one of
- *     those the result carries the **nameplate** gains and `valid == false`, so a caller that applies what it gets
- *     applies nothing new.
+ *   **Refusals, each with its own reason.** Too short a window, a current that did not vary (no slope to measure), a
+ *   saturated sample (the loop was not delivering what the reference asked), a residual too large (the model does not
+ *   explain the window -- friction that changes with position, a cogging detent, a load that moves), a negative or
+ *   implausible mechanical pole, and a measured inertia further than `tolerance` from `j_expected`. In every one of
+ *   those the result carries the **nameplate** gains and `valid == false`, so a caller that applies what it gets
+ *   applies nothing new.
  *
  * @brief [zh] 从一个转矩阶跃窗口辨识速度环需要的两个比值，并在窗口不构成测量时拒绝。
  *
- *     **拟合。** `dω_m/dt = (kt/J)·iq − (b/J)·ω_m` 对 `(iq, ω_m)` 是线性的，所以窗口上的两参数最小二乘同时给出两个比
- *     值，而不需要假设转速不变：`kt/J` 是对 `iq` 的斜率，`b/J` 是对 `ω_m` 的斜率。拟合**刻意带截距**——一个未知的恒定负
- *     载会落在那里，这是本次整定能区分"机器比你说的重"与"有东西在拉它"的方式。
+ *   **拟合。** `dω_m/dt = (kt/J)·iq − (b/J)·ω_m` 对 `(iq, ω_m)` 是线性的，所以窗口上的两参数最小二乘同时给出两个比值，
+ *   而不需要假设转速不变：`kt/J` 是对 `iq` 的斜率，`b/J` 是对 `ω_m` 的斜率。拟合**刻意带截距**——一个未知的恒定负载会落
+ *   在那里，这是本次整定能区分"机器比你说的重"与"有东西在拉它"的方式。
  *
- *     **拒绝，各有理由。** 窗口太短、电流没有变化（没有斜率可测）、出现饱和样本（环路没在送出参考要的东西）、残差过大（
- *     模型解释不了这个窗口——随位置变化的摩擦、齿槽定位点、在动的负载）、机械极点不成立或为负、实测惯量离 `j_expected`
- *     超过 `tolerance`。以上每一种，结果里带的都是**铭牌**增益且 `valid == false`，于是"拿到什么就用什么"的调用方等于什
- *     么都没换。
+ *   **拒绝，各有理由。** 窗口太短、电流没有变化（没有斜率可测）、出现饱和样本（环路没在送出参考要的东西）、残差过大（模
+ *   型解释不了这个窗口——随位置变化的摩擦、齿槽定位点、在动的负载）、机械极点不成立或为负、实测惯量离 `j_expected` 超过
+ *   `tolerance`。以上每一种，结果里带的都是**铭牌**增益且 `valid == false`，于是"拿到什么就用什么"的调用方等于什么都没
+ *   换。
  * @since 0.1.9
  * @exporter
  */

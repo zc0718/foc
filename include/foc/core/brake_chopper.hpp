@@ -74,18 +74,18 @@ struct BrakeChopperOutput final {
  *               the supply can absorb. There is nowhere for the energy to go, so it goes into a resistor -- on purpose,
  *               before the bus finds its own way to get rid of it.
  *
- *     Two things about the design are worth stating because both were available and would have been wrong. The duty is
- *     **bang-bang at `duty_max`**, not proportional to the overvoltage: a proportional law makes the resistor's power a
- *     function of how far the bus went over, which means the first thing it does about a fast rise is too little, and
- *     the thing it does at the threshold is nothing at all. And the budget is integrated with a **cooling** term,
- *     because a budget without cooling is a latch that fires once in the machine's life and then never again.
+ *   Two things about the design are worth stating because both were available and would have been wrong. The duty is
+ *   **bang-bang at `duty_max`**, not proportional to the overvoltage: a proportional law makes the resistor's power a
+ *   function of how far the bus went over, which means the first thing it does about a fast rise is too little, and the
+ *   thing it does at the threshold is nothing at all. And the budget is integrated with a **cooling** term, because a
+ *   budget without cooling is a latch that fires once in the machine's life and then never again.
  *
  * @details [zh] 斩波器只为一件事存在，而那是驱动躲不开的：机器回馈得比电源能吸收的更快。能量无处可去，于是**有意地**送
  *               进一个电阻，赶在母线自己找到办法处理它之前。
  *
- *     设计上有两件事值得写下来，因为两个替代方案都唾手可得而且都是错的。占空比是 **`duty_max` 上的 bang-bang**，而不是
- *     正比于超压量：按比例律，电阻的功率取决于母线超了多少，于是它对一次快速上升的第一反应**太小**，而在阈值处的反应干
- *     脆是 **零**。预算是带**冷却**项积分的，因为没有冷却的预算是一辈子只跳一次、之后再也不跳的锁存器。
+ *   设计上有两件事值得写下来，因为两个替代方案都唾手可得而且都是错的。占空比是 **`duty_max` 上的 bang-bang**，而不是正
+ *   比于超压量：按比例律，电阻的功率取决于母线超了多少，于是它对一次快速上升的第一反应**太小**，而在阈值处的反应干脆是
+ *   **零**。预算是带**冷却**项积分的，因为没有冷却的预算是一辈子只跳一次、之后再也不跳的锁存器。
  * @since 0.1.9
  * @exporter
  */

@@ -14,26 +14,25 @@ namespace motor {
 /**
  * @brief [en] Nameplate parameters of one motor, SI units. Populated once at construction.
  *
- *     The struct carries both the machine itself and the setup decisions that go with it (limits, carrier, dead time,
- *     loop period). A field of zero there means "use the natural behaviour": `speed_loop_period_s = 0` runs the speed
- *     loop on every tick, which is what the library did before the field existed.
+ *   The struct carries both the machine itself and the setup decisions that go with it (limits, carrier, dead time,
+ *   loop period). A field of zero there means "use the natural behaviour": `speed_loop_period_s = 0` runs the speed
+ *   loop on every tick, which is what the library did before the field existed.
  *
- *     **The period fields are lower bounds, not exact periods.** The loops run on whole control ticks, so the actual
- *     period is `dt*ceil(period/dt)` -- asking for 1.2 ticks gets 2 -- and because the elapsed time accumulates in
- *     float32 the rounded sum can fall just short of the request and add one more tick, which is why a requested 1.000
- *     ms runs every 21 ticks (1.050 ms) while 0.250 ms and 0.500 ms land exactly. After six years of ticks that is one
- *     tick, not six; but a caller who needs an exact decimation ratio has to check the actual period rather than assume
- *     it.
+ *   **The period fields are lower bounds, not exact periods.** The loops run on whole control ticks, so the actual
+ *   period is `dt*ceil(period/dt)` -- asking for 1.2 ticks gets 2 -- and because the elapsed time accumulates in
+ *   float32 the rounded sum can fall just short of the request and add one more tick, which is why a requested 1.000 ms
+ *   runs every 21 ticks (1.050 ms) while 0.250 ms and 0.500 ms land exactly. After six years of ticks that is one tick,
+ *   not six; but a caller who needs an exact decimation ratio has to check the actual period rather than assume it.
  *
  * @brief [zh] 单台电机的铭牌参数，SI 单位。构造时一次填好。
  *
- *     本结构同时携带电机本体与随之而来的设置决策（限幅、载波、死区、环路周期）。其中取值为 0 的字段表示“使用自然行为”：
- *     `speed_loop_period_s = 0` 表示每个 tick 都跑速度环，也就是这个 字段出现之前库的行为。
+ *   本结构同时携带电机本体与随之而来的设置决策（限幅、载波、死区、环路周期）。其中取值为 0 的字段表示“使用自然行为”：
+ *   `speed_loop_period_s = 0` 表示每个 tick 都跑速度环，也就是这个 字段出现之前库的行为。
  *
- *     **周期字段是下界，不是精确周期。** 环路按整控制拍运行，所以实际周期是 `dt*ceil(周期/dt)`——要 1.2 拍得到 2 拍；而
- *     经过时间用 float32 累加，舍入后的和可能比请求略小，于是再多等一拍：所以请求 1.000 ms 实际每 21 拍跑一次（ 1.050
- *     ms），而 0.250 ms 与 0.500 ms 恰好落在点上。这个偏差是一拍、不会随时间增加；但需要精确降采样比的调用方必须去查实
- *     际周期，不能假定。
+ *   **周期字段是下界，不是精确周期。** 环路按整控制拍运行，所以实际周期是 `dt*ceil(周期/dt)`——要 1.2 拍得到 2 拍；而经
+ *   过时间用 float32 累加，舍入后的和可能比请求略小，于是再多等一拍：所以请求 1.000 ms 实际每 21 拍跑一次（ 1.050 ms
+ *   ），而 0.250 ms 与 0.500 ms 恰好落在点上。这个偏差是一拍、不会随时间增加；但需要精确降采样比的调用方必须去查实际周
+ *   期，不能假定。
  * @since 0.1.0
  * @exporter
  */
@@ -59,15 +58,15 @@ struct MotorConfig final {
 /**
  * @brief [en] Rotor flux linkage implied by the torque constant.
  *
- *     \f[ \psi_f = \frac{K_t}{1.5\,p} \f]
+ *   \f[ \psi_f = \frac{K_t}{1.5\,p} \f]
  *
- *     Needed to seed a flux-linkage observer during the align phase.
+ *   Needed to seed a flux-linkage observer during the align phase.
  *
  * @brief [zh] 由转矩常数反推的转子磁链。
  *
- *     \f[ \psi_f = \frac{K_t}{1.5\,p} \f]
+ *   \f[ \psi_f = \frac{K_t}{1.5\,p} \f]
  *
- *     用于在对齐阶段为磁链观测器播种。
+ *   用于在对齐阶段为磁链观测器播种。
  *
  * @return [en] flux linkage in Wb, or 0 when pole_pairs is 0.
  * @return [zh] 磁链，Wb；极对数为 0 时返回 0。
@@ -81,16 +80,16 @@ auto psi_f_wb(const motor::MotorConfig& config) noexcept -> float;
 /**
  * @brief [en] Current-loop PI for a critically damped bandwidth.
  *
- *     \f[ k_i = \omega_b^2 L,\qquad k_p = 2\,\omega_b L - R \f]
+ *   \f[ k_i = \omega_b^2 L,\qquad k_p = 2\,\omega_b L - R \f]
  *
- *     Substituting the plant pole again gives `s^2 + 2*wb*s + wb^2`, so the closed loop has no overshoot at all; every
- *     gain is derived from the nameplate, never hand-tuned.
+ *   Substituting the plant pole again gives `s^2 + 2*wb*s + wb^2`, so the closed loop has no overshoot at all; every
+ *   gain is derived from the nameplate, never hand-tuned.
  *
  * @brief [zh] 按临界阻尼带宽给出的电流环 PI。
  *
- *     \f[ k_i = \omega_b^2 L,\qquad k_p = 2\,\omega_b L - R \f]
+ *   \f[ k_i = \omega_b^2 L,\qquad k_p = 2\,\omega_b L - R \f]
  *
- *     代回被控对象极点后正好得到 `s^2 + 2*wb*s + wb^2`，因此闭环无超调；全部增益由铭牌参数推导，不手调。
+ *   代回被控对象极点后正好得到 `s^2 + 2*wb*s + wb^2`，因此闭环无超调；全部增益由铭牌参数推导，不手调。
  *
  * @param config [en] nameplate parameters.
  * @param config [zh] 铭牌参数。
@@ -131,13 +130,13 @@ auto speed_pi_config(const motor::MotorConfig& config, float bandwidth_rad_s) no
 /**
  * @brief [en] Feedforward terms derived from the nameplate: Ld, Lq and `psi_f` in one place.
  *
- *     Exists so a caller never retypes machine constants: the same `MotorConfig` that tunes the loops also configures
- *     the feedforward, and `psi_f` keeps the single definition in psi_f_wb().
+ *   Exists so a caller never retypes machine constants: the same `MotorConfig` that tunes the loops also configures the
+ *   feedforward, and `psi_f` keeps the single definition in psi_f_wb().
  *
  * @brief [zh] 由铭牌推导的前馈项：Ld、Lq 与 `psi_f` 在同一处给出。
  *
- *     存在的意义是调用方永不需要重抄电机常数：整定环路用的那份 `MotorConfig` 同时配置 前馈，而 `psi_f` 只在 psi_f_wb()
- *     里定义一次。
+ *   存在的意义是调用方永不需要重抄电机常数：整定环路用的那份 `MotorConfig` 同时配置 前馈，而 `psi_f` 只在 psi_f_wb() 里
+ *   定义一次。
  *
  * @param config [en] nameplate parameters.
  * @param config [zh] 铭牌参数。
@@ -152,17 +151,17 @@ auto feedforward_config(const motor::MotorConfig& config) noexcept -> core::Deco
 /**
  * @brief [en] Position-loop configuration: `gain = bandwidth`, plus both limits.
  *
- *     With the speed loop much faster than the position loop, `gain = w` closes the position loop as a first-order
- *     system of bandwidth `w` (the velocity loop contributes the `1/s`). There is no integral term: a constant load
- *     torque is a disturbance *inside* the speed loop, whose integrator already removes it, so a second integrator
- *     would only add windup. That is why this controller is a P and the helper is called `position_p_config` -- the old
- *     name claimed a PI that never had an I.
+ *   With the speed loop much faster than the position loop, `gain = w` closes the position loop as a first-order system
+ *   of bandwidth `w` (the velocity loop contributes the `1/s`). There is no integral term: a constant load torque is a
+ *   disturbance *inside* the speed loop, whose integrator already removes it, so a second integrator would only add
+ *   windup. That is why this controller is a P and the helper is called `position_p_config` -- the old name claimed a
+ *   PI that never had an I.
  *
  * @brief [zh] 位置环配置：`增益 = 带宽`，外加两道限制。
  *
- *     速度环远快于位置环时，`gain = w` 让位置环闭环成一阶系统、带宽 `w`（`1/s` 由速度环 提供）。这里没有积分项：恒定负
- *     载转矩是速度环**内部**的扰动，速度环积分器已经消掉它，再加 一个积分器只会带来积分饱和。所以这个控制器是 P，辅助函
- *     数叫 `position_p_config`——旧名字 声称的 PI 从来没有 I。
+ *   速度环远快于位置环时，`gain = w` 让位置环闭环成一阶系统、带宽 `w`（`1/s` 由速度环 提供）。这里没有积分项：恒定负载
+ *   转矩是速度环**内部**的扰动，速度环积分器已经消掉它，再加 一个积分器只会带来积分饱和。所以这个控制器是 P，辅助函数叫
+ *   `position_p_config`——旧名字 声称的 PI 从来没有 I。
  *
  * @param config [en] nameplate parameters.
  * @param config [zh] 铭牌参数。

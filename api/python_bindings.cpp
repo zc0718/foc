@@ -76,11 +76,11 @@ auto error_name(foc_err_t code) -> const char* {
 /**
  * @brief [en] Turn a return code into a Python-visible exception.
  *
- *     The C call site stays one line.
+ *   The C call site stays one line.
  *
  * @brief [zh] 把返回码变成 Python 可见的异常。
  *
- *     C 调用点在源码里仍然只有一行。
+ *   C 调用点在源码里仍然只有一行。
  */
 auto check(foc_err_t code, const char* call) -> void {
     if (code == FOC_OK) {
@@ -531,8 +531,8 @@ class Protector final {
     /**
      * @brief [en] One control period.
      *
-     *     The return is a tuple rather than a dict because the six values are positional in the C output struct and a
-     *     dict would invite name drift.
+     *   The return is a tuple rather than a dict because the six values are positional in the C output struct and a
+     *   dict would invite name drift.
      *
      * @brief [zh] 一个控制周期。返回元组而非 dict，因为这六个数在 C 输出结构里是有位置的，dict 会招来名字漂移。
      */

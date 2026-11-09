@@ -11,8 +11,8 @@ namespace {
 /**
  * @brief [en] The `t` that maximises `p*sin t + q*sin 2t`.
  *
- *     Which is the whole of both laws in this file: the ellipse case and the current-circle case differ only in what
- *     `p` and `q` are.
+ *   Which is the whole of both laws in this file: the ellipse case and the current-circle case differ only in what `p`
+ *   and `q` are.
  *
  * @brief [zh] 使 `p·sin t + q·sin 2t` 最大的 `t`。本文件里的两条规律全在这里：椭圆情形与电流圆情形只差 `p`、`q` 取什
  *             么。

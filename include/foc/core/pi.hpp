@@ -11,15 +11,15 @@ namespace core {
 /**
  * @brief [en] Per-call gain scaling: how hard the drive resists, for this call only.
  *
- *     A zero or negative scale means "no override" and becomes \f$1\f$, which is the same rule the rest of the project
- *     uses for per-call values; here it also keeps a defaulted aggregate from asking for zero stiffness. The scale
- *     multiplies the **configuration** and is never accumulated into it, so one compliant call cannot leave the
- *     controller detuned for the next stiff one.
+ *   A zero or negative scale means "no override" and becomes \f$1\f$, which is the same rule the rest of the project
+ *   uses for per-call values; here it also keeps a defaulted aggregate from asking for zero stiffness. The scale
+ *   multiplies the **configuration** and is never accumulated into it, so one compliant call cannot leave the
+ *   controller detuned for the next stiff one.
  *
  * @brief [zh] 按次增益缩放：这一次驱动要抵抗多少。
  *
- *     零或负的缩放表示"不覆盖"，会被取成 \f$1\f$，与项目其余部分对按次传值的规则一致；在这里它还防止一个被值初始化的聚
- *     合体要求零刚度。缩放乘的是**配置**、绝不累加进配置，所以一次柔顺调用不会把控制器留在失调状态。
+ *   零或负的缩放表示"不覆盖"，会被取成 \f$1\f$，与项目其余部分对按次传值的规则一致；在这里它还防止一个被值初始化的聚合
+ *   体要求零刚度。缩放乘的是**配置**、绝不累加进配置，所以一次柔顺调用不会把控制器留在失调状态。
  * @see `test_pi.cpp` (`AZeroIntegralScaleMeansNoOverrideRatherThanAnEmptyWindow`)
  * @since 0.1.0
  * @exporter
@@ -34,37 +34,37 @@ struct SpeedInput final {
 /**
  * @brief [en] One discrete PI step with the output and the integral both clamped.
  *
- *     The integral clamp **is** the anti-windup mechanism: there is no back-calculation and `step()` never sees the
- *     actuator's actual output. The integral is re-clamped against the **current** window before it is added to the
- *     proportional term, which is what makes a shrunken window release stored output at once:
+ *   The integral clamp **is** the anti-windup mechanism: there is no back-calculation and `step()` never sees the
+ *   actuator's actual output. The integral is re-clamped against the **current** window before it is added to the
+ *   proportional term, which is what makes a shrunken window release stored output at once:
  *
- *     \f[ e = r - y,\qquad i \leftarrow \mathrm{clamp}(i + k_i\,e\,\Delta t,\; i_{min},\; i_{max}),\qquad u =
- *     \mathrm{clamp}(k_p\,e + i,\; u_{min},\; u_{max}) \f]
+ *   \f[ e = r - y,\qquad i \leftarrow \mathrm{clamp}(i + k_i\,e\,\Delta t,\; i_{min},\; i_{max}),\qquad u =
+ *   \mathrm{clamp}(k_p\,e + i,\; u_{min},\; u_{max}) \f]
  *
- *     Where \f$e\f$ is the control error, \f$u\f$ the output, \f$k_p\f$ the proportional gain (output units per error
- *     unit), \f$k_i\f$ the integral gain (output units per error unit per second) and \f$\Delta t\f$ the step length in
- *     seconds. Everything is in the caller's loop units; no machine quantity appears here, so nothing in this block
- *     needs the symbol table. Ledger `E-PI-1`.
+ *   Where \f$e\f$ is the control error, \f$u\f$ the output, \f$k_p\f$ the proportional gain (output units per error
+ *   unit), \f$k_i\f$ the integral gain (output units per error unit per second) and \f$\Delta t\f$ the step length in
+ *   seconds. Everything is in the caller's loop units; no machine quantity appears here, so nothing in this block needs
+ *   the symbol table. Ledger `E-PI-1`.
  *
- *     Size the integral window to the loop's steady-state output range -- for a speed loop, the current that holds the
- *     top speed rather than `i_max` -- because the full output range costs a slow, visible recovery after saturation
- *     (measured in the current-step and saturation-limit scenarios). All state lives in the object: no globals, no
- *     allocation, one instance per axis.
+ *   Size the integral window to the loop's steady-state output range -- for a speed loop, the current that holds the
+ *   top speed rather than `i_max` -- because the full output range costs a slow, visible recovery after saturation
+ *   (measured in the current-step and saturation-limit scenarios). All state lives in the object: no globals, no
+ *   allocation, one instance per axis.
  *
  * @brief [zh] 输出与积分都被限幅的离散 PI 一步。
  *
- *     积分限幅**就是**抗饱和手段：本实现没有 back-calculation，`step()` 也拿不到执行器实际施加的输出。积分在加到比例项
- *     **之前**先按**当前**窗口重新夹紧，这正是窗口收窄时已存输出能立刻释放的原因：
+ *   积分限幅**就是**抗饱和手段：本实现没有 back-calculation，`step()` 也拿不到执行器实际施加的输出。积分在加到比例项 **
+ *   之前**先按**当前**窗口重新夹紧，这正是窗口收窄时已存输出能立刻释放的原因：
  *
- *     \f[ e = r - y,\qquad i \leftarrow \mathrm{clamp}(i + k_i\,e\,\Delta t,\; i_{min},\; i_{max}),\qquad u =
- *     \mathrm{clamp}(k_p\,e + i,\; u_{min},\; u_{max}) \f]
+ *   \f[ e = r - y,\qquad i \leftarrow \mathrm{clamp}(i + k_i\,e\,\Delta t,\; i_{min},\; i_{max}),\qquad u =
+ *   \mathrm{clamp}(k_p\,e + i,\; u_{min},\; u_{max}) \f]
  *
- *     其中 \f$e\f$ 是控制误差、\f$u\f$ 是输出、\f$k_p\f$ 是比例增益（输出单位/误差单位）、\f$k_i\f$ 是积分增益（输出单
- *     位/误差单位/秒）、\f$\Delta t\f$ 是步长，s。全部取调用方环路的单位；本段不出现机器量，因此不需要符号表。台账
- *     `E-PI-1`。
+ *   其中 \f$e\f$ 是控制误差、\f$u\f$ 是输出、\f$k_p\f$ 是比例增益（输出单位/误差单位）、\f$k_i\f$ 是积分增益（输出单位/
+ *   误差单位/秒）、\f$\Delta t\f$ 是步长，s。全部取调用方环路的单位；本段不出现机器量，因此不需要符号表。台账
+ *   `E-PI-1`。
  *
- *     积分窗口请取成该环的**稳态输出量级**——速度环即“维持最高转速所需电流”，而不是 `i_max`——因为按满量程取会让饱和后出
- *     现明显的慢恢复（电流阶跃与饱和限幅两个场景有实测数字）。状态全部在对象内：无全局、不分配，每个轴一个实例。
+ *   积分窗口请取成该环的**稳态输出量级**——速度环即“维持最高转速所需电流”，而不是 `i_max`——因为按满量程取会让饱和后出现
+ *   明显的慢恢复（电流阶跃与饱和限幅两个场景有实测数字）。状态全部在对象内：无全局、不分配，每个轴一个实例。
  *
  * @warning [en] A negative gain is refused at construction and the controller latches `ErrorCode::Param`; a
  *               non-positive `dt` is refused at the step and the output holds at its previous value. A latched `Param`
@@ -82,18 +82,18 @@ class Pi final {
     /**
      * @brief [en] Gains and limits, validated once at construction rather than on every step.
      *
-     *     Valid when \f$k_p \ge 0\f$, \f$k_i \ge 0\f$, \f$u_{min} \le u_{max}\f$ and \f$i_{min} \le i_{max}\f$;
-     *     anything else leaves the controller latched in `ErrorCode::Param`. The point of checking here is that a
-     *     configuration which passes cannot make `clamp` receive an inverted window, which is the only way a clamp
-     *     silently stops being a clamp. \f$k_p\f$ and \f$k_i\f$ are in output units per error unit (per second for
-     *     \f$k_i\f$); the four limits are in output units and in the integral's own units.
+     *   Valid when \f$k_p \ge 0\f$, \f$k_i \ge 0\f$, \f$u_{min} \le u_{max}\f$ and \f$i_{min} \le i_{max}\f$; anything
+     *   else leaves the controller latched in `ErrorCode::Param`. The point of checking here is that a configuration
+     *   which passes cannot make `clamp` receive an inverted window, which is the only way a clamp silently stops being
+     *   a clamp. \f$k_p\f$ and \f$k_i\f$ are in output units per error unit (per second for \f$k_i\f$); the four limits
+     *   are in output units and in the integral's own units.
      *
      * @brief [zh] 增益与限幅，在构造时校验一次，而不是每一步都校验。
      *
-     *     合法条件是 \f$k_p \ge 0\f$、\f$k_i \ge 0\f$、\f$u_{min} \le u_{max}\f$、\f$i_{min} \le i_{max}\f$；其余情形让
-     *     控制器锁存在 `ErrorCode::Param`。在这里校验的意义是：通过的配置不可能让 `clamp` 收到一个反向的窗口——而那是限
-     *     幅悄悄不再是限幅的唯一途径。\f$k_p\f$ 与 \f$k_i\f$ 的单位是输出单位/误差单位（\f$k_i\f$ 再除一次秒）；四个限
-     *     幅分别取输出单位与积分自身单位。
+     *   合法条件是 \f$k_p \ge 0\f$、\f$k_i \ge 0\f$、\f$u_{min} \le u_{max}\f$、\f$i_{min} \le i_{max}\f$；其余情形让控
+     *   制器锁存在 `ErrorCode::Param`。在这里校验的意义是：通过的配置不可能让 `clamp` 收到一个反向的窗口——而那是限幅悄
+     *   悄不再是限幅的唯一途径。\f$k_p\f$ 与 \f$k_i\f$ 的单位是输出单位/误差单位（\f$k_i\f$ 再除一次秒）；四个限幅分别
+     *   取输出单位与积分自身单位。
      *
      * @warning [en] A negative gain or an inverted window is refused at construction, and `reset()` re-runs the same
      *               check, so a latched controller cannot be revived by clearing its state alone.

@@ -13,26 +13,25 @@ namespace core {
 /**
  * @brief [en] What a recorded step response actually did, in numbers a tuning decision can rest on.
  *
- *     Exists so the loop can measure itself instead of asking a human to eyeball a plot. The two quantities that carry
- *     a tuning decision are `bandwidth_rad_s` -- the -3 dB point of the first-order model fitted to the approach, which
- *     the gain law in `motor_config.hpp` claims to place at the requested bandwidth -- and `settling_s`, which is the
- *     claim a customer actually makes ("it holds within 2 % in 70 ms").
+ *   Exists so the loop can measure itself instead of asking a human to eyeball a plot. The two quantities that carry a
+ *   tuning decision are `bandwidth_rad_s` -- the -3 dB point of the first-order model fitted to the approach, which the
+ *   gain law in `motor_config.hpp` claims to place at the requested bandwidth -- and `settling_s`, which is the claim a
+ *   customer actually makes ("it holds within 2 % in 70 ms").
  *
- *     `status` is the diagnostic channel, and it is not decoration: `Ok` means a decay was fitted, `State` means the
- *     window carried no usable decay (fewer than three samples strictly between the start and the target), `Param`
- *     means the arguments cannot describe a step at all. A bandwidth of 0 with status `Ok` is impossible by
- *     construction, so "zero" cannot be mistaken for "not measured" -- which is the failure mode the capability matrix
- *     exists to prevent.
+ *   `status` is the diagnostic channel, and it is not decoration: `Ok` means a decay was fitted, `State` means the
+ *   window carried no usable decay (fewer than three samples strictly between the start and the target), `Param` means
+ *   the arguments cannot describe a step at all. A bandwidth of 0 with status `Ok` is impossible by construction, so
+ *   "zero" cannot be mistaken for "not measured" -- which is the failure mode the capability matrix exists to prevent.
  *
  * @brief [zh] 一段记录下来的阶跃响应到底做了什么，用可直接据以整定的数说出来。
  *
- *     存在的意义是让环路自己测自己，而不是让人去看图。承载整定决策的两个量是 `bandwidth_rad_s`——拟合到逼近段的一阶模型
- *     的 -3 dB 点，`motor_config.hpp` 的增益律声称把它放在请求的带宽上——和 `settling_s`，后者正是客户真正会说的话（"70
- *     ms 内稳定在 2% 带内"）。
+ *   存在的意义是让环路自己测自己，而不是让人去看图。承载整定决策的两个量是 `bandwidth_rad_s`——拟合到逼近段的一阶模型的
+ *   -3 dB 点，`motor_config.hpp` 的增益律声称把它放在请求的带宽上——和 `settling_s`，后者正是客户真正会说的话（"70 ms 内
+ *   稳定在 2% 带内"）。
  *
- *     `status` 是诊断通道，不是装饰：`Ok` 表示拟合到了衰减，`State` 表示窗口里没有可用的衰减（严格落在起点与目标之间的
- *     样本少于三个），`Param` 表示参数根本描述不了一个阶跃。构造上不可能出现 `status == Ok` 而带宽为 0，因此"零"不会被
- *     误读成"没测"——而这正是能力矩阵存在的理由。
+ *   `status` 是诊断通道，不是装饰：`Ok` 表示拟合到了衰减，`State` 表示窗口里没有可用的衰减（严格落在起点与目标之间的样
+ *   本少于三个），`Param` 表示参数根本描述不了一个阶跃。构造上不可能出现 `status == Ok` 而带宽为 0，因此"零"不会被误读
+ *   成"没测"——而这正是能力矩阵存在的理由。
  * @since 0.1.8
  * @exporter
  */
@@ -65,34 +64,34 @@ struct StepMetrics {
 /**
  * @brief [en] Measure a recorded step response: fit the approach and report the loop's numbers.
  *
- *     The window must start at (or before) the step: `y[0]` is taken as the pre-step value and `target` as the
- *     post-step one, so a window that begins mid-transient measures the transient, not the step. That is a documented
- *     precondition rather than a guess about the caller's data.
+ *   The window must start at (or before) the step: `y[0]` is taken as the pre-step value and `target` as the post-step
+ *   one, so a window that begins mid-transient measures the transient, not the step. That is a documented precondition
+ *   rather than a guess about the caller's data.
  *
- *     The fit uses the **approach segment only**: every sample from the first movement up to the first arrival at the
- *     target, and nothing after it. An overshoot above the target would make `ln` of a non-positive number, and the
- *     ring-down past the crossing is a shape the first-order model does not describe -- including it pulls the time
- *     constant toward the oscillation period. A response that never gets closer than 10 % of the way to the target
- *     therefore reports `State` instead of a confidently wrong number, and a response that overshoots is measured on
- *     the part that is actually first-order.
+ *   The fit uses the **approach segment only**: every sample from the first movement up to the first arrival at the
+ *   target, and nothing after it. An overshoot above the target would make `ln` of a non-positive number, and the
+ *   ring-down past the crossing is a shape the first-order model does not describe -- including it pulls the time
+ *   constant toward the oscillation period. A response that never gets closer than 10 % of the way to the target
+ *   therefore reports `State` instead of a confidently wrong number, and a response that overshoots is measured on the
+ *   part that is actually first-order.
  *
- *     `bandwidth_rad_s = 1 / tau`. For the speed loop in this library that is the whole claim: `speed_pi_config()`
- *     cancels the mechanical pole `B/J` and leaves `wb / s`, a first-order loop with time constant `1 / wb`, whose -3
- *     dB point is `wb`. Fitting `tau` from the trace and comparing it with the requested `wb` is therefore a
- *     measurement of whether the gain law did what its documentation says.
+ *   `bandwidth_rad_s = 1 / tau`. For the speed loop in this library that is the whole claim: `speed_pi_config()`
+ *   cancels the mechanical pole `B/J` and leaves `wb / s`, a first-order loop with time constant `1 / wb`, whose -3 dB
+ *   point is `wb`. Fitting `tau` from the trace and comparing it with the requested `wb` is therefore a measurement of
+ *   whether the gain law did what its documentation says.
  *
  * @brief [zh] 测量一段记录下来的阶跃响应：对逼近段拟合一个一阶衰减，并给出环路的几个数。
  *
- *     窗口必须从阶跃之前（或正好在阶跃处）开始：`y[0]` 被当作阶跃前的值、`target` 被当作阶跃后的值，因此从暂态中间开始
- *     的窗口测到的是暂态，不是阶跃。这是写下来的前提条件，不是对调用方数据的猜测。
+ *   窗口必须从阶跃之前（或正好在阶跃处）开始：`y[0]` 被当作阶跃前的值、`target` 被当作阶跃后的值，因此从暂态中间开始的
+ *   窗口测到的是暂态，不是阶跃。这是写下来的前提条件，不是对调用方数据的猜测。
  *
- *     拟合只取**逼近段**：从第一次移动起，到第一次到达目标为止，之后的一个都不用。越过目标的超调会让 `ln` 作用在非正数
- *     上；而越过之后的振荡下降是一阶模型描述不了的形状——把它纳入会把时间常数拉向振荡周期。"始终没能逼近目标 10% 以内"的
- *     响应因此报 `State` 而不是一个自信的错误数字，而有过冲的响应则在真正属于一阶的那一段上被测量。
+ *   拟合只取**逼近段**：从第一次移动起，到第一次到达目标为止，之后的一个都不用。越过目标的超调会让 `ln` 作用在非正数
+ *   上；而越过之后的振荡下降是一阶模型描述不了的形状——把它纳入会把时间常数拉向振荡周期。"始终没能逼近目标 10% 以内"的响
+ *   应因此报 `State` 而不是一个自信的错误数字，而有过冲的响应则在真正属于一阶的那一段上被测量。
  *
- *     `bandwidth_rad_s = 1 / tau`。对本库的速度环而言这就是那个断言的全部：`speed_pi_config()` 抵消机械极点 `B/J` 后留
- *     下 `wb / s`，即时间常数为 `1 / wb` 的一阶环，其 -3 dB 点就是 `wb`。因此从轨迹里拟合 `tau` 并与请求的 `wb` 比较，
- *     就是在测量增益律是否做到了它文档里说的事。
+ *   `bandwidth_rad_s = 1 / tau`。对本库的速度环而言这就是那个断言的全部：`speed_pi_config()` 抵消机械极点 `B/J` 后留下
+ *   `wb / s`，即时间常数为 `1 / wb` 的一阶环，其 -3 dB 点就是 `wb`。因此从轨迹里拟合 `tau` 并与请求的 `wb` 比较，就是在
+ *   测量增益律是否做到了它文档里说的事。
  *
  * @param y [en] response samples, oldest first, SI units; at least three.
  * @param y [zh] 响应样本，最早的在前，SI 单位；至少三个。

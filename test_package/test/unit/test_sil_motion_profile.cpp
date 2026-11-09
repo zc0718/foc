@@ -122,28 +122,28 @@ TEST(SilMotionProfile, AccelLimitedMoveRespectsItsLimitsAndStillArrives) {
  *
  * @brief [zh] 这个结构自身给出的界：巡航在减速阈值处结束，而 shaping gain 不决定它。
  *
- *     The hypothesis this case was written to test was `e = v_limit / shaping_gain`, the textbook following error of a
- *     first-order tracker on a ramp. **The measurement refuted it**: the cruise gap came out at 0.496 rad against 0.100
- *     predicted, and -- the part that settles it -- doubling the shaping gain left it at 0.496. A number that does not
- *     move when its supposed parameter doubles is not that parameter's.
+ *   The hypothesis this case was written to test was `e = v_limit / shaping_gain`, the textbook following error of a
+ *   first-order tracker on a ramp. **The measurement refuted it**: the cruise gap came out at 0.496 rad against 0.100
+ *   predicted, and -- the part that settles it -- doubling the shaping gain left it at 0.496. A number that does not
+ *   move when its supposed parameter doubles is not that parameter's.
  *
- *     The reason is structural, and it is worth having in the claim rather than in a comment: `MotionProfile` does not
- *     generate a position reference to follow. It shapes a *velocity* command from the position error, so there is no
- *     ramp and therefore no ramp-following error. What the profile does bound is where the cruise ends: it decelerates
- *     when the remaining distance reaches `v^2 / (2a)`, so the cruise gap is bounded below by that threshold and the
- *     dwell is a consequence of the two limits, not of the gain.
+ *   The reason is structural, and it is worth having in the claim rather than in a comment: `MotionProfile` does not
+ *   generate a position reference to follow. It shapes a *velocity* command from the position error, so there is no
+ *   ramp and therefore no ramp-following error. What the profile does bound is where the cruise ends: it decelerates
+ *   when the remaining distance reaches `v^2 / (2a)`, so the cruise gap is bounded below by that threshold and the
+ *   dwell is a consequence of the two limits, not of the gain.
  *
- *     Criterion, written before this run: the smallest cruise gap agrees with `v_limit^2 / (2 * accel_limit)` within 25
- *     %, and the cruise window is non-empty (otherwise the assertion is vacuous). 本用例原本要检验的假设是 `e = v_limit
- *     / shaping_gain`，即一阶跟踪器跟斜坡的教科书跟随误差。**实测把它否掉了**：巡航间隙 0.496 rad，而预测 0.100；而决定
- *     性的一点是——把 shaping gain 加倍，它仍然是 0.496。一个在其所谓参数加倍时不动的数，就不是那个参数的。
+ *   Criterion, written before this run: the smallest cruise gap agrees with `v_limit^2 / (2 * accel_limit)` within 25
+ *   %, and the cruise window is non-empty (otherwise the assertion is vacuous). 本用例原本要检验的假设是 `e = v_limit /
+ *   shaping_gain`，即一阶跟踪器跟斜坡的教科书跟随误差。**实测把它否掉了**：巡航间隙 0.496 rad，而预测 0.100；而决定性的
+ *   一点是——把 shaping gain 加倍，它仍然是 0.496。一个在其所谓参数加倍时不动的数，就不是那个参数的。
  *
- *     原因是结构性的，值得写进主张而不是留在注释里：`MotionProfile` 不产生被跟随的位置参考，它用位置误差塑造**速度**指
- *     令，所以这里没有斜坡、也就没有斜坡跟随误差。它真正给出界的是巡航在哪里结束：剩余距离降到 `v^2 / (2a)` 时开始减
- *     速，于是巡航间隙以下限的形式被那个阈值夹住，停留时间是两个限值的后果，不是增益的。
+ *   原因是结构性的，值得写进主张而不是留在注释里：`MotionProfile` 不产生被跟随的位置参考，它用位置误差塑造**速度**指
+ *   令，所以这里没有斜坡、也就没有斜坡跟随误差。它真正给出界的是巡航在哪里结束：剩余距离降到 `v^2 / (2a)` 时开始减速，
+ *   于是巡航间隙以下限的形式被那个阈值夹住，停留时间是两个限值的后果，不是增益的。
  *
- *     判据（写在本次测量之前）：最小巡航间隙与 `v_limit^2 / (2 * accel_limit)` 相差 ≤25 %，且巡航窗口非空（否则断言是空
- *     的）。
+ *   判据（写在本次测量之前）：最小巡航间隙与 `v_limit^2 / (2 * accel_limit)` 相差 ≤25 %，且巡航窗口非空（否则断言是空
+ *   的）。
  */
 TEST(SilMotionProfile, TheCruiseEndsAtTheDecelerationThresholdNotAtTheShapingGain) {
     constexpr float kShapingGain = 20.0F;
@@ -323,24 +323,24 @@ auto run_move(float gain, float velocity_limit, float accel_limit, float target,
  *
  * @brief [zh] 这次运动花的时间恰好等于梯形规划自己运动学给出的那个数，所以头文件那句"不是时间最优"的说明比字面上要窄。
  *
- *     The header says the profile "is not time-optimal against a moving target". That caveat is about retargeting. For
- *     a rest-to-rest move whose limits are all reachable, the phase sequence is ramp / cruise / constant-deceleration,
- *     and the *move's* kinematics -- nothing to do with this class -- put the total at `D/v + v/a`. The prediction used
- *     here is the same expression minus the tail still to be covered at the moment the gap crosses the band,
- *     `sqrt(2*eps/a)`, because the crossing is what is observable, not the landing.
+ *   The header says the profile "is not time-optimal against a moving target". That caveat is about retargeting. For a
+ *   rest-to-rest move whose limits are all reachable, the phase sequence is ramp / cruise / constant-deceleration, and
+ *   the *move's* kinematics -- nothing to do with this class -- put the total at `D/v + v/a`. The prediction used here
+ *   is the same expression minus the tail still to be covered at the moment the gap crosses the band, `sqrt(2*eps/a)`,
+ *   because the crossing is what is observable, not the landing.
  *
- *     Two independent things are being checked. First, the number: the profile never computes a total time, so if any
- *     coefficient inside it were wrong the sum would move. Second, the *structure*: the cruise runs at exactly `v`, so
- *     moving the target 3 rad further must cost exactly `3/v` seconds. That difference is measured and is a much
- *     sharper test than either absolute time -- it cancels the ramp and the brake entirely.
+ *   Two independent things are being checked. First, the number: the profile never computes a total time, so if any
+ *   coefficient inside it were wrong the sum would move. Second, the *structure*: the cruise runs at exactly `v`, so
+ *   moving the target 3 rad further must cost exactly `3/v` seconds. That difference is measured and is a much sharper
+ *   test than either absolute time -- it cancels the ramp and the brake entirely.
  *
- *     头文件说规划器"对移动目标不是时间最优"。那句说明是关于中途改目标的。对于限制都能达到的点到点运动，相位序列是加速/
- *     匀速/恒定减速，而**这次运动**的运动学（与这个类无关）给出总时间 `D/v + v/a`。这里用的预测是同一个式子减去间隙穿过
- *     带子那一刻尚未走完的尾巴 `sqrt(2*eps/a)`，因为可观测的是穿越而不是落地。
+ *   头文件说规划器"对移动目标不是时间最优"。那句说明是关于中途改目标的。对于限制都能达到的点到点运动，相位序列是加速/
+ *   匀速/恒定减速，而**这次运动**的运动学（与这个类无关）给出总时间 `D/v + v/a`。这里用的预测是同一个式子减去间隙穿过带
+ *   子那一刻尚未走完的尾巴 `sqrt(2*eps/a)`，因为可观测的是穿越而不是落地。
  *
- *     检查的是两件独立的事。第一是数：规划器从不计算总时间，所以其中任何系数错了这个和都会动。第二是**结构**：巡航严格
- *     以 `v` 走，所以把目标再挪 3 rad 必须恰好多花 `3/v` 秒。这个差值是量出来的，而且比任何一个绝对时间都锋利——它把加速
- *     段和制动段整个约掉了。
+ *   检查的是两件独立的事。第一是数：规划器从不计算总时间，所以其中任何系数错了这个和都会动。第二是**结构**：巡航严格以
+ *   `v` 走，所以把目标再挪 3 rad 必须恰好多花 `3/v` 秒。这个差值是量出来的，而且比任何一个绝对时间都锋利——它把加速段和
+ *   制动段整个约掉了。
  */
 TEST(SilMotionProfile, TheMoveTakesTheTimeTheTrapezoidsKinematicsGiveIt) {
     constexpr float kBand = 0.010F;
@@ -404,25 +404,25 @@ TEST(SilMotionProfile, TheMoveTakesTheTimeTheTrapezoidsKinematicsGiveIt) {
  *
  * @brief [zh] 轴会多走一段规划器没有预算的追赶距离，而一个从某组配置反解出的滞后时间能预测另外两组。
  *
- *     The profile's promise is a stopping distance of `v^2/(2a)`, and it keeps that promise about its *command*. The
- *     axis does not follow the command exactly, so the gap at which the measured speed has fallen by 5 % sits below
- *     that threshold. The deficit has two parts, and only one of them is new: the command itself takes `0.05*v/a` to
- *     fall 5 % (kinematics, already known), and the measurement chain adds a lag `tau`, so the axis covers `v*(0.05*v/a
- *     + tau)` beyond the threshold.
+ *   The profile's promise is a stopping distance of `v^2/(2a)`, and it keeps that promise about its *command*. The axis
+ *   does not follow the command exactly, so the gap at which the measured speed has fallen by 5 % sits below that
+ *   threshold. The deficit has two parts, and only one of them is new: the command itself takes `0.05*v/a` to fall 5 %
+ *   (kinematics, already known), and the measurement chain adds a lag `tau`, so the axis covers `v*(0.05*v/a + tau)`
+ *   beyond the threshold.
  *
- *     `tau` is recovered from one configuration and then used to predict the other two, which is the only honest way to
- *     fit a number: if you recover it from all of them, you have not measured anything. It comes out at a few
- *     milliseconds and is *not* derived from anything here -- its candidates are the windowed speed estimate and the
- *     two inner loops, and this case does not separate them. What it does establish is the shape: the deficit vanishes
- *     with `v^2/a` and the lag term scales with `v` alone, which is why halving the acceleration almost doubles it.
+ *   `tau` is recovered from one configuration and then used to predict the other two, which is the only honest way to
+ *   fit a number: if you recover it from all of them, you have not measured anything. It comes out at a few
+ *   milliseconds and is *not* derived from anything here -- its candidates are the windowed speed estimate and the two
+ *   inner loops, and this case does not separate them. What it does establish is the shape: the deficit vanishes with
+ *   `v^2/a` and the lag term scales with `v` alone, which is why halving the acceleration almost doubles it.
  *
- *     规划器承诺的制动距离是 `v^2/(2a)`，而这个承诺是关于它的**指令**的。轴并不精确跟随指令，所以实测速度掉了 5 % 时的
- *     间隙落在那个阈值之下。缺口有两部分，只有一部分是新的：指令自己掉 5 % 需要 `0.05*v/a`（运动学，已知），量测链再加
- *     一个滞后 `tau`，于是轴比阈值多走 `v*(0.05*v/a + tau)`。
+ *   规划器承诺的制动距离是 `v^2/(2a)`，而这个承诺是关于它的**指令**的。轴并不精确跟随指令，所以实测速度掉了 5 % 时的间
+ *   隙落在那个阈值之下。缺口有两部分，只有一部分是新的：指令自己掉 5 % 需要 `0.05*v/a`（运动学，已知），量测链再加一个
+ *   滞后 `tau`，于是轴比阈值多走 `v*(0.05*v/a + tau)`。
  *
- *     `tau` 从一组配置反解出来，然后用来预测另外两组——这是拟合一个数唯一诚实的用法：如果从所有配置里反解，那就什么都没
- *     量到。它是几毫秒，且**不是**从这里的任何东西推导出来的：它的候选是加窗转速估计与两个内层环，本用例不区分它们。它
- *     确立的是形状：缺口随 `v^2/a` 消失，滞后项只随 `v` 线性增长，这就是为什么加速度减半几乎让它翻倍。
+ *   `tau` 从一组配置反解出来，然后用来预测另外两组——这是拟合一个数唯一诚实的用法：如果从所有配置里反解，那就什么都没量
+ *   到。它是几毫秒，且**不是**从这里的任何东西推导出来的：它的候选是加窗转速估计与两个内层环，本用例不区分它们。它确立
+ *   的是形状：缺口随 `v^2/a` 消失，滞后项只随 `v` 线性增长，这就是为什么加速度减半几乎让它翻倍。
  */
 TEST(SilMotionProfile, TheAxisAddsACatchUpDistanceTheProfileDoesNotBudgetFor) {
     constexpr float kGain = 20.0F;

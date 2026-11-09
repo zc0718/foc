@@ -15,12 +15,12 @@ namespace driver {
 /**
  * @brief [en] A complete HalPolicy built from the reference stubs.
  *
- *     The default for SIL and tests. Motor binds to it through the member names `pwm`, `current_sense`, `position`,
- *     `dc_link`.
+ *   The default for SIL and tests. Motor binds to it through the member names `pwm`, `current_sense`, `position`,
+ *   `dc_link`.
  *
  * @brief [zh] 由参考桩拼成的完整 HalPolicy。
  *
- *     SIL 与测试的默认实现。Motor 通过成员名 `pwm`、`current_sense`、`position`、`dc_link` 绑定到它。
+ *   SIL 与测试的默认实现。Motor 通过成员名 `pwm`、`current_sense`、`position`、`dc_link` 绑定到它。
  * @since 0.1.0
  * @exporter
  */

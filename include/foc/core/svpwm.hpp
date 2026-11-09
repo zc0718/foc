@@ -26,14 +26,14 @@ struct SvpwmResult final {
  * @brief [en] What the modulator is asked for on one step: the voltage to produce, and the currents it may need in
  *             order to produce it honestly.
  *
- *     The currents are here because a real inverter does not deliver what it is told: dead time costs `v_dead *
- *     sign(i_phase)` on every phase, so a modulator that cannot see the current sign cannot compensate for it -- not
- *     "chooses not to", *cannot*. Widening this contract is what makes dead-time compensation expressible at all.
+ *   The currents are here because a real inverter does not deliver what it is told: dead time costs `v_dead *
+ *   sign(i_phase)` on every phase, so a modulator that cannot see the current sign cannot compensate for it -- not
+ *   "chooses not to", *cannot*. Widening this contract is what makes dead-time compensation expressible at all.
  *
  * @brief [zh] 调制器在一步里被要求做什么：该产生的电压，以及为了如实产生这个电压它可能需要的电流。
  *
- *     电流出现在这里，是因为真实逆变器并不交付它被要求的电压：死区在每一相上吃掉 `v_dead * sign(i_phase)`，因此看不到电
- *     流方向的调制器无法补偿它——不是"选择不补"，而是 **做不到**。加宽这条契约，才让死区补偿从"不可表达"变成"可表达"。
+ *   电流出现在这里，是因为真实逆变器并不交付它被要求的电压：死区在每一相上吃掉 `v_dead * sign(i_phase)`，因此看不到电流
+ *   方向的调制器无法补偿它——不是"选择不补"，而是 **做不到**。加宽这条契约，才让死区补偿从"不可表达"变成"可表达"。
  * @since 0.1.0
  * @exporter
  */
@@ -47,14 +47,14 @@ struct ModulatorInput final {
 /**
  * @brief [en] Space-vector modulator (symmetric seven-segment equivalent).
  *
- *     Implementation note: the symmetric seven-segment pattern is obtained by centring the phase voltages (midpoint /
- *     min-max injection), which yields exactly the same duties as the classic sector + T1/T2 formulation without a
- *     sector branch. Sector classification is still exposed as `svpwm_sector()` for telemetry and tests.
+ *   Implementation note: the symmetric seven-segment pattern is obtained by centring the phase voltages (midpoint /
+ *   min-max injection), which yields exactly the same duties as the classic sector + T1/T2 formulation without a sector
+ *   branch. Sector classification is still exposed as `svpwm_sector()` for telemetry and tests.
  *
  * @brief [zh] 空间矢量调制器（对称七段式的等价实现）。
  *
- *     实现说明：对称七段式通过把相电压居中（中点/min-max 注入）得到，与经典「扇区 + T1/T2」 公式产生的占空比完全一致，
- *     但不需要扇区分支。扇区分类仍以 `svpwm_sector()` 提供， 用于遥测与测试。
+ *   实现说明：对称七段式通过把相电压居中（中点/min-max 注入）得到，与经典「扇区 + T1/T2」 公式产生的占空比完全一致，但
+ *   不需要扇区分支。扇区分类仍以 `svpwm_sector()` 提供， 用于遥测与测试。
  *
  * @context [en] Current-loop ISR: noexcept, no allocation, no division by zero.
  * @context [zh] 电流环 ISR：noexcept、不分配、不会除零。

@@ -76,19 +76,19 @@ struct SixStepOutput final {
 /**
  * @brief [en] Drive a six-step table from a hall code, and refuse the transitions a real rotor cannot make.
  *
- *     The table and the sector map already live in `hall.hpp`; what is added here is the *sequencing* rule that neither
- *     of them can state. A three-hall set names one of six sectors, and the table answers a vector for whatever it is
- *     told -- including a sector two places away, which is what a missed read looks like and which produces torque in
- *     the wrong direction. So a transition is accepted only when it is a neighbour, and a jump is held and counted
- *     instead. An illegal code (`0` or `7`) is a different thing: the pins are not naming a position at all, and the
- *     answer there is the zero vector plus `holding`.
+ *   The table and the sector map already live in `hall.hpp`; what is added here is the *sequencing* rule that neither
+ *   of them can state. A three-hall set names one of six sectors, and the table answers a vector for whatever it is
+ *   told -- including a sector two places away, which is what a missed read looks like and which produces torque in the
+ *   wrong direction. So a transition is accepted only when it is a neighbour, and a jump is held and counted instead.
+ *   An illegal code (`0` or `7`) is a different thing: the pins are not naming a position at all, and the answer there
+ *   is the zero vector plus `holding`.
  *
  * @brief [zh] 由霍尔编码驱动六步表，并拒绝真实转子做不出来的跳变。
  *
- *     表和扇区映射都已经在 `hall.hpp` 里；这里加的是它们都无法陈述的**序列**规则。三霍尔组只指明六个扇区之一，而表对它
- *     被告知的任何东西都给一个矢量——包括隔两格的扇区，那正是"漏读一次"的样子，而它产生的力矩方向是错的。因此只有相邻扇
- *     区被接受，跳变则保持旧矢量并计数。非法编码（`0` 或 `7`）是另一回事：引脚根本没有在指出位置，那里的回答是零矢量加
- *     `holding`。
+ *   表和扇区映射都已经在 `hall.hpp` 里；这里加的是它们都无法陈述的**序列**规则。三霍尔组只指明六个扇区之一，而表对它被
+ *   告知的任何东西都给一个矢量——包括隔两格的扇区，那正是"漏读一次"的样子，而它产生的力矩方向是错的。因此只有相邻扇区被
+ *   接受，跳变则保持旧矢量并计数。非法编码（`0` 或 `7`）是另一回事：引脚根本没有在指出位置，那里的回答是零矢量加
+ *   `holding`。
  * @since 0.1.9
  * @exporter
  */

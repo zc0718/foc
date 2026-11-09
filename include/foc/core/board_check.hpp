@@ -65,13 +65,13 @@ enum class BoardItem : std::uint8_t {
 /**
  * @brief [en] The one thing that most likely needs fixing.
  *
- *     The list is a *diagnosis*, not a list of failures: "two items failed" is not actionable, "the sampling instant is
- *     wrong" is. The mapping from failure pattern to cause is the whole value of this file -- see `check_board()`.
+ *   The list is a *diagnosis*, not a list of failures: "two items failed" is not actionable, "the sampling instant is
+ *   wrong" is. The mapping from failure pattern to cause is the whole value of this file -- see `check_board()`.
  *
  * @brief [zh] 最可能需要修的那一件事。
  *
- *     这份清单是**诊断**，不是失败列表："两项失败了"没法处理，"采样时刻错了"可以。从失败模式到 成因的映射就是本文件的全
- *     部价值——见 `check_board()`。
+ *   这份清单是**诊断**，不是失败列表："两项失败了"没法处理，"采样时刻错了"可以。从失败模式到 成因的映射就是本文件的全部
+ *   价值——见 `check_board()`。
  * @since 0.1.0
  * @exporter
  */
@@ -113,11 +113,11 @@ enum class BoardCause : std::uint8_t {
 /**
  * @brief [en] Everything the checks measure, in one place.
  *
- *     Every field is a **number**, which is the point: the report has to say "0.041 A" and not "fail".
+ *   Every field is a **number**, which is the point: the report has to say "0.041 A" and not "fail".
  *
  * @brief [zh] 检查量到的全部东西，放在一处。
  *
- *     每个字段都是一个**数**，这正是要点：报告要说"0.041 A"，不是"失败"。
+ *   每个字段都是一个**数**，这正是要点：报告要说"0.041 A"，不是"失败"。
  * @since 0.1.0
  * @exporter
  */
@@ -315,17 +315,17 @@ struct movable_trigger<Bench, std::void_t<decltype(std::declval<Bench&>().set_sa
 /**
  * @brief [en] Runs the checks and names the most likely single cause.
  *
- *     Why a cause and not a list. A board that is mis-wired usually fails **several** items at once, and the items are
- *     not independent: an inverted current channel makes the three-wire sum non-zero *and* the dead-time identification
- *     come out negative *and* the flux identification reverse. Reporting three failures sends the user to three places;
- *     the intended behaviour is to report the one thing that explains the most of them. The scoring below is exactly
- *     that: each candidate cause counts how many of the failed items it accounts for, and the winner is reported.
+ *   Why a cause and not a list. A board that is mis-wired usually fails **several** items at once, and the items are
+ *   not independent: an inverted current channel makes the three-wire sum non-zero *and* the dead-time identification
+ *   come out negative *and* the flux identification reverse. Reporting three failures sends the user to three places;
+ *   the intended behaviour is to report the one thing that explains the most of them. The scoring below is exactly
+ *   that: each candidate cause counts how many of the failed items it accounts for, and the winner is reported.
  *
  * @brief [zh] 跑完检查，并指出最可能的那个单一成因。
  *
- *     为什么报一个成因而不是一张表。接错的板子通常**同时**弄坏好几项，而这些项并不独立：一条反 相的电流通道会让三线之和
- *     不为零、让死区辨识出负值、让磁链辨识反号。报三条失败会把用户支到 三个地方；该做的是报那个"解释得最多"的一件。下面
- *     的打分就是这个：每个候选成因数一数它解释 了几条失败，胜者上报。
+ *   为什么报一个成因而不是一张表。接错的板子通常**同时**弄坏好几项，而这些项并不独立：一条反 相的电流通道会让三线之和不
+ *   为零、让死区辨识出负值、让磁链辨识反号。报三条失败会把用户支到 三个地方；该做的是报那个"解释得最多"的一件。下面的打
+ *   分就是这个：每个候选成因数一数它解释 了几条失败，胜者上报。
  *
  * @param m [en] what was measured.
  * @param m [zh] 量到了什么。
@@ -741,21 +741,21 @@ class BoardSelfTest final {
     /**
      * @brief [en] Move the ADC trigger across the switching period and read what moves.
      *
-     *     Three numbers come out of the same sweep. The reading's **peak-to-peak across the period** is the ripple the
-     *     ADC actually sees, which is what the `SamplingInstant` check compares against the switching period. The
-     *     **deviation of the reading at the board's own trigger from the period average** (`sample_error_a`) is what
-     *     that position costs the loop in amps. The **position of the minimum deviation** is where the trigger ought to
-     *     be -- and it is reported rather than assumed, because it is *not* always the centre of the period: a
-     *     centre-aligned PWM puts the mean at the centre, an edge-aligned one puts it wherever the current crosses its
-     *     average, which depends on the duty. Assuming 0.5 would be a guess wearing a constant.
+     *   Three numbers come out of the same sweep. The reading's **peak-to-peak across the period** is the ripple the
+     *   ADC actually sees, which is what the `SamplingInstant` check compares against the switching period. The
+     *   **deviation of the reading at the board's own trigger from the period average** (`sample_error_a`) is what that
+     *   position costs the loop in amps. The **position of the minimum deviation** is where the trigger ought to be --
+     *   and it is reported rather than assumed, because it is *not* always the centre of the period: a centre-aligned
+     *   PWM puts the mean at the centre, an edge-aligned one puts it wherever the current crosses its average, which
+     *   depends on the duty. Assuming 0.5 would be a guess wearing a constant.
      *
      * @brief [zh] 把 ADC 触发点在开关周期里挪一遍，看什么在动。
      *
-     *     同一次扫描给出三个数。读数在**整个周期里的峰峰值**就是 ADC 实际看到的纹波，即 `SamplingInstant` 项与开关周期
-     *     对比的那个量。**板子自己那个触发点上的读数相对周期均值的 偏离**（`sample_error_a`）就是那个位置在安培上让环付
-     *     出多少。**偏离最小处的位置**才是触发点 该在的地方——而它是被**量出来并上报**的，不是被假设的，因为它**并不总是
-     *     **周期中心：中心对齐的 PWM 把均值放在中心，边沿对齐的把均值放在电流穿过自身平均值的时刻，那取决于占空比。假设
-     *     0.5 是一个披着常数外衣的猜测。
+     *   同一次扫描给出三个数。读数在**整个周期里的峰峰值**就是 ADC 实际看到的纹波，即 `SamplingInstant` 项与开关周期对
+     *   比的那个量。**板子自己那个触发点上的读数相对周期均值的 偏离**（`sample_error_a`）就是那个位置在安培上让环付出多
+     *   少。**偏离最小处的位置**才是触发点 该在的地方——而它是被**量出来并上报**的，不是被假设的，因为它**并不总是 **周
+     *   期中心：中心对齐的 PWM 把均值放在中心，边沿对齐的把均值放在电流穿过自身平均值的时刻，那取决于占空比。假设 0.5
+     *   是一个披着常数外衣的猜测。
      *
      * @note [en] Skipped entirely when the bench has no trigger to move; that is detected at compile time, not at run
      *            time, so a bench without it costs nothing and does not need a stub.

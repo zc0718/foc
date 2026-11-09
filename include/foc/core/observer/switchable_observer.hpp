@@ -37,37 +37,37 @@ enum class ObserverKind : std::uint8_t {
 /**
  * @brief [en] One observer slot that holds two and forwards to the selected one.
  *
- *     Why it exists: `Motor` composes its observers statically, so without this every choice of observer would be
- *     another `Motor` instantiation and another object pool -- and the bridge's handles, magics and dispatch are all
- *     built for a fixed set of pools. Choosing a member instead of a type keeps one motor type for every choice, which
- *     is what makes a runtime selector possible without touching any of that.
+ *   Why it exists: `Motor` composes its observers statically, so without this every choice of observer would be another
+ *   `Motor` instantiation and another object pool -- and the bridge's handles, magics and dispatch are all built for a
+ *   fixed set of pools. Choosing a member instead of a type keeps one motor type for every choice, which is what makes
+ *   a runtime selector possible without touching any of that.
  *
  * @brief [zh] 一个观测器槽位，持有两个并按选择转发。
  *
- *     存在的理由：`Motor` 静态组合观测器，没有它的话每次选择观测器都会变成又一次 `Motor` 实例化和另一个对象池——而
- *     bridge 的句柄、magic 与派发都是围绕固定的池集合构造的。把选择做成成员而不是类型，所有选择就共用一个电机类型，这正
- *     是"不碰那些东西也能有运行时选择器"的前提。
+ *   存在的理由：`Motor` 静态组合观测器，没有它的话每次选择观测器都会变成又一次 `Motor` 实例化和另一个对象池——而 bridge
+ *   的句柄、magic 与派发都是围绕固定的池集合构造的。把选择做成成员而不是类型，所有选择就共用一个电机类型，这正是"不碰那
+ *   些东西也能有运行时选择器"的前提。
  *
  * @note [en] The slot does **not** hold `DualInductanceObserver` (0.1.11), and that is a statement about this class
  *            rather than about the library: the four members here are the ones whose hand-over has been measured, and
  *            adding a fifth means re-measuring the hand-over rather than widening the enum. Until then a caller who
  *            needs saliency picks that observer directly, by type.
  *
- *     Both observers are constructed; **only the selected one is stepped**. The other is frozen, not reset: its state
- *     at the moment it is selected again is the state it had when it was last selected. That is deliberate -- a silent
- *     reset would make a hand-over depend on which member happened to be live -- but it means a caller that wants the
- *     incoming observer to start from the outgoing one's estimate must seed it, and `seed_flux()` is how. `seed_flux()`
- *     goes to **both**, because a seed given while one is running is still the right seed for the other, and forgetting
- *     one of them is exactly the kind of omission that only shows up at a hand-over.
+ *   Both observers are constructed; **only the selected one is stepped**. The other is frozen, not reset: its state at
+ *   the moment it is selected again is the state it had when it was last selected. That is deliberate -- a silent reset
+ *   would make a hand-over depend on which member happened to be live -- but it means a caller that wants the incoming
+ *   observer to start from the outgoing one's estimate must seed it, and `seed_flux()` is how. `seed_flux()` goes to
+ *   **both**, because a seed given while one is running is still the right seed for the other, and forgetting one of
+ *   them is exactly the kind of omission that only shows up at a hand-over.
  *
  * @note [zh] 这个槽位**不包含** `DualInductanceObserver`（0.1.11）。这是关于本类的陈述而不是关于库的：这里的四个成员是"
  *            交接已被量过"的那四个，加第五个意味着重测交接，而不是把枚举加宽。在那之前，需要凸极性的调用方直接按类型选
  *            那个观测器。
  *
- *     两个观测器都会被构造，但**只有被选中的那个会被推进**。另一个是冻结而不是复位：它再次被选中时的状态，就是它上次被
- *     选中时的状态。这是刻意的——静默复位会让交接成败取决于当时哪个成员恰好是活的——但也意味着希望接手者从交出者的估计出
- *     发的调用方必须自己播种，而 `seed_flux()` 就是那个工具。 `seed_flux()` 会同时给**两者**：在其中一个运行时给出的种
- *     子对另一个同样成立，而漏掉一个正是那种只在交接时才会暴露的疏漏。
+ *   两个观测器都会被构造，但**只有被选中的那个会被推进**。另一个是冻结而不是复位：它再次被选中时的状态，就是它上次被选
+ *   中时的状态。这是刻意的——静默复位会让交接成败取决于当时哪个成员恰好是活的——但也意味着希望接手者从交出者的估计出发的
+ *   调用方必须自己播种，而 `seed_flux()` 就是那个工具。 `seed_flux()` 会同时给**两者**：在其中一个运行时给出的种子对另
+ *   一个同样成立，而漏掉一个正是那种只在交接时才会暴露的疏漏。
  * @since 0.1.5
  * @exporter
  */
@@ -421,40 +421,40 @@ class SwitchableObserver final {
     /**
      * @brief [en] The blend owns its own two observers rather than borrowing the members above.
      *
-     *     Borrowing would tie the band's behaviour to whatever the standalone members last believed, and the wrapper's
-     *     whole rule is that only the selected observer is stepped -- so a borrowed copy would be either frozen (and
-     *     useless) or stealthily advanced (and a second carrier phase). The cost is a second copy of two small objects
-     *     in a statically sized slot.
+     *   Borrowing would tie the band's behaviour to whatever the standalone members last believed, and the wrapper's
+     *   whole rule is that only the selected observer is stepped -- so a borrowed copy would be either frozen (and
+     *   useless) or stealthily advanced (and a second carrier phase). The cost is a second copy of two small objects in
+     *   a statically sized slot.
      *
      * @brief [zh] 交接带持有**自己**的两个观测器，而不是借用上面的成员。
      *
-     *     借用会让交接带的行为取决于那两个成员上次相信了什么，而包装器的全部规则就是"只推进被选中的那个"——借来的副本要
-     *     么被冻结（因而无用），要么被偷偷推进（于是多出一个载波相位）。代价是在一个静态定容的槽位里多存两个小对象。
+     *   借用会让交接带的行为取决于那两个成员上次相信了什么，而包装器的全部规则就是"只推进被选中的那个"——借来的副本要么
+     *   被冻结（因而无用），要么被偷偷推进（于是多出一个载波相位）。代价是在一个静态定容的槽位里多存两个小对象。
      */
     BlendedObserver<HfiObserver, BackEmfObserver> blended_;
     /**
      * @brief [en] The salient-machine observer, held here so that a caller can select it at run time.
      *
-     *     It is the only member whose state is the **stator** flux rather than the rotor flux, which is why
-     *     `hand_over_to(next, i_ab)` exists: seeding it with `psi_f*e^(j*theta)` alone would leave the current's own
-     *     flux out of the integration constant, and a pure integrator never forgets.
+     *   It is the only member whose state is the **stator** flux rather than the rotor flux, which is why
+     *   `hand_over_to(next, i_ab)` exists: seeding it with `psi_f*e^(j*theta)` alone would leave the current's own flux
+     *   out of the integration constant, and a pure integrator never forgets.
      *
      * @brief [zh] 凸极机观测器，放在这里好让调用方能在运行时选中它。
      *
-     *     它是唯一一个状态为**定子**磁链而不是转子磁链的成员，这也是 `hand_over_to(next, i_ab)` 存在的原因：只拿
-     *     `psi_f·e^(jθ)` 播种会把电流自身的磁链漏在积分常数之外，而纯积分器不会遗忘。
+     *   它是唯一一个状态为**定子**磁链而不是转子磁链的成员，这也是 `hand_over_to(next, i_ab)` 存在的原因：只拿
+     *   `psi_f·e^(jθ)` 播种会把电流自身的磁链漏在积分常数之外，而纯积分器不会遗忘。
      */
     DualInductanceObserver dual_inductance_;
     ObserverKind kind_;
     /**
      * @brief [en] The machine's flux linkage, taken from the one field that already states it.
      *
-     *     `nonlinear_flux.psi_f`, so a hand-over has a magnitude to place the incoming observer's vector at. Not a
-     *     second definition of the machine.
+     *   `nonlinear_flux.psi_f`, so a hand-over has a magnitude to place the incoming observer's vector at. Not a second
+     *   definition of the machine.
      *
      * @brief [zh] 这台机器的磁链，取自已经写明它的那**一个**字段。
      *
-     *     `nonlinear_flux.psi_f`，于是交接有幅值可用来安置接手者的矢量。这不是对这台机器的第二个定义。
+     *   `nonlinear_flux.psi_f`，于是交接有幅值可用来安置接手者的矢量。这不是对这台机器的第二个定义。
      */
     float psi_f_wb_;
 };

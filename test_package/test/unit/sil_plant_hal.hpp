@@ -33,10 +33,10 @@ using motor::MotorConfig;
  *
  * @brief [zh] 逆变器适配层：记录占空比，由台架把它送进 plant。
  *
- *     The duty is held in the **stationary** frame for a whole control period (zero-order hold on the applied stator
- *     voltage vector), which is what a real inverter does. Disabled or not-yet-enabled states hold 50% duty, i.e. zero
- *     voltage. 占空比在整个控制周期内保持于**静止**坐标系（作用到定子电压矢量上的零阶保持），这才是真实 逆变器的行为。
- *     未使能/已关闭状态保持 50% 占空比，即零电压。
+ *   The duty is held in the **stationary** frame for a whole control period (zero-order hold on the applied stator
+ *   voltage vector), which is what a real inverter does. Disabled or not-yet-enabled states hold 50% duty, i.e. zero
+ *   voltage. 占空比在整个控制周期内保持于**静止**坐标系（作用到定子电压矢量上的零阶保持），这才是真实 逆变器的行为。未
+ *   使能/已关闭状态保持 50% 占空比，即零电压。
  * @since 0.1.0
  */
 class PlantPwm final : public hal::Pwm {

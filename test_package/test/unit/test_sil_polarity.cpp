@@ -348,9 +348,9 @@ struct PulseResult final {
  *
  * @brief [zh] 沿刻意偏移的 d 轴估计脉冲，前面不接凸极环。
  *
- *     The sweep is *about* the angle the caller hands in, so converging HFI first would defeat it: the loop's job is to
- *     land on the d-axis line, and this case asks what happens when it does not. 这次扫描**就是**关于调用方给出的角度
- *     的，所以先让 HFI 收敛会毁掉它：那个环的职责正是落在 d 轴线上，而本用例问的是它没落准时会怎样。
+ *   The sweep is *about* the angle the caller hands in, so converging HFI first would defeat it: the loop's job is to
+ *   land on the d-axis line, and this case asks what happens when it does not. 这次扫描**就是**关于调用方给出的角度的，
+ *   所以先让 HFI 收敛会毁掉它：那个环的职责正是落在 d 轴线上，而本用例问的是它没落准时会怎样。
  */
 auto pulse_at(double delta_rad, double settle_s) -> PulseResult {
     sil::PmsmPlant plant = saturating_plant(0.0F);
@@ -389,32 +389,32 @@ auto pulse_at(double delta_rad, double settle_s) -> PulseResult {
  *
  * @brief [zh] 答案按 d 轴误差的 `cos²` 衰减，而窗口是先被**转子被推走**关上的，不是先被信号淡出关上的。
  *
- *     Both pulses are applied along the *estimate*, so the d-axis volt-seconds are cut by `cos(delta)` and the measured
- *     projection cuts them again -- two factors, hence `cos^2`. The saliency term `sin^2(delta)/Lq` is common to both
- *     pulses and cancels in the difference, so saliency attenuates the answer without contaminating it: that is the
- *     structural reason the method is sound, and `cos^2` is why it has a finite window.
+ *   Both pulses are applied along the *estimate*, so the d-axis volt-seconds are cut by `cos(delta)` and the measured
+ *   projection cuts them again -- two factors, hence `cos^2`. The saliency term `sin^2(delta)/Lq` is common to both
+ *   pulses and cancels in the difference, so saliency attenuates the answer without contaminating it: that is the
+ *   structural reason the method is sound, and `cos^2` is why it has a finite window.
  *
- *     Measured ratios against `cos^2`: **0.987 at 15 degrees, 0.943 at 30, 0.850 at 45**, and 0.658 at 60 where the
- *     first-order law is visibly over-predicting -- at large `delta` the pulse drives less current, so it engages less
- *     of the inductance collapse and the true attenuation is faster. That is the small-signal limit of the law, and it
- *     is stated as a domain rather than fitted away.
+ *   Measured ratios against `cos^2`: **0.987 at 15 degrees, 0.943 at 30, 0.850 at 45**, and 0.658 at 60 where the
+ *   first-order law is visibly over-predicting -- at large `delta` the pulse drives less current, so it engages less of
+ *   the inductance collapse and the true attenuation is faster. That is the small-signal limit of the law, and it is
+ *   stated as a domain rather than fitted away.
  *
- *     The window itself is set by something else, which this case found rather than assumed: at 60 degrees the
- *     asymmetry is still 0.093 A, **4.6 times the 0.02 A threshold**, and the answer is refused anyway -- because the
- *     pulse now has a large q component, the rotor moves 14 mrad electrical, and the two pulses no longer start from
- *     one operating point. Lengthening the settle to 20 ms restores the answer at 60 degrees, which is what identifies
- *     the binding limit.
+ *   The window itself is set by something else, which this case found rather than assumed: at 60 degrees the asymmetry
+ *   is still 0.093 A, **4.6 times the 0.02 A threshold**, and the answer is refused anyway -- because the pulse now has
+ *   a large q component, the rotor moves 14 mrad electrical, and the two pulses no longer start from one operating
+ *   point. Lengthening the settle to 20 ms restores the answer at 60 degrees, which is what identifies the binding
+ *   limit.
  *
- *     两个脉冲都沿**估计**施加，所以 d 轴伏秒被 `cos(delta)` 砍一次、测量投影再砍一次——两个因子，因此是 `cos²`。凸极项
- *     `sin²(delta)/Lq` 对两个脉冲共模、在差值里抵消，所以凸极只衰减答案而不污染它：这是方法成立的结构性原因，而 `cos²`
- *     是它窗口有限的原因。
+ *   两个脉冲都沿**估计**施加，所以 d 轴伏秒被 `cos(delta)` 砍一次、测量投影再砍一次——两个因子，因此是 `cos²`。凸极项
+ *   `sin²(delta)/Lq` 对两个脉冲共模、在差值里抵消，所以凸极只衰减答案而不污染它：这是方法成立的结构性原因，而 `cos²` 是
+ *   它窗口有限的原因。
  *
- *     对照 `cos²` 实测比值：**15° 0.987、30° 0.943、45° 0.850**，60° 处 0.658，那里一阶律明显过预测—— 大 `delta` 下脉冲
- *     推动的电流更小，激起的电感塌陷也更少，真实衰减更快。这是一阶律的小信号边界，写成域而不是拟合掉。
+ *   对照 `cos²` 实测比值：**15° 0.987、30° 0.943、45° 0.850**，60° 处 0.658，那里一阶律明显过预测—— 大 `delta` 下脉冲推
+ *   动的电流更小，激起的电感塌陷也更少，真实衰减更快。这是一阶律的小信号边界，写成域而不是拟合掉。
  *
- *     窗口本身是被别的东西定下的，这是本用例**发现**的而不是假设的：60° 处不对称仍有 0.093 A，是 0.02 A 阈值的 **4.6 倍
- *     **，而答案照样被拒——因为脉冲现在有很大的 q 分量，转子被推走 14 mrad 电角度，两个脉冲不再从同一个工作点出发。把松
- *     弛加到 20 ms 后 60° 又能作答，这就指出了真正的限制项。
+ *   窗口本身是被别的东西定下的，这是本用例**发现**的而不是假设的：60° 处不对称仍有 0.093 A，是 0.02 A 阈值的 **4.6 倍
+ *   **，而答案照样被拒——因为脉冲现在有很大的 q 分量，转子被推走 14 mrad 电角度，两个脉冲不再从同一个工作点出发。把松弛
+ *   加到 20 ms 后 60° 又能作答，这就指出了真正的限制项。
  */
 TEST(SilPolarity, TheAnswerFadesAsTheCosineSquaredAndTheRotorClosesTheWindow) {
     const PulseResult aligned = pulse_at(0.0, 5e-3);
@@ -479,24 +479,23 @@ TEST(SilPolarity, TheAnswerFadesAsTheCosineSquaredAndTheRotorClosesTheWindow) {
  *
  * @brief [zh] 短于绕组 `L/R` 的松弛被拒绝而不是被作答——而那个交界正是闭式。
  *
- *     This is F-47. Without the guard the failure shape is the worst possible one: at a zero-length settle the second
- *     pulse starts on the first pulse's tail, the asymmetry comes out at **-0.5404 A** for a machine whose magnet is
- *     `Aligned` -- the wrong sign, and 96 % *larger* in magnitude than the honest 0.5651 A. A wrong answer that is
- *     louder than the right one is invisible to any magnitude check downstream.
+ *   This is F-47. Without the guard the failure shape is the worst possible one: at a zero-length settle the second
+ *   pulse starts on the first pulse's tail, the asymmetry comes out at **-0.5404 A** for a machine whose magnet is
+ *   `Aligned` -- the wrong sign, and 96 % *larger* in magnitude than the honest 0.5651 A. A wrong answer that is louder
+ *   than the right one is invisible to any magnitude check downstream.
  *
- *     The crossing is derivable with nothing but the winding: the residual decays as `exp(-t/tau)` with `tau = Ld/Rs =
- *     571 us`, and the guard releases when it falls below `min_asymmetry_a = 0.02 A`, i.e. at `tau*ln(1.791/0.020) =
- *     2.57 ms`. Measured: **refused at 2 ms, answered at 3 ms** -- the first grid point above the prediction. The
- *     precondition is therefore not a comfort margin; it is a number, and one the caller can compute for their own
- *     winding.
+ *   The crossing is derivable with nothing but the winding: the residual decays as `exp(-t/tau)` with `tau = Ld/Rs =
+ *   571 us`, and the guard releases when it falls below `min_asymmetry_a = 0.02 A`, i.e. at `tau*ln(1.791/0.020) = 2.57
+ *   ms`. Measured: **refused at 2 ms, answered at 3 ms** -- the first grid point above the prediction. The precondition
+ *   is therefore not a comfort margin; it is a number, and one the caller can compute for their own winding.
  *
- *     这就是 F-47。没有护栏时的失效形态是最糟的那种：零松弛下第二个脉冲从第一个脉冲的尾巴上出发，磁钢为 `Aligned` 的机
- *     器算出 **-0.5404 A** 的不对称——符号错，幅值还比诚实的 0.5651 A **大 96 %**。一个比正确答案更"响"的错误答案，下游
- *     任何幅值检查都看不见。
+ *   这就是 F-47。没有护栏时的失效形态是最糟的那种：零松弛下第二个脉冲从第一个脉冲的尾巴上出发，磁钢为 `Aligned` 的机器
+ *   算出 **-0.5404 A** 的不对称——符号错，幅值还比诚实的 0.5651 A **大 96 %**。一个比正确答案更"响"的错误答案，下游任何
+ *   幅值检查都看不见。
  *
- *     交界可以只用绕组推出来：残余按 `exp(-t/tau)` 衰减，`tau = Ld/Rs = 571 us`，护栏在它落到 `min_asymmetry_a = 0.02
- *     A` 以下时放开，即 `tau*ln(1.791/0.020) = 2.57 ms`。实测：**2 ms 被拒、 3 ms 作答**——预测之上的第一个栅格点。所以
- *     这条前置条件不是舒适裕度；它是一个数，而且调用方可以按自己的绕组算出来。
+ *   交界可以只用绕组推出来：残余按 `exp(-t/tau)` 衰减，`tau = Ld/Rs = 571 us`，护栏在它落到 `min_asymmetry_a = 0.02 A`
+ *   以下时放开，即 `tau*ln(1.791/0.020) = 2.57 ms`。实测：**2 ms 被拒、 3 ms 作答**——预测之上的第一个栅格点。所以这条前
+ *   置条件不是舒适裕度；它是一个数，而且调用方可以按自己的绕组算出来。
  */
 TEST(SilPolarity, ASettleShorterThanTheWindingDecayIsRefusedAndTheCrossingIsTheClosedForm) {
     const double tau_s = static_cast<double>(kLd) / static_cast<double>(kRs);

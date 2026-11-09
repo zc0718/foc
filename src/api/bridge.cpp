@@ -228,17 +228,16 @@ constexpr float kHfiMinRatio = 2.0F;
 /**
  * @brief [en] The low-pass on the injection observer's published speed, in Hz.
  *
- *     Measured on the ripple rig: 200 Hz takes the carrier tone in the published speed from 0.4180 to 0.0412 rad/s
- *     (10.1x) with the steady bias not worse (0.0039 -> 0.0023 rad/s), and leaves every cutoff from 50 to 400 Hz
- *     stable, so the choice is not a stability edge. 50 Hz measured quieter still but sits 1.6x above the 32 Hz speed
- *     loop's own bandwidth, where the phase cost has not been measured; 200 Hz sits 6.25x above it and costs about 9
- *     degrees.
+ *   Measured on the ripple rig: 200 Hz takes the carrier tone in the published speed from 0.4180 to 0.0412 rad/s
+ *   (10.1x) with the steady bias not worse (0.0039 -> 0.0023 rad/s), and leaves every cutoff from 50 to 400 Hz stable,
+ *   so the choice is not a stability edge. 50 Hz measured quieter still but sits 1.6x above the 32 Hz speed loop's own
+ *   bandwidth, where the phase cost has not been measured; 200 Hz sits 6.25x above it and costs about 9 degrees.
  *
  * @brief [zh] 注入观测器已发布转速上的低通截止频率，Hz。
  *
- *     在纹波台架上实测：200 Hz 把已发布转速里的载波音调从 0.4180 压到 0.0412 rad/s（10.1 倍），而稳态偏置没有变差（
- *     0.0039 → 0.0023 rad/s），并且 50 到 400 Hz 之间每个截止频率都稳定，所以这个选择不是稳定边界。50 Hz 实测更安静，但
- *     它只比 32 Hz 速度环自身带宽高 1.6 倍，那里的相位代价没有量过；200 Hz 高出 6.25 倍，代价约 9 度。
+ *   在纹波台架上实测：200 Hz 把已发布转速里的载波音调从 0.4180 压到 0.0412 rad/s（10.1 倍），而稳态偏置没有变差（
+ *   0.0039 → 0.0023 rad/s），并且 50 到 400 Hz 之间每个截止频率都稳定，所以这个选择不是稳定边界。50 Hz 实测更安静，但它
+ *   只比 32 Hz 速度环自身带宽高 1.6 倍，那里的相位代价没有量过；200 Hz 高出 6.25 倍，代价约 9 度。
  * @since 0.1.7
  */
 constexpr float kHfiSpeedLpfHz = 200.0F;
@@ -296,12 +295,12 @@ auto resolve_config(const foc_motor_params_t& params, const Setup& resolved) noe
 /**
  * @brief [en] Merge the caller's setup over the defaults.
  *
- *     Only what their `struct_size` covers is read, so an older and shorter struct is safe by construction rather than
- *     by convention.
+ *   Only what their `struct_size` covers is read, so an older and shorter struct is safe by construction rather than by
+ *   convention.
  *
  * @brief [zh] 把调用方的设置叠在默认值上。
  *
- *     只读取其 `struct_size` 覆盖到的字段；于是更短的旧结构是"结构上安全"而不是"约定上安全"。
+ *   只读取其 `struct_size` 覆盖到的字段；于是更短的旧结构是"结构上安全"而不是"约定上安全"。
  * @since 0.1.0
  */
 auto resolve_setup(const foc_motor_setup_t* requested) noexcept -> Setup {
@@ -549,11 +548,11 @@ auto setup_ok(const Setup& setup) noexcept -> bool {
 /**
  * @brief [en] One pool slot: inline storage for the motor plus the control block the handle points at.
  *
- *     `storage` is the only place a `Motor<>` ever lives on the C path.
+ *   `storage` is the only place a `Motor<>` ever lives on the C path.
  *
  * @brief [zh] 一个池槽：电机内联存储 + 句柄指向的控制块。
  *
- *     `storage` 是 C 路径上 `Motor<>` 唯一存在的地方。
+ *   `storage` 是 C 路径上 `Motor<>` 唯一存在的地方。
  * @since 0.1.0
  */
 template <typename MotorType, typename HalType> struct SlotT final {
@@ -839,12 +838,12 @@ constexpr std::uintptr_t kAutoTuneMagic = 0x464F4354U; // "FOCT": a tuning token
 /**
  * @brief [en] Two tuning sessions.
  *
- *     Commissioning runs one at a time, and a second slot is what lets a caller start the next machine before it has
- *     released the last one.
+ *   Commissioning runs one at a time, and a second slot is what lets a caller start the next machine before it has
+ *   released the last one.
  *
  * @brief [zh] 两个整定会话。
  *
- *     调试一次只跑一个，第二个槽位让调用方在释放上一个之前就能开下一台机器。
+ *   调试一次只跑一个，第二个槽位让调用方在释放上一个之前就能开下一台机器。
  */
 constexpr std::size_t kMaxAutoTunes = 2U;
 
@@ -995,11 +994,11 @@ auto cogging_config(const foc_cogging_learn_config_t& in) noexcept -> core::Cogg
 /**
  * @brief [en] `psi_f` is derived, never taken from the caller.
  *
- *     `kt` already encodes it and `psi_f = kt/(1.5*p)` is the single definition.
+ *   `kt` already encodes it and `psi_f = kt/(1.5*p)` is the single definition.
  *
  * @brief [zh] `psi_f` 由 `kt` 推导，绝不向调用方索取。
  *
- *     `kt` 已经包含它，而 `psi_f = kt/(1.5·p)` 是唯一定义。
+ *   `kt` 已经包含它，而 `psi_f = kt/(1.5·p)` 是唯一定义。
  */
 auto machine_params(const foc_motor_params_t& p) noexcept -> core::MachineParams {
     const float poles = static_cast<float>(p.pole_pairs);
@@ -1010,11 +1009,11 @@ auto machine_params(const foc_motor_params_t& p) noexcept -> core::MachineParams
 /**
  * @brief [en] The observer the C path builds.
  *
- *     The nameplate, one explicit kind, and nothing the caller has to repeat.
+ *   The nameplate, one explicit kind, and nothing the caller has to repeat.
  *
  * @brief [zh] C 路径构造的观测器。
  *
- *     铭牌、一个显式的 kind，不让调用方重复任何数字。
+ *   铭牌、一个显式的 kind，不让调用方重复任何数字。
  *
  * @param p [en] the caller's nameplate.
  * @param p [zh] 调用方的铭牌。

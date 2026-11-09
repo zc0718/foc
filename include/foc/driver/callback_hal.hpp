@@ -17,25 +17,25 @@ namespace driver {
 /**
  * @brief [en] The five HAL operations a host (test bench, Python, FMU) supplies as plain C calls.
  *
- *     A drive whose sensors are stubs can only be simulated against the stubs. This struct is the other half of the
- *     design: the same control loop, with its measurements coming from a caller and its duties going back to that
- *     caller. The callbacks are plain function pointers rather than virtuals because the callers that need this are a C
- *     ABI, a Python extension and an FMU -- none of which can hand a C++ object across.
+ *   A drive whose sensors are stubs can only be simulated against the stubs. This struct is the other half of the
+ *   design: the same control loop, with its measurements coming from a caller and its duties going back to that caller.
+ *   The callbacks are plain function pointers rather than virtuals because the callers that need this are a C ABI, a
+ *   Python extension and an FMU -- none of which can hand a C++ object across.
  *
- *     Four callbacks are required and are checked by `valid()`: duties out, phase currents in, mechanical angle in, DC
- *     link voltage in. The rest are optional and are documented where they are declared. A NULL optional callback means
- *     "this host has no such facility", never "assume a convenient value": `pwm_fault` returning absent means no fault
- *     is reported, `velocity_rad_s` absent means the host cannot measure speed, and `now_us` absent means the caller
- *     trusts the `dt` it passes to each tick.
+ *   Four callbacks are required and are checked by `valid()`: duties out, phase currents in, mechanical angle in, DC
+ *   link voltage in. The rest are optional and are documented where they are declared. A NULL optional callback means
+ *   "this host has no such facility", never "assume a convenient value": `pwm_fault` returning absent means no fault is
+ *   reported, `velocity_rad_s` absent means the host cannot measure speed, and `now_us` absent means the caller trusts
+ *   the `dt` it passes to each tick.
  *
  * @brief [zh] 主控方（测试台、Python、FMU）以纯 C 调用提供的五个 HAL 操作。
  *
- *     传感器是桩的驱动，只能对着桩仿真。这个结构是设计的另一半：同一个控制环，测量值来自调用方，占空比送回调用方。用普
- *     通函数指针而不是虚函数，是因为需要它的调用方是 C ABI、Python 扩展与 FMU——它们都无法跨边界传 C++ 对象。
+ *   传感器是桩的驱动，只能对着桩仿真。这个结构是设计的另一半：同一个控制环，测量值来自调用方，占空比送回调用方。用普通
+ *   函数指针而不是虚函数，是因为需要它的调用方是 C ABI、Python 扩展与 FMU——它们都无法跨边界传 C++ 对象。
  *
- *     四个回调是必需的，由 `valid()` 检查：占空比送出、相电流读入、机械角读入、母线电压读入。其余是可选的，在声明处逐个
- *     说明。可选项为 NULL 的含义是"这个主控方没有这个能力"，**不是**"假定一个方便的值"： `pwm_fault` 缺省即不报故障，
- *     `velocity_rad_s` 缺省即主控方测不到转速，`now_us` 缺省即调用方信任自己每拍传入的 `dt`。
+ *   四个回调是必需的，由 `valid()` 检查：占空比送出、相电流读入、机械角读入、母线电压读入。其余是可选的，在声明处逐个说
+ *   明。可选项为 NULL 的含义是"这个主控方没有这个能力"，**不是**"假定一个方便的值"： `pwm_fault` 缺省即不报故障，
+ *   `velocity_rad_s` 缺省即主控方测不到转速，`now_us` 缺省即调用方信任自己每拍传入的 `dt`。
  *
  * @note [en] `configure()` on the HAL is a no-op here: the host owns its own carrier frequency and dead time. The
  *            controller's request is a wish, not a command, once the switching hardware belongs to someone else.
@@ -401,16 +401,16 @@ class CallbackClock final : public hal::Clock {
 /**
  * @brief [en] A HAL policy whose five interfaces are supplied by a host.
  *
- *     Use it where the plant lives outside the library: a test bench, a Python model, an FMU, or a bench script driving
- *     a real inverter. The control path is identical to `StubHal` -- same `Motor` template, same ticks -- only the
- *     measurements' origin changes. That is what makes "the same loop, verified in three places" a statement about the
- *     loop rather than about the stub.
+ *   Use it where the plant lives outside the library: a test bench, a Python model, an FMU, or a bench script driving a
+ *   real inverter. The control path is identical to `StubHal` -- same `Motor` template, same ticks -- only the
+ *   measurements' origin changes. That is what makes "the same loop, verified in three places" a statement about the
+ *   loop rather than about the stub.
  *
  * @brief [zh] 五个接口都由主控方提供的 HAL 策略。
  *
- *     用在被控对象位于库外的场合：测试台、Python 模型、FMU，或驱动真实逆变器的台架脚本。控制路径与 `StubHal` 完全一致——
- *     同一个 `Motor` 模板、同样的 tick——只有测量值的来源不同。这正是"同一个环，在三处验证过"这句话谈的是环而不是桩的原
- *     因。
+ *   用在被控对象位于库外的场合：测试台、Python 模型、FMU，或驱动真实逆变器的台架脚本。控制路径与 `StubHal` 完全一致——
+ *   同一个 `Motor` 模板、同样的 tick——只有测量值的来源不同。这正是"同一个环，在三处验证过"这句话谈的是环而不是桩的原
+ *   因。
  *
  * @note [en] `bind()` may be called between ticks to point the same motor at different callbacks; it does not reset the
  *            controller state, because swapping a data source is not a reason to forget the integrator.

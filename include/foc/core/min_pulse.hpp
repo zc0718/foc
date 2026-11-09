@@ -59,38 +59,38 @@ struct MinPulseOutput final {
  * @details [en] The bridge has a floor that no controller can argue with: below `t_min` the driver does not transmit
  *               the pulse. Two things follow, and they are usually conflated.
  *
- *     **The law.** For one phase, with `m = t_min/T` and the request `d` in [0, 1]: `applied = 0` when `d < m` (the
- *     on-pulse is too short to exist), `applied = 1` when `1 - d < m` (the *off*-pulse is too short, so the high side
- *     cannot turn off), and `applied = d` otherwise. The period-mean phase voltage is therefore short by `(d - applied)
- *     * v_bus`, which is a number the caller can write down *before* it happens. That is the whole point of `apply()`:
- *     not to change anything, but to say what the bridge will do.
+ *   **The law.** For one phase, with `m = t_min/T` and the request `d` in [0, 1]: `applied = 0` when `d < m` (the
+ *   on-pulse is too short to exist), `applied = 1` when `1 - d < m` (the *off*-pulse is too short, so the high side
+ *   cannot turn off), and `applied = d` otherwise. The period-mean phase voltage is therefore short by `(d - applied) *
+ *   v_bus`, which is a number the caller can write down *before* it happens. That is the whole point of `apply()`: not
+ *   to change anything, but to say what the bridge will do.
  *
- *     **The residue.** `shape()` adds the lost duty to the next period's request and remembers what is still owed, so
- *     `sum(applied) = sum(requested) - carry` over any window: the *average* is exact and only the residue is left. The
- *     residue is bounded by one minimum pulse (`abs(carry) <= m` in duty, i.e. one `t_min` window), so over `N` periods
- *     the mean error is at most `m/N` -- 0.024 % of full duty at `m = 2 %` and `N = 100`, against the 2 % that dropping
- *     the pulse every period would cost. A delta-sigma modulator, played on a pulse width.
+ *   **The residue.** `shape()` adds the lost duty to the next period's request and remembers what is still owed, so
+ *   `sum(applied) = sum(requested) - carry` over any window: the *average* is exact and only the residue is left. The
+ *   residue is bounded by one minimum pulse (`abs(carry) <= m` in duty, i.e. one `t_min` window), so over `N` periods
+ *   the mean error is at most `m/N` -- 0.024 % of full duty at `m = 2 %` and `N = 100`, against the 2 % that dropping
+ *   the pulse every period would cost. A delta-sigma modulator, played on a pulse width.
  *
- *     What this class **cannot** do, stated because the alternative is a caller that believes otherwise: it cannot make
- *     the driver transmit a pulse it refuses, it does not model the propagation-delay *jitter* around the two edges,
- *     and the residue assumes the same `t_min` next period -- a driver whose limit changes (temperature, bus voltage)
- *     breaks the exactness, not the bound.
+ *   What this class **cannot** do, stated because the alternative is a caller that believes otherwise: it cannot make
+ *   the driver transmit a pulse it refuses, it does not model the propagation-delay *jitter* around the two edges, and
+ *   the residue assumes the same `t_min` next period -- a driver whose limit changes (temperature, bus voltage) breaks
+ *   the exactness, not the bound.
  *
  * @details [zh] 桥臂有一个任何控制器都争不过的下限：窄于 `t_min` 的脉冲，驱动器不送。由此有两件事，而它们经常被混为一
  *               谈。
  *
- *     **律。** 单相，`m = t_min/T`，请求 `d` ∈ [0, 1]：`d < m` 时 `applied = 0`（导通脉冲短到不存在），`1 − d < m` 时
- *     `applied = 1`（**关断**脉冲太短，高侧关不掉），其余 `applied = d`。于是周期平均相电压少了 `(d − applied)·v_bus`——
- *     一个调用方**在它发生之前**就能写下来的数。`apply()` 的全部意义就在这里：不改变任何东西，只说桥臂会怎么做。
+ *   **律。** 单相，`m = t_min/T`，请求 `d` ∈ [0, 1]：`d < m` 时 `applied = 0`（导通脉冲短到不存在），`1 − d < m` 时
+ *   `applied = 1`（**关断**脉冲太短，高侧关不掉），其余 `applied = d`。于是周期平均相电压少了 `(d − applied)·v_bus`——
+ *   一个调用方**在它发生之前**就能写下来的数。`apply()` 的全部意义就在这里：不改变任何东西，只说桥臂会怎么做。
  *
- *     **余量。** `shape()` 把丢掉的那份占空比加到下一周期的请求上，并记住还欠多少，于是在任何窗口上 `Σapplied =
- *     Σrequested − carry`：**平均**是精确的，剩下的只是余量。余量被一个最小脉冲界住（占空比上 `abs(carry) ≤ m`，即一个
- *     `t_min` 窗口），所以 `N` 个周期的平均误差至多 `m/N`——`m = 2 %`、`N = 100` 时是全占空比的 0.024 %，而每个周期都把
- *     脉冲丢掉的做法要付 2 %。一个调在脉宽上的 delta-sigma 调制器。
+ *   **余量。** `shape()` 把丢掉的那份占空比加到下一周期的请求上，并记住还欠多少，于是在任何窗口上 `Σapplied =
+ *   Σrequested − carry`：**平均**是精确的，剩下的只是余量。余量被一个最小脉冲界住（占空比上 `abs(carry) ≤ m`，即一个
+ *   `t_min` 窗口），所以 `N` 个周期的平均误差至多 `m/N`——`m = 2 %`、`N = 100` 时是全占空比的 0.024 %，而每个周期都把脉
+ *   冲丢掉的做法要付 2 %。一个调在脉宽上的 delta-sigma 调制器。
  *
- *     这个类**做不到**什么，写下来是因为不写就会有调用方以为它做得到：它无法让驱动器送出一个它拒绝送的脉冲；它不建模两
- *     个边沿的传输延迟**抖动**；余量假定下一周期的 `t_min` 相同——一个极限会变的驱动器（温度、母线电压）破坏的是 **精确
- *     性**，不是那条界。
+ *   这个类**做不到**什么，写下来是因为不写就会有调用方以为它做得到：它无法让驱动器送出一个它拒绝送的脉冲；它不建模两个
+ *   边沿的传输延迟**抖动**；余量假定下一周期的 `t_min` 相同——一个极限会变的驱动器（温度、母线电压）破坏的是 **精确性
+ *   **，不是那条界。
  *
  * @context [en] Current-loop ISR: noexcept, no allocation, one branch per phase when disabled.
  * @context [zh] 电流环 ISR：noexcept、不分配、未启用时每相一个分支。

@@ -219,20 +219,20 @@ auto psi_f_wb() -> double {
  *
  * @brief [zh] PI 提供的稳态 q 轴电压就是电机自己的方程，而两个工作点才能把 `Ld` 与 `psi_f` 分开。
  *
- *     With no feedforward the current loop has to produce the whole voltage, so the number it settles on is a
- *     measurement of the machine: `vq = Rs*iq + omega_e*(Ld*id + psi_f)`. The model here is the plant's own steady
- *     state (`diq/dt = 0`), which is an independent source from anything inside `DecouplingFeedforward`.
+ *   With no feedforward the current loop has to produce the whole voltage, so the number it settles on is a measurement
+ *   of the machine: `vq = Rs*iq + omega_e*(Ld*id + psi_f)`. The model here is the plant's own steady state (`diq/dt =
+ *   0`), which is an independent source from anything inside `DecouplingFeedforward`.
  *
- *     What is *not* separable is the pair: `Ld` and `psi_f` enter only as `Ld*id + psi_f`, so at `id = 0` the equation
- *     measures the flux and says nothing about `Ld`. That is why the case runs a second point at `id = -1 A`, and why a
- *     commissioning routine that identifies inductances from one operating point is measuring a sum it cannot split.
+ *   What is *not* separable is the pair: `Ld` and `psi_f` enter only as `Ld*id + psi_f`, so at `id = 0` the equation
+ *   measures the flux and says nothing about `Ld`. That is why the case runs a second point at `id = -1 A`, and why a
+ *   commissioning routine that identifies inductances from one operating point is measuring a sum it cannot split.
  *
- *     没有前馈时电流环必须提供全部电压，于是它稳定下来的数就是对电机的一次测量： `vq = Rs*iq + ω_e*(Ld*id + ψ_f)`。这里
- *     的模型是 plant 自己的稳态（`diq/dt = 0`），它与 `DecouplingFeedforward` 内部的任何东西都是独立来源。
+ *   没有前馈时电流环必须提供全部电压，于是它稳定下来的数就是对电机的一次测量： `vq = Rs*iq + ω_e*(Ld*id + ψ_f)`。这里的
+ *   模型是 plant 自己的稳态（`diq/dt = 0`），它与 `DecouplingFeedforward` 内部的任何东西都是独立来源。
  *
- *     **不可分**的是那个配对：`Ld` 与 `ψ_f` 只以 `Ld*id + ψ_f` 的形式出现，所以 `id = 0` 时这个方程量到的是磁链、对
- *     `Ld` 一无所知。这就是本用例要跑第二个 `id = -1 A` 工作点的原因，也是"从一个工作点辨识电感" 的调试流程实际在量一个
- *     它拆不开的和的原因。
+ *   **不可分**的是那个配对：`Ld` 与 `ψ_f` 只以 `Ld*id + ψ_f` 的形式出现，所以 `id = 0` 时这个方程量到的是磁链、对 `Ld`
+ *   一无所知。这就是本用例要跑第二个 `id = -1 A` 工作点的原因，也是"从一个工作点辨识电感" 的调试流程实际在量一个它拆不
+ *   开的和的原因。
  */
 TEST(SilFeedforward, TheSteadyStateQVoltageIsTheMachinesOwnEquationAndTwoPointsSplitIt) {
     const foc::motor::MotorConfig mc = machine();
@@ -271,18 +271,18 @@ TEST(SilFeedforward, TheSteadyStateQVoltageIsTheMachinesOwnEquationAndTwoPointsS
  *
  * @brief [zh] 参数失配留下的恰好是那一项的这个比例，且残差对失配是线性的。
  *
- *     The feedforward removes `omega_e*(Ld*id + psi_f)`; if the configuration is `(1+eps)` of the truth, what is left
- *     on the PI is `-eps*omega_e*(Ld*id + psi_f)`. That is a one-line derivation and it is worth having as a number: it
- *     says the residual is proportional to the mismatch and to the term, so the only thing that makes a mismatch
- *     harmless is a small mismatch -- there is no operating point that hides a 10 % error.
+ *   The feedforward removes `omega_e*(Ld*id + psi_f)`; if the configuration is `(1+eps)` of the truth, what is left on
+ *   the PI is `-eps*omega_e*(Ld*id + psi_f)`. That is a one-line derivation and it is worth having as a number: it says
+ *   the residual is proportional to the mismatch and to the term, so the only thing that makes a mismatch harmless is a
+ *   small mismatch -- there is no operating point that hides a 10 % error.
  *
- *     Measured at `eps = +0.10, -0.10, +0.25`, and the linearity is checked by the ratio of the last two.
+ *   Measured at `eps = +0.10, -0.10, +0.25`, and the linearity is checked by the ratio of the last two.
  *
- *     前馈剥掉 `ω_e*(Ld*id + ψ_f)`；若配置是真实值的 `(1+eps)` 倍，留在 PI 上的是 `-eps*ω_e*(Ld*id + ψ_f)`。这是一行推
- *     导，但值得作为一个数留下来：它说残差正比于失配、也正比于那一项，所以让失配无害的唯一办法就是让它小——没有任何工作
- *     点能藏住 10 % 的误差。
+ *   前馈剥掉 `ω_e*(Ld*id + ψ_f)`；若配置是真实值的 `(1+eps)` 倍，留在 PI 上的是 `-eps*ω_e*(Ld*id + ψ_f)`。这是一行推
+ *   导，但值得作为一个数留下来：它说残差正比于失配、也正比于那一项，所以让失配无害的唯一办法就是让它小——没有任何工作点
+ *   能藏住 10 % 的误差。
  *
- *     在 `eps = +0.10, -0.10, +0.25` 上量，并用后两者的比值检查线性。
+ *   在 `eps = +0.10, -0.10, +0.25` 上量，并用后两者的比值检查线性。
  */
 TEST(SilFeedforward, AParameterMismatchLeavesExactlyItsFractionOfTheTermBehind) {
     const foc::motor::MotorConfig mc = machine();
@@ -336,12 +336,12 @@ TEST(SilFeedforward, AParameterMismatchLeavesExactlyItsFractionOfTheTermBehind) 
  * @brief [zh] 在同一个工作点上，配置的 `Ld` 与磁链无法区分；换一个工作点就可以——与辨识用例同一条论断，这里作为实验给
  *             出。
  *
- *     At `id = 0` the q-axis term is `omega_e*psi_f` whatever `Ld` says, so two configurations that differ only in `Ld`
- *     leave the *same* residual. That is an exact identity, not an approximation, and it is the reason "the feedforward
- *     matched at this point" is not evidence that its inductance is right.
+ *   At `id = 0` the q-axis term is `omega_e*psi_f` whatever `Ld` says, so two configurations that differ only in `Ld`
+ *   leave the *same* residual. That is an exact identity, not an approximation, and it is the reason "the feedforward
+ *   matched at this point" is not evidence that its inductance is right.
  *
- *     `id = 0` 时 q 轴那一项是 `omega_e*psi_f`，与 `Ld` 说什么无关，于是两个只在 `Ld` 上不同的配置留下**相同** 的残差。
- *     这是一条恒等式而不是近似，也正是"前馈在这个点上对上了"不能证明它的电感是对的原因。
+ *   `id = 0` 时 q 轴那一项是 `omega_e*psi_f`，与 `Ld` 说什么无关，于是两个只在 `Ld` 上不同的配置留下**相同** 的残差。这
+ *   是一条恒等式而不是近似，也正是"前馈在这个点上对上了"不能证明它的电感是对的原因。
  */
 TEST(SilFeedforward, AtOneOperatingPointTheInductanceIsInvisibleOnTheQAxis) {
     const foc::motor::MotorConfig mc = machine();
@@ -387,30 +387,30 @@ TEST(SilFeedforward, AtOneOperatingPointTheInductanceIsInvisibleOnTheQAxis) {
  *
  * @brief [zh] d 轴电压被估计器自身的角误差混淆，而那个混淆比它本该量到的交叉耦合项还大。
  *
- *     The d-axis steady state is `vd = Rs*id - omega_e*Lq*iq`, which looks like a clean way to identify `Lq`. It is
- *     not, through a closed loop: the command is built in the *estimated* frame and applied in the plant's *true*
- *     frame, so what the machine receives is the command rotated by the estimator's angle error `delta`. To first order
- *     that adds `vq*delta` to the d axis -- and `vq` is the biggest number in the loop.
+ *   The d-axis steady state is `vd = Rs*id - omega_e*Lq*iq`, which looks like a clean way to identify `Lq`. It is not,
+ *   through a closed loop: the command is built in the *estimated* frame and applied in the plant's *true* frame, so
+ *   what the machine receives is the command rotated by the estimator's angle error `delta`. To first order that adds
+ *   `vq*delta` to the d axis -- and `vq` is the biggest number in the loop.
  *
- *     Measured on this machine: the cross term is `-omega*Lq*iq` and the confound comes out at **41 % of it**. Solving
- *     the two axes for `delta` gives **0.0131 rad (0.75 deg)**, which is a plausible observer error and is invisible on
- *     the q axis (`vd*delta` is ~3 % of `vq`) -- which is exactly why the q-axis identification in the case above works
- *     to 0.06 % while the same procedure on d is off by 41 %.
+ *   Measured on this machine: the cross term is `-omega*Lq*iq` and the confound comes out at **41 % of it**. Solving
+ *   the two axes for `delta` gives **0.0131 rad (0.75 deg)**, which is a plausible observer error and is invisible on
+ *   the q axis (`vd*delta` is ~3 % of `vq`) -- which is exactly why the q-axis identification in the case above works
+ *   to 0.06 % while the same procedure on d is off by 41 %.
  *
- *     The budget is therefore explicit: identifying `Lq` from the d-axis voltage needs the angle known to
- *     `omega*Lq*iq/vq`, i.e. about 0.033 rad here, and it explains why commissioning identifies inductance from the *q*
- *     axis and never from d.
+ *   The budget is therefore explicit: identifying `Lq` from the d-axis voltage needs the angle known to
+ *   `omega*Lq*iq/vq`, i.e. about 0.033 rad here, and it explains why commissioning identifies inductance from the *q*
+ *   axis and never from d.
  *
- *     d 轴稳态是 `vd = Rs*id - ω_e*Lq*iq`，看上去是辨识 `Lq` 的干净途径。通过闭环它**不是**：指令在**估计** 坐标系里构
- *     造、在 plant 的**真实**坐标系里施加，于是电机收到的是被估计器角误差 `delta` 旋转过的指令。一阶上这给 d 轴加上了
- *     `vq*delta`——而 `vq` 是环里最大的那个数。
+ *   d 轴稳态是 `vd = Rs*id - ω_e*Lq*iq`，看上去是辨识 `Lq` 的干净途径。通过闭环它**不是**：指令在**估计** 坐标系里构
+ *   造、在 plant 的**真实**坐标系里施加，于是电机收到的是被估计器角误差 `delta` 旋转过的指令。一阶上这给 d 轴加上了
+ *   `vq*delta`——而 `vq` 是环里最大的那个数。
  *
- *     在这台电机上实测：交叉项是 `-ω*Lq*iq`，混淆量达到它的 **41 %**。用两轴解出 `delta` 得 **0.0131 rad（0.75°）**，是
- *     合理的观测器误差，且在 q 轴上不可见（`vd*delta` 只占 `vq` 的约 3 %）—— 这正是上面那个 q 轴辨识能到 0.06 %、而同样
- *     的步骤在 d 轴上差 41 % 的原因。
+ *   在这台电机上实测：交叉项是 `-ω*Lq*iq`，混淆量达到它的 **41 %**。用两轴解出 `delta` 得 **0.0131 rad（0.75°）**，是合
+ *   理的观测器误差，且在 q 轴上不可见（`vd*delta` 只占 `vq` 的约 3 %）—— 这正是上面那个 q 轴辨识能到 0.06 %、而同样的步
+ *   骤在 d 轴上差 41 % 的原因。
  *
- *     于是预算是显式的：从 d 轴电压辨识 `Lq` 要求角度已知到 `ω*Lq*iq/vq`，这里约 0.033 rad；这也解释了为什么调试流程从
- *     **q** 轴辨识电感、而不从 d 轴。
+ *   于是预算是显式的：从 d 轴电压辨识 `Lq` 要求角度已知到 `ω*Lq*iq/vq`，这里约 0.033 rad；这也解释了为什么调试流程从
+ *   **q** 轴辨识电感、而不从 d 轴。
  */
 TEST(SilFeedforward, TheDAxisIsConfoundedByTheAngleErrorMoreThanByTheTermItself) {
     const foc::motor::MotorConfig mc = machine();
@@ -449,23 +449,23 @@ TEST(SilFeedforward, TheDAxisIsConfoundedByTheAngleErrorMoreThanByTheTermItself)
  *
  * @brief [zh] 每个电感乘的是**它自己**的交叉项，这正是这个前馈是双电感、而不是一个披着两个名字的单 `L` 近似的意思。
  *
- *     `v_d -= omega*Lq*iq` and `v_q += omega*Ld*id` is an asymmetry worth testing rather than reading: a single-`L`
- *     implementation would put the same letter in both places, and on a machine with `Lq/Ld = 3` that is a
- *     factor-of-three error in one of the two terms. The test is a **difference of two runs** that share every other
- *     detail -- exact feedforward against one with a single parameter scaled -- because the d axis carries a confound
- *     (`vq*delta`, 55.5 % of the cross term, measured in the case above) that would swamp a 10 % mismatch outright.
- *     Differencing cancels it, since both runs are at the same operating point.
+ *   `v_d -= omega*Lq*iq` and `v_q += omega*Ld*id` is an asymmetry worth testing rather than reading: a single-`L`
+ *   implementation would put the same letter in both places, and on a machine with `Lq/Ld = 3` that is a
+ *   factor-of-three error in one of the two terms. The test is a **difference of two runs** that share every other
+ *   detail -- exact feedforward against one with a single parameter scaled -- because the d axis carries a confound
+ *   (`vq*delta`, 55.5 % of the cross term, measured in the case above) that would swamp a 10 % mismatch outright.
+ *   Differencing cancels it, since both runs are at the same operating point.
  *
- *     The predictions are one line each: scaling `Lq` by `(1+eps)` leaves `+eps*omega*Lq*iq` on the d axis and nothing
- *     on q; scaling `Ld` leaves `-eps*omega*Ld*id` on q and nothing on d. So the two parameters are separable by *which
- *     axis moves*, which is the property that makes dual inductance worth having.
+ *   The predictions are one line each: scaling `Lq` by `(1+eps)` leaves `+eps*omega*Lq*iq` on the d axis and nothing on
+ *   q; scaling `Ld` leaves `-eps*omega*Ld*id` on q and nothing on d. So the two parameters are separable by *which axis
+ *   moves*, which is the property that makes dual inductance worth having.
  *
- *     `v_d -= ω·Lq·iq` 与 `v_q += ω·Ld·id` 这个不对称值得测而不是读：单 `L` 的实现会在两处放同一个字母，而在 `Lq/Ld =
- *     3` 的机器上那是两项之一的**三倍**误差。测法是**两次只差一个参数的运行相减**——因为 d 轴带着一个混淆量（`vq·δ`，实
- *     测占交叉项的 55.5 %），它会把 10 % 的失配彻底淹没；两次运行工作点相同，相减即抵消。
+ *   `v_d -= ω·Lq·iq` 与 `v_q += ω·Ld·id` 这个不对称值得测而不是读：单 `L` 的实现会在两处放同一个字母，而在 `Lq/Ld = 3`
+ *   的机器上那是两项之一的**三倍**误差。测法是**两次只差一个参数的运行相减**——因为 d 轴带着一个混淆量（`vq·δ`，实测占交
+ *   叉项的 55.5 %），它会把 10 % 的失配彻底淹没；两次运行工作点相同，相减即抵消。
  *
- *     两条预测各一行：`Lq` 缩放 `(1+eps)` 在 d 轴留下 `+eps·ω·Lq·iq`、q 轴不留；`Ld` 缩放则在 q 轴留下 `-eps·ω·Ld·id`、
- *     d 轴不留。于是两个参数靠**哪个轴动**就能分开——这正是双电感值得拥有的性质。
+ *   两条预测各一行：`Lq` 缩放 `(1+eps)` 在 d 轴留下 `+eps·ω·Lq·iq`、q 轴不留；`Ld` 缩放则在 q 轴留下 `-eps·ω·Ld·id`、 d
+ *   轴不留。于是两个参数靠**哪个轴动**就能分开——这正是双电感值得拥有的性质。
  */
 TEST(SilFeedforward, EachInductanceMultipliesItsOwnCrossTerm) {
     const foc::motor::MotorConfig mc = machine();

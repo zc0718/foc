@@ -371,13 +371,13 @@ namespace {
  *
  * @brief [zh] 用第二种写法表达环形缓冲的契约：把每次推入都存进一张平铺的日志，再把最后 `capacity` 个投影出来。
  *
- *     This is a genuinely different structure from a circular index -- there is no wrap, no `head_`, no modulo -- and
- *     that is exactly what makes it useful as a reference: the classic ring defect is an index arithmetic error after
- *     the wrap, and an implementation that never wraps cannot make that error. It costs O(n) storage, which is why it
- *     lives in a test and not in the library.
+ *   This is a genuinely different structure from a circular index -- there is no wrap, no `head_`, no modulo -- and
+ *   that is exactly what makes it useful as a reference: the classic ring defect is an index arithmetic error after the
+ *   wrap, and an implementation that never wraps cannot make that error. It costs O(n) storage, which is why it lives
+ *   in a test and not in the library.
  *
- *     它与循环下标是**结构上不同**的东西——没有回绕、没有 `head_`、没有取模——而这正是它作为参照有用的原因：环的经典缺陷
- *     是回绕之后的索引算术错误，而一个永不回绕的实现犯不了那种错。它花 O(n) 存储，所以它住在测试里而不是库里。
+ *   它与循环下标是**结构上不同**的东西——没有回绕、没有 `head_`、没有取模——而这正是它作为参照有用的原因：环的经典缺陷是
+ *   回绕之后的索引算术错误，而一个永不回绕的实现犯不了那种错。它花 O(n) 存储，所以它住在测试里而不是库里。
  */
 template <std::size_t N> struct PlainLog final {
     std::array<foc::core::TraceSample, N> all{};
@@ -432,26 +432,26 @@ auto same_sample(const foc::core::TraceSample& a, const foc::core::TraceSample& 
  * @brief [zh] 两个环都与一个"不会回绕"的模型逐样本一致，而丢帧计数恰好等于掉出去的推入次数——包括电机真正在用的那个容
  *             量。
  *
- *     `RingTrace` had one case, on capacity 4, and it passed: the wrap, the ordering and `dropped()` were all correct
- *     there. Coverage said something the case could not: the `RingTrace<8>` the clocked motor instantiates and the
- *     `RingTrace<64>` the traced motor instantiates are **separate functions**, and neither of them had ever
- *     overwritten a sample. A template's contract is only as tested as each instantiation the product uses, which is
- *     the kind of thing a hand-written case list hides and a per-instantiation measurement does not.
+ *   `RingTrace` had one case, on capacity 4, and it passed: the wrap, the ordering and `dropped()` were all correct
+ *   there. Coverage said something the case could not: the `RingTrace<8>` the clocked motor instantiates and the
+ *   `RingTrace<64>` the traced motor instantiates are **separate functions**, and neither of them had ever overwritten
+ *   a sample. A template's contract is only as tested as each instantiation the product uses, which is the kind of
+ *   thing a hand-written case list hides and a per-instantiation measurement does not.
  *
- *     The reference is `PlainLog`, which keeps every push and projects the tail: no wrap, no head, no modulo. Over 100
- *     pushes at capacity 8 the ring retains 8, drops 92, and `at(i)` must equal `log.at(8, i)` for every `i` -- the
- *     full ring, not a spot check -- and `latest()` must equal the 100th. Doing it for `SpanTrace` over a caller array
- *     as well is not duplication: they are two implementations of one contract, and the pair is the check that the
- *     contract is written down rather than invented per class.
+ *   The reference is `PlainLog`, which keeps every push and projects the tail: no wrap, no head, no modulo. Over 100
+ *   pushes at capacity 8 the ring retains 8, drops 92, and `at(i)` must equal `log.at(8, i)` for every `i` -- the full
+ *   ring, not a spot check -- and `latest()` must equal the 100th. Doing it for `SpanTrace` over a caller array as well
+ *   is not duplication: they are two implementations of one contract, and the pair is the check that the contract is
+ *   written down rather than invented per class.
  *
- *     `RingTrace` 只有一个容量 4 的用例，而它通过了：回绕、顺序、`dropped()` 在那里都对。覆盖率说出了用例说不出的事：时
- *     钟电机实例化的 `RingTrace<8>` 与被追踪电机实例化的 `RingTrace<64>` 是**各自的函数**，两者都从未覆盖过一个样本。模
- *     板的契约只被"产品用到的每个实例化"测到多少算多少——这正是手写用例清单会藏住、而按实例化测量藏不住的东西。
+ *   `RingTrace` 只有一个容量 4 的用例，而它通过了：回绕、顺序、`dropped()` 在那里都对。覆盖率说出了用例说不出的事：时钟
+ *   电机实例化的 `RingTrace<8>` 与被追踪电机实例化的 `RingTrace<64>` 是**各自的函数**，两者都从未覆盖过一个样本。模板的
+ *   契约只被"产品用到的每个实例化"测到多少算多少——这正是手写用例清单会藏住、而按实例化测量藏不住的东西。
  *
- *     参照物是 `PlainLog`：它保留每次推入、投影尾部，没有回绕、没有 head、没有取模。容量 8 上推 100 次，环保留 8 个、丢
- *     掉 92 个，而 `at(i)` 对**每个** `i` 都必须等于 `log.at(8, i)`——整个环，不是抽查——`latest()` 必须等于第 100 个。对
- *     调用方数组上的 `SpanTrace` 也这么做不是重复：它们是同一份契约的两种实现，而这一对正是"契约是写下来的、不是每个类
- *     各自发明"的证据。
+ *   参照物是 `PlainLog`：它保留每次推入、投影尾部，没有回绕、没有 head、没有取模。容量 8 上推 100 次，环保留 8 个、丢掉
+ *   92 个，而 `at(i)` 对**每个** `i` 都必须等于 `log.at(8, i)`——整个环，不是抽查——`latest()` 必须等于第 100 个。对调用
+ *   方数组上的 `SpanTrace` 也这么做不是重复：它们是同一份契约的两种实现，而这一对正是"契约是写下来的、不是每个类各自发
+ *   明"的证据。
  */
 TEST(Trace, BothRingsAgreeWithAModelThatCannotWrap) {
     constexpr std::uint32_t kPushes = 100U;
@@ -513,22 +513,22 @@ TEST(Trace, BothRingsAgreeWithAModelThatCannotWrap) {
  *
  * @brief [zh] 丢帧计数器饱和；它不会回到一个小数字，也从不减少。
  *
- *     The count is read by whoever decides whether the trace they received is complete. That reader has exactly two
- *     questions -- "did I lose anything" and "how much" -- and a wrapping counter answers the first one wrongly at the
- *     moment it matters most: after 65536 losses on a `uint16_t` it reads 0, which is what a healthy channel reports. A
- *     defect whose symptom is "looks healthy" is the one class this library does not accept, so the counter stops at
- *     the maximum and says so.
+ *   The count is read by whoever decides whether the trace they received is complete. That reader has exactly two
+ *   questions -- "did I lose anything" and "how much" -- and a wrapping counter answers the first one wrongly at the
+ *   moment it matters most: after 65536 losses on a `uint16_t` it reads 0, which is what a healthy channel reports. A
+ *   defect whose symptom is "looks healthy" is the one class this library does not accept, so the counter stops at the
+ *   maximum and says so.
  *
- *     The check is a property rather than a boundary value: over 65537 pushes into a capacity-1 ring the counter must
- *     be monotone at every step, must equal `min(pushes - 1, 65535)` at every step, and must still be at the maximum
- *     1000 pushes later. "It saturated once" is not the claim; "it can never come back down" is.
+ *   The check is a property rather than a boundary value: over 65537 pushes into a capacity-1 ring the counter must be
+ *   monotone at every step, must equal `min(pushes - 1, 65535)` at every step, and must still be at the maximum 1000
+ *   pushes later. "It saturated once" is not the claim; "it can never come back down" is.
  *
- *     读这个数的人要判断"收到的轨迹完不完整"。这个读者只有两个问题——"我丢了没有"和"丢了多少"——而回绕的计数器恰好在最要
- *     紧的时刻把第一个答错：`uint16_t` 上丢够 65536 个之后它读作 0，而那正是健康通道报的数。一个症状是"看起来正常"的缺
- *     陷，是本库唯一不接受的那一类，所以计数器停在最大值并说明这一点。
+ *   读这个数的人要判断"收到的轨迹完不完整"。这个读者只有两个问题——"我丢了没有"和"丢了多少"——而回绕的计数器恰好在最要紧
+ *   的时刻把第一个答错：`uint16_t` 上丢够 65536 个之后它读作 0，而那正是健康通道报的数。一个症状是"看起来正常"的缺陷，
+ *   是本库唯一不接受的那一类，所以计数器停在最大值并说明这一点。
  *
- *     判据是一条**性质**而不是一个边界值：往容量 1 的环里推 65537 次，计数器在**每一步**都必须单调、都必须等于 `min(推
- *     入次数 - 1, 65535)`，并且再过 1000 次推入仍然停在最大值。"它曾经饱和过"不是主张；"它再也降不下来"才是。
+ *   判据是一条**性质**而不是一个边界值：往容量 1 的环里推 65537 次，计数器在**每一步**都必须单调、都必须等于 `min(推入
+ *   次数 - 1, 65535)`，并且再过 1000 次推入仍然停在最大值。"它曾经饱和过"不是主张；"它再也降不下来"才是。
  */
 TEST(Trace, TheLossCounterSaturatesInsteadOfWrapping) {
     constexpr std::uint32_t kPushes = 65537U;          // 1 to fill + 65536 overwrites => one past UINT16_MAX
@@ -574,14 +574,14 @@ TEST(Trace, TheLossCounterSaturatesInsteadOfWrapping) {
  *
  * @brief [zh] 饱和规则是一个独立函数，于是它的边界在任何宽度上都碰得到。
  *
- *     Two rings use one rule. Testing it only through `SpanTrace` would need 4294967296 pushes (about half a minute of
- *     CI, and a test nobody keeps); testing it only through `RingTrace` would leave the 32-bit instantiation's rule
- *     unvisited. Naming it and checking it on `std::uint8_t` costs three pushes and makes the rule killable: delete the
- *     clamp and this case goes red, whichever ring the clamp was written in.
+ *   Two rings use one rule. Testing it only through `SpanTrace` would need 4294967296 pushes (about half a minute of
+ *   CI, and a test nobody keeps); testing it only through `RingTrace` would leave the 32-bit instantiation's rule
+ *   unvisited. Naming it and checking it on `std::uint8_t` costs three pushes and makes the rule killable: delete the
+ *   clamp and this case goes red, whichever ring the clamp was written in.
  *
- *     两个环共用一条规则。只通过 `SpanTrace` 去测它要 4294967296 次推入（约半分钟 CI，而且是没人会留着的用例）；只通过
- *     `RingTrace` 去测它，则 32 位那个实例化的规则永远没被走到。给它一个名字并在 `std::uint8_t` 上检查它，代价是三次推
- *     入，却让这条规则变得可被变异杀死：删掉钳位，本用例就红——无论钳位当初写在哪一个环里。
+ *   两个环共用一条规则。只通过 `SpanTrace` 去测它要 4294967296 次推入（约半分钟 CI，而且是没人会留着的用例）；只通过
+ *   `RingTrace` 去测它，则 32 位那个实例化的规则永远没被走到。给它一个名字并在 `std::uint8_t` 上检查它，代价是三次推
+ *   入，却让这条规则变得可被变异杀死：删掉钳位，本用例就红——无论钳位当初写在哪一个环里。
  */
 TEST(Trace, TheSaturationRuleIsReachableAtAnyWidth) {
     std::uint8_t small = 3U;
@@ -603,20 +603,20 @@ TEST(Trace, TheSaturationRuleIsReachableAtAnyWidth) {
  *
  * @brief [zh] 没有存储的 span 就是一个空通道：它拒绝推入、答零，而 `attach()` 不会把空数组或零长度当成一个环。
  *
- *     `SpanTrace` is what the C ABI actually points at (`src/api/bridge.cpp`), so its detached state is not academic: a
- *     host that asks for a trace buffer of length 0, or whose allocation failed, ends up exactly here, and the two
- *     wrong answers it could give are "dereference null" and "report a size". The header promises neither.
+ *   `SpanTrace` is what the C ABI actually points at (`src/api/bridge.cpp`), so its detached state is not academic: a
+ *   host that asks for a trace buffer of length 0, or whose allocation failed, ends up exactly here, and the two wrong
+ *   answers it could give are "dereference null" and "report a size". The header promises neither.
  *
- *     The falsifier is the same calls with real storage: they must behave, so "refuse everything" cannot pass this
- *     case, and the buffer's own bytes are checked to be untouched while detached -- a detached ring writing into the
- *     caller's array would be a defect that only shows up on the host that owns it.
+ *   The falsifier is the same calls with real storage: they must behave, so "refuse everything" cannot pass this case,
+ *   and the buffer's own bytes are checked to be untouched while detached -- a detached ring writing into the caller's
+ *   array would be a defect that only shows up on the host that owns it.
  *
- *     `SpanTrace` 正是 C ABI 指向的东西（`src/api/bridge.cpp`），所以它的未挂载状态不是学术问题：一个请求长度为 0 的轨
- *     迹缓冲、或分配失败的宿主，落到的就是这个状态，而它可能给出的两个错误答案是"解引用空指针"与"报一个尺寸"。头文件两
- *     个都不承诺。
+ *   `SpanTrace` 正是 C ABI 指向的东西（`src/api/bridge.cpp`），所以它的未挂载状态不是学术问题：一个请求长度为 0 的轨迹
+ *   缓冲、或分配失败的宿主，落到的就是这个状态，而它可能给出的两个错误答案是"解引用空指针"与"报一个尺寸"。头文件两个都
+ *   不承诺。
  *
- *     伪证是同样这些调用配上真存储：它们必须正常工作，于是"一律拒绝"过不了本用例；而未挂载期间调用方的字节被检查为未被
- *     触碰——一个未挂载却往调用方数组里写的环，是只在拥有它的宿主上才显形的缺陷。
+ *   伪证是同样这些调用配上真存储：它们必须正常工作，于是"一律拒绝"过不了本用例；而未挂载期间调用方的字节被检查为未被触
+ *   碰——一个未挂载却往调用方数组里写的环，是只在拥有它的宿主上才显形的缺陷。
  */
 TEST(Trace, ASpanOverNoStorageIsANullChannelRatherThanACrash) {
     std::array<foc::core::TraceSample, 4> storage{};

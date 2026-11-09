@@ -322,9 +322,9 @@ namespace {
  *
  * @brief [zh] 电机参数可以按参数给出的静止台架。
  *
- *     The rig above pins the machine because its cases are about the loop; the sensitivity table below is about the
- *     *physics*, and its independent variable is one of those parameters. 上面的台架把电机钉死了，因为它的用例关心的是
- *     环路；下面的敏感度表关心的是**物理**，而它的自变量正是那些参数之一。
+ *   The rig above pins the machine because its cases are about the loop; the sensitivity table below is about the
+ *   *physics*, and its independent variable is one of those parameters. 上面的台架把电机钉死了，因为它的用例关心的是环
+ *   路；下面的敏感度表关心的是**物理**，而它的自变量正是那些参数之一。
  */
 class ParameterisedRig final {
   public:
@@ -388,34 +388,34 @@ auto hf_amplitude(float ld, float lq, float inject_v, float inject_hz) -> double
  *
  * @brief [zh] 载波的三个敏感度系数：对注入幅值线性、正比于凸极 `(Ld-Lq)/(Ld*Lq)`、受控制率封顶。
  *
- *     `hf_current_a` is the demodulated amplitude, and `predicted_gain_a` is the closed form the observation is
- *     normalised by: `V_h*(Ld-Lq)/(2*w_h*Ld*Lq)`. That expression is not a fit -- it is the *difference of two
- *     admittances*, `(V_h/(2*w_h))*(1/Lq - 1/Ld)`, i.e. the part of the high-frequency current response that depends on
- *     where the rotor is. So the two coefficients below are checked against arithmetic, not against a previous run:
+ *   `hf_current_a` is the demodulated amplitude, and `predicted_gain_a` is the closed form the observation is
+ *   normalised by: `V_h*(Ld-Lq)/(2*w_h*Ld*Lq)`. That expression is not a fit -- it is the *difference of two
+ *   admittances*, `(V_h/(2*w_h))*(1/Lq - 1/Ld)`, i.e. the part of the high-frequency current response that depends on
+ *   where the rotor is. So the two coefficients below are checked against arithmetic, not against a previous run:
  *
- *     1. **Injection amplitude** -- the amplitude is linear in `V_h` (measured 6 / 12 / 24 V: ratios 2.000 and 2.000 on
- *     the halves), and the *angle* estimate is invariant, because the normalisation divides the same factor back out.
- *     That is why a commissioning script does not have to recalibrate when the amplitude changes, and why a *smaller*
- *     amplitude is only a signal-to-noise decision.
+ *   1. **Injection amplitude** -- the amplitude is linear in `V_h` (measured 6 / 12 / 24 V: ratios 2.000 and 2.000 on
+ *   the halves), and the *angle* estimate is invariant, because the normalisation divides the same factor back out.
+ *   That is why a commissioning script does not have to recalibrate when the amplitude changes, and why a *smaller*
+ *   amplitude is only a signal-to-noise decision.
  *
- *     2. **Saliency** -- three machines on a line through the same `(Ld, Lq)` ratio: the amplitude divided by the
- *     closed form stays put, so what the plant measures is `(Ld-Lq)/(Ld*Lq)` and not, say, `Ld-Lq`.
+ *   2. **Saliency** -- three machines on a line through the same `(Ld, Lq)` ratio: the amplitude divided by the closed
+ *   form stays put, so what the plant measures is `(Ld-Lq)/(Ld*Lq)` and not, say, `Ld-Lq`.
  *
- *     3. **Sample timing** -- `max_inject_hz(control_hz)` is `control_hz / kMinSamplesPerCarrier`: at 20 kHz the last
- *     accepted carrier is 8000 Hz and 8001 is refused by status rather than left to collapse.
+ *   3. **Sample timing** -- `max_inject_hz(control_hz)` is `control_hz / kMinSamplesPerCarrier`: at 20 kHz the last
+ *   accepted carrier is 8000 Hz and 8001 is refused by status rather than left to collapse.
  *
- *     `hf_current_a` 是解调幅值，而 `predicted_gain_a` 是观测被归一化所依据的闭式：`V_h*(Ld-Lq)/(2*ω_h*Ld*Lq)`。这个式
- *     子不是拟合——它是**两个导纳之差** `(V_h/(2ω_h))*(1/Lq − 1/Ld)`，即高频电流响应中与转子位置有关的那一部分。所以下面
- *     两个系数是对着算术核对的，不是对着上一次运行：
+ *   `hf_current_a` 是解调幅值，而 `predicted_gain_a` 是观测被归一化所依据的闭式：`V_h*(Ld-Lq)/(2*ω_h*Ld*Lq)`。这个式子
+ *   不是拟合——它是**两个导纳之差** `(V_h/(2ω_h))*(1/Lq − 1/Ld)`，即高频电流响应中与转子位置有关的那一部分。所以下面两个
+ *   系数是对着算术核对的，不是对着上一次运行：
  *
- *     1. **注入幅值**——幅值对 `V_h` 线性（实测 6/12/24 V：两段比值 2.000 与 2.000），而**角度**估计是不变量，因为归一化
- *     把同一个因子又除了回去。这就是幅值变化时调试脚本无需重新标定的原因，也是更小的幅值只是一个信噪比决定的原因。
+ *   1. **注入幅值**——幅值对 `V_h` 线性（实测 6/12/24 V：两段比值 2.000 与 2.000），而**角度**估计是不变量，因为归一化把
+ *   同一个因子又除了回去。这就是幅值变化时调试脚本无需重新标定的原因，也是更小的幅值只是一个信噪比决定的原因。
  *
- *     2. **凸极**——三台机器走过同一 `(Ld, Lq)` 比例的一条线：幅值除以闭式保持不变，于是 plant 量到的是
- *     `(Ld-Lq)/(Ld*Lq)` 而不是比如说 `Ld-Lq`。
+ *   2. **凸极**——三台机器走过同一 `(Ld, Lq)` 比例的一条线：幅值除以闭式保持不变，于是 plant 量到的是 `(Ld-Lq)/(Ld*Lq)`
+ *   而不是比如说 `Ld-Lq`。
  *
- *     3. **采样时序**——`max_inject_hz(control_hz)` 就是 `control_hz / kMinSamplesPerCarrier`：20 kHz 下最后一个被接受的
- *     载波是 8000 Hz，8001 由状态拒绝，而不是留给它塌掉。
+ *   3. **采样时序**——`max_inject_hz(control_hz)` 就是 `control_hz / kMinSamplesPerCarrier`：20 kHz 下最后一个被接受的载
+ *   波是 8000 Hz，8001 由状态拒绝，而不是留给它塌掉。
  */
 TEST(SilHfi, TheCarrierHasThreeSensitivityCoefficientsAndEachIsAClosedForm) {
     // (1) Injection amplitude: the amplitude is linear, the angle is not affected.

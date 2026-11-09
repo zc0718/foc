@@ -52,28 +52,27 @@ inline auto wrap_full_turn(float angle) noexcept -> float {
 /**
  * @brief [en] One angle estimate from two observers, each valid in a different speed regime.
  *
- *     Why neither observer alone is enough: a saliency loop measures the magnetic circuit, which does not care about
- *     speed, so it works at standstill and drowns in the fundamental current as speed rises. A back-EMF observer
- *     measures the voltage the rotation generates, so it needs rotation and its accuracy improves with speed -- a flux
- *     integrator with a 30 % Rs error was measured at 2.7 rad of angle error near standstill and 0.02 rad at 400 rad/s
- *     electrical, on the same fixture where the saliency loop went the other way. The two curves cross, and this class
- *     is that crossing.
+ *   Why neither observer alone is enough: a saliency loop measures the magnetic circuit, which does not care about
+ *   speed, so it works at standstill and drowns in the fundamental current as speed rises. A back-EMF observer measures
+ *   the voltage the rotation generates, so it needs rotation and its accuracy improves with speed -- a flux integrator
+ *   with a 30 % Rs error was measured at 2.7 rad of angle error near standstill and 0.02 rad at 400 rad/s electrical,
+ *   on the same fixture where the saliency loop went the other way. The two curves cross, and this class is that
+ *   crossing.
  *
- *     The weight is a linear ramp between two speeds, not a switch, and the band is required to have width. A hard
- *     switch driven by the very speed being estimated is a limit cycle: it switches, the speed reading changes, it
- *     switches back. The band also has to *end before the low-speed observer stops working*, which is a measured
- *     property of the machine, not a universal constant -- hence a configuration field rather than a number inside this
- *     class.
+ *   The weight is a linear ramp between two speeds, not a switch, and the band is required to have width. A hard switch
+ *   driven by the very speed being estimated is a limit cycle: it switches, the speed reading changes, it switches
+ *   back. The band also has to *end before the low-speed observer stops working*, which is a measured property of the
+ *   machine, not a universal constant -- hence a configuration field rather than a number inside this class.
  *
  * @brief [zh] 由两个各自在某个速度区间有效的观测器合成的单一角度估计。
  *
- *     为什么单用哪个都不够：凸极环测的是磁路，与转速无关，因此静止可用，转速升高后被基频电流淹没。 反电动势观测器测的是
- *     旋转产生的电压，必须有转速，且精度随转速提高——同一台架上，Rs 偏 30% 的磁链 积分器在近静止处实测角度误差 2.7 rad，
- *     400 rad/s 电角速度处 0.02 rad，而凸极环的趋势正好相反。 两条曲线交叉，本类就是这个交叉。
+ *   为什么单用哪个都不够：凸极环测的是磁路，与转速无关，因此静止可用，转速升高后被基频电流淹没。 反电动势观测器测的是旋
+ *   转产生的电压，必须有转速，且精度随转速提高——同一台架上，Rs 偏 30% 的磁链 积分器在近静止处实测角度误差 2.7 rad， 400
+ *   rad/s 电角速度处 0.02 rad，而凸极环的趋势正好相反。 两条曲线交叉，本类就是这个交叉。
  *
- *     权重是两个转速之间的线性斜坡而不是开关，且要求带宽不为零。用被估计的转速去驱动的硬开关就是一个 极限环：切换 → 转
- *     速读数变化 → 切回来。此外带宽必须**在低速观测器失效之前结束**，而那是被控对象 的实测属性、不是通用常数——所以它是
- *     配置字段，而不是本类里的某个数字。
+ *   权重是两个转速之间的线性斜坡而不是开关，且要求带宽不为零。用被估计的转速去驱动的硬开关就是一个 极限环：切换 → 转速
+ *   读数变化 → 切回来。此外带宽必须**在低速观测器失效之前结束**，而那是被控对象 的实测属性、不是通用常数——所以它是配置
+ *   字段，而不是本类里的某个数字。
  *
  * @note [en] The angle blend is a shortest-arc interpolation, never a plain mix of two numbers in [0, 2*pi): the two
  *            estimates sit on opposite sides of the wrap every time one of them crosses zero, and averaging those raw
@@ -100,19 +99,19 @@ inline auto wrap_full_turn(float angle) noexcept -> float {
  * @note [zh] 角度混合是**最短弧插值**，绝不是把 [0, 2π) 里的两个数字直接按权重相加：只要其中一个跨过零点， 两个估计就分
  *            处环绕的两侧，直接平均会在最不该跳的时刻产生整整一圈的跳变。
  *
- *     注入按 `1 − 权重` 缩放，于是载波随交接完成而收掉，而不是永远付着这份代价。完全交接时恰为零。
+ *   注入按 `1 − 权重` 缩放，于是载波随交接完成而收掉，而不是永远付着这份代价。完全交接时恰为零。
  *
- *     交接对高速那一半的代价：载波在收掉的过程中仍在送达，而基于模型的观测器分不清它与反电动势。 开环磁链积分器给什么留
- *     什么，因此穿越会给它留下约一个载波周期伏秒的偏差——实测 2 V / 2 kHz 下 0.031 rad，`inject_v / (2π·inject_hz·ψf)`
- *     预测 0.033。给高速观测器的电压做滤波可以消掉它，代价 却更大：低到能在载波频率上起作用的极点，在高速时会把基频滞后
- *     几十度。可用的答案是按你能承受的 偏差去定容载波。
+ *   交接对高速那一半的代价：载波在收掉的过程中仍在送达，而基于模型的观测器分不清它与反电动势。 开环磁链积分器给什么留什
+ *   么，因此穿越会给它留下约一个载波周期伏秒的偏差——实测 2 V / 2 kHz 下 0.031 rad，`inject_v / (2π·inject_hz·ψf)` 预测
+ *   0.033。给高速观测器的电压做滤波可以消掉它，代价 却更大：低到能在载波频率上起作用的极点，在高速时会把基频滞后几十
+ *   度。可用的答案是按你能承受的 偏差去定容载波。
  *
- *     **转速**噪声的来源，因为它决定了修法是什么：不是数值微分。本库试过并实测过一个 "磁链 + PLL" 观测器，期待环路的平
- *     滑转速能让交接可复现。结果是不行：两者的转速纹波完全相同 （电角速度 20 rad/s 处 ±3 rad/s，100–200 处 ±12），而环
- *     路的**角度**在高速反而差 2–3 倍 （400 处 0.030 对 0.011，800 处 0.060 对 0.020）。原因是纹波本来就在磁链估计里——
- *     积分器的输入是 `v − Rs·i`，它把电流的开关纹波一并吞了进去——于是任何从该磁链导出的角度都继承它，而环路的比例 通道
- *     又把它直接变回转速。所以"对同一条磁链加环"不是修法；修法是让观测器**对电流闭环** （Luenberger / 滑模），在纹波到
- *     达磁链之前就把它压掉。
+ *   **转速**噪声的来源，因为它决定了修法是什么：不是数值微分。本库试过并实测过一个 "磁链 + PLL" 观测器，期待环路的平滑
+ *   转速能让交接可复现。结果是不行：两者的转速纹波完全相同 （电角速度 20 rad/s 处 ±3 rad/s，100–200 处 ±12），而环路的
+ *   **角度**在高速反而差 2–3 倍 （400 处 0.030 对 0.011，800 处 0.060 对 0.020）。原因是纹波本来就在磁链估计里—— 积分器
+ *   的输入是 `v − Rs·i`，它把电流的开关纹波一并吞了进去——于是任何从该磁链导出的角度都继承它，而环路的比例 通道又把它直
+ *   接变回转速。所以"对同一条磁链加环"不是修法；修法是让观测器**对电流闭环** （Luenberger / 滑模），在纹波到达磁链之前
+ *   就把它压掉。
  *
  * @context [en] Current-loop ISR after construction: noexcept, no allocation.
  * @context [zh] 构造之后的电流环 ISR： noexcept、不分配。
@@ -136,9 +135,9 @@ template <typename LowSpeed, typename HighSpeed> class BlendedObserver final {
      *
      * @note [zh] `blend_end_rad_s` 必须严格大于 `blend_start_rad_s`：零带宽就是硬开关，会被拒绝而不是被 支持。
      *
-     *     `handover_lpf_hz` 存在的理由：权重不能由未经平滑的微分角度算出。台架实测， 反电动势观测器的转速在 100–200
-     *     rad/s 附近带 ±12 rad/s 的纹波（其磁链估计里的 `−L·i` 项随 电流纹波），在 60 rad/s 宽的带内就会把权重摆动
-     *     ±20%，使输出在两个并非同一物理量的估计之间 跳变。
+     *   `handover_lpf_hz` 存在的理由：权重不能由未经平滑的微分角度算出。台架实测， 反电动势观测器的转速在 100–200 rad/s
+     *   附近带 ±12 rad/s 的纹波（其磁链估计里的 `−L·i` 项随 电流纹波），在 60 rad/s 宽的带内就会把权重摆动 ±20%，使输出
+     *   在两个并非同一物理量的估计之间 跳变。
      * @since 0.1.0
      */
     struct Config final {

@@ -112,28 +112,28 @@ auto report(const char* what, const Walk& result) -> std::string {
  *
  * @brief [zh] ABI 能返回的每个故障码都有自己的名字，而 C 枚举与 C++ 枚举逐值对应。
  *
- *     Three legs, and the third is the one that was missing from the plans. (a) The naming switch is complete for every
- *     value in `0..FOC_FAULT_CLOCK_LOST` and every name is distinct -- distinctness matters because that is what a
- *     caller does with the string: prints it, or diffs it into a log. (b) `FOC_FAULT_CLOCK_LOST + 1` answers `"?"`, so
- *     the declared domain and the switch agree at the boundary as well as in the middle. (c) Each C macro equals the
- *     C++ enumerator it mirrors. Leg (c) is the one `-Wswitch` and every reflection library are blind to, and it was
- *     failing on 2026-11-06 for `DriveFault`/`Watchdog`/`ClockLost`, whose macros did not exist.
+ *   Three legs, and the third is the one that was missing from the plans. (a) The naming switch is complete for every
+ *   value in `0..FOC_FAULT_CLOCK_LOST` and every name is distinct -- distinctness matters because that is what a caller
+ *   does with the string: prints it, or diffs it into a log. (b) `FOC_FAULT_CLOCK_LOST + 1` answers `"?"`, so the
+ *   declared domain and the switch agree at the boundary as well as in the middle. (c) Each C macro equals the C++
+ *   enumerator it mirrors. Leg (c) is the one `-Wswitch` and every reflection library are blind to, and it was failing
+ *   on 2026-11-06 for `DriveFault`/`Watchdog`/`ClockLost`, whose macros did not exist.
  *
- *     **Not claimed**: a value appended after the last enumerator *and* a `default:` label added to the switch *and*
- *     the range check in `foc_bridge_fault_name` widened would still pass this case. That combination cannot be caught
- *     without reflection, and the two-and-a-half of the three steps it needs are each caught by the compiler; the cost
- *     of closing it is a dependency that makes every consumer compile 277 extra headers (see
- *     `.github/project/deps.json`), which is not a trade this repository makes for the remaining corner.
+ *   **Not claimed**: a value appended after the last enumerator *and* a `default:` label added to the switch *and* the
+ *   range check in `foc_bridge_fault_name` widened would still pass this case. That combination cannot be caught
+ *   without reflection, and the two-and-a-half of the three steps it needs are each caught by the compiler; the cost of
+ *   closing it is a dependency that makes every consumer compile 277 extra headers (see `.github/project/deps.json`),
+ *   which is not a trade this repository makes for the remaining corner.
  *
- *     三条腿，而第三条正是计划里缺的那条。(a) 命名 switch 对 `0..FOC_FAULT_CLOCK_LOST` 每个值都完整，且名字互不相同 ——
- *     不重复是要紧的，因为调用方拿这个字符串去打印、去和日志做差异。(b) `FOC_FAULT_CLOCK_LOST + 1` 回答 `"?"`，于是声明
- *     的取值域与 switch 在边界上和在中间都一致。(c) 每个 C 宏等于它镜像的 C++ 枚举值。第 (c) 条正是 `-Wswitch` 与任何反
- *     射库都看不见的那条，而它在 2026-11-06 对 `DriveFault`/`Watchdog`/`ClockLost` 是**不成立**的：那三个宏根本不存在。
+ *   三条腿，而第三条正是计划里缺的那条。(a) 命名 switch 对 `0..FOC_FAULT_CLOCK_LOST` 每个值都完整，且名字互不相同 —— 不
+ *   重复是要紧的，因为调用方拿这个字符串去打印、去和日志做差异。(b) `FOC_FAULT_CLOCK_LOST + 1` 回答 `"?"`，于是声明的取
+ *   值域与 switch 在边界上和在中间都一致。(c) 每个 C 宏等于它镜像的 C++ 枚举值。第 (c) 条正是 `-Wswitch` 与任何反射库都
+ *   看不见的那条，而它在 2026-11-06 对 `DriveFault`/`Watchdog`/`ClockLost` 是**不成立**的：那三个宏根本不存在。
  *
- *     **不宣称**：一个追加在末值之后的新枚举值，**并且**给 switch 加了 `default:` 标签，**并且**把
- *     `foc_bridge_fault_name` 里的范围检查放宽——这三件事凑齐了仍能过本用例。没有反射就抓不到这种组合，而它需要的三步里
- *     有两步半都被编译器盯着；而关闭这个角落的代价是一个让每个消费者多编 277 个头的依赖（见
- *     `.github/project/deps.json`），这个仓库不为剩下的那个角付这个价。
+ *   **不宣称**：一个追加在末值之后的新枚举值，**并且**给 switch 加了 `default:` 标签，**并且**把
+ *   `foc_bridge_fault_name` 里的范围检查放宽——这三件事凑齐了仍能过本用例。没有反射就抓不到这种组合，而它需要的三步里有
+ *   两步半都被编译器盯着；而关闭这个角落的代价是一个让每个消费者多编 277 个头的依赖（见 `.github/project/deps.json`），
+ *   这个仓库不为剩下的那个角付这个价。
  */
 TEST(EnumNames, EveryFaultTheAbiCanReturnHasItsOwnNameAndItsOwnMacro) {
     // (c) first: the mirror. These are the assertions that failed before the fix, so they also document the gap.

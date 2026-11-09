@@ -96,24 +96,24 @@ struct GearOutput final {
 /**
  * @brief [en] Electronic gearing with the master unwrapped, so a slave does not lose a revolution per turn.
  *
- *     The whole difficulty is in one word: *unwrapped*. An encoder hands over an angle in `[0, 2*pi)`, so a master that
- *     turns three times reads 0, then 2*pi, then 0 again -- and a gear that multiplies what it is given hands the slave
- *     a reference that walks backwards twice per three revolutions. The fix is to accumulate the shortest arc between
- *     consecutive samples, which is exact for any sampling rate that resolves the master's motion (the same condition
- *     every observer in this library states), and which costs one state variable.
+ *   The whole difficulty is in one word: *unwrapped*. An encoder hands over an angle in `[0, 2*pi)`, so a master that
+ *   turns three times reads 0, then 2*pi, then 0 again -- and a gear that multiplies what it is given hands the slave a
+ *   reference that walks backwards twice per three revolutions. The fix is to accumulate the shortest arc between
+ *   consecutive samples, which is exact for any sampling rate that resolves the master's motion (the same condition
+ *   every observer in this library states), and which costs one state variable.
  *
- *     Why it is a separate stage rather than a line in the caller: the unwrapped master is also the *synchronisation
- *     error's* reference. Measuring the slave against a wrapped master is how a perfectly synchronised pair reports a
- *     6.28 rad error once a revolution, and the measurement is the point of the capability.
+ *   Why it is a separate stage rather than a line in the caller: the unwrapped master is also the *synchronisation
+ *   error's* reference. Measuring the slave against a wrapped master is how a perfectly synchronised pair reports a
+ *   6.28 rad error once a revolution, and the measurement is the point of the capability.
  *
  * @brief [zh] 电子齿轮，并去掉主轴的卷绕，使从轴不会每次旋转丢掉一圈。
  *
- *     全部难点在一个词里：**去卷绕**。编码器给出的角度在 `[0, 2π)` 内，所以转三圈的主轴读出 0、2π、0——而一个直接乘下去
- *     的齿轮会给从轴一个每三圈倒退两次的参考。修法是对相邻采样之间的最短弧做累加，只要采样率能分辨主轴的运动就精确（这
- *     正是本库每个观测器都声明的同一个条件），代价是一个状态变量。
+ *   全部难点在一个词里：**去卷绕**。编码器给出的角度在 `[0, 2π)` 内，所以转三圈的主轴读出 0、2π、0——而一个直接乘下去的
+ *   齿轮会给从轴一个每三圈倒退两次的参考。修法是对相邻采样之间的最短弧做累加，只要采样率能分辨主轴的运动就精确（这正是
+ *   本库每个观测器都声明的同一个条件），代价是一个状态变量。
  *
- *     为什么它是独立一级而不是调用方的一行：去卷绕后的主轴同时也是**同步误差**的参照。拿卷绕的主轴去量从轴，正是一对完
- *     全同步的轴每转一圈报出 6.28 rad 误差的方式，而那个测量正是这条能力的要点。
+ *   为什么它是独立一级而不是调用方的一行：去卷绕后的主轴同时也是**同步误差**的参照。拿卷绕的主轴去量从轴，正是一对完全
+ *   同步的轴每转一圈报出 6.28 rad 误差的方式，而那个测量正是这条能力的要点。
  * @since 0.1.10
  * @exporter
  */

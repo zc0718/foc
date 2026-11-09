@@ -64,8 +64,17 @@ marker, so a tag in the wrong place moves text into the wrong language version.
 4. **No tag = every language.** `@since`, `@see`, `@ingroup`, `@version` appear once, untagged.
    **不带标签 = 所有语言可见**。
 5. **Indentation**: a wrapped line of a tag line aligns under that field's own text; a separate
-   body paragraph uses a block indent five columns in from the star.
-   **缩进**：标签行的折行续行对齐到该字段自身的文字之下；独立正文段落用星号后五格的块缩进。
+   body paragraph uses a block indent **three** columns in from the star.
+   **缩进**：标签行的折行续行对齐到该字段自身的文字之下；独立正文段落用星号后**三**格的块缩进。
+
+   The number is a rendering constraint, not taste. Doxygen's Markdown support reads four or more
+   leading spaces as an *indented code block*, and inside a code block nothing is interpreted: a
+   body at five columns printed its `\f$…\f$` formulas, its bold, its backticked code spans and its
+   lists as source characters, and the gate stayed silent because the text really was present.
+   Three keeps the visual block and stays one column under the threshold.
+   这个数字是渲染约束，不是审美：Markdown 把行首四格及以上读成*缩进代码块*，而代码块里什么都不
+   解释——五格正文会把公式、粗体、反引号代码跨度和列表原样打印，门禁却因为"文字确实在"而不报。
+   三格保住块感又低阈值一格。
 
 `.github/project/docfmt.py` enforces all five (7th gate, `python3 .github/project/gates.py docs`). It
 refuses to write a file whose prose characters would change — run `--check` first, `--fix` behind

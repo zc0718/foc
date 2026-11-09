@@ -24,14 +24,14 @@ namespace concepts {
  * @brief [en] Compile-time contract checks for the foc_hal interfaces (C++17 detection idiom; the project targets
  *             C++17, so `concept`/`requires` are not available).
  *
- *     Each trait answers two questions at once: does the member exist with the documented signature, and is it
- *     `noexcept`? A stub that forgets a member fails at compile time with the message from the caller's
- *     `static_assert`, never at run time.
+ *   Each trait answers two questions at once: does the member exist with the documented signature, and is it
+ *   `noexcept`? A stub that forgets a member fails at compile time with the message from the caller's `static_assert`,
+ *   never at run time.
  *
  * @brief [zh] foc_hal 接口的编译期契约检查（C++17 检测惯用法；项目目标是 C++17，没有 concept/requires）。
  *
- *     每个 trait 同时回答两件事：成员是否以文档化的签名存在、是否 `noexcept`。 漏掉成员的桩会在编译期失败（报调用点的
- *     static_assert 消息），不会拖到运行期。
+ *   每个 trait 同时回答两件事：成员是否以文档化的签名存在、是否 `noexcept`。 漏掉成员的桩会在编译期失败（报调用点的
+ *   static_assert 消息），不会拖到运行期。
  * @since 0.1.0
  * @exporter
  */
@@ -139,11 +139,11 @@ struct is_fault_input<T, std::void_t<decltype(std::declval<T&>().faulted())>>
 /**
  * @brief [en] Convenience variable templates.
  *
- *     For example `static_assert(hal::concepts::is_pwm_v<MyPwm>, "MyPwm must satisfy foc::hal::Pwm");`.
+ *   For example `static_assert(hal::concepts::is_pwm_v<MyPwm>, "MyPwm must satisfy foc::hal::Pwm");`.
  *
  * @brief [zh] 便捷变量模板。
  *
- *     例如 `static_assert(hal::concepts::is_pwm_v<MyPwm>, "MyPwm must satisfy foc::hal::Pwm");`。
+ *   例如 `static_assert(hal::concepts::is_pwm_v<MyPwm>, "MyPwm must satisfy foc::hal::Pwm");`。
  * @since 0.1.0
  * @exporter
  */
@@ -170,11 +170,11 @@ namespace concepts {
 /**
  * @brief [en] `T` exposes the flux-linkage observer's optional `seed_flux(Ab<float>)` hook.
  *
- *     Motor uses it during `start()`: a sensorless setup seeds the flux from the nameplate.
+ *   Motor uses it during `start()`: a sensorless setup seeds the flux from the nameplate.
  *
  * @brief [zh] `T` 是否提供磁链观测器可选的 `seed_flux(Ab<float>)` 钩子。
  *
- *     Motor 在 `start()` 中使用它：无感场景用铭牌参数播种磁链。
+ *   Motor 在 `start()` 中使用它：无感场景用铭牌参数播种磁链。
  * @since 0.1.0
  * @exporter
  */
@@ -195,7 +195,7 @@ template <typename T> inline constexpr bool has_seed_flux_v = has_seed_flux<T>::
 /**
  * @brief [en] `T` asks for a voltage of its own.
  *
- *     An observer with a high-frequency injection needs Motor to add it to the command on its behalf.
+ *   An observer with a high-frequency injection needs Motor to add it to the command on its behalf.
  *
  * @brief [zh] `T`（观测器）要自己的一份电压：Motor 需代它把高频注入叠加到指令上。
  * @note [en] Detection is capability, not configuration. An observer that needs no injection is simply a type that does
@@ -304,11 +304,11 @@ template <typename T> inline constexpr bool has_apply_params_v = has_apply_param
 /**
  * @brief [en] `T` satisfies the observer policy contract.
  *
- *     See observer_policy.hpp: it must expose `update(Ab<float>, Ab<float>, float) noexcept -> ObsState`.
+ *   See observer_policy.hpp: it must expose `update(Ab<float>, Ab<float>, float) noexcept -> ObsState`.
  *
  * @brief [zh] `T` 满足观测器策略契约。
  *
- *     见 observer_policy.hpp：必须提供 `update(Ab<float>, Ab<float>, float) noexcept -> ObsState`。
+ *   见 observer_policy.hpp：必须提供 `update(Ab<float>, Ab<float>, float) noexcept -> ObsState`。
  * @since 0.1.0
  * @exporter
  */
@@ -335,11 +335,11 @@ template <typename T> inline constexpr bool is_observer_v = is_observer<T>::valu
 /**
  * @brief [en] `T` satisfies the reference-generator policy contract.
  *
- *     See reference.hpp: it must expose `generate(const ReferenceInput&) noexcept -> Dq<float>`.
+ *   See reference.hpp: it must expose `generate(const ReferenceInput&) noexcept -> Dq<float>`.
  *
  * @brief [zh] `T` 满足参考生成器策略契约。
  *
- *     见 reference.hpp：必须提供 `generate(const ReferenceInput&) noexcept -> Dq<float>`。
+ *   见 reference.hpp：必须提供 `generate(const ReferenceInput&) noexcept -> Dq<float>`。
  * @since 0.1.0
  * @exporter
  */
@@ -386,14 +386,13 @@ template <typename T> inline constexpr bool is_feedforward_v = is_feedforward<T>
 /**
  * @brief [en] `T` (a HalPolicy) exposes an optional `clock` member satisfying `hal::Clock`.
  *
- *     Deliberately optional: a HAL without a clock is legal, and a member that happens to be named `clock` but does not
- *     satisfy the contract is treated as absent rather than as an error, so an unrelated field name never breaks a
- *     build.
+ *   Deliberately optional: a HAL without a clock is legal, and a member that happens to be named `clock` but does not
+ *   satisfy the contract is treated as absent rather than as an error, so an unrelated field name never breaks a build.
  *
  * @brief [zh] `T`（HalPolicy）是否暴露了满足 `hal::Clock` 的可选成员 `clock`。
  *
- *     故意设计成可选：没有时钟的 HAL 是合法的；名字恰好叫 `clock` 但不满足契约的成员按 “不存在”处理而不是报错，于是无关
- *     字段名永远不会把构建弄红。
+ *   故意设计成可选：没有时钟的 HAL 是合法的；名字恰好叫 `clock` 但不满足契约的成员按 “不存在”处理而不是报错，于是无关字
+ *   段名永远不会把构建弄红。
  * @since 0.1.0
  * @exporter
  */
@@ -414,16 +413,16 @@ template <typename T> inline constexpr bool has_clock_v = has_clock<T>::value;
 /**
  * @brief [en] `T` (a HalPolicy) exposes a `fault_input` member satisfying `hal::FaultInput`.
  *
- *     Unlike `has_clock`, absence here is **not** silent: `Motor::start()` refuses with `NotImpl` when this is false,
- *     because the only value a missing fault input could stand for is "the power stage is fine", and no library is
- *     entitled to answer that on the drive's behalf. See `hal::FaultInput` for the full argument and for what a host
- *     with no such pin is supposed to write instead.
+ *   Unlike `has_clock`, absence here is **not** silent: `Motor::start()` refuses with `NotImpl` when this is false,
+ *   because the only value a missing fault input could stand for is "the power stage is fine", and no library is
+ *   entitled to answer that on the drive's behalf. See `hal::FaultInput` for the full argument and for what a host with
+ *   no such pin is supposed to write instead.
  *
  * @brief [zh] `T`（HalPolicy）是否暴露了满足 `hal::FaultInput` 的 `fault_input` 成员。
  *
- *     与 `has_clock` 不同，这里的缺席**不是**静默的：它为 false 时 `Motor::start()` 以 `NotImpl` 拒绝，因为一个缺席的故
- *     障输入唯一可能代表的值就是"功率级没事"，而没有哪个库有资格替驱动器回答这一句。完整论证、以及没有这根引脚的主控方
- *     该写什么，见 `hal::FaultInput`。
+ *   与 `has_clock` 不同，这里的缺席**不是**静默的：它为 false 时 `Motor::start()` 以 `NotImpl` 拒绝，因为一个缺席的故障
+ *   输入唯一可能代表的值就是"功率级没事"，而没有哪个库有资格替驱动器回答这一句。完整论证、以及没有这根引脚的主控方该写
+ *   什么，见 `hal::FaultInput`。
  * @since 0.1.9
  * @exporter
  */
@@ -528,11 +527,11 @@ template <typename T> inline constexpr bool is_speed_control_v = is_speed_contro
 /**
  * @brief [en] `T` satisfies the *position* slot contract.
  *
- *     `step(const PositionInput&, float, float) noexcept -> float` plus `reset()`.
+ *   `step(const PositionInput&, float, float) noexcept -> float` plus `reset()`.
  *
  * @brief [zh] `T` 满足**位置**槽位契约。
  *
- *     `step(const PositionInput&, float, float) noexcept -> float` 与 `reset()`。
+ *   `step(const PositionInput&, float, float) noexcept -> float` 与 `reset()`。
  *
  * @note [en] Deliberately *not* the same shape as the current and speed slots. Those three are regulators: a setpoint,
  *            a measurement, a step. The position slot is a trajectory shaper too, and a move has a velocity and an
@@ -564,13 +563,12 @@ template <typename T> inline constexpr bool is_position_control_v = is_position_
 /**
  * @brief [en] `T` satisfies the aligner-slot contract.
  *
- *     See alignment.hpp: `validate()`, `begin(pole_pairs) -> bool`, `step(dt, angle) noexcept -> AlignOutput`,
- *     `reset()`.
+ *   See alignment.hpp: `validate()`, `begin(pole_pairs) -> bool`, `step(dt, angle) noexcept -> AlignOutput`, `reset()`.
  *
  * @brief [zh] `T` 满足对齐槽位契约。
  *
- *     见 alignment.hpp：`validate()`、`begin(pole_pairs) -> bool`、`step(dt, angle) noexcept -> AlignOutput`、
- *     `reset()`。
+ *   见 alignment.hpp：`validate()`、`begin(pole_pairs) -> bool`、`step(dt, angle) noexcept -> AlignOutput`、
+ *   `reset()`。
  *
  * @note [en] `begin()` returns `bool` rather than `ErrorCode` on purpose: "nothing to do" is a normal answer (a build
  *            with a stored offset), while "your recipe is invalid" is a configuration error reported by `validate()`

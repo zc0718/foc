@@ -1047,38 +1047,38 @@ using foc::sil::speed_loop_gain;
  * @brief [zh] 增益律把闭环 -3 dB 放在请求值的 3.5 % 以内，而两个铭牌项并不对等：**惯量**误差一比一移动带宽， **摩擦**误
  *             差完全不动它。
  *
- *     This is the row that has to explain the number `step_metrics` reports: the SIL bench measures the loop at 243.57
- *     rad/s against a 250 rad/s request through the Python plant (-2.57 %) and +9.15 % through the C++ bench. Measured
- *     here on an **ideal current loop**, so that whatever is left belongs to the speed law alone:
+ *   This is the row that has to explain the number `step_metrics` reports: the SIL bench measures the loop at 243.57
+ *   rad/s against a 250 rad/s request through the Python plant (-2.57 %) and +9.15 % through the C++ bench. Measured
+ *   here on an **ideal current loop**, so that whatever is left belongs to the speed law alone:
  *
- *     | requested | measured -3 dB / requested | |---|---| | 50 rad/s | **1.02516** | | 100 rad/s | **1.02661** | | 200
- *     rad/s | **1.02948** | | 400 rad/s | **1.03462** |
+ *   | requested | measured -3 dB / requested | |---|---| | 50 rad/s | **1.02516** | | 100 rad/s | **1.02661** | | 200
+ *   rad/s | **1.02948** | | 400 rad/s | **1.03462** |
  *
- *     So the law is good to **3.5 %** across a decade, and the residual grows with `wb*dt` (0.0025 at 50 rad/s, 0.02 at
+ *   So the law is good to **3.5 %** across a decade, and the residual grows with `wb*dt` (0.0025 at 50 rad/s, 0.02 at
  *
- *     400) -- it is the 20 kHz sampling of a continuous-time design, not the cancellation being approximate. Whatever
- *     the benches see beyond that is the inner current loop and the plant, which this row does not contain.
+ *   400) -- it is the 20 kHz sampling of a continuous-time design, not the cancellation being approximate. Whatever the
+ *   benches see beyond that is the inner current loop and the plant, which this row does not contain.
  *
- *     The sensitivity is the actionable half, and it is lopsided:
+ *   The sensitivity is the actionable half, and it is lopsided:
  *
- *     | nameplate error at 200 rad/s | measured -3 dB / requested | |---|---| | inertia -20 % / +20 % / +50 % |
- *     **0.82262 / 1.23666 / 1.54877** | | friction -50 % / +50 % / +200 % | **1.02948 / 1.02949 / 1.02951** |
+ *   | nameplate error at 200 rad/s | measured -3 dB / requested | |---|---| | inertia -20 % / +20 % / +50 % | **0.82262
+ *   / 1.23666 / 1.54877** | | friction -50 % / +50 % / +200 % | **1.02948 / 1.02949 / 1.02951** |
  *
- *     Divided by the error-free 1.02948 those inertia rows read 0.799 / 1.201 / 1.504: **the bandwidth you get is the
- *     bandwidth you asked for times `J_hat/J`**. The friction rows move the fourth digit -- because `kp = wb*J/kt`
- *     alone sets the first-order bandwidth and `ki` only trims the friction term, so a wrong `b` costs steady-state
- *     droop and not bandwidth. That asymmetry is the reason a commissioning run should fit `J` before `b`, and it is
- *     the one number here a user can act on: a 20 % inertia error is a 20 % bandwidth error, one for one.
+ *   Divided by the error-free 1.02948 those inertia rows read 0.799 / 1.201 / 1.504: **the bandwidth you get is the
+ *   bandwidth you asked for times `J_hat/J`**. The friction rows move the fourth digit -- because `kp = wb*J/kt` alone
+ *   sets the first-order bandwidth and `ki` only trims the friction term, so a wrong `b` costs steady-state droop and
+ *   not bandwidth. That asymmetry is the reason a commissioning run should fit `J` before `b`, and it is the one number
+ *   here a user can act on: a 20 % inertia error is a 20 % bandwidth error, one for one.
  *
- *     这一行必须解释 `step_metrics` 报出的那个数：SIL 台架测到 243.57 rad/s 对 250 rad/s 的请求（Python plant −2.57
- *     % ），而 C++ 台架是 +9.15 %。这里在**理想电流环**上实测（见上表）：律在一个十倍带宽范围内好到 **3.5 %**，残差随
- *     `wb·dt` 增长（50 rad/s 时 0.0025、400 时 0.02）——那是 20 kHz 采样一个连续时间设计的结果，不是消去不精确。台架在此
- *     之外看到的东西属于内环与被控对象，不属这一行。
+ *   这一行必须解释 `step_metrics` 报出的那个数：SIL 台架测到 243.57 rad/s 对 250 rad/s 的请求（Python plant −2.57 %
+ *   ），而 C++ 台架是 +9.15 %。这里在**理想电流环**上实测（见上表）：律在一个十倍带宽范围内好到 **3.5 %**，残差随
+ *   `wb·dt` 增长（50 rad/s 时 0.0025、400 时 0.02）——那是 20 kHz 采样一个连续时间设计的结果，不是消去不精确。台架在此之
+ *   外看到的东西属于内环与被控对象，不属这一行。
  *
- *     敏感度才是可操作的一半，而且明显偏斜（见下表）：把惯量那三行除以无误差的 1.02948，读作 0.799/1.201/1.504—— **你得
- *     到的带宽就是你要的带宽乘以 `J_hat/J`**。摩擦那几行只动第四位，因为一阶带宽由 `kp = wb·J/kt` 单独决定， `ki` 只修
- *     摩擦项，所以 `b` 错了花的是稳态静差而不是带宽。这个偏斜正是调试时应当先拟合 `J` 再拟合 `b` 的原因，也是这里唯一一
- *     个用户能直接用的数：20 % 的惯量误差就是一比一的 20 % 带宽误差。
+ *   敏感度才是可操作的一半，而且明显偏斜（见下表）：把惯量那三行除以无误差的 1.02948，读作 0.799/1.201/1.504—— **你得到
+ *   的带宽就是你要的带宽乘以 `J_hat/J`**。摩擦那几行只动第四位，因为一阶带宽由 `kp = wb·J/kt` 单独决定， `ki` 只修摩擦
+ *   项，所以 `b` 错了花的是稳态静差而不是带宽。这个偏斜正是调试时应当先拟合 `J` 再拟合 `b` 的原因，也是这里唯一一个用户
+ *   能直接用的数：20 % 的惯量误差就是一比一的 20 % 带宽误差。
  */
 TEST(MotorConfig, TheInertiaEstimateIsTheBandwidthAndTheFrictionEstimateIsNot) {
     constexpr float kKt = 0.0714F;

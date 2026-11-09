@@ -95,40 +95,40 @@ struct ShuntCurrents final {
  *               largest (equivalently the negative of the smallest). Two readings are therefore enough for three
  *               currents, because the machine is a floating star and they sum to zero:
  *
- *     `i_max = i_dc(V_k)`, `i_min = -i_dc(V_{k+1})`, `i_mid = -(i_max + i_min)`.
+ *   `i_max = i_dc(V_k)`, `i_min = -i_dc(V_{k+1})`, `i_mid = -(i_max + i_min)`.
  *
- *     That is the whole reconstruction, and the sector table that usually accompanies it is deliberately **not** here:
- *     the answer depends only on which phase has which duty, so a table indexed by sector number would add a second
- *     place for the sector convention to be wrong without adding a single measurement.
+ *   That is the whole reconstruction, and the sector table that usually accompanies it is deliberately **not** here:
+ *   the answer depends only on which phase has which duty, so a table indexed by sector number would add a second place
+ *   for the sector convention to be wrong without adding a single measurement.
  *
- *     What decides whether it can be done at all is the window. A 7-segment pattern applies each active vector twice
- *     per period, so the time available after the ringing settles and before the next edge is `min(t_active1,
- *     t_active2)/2`, and it must be at least `t_settle + t_sample`. Near a sector boundary one of those intervals goes
- *     to zero, and **that** is the operating region where a single shunt has no answer -- not an approximation, an
- *     absence. The policy's answer is to say so: `classify()` returns `WindowTooNarrow`, and `reconstruct()` returns
- *     `valid == false` rather than a plausible-looking number built from a reading taken during a transition.
+ *   What decides whether it can be done at all is the window. A 7-segment pattern applies each active vector twice per
+ *   period, so the time available after the ringing settles and before the next edge is `min(t_active1, t_active2)/2`,
+ *   and it must be at least `t_settle + t_sample`. Near a sector boundary one of those intervals goes to zero, and
+ *   **that** is the operating region where a single shunt has no answer -- not an approximation, an absence. The
+ *   policy's answer is to say so: `classify()` returns `WindowTooNarrow`, and `reconstruct()` returns `valid == false`
+ *   rather than a plausible-looking number built from a reading taken during a transition.
  *
- *     The error structure is worth stating because it is not uniform: the largest and smallest phases carry the ADC
- *     error of one reading each, while the middle phase is a *difference*, so its noise is `sqrt(2)` times larger. A
- *     bound written for the first two and used for the third is 41 % too optimistic, which is why the test asserts two
- *     different bounds rather than one.
+ *   The error structure is worth stating because it is not uniform: the largest and smallest phases carry the ADC error
+ *   of one reading each, while the middle phase is a *difference*, so its noise is `sqrt(2)` times larger. A bound
+ *   written for the first two and used for the third is 41 % too optimistic, which is why the test asserts two
+ *   different bounds rather than one.
  *
  * @details [zh] 一个采样电阻放在直流回路里，于是它量到的是**有效矢量**恰好让它经过的那个电流：`V_k` 期间是占空比最大的
  *               那一相单独，`V_{k+1}` 期间是最大的两相（等价地，最小的那一相的相反数）。所以三次电流只需要两个读数，因
  *               为电机是浮地星形、三者和为零：
  *
- *     `i_max = i_dc(V_k)`、`i_min = −i_dc(V_{k+1})`、`i_mid = −(i_max + i_min)`。
+ *   `i_max = i_dc(V_k)`、`i_min = −i_dc(V_{k+1})`、`i_mid = −(i_max + i_min)`。
  *
- *     这就是全部重构；而通常随它一起出现的那张扇区表被**刻意**省掉了：答案只取决于哪一相的占空比排在哪个位置，所以一张
- *     按扇区号索引的表只会给「扇区约定写错」多一个地方，却不多一条测量。
+ *   这就是全部重构；而通常随它一起出现的那张扇区表被**刻意**省掉了：答案只取决于哪一相的占空比排在哪个位置，所以一张按
+ *   扇区号索引的表只会给「扇区约定写错」多一个地方，却不多一条测量。
  *
- *     决定能不能做的是窗口。七段式图样每个周期把每个有效矢量施加两次，所以振铃建立之后、下一个边沿之前可用的时间是
- *     `min(t_active1, t_active2)/2`，它必须不小于 `t_settle + t_sample`。靠近扇区边界时其中一个区间趋于零，**那里**才是
- *     单电阻没有答案的工作区——不是近似不好，是没有。策略的回答就是把它说出来：`classify()` 返回 `WindowTooNarrow`，
- *     `reconstruct()` 返回 `valid == false`，而不是拿一个在换向过程中读到的数拼出一个看起来合理的电流。
+ *   决定能不能做的是窗口。七段式图样每个周期把每个有效矢量施加两次，所以振铃建立之后、下一个边沿之前可用的时间是
+ *   `min(t_active1, t_active2)/2`，它必须不小于 `t_settle + t_sample`。靠近扇区边界时其中一个区间趋于零，**那里**才是单
+ *   电阻没有答案的工作区——不是近似不好，是没有。策略的回答就是把它说出来：`classify()` 返回 `WindowTooNarrow`，
+ *   `reconstruct()` 返回 `valid == false`，而不是拿一个在换向过程中读到的数拼出一个看起来合理的电流。
  *
- *     误差结构值得写下来，因为它并不均匀：最大和最小两相各承担一个读数的 ADC 误差，而中间那一相是一个**差**，噪声大
- *     `sqrt(2)` 倍。按前两相写的界用在第三相上会乐观 41 %，这也是测试断言**两条**不同的界而不是一条的原因。
+ *   误差结构值得写下来，因为它并不均匀：最大和最小两相各承担一个读数的 ADC 误差，而中间那一相是一个**差**，噪声大
+ *   `sqrt(2)` 倍。按前两相写的界用在第三相上会乐观 41 %，这也是测试断言**两条**不同的界而不是一条的原因。
  *
  * @context [en] Current-loop ISR: noexcept, no allocation, no state.
  * @context [zh] 电流环 ISR：noexcept、不分配、无状态。

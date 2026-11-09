@@ -146,12 +146,12 @@ namespace detail {
 /**
  * @brief [en] The sticky status, read whole.
  *
- *     Five registers live in this one struct, and reading it five times would let a caller see three different instants
- *     in one frame.
+ *   Five registers live in this one struct, and reading it five times would let a caller see three different instants
+ *   in one frame.
  *
  * @brief [zh] 一次性读回整个状态结构。
  *
- *     五个寄存器住在这一个结构里，读五遍会让调用方在同一帧里看到三个不同的时刻。
+ *   五个寄存器住在这一个结构里，读五遍会让调用方在同一帧里看到三个不同的时刻。
  */
 inline auto status_read(foc_motor_t motor, std::uint32_t* raw, int which) noexcept -> std::int32_t {
     foc_motor_status_t status{};
@@ -240,11 +240,11 @@ inline auto read_iq(foc_motor_t motor, std::uint32_t* raw) noexcept -> std::int3
 /**
  * @brief [en] `foc_motor_trace_size` answers a count and cannot fail.
  *
- *     A NULL handle reads 0, which is the documented answer.
+ *   A NULL handle reads 0, which is the documented answer.
  *
  * @brief [zh] `foc_motor_trace_size` 直接给出一个计数，不会失败。
  *
- *     NULL 句柄读作 0，那正是它文档里的答案。
+ *   NULL 句柄读作 0，那正是它文档里的答案。
  */
 inline auto read_trace_size(foc_motor_t motor, std::uint32_t* raw) noexcept -> std::int32_t {
     *raw = foc_motor_trace_size(motor);

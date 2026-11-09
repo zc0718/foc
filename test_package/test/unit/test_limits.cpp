@@ -48,16 +48,16 @@ TEST(SlewLimiter, ReachesTargetWhenInsideOneStep) {
  *
  * @brief [zh] 步进是**差** `target - value`，它的符号决定输出往哪边走。
  *
- *     Mutation testing found this: replacing `target - value_` with `target + value_` in the slew limiter survived the
- *     whole suite. Every existing case starts from zero or has a target large enough to dominate the current value, so
- *     the two expressions agree on the branch they take and no assertion can tell them apart. Here the value is 5 and
- *     the target is 3: the difference is -2, twice the one-step budget of 1, so the output must land on 4 -- while
- *     `target + value_` reads +8 and would walk the output *up* to 6, in the opposite direction from its own target.
+ *   Mutation testing found this: replacing `target - value_` with `target + value_` in the slew limiter survived the
+ *   whole suite. Every existing case starts from zero or has a target large enough to dominate the current value, so
+ *   the two expressions agree on the branch they take and no assertion can tell them apart. Here the value is 5 and the
+ *   target is 3: the difference is -2, twice the one-step budget of 1, so the output must land on 4 -- while `target +
+ *   value_` reads +8 and would walk the output *up* to 6, in the opposite direction from its own target.
  *
- *     变异测试发现的：把斜率限制器里的 `target - value_` 换成 `target + value_` 后整个套件都活着。现有用例要么从零开
- *     始，要么目标大到压过当前值，于是两个表达式落在同一个分支上，任何断言都分不开它们。这里当前值是 5、目标是 3：差是
- *     -2，是单步预算 1 的两倍，所以输出必须落到 4——而 `target + value_` 读到 +8，会把输出**往上**推到 6，朝着与它自己的
- *     目标相反的方向。
+ *   变异测试发现的：把斜率限制器里的 `target - value_` 换成 `target + value_` 后整个套件都活着。现有用例要么从零开始，
+ *   要么目标大到压过当前值，于是两个表达式落在同一个分支上，任何断言都分不开它们。这里当前值是 5、目标是 3：差是 -2，是
+ *   单步预算 1 的两倍，所以输出必须落到 4——而 `target + value_` 读到 +8，会把输出**往上**推到 6，朝着与它自己的目标相反
+ *   的方向。
  */
 TEST(SlewLimiter, TheErrorTermIsADifferenceSoItsSignIsObservable) {
     foc::core::SlewLimiter limiter(10.0F);
@@ -184,22 +184,22 @@ TEST(SlewLimiter, InsideTheBudgetItPassesTheTargetThroughAndNeverOvershoots) {
  *            `0.15`, so `value += max_delta` and `value = target` are indistinguishable there. The mutant log said as
  *            much: both `>` -> `>=` sites on this branch order survived, and the baseline called them equivalents.
  *
- *     They are not. The two computations differ by the whole target whenever the subtraction that produced `delta` lost
- *     it, and that needs the distance to be large against the target: `1.0 - 1e8` rounds to exactly `-1e8`, so `delta
- *     == -max_delta` is reachable with a 1e8 step and the target 1.0. The branch that assigns answers 1.0; the branch
- *     that accumulates answers 0.0. That is not a rounding difference, it is the target thrown away -- and it is
- *     reachable on any axis whose limiter is asked for a step comparable to its own position, which is what a reset to
- *     a large value plus a long period produces.
+ *   They are not. The two computations differ by the whole target whenever the subtraction that produced `delta` lost
+ *   it, and that needs the distance to be large against the target: `1.0 - 1e8` rounds to exactly `-1e8`, so `delta ==
+ *   -max_delta` is reachable with a 1e8 step and the target 1.0. The branch that assigns answers 1.0; the branch that
+ *   accumulates answers 0.0. That is not a rounding difference, it is the target thrown away -- and it is reachable on
+ *   any axis whose limiter is asked for a step comparable to its own position, which is what a reset to a large value
+ *   plus a long period produces.
  *
  * @note [zh] 上面那条用例断言的是同一个意图（"必须落在目标上"），而它对**两个分支都通过**：`value = 0.05`、 `step =
  *            0.1`、`target = 0.15` 时，`0.05 + 0.1` 与 `0.15` 舍入到同一个 float，于是 `value += max_delta` 与 `value =
  *            target` 在那里无法区分。变异日志说的正是这件事：这个分支序上的两个 `>` -> `>=` 都存活，而基线把它们记成了
  *            等价。
  *
- *     它们不等价。只要算出 `delta` 的那次减法把它丢了，两种算法就差整整一个目标值；而这需要距离相对目标足够大： `1.0 -
- *     1e8` 恰好舍入成 `-1e8`，于是取 `1e8` 为一步、`1.0` 为目标即可达到 `delta == -max_delta`。赋值的分支答 1.0，累加的
- *     分支答 0.0。这不是舍入差异，是目标被丢掉了——而且任何"把限幅器 reset 到一个大数值、再给一个可与其自身位置相比的步
- *     长"的轴都会遇到它。
+ *   它们不等价。只要算出 `delta` 的那次减法把它丢了，两种算法就差整整一个目标值；而这需要距离相对目标足够大： `1.0 -
+ *   1e8` 恰好舍入成 `-1e8`，于是取 `1e8` 为一步、`1.0` 为目标即可达到 `delta == -max_delta`。赋值的分支答 1.0，累加的分
+ *   支答 0.0。这不是舍入差异，是目标被丢掉了——而且任何"把限幅器 reset 到一个大数值、再给一个可与其自身位置相比的步长"的
+ *   轴都会遇到它。
  */
 TEST(SlewLimiter, AtExactlyOneStepTheTargetIsAssignedAndNotAccumulated) {
     // Positive side: from -1e8 the target 1.0 is exactly one 1e8 step away, and `1.0 - (-1e8)` rounds to +1e8.

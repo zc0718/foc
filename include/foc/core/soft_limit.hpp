@@ -51,47 +51,47 @@ struct SoftLimitOutput final {
 /**
  * @brief [en] Keep an axis inside a window: refuse the targets outside it, and cap the speed near the walls.
  *
- *     The two halves answer two different failures, and mixing them up is how soft limits get a bad name. Refusing a
- *     target outside the window fixes a *programming* fault -- a move that was never meant to be commanded -- and it is
- *     answered by status, not by clamping, because a clamp turns an impossible command into a plausible one and the
- *     caller never learns. Capping the speed near the wall fixes a *physical* fault -- the axis has momentum and needs
- *     distance to lose it -- and it is answered by an invariant that holds every period: `v^2 <= 2*a*(d - v*dt)`, with
- *     `d` the distance left to the wall, `a` the deceleration the axis really has, and `dt` the drive's own delay.
+ *   The two halves answer two different failures, and mixing them up is how soft limits get a bad name. Refusing a
+ *   target outside the window fixes a *programming* fault -- a move that was never meant to be commanded -- and it is
+ *   answered by status, not by clamping, because a clamp turns an impossible command into a plausible one and the
+ *   caller never learns. Capping the speed near the wall fixes a *physical* fault -- the axis has momentum and needs
+ *   distance to lose it -- and it is answered by an invariant that holds every period: `v^2 <= 2*a*(d - v*dt)`, with
+ *   `d` the distance left to the wall, `a` the deceleration the axis really has, and `dt` the drive's own delay.
  *
- *     Why the invariant rather than a slowdown zone: a zone has a width, the width has to be right, and "right" depends
- *     on the speed. The invariant has no width -- at every speed and every position it says the same thing -- and it is
- *     checkable in the same period it is applied, so a case can assert it sample by sample instead of at the end.
+ *   Why the invariant rather than a slowdown zone: a zone has a width, the width has to be right, and "right" depends
+ *   on the speed. The invariant has no width -- at every speed and every position it says the same thing -- and it is
+ *   checkable in the same period it is applied, so a case can assert it sample by sample instead of at the end.
  *
- *     The `v*dt` term is not a refinement, it is the difference between working and not working. On the SIL plant at 20
- *     rad/s toward a wall: without the term the axis crosses by **19 mm**, with it it stops **1.04 mm short**, and 19
- *     mm is exactly `v*dt` for the 1 ms this drive takes to deliver the current it was asked for. A ceiling that
- *     assumes instantaneous braking assumes infinite jerk, and no drive has it.
+ *   The `v*dt` term is not a refinement, it is the difference between working and not working. On the SIL plant at 20
+ *   rad/s toward a wall: without the term the axis crosses by **19 mm**, with it it stops **1.04 mm short**, and 19 mm
+ *   is exactly `v*dt` for the 1 ms this drive takes to deliver the current it was asked for. A ceiling that assumes
+ *   instantaneous braking assumes infinite jerk, and no drive has it.
  *
- *     The invariant also has a *solution*, and that solution is the number to commission against: the largest speed the
- *     cap lets through at distance `d` is `sqrt(a^2*tau^2 + 2*a*d) - a*tau`, which falls back to the familiar
- *     `sqrt(2*a*d)` as the delay goes to zero. It is homogeneous of degree one in `(d, a)` jointly, so a machine twice
- *     as strong working over twice the distance is exactly twice as fast rather than `sqrt(2)` times, and each error
- *     source has a plain coefficient: `a/(v+a*tau)` per radian of wall error, `v^2/(2*a*(v+a*tau))` per rad/s^2 of
- *     braking capability, and `-a*v/(v+a*tau)` per second of delay.
+ *   The invariant also has a *solution*, and that solution is the number to commission against: the largest speed the
+ *   cap lets through at distance `d` is `sqrt(a^2*tau^2 + 2*a*d) - a*tau`, which falls back to the familiar
+ *   `sqrt(2*a*d)` as the delay goes to zero. It is homogeneous of degree one in `(d, a)` jointly, so a machine twice as
+ *   strong working over twice the distance is exactly twice as fast rather than `sqrt(2)` times, and each error source
+ *   has a plain coefficient: `a/(v+a*tau)` per radian of wall error, `v^2/(2*a*(v+a*tau))` per rad/s^2 of braking
+ *   capability, and `-a*v/(v+a*tau)` per second of delay.
  *
  * @brief [zh] 把轴留在窗口内：拒绝窗口外的目标，并在靠近墙时限制速度。
  *
- *     两半回答两种不同的失效，把它们混在一起正是软限位名声不好的原因。拒绝窗口外的目标修的是**编程**错误——一次本就不该
- *     下发的运动——而它用状态回答而不是钳位，因为钳位会把一条不可能的命令变成一条看起来合理的命令，调用方永远学不到。靠
- *     近墙时限制速度修的是**物理**错误——轴有动量，需要距离把它耗掉——而它用一个每周期都成立的守恒式回答： `v² <= 2·a·(d
- *     − v·dt)`，`d` 是到墙的剩余距离，`a` 是轴真实具备的减速度，`dt` 是驱动自身的延迟。
+ *   两半回答两种不同的失效，把它们混在一起正是软限位名声不好的原因。拒绝窗口外的目标修的是**编程**错误——一次本就不该下
+ *   发的运动——而它用状态回答而不是钳位，因为钳位会把一条不可能的命令变成一条看起来合理的命令，调用方永远学不到。靠近墙
+ *   时限制速度修的是**物理**错误——轴有动量，需要距离把它耗掉——而它用一个每周期都成立的守恒式回答： `v² <= 2·a·(d −
+ *   v·dt)`，`d` 是到墙的剩余距离，`a` 是轴真实具备的减速度，`dt` 是驱动自身的延迟。
  *
- *     为什么用守恒式而不是减速区：区有宽度，宽度得对，而"对"取决于速度。守恒式没有宽度——在任何速度和任何位置它说的都是
- *     同一件事——而且它就在施加它的那个周期里可检，用例因此可以逐点断言，而不是等到最后。
+ *   为什么用守恒式而不是减速区：区有宽度，宽度得对，而"对"取决于速度。守恒式没有宽度——在任何速度和任何位置它说的都是同
+ *   一件事——而且它就在施加它的那个周期里可检，用例因此可以逐点断言，而不是等到最后。
  *
- *     `v·dt` 这一项不是精修，而是能不能用的分界。在 SIL plant 上以 20 rad/s 冲向一面墙：没有这一项时轴越过 **19 mm**，
- *     有它时停在墙前 **1.04 mm**，而 19 mm 恰好是这台驱动把电流送到位所需的 1 ms 里的 `v·dt`。假设瞬时制动的上限等于假
- *     设无限加加速度，而没有哪台驱动有这个。
+ *   `v·dt` 这一项不是精修，而是能不能用的分界。在 SIL plant 上以 20 rad/s 冲向一面墙：没有这一项时轴越过 **19 mm**，有
+ *   它时停在墙前 **1.04 mm**，而 19 mm 恰好是这台驱动把电流送到位所需的 1 ms 里的 `v·dt`。假设瞬时制动的上限等于假设无
+ *   限加加速度，而没有哪台驱动有这个。
  *
- *     这条守恒式还有一个**解**，而那个解才是调试时该对着的数：距离 `d` 处上限放过的最大速度是 `sqrt(a²·τ² + 2·a·d) −
- *     a·τ`，延迟趋零时它退回熟悉的 `sqrt(2·a·d)`。它在 `(d, a)` 上联合一次齐次，所以一台强一倍、行程也长一倍的机器恰好
- *     快一倍而不是 `sqrt(2)` 倍；每个误差源都有一个平实的系数：每弧度墙的位置误差 `a/(v+a·τ)`、每 rad/s² 的制动能力
- *     `v²/(2·a·(v+a·τ))`、每秒延迟 `−a·v/(v+a·τ)`。
+ *   这条守恒式还有一个**解**，而那个解才是调试时该对着的数：距离 `d` 处上限放过的最大速度是 `sqrt(a²·τ² + 2·a·d) −
+ *   a·τ`，延迟趋零时它退回熟悉的 `sqrt(2·a·d)`。它在 `(d, a)` 上联合一次齐次，所以一台强一倍、行程也长一倍的机器恰好快
+ *   一倍而不是 `sqrt(2)` 倍；每个误差源都有一个平实的系数：每弧度墙的位置误差 `a/(v+a·τ)`、每 rad/s² 的制动能力
+ *   `v²/(2·a·(v+a·τ))`、每秒延迟 `−a·v/(v+a·τ)`。
  * @since 0.1.10
  * @exporter
  */

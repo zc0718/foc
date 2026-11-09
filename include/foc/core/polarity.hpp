@@ -31,24 +31,24 @@ enum class PolarityVerdict : std::int8_t {
 /**
  * @brief [en] Magnet polarity from a pair of d-axis voltage pulses.
  *
- *     Why a separate step rather than something the observer does: a saliency tracking loop has a stable zero at
- *     `dtheta = 0` **and** at `dtheta = pi`, because `sin(2*dtheta)` cannot tell the two apart. The information that
- *     separates them is not in the saliency -- it is in magnetic saturation: `+i_d` reinforces the rotor flux and
- *     `-i_d` opposes it, so the *same* volt-second pulse in the two directions produces two different current rises.
- *     The larger rise is the magnet's `+d`.
+ *   Why a separate step rather than something the observer does: a saliency tracking loop has a stable zero at `dtheta
+ *   = 0` **and** at `dtheta = pi`, because `sin(2*dtheta)` cannot tell the two apart. The information that separates
+ *   them is not in the saliency -- it is in magnetic saturation: `+i_d` reinforces the rotor flux and `-i_d` opposes
+ *   it, so the *same* volt-second pulse in the two directions produces two different current rises. The larger rise is
+ *   the magnet's `+d`.
  *
- *     Why pulses along d and not q: a pulse on the d axis of a converged estimate produces no torque (to first order),
- *     so the rotor stays where the test found it. A q-axis pulse would move it and the second pulse would be measuring
- *     a different machine position.
+ *   Why pulses along d and not q: a pulse on the d axis of a converged estimate produces no torque (to first order), so
+ *   the rotor stays where the test found it. A q-axis pulse would move it and the second pulse would be measuring a
+ *   different machine position.
  *
  * @brief [zh] 用一对 d 轴电压脉冲判断磁钢极性。
  *
- *     为什么是一个单独步骤而不是观测器顺手做的事：凸极跟踪环在 `dtheta = 0` 与 `dtheta = pi` 都有 稳定零点，因为
- *     `sin(2·dtheta)` 区分不了两者。区分它们的信息不在凸极里，而在磁饱和里： `+i_d` 增强转子磁链、`-i_d` 削弱它，于是**
- *     相同**伏秒的脉冲在两个方向上产生不同的电流上升。 上升更大的那个方向就是磁钢的 `+d`。
+ *   为什么是一个单独步骤而不是观测器顺手做的事：凸极跟踪环在 `dtheta = 0` 与 `dtheta = pi` 都有 稳定零点，因为
+ *   `sin(2·dtheta)` 区分不了两者。区分它们的信息不在凸极里，而在磁饱和里： `+i_d` 增强转子磁链、`-i_d` 削弱它，于是**
+ *   相同**伏秒的脉冲在两个方向上产生不同的电流上升。 上升更大的那个方向就是磁钢的 `+d`。
  *
- *     为什么沿 d 轴而不是 q 轴脉冲：在已收敛估计的 d 轴上脉冲，(一阶意义上)不产生转矩，转子留在 测试发现它的位置。q 轴
- *     脉冲会把它推走，第二个脉冲测的就是另一个转子位置了。
+ *   为什么沿 d 轴而不是 q 轴脉冲：在已收敛估计的 d 轴上脉冲，(一阶意义上)不产生转矩，转子留在 测试发现它的位置。q 轴脉
+ *   冲会把它推走，第二个脉冲测的就是另一个转子位置了。
  *
  * @warning [en] This injects a current pulse on purpose, so the caller must run it at standstill with the inverter
  *               under its own control -- not through a closed current loop that would fight the pulse. The documented
@@ -168,11 +168,11 @@ class MagnetPolarityTest final {
     /**
  * @brief [en] The same value captured before the *positive* pulse.
  *
- *     Kept so `decide()` can check that the two pulses really started from one operating point.
+ *   Kept so `decide()` can check that the two pulses really started from one operating point.
  *
  * @brief [zh] 在**正**脉冲之前记下的同一个量。
  *
- *     留着让 `decide()` 能检查两个脉冲确实从同一个工作点出发。
+ *   留着让 `decide()` 能检查两个脉冲确实从同一个工作点出发。
      */
     float i_before_positive_a_;
     float delta_positive_a_;

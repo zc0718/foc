@@ -254,10 +254,10 @@ struct Ramp final {
  *
  * @brief [zh] 通过电角度驱动的机械斜坡，每转一圈一个标记。
  *
- *     The origin is defined by a mark at mechanical zero, so every later number is measured from a known place; every
- *     subsequent pulse arrives `mark_delay_rad` after the geometric crossing, which is how a mounting tolerance or a
- *     threshold jitter shows up on a real machine. 原点由机械零位处的一个标记定义，于是后面每个数都从一个已知位置量起；
- *     此后每个脉冲都在几何穿越之后 `mark_delay_rad` 到达，这正是真实机器上安装公差或阈值抖动出现的方式。
+ *   The origin is defined by a mark at mechanical zero, so every later number is measured from a known place; every
+ *   subsequent pulse arrives `mark_delay_rad` after the geometric crossing, which is how a mounting tolerance or a
+ *   threshold jitter shows up on a real machine. 原点由机械零位处的一个标记定义，于是后面每个数都从一个已知位置量起；此
+ *   后每个脉冲都在几何穿越之后 `mark_delay_rad` 到达，这正是真实机器上安装公差或阈值抖动出现的方式。
  */
 auto run_ramp(core::PositionReference& reference, double turns, float mech_step, float mark_delay_rad,
               int skip_turn) -> Ramp {
@@ -304,45 +304,45 @@ auto run_ramp(core::PositionReference& reference, double turns, float mech_step,
  *
  * @brief [zh] 计数通道上的四个误差源，每个都有一个先写后量的闭式。
  *
- *     The register asked for a sensitivity table, and a counting channel gives one the continuous-angle channels
- *     cannot: every coefficient is exact, because the channel is a sum of integers and one division. So this case
- *     checks four *identities* rather than four magnitudes.
+ *   The register asked for a sensitivity table, and a counting channel gives one the continuous-angle channels cannot:
+ *   every coefficient is exact, because the channel is a sum of integers and one division. So this case checks four
+ *   *identities* rather than four magnitudes.
  *
- *     1. **Wrap rate.** The electrical angle wraps every `2*pi/p` mechanically, so `p*s/(2*pi)` electrical turns pass
- *     in `s` mechanical radians. This is the input signal, not the reconstruction, and stating it is what makes the
- *     other three readable.
+ *   1. **Wrap rate.** The electrical angle wraps every `2*pi/p` mechanically, so `p*s/(2*pi)` electrical turns pass in
+ *   `s` mechanical radians. This is the input signal, not the reconstruction, and stating it is what makes the other
+ *   three readable.
  *
- *     2. **Pole-pair error.** Each electrical step is divided by the *configured* pole count, so the reconstruction's
- *     **turn length is `2*pi*p/p'`**, not `2*pi`. That is a scale error, and the index is the only thing that can see
- *     it, because a mark measures exactly one turn. Its residue at the next mark is `2*pi*|1 - p/p'|`, which for any
- *     integer error is at least `2.22*|p'-p|` times the resolution the channel declares -- so with the guard below the
- *     mark is **refused and reported** instead of silently sawing the count back once per turn. A wrong pole count is
- *     therefore detectable from the second mark onward: a capability this row did not have before.
+ *   2. **Pole-pair error.** Each electrical step is divided by the *configured* pole count, so the reconstruction's
+ *   **turn length is `2*pi*p/p'`**, not `2*pi`. That is a scale error, and the index is the only thing that can see it,
+ *   because a mark measures exactly one turn. Its residue at the next mark is `2*pi*|1 - p/p'|`, which for any integer
+ *   error is at least `2.22*|p'-p|` times the resolution the channel declares -- so with the guard below the mark is
+ *   **refused and reported** instead of silently sawing the count back once per turn. A wrong pole count is therefore
+ *   detectable from the second mark onward: a capability this row did not have before.
  *
- *     3. **Mark jitter.** The snap moves the origin onto the *pulse*, so a mark that fires `j` late moves the origin by
- *     exactly `j`, on every pass. Measured as the snap itself, not as an end-of-run error, because that error also
- *     carries the unwrap's own drift.
+ *   3. **Mark jitter.** The snap moves the origin onto the *pulse*, so a mark that fires `j` late moves the origin by
+ *   exactly `j`, on every pass. Measured as the snap itself, not as an end-of-run error, because that error also
+ *   carries the unwrap's own drift.
  *
- *     4. **A missed mark** costs **no counts**. The count is carried by the unwrap; the mark only removes drift. A
- *     missed mark therefore costs one turn of drift, of order 1e-3 rad -- and that is exactly what separates it from a
- *     lost count, which costs a whole turn.
+ *   4. **A missed mark** costs **no counts**. The count is carried by the unwrap; the mark only removes drift. A missed
+ *   mark therefore costs one turn of drift, of order 1e-3 rad -- and that is exactly what separates it from a lost
+ *   count, which costs a whole turn.
  *
- *     登记册要的是一张敏感度表，而计数通道给出的表是连续角度通道给不出的：每个系数都精确，因为这个通道就是整数求和加一
- *     次除法。所以本用例核对的是四条**恒等式**而不是四个量级。
+ *   登记册要的是一张敏感度表，而计数通道给出的表是连续角度通道给不出的：每个系数都精确，因为这个通道就是整数求和加一次
+ *   除法。所以本用例核对的是四条**恒等式**而不是四个量级。
  *
- *     1. **折返率**。电角度每 `2*pi/p` 机械弧度折一次，所以 `s` 机械弧度里经过 `p*s/(2*pi)` 个电周期。这是输入信号而不
- *     是重建；把它写清楚，后面三条才读得懂。
+ *   1. **折返率**。电角度每 `2*pi/p` 机械弧度折一次，所以 `s` 机械弧度里经过 `p*s/(2*pi)` 个电周期。这是输入信号而不是
+ *   重建；把它写清楚，后面三条才读得懂。
  *
- *     2. **极对数误差**。每个电步长除以**配置的**极对数，所以重建出来的**一圈长度是 `2*pi*p/p'`** 而不是 `2*pi`。这是比
- *     例误差，而索引是唯一能看见它的东西，因为标记量的正是一圈。它在下一次标记处的残差是 `2*pi*|1 − p/p'|`，对任何整数
- *     误差都不小于通道声明分辨力的 `2.22*|p'−p|` 倍——所以有了下面那条护栏，标记会被**拒绝并报告**，而不是每圈把计数静默
- *     锯回去一次。于是极对数配错从第二个标记起就是**可检出**的：这是本行此前没有的能力。
+ *   2. **极对数误差**。每个电步长除以**配置的**极对数，所以重建出来的**一圈长度是 `2*pi*p/p'`** 而不是 `2*pi`。这是比例
+ *   误差，而索引是唯一能看见它的东西，因为标记量的正是一圈。它在下一次标记处的残差是 `2*pi*|1 − p/p'|`，对任何整数误差
+ *   都不小于通道声明分辨力的 `2.22*|p'−p|` 倍——所以有了下面那条护栏，标记会被**拒绝并报告**，而不是每圈把计数静默锯回去
+ *   一次。于是极对数配错从第二个标记起就是**可检出**的：这是本行此前没有的能力。
  *
- *     3. **标记抖动**。吸附把原点移到**脉冲**上，所以晚 `j` 的标记每次经过都把原点移动恰好 `j`。量的是吸附本身，而不是
- *     终点误差——后者还带着解折返自己的漂移。
+ *   3. **标记抖动**。吸附把原点移到**脉冲**上，所以晚 `j` 的标记每次经过都把原点移动恰好 `j`。量的是吸附本身，而不是终
+ *   点误差——后者还带着解折返自己的漂移。
  *
- *     4. **漏掉一个标记**不损失任何计数。计数由解折返携带，标记只消除漂移。所以漏一个标记的代价是一圈的漂移，量级 1e-3
- *     rad——这正是它与"丢计数"（损失整整一圈）的区别。
+ *   4. **漏掉一个标记**不损失任何计数。计数由解折返携带，标记只消除漂移。所以漏一个标记的代价是一圈的漂移，量级 1e-3
+ *   rad——这正是它与"丢计数"（损失整整一圈）的区别。
  */
 TEST(PositionReference, TheCountingChannelHasFourErrorSourcesAndEachHasAClosedForm) {
     // (1) The input signal's wrap rate.
@@ -419,26 +419,25 @@ TEST(PositionReference, TheCountingChannelHasFourErrorSourcesAndEachHasAClosedFo
  *
  * @brief [zh] 不可能是标记的那个标记会被报告，而不是把原点移走最多半圈。
  *
- *     The electrical path already refuses to guess: a step at or beyond `0.9*pi` electrical is reported rather than
- *     resolved, because picking a direction gives an angle that looks fine and is a whole turn out. The index path had
- *     no such rule, and it was the more dangerous of the two: a spurious pulse produced a snap of `wrap_pi(phase)` --
- *     up to 3.14 rad of **mechanical** angle, seven times the electrical step it was not guarding against -- and
- *     nothing reported it. The next real mark then moved it back, so the defect presented as a transient nobody could
- *     reproduce.
+ *   The electrical path already refuses to guess: a step at or beyond `0.9*pi` electrical is reported rather than
+ *   resolved, because picking a direction gives an angle that looks fine and is a whole turn out. The index path had no
+ *   such rule, and it was the more dangerous of the two: a spurious pulse produced a snap of `wrap_pi(phase)` -- up to
+ *   3.14 rad of **mechanical** angle, seven times the electrical step it was not guarding against -- and nothing
+ *   reported it. The next real mark then moved it back, so the defect presented as a transient nobody could reproduce.
  *
- *     The fix is the same rule in the same units: past `0.9*pi/p` of mechanical residual the two sources are not
- *     describing the same event, so the pulse is refused and flagged. Below that the pulse is *believed*, and that
- *     boundary is stated rather than hidden: at `p = 7` the threshold is 0.404 rad, which is the resolution floor the
- *     channel already declares for the electrical step and 400 times the drift measured over five turns.
+ *   The fix is the same rule in the same units: past `0.9*pi/p` of mechanical residual the two sources are not
+ *   describing the same event, so the pulse is refused and flagged. Below that the pulse is *believed*, and that
+ *   boundary is stated rather than hidden: at `p = 7` the threshold is 0.404 rad, which is the resolution floor the
+ *   channel already declares for the electrical step and 400 times the drift measured over five turns.
  *
- *     电角度通路本来就不猜：达到或超过电 `0.9*pi` 的步长被**报告**而不是被解掉，因为选一个方向会给出一个看起来没问题、
- *     却差了整整一圈的角度。索引通路没有这条规则，而它才是更危险的那条：一个虚假脉冲产生的吸附是 `wrap_pi(相位)`——最多
- *     3.14 **机械**弧度，是它本该防住的电步长的七倍——而且没有任何东西报告它。下一次真实标记又把它移回来，于是这个缺陷表
- *     现为一个没人能复现的瞬变。
+ *   电角度通路本来就不猜：达到或超过电 `0.9*pi` 的步长被**报告**而不是被解掉，因为选一个方向会给出一个看起来没问题、却
+ *   差了整整一圈的角度。索引通路没有这条规则，而它才是更危险的那条：一个虚假脉冲产生的吸附是 `wrap_pi(相位)`——最多 3.14
+ *   **机械**弧度，是它本该防住的电步长的七倍——而且没有任何东西报告它。下一次真实标记又把它移回来，于是这个缺陷表现为一
+ *   个没人能复现的瞬变。
  *
- *     修法就是同一条规则、同一个单位：机械残差超过 `0.9*pi/p` 时两个源描述的不是同一个事件，于是脉冲被拒绝并置旗。低于
- *     它时脉冲是**被相信的**，而这条边界写在这里而不是藏着：`p = 7` 时阈值是 0.404 rad，正是该通道为电步长已经声明过的
- *     分辨力下限，也是五圈实测漂移的 400 倍。
+ *   修法就是同一条规则、同一个单位：机械残差超过 `0.9*pi/p` 时两个源描述的不是同一个事件，于是脉冲被拒绝并置旗。低于它
+ *   时脉冲是**被相信的**，而这条边界写在这里而不是藏着：`p = 7` 时阈值是 0.404 rad，正是该通道为电步长已经声明过的分辨
+ *   力下限，也是五圈实测漂移的 400 倍。
  */
 TEST(PositionReference, AMarkThatCannotBeTheMarkIsReportedInsteadOfMovingTheOrigin) {
     const float resolution = 0.9F * kPi / static_cast<float>(kPoles);

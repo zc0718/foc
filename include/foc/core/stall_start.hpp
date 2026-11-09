@@ -86,25 +86,25 @@ struct StallStartOutput final {
 /**
  * @brief [en] Break a stuck rotor loose on purpose, then hand it to the speed loop with the integral still clean.
  *
- *     Why this is not just "let the speed loop do it". A speed PI *does* eventually break a stuck axis loose -- its
- *     integral ramps the current until the torque passes the breakaway point -- and that is the problem: by the time it
- *     happens the integral has stored the whole windup, so the moment the rotor lets go, the stored torque drives it
- *     past the setpoint and the loop spends as long again recovering. This sequence does the same thing deliberately:
- *     it raises the torque at a known rate, reports the instant the rotor moves, and the value it reports is the
- *     handover torque -- so the speed loop starts from a known current instead of from a wound-up integrator.
+ *   Why this is not just "let the speed loop do it". A speed PI *does* eventually break a stuck axis loose -- its
+ *   integral ramps the current until the torque passes the breakaway point -- and that is the problem: by the time it
+ *   happens the integral has stored the whole windup, so the moment the rotor lets go, the stored torque drives it past
+ *   the setpoint and the loop spends as long again recovering. This sequence does the same thing deliberately: it
+ *   raises the torque at a known rate, reports the instant the rotor moves, and the value it reports is the handover
+ *   torque -- so the speed loop starts from a known current instead of from a wound-up integrator.
  *
- *     `Failed` is a first-class answer, not an error path. A load the drive cannot move at its limit is a fact about
- *     the machine, and a sequence that ramps forever instead of saying so leaves the operator watching a silent axis.
+ *   `Failed` is a first-class answer, not an error path. A load the drive cannot move at its limit is a fact about the
+ *   machine, and a sequence that ramps forever instead of saying so leaves the operator watching a silent axis.
  *
  * @brief [zh] 主动把卡住的转子挣脱，然后在积分仍然干净的情况下交给速度环。
  *
- *     为什么这不是"让速度环自己干"。速度 PI 确实**最终**能把卡住的轴弄动——它的积分把电流顶到力矩超过起动点 ——而这正是问
- *     题所在：等它发生时，积分已经存下了整个饱和量，于是转子一松脱，存下的力矩就把它推过给定，环路要用同样长的时间收回
- *     来。本序列把同一件事**有意地**做：以已知速率抬升力矩，报告转子动起来的那一刻，而它报告的数值就是交接力矩——于是速
- *     度环从一个已知电流起步，而不是从一个饱和的积分起步。
+ *   为什么这不是"让速度环自己干"。速度 PI 确实**最终**能把卡住的轴弄动——它的积分把电流顶到力矩超过起动点 ——而这正是问题
+ *   所在：等它发生时，积分已经存下了整个饱和量，于是转子一松脱，存下的力矩就把它推过给定，环路要用同样长的时间收回来。
+ *   本序列把同一件事**有意地**做：以已知速率抬升力矩，报告转子动起来的那一刻，而它报告的数值就是交接力矩——于是速度环从
+ *   一个已知电流起步，而不是从一个饱和的积分起步。
  *
- *     `Failed` 是一等答案，不是错误路径。驱动在限幅内搬不动的负载是关于这台机器的事实，而一条"永远爬升、什么也不说" 的
- *     序列会让操作者盯着一根沉默的轴。
+ *   `Failed` 是一等答案，不是错误路径。驱动在限幅内搬不动的负载是关于这台机器的事实，而一条"永远爬升、什么也不说" 的序
+ *   列会让操作者盯着一根沉默的轴。
  * @since 0.1.8
  * @exporter
  */

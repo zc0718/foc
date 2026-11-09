@@ -29,12 +29,11 @@ enum class ErrorCode : std::int8_t {
 /**
  * @brief [en] Core math types shared by both paths.
  *
- *     Fixed layout, trivially copyable, no allocation. Units follow the project-wide SI rule (A, V, rad, rad/s, s,
- *     N*m).
+ *   Fixed layout, trivially copyable, no allocation. Units follow the project-wide SI rule (A, V, rad, rad/s, s, N*m).
  *
  * @brief [zh] 两条路径共享的核心数学类型。
  *
- *     布局固定、可平凡复制、无内存分配。单位遵循全项目 SI 约定（A、V、rad、rad/s、s、N·m）。
+ *   布局固定、可平凡复制、无内存分配。单位遵循全项目 SI 约定（A、V、rad、rad/s、s、N·m）。
  * @since 0.1.0
  */
 namespace core {
@@ -135,11 +134,11 @@ class ElapsedClock final {
     /**
      * @brief [en] Seconds to whole nanoseconds: nearest and saturating.
      *
-     *     Anything not positive converts to zero rather than wrapping, NaN included.
+     *   Anything not positive converts to zero rather than wrapping, NaN included.
      *
      * @brief [zh] 秒转整纳秒：四舍五入、饱和。
      *
-     *     非正的一律转为零而不是回绕，NaN 也在内。
+     *   非正的一律转为零而不是回绕，NaN 也在内。
      *
      * @param seconds [en] a duration in s.
      * @param seconds [zh] 以秒计的时长。

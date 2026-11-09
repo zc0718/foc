@@ -42,17 +42,17 @@ auto nlfo_config() -> foc::core::NonlinearFluxObserver::Config {
 /** @brief [en] A valid carrier configuration at the 20 kHz control rate this file drives at.
  * @brief [zh] 在本文件 20 kHz 控制率下合法的载波配置。
  *
- *     The demodulation gain is passed in as `predicted_gain_a(inject_v, inject_hz, Ld, Lq + Ld)` rather than from the
- *     machine's own saliency: this file's machine has `Ld == Lq`, whose saliency is zero, and a zero gain is refused by
- *     the observer (the error normalisation would divide by it) -- so the plain formula would put the carrier in
- *     `Param` and the two injecting modes would hold at zero forever. The `+ Ld` is the same substitution the lock
- *     verdict case below already uses, and it stands for "a machine that does have saliency" -- a per-machine number,
- *     which is why the observer takes it as a field instead of deriving it.
+ *   The demodulation gain is passed in as `predicted_gain_a(inject_v, inject_hz, Ld, Lq + Ld)` rather than from the
+ *   machine's own saliency: this file's machine has `Ld == Lq`, whose saliency is zero, and a zero gain is refused by
+ *   the observer (the error normalisation would divide by it) -- so the plain formula would put the carrier in `Param`
+ *   and the two injecting modes would hold at zero forever. The `+ Ld` is the same substitution the lock verdict case
+ *   below already uses, and it stands for "a machine that does have saliency" -- a per-machine number, which is why the
+ *   observer takes it as a field instead of deriving it.
  *
- *     解调增益按 `predicted_gain_a(inject_v, inject_hz, Ld, Lq + Ld)` 传入，而不是由机器自身的凸极算出：本文件的机器
- *     `Ld == Lq`，其凸极为零，而零增益会被观测器拒绝（误差归一化要除以它）——于是朴素公式会把载波放进 `Param`，两个注入
- *     模式就永远停在零。`+ Ld` 与下面那个锁定判据用例已在用的替换相同，它代表"一台确实有凸极的机器"——这是一个逐机器的
- *     数，也正是观测器把它作为字段而非推导它的原因。
+ *   解调增益按 `predicted_gain_a(inject_v, inject_hz, Ld, Lq + Ld)` 传入，而不是由机器自身的凸极算出：本文件的机器 `Ld
+ *   == Lq`，其凸极为零，而零增益会被观测器拒绝（误差归一化要除以它）——于是朴素公式会把载波放进 `Param`，两个注入模式就
+ *   永远停在零。`+ Ld` 与下面那个锁定判据用例已在用的替换相同，它代表"一台确实有凸极的机器"——这是一个逐机器的数，也正是
+ *   观测器把它作为字段而非推导它的原因。
  */
 auto hfi_config() -> foc::core::HfiObserver::Config {
     foc::core::HfiObserver::Config config{};
