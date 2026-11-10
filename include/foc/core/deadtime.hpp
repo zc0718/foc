@@ -91,17 +91,19 @@ template <typename Modulator> class DeadTimeCompensator final {
      *            正在中间电流处过弱得多（0.3 A 处误差是阶跃的 6.6 倍，开关 plant 实测）。它是 **可辨识** 的——见
      *            `DeadTimeFadeEstimator`。
      * @warning [en] **Not recommended.** The width can be identified (measured: 0.0355 A at 24 V, and it halves exactly
-     *               when the bus halves), but the identified number still loses to the plain `sign()` step: 1.16x its
-     *               error at 0.3 A and 1.58x at 20 mA. The reason is a wrong *shape*, not a wrong number -- on the
-     *               plant the loss goes from 2.7 % to 97 % of `(4/pi)*deadtime_v` between |i| = 21 mA and 86 mA, which
-     *               is a soft step, and a linear clamp spread over `If` cannot represent something that steep. So leave
-     *               this at 0 unless a measurement on *your* hardware says the transition really is broad; and note
-     *               that a ramp's advantage, when it exists, is at low current, where the PI already holds the mean.
+     *               when the bus halves), but the identified number still loses to the plain `sign()` step: 1.24x its
+     *               error at 0.3 A and 1.40x at 20 mA, as `SilDeadtime.TheIdentifiedWidthIsNotBetterThanTheStep` prints
+     *               and asserts. The reason is a wrong *shape*, not a wrong number -- on the plant the loss goes from
+     *               2.7 % to 97 % of `(4/pi)*deadtime_v` between |i| = 21 mA and 86 mA, which is a soft step, and a
+     *               linear clamp spread over `If` cannot represent something that steep. So leave this at 0 unless a
+     *               measurement on *your* hardware says the transition really is broad; and note that a ramp's
+     *               advantage, when it exists, is at low current, where the PI already holds the mean.
      * @warning [zh] **不建议使用。** 宽度是可辨识的（实测：24 V 下 0.0355 A，且母线 减半时它正好减半），但辨识出来的数
-     *               仍然输给朴素的 `sign()` 阶跃：0.3 A 处 误差是它的 1.16 倍，20 mA 处 1.58 倍。原因是 **形状** 错而不
-     *               是数错——plant 上 损失在 |i| 从 21 mA 到 86 mA 之间从 `(4/π)·deadtime_v` 的 2.7 % 跳到 97 %， 那是一
-     *               个软阶跃，铺在 `If` 上的线性斜坡表示不了这么陡的东西。所以除非 **你的** 硬件上量出来过渡确实很宽，
-     *               这一项保持 0；而且要注意斜坡的优势（如果存在）都在 小电流处，而那里 PI 本来就已经把均值守住了。
+     *               仍然输给朴素的 `sign()` 阶跃：0.3 A 处 误差是它的 1.24 倍，20 mA 处 1.40 倍（由
+     *               `SilDeadtime.TheIdentifiedWidthIsNotBetterThanTheStep` 打印并断言）。原因是 **形状** 错而不是数错
+     *               ——plant 上 损失在 |i| 从 21 mA 到 86 mA 之间从 `(4/π)·deadtime_v` 的 2.7 % 跳到 97 %， 那是一个软阶
+     *               跃，铺在 `If` 上的线性斜坡表示不了这么陡的东西。所以除非 **你的** 硬件上量出来过渡确实很宽，这一项
+     *               保持 0；而且要注意斜坡的优势（如果存在）都在 小电流处，而那里 PI 本来就已经把均值守住了。
      * @since 0.1.0
      */
         float i_fade_a;
