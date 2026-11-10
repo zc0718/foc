@@ -1,10 +1,16 @@
 // Callers -- consuming the library from C: five function pointers in, a handle
 // out, and every call after that is a plain `foc_*` function.
 //
-// Build with the flags the `strict` gate uses, plus the C translation unit the
 // ABI lives in (the repository links `src/**/*.cpp` and `src/**/*.c`; a product
 // links the aggregate target `foc::foc`):
-//   g++ -std=c++17 -fno-exceptions -fno-rtti -Wall -Wextra -Werror -Iinclude docs/doxygen/dox/demos/c-and-cpp-callers.cxx src/api/foc_api.c src/api/bridge.cpp src/core/*.cpp src/motor/*.cpp src/comm/*.cpp src/driver/*.cpp src/core/observer/*.cpp -o /tmp/c-and-cpp-callers
+// Build it the way the `demo` gate does -- the example calls into the library, so the
+// sources are part of the command, and `-Iinclude` alone fails at the link. A renamed
+// source turns that gate red instead of leaving a stale instruction here:
+//   g++ -std=c++17 -fno-exceptions -fno-rtti -Wall -Wextra -Werror -Iinclude
+//   docs/doxygen/dox/demos/c-and-cpp-callers.cxx src/core/*.cpp
+//   src/core/observer/*.cpp src/motor/*.cpp src/driver/*.cpp src/api/foc_api.c
+//   src/api/bridge.cpp src/version.c
+//   -o /tmp/c-and-cpp-callers
 //
 // With `--csv <path>` it writes the run as rows; `docs/demos/make_figures.py`
 // draws this example's figure from that file.

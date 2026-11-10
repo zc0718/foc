@@ -1,8 +1,14 @@
 // Low speed -- zero and low speed: high-frequency injection, and the machines it
 // refuses to work on.
 //
-// Build with the flags the `strict` gate uses for a C++17 translation unit:
-//   g++ -std=c++17 -fno-exceptions -fno-rtti -Wall -Wextra -Werror -Iinclude docs/doxygen/dox/demos/low-speed-injection.cxx src/core/observer/hfi_observer.cpp src/core/transform.cpp -o /tmp/low-speed-injection
+// Build it the way the `demo` gate does -- the example calls into the library, so the
+// sources are part of the command, and `-Iinclude` alone fails at the link. A renamed
+// source turns that gate red instead of leaving a stale instruction here:
+//   g++ -std=c++17 -fno-exceptions -fno-rtti -Wall -Wextra -Werror -Iinclude
+//   docs/doxygen/dox/demos/low-speed-injection.cxx src/core/*.cpp
+//   src/core/observer/*.cpp src/motor/*.cpp src/driver/*.cpp src/api/foc_api.c
+//   src/api/bridge.cpp src/version.c
+//   -o /tmp/low-speed-injection
 //
 // With `--csv <path>` it writes both sweeps as rows; `docs/demos/make_figures.py`
 // draws this example's figure from that file.

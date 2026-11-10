@@ -3,8 +3,14 @@
 // policy, and what it decides (angle, current, when it is finished) is what this
 // program prints.
 //
-// Build with the flags the `strict` gate uses for a C++17 translation unit:
-//   g++ -std=c++17 -fno-exceptions -fno-rtti -Wall -Wextra -Werror -Iinclude docs/doxygen/dox/demos/startup-sensorless.cxx -o /tmp/startup-sensorless
+// Build it the way the `demo` gate does -- the example calls into the library, so the
+// sources are part of the command, and `-Iinclude` alone fails at the link. A renamed
+// source turns that gate red instead of leaving a stale instruction here:
+//   g++ -std=c++17 -fno-exceptions -fno-rtti -Wall -Wextra -Werror -Iinclude
+//   docs/doxygen/dox/demos/startup-sensorless.cxx src/core/*.cpp
+//   src/core/observer/*.cpp src/motor/*.cpp src/driver/*.cpp src/api/foc_api.c
+//   src/api/bridge.cpp src/version.c
+//   -o /tmp/startup-sensorless
 //
 // With `--csv <path>` it writes the same run as rows instead of a table; that is
 // how `docs/demos/make_figures.py` draws this example's figure, so the figure and

@@ -427,7 +427,7 @@ PROJECT_GATES = ('license', 'strict', 'claims', 'docs', 'deps', 'form', 'boundar
                  'assume', 'anchor', 'scaffold', 'budget', 'clocks', 'observability', 'combinations', 'domain',
                  'mutants', 'plantref', 'fmu', 'pil', 'mcdc', 'blast', 'wired', 'smoke', 'regmap', 'subset',
                  'docvoice', 'symbols', 'equations', 'enforce', 'docshape', 'docver', 'docannot',
-                 'docscope', 'compliance')
+                 'docscope', 'compliance', 'demo')
 
 
 def cmd_subset(_explicit):
@@ -507,6 +507,24 @@ def cmd_compliance(_explicit):
     thing. `--selftest` first, because a checker that has never said no is a checker nobody has a
     reason to trust."""
     script = str(ROOT / '.github' / 'project' / 'compliance_gate.py')
+    for _args in (['--selftest'], []):
+        _rc = subprocess.run([sys.executable, script, *_args], cwd=ROOT, text=True).returncode
+        if _rc:
+            return _rc
+    return 0
+
+
+def cmd_demo(_explicit):
+    """Every example the documentation shows carries a build command, and that command works.
+
+    The guide pages promise that each listing **is** the file and that the example compiles; the
+    manual's `check.py` then treats those files as the source of its chapters. Measured when this
+    gate was written: nothing in the repository compiled them, and four of the nine documented
+    commands failed when run as written (two named a source file that does not exist), while the
+    tenth example had no command at all and one did not compile under `-Werror`. It runs **the
+    command the page documents**, not its own, so the instruction cannot drift from the code.
+    `--selftest` first: a checker that has never said no is one nobody has a reason to trust."""
+    script = str(ROOT / '.github' / 'project' / 'demo_gate.py')
     for _args in (['--selftest'], []):
         _rc = subprocess.run([sys.executable, script, *_args], cwd=ROOT, text=True).returncode
         if _rc:
@@ -915,6 +933,8 @@ def main():
                     'declaration to describe, which `EXTRACT_ALL` makes invisible',
         'compliance': 'the compliance pages are reachable from more than the index, and the four sentences this '
                       'project never says are identical in the site and on the Doxygen front page (one JSON source)',
+        'demo': 'every example under `docs/doxygen/dox/demos/` carries a build command in its own header, and that '
+                'command -- not one of this gate\'s own -- compiles and links the file it names',
         'pil': 'run the speed-step scenario on the target ISA under qemu and compare with the host; SKIPPED when its '
                'material is absent',
         'all': ' + '.join(PROJECT_GATES),
@@ -1006,6 +1026,8 @@ def main():
         return cmd_docscope([])
     if args.gate == 'compliance':
         return cmd_compliance([])
+    if args.gate == 'demo':
+        return cmd_demo([])
     # The chain above is the only thing standing between a single-gate invocation and the aggregate below, and it
     # has now been forgotten twice (`plantref` before, `combinations` and `mcdc` this time). A missing branch does
     # not fail: it runs *every* gate and prints "all N", which reads as success. So the fall-through is refused
@@ -1040,6 +1062,7 @@ def main():
                   'docannot': cmd_docannot,
                   'docscope': cmd_docscope,
                   'compliance': cmd_compliance,
+                  'demo': cmd_demo,
                   'pil': lambda _f: cmd_pil([], tolerant=True)}[name]([]) ]
     if failed:
         print(f'[project-gates] FAIL: {", ".join(failed)}', flush=True)

@@ -17,9 +17,11 @@ What you need
   the integral state is per axis.
 - ``foc/core/feedforward.hpp`` -- the axis cross-coupling and back-EMF terms,
   added **after** the PI so the PI keeps its own-axis job.
-- ``foc/core/limits.hpp`` -- ``clamp``, and the ceiling itself. The ceiling is
-  not the rail voltage: it is the modulator's linear range, which :doc:`modulation-limits`
-  covers.
+- ``foc/core/limits.hpp`` -- ``clamp``.
+- ``foc/motor/motor_config.hpp`` -- the two gain laws and the per-axis output
+  clamp, derived from the nameplate by ``current_pi_config()``. The ceiling the
+  modulator cares about is a different object: it is the **pair's** inscribed
+  circle, and :doc:`modulation-limits` covers why it is not the rail.
 
 A minimal program
 -----------------
@@ -46,12 +48,14 @@ Two rows of that output are worth reading before the rest:
 Where the numbers come from
 ---------------------------
 
-Every gain in the example is derived from the nameplate, not tuned: ``kp = L *
-omega`` and ``ki = R * omega`` are the pole-zero cancellation, and the same
-numbers come out of ``foc::current_pi_config(motor_config, bandwidth, v_bus)``,
-which is what the C path, the SIL bench and a board should all call rather than
-retype. The feedforward terms are built from the same nameplate through
-``foc::feedforward_config(motor_config)``.
+Every gain in the example comes from the nameplate, through the library's own
+rule: ``foc::current_pi_config(motor_config, bandwidth, v_bus)`` returns a
+proportional term that is twice the bandwidth times the inductance less the
+resistance (floored at zero) and an integral term that is the bandwidth squared
+times the inductance. The example **calls it rather than retyping it** -- a second
+copy of a tuning law is a second law, and it drifts -- which is what the C path,
+the SIL bench and a board should all do. The feedforward terms are built from the
+same nameplate through ``foc::feedforward_config(motor_config)``.
 
 The one field that has no nameplate source is ``i_d_per_speed_a_s_per_rad``. It
 is a statement about **how the angle is measured**, so it cannot be derived; the
@@ -69,7 +73,9 @@ How it goes wrong
 2. **The ceiling inside the PI.** Clamping the PI output to the linear range and
    then adding feedforward can exceed what the modulator can deliver, and the
    clamp that was supposed to stop the integral from winding up no longer
-   describes the voltage being applied. Clamp the sum.
+   describes the voltage being applied. Clamp the sum -- and clamp the **pair**,
+   not each axis: two axes each inside their own bound are still a vector outside
+   the circle, and it has rotated away from the reference.
 3. **Feedforward on the reference instead of the measurement.** The terms are
    ``omega * L * i`` and ``omega * psi_f``; with the reference in place of the
    measured current the term stops responding when the loop is saturated, which

@@ -1,8 +1,14 @@
 // Protection -- health and protection: what a drive does when something is wrong,
 // and how the answers differ from the ones that look like them.
 //
-// Build with the flags the `strict` gate uses for a C++17 translation unit:
-//   g++ -std=c++17 -fno-exceptions -fno-rtti -Wall -Wextra -Werror -Iinclude docs/doxygen/dox/demos/protection-and-derating.cxx src/core/protection.cpp src/core/watchdog.cpp src/core/brake_chopper.cpp -o /tmp/protection-and-derating
+// Build it the way the `demo` gate does -- the example calls into the library, so the
+// sources are part of the command, and `-Iinclude` alone fails at the link. A renamed
+// source turns that gate red instead of leaving a stale instruction here:
+//   g++ -std=c++17 -fno-exceptions -fno-rtti -Wall -Wextra -Werror -Iinclude
+//   docs/doxygen/dox/demos/protection-and-derating.cxx src/core/*.cpp
+//   src/core/observer/*.cpp src/motor/*.cpp src/driver/*.cpp src/api/foc_api.c
+//   src/api/bridge.cpp src/version.c
+//   -o /tmp/protection-and-derating
 //
 // With `--csv <path>` it writes the two sweeps and the latch timeline as rows;
 // `docs/demos/make_figures.py` draws this example's figure from that file.

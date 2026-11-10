@@ -1,8 +1,14 @@
 // Field weakening -- above base speed: the voltage ceiling starts to bind, and the
 // currents have to leave the MTPA curve to keep producing torque.
 //
-// Build with the flags the `strict` gate uses for a C++17 translation unit:
-//   g++ -std=c++17 -fno-exceptions -fno-rtti -Wall -Wextra -Werror -Iinclude docs/doxygen/dox/demos/high-speed-field-weakening.cxx src/core/mtpv.cpp -o /tmp/high-speed-field-weakening
+// Build it the way the `demo` gate does -- the example calls into the library, so the
+// sources are part of the command, and `-Iinclude` alone fails at the link. A renamed
+// source turns that gate red instead of leaving a stale instruction here:
+//   g++ -std=c++17 -fno-exceptions -fno-rtti -Wall -Wextra -Werror -Iinclude
+//   docs/doxygen/dox/demos/high-speed-field-weakening.cxx src/core/*.cpp
+//   src/core/observer/*.cpp src/motor/*.cpp src/driver/*.cpp src/api/foc_api.c
+//   src/api/bridge.cpp src/version.c
+//   -o /tmp/high-speed-field-weakening
 //
 // With `--csv <path>` it writes the sweep as rows; `docs/demos/make_figures.py`
 // draws this example's figure from that file.

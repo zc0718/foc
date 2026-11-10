@@ -1,8 +1,14 @@
 // Sampling -- sampling and the power stage: when there is time to measure the
 // current at all, and what the dead time does to the voltage the bridge delivers.
 //
-// Build with the flags the `strict` gate uses for a C++17 translation unit:
-//   g++ -std=c++17 -fno-exceptions -fno-rtti -Wall -Wextra -Werror -Iinclude docs/doxygen/dox/demos/current-sampling.cxx src/core/svpwm.cpp src/core/single_shunt.cpp -o /tmp/current-sampling
+// Build it the way the `demo` gate does -- the example calls into the library, so the
+// sources are part of the command, and `-Iinclude` alone fails at the link. A renamed
+// source turns that gate red instead of leaving a stale instruction here:
+//   g++ -std=c++17 -fno-exceptions -fno-rtti -Wall -Wextra -Werror -Iinclude
+//   docs/doxygen/dox/demos/current-sampling.cxx src/core/*.cpp
+//   src/core/observer/*.cpp src/motor/*.cpp src/driver/*.cpp src/api/foc_api.c
+//   src/api/bridge.cpp src/version.c
+//   -o /tmp/current-sampling
 //
 // With `--csv <path>` it writes both sweeps as rows; `docs/demos/make_figures.py`
 // draws this example's figure from that file.

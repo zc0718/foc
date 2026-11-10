@@ -8,6 +8,17 @@
 // purpose: gettext cannot filter a code block, and a bilingual comment would leak Chinese into the
 // English page.
 
+// Build it the way the `demo` gate does -- the example calls into the library, so the
+// sources are part of the command, and `-Iinclude` alone fails at the link. A renamed
+// source turns that gate red instead of leaving a stale instruction here:
+//   g++ -std=c++17 -fno-exceptions -fno-rtti -Wall -Wextra -Werror -Iinclude
+//   docs/doxygen/dox/demos/servo-loop.cxx src/core/*.cpp
+//   src/core/observer/*.cpp src/motor/*.cpp src/driver/*.cpp src/api/foc_api.c
+//   src/api/bridge.cpp src/version.c
+//   -o /tmp/servo-loop
+
+#include <cstdio>
+
 #include <foc/core/observer/back_emf_observer.hpp>
 #include <foc/core/pi.hpp>
 #include <foc/core/svpwm.hpp>
@@ -60,7 +71,10 @@ int main() {
 
     // 5. read back what happened
     const foc::motor::Telemetry telemetry = motor.telemetry();
-    // telemetry.speed_mech_rad_s, telemetry.id_a, telemetry.iq_a
+    std::printf("speed %.3f rad/s, id %.3f A, iq %.3f A\n",
+                static_cast<double>(telemetry.speed_mech_rad_s),
+                static_cast<double>(telemetry.id_a),
+                static_cast<double>(telemetry.iq_a));
 
     motor.stop();
     return 0;

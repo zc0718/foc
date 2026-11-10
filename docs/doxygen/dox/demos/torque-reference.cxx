@@ -2,16 +2,21 @@
 // feedforward, and where the voltage ceiling belongs. No hardware, no plant:
 // the point of the example is the wiring a board shares with the SIL bench.
 //
-// Build with the flags the `strict` gate uses for a C++17 translation unit (one
-// line, because a trailing backslash inside a `//` comment is a warning):
+// Build it the way the `demo` gate does -- the example calls into the library, so the
+// sources are part of the command, and `-Iinclude` alone fails at the link. A renamed
+// source turns that gate red instead of leaving a stale instruction here:
 //   g++ -std=c++17 -fno-exceptions -fno-rtti -Wall -Wextra -Werror -Iinclude
-//   docs/doxygen/dox/demos/torque-reference.cxx -o /tmp/torque-reference
+//   docs/doxygen/dox/demos/torque-reference.cxx src/core/*.cpp
+//   src/core/observer/*.cpp src/motor/*.cpp src/driver/*.cpp src/api/foc_api.c
+//   src/api/bridge.cpp src/version.c
+//   -o /tmp/torque-reference
 //
 // 转矩 —— 基速以下转矩：参考策略、两个 PI、前馈，以及电压天花板该放在哪。
 // 不需要硬件也不需要被控对象：这个例子要展示的是"板子与 SIL
 // 台架共用的那段接线"。
 
 #include <cmath>
+#include <cstdint>
 #include <cstdio>
 
 #include <foc/core/feedforward.hpp>
@@ -19,6 +24,7 @@
 #include <foc/core/pi.hpp>
 #include <foc/core/reference.hpp>
 #include <foc/core/types.hpp>
+#include <foc/motor/motor_config.hpp>
 
 namespace {
 
@@ -37,19 +43,57 @@ constexpr float kRs = 0.5F;
 constexpr float kVBusV = 24.0F;
 constexpr float kDtS = 5.0e-5F; // 20 kHz current loop
 
-// A current loop closed at 1 kHz. The gains are `L * omega` and `R * omega`,
-// the pole-zero cancellation every board uses, written here so the example does
-// not depend on a tuning helper the reader has not read yet. 1 kHz
-// 闭环的电流环。增益是 `L * omega` 与 `R * omega`，即各处都在用的零极点对消；
-// 写出来是为了让例子不依赖读者还没读过的整定辅助函数。
+// The nameplate, once. Six of these fields never reach the current loop -- they
+// are here because `current_pi_config()` takes the configuration a caller already
+// has, instead of the two numbers it happens to read.
+// 铭牌，只写一次。其中六个字段根本进不到电流环——它们在这里是因为
+// `current_pi_config()` 要的是调用方本来就有的那份配置，而不是它恰好读的那两个数。
+constexpr foc::motor::MotorConfig kMachine{
+    kRs, kLd, kLq, 0.08F, 1.0e-4F, 1.0e-4F, std::uint8_t{4}, kIMaxA, 20.0e3F,
+    200.0F};
+
+// A current loop closed at 1 kHz. The gains come from the library's own rule
+// (`kp = 2*wb*Ld - Rs`, `ki = wb^2*Ld`), not retyped here: the equation table
+// in the documentation carries that rule with a pointer to this function, and a
+// second copy in an example is a second law that can drift from it.
+// 1 kHz 闭环的电流环。增益来自库自己的规则（`kp = 2*wb*Ld - Rs`、`ki = wb^2*Ld`），
+// 不在这里重抄：文档里的方程表带着指向这个函数的指针，而示例里的第二份就是一条
+// 会与它走散的第二定律。
 constexpr float kLoopOmega = kTwoPi * 1000.0F;
 
-/// One current-loop tick on one axis: PI plus the axis's feedforward term.
-/// 一个电流环周期上的单轴：PI 加该轴的前馈项。
-auto tick(foc::core::Pi &pi, float reference, float measured, float ff,
-          float ceiling) noexcept -> float {
-  return foc::core::clamp(pi.step(reference, measured, kDtS) + ff, -ceiling,
-                          ceiling);
+// The ceiling is a **vector** ceiling: `v_bus/sqrt(3)`, the inscribed circle of
+// the hexagon, which is where `svpwm.hpp` reports `saturated`. It is not
+// `v_bus/2` -- that is the per-axis clamp inside `Pi::Config`, a different
+// object, and a pair of axes both sitting on it asks for `0.707*v_bus`, which
+// the bridge cannot deliver linearly.
+// 天花板是**矢量**天花板：`v_bus/sqrt(3)`，六边形的内切圆，也就是 `svpwm.hpp`
+// 报 `saturated` 的位置。不是 `v_bus/2`——那是 `Pi::Config` 里的每轴钳位，是两个
+// 不同的对象；两轴同时贴着它，合成矢量就是 `0.707*v_bus`，桥臂无法线性交付。
+constexpr float kVCeilingV = kVBusV / 1.7320508F;
+
+/// One current-loop tick on one axis: PI plus that axis's feedforward term, with
+/// no ceiling applied here -- the ceiling belongs to the pair, see
+/// `limit_vector()`.
+/// 一个电流环周期上的单轴：PI 加该轴的前馈项，**不**在这里钳位——天花板属于那对
+/// 数，见 `limit_vector()`。
+auto tick(foc::core::Pi &pi, float reference, float measured, float ff) noexcept
+    -> float {
+  return pi.step(reference, measured, kDtS) + ff;
+}
+
+/// Limit the **pair**, not each axis. Clamping them separately keeps each inside
+/// its own bound and still lets the vector out; scaling both keeps the angle the
+/// loop asked for, which is the one thing the modulator cannot restore.
+/// 限的是**那对数**，不是每个轴。分开钳位只能保证各自不越界，合成矢量仍然会出去；
+/// 两边同比例缩，才不会改变环路要的角度——而角度是调制器无法恢复的东西。
+auto limit_vector(foc::core::Dq<float> v, float ceiling) noexcept
+    -> foc::core::Dq<float> {
+  const float magnitude = std::sqrt((v.d * v.d) + (v.q * v.q));
+  if ((magnitude <= ceiling) || (magnitude <= 0.0F)) {
+    return v;
+  }
+  const float scale = ceiling / magnitude;
+  return foc::core::Dq<float>{v.d * scale, v.q * scale};
 }
 
 } // namespace
@@ -75,13 +119,14 @@ auto main() -> int {
   foc::core::MtpaReference mtpa(with_allowance);
   foc::core::NullReferenceGenerator d_zero{};
 
-  const float v_ceiling = 0.5F * kVBusV; // the SVPWM linear range, not the rail
-  const float kp = kLd * kLoopOmega;
-  const float ki = kRs * kLoopOmega;
-  foc::core::Pi pi_d(foc::core::Pi::Config{kp, ki, -v_ceiling, v_ceiling,
-                                           -v_ceiling, v_ceiling});
-  foc::core::Pi pi_q(foc::core::Pi::Config{kp, ki, -v_ceiling, v_ceiling,
-                                           -v_ceiling, v_ceiling});
+  // One law, one place. `current_pi_config()` returns the gains *and* the
+  // per-axis output clamp, which is why nothing here recomputes either.
+  // 一条定律，一个位置。`current_pi_config()` 同时返回增益与**每轴**输出钳位，
+  // 所以这里两边都不重算。
+  const foc::core::Pi::Config gains =
+      foc::current_pi_config(kMachine, kLoopOmega, kVBusV);
+  foc::core::Pi pi_d(gains);
+  foc::core::Pi pi_q(gains);
   foc::core::DecouplingFeedforward feedforward(
       foc::core::DecouplingFeedforward::Config{
           kLd, kLq, kPsiF,
@@ -117,8 +162,10 @@ auto main() -> int {
   const foc::core::Dq<float> i_ref = mtpa.generate(top);
   const foc::core::Dq<float> v_ff =
       feedforward.generate(foc::core::FeedforwardInput{omega_e, measured});
-  const float v_d = tick(pi_d, i_ref.d, measured.d, v_ff.d, v_ceiling);
-  const float v_q = tick(pi_q, i_ref.q, measured.q, v_ff.q, v_ceiling);
+  const float v_d_raw = tick(pi_d, i_ref.d, measured.d, v_ff.d);
+  const float v_q_raw = tick(pi_q, i_ref.q, measured.q, v_ff.q);
+  const foc::core::Dq<float> v =
+      limit_vector(foc::core::Dq<float>{v_d_raw, v_q_raw}, kVCeilingV);
   std::printf(
       "\none tick at iq = %.2f A, omega_e = %.1f rad/s, v_bus = %.1f V\n",
       static_cast<double>(top.iq_command_a), static_cast<double>(omega_e),
@@ -127,10 +174,36 @@ auto main() -> int {
               static_cast<double>(i_ref.d), static_cast<double>(i_ref.q));
   std::printf("  feedforward vd = %+8.4f V  vq = %+8.4f V\n",
               static_cast<double>(v_ff.d), static_cast<double>(v_ff.q));
-  std::printf("  command     vd = %+8.4f V  vq = %+8.4f V  (ceiling %.1f V)\n",
-              static_cast<double>(v_d), static_cast<double>(v_q),
-              static_cast<double>(v_ceiling));
+  std::printf(
+      "  asked       vd = %+8.4f V  vq = %+8.4f V  (|v| = %.4f V)\n",
+      static_cast<double>(v_d_raw), static_cast<double>(v_q_raw),
+      static_cast<double>(std::sqrt((v_d_raw * v_d_raw) + (v_q_raw * v_q_raw))));
+  std::printf(
+      "  commanded   vd = %+8.4f V  vq = %+8.4f V  (|v| = %.4f V, ceiling "
+      "%.4f V)\n",
+      static_cast<double>(v.d), static_cast<double>(v.q),
+      static_cast<double>(std::sqrt((v.d * v.d) + (v.q * v.q))),
+      static_cast<double>(kVCeilingV));
   std::printf("  status      d = %d  q = %d  (0 = Ok)\n",
               static_cast<int>(pi_d.status()), static_cast<int>(pi_q.status()));
+
+  // The limiter, shown on the pair that needs it. Two axes each sitting on the
+  // per-axis clamp `current_pi_config()` puts in `Pi::Config` ask for
+  // `v_bus/2*sqrt(2)`, which is past the inscribed circle -- and the scaled pair
+  // keeps the angle, which is the whole reason for scaling rather than clamping.
+  // 限幅器，用真正需要它的那对数展示。两轴各贴着 `current_pi_config()` 写进
+  // `Pi::Config` 的每轴钳位，合成矢量就是 `v_bus/2*sqrt(2)`，已经出了内切圆——
+  // 而按比例缩放后的那对数保住了角度，这就是"缩放而不是钳位"的全部理由。
+  const float per_axis = 0.5F * kVBusV;
+  const foc::core::Dq<float> over{per_axis, per_axis};
+  const foc::core::Dq<float> held = limit_vector(over, kVCeilingV);
+  std::printf(
+      "\nthe vector ceiling, on a pair that reaches it:\n  asked       |v| = "
+      "%.4f V  angle = %+.1f deg\n  commanded   |v| = %.4f V  angle = %+.1f "
+      "deg\n",
+      static_cast<double>(std::sqrt((over.d * over.d) + (over.q * over.q))),
+      static_cast<double>(std::atan2(over.q, over.d) * 57.29577951308232),
+      static_cast<double>(std::sqrt((held.d * held.d) + (held.q * held.q))),
+      static_cast<double>(std::atan2(held.q, held.d) * 57.29577951308232));
   return 0;
 }

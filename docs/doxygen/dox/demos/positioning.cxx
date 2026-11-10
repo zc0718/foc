@@ -2,8 +2,14 @@
 // where the axis may go. No plant: the "axis" below is a bare integrator, so what
 // you are looking at is the profile's shape and the limit's refusals, not a motor.
 //
-// Build with the flags the `strict` gate uses for a C++17 translation unit:
-//   g++ -std=c++17 -fno-exceptions -fno-rtti -Wall -Wextra -Werror -Iinclude docs/doxygen/dox/demos/positioning.cxx src/core/motion_profile.cpp -o /tmp/positioning
+// Build it the way the `demo` gate does -- the example calls into the library, so the
+// sources are part of the command, and `-Iinclude` alone fails at the link. A renamed
+// source turns that gate red instead of leaving a stale instruction here:
+//   g++ -std=c++17 -fno-exceptions -fno-rtti -Wall -Wextra -Werror -Iinclude
+//   docs/doxygen/dox/demos/positioning.cxx src/core/*.cpp
+//   src/core/observer/*.cpp src/motor/*.cpp src/driver/*.cpp src/api/foc_api.c
+//   src/api/bridge.cpp src/version.c
+//   -o /tmp/positioning
 //
 // With `--csv <path>` it writes the same run as rows; that is how
 // `docs/demos/make_figures.py` draws this example's figure.
