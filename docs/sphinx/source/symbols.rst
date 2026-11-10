@@ -96,8 +96,8 @@ i_q  ``i_q``
     **Defined by.** ``include/foc/core/types.hpp`` (``T q{};``)
 
 v_bus  ``v_bus``
-    **Meaning.** DC link voltage. The available phase voltage is bounded by `v_bus`, and the current loop's output clamp is `+-v_bus/2`.
-    母线电压。可用相电压受 `v_bus` 约束，电流环输出限幅是 `±v_bus/2`。
+    **Meaning.** DC link voltage. The current loop's output clamp is `+-v_bus/2` per axis, which is not the ceiling the modulator enforces on the pair: that one is the inscribed circle, `v_bus/sqrt(3)`.
+    母线电压。电流环输出限幅是每轴 `±v_bus/2`，它不是调制器对矢量对施加的天花板：后者是内切圆 `v_bus/sqrt(3)`。
     **Unit.** V  **Frame.** DC link
     **Positive.** positive.
     **Defined by.** ``include/foc/motor/motor_config.hpp`` (``float bandwidth_rad_s, float v_bus``)
