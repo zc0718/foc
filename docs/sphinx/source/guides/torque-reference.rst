@@ -57,6 +57,14 @@ copy of a tuning law is a second law, and it drifts -- which is what the C path,
 the SIL bench and a board should all do. The feedforward terms are built from the
 same nameplate through ``foc::feedforward_config(motor_config)``.
 
+One property of the returned configuration is worth stating rather than leaving to
+be found: it is a **single** gain pair derived from ``ld``, given to both axes. On
+an interior machine ``lq`` is the larger of the two, so the q axis is tuned as if
+its inductance were the smaller one and lands slightly slower than the d axis at
+the same requested bandwidth. Two axes that want different gains are two
+configurations built from the same nameplate; the helper returns one because one
+is what a symmetric pair of loops needs.
+
 The one field that has no nameplate source is ``i_d_per_speed_a_s_per_rad``. It
 is a statement about **how the angle is measured**, so it cannot be derived; the
 field's own documentation carries the measured numbers for the nominal machine
