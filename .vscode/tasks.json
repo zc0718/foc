@@ -58,7 +58,7 @@
     {
       "label": "commit-lint",
       "type": "shell",
-      "command": "npx commitlint --config .github/misc/commitlint.config.js --from HEAD~1 --to HEAD",
+      "command": "npx commitlint --config .github/misc/commitlint.config.js --from \"$(git merge-base HEAD origin/main)\" --to HEAD",
       "problemMatcher": []
     },
     {
