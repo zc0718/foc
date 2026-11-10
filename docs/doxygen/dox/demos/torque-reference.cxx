@@ -89,7 +89,9 @@ auto tick(foc::core::Pi &pi, float reference, float measured, float ff) noexcept
 auto limit_vector(foc::core::Dq<float> v, float ceiling) noexcept
     -> foc::core::Dq<float> {
   const float magnitude = std::sqrt((v.d * v.d) + (v.q * v.q));
-  if ((magnitude <= ceiling) || (magnitude <= 0.0F)) {
+  // `ceiling` is a positive constant, so a zero vector takes the early return and
+  // the division below never divides by zero.
+  if (magnitude <= ceiling) {
     return v;
   }
   const float scale = ceiling / magnitude;
