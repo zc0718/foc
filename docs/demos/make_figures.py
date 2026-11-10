@@ -404,8 +404,8 @@ def plot_current_sampling(rows: list[dict[str, str]]) -> None:
 
 
 def plot_low_speed_injection(rows: list[dict[str, str]]) -> None:
-    """Zero speed: whether the estimate moves at all, and why a surface-mount
-    rotor never gets one.
+    """Zero speed: whether the estimate moves at all, and why a rotor with no
+    saliency never gets one.
 
     The left panel is the angle error against time for the three runs the example
     makes; the right panel is the library's own sensitivity function, whose zero
@@ -419,7 +419,7 @@ def plot_low_speed_injection(rows: list[dict[str, str]]) -> None:
     # axis, so the lock flag decides the line style rather than the shape.
     # 从不锁定的运行与从未开始的运行在这条轴上看起来一样，所以用锁定标志决定线型，
     # 而不是靠形状。
-    for kind, colour, style, label in (("spm", COLORS["reference"], "--", "surface-mount rotor"),
+    for kind, colour, style, label in (("spm", COLORS["reference"], "--", "no saliency, Ld = Lq"),
                                        ("slow-control", COLORS["aux"], "--", "carrier the rate cannot resolve"),
                                        ("ipm", COLORS["measured"], "-", "interior rotor")):
         series = [row for row in rows if row["kind"] == kind]
