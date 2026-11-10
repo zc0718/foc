@@ -616,10 +616,13 @@ TEST(SilDeadtime,
 }
 TEST(SilDeadtime, TheIdentifiedWidthIsNotBetterThanTheStep) {
   // **The pre-written criterion failed, and the feature lost.** P4-d asked
-  // for `ramp <= 1.1x step` at 0.3 A; the measured width gives 1.16x. It
-  // also loses at 20 mA, where the step is *better* (0.01350 vs 0.02135).
+  // for `ramp <= 1.1x step` at 0.3 A; the measured width gives 1.24x. It
+  // also loses at 20 mA, where the step is *better* (0.01421 vs 0.01995).
   // Both ends go the same way, so the rollback rule applies: `i_fade_a` is
-  // demoted and the `sign()` step stays the recommendation.
+  // demoted and the `sign()` step stays the recommendation. The two ratios
+  // are asserted below in a band, because the header of
+  // `DeadTimeCompensator` quotes them: they had drifted (1.16x / 1.58x in
+  // the prose against 1.24x / 1.40x here) and nothing noticed.
   // **预先写下的判据失败了，而且输的是这个特性本身。** P4-d 要求 0.3 A 处
   // `ramp ≤ 1.1×step`，实测宽度给 1.16×；20 mA 处它也输给阶跃（0.01350 对
   // 0.02135）。两端同向，于是回退规则生效：`i_fade_a` 降级，`sign()`
@@ -668,10 +671,21 @@ TEST(SilDeadtime, TheIdentifiedWidthIsNotBetterThanTheStep) {
   // fixes it, this test says so instead of silently agreeing.
   // 现在记录在案的是：辨识出来的宽度在两端都 **输给** 阶跃。双侧写法，将来有人找到
   // 能修好它的形状时，这个测试会说出来，而不是默默点头。
-  EXPECT_GT(ramp_rated, 1.1F * step_rated)
+  // Two-sided, and tied to the numbers the header quotes: a band wide enough for the rig to
+  // move by ten percent, narrow enough that the prose and the measurement cannot drift apart
+  // unnoticed. 双侧，并与头文件里引用的那个数绑定：带宽容许台架本身动 10%，但窄到让
+  // 散文与实测不会各自走开而没人发现。
+  constexpr float kRatedRatio = 1.24F;
+  constexpr float kSmallRatio = 1.40F;
+  constexpr float kBand = 0.10F;
+  EXPECT_GT(ramp_rated, kRatedRatio * (1.0F - kBand) * step_rated)
       << "P4-d as written: the identified width does not match the step";
-  EXPECT_GT(ramp_small, step_small)
+  EXPECT_LT(ramp_rated, kRatedRatio * (1.0F + kBand) * step_rated)
+      << "and the header quotes this ratio, so it cannot drift from it";
+  EXPECT_GT(ramp_small, kSmallRatio * (1.0F - kBand) * step_small)
       << "and it loses at 20 mA too, where the PI already holds the mean";
+  EXPECT_LT(ramp_small, kSmallRatio * (1.0F + kBand) * step_small)
+      << "and the header quotes this ratio too";
   EXPECT_LT(off_small, step_small)
       << "at 20 mA no compensation beats none, which is the other half of "
          "it";
