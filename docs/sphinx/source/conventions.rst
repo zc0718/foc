@@ -80,7 +80,94 @@ _`1. What this library fixes`
        instant; samples aligned to the control period (the L2 reference keeps every fifth row)
      - :code:`test_sil_l2_reference.cpp`
 
-_`2. The four traps that actually bite`
+_`2. Gains: one word, four meanings`
+------------------------------------
+
+A vendor's :code:`kp` and ours are not the same object, even when they are the same digits. What
+the gain multiplies decides its unit, and the unit decides whether the two numbers can be compared
+at all.
+
+.. list-table::
+   :header-rows: 1
+   :widths: 22 34 14 30
+
+   * - Loop
+     - What the gain multiplies
+     - Unit
+     - In this library
+   * - Current
+     - current error
+     - V/A
+     - :code:`core::Pi::Config::kp`
+   * - Speed
+     - speed error
+     - A/(rad/s)
+     - :code:`speed_pi_config()`
+   * - Position
+     - position error, and the output is a **velocity** command
+     - 1/s
+     - :code:`PositionP::Config::gain_1_s`, :code:`position_p_config()`
+   * - Vendor "position gain"
+     - often torque per radian, commanding torque directly
+     - N·m/rad
+     - not used here: this library puts the speed loop between position and torque
+
+Our position gain closes a **first-order** position loop *through* the speed loop. A vendor whose
+position gain commands torque directly has a different loop, so :code:`kp = 20` in their header and
+:code:`20 1/s` here are two different claims about two different plants.
+
+_`3. Scaling names, and what a zero means`
+------------------------------------------
+
+The per-call scales are named after the vendor's spelling on purpose, so a ported configuration can
+be compared field by field:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 24 36 40
+
+   * - Field here
+     - Scales
+     - Vendor equivalent
+   * - :code:`kp_scale`
+     - position-loop gain
+     - moteus :code:`kp_scale`, same meaning
+   * - :code:`kd_scale`
+     - speed-loop proportional gain, i.e. the damping
+     - moteus :code:`kd_scale`
+   * - :code:`ilimit_scale`
+     - speed-loop integral limit
+     - moteus :code:`ilimit_scale`
+
+:code:`0` in all three means **no override, use the configured value**, not "zero gain". That is a
+project-wide rule: zero is only ever a default where zero is not a legal value. The cases are
+:code:`Pi.AZeroIntegralScaleMeansNoOverrideRatherThanAnEmptyWindow`,
+:code:`Pi.APerCallGainScaleMultipliesTheProportionalTermWithoutTouchingTheConfig` and
+:code:`MotionProfile.TheStiffnessScaleSlowsTheApproachWithoutChangingTheLimits`.
+
+_`4. Timing: what the library does not decide for you`
+------------------------------------------------------
+
+.. list-table::
+   :header-rows: 1
+   :widths: 26 74
+
+   * - Item
+     - What is fixed, and where
+   * - Control period
+     - **given by the caller** (:code:`tick(dt_s)`); the library never invents a time base of its own
+   * - Decimation
+     - by **elapsed time** (:code:`speed_loop_period_s`, :code:`position_loop_period_s`), not by a
+       tick count, so a change of control frequency keeps the physical period
+   * - Overrun
+     - :code:`Telemetry::max_period_us`, and only when the HAL policy exposes a clock. It is an
+       indicator and never a scheduling input
+   * - Comparing bandwidths
+     - do not compare a control-loop bandwidth across implementations at different rates without
+       normalising: fielded firmwares run their loops anywhere from tens of hertz to tens of
+       kilohertz, and the same gain means different things at each
+
+_`5. The four traps that actually bite`
 ---------------------------------------
 
 #. **Mechanical vs electrical angle.** A missing :code:`pole_pairs` makes the whole dq frame rotate
@@ -98,7 +185,7 @@ _`2. The four traps that actually bite`
    :math:`e = \dot{E}MF / k_i` (about 1 % here). That is not a defect: before judging
    "steady-state error", confirm the run is on a constant-speed segment.
 
-_`3. Extra checks before comparing with a third party`
+_`6. Extra checks before comparing with a third party`
 ------------------------------------------------------
 
 .. list-table::
@@ -120,7 +207,7 @@ _`3. Extra checks before comparing with a third party`
    * - Sampling and delay
      - one-period computation delay? mid-point sampling? loop rate versus PWM frequency?
 
-_`4. Status of the SguanFOC reference`
+_`7. Status of the SguanFOC reference`
 --------------------------------------
 
 - **Not vendored, not built, not in any CI path.**
@@ -134,7 +221,7 @@ _`4. Status of the SguanFOC reference`
   no comparison data and enters no test. When it disagrees with this page, the default is to
   distrust SguanFOC.
 
-_`5. Change rule`
+_`8. Change rule`
 -----------------
 
 #. Any change to a convention above (introducing per-unit, switching to generator convention,
