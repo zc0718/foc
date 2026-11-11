@@ -153,4 +153,4 @@ The driver builds against the conan-cached gtest and runs standalone:
    /tmp/sop
 
 It runs as part of ``ctest`` as well; the case count is in
-``docs/verification-numbers.json`` so this page does not have to carry it.
+``.github/project/verification-numbers.json`` so this page does not have to carry it.

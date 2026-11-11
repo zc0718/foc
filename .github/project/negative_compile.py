@@ -690,7 +690,7 @@ def main():
 
     total = len(CASES)
     print(f"[negative] {total - failures}/{total} cases behaved as specified ({args.compiler}, -std={std})")
-    numbers = pathlib.Path(__file__).resolve().parents[2] / "docs/verification-numbers.json"
+    numbers = pathlib.Path(__file__).resolve().parents[2] / ".github/project/verification-numbers.json"
     payload = json.loads(numbers.read_text(encoding="utf-8")) if numbers.is_file() else {}
     payload["negative_cases"] = total - failures
     numbers.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")

@@ -296,7 +296,7 @@ def main():
     # Record what was measured, so the numbers printed in the documentation can be checked
     # against something. A number nobody wrote down is the number that goes stale.
     # 把量到的记下来，好让文档里印的数字有东西可对。没人写下来的数字，就是会过期的数字。
-    numbers = pathlib.Path(__file__).resolve().parents[2] / "docs/verification-numbers.json"
+    numbers = pathlib.Path(__file__).resolve().parents[2] / ".github/project/verification-numbers.json"
     payload = json.loads(numbers.read_text(encoding="utf-8")) if numbers.is_file() else {}
     payload["coverage_all"] = round(overall["percent"], 2)
     payload["coverage_core"] = round(core["percent"], 2)

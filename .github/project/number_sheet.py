@@ -5,7 +5,7 @@
 to run. Those claims drifted twice by hand -- 365 cases against a 367-case suite -- because a
 number in prose has no owner. This gives them one: the case count comes from CTest's own discovery
 (no tests are executed), the coverage and negative-compilation numbers from
-`docs/verification-numbers.json`, which the gates that measure them write.
+`.github/project/verification-numbers.json`, which the gates that measure them write.
 
     python3 .github/project/number_sheet.py --check      # what CI runs
     python3 .github/project/number_sheet.py --record     # refresh the json from the artefacts
@@ -25,7 +25,7 @@ import sys
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 USAGE = ROOT / "docs/sphinx/source/usage.rst"
-NUMBERS = ROOT / "docs/verification-numbers.json"
+NUMBERS = ROOT / ".github/project/verification-numbers.json"
 BUILD_ROOTS = sorted((ROOT / "test_package/build").glob("*/CTestTestfile.cmake"))
 
 CASES_ROW = re.compile(r"(\d+)\s+cases,\s*(\d+)\s+failed")
@@ -88,7 +88,7 @@ def main() -> int:
 
     documented = COVERAGE_ROW.search(text)
     if "coverage_all" not in stored or "coverage_core" not in stored:
-        skipped.append("coverage (docs/verification-numbers.json has no coverage entry)")
+        skipped.append("coverage (.github/project/verification-numbers.json has no coverage entry)")
     elif documented is None:
         problems.append("the coverage row is gone from usage.rst")
     else:
