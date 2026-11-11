@@ -168,6 +168,7 @@ accident.
    :numbered:
 
    Foundation corrections <foundation-log>
+   Third-party code <third-party>
 
 _`License`
 ----------

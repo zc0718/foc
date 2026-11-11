@@ -60,6 +60,13 @@ def main() -> int:
     parser.add_argument("--cases", type=int, help="case count, when recording outside a build")
     args = parser.parse_args()
 
+    if not USAGE.exists():
+        # This script exists to cross-check prose against artefacts, so a missing page is a verdict,
+        # not a crash: the layer whose subject is the documentation is allowed to fail when the
+        # documentation is not there, but it has to say which file it wanted.
+        print(f"[numbers] {USAGE.relative_to(ROOT).as_posix()}: the documentation tree is not here, "
+              f"so there is nothing to cross-check", flush=True)
+        return 1
     text = USAGE.read_text(encoding="utf-8")
     cases = args.cases or measured_cases()
     stored = recorded()

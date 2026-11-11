@@ -1,0 +1,141 @@
+{
+  "_what": [
+    "The licence audit of every upstream project this library may read from. `deps.json` answers 'what do we link';",
+    "this file answers the other question a compliance reviewer asks: before reading another FOC project closely,",
+    "vendoring it, or copying a function out of it, what is its licence and what does that licence let us do.",
+    "The site page is rendered from this file by `deps_gate.py --render`; nothing in it is typed into prose.",
+    "`deps.json` 回答“我们链接了什么”；本文件回答合规审阅者的另一个问题：在细读、引入或摘抄另一个 FOC 项目之前，",
+    "它的许可是什么、允许我们做什么。站点页面由 `deps_gate.py --render` 从本文件生成，没有任何一条是手打进散文的。"
+  ],
+  "_why_here": [
+    "It lives in `.github/project/` because it is project-private rule data: the gate that enforces the same rule",
+    "(`gates.py license` over `.github/misc/.license-guard.txt`) is here too, and a documentation tree can be",
+    "rewritten without touching it. 它放在 `.github/project/`，因为它是项目私域的规则数据：执行同一条规则的门禁也在这里，",
+    "而文档树可以整个重写而不碰它。"
+  ],
+  "verdicts": {
+    "yes": {"en": "may be vendored, keep the notice", "zh": "可以引入，保留声明"},
+    "never": {"en": "never", "zh": "绝不可"},
+    "unverified": {"en": "unverified", "zh": "未核实"},
+    "not_vendored": {"en": "not vendored", "zh": "不引入"}
+  },
+  "projects": [
+    {
+      "id": "SimpleFOC",
+      "licence": "MIT",
+      "vendor": "yes",
+      "evidence": "LICENSE, Copyright (c) 2020 Antun Skuric",
+      "use": {
+        "en": "Behaviour spec and the HAL breadth checklist. **Not code**: its Arduino/global-object model conflicts with the rule that `include/` is allocation-free and exception-free, and with policy composition having no globals.",
+        "zh": "行为规格与 HAL 广度清单。**不引代码**：其 Arduino/全局对象模型与“`include/` 不分配、不抛异常”以及“策略组合不用全局”两条约束冲突。"
+      }
+    },
+    {
+      "id": "moteus",
+      "licence": "Apache-2.0",
+      "vendor": "yes",
+      "evidence": "README, licence section",
+      "use": {
+        "en": "The best reference for the command surface — field semantics, `NaN` meaning hold position, the gain scales — and for the field-weakening calibration flow. Same licence family as ours.",
+        "zh": "命令面语义（字段含义、`NaN` 表示保持位置、增益缩放）与弱磁标定流程的最佳参考，且与本库同族许可。"
+      }
+    },
+    {
+      "id": "VESC (bldc)",
+      "licence": "GPLv3",
+      "vendor": "never",
+      "evidence": "README badge and body",
+      "use": {
+        "en": "Capability and parameter **semantics only**. Copyleft is viral and would end the Apache-2.0 licence and any commercial use: do not copy code *or comments*, write the behaviour down as our own test and satisfy that.",
+        "zh": "只对标能力与参数**语义**。传染性 copyleft 会终结本库的 Apache-2.0 与商业可用性：**连注释都不要抄**，把行为写成我们自己的测试再满足它。"
+      }
+    },
+    {
+      "id": "miniFOC",
+      "licence": "AGPL-3.0",
+      "vendor": "never",
+      "evidence": "README body",
+      "use": {
+        "en": "Reference for 'low-cost hardware, no current loop' only. The network clause is poison for a library.",
+        "zh": "仅作“低成本硬件、无电流环”的参考。网络条款对库是毒药。"
+      }
+    },
+    {
+      "id": "SguanFOC",
+      "licence": "MIT",
+      "vendor": "yes",
+      "evidence": "LICENSE, Copyright (c) 2026 星必尘Sguan",
+      "use": {
+        "en": "Thinking reference only: never in the build, never in the library. `conventions.rst` records why it is also the one external reference whose numbers this project refuses to compare against.",
+        "zh": "只作思路参考：不进构建、不进库。它也是本库拒绝与之比数字的唯一外部参考，原因见 `conventions.rst`。"
+      }
+    },
+    {
+      "id": "ODrive (firmware)",
+      "licence": "MIT",
+      "vendor": "yes",
+      "evidence": "LICENSE.md first line, Copyright (c) 2016-2018 ODrive Robotics, repo 3a2e4dd1; three web fetches had failed before a clone worked",
+      "use": {
+        "en": "Behaviour spec first — spinout detection, input modes, anticogging, the torque-mode velocity limiter. Code only with the notice. Verified by cloning, which also pins the commit the conclusion rests on.",
+        "zh": "先作行为规格：spinout 检测、输入模式、anticogging、力矩模式限速。引代码须保留声明。用克隆核实，顺带把结论所依据的 commit 钉住。"
+      }
+    },
+    {
+      "id": "ST MCSDK / TI InstaSPIN / FpOC",
+      "licence": "unverified",
+      "vendor": "unverified",
+      "evidence": "not fetched",
+      "use": {
+        "en": "Treat like ODrive until verified: behaviour first, code never.",
+        "zh": "核实前与 ODrive 同处理：行为优先，代码不碰。"
+      }
+    },
+    {
+      "id": "ETL",
+      "licence": "MIT",
+      "vendor": "not_vendored",
+      "evidence": "LICENSE in the conan package, © John Wellbelove and contributors",
+      "use": {
+        "en": "An internal dependency and an independent witness: `src/**` and the tests may include it, a public header may not. The cross-check cases are the point — our CRC agrees with theirs byte for byte. The measured cost of the other choice is in `deps.json`.",
+        "zh": "内部依赖兼独立证人：`src/**` 与测试可以 include，公开头不行。价值在对拍用例——我们的 CRC 与它逐字节一致。另一种选择的实测代价在 `deps.json`。"
+      }
+    }
+  ],
+  "methods": [
+    {
+      "title": {"en": "Two ways to integrate, and only one is about code", "zh": "两种“接入”，只有一种涉及代码"},
+      "body": {
+        "en": [
+          "**Behaviour integration, always allowed.** Write our own test that encodes what the other project guarantees, then satisfy it. No licence question arises, and the test is the artefact that survives.",
+          "**Code integration, permissive licences only.** Copy, keep the notice, extend `NOTICE`, and let `gates.py license` keep everyone honest. A vendored subtree that is legitimately copyleft needs a scope line in `.github/misc/.license-guard.txt` and an entry in `NOTICE`; the library default stays permissive."
+        ],
+        "zh": [
+          "**行为接入，永远可行。** 把对方承诺的行为写成我们自己的测试，然后满足它。完全不涉及许可问题，留下的产物就是测试。",
+          "**代码接入，仅限宽松许可。** 复制、保留声明、扩 `NOTICE`，并让 `gates.py license` 守住。确实需要 copyleft 子目录时，在 `.github/misc/.license-guard.txt` 加作用域行并在 `NOTICE` 登记；库本身默认仍是宽松许可。"
+        ]
+      }
+    },
+    {
+      "title": {"en": "How to verify a licence: clone it, do not fetch it", "zh": "怎么核实许可：克隆，别抓网页"},
+      "body": {
+        "en": [
+          "A web fetch cannot extract a plain-text `LICENSE`, and a clone also pins the exact commit the conclusion rests on — which a web page never does. `workspace/` is git-ignored, so the reference copy never reaches a commit, but the conclusion and the commit hash do."
+        ],
+        "zh": [
+          "网页抓取无法提取纯文本 `LICENSE`；克隆还能给出结论所依据的确切 commit，而网页永远给不出。`workspace/` 已被 gitignore，参考副本不会进提交，但结论与 commit 哈希会进。"
+        ]
+      }
+    },
+    {
+      "title": {"en": "Hardware is not code", "zh": "硬件不是代码"},
+      "body": {
+        "en": [
+          "Driving hardware designed for another project needs no licence at all, and it is the cheapest real integration available: implement the five HAL interfaces (`Pwm`, `CurrentSense`, `PositionSensor`, `DcLink`, `Clock`) for that board and the library serves it."
+        ],
+        "zh": [
+          "为别人的项目设计的硬件写驱动不涉及任何许可，而且这是最便宜的真实接入：为那块板子实现五个 HAL 接口（`Pwm`、`CurrentSense`、`PositionSensor`、`DcLink`、`Clock`），库就能服务它。"
+        ]
+      }
+    }
+  ]
+}

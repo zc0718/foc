@@ -22,6 +22,7 @@ comparing the whole file's word sequence before and after, and refusing to write
 """
 import re
 import sys
+from pathlib import Path
 
 PATHS = ["docs/sphinx/source/foundation-log.rst"]
 HEAD = re.compile(r"^(\s*)\* - (.*)$")
@@ -74,6 +75,14 @@ def rows_of(lines, start, end):
 
 def check(paths=PATHS, quiet=False):
     bad = []
+    missing = [path for path in paths if not Path(path).exists()]
+    if missing:
+        # A doc-layer check may fail when the documentation is not there -- that is its subject --
+        # but it must say so in one line. A traceback says the tool is broken, which sends the reader
+        # looking for a bug in the wrong layer.
+        for path in missing:
+            print(f"[rst-table] {path}: the documentation tree is not here, so there is nothing to check")
+        return 1
     for path in paths:
         lines = open(path).read().splitlines()
         for start, end, width in tables(lines):

@@ -323,15 +323,19 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--selftest", action="store_true", help="mutate the table and require each mutation to be caught")
     parser.add_argument("--list", action="store_true", help="print every problem and every measurement")
-    parser.add_argument("--render", action="store_true", help="rewrite the Sphinx page from the table")
+    parser.add_argument("--render", action="store_true", help="write the Sphinx page from the table")
+    parser.add_argument("--out", type=Path, default=None,
+                        help="where --render writes; the site page by default, a temp path when a doc-side check asks")
     parser.add_argument("--baseline", action="store_true", help="freeze today's measurements into the baseline")
     args = parser.parse_args(argv)
     table = json.loads(TABLE.read_text(encoding="utf-8"))
     if args.selftest:
         return selftest(table)
     if args.render:
-        PAGE.write_text(render(table), encoding="utf-8")
-        print(f"[symbols] wrote {PAGE.relative_to(ROOT).as_posix()}")
+        target = args.out or PAGE
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(render(table), encoding="utf-8")
+        print(f"[symbols] wrote {target}")
         return 0
     measured = measure(table)
     if args.baseline:
@@ -350,11 +354,9 @@ def main(argv: list[str] | None = None) -> int:
               f"{len(measured['prose_anchors'])} prose anchor(s), {measured['reserved']} reserved symbol(s)")
         return 0
     problems = evaluate(table) + ratchet(measured, load_baseline())
-    if PAGE.exists():
-        if PAGE.read_text(encoding="utf-8") != render(table):
-            problems.append(f"{PAGE.relative_to(ROOT).as_posix()}: stale, run --render")
-    else:
-        problems.append(f"{PAGE.relative_to(ROOT).as_posix()}: does not exist, run --render")
+    # The page this table renders into is *not* checked here. A gate whose subject is the code must run
+    # with no documentation tree at all: whether the site page is current is a question about the
+    # documentation, so `render_check.py` -- run by the `docs` gate -- asks it.
     if args.list or problems:
         for problem in problems:
             print(f"[symbols] {problem}")

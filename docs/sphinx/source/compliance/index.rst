@@ -39,6 +39,10 @@ Four readers, four pages
    * - An auditor
      - this page, then :doc:`../boundaries`
      - the four sentences below, and the list of things this library does not do at all
+   * - A customer's licence reviewer
+     - :doc:`../third-party`
+     - every dependency we link with its licence and the paths it may appear on, and the licence of
+       each upstream project this library is allowed to read from
 
 The four sentences this project never says
 ------------------------------------------

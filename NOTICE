@@ -50,12 +50,14 @@ all of them arrive through the package manager, so the shipped sources stay enti
 
 | Component | Version | Licence | Where it appears |
 |---|---|---|---|
-| ETL (Embedded Template Library), © John Wellbelove and contributors | 20.47.1 | MIT | `src/**` and `test_package/test/**` only — its cost was measured before it was allowed anywhere (`docs/THIRD-PARTY.md`, `.github/project/deps.json`) |
+| ETL (Embedded Template Library), © John Wellbelove and contributors | 20.47.1 | MIT | `src/**` and `test_package/test/**` only — its cost was measured before it was allowed anywhere (`docs/sphinx/source/third-party.rst`, which is generated from `.github/project/deps.json`) |
 | GoogleTest, © Google Inc. | 1.16.0 | BSD-3-Clause | `test_package/**` only |
 | pybind11, © Wenzel Jakob | 3.0.1 | BSD-3-Clause | `api/**` only, and only when the Python bindings are enabled |
 
-`docs/THIRD-PARTY.md` states, per component, why it is here, where it may appear, and what evidence shows
-it does what we think it does. `conandata.yml` is the authoritative list; this table must never name a
-package that file does not.
-`docs/THIRD-PARTY.md` 逐个说明每个组件为什么在这里、允许出现在哪、以及凭什么相信它做对了。
+`docs/sphinx/source/third-party.rst` states, per component, why it is here, where it may
+appear, and what evidence shows it does what we think it does; it is generated from
+`.github/project/deps.json`, so it cannot disagree with the registry the gate reads. `conandata.yml` is
+the authoritative list; this table must never name a package that file does not.
+`docs/sphinx/source/third-party.rst` 逐项说明每个组件为什么在这里、允许出现在哪、
+以及凭什么相信它做对了；该页由 `.github/project/deps.json` 生成，因此不会与门禁读取的注册表不一致。
 `conandata.yml` 才是权威清单；本表不得列出那个文件里没有的包。
