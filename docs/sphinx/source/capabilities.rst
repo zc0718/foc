@@ -307,6 +307,16 @@ the sensitivity half is not, so the row stays **L2**.
      - ``Frame.NoSingleByteCorruptionIsAccepted``
      - na -- the codec holds no state; `SequenceChecker` holds one byte and one flag, and neither is a
        continuous-output invariant.
+   * - ``core/bus_current_limit.hpp``
+     - `BusCurrentLimitOutput` carries the authority to apply, whether a bus current arrived at all, and whether the
+       limiter is doing anything -- so "was this command clipped" is answerable without reconstructing the loop.
+     - `configure()` refuses a ceiling that is not positive, a headroom that does not sit below it, and rates or a gain
+       that are not positive; an unconfigured limiter passes everything through at authority 1 rather than clamping.
+       A step whose period is not positive changes nothing.
+     - ``BusCurrentLimit.TheCeilingHoldsOnTheBenchAndTheSameBenchExceedsItWithout``
+     - na -- the output is a per-tick authority rather than a continuous signal, and the property that matters
+       (`scale` never exceeds 1, so a limiter cannot become a booster) is asserted in
+       ``BusCurrentLimit.BelowTheAimNothingHappens``.
    * - ``core/angle_source.hpp``
      - `AngleReading` carries the quality word, the source that produced the angle, the disagreement the decision was
        made on (`NaN` when nothing could be compared) and how long the preferred source has been missing, so "which

@@ -54,6 +54,11 @@
       "example": null,
       "why": "a feed-forward the caller adds to its torque command; `Motor` has no compensation slot, which is why nothing in `src/` includes it"
     },
+    "core/bus_current_limit.hpp": {
+      "class": "policy",
+      "example": "test_package/test/unit/test_bus_current_limit.cpp",
+      "why": "the caller scales its own command with it; whether a bus current can be measured at all, and what ceiling the supply allows, are facts about the installation, so this type takes both as inputs and nothing in `src/` includes it"
+    },
     "core/angle_source.hpp": {
       "class": "policy",
       "example": "test_package/test/unit/test_angle_source.cpp",

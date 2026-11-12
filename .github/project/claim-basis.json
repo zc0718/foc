@@ -366,7 +366,10 @@
     ],
     "comm/frame.hpp": [
       "comm/frame.hpp"
-    ],    "core/angle_source.hpp": [
+    ],    "core/bus_current_limit.hpp": [
+      "core/bus_current_limit.hpp"
+    ],
+    "core/angle_source.hpp": [
       "core/angle_source.hpp"
     ],
     "core/thermistor.hpp": [
