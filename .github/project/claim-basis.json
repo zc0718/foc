@@ -369,6 +369,11 @@
     ],    "core/thermistor.hpp": [
       "core/thermistor.hpp"
     ],
+    "motor/drive_supervisor.hpp": [
+      "core/protection.hpp",
+      "core/brake_chopper.hpp",
+      "motor/motor.hpp"
+    ],
     "hal/temperature.hpp": [
       "hal/temperature.hpp"
     ],

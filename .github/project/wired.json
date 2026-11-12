@@ -186,6 +186,11 @@
     "motor/torque_map.hpp": {
       "class": "motor-owned"
     },
+    "motor/drive_supervisor.hpp": {
+      "class": "policy",
+      "example": "test_package/test/unit/test_drive_supervisor.cpp",
+      "why": "the caller wraps its own `Motor` in it, which is why nothing in `src/` includes it and why `motor.hpp` was not touched: the tick order is a decision about the *application's* hardware (which fault pin, which chopper, which temperature channel), and a `Motor` that assumed one would have taken that decision away from every host that does it differently"
+    },
     "hal/clock.hpp": {
       "class": "contract",
       "stub": "callback_hal.hpp",

@@ -287,6 +287,17 @@ the sensitivity half is not, so the row stays **L2**.
      - ``AutoTune.ADoubledInertiaIsRefusedAndTheGainsComeBackUntouched``
      - na -- the window is a finite sum that is thrown away on `reset()`, and what leaves the class is a `Pi` config rather
        than a per-tick output.
+   * - ``motor/drive_supervisor.hpp``
+     - `SupervisorStatus` carries the cause, both masks, the derated limit, the temperature that was used (`NaN` when
+       no channel answered), the bus voltage, the chopper's duty and the tick number, so "which cause, on which tick,
+       was the output allowed" takes one read.
+     - `configure()` refuses a band that cannot be a band -- a trip point under its own derating start, a derating end
+       under its start, a bus window the wrong way round, no hard limit, no thermal budget, a chopper that would switch
+       on below where it switches off, no pole pairs -- and leaves nothing stored; `step()` before `configure()` answers
+       `State` and writes no duty, because an unprotected drive is the failure this type exists to prevent.
+     - ``DriveSupervisor.AnOverCurrentStopsTheOutputOnTheFirstTickItIsVisible``
+     - na -- every output is a per-tick decision; the stateful parts (`Protector`'s budget and timers, the chopper's
+       dwell times) are their own types with their own cases.
    * - ``comm/frame.hpp``
      - `FrameStatus` names which check failed (start / length / checksum) instead of one generic failure, and
        `SequenceChecker` reports `missing` / `duplicate` / `out_of_order` separately. `missing` counts the frames

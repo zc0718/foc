@@ -707,6 +707,17 @@
       "limit": "The member is not part of `hal::DcLink`, because a bus fed from a supply may measure no current and making it required would refuse those drives -- so a consumer must ask `has_bus_current_v` rather than link against it. The port carries no scenario of its own: a conversion is checked, a policy is not.",
       "reopened": [],
       "no_effect": "No claim row was re-opened, and by the rule above none could be: this is an implementation-level leg, the member is absent on every link that does not declare it, and a port never promotes. `core/traits.hpp` gained one structural trait; the suite moved only by the four new cases."
+    },
+    {
+      "id": "O-51",
+      "date": "2026-11-12",
+      "leg": "implementation",
+      "capability": "A whole drive tick has one status: `motor/drive_supervisor.hpp` publishes `SupervisorStatus{fault, active_mask, latched_mask, i_limit_a, temperature_c, v_bus_v, chopper_duty, output_allowed, tick}`. Before this, the five protection causes that no other component can see (over-current, over/under-voltage, over-temperature, `I2t`) had no producer at all, so a host could only learn the drive was unhappy from the loop's own `status()` -- which never named them.",
+      "source": "`test_drive_supervisor.cpp` (9 cases). Each of the five causes reaches `fault_code()` by name; the trip tick writes **no duty** and the counterfactual from the same fixture -- supervisor left out of the path -- is five ticks of switching at 6 A against a 5 A hard limit with `FaultCode::None` afterwards; the bus is read on the tick it is acted on (`write_count() == 0` for an over-voltage); the chopper keeps a non-zero duty at 34 V with the PWM off; a missing temperature channel leaves `i_limit_a` alone while `temperature_c` carries `NaN`; the derating curve falls to exactly 0 across 20 -> 120 C with `fault == None`; `clear()` leaves the thermal budget untouched. Teeth: a no-op trip branch kills 5 of those 9, and gating the chopper on the motor's state kills the continuity case alone.",
+      "effect": "N4 and the C command surface now have somewhere to read a fault cause from, and the derated limit has a published home to reach `Command::max_current_a` through. Nothing in `src/` reads it in this release: the supervisor is a composition the caller instantiates.",
+      "limit": "The current input is the loop's **own conversion**, so an over-current is acted on one tick after it is applied -- stated on the type rather than discovered. The status does not carry a mechanical-brake state, because no contract for one exists yet. `flux_valid` is reported as `true` with a zero error: that judgement belongs to `Motor`, which owns the observer.",
+      "reopened": [],
+      "no_effect": "No claim row was re-opened, and by the rule above none could be: this is an implementation-level leg, nothing in `src/` includes the header, and a port never promotes. The claim it does carry is the README row for the header itself, whose evidence is the same nine cases."
     }
   ]
 }
