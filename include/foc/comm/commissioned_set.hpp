@@ -219,8 +219,13 @@ namespace detail {
  * @since 0.1.0
  */
 inline void put_u16(std::uint8_t* out, std::uint16_t value) noexcept {
-    out[0] = static_cast<std::uint8_t>(value & 0xFFU);
-    out[1] = static_cast<std::uint8_t>((value >> 8U) & 0xFFU);
+    // Widened before the shift: a `uint16_t` promoted to `int` and then and-ed with `0xFFU` is a signed/unsigned mix,
+    // which the analyser refuses and which is one `-fwrapv` away from mattering.
+    // 先加宽再移位：`uint16_t` 提升为 `int` 之后与 `0xFFU` 相与，是有符号与无符号混用——分析器拒绝它，而它与一个
+    // `-fwrapv` 之差就可能真的出事。
+    const auto wide = static_cast<std::uint32_t>(value);
+    out[0] = static_cast<std::uint8_t>(wide & 0xFFU);
+    out[1] = static_cast<std::uint8_t>((wide >> 8U) & 0xFFU);
 }
 
 /**

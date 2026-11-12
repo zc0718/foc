@@ -398,6 +398,11 @@
       "class": "policy",
       "example": "test_package/test/unit/test_commissioning_flow.cpp",
       "why": "the caller owns the estimators and the bench; this type only records the session, so whether a machine needs flux before inductance and what a partial set means are facts about the installation rather than about the library -- which is also why nothing in `src/` includes it"
+    },
+    "comm/board_record.hpp": {
+      "class": "policy",
+      "example": "test_package/test/unit/test_board_record.cpp",
+      "why": "a codec the caller uses when it stores one unit's production result; where that blob lives -- which sector, which database -- is a board and factory fact, so nothing in `src/` includes it"
     }
   }
 }

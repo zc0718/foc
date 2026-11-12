@@ -360,6 +360,17 @@ the sensitivity half is not, so the row stays **L2**.
      - ``CommissioningFlow.AFailureKeepsWhatWasAlreadyObtainedAndNamesTheStageThatGaveUp``
      - na -- it holds a session record, not a signal; the properties that matter (the mask survives a failure, and
        nothing starts after one until `reset()`) are asserted in the case named above.
+   * - ``comm/board_record.hpp``
+     - `decode_board_record()` answers with the offset it stopped at, and the four structural refusals are separate
+       words rather than one "invalid": a wrong marker sends a reader to the writer, a failed check value to the
+       transport, and a `BadField` offset to the check that produced an impossible row.
+     - `encode_board_record()` refuses a short buffer or an unusable record **before the first byte**, so a
+       truncated record never reaches flash; the padding past `count` must be zero on the way in and is verified on
+       the way out; a negative zero is not a padding zero, because it compares equal to `0.0F` and encodes
+       differently.
+     - ``BoardRecord.APaddingRowThatSpeaksOrACountThatCannotBeIsRefused``
+     - na -- a codec holds no state and produces no signal; the property that matters (no single-byte corruption of
+       the blob reads back as a record) is asserted in ``BoardRecord.NoSingleByteCorruptionIsAccepted``.
    * - ``comm/commissioned_set.hpp``
      - `SetStatus` names the check that failed (short / marker / schema / reserved / check value / field) and
        `SetError.offset` names the byte, so a reader learns which number to re-measure rather than which byte to stare

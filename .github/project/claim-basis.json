@@ -464,6 +464,11 @@
     ],
     "core/commissioning_flow.hpp": [
       "core/commissioning_flow.hpp"
+    ],
+    "comm/board_record.hpp": [
+      "comm/board_record.hpp",
+      "comm/commissioned_set.hpp",
+      "core/board_check.hpp"
     ]
   },
   "unmapped": []
