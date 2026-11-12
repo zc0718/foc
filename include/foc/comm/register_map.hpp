@@ -154,14 +154,14 @@ enum class RegisterKind : std::uint8_t {
  * @brief [zh] 一个寄存器：编号、怎么读、以及回答它的那个 C 函数。
  * @note [en] `read` is a **function pointer taken at compile time**, not a name in a table to be looked up later. That
  *            is the whole design: renaming a C function without updating this table is a compile error, in every build
- *            leg, before any gate runs. A string-keyed table would need a gate to notice, and a gate only runs where
- *            the gate is wired in. `abi` is carried for the diagnostics and for the completeness check, and it is the
- *            *name of the function whose address is in `read`* -- the two are written on the same line so they cannot
- *            drift.
+ *            leg, before anything else has a chance to notice. A string-keyed table would compile and fail later, which
+ *            means it fails in the field. `abi` is carried for the diagnostics and for the completeness check, and it
+ *            is the *name of the function whose address is in `read`* -- the two are written on the same line so they
+ *            cannot drift.
  * @note [zh] `read` 是 **编译期取得的函数指针** ，不是一张稍后要查的名字表。这就是整个设计：改了 C 函数名而没更新这张
- *            表，在每一条构建腿里都是编译错误，早于任何门禁。以字符串为键的表需要门禁才能发现，而门禁只在它被接上的地方
- *            跑。 `abi` 是为了诊断与完整性检查而携带的，它 **就是 `read` 里那个函数的地址所属的函数名** ——两者写在同一
- *            行，所以漂不开。
+ *            表，在每一条构建腿里都是编译错误，早于任何其他环节发现问题。以字符串为键的表能编过、在更晚的时候才失败——
+ *            而那意味着它在现场失败。 `abi` 是为了诊断与完整性检查而携带的，它
+ *            **就是 `read` 里那个函数的地址所属的函数名** ——两者写在同一行，所以漂不开。
  * @since 0.1.0
  * @exporter
  */
