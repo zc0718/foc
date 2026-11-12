@@ -331,19 +331,20 @@ namespace {
  * @brief [zh] 一台电机配一个自己的被控对象，于是两台可以同步推进。
  */
 struct Twin final {
-    Twin() : callback_plant(plant) {}
+    explicit Twin(const foc::sil::PlantParams& plant_params) : plant(plant_params), callback_plant(plant) {}
     Twin(const Twin&) = delete;
     Twin& operator=(const Twin&) = delete;
     ~Twin() = default;
 
-    foc::sil::PmsmPlant plant{pinned_plant_params()};
+    foc::sil::PmsmPlant plant;
     CallbackPlant callback_plant;
     foc_motor_t motor{};
 };
 
-auto make_twin(Twin& twin, const foc_motor_params_t& params) -> foc_err_t {
+auto make_twin(Twin& twin, const foc_motor_params_t& params, std::int32_t use_observer_angle = 0) -> foc_err_t {
     const foc_hal_callbacks_t callbacks = callbacks_for(twin.callback_plant);
-    const foc_motor_setup_t setup = setup_with_bandwidth(2000.0F);
+    foc_motor_setup_t setup = setup_with_bandwidth(2000.0F);
+    setup.use_observer_angle = use_observer_angle;
     return foc_motor_create_host(&params, &setup, &callbacks, &twin.motor);
 }
 
@@ -392,7 +393,7 @@ auto tick_in_lockstep(Twin& a, Twin& b, int count) -> void {
 } // namespace
 
 TEST(ApiParams, TheReadbackIsWhatWasHandedIn) {
-    Twin twin;
+    Twin twin{pinned_plant_params()};
     const foc_motor_params_t params = params_struct();
     ASSERT_EQ(make_twin(twin, params), FOC_OK);
 
@@ -423,8 +424,8 @@ TEST(ApiParams, TheReadbackIsWhatWasHandedIn) {
 }
 
 TEST(ApiParams, ARefusedCallIsIndistinguishableFromNoCall) {
-    Twin a;
-    Twin b;
+    Twin a{pinned_plant_params()};
+    Twin b{pinned_plant_params()};
     const foc_motor_params_t params = params_struct();
     ASSERT_EQ(make_twin(a, params), FOC_OK);
     ASSERT_EQ(make_twin(b, params), FOC_OK);
@@ -469,8 +470,8 @@ TEST(ApiParams, ARefusedCallIsIndistinguishableFromNoCall) {
 }
 
 TEST(ApiParams, AValidCallDoesNotReachTheSensoredControlFrame) {
-    Twin a;
-    Twin b;
+    Twin a{pinned_plant_params()};
+    Twin b{pinned_plant_params()};
     const foc_motor_params_t params = params_struct();
     ASSERT_EQ(make_twin(a, params), FOC_OK);
     ASSERT_EQ(make_twin(b, params), FOC_OK);
@@ -497,6 +498,88 @@ TEST(ApiParams, AValidCallDoesNotReachTheSensoredControlFrame) {
     different.lq = params.lq * 2.0F;
     ASSERT_EQ(foc_motor_apply_params(a.motor, &different, nullptr), FOC_OK);
     tick_in_lockstep(a, b, 40);
+
+    EXPECT_EQ(foc_motor_destroy(a.motor), FOC_OK);
+    EXPECT_EQ(foc_motor_destroy(b.motor), FOC_OK);
+}
+
+TEST(ApiParams, TheNumbersReachTheObserver) {
+    // The case above pins where the numbers do *not* go on a sensored host. This one covers the other half: with the
+    // angle coming from the observer, the numbers reach the loop that commutates -- and that has to be shown by a
+    // difference, because "reaches the observer" is not a quantity the C surface publishes.
+    // 上一条钉住带传感器宿主上数字**不去**哪里。这一条覆盖另一半：角度来自观测器时，数字到达换相所依据的环路——而这件事
+    // 只能用一个差来证明，因为"到达观测器"不是 C 接口会发布的量。
+    Twin a{foc::sil::nominal_plant_params()};
+    Twin b{foc::sil::nominal_plant_params()};
+    const foc_motor_params_t params = params_struct();
+    ASSERT_EQ(make_twin(a, params, 1), FOC_OK) << "the observer-driven host was refused";
+    ASSERT_EQ(make_twin(b, params, 1), FOC_OK);
+    start_twin(a);
+    start_twin(b);
+
+    // Lockstep *without* asserting equality: this case needs the first tick at which they differ, which is the
+    // measurement rather than a pass/fail condition.
+    // 同步推进但**不断言**相等：本用例要的是它们第一次分开的那一拍，那是测量值，不是布尔条件。
+    const auto tick_pair = [](Twin& x, Twin& y) -> bool {
+        const foc_err_t rx = step_twin(x);
+        const foc_err_t ry = step_twin(y);
+        std::uint32_t sx[3] = {};
+        std::uint32_t sy[3] = {};
+        const foc_err_t gx = state_as_bits(x.motor, sx);
+        const foc_err_t gy = state_as_bits(y.motor, sy);
+        if (rx != FOC_OK || ry != FOC_OK || gx != FOC_OK || gy != FOC_OK) {
+            return false;
+        }
+        return (sx[0] != sy[0]) || (sx[1] != sy[1]) || (sx[2] != sy[2]);
+    };
+
+    int spontaneous = 0;
+    for (int i = 0; i < 100; ++i) {
+        spontaneous += tick_pair(a, b) ? 1 : 0;
+    }
+    ASSERT_EQ(spontaneous, 0) << "two identical observer-driven motors diverged before any call was made";
+
+    // Non-vacuity: an observer that publishes zeros would make the comparison above meaningless.
+    // 非空真：一个只会发布零的观测器会让上面的比较失去意义。
+    float speed = 0.0F;
+    float id_a = 0.0F;
+    float iq_a = 0.0F;
+    ASSERT_EQ(foc_get_state(a.motor, &speed, &id_a, &iq_a), FOC_OK);
+    std::printf("[api-params] observer-driven loop: speed %.6f rad/s, iq %.6f A of %.6f A\n", static_cast<double>(speed),
+                static_cast<double>(iq_a), static_cast<double>(kIqCommand));
+    ASSERT_GT(std::fabs(iq_a), 0.1F) << "the observer-driven loop is not driving anything";
+
+    // Face one: the numbers already in force must be a no-op here too, which is what rules out "any call perturbs it".
+    // 第一面：把已经在生效的数字再交一次，在这里也必须是空操作——这排除了"任何一次调用都会扰动它"。
+    ASSERT_EQ(foc_motor_apply_params(a.motor, &params, nullptr), FOC_OK);
+    int changed_by_noop = 0;
+    for (int i = 0; i < 40; ++i) {
+        changed_by_noop += tick_pair(a, b) ? 1 : 0;
+    }
+    EXPECT_EQ(changed_by_noop, 0) << "calling with the numbers already in force changed the trajectory";
+
+    // Face two: a real change has to reach the loop, and the tick at which it does is recorded rather than assumed.
+    // 第二面：真的变更必须到达环路，而它到达的那一拍是被记录下来的，不是假设的。
+    foc_motor_params_t different = params;
+    different.lq = params.lq * 1.5F;
+    ASSERT_EQ(foc_motor_apply_params(a.motor, &different, nullptr), FOC_OK);
+    int divergence_tick = -1;
+    for (int i = 0; i < 40 && divergence_tick < 0; ++i) {
+        if (tick_pair(a, b)) {
+            divergence_tick = i + 1;
+        }
+    }
+    std::printf("[api-params] lq x1.5 reached the observer-driven loop at tick %d\n", divergence_tick);
+    EXPECT_GT(divergence_tick, 0) << "the numbers never reached the loop the observer drives";
+    // Measured: 1 tick. The assertion allows two, so a one-tick change in when the observer is stepped does not make
+    // this flaky -- while a regression that stops forwarding the numbers cannot pass it at all.
+    // 实测：第 1 拍。断言允许两拍，于是观测器推进时机的单拍变化不会让它变瓕——而停止转发数字的回归一次也过不了。
+    EXPECT_LE(divergence_tick, 2) << "the numbers reached the loop late enough that something else explains it";
+    // What this does not claim: the observer is accurate here. At ~1.1 rad/s it sits below the documented speed floor
+    // for back-EMF observation, so the published angle is not a good estimate -- it is only an estimate the numbers
+    // demonstrably reach. Accuracy at speed is the observer's own claim row, not this one.
+    // 本用例不声称的：观测器在这里是准的。~1.1 rad/s 低于反电势观测器文档化的转速下限，所以发布的角度不是好估计——
+    // 它只是“数字确实到达”的那个估计。高速下的精度属于观测器自己的 claim 行，不属于这里。
 
     EXPECT_EQ(foc_motor_destroy(a.motor), FOC_OK);
     EXPECT_EQ(foc_motor_destroy(b.motor), FOC_OK);

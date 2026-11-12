@@ -543,7 +543,7 @@ whether your hardware matches that model.
      - Level
    * - Unit, SIL and stress cases
      - :code:`conan create . -s build_type=Debug --build=missing`
-     - 860 cases, 0 failed
+     - 861 cases, 0 failed
      - L1/L2
    * - Line coverage
      - :code:`python3 .github/project/coverage_gate.py`
