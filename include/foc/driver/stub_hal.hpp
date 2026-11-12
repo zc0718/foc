@@ -5,6 +5,7 @@
 #include <foc/driver/stub_fault_input.hpp>
 #include <foc/driver/stub_dc_link.hpp>
 #include <foc/driver/stub_pwm.hpp>
+#include <foc/driver/stub_temperature.hpp>
 // Conan::ImportEnd
 
 /*!
@@ -39,11 +40,22 @@ struct StubHal final {
     using Position = SimPosition;
     using DcLink = StubDcLink;
     using FaultInput = StubFaultInput;
+    using Temperature = StubTemperature;
 
     Pwm pwm;
     CurrentSense current_sense;
     Position position;
     DcLink dc_link;
+    /**
+     * @brief [en] The optional winding-temperature channel, present and **invalid** until a case sets it.
+     * @brief [zh] 可选的绕组温度通道：在，并且在用例设定之前就是 **无效** 的。
+     * @note [en] Present so that the optional-contract path is exercisable from a bench; invalid so that a consumer
+     *            which forgets to ask `has_temperature_v` reads "no measurement" rather than a number nobody supplied.
+     * @note [zh] 它在，是为了让可选契约的路径在台架上可被走到；它无效，是为了让忘记问 `has_temperature_v` 的消费者读到
+     *            "没有测量"，而不是一个没人提供过的数字。
+     * @since 0.1.0
+     */
+    Temperature temperature;
     /**
      * @brief [en] The power stage's fault output: present and quiet, and injection is what a fault case does.
      * @brief [zh] 功率级的故障输出：在、且安静，注入是故障用例要做的事。

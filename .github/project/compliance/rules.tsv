@@ -86,10 +86,10 @@ bugprone-use-after-move	tidy:bugprone-use-after-move	implemented	any	none	-	zc	c
 bugprone-virtual-near-miss	tidy:bugprone-virtual-near-miss	implemented	any	none	-	zc	clang-tidy (pinned config)
 cppcoreguidelines-avoid-magic-numbers	tidy:cppcoreguidelines-avoid-magic-numbers	open	any	none	这一行原本由生成器写成 `implemented`，那是**洗衣**：检查名确实在钉住的配置里，但它没有生效。改成 `open` 才是实情——这条规则既没有被本项目执行，也没有被签偏差。钉住的配置**刻意是松的**（`Checks:` 折叠标量里的 `#` 是字面量，`clang-tidy --dump-config` 解析出 `-*`）。这不是缺陷：私域语法（`// Conan::ImportStart` 之类）由 IaC 层管控（`.github/skills/_shared/code-conventions.md`、`.github/misc/Codegen-Starter.txt`、`het-*` 技能），linter 被刻意排除在外以保持兼容。**zc 于 2026-11-06 拍板：不报上游。** 所以「这条检查在不在跑」只能由本仓库自己声明——`enforce.json` 的族表是唯一出口。要收它只有两条路，都要一次显式决定：① 加进 `enforce.json` 的族表并把 310 处（`src/`）/ 353 处（`include/`）清掉，或把 `IgnoredIntegerValues` 调宽并写明理由；② 保持 `open`。	zc	clang-tidy（钉住配置，但未生效）
 cppcoreguidelines-family	tidy:cppcoreguidelines-*	open	c++17	none	Core Guidelines 的 43 条检查里只点名了 2 条。钉住的配置**刻意是松的**：`Checks:` 是多行折叠标量，**其中的 `#` 注释行是字面量**，`clang-tidy --dump-config` 解析出的集合是 `-*`——所以 `tidy` 门对 42 个源文件报 OK 是因为它一个检查都没开（事实如此，且是模板的姿态，私域语法由 IaC 层管控，见 `enforce.json`，zc 已拍板不报上游）。把注释行去掉后同样的文件 **37/42 有诊断、共 383 条**；整族（`-*,cppcoreguidelines-*`，125 个目标）实测 **1365 条 / 15 个检查**，其中三块是设计决策而不是疏漏：C ABI（`use-enum-class` 50、`avoid-c-arrays` 123、`pro-bounds-*` 309）、本库既有的值类型风格（`use-default-member-init` 92、`pro-type-member-init` 64、`special-member-functions` 47）、以及 `avoid-magic-numbers` 664。**不整族收**：它报的多数是 C ABI 与 API 形状。保持 `open` 是因为还没有决定要逐条收哪几个成员，计数已经备好，随时可选。	zc	A10 C++ Core Guidelines（免费）
-cppcoreguidelines-macro-usage	tidy:cppcoreguidelines-macro-usage	deviation	any	none	deviation/cppcoreguidelines-macro-usage.md -- suppressed at include/foc/api/foc_types.h:22, include/foc/api/foc_types.h:25	zc	clang-tidy (pinned config)
+cppcoreguidelines-macro-usage	tidy:cppcoreguidelines-macro-usage	deviation	any	none	deviation/cppcoreguidelines-macro-usage.md -- suppressed at include/foc/api/foc_types.h:36, include/foc/api/foc_types.h:39	zc	clang-tidy (pinned config)
 cppcoreguidelines-pro-type-reinterpret-cast	tidy:cppcoreguidelines-pro-type-reinterpret-cast	deviation	c++17	none	规则**适用**：`src/api/bridge.cpp` 里有 8 处真实的 `reinterpret_cast`，每一处都已签偏差，理由写在 deviation/cppcoreguidelines-pro-type-reinterpret-cast.md。这一行原记 `not-applicable`，理由是「该检查没启用，所以没有规则可违反」——那是关于**工具**的陈述，不是关于**代码**的陈述：检查没开不等于规则没有宾语。启用与否不改变「这 8 处违反该规则」这个事实，所以它一直是偏差，只是没人把它记成偏差。	zc	clang-tidy（未启用）+ src/api/bridge.cpp
 performance-avoid-endl	tidy:performance-avoid-endl	implemented	any	none	-	zc	clang-tidy (pinned config)
-performance-enum-size	tidy:performance-enum-size	deviation	any	none	deviation/performance-enum-size.md -- suppressed at include/foc/api/foc_types.h:136, include/foc/api/foc_types.h:232, include/foc/api/foc_types.h:247, include/foc/api/foc_types.h:264, include/foc/api/foc_types.h:430, include/foc/api/foc_types.h:448, include/foc/api/foc_types.h:466, include/foc/api/foc_types.h:483, include/foc/api/foc_types.h:582, include/foc/api/foc_types.h:83	zc	clang-tidy (pinned config)
+performance-enum-size	tidy:performance-enum-size	deviation	any	none	deviation/performance-enum-size.md -- suppressed at include/foc/api/foc_types.h:103, include/foc/api/foc_types.h:156, include/foc/api/foc_types.h:325, include/foc/api/foc_types.h:348, include/foc/api/foc_types.h:365, include/foc/api/foc_types.h:604, include/foc/api/foc_types.h:622, include/foc/api/foc_types.h:640, include/foc/api/foc_types.h:657, include/foc/api/foc_types.h:887	zc	clang-tidy (pinned config)
 performance-faster-string-find	tidy:performance-faster-string-find	implemented	any	none	-	zc	clang-tidy (pinned config)
 performance-for-range-copy	tidy:performance-for-range-copy	implemented	any	none	-	zc	clang-tidy (pinned config)
 performance-implicit-conversion-in-loop	tidy:performance-implicit-conversion-in-loop	implemented	any	none	-	zc	clang-tidy (pinned config)
@@ -99,7 +99,7 @@ performance-inefficient-vector-operation	tidy:performance-inefficient-vector-ope
 performance-move-const-arg	tidy:performance-move-const-arg	implemented	any	none	-	zc	clang-tidy (pinned config)
 performance-move-constructor-init	tidy:performance-move-constructor-init	implemented	any	none	-	zc	clang-tidy (pinned config)
 performance-no-automatic-move	tidy:performance-no-automatic-move	implemented	any	none	-	zc	clang-tidy (pinned config)
-performance-no-int-to-ptr	tidy:performance-no-int-to-ptr	deviation	any	none	deviation/performance-no-int-to-ptr.md -- suppressed at src/api/bridge.cpp:609, src/api/bridge.cpp:659, src/api/bridge.cpp:809, src/api/bridge.cpp:820, src/api/bridge.cpp:874, src/api/bridge.cpp:885, src/api/bridge.cpp:950, src/api/bridge.cpp:961	zc	clang-tidy (pinned config)
+performance-no-int-to-ptr	tidy:performance-no-int-to-ptr	deviation	any	none	deviation/performance-no-int-to-ptr.md -- suppressed at src/api/bridge.cpp:1008, src/api/bridge.cpp:1019, src/api/bridge.cpp:662, src/api/bridge.cpp:712, src/api/bridge.cpp:864, src/api/bridge.cpp:875, src/api/bridge.cpp:929, src/api/bridge.cpp:940	zc	clang-tidy (pinned config)
 performance-noexcept-destructor	tidy:performance-noexcept-destructor	implemented	any	none	-	zc	clang-tidy (pinned config)
 performance-noexcept-move-constructor	tidy:performance-noexcept-move-constructor	implemented	any	none	-	zc	clang-tidy (pinned config)
 performance-noexcept-swap	tidy:performance-noexcept-swap	implemented	any	none	-	zc	clang-tidy (pinned config)
@@ -147,6 +147,7 @@ unit:driver/stub_fault_input.hpp	-	not-applicable	any	none	测试替身：可以
 unit:driver/stub_hal.hpp	-	not-applicable	any	none	测试替身：让库在没有硬件时也能被驱动的是它，被断言的不是它。	zc	README claim 行 L1（终态，stub 组）
 unit:driver/stub_hall.hpp	-	not-applicable	any	none	测试替身：存在的目的就是"没有硬件也能驱动库"，它的行为由用它的人决定。	zc	README claim 行 L1（终态）
 unit:driver/stub_pwm.hpp	-	not-applicable	any	none	测试替身：记录占空比供断言使用，自身无控制律。	zc	README claim 行 L1（终态，stub 组）
+unit:driver/stub_temperature.hpp	-	not-applicable	any	none	接口/管道头：契约的参考实现，只存一个读数；它证明形状可实现，不主张任何物理。行为断言在 test_temperature.cpp，不在本声明处。	zc	README claim 行 L1（终态）
 unit:hal/brake_switch.hpp	-	not-applicable	any	none	HAL 契约：抽象声明，没有可检查的定义。	zc	README claim 行 L1（终态，HAL 组）
 unit:hal/clock.hpp	-	not-applicable	any	none	HAL 契约：抽象声明，没有可检查的定义。	zc	README claim 行 L1（终态，HAL 组）
 unit:hal/current_sense.hpp	-	not-applicable	any	none	HAL 契约：抽象声明，没有可检查的定义。	zc	README claim 行 L1（终态，HAL 组）
@@ -155,4 +156,5 @@ unit:hal/fault_input.hpp	-	not-applicable	any	none	HAL 契约：抽象声明，�
 unit:hal/hall.hpp	-	not-applicable	any	none	HAL 契约：只有抽象声明，没有可检查的定义。	zc	README claim 行 L1（终态）
 unit:hal/position.hpp	-	not-applicable	any	none	HAL 契约：抽象声明，没有可检查的定义。	zc	README claim 行 L1（终态，HAL 组）
 unit:hal/pwm.hpp	-	not-applicable	any	none	HAL 契约：抽象声明，没有可检查的定义。	zc	README claim 行 L1（终态，HAL 组）
+unit:hal/temperature.hpp	-	not-applicable	any	none	接口/管道头：一个纯虚接口与一个读数结构；没有行为可断言，缺席路径由 traits 的结构化判定承担（见 core/traits.hpp 行）。	zc	README claim 行 L1（终态）
 unit:version.h	-	not-applicable	any	none	同上（C ABI 侧的版本串）。	zc	README claim 行 L1（终态）

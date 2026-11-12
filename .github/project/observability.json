@@ -685,6 +685,17 @@
       "limit": "The node is one lumped body: no magnet, no end-winding, no ambient drift, and `Rt`/`Ct` are the caller's numbers rather than something this repository measured on a machine. Above `Rt*P*alpha = 1` the model has no steady state at all and runs away to temperatures no winding would survive -- which is the physically correct answer to the equation as written, not a claim that a real machine runs away.",
       "reopened": [],
       "no_effect": "No claim row was re-opened: the port contributes exactly `0.0F` when off, and the four claim rows over this plant (`core/observer/back_emf_observer.hpp`, `core/observer/hfi_observer.hpp`, `core/observer/nonlinear_flux_observer.hpp`, `motor/motor.hpp`) were re-read as `holds` with that reason in `blast` B-12. `core/protection.hpp` was read too and needs no change -- its numbers were confirmed against the configuration it ships with, and the only refinement is the one above about which quantity the zero at 105 C is, which the row already describes as '0 A and no output'. The suite moved only by the five new cases."
+    },
+    {
+      "id": "O-49",
+      "date": "2026-11-12",
+      "leg": "implementation",
+      "capability": "A winding-temperature channel now exists as an **optional** HAL contract (`hal/temperature.hpp`), with a reference stub and a datasheet-side converter (`core/thermistor.hpp`). Before this the library could only be handed a temperature as a number, so every derating consumer would have had to invent the channel, its failure semantics and its divider arithmetic separately -- and each would have answered 'is this a measurement' differently.",
+      "source": "`test_temperature.cpp` (6 cases): the divider inverse against a forward model written in the test (worst **0.000031 C** over -20..+120 C), the two topologies as mirror images, both rails refused with the receiver untouched, a configuration that cannot describe a divider refused up front, the stub starting invalid with `StubHal::reset()` taking it back, and `has_temperature_v` answering true / false / false for present / absent / wrong-shaped members.",
+      "effect": "N3's supervisor gets an input it can **ask for** instead of a parameter it must be handed. Nothing else changes in this release: no consumer reads the channel yet.",
+      "limit": "The converter is the two-point beta model, so the band it is honest over is 20-100 C; outside that a Steinhart-Hart fit is the right tool and this one is not. Whether a real NTC's self-heating and cable resistance matter is a board question, not one this repository measured.",
+      "reopened": [],
+      "no_effect": "No claim row was re-opened, and by the rule above none could be: this is an implementation-level leg, the contract is absent in every existing HalPolicy (`CallbackHal`, `PlantHal`), and a port never promotes. `core/traits.hpp` gained one structural trait beside `is_clock`; the suite moved only by the six new cases."
     }
   ]
 }

@@ -296,6 +296,14 @@ the sensitivity half is not, so the row stays **L2**.
      - ``Frame.NoSingleByteCorruptionIsAccepted``
      - na -- the codec holds no state; `SequenceChecker` holds one byte and one flag, and neither is a
        continuous-output invariant.
+   * - ``core/thermistor.hpp``
+     - `NtcDivider::temperature_c` answers `false` at both rails and leaves the receiver untouched, because 0 and full
+       scale are what an open and a shorted thermistor produce and both are ordinary numbers on the curve;
+       `valid_config()` reports a divider that cannot exist before the first reading is attempted.
+     - `valid_config()` is asked at construction by whoever builds the converter, and every conversion re-checks it, so
+       a typo in `series_ohm` cannot silently produce a temperature.
+     - ``Temperature.TheInverseUndoesTheForwardModelAcrossTheWorkingBand``
+     - na -- a conversion is a pure function of one code and its configuration.
    * - ``comm/commissioned_set.hpp``
      - `SetStatus` names the check that failed (short / marker / schema / reserved / check value / field) and
        `SetError.offset` names the byte, so a reader learns which number to re-measure rather than which byte to stare

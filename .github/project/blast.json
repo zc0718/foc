@@ -1489,6 +1489,11 @@
           "row": "motor/foc_loop.hpp",
           "verdict": "holds",
           "why": "`motor/foc_loop.hpp` is recorded as resting on these headers, and `git diff -U0 -- include/foc/api/foc_api.h include/foc/api/foc_types.h include/foc/comm/register_map.hpp include/foc/core/auto_tune.hpp include/foc/core/board_check.hpp include/foc/core/cogging_comp.hpp include/foc/core/cogging_learn.hpp include/foc/core/commissioning.hpp include/foc/core/field_weakening.hpp include/foc/core/limits.hpp include/foc/core/machine_map_text.hpp include/foc/core/machine_params.hpp include/foc/core/observer/dual_inductance_observer.hpp include/foc/core/observer/hfi_observer.hpp include/foc/core/observer/nonlinear_flux_observer.hpp include/foc/core/observer/observer_policy.hpp include/foc/core/polarity.hpp include/foc/core/sinusoid_fit.hpp include/foc/core/speed_from_angle.hpp include/foc/driver/stub_hal.hpp include/foc/driver/stub_pwm.hpp include/foc/motor/motor.hpp | grep -E '^[+-]' | grep -vE '^(\\+\\+\\+|---)' | grep -vE '^[+-]\\s*\\*'` is empty, so no declaration, member, default, formula or arithmetic in any of them changed."
+        },
+        {
+          "row": "comm/commissioned_set.hpp",
+          "verdict": "holds",
+          "why": "The row was created later and rests on `comm/frame.hpp`, which this pass only re-wrapped. What the pass changed there was comment width, so the CRC it reuses and the frame layout it sits beside are the same code; the row evidence is `test_commissioned_set.cpp`."
         }
       ]
     },
@@ -1968,6 +1973,92 @@
           "row": "motor/torque_map.hpp",
           "verdict": "holds",
           "why": "This row's L3 evidence is `test_torque_map.cpp`, `test/python/test_python_bindings.py`, and the case measures behaviour. The diff reaches it only through `@file`: one `/*!` block inserted after `// Conan::ImportEnd`, with zero code lines added, changed or removed (`git diff -U0 -- include src` has 0 deletion lines and every insertion is inside a comment), so the code the case executes is byte-identical and nothing needed re-running. If this had been a code change the row would have needed a number."
+        }
+      ]
+    },
+    {
+      "id": "B-24",
+      "date": "2026-11-12",
+      "what_changed": "The integration line's first two batches. The machine numbers became readable and replaceable through the frozen C ABI (`foc_motor_get_params` / `foc_motor_apply_params`) and gained a form that survives a power cycle (`comm/commissioned_set.hpp`, 46 bytes with a schema and a CRC). A winding-temperature channel was added as an **optional** HAL contract (`hal/temperature.hpp`) with a reference stub (`driver/stub_temperature.hpp`) and the datasheet-side conversion (`core/thermistor.hpp`). The seeds are what the ledger's own triggers pick up: `core/traits.hpp` gained a structural trait and an optional-member check, `driver/stub_hal.hpp` gained the optional member, `src/driver/stub_hal.cpp` resets it, and the three new headers are seeds in their own right.",
+      "seeds": [
+        "include/foc/core/traits.hpp",
+        "include/foc/driver/stub_hal.hpp",
+        "src/driver/stub_hal.cpp",
+        "include/foc/core/thermistor.hpp",
+        "include/foc/hal/temperature.hpp",
+        "include/foc/driver/stub_temperature.hpp",
+        "src/core/thermistor.cpp",
+        "src/driver/stub_temperature.cpp"
+      ],
+      "affected": [
+        {
+          "row": "core/observer/blended_observer.hpp",
+          "verdict": "holds",
+          "why": "It reads `has_apply_params_v` from this header; that template is untouched and its instantiations resolve to the same `std::bool_constant`. `test_blended_observer.cpp` and `test_sil_observer_blend.cpp` pass unchanged."
+        },
+        {
+          "row": "motor/motor.hpp",
+          "verdict": "holds",
+          "why": "Same header, same reason: it reads `has_clock_v`, `has_fault_input_v` and `has_apply_params_v`, none of which moved. `test_motor.cpp` and its three companions pass unchanged."
+        },
+        {
+          "row": "driver/stub_hal.hpp",
+          "verdict": "holds",
+          "why": "A fifth member was added, and it is the optional one the contract allows. The only behaviour change is that `reset()` now returns it to invalid, which `Temperature.TheStubStartsInvalidAndTheHalResetTakesItBack` pins; `test_driver_stubs.cpp` passes unchanged."
+        },
+        {
+          "row": "hal/temperature.hpp",
+          "verdict": "holds",
+          "why": "New row, L1: an abstract interface with no behaviour to claim. Its stub exists so the shape is demonstrably implementable, and its absence path is demonstrated by every HalPolicy that does not carry the member. This leg promotes nothing -- `observability` O-49 is the account."
+        },
+        {
+          "row": "driver/stub_temperature.hpp",
+          "verdict": "holds",
+          "why": "The reference implementation, and it starts invalid rather than at a plausible 25 C: a consumer that forgets `has_temperature_v` then reads 'no measurement', which is the failure the contract exists to make visible. `Temperature.TheOptionalMemberIsDetectedByShapeAndNotByName` covers the three detection outcomes."
+        },
+        {
+          "row": "core/trace.hpp",
+          "verdict": "holds",
+          "why": "No number it quotes moved: this change added one trait template beside `is_clock` and changed no existing one, so anything resting on `core/traits.hpp` keeps its instantiations verbatim. The suite is 878 cases and passes."
+        },
+        {
+          "row": "core/trace_parse.hpp",
+          "verdict": "holds",
+          "why": "No number it quotes moved: this change added one trait template beside `is_clock` and changed no existing one, so anything resting on `core/traits.hpp` keeps its instantiations verbatim. The suite is 878 cases and passes."
+        },
+        {
+          "row": "core/observer/switchable_observer.hpp",
+          "verdict": "holds",
+          "why": "It forwards `apply_params` and switches between observers; the traits it reads from `core/traits.hpp` are untouched and its own forwarding is unchanged. `test_switchable_observer.cpp` passes."
+        },
+        {
+          "row": "core/thermistor.hpp",
+          "verdict": "holds",
+          "why": "New row, L2: the divider inverse is checked against a forward model written in the test, worst 0.000031 C over -20..+120 C. This change is where the row was created, so it is adjudicated here rather than left as an open account."
+        }
+      ]
+    },
+    {
+      "id": "B-25",
+      "date": "2026-11-12",
+      "what_changed": "The two commits before this change set: `foc_motor_get_params` / `foc_motor_apply_params` were added to the frozen C ABI (with three cases, one of them showing the numbers reach an observer-driven loop), and `comm/commissioned_set.hpp` was added as the form a commissioning result keeps across a power cycle (ten cases, one of them the whole ABI-to-bytes round trip). The seeds are the files those commits touched; they are recorded here because the ledger had no entry covering them.",
+      "seeds": [
+        "include/foc/api/foc_api.h",
+        "src/api/foc_api.c",
+        "src/api/bridge.h",
+        "src/api/bridge.cpp",
+        "include/foc/comm/commissioned_set.hpp"
+      ],
+      "affected": [
+        {
+          "row": "api/foc_api.h",
+          "verdict": "holds",
+          "why": "Two entry points were added and no existing signature, enum or struct field changed, so the frozen surface is a superset of what it was. The row stays L2 and its evidence column gained `test_api_identification.cpp`, where the new cases live; 878 cases pass."
+        },
+        {
+          "row": "comm/commissioned_set.hpp",
+          "verdict": "holds",
+          "why": "Created by this change set: 46 bytes, a schema, provenance and a CRC-16 whose teeth are the exhaustive single-byte sweep (11730 candidates, 0 accepted). Recorded here because the row had no account."
         }
       ]
     }

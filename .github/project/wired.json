@@ -279,6 +279,22 @@
       "example": "test_package/test/unit/test_commissioned_set.cpp",
       "why": "a storage format: this module decides what the bytes are and refuses the ones no reader may accept, while where they live (flash, EEPROM, a file on a host) belongs to the integrator -- nothing on the control path encodes a record"
     },
+    "core/thermistor.hpp": {
+      "class": "policy",
+      "example": "test_package/test/unit/test_temperature.cpp",
+      "why": "a datasheet-to-temperature conversion the integrator configures: the three numbers and which leg of the divider the part sits in are board facts, so nothing in the control path constructs one"
+    },
+    "hal/temperature.hpp": {
+      "class": "contract",
+      "stub": "stub_temperature.hpp",
+      "example": "test_package/test/unit/test_temperature.cpp",
+      "why": "a winding-temperature channel is optional, and the contract exists so a consumer can ask whether one is present instead of assuming a number; a drive with no thermistor is legal"
+    },
+    "driver/stub_temperature.hpp": {
+      "class": "reference",
+      "example": "test_package/test/unit/test_temperature.cpp",
+      "why": "the reference implementation of the contract, starting invalid so a consumer that forgets to ask reads 'no measurement' rather than a temperature nobody set"
+    },
     "comm/register_map.hpp": {
       "class": "policy",
       "example": "test_package/test/unit/test_register_map.cpp",

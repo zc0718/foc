@@ -35,6 +35,11 @@ void StubHal::reset() noexcept {
     // 回到"功率级没在报故障"，也就是桩功率级所处的状态：一次把注入的故障留在有效状态的 reset，会让 `reset()` 看起来
     // 生效了，而驱动仍然拒绝运行。
     fault_input.reset();
+    // And back to "nobody measured a temperature". A reset that left the last case's 80 degrees C in place would leak
+    // one case's derating into the next one's, which is the shape of failure that takes an afternoon to find.
+    // 同时回到"没有人测过温度"。一次把上个用例的 80 摄氏度留在原处的 reset，会把一个用例的降额漏进下一个用例，而那是
+    // 要花一下午才能找到的失效形状。
+    temperature.set_invalid();
 }
 
 } // namespace driver

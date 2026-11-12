@@ -133,6 +133,26 @@ struct is_clock<T, std::void_t<decltype(std::declval<T&>().now_us())>>
                          noexcept(std::declval<T&>().now_us())> {};
 
 /**
+ * @brief [en] `T` satisfies the foc::hal::Temperature contract.
+ * @brief [zh] `T` 满足 foc::hal::Temperature 契约。
+ * @note [en] Structural on the reading and not on its type name, because `core/` may not include `hal/` (the layering
+ *            guard). The two fields are what the contract promises; a type that has them is the contract, whatever it
+ *            is called.
+ * @note [zh] 按 **读数的形状** 判定而不是按它的类型名，因为 `core/` 不允许 include `hal/`（分层护栏）。那两个字段就是契
+ *            约承诺的东西；拥有它们的类型就是那个契约，无论它叫什么名字。
+ * @since 0.1.0
+ * @exporter
+ */
+template <typename T, typename = void> struct is_temperature : std::false_type {};
+
+template <typename T>
+struct is_temperature<
+    T, std::void_t<decltype(std::declval<T&>().read().celsius), decltype(std::declval<T&>().read().valid)>>
+    : std::bool_constant<std::is_same_v<decltype(std::declval<T&>().read().celsius), float> &&
+                         std::is_same_v<decltype(std::declval<T&>().read().valid), bool> &&
+                         noexcept(std::declval<T&>().read())> {};
+
+/**
  * @brief [en] `T` satisfies the foc::hal::FaultInput contract.
  * @brief [zh] `T` 满足 foc::hal::FaultInput 契约。
  * @since 0.1.0
@@ -165,7 +185,7 @@ template <typename T> inline constexpr bool is_position_sensor_v = is_position_s
 template <typename T> inline constexpr bool is_dc_link_v = is_dc_link<T>::value;
 
 template <typename T> inline constexpr bool is_clock_v = is_clock<T>::value;
-
+template <typename T> inline constexpr bool is_temperature_v = is_temperature<T>::value;
 template <typename T> inline constexpr bool is_fault_input_v = is_fault_input<T>::value;
 
 } // namespace concepts
@@ -418,6 +438,34 @@ struct has_clock<T, std::void_t<decltype(std::declval<T&>().clock)>>
  * @exporter
  */
 template <typename T> inline constexpr bool has_clock_v = has_clock<T>::value;
+
+/**
+ * @brief [en] `T` (a HalPolicy) exposes an optional `temperature` member satisfying `hal::Temperature`.
+ *
+ *   Optional for the same reason the clock is, but with a different consequence: a drive with no temperature channel is
+ *   legal, and the honest answer to "what is the winding temperature" is then "nobody measured it" rather than a
+ *   default. A consumer that derates must ask this first -- assuming a number is the one thing it may not do.
+ *
+ * @brief [zh] `T`（HalPolicy）是否暴露了满足 `hal::Temperature` 的可选成员 `temperature`。
+ *
+ *   可选的理由与时钟相同，但后果不同：没有温度通道的驱动是合法的，而对"绕组多少度"的诚实回答是“没有人测过”，不是一个默
+ *   认值。凡是降额的消费者都必须先问这个——假定一个数是它唯一不能做的事。
+ * @since 0.1.0
+ * @exporter
+ */
+template <typename T, typename = void> struct has_temperature : std::false_type {};
+
+template <typename T>
+struct has_temperature<T, std::void_t<decltype(std::declval<T&>().temperature)>>
+    : std::bool_constant<hal::concepts::is_temperature_v<decltype(std::declval<T&>().temperature)>> {};
+
+/**
+ * @brief [en] Convenience variable template for the optional temperature member.
+ * @brief [zh] 可选温度成员的便捷变量模板。
+ * @since 0.1.0
+ * @exporter
+ */
+template <typename T> inline constexpr bool has_temperature_v = has_temperature<T>::value;
 
 /**
  * @brief [en] `T` (a HalPolicy) exposes a `fault_input` member satisfying `hal::FaultInput`.

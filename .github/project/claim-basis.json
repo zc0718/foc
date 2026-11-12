@@ -366,6 +366,14 @@
     ],
     "comm/frame.hpp": [
       "comm/frame.hpp"
+    ],    "core/thermistor.hpp": [
+      "core/thermistor.hpp"
+    ],
+    "hal/temperature.hpp": [
+      "hal/temperature.hpp"
+    ],
+    "driver/stub_temperature.hpp": [
+      "hal/temperature.hpp"
     ],
     "comm/commissioned_set.hpp": [
       "comm/frame.hpp",
