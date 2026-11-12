@@ -1057,8 +1057,9 @@ def main():
                     'declaration to describe, which `EXTRACT_ALL` makes invisible',
         'compliance': 'the compliance pages are reachable and both doc lines carry the same four sentences',
         'demo': 'every example in the docs compiles and links with the command its own page gives it',
-        'ports': 'every field of a per-tick input struct names a producer that exists, and the count of fields '
-                 'no channel is provided for only falls',
+        'ports': 'every field of a per-tick input struct, and every `step()` parameter whose name '
+                 'carries a unit, names a producer that exists, and the count of quantities no channel '
+                 'is provided for only falls',
         'pil': 'run the speed-step scenario on the target ISA under qemu and compare with the host; SKIPPED when its '
                'material is absent',
         'all': ' + '.join(PROJECT_GATES),

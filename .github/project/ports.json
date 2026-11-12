@@ -1,7 +1,9 @@
 {
   "what": "Where the value of every per-tick input field comes from. `ports_gate.py` reads this and refuses to run green while an in-scope field has no row.",
   "scope": "structs whose name ends in `Input` or `Measurements` under include/foc/core/**",
+  "parameter_scope": "scalar `step()` parameters under include/foc/core/** whose *name* carries a unit suffix -- the suffix is how this tree says \"physical quantity\"; `dt_s` is the host clock, not a measurement",
   "unfed_budget": 0,
+  "unfed_parameter_budget": 1,
   "kinds": {
     "contract": "a declared contract names the channel (`hal/...` a hardware port, `core/...` an injected instrument)",
     "host": "a C entry in foc_api.h hands it in",
@@ -13,30 +15,30 @@
     {
       "struct": "BoardMeasurements",
       "field": "sum_current_a",
-      "kind": "contract",
+      "kind": "duck",
       "producer": "core/board_check.hpp::Bench",
-      "note": "The three-phase sum, read by whatever bench the integrator injects. The bench is a structural requirement of the board check, so this one had a channel before the gate existed."
+      "note": "The three-phase sum, read by whatever bench the integrator injects. The bench is a structural requirement of the board check, so this one had a channel before the gate existed. Typed as `duck`: `Bench` is a template parameter `board_check.hpp` accepts, not a method any header declares, and a row that named it as a method would be claiming a function that does not exist."
     },
     {
       "struct": "BoardMeasurements",
       "field": "offset_a",
-      "kind": "contract",
+      "kind": "duck",
       "producer": "core/board_check.hpp::Bench",
-      "note": "Per-phase current-sense offset, from the bench's own zero-current capture."
+      "note": "Per-phase current-sense offset, from the bench's own zero-current capture. Typed as `duck`: `Bench` is a template parameter `board_check.hpp` accepts, not a method any header declares, and a row that named it as a method would be claiming a function that does not exist."
     },
     {
       "struct": "BoardMeasurements",
       "field": "response_sign",
-      "kind": "contract",
+      "kind": "duck",
       "producer": "core/board_check.hpp::Bench",
-      "note": "Which way each phase responded to a known voltage: that is wiring, and only a physical bench knows it."
+      "note": "Which way each phase responded to a known voltage: that is wiring, and only a physical bench knows it. Typed as `duck`: `Bench` is a template parameter `board_check.hpp` accepts, not a method any header declares, and a row that named it as a method would be claiming a function that does not exist."
     },
     {
       "struct": "BoardMeasurements",
       "field": "ripple_measured_a",
-      "kind": "contract",
+      "kind": "duck",
       "producer": "core/board_check.hpp::Bench",
-      "note": "Measured current ripple at a known duty; the bench's scope or shunt."
+      "note": "Measured current ripple at a known duty; the bench's scope or shunt. Typed as `duck`: `Bench` is a template parameter `board_check.hpp` accepts, not a method any header declares, and a row that named it as a method would be claiming a function that does not exist."
     },
     {
       "struct": "BoardMeasurements",
@@ -48,9 +50,9 @@
     {
       "struct": "BoardMeasurements",
       "field": "deadtime_v",
-      "kind": "contract",
+      "kind": "duck",
       "producer": "core/board_check.hpp::Bench",
-      "note": "Dead-time volt-seconds, measured from the phase-voltage distortion."
+      "note": "Dead-time volt-seconds, measured from the phase-voltage distortion. Typed as `duck`: `Bench` is a template parameter `board_check.hpp` accepts, not a method any header declares, and a row that named it as a method would be claiming a function that does not exist."
     },
     {
       "struct": "BoardMeasurements",
@@ -289,6 +291,79 @@
       "kind": "contract",
       "producer": "hal/current_sense.hpp::CurrentSense::read_uvw",
       "note": "Present for single-shunt reconstruction, where the currents decide whether the sample window is usable at all."
+    }
+  ],
+  "parameters": [
+    {
+      "class": "AlignRoutine",
+      "parameter": "angle_mech_rad",
+      "kind": "contract",
+      "producer": "hal/position.hpp::angle_mech_rad",
+      "note": "Alignment is the routine that *measures* the offset, so the angle it reads is the sensor angle -- the one number it cannot compute and must be handed."
+    },
+    {
+      "class": "NullAlignment",
+      "parameter": "angle_mech_rad",
+      "kind": "contract",
+      "producer": "hal/position.hpp::angle_mech_rad",
+      "note": "The same sensor angle, on the alignment that does nothing: the signature is kept identical so a drive can swap one for the other without touching the call site."
+    },
+    {
+      "class": "BrakeChopper",
+      "parameter": "v_bus",
+      "kind": "contract",
+      "producer": "hal/dc_link.hpp::voltage_v",
+      "note": "The chopper decides on the bus voltage every step, so it is on the same contract the modulator reads; a separate port would be a second chance for the two to disagree within one tick."
+    },
+    {
+      "class": "BusCurrentLimit",
+      "parameter": "bus_current_a",
+      "kind": "contract",
+      "producer": "core/traits.hpp::read_bus_current_a",
+      "note": "The case this axis was extended for: the limiter was written before anything in the tree could measure bus current. The channel is optional and lives on the DC-link object rather than in `hal::DcLink` (a link that cannot measure current must be able to say so rather than report zero), so the producer is the trait, not `voltage_v`."
+    },
+    {
+      "class": "FrictionComp",
+      "parameter": "demand_nm",
+      "kind": "derived",
+      "producer": "core/pi.hpp",
+      "note": "The torque the outer loop already asked for. The compensator adds to it rather than replacing it, so both numbers exist in the caller at the same instant."
+    },
+    {
+      "class": "FrictionComp",
+      "parameter": "speed_meas_rad_s",
+      "kind": "contract",
+      "producer": "hal/position.hpp::velocity_rad_s",
+      "note": "Measured speed: the sensor contract when there is one, otherwise the observer, which the caller already holds -- the compensator takes a number, not a source of truth."
+    },
+    {
+      "class": "FrictionComp",
+      "parameter": "speed_ref_rad_s",
+      "kind": "host",
+      "producer": "foc_set_speed",
+      "note": "The application's own reference, the same number it hands the axis through `foc_set_speed`. The compensator is a policy the caller drives; it does not own a profile."
+    },
+    {
+      "class": "PpmCommand",
+      "parameter": "width_us",
+      "kind": "unfed",
+      "owner": "RC-capture HAL",
+      "producer": "",
+      "note": "No capture channel exists: the application times the pulse with a timer peripheral and hands the width in. Kept as a debt rather than a `contract` because writing a `hal/rc_capture.hpp` with nothing behind it would be the same green field this gate exists for."
+    },
+    {
+      "class": "StallStart",
+      "parameter": "speed_mech_rad_s",
+      "kind": "contract",
+      "producer": "hal/position.hpp::velocity_rad_s",
+      "note": "The breakaway sequence decides when the rotor has moved on the speed it is told; the assembly passes the sensor velocity or the observer estimate from the same slot."
+    },
+    {
+      "class": "StartupRoutine",
+      "parameter": "angle_mech_rad",
+      "kind": "contract",
+      "producer": "hal/position.hpp::angle_mech_rad",
+      "note": "Open-loop startup ramps the commanded angle but still needs the measured one to know when the rotor has caught up."
     }
   ]
 }
