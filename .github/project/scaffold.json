@@ -72,9 +72,14 @@
       "patch": ".github/project/upstream-patches/0021-lcov-extract-ignore-errors.patch",
       "why": "macOS coverage export dies inside `lcov --extract`: lcov 2.x treats a function gcov reports as never entered while one of its lines ran as an `inconsistent` **error**, and a template instantiated in an anonymous namespace hits exactly that (measured: `bridge.cpp:1496` never entered, line 1497 hit). Every other lcov call in this file already passes `_lcov_ignore_errors()`; the `--extract` call was the one that did not, which is why Linux was green and macOS was red -- and why this is an upstream defect rather than a preference.",
       "exit": "upstream takes patch 0021 (one flag on one command); when it lands, re-pin, take upstream's bytes and delete both this entry and the baseline copy. `scaffold-baseline/test_package/conanfile.py` is v0.3.4's file, and the patch reproduces this tree's file from it byte for byte, so the fork cannot drift away from its own description."
+    },
+    "test_package/CMakeLists.txt": {
+      "patch": ".github/project/upstream-patches/0022-python-consumer-interpreter.patch",
+      "why": "`find_package(Python)` caches whichever interpreter that configure happened to find, and this test_package build directory is reused across packages, so a `_Python_EXECUTABLE` of `~/.local/bin/python3.10` ran a module pybind11 had built against the 3.12 at `/usr/bin`: the case died in 0.09 s with `ModuleNotFoundError: No module named 'foc_python'`, which names the binding as the broken thing while two pythons are the story. A compiled extension can only be imported by the interpreter whose ABI it was built for, and the artifact's own filename says which one that is (`foc_python.cpython-312-...so`), so the tag decides and the variable is ignored. The guard that was already written down ('a module built for 3.12 cannot be imported by 3.13') sat above an `if(NOT DEFINED Python_EXECUTABLE)` that is false as soon as any configure has cached one -- the wording upstream should carry. Missing interpreter for the shipped ABI skips the case instead of failing it, for the same reason the script already blames a missing numpy on the machine.",
+      "exit": "upstream registers the python consumer with the interpreter taken from the module's ABI tag; when that lands, re-pin, take upstream's bytes and delete this entry, the baseline copy under `scaffold-baseline/` and patch 0022. The patch reproduces this tree's file from the pinned baseline byte for byte, so the fork cannot drift away from its own description."
     }
   },
-  "baseline_divergences": 1,
+  "baseline_divergences": 2,
   "sha256": {
     ".github/misc/.checkov.yml": "ff9d84399876a7ccb5bc3bf7acd15dda2cc26cd4005e9196eabc8e928eb8f651",
     ".github/misc/.clang-format-c": "412c3b92a6063fa5f92380b4499fe148edfc156eea9c2a9ae1b97ab6ecb79148",

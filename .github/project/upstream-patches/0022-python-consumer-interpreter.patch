@@ -1,0 +1,56 @@
+--- a/test_package/CMakeLists.txt	2026-11-12 21:54:40.512977367 +0800
++++ b/test_package/CMakeLists.txt	2026-11-12 21:54:40.514131567 +0800
+@@ -151,16 +151,45 @@
+       endif()
+       file(GLOB PY_CONSUMER_MODULES "${PY_CONSUMER_MODULE_DIR}/${LIB_NAME}_python*")
+       if(PY_CONSUMER_MODULES)
+-        # reuse the interpreter pybind11 picked: a module built for 3.12 cannot be imported by 3.13
+-        if(NOT DEFINED Python_EXECUTABLE)
++        # A pybind11 module imports only under the interpreter whose ABI it was built for, and the
++        # module's own name says which one that is (`foc_python.cpython-312-...so` is a 3.12 ABI).
++        # `Python_EXECUTABLE` is whatever a `find_package(Python)` in *this* configure happened to
++        # cache -- measured on one box: pybind11 built against the 3.12 at `/usr/bin` while the test
++        # package cached a 3.10 from `~/.local/bin`, so the case died with
++        # `ModuleNotFoundError: No module named 'foc_python'`, which reads like a broken binding
++        # rather than two pythons. The file is the fact; the variable is a guess.
++        list(GET PY_CONSUMER_MODULES 0 PY_CONSUMER_MODULE)
++        get_filename_component(PY_CONSUMER_MODULE_NAME "${PY_CONSUMER_MODULE}" NAME)
++        set(PY_CONSUMER_INTERPRETER "")
++        if(PY_CONSUMER_MODULE_NAME MATCHES "cpython-([0-9])([0-9]+)")
++          set(PY_CONSUMER_PY "python${CMAKE_MATCH_1}.${CMAKE_MATCH_2}")
++          # Not into `PY_CONSUMER_INTERPRETER`: `find_program` skips its search when the variable
++          # already holds a value, and the line above set it to the empty string -- which counts as a
++          # value. Measured, because the first version of this block searched nothing and announced
++          # "no such interpreter on PATH" for an interpreter that is on PATH.
++          find_program(PY_CONSUMER_PY_PATH NAMES ${PY_CONSUMER_PY} NO_CACHE)
++          if(PY_CONSUMER_PY_PATH)
++            set(PY_CONSUMER_INTERPRETER "${PY_CONSUMER_PY_PATH}")
++          else()
++            # Skipped, not failed: the package is fine, this machine simply has no interpreter for
++            # the ABI it shipped, and a red case here would report that as a library defect.
++            message(STATUS "[test] the package ships a ${PY_CONSUMER_PY} module and no such interpreter is "
++                           "on PATH: python consumer skipped")
++          endif()
++        elseif(DEFINED Python_EXECUTABLE)
++          set(PY_CONSUMER_INTERPRETER "${Python_EXECUTABLE}")
++        else()
+           find_package(Python3 COMPONENTS Interpreter REQUIRED)
+-          set(Python_EXECUTABLE "${Python3_EXECUTABLE}")
++          set(PY_CONSUMER_INTERPRETER "${Python3_EXECUTABLE}")
++        endif()
++        if(PY_CONSUMER_INTERPRETER)
++          message(STATUS "[test] pybind11 module found: running the python consumer under "
++                         "${PY_CONSUMER_INTERPRETER}")
++          add_test(NAME python_bindings
++                   COMMAND ${PY_CONSUMER_INTERPRETER} "${CMAKE_CURRENT_SOURCE_DIR}/test/python/test_python_bindings.py")
++          set_tests_properties(python_bindings PROPERTIES
++                               ENVIRONMENT "PYTHONPATH=${PY_CONSUMER_MODULE_DIR}")
+         endif()
+-        message(STATUS "[test] pybind11 module found: running the python consumer")
+-        add_test(NAME python_bindings
+-                 COMMAND ${Python_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/test/python/test_python_bindings.py")
+-        set_tests_properties(python_bindings PROPERTIES
+-                             ENVIRONMENT "PYTHONPATH=${PY_CONSUMER_MODULE_DIR}")
+       else()
+         message(STATUS "[test] no pybind11 module in the package: python consumer skipped")
+       endif()
