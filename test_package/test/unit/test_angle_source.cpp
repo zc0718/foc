@@ -274,4 +274,100 @@ TEST(AngleSource, AResetForgetsTheHeldAngleAndTheHandOverOffset) {
     EXPECT_FLOAT_EQ(0.98F, fresh.angle_mech_rad) << "and the offset from before the reset is gone with it";
 }
 
+// 10. The four refusals in the first line, one at a time. The mutation harness found all four unguarded: the `||`
+// chain was only ever entered through `!configured_`, so changing any *other* disjunct -- or the `>` on `dt_s` --
+// left every case green. A guard is four promises, not one, and this case is the four of them.
+// 首行里的四处拒绝，逐一来。变异门禁发现四处都没被守住：那条 `||` 链总是经由 `!configured_` 进入，于是改掉**别的**
+// 任何一个析取项、或 `dt_s` 上的那个 `>`，全部用例照样绿。一个守卫是四个承诺，不是一个，这条用例就是那四个。
+TEST(AngleSource, EveryDisjunctOfTheGuardIsARefusalOfItsOwn) {
+    const AngleOffer two[2] = {make_offer(AngleSourceKind::Sensor, 0.5F, 1.0F),
+                               make_offer(AngleSourceKind::Observer, 0.5F, 1.0F)};
+    {
+        AngleSource source;
+        ASSERT_EQ(ErrorCode::Ok, source.configure(make_config()));
+        ASSERT_EQ(AngleQuality::Ok, source.step(two, 2U, kDt).quality);
+        // Zero is the barrier itself: `dt_s > 0` refuses it, and a `>=` would let a step of no length through.
+        // 零就是那道坎：`dt_s > 0` 拒绝它，写成 `>=` 就会放一个长度为零的步进去。
+        const auto& reading = source.step(two, 2U, 0.0F);
+        EXPECT_EQ(AngleQuality::Blind, reading.quality) << "a step of zero length is refused, not executed";
+        EXPECT_EQ(AngleSourceKind::None, reading.source);
+        EXPECT_FLOAT_EQ(0.0F, reading.speed_mech_rad_s) << "and the held angle still has no speed";
+    }
+    {
+        AngleSource source;
+        ASSERT_EQ(ErrorCode::Ok, source.configure(make_config()));
+        EXPECT_EQ(AngleQuality::Blind, source.step(two, 2U, -kDt).quality) << "a negative period is refused too";
+    }
+    {
+        // A null array with a positive count is the one refusal that has a *failure* behind it rather than a
+        // reading: without the guard the loop dereferences it.
+        // 数组为空而计数为正，是这些拒绝里唯一背后藏着一次失败的：没有这个守卫，循环就会去解引用它。
+        AngleSource source;
+        ASSERT_EQ(ErrorCode::Ok, source.configure(make_config()));
+        EXPECT_EQ(AngleQuality::Blind, source.step(nullptr, 2U, kDt).quality) << "nothing to iterate is not a step";
+    }
+    {
+        AngleSource source;
+        ASSERT_EQ(ErrorCode::Ok, source.configure(make_config()));
+        EXPECT_EQ(AngleQuality::Blind, source.step(two, 0U, kDt).quality) << "a count of zero offers nothing";
+    }
+}
+
+// 11. One offer is an offer: the guard's `count == 0` means *no* offers, and a single live source is still a reading
+// -- `Degraded`, because agreement cannot be checked, but not `Blind`. The harness found this one too: every case
+// passed two offers, so `count == 0` could be widened to `count == 1` without anything noticing.
+// 一份报价也是报价：守卫里的 `count == 0` 意思是**没有**报价，而单个活的来源仍是一次读数——`Degraded`，因为
+// 无从核对是否相符，但不是 `Blind`。这条也是门禁发现的：所有用例都传两份报价，于是 `count == 0` 被放宽成
+// `count == 1` 也没人发现。
+TEST(AngleSource, OneOfferIsStillAnOffer) {
+    AngleSource source;
+    ASSERT_EQ(ErrorCode::Ok, source.configure(make_config()));
+    const AngleOffer one[1] = {make_offer(AngleSourceKind::Sensor, 0.7F, 3.0F)};
+    const auto& reading = source.step(one, 1U, kDt);
+    EXPECT_EQ(AngleQuality::Degraded, reading.quality) << "a lone source is usable, not verified";
+    EXPECT_EQ(AngleSourceKind::Sensor, reading.source);
+    EXPECT_FLOAT_EQ(0.7F, reading.angle_mech_rad) << "and the answer is that source's own angle";
+    EXPECT_TRUE(std::isnan(reading.disagreement_rad));
+}
+
+// 12. The declared capacity is a bound on what gets *looked at*, not just a constant: a fourth offer is outside what
+// the type says it can carry, so it is not the second opinion. Widening `kMaxOffers` to four changed the reading for
+// exactly this shape -- and nothing noticed, because no case ever offered more than two.
+// 声明的容量是"看几份"的界，不只是一个常数：第四份报价超出了本类型声称能装的范围，于是它不算第二意见。把
+// `kMaxOffers` 放宽到四，恰好会改变这种形状的读数——而没人发现，因为没有任何用例给过两份以上。
+TEST(AngleSource, AnOfferBeyondTheDeclaredCapacityIsNotASecondOpinion) {
+    AngleSource source;
+    ASSERT_EQ(ErrorCode::Ok, source.configure(make_config()));
+    // Valid at index 0 and index 3, missing in between: the only second live offer sits past the capacity.
+    // 下标 0 与 3 有效、中间缺席：唯一第二份活着的报价落在容量之外。
+    const AngleOffer four[4] = {make_offer(AngleSourceKind::Sensor, 0.5F, 1.0F), make_missing(AngleSourceKind::Hall),
+                                make_missing(AngleSourceKind::Hall), make_offer(AngleSourceKind::Observer, 0.5F, 1.0F)};
+    const auto& reading = source.step(four, 4U, kDt);
+    EXPECT_TRUE(std::isnan(reading.disagreement_rad)) << "the fourth offer is outside the four the type refuses to go past";
+    EXPECT_EQ(AngleQuality::Degraded, reading.quality) << "so there is nothing to compare against";
+}
+
+// 13. The window ends *at* the window, not one step after it: `lost_s` equal to the declared window is a spent window.
+// The harness could flip that `<` to `<=` and stay green, because no case ever landed exactly on the number -- so this
+// one steps with a period equal to the window, which makes `0 + window` exact in float32 and the comparison, rather
+// than the accumulation, the thing being tested.
+// 窗口是**在**窗口那一刻结束的，不是晚一步：`lost_s` 等于声明的窗口就是窗口用完了。门禁可以把那个 `<` 翻成 `<=`
+// 而全绿，因为没有任何用例恰好落在那个数上——所以这条用一个等于窗口的周期走一步，让 `0 + 窗口` 在 float32 里是
+// 精确的，被测量的是那个比较，而不是累加。
+TEST(AngleSource, TheWindowIsSpentAtExactlyTheWindow) {
+    AngleSource source;
+    AngleSourceConfig config = make_config();
+    ASSERT_EQ(ErrorCode::Ok, source.configure(config));
+    const AngleOffer alive[2] = {make_offer(AngleSourceKind::Sensor, 0.5F, 1.0F),
+                                 make_offer(AngleSourceKind::Observer, 0.5F, 1.0F)};
+    ASSERT_EQ(AngleQuality::Ok, source.step(alive, 2U, kDt).quality);
+
+    const AngleOffer preferred_gone[2] = {make_missing(AngleSourceKind::Sensor),
+                                          make_offer(AngleSourceKind::Observer, 0.5F, 1.0F)};
+    const auto& at_the_window = source.step(preferred_gone, 2U, config.handover_window_s);
+    EXPECT_EQ(AngleSourceKind::Observer, at_the_window.source)
+        << "a window of exactly that length has been spent: the answer is the lower-ranked source's";
+    EXPECT_FLOAT_EQ(0.5F, at_the_window.angle_mech_rad) << "and it is carried, not jumped";
+}
+
 } // namespace

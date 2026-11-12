@@ -115,6 +115,38 @@ MODULES = {
         "tests": ["test_package/test/unit/test_commissioning_flow.cpp"],
         "extra": [],
     },
+    # The three added on 2026-11-12, once `commissioning_flow` had proved the shape of a header-only entry. Until then
+    # they had only ever been probed with three hand-picked mutations each -- which is an assertion about which
+    # mutations I thought of, not about the teeth of their tests. The number that replaces it is below.
+    # 2026-11-12 新增的三个，此时 `commissioning_flow` 已经验证了"纯头条目"的形态。在此之前它们只经过我手挑三个
+    # 变异的探查——那是对"我想到了哪些变异"的断言，不是对用例牙齿的断言。下面那个数才是。
+    "bus_current_limit": {
+        # The limiter itself is header-only, but its test drives a whole axis (a plant, the current loop, the
+        # modulator), so the motor's out-of-line half has to be in the link or nothing measures the limiter.
+        # 限制器本身是纯头，但它的用例驱动一整根轴（被控对象、电流环、调制器），所以电机的带外实现必须在链接里，
+        # 否则量到的不是限制器。
+        "mutate": ["include/foc/core/bus_current_limit.hpp"],
+        "tests": ["test_package/test/unit/test_bus_current_limit.cpp"],
+        "extra": _MOTOR_SOURCES,
+        "classify": True,
+    },
+    "move_trajectory": {
+        # Same reason: the case that matters is the axis reaching the target, and that is a motor tick.
+        # 同理：真正要紧的那条用例是"轴到达目标"，而那是电机的一拍。
+        "mutate": ["include/foc/core/move_trajectory.hpp"],
+        "tests": ["test_package/test/unit/test_move_trajectory.cpp"],
+        "extra": _MOTOR_SOURCES,
+        "classify": True,
+    },
+    "angle_source": {
+        # This one is genuinely alone: its test feeds offers it builds itself and asserts the arbitration, so no
+        # source file is needed to link it.
+        # 这一个确实是孤立的：它的用例自己造候选、断言仲裁结果，所以链接时不需要任何源文件。
+        "mutate": ["include/foc/core/angle_source.hpp"],
+        "tests": ["test_package/test/unit/test_angle_source.cpp"],
+        "extra": [],
+        "classify": True,
+    },
 }
 
 BINARY_OPS = {"+": "-", "-": "+", "*": "/", "/": "*", "<": "<=", ">": ">=", "<=": "<", ">=": ">",
@@ -229,6 +261,17 @@ def _candidates(path: Path, limit: int) -> tuple[list[dict], bool]:
                 new = f"{value * 1.001:.6g}"
             else:
                 new = str(value + 1)
+            # A constant that keeps its value is not a mutant. `0.0 * 1.001` is `0.0`, so every `0.0F` in a module
+            # produced a "survivor" that no test could ever kill -- twelve of them in `move_trajectory`, which is the
+            # same failure `_masked` fixed for string literals: work for a human on mutants nothing can distinguish.
+            # 保持原值的常数不是变异体。`0.0 * 1.001` 就是 `0.0`，于是每个 `0.0F` 都会产出一个任何用例都不可能杀掉的
+            # "存活者"——`move_trajectory` 里就有十二个。这与 `_masked` 为字符串字面量修掉的是同一个毛病：
+            # 让人去做一件没有东西能分辨出来的工作。
+            try:
+                if float(new) == float(value):
+                    continue
+            except ValueError:
+                continue
             sites.append({"line": lineno, "start": match.start(1), "end": match.end(1),
                           "original": token, "replacement": new, "operator": "constant"})
         if len(sites) >= limit:

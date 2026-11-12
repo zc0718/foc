@@ -498,6 +498,62 @@ TEST(MoveTrajectory, NumbersThatCannotDescribeAMoveAreRefusedAndNothingMoves) {
 
 
 /**
+ * @brief [en] The step that lands *exactly* on the target finishes the move; it does not carry on and come back.
+ *
+ * @brief [zh] **恰好** 落在目标上的那一拍就结束这次运动；它不会继续走过去再折回来。
+ *
+ *   Every other case in this file lands by overshooting by less than one step and letting the clamp put the reference
+ *   on the target, so the landing test `position >= target` was only ever exercised in its `>` half. Flip it to `>` and
+ *   nothing noticed -- the mutation harness found that. The consequence is not subtle: a reference that reaches the
+ *   target *exactly* keeps its velocity, walks past, and (because the direction has already flipped) never satisfies
+ *   `position <= target` again, so it oscillates around the target with `done` false forever.
+ *
+ *   The numbers are chosen so the arithmetic is exact in binary: the first ramp step from rest covers
+ *   `0.5 * 1.0 * 0.25 = 0.125` rad, which *is* the target, so the equality is a property of the case rather than an
+ *   accident of rounding.
+ *
+ *   本文件里其他用例都是"多走不到一步、由夹紧把参考放到目标上"，所以落点判据 `position >= target` 只被走过 `>` 那一半。
+ *   把它翻成纯 `>`，没人发现——这是变异门禁找出来的。后果并不细微： **恰好** 到达目标的参考会保留速度、继续走过去，而方
+ *   向已经翻转，于是 `position <= target` 再也不成立，它就在目标周围来回摆、 `done` 永远为假。
+ *
+ *   数字取成二进制精确的：从静止的第一个斜坡步走过 `0.5 * 1.0 * 0.25 = 0.125` rad，正好是目标，于是那个相等是用例本身的
+ *   性质，而不是舍入的巧合。
+ */
+TEST(MoveTrajectory, TheStepThatLandsExactlyOnTheTargetFinishesTheMove) {
+    constexpr float kExactTargetRad = 0.125F;
+    foc::core::MoveTrajectory traj(foc::core::MoveLimits{1.0F, 4.0F});
+    ASSERT_EQ(foc::ErrorCode::Ok, traj.move_to(kExactTargetRad));
+
+    const auto& landed = traj.step(0.25F);
+    EXPECT_TRUE(landed.done) << "the reference is on the target, so the move is finished -- not 'about to be'";
+    EXPECT_EQ(kExactTargetRad, landed.position_rad);
+    EXPECT_EQ(0.0F, landed.velocity_rad_s) << "a finished move holds, it does not keep the speed it arrived with";
+
+    // And it stays finished: a reference that overshot here would keep moving, so this is the assertion that separates
+    // "landed" from "passed through".
+    // 而且它保持结束状态：在这里越过去的参考会继续走，所以这一条才是把"落上"与"路过"分开的断言。
+    for (int i = 0; i < 10; ++i) {
+        const auto& held = traj.step(0.25F);
+        EXPECT_TRUE(held.done);
+        EXPECT_EQ(kExactTargetRad, held.position_rad);
+        EXPECT_EQ(0.0F, held.velocity_rad_s);
+    }
+
+    // The same promise in the other direction, because the landing test has two halves and the harness showed that
+    // only the `>=` one was covered: the `<=` half can be flipped to `<` and stay green while every case here is an
+    // increasing move.
+    // 同一个承诺在另一个方向上：落点判据有两半，而门禁显示只有 `>=` 那一半被覆盖——本文件全是正向运动时，`<=` 那一半
+    // 翻成 `<` 也照样全绿。
+    foc::core::MoveTrajectory descending(foc::core::MoveLimits{1.0F, 4.0F});
+    ASSERT_EQ(foc::ErrorCode::Ok, descending.move_to(-kExactTargetRad));
+    const auto& down = descending.step(0.25F);
+    EXPECT_TRUE(down.done) << "a move in the negative direction lands exactly the same way";
+    EXPECT_EQ(-kExactTargetRad, down.position_rad);
+    EXPECT_EQ(0.0F, down.velocity_rad_s);
+}
+
+
+/**
  * @brief [en] The measured difference from a shaped velocity command: what the loop is told to reach during the cruise.
  *
  * @brief [zh] 与「速度塑造型指令」之间被量出来的差别：巡航期间环被告知要去哪儿。

@@ -302,4 +302,160 @@ TEST(BusCurrentLimit, TheEnergyBooksStillCloseWithTheLimiterInThePath) {
         << "scaling a command cannot create or destroy energy: the meter's books have to close as they did without it";
 }
 
+// 7. Two configurations the guard accepts or refuses *at* the edge, where the harness found nothing looking: `headroom_a
+// == 0` (aim == ceiling) is legal and must stay legal, and a zero gain is a limiter that never moves, which is refused.
+// 守卫在**边上**接受或拒绝的两种配置，而门禁发现没人看那里：`headroom_a == 0`（瞄准值等于上限）是合法的，必须继续
+// 合法；而零增益是一个永远不会动的限制器，要被拒绝。
+TEST(BusCurrentLimit, TheEdgeOfTheConfigurationGuardIsEachNumbersOwnPromise) {
+    {
+        BusCurrentLimit limiter;
+        BusCurrentLimitConfig config = limit_config(1.0F);
+        config.headroom_a = 0.0F; // aim == i_max: hold the ceiling, not a point below it
+        EXPECT_EQ(foc::ErrorCode::Ok, limiter.configure(config))
+            << "a band with no headroom is still a band; refusing it would take away the strictest legal setting";
+        // And it does something: at the ceiling the authority is pulled down, not left at 1.
+        // 而且它确实起作用：在**上限上**权限就被往下拉，而不是停在 1。
+        for (int k = 0; k < 20; ++k) {
+            static_cast<void>(limiter.step(1.5F, kDt));
+        }
+        EXPECT_LT(limiter.output().scale, 1.0F);
+    }
+    {
+        // Each of the three rates on its own: a limiter that cannot move (zero gain), cannot come back, or cannot give
+        // way is not a limiter, and the guard says so per number rather than per group -- the harness found `rise` was
+        // the only one of the three a case ever zeroed.
+        // 三个速率各自来一遍：一个不能动的（零增益）、回不来的、或让不了的，都不是限制器；守卫是逐个数表态的，而不是
+        // 整组——门禁发现三个里只有一个（`rise`）曾被某个用例置零。
+        for (const int which : {0, 1, 2}) {
+            BusCurrentLimit limiter;
+            BusCurrentLimitConfig config = limit_config(1.0F);
+            if (which == 0) {
+                config.fall_per_s = 0.0F;
+            } else if (which == 1) {
+                config.rise_per_s = 0.0F;
+            } else {
+                config.gain_per_a_s = 0.0F;
+            }
+            EXPECT_EQ(foc::ErrorCode::Param, limiter.configure(config)) << "rate #" << which << " of three";
+        }
+    }
+}
+
+// 8. A period of zero changes nothing -- including the flag that says whether anything was measured. The harness found
+// the guard's `||` flippable to `&&`, which let a zero-length step run the body: the scale came out the same (the
+// arithmetic of a zero step is a no-op) but `measured` was overwritten, and that flag is the whole difference between
+// "the bus is fine" and "nobody told me".
+// 周期为零的步什么都不改——**包括**那个说明是否测到了数的标志。门禁发现守卫里的 `||` 可以翻成 `&&`，从而让长度为
+// 零的一步跑进函数体：`scale` 出来是一样的（零步的算术是空操作），但 `measured` 被覆盖了，而那个标志正是"母线很好"
+// 与"没人告诉我"之间的全部区别。
+TEST(BusCurrentLimit, AZeroPeriodDoesNotEvenRewriteTheMeasuredFlag) {
+    BusCurrentLimit limiter;
+    ASSERT_EQ(foc::ErrorCode::Ok, limiter.configure(limit_config(1.0F)));
+    const auto& squeezed = limiter.step(2.0F, kDt);
+    ASSERT_TRUE(squeezed.measured);
+    const float scale = squeezed.scale;
+    const bool limiting = squeezed.limiting;
+    ASSERT_LT(scale, 1.0F);
+
+    for (const float dt : {0.0F, -kDt}) {
+        const auto& held = limiter.step(std::nanf(""), dt);
+        EXPECT_TRUE(held.measured) << "a refused step reports last step's reading, and last step was told";
+        EXPECT_EQ(scale, held.scale);
+        EXPECT_EQ(limiting, held.limiting);
+    }
+}
+
+// 9. One step follows the law exactly: the number the authority moves by is `gain * (error) * dt`, computed here from
+// the same three configured values. The harness could turn either `*` into a `/` and stay green -- every other case in
+// this file measures a *property* of the loop (it holds the ceiling, it comes back at a rate) and a property survives a
+// law that is off by orders of magnitude in the middle.
+// 一步严格照那条律走：权限移动的量是 `gain *（误差）* dt`，这里是拿那三个配置值自己算出来的。门禁把两个 `*` 中的任何
+// 一个翻成 `/` 都能全绿——本文件其他用例量的都是环的**性质**（压得住、按速率回来），而性质是能在律差了好几个数量级时
+// 依然成立的。
+TEST(BusCurrentLimit, OneStepMovesByTheLawTheThreeNumbersDescribe) {
+    BusCurrentLimit limiter;
+    const BusCurrentLimitConfig config = limit_config(1.0F);
+    ASSERT_EQ(foc::ErrorCode::Ok, limiter.configure(config));
+    ASSERT_FLOAT_EQ(1.0F, limiter.output().scale);
+
+    // Inside the rate limit on both sides: an error of `i_max/20` moves the authority by `1 - gain*error*dt`, which is
+    // `1 - 1e-3` here -- well inside what `fall_per_s * dt = 0.01` allows, so the law is what is under test and not the
+    // floor.
+    // 两侧都在限斜率之内：`i_max/20` 的误差让权限移动 `1 - gain*误差*dt`，这里是 `1 - 1e-3`——远在
+    // `fall_per_s * dt = 0.01` 允许的范围内，所以被测量的是那条律，而不是底。
+    const float aim_a = config.i_max_a - config.headroom_a;
+    const float measured_a = aim_a + (config.i_max_a / 20.0F);
+    const auto& out = limiter.step(measured_a, kDt);
+    const float expected = 1.0F - (config.gain_per_a_s * (measured_a - aim_a) * kDt);
+    EXPECT_NEAR(expected, out.scale, 1.0e-6F)
+        << "one step from full authority has to move by exactly gain * error * dt, not merely 'downwards'";
+    EXPECT_TRUE(out.limiting) << "and it is below full authority, so it has to say so";
+}
+
+// 10. The authority never rises above one, however far below the aim the current falls: the saturation is the promise,
+// and the only thing that would break it is `wanted` running away upwards. The harness showed the two numbers in the
+// saturation could be moved without anything noticing, because every case reaches the ceiling from below and stops.
+// 无论电流掉到瞄准值以下多少，权限都不超过一：饱和就是这个承诺，而唯一能破坏它的是 `wanted` 往上跑。门禁显示那两处
+// 常数可以被改动而无人发现，因为本文件每个用例都是从下面够到上限然后停住。
+TEST(BusCurrentLimit, TheAuthorityNeverRisesAboveOneHoweverFarBelowTheAim) {
+    BusCurrentLimit limiter;
+    BusCurrentLimitConfig config = limit_config(1.0F);
+    config.rise_per_s = 1.0e6F; // the rate limit must not be what stops it, so that the saturation is
+    ASSERT_EQ(foc::ErrorCode::Ok, limiter.configure(config));
+
+    // Zero current against an aim of `i_max - headroom`: the integrator wants `1 + gain*aim*dt = 1.019` here.
+    // 零电流对上 `i_max - headroom` 的瞄准值：积分器想要 `1 + gain*瞄准值*dt = 1.019`。
+    const auto& out = limiter.step(0.0F, kDt);
+    EXPECT_EQ(1.0F, out.scale) << "full authority is the ceiling of the *state*, not just of the ramp";
+    EXPECT_FALSE(out.limiting);
+    EXPECT_FLOAT_EQ(1.0F, limiter.output().scale);
+}
+
+// 11. The fall has a rate too, and it is the configured one: one step from full authority against an absurd current falls
+// by exactly `fall_per_s * dt`, not all the way to the answer. The harness could turn that `*` into a `/` and stay green
+// because case 5 only asserts that the fall *happened* fast -- "fast" is satisfied by "instant".
+// 下降也有速率，而且就是配置的那个：从满权限对上一个荒谬的电流走一步，只下降 `fall_per_s * dt`，不是一路掉到答案上。
+// 门禁把那个 `*` 翻成 `/` 也能全绿，因为用例 5 只断言下降**很快**——而"很快"是"瞬间"也能满足的。
+TEST(BusCurrentLimit, TheFallIsRateLimitedByItsOwnNumber) {
+    BusCurrentLimit limiter;
+    const BusCurrentLimitConfig config = limit_config(1.0F);
+    ASSERT_EQ(foc::ErrorCode::Ok, limiter.configure(config));
+    ASSERT_FLOAT_EQ(1.0F, limiter.output().scale);
+
+    // 100 A against an aim of 0.95: the integrator asks for `1 - 1.98`, so only the floor can decide the answer.
+    // 100 A 对上 0.95 的瞄准值：积分器要的是 `1 - 1.98`，于是只有底能决定答案。
+    const auto& out = limiter.step(100.0F, kDt);
+    const float expected = 1.0F - (config.fall_per_s * kDt);
+    EXPECT_NEAR(expected, out.scale, 1.0e-6F)
+        << "one step may only give up fall_per_s * dt of authority, however bad the current is";
+}
+
+// 12. Full authority means exactly one, on a fresh limiter and after `reset()` -- not 1.001, and not "whatever the last
+// state was plus a bit". The harness found three constants in that neighbourhood movable without a red case: the
+// member initializer, the value `reset()` writes, and the scale it publishes.
+// 满权限就是恰好一，无论是新对象还是 `reset()` 之后——不是 1.001，也不是"上一个状态再加一点"。门禁在这一带找到三个可以
+// 随便动的常数：成员初始化值、`reset()` 写入的值、以及它公布出去的那个 scale。
+TEST(BusCurrentLimit, FullAuthorityIsExactlyOneFreshAndAfterReset) {
+    const BusCurrentLimitConfig config = limit_config(1.0F);
+    const float aim_a = config.i_max_a - config.headroom_a;
+    const float measured_a = aim_a + (config.i_max_a / 20.0F);
+    const float expected = 1.0F - (config.gain_per_a_s * (measured_a - aim_a) * kDt);
+
+    BusCurrentLimit limiter;
+    ASSERT_EQ(foc::ErrorCode::Ok, limiter.configure(config));
+    EXPECT_NEAR(expected, limiter.step(measured_a, kDt).scale, 1.0e-6F)
+        << "a fresh limiter starts the law from exactly 1.0";
+
+    // Squeeze it, then reset: both the state and the published scale go back to exactly one.
+    // 先压下去，再 reset：状态与公布出去的 scale 都回到恰好一。
+    for (int k = 0; k < 20; ++k) {
+        static_cast<void>(limiter.step(2.0F, kDt));
+    }
+    ASSERT_LT(limiter.output().scale, 0.99F);
+    limiter.reset();
+    EXPECT_EQ(1.0F, limiter.output().scale) << "reset publishes exactly full authority";
+    EXPECT_NEAR(expected, limiter.step(measured_a, kDt).scale, 1.0e-6F)
+        << "and the law after a reset starts from that same one";
+}
+
 } // namespace

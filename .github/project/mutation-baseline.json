@@ -651,6 +651,449 @@
         }
       ],
       "notes": "94.3 % after the first pass found two assertions that were not being made (a stage starting while one runs, and a plan using all four stages). The two survivors are the same defensive `>=` in two places."
+    },
+    "angle_source": {
+      "mutate": [
+        "include/foc/core/angle_source.hpp"
+      ],
+      "tests": [
+        "test_package/test/unit/test_angle_source.cpp"
+      ],
+      "limit_per_file": 200,
+      "killed": 36,
+      "survived": 3,
+      "invalid": 16,
+      "timeout": 0,
+      "survivors": [
+        {
+          "file": "include/foc/core/angle_source.hpp",
+          "line": 33,
+          "col": 12,
+          "original": "0",
+          "replacement": "1",
+          "operator": "constant"
+        },
+        {
+          "file": "include/foc/core/angle_source.hpp",
+          "line": 68,
+          "col": 10,
+          "original": "0",
+          "replacement": "1",
+          "operator": "constant"
+        },
+        {
+          "file": "include/foc/core/angle_source.hpp",
+          "line": 277,
+          "col": 19,
+          "original": ">",
+          "replacement": ">=",
+          "operator": "swap"
+        }
+      ],
+      "invalid_sites": 16,
+      "truncated": [],
+      "judged": 39,
+      "score": 92.3,
+      "seconds": 102.8,
+      "recorded": "2026-11-12",
+      "equivalents": [
+        {
+          "file": "include/foc/core/angle_source.hpp",
+          "line": 33,
+          "col": 12,
+          "original": "0",
+          "replacement": "1",
+          "kind": "equivalent",
+          "why": "The numeric value of `AngleSourceKind::None` is not part of any promise. Every site compares by name, `reading_` is explicitly initialized with the enumerators by name, and nothing in the library casts this enum to an integer or writes it to a record -- which is exactly why `board_record.hpp` pins `BoardItem` with a `static_assert` and this one is left alone: that value *is* encoded, this one is not. Pinning it here would create a promise nobody consumes."
+        },
+        {
+          "file": "include/foc/core/angle_source.hpp",
+          "line": 68,
+          "col": 10,
+          "original": "0",
+          "replacement": "1",
+          "kind": "equivalent",
+          "why": "Same for `AngleQuality::Ok`. Note that `Ok = 0` *would* be a dangerous zero value if a zero-initialized reading were ever observable, which is why the member is initialized explicitly (`reading_{0, 0, Blind, None, NaN, 0}`) and why `reading()` before the first step answers `Blind`. The mutant moves the numbering behind that explicit initialization, so nothing can see it."
+        },
+        {
+          "file": "include/foc/core/angle_source.hpp",
+          "line": 277,
+          "col": 19,
+          "original": ">",
+          "replacement": ">=",
+          "kind": "equivalent",
+          "why": "`if (count > kMaxOffers) count = kMaxOffers;` -- at `count == kMaxOffers` both forms assign the value the variable already holds, so the clamp is a no-op on both sides of the boundary. The interesting off-by-one next to it (`count == 0` widened to `count == 1`) was a real blind spot and now has a case: `OneOfferIsStillAnOffer`."
+        }
+      ]
+    },
+    "move_trajectory": {
+      "mutate": [
+        "include/foc/core/move_trajectory.hpp"
+      ],
+      "tests": [
+        "test_package/test/unit/test_move_trajectory.cpp"
+      ],
+      "limit_per_file": 200,
+      "killed": 28,
+      "survived": 7,
+      "invalid": 0,
+      "timeout": 0,
+      "survivors": [
+        {
+          "file": "include/foc/core/move_trajectory.hpp",
+          "line": 194,
+          "col": 33,
+          "original": ">",
+          "replacement": ">=",
+          "operator": "swap"
+        },
+        {
+          "file": "include/foc/core/move_trajectory.hpp",
+          "line": 203,
+          "col": 49,
+          "original": ">",
+          "replacement": ">=",
+          "operator": "swap"
+        },
+        {
+          "file": "include/foc/core/move_trajectory.hpp",
+          "line": 208,
+          "col": 77,
+          "original": ">",
+          "replacement": ">=",
+          "operator": "swap"
+        },
+        {
+          "file": "include/foc/core/move_trajectory.hpp",
+          "line": 213,
+          "col": 26,
+          "original": ">",
+          "replacement": ">=",
+          "operator": "swap"
+        },
+        {
+          "file": "include/foc/core/move_trajectory.hpp",
+          "line": 215,
+          "col": 33,
+          "original": "<",
+          "replacement": "<=",
+          "operator": "swap"
+        },
+        {
+          "file": "include/foc/core/move_trajectory.hpp",
+          "line": 223,
+          "col": 25,
+          "original": ">",
+          "replacement": ">=",
+          "operator": "swap"
+        },
+        {
+          "file": "include/foc/core/move_trajectory.hpp",
+          "line": 224,
+          "col": 25,
+          "original": "<",
+          "replacement": "<=",
+          "operator": "swap"
+        }
+      ],
+      "invalid_sites": 0,
+      "truncated": [],
+      "judged": 35,
+      "score": 80.0,
+      "seconds": 304.8,
+      "recorded": "2026-11-12",
+      "equivalents": [
+        {
+          "file": "include/foc/core/move_trajectory.hpp",
+          "line": 194,
+          "col": 33,
+          "original": ">",
+          "replacement": ">=",
+          "kind": "equivalent",
+          "why": "A zero-length step is already a no-op in the arithmetic: `max_change_rad_s = accel * 0 = 0`, so the ramp re-assigns the velocity it had, and `position += 0.5 * (v + v) * 0 = 0`. The guard exists for `dt_s < 0` and `NaN`, and the mutation touches neither. The `dt_s == 0` case *is* covered -- `NumbersThatCannotDescribeAMoveAreRefusedAndNothingMoves` steps with it -- so what this says is that the mutant cannot be distinguished, not that nothing looks."
+        },
+        {
+          "file": "include/foc/core/move_trajectory.hpp",
+          "line": 203,
+          "col": 49,
+          "original": ">",
+          "replacement": ">=",
+          "kind": "equivalent",
+          "why": "The sign chosen for a zero remaining distance is unobservable. At `remaining == 0`, `ahead_rad` is `-(|v| * dt) <= 0`, so `stop_speed` is 0 and `wanted = +-0`; both signs drive the ramp identically (the comparisons are against +-0, which compare equal), and the landing test needs `position >= target` with `direction > 0` or `position <= target` with `direction < 0`, which at `position == target` are both true. The reading after that step is the target, zero speed, done -- either way."
+        },
+        {
+          "file": "include/foc/core/move_trajectory.hpp",
+          "line": 208,
+          "col": 77,
+          "original": ">",
+          "replacement": ">=",
+          "kind": "equivalent",
+          "why": "`(ahead_rad > 0.0) ? ahead_rad : 0.0` -- at `ahead_rad == 0` both arms yield `0.0`, which is the whole point of the conditional."
+        },
+        {
+          "file": "include/foc/core/move_trajectory.hpp",
+          "line": 213,
+          "col": 26,
+          "original": ">",
+          "replacement": ">=",
+          "kind": "equivalent",
+          "why": "At `wanted == velocity + max_change` the first arm does `velocity += max_change` and the else arm assigns `wanted`; both are `velocity_rad_s_ + max_change_rad_s`, computed from the same two doubles, so the assignment is the same number. The ramp is \"clamp to one acceleration step\", and equality is inside the clamp either way."
+        },
+        {
+          "file": "include/foc/core/move_trajectory.hpp",
+          "line": 215,
+          "col": 33,
+          "original": "<",
+          "replacement": "<=",
+          "kind": "equivalent",
+          "why": "Same as line 213 in the other direction: at equality both arms assign `velocity_rad_s_ - max_change_rad_s`."
+        },
+        {
+          "file": "include/foc/core/move_trajectory.hpp",
+          "line": 223,
+          "col": 25,
+          "original": ">",
+          "replacement": ">=",
+          "kind": "equivalent",
+          "why": "`direction` is only ever `+1` or `-1` -- it is assigned by `(remaining_rad > 0.0) ? 1.0 : -1.0` and nothing else -- so `direction > 0.0` and `direction >= 0.0` are the same predicate on every value the variable can hold. This is not an unprobed boundary: the value cannot be zero."
+        },
+        {
+          "file": "include/foc/core/move_trajectory.hpp",
+          "line": 224,
+          "col": 25,
+          "original": "<",
+          "replacement": "<=",
+          "kind": "equivalent",
+          "why": "Same for `direction < 0.0` and `direction <= 0.0`: `direction` is +-1 by construction."
+        }
+      ]
+    },
+    "bus_current_limit": {
+      "mutate": [
+        "include/foc/core/bus_current_limit.hpp"
+      ],
+      "tests": [
+        "test_package/test/unit/test_bus_current_limit.cpp"
+      ],
+      "limit_per_file": 200,
+      "killed": 30,
+      "survived": 12,
+      "invalid": 0,
+      "timeout": 0,
+      "survivors": [
+        {
+          "file": "include/foc/core/bus_current_limit.hpp",
+          "line": 150,
+          "col": 49,
+          "original": ">",
+          "replacement": ">=",
+          "operator": "swap"
+        },
+        {
+          "file": "include/foc/core/bus_current_limit.hpp",
+          "line": 150,
+          "col": 57,
+          "original": "&&",
+          "replacement": "||",
+          "operator": "swap"
+        },
+        {
+          "file": "include/foc/core/bus_current_limit.hpp",
+          "line": 181,
+          "col": 24,
+          "original": "1.0",
+          "replacement": "1.001",
+          "operator": "constant"
+        },
+        {
+          "file": "include/foc/core/bus_current_limit.hpp",
+          "line": 200,
+          "col": 20,
+          "original": "<",
+          "replacement": "<=",
+          "operator": "swap"
+        },
+        {
+          "file": "include/foc/core/bus_current_limit.hpp",
+          "line": 201,
+          "col": 34,
+          "original": ">",
+          "replacement": ">=",
+          "operator": "swap"
+        },
+        {
+          "file": "include/foc/core/bus_current_limit.hpp",
+          "line": 203,
+          "col": 34,
+          "original": "<",
+          "replacement": "<=",
+          "operator": "swap"
+        },
+        {
+          "file": "include/foc/core/bus_current_limit.hpp",
+          "line": 211,
+          "col": 24,
+          "original": "<",
+          "replacement": "<=",
+          "operator": "swap"
+        },
+        {
+          "file": "include/foc/core/bus_current_limit.hpp",
+          "line": 214,
+          "col": 24,
+          "original": ">",
+          "replacement": ">=",
+          "operator": "swap"
+        },
+        {
+          "file": "include/foc/core/bus_current_limit.hpp",
+          "line": 218,
+          "col": 39,
+          "original": "<",
+          "replacement": "<=",
+          "operator": "swap"
+        },
+        {
+          "file": "include/foc/core/bus_current_limit.hpp",
+          "line": 218,
+          "col": 49,
+          "original": "1",
+          "replacement": "2",
+          "operator": "constant"
+        },
+        {
+          "file": "include/foc/core/bus_current_limit.hpp",
+          "line": 218,
+          "col": 52,
+          "original": "6",
+          "replacement": "7",
+          "operator": "constant"
+        },
+        {
+          "file": "include/foc/core/bus_current_limit.hpp",
+          "line": 243,
+          "col": 22,
+          "original": "1.0",
+          "replacement": "1.001",
+          "operator": "constant"
+        }
+      ],
+      "invalid_sites": 0,
+      "truncated": [],
+      "judged": 42,
+      "score": 71.4,
+      "seconds": 356.3,
+      "recorded": "2026-11-13",
+      "equivalents": [
+        {
+          "file": "include/foc/core/bus_current_limit.hpp",
+          "line": 150,
+          "col": 49,
+          "original": ">",
+          "replacement": ">=",
+          "kind": "equivalent",
+          "why": "Masked by the next clause: a ceiling that is not positive is already refused by `headroom_a < i_max_a`, which no legal headroom (`>= 0`) can satisfy. The clause is deliberate defence in depth -- a ceiling of zero alone would divide the aim by nothing -- but a defect in it cannot reach the return value, so no test can distinguish the mutant from the guard."
+        },
+        {
+          "file": "include/foc/core/bus_current_limit.hpp",
+          "line": 150,
+          "col": 57,
+          "original": "&&",
+          "replacement": "||",
+          "kind": "equivalent",
+          "why": "Masked by the next clause: a ceiling that is not positive is already refused by `headroom_a < i_max_a`, which no legal headroom (`>= 0`) can satisfy. The clause is deliberate defence in depth -- a ceiling of zero alone would divide the aim by nothing -- but a defect in it cannot reach the return value, so no test can distinguish the mutant from the guard."
+        },
+        {
+          "file": "include/foc/core/bus_current_limit.hpp",
+          "line": 181,
+          "col": 24,
+          "original": "1.0",
+          "replacement": "1.001",
+          "kind": "equivalent",
+          "why": "`wanted` in the unmeasured branch is a target for the rise, and any target above 1 saturates to 1 on the same step: when the ceiling is still below the target the ceiling wins and then saturates, and when the ceiling is above it the assignment is the target and saturates too. 1.0 and 1.001 differ only in the intermediate variable."
+        },
+        {
+          "file": "include/foc/core/bus_current_limit.hpp",
+          "line": 200,
+          "col": 20,
+          "original": "<",
+          "replacement": "<=",
+          "kind": "equivalent",
+          "why": "At equality both arms assign the same number: the conditional's two branches differ only when the comparison is off by one step, and at exactly one step they meet."
+        },
+        {
+          "file": "include/foc/core/bus_current_limit.hpp",
+          "line": 201,
+          "col": 34,
+          "original": ">",
+          "replacement": ">=",
+          "kind": "equivalent",
+          "why": "At equality both arms assign the same number: the conditional's two branches differ only when the comparison is off by one step, and at exactly one step they meet."
+        },
+        {
+          "file": "include/foc/core/bus_current_limit.hpp",
+          "line": 203,
+          "col": 34,
+          "original": "<",
+          "replacement": "<=",
+          "kind": "equivalent",
+          "why": "At equality both arms assign the same number: the conditional's two branches differ only when the comparison is off by one step, and at exactly one step they meet."
+        },
+        {
+          "file": "include/foc/core/bus_current_limit.hpp",
+          "line": 211,
+          "col": 24,
+          "original": "<",
+          "replacement": "<=",
+          "kind": "equivalent",
+          "why": "The saturation writes the bound: at exactly 0 both forms assign 0."
+        },
+        {
+          "file": "include/foc/core/bus_current_limit.hpp",
+          "line": 214,
+          "col": 24,
+          "original": ">",
+          "replacement": ">=",
+          "kind": "equivalent",
+          "why": "Same at the top: at exactly 1 both forms assign 1."
+        },
+        {
+          "file": "include/foc/core/bus_current_limit.hpp",
+          "line": 218,
+          "col": 39,
+          "original": "<",
+          "replacement": "<=",
+          "kind": "equivalent",
+          "why": "Distinguishable only by landing the authority inside a 1e-6-wide band just below 1.0, which would mean choosing a configuration to hit a float boundary -- a case measuring rounding rather than the rule. The band is a flicker guard (a scale of 0.9999999 is not \"limiting\"); its exact width is not a promise, and every authority the law actually produces falls on the same side of all three widths."
+        },
+        {
+          "file": "include/foc/core/bus_current_limit.hpp",
+          "line": 218,
+          "col": 49,
+          "original": "1",
+          "replacement": "2",
+          "kind": "equivalent",
+          "why": "Distinguishable only by landing the authority inside a 1e-6-wide band just below 1.0, which would mean choosing a configuration to hit a float boundary -- a case measuring rounding rather than the rule. The band is a flicker guard (a scale of 0.9999999 is not \"limiting\"); its exact width is not a promise, and every authority the law actually produces falls on the same side of all three widths."
+        },
+        {
+          "file": "include/foc/core/bus_current_limit.hpp",
+          "line": 218,
+          "col": 52,
+          "original": "6",
+          "replacement": "7",
+          "kind": "equivalent",
+          "why": "Distinguishable only by landing the authority inside a 1e-6-wide band just below 1.0, which would mean choosing a configuration to hit a float boundary -- a case measuring rounding rather than the rule. The band is a flicker guard (a scale of 0.9999999 is not \"limiting\"); its exact width is not a promise, and every authority the law actually produces falls on the same side of all three widths."
+        },
+        {
+          "file": "include/foc/core/bus_current_limit.hpp",
+          "line": 243,
+          "col": 22,
+          "original": "1.0",
+          "replacement": "1.001",
+          "kind": "equivalent",
+          "why": "The member initializer for `authority_` is dead: `configure()` writes 1.0 into it before any step can run, and `output()` before `configure()` reads `output_`, not `authority_`. Nothing can observe the value the constructor chose -- which is worth knowing, because it means the initializer is documentation rather than behaviour."
+        }
+      ]
     }
   },
   "_comment": [
