@@ -30,6 +30,11 @@ void StubHal::reset() noexcept {
     position.set_velocity_rad_s(0.0F);
     position.set_sensor_present(true);
     dc_link.set_voltage_v(0.0F);
+    // The optional half of the same member: back to "no shunt", not to 0 A. A reset that left the last case's current
+    // in place would make the next case read a measurement somebody else took.
+    // 同一成员的可选那一半：回到"没有分流电阻"，而不是 0 A。一次把上个用例的电流留在原处的 reset，会让下一个用例读到
+    // 别人做的测量。
+    dc_link.set_bus_current_unavailable();
     // Back to "the power stage is not reporting a fault", which is the state a stub power stage is in: a reset that left
     // an injected fault asserted would make `reset()` look like it worked while the drive still refused to run.
     // 回到"功率级没在报故障"，也就是桩功率级所处的状态：一次把注入的故障留在有效状态的 reset，会让 `reset()` 看起来

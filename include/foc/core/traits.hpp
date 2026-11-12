@@ -153,6 +153,27 @@ struct is_temperature<
                          noexcept(std::declval<T&>().read())> {};
 
 /**
+ * @brief [en] `T` exposes an optional bus-current reading (`read_bus_current_a(float&) -> bool`).
+ * @brief [zh] `T` 是否暴露了可选的母线电流读数（ `read_bus_current_a(float&) -> bool`）。
+ * @note [en] Written as `bool` plus an out-parameter rather than a bare `float`, and that is the point: this quantity
+ *            does not always exist. A shunt that is not populated, or a bus fed from a bench supply with no return path
+ *            measured -- in both cases the honest answer is "not measured", and a `float`-only contract would force the
+ *            caller to read 0 A as a measurement. Same shape as `NtcDivider::temperature_c`.
+ * @note [zh] 写成 `bool` 加出参而不是裸 `float`，而这正是要点：这个量并不总是存在。分流电阻没贴、或母线由台架电源供电而
+ *            没有测回流路径——两种情况下诚实的回答都是"没有测到"，而只有 `float` 的契约会逼着调用方把 0 A 当作一次测量。
+ *            形状与 `NtcDivider::temperature_c` 一致。
+ * @since 0.1.0
+ * @exporter
+ */
+template <typename T, typename = void> struct is_bus_current : std::false_type {};
+
+template <typename T>
+struct is_bus_current<T, std::void_t<decltype(std::declval<T&>().read_bus_current_a(std::declval<float&>()))>>
+    : std::bool_constant<
+          std::is_same_v<decltype(std::declval<T&>().read_bus_current_a(std::declval<float&>())), bool> &&
+          noexcept(std::declval<T&>().read_bus_current_a(std::declval<float&>()))> {};
+
+/**
  * @brief [en] `T` satisfies the foc::hal::FaultInput contract.
  * @brief [zh] `T` 满足 foc::hal::FaultInput 契约。
  * @since 0.1.0
@@ -186,6 +207,7 @@ template <typename T> inline constexpr bool is_dc_link_v = is_dc_link<T>::value;
 
 template <typename T> inline constexpr bool is_clock_v = is_clock<T>::value;
 template <typename T> inline constexpr bool is_temperature_v = is_temperature<T>::value;
+template <typename T> inline constexpr bool is_bus_current_v = is_bus_current<T>::value;
 template <typename T> inline constexpr bool is_fault_input_v = is_fault_input<T>::value;
 
 } // namespace concepts
@@ -466,6 +488,35 @@ struct has_temperature<T, std::void_t<decltype(std::declval<T&>().temperature)>>
  * @exporter
  */
 template <typename T> inline constexpr bool has_temperature_v = has_temperature<T>::value;
+
+/**
+ * @brief [en] `T` (a HalPolicy) exposes a `dc_link` whose type can report the bus current.
+ *
+ *   Two levels rather than one, because the reading hangs off the DC link and not off the policy: `dc_link` is already
+ *   a required member, so this asks a narrower question -- does *this* DC link know its own current. A policy whose
+ *   link answers with a plain `voltage_v()` only is the normal case for a bus fed from a supply, and it has to answer
+ *   false rather than pretend.
+ *
+ * @brief [zh] `T`（HalPolicy）的 `dc_link` 是否能报出母线电流。
+ *
+ *   两层而不是一层，因为读数是挂在直流母线而不是策略上： `dc_link` 本来就是必需成员，所以这个 trait 问的是更窄的问题 ——
+ *   **这个** 母线是否知道自己的电流。一个只会答 `voltage_v()` 的母线（由电源供电的常见情形）必须答 false，而不是假装。
+ * @since 0.1.0
+ * @exporter
+ */
+template <typename T, typename = void> struct has_bus_current : std::false_type {};
+
+template <typename T>
+struct has_bus_current<T, std::void_t<decltype(std::declval<T&>().dc_link)>>
+    : std::bool_constant<hal::concepts::is_bus_current_v<decltype(std::declval<T&>().dc_link)>> {};
+
+/**
+ * @brief [en] Convenience variable template for the optional bus-current reading.
+ * @brief [zh] 可选母线电流读数的便捷变量模板。
+ * @since 0.1.0
+ * @exporter
+ */
+template <typename T> inline constexpr bool has_bus_current_v = has_bus_current<T>::value;
 
 /**
  * @brief [en] `T` (a HalPolicy) exposes a `fault_input` member satisfying `hal::FaultInput`.

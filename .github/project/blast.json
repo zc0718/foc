@@ -1979,7 +1979,7 @@
     {
       "id": "B-24",
       "date": "2026-11-12",
-      "what_changed": "The integration line's first two batches. The machine numbers became readable and replaceable through the frozen C ABI (`foc_motor_get_params` / `foc_motor_apply_params`) and gained a form that survives a power cycle (`comm/commissioned_set.hpp`, 46 bytes with a schema and a CRC). A winding-temperature channel was added as an **optional** HAL contract (`hal/temperature.hpp`) with a reference stub (`driver/stub_temperature.hpp`) and the datasheet-side conversion (`core/thermistor.hpp`). The seeds are what the ledger's own triggers pick up: `core/traits.hpp` gained a structural trait and an optional-member check, `driver/stub_hal.hpp` gained the optional member, `src/driver/stub_hal.cpp` resets it, and the three new headers are seeds in their own right.",
+      "what_changed": "The integration line's first two batches. The machine numbers became readable and replaceable through the frozen C ABI (`foc_motor_get_params` / `foc_motor_apply_params`) and gained a form that survives a power cycle (`comm/commissioned_set.hpp`, 46 bytes with a schema and a CRC). A winding-temperature channel was added as an **optional** HAL contract (`hal/temperature.hpp`) with a reference stub (`driver/stub_temperature.hpp`) and the datasheet-side conversion (`core/thermistor.hpp`). The seeds are what the ledger's own triggers pick up: `core/traits.hpp` gained a structural trait and an optional-member check, `driver/stub_hal.hpp` gained the optional member, `src/driver/stub_hal.cpp` resets it, and the three new headers are seeds in their own right. The same day added the bus-current half: an optional member on the stub DC link and a structural trait that finds it, with the d-q power identity checked against a phase-form expression written in the test.",
       "seeds": [
         "include/foc/core/traits.hpp",
         "include/foc/driver/stub_hal.hpp",
@@ -1988,7 +1988,9 @@
         "include/foc/hal/temperature.hpp",
         "include/foc/driver/stub_temperature.hpp",
         "src/core/thermistor.cpp",
-        "src/driver/stub_temperature.cpp"
+        "src/driver/stub_temperature.cpp",
+        "include/foc/driver/stub_dc_link.hpp",
+        "src/driver/stub_dc_link.cpp"
       ],
       "affected": [
         {
@@ -2035,6 +2037,11 @@
           "row": "core/thermistor.hpp",
           "verdict": "holds",
           "why": "New row, L2: the divider inverse is checked against a forward model written in the test, worst 0.000031 C over -20..+120 C. This change is where the row was created, so it is adjudicated here rather than left as an open account."
+        },
+        {
+          "row": "driver/stub_dc_link.hpp",
+          "verdict": "holds",
+          "why": "The member it gained is optional and off the `hal::DcLink` contract, so no existing caller changes: `voltage_v()` is untouched and the new reading answers false until a case sets it. `StubHal::reset()` sends it back there, which `BusCurrent.TheStubStartsWithoutAReadingAndResetTakesItBack` pins; `test_driver_stubs.cpp` passes unchanged."
         }
       ]
     },

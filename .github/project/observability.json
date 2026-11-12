@@ -696,6 +696,17 @@
       "limit": "The converter is the two-point beta model, so the band it is honest over is 20-100 C; outside that a Steinhart-Hart fit is the right tool and this one is not. Whether a real NTC's self-heating and cable resistance matter is a board question, not one this repository measured.",
       "reopened": [],
       "no_effect": "No claim row was re-opened, and by the rule above none could be: this is an implementation-level leg, the contract is absent in every existing HalPolicy (`CallbackHal`, `PlantHal`), and a port never promotes. `core/traits.hpp` gained one structural trait beside `is_clock`; the suite moved only by the six new cases."
+    },
+    {
+      "id": "O-50",
+      "date": "2026-11-12",
+      "leg": "implementation",
+      "capability": "The DC link can report its **bus current** as an optional capability: `read_bus_current_a(float&) -> bool` on the concrete link, detected structurally by `core::concepts::has_bus_current_v`. Before this, the only bus current in the tree was inside the SIL bench (`sil_bus.hpp`), so nothing a host built could be limited on it.",
+      "source": "`test_bus_current.cpp` (4 cases): the stub starts without a reading and `StubHal::reset()` takes it back; the capability answers true / false / false for present, voltage-only and wrong-shaped links; and the d-q power form is held against the **phase form written in the test** -- `sum(v_k*i_k) == v_bus * i_dc` at five rotor angles, worst relative disagreement **1.4e-7**, with the factor proved load-bearing by mutation (replacing `1.5` with `1.0` gives exactly 1/3 disagreement and turns the case red).",
+      "effect": "N3 can limit on a measured bus current, and N6 (the battery-current limit) has a quantity to limit on. Nothing reads it in this release.",
+      "limit": "The member is not part of `hal::DcLink`, because a bus fed from a supply may measure no current and making it required would refuse those drives -- so a consumer must ask `has_bus_current_v` rather than link against it. The port carries no scenario of its own: a conversion is checked, a policy is not.",
+      "reopened": [],
+      "no_effect": "No claim row was re-opened, and by the rule above none could be: this is an implementation-level leg, the member is absent on every link that does not declare it, and a port never promotes. `core/traits.hpp` gained one structural trait; the suite moved only by the four new cases."
     }
   ]
 }
