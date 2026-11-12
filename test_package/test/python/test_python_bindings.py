@@ -1121,6 +1121,112 @@ def test_the_torque_map_turns_newton_metres_into_amps_and_says_when_it_clipped()
         raise AssertionError("a machine with kt = 0 was admitted to a torque map")
 
 
+def supervisor_config(v_max_v=30.0, v_min_v=18.0):
+    """The thresholds the pure-C validation uses, as a config a Python host can compose.
+
+    Deliberately not a "default": the C entry point refuses a NULL config, and a Python default would
+    be this module deciding what a safe band is -- which is the one thing a thin wrapper must not do.
+    The numbers are the bench's, and the two call sites below move only `v_min_v`, the same way
+    `c_api_validation.c` moves only the band.
+
+    纯 C 校验用的那组阈值，做成 Python 宿主能自己拼的配置。它**刻意不是**"默认值"：C 入口拒绝 NULL 配置，
+    而 Python 侧给个默认就等于由本模块来决定"安全区间是什么"——那正是薄包装唯一不能做的事。数字是台架的，
+    下面两处只动 `v_min_v`，与 `c_api_validation.c` 只动区间是同一种做法。
+    """
+    config = foc.SupervisorConfig()
+    config.protection.i_hard_a = 4.0
+    config.protection.i_max_a = 3.0
+    config.protection.i2t_a2s = 1.0
+    config.protection.i2t_cooling_s = 10.0
+    config.protection.v_max_v = v_max_v
+    config.protection.v_min_v = v_min_v
+    config.protection.t_trip_c = 110.0
+    config.protection.t_derate_start_c = 60.0
+    config.protection.t_derate_end_c = 80.0
+    config.protection.stall_speed_rad_s = 1.0
+    config.protection.stall_current_a = 2.0
+    config.protection.stall_time_s = 1.0
+    config.protection.sync_error_ratio = 0.5
+    config.protection.hysteresis_ratio = 0.05
+    config.chopper.v_on_v = 28.0
+    config.chopper.v_off_v = 26.0
+    config.chopper.resistance_ohm = 2.2
+    config.chopper.duty_max = 0.95
+    config.chopper.min_on_s = 1e-4
+    config.chopper.min_off_s = 1e-4
+    config.pole_pairs = 7.0
+    return config
+
+
+def test_the_supervisor_refuses_a_band_that_cannot_be_a_band():
+    # The refusal has to happen in the constructor: a Python object that exists but holds no handle
+    # would be this module inventing a state the C ABI does not have.
+    # 拒绝必须发生在构造函数里：一个存在却没握住句柄的 Python 对象，等于本模块发明了一个 C ABI 没有的状态。
+    with foc.Motor.from_parts() as motor:
+        expect_foc_error(
+            foc.ErrorCode.PARAM,
+            lambda: foc.Supervisor(motor, supervisor_config(v_max_v=30.0, v_min_v=40.0)),
+        )
+
+
+def test_the_supervisor_counts_the_periods_it_steps():
+    # Ten periods in, the tenth is on the counter and the loop was allowed to run -- the same two
+    # assertions `c_api_validation.c` makes on the same ten ticks.
+    # 走十拍之后，计数器上是十，而且环被允许运行——与 `c_api_validation.c` 在同一段拍上的两个断言一致。
+    with foc.Motor.from_parts() as motor, foc.Supervisor(motor, supervisor_config(v_min_v=0.0)) as supervisor:
+        supervisor.enable()
+        for _ in range(10):
+            supervisor.step(1e-4)
+        status = supervisor.status()
+        assert status["tick"] == 10, status
+        assert status["fault"] == "none", status
+        assert status["output_allowed"], status
+        assert math.isfinite(status["v_bus_v"]), status
+        assert not status["brake_engaged"], status
+
+
+def test_a_second_supervisor_on_one_motor_is_a_state_error():
+    with foc.Motor.from_parts() as motor, foc.Supervisor(motor, supervisor_config(v_min_v=0.0)):
+        expect_foc_error(foc.ErrorCode.STATE, lambda: foc.Supervisor(motor, supervisor_config(v_min_v=0.0)))
+
+
+def test_a_trip_names_the_same_fault_the_c_side_names():
+    # 24 V bus against a 30 V floor: the first tick stops the loop. Every assertion below is a place
+    # where a translation defect would show up as the two Faces disagreeing -- the fault *name* (from
+    # the same table), whether output was allowed, how many ticks were stepped, and what the motor
+    # itself now reports.
+    # 24 V 母线对上 30 V 下限：第一拍就把环停掉。下面每一条断言都是一个"翻译缺陷会让两个面互相矛盾"的位置
+    # ——故障**名字**（取自同一张表）、输出是否被允许、走了几拍、以及电机自己现在报什么。
+    with foc.Motor.from_parts() as motor, foc.Supervisor(motor, supervisor_config(v_max_v=40.0, v_min_v=30.0)) as supervisor:
+        supervisor.enable()
+        expect_foc_error(foc.ErrorCode.FAULT, lambda: supervisor.step(1e-4))
+        status = supervisor.status()
+        assert status["fault"] == "under voltage", status
+        assert not status["output_allowed"], status
+        assert status["tick"] == 1, status
+        assert motor.status()["mode"] == foc.MotorState.FAULT, motor.status()
+
+
+def test_a_closed_supervisor_is_a_refusal_not_undefined_behaviour():
+    # A closed object holds NULL, and the C entry answers `FOC_ERR_PARAM` for NULL -- a *stale*
+    # handle (freed but not nulled) is the one that answers `FOC_ERR_STATE` (`c_api_validation.c`
+    # produces that one by keeping the old value). Python cannot produce a stale handle, because
+    # `close()` nulls it, so this case records which of the two refusals a Python author will see
+    # rather than asserting the friendlier one the C ABI uses for a different mistake.
+    # 关闭后的对象持的是 NULL，而 C 入口对 NULL 答 `FOC_ERR_PARAM`；答 `FOC_ERR_STATE` 的是**陈旧**句柄
+    # （已释放但没置空，`c_api_validation.c` 靠保留旧值造出那一种）。Python 造不出陈旧句柄，因为 `close()`
+    # 会置空它——所以这条用例记录的是「Python 作者会看到哪一种拒绝」，而不是去断言 C ABI 为另一种错误准备的
+    # 那个更好听的码。
+    motor = foc.Motor.from_parts()
+    supervisor = foc.Supervisor(motor, supervisor_config(v_min_v=0.0))
+    supervisor.close()
+    assert not supervisor.alive, "close() must clear the handle"
+    expect_foc_error(foc.ErrorCode.PARAM, lambda: supervisor.step(1e-4))
+    expect_foc_error(foc.ErrorCode.PARAM, lambda: supervisor.status())
+    supervisor.close()  # idempotent: destroy(NULL) is FOC_OK, which is why this does not raise
+    motor.close()
+
+
 def main():
     failures = 0
     for name, case in sorted(globals().items()):

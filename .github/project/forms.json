@@ -55,8 +55,8 @@
       "supports_claim": true,
       "claim_status": "gap",
       "claimed_by": null,
-      "gap": "Python appears only as an *evidence path* on three rows (trace, sinusoid_fit, torque_map), never as a claim that the binding itself behaves. A row would have to state what the module promises -- that it is a thin wrapper over the C ABI, so anything it gets wrong is a translation defect -- and name the case that would catch a translation defect.",
-      "note": "Deliberately not claimed rather than half-claimed: the three rows above use Python as a second machine, which is a stronger use of it than a claim about the binding."
+      "gap": "Python appears only as an *evidence path* on three rows (trace, sinusoid_fit, torque_map), never as a claim that the binding itself behaves. Since 2026-11-12 it is closer than that: the module carries the drive-tick assembly (`Supervisor`, over `foc_supervisor_*`), and `test_a_trip_names_the_same_fault_the_c_side_names` is a translation-defect case -- a re-mapped fault name, a boolean read as an int, a band refused in the constructor but a handle minted anyway, all fail it. What is still missing is the claim: a row with a level and a boundary statement (this wrapper promises the C answers, *including the refusals*, not friendlier ones), naming the case set that would catch a translation defect across the rest of the surface.",
+      "note": "Deliberately not claimed rather than half-claimed: the three rows above use Python as a second machine, which is a stronger use of it than a claim about the binding. The 2026-11-12 binding work also produced the first *measured* boundary statement for such a row: a closed `Supervisor` answers `FOC_ERR_PARAM`, because the object nulls its handle and the C entry returns PARAM for NULL, while `FOC_ERR_STATE` is the code for a stale handle that Python cannot build. A claim row that promised `STATE` here would be promising a friendlier answer than the C ABI gives."
     }
   ]
 }

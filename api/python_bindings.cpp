@@ -574,6 +574,97 @@ class Protector final {
     foc_protector_t handle_{nullptr};
 };
 
+/**
+ * @brief [en] RAII owner of one `foc_supervisor_t`: the drive tick, in the order a stop has to follow.
+ *
+ *   The C entry point exists because a host that steps the motor and adjudicates the protector itself is writing that
+ *   order again -- brake before the output goes away, `stop()` before the fault is recorded. This binding exists for
+ *   the same reason one level out: a Python host that assembles those calls by hand is writing the order a third time,
+ *   and the two Faces would then be able to disagree about what a stop is.
+ *
+ * @brief [zh] 一个 `foc_supervisor_t` 的 RAII 持有者：驱动器那一拍，顺序就是一次停机必须遵守的那个顺序。
+ *
+ *   C 入口存在的理由，是一个自己走环、自己处置保护器判决的宿主在重写那个顺序——输出消失之前先抱闸、记故障之前先
+ *   `stop()`。这层绑定为同一个理由再往外一层：手写这些调用的 Python 宿主会把那个顺序写第三遍，于是两个「面」就有机会对
+ *   「一次停机是什么」产生分歧。
+ *
+ * @note [en] `step()` raises on `FOC_ERR_FAULT`, because the C call says so and this module's promise is that it never
+ *            re-decides what a C return means. Catch it and read `status()`: the chopper keeps dissipating and the
+ *            status keeps being updated, so a tripped supervisor is still worth stepping.
+ * @note [zh] `step()` 在 `FOC_ERR_FAULT` 上抛异常，因为 C 调用就是这么说的，而本模块的承诺是从不重新判定 C 返回值的含
+ *            义。接住它再读 `status()`：斩波器继续耗能、状态继续更新，所以跳闸后的监督器仍然值得继续走。
+ * @since 0.1.0
+ */
+class Supervisor final {
+  public:
+    /**
+     * @brief [en] Bind a supervisor to a live motor. The motor is not copied and must outlive this object.
+     * @brief [zh] 把监督器绑到一台活着的电机上。电机不被复制，且必须活得比本对象久。
+     */
+    Supervisor(const Motor& motor, const foc_supervisor_config_t& config) {
+        check(foc_supervisor_create(motor.handle(), &config, &handle_), "foc_supervisor_create");
+    }
+
+    ~Supervisor() { close(); }
+
+    Supervisor(const Supervisor&) = delete;
+    auto operator=(const Supervisor&) -> Supervisor& = delete;
+    Supervisor(Supervisor&& other) noexcept : handle_(other.handle_) { other.handle_ = nullptr; }
+    auto operator=(Supervisor&& other) noexcept -> Supervisor& {
+        if (this != &other) {
+            close();
+            handle_ = other.handle_;
+            other.handle_ = nullptr;
+        }
+        return *this;
+    }
+
+    void step(double dt_s) const { check(foc_supervisor_step(handle_, static_cast<float>(dt_s)), "foc_supervisor_step"); }
+
+    /**
+     * @brief [en] What the last tick decided, as a dict keyed the way `foc_supervisor_status_t` is.
+     *
+     * @brief [zh] 上一拍的决定，以 dict 给出，键名与 `foc_supervisor_status_t` 一一对应。
+     *
+     *   The fault comes back as the name from `foc_fault_name()`, the same table the C users read: a number here and a
+     *   name there would be two answers to "what fault is this".
+     */
+    [[nodiscard]] auto status() const -> py::dict {
+        foc_supervisor_status_t raw{};
+        raw.struct_size = static_cast<std::uint32_t>(sizeof(raw));
+        check(foc_supervisor_status(handle_, &raw), "foc_supervisor_status");
+        py::dict out;
+        out["fault"] = foc_fault_name(raw.fault);
+        out["active_mask"] = raw.active_mask;
+        out["latched_mask"] = raw.latched_mask;
+        out["i_limit_a"] = raw.i_limit_a;
+        out["temperature_c"] = raw.temperature_c;
+        out["v_bus_v"] = raw.v_bus_v;
+        out["chopper_duty"] = raw.chopper_duty;
+        out["output_allowed"] = raw.output_allowed != 0;
+        out["brake_engaged"] = raw.brake_engaged != 0;
+        out["tick"] = raw.tick;
+        return out;
+    }
+
+    void enable() const { check(foc_supervisor_enable(handle_), "foc_supervisor_enable"); }
+    void disable() const { check(foc_supervisor_disable(handle_), "foc_supervisor_disable"); }
+
+    void clear() const { check(foc_supervisor_clear(handle_), "foc_supervisor_clear"); }
+
+    void close() noexcept {
+        if (handle_ != nullptr) {
+            (void)foc_supervisor_destroy(handle_);
+            handle_ = nullptr;
+        }
+    }
+
+    [[nodiscard]] auto alive() const noexcept -> bool { return handle_ != nullptr; }
+
+  private:
+    foc_supervisor_t handle_{nullptr};
+};
+
 auto make_motor(float rs, float ld, float lq, float kt, float j, float b, std::uint8_t pole_pairs) -> Motor {
     foc_motor_params_t params{};
     params.rs = rs;
@@ -1282,4 +1373,97 @@ PYBIND11_MODULE(foc_python, m) {
             py::return_value_policy::reference_internal)
         .def("__exit__",
              [](Protector& self, const py::object&, const py::object&, const py::object&) { self.close(); });
+
+    // The supervisor's two halves, bound field by field rather than through a 22-argument constructor: a Python host
+    // composes the same numbers a C host does, from the same struct, and the refusals are the C ones (a band that
+    // cannot be a band, a pole-pair count that is not finite). `struct_size` is this object's business, never the
+    // caller's -- the one field a caller can get wrong that has no meaning to get wrong.
+    // 监督器的两半，逐字段绑定而不是 22 个参数的构造函数：Python 宿主与 C 宿主填同样的数、填自同一个结构体，拒绝也是 C
+    // 的那些（描述不出区间的区间、非有限的极对数）。 `struct_size` 是本对象的事，从来不是调用方的事——那是唯一一个
+    // 「填错也没有意义」的字段。
+    py::class_<foc_protection_config_t>(m, "ProtectionConfig",
+                                        "[en] The fault thresholds, including the derating band.\n"
+                                        "[zh] 故障阈值，含降额区间。")
+        .def(py::init([]() {
+            foc_protection_config_t out{};
+            out.struct_size = static_cast<std::uint32_t>(sizeof(out));
+            return out;
+        }))
+        .def_readwrite("i_hard_a", &foc_protection_config_t::i_hard_a)
+        .def_readwrite("i_max_a", &foc_protection_config_t::i_max_a)
+        .def_readwrite("i2t_a2s", &foc_protection_config_t::i2t_a2s)
+        .def_readwrite("i2t_cooling_s", &foc_protection_config_t::i2t_cooling_s)
+        .def_readwrite("v_max_v", &foc_protection_config_t::v_max_v)
+        .def_readwrite("v_min_v", &foc_protection_config_t::v_min_v)
+        .def_readwrite("t_trip_c", &foc_protection_config_t::t_trip_c)
+        .def_readwrite("t_derate_start_c", &foc_protection_config_t::t_derate_start_c)
+        .def_readwrite("t_derate_end_c", &foc_protection_config_t::t_derate_end_c)
+        .def_readwrite("stall_speed_rad_s", &foc_protection_config_t::stall_speed_rad_s)
+        .def_readwrite("stall_current_a", &foc_protection_config_t::stall_current_a)
+        .def_readwrite("stall_time_s", &foc_protection_config_t::stall_time_s)
+        .def_readwrite("sync_error_ratio", &foc_protection_config_t::sync_error_ratio)
+        .def_readwrite("hysteresis_ratio", &foc_protection_config_t::hysteresis_ratio);
+
+    py::class_<foc_chopper_config_t>(m, "ChopperConfig",
+                                     "[en] The brake chopper's band and resistor.\n"
+                                     "[zh] 制动斩波器的区间与电阻。")
+        .def(py::init([]() {
+            foc_chopper_config_t out{};
+            out.struct_size = static_cast<std::uint32_t>(sizeof(out));
+            return out;
+        }))
+        .def_readwrite("v_on_v", &foc_chopper_config_t::v_on_v)
+        .def_readwrite("v_off_v", &foc_chopper_config_t::v_off_v)
+        .def_readwrite("resistance_ohm", &foc_chopper_config_t::resistance_ohm)
+        .def_readwrite("duty_max", &foc_chopper_config_t::duty_max)
+        .def_readwrite("min_on_s", &foc_chopper_config_t::min_on_s)
+        .def_readwrite("min_off_s", &foc_chopper_config_t::min_off_s);
+
+    py::class_<foc_supervisor_config_t>(m, "SupervisorConfig",
+                                        "[en] A whole drive tick's thresholds: protection, chopper, pole pairs.\n"
+                                        "[zh] 一整拍的阈值：保护、斩波器、极对数。")
+        .def(py::init([]() {
+            foc_supervisor_config_t out{};
+            out.struct_size = static_cast<std::uint32_t>(sizeof(out));
+            out.protection.struct_size = static_cast<std::uint32_t>(sizeof(out.protection));
+            out.chopper.struct_size = static_cast<std::uint32_t>(sizeof(out.chopper));
+            return out;
+        }))
+        .def_readwrite("protection", &foc_supervisor_config_t::protection)
+        .def_readwrite("chopper", &foc_supervisor_config_t::chopper)
+        .def_readwrite("pole_pairs", &foc_supervisor_config_t::pole_pairs);
+
+    py::class_<Supervisor>(m, "Supervisor",
+                           "[en] The drive tick: chopper, then protection, then the control loop, in one call.\n"
+                           "[zh] 驱动器那一拍：先斩波、再保护、最后控制环，一次调用。")
+        .def(py::init<const Motor&, const foc_supervisor_config_t&>(), py::arg("motor"), py::arg("config"),
+             "[en] Bind to a live motor. The motor must outlive this object; a second supervisor on the same motor\n"
+             "raises `FOC_ERR_STATE`.\n"
+             "[zh] 绑到一台活着的电机上。电机必须活得比本对象久；同一台电机上的第二个监督器会抛 `FOC_ERR_STATE`。")
+        .def("step", &Supervisor::step, py::arg("dt_s"),
+             "[en] One period. Raises on `FOC_ERR_FAULT` -- catch it and read `status()`.\n"
+             "[zh] 一个周期。遇 `FOC_ERR_FAULT` 抛异常——接住它再读 `status()`。")
+        .def("status", &Supervisor::status,
+             "[en] What the last tick decided: fault name, masks, limit, temperature, bus, chopper duty,\n"
+             "output_allowed, brake_engaged, tick.\n"
+             "[zh] 上一拍的决定：故障名、掩码、限幅、温度、母线、斩波占空比、是否允许输出、抱闸是否抱住、拍数。")
+        .def("enable", &Supervisor::enable, "[en] Let the loop run. [zh] 允许环运行。")
+        .def("disable", &Supervisor::disable,
+             "[en] Stop the loop the polite way: the caller says the drive should stop.\n"
+             "[zh] 用礼貌的方式停环：调用方表示这台驱动该停了。")
+        .def("clear", &Supervisor::clear,
+             "[en] Clear the faults without touching the record of what happened.\n"
+             "[zh] 清故障，但不动「发生过什么」的记录。")
+        .def("close", &Supervisor::close,
+             "[en] Destroy the handle (idempotent). A closed object then answers `FOC_ERR_PARAM` -- it holds NULL, and "
+             "that is what the C entry returns for NULL. `FOC_ERR_STATE` is the code for a *stale* handle, which this "
+             "object cannot produce because it nulls the handle.\n"
+             "[zh] 销毁句柄（幂等）。关闭后的对象此后答 `FOC_ERR_PARAM`——它持的是 NULL，而 C 入口对 NULL 就是"
+             "这么答的。`FOC_ERR_STATE` 是**陈旧**句柄的码，本对象造不出来，因为它会置空句柄。")
+        .def_property_readonly("alive", &Supervisor::alive, "[en] False once destroyed. [zh] 销毁后为 False。")
+        .def(
+            "__enter__", [](Supervisor& self) -> Supervisor& { return self; },
+            py::return_value_policy::reference_internal)
+        .def("__exit__",
+             [](Supervisor& self, const py::object&, const py::object&, const py::object&) { self.close(); });
 }
