@@ -97,6 +97,16 @@
           "row": "comm/register_map.hpp",
           "verdict": "holds",
           "why": "new in this batch, and it sits in the radius because its basis names `api/foc_api.h`, which is one of this entry's seeds -- a protocol reader of the C surface inherits whatever the C surface inherits. The breakaway branch cannot reach it: it calls `foc_motor_get_status`, `foc_get_state`, `foc_motor_trace_size` and `foc_motor_trace_dropped`, and none of them enters the stall sequence. measured on this tree: `test_register_map` 3/3, including a real motor read that agrees with the C entry point bit for bit"
+        },
+        {
+          "row": "comm/commissioned_set.hpp",
+          "verdict": "holds",
+          "why": "The record's byte layout rests on `foc_motor_params_t`, and this change did not touch that struct: `foc_types.h` gained two new types at the tail and nothing else moved. The `sizeof(foc_motor_params_t) == 28` static_assert still fires, and the ten cases that walk 11730 single-byte mutations still pass in the same run."
+        },
+        {
+          "row": "motor/drive_supervisor.hpp",
+          "verdict": "holds",
+          "why": "New row from the previous batch, and this change appends nothing it calls: the supervisor composes `motor/motor.hpp`, `core/protection.hpp` and `core/brake_chopper.hpp`, none of which are in this diff. Its nine cases pass unchanged."
         }
       ]
     },
@@ -1494,6 +1504,11 @@
           "row": "comm/commissioned_set.hpp",
           "verdict": "holds",
           "why": "The row was created later and rests on `comm/frame.hpp`, which this pass only re-wrapped. What the pass changed there was comment width, so the CRC it reuses and the frame layout it sits beside are the same code; the row evidence is `test_commissioned_set.cpp`."
+        },
+        {
+          "row": "motor/drive_supervisor.hpp",
+          "verdict": "holds",
+          "why": "Rests on `core/traits.hpp` and the HAL contracts through `Motor`, neither of which this batch touched. The one contract interaction it does have -- reading the optional temperature channel through the trait -- is covered by its own case and by `test_temperature.cpp`, both unchanged."
         }
       ]
     },
@@ -2066,6 +2081,41 @@
           "row": "comm/commissioned_set.hpp",
           "verdict": "holds",
           "why": "Created by this change set: 46 bytes, a schema, provenance and a CRC-16 whose teeth are the exhaustive single-byte sweep (11730 candidates, 0 accepted). Recorded here because the row had no account."
+        },
+        {
+          "row": "api/foc_types.h",
+          "verdict": "holds",
+          "why": "Two types were appended at the tail (`foc_frame_t`, `foc_frame_status_t`) and no existing field moved, which is the rule this entry exists to police. The pure-C consumer -- the same file that proves the ABI links at all -- reads, frames and decodes all ten registers and refuses every single-byte change."
+        },
+        {
+          "row": "comm/register_map.hpp",
+          "verdict": "holds",
+          "why": "The table is unchanged at ten entries and is still the only source of ids. The new `foc_reg_read` takes the id **out of the table** by index rather than casting the index, which was the one trap here: `RegisterId` starts at 1, so `static_cast<RegisterId>(0)` would have skipped `State` and answered STALE for the first register. The C consumer reads index 0 and index 9."
+        },
+        {
+          "row": "core/sinusoid_fit.hpp",
+          "verdict": "holds",
+          "why": "Its C entry is in `foc_api.h`, which four entries were appended to; none of its own declarations or defaults changed. Its cases pass in the same 891-case run."
+        },
+        {
+          "row": "core/step_metrics.hpp",
+          "verdict": "holds",
+          "why": "Same reason: `foc_api.h` grew at the tail only, and the step-metrics entries and their numbers are untouched by this diff."
+        },
+        {
+          "row": "core/trace.hpp",
+          "verdict": "holds",
+          "why": "The trace entries (`foc_motor_trace_size`, `foc_motor_trace_dropped`, `foc_motor_set_trace`) are unchanged, and they are two of the ten registers the new `foc_reg_read` walks -- so this batch is a new *reader* of a row that already held, not a change to it."
+        },
+        {
+          "row": "core/trace_parse.hpp",
+          "verdict": "holds",
+          "why": "Unchanged by this diff; it rests on `core/trace.hpp`, which the register table reads and which this batch only reads as well."
+        },
+        {
+          "row": "motor/torque_map.hpp",
+          "verdict": "holds",
+          "why": "Its C entries are untouched; `foc_api.h` was appended to after them, which cannot change what they answer."
         }
       ]
     }

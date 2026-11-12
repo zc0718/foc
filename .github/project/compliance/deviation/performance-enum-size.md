@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | **规则** | `performance-enum-size`（clang-tidy，由 `.github/misc/.clang-tidy` 的 `performance-*` 启用） |
-| **压制位置** | `include/foc/api/foc_types.h` 共 **10 处**（`:77` `:130` `:226` 等，逐处由 gen_subset 扫描得到） |
+| **压制位置** | `include/foc/api/foc_types.h` 共 **11 处** + `include/foc/comm/register_map.hpp` 共 **1 处**（逐处由 gen_subset 扫描得到） |
 | **状态** | 已登记（`rules.tsv` 里这一行是 `deviation`） |
 
 ## 为什么
@@ -15,6 +15,13 @@ C 的 `enum` **没有固定底层类型**（C23 之前）。`foc_err_t`、`foc_m
 更硬的一条理由：**这些数值是已冻结的 C ABI**。`foc::ErrorCode`、`foc::MotorState`、`foc::FaultCode`
 与它们一一对应，改底层类型会改 `sizeof`，那就是 ABI 变更。`performance-enum-size` 的建议
 （"把只用到 3–4 个值的枚举收窄成 `uint8_t`"）在这里**与冻结承诺直接冲突**，而承诺优先。
+
+### 两处新加入的压制，理由各自不同
+
+- `foc_types.h` 的 `foc_frame_status_t`：与其他 C 枚举同一条理由——C23 之前没有固定底层类型，而这个头必须被 C11 与 C++17 都编过。
+- `register_map.hpp` 的 `RegisterId`：这里的 `std::uint16_t` 是 **协议的地址宽度**，不是今天已有的寄存器个数。收窄成一个字节要到
+  线上格式已经冻结时再改回来；布局建议与线上格式方向相反，线上格式赢。它进这份记录的时间比别的晚，是因为 `bridge.cpp` 到
+  2026-11-12 才开始 include 这个头——在此之前它从未进入 clang-tidy 的分析单元，于是同一句诊断**一直存在但没人看见**。
 
 ## 影响
 

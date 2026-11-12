@@ -1816,3 +1816,56 @@ typedef struct foc_cogging_learn_result {
      */
     float speed_max_rad_s;
 } foc_cogging_learn_result_t;
+
+/**
+ * @brief [en] One decoded frame: the header fields, and the payload left where the caller put it.
+ * @brief [zh] 一帧解码结果：头字段，以及留在调用方原处的负载。
+ * @note [en] `payload` points into the buffer that was decoded, not into a copy of it.
+ * @note [zh] `payload` 指向被解码的那个缓冲区，而不是它的拷贝。
+ * @since 0.1.0
+ * @exporter
+ */
+typedef struct foc_frame_t {
+    /**
+     * @brief [en] sender's frame counter, modulo 256
+     * @brief [zh] 发送方的帧计数，模 256
+     */
+    uint8_t seq;
+    /**
+     * @brief [en] message type; the codec does not interpret it
+     * @brief [zh] 报文类型；编解码器不解释它
+     */
+    uint8_t type;
+    /**
+     * @brief [en] payload bytes, 0..255
+     * @brief [zh] 负载字节数，0..255
+     */
+    uint8_t length;
+    /**
+     * @brief [en] into the decoded buffer, `length` of them
+     * @brief [zh] 指向被解码的缓冲区，共 `length` 个
+     */
+    const uint8_t *payload;
+} foc_frame_t;
+
+/**
+ * @brief [en] Why a byte sequence is not a frame.
+ * @brief [zh] 一段字节为什么不是一帧。
+ * @note [en] Five reasons and no "generic error": a receiver that cannot say which check failed cannot decide whether
+ *            to resynchronise, to ask for a retransmission, or to count a link loss -- and those are three different
+ *            actions. The width is left to the compiler here for the same reason as every other enum in this header: C
+ *            has no fixed underlying type before C23, and these numbers are part of the frozen ABI.
+ * @note [zh] 五个原因，没有"一般性错误"：说不清哪一道检查失败的接收方，无法决定是重新同步、请求重传，还是记一次链路丢失
+ *            ——而那是三种不同的动作。宽度在这里同样交给编译器决定，理由与本头里其他每个枚举一样：C23 之前没有固定底层类
+ *            型，而这些数值属于已冻结的 ABI。
+ * @since 0.1.0
+ * @exporter
+ */
+// NOLINTNEXTLINE(performance-enum-size)
+typedef enum foc_frame_status_t {
+    FOC_FRAME_OK = 0,
+    FOC_FRAME_TOO_SHORT,
+    FOC_FRAME_BAD_START,
+    FOC_FRAME_BAD_LENGTH,
+    FOC_FRAME_BAD_CHECKSUM
+} foc_frame_status_t;

@@ -1300,3 +1300,92 @@ FOC_WARN_UNUSED foc_err_t foc_cogging_learn_reset(foc_cogging_learn_t handle);
  * @exporter
  */
 FOC_WARN_UNUSED foc_err_t foc_cogging_learn_destroy(foc_cogging_learn_t handle);
+
+/**
+ * @brief [en] How many registers the machine-readable table has.
+ * @brief [zh] 机器可读寄存器表有多少项。
+ * @return [en] the count, which is also the exclusive upper bound for `foc_reg_read()`.
+ * @return [zh] 项数，同时也是 `foc_reg_read()` 的开区间上界。
+ * @note [en] Returned rather than compiled into every host: a host that hard-codes ten stops reading the eleventh, and
+ *            there is nothing at the port to tell it that a register was added.
+ * @note [zh] 返回而不是编进每一个主控方：把十硬编码进去的主控方读不到第十一项，而端口处没有任何东西会告诉它多了一项。
+ * @since 0.1.0
+ * @exporter
+ */
+FOC_WARN_UNUSED uint32_t foc_reg_count(void);
+
+/**
+ * @brief [en] Read one register by its position in the table.
+ * @brief [zh] 按它在表中的位置读一项寄存器。
+ * @param motor [en] valid handle.
+ * @param motor [zh] 有效句柄。
+ * @param index [en] `0 .. foc_reg_count() - 1`.
+ * @param index [zh] `0 .. foc_reg_count() - 1`。
+ * @param raw [en] non-NULL receiver for the 32-bit word.
+ * @param raw [zh] 非 NULL 的 32 位字接收者。
+ * @return [en] FOC_OK; FOC_ERR_PARAM for a NULL / stale handle, a NULL receiver, or an index past the end;
+ *              FOC_ERR_STATE when the register has nothing to report for this motor yet.
+ * @return [zh] FOC_OK；句柄为 NULL/已失效、接收者为 NULL、或索引越界时返回 FOC_ERR_PARAM；本电机此刻没有可报内容时返回
+ *              FOC_ERR_STATE。
+ * @note [en] The word's meaning depends on the register's kind, and the table is the only place that says which: a
+ *            scaler register is an integer in a fixed unit, a bitfield names its bits. Same table the protocol page is
+ *            generated from, so a host and a document cannot disagree about what index 7 is.
+ * @note [zh] 这个字的含义取决于该项的种类，而说明种类的只有那张表：标量寄存器是固定单位的整数，位域寄存器逐位有名字。它
+ *            与协议页由同一张表生成，所以主控方与文档不可能对"第 7 项是什么"各说一套。
+ * @since 0.1.0
+ * @exporter
+ */
+FOC_WARN_UNUSED foc_err_t foc_reg_read(foc_motor_t motor, uint32_t index, uint32_t *raw);
+
+/**
+ * @brief [en] Frame a payload for the wire: start byte, sequence, type, length, payload, CRC-16.
+ * @brief [zh] 把负载封装成线上格式：起始字节、序号、类型、长度、负载、CRC-16。
+ * @param seq [en] sender's counter, modulo 256; the codec does not advance it.
+ * @param seq [zh] 发送方计数，模 256；编解码器不推进它。
+ * @param type [en] message type; the codec does not interpret it.
+ * @param type [zh] 报文类型；编解码器不解释它。
+ * @param payload [en] `length` bytes; may be NULL only when `length` is 0.
+ * @param payload [zh] `length` 个字节；仅当 `length` 为 0 时才可为 NULL。
+ * @param out [en] non-NULL destination.
+ * @param out [zh] 非 NULL 的目的缓冲区。
+ * @param capacity [en] how many bytes `out` can take.
+ * @param capacity [zh] `out` 能容纳多少字节。
+ * @return [en] total bytes written, or **0** when the frame does not fit or an argument is NULL. A frame is never
+ *              partially written: a caller passing the result straight to `write()` sends nothing or a whole frame.
+ * @return [zh] 写入的总字节数；装不下或参数为 NULL 时返回 **0** 。帧绝不会被写一半：把返回值直接交给 `write()` 的调用
+ *              方，要么什么都不发，要么发出一整帧。
+ * @note [en] The CRC covers `seq..payload` and deliberately not the start byte: a bad start byte fails the first check
+ *            anyway, and including it would make one frame's checksum depend on where resynchronisation began.
+ * @note [zh] CRC 覆盖 `seq..payload`，故意不含起始字节：起始字节坏了第一道检查就不过，而把它算进去会让同一帧的校验和取
+ *            决于它是从哪次重新同步开始的。
+ * @since 0.1.0
+ * @exporter
+ */
+FOC_WARN_UNUSED uint32_t foc_frame_encode(uint8_t seq, uint8_t type, const uint8_t *payload, uint8_t length,
+                                          uint8_t *out, uint32_t capacity);
+
+/**
+ * @brief [en] Check a byte sequence and, if it is a frame, describe it.
+ * @brief [zh] 检查一段字节，若它是一帧则描述它。
+ * @param in [en] the received bytes.
+ * @param in [zh] 收到的字节。
+ * @param length [en] how many bytes are there.
+ * @param length [zh] 手上有多少个字节。
+ * @param out [en] non-NULL receiver, written **only on FOC_FRAME_OK**.
+ * @param out [zh] 非 NULL 的接收者， **仅在 FOC_FRAME_OK 时写入** 。
+ * @return [en] FOC_FRAME_OK, or which check failed: too short, bad start byte, a length field past the buffer, or a
+ *              checksum mismatch.
+ * @return [zh] FOC_FRAME_OK，或哪一道检查失败：太短、起始字节不对、长度字段越界、校验和不符。
+ * @warning [en] `out->payload` points **into `in`**. It is not a copy, so the buffer must outlive the frame you are
+ *               reading from it -- the decoder cannot know a size to copy into, and a decoder that copies is one that
+ *               can fail for a reason that has nothing to do with the bytes.
+ * @warning [zh] `out->payload` **指向 `in`** 。它不是拷贝，所以那个缓冲区必须比从它读出的帧活得久——解码器无从得知要拷进
+ *               多大的空间，而会拷贝的解码器就是一个会因为"与字节无关的原因"失败的解码器。
+ * @note [en] `out` is untouched on every refusal, so a receiver that keeps the previous frame keeps it intact: "this
+ *            buffer is not a frame" and "here is a frame" cannot be confused by looking at the same struct.
+ * @note [zh] 每一次拒绝都不碰 `out`，所以保留上一帧的接收者能完整保留它："这段字节不是帧"与"这是一帧"无法通过看同一个结
+ *            构体来混淆。
+ * @since 0.1.0
+ * @exporter
+ */
+FOC_WARN_UNUSED foc_frame_status_t foc_frame_decode(const uint8_t *in, uint32_t length, foc_frame_t *out);

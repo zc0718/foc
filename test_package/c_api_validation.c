@@ -538,6 +538,107 @@ int main(void) {
         CHECK(foc_cogging_learn_destroy(learn) == FOC_ERR_STATE); /* twice */
     }
 
+    /* --- The machine-readable command surface, exercised as a pure C link. ---
+     * Ten registers, framed, sent through a loopback that is nothing but a memcpy, decoded again: the point is not that
+     * a codec round-trips its own output (it does) but that a C host can reach all of it without a single C++ symbol.
+     * --- 机器可读的命令面，作为纯 C 链接来走一遍。十个寄存器、封装成帧、经一个只是 memcpy 的环回、再解回来：要点不是
+     * 编解码器能还原自己的输出（那当然可以），而是 C 宿主不碰任何 C++ 符号就能走到全部这些。 --- */
+    {
+        const uint32_t count = foc_reg_count();
+        CHECK(count == 10U);
+
+        uint8_t payload[10U * 4U];
+        uint32_t written = 0U;
+        uint32_t ok_reads = 0U;
+        uint32_t index;
+        for (index = 0U; index < count; ++index) {
+            uint32_t word = 0U;
+            const foc_err_t got = foc_reg_read(motor, index, &word);
+            CHECK((got == FOC_OK) || (got == FOC_ERR_STATE));
+            if (got == FOC_OK) {
+                ++ok_reads;
+            }
+            /* Little-endian by construction, not by trusting the host: this is the wire order the decoder reassembles. */
+            /* 按构造用小端，而不是相信主机字节序：这就是解码方重新拼装的线上顺序。 */
+            payload[written + 0U] = (uint8_t)(word & 0xFFU);
+            payload[written + 1U] = (uint8_t)((word >> 8U) & 0xFFU);
+            payload[written + 2U] = (uint8_t)((word >> 16U) & 0xFFU);
+            payload[written + 3U] = (uint8_t)((word >> 24U) & 0xFFU);
+            written += 4U;
+        }
+        /* At least one register has something to say about a motor that was created and enabled; the rest are allowed
+         * to answer STATE, because a register whose source has not run yet is a state and not a bug.
+         * 至少有一项寄存器对一台已创建并使能的电机有话可说；其余允许答 STATE，因为来源还没跑过的寄存器是一种状态，
+         * 不是缺陷。 */
+        CHECK(ok_reads > 0U);
+
+        /* Out of range is a caller bug, a NULL receiver likewise; neither touches the word. */
+        /* 越界是调用方的错误，接收者为 NULL 同理；两者都不碰那个字。 */
+        {
+            uint32_t guard = 0xDEADBEEFU;
+            CHECK(foc_reg_read(motor, count, &guard) == FOC_ERR_PARAM);
+            CHECK(guard == 0xDEADBEEFU);
+            CHECK(foc_reg_read(motor, 0U, NULL) == FOC_ERR_PARAM);
+        }
+
+        uint8_t wire[64];
+        const uint32_t frame_size = foc_frame_encode(7U, 0x42U, payload, (uint8_t)written, wire, (uint32_t)sizeof wire);
+        CHECK(frame_size == (uint32_t)(written + 6U));
+
+        /* A buffer one byte too small writes nothing at all, so a caller that hands the answer to write() cannot send
+         * half a frame. */
+        /* 小一个字节的缓冲区一个字节都不写，于是把答案交给 write() 的调用方不可能发出半帧。 */
+        {
+            uint8_t small[8];
+            CHECK(foc_frame_encode(7U, 0x42U, payload, (uint8_t)written, small, (uint32_t)sizeof small) == 0U);
+        }
+
+        foc_frame_t decoded;
+        (void)memset(&decoded, 0, sizeof decoded);
+        CHECK(foc_frame_decode(wire, frame_size, &decoded) == FOC_FRAME_OK);
+        CHECK(decoded.seq == 7U);
+        CHECK(decoded.type == 0x42U);
+        CHECK(decoded.length == (uint8_t)written);
+        CHECK(decoded.payload != NULL);
+        for (index = 0U; index < written; ++index) {
+            CHECK(decoded.payload[index] == payload[index]);
+        }
+
+        /* Every single-byte change is refused, and the receiver is left exactly as the caller had it -- so a host that
+         * keeps the last good frame keeps a good frame, not a two-thirds-written one. */
+        /* 任何单字节改动都被拒绝，且接收者保持调用方留下时的样子——于是保留上一帧的宿主保留的是一帧好帧，而不是写了三分
+         * 之二的帧。 */
+        {
+            uint32_t byte;
+            for (byte = 0U; byte < frame_size; ++byte) {
+                uint8_t tampered[64];
+                (void)memcpy(tampered, wire, frame_size);
+                tampered[byte] = (uint8_t)(tampered[byte] ^ 0x01U);
+                static const uint8_t sentinel_byte = 0U;
+                foc_frame_t keep;
+                (void)memset(&keep, 0x5A, sizeof keep);
+                keep.payload = &sentinel_byte;
+                const foc_frame_status_t status = foc_frame_decode(tampered, frame_size, &keep);
+                CHECK(status != FOC_FRAME_OK);
+                CHECK(keep.seq == 0x5AU);
+                CHECK(keep.type == 0x5AU);
+                CHECK(keep.length == 0x5AU);
+                CHECK(keep.payload == &sentinel_byte);
+            }
+        }
+
+        /* And the three shapes that are not a frame at all are named, not folded into one error. */
+        /* 而三种"根本不是帧"的形状各有名字，不并成一个错误。 */
+        CHECK(foc_frame_decode(wire, 3U, &decoded) == FOC_FRAME_TOO_SHORT);
+        {
+            uint8_t wrong_start[8];
+            (void)memcpy(wrong_start, wire, 8U);
+            wrong_start[0] = 0x00U;
+            CHECK(foc_frame_decode(wrong_start, 8U, &decoded) == FOC_FRAME_BAD_START);
+            CHECK(foc_frame_decode(wire, 8U, &decoded) == FOC_FRAME_BAD_LENGTH);
+        }
+    }
+
     if (failures != 0) {
         (void)fprintf(stderr, "C11 consumer: %d failure(s)\n", failures);
         return 1;

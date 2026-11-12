@@ -460,3 +460,24 @@ foc_err_t foc_cogging_learn_finish(foc_cogging_learn_t handle, foc_cogging_harmo
 foc_err_t foc_cogging_learn_reset(foc_cogging_learn_t handle) { return foc_bridge_cogging_learn_reset(handle); }
 
 foc_err_t foc_cogging_learn_destroy(foc_cogging_learn_t handle) { return foc_bridge_cogging_learn_destroy(handle); }
+
+uint32_t foc_reg_count(void) { return foc_bridge_reg_count(); }
+
+foc_err_t foc_reg_read(foc_motor_t motor, uint32_t index, uint32_t *raw) {
+    if (raw == NULL) {
+        return FOC_ERR_PARAM;
+    }
+    return (foc_err_t)foc_bridge_reg_read(motor, index, raw);
+}
+
+uint32_t foc_frame_encode(uint8_t seq, uint8_t type, const uint8_t *payload, uint8_t length, uint8_t *out,
+                          uint32_t capacity) {
+    return foc_bridge_frame_encode(seq, type, payload, length, out, capacity);
+}
+
+foc_frame_status_t foc_frame_decode(const uint8_t *in, uint32_t length, foc_frame_t *out) {
+    if (out == NULL) {
+        return FOC_FRAME_TOO_SHORT;
+    }
+    return (foc_frame_status_t)foc_bridge_frame_decode(in, length, out);
+}

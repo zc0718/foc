@@ -28,6 +28,8 @@
 #include <foc/motor/motor.hpp>
 #include <foc/motor/motor_config.hpp>
 #include <foc/motor/torque_map.hpp>
+#include <foc/comm/frame.hpp>
+#include <foc/comm/register_map.hpp>
 // Conan::ImportEnd
 
 /*!
@@ -2607,4 +2609,57 @@ foc_err_t foc_bridge_cogging_learn_destroy(foc_cogging_learn_t handle) {
     slot->required = 0;
     slot->alive = false;
     return FOC_OK;
+}
+
+
+std::uint32_t foc_bridge_reg_count(void) { return static_cast<std::uint32_t>(foc::comm::kRegisterCount); }
+
+
+std::int32_t foc_bridge_reg_read(foc_motor_t motor, std::uint32_t index, std::uint32_t* raw) {
+    if (raw == nullptr) {
+        return FOC_ERR_PARAM;
+    }
+    if (index >= static_cast<std::uint32_t>(foc::comm::kRegisterCount)) {
+        // Past the end is a caller bug, not a motor state: the count is available from `foc_reg_count()` and nothing
+        // about the motor could have moved it.
+        // 越过末尾是调用方的错误，不是电机的状态：项数可以从 `foc_reg_count()` 拿到，而电机上的任何东西都不会移动它。
+        return FOC_ERR_PARAM;
+    }
+    const auto id = foc::comm::register_table()[index].id;
+    // The id comes out of the table rather than out of the index: `RegisterId` starts at 1 on purpose (0 is nobody's
+    // register), so `static_cast<RegisterId>(index)` would silently skip the first entry and answer STALE for it.
+    // 编号取自表而不是由索引算出来：`RegisterId` 故意从 1 起（0 不属于任何寄存器），所以 `static_cast<RegisterId>(index)`
+    // 会静默跳掉第一项并对它答 STALE。
+    // `read_register` folds "no such register" and "the C surface refused" into `false`; here the address is already
+    // known to be in range, so what is left is a refusal from the motor.
+    // `read_register` 把“没有这个寄存器”与“C 接口拒绝了”并成一个 `false`；此处地址已确认在范围内，剩下的就是电机的拒绝。
+    return foc::comm::read_register(motor, id, raw) ? FOC_OK : FOC_ERR_STATE;
+}
+
+
+std::uint32_t foc_bridge_frame_encode(std::uint8_t seq, std::uint8_t type, const std::uint8_t* payload,
+                                      std::uint8_t length, std::uint8_t* out, std::uint32_t capacity) {
+    return static_cast<std::uint32_t>(
+        foc::comm::encode_frame(seq, type, payload, length, out, static_cast<std::size_t>(capacity)));
+}
+
+
+std::int32_t foc_bridge_frame_decode(const std::uint8_t* in, std::uint32_t length, foc_frame_t* out) {
+    if (out == nullptr) {
+        return FOC_FRAME_TOO_SHORT;
+    }
+    foc::comm::Frame frame{};
+    const foc::comm::FrameStatus status = foc::comm::decode_frame(in, static_cast<std::size_t>(length), frame);
+    if (status != foc::comm::FrameStatus::Ok) {
+        // The receiver is left exactly as the caller had it, which is `decode_frame`'s own rule and the reason the
+        // temporary above exists: nothing is copied out until every check has passed.
+        // 接收者保持调用方留下时的样子，这是 `decode_frame` 自己的规矩，也是上面那个临时对象存在的原因：所有检查通过之前
+        // 什么都不拷出去。
+        return static_cast<std::int32_t>(status);
+    }
+    out->seq = frame.seq;
+    out->type = frame.type;
+    out->length = frame.length;
+    out->payload = frame.payload;
+    return FOC_FRAME_OK;
 }

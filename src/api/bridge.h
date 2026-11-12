@@ -111,6 +111,11 @@ foc_err_t foc_bridge_cogging_learn_finish(foc_cogging_learn_t handle, foc_coggin
                                           int32_t capacity, foc_cogging_learn_result_t *out_result);
 foc_err_t foc_bridge_cogging_learn_reset(foc_cogging_learn_t handle);
 foc_err_t foc_bridge_cogging_learn_destroy(foc_cogging_learn_t handle);
+uint32_t foc_bridge_reg_count(void);
+int32_t foc_bridge_reg_read(foc_motor_t motor, uint32_t index, uint32_t *raw);
+uint32_t foc_bridge_frame_encode(uint8_t seq, uint8_t type, const uint8_t *payload, uint8_t length, uint8_t *out,
+                                 uint32_t capacity);
+int32_t foc_bridge_frame_decode(const uint8_t *in, uint32_t length, foc_frame_t *out);
 #ifdef __cplusplus
 }
 #endif

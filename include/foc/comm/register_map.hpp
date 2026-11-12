@@ -55,12 +55,18 @@ namespace comm {
  * @note [en] The numbers are the protocol's, not the C ABI's, and they are the only place in the tree where a register
  *            number is written down. Everything that wants to read one of these through a link names it by this enum,
  *            so "the protocol grew a second vocabulary" shows up as a compile error rather than as two tables that
- *            disagree.
+ *            disagree. `std::uint16_t` is the **address width of the protocol**, not the number of registers that exist
+ *            today: a later revision can address more than ten, and narrowing this to one byte would have to be undone
+ *            at the point where the wire format is already frozen. The layout suggestion and the wire format point in
+ *            opposite directions, and the wire wins.
  * @note [zh] 这些编号是 **协议** 的，不是 C ABI 的，而且它们是整棵树里唯一写下寄存器编号的地方。任何想通过链路读这些东
  *            西的代码都用这个枚举来指代，于是"协议长出了第二套词汇"表现为一个编译错误，而不是两张互相矛盾的表格。
+ *            `std::uint16_t` 是 **协议的地址宽度** ，不是今天已有的寄存器个数：后续版本可以寻址超过十个，而把它收窄成一
+ *            个字节，到线上格式已经冻结的那一刻又得改回来。布局建议与线上格式指向相反的方向，线上格式赢。
  * @since 0.1.0
  * @exporter
  */
+// NOLINTNEXTLINE(performance-enum-size)
 enum class RegisterId : std::uint16_t {
     /**
      * @brief [en] `foc_motor_status_t::mode_state`.

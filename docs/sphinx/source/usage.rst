@@ -547,7 +547,7 @@ whether your hardware matches that model.
      - L1/L2
    * - Line coverage
      - :code:`python3 .github/project/coverage_gate.py`
-     - 94.66 % overall, 96.51 % in :code:`core/`
+     - 94.82 % overall, 96.51 % in :code:`core/`
      - L1
    * - Layering and standalone headers
      - :code:`gates.py guard` / :code:`gates.py strict`
