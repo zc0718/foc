@@ -1,0 +1,294 @@
+{
+  "what": "Where the value of every per-tick input field comes from. `ports_gate.py` reads this and refuses to run green while an in-scope field has no row.",
+  "scope": "structs whose name ends in `Input` or `Measurements` under include/foc/core/**",
+  "unfed_budget": 0,
+  "kinds": {
+    "contract": "a declared contract names the channel (`hal/...` a hardware port, `core/...` an injected instrument)",
+    "host": "a C entry in foc_api.h hands it in",
+    "derived": "the library computes it from other fields; the producer names the header that does",
+    "constant": "a number off a datasheet or a tuned scale, not a measurement; no producer",
+    "unfed": "the application measures it and this project offers no channel -- a debt, printed every run"
+  },
+  "fields": [
+    {
+      "struct": "BoardMeasurements",
+      "field": "sum_current_a",
+      "kind": "contract",
+      "producer": "core/board_check.hpp::Bench",
+      "note": "The three-phase sum, read by whatever bench the integrator injects. The bench is a structural requirement of the board check, so this one had a channel before the gate existed."
+    },
+    {
+      "struct": "BoardMeasurements",
+      "field": "offset_a",
+      "kind": "contract",
+      "producer": "core/board_check.hpp::Bench",
+      "note": "Per-phase current-sense offset, from the bench's own zero-current capture."
+    },
+    {
+      "struct": "BoardMeasurements",
+      "field": "response_sign",
+      "kind": "contract",
+      "producer": "core/board_check.hpp::Bench",
+      "note": "Which way each phase responded to a known voltage: that is wiring, and only a physical bench knows it."
+    },
+    {
+      "struct": "BoardMeasurements",
+      "field": "ripple_measured_a",
+      "kind": "contract",
+      "producer": "core/board_check.hpp::Bench",
+      "note": "Measured current ripple at a known duty; the bench's scope or shunt."
+    },
+    {
+      "struct": "BoardMeasurements",
+      "field": "ripple_expected_a",
+      "kind": "constant",
+      "producer": "",
+      "note": "The value the check compares the measurement against, computed by the caller from L, R and the switching period. A reference number, not a measurement -- if this came from the bench the comparison would be tautological."
+    },
+    {
+      "struct": "BoardMeasurements",
+      "field": "deadtime_v",
+      "kind": "contract",
+      "producer": "core/board_check.hpp::Bench",
+      "note": "Dead-time volt-seconds, measured from the phase-voltage distortion."
+    },
+    {
+      "struct": "BoardMeasurements",
+      "field": "deadtime_cmd_v",
+      "kind": "constant",
+      "producer": "",
+      "note": "The commanded dead time scaled by V_bus and the PWM period: the caller knows its gate drive and the library cannot measure it. `foc_axis_deadtime_v` is the arithmetic, but the dead-time and switching numbers are the caller's."
+    },
+    {
+      "struct": "BoardMeasurements",
+      "field": "encoder_offset_rad",
+      "kind": "derived",
+      "producer": "core/alignment.hpp",
+      "note": "Produced by the electrical alignment routine, then read back here to be compared against its limit."
+    },
+    {
+      "struct": "BoardMeasurements",
+      "field": "rs_ohm",
+      "kind": "derived",
+      "producer": "core/commissioning.hpp",
+      "note": "`RsEstimator` produces it; the board check only adjudicates the number."
+    },
+    {
+      "struct": "BoardMeasurements",
+      "field": "rs_nameplate_ohm",
+      "kind": "constant",
+      "producer": "",
+      "note": "The datasheet value the estimate is held against."
+    },
+    {
+      "struct": "BoardMeasurements",
+      "field": "psi_f_wb",
+      "kind": "derived",
+      "producer": "core/commissioning.hpp",
+      "note": "`FluxEstimator` produces it."
+    },
+    {
+      "struct": "BoardMeasurements",
+      "field": "psi_f_nameplate_wb",
+      "kind": "constant",
+      "producer": "",
+      "note": "The datasheet value the estimate is held against."
+    },
+    {
+      "struct": "BoardMeasurements",
+      "field": "observer_error_rad",
+      "kind": "derived",
+      "producer": "core/observer/back_emf_observer.hpp",
+      "note": "The observer's own angle error against the sensor, which is what the board check is auditing."
+    },
+    {
+      "struct": "CoggingCompInput",
+      "field": "theta_mech_rad",
+      "kind": "contract",
+      "producer": "hal/position.hpp::PositionSensor::angle_mech_rad",
+      "note": "Mechanical angle, for indexing the table."
+    },
+    {
+      "struct": "CoggingCompInput",
+      "field": "omega_mech_rad_s",
+      "kind": "contract",
+      "producer": "hal/position.hpp::PositionSensor::velocity_rad_s",
+      "note": "Mechanical speed, used to fade the table out at speed."
+    },
+    {
+      "struct": "CoggingCompInput",
+      "field": "id_a",
+      "kind": "contract",
+      "producer": "hal/current_sense.hpp::CurrentSense::read_uvw",
+      "note": "The d-axis current the table is not compensating for; needed to keep the sum honest."
+    },
+    {
+      "struct": "CoggingCompInput",
+      "field": "iq_command_a",
+      "kind": "derived",
+      "producer": "core/pi.hpp",
+      "note": "The current controller's output, not a measurement."
+    },
+    {
+      "struct": "CoggingCompInput",
+      "field": "i_max_a",
+      "kind": "constant",
+      "producer": "",
+      "note": "The current ceiling the compensation is not allowed to push past; configuration."
+    },
+    {
+      "struct": "FeedforwardInput",
+      "field": "omega_e_rad_s",
+      "kind": "derived",
+      "producer": "core/observer/back_emf_observer.hpp",
+      "note": "Electrical speed, from the observer or the sensor; the feedforward does not care which."
+    },
+    {
+      "struct": "FeedforwardInput",
+      "field": "i_meas",
+      "kind": "contract",
+      "producer": "hal/current_sense.hpp::CurrentSense::read_uvw",
+      "note": "Phase currents, rotated to d-q by the caller."
+    },
+    {
+      "struct": "SpeedInput",
+      "field": "target_rad_s",
+      "kind": "host",
+      "producer": "foc_set_speed",
+      "note": "The speed command, through the C entry."
+    },
+    {
+      "struct": "SpeedInput",
+      "field": "kp_scale",
+      "kind": "constant",
+      "producer": "",
+      "note": "Gain scheduling scale, per tick; the caller owns the schedule."
+    },
+    {
+      "struct": "SpeedInput",
+      "field": "ilimit_scale",
+      "kind": "constant",
+      "producer": "",
+      "note": "Integrator-limit scale, same schedule."
+    },
+    {
+      "struct": "PositionInput",
+      "field": "target_rad",
+      "kind": "host",
+      "producer": "foc_set_position",
+      "note": "The position command, through the C entry."
+    },
+    {
+      "struct": "PositionInput",
+      "field": "velocity_limit_rad_s",
+      "kind": "constant",
+      "producer": "",
+      "note": "Profile limit, configuration."
+    },
+    {
+      "struct": "PositionInput",
+      "field": "accel_limit_rad_s2",
+      "kind": "constant",
+      "producer": "",
+      "note": "Profile limit, configuration."
+    },
+    {
+      "struct": "PositionInput",
+      "field": "kp_scale",
+      "kind": "constant",
+      "producer": "",
+      "note": "Gain scheduling scale, as for speed."
+    },
+    {
+      "struct": "ProtectionInput",
+      "field": "i_magnitude_a",
+      "kind": "contract",
+      "producer": "hal/current_sense.hpp::CurrentSense::read_uvw",
+      "note": "Phase currents; the magnitude is the caller's arithmetic on them."
+    },
+    {
+      "struct": "ProtectionInput",
+      "field": "v_bus_v",
+      "kind": "contract",
+      "producer": "hal/dc_link.hpp::DcLink::voltage_v",
+      "note": "The DC link, which has been a required contract from the start."
+    },
+    {
+      "struct": "ProtectionInput",
+      "field": "temperature_c",
+      "kind": "contract",
+      "producer": "hal/temperature.hpp::Temperature::read",
+      "note": "The field this gate exists for: until 2026-11-12 the HAL had no temperature at all and every integrator wrote the same divider inversion. The contract landed in 8785ea7. Known limit, stated where it can be read: the contract exists and nothing assembles it into this struct yet -- that is the drive supervisor's job, and a green row here does not claim otherwise."
+    },
+    {
+      "struct": "ProtectionInput",
+      "field": "omega_e_rad_s",
+      "kind": "derived",
+      "producer": "core/observer/back_emf_observer.hpp",
+      "note": "Electrical speed, for the flux-weakening guard."
+    },
+    {
+      "struct": "ProtectionInput",
+      "field": "flux_error_ratio",
+      "kind": "derived",
+      "producer": "core/observer/back_emf_observer.hpp",
+      "note": "The observer's own confidence, so the protector can distrust a flux estimate that has drifted."
+    },
+    {
+      "struct": "ProtectionInput",
+      "field": "flux_valid",
+      "kind": "derived",
+      "producer": "core/observer/back_emf_observer.hpp",
+      "note": "Same source: whether that estimate is worth acting on."
+    },
+    {
+      "struct": "ReferenceInput",
+      "field": "iq_command_a",
+      "kind": "derived",
+      "producer": "core/pi.hpp",
+      "note": "The outer loop's output."
+    },
+    {
+      "struct": "ReferenceInput",
+      "field": "omega_e_rad_s",
+      "kind": "derived",
+      "producer": "core/observer/back_emf_observer.hpp",
+      "note": "For the back-emf and field-weakening terms."
+    },
+    {
+      "struct": "ReferenceInput",
+      "field": "v_bus_v",
+      "kind": "contract",
+      "producer": "hal/dc_link.hpp::DcLink::voltage_v",
+      "note": "For the voltage ceiling the reference must respect."
+    },
+    {
+      "struct": "ReferenceInput",
+      "field": "i_meas",
+      "kind": "contract",
+      "producer": "hal/current_sense.hpp::CurrentSense::read_uvw",
+      "note": "For the current-headroom terms."
+    },
+    {
+      "struct": "ModulatorInput",
+      "field": "v_ab",
+      "kind": "derived",
+      "producer": "core/svpwm.hpp",
+      "note": "The reference the modulator is asked to realise; computed upstream in the control frame."
+    },
+    {
+      "struct": "ModulatorInput",
+      "field": "v_bus",
+      "kind": "contract",
+      "producer": "hal/dc_link.hpp::DcLink::voltage_v",
+      "note": "The modulator needs it to turn a voltage into a duty."
+    },
+    {
+      "struct": "ModulatorInput",
+      "field": "i_uvw",
+      "kind": "contract",
+      "producer": "hal/current_sense.hpp::CurrentSense::read_uvw",
+      "note": "Present for single-shunt reconstruction, where the currents decide whether the sample window is usable at all."
+    }
+  ]
+}

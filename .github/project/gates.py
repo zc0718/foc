@@ -545,7 +545,7 @@ PROJECT_GATES = ('license', 'strict', 'claims', 'docs', 'deps', 'form', 'boundar
                  'assume', 'anchor', 'scaffold', 'budget', 'clocks', 'observability', 'combinations', 'domain',
                  'mutants', 'plantref', 'fmu', 'pil', 'mcdc', 'blast', 'wired', 'smoke', 'regmap', 'subset',
                  'docvoice', 'symbols', 'equations', 'enforce', 'docshape', 'docver', 'docannot',
-                 'docscope', 'compliance', 'demo')
+                 'docscope', 'compliance', 'demo', 'ports')
 
 
 def cmd_subset(_explicit):
@@ -595,6 +595,16 @@ def cmd_demo(_explicit):
     The pages already promised this ("the listing is that file, so the two cannot drift"); this is what makes it
     true. It also means an example cannot keep an error constant that nothing compiles."""
     return _run_script_with_selftest('demo_gate.py', 'demo')
+
+
+def cmd_ports(_explicit):
+    """Every per-tick input field names where its value comes from, and that place exists.
+
+    The body lives in `ports_gate.py` because it is a table plus a discovery pass, not another rule about the
+    source tree. This is the one gate here whose whole subject is a *silence*: the temperature channel was missing
+    for as long as the library existed, every consumer's tests passed anyway (they handed the field in
+    themselves), and nothing was red about it."""
+    return _run_script_with_selftest('ports_gate.py', 'ports')
 
 
 def cmd_equations(_explicit):
@@ -1047,6 +1057,8 @@ def main():
                     'declaration to describe, which `EXTRACT_ALL` makes invisible',
         'compliance': 'the compliance pages are reachable and both doc lines carry the same four sentences',
         'demo': 'every example in the docs compiles and links with the command its own page gives it',
+        'ports': 'every field of a per-tick input struct names a producer that exists, and the count of fields '
+                 'no channel is provided for only falls',
         'pil': 'run the speed-step scenario on the target ISA under qemu and compare with the host; SKIPPED when its '
                'material is absent',
         'all': ' + '.join(PROJECT_GATES),
@@ -1063,6 +1075,9 @@ def main():
         if name == 'ci-policy':
             leaf.add_argument('--selftest', action='store_true',
                               help='prove both rules can fail, on fixtures rather than on the tree')
+        if name == 'ports':
+            leaf.add_argument('--selftest', action='store_true',
+                              help='prove every rule can fail, on fixtures rather than on the tree')
     args = parser.parse_args()
 
     if args.gate == 'license':
@@ -1143,6 +1158,8 @@ def main():
         return cmd_compliance([])
     if args.gate == 'demo':
         return cmd_demo([])
+    if args.gate == 'ports':
+        return cmd_ports([])
     # The chain above is the only thing standing between a single-gate invocation and the aggregate below, and it
     # has now been forgotten twice (`plantref` before, `combinations` and `mcdc` this time). A missing branch does
     # not fail: it runs *every* gate and prints "all N", which reads as success. So the fall-through is refused
@@ -1178,6 +1195,7 @@ def main():
                   'docscope': cmd_docscope,
                   'compliance': cmd_compliance,
                   'demo': cmd_demo,
+                  'ports': cmd_ports,
                   'pil': lambda _f: cmd_pil([], tolerant=True)}[name]([]) ]
     if failed:
         print(f'[project-gates] FAIL: {", ".join(failed)}', flush=True)
