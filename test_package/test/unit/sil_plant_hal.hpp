@@ -160,6 +160,17 @@ class PlantPosition final : public hal::PositionSensor {
     void set_sensor_present(bool present) noexcept;
 
     /**
+     * @brief [en] Model an encoder that reports an angle and no speed: `velocity_rad_s()` answers `NaN`.
+     * @brief [zh] 模拟只报角度、不报速度的编码器： `velocity_rad_s()` 答 `NaN`。
+     * @note [en] What this buys is the one configuration in which a *sensored* axis steps the observer: the angle comes
+     *            from the sensor and the speed from the observer, so both opinions exist in the same tick and the
+     *            disagreement between them is a measurement rather than an assumption.
+     * @note [zh] 它换来的是带传感器轴 **推进观测器** 的唯一配置：角度来自传感器、速度来自观测器，于是两个意见在同一拍里
+     *            都存在，它们之间的分歧是一个测量值而不是一个假设。
+     */
+    void set_velocity_supported(bool supported) noexcept;
+
+    /**
    * @brief [en] The correction offset handed over by alignment.
    * @brief [zh] 由对齐交给传感器的校正偏置。
    */
@@ -206,6 +217,7 @@ class PlantPosition final : public hal::PositionSensor {
     float offset_rad_{0.0F};
     float resolution_rad_{0.0F};
     bool sensor_present_{true};
+    bool velocity_supported_{true};
     bool has_index_{false};
     float index_position_rad_{0.0F};
     float previous_true_rad_{0.0F};
@@ -559,7 +571,16 @@ inline auto PlantPosition::index_pulse() noexcept -> bool {
 }
 
 
-inline auto PlantPosition::velocity_rad_s() noexcept -> float { return plant_->omega_mech_rad_s(); }
+inline auto PlantPosition::velocity_rad_s() noexcept -> float {
+    // The HAL contract says a sensor may report an angle and no speed (`NaN` = not supported). No case ever drove the
+    // assembly through that branch, which is why the knob below exists: with a speed the observer is not stepped at
+    // all, so a sensored axis has no second opinion to compare against.
+    // HAL 契约允许传感器只报角度、不报速度（`NaN` = 不支持）。此前没有任何用例把装配层开过这条分支，所以才有下面这个
+    // 旋钮：有速度时观测器根本不被推进，于是带传感器的轴上没有第二意见可比。
+    return velocity_supported_ ? plant_->omega_mech_rad_s() : std::nanf("");
+}
+
+inline void PlantPosition::set_velocity_supported(bool supported) noexcept { velocity_supported_ = supported; }
 
 inline auto PlantPosition::has_sensor() const noexcept -> bool { return sensor_present_; }
 

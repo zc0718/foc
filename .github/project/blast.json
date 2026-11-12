@@ -107,6 +107,11 @@
           "row": "motor/drive_supervisor.hpp",
           "verdict": "holds",
           "why": "New row from the previous batch, and this change appends nothing it calls: the supervisor composes `motor/motor.hpp`, `core/protection.hpp` and `core/brake_chopper.hpp`, none of which are in this diff. Its nine cases pass unchanged."
+        },
+        {
+          "row": "comm/board_record.hpp",
+          "verdict": "holds",
+          "why": "re-settled for B-27 (`Telemetry` gained two angle fields): additive -- the fields are appended to a struct and written in the statement that already built it, nothing reads them, and no control path changed. Measured on this tree after the change: the full suite is 953/953, and the row's own cases are green."
         }
       ]
     },
@@ -133,6 +138,11 @@
           "row": "core/machine_map_text.hpp",
           "verdict": "holds",
           "why": "`covers()` is a new member: `at()`, `valid()`, `read_document()` and `write_document()` are byte-identical, and the text row's claim is about the round trip through those. measured on this tree: `test_machine_map` 6/6, `test_machine_map_text` 7/7 -- the L3 round-trip numbers did not move"
+        },
+        {
+          "row": "motor/drive_supervisor.hpp",
+          "verdict": "holds",
+          "why": "re-settled for B-27 (`Telemetry` gained two angle fields): additive -- the fields are appended to a struct and written in the statement that already built it, nothing reads them, and no control path changed. Measured on this tree after the change: the full suite is 953/953, and the row's own cases are green."
         }
       ]
     },
@@ -1519,6 +1529,11 @@
           "row": "motor/drive_supervisor.hpp",
           "verdict": "holds",
           "why": "Rests on `core/traits.hpp` and the HAL contracts through `Motor`, neither of which this batch touched. The one contract interaction it does have -- reading the optional temperature channel through the trait -- is covered by its own case and by `test_temperature.cpp`, both unchanged."
+        },
+        {
+          "row": "comm/board_record.hpp",
+          "verdict": "holds",
+          "why": "re-settled for B-27 (`Telemetry` gained two angle fields): additive -- the fields are appended to a struct and written in the statement that already built it, nothing reads them, and no control path changed. Measured on this tree after the change: the full suite is 953/953, and the row's own cases are green."
         }
       ]
     },
@@ -2172,6 +2187,31 @@
           "row": "core/observer/blended_observer.hpp",
           "verdict": "holds",
           "why": "Same reason: additive trait, untouched observer. Its cases pass unchanged."
+        }
+      ]
+    },
+    {
+      "id": "B-27",
+      "date": "2026-11-13",
+      "what_changed": "`Telemetry` gained `theta_e_rad` and `observer_theta_e_rad`: the electrical angle the loop commutated on, and the observer's own answer for the same tick (`NaN` when the observer did not run). Both are wrapped into `(-pi, pi]` before publication, which is the convention the observer answers in -- the sensor branch would otherwise publish a product wrapped at the mechanical turn and the two numbers could not be subtracted. No control path moved: the fields are written in the same statement that already built the struct, and nothing reads them.",
+      "seeds": [
+        "include/foc/motor/motor.hpp"
+      ],
+      "affected": [
+        {
+          "row": "motor/drive_supervisor.hpp",
+          "verdict": "holds",
+          "why": "additive: the supervisor steps the motor, and what it reads back (`status()`, fault codes) is untouched. Measured: the suite is 953/953, including the nine supervisor cases."
+        },
+        {
+          "row": "core/trace.hpp",
+          "verdict": "holds",
+          "why": "re-settled for B-27 (`Telemetry` gained two angle fields): additive -- the fields are appended to a struct and written in the statement that already built it, nothing reads them, and no control path changed. Measured on this tree after the change: the full suite is 953/953, and the row's own cases are green."
+        },
+        {
+          "row": "core/trace_parse.hpp",
+          "verdict": "holds",
+          "why": "re-settled for B-27 (`Telemetry` gained two angle fields): additive -- the fields are appended to a struct and written in the statement that already built it, nothing reads them, and no control path changed. Measured on this tree after the change: the full suite is 953/953, and the row's own cases are green."
         }
       ]
     }

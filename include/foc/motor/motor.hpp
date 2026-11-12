@@ -71,6 +71,33 @@ struct Telemetry final {
      * @brief [zh] 最差 tick 间隔，us。
      */
     std::uint32_t max_period_us;
+    /**
+     * @brief [en] the electrical angle this tick was commutated on, rad.
+     * @brief [zh] 本拍据此换相的电角度，rad。
+     * @note [en] The angle the *loop used*, so a caller can subtract the observer's own answer from it and see the
+     *            disagreement the assembly currently resolves silently. Both published angles are electrical and both
+     *            are wrapped into `(-pi, pi]`, which is the convention the observer answers in -- the sensor branch
+     *            multiplies a mechanical angle wrapped into `[0, 2*pi)` by the pole pairs and would otherwise carry a
+     *            different wrap, so the two numbers could not be subtracted. That was measured, not assumed: with a
+     *            sensor the raw product reaches `2*pi*p` and the difference against the observer's `(-pi, pi]` value
+     *            aliases on the sampling instant.
+     * @note [zh] 环 **实际使用** 的角度，于是调用方可以减掉观测器自己的答案，看见装配层目前默默解决的那个分歧。
+     * @since 0.1.0
+     */
+    float theta_e_rad;
+    /**
+     * @brief [en] the observer's own electrical angle this tick, rad; `NaN` when the observer did not run.
+     * @brief [zh] 本拍观测器自己的电角度，rad；观测器没有运行时为 `NaN`。
+     * @note [en] This is the second opinion, and `NaN` is its absence rather than a zero: a sensored axis whose sensor
+     *            also reports a speed does not step the observer at all, so there is nothing to compare against and the
+     *            reading says so. The distinction matters because "no second opinion" and "a second opinion that
+     *            agrees" are the two cases an arbitration has to tell apart.
+     * @note [zh] 这就是第二意见，而 `NaN` 是它 **不存在** ，不是一个零：传感器同时报速度的带传感器轴上，观测器根本不被
+     *            推进，因此没有可比的东西，读数就这么说。这个区分要紧，因为"没有第二意见"与"第二意见也同意" 正是仲裁必
+     *            须分辨的两种情形。
+     * @since 0.1.0
+     */
+    float observer_theta_e_rad;
 };
 
 
@@ -819,7 +846,7 @@ template <typename Observer, typename Modulator, typename Controller, typename H
           typename FeedForward, typename PositionControl, typename Aligner, typename Trace>
 Motor<Observer, Modulator, Controller, HalPolicy, RefGenerator, FeedForward, PositionControl, Aligner, Trace>::Motor(
     MotorConfig config, Policies policies, HalPolicy& hal) noexcept
-    : config_(config), policies_(policies), hal_(&hal), sm_(), telemetry_{0.0F, 0.0F, 0.0F, 0U}, status_(ErrorCode::Ok),
+    : config_(config), policies_(policies), hal_(&hal), sm_(), telemetry_{0.0F, 0.0F, 0.0F, 0U, 0.0F, std::nanf("")}, status_(ErrorCode::Ok),
       mode_(ReferenceMode::Torque), iq_ref_a_(0.0F), speed_ref_rad_s_(0.0F), speed_elapsed_s_(0.0F),
       speed_step_due_(true), position_ref_rad_(0.0F), command_{}, speed_ref_from_position_rad_s_(0.0F),
       position_elapsed_s_(0.0F), position_step_due_(true),
@@ -1178,6 +1205,14 @@ auto Motor<Observer, Modulator, Controller, HalPolicy, RefGenerator, FeedForward
     const bool speed_from_observer = !has_sensor || std::isnan(sensor_speed);
 
     float theta_e = 0.0F;
+    // The observer's own answer, kept apart from the angle the loop uses: `NaN` means it did not run this tick, which
+    // is the normal case on a sensored axis whose sensor also reports a speed. Publishing it is what makes the second
+    // opinion observable from outside -- `AngleSource` can arbitrate on real data instead of on offers the assembly
+    // never forms.
+    // 观测器自己的答案，与环实际使用的角度分开保存：`NaN` 表示它本拍没有运行，这在传感器同时报速度的带传感器轴上是
+    // 常态。把它公布出去，第二意见才从外面看得见——`AngleSource` 才能对**真实**数据仲裁，而不是对装配层从不构造的
+    // 候选仲裁。
+    float observer_theta_e = std::nanf("");
     float speed_mech = 0.0F;
     Dq<float> i_dq{};
     Dq<float> i_ref{};
@@ -1237,6 +1272,7 @@ auto Motor<Observer, Modulator, Controller, HalPolicy, RefGenerator, FeedForward
             // 因此发布传感器转速——除非传感器根本不报速度，那正是这一行一直覆盖的情形。
             speed_mech = speed_from_observer ? observed.omega_e / static_cast<float>(config_.pole_pairs) : sensor_speed;
             theta_e = has_sensor ? (angle_mech * static_cast<float>(config_.pole_pairs)) : observed.theta_e;
+            observer_theta_e = observed.theta_e;
             // The reference is fed from the observer's own angle, and the index pulse -- when the sensor offers one --
             // is what fixes its origin. Without a mark the reference still counts turns, it simply has no absolute
             // zero, which is exactly what `homed()` reports and why a position command must ask rather than assume.
@@ -1460,7 +1496,14 @@ auto Motor<Observer, Modulator, Controller, HalPolicy, RefGenerator, FeedForward
 
     hal_->pwm.write_duty(modulated.duty);
     v_ab_prev_ = v_ab;
-    telemetry_ = Telemetry{speed_mech, i_dq.d, i_dq.q, max_period_us_};
+    // Both published angles are electrical and both are wrapped into (-pi, pi], because the sensor branch would
+    // otherwise publish `angle_mech * p` wrapped at the *mechanical* turn -- measured: the two numbers then alias on
+    // the sampling instant and cannot be subtracted, which is the one thing a second opinion is for.
+    // 公布的两个都是电角度，且都归到 (-pi, pi]，因为否则传感器分支公布的是按**机械**圈归一化的
+    // `angle_mech * p`——实测：两个数随后就会随采样时刻混叠、相减不了，而相减正是第二意见唯一的用途。
+    constexpr float kTwoPiElectricalRad = 6.28318530717958647692F;
+    telemetry_ = Telemetry{
+        speed_mech, i_dq.d, i_dq.q, max_period_us_, std::remainder(theta_e, kTwoPiElectricalRad), observer_theta_e};
 
     // The trace records what the loop decided, after it decided it. Placed here rather than earlier so one sample is one
     // period: the currents the PI acted on, the voltage it asked for, and the state the period ended in. With the default
