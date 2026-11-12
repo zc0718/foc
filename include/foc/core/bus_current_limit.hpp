@@ -98,10 +98,10 @@ struct BusCurrentLimitOutput final {
  *   Three things worth knowing before reading the code, because each of them is a decision that the obvious alternative
  *   gets wrong:
  *
- *   1. **It is feedback, and it says so.** The law is `scale = aim / measured`, slewed -- not a model of the machine. A
- *   model-based limit would need `vd`, `vq`, `id` and `iq` at every step and would be wrong by exactly as much as the
- *   model is: the bus current is the one quantity in this loop that *is* measured, so it is the one that should be
- *   closed on.
+ *   1. **It is feedback, and it says so.** The authority is integrated from `measured - aim`, not computed from a model
+ *   of the machine. A model-based limit would need `vd`, `vq`, `id` and `iq` at every step and would be wrong by
+ *   exactly as much as the model is: the bus current is the one quantity in this path that *is* measured, so it is the
+ *   one that should be closed on.
  *
  *   2. **A missing measurement is not a pass.** With `NaN` in, the authority relaxes at `rise_per_s` -- the drive is
  *   not punished for a dead shunt -- and the output says `measured == false`, so a caller that needs the limit enforced
@@ -117,9 +117,9 @@ struct BusCurrentLimitOutput final {
  *
  *   读代码之前值得先知道三件事，每一件都是"朴素替代做法会做错"的决定：
  *
- *   1. **它是反馈，而且它自己说了。** 律是 `scale = aim / measured` 再限斜率，不是机器的模型。基于模型的限值每步都要
- *   `vd`、 `vq`、 `id`、 `iq`，而且会恰好错成模型错的那样多：母线电流是这个环里 **唯一真的被量到的** 量，所以它也是唯一
- *   应该被闭环的量。
+ *   1. **它是反馈，而且它自己说了。** 权限是对 `实测 − 瞄准` 做积分，而不是从机器模型算出来的。基于模型的限值每步都要
+ *   `vd`、 `vq`、 `id`、 `iq`，而且会恰好错成模型错的那样多：母线电流是这条通路上 **唯一真的被量到的** 量，所以它也是唯
+ *   一应该被闭环的量。
  *
  *   2. **没有测量不是放行。** 输入 `NaN` 时权限按 `rise_per_s` 松开——驱动器不为通路上的一个死分流电阻受过——而输出报
  *   `measured == false`，于是需要这条限值真的生效的调用方可以拒绝运行，而不是相信自己正被保护着。
