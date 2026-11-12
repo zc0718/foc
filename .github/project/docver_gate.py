@@ -31,9 +31,21 @@ import sys
 import tempfile
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
-STAMP = re.compile(r'(?<![\w.])0\.\d+\.\d+(?![\w.])')
+# A version stamp, with two lookarounds that were measured rather than guessed. `(?<![\d.])` lets
+# `v0.1.9` through, because a release claim is written that way as often as not, while still refusing
+# to read `10.1.9` as `0.1.9`. `(?![\w]|\.\d)` lets a sentence end on the stamp -- the first version
+# of this pattern required a non-dot after it, so "shipped in 0.1.9." was invisible, which is exactly
+# how a prose claim survives a check written for it.
+STAMP = re.compile(r'(?<![\d.])0\.\d+\.\d+(?![\w]|\.\d)')
 EXAMPLE = re.compile(r'@example\s+(\S+)')
 SINCE = re.compile(r'@since\s+(\S+)')
+
+# Hand-written prose where a release claim is typed by hand. `doc_doxygen_folders` covers the
+# docstrings; these are the other surfaces a version number reaches a reader from, and an audit of
+# them found five stale ones (a README row claiming "since 0.1.12" while `doc_versions` says 0.1.0,
+# the same shape twice in the capability table, and once in a project registry). Nothing caught them:
+# the rules above only read the Doxygen tree.
+HISTORY = ('CHANGELOG.md', 'docs/sphinx/source/foundation-log.rst')
 
 
 def _load_build(root: pathlib.Path):
@@ -58,6 +70,17 @@ def _doc_files(root: pathlib.Path, meta: dict) -> list:
             for path in sorted(base.rglob(f'*.{suffix}')):
                 res.append((base, path, suffix))
     return res
+
+
+def _prose_files(root: pathlib.Path) -> list:
+    """The hand-written surfaces a release claim can hide in, outside the Doxygen tree."""
+    files = []
+    readme = root / 'README.md'
+    if readme.is_file():
+        files.append(readme)
+    files.extend(sorted((root / 'docs' / 'sphinx' / 'source').rglob('*.rst')))
+    files.extend(sorted((root / '.github' / 'project').glob('*.json')))
+    return files
 
 
 def violations(root: pathlib.Path) -> list:
@@ -99,6 +122,26 @@ def violations(root: pathlib.Path) -> list:
             problems.append(f'{rel}: the version filter removes the whole file (every block is '
                             f'stamped above {meta["doc_versions"][-1]})')
 
+    # rule 5: a release claim in prose. `doc_versions` is the set of versions this project published,
+    # so a stamp in the same major.minor family that is not one of them is a claim about a release
+    # that never happened -- and unlike a docstring stamp, no filter would drop it. Foreign families
+    # are left alone: the scaffold's 0.3.x and a third-party tool's 0.5.0 are not this project's
+    # versions to police, and a package quote inside the ledger is history, not a claim.
+    published = set(meta['doc_versions'])
+    families = {tuple(_ver_tuple(v)[:2]) for v in meta['doc_versions']}
+    for path in _prose_files(root):
+        rel = path.relative_to(root).as_posix()
+        if rel in HISTORY:
+            continue
+        for number, line in enumerate(path.read_text(encoding='utf-8').splitlines(), 1):
+            for stamp in sorted(set(STAMP.findall(line))):
+                if stamp in published:
+                    continue
+                if tuple(_ver_tuple(stamp)[:2]) in families:
+                    problems.append(f'{rel}:{number}: release claim {stamp!r} names a version this '
+                                    f'project never published ({meta["doc_versions"][-1]} is the '
+                                    f'published one)')
+
     return problems
 
 
@@ -139,6 +182,15 @@ def selftest() -> int:
             found = violations(root)
             if not any(expect in _ for _ in found):
                 failures.append(f'{label}: not caught ({found})')
+    # A release claim in hand-written prose: the shape the audit found five of, none of which any
+    # filter would have dropped, so nothing but this rule could see them.
+    with tempfile.TemporaryDirectory() as tmp:
+        root = pathlib.Path(tmp)
+        _fixture(root, since='0.1.0', example='demo.cxx', sibling=True)
+        _write(root, 'README.md', 'The C surface has been reachable since 0.1.9.\n')
+        found = violations(root)
+        if not any('never published' in _ for _ in found):
+            failures.append(f'a prose release claim not caught ({found})')
     with tempfile.TemporaryDirectory() as tmp:
         root = pathlib.Path(tmp)
         _fixture(root, since='0.1.0', example='demo.cxx', sibling=True)

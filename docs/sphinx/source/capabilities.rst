@@ -227,7 +227,7 @@ the sensitivity half is not, so the row stays **L2**.
        refusal that says nothing leaves the caller guessing whether to spin longer, slower, or steadier, and those are
        three different actions. A table it never saw is absent from the output rather than extrapolated, because a
        compensator acting on an invented harmonic injects a ripple of its own.
-       **Reachable from C since 0.1.9** (six `experimental` entries:
+       **Reachable from C** (six `experimental` entries:
        `foc_cogging_learn_create/accumulate/ready/finish/reset/destroy`), so a script can learn a machine's table. What
        this answer is, is a **table**, so the C contract carries a capacity clause the C++ one does not need: `finish()`
        echoes `required` (how many entries the answer needs) and `capacity` (how many the caller offered) on **every**
@@ -276,7 +276,7 @@ the sensitivity half is not, so the row stays **L2**.
        whatever it gets applies nothing new. `reason` names which of seven refusals fired, because "spin with a varying
        current" and "something is pulling on the axis" are different actions. The fit keeps an **intercept** so a constant
        unknown load cannot be attributed to the current.
-       **Reachable from C since 0.1.9** (five `experimental` entries: `foc_autotune_create/accumulate/finish/reset/destroy`),
+       **Reachable from C** (five `experimental` entries: `foc_autotune_create/accumulate/finish/reset/destroy`),
        so a C or Python consumer can run the procedure. A session is its own opaque handle rather than a motor register --
        nothing is readable tick by tick, only a window to feed and an answer to ask for -- and `finish()` answering
        `FOC_OK` with `valid == 0` is a refusal, not a failure.
