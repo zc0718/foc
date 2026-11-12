@@ -294,6 +294,11 @@
           "row": "motor/motor.hpp",
           "verdict": "holds",
           "why": "the port is below `HalPolicy`, so `Motor` sees one more `DcLink` implementation and no interface change. The claim that the loop does not care who calls it still holds: `test_rtos_bridge` 4/4 and the full suite is re-run at batch closure"
+        },
+        {
+          "row": "motor/drive_supervisor.hpp",
+          "verdict": "holds",
+          "why": "The watch here is the SIL bench, and this change touches it only on the observation side: the plant now publishes a period-mean bus current that it was already computing for the meter. No instrument's dynamics changed, so nothing the supervisor rests on moved -- and the supervisor's fourteen cases (nine behaviours, five record) still pass in the same run."
         }
       ]
     },

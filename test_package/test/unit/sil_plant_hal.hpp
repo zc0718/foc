@@ -235,9 +235,60 @@ class PlantDcLink final : public hal::DcLink {
     /** @brief [en] Read the voltage from this meter instead; `nullptr` goes back to the stiff value. [zh] 改从这个 meter 读电压；`nullptr` 回到刚性值。 */
     void set_meter(BusMeter* meter) noexcept { meter_ = meter; }
 
+    /**
+     * @brief [en] Publish the current the bus node carried over the period just integrated.
+     * @brief [zh] 公布刚积分完的那一个周期里母线节点流过的电流。
+     * @param amps [en] period-mean current into the inverter, A.
+     * @param amps [zh] 流入逆变器的周期平均电流，A。
+     * @note [en] A **period mean**, not the last sub-step's value: the plant walks the period in sub-steps, so no
+     *            single instant is "the" current of the period, and reporting the last one would make the number depend
+     *            on the sub-step count. The mean is what the bus actually carried.
+     * @note [zh] 是 **周期平均** ，不是最后一个子步的值：plant 把周期切成子步走，所以没有任何一个瞬间是这一周期的"那个"
+     *            电流，报最后一个会让这个数取决于子步数。平均值才是母线实际流过的量。
+     * @since 0.1.0
+     */
+    void set_bus_current_a(float amps) noexcept {
+        bus_current_a_ = amps;
+        bus_current_valid_ = true;
+    }
+
+    /**
+     * @brief [en] Report "not measured" from now on, as a bench with no bus shunt would.
+     * @brief [zh] 从现在起上报"没有测到"，如同没有母线分流器的台架。
+     * @since 0.1.0
+     */
+    void set_bus_current_unavailable() noexcept {
+        bus_current_a_ = 0.0F;
+        bus_current_valid_ = false;
+    }
+
+    /**
+     * @brief [en] The period-mean bus current, when the bench measured one.
+     * @brief [zh] 台架测到过时的周期平均母线电流。
+     * @param out [en] receiver, written only when the answer is true.
+     * @param out [zh] 接收者，仅在返回 true 时写入。
+     * @return [en] true when a measurement exists.
+     * @return [zh] 存在一次测量时为 true。
+     * @note [en] Not an override: `hal::DcLink` does not carry this, because a bus fed from a supply may measure no
+     *            current and making it required would refuse those drives. `core::concepts::has_bus_current_v` is how a
+     *            consumer asks whether this link has it.
+     * @note [zh] 不是 override： `hal::DcLink` 不带这个，因为由电源供电的母线可能测不到电流，设成必需会把这类驱动拒之门
+     *            外。消费者用 `core::concepts::has_bus_current_v` 问这条母线有没有。
+     * @since 0.1.0
+     */
+    [[nodiscard]] auto read_bus_current_a(float& out) noexcept -> bool {
+        if (!bus_current_valid_) {
+            return false;
+        }
+        out = bus_current_a_;
+        return true;
+    }
+
   private:
     float v_bus_;
     BusMeter* meter_{nullptr};
+    float bus_current_a_{0.0F};
+    bool bus_current_valid_{false};
 };
 
 /**
@@ -360,9 +411,22 @@ class PlantHal final {
     driver::StubFaultInput fault_input;
 
   private:
+    /**
+     * @brief Publish the period mean of the current the node carried, and start a new period.
+     */
+    void publish_bus_current() noexcept {
+        if ((bus_ != nullptr) && (bus_current_s_ > 0.0)) {
+            dc_link.set_bus_current_a(static_cast<float>(bus_current_a_s_ / bus_current_s_));
+        }
+        bus_current_a_s_ = 0.0;
+        bus_current_s_ = 0.0;
+    }
+
     PmsmPlant* plant_;
     DiscreteInverter* inverter_{nullptr};
     BusMeter* bus_{nullptr};
+    double bus_current_a_s_{0.0};
+    double bus_current_s_{0.0};
     float v_dead_{0.0F};
     float transition_a_{/**
        * @brief [en] dead-zone transition width in A; 0 = ideal `sign()`.
@@ -551,10 +615,18 @@ inline void PlantHal::advance(float dt_ctrl_s, int substeps) noexcept {
                 // 下一子步的电流配在一起，而那正是这个端口要避免的错位。
                 const Dq<float> i_dq = plant_->current_dq();
                 if (bus_ != nullptr) {
-                    bus_->book(bus_current_a(v_dq, i_dq, v_bus), i_brake, static_cast<double>(h));
+                    const double i_dc = bus_current_a(v_dq, i_dq, v_bus);
+                    bus_->book(i_dc, i_brake, static_cast<double>(h));
+                    // The same number the meter books, accumulated so the link can report the period mean. One
+                    // formula, two consumers: the meter integrates it into energy, the link averages it.
+                    // 与 meter 记账用的同一个数，在这里累加，于是 link 能报出周期平均。一个公式、两个消费者：meter 把它
+                    // 积成能量，link 把它取平均。
+                    bus_current_a_s_ += i_dc * static_cast<double>(h);
+                    bus_current_s_ += static_cast<double>(h);
                 }
                 plant_->advance(h);
             }
+            publish_bus_current();
             return;
         }
     }
@@ -599,10 +671,14 @@ inline void PlantHal::advance(float dt_ctrl_s, int substeps) noexcept {
         const Dq<float> v_dq = core::park(v_ab, theta_e);
         plant_->set_voltage_dq(v_dq);
         if (bus_ != nullptr) {
-            bus_->book(bus_current_a(v_dq, plant_->current_dq(), v_bus), i_brake, static_cast<double>(dt_sub));
+            const double i_dc = bus_current_a(v_dq, plant_->current_dq(), v_bus);
+            bus_->book(i_dc, i_brake, static_cast<double>(dt_sub));
+            bus_current_a_s_ += i_dc * static_cast<double>(dt_sub);
+            bus_current_s_ += static_cast<double>(dt_sub);
         }
         plant_->advance(dt_sub);
     }
+    publish_bus_current();
 }
 
 inline void PlantHal::set_inverter(DiscreteInverter* inverter) noexcept { inverter_ = inverter; }
