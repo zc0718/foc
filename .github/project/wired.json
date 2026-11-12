@@ -393,6 +393,11 @@
       "class": "policy",
       "example": "test_package/test/unit/test_move_trajectory.cpp",
       "why": "the caller streams its position into its own position loop and re-aims it when the target moves; what the axis can follow is a fact about the installation, so this type takes the limits as an input and nothing in `src/` includes it"
+    },
+    "core/commissioning_flow.hpp": {
+      "class": "policy",
+      "example": "test_package/test/unit/test_commissioning_flow.cpp",
+      "why": "the caller owns the estimators and the bench; this type only records the session, so whether a machine needs flux before inductance and what a partial set means are facts about the installation rather than about the library -- which is also why nothing in `src/` includes it"
     }
   }
 }

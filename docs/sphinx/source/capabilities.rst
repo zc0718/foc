@@ -350,6 +350,16 @@ the sensitivity half is not, so the row stays **L2**.
        a typo in `series_ohm` cannot silently produce a temperature.
      - ``Temperature.TheInverseUndoesTheForwardModelAcrossTheWorkingBand``
      - na -- a conversion is a pure function of one code and its configuration.
+   * - ``core/commissioning_flow.hpp``
+     - `completed_mask()` and `failed_stage()` are the two words a support call needs: how far the session got, and
+       which stage gave up. `state()` separates `Running` from `Idle` on purpose -- a session interrupted by a reset
+       has one stage that started and never reported, and "not started" is a different answer.
+     - A plan that is empty, longer than the enumeration, names a stage twice, or names one that does not exist is
+       refused with `Param` at `begin()` rather than repaired; `complete()` and `fail()` refuse a stage that is not
+       the one in progress, so a late report from an abandoned stage cannot move the session.
+     - ``CommissioningFlow.AFailureKeepsWhatWasAlreadyObtainedAndNamesTheStageThatGaveUp``
+     - na -- it holds a session record, not a signal; the properties that matter (the mask survives a failure, and
+       nothing starts after one until `reset()`) are asserted in the case named above.
    * - ``comm/commissioned_set.hpp``
      - `SetStatus` names the check that failed (short / marker / schema / reserved / check value / field) and
        `SetError.offset` names the byte, so a reader learns which number to re-measure rather than which byte to stare

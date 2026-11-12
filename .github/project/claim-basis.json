@@ -461,6 +461,9 @@
     ],
     "core/move_trajectory.hpp": [
       "core/move_trajectory.hpp"
+    ],
+    "core/commissioning_flow.hpp": [
+      "core/commissioning_flow.hpp"
     ]
   },
   "unmapped": []
