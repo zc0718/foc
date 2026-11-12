@@ -116,6 +116,13 @@ int32_t foc_bridge_reg_read(foc_motor_t motor, uint32_t index, uint32_t *raw);
 uint32_t foc_bridge_frame_encode(uint8_t seq, uint8_t type, const uint8_t *payload, uint8_t length, uint8_t *out,
                                  uint32_t capacity);
 int32_t foc_bridge_frame_decode(const uint8_t *in, uint32_t length, foc_frame_t *out);
+foc_err_t foc_bridge_supervisor_create(foc_motor_t motor, const foc_supervisor_config_t *config, foc_supervisor_t *out);
+foc_err_t foc_bridge_supervisor_step(foc_supervisor_t supervisor, float dt_s);
+foc_err_t foc_bridge_supervisor_status(foc_supervisor_t supervisor, foc_supervisor_status_t *out);
+foc_err_t foc_bridge_supervisor_enable(foc_supervisor_t supervisor);
+foc_err_t foc_bridge_supervisor_disable(foc_supervisor_t supervisor);
+foc_err_t foc_bridge_supervisor_clear(foc_supervisor_t supervisor);
+foc_err_t foc_bridge_supervisor_destroy(foc_supervisor_t supervisor);
 #ifdef __cplusplus
 }
 #endif

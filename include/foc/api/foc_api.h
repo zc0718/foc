@@ -1393,3 +1393,135 @@ FOC_WARN_UNUSED uint32_t foc_frame_encode(uint8_t seq, uint8_t type, const uint8
  * @exporter
  */
 FOC_WARN_UNUSED foc_frame_status_t foc_frame_decode(const uint8_t *in, uint32_t length, foc_frame_t *out);
+
+
+/**
+ * @brief [en] Create the drive-tick supervisor for one motor: chopper, protection, then the control loop.
+ * @brief [zh] 为一台电机创建驱动器拍监督器：先斩波、再保护、最后控制环。
+ * @param motor [en] a live motor handle.
+ * @param motor [zh] 一个活着的电机句柄。
+ * @param config [en] the thresholds; required, never NULL.
+ * @param config [zh] 阈值；必须给，不接受 NULL。
+ * @param out [en] non-NULL receiver of the new handle.
+ * @param out [zh] 非 NULL 的新句柄接收者。
+ * @return [en] FOC_OK; `FOC_ERR_PARAM` for a NULL or wrongly sized config, a config that cannot be a band, a motor
+ *              handle that is not live, or a non-finite pole-pair count; `FOC_ERR_STATE` when this motor already has a
+ *              supervisor.
+ * @return [zh] FOC_OK；配置为 NULL 或尺寸不符、配置描述不出区间、电机句柄不是活的、极对数非有限时返回 `FOC_ERR_PARAM`；
+ *              该电机已有监督器时返回 `FOC_ERR_STATE`。
+ * @note [en] This is the order a stop has to follow, made reachable from C: brake before the output goes away, `stop()`
+ *            before the fault is recorded. A host that steps the motor with `foc_motor_tick()` and acts on
+ *            `foc_protector_step()` itself is writing that order again, which is what this entry point removes. The
+ *            supervisor binds to the motor, not the other way round: destroying the motor destroys it, and a handle
+ *            that outlives its motor answers `FOC_ERR_STATE` rather than touching freed state.
+ * @note [zh] 这就是一次停机必须遵守的顺序，现在从 C 也能拿到了：输出消失之前先抱闸、记故障之前先 `stop()`。一个自己用
+ *            `foc_motor_tick()` 走环、自己处置 `foc_protector_step()` 判决的宿主，就是在重写这个顺序——而这个入口正是为
+ *            了不再重写它。监督器绑定在电机上，不是反过来：销毁电机会销毁它，而比电机活得久的句柄会以 `FOC_ERR_STATE`
+ *            作答，而不是去碰已经释放的状态。
+ * @since 0.1.0
+ * @exporter
+ */
+FOC_WARN_UNUSED foc_err_t foc_supervisor_create(foc_motor_t motor, const foc_supervisor_config_t *config,
+                                                foc_supervisor_t *out);
+/**
+ * @brief [en] Run one drive tick through the supervisor, in the order a stop has to follow.
+ * @brief [zh] 经监督器走一拍，顺序就是一次停机必须遵守的那个顺序。
+ * @param supervisor [en] a live supervisor handle.
+ * @param supervisor [zh] 一个活着的监督器句柄。
+ * @param dt_s [en] the period, s; must be finite and positive.
+ * @param dt_s [zh] 周期，s；须有限且为正。
+ * @return [en] FOC_OK; whatever the motor answered when it ran; `FOC_ERR_FAULT` on the tick a fault stopped the output;
+ *              `FOC_ERR_PARAM` for a bad period; `FOC_ERR_STATE` for a handle that is not live.
+ * @return [zh] FOC_OK；控制环真的跑时返回电机的回答；故障停掉输出的那一拍返回 `FOC_ERR_FAULT`；周期不合法返回
+ *              `FOC_ERR_PARAM`；句柄不是活的返回 `FOC_ERR_STATE`。
+ * @note [en] While a supervisor exists, **this** is the tick: a host that also calls `foc_motor_tick()` runs the loop
+ *            twice per period, which the current loop will happily do and the plant will not. A fault returned here is
+ *            not a reason to stop calling: the chopper keeps dissipating and the status keeps being updated, because a
+ *            bus that is still hot is still a fact after the inverter went quiet.
+ * @note [zh] 监督器存在期间， **这一拍** 就是它：同时再调 `foc_motor_tick()` 的宿主会让环每周期跑两遍——电流环会很乐意地
+ *            照做，而 plant 不会。这里返回故障并不意味着该停止调用：斩波器继续耗能、状态继续更新，因为逆变器安静下来之
+ *            后，一条还很热的母线仍然是一个事实。
+ * @since 0.1.0
+ * @exporter
+ */
+FOC_WARN_UNUSED foc_err_t foc_supervisor_step(foc_supervisor_t supervisor, float dt_s);
+/**
+ * @brief [en] Read what the last tick decided, in one call.
+ * @brief [zh] 一次调用读出上一拍的决定。
+ * @param supervisor [en] a live supervisor handle.
+ * @param supervisor [zh] 一个活着的监督器句柄。
+ * @param out [en] non-NULL receiver, `struct_size` set by the caller.
+ * @param out [zh] 非 NULL 接收者， `struct_size` 由调用方填好。
+ * @return [en] FOC_OK, `FOC_ERR_PARAM` for a NULL or wrongly sized receiver, or `FOC_ERR_STATE` for a stale handle.
+ * @return [zh] FOC_OK；接收者为 NULL 或尺寸不符返回 `FOC_ERR_PARAM`；句柄过期返回 `FOC_ERR_STATE`。
+ * @note [en] `output_allowed == 0` and `fault != 0` are the two words a log line needs; `brake_engaged` is the third,
+ *            because "it stopped" and "something is holding it" are different answers.
+ * @note [zh] 一条日志需要的两个词是 `output_allowed == 0` 与 `fault != 0`；第三个词是 `brake_engaged`，因为"它停了"与"
+ *            有东西抱着它"是两个不同的回答。
+ * @since 0.1.0
+ * @exporter
+ */
+FOC_WARN_UNUSED foc_err_t foc_supervisor_status(foc_supervisor_t supervisor, foc_supervisor_status_t *out);
+/**
+ * @brief [en] Start the control loop and release the mechanical brake, in that order.
+ * @brief [zh] 起控制环、松机械抱闸，按这个顺序。
+ * @param supervisor [en] a live supervisor handle.
+ * @param supervisor [zh] 一个活着的监督器句柄。
+ * @return [en] FOC_OK; whatever the motor refused with; or whatever the brake refused with,
+ *              **with the loop stopped again**.
+ * @return [zh] FOC_OK；电机拒绝的原因；或抱闸拒绝的原因（此时 **环已被重新停掉** ）。
+ * @note [en] A refused release stops the loop again rather than leaving a drive running against a brake it could not
+ *            let go: the sequence exists so that the two facts cannot disagree.
+ * @note [zh] 松闸被拒绝时把环重新停掉，而不是让一台驱动器顶着放不开的抱闸继续跑：这个顺序存在的意义就是让两个事实不会互
+ *            相矛盾。
+ * @since 0.1.0
+ * @exporter
+ */
+FOC_WARN_UNUSED foc_err_t foc_supervisor_enable(foc_supervisor_t supervisor);
+/**
+ * @brief [en] Engage the mechanical brake, verify that it took, then stop the control loop.
+ * @brief [zh] 抱上机械抱闸、确认抱住，然后停控制环。
+ * @param supervisor [en] a live supervisor handle.
+ * @param supervisor [zh] 一个活着的监督器句柄。
+ * @return [en] FOC_OK; whatever the motor refused with; or whatever the brake refused with,
+ *              **with the loop still running**.
+ * @return [zh] FOC_OK；电机拒绝的原因；或抱闸拒绝的原因（此时 **环仍在运行** ）。
+ * @note [en] The refusal is returned with the drive still enabled on purpose: stopping an unheld vertical axis turns a
+ *            reported problem into a dropped load, so the caller decides what to do with the news.
+ * @note [zh] 拒绝时驱动器仍然使能是故意的：把一根没有被抱住的竖直轴停下来，会把一个已报告的问题变成一次下坠，所以这条消
+ *            息怎么处置由调用方决定。
+ * @since 0.1.0
+ * @exporter
+ */
+FOC_WARN_UNUSED foc_err_t foc_supervisor_disable(foc_supervisor_t supervisor);
+/**
+ * @brief [en] Clear a latched fault, keeping the thermal budget and the record of what happened.
+ * @brief [zh] 清除已锁存的故障，保留热预算与发生过什么的记录。
+ * @param supervisor [en] a live supervisor handle.
+ * @param supervisor [zh] 一个活着的监督器句柄。
+ * @return [en] FOC_OK, or whatever the motor said; `FOC_ERR_STATE` for a stale handle.
+ * @return [zh] FOC_OK，或电机的回答；句柄过期返回 `FOC_ERR_STATE`。
+ * @note [en] `I2t` is deliberately **not** cleared: the winding is still hot, and clearing that here would override a
+ *            decision made in `Protector`. The record of the last faults survives too -- a cleared fault is not an
+ *            erase.
+ * @note [zh] `I2t` 是故意 **不** 清的：绕组还热着，在这里清掉它等于从外部推翻 `Protector` 里的决定。最近若干条故障的记
+ *            录同样保留——清除故障不是擦除历史。
+ * @since 0.1.0
+ * @exporter
+ */
+FOC_WARN_UNUSED foc_err_t foc_supervisor_clear(foc_supervisor_t supervisor);
+/**
+ * @brief [en] Drop the supervisor; the motor keeps running.
+ * @brief [zh] 丢弃监督器；电机继续运行。
+ * @param supervisor [en] a supervisor handle, or NULL.
+ * @param supervisor [zh] 监督器句柄，或 NULL。
+ * @return [en] FOC_OK (also for NULL), or `FOC_ERR_STATE` for a handle that is not live.
+ * @return [zh] FOC_OK（NULL 也返回它），或句柄不是活的时返回 `FOC_ERR_STATE`。
+ * @note [en] The drive is **not** stopped here. A destructor that stops a machine is a destructor nobody dares call,
+ *            and the caller that wants a stopped drive says `foc_supervisor_disable()` first.
+ * @note [zh] 这里 **不** 停驱动器。一个会把机器停掉的析构函数，是一个谁都不敢调的析构函数；想要停下来的调用方先调
+ *            `foc_supervisor_disable()`。
+ * @since 0.1.0
+ * @exporter
+ */
+FOC_WARN_UNUSED foc_err_t foc_supervisor_destroy(foc_supervisor_t supervisor);

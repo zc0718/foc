@@ -481,3 +481,53 @@ foc_frame_status_t foc_frame_decode(const uint8_t *in, uint32_t length, foc_fram
     }
     return (foc_frame_status_t)foc_bridge_frame_decode(in, length, out);
 }
+
+
+foc_err_t foc_supervisor_create(foc_motor_t motor, const foc_supervisor_config_t *config, foc_supervisor_t *out) {
+    if ((motor == NULL) || (config == NULL) || (out == NULL)) {
+        return FOC_ERR_PARAM;
+    }
+    return foc_bridge_supervisor_create(motor, config, out);
+}
+
+foc_err_t foc_supervisor_step(foc_supervisor_t supervisor, float dt_s) {
+    if ((supervisor == NULL) || !isfinite(dt_s) || !(dt_s > 0.0F)) {
+        return FOC_ERR_PARAM;
+    }
+    return foc_bridge_supervisor_step(supervisor, dt_s);
+}
+
+foc_err_t foc_supervisor_status(foc_supervisor_t supervisor, foc_supervisor_status_t *out) {
+    if ((supervisor == NULL) || (out == NULL)) {
+        return FOC_ERR_PARAM;
+    }
+    return foc_bridge_supervisor_status(supervisor, out);
+}
+
+foc_err_t foc_supervisor_enable(foc_supervisor_t supervisor) {
+    if (supervisor == NULL) {
+        return FOC_ERR_PARAM;
+    }
+    return foc_bridge_supervisor_enable(supervisor);
+}
+
+foc_err_t foc_supervisor_disable(foc_supervisor_t supervisor) {
+    if (supervisor == NULL) {
+        return FOC_ERR_PARAM;
+    }
+    return foc_bridge_supervisor_disable(supervisor);
+}
+
+foc_err_t foc_supervisor_clear(foc_supervisor_t supervisor) {
+    if (supervisor == NULL) {
+        return FOC_ERR_PARAM;
+    }
+    return foc_bridge_supervisor_clear(supervisor);
+}
+
+foc_err_t foc_supervisor_destroy(foc_supervisor_t supervisor) {
+    if (supervisor == NULL) {
+        return FOC_OK;
+    }
+    return foc_bridge_supervisor_destroy(supervisor);
+}

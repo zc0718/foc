@@ -267,7 +267,16 @@ class DriveSupervisor final {
         // 库中其他部分看不见的五个成因。`Motor` 已经在自己那拍的开头锁存功率级自己的引脚，所以这不是重复检查——这里管的是
         // 另外五个码。
         const core::ProtectionInput input = make_input();
-        const core::ProtectionOutput out = protector_->step(input, dt_s);
+        // The optional is checked at the top of this function as well; spelling it again here is what lets the
+        // analyser -- and a later reader -- see that the dereference is guarded, without holding two functions in
+        // their head at once.
+        // 可选值在本函数开头已经检查过一次；在这里再写一次，是为了让分析器（以及后来的读者）看得见这次解引用是有守卫的，
+        // 而不必同时在脑子里装两个函数。
+        ProtectorType* protector = protector_.has_value() ? &protector_.value() : nullptr;
+        if (protector == nullptr) {
+            return ErrorCode::State;
+        }
+        const core::ProtectionOutput out = protector->step(input, dt_s);
         status_.fault = out.fault;
         status_.active_mask = out.active_mask;
         status_.latched_mask = out.latched_mask;
@@ -544,13 +553,21 @@ class DriveSupervisor final {
         input.i_magnitude_a = std::sqrt((telemetry.id_a * telemetry.id_a) + (telemetry.iq_a * telemetry.iq_a));
         input.v_bus_v = status_.v_bus_v;
         input.omega_e_rad_s = telemetry.speed_mech_rad_s * config_.pole_pairs;
-        float temperature_c = std::nanf("");
-        if constexpr (core::concepts::has_temperature_v<HalType>) {
-            const auto reading = hal_.temperature.read();
-            if (reading.valid) {
-                temperature_c = reading.celsius;
+        // A lambda rather than an if-then-assign, because on a HAL without the optional contract the variable is
+        // never assigned -- which makes it `const` there and not here, and "sometimes const" is how a warning turns
+        // into a suppression.
+        // 用 lambda 而不是"先赋值再改"：在没有这个可选契约的 HAL 上，那个变量从头到尾没被赋值过——于是它在那里是 const、
+        // 在这里不是，而"有时 const"正是把告警变成一句抑制的方式。
+        const auto read_temperature_c = [this]() noexcept -> float {
+            if constexpr (core::concepts::has_temperature_v<HalType>) {
+                const auto reading = hal_.temperature.read();
+                if (reading.valid) {
+                    return reading.celsius;
+                }
             }
-        }
+            return std::nanf("");
+        };
+        const float temperature_c = read_temperature_c();
         status_.temperature_c = temperature_c;
         input.temperature_c = std::isnan(temperature_c) ? config_.protection.t_derate_start_c : temperature_c;
         input.flux_valid = true;

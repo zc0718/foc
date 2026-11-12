@@ -1869,3 +1869,168 @@ typedef enum foc_frame_status_t {
     FOC_FRAME_BAD_LENGTH,
     FOC_FRAME_BAD_CHECKSUM
 } foc_frame_status_t;
+
+/**
+ * @brief [en] The brake chopper's bus band and its resistor, as the C caller declares them.
+ * @brief [zh] 制动斩波器的母线区间与电阻，按 C 调用方的声明形式。
+ * @note [en] Same rule as every other configuration struct in this header: `struct_size` is set by the caller to
+ *            `sizeof()` of the struct it knows, and a mismatch is refused rather than guessed at.
+ * @note [zh] 与本头里其他配置结构同一条规则： `struct_size` 由调用方填成它所知道的结构体大小，不匹配就被拒绝而不是猜
+ *            测。
+ * @since 0.1.0
+ * @exporter
+ */
+typedef struct foc_chopper_config {
+    /**
+     * @brief [en] sizeof(foc_chopper_config_t)
+     * @brief [zh] sizeof(foc_chopper_config_t)
+     */
+    uint32_t struct_size;
+    /**
+     * @brief [en] bus voltage the chopper switches on at, V
+     * @brief [zh] 斩波器在此母线电压开通，V
+     */
+    float v_on_v;
+    /**
+     * @brief [en] bus voltage it switches off at, V; must be below `v_on_v`
+     * @brief [zh] 在此母线电压关断，V；须低于 `v_on_v`
+     */
+    float v_off_v;
+    /**
+     * @brief [en] the dissipating resistor, ohm
+     * @brief [zh] 耗能电阻，欧姆
+     */
+    float resistance_ohm;
+    /**
+     * @brief [en] duty ceiling, 0..1
+     * @brief [zh] 占空比上限，0..1
+     */
+    float duty_max;
+    /**
+     * @brief [en] shortest time it may stay on, s
+     * @brief [zh] 最短保持开通时间，s
+     */
+    float min_on_s;
+    /**
+     * @brief [en] shortest time it may stay off, s
+     * @brief [zh] 最短保持关断时间，s
+     */
+    float min_off_s;
+} foc_chopper_config_t;
+
+
+/**
+ * @brief [en] What the whole drive tick needs to know that is not a measurement.
+ * @brief [zh] 整个驱动器的一拍需要知道的、而不是测量出来的东西。
+ * @note [en] There is no "NULL means library defaults" here, unlike `foc_protector_create()`: a protection sized for
+ *            nobody is exactly what this type exists to prevent, and the numbers describe an installation rather than a
+ *            machine. Every field is required.
+ * @note [zh] 这里没有 `foc_protector_create()` 那种"NULL 表示用库默认值"：一个替谁都没量过身的保护，正是本类型存在的意
+ *            义所在的反面，而这些数字描述的是安装而不是机器。每个字段都是必须的。
+ * @since 0.1.0
+ * @exporter
+ */
+typedef struct foc_supervisor_config {
+    /**
+     * @brief [en] sizeof(foc_supervisor_config_t)
+     * @brief [zh] sizeof(foc_supervisor_config_t)
+     */
+    uint32_t struct_size;
+    /**
+     * @brief [en] the fault thresholds, including the derating band; its own `struct_size` must be set
+     * @brief [zh] 故障阈值（含降额区间）；它自己的 `struct_size` 也要填好
+     */
+    foc_protection_config_t protection;
+    /**
+     * @brief [en] the chopper's band and resistor
+     * @brief [zh] 斩波器的区间与电阻
+     */
+    foc_chopper_config_t chopper;
+    /**
+     * @brief [en] electrical revolutions per mechanical revolution
+     * @brief [zh] 每机械圈对应的电周期数
+     */
+    float pole_pairs;
+} foc_supervisor_config_t;
+
+
+/**
+ * @brief [en] What the drive tick decided, in one read.
+ * @brief [zh] 驱动器那一拍的决定，一次读完。
+ * @note [en] `active_mask` and `latched_mask` use bit `1 << code` over `foc_fault_t`, and are widened to 32 bits here
+ *            because a C ABI this old cannot rely on a 16-bit type's promotions.
+ * @note [zh] `active_mask` 与 `latched_mask` 以 `1 << code` 对应 `foc_fault_t`，这里加宽到 32 位：这个年代的 C ABI 不能
+ *            依赖 16 位类型的整型提升行为。
+ * @since 0.1.0
+ * @exporter
+ */
+typedef struct foc_supervisor_status {
+    /**
+     * @brief [en] sizeof(foc_supervisor_status_t)
+     * @brief [zh] sizeof(foc_supervisor_status_t)
+     */
+    uint32_t struct_size;
+    /**
+     * @brief [en] the highest-ranked active fault (a `foc_fault_t` value), 0 while everything is in order
+     * @brief [zh] 排名最高的活动故障（ `foc_fault_t` 取值），一切正常时为 0
+     */
+    int32_t fault;
+    /**
+     * @brief [en] bit `1 << code` per active fault
+     * @brief [zh] 每个活动故障一位 `1 << code`
+     */
+    uint32_t active_mask;
+    /**
+     * @brief [en] the same, for the faults that will not clear on their own
+     * @brief [zh] 同上，但只含不会自行清除的故障
+     */
+    uint32_t latched_mask;
+    /**
+     * @brief [en] current limit after derating, A; 0 while tripped
+     * @brief [zh] 降额后的电流限幅，A；跳闸时为 0
+     */
+    float i_limit_a;
+    /**
+     * @brief [en] the winding temperature that was used, NaN when no channel answered
+     * @brief [zh] 实际用到的绕组温度；没有通道回答时为 NaN
+     */
+    float temperature_c;
+    /**
+     * @brief [en] the bus voltage this tick was decided on, V
+     * @brief [zh] 本拍据以判定的母线电压，V
+     */
+    float v_bus_v;
+    /**
+     * @brief [en] the chopper's duty this tick, 0 when it is not dissipating
+     * @brief [zh] 本拍斩波器占空比，不耗能时为 0
+     */
+    float chopper_duty;
+    /**
+     * @brief [en] 1 when the control loop was allowed to run this tick
+     * @brief [zh] 本拍允许控制环运行时为 1
+     */
+    int32_t output_allowed;
+    /**
+     * @brief [en] 1 when the shaft is being held by the mechanical brake; always 0 on a drive that has none
+     * @brief [zh] 轴被机械抱闸抱住时为 1；没有抱闸的驱动恒为 0
+     */
+    int32_t brake_engaged;
+    /**
+     * @brief [en] ticks stepped since the supervisor was created
+     * @brief [zh] 自监督器创建以来走过的拍数
+     */
+    uint32_t tick;
+} foc_supervisor_status_t;
+
+
+/**
+ * @brief [en] An opaque drive-tick handle bound to one motor.
+ * @brief [zh] 绑定在一台电机上的、不透明的驱动器拍句柄。
+ * @note [en] A distinct handle kind from `foc_motor_t` and `foc_protector_t`: passing one where another belongs
+ *            resolves to nothing and answers `FOC_ERR_STATE` instead of reading a `Protector` out of a `Motor`.
+ * @note [zh] 与 `foc_motor_t`、 `foc_protector_t` 是不同的句柄种类：把它当成别的东西传进来会解析不到任何槽位并以
+ *            `FOC_ERR_STATE` 作答，而不是从一个 `Motor` 的字节里读出一个 `Protector`。
+ * @since 0.1.0
+ * @exporter
+ */
+typedef struct foc_supervisor_s *foc_supervisor_t;

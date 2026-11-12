@@ -25,6 +25,7 @@
 #include <foc/core/svpwm.hpp>
 #include <foc/driver/callback_hal.hpp>
 #include <foc/driver/stub_hal.hpp>
+#include <foc/motor/drive_supervisor.hpp>
 #include <foc/motor/motor.hpp>
 #include <foc/motor/motor_config.hpp>
 #include <foc/motor/torque_map.hpp>
@@ -602,9 +603,24 @@ auto setup_ok(const Setup& setup) noexcept -> bool {
  * @since 0.1.0
  */
 template <typename MotorType, typename HalType> struct SlotT final {
-    alignas(MotorType) unsigned char storage[sizeof(MotorType)]{};
     MotorType* instance{nullptr};
+    /**
+     * @brief [en] The supervisor for this motor, built in place on first `foc_supervisor_create()`.
+     * @brief [zh] 这台电机的监督器，在第一次 `foc_supervisor_create()` 时就地构造。
+     * @note [en] It lives in the motor's slot rather than in a pool of its own because it binds to *this* motor and
+     *            *this* HAL by reference: a pool would let a handle outlive what it points at. It is also the reason
+     *            `destroy_motor()` has to drop it first.
+     * @note [zh] 它住在电机自己的槽位里，而不是独立的池里，因为它按引用绑定 **这一台** 电机与 **这一个** HAL：独立池会
+     *            让句柄活得比它指向的东西更久。这也是 `destroy_motor()` 必须先丢掉它的原因。
+     * @since 0.1.0
+     */
+    using SupervisorT = motor::DriveSupervisor<MotorType, HalType>;
+    SupervisorT* supervisor{nullptr};
+    alignas(SupervisorT) unsigned char supervisor_storage[sizeof(SupervisorT)]{};
+    alignas(MotorType) unsigned char storage[sizeof(MotorType)]{};
     HalType hal{};
+    std::uint32_t supervisor_generation{0U};
+    std::uint32_t generation{0U};
     Setup setup{};
     /**
      * @brief [en] The machine numbers this slot was last given (construction or `foc_motor_apply_params`).
@@ -616,7 +632,6 @@ template <typename MotorType, typename HalType> struct SlotT final {
      * @since 0.1.0
      */
     foc_motor_params_t params{};
-    std::uint32_t generation{0U};
     bool alive{false};
 };
 
@@ -740,6 +755,69 @@ auto resolve_host(foc_motor_t handle) noexcept -> HostSlot* {
 
 
 /**
+ * @brief [en] High word of every supervisor handle: "FOCU", a third kind.
+ * @brief [zh] 每个监督器句柄的高位字："FOCU"。第三种句柄，理由与保护器有自己那一种相同。
+ */
+constexpr std::uintptr_t kSupervisorMagic = 0x464F4355U;
+
+/**
+ * @brief [en] Resolve a supervisor handle to the motor slot it was minted on.
+ * @brief [zh] 把监督器句柄解析为它被签发的那个电机槽位。
+ * @note [en] Two conditions, not one: the motor slot must still be alive *and* must still hold a supervisor of this
+ *            generation. Destroying the motor therefore invalidates the supervisor handle without any bookkeeping at
+ *            the call site.
+ * @note [zh] 两个条件而不是一个：电机槽位仍然活着， **并且** 仍持有这一代的监督器。因此销毁电机会让监督器句柄失效，调用
+ *            方那边不需要任何记录。
+ * @since 0.1.0
+ */
+template <typename SlotType, std::size_t N>
+auto resolve_supervisor_in(foc_supervisor_t handle, SlotType (&pool)[N]) noexcept -> SlotType* {
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast, performance-no-int-to-ptr) -- a token, never dereferenced.
+    const auto raw = reinterpret_cast<std::uintptr_t>(handle);
+    if ((raw >> 32U) != kSupervisorMagic) {
+        return nullptr;
+    }
+    const auto slot_index = static_cast<std::uint32_t>(raw & 0xFFU);
+    const auto generation = static_cast<std::uint32_t>((raw >> kSlotBits) & 0xFFFFFFU);
+    if (slot_index >= N) {
+        return nullptr;
+    }
+    SlotType& slot = pool[slot_index];
+    if (!slot.alive || (slot.supervisor == nullptr) || (slot.supervisor_generation != generation)) {
+        return nullptr;
+    }
+    return &slot;
+}
+
+/**
+ * @brief [en] Mint a supervisor token: the motor's slot index plus the supervisor's own generation.
+ * @brief [zh] 签发监督器令牌：电机槽位索引，加上监督器自己的那一代。
+ */
+template <typename SlotType, std::size_t N>
+auto mint_supervisor(SlotType& slot, SlotType (&pool)[N]) noexcept -> foc_supervisor_t {
+    const auto index = static_cast<std::uint32_t>(&slot - &pool[0]);
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast, performance-no-int-to-ptr)
+    return reinterpret_cast<foc_supervisor_t>((kSupervisorMagic << 32U) |
+                                              (static_cast<std::uintptr_t>(slot.supervisor_generation) << kSlotBits) |
+                                              static_cast<std::uintptr_t>(index));
+}
+
+/**
+ * @brief [en] Run one behaviour against the slot a supervisor handle names.
+ * @brief [zh] 对着监督器句柄所指的槽位执行同一个行为。
+ */
+template <typename Fn> auto on_supervisor(foc_supervisor_t handle, Fn&& fn) -> foc_err_t {
+    if (Slot* slot = resolve_supervisor_in(handle, g_pool)) {
+        return to_c(fn(*slot));
+    }
+    if (HostSlot* slot = resolve_supervisor_in(handle, g_host_pool)) {
+        return to_c(fn(*slot));
+    }
+    return FOC_ERR_STATE;
+}
+
+
+/**
  * @brief [en] The motor living in a slot.
  * @brief [zh] 槽位中存放的电机。
  */
@@ -774,6 +852,16 @@ template <typename Fn> auto on_slot(foc_motor_t handle, Fn&& fn) -> foc_err_t {
  * @since 0.1.0
  */
 template <typename SlotType> void destroy_motor(SlotType& slot) noexcept {
+    // The supervisor holds references *into* this slot, so it goes first. A stale supervisor handle then resolves to
+    // nothing and answers `FOC_ERR_STATE` instead of touching a motor that no longer exists.
+    // 监督器按引用指向本槽位内部，所以它先走。之后过期的监督器句柄解析不到任何东西，以 `FOC_ERR_STATE` 作答，
+    // 而不是去碰一台已经不存在的电机。
+    if (slot.supervisor != nullptr) {
+        using SupervisorType = typename SlotType::SupervisorT;
+        slot.supervisor->~SupervisorType();
+        slot.supervisor = nullptr;
+        slot.supervisor_generation = (slot.supervisor_generation + 1U) & 0xFFFFFFU;
+    }
     if (slot.instance != nullptr) {
         using MotorType = std::remove_pointer_t<decltype(slot.instance)>;
         slot.instance->~MotorType();
@@ -1294,6 +1382,55 @@ auto protection_config(const foc_protection_config_t& in) noexcept -> core::Prot
     c.sync_error_ratio = in.sync_error_ratio;
     c.hysteresis_ratio = in.hysteresis_ratio;
     return c;
+}
+
+/**
+ * @brief [en] Copy the C chopper band into the core struct.
+ * @brief [zh] 把 C 的斩波区间拷进核心结构。
+ */
+auto chopper_config(const foc_chopper_config_t& in) noexcept -> core::BrakeChopperConfig {
+    core::BrakeChopperConfig c{};
+    c.v_on = in.v_on_v;
+    c.v_off = in.v_off_v;
+    c.r_ohm = in.resistance_ohm;
+    c.duty_max = in.duty_max;
+    c.min_on_s = in.min_on_s;
+    c.min_off_s = in.min_off_s;
+    return c;
+}
+
+
+/**
+ * @brief [en] Build the supervisor for a slot, or refuse without storing anything.
+ * @brief [zh] 为一个槽位构造监督器，或者什么都不存地拒绝。
+ * @note [en] The supervisor is destroyed again when `configure()` refuses: a half-built supervisor left alive in the
+ *            slot would answer `State` to every later `step()` and look like "the drive is supervised" to a caller
+ *            reading only the status.
+ * @note [zh] `configure()` 拒绝时会把监督器销毁：留在槽位里的半成品监督器会让之后每次 `step()` 都答 `State`，而在只看状
+ *            态的调用方眼里，这看起来像"驱动器已被监督"。
+ * @since 0.1.0
+ */
+template <typename SlotType, std::size_t N>
+auto supervisor_create_in(SlotType& slot, SlotType (&pool)[N], const foc_supervisor_config_t& config,
+                          foc_supervisor_t* out) noexcept -> foc_err_t {
+    using SupervisorType = typename SlotType::SupervisorT;
+    if (slot.supervisor != nullptr) {
+        return FOC_ERR_STATE; // one supervisor per motor
+    }
+    typename SupervisorType::Config cfg{};
+    cfg.protection = protection_config(config.protection);
+    cfg.chopper = chopper_config(config.chopper);
+    cfg.pole_pairs = config.pole_pairs;
+
+    auto* supervisor = new (slot.supervisor_storage) SupervisorType(*slot.instance, slot.hal);
+    if (supervisor->configure(cfg) != ErrorCode::Ok) {
+        supervisor->~SupervisorType();
+        return FOC_ERR_PARAM;
+    }
+    slot.supervisor = supervisor;
+    slot.supervisor_generation = (slot.supervisor_generation + 1U) & 0xFFFFFFU;
+    *out = mint_supervisor(slot, pool);
+    return FOC_OK;
 }
 
 /**
@@ -2662,4 +2799,69 @@ std::int32_t foc_bridge_frame_decode(const std::uint8_t* in, std::uint32_t lengt
     out->length = frame.length;
     out->payload = frame.payload;
     return FOC_FRAME_OK;
+}
+
+
+foc_err_t foc_bridge_supervisor_create(foc_motor_t motor, const foc_supervisor_config_t* config,
+                                       foc_supervisor_t* out) {
+    if ((config == nullptr) || (out == nullptr) || !foc::api::size_ok(*config) ||
+        !foc::api::size_ok(config->protection) || !foc::api::size_ok(config->chopper)) {
+        return FOC_ERR_PARAM;
+    }
+    if (foc::api::Slot* slot = foc::api::resolve(motor)) {
+        return foc::api::supervisor_create_in(*slot, foc::api::g_pool, *config, out);
+    }
+    if (foc::api::HostSlot* slot = foc::api::resolve_host(motor)) {
+        return foc::api::supervisor_create_in(*slot, foc::api::g_host_pool, *config, out);
+    }
+    return FOC_ERR_PARAM;
+}
+
+foc_err_t foc_bridge_supervisor_step(foc_supervisor_t supervisor, float dt_s) {
+    return foc::api::on_supervisor(supervisor, [dt_s](auto& slot) { return slot.supervisor->step(dt_s); });
+}
+
+foc_err_t foc_bridge_supervisor_status(foc_supervisor_t supervisor, foc_supervisor_status_t* out) {
+    if ((out == nullptr) || !foc::api::size_ok(*out)) {
+        return FOC_ERR_PARAM;
+    }
+    return foc::api::on_supervisor(supervisor, [out](auto& slot) {
+        const auto& status = slot.supervisor->status();
+        out->fault = static_cast<std::int32_t>(status.fault);
+        out->active_mask = static_cast<std::uint32_t>(status.active_mask);
+        out->latched_mask = static_cast<std::uint32_t>(status.latched_mask);
+        out->i_limit_a = status.i_limit_a;
+        out->temperature_c = status.temperature_c;
+        out->v_bus_v = status.v_bus_v;
+        out->chopper_duty = status.chopper_duty;
+        out->output_allowed = status.output_allowed ? 1 : 0;
+        out->brake_engaged = status.brake_engaged ? 1 : 0;
+        out->tick = status.tick;
+        return foc::ErrorCode::Ok;
+    });
+}
+
+foc_err_t foc_bridge_supervisor_enable(foc_supervisor_t supervisor) {
+    return foc::api::on_supervisor(supervisor, [](auto& slot) { return slot.supervisor->enable(); });
+}
+
+foc_err_t foc_bridge_supervisor_disable(foc_supervisor_t supervisor) {
+    return foc::api::on_supervisor(supervisor, [](auto& slot) { return slot.supervisor->disable(); });
+}
+
+foc_err_t foc_bridge_supervisor_clear(foc_supervisor_t supervisor) {
+    return foc::api::on_supervisor(supervisor, [](auto& slot) { return slot.supervisor->clear(); });
+}
+
+foc_err_t foc_bridge_supervisor_destroy(foc_supervisor_t supervisor) {
+    if (supervisor == nullptr) {
+        return FOC_OK;
+    }
+    return foc::api::on_supervisor(supervisor, [](auto& slot) {
+        using SupervisorType = typename std::remove_reference_t<decltype(slot)>::SupervisorT;
+        slot.supervisor->~SupervisorType();
+        slot.supervisor = nullptr;
+        slot.supervisor_generation = (slot.supervisor_generation + 1U) & 0xFFFFFFU;
+        return foc::ErrorCode::Ok;
+    });
 }

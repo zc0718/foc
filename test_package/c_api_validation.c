@@ -639,6 +639,123 @@ int main(void) {
         }
     }
 
+    /* The drive tick's order, from C: one call decides, and the caller is not asked to act on a verdict.
+     * Two motors, because the two answers worth proving are opposite: a bus inside its band keeps the loop running,
+     * and a bus outside it stops the loop on the tick that saw it.
+     * 驱动器拍的顺序，从 C 出发：一次调用就做出决定，而调用方不被要求去处置判决。两台电机，因为值得证明的两个回答相反：
+     * 母线在区间内时环继续跑，母线在区间外时在看见它的那一拍就停。
+     */
+    {
+        foc_supervisor_config_t config;
+        (void)memset(&config, 0, sizeof(config));
+        config.struct_size = (uint32_t)sizeof(config);
+        config.protection.struct_size = (uint32_t)sizeof(config.protection);
+        config.protection.i_hard_a = 4.0F;
+        config.protection.i_max_a = 3.0F;
+        config.protection.i2t_a2s = 1.0F;
+        config.protection.i2t_cooling_s = 10.0F;
+        config.protection.v_max_v = 30.0F;
+        config.protection.v_min_v = 18.0F;
+        config.protection.t_trip_c = 110.0F;
+        config.protection.t_derate_start_c = 60.0F;
+        config.protection.t_derate_end_c = 80.0F;
+        config.protection.stall_speed_rad_s = 1.0F;
+        config.protection.stall_current_a = 2.0F;
+        config.protection.stall_time_s = 1.0F;
+        config.protection.sync_error_ratio = 0.5F;
+        config.protection.hysteresis_ratio = 0.05F;
+        config.chopper.struct_size = (uint32_t)sizeof(config.chopper);
+        config.chopper.v_on_v = 28.0F;
+        config.chopper.v_off_v = 26.0F;
+        config.chopper.resistance_ohm = 2.2F;
+        config.chopper.duty_max = 0.95F;
+        config.chopper.min_on_s = 1e-4F;
+        config.chopper.min_off_s = 1e-4F;
+        config.pole_pairs = 7.0F;
+
+        /* A band that cannot be a band is refused, and no handle is minted. */
+        {
+            foc_supervisor_config_t bad = config;
+            foc_supervisor_t none = NULL;
+            bad.protection.v_min_v = 40.0F; /* above its own v_max_v */
+            CHECK(foc_supervisor_create(motor, &bad, &none) == FOC_ERR_PARAM);
+            CHECK(none == NULL);
+        }
+
+        /* Inside the band: the arm appears in `resolved.v_bus_v` (24 V by default) and the stub DC link reports it,
+         * so the band is opened down to 0 V to keep the loop alive whatever that setup says.
+         * 区间内：母线电压来自 `resolved.v_bus_v`（默认 24 V），由桩直流母线报出来；所以把区间下限开到 0 V，
+         * 不管那份 setup 说什么，环都活在里面。 */
+        {
+            foc_supervisor_config_t inside = config;
+            foc_motor_t second_motor = NULL;
+            foc_supervisor_t supervisor = NULL;
+            foc_supervisor_status_t status;
+
+            inside.protection.v_min_v = 0.0F;
+            CHECK(foc_motor_create(&params, &second_motor) == FOC_OK);
+            CHECK(foc_supervisor_create(second_motor, &inside, &supervisor) == FOC_OK);
+            CHECK(supervisor != NULL);
+            {
+                foc_supervisor_t another = NULL;
+                CHECK(foc_supervisor_create(second_motor, &inside, &another) == FOC_ERR_STATE);
+                CHECK(another == NULL);
+            }
+            CHECK(foc_supervisor_enable(supervisor) == FOC_OK);
+            for (int i = 0; i < 10; ++i) {
+                CHECK(foc_supervisor_step(supervisor, 1e-4F) == FOC_OK);
+            }
+            (void)memset(&status, 0, sizeof(status));
+            status.struct_size = (uint32_t)sizeof(status);
+            CHECK(foc_supervisor_status(supervisor, &status) == FOC_OK);
+            CHECK(status.tick == 10U);
+            CHECK(status.fault == FOC_FAULT_NONE);
+            CHECK(status.output_allowed == 1);
+            CHECK(foc_supervisor_disable(supervisor) == FOC_OK);
+            CHECK(foc_supervisor_destroy(supervisor) == FOC_OK);
+            /* The handle is dead afterwards: stale is a state error, not undefined behaviour. */
+            CHECK(foc_supervisor_step(supervisor, 1e-4F) == FOC_ERR_STATE);
+            CHECK(foc_supervisor_destroy(supervisor) == FOC_ERR_STATE);
+            CHECK(foc_motor_destroy(second_motor) == FOC_OK);
+        }
+
+        /* Outside the band: the same 24 V bus against a 30 V floor, so the first tick stops the loop and says why.
+         * The band is moved rather than the bus, because the bus on this bench is what the motor's setup resolved and a
+         * fixture that lied about it would be testing its own arithmetic.
+         * 区间外：同一条 24 V 母线对上 30 V 下限，于是第一拍就停掉环并说明原因。动的是区间而不是母线：
+         * 这台架上的母线就是电机 setup 解出来的那个值，一个去改口它的夹具只是在测自己的算术。 */
+        {
+            foc_supervisor_config_t outside = config;
+            foc_motor_t third_motor = NULL;
+            foc_supervisor_t supervisor = NULL;
+            foc_supervisor_status_t status;
+            foc_motor_status_t motor_status;
+
+            outside.protection.v_max_v = 40.0F;
+            outside.protection.v_min_v = 30.0F;
+            CHECK(foc_motor_create(&params, &third_motor) == FOC_OK);
+            CHECK(foc_supervisor_create(third_motor, &outside, &supervisor) == FOC_OK);
+            CHECK(foc_supervisor_enable(supervisor) == FOC_OK);
+            CHECK(foc_supervisor_step(supervisor, 1e-4F) == FOC_ERR_FAULT);
+
+            (void)memset(&status, 0, sizeof(status));
+            status.struct_size = (uint32_t)sizeof(status);
+            CHECK(foc_supervisor_status(supervisor, &status) == FOC_OK);
+            CHECK(status.tick == 1U);
+            CHECK(status.fault == FOC_FAULT_UNDER_VOLTAGE);
+            CHECK(status.output_allowed == 0);
+            /* The motor was stopped by the supervisor, not by the caller noticing. */
+            (void)memset(&motor_status, 0, sizeof(motor_status));
+            motor_status.struct_size = (uint32_t)sizeof(motor_status);
+            CHECK(foc_motor_get_status(third_motor, &motor_status) == FOC_OK);
+            CHECK(motor_status.mode_state == FOC_MOTOR_FAULT);
+
+            CHECK(foc_supervisor_clear(supervisor) == FOC_OK);
+            CHECK(foc_supervisor_destroy(supervisor) == FOC_OK);
+            CHECK(foc_motor_destroy(third_motor) == FOC_OK);
+        }
+    }
+
     if (failures != 0) {
         (void)fprintf(stderr, "C11 consumer: %d failure(s)\n", failures);
         return 1;
