@@ -33,6 +33,13 @@ constexpr auto bit(CommissioningStage stage) -> std::uint8_t {
     return static_cast<std::uint8_t>(1U << static_cast<unsigned>(stage));
 }
 
+// The count has to equal the number of enumerators, because the plan's array is sized from it: a fifth stage gets a
+// fifth enumerator *and* a bigger count, and a count that drifted from the enumeration would make the array and the
+// range check disagree about what a legal stage is.
+// 这个计数必须等于枚举项的个数，因为计划的数组就是按它开的：多一段就多一个枚举项 **并且** 计数加一；一个与枚举脱
+// 节的计数，会让数组与范围检查对"哪一段合法"各说各话。
+static_assert(foc::core::kCommissioningStageCount == 4U, "the enumeration has four stages");
+
 } // namespace
 
 
@@ -175,4 +182,78 @@ TEST(CommissioningFlow, APlanThatCannotBeAPlanIsRefusedRatherThanRepaired) {
         EXPECT_EQ(CommissioningState::Idle, flow.state());
         EXPECT_EQ(0U, flow.completed_mask());
     }
+}
+
+
+/**
+ * @brief [en] A second stage cannot start while one is already running.
+ *
+ * @brief [zh] 已经有一段在跑的时候，第二段开不了。
+ *
+ *   Without this the session would have two stages in flight and one `in_progress_` slot, so the second report would be
+ *   refused while the first stage's operator is still measuring -- and the log would say the session is running with no
+ *   way to say which stage it means.
+ *
+ * @note [en] This case exists because the mutation gate found it missing: rewriting the guard's `||` as `&&` left the
+ *            whole suite green, which is the definition of an assertion that was not being made.
+ * @note [zh] 这条用例是被变异门禁找出来的：把那个守卫里的 `||` 改写成 `&&` 之后整套用例仍是绿的，而这正是"那条断言根本
+ *            没被做"的定义。
+ */
+TEST(CommissioningFlow, ASecondStageCannotStartWhileOneIsAlreadyRunning) {
+    CommissioningFlow flow(plan_of({CommissioningStage::Resistance, CommissioningStage::Flux}));
+    ASSERT_EQ(foc::ErrorCode::Ok, flow.begin(CommissioningStage::Resistance));
+
+    // Not the next stage, and not a second start of the one in flight: both are `State`, and neither moves anything.
+    EXPECT_EQ(foc::ErrorCode::State, flow.begin(CommissioningStage::Flux));
+    EXPECT_EQ(foc::ErrorCode::State, flow.begin(CommissioningStage::Resistance));
+    EXPECT_EQ(CommissioningState::Running, flow.state());
+    EXPECT_FALSE(flow.next().has_value());
+    EXPECT_EQ(0U, flow.completed_mask());
+
+    // And the stage in flight still owns the session.
+    ASSERT_EQ(foc::ErrorCode::Ok, flow.complete(CommissioningStage::Resistance));
+    EXPECT_EQ(CommissioningState::Idle, flow.state());
+    ASSERT_TRUE(flow.next().has_value());
+    EXPECT_EQ(CommissioningStage::Flux, flow.next().value());
+}
+
+
+/**
+ * @brief [en] A plan that uses all four stages is legal, and the four stages are four *different* stages.
+ *
+ * @brief [zh] 用上全部四段的计划是合法的，而且这四段确实是四个 **不同** 的段。
+ *
+ *   Two separate ways of being wrong, both of them silent until now:
+ *
+ *   1. A plan of the full length is the shape that sits on the boundary of the range check, so an off-by-one there
+ *   turns the only complete plan a caller can write into a refusal. No other case reaches four stages.
+ *
+ *   2. If two enumerators ever shared a value their mask bits would collide, and `plan_ok()` would refuse a plan naming
+ *   both -- which from the outside looks like "the plan is wrong" rather than "the enumeration is". Running all four
+ *   and reading the mask back tells the two apart: the mask has to reach `0b1111`, not stop at three bits.
+ *
+ * @note [en] Criterion, written before the run: `plan_ok()` is true, every stage starts and completes in order, the
+ *            session ends `Done`, and the mask is exactly those four bits.
+ * @note [zh] 判据（写在本次测量之前）： `plan_ok()` 为真、每段按顺序开始并完成、会话以 `Done` 结束、掩码恰好是那四位。
+ */
+TEST(CommissioningFlow, AFullPlanOfAllFourStagesIsLegalAndTheStagesAreDistinct) {
+    CommissioningFlow flow(plan_of({CommissioningStage::Resistance, CommissioningStage::Flux,
+                                    CommissioningStage::CurrentSense, CommissioningStage::Inductance}));
+    ASSERT_TRUE(flow.plan_ok());
+
+    const CommissioningStage all[] = {CommissioningStage::Resistance, CommissioningStage::Flux,
+                                      CommissioningStage::CurrentSense, CommissioningStage::Inductance};
+    std::uint8_t expected = 0U;
+    for (const CommissioningStage stage : all) {
+        ASSERT_TRUE(flow.next().has_value());
+        EXPECT_EQ(stage, flow.next().value());
+        ASSERT_EQ(foc::ErrorCode::Ok, flow.begin(stage));
+        ASSERT_EQ(foc::ErrorCode::Ok, flow.complete(stage));
+        expected = static_cast<std::uint8_t>(expected | bit(stage));
+        // Four stages, four bits: a shared enumerator value shows up here as a mask that never reaches 0x0F.
+        EXPECT_EQ(expected, static_cast<std::uint8_t>(expected & 0x0FU));
+    }
+
+    EXPECT_EQ(CommissioningState::Done, flow.state());
+    EXPECT_EQ(static_cast<std::uint8_t>(0x0FU), flow.completed_mask());
 }

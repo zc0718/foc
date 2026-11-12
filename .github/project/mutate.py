@@ -107,6 +107,14 @@ MODULES = {
         "extra": [],
         "classify": True,
     },
+    "commissioning_flow": {
+        # Header-only, and its test needs nothing but gtest: the flow owns no estimators and touches no HAL, which is
+        # also why it is the cheapest module in this table to mutate.
+        # 纯头，且它的用例除 gtest 之外什么都不需要：流程不拥有估计器、也不碰 HAL，这也正是本表里变异代价最低的模块。
+        "mutate": ["include/foc/core/commissioning_flow.hpp"],
+        "tests": ["test_package/test/unit/test_commissioning_flow.cpp"],
+        "extra": [],
+    },
 }
 
 BINARY_OPS = {"+": "-", "-": "+", "*": "/", "/": "*", "<": "<=", ">": ">=", "<=": "<", ">=": ">",

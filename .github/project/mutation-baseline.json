@@ -593,6 +593,64 @@
       ],
       "notes": "13 of 13 survivor(s) classified (equivalent: 10, equivalent_by_overspecification: 2, unreachable: 1). Re-keyed 2026-11-04, second time: F39 appended `FaultCode::DriveFault` and its latch line, which inserted 18 lines above this whole region, so the record's `file:line:col` identities stopped matching. The shift was verified rather than assumed -- for every entry, HEAD's line L and the working file's line L+18 both carry the recorded token at the recorded column -- and then the positions were moved with the classifications untouched. Two entries were NOT re-keyed because they are no longer survivors: `reset()`'s `<`->`<=` and `8`->`9` are now killed, and the reason is the same change that caused the shift. The loop `for (code = 1; code < 8; ++code)` used to be unable to tell `<` from `<=` because code 8 was not an enumerator; appending `DriveFault` made code 8 a real code and `test_fault_input`'s latch-outlives-the-pin / clear-then-idle case now sees the difference. F39 therefore bought coverage here: 52/67 = 77.6 % -> 54/67 = 80.6 %. Earlier re-key (same day): protection.hpp had grown 7-31 lines after the 2026-10-31 record and 14 of 15 classifications no longer matched anything; every entry was re-pointed index for index against a fresh --list with the mutation text asserted equal at every index. | 2026-11-05: every line number above was shifted by 20 because `FaultCode` appended `Watchdog` and `ClockLost` right after `DriveFault`, moving every survivor below the enum down by exactly 20 lines. The mutants are the same 13 (identical operators, columns and text), so no classification changed -- only the addresses did. Verified against the gate's own report: the 13 keys it names are these 13 plus 20.",
       "recorded": "2026-11-09"
+    },
+    "commissioning_flow": {
+      "mutate": [
+        "include/foc/core/commissioning_flow.hpp"
+      ],
+      "tests": [
+        "test_package/test/unit/test_commissioning_flow.cpp"
+      ],
+      "limit_per_file": 200,
+      "killed": 33,
+      "survived": 2,
+      "invalid": 1,
+      "timeout": 0,
+      "survivors": [
+        {
+          "file": "include/foc/core/commissioning_flow.hpp",
+          "line": 192,
+          "col": 66,
+          "original": ">=",
+          "replacement": ">",
+          "operator": "swap"
+        },
+        {
+          "file": "include/foc/core/commissioning_flow.hpp",
+          "line": 258,
+          "col": 80,
+          "original": ">=",
+          "replacement": ">",
+          "operator": "swap"
+        }
+      ],
+      "invalid_sites": 1,
+      "truncated": [],
+      "judged": 35,
+      "score": 94.3,
+      "seconds": 79.2,
+      "recorded": "2026-11-12",
+      "equivalents": [
+        {
+          "file": "include/foc/core/commissioning_flow.hpp",
+          "line": 192,
+          "col": 66,
+          "original": ">=",
+          "replacement": ">",
+          "kind": "equivalent",
+          "why": "Unreachable while the state invariant holds: `next_index_` only ever equals `count` after the last `complete()`, and that same call sets the state to `Done`, which the first operand already refuses. The `>=` is kept as a guard rather than as a decision: if the invariant ever broke, `>` would index `plan.order[count]` -- one past the stages the plan uses -- instead of refusing."
+        },
+        {
+          "file": "include/foc/core/commissioning_flow.hpp",
+          "line": 258,
+          "col": 80,
+          "original": ">=",
+          "replacement": ">",
+          "kind": "equivalent",
+          "why": "Same invariant, same reason, in `next()`: `next_index_ == count` implies `Done`, and `Done` already answers `nullopt` through the state test."
+        }
+      ],
+      "notes": "94.3 % after the first pass found two assertions that were not being made (a stage starting while one runs, and a plan using all four stages). The two survivors are the same defensive `>=` in two places."
     }
   },
   "_comment": [
