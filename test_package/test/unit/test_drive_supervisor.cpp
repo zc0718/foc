@@ -53,6 +53,7 @@ auto current_pi_config() -> foc::core::Pi::Config {
 
 using MotorType = foc::motor::Motor<foc::core::BackEmfObserver, foc::core::Svpwm, foc::core::Pi, Hal>;
 using Supervisor = foc::motor::DriveSupervisor<MotorType, Hal>;
+using foc::motor::SupervisorStatus;
 
 auto policies() -> MotorType::Policies {
     return MotorType::Policies{
@@ -353,6 +354,105 @@ TEST(DriveSupervisor, ClearingTheFaultKeepsTheThermalBudget) {
     EXPECT_FLOAT_EQ(spent, drive.supervisor.protector().thermal_budget())
         << "the budget is heat, and heat is not cleared by an operator action";
     EXPECT_EQ(foc::core::MotorState::Idle, drive.motor.state());
+}
+
+
+// 10. The record: what the drive was doing in the ticks before it tripped. A support call that opens with "it stopped"
+//     needs the bus voltage and the limit that led to it, and by the time somebody asks, those numbers are gone.
+// 10. 档案：跳闸之前那几拍驱动器在做什么。以"它停了"开场的技术支持需要当时的母线电压与限幅，而等到有人来问，
+//     那些数字已经不在了。
+TEST(DriveSupervisorRecord, TheRecordHoldsTheLastVerdictsInOrderAndDropsTheOldest) {
+    Drive drive;
+    drive.bring_up();
+    constexpr std::size_t kCapacity = Supervisor::kSnapshotCapacity;
+    for (int i = 0; i < static_cast<int>(kCapacity) + 4; ++i) {
+        ASSERT_EQ(ErrorCode::Ok, drive.supervisor.step(kDt));
+    }
+    ASSERT_EQ(kCapacity, drive.supervisor.snapshot_size());
+
+    SupervisorStatus buffer[kCapacity] = {};
+    ASSERT_EQ(kCapacity, drive.supervisor.snapshot(buffer, kCapacity));
+    // Twenty ticks went in, sixteen came out, and the ones that came out are the last sixteen -- in order.
+    // 进了二十拍、出来十六拍，而出来的是最后十六拍——并且有序。
+    EXPECT_EQ(5U, buffer[0].tick) << "the oldest entry is the first one that still fits";
+    EXPECT_EQ(20U, buffer[kCapacity - 1U].tick) << "and the newest is the tick that just ran";
+    for (std::size_t i = 1U; i < kCapacity; ++i) {
+        EXPECT_EQ(buffer[i - 1U].tick + 1U, buffer[i].tick) << "no gaps inside the record";
+    }
+}
+
+// 11. A buffer shorter than the record gets the newest entries: the ticks nearest the fault are the ones worth having.
+TEST(DriveSupervisorRecord, ASHortBufferGetsTheNewestEntriesRatherThanTheOldest) {
+    Drive drive;
+    drive.bring_up();
+    for (int i = 0; i < 10; ++i) {
+        ASSERT_EQ(ErrorCode::Ok, drive.supervisor.step(kDt));
+    }
+    SupervisorStatus buffer[3] = {};
+    ASSERT_EQ(3U, drive.supervisor.snapshot(buffer, 3U));
+    EXPECT_EQ(8U, buffer[0].tick);
+    EXPECT_EQ(10U, buffer[2].tick);
+    EXPECT_EQ(0U, drive.supervisor.snapshot(buffer, 0U)) << "zero capacity writes nothing";
+    EXPECT_EQ(0U, drive.supervisor.snapshot(nullptr, 3U)) << "and neither does a null buffer";
+}
+
+// 12. The trip is in the record, and so is the tick before it -- which is what makes the record worth keeping.
+TEST(DriveSupervisorRecord, TheTripAndTheTickBeforeItAreBothInTheRecord) {
+    Drive drive;
+    ProtectionConfig p = wide_protection();
+    p.v_max_v = 26.0F;
+    p.v_min_v = 10.0F;
+    drive.bring_up(config(p));
+    drive.load_current(0.2F);
+    ASSERT_EQ(ErrorCode::Ok, drive.supervisor.step(kDt));
+    ASSERT_EQ(ErrorCode::Ok, drive.supervisor.step(kDt));
+
+    drive.hal.dc_link.set_voltage_v(30.0F);
+    ASSERT_EQ(ErrorCode::Fault, drive.supervisor.step(kDt));
+
+    EXPECT_EQ(3U, drive.supervisor.fault_tick()) << "the tick that went wrong, by the same numbering the status uses";
+
+    SupervisorStatus buffer[Supervisor::kSnapshotCapacity] = {};
+    const std::size_t held = drive.supervisor.snapshot(buffer, Supervisor::kSnapshotCapacity);
+    ASSERT_EQ(3U, held);
+    EXPECT_EQ(24.0F, buffer[0].v_bus_v) << "the tick before the trip is still there, and it was healthy";
+    EXPECT_EQ(FaultCode::None, buffer[0].fault);
+    EXPECT_EQ(30.0F, buffer[2].v_bus_v) << "and the trip carries the voltage it happened at";
+    EXPECT_EQ(FaultCode::OverVoltage, buffer[2].fault);
+    EXPECT_FALSE(buffer[2].output_allowed);
+}
+
+// 13. Clearing is a request to run again, not a request to forget: the record and the fault tick survive it.
+TEST(DriveSupervisorRecord, ClearingTheFaultDoesNotEraseTheRecord) {
+    Drive drive;
+    ProtectionConfig p = wide_protection();
+    p.v_max_v = 26.0F;
+    p.v_min_v = 10.0F;
+    drive.bring_up(config(p));
+    drive.load_current(0.2F);
+    ASSERT_EQ(ErrorCode::Ok, drive.supervisor.step(kDt));
+    drive.hal.dc_link.set_voltage_v(30.0F);
+    ASSERT_EQ(ErrorCode::Fault, drive.supervisor.step(kDt));
+    const std::size_t before = drive.supervisor.snapshot_size();
+    ASSERT_EQ(2U, before);
+    ASSERT_EQ(2U, drive.supervisor.fault_tick());
+
+    ASSERT_EQ(ErrorCode::Ok, drive.supervisor.clear());
+    EXPECT_EQ(2U, drive.supervisor.snapshot_size()) << "an operator action does not rewrite what was measured";
+    EXPECT_EQ(2U, drive.supervisor.fault_tick());
+
+    SupervisorStatus buffer[Supervisor::kSnapshotCapacity] = {};
+    ASSERT_EQ(2U, drive.supervisor.snapshot(buffer, Supervisor::kSnapshotCapacity));
+    EXPECT_EQ(FaultCode::OverVoltage, buffer[1].fault) << "the recorded trip still says what it was";
+}
+
+// 14. A refused step is not a tick and leaves no trace in the record.
+TEST(DriveSupervisorRecord, ARefusedStepWritesNothingToTheRecord) {
+    Drive drive;
+    ASSERT_EQ(ErrorCode::Ok, drive.motor.init());
+    EXPECT_EQ(ErrorCode::State, drive.supervisor.step(kDt)) << "unconfigured";
+    EXPECT_EQ(0U, drive.supervisor.snapshot_size());
+    EXPECT_EQ(0U, drive.supervisor.fault_tick());
 }
 
 } // namespace

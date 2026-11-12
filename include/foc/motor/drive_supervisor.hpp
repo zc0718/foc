@@ -273,6 +273,7 @@ class DriveSupervisor final {
         status_.latched_mask = out.latched_mask;
         status_.i_limit_a = out.i_limit_a;
         status_.output_allowed = out.output_allowed;
+        record();
 
         if (!out.output_allowed) {
             // The brake is asked to hold *before* the output goes away, from the same rule `disable()` follows: a
@@ -397,14 +398,81 @@ class DriveSupervisor final {
     }
 
     /**
+     * @brief [en] How many verdicts the record keeps.
+     * @brief [zh] 档案保留多少条结论。
+     * @note [en] Sixteen at a 50 us period is 0.8 ms of history -- long enough to hold the bus sag that preceded an
+     *            over-current on the same control frame, and short enough to stay in the core's own memory.
+     * @note [zh] 50 us 周期下十六条是 0.8 ms 的历史——足够装下同一控制帧里过流之前的母线跌落，又短到能留在内核自己的内存
+     *            里。
+     * @since 0.1.0
+     */
+    static constexpr std::size_t kSnapshotCapacity = 16U;
+
+    /**
+     * @brief [en] Copy the recorded verdicts out, oldest first.
+     * @brief [zh] 把记录下来的结论拷出来，最旧的在前。
+     * @param out [en] non-NULL destination for up to `capacity` verdicts.
+     * @param out [zh] 非 NULL 的目的缓冲区，最多 `capacity` 条。
+     * @param capacity [en] how many entries `out` can take.
+     * @param capacity [zh] `out` 能装多少条。
+     * @return [en] how many were written; when the buffer is shorter than the record, the **newest** entries are the
+     *              ones handed back, in chronological order among themselves.
+     * @return [zh] 写入了多少条；缓冲区比档案短时，交回的是 **最新的** 那几条，它们之间仍按时间排序。
+     * @note [en] A copy rather than a span over the ring, because a ring is not contiguous: an accessor that returned
+     *            one would either have to unwrap on every read or hand back two disjoint ranges, and both invite the
+     *            caller to read it backwards.
+     * @note [zh] 拷贝而不是给环一个 span，因为环不连续：那样一个访问器要么每次读都展开，要么交回两段互不相连的区间，而
+     *            两者都会招来"从后往前读"的调用方。
+     * @since 0.1.0
+     */
+    auto snapshot(SupervisorStatus* out, std::size_t capacity) const noexcept -> std::size_t {
+        if ((out == nullptr) || (capacity == 0U)) {
+            return 0U;
+        }
+        const std::size_t take = (held_ < capacity) ? held_ : capacity;
+        const std::size_t skip = held_ - take;
+        for (std::size_t i = 0U; i < take; ++i) {
+            // `skip` drops the oldest when the caller's buffer is shorter than the record.
+            const std::size_t slot = ((head_ + kSnapshotCapacity - held_) + skip + i) % kSnapshotCapacity;
+            out[i] = ring_[slot];
+        }
+        return take;
+    }
+
+    /**
+     * @brief [en] How many verdicts are held.
+     * @brief [zh] 档里存了多少条结论。
+     * @return [en] the count, at most `kSnapshotCapacity`.
+     * @return [zh] 条数，最多 `kSnapshotCapacity`。
+     * @since 0.1.0
+     */
+    [[nodiscard]] auto snapshot_size() const noexcept -> std::size_t { return held_; }
+
+    /**
+     * @brief [en] The tick on which something was first wrong, `0` while nothing has been.
+     * @brief [zh] 第一次出问题的那一 tick；一直没出过问题时为 `0`。
+     * @return [en] the tick number, which is the same number `SupervisorStatus::tick` carries.
+     * @return [zh] tick 号，与 `SupervisorStatus::tick` 是同一个编号。
+     * @note [en] Not derived by scanning the record: the record is short, and the interesting tick is often the first
+     *            one that was wrong rather than the first one still held.
+     * @note [zh] 不去扫档案推出来：档案很短，而有意义的那一 tick 常常是第一个出问题的，不是第一个还留在档案里的。
+     * @since 0.1.0
+     */
+    [[nodiscard]] auto fault_tick() const noexcept -> std::uint32_t { return fault_tick_; }
+
+    /**
      * @brief [en] Clear the latched faults, in the right order: the motor leaves `Fault` first, then the classifier
      *             forgets.
      * @brief [zh] 清除锁存故障，顺序正确：电机先离开 `Fault`，分类器再忘记。
      * @return [en] whatever `Motor::clear_fault()` said.
      * @return [zh] `Motor::clear_fault()` 的回答。
      * @note [en] `Protector::reset()` deliberately keeps the `I2t` budget: the winding is still hot. Clearing it here
-     *            would undo that decision from the outside.
-     * @note [zh] `Protector::reset()` 是故意保留 `I2t` 预算的：绕组还热着。在这里把它清掉会从外部推翻那个决定。
+     *            would undo that decision from the outside. The record survives too, and for the same kind of reason:
+     *            clearing a fault is a request to run again, not a request to forget what happened. `fault_tick()`
+     *            still names the tick that went wrong.
+     * @note [zh] `Protector::reset()` 是故意保留 `I2t` 预算的：绕组还热着。在这里把它清掉会从外部推翻那个决定。档案同样
+     *            保留，理由属于同一类：清故障是要求重新跑，不是要求忘掉发生过什么。 `fault_tick()` 仍然指着出事的那一
+     *            tick。
      * @since 0.1.0
      */
     auto clear() noexcept -> ErrorCode {
@@ -420,6 +488,31 @@ class DriveSupervisor final {
     }
 
   private:
+    /**
+     * @brief [en] Put this tick's verdict into the record.
+     * @brief [zh] 把本拍的结论记进档案。
+     * @note [en] Fixed size and no allocation, because this runs in the control loop; a record that can fail to
+     *            allocate is a record that disappears exactly when memory is tight, which is when a fault is likely.
+     * @note [zh] 固定容量、不分配，因为它在控制环里跑；会分配失败的档案，恰好在内存紧张时消失，而内存紧张也正是故障容易
+     *            发生的时候。
+     * @since 0.1.0
+     */
+    void record() noexcept {
+        ring_[head_] = status_;
+        head_ = (head_ + 1U) % kSnapshotCapacity;
+        if (held_ < kSnapshotCapacity) {
+            ++held_;
+        }
+        if ((status_.fault != core::FaultCode::None) && (fault_tick_ == 0U)) {
+            // The first tick on which anything was wrong, kept until somebody asks for a new recording. Recording and
+            // clearing are different actions: an operator who clears a fault is asking to run again, not asking to
+            // forget what happened.
+            // 第一个出问题的 tick，一直保留到有人要求重新记录。记录与清除是两件事：清故障的运维是在要求重新跑，不是在要求忘掉
+            // 发生过什么。
+            fault_tick_ = status_.tick;
+        }
+    }
+
     /**
      * @brief [en] Gather this tick's observations from the hardware and the loop's own telemetry.
      * @brief [zh] 从硬件与控制环自身的遥测里收集本拍的观测量。
@@ -471,6 +564,10 @@ class DriveSupervisor final {
     ChopperType chopper_{};
     Config config_{};
     SupervisorStatus status_{};
+    std::array<SupervisorStatus, kSnapshotCapacity> ring_{};
+    std::size_t head_{0U};
+    std::size_t held_{0U};
+    std::uint32_t fault_tick_{0U};
 };
 
 } // namespace motor

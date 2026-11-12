@@ -718,6 +718,17 @@
       "limit": "The current input is the loop's **own conversion**, so an over-current is acted on one tick after it is applied -- stated on the type rather than discovered. The status does not carry a mechanical-brake state, because no contract for one exists yet. `flux_valid` is reported as `true` with a zero error: that judgement belongs to `Motor`, which owns the observer.",
       "reopened": [],
       "no_effect": "No claim row was re-opened, and by the rule above none could be: this is an implementation-level leg, nothing in `src/` includes the header, and a port never promotes. The claim it does carry is the README row for the header itself, whose evidence is the same nine cases."
+    },
+    {
+      "id": "O-52",
+      "date": "2026-11-12",
+      "leg": "implementation",
+      "capability": "The drive keeps the **last sixteen verdicts** and the tick that first went wrong: `DriveSupervisor::snapshot()` copies them out oldest-first into a caller's buffer and `fault_tick()` names the trip. Before this, a fault left one word behind (`fault_code`) and no answer to \"what was the bus doing just before\".",
+      "source": "`test_drive_supervisor.cpp`, the `DriveSupervisorRecord` suite (5 cases): the ring drops the oldest and hands back the last sixteen in order (ticks 5..20 after twenty steps); a three-entry buffer gets ticks 8..10 rather than 1..3; the trip and the healthy tick before it are both in the record carrying 24 V and 30 V respectively, which is the bus step that caused it; `clear()` leaves both the record and the fault tick untouched; an unconfigured step writes nothing. Teeth: returning the oldest for a short buffer, never recording the fault tick, and wiping the record in `clear()` each turn exactly one case red.",
+      "effect": "A support call that opens with \"it stopped\" can now be answered with the numbers instead of a guess, and the same record is what a snapshot-on-fault would carry if one is ever added.",
+      "limit": "Sixteen entries at 50 us is 0.8 ms -- enough for the control-frame history that led to a trip and not enough for anything slower than that. It is a copy, not a span, so a caller pays for what it reads. Nothing in `src/` reads it in this release.",
+      "reopened": [],
+      "no_effect": "No claim row was re-opened, and by the rule above none could be: this is an implementation-level leg, nothing in `src/` includes the header, and a port never promotes. The claim it supports is the supervisor's own README row, whose evidence is the same file."
     }
   ]
 }
