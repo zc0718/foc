@@ -19,6 +19,7 @@
 
 #include <foc/api/foc_api.h>
 #include <foc/api/foc_types.h>
+#include <foc/comm/commissioned_set.hpp>
 #include <foc/core/types.hpp>
 
 #include "sil_bench.hpp"
@@ -501,6 +502,57 @@ TEST(ApiParams, AValidCallDoesNotReachTheSensoredControlFrame) {
 
     EXPECT_EQ(foc_motor_destroy(a.motor), FOC_OK);
     EXPECT_EQ(foc_motor_destroy(b.motor), FOC_OK);
+}
+
+TEST(ApiParams, WhatWasStoredIsWhatComesBackAndWhatGetsApplied) {
+    // The whole point of the record: numbers measured once have to survive a power cycle and land on the axis again. The
+    // two conversions are the only mapping between the record and the ABI struct, so this is also the case that would
+    // catch a transposed pair -- the one defect a compiler cannot see here.
+    // 记录的全部意义：测过一次的数字要活过一次断电，并再次落到轴上。两个转换是记录与 ABI 结构之间唯一的映射，所以这也
+    // 是能抓到写反一对字段的那条用例——编译器在这里看不见的那个缺陷。
+    Twin twin{pinned_plant_params()};
+    const foc_motor_params_t params = params_struct();
+    ASSERT_EQ(make_twin(twin, params), FOC_OK);
+
+    foc_motor_params_t read{};
+    ASSERT_EQ(foc_motor_get_params(twin.motor, &read), FOC_OK);
+
+    foc::comm::CommissionedSet record = foc::comm::from_params(read);
+    record.machine_id = 0x1234U;
+    record.measured_at_unix_s = 1762900000U;
+    record.temperature_c = 41.5F;
+    std::uint8_t bytes[foc::comm::kCommissionedSetBytes] = {};
+    ASSERT_EQ(foc::comm::encode_commissioned_set(record, bytes, sizeof bytes), foc::comm::kCommissionedSetBytes);
+
+    foc::comm::CommissionedSet decoded{};
+    ASSERT_EQ(foc::comm::decode_commissioned_set(bytes, sizeof bytes, decoded).status, foc::comm::SetStatus::Ok);
+    const foc_motor_params_t restored = foc::comm::to_params(decoded);
+
+    EXPECT_FLOAT_EQ(restored.rs, read.rs);
+    EXPECT_FLOAT_EQ(restored.ld, read.ld);
+    EXPECT_FLOAT_EQ(restored.lq, read.lq);
+    EXPECT_FLOAT_EQ(restored.kt, read.kt);
+    EXPECT_FLOAT_EQ(restored.j, read.j);
+    EXPECT_FLOAT_EQ(restored.b, read.b);
+    EXPECT_EQ(restored.pole_pairs, read.pole_pairs);
+    EXPECT_EQ(decoded.machine_id, 0x1234U);
+    EXPECT_EQ(decoded.measured_at_unix_s, 1762900000U);
+    EXPECT_FLOAT_EQ(decoded.temperature_c, 41.5F);
+
+    // And it can be handed straight back, unchanged.
+    // 而且可以直接交回去，一字不改。
+    ASSERT_EQ(foc_motor_apply_params(twin.motor, &restored, nullptr), FOC_OK);
+    foc_motor_params_t again{};
+    ASSERT_EQ(foc_motor_get_params(twin.motor, &again), FOC_OK);
+    EXPECT_FLOAT_EQ(again.rs, restored.rs);
+    EXPECT_FLOAT_EQ(again.ld, restored.ld);
+    EXPECT_FLOAT_EQ(again.lq, restored.lq);
+    EXPECT_FLOAT_EQ(again.kt, restored.kt);
+    EXPECT_FLOAT_EQ(again.j, restored.j);
+    EXPECT_FLOAT_EQ(again.b, restored.b);
+    EXPECT_EQ(again.pole_pairs, restored.pole_pairs);
+
+    EXPECT_EQ(foc_motor_destroy(twin.motor), FOC_OK);
 }
 
 TEST(ApiParams, TheNumbersReachTheObserver) {

@@ -367,6 +367,10 @@
     "comm/frame.hpp": [
       "comm/frame.hpp"
     ],
+    "comm/commissioned_set.hpp": [
+      "comm/frame.hpp",
+      "api/foc_types.h"
+    ],
     "comm/register_map.hpp": [
       "api/foc_api.h"
     ],

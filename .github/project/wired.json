@@ -274,6 +274,11 @@
       "example": "test_package/test/unit/test_frame.cpp",
       "why": "a link layer the host drives; the firmware's control path never frames anything"
     },
+    "comm/commissioned_set.hpp": {
+      "class": "policy",
+      "example": "test_package/test/unit/test_commissioned_set.cpp",
+      "why": "a storage format: this module decides what the bytes are and refuses the ones no reader may accept, while where they live (flash, EEPROM, a file on a host) belongs to the integrator -- nothing on the control path encodes a record"
+    },
     "comm/register_map.hpp": {
       "class": "policy",
       "example": "test_package/test/unit/test_register_map.cpp",

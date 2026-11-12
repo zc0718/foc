@@ -296,6 +296,16 @@ the sensitivity half is not, so the row stays **L2**.
      - ``Frame.NoSingleByteCorruptionIsAccepted``
      - na -- the codec holds no state; `SequenceChecker` holds one byte and one flag, and neither is a
        continuous-output invariant.
+   * - ``comm/commissioned_set.hpp``
+     - `SetStatus` names the check that failed (short / marker / schema / reserved / check value / field) and
+       `SetError.offset` names the byte, so a reader learns which number to re-measure rather than which byte to stare
+       at.
+     - `encode_commissioned_set` returns 0 and writes nothing for a short buffer or an unusable set;
+       `decode_commissioned_set` refuses a short buffer, a foreign marker, an unread schema, a non-zero reserved byte
+       and a failed check value before touching the receiver, and leaves it untouched on every refusal.
+     - ``CommissionedSet.EverySingleByteChangeIsRefused``
+     - na -- a codec is a pure function of its buffer; the only state is the receiver, which is written once on
+       success.
    * - ``comm/encoder_stream.hpp``
      - `EncoderFrame` separates "this frame arrived and is not trustworthy" (`State` plus `crc_ok == false`, with the counts
        still filled in so a log has something to show) from "this buffer cannot be read at all" (`Param`, with no value
