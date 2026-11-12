@@ -1,0 +1,39 @@
+/*!
+ * @example telemetry-loopback.cxx
+ *
+ * @par [en] Reading the registers out of a drive and putting them on a wire, in C. [zh] 在 C 里把寄存器从驱动器读出来并放上线。
+ * @section telemetry_shows [en] What the example shows [zh] 这个例子展示了什么
+ * @par [en] The whole path a host needs in order to log or forward a drive's state: ask how many registers there are,
+ *      read them by position, frame the words, send them through a loopback, and decode them again with every field
+ *      equal. Every call is a `foc_*` function -- there is no C++ in the file, and a pure C consumer writes the same
+ *      lines.
+ * @par [zh] 宿主记录或转发驱动器状态所需的整条路：问有多少个寄存器、按位置读、把字封装成帧、经环回发出去、再解回来且逐字段
+ *      相等。每一个调用都是 `foc_*` 函数——文件里没有 C++，纯 C 消费者写的是同样的几行。
+ *
+ * @section telemetry_table [en] Why the count is asked for rather than known [zh] 为什么项数是问来的而不是知道的
+ * @par [en] A host that hard-codes ten stops reading the eleventh, and nothing at the port tells it that a register was
+ *      added. Asking costs one call and makes the table the one place that knows how long it is. The same table is what
+ *      the protocol page is generated from, so a document and a host cannot disagree about what index 7 is.
+ * @par [zh] 把十写死的宿主读不到第十一项，而端口处没有任何东西告诉它多了一项。问一次只花一个调用，却让那张表成为唯一知道
+ *      自己多长的地方。协议页也由同一张表生成，所以文档和宿主不可能对"第 7 项是什么"各说一套。
+ *
+ * @section telemetry_refusal [en] The half that matters when a link is bad [zh] 链路不好时真正要紧的那一半
+ * @par [en] One flipped bit in the middle of the frame is refused, and the receiver is left exactly as the caller had
+ *      it -- so a host that keeps the last good frame keeps a good frame rather than two thirds of a new one. The
+ *      example prints which check failed rather than a generic error, because a receiver that cannot say which check
+ *      failed cannot decide whether to resynchronise, ask for a retransmission, or count a link loss.
+ * @par [zh] 帧中间翻一个比特会被拒绝，而接收者保持调用方留下时的样子——于是保留上一帧的宿主保留的是一帧好帧，而不是新帧
+ *      的三分之二。例子打印的是 **哪一道** 检查失败，而不是一个笼统的错误，因为说不清哪一道失败的接收方，无法决定是重新
+ *      同步、请求重传，还是记一次链路丢失。
+ *
+ * @section telemetry_transport [en] The loopback is a memcpy, on purpose [zh] 环回就是一个 memcpy，故意的
+ * @par [en] What this page is about is that the register table, the codec and the C ABI meet in a host with no glue of
+ *      its own; a transport would be a different page. `comm/frame.hpp` is protocol-neutral for the same reason -- a
+ *      CAN, a UART and a socket all carry these bytes, and none of them belongs in the library.
+ * @par [zh] 这一页讲的是寄存器表、编解码器与 C ABI 在一个没有任何自备胶水的宿主里接上了；传输是另一页的事。`comm/frame.hpp`
+ *      协议中立也是同一个道理——CAN、串口和 socket 都能扛这些字节，而它们都不属于这个库。
+ *
+ * @par [en] Run it with the command in the file's own header; it exits non-zero if any field comes back different or if
+ *      the corrupted frame is accepted.
+ * @par [zh] 用文件自己头部里的命令运行它；只要有任何一个字段回来时不同，或者被篡改的帧被接受，它就以非零退出。
+ */
