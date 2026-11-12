@@ -377,6 +377,12 @@
       "core/brake_chopper.hpp",
       "motor/motor.hpp"
     ],
+    "hal/mechanical_brake.hpp": [
+      "hal/mechanical_brake.hpp"
+    ],
+    "driver/stub_mechanical_brake.hpp": [
+      "hal/mechanical_brake.hpp"
+    ],
     "hal/temperature.hpp": [
       "hal/temperature.hpp"
     ],

@@ -174,6 +174,28 @@ struct is_bus_current<T, std::void_t<decltype(std::declval<T&>().read_bus_curren
           noexcept(std::declval<T&>().read_bus_current_a(std::declval<float&>()))> {};
 
 /**
+ * @brief [en] `T` satisfies the foc::hal::MechanicalBrake contract.
+ * @brief [zh] `T` 满足 foc::hal::MechanicalBrake 契约： `engage`/`release` 一对动作，加一个 `engaged` 查询。
+ * @note [en] `engaged()` is part of the shape on purpose. A contract with only the two actions cannot tell a sequencer
+ *            whether the shaft is actually held, and "I called engage" is the claim that stops a vertical axis from
+ *            falling only if it is true.
+ * @note [zh] `engaged()` 故意是形状的一部分。只有两个动作的契约无法告诉编排方轴到底抱住了没有，而"我调了 engage" 这句话
+ *            只有在为真时才能挡住垂直轴往下掉。
+ * @since 0.1.0
+ * @exporter
+ */
+template <typename T, typename = void> struct is_mechanical_brake : std::false_type {};
+
+template <typename T>
+struct is_mechanical_brake<T, std::void_t<decltype(std::declval<T&>().engage()), decltype(std::declval<T&>().release()),
+                                          decltype(std::declval<T&>().engaged())>>
+    : std::bool_constant<std::is_same_v<decltype(std::declval<T&>().engage()), ErrorCode> &&
+                         std::is_same_v<decltype(std::declval<T&>().release()), ErrorCode> &&
+                         std::is_same_v<decltype(std::declval<T&>().engaged()), bool> &&
+                         noexcept(std::declval<T&>().engage()) && noexcept(std::declval<T&>().release()) &&
+                         noexcept(std::declval<T&>().engaged())> {};
+
+/**
  * @brief [en] `T` satisfies the foc::hal::FaultInput contract.
  * @brief [zh] `T` 满足 foc::hal::FaultInput 契约。
  * @since 0.1.0
@@ -208,6 +230,7 @@ template <typename T> inline constexpr bool is_dc_link_v = is_dc_link<T>::value;
 template <typename T> inline constexpr bool is_clock_v = is_clock<T>::value;
 template <typename T> inline constexpr bool is_temperature_v = is_temperature<T>::value;
 template <typename T> inline constexpr bool is_bus_current_v = is_bus_current<T>::value;
+template <typename T> inline constexpr bool is_mechanical_brake_v = is_mechanical_brake<T>::value;
 template <typename T> inline constexpr bool is_fault_input_v = is_fault_input<T>::value;
 
 } // namespace concepts
@@ -517,6 +540,31 @@ struct has_bus_current<T, std::void_t<decltype(std::declval<T&>().dc_link)>>
  * @exporter
  */
 template <typename T> inline constexpr bool has_bus_current_v = has_bus_current<T>::value;
+
+/**
+ * @brief [en] `T` (a HalPolicy) exposes an optional `mechanical_brake` member satisfying `hal::MechanicalBrake`.
+ * @brief [zh] `T`（HalPolicy）是否暴露了满足 `hal::MechanicalBrake` 的可选成员 `mechanical_brake`。
+ * @note [en] Its absence means "there is nothing to sequence", never "assume the shaft is free". A horizontal axis
+ *            without a brake is legal, and the sequencer that finds no brake simply has one fewer step -- it does not
+ *            get to invent a state for a device that is not there.
+ * @note [zh] 它的缺席意味着"没有可编排的东西"，永远不是"假定轴是自由的"。没有抱闸的水平轴是合法的，而找不到抱闸的编排方
+ *            只是少一步——它没有资格为一个不存在的设备编一个状态出来。
+ * @since 0.1.0
+ * @exporter
+ */
+template <typename T, typename = void> struct has_mechanical_brake : std::false_type {};
+
+template <typename T>
+struct has_mechanical_brake<T, std::void_t<decltype(std::declval<T&>().mechanical_brake)>>
+    : std::bool_constant<hal::concepts::is_mechanical_brake_v<decltype(std::declval<T&>().mechanical_brake)>> {};
+
+/**
+ * @brief [en] Convenience variable template for the optional holding-brake member.
+ * @brief [zh] 可选保持抱闸成员的便捷变量模板。
+ * @since 0.1.0
+ * @exporter
+ */
+template <typename T> inline constexpr bool has_mechanical_brake_v = has_mechanical_brake<T>::value;
 
 /**
  * @brief [en] `T` (a HalPolicy) exposes a `fault_input` member satisfying `hal::FaultInput`.

@@ -146,6 +146,7 @@ unit:driver/stub_dc_link.hpp	-	not-applicable	any	none	测试替身：提供一�
 unit:driver/stub_fault_input.hpp	-	not-applicable	any	none	测试替身：可以人为置起 nFAULT。	zc	README claim 行 L1（终态，stub 组）
 unit:driver/stub_hal.hpp	-	not-applicable	any	none	测试替身：让库在没有硬件时也能被驱动的是它，被断言的不是它。	zc	README claim 行 L1（终态，stub 组）
 unit:driver/stub_hall.hpp	-	not-applicable	any	none	测试替身：存在的目的就是"没有硬件也能驱动库"，它的行为由用它的人决定。	zc	README claim 行 L1（终态）
+unit:driver/stub_mechanical_brake.hpp	-	not-applicable	any	none	接口/管道头：契约的参考实现，只存一个布尔与两个失败开关；它证明形状可实现，不主张任何物理。行为断言（上电即抱住、拒绝不改状态、调用被计数）在 test_brake_sequencing.cpp，不在本声明处。	zc	README claim 行 L1（终态）
 unit:driver/stub_pwm.hpp	-	not-applicable	any	none	测试替身：记录占空比供断言使用，自身无控制律。	zc	README claim 行 L1（终态，stub 组）
 unit:driver/stub_temperature.hpp	-	not-applicable	any	none	接口/管道头：契约的参考实现，只存一个读数；它证明形状可实现，不主张任何物理。行为断言在 test_temperature.cpp，不在本声明处。	zc	README claim 行 L1（终态）
 unit:hal/brake_switch.hpp	-	not-applicable	any	none	HAL 契约：抽象声明，没有可检查的定义。	zc	README claim 行 L1（终态，HAL 组）
@@ -154,6 +155,7 @@ unit:hal/current_sense.hpp	-	not-applicable	any	none	HAL 契约：抽象声明�
 unit:hal/dc_link.hpp	-	not-applicable	any	none	HAL 契约：抽象声明，没有可检查的定义。	zc	README claim 行 L1（终态，HAL 组）
 unit:hal/fault_input.hpp	-	not-applicable	any	none	HAL 契约：抽象声明，没有可检查的定义。	zc	README claim 行 L1（终态，HAL 组）
 unit:hal/hall.hpp	-	not-applicable	any	none	HAL 契约：只有抽象声明，没有可检查的定义。	zc	README claim 行 L1（终态）
+unit:hal/mechanical_brake.hpp	-	not-applicable	any	none	接口/管道头：一个纯虚接口，三个纯虚函数，没有行为可断言；缺席路径由 traits 的结构化判定承担（见 core/traits.hpp 行）。把 `engaged()` 写进形状这件事本身是本声明唯一的主张，而它在 test_brake_sequencing.cpp 里被两侧都断言过：有抱闸的策略被识别、没有该成员的策略不被识别。	zc	README claim 行 L1（终态）
 unit:hal/position.hpp	-	not-applicable	any	none	HAL 契约：抽象声明，没有可检查的定义。	zc	README claim 行 L1（终态，HAL 组）
 unit:hal/pwm.hpp	-	not-applicable	any	none	HAL 契约：抽象声明，没有可检查的定义。	zc	README claim 行 L1（终态，HAL 组）
 unit:hal/temperature.hpp	-	not-applicable	any	none	接口/管道头：一个纯虚接口与一个读数结构；没有行为可断言，缺席路径由 traits 的结构化判定承担（见 core/traits.hpp 行）。	zc	README claim 行 L1（终态）

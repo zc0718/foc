@@ -78,6 +78,14 @@ struct SupervisorStatus final {
      */
     bool output_allowed;
     /**
+     * @brief [en] whether the shaft is being held by the mechanical brake; `false` on a drive that has none.
+     * @brief [zh] 轴是否被机械抱闸抱住；没有抱闸的驱动上为 `false`。
+     * @note [en] Kept next to the fault because it answers the second question a stop raises: not only "did it stop",
+     *            but "is something holding it now".
+     * @note [zh] 与故障并列，因为它回答了一次停机提出的第二个问题：不只是"停了没有"，还有"现在有东西抱着它吗"。
+     */
+    bool brake_engaged;
+    /**
      * @brief [en] how many ticks have been stepped, for a caller that has to say when something happened.
      * @brief [zh] 已经走过的 tick 数，供需要说明"某事发生在何时"的调用方使用。
      */
@@ -267,6 +275,15 @@ class DriveSupervisor final {
         status_.output_allowed = out.output_allowed;
 
         if (!out.output_allowed) {
+            // The brake is asked to hold *before* the output goes away, from the same rule `disable()` follows: a
+            // stopped drive must not become a dropping load. Its answer does not delay the stop, though -- a protection
+            // that waits for a brake is not a protection -- so a refusal is recorded rather than returned.
+            // 抱闸在输出消失 *之前* 被要求抱住，规则与 `disable()` 相同：停下的驱动器不能变成一个下坠的负载。但它的回答不
+            // 会推迟停机——等抱闸的保护不是保护——所以拒绝被记录下来而不是被返回。
+            if constexpr (core::concepts::has_mechanical_brake_v<HalType>) {
+                (void)hal_.mechanical_brake.engage();
+                status_.brake_engaged = hal_.mechanical_brake.engaged();
+            }
             // PWM off, *then* the state. `fault()` disables as well, so the order is not about who does the
             // disabling -- it is about never publishing "protection acted" for a period in which the loop still
             // switched. `stop()` first also means the refusal happens on a machine that is already quiet.
@@ -303,6 +320,81 @@ class DriveSupervisor final {
      * @since 0.1.0
      */
     [[nodiscard]] auto chopper() noexcept -> ChopperType& { return chopper_; }
+
+    /**
+     * @brief [en] Power the drive up in the one order that never leaves the load held by nothing.
+     *
+     *   Start the loop first, then let the brake go. The other order is a vertical axis taking a step down on every
+     *   enable: the brake lets go of a shaft that nothing is holding yet. What makes this worth a call rather than a
+     *   comment is the failure path -- if the brake refuses to release, the loop is stopped again and the error is
+     *   returned, because a drive left running against a brake that thinks it is still applied is a stall with a
+     *   current limit.
+     *
+     * @brief [zh] 用唯一一种不会让负载一时无人抱住的顺序把驱动器使能起来。
+     *
+     *   先启动控制环，再让抱闸松开。相反的顺序会让垂直轴每次使能都往下掉一格：抱闸松开一根还没有任何东西抱住的轴。让它
+     *   成为一个调用而不是一句注释的，是失败路径——如果抱闸拒绝松开，控制环会被重新停掉并返回错误，因为一个对着"自认为仍
+     *   夹紧"的抱闸继续跑的驱动器，是一次带着电流限幅的堵转。
+     *
+     * @return [en] `Ok`; whatever the motor said; or whatever the brake refused with, after stopping the motor again.
+     * @return [zh] `Ok`；电机的回答；或抱闸拒绝的原因，并在那之前把电机重新停掉。
+     * @note [en] A drive with no brake takes the same path with one step fewer. It does **not** get a state invented
+     *            for a device that is not there.
+     * @note [zh] 没有抱闸的驱动走同一条路，只是少一步。它 **不会** 为一个不存在的设备编一个状态出来。
+     * @since 0.1.0
+     */
+    auto enable() noexcept -> ErrorCode {
+        const ErrorCode started = motor_.start();
+        if (started != ErrorCode::Ok) {
+            return started;
+        }
+        if constexpr (core::concepts::has_mechanical_brake_v<HalType>) {
+            const ErrorCode released = hal_.mechanical_brake.release();
+            if (released != ErrorCode::Ok) {
+                // The shaft is still held, which is the safe half of this; the unsafe half would be staying enabled
+                // against a brake that thinks it is applied.
+                // 轴仍被抱住，这是安全的那一半；不安全的那一半是对着一个"自认为仍夹紧"的抱闸保持使能。
+                (void)motor_.stop();
+                status_.brake_engaged = hal_.mechanical_brake.engaged();
+                return released;
+            }
+            status_.brake_engaged = hal_.mechanical_brake.engaged();
+        }
+        return ErrorCode::Ok;
+    }
+
+    /**
+     * @brief [en] Stop the drive in the one order that never leaves the load held by nothing.
+     *
+     *   Hold first, then stop switching. The opposite -- cut the inverter and then apply the brake -- is a load that
+     *   free-falls for as long as the brake takes to grip, which is tens of milliseconds and therefore metres.
+     *
+     * @brief [zh] 用唯一一种不会让负载一时无人抱住的顺序把驱动器停下来。
+     *
+     *   先抱住，再停止开关。反过来——先关逆变器再抱闸——是负载在抱闸夹紧所需的那段时间里自由下落，那段时间是几十毫秒，因
+     *   此也就是好几米。
+     *
+     * @return [en] `Ok`; whatever the brake refused with, **with the motor left running**; or whatever the motor said.
+     * @return [zh] `Ok`；抱闸拒绝的原因（此时 **电机仍在运行** ）；或电机的回答。
+     * @warning [en] A brake that refuses to engage does not stop the drive. Cutting the output anyway would turn a
+     *               failed brake into a dropped load, so the error is returned with the loop still enabled and the
+     *               caller is told to deal with it.
+     * @warning [zh] 拒绝夹紧的抱闸不会让驱动器停下。照样切断输出会把一次抱闸失效变成一次负载坠落，所以返回错误时控制环
+     *               仍在使能，并把这件事交给调用方处理。
+     * @since 0.1.0
+     */
+    auto disable() noexcept -> ErrorCode {
+        if constexpr (core::concepts::has_mechanical_brake_v<HalType>) {
+            const ErrorCode held = hal_.mechanical_brake.engage();
+            // Asked, not inferred: `engage()` returning `Ok` and the shaft being held are two different claims.
+            // 去问，而不是推断：`engage()` 返回 `Ok` 与轴被抱住是两句不同的话。
+            status_.brake_engaged = hal_.mechanical_brake.engaged();
+            if ((held != ErrorCode::Ok) || !status_.brake_engaged) {
+                return (held != ErrorCode::Ok) ? held : ErrorCode::State;
+            }
+        }
+        return motor_.stop();
+    }
 
     /**
      * @brief [en] Clear the latched faults, in the right order: the motor leaves `Fault` first, then the classifier

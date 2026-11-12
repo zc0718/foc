@@ -570,6 +570,26 @@
       "why": "接口/管道头：契约的参考实现，只存一个读数；它证明形状可实现，不主张任何物理。行为断言在 test_temperature.cpp，不在本声明处。",
       "owner": "zc",
       "source": "README claim 行 L1（终态）"
+    },
+    {
+      "rule": "unit:hal/mechanical_brake.hpp",
+      "check": "-",
+      "status": "not-applicable",
+      "lang": "any",
+      "delta": "none",
+      "why": "接口/管道头：一个纯虚接口，三个纯虚函数，没有行为可断言；缺席路径由 traits 的结构化判定承担（见 core/traits.hpp 行）。把 `engaged()` 写进形状这件事本身是本声明唯一的主张，而它在 test_brake_sequencing.cpp 里被两侧都断言过：有抱闸的策略被识别、没有该成员的策略不被识别。",
+      "owner": "zc",
+      "source": "README claim 行 L1（终态）"
+    },
+    {
+      "rule": "unit:driver/stub_mechanical_brake.hpp",
+      "check": "-",
+      "status": "not-applicable",
+      "lang": "any",
+      "delta": "none",
+      "why": "接口/管道头：契约的参考实现，只存一个布尔与两个失败开关；它证明形状可实现，不主张任何物理。行为断言（上电即抱住、拒绝不改状态、调用被计数）在 test_brake_sequencing.cpp，不在本声明处。",
+      "owner": "zc",
+      "source": "README claim 行 L1（终态）"
     }
   ]
 }

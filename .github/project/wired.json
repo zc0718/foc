@@ -196,6 +196,14 @@
       "example": "test_package/test/unit/test_drive_supervisor.cpp",
       "why": "the caller wraps its own `Motor` in it, which is why nothing in `src/` includes it and why `motor.hpp` was not touched: the tick order is a decision about the *application's* hardware (which fault pin, which chopper, which temperature channel), and a `Motor` that assumed one would have taken that decision away from every host that does it differently"
     },
+    "hal/mechanical_brake.hpp": {
+      "class": "contract",
+      "stub": "stub_mechanical_brake.hpp",
+      "why": "the device that holds a vertical load while the drive is off; the shipped stub is what proves the shape is implementable, including the two refusals a sequencer has to survive"
+    },
+    "driver/stub_mechanical_brake.hpp": {
+      "class": "reference"
+    },
     "hal/clock.hpp": {
       "class": "contract",
       "stub": "callback_hal.hpp",
