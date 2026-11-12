@@ -366,7 +366,10 @@
     ],
     "comm/frame.hpp": [
       "comm/frame.hpp"
-    ],    "core/thermistor.hpp": [
+    ],    "core/angle_source.hpp": [
+      "core/angle_source.hpp"
+    ],
+    "core/thermistor.hpp": [
       "core/thermistor.hpp"
     ],
     "motor/drive_supervisor.hpp": [

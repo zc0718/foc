@@ -54,6 +54,11 @@
       "example": null,
       "why": "a feed-forward the caller adds to its torque command; `Motor` has no compensation slot, which is why nothing in `src/` includes it"
     },
+    "core/angle_source.hpp": {
+      "class": "policy",
+      "example": "test_package/test/unit/test_angle_source.cpp",
+      "why": "the caller feeds it the offers it actually has and applies the answer; which sources a drive has, and in what order it trusts them, is a fact about the drive, so this type takes the order as an argument rather than assuming one -- which is also why nothing in `src/` includes it"
+    },
     "core/gear_ratio.hpp": {
       "class": "policy",
       "example": null,

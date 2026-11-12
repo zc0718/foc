@@ -307,6 +307,17 @@ the sensitivity half is not, so the row stays **L2**.
      - ``Frame.NoSingleByteCorruptionIsAccepted``
      - na -- the codec holds no state; `SequenceChecker` holds one byte and one flag, and neither is a
        continuous-output invariant.
+   * - ``core/angle_source.hpp``
+     - `AngleReading` carries the quality word, the source that produced the angle, the disagreement the decision was
+       made on (`NaN` when nothing could be compared) and how long the preferred source has been missing, so "which
+       angle, how far to trust it, and since when" takes one read.
+     - `configure()` refuses three numbers that cannot describe a band -- a window that is not positive, a degraded bar
+       that is not positive, a blind bar that is not above the degraded one -- and a step before `configure()` answers
+       `Blind` rather than using a zeroed-out band. A step whose period is not positive changes nothing.
+     - ``AngleSource.ALostSourceIsHeldForTheDeclaredWindowAndThenReplaced``
+     - na -- the output is a per-tick decision rather than a continuous signal, and the property that matters about it
+       (`Blind` holds the angle and reports zero speed, so a caller ignoring the quality word still cannot steer with a
+       held constant) is asserted in the case named above.
    * - ``core/thermistor.hpp``
      - `NtcDivider::temperature_c` answers `false` at both rails and leaves the receiver untouched, because 0 and full
        scale are what an open and a shorted thermistor produce and both are ordinary numbers on the curve;
