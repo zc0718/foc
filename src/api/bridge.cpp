@@ -604,6 +604,16 @@ template <typename MotorType, typename HalType> struct SlotT final {
     MotorType* instance{nullptr};
     HalType hal{};
     Setup setup{};
+    /**
+     * @brief [en] The machine numbers this slot was last given (construction or `foc_motor_apply_params`).
+     * @brief [zh] 本槽位最后一次被交给的机器数字（构造时或 `foc_motor_apply_params` 时）。
+     * @note [en] Stored here rather than in `Motor`, which deliberately keeps no copy: the bridge is the record of the
+     *            transaction, exactly as it already is for the setup.
+     * @note [zh] 存在这里而不是存到 `Motor`：后者刻意不留副本，bridge 才是"这次调用"的记录——与 setup 一直以来的做法相
+     *            同。
+     * @since 0.1.0
+     */
+    foc_motor_params_t params{};
     std::uint32_t generation{0U};
     bool alive{false};
 };
@@ -1406,6 +1416,7 @@ foc_err_t foc_bridge_create_ex(const foc_motor_params_t* params, const foc_motor
         }
 
         slot.setup = resolved;
+        slot.params = *params;
         ++slot.generation;
         slot.alive = true;
         *out = foc::api::mint_handle(static_cast<std::uint32_t>(i), slot.generation);
@@ -1485,6 +1496,7 @@ foc_err_t foc_bridge_create_host(const foc_motor_params_t* params, const foc_mot
         // 参考角只在角度来自观测器时才被推进。
         slot.hal.position.set_sensor_present(resolved.use_observer_angle == 0);
         slot.setup = resolved;
+        slot.params = *params;
 
         const foc::api::MotorT_Host::Policies policies{foc::api::make_observer(*params, resolved),
                                                        foc::core::Svpwm{},
@@ -1553,6 +1565,47 @@ foc_err_t foc_bridge_get_setup(foc_motor_t motor, foc_motor_setup_t* out) {
         result.blend_end_rad_s = applied.blend_end_rad_s;
         result.handover_lpf_hz = applied.handover_lpf_hz;
         *out = result;
+        return foc::ErrorCode::Ok;
+    });
+}
+
+
+foc_err_t foc_bridge_get_params(foc_motor_t motor, foc_motor_params_t* out) {
+    if (out == nullptr) {
+        return FOC_ERR_PARAM;
+    }
+    return foc::api::on_slot(motor, [out](auto& slot) {
+        *out = slot.params;
+        return foc::ErrorCode::Ok;
+    });
+}
+
+
+foc_err_t foc_bridge_apply_params(foc_motor_t motor, const foc_motor_params_t* params, const foc_motor_setup_t* setup) {
+    if (params == nullptr) {
+        return FOC_ERR_PARAM;
+    }
+    // A setup is not a set of numbers a running object can absorb: the loop gains, the loop periods and the inverter
+    // timing were all derived from it once, at construction. Accepting it and applying "the parts we can" would be a
+    // partial commit -- the one thing this function must not do -- so the request is refused by name instead.
+    // setup 不是运行中的对象能吸收的一组数字：环路增益、环路周期与逆变器时序都是在构造时由它一次性推导出来的。
+    // 接受它、只应用“能应用的那部分”，就是一次部分提交——正是本函数唯一不能做的事，所以按名字拒绝。
+    if (setup != nullptr) {
+        return FOC_ERR_NOT_IMPL;
+    }
+    if (!foc::api::params_ok(*params)) {
+        return FOC_ERR_PARAM;
+    }
+    return foc::api::on_slot(motor, [params](auto& slot) {
+        // Every check happens before anything is written, so a refused call leaves the axis exactly as it was -- and
+        // that is a property a trace can be compared against, tick for tick, against a twin that never saw the call.
+        // 所有检查都在写入之前完成，于是被拒的调用让轴保持原样——而这个性质可以用轨迹逐拍比起一个从未收到该调用的孪生体。
+        const foc_err_t admission = foc::api::observer_status(slot.setup, *params);
+        if (admission != FOC_OK) {
+            return (admission == FOC_ERR_NOT_IMPL) ? foc::ErrorCode::NotImpl : foc::ErrorCode::Param;
+        }
+        slot.instance->apply_params(foc::api::machine_params(*params));
+        slot.params = *params;
         return foc::ErrorCode::Ok;
     });
 }

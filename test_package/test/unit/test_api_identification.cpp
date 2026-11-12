@@ -12,6 +12,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstdio>
+#include <cstring>
 #include <vector>
 
 #include <gtest/gtest.h>
@@ -314,4 +315,189 @@ TEST(ApiIdentification, TheFluxSweepRecoversTheInjectedLine) {
     EXPECT_NE(result.valid, 0);
     EXPECT_NEAR(result.value, injected_psi_f, 0.01F * injected_psi_f);
     EXPECT_NEAR(result.offset, kOffsetV, 0.05F * kOffsetV);
+}
+
+// `foc_motor_get_setup()` had a readback and the machine parameters had not, so a tuning tool could read every loop
+// setting and none of the numbers those loops are built from. The cases below cover both halves of the entry point:
+// what was handed in comes back, and a refused call is indistinguishable -- tick for tick -- from a call nobody made.
+//
+// 设置一直有回读，而机器参数没有，于是整定工具能读到每个环路设置，却读不到那些环路是由哪些数字构造的。下面覆盖这个入口
+// 的两半：交进去什么就读回什么；被拒的调用与"根本没人调用过"逐拍不可区分。
+
+namespace {
+
+/**
+ * @brief [en] One motor on its own plant, so two of them can be ticked in lockstep.
+ * @brief [zh] 一台电机配一个自己的被控对象，于是两台可以同步推进。
+ */
+struct Twin final {
+    Twin() : callback_plant(plant) {}
+    Twin(const Twin&) = delete;
+    Twin& operator=(const Twin&) = delete;
+    ~Twin() = default;
+
+    foc::sil::PmsmPlant plant{pinned_plant_params()};
+    CallbackPlant callback_plant;
+    foc_motor_t motor{};
+};
+
+auto make_twin(Twin& twin, const foc_motor_params_t& params) -> foc_err_t {
+    const foc_hal_callbacks_t callbacks = callbacks_for(twin.callback_plant);
+    const foc_motor_setup_t setup = setup_with_bandwidth(2000.0F);
+    return foc_motor_create_host(&params, &setup, &callbacks, &twin.motor);
+}
+
+auto start_twin(Twin& twin) -> void {
+    const foc_err_t enable = foc_motor_enable(twin.motor);
+    EXPECT_EQ(enable, FOC_OK);
+    const foc_err_t command = foc_set_torque(twin.motor, kIqCommand);
+    EXPECT_EQ(command, FOC_OK);
+}
+
+auto step_twin(Twin& twin) -> foc_err_t {
+    const foc_err_t rc = foc_tick(twin.motor, kDt);
+    twin.callback_plant.hal.advance(kDt, kSubsteps);
+    return rc;
+}
+
+auto state_as_bits(foc_motor_t motor, std::uint32_t out[3]) -> foc_err_t {
+    float speed = 0.0F;
+    float id_a = 0.0F;
+    float iq_a = 0.0F;
+    const foc_err_t rc = foc_get_state(motor, &speed, &id_a, &iq_a);
+    std::memcpy(&out[0], &speed, sizeof(float));
+    std::memcpy(&out[1], &id_a, sizeof(float));
+    std::memcpy(&out[2], &iq_a, sizeof(float));
+    return rc;
+}
+
+/**
+ * @brief [en] Tick both, and require the published state to agree bit for bit at every tick.
+ * @brief [zh] 同步推进两者，并要求每一拍的已发布状态逐位相同。
+ */
+auto tick_in_lockstep(Twin& a, Twin& b, int count) -> void {
+    for (int i = 0; i < count; ++i) {
+        ASSERT_EQ(step_twin(a), FOC_OK);
+        ASSERT_EQ(step_twin(b), FOC_OK);
+        std::uint32_t sa[3] = {};
+        std::uint32_t sb[3] = {};
+        ASSERT_EQ(state_as_bits(a.motor, sa), FOC_OK);
+        ASSERT_EQ(state_as_bits(b.motor, sb), FOC_OK);
+        ASSERT_EQ(sa[0], sb[0]) << "speed differs at tick " << i;
+        ASSERT_EQ(sa[1], sb[1]) << "i_d differs at tick " << i;
+        ASSERT_EQ(sa[2], sb[2]) << "i_q differs at tick " << i;
+    }
+}
+
+} // namespace
+
+TEST(ApiParams, TheReadbackIsWhatWasHandedIn) {
+    Twin twin;
+    const foc_motor_params_t params = params_struct();
+    ASSERT_EQ(make_twin(twin, params), FOC_OK);
+
+    foc_motor_params_t read{};
+    ASSERT_EQ(foc_motor_get_params(twin.motor, &read), FOC_OK);
+    EXPECT_FLOAT_EQ(read.rs, params.rs);
+    EXPECT_FLOAT_EQ(read.ld, params.ld);
+    EXPECT_FLOAT_EQ(read.lq, params.lq);
+    EXPECT_FLOAT_EQ(read.kt, params.kt);
+    EXPECT_FLOAT_EQ(read.j, params.j);
+    EXPECT_FLOAT_EQ(read.b, params.b);
+    EXPECT_EQ(read.pole_pairs, params.pole_pairs);
+
+    // The answer is the last call, not the construction: that is the half which had no answer at all before.
+    // 答案是最后一次调用，而不是构造时——这正是此前完全没有答案的那一半。
+    foc_motor_params_t changed = params;
+    changed.ld = params.ld * 1.5F;
+    changed.kt = params.kt * 0.5F;
+    ASSERT_EQ(foc_motor_apply_params(twin.motor, &changed, nullptr), FOC_OK);
+
+    foc_motor_params_t second{};
+    ASSERT_EQ(foc_motor_get_params(twin.motor, &second), FOC_OK);
+    EXPECT_FLOAT_EQ(second.ld, changed.ld);
+    EXPECT_FLOAT_EQ(second.kt, changed.kt);
+    EXPECT_FLOAT_EQ(second.lq, params.lq) << "a field that was not handed in must not drift";
+
+    EXPECT_EQ(foc_motor_destroy(twin.motor), FOC_OK);
+}
+
+TEST(ApiParams, ARefusedCallIsIndistinguishableFromNoCall) {
+    Twin a;
+    Twin b;
+    const foc_motor_params_t params = params_struct();
+    ASSERT_EQ(make_twin(a, params), FOC_OK);
+    ASSERT_EQ(make_twin(b, params), FOC_OK);
+    start_twin(a);
+    start_twin(b);
+    tick_in_lockstep(a, b, 40);
+
+    // The comparison above is only worth something if the loop is actually delivering current: two motors parked at
+    // zero would agree bit for bit for reasons that have nothing to do with the call under test.
+    // 上面的比对只有在环路真的在送电流时才有意义：两台停在零上的电机会逐位一致，而那与本次被测的调用无关。
+    {
+        float speed = 0.0F;
+        float id_a = 0.0F;
+        float iq_a = 0.0F;
+        ASSERT_EQ(foc_get_state(a.motor, &speed, &id_a, &iq_a), FOC_OK);
+        std::printf("[api-params] steady q-axis current %.6f A of %.6f A commanded\n",
+                    static_cast<double>(iq_a), static_cast<double>(kIqCommand));
+        ASSERT_GT(std::fabs(iq_a), 0.1F) << "the loop is not tracking, so bit-identity proves nothing";
+    }
+
+    // Two ways to be refused, each with its own answer: a field the whole-set validation rejects, and a setup the
+    // running object cannot absorb at all.
+    // 两种被拒的方式各有各的回答：整组校验拒绝的字段，以及运行中的对象根本无法吸收的设置。
+    foc_motor_params_t bad = params;
+    bad.ld = 0.0F;
+    EXPECT_EQ(foc_motor_apply_params(a.motor, &bad, nullptr), FOC_ERR_PARAM);
+
+    const foc_motor_setup_t other = setup_with_bandwidth(500.0F);
+    EXPECT_EQ(foc_motor_apply_params(a.motor, &params, &other), FOC_ERR_NOT_IMPL);
+
+    // The twin never saw either call, so from here on A must be bit-identical to it. That is the only form of "nothing
+    // was written" observable from outside.
+    // 孪生体从未收到这两次调用，所以从此刻起 A 必须与它逐位相同。这是从外部唯一可观测的"什么都没写"。
+    tick_in_lockstep(a, b, 40);
+
+    foc_motor_params_t read{};
+    ASSERT_EQ(foc_motor_get_params(a.motor, &read), FOC_OK);
+    EXPECT_FLOAT_EQ(read.ld, params.ld) << "a refused call must not be remembered as applied";
+
+    EXPECT_EQ(foc_motor_destroy(a.motor), FOC_OK);
+    EXPECT_EQ(foc_motor_destroy(b.motor), FOC_OK);
+}
+
+TEST(ApiParams, AValidCallDoesNotReachTheSensoredControlFrame) {
+    Twin a;
+    Twin b;
+    const foc_motor_params_t params = params_struct();
+    ASSERT_EQ(make_twin(a, params), FOC_OK);
+    ASSERT_EQ(make_twin(b, params), FOC_OK);
+    start_twin(a);
+    start_twin(b);
+    tick_in_lockstep(a, b, 40);
+
+    {
+        float speed = 0.0F;
+        float id_a = 0.0F;
+        float iq_a = 0.0F;
+        ASSERT_EQ(foc_get_state(a.motor, &speed, &id_a, &iq_a), FOC_OK);
+        ASSERT_GT(std::fabs(iq_a), 0.1F) << "the loop is not tracking, so bit-identity proves nothing";
+    }
+
+    // Two faces on purpose. On this host the angle comes from the sensor and the loop gains were built once at
+    // construction, so the observer is the only live consumer of these numbers -- and it does not publish into this
+    // loop. A large change must therefore leave the trajectory untouched; if a refactor ever fed the numbers into the
+    // control frame, this goes red, which is exactly the change somebody would want to be told about.
+    // 故意写两面。本宿主的角度来自传感器，而环路增益在构造时一次性生成，所以这些数字唯一的活消费者是观测器——而它不往
+    // 这个环路里发布。于是大的变更必须让轨迹原样不动；哪天有人把这些数字接进控制帧，这条就会红，而那正是应该被告知的变更。
+    foc_motor_params_t different = params;
+    different.rs = params.rs * 0.5F;
+    different.lq = params.lq * 2.0F;
+    ASSERT_EQ(foc_motor_apply_params(a.motor, &different, nullptr), FOC_OK);
+    tick_in_lockstep(a, b, 40);
+
+    EXPECT_EQ(foc_motor_destroy(a.motor), FOC_OK);
+    EXPECT_EQ(foc_motor_destroy(b.motor), FOC_OK);
 }

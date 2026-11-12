@@ -98,6 +98,60 @@ FOC_WARN_UNUSED foc_err_t foc_motor_get_setup(foc_motor_t motor, foc_motor_setup
 
 
 /**
+ * @brief [en] Read back the machine numbers this motor was last given.
+ * @brief [zh] 读回这台电机最后一次被交给的机器数字。
+ * @param motor [en] valid handle.
+ * @param motor [zh] 有效句柄。
+ * @param out [en] non-NULL receiver; the whole struct is written.
+ * @param out [zh] 非 NULL 的接收者；写入整个结构。
+ * @return [en] FOC_OK, or FOC_ERR_PARAM for a NULL / stale handle or a NULL receiver.
+ * @return [zh] FOC_OK；句柄为 NULL/已失效或接收者为 NULL 时返回 FOC_ERR_PARAM。
+ * @note [en] `foc_motor_get_setup()` had a readback and the machine parameters did not, so a tuning tool could read
+ *            every loop setting and none of the numbers those loops are built from -- `rs`, `ld`, `lq`, `kt`, `j`, `b`
+ *            and the pole-pair count. The answer is what `foc_motor_create*()` or the last `foc_motor_apply_params()`
+ *            was given, not a re-identification.
+ * @note [zh] `foc_motor_get_setup()` 一直有回读，而机器参数没有，于是整定工具能读到每一个环路设置，却读不到那些环路是由
+ *            哪些数字构造的： `rs`、 `ld`、 `lq`、 `kt`、 `j`、 `b` 与极对数。答案是 `foc_motor_create*()` 或最后一次
+ *            `foc_motor_apply_params()` 被交给的值，不是重新辨识出来的值。
+ * @since 0.1.0
+ * @exporter
+ */
+FOC_WARN_UNUSED foc_err_t foc_motor_get_params(foc_motor_t motor, foc_motor_params_t *out);
+
+
+/**
+ * @brief [en] Give a live motor a new set of machine numbers.
+ * @brief [zh] 给一台活着的电机一组新的机器数字。
+ * @param motor [en] valid handle, in any state.
+ * @param motor [zh] 有效句柄，任意状态。
+ * @param params [en] non-NULL; validated as a whole before anything is written.
+ * @param params [zh] 非 NULL；整组校验通过之后才写入。
+ * @param setup [en] must be NULL. Passing one answers FOC_ERR_NOT_IMPL and changes nothing.
+ * @param setup [zh] 必须为 NULL。传了它回答 FOC_ERR_NOT_IMPL，且什么都不改。
+ * @return [en] FOC_OK; FOC_ERR_PARAM for a NULL or stale handle, an invalid field, or a machine that cannot run the
+ *              observer this motor is configured with; FOC_ERR_NOT_IMPL when `setup` is not NULL.
+ * @return [zh] FOC_OK；句柄为 NULL/已失效、某个字段非法、或这台机器跑不了本电机已配置的观测器时返回 FOC_ERR_PARAM；
+ *              `setup` 非 NULL 时返回 FOC_ERR_NOT_IMPL。
+ * @warning [en] This forwards the numbers to the slots that declare they can take them; it does **not** rebuild the
+ *               motor. The loop gains and the inverter timing keep the values they were constructed with, so a change
+ *               large enough to move them is a different motor, not an update -- create a new one. For the same reason
+ *               two runs are not interchangeable: `create(A)` then `apply(B)` keeps A's gains, while `create(B)` does
+ *               not.
+ * @warning [zh] 它只把数字转发给声明了能接受它们的槽位， **不** 重建电机。环路增益与逆变器时序保持构造时的值，所以大到
+ *               会改动它们的变更属于换一台电机，而不是一次更新——请新建。同理两条路径不可互换： `create(A)` 再
+ *               `apply(B)` 保留的是 A 的增益，而 `create(B)` 不是。
+ * @note [en] Exists because the numbers arrive after start-up in practice: a commissioning routine measures them, and a
+ *            support call reads them back. Without this entry point both ends of that loop are closed.
+ * @note [zh] 它存在的理由是这些数字在实际中晚于启动才到：调试流程测出它们，现场排查又要读回它们。没有这个入口，那条闭环
+ *            的两端都是断的。
+ * @since 0.1.0
+ * @exporter
+ */
+FOC_WARN_UNUSED foc_err_t foc_motor_apply_params(foc_motor_t motor, const foc_motor_params_t *params,
+                                                 const foc_motor_setup_t *setup);
+
+
+/**
  * @brief [en] Hand an enabled motor over to a different observer while it is running.
  * @brief [zh] 在运行中把已使能的电机交接给另一个观测器。
  * @param motor [en] handle from foc_motor_create(); a motor in the Run state.

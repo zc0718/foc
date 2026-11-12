@@ -31,6 +31,8 @@ foc_err_t foc_bridge_create_ex(const foc_motor_params_t *params, const foc_motor
 foc_err_t foc_bridge_create_host(const foc_motor_params_t *params, const foc_motor_setup_t *setup,
                                  const foc_hal_callbacks_t *callbacks, foc_motor_t *out);
 foc_err_t foc_bridge_get_setup(foc_motor_t motor, foc_motor_setup_t *out);
+foc_err_t foc_bridge_get_params(foc_motor_t motor, foc_motor_params_t *out);
+foc_err_t foc_bridge_apply_params(foc_motor_t motor, const foc_motor_params_t *params, const foc_motor_setup_t *setup);
 foc_err_t foc_bridge_set_observer(foc_motor_t motor, foc_observer_t observer);
 foc_err_t foc_bridge_set_trace(foc_motor_t motor, foc_trace_sample_t *samples, uint32_t capacity);
 uint32_t foc_bridge_trace_size(foc_motor_t motor);

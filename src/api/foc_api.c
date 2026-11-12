@@ -58,6 +58,20 @@ foc_err_t foc_motor_get_setup(foc_motor_t motor, foc_motor_setup_t *out) {
     return foc_bridge_get_setup(motor, out);
 }
 
+foc_err_t foc_motor_get_params(foc_motor_t motor, foc_motor_params_t *out) {
+    if ((motor == NULL) || (out == NULL)) {
+        return FOC_ERR_PARAM;
+    }
+    return foc_bridge_get_params(motor, out);
+}
+
+foc_err_t foc_motor_apply_params(foc_motor_t motor, const foc_motor_params_t *params, const foc_motor_setup_t *setup) {
+    if ((motor == NULL) || (params == NULL)) {
+        return FOC_ERR_PARAM;
+    }
+    return foc_bridge_apply_params(motor, params, setup);
+}
+
 foc_err_t foc_motor_set_observer(foc_motor_t motor, foc_observer_t observer) {
     /* The upper bound is the last enumerator. It used to say FOC_OBSERVER_BLENDED, which was a second copy of the
        enumeration and stayed behind when a fifth mode was added -- the mode was admitted by the bridge and refused
