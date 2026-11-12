@@ -329,11 +329,15 @@ FOC_WARN_UNUSED foc_err_t foc_set_speed(foc_motor_t motor, float rad_per_s);
  * @param motor [zh] 有效句柄。
  * @param rad_per_s [en] mechanical speed in rad/s; narrowed to float inside.
  * @param rad_per_s [zh] 机械速度，rad/s；内部收窄为 float。
- * @return [en] FOC_OK, or FOC_ERR_PARAM for a NULL handle or a non-finite value.
- * @return [zh] FOC_OK；句柄为 NULL 或数值非有限返回 FOC_ERR_PARAM。
+ * @return [en] FOC_OK, or FOC_ERR_PARAM for a NULL handle, a non-finite value, or a value that is finite in `double`
+ *              but not representable in `float` (`1e40`), which narrows to an infinity.
+ * @return [zh] FOC_OK；句柄为 NULL、数值非有限、或数值在 `double` 里有限而在 `float` 里不可表示（ `1e40`，会收窄为无穷
+ *              大）时返回 FOC_ERR_PARAM。
  * @note [en] The library computes in single precision: the double path avoids a lossy conversion at the *call site*, it
- *            does not raise the internal precision.
- * @note [zh] 库内以单精度计算：double 通道避免的是 **调用点** 的隐式收窄，并不提高内部精度。
+ *            does not raise the internal precision. The finiteness check is made on the narrowed value, so the wider
+ *            range of a `double` is not something a caller can rely on.
+ * @note [zh] 库内以单精度计算：double 通道避免的是 **调用点** 的隐式收窄，并不提高内部精度。有限性检查做在收窄之后的值
+ *            上，因此 `double` 更宽的范围不是调用方可以依赖的东西。
  * @since 0.1.0
  * @exporter
  */

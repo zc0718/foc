@@ -820,6 +820,13 @@ no leg compiles a module interface. Treat the feature as unverified until a leg 
 - **Desktop**: Windows, Linux, macOS — each is a build-and-run CI leg
 - **Embedded / cross-compiled**: `arm-linux-a53` (Cortex-A, aarch64 Linux) and `mcu-m4` (Cortex-M
   baremetal, `arm-none-eabi`) — see `.github/workflows/cross-compile.yml`
+- **Numeric domain**: the library computes in **single precision**. A single-precision FPU is assumed, not
+  emulated: the covered baremetal target is `mcu-m4` (Cortex-M4F), and on a part without an FPU the same
+  code runs through software floating point and none of the timing figures in this repository apply.
+  `double` appears only where a value is cheaper to keep exact than to re-derive (the trajectory's position
+  accumulator converts at the exit); it is not a second numeric domain, and the `_f64` C entry points only
+  avoid a narrowing at the *call site*. Q31 fixed point is deliberately not implemented — see
+  [What this library does not do](docs/sphinx/source/boundaries.rst).
 - Any other target works through a generated Conan profile, but is **not covered by CI** until a leg is
   added for it.
 

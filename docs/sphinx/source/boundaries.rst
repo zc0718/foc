@@ -161,6 +161,15 @@ only reason this page can be trusted after the person who wrote it has moved on.
        degrades 4.7x when the ratio drops from 40 to 8 is the sampling error on top of it.
      - ``HighSpeed.TheErrorFollowsSamplesPerCycleRatherThanTheSpeed``
 
+   * - **Compute in double when the caller passes a double.**
+     - The `_f64` entry points exist so a call site does not lose a value to an *implicit* narrowing; the library
+       still computes in `float32` throughout, and there is no wider range behind them. `1e40` is the value that
+       says so: it is a finite `double` and an `inf` in `float`, and it is **refused** rather than accepted -- the
+       check that decides is on the narrowed value, where it enters the loop, because judging the argument that
+       arrived would let an infinity through. A caller sizing anything against a `double` range is sizing against a
+       range the library does not have.
+     - ``ApiC.AFiniteDoubleThatOverflowsFloatIsRefusedInsteadOfReachingTheLoopAsInfinity``
+
 What is *not* on this page, because it is enforced by a gate rather than by a test case: no exceptions, no RTTI, no
 `new`/`delete`, no `std::vector`/`std::string`, C++17 and C11 only (`strict`), every installed header carrying a README
 claim row (`claims`), and every number in the documentation matching an artefact the build produced (`docs`).

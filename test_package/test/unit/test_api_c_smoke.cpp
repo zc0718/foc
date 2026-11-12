@@ -299,6 +299,42 @@ TEST(ApiC, DoublePrecisionEntryPointsReachTheSameCore) {
   EXPECT_EQ(FOC_ERR_PARAM, foc_set_torque_f64(handle.get(), -INFINITY));
 }
 
+/**
+ * @brief [en] The double twins narrow at the boundary, and the value that is judged finite is the **narrowed** one: a
+ *             double that is finite and overflows `float` never reaches the loop as an infinity.
+ *
+ * @brief [zh] 双精度孪生版本在边界处收窄，而被判“是否有限”的是 **收窄之后** 的值：在 `double` 里有限、在 `float` 里溢出
+ *             的值，不会以无穷大的形式进入控制环。
+ *
+ *   `1e40` is the discriminating value and it is the whole point of the case: it is a perfectly finite `double`, so a
+ *   finiteness check on the argument alone accepts it, and it narrows to `+inf`, so a check that happened *before* the
+ *   narrowing would let an infinity into the loop. The guard that answers this is on the narrowed float, where the
+ *   value enters the loop (`foc_bridge_set_*`); this case is what keeps that arrangement from quietly changing, and the
+ *   control at the bottom (`1e38`, finite in both) keeps it from passing by refusing everything.
+ *
+ * @note [en] It also pins the *premise*: there is no second numeric domain. If the library ever grew a real `double`
+ *            path, `1e40` would become a legal setpoint and this case, the sentence in `README` and the row in ` `
+ *            boundaries.rst`` would have to go together.
+ * @note [zh] 它同时钉住了 **前提** ：本库没有第二条数值域。如果哪天真的长出 double 通路， `1e40` 就成了合法给定，本条用
+ *            例必须和 `README` 里那句话、 `boundaries.rst` 里那一行一起删掉。
+ */
+TEST(ApiC, AFiniteDoubleThatOverflowsFloatIsRefusedInsteadOfReachingTheLoopAsInfinity) {
+  constexpr double kOverflowsFloat = 1e40;
+  constexpr double kFitsInFloat = 1e38;
+
+  CHandle handle;
+  ASSERT_EQ(FOC_OK, handle.create());
+
+  EXPECT_EQ(FOC_ERR_PARAM, foc_set_speed_f64(handle.get(), kOverflowsFloat));
+  EXPECT_EQ(FOC_ERR_PARAM, foc_set_torque_f64(handle.get(), kOverflowsFloat));
+  EXPECT_EQ(FOC_ERR_PARAM, foc_set_position_f64(handle.get(), kOverflowsFloat));
+  EXPECT_EQ(FOC_ERR_PARAM, foc_set_speed_f64(handle.get(), -kOverflowsFloat));
+
+  // The narrowing is honest about what it can hold, not a blanket refusal.
+  EXPECT_EQ(FOC_OK, foc_set_speed_f64(handle.get(), kFitsInFloat));
+  EXPECT_EQ(FOC_OK, foc_set_torque_f64(handle.get(), -kFitsInFloat));
+}
+
 TEST(ApiC, PoolExhaustsAndRecovers) {
   constexpr int kPoolSize = 4; // FOC_MAX_MOTORS in bridge.cpp
 
