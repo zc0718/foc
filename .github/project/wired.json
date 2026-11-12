@@ -388,6 +388,11 @@
       "class": "policy",
       "example": "test_package/test/unit/test_watchdog.cpp",
       "why": "a host that has to stop a drive when its own feeder stalls asks it whether the silence is past the deadline and which cause it was; it is a policy rather than a `Motor` concern because the timestamp belongs to the host -- the library never reads a clock it does not own -- and because the host is what decides when to poll and which line raises the fault, so the module answers the cause and does not reach into the drive"
+    },
+    "core/move_trajectory.hpp": {
+      "class": "policy",
+      "example": "test_package/test/unit/test_move_trajectory.cpp",
+      "why": "the caller streams its position into its own position loop and re-aims it when the target moves; what the axis can follow is a fact about the installation, so this type takes the limits as an input and nothing in `src/` includes it"
     }
   }
 }

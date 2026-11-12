@@ -366,7 +366,8 @@
     ],
     "comm/frame.hpp": [
       "comm/frame.hpp"
-    ],    "core/bus_current_limit.hpp": [
+    ],
+    "core/bus_current_limit.hpp": [
       "core/bus_current_limit.hpp"
     ],
     "core/angle_source.hpp": [
@@ -457,6 +458,9 @@
       "src/core/watchdog.cpp",
       "core/protection.hpp",
       "core/types.hpp"
+    ],
+    "core/move_trajectory.hpp": [
+      "core/move_trajectory.hpp"
     ]
   },
   "unmapped": []

@@ -317,6 +317,20 @@ the sensitivity half is not, so the row stays **L2**.
      - na -- the output is a per-tick authority rather than a continuous signal, and the property that matters
        (`scale` never exceeds 1, so a limiter cannot become a booster) is asserted in
        ``BusCurrentLimit.BelowTheAimNothingHappens``.
+   * - ``core/move_trajectory.hpp``
+     - `TrajectoryPoint` carries the position to hand the loop, the speed it is travelling at, and whether
+       anything is still pending -- so "where should the axis be *now*, and is the move over" takes one read
+       instead of an integrator on the caller's side. That is the whole difference from `MotionProfile`, which
+       only ever answers "how fast".
+     - Limits that cannot describe motion, and targets that are not numbers, are refused by `move_to()` and
+       change nothing -- not the target, not the position, not the pending flag. A step whose period is zero,
+       negative or `NaN` changes nothing either. A trajectory constructed with unusable limits never leaves its
+       start rather than moving with an invented default.
+     - ``MoveTrajectory.ANewTargetMidCruiseIsANumberTheReferenceCannotJumpTo``
+     - na -- its per-tick properties (the velocity changes by no more than `a*dt`, never exceeds what the remaining
+       distance can still stop from, never passes the target, and is unchanged by a re-aim) are asserted inside
+       ``MoveTrajectory.ANewTargetMidCruiseIsANumberTheReferenceCannotJumpTo`` rather than in the algebraic
+       ``Invariants`` suite, because they are limits of a sampled law and not identities between transforms.
    * - ``core/angle_source.hpp``
      - `AngleReading` carries the quality word, the source that produced the angle, the disagreement the decision was
        made on (`NaN` when nothing could be compared) and how long the preferred source has been missing, so "which
