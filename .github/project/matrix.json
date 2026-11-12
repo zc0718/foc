@@ -1,0 +1,404 @@
+{
+  "_what": "The horizontal comparison as a registry: one row per feature the survey of ten third-party repositories covered, with what this library's cell rests on. `matrix_gate.py` reads it and refuses two things -- a cell that points at a claim the README does not make, and a new claim row that no cell accounts for. The *other* columns of that survey (how many of the ten have the feature) are research notes under `workspace/`, not shipped claims, and are deliberately not here: this file holds our column and its evidence.",
+  "_cells": {
+    "has": "a README claim row backs it; `claims` names the module(s) and must be non-empty",
+    "partial": "a claim backs part of it; `claims` is non-empty and `why` says which part is not there",
+    "absent": "no claim; `claims` must be empty and `why` says what closing it would cost"
+  },
+  "features": [
+    {
+      "id": "svpwm",
+      "feature": "SVPWM with a linear-range criterion",
+      "cell": "has",
+      "claims": [
+        "foc/core/svpwm.hpp"
+      ]
+    },
+    {
+      "id": "deadtime",
+      "feature": "Dead-time compensation as volt-seconds",
+      "cell": "has",
+      "claims": [
+        "foc/core/deadtime.hpp"
+      ]
+    },
+    {
+      "id": "single_shunt",
+      "feature": "Single-shunt current reconstruction",
+      "cell": "has",
+      "claims": [
+        "foc/core/single_shunt.hpp"
+      ]
+    },
+    {
+      "id": "min_pulse",
+      "feature": "Minimum pulse width and its residue",
+      "cell": "has",
+      "claims": [
+        "foc/core/min_pulse.hpp"
+      ]
+    },
+    {
+      "id": "overmodulation",
+      "feature": "Overmodulation and six-step extension",
+      "cell": "absent",
+      "claims": [],
+      "why": "The modulator stops at the linear hexagon and says so, because the boundary is measured. Four of the six product firmwares in the survey extend past it, and doing so here would move every voltage assertion in this repository -- recorded as the one power-stage gap rather than half-done."
+    },
+    {
+      "id": "back_emf",
+      "feature": "Flux / back-EMF observation",
+      "cell": "has",
+      "claims": [
+        "foc/core/observer/back_emf_observer.hpp",
+        "foc/core/observer/nonlinear_flux_observer.hpp"
+      ]
+    },
+    {
+      "id": "hfi",
+      "feature": "High-frequency injection",
+      "cell": "has",
+      "claims": [
+        "foc/core/observer/hfi_observer.hpp"
+      ]
+    },
+    {
+      "id": "smo",
+      "feature": "Sliding-mode / closed-loop current observer",
+      "cell": "absent",
+      "claims": [],
+      "why": "Measured as a candidate and refused: it beat the incumbent on the mean-value plant and lost on a switching one, so it is a harness candidate (`test_sil_admission.cpp`) and not a shipped header. The README says so next to the claim table, which is why no `smo.hpp` row exists to point at."
+    },
+    {
+      "id": "dual_inductance",
+      "feature": "Saliency-based observation (two inductances)",
+      "cell": "has",
+      "claims": [
+        "foc/core/observer/dual_inductance_observer.hpp"
+      ]
+    },
+    {
+      "id": "polarity",
+      "feature": "Magnet polarity identification",
+      "cell": "has",
+      "claims": [
+        "foc/core/polarity.hpp"
+      ]
+    },
+    {
+      "id": "observer_blend",
+      "feature": "Observer blending and hand-over",
+      "cell": "has",
+      "claims": [
+        "foc/core/observer/blended_observer.hpp",
+        "foc/core/observer/switchable_observer.hpp"
+      ]
+    },
+    {
+      "id": "weakening",
+      "feature": "Field weakening, MTPA and MTPV as one map",
+      "cell": "has",
+      "claims": [
+        "foc/core/field_weakening.hpp",
+        "foc/core/reference.hpp",
+        "foc/core/mtpv.hpp"
+      ]
+    },
+    {
+      "id": "loops",
+      "feature": "Current, speed and position loops",
+      "cell": "has",
+      "claims": [
+        "foc/core/pi.hpp",
+        "foc/core/position.hpp"
+      ]
+    },
+    {
+      "id": "feedforward",
+      "feature": "Cross-coupling and back-EMF feedforward",
+      "cell": "has",
+      "claims": [
+        "foc/core/feedforward.hpp"
+      ]
+    },
+    {
+      "id": "cogging",
+      "feature": "Cogging learning and feedforward compensation",
+      "cell": "has",
+      "claims": [
+        "foc/core/cogging_comp.hpp",
+        "foc/core/cogging_learn.hpp"
+      ]
+    },
+    {
+      "id": "auto_tune",
+      "feature": "Outer-loop self-tuning from one window",
+      "cell": "has",
+      "claims": [
+        "foc/core/auto_tune.hpp"
+      ]
+    },
+    {
+      "id": "friction",
+      "feature": "Friction compensation, soft limits, electronic gearing",
+      "cell": "has",
+      "claims": [
+        "foc/core/friction_comp.hpp",
+        "foc/core/soft_limit.hpp",
+        "foc/core/gear_ratio.hpp"
+      ]
+    },
+    {
+      "id": "stall_start",
+      "feature": "Breakaway start with a measured hand-over",
+      "cell": "has",
+      "claims": [
+        "foc/core/stall_start.hpp"
+      ]
+    },
+    {
+      "id": "hall",
+      "feature": "Hall decoding and six-step commutation",
+      "cell": "has",
+      "claims": [
+        "foc/core/hall.hpp",
+        "foc/core/six_step.hpp"
+      ]
+    },
+    {
+      "id": "position_ref",
+      "feature": "Position reference from an electrical estimate",
+      "cell": "has",
+      "claims": [
+        "foc/core/position_reference.hpp",
+        "foc/core/homing.hpp"
+      ]
+    },
+    {
+      "id": "trajectory",
+      "feature": "A position reference to follow, not only an endpoint",
+      "cell": "has",
+      "claims": [
+        "foc/core/move_trajectory.hpp",
+        "foc/core/motion_profile.hpp"
+      ]
+    },
+    {
+      "id": "thermal",
+      "feature": "Thermal scheduling before derating",
+      "cell": "has",
+      "claims": [
+        "foc/core/thermal_limit.hpp",
+        "foc/core/protection.hpp"
+      ]
+    },
+    {
+      "id": "protection",
+      "feature": "Protection, derating and the I2t budget",
+      "cell": "has",
+      "claims": [
+        "foc/core/protection.hpp",
+        "foc/core/watchdog.hpp"
+      ]
+    },
+    {
+      "id": "chopper",
+      "feature": "Brake chopper on the DC link",
+      "cell": "has",
+      "claims": [
+        "foc/core/brake_chopper.hpp"
+      ]
+    },
+    {
+      "id": "q31",
+      "feature": "Q31 fixed-point path",
+      "cell": "absent",
+      "claims": [],
+      "why": "This library is float32 with a stated FPU assumption (README, Platforms Support), not two numerical domains. Writing one would move every algorithm and every criterion, so the premise is declared instead of the feature being pretended."
+    },
+    {
+      "id": "params_runtime",
+      "feature": "Parameter write and read-back at runtime",
+      "cell": "has",
+      "claims": [
+        "foc/api/foc_api.h"
+      ]
+    },
+    {
+      "id": "commissioning",
+      "feature": "The commissioning chain, end to end",
+      "cell": "has",
+      "claims": [
+        "foc/core/commissioning.hpp",
+        "foc/core/commissioning_flow.hpp"
+      ]
+    },
+    {
+      "id": "nvm",
+      "feature": "Calibration result that survives the bench",
+      "cell": "partial",
+      "claims": [
+        "foc/comm/commissioned_set.hpp"
+      ],
+      "why": "The record exists and is checked (46 bytes, version, CRC with an exhaustive single-byte sweep); the storage driver does not, and deliberately -- which sector, which wear strategy and the power-fail ordering are board facts, not library ones."
+    },
+    {
+      "id": "production_record",
+      "feature": "Production test record",
+      "cell": "partial",
+      "claims": [
+        "foc/comm/board_record.hpp",
+        "foc/core/board_check.hpp"
+      ],
+      "why": "The 164-byte record exists and so does the check that fills it; writing it somewhere is again the board's business."
+    },
+    {
+      "id": "safety_assembly",
+      "feature": "Safety chain assembled into one drive tick",
+      "cell": "has",
+      "claims": [
+        "foc/motor/drive_supervisor.hpp"
+      ]
+    },
+    {
+      "id": "angle_arbitration",
+      "feature": "Angle-source arbitration with a declared quality",
+      "cell": "partial",
+      "claims": [
+        "foc/core/angle_source.hpp"
+      ],
+      "why": "The type is measured and ships, but the assembled drive still picks its angle in one place, so no host can hand it two candidates. Recorded as the reach of the type rather than as a claim about the drive."
+    },
+    {
+      "id": "temperature",
+      "feature": "Temperature input channel",
+      "cell": "has",
+      "claims": [
+        "foc/core/thermistor.hpp",
+        "foc/hal/temperature.hpp"
+      ]
+    },
+    {
+      "id": "bus_current",
+      "feature": "Bus / battery current ceiling",
+      "cell": "has",
+      "claims": [
+        "foc/core/bus_current_limit.hpp"
+      ]
+    },
+    {
+      "id": "protocol",
+      "feature": "Frame and register table for a byte link",
+      "cell": "partial",
+      "claims": [
+        "foc/comm/frame.hpp",
+        "foc/comm/register_map.hpp",
+        "foc/comm/encoder_stream.hpp"
+      ],
+      "why": "The frame layer, the register table and an encoder stream exist; a stack (CANopen, Modbus) does not, and the register table is the seam such a stack would be written against."
+    },
+    {
+      "id": "host_tooling",
+      "feature": "Host tooling / GUI",
+      "cell": "absent",
+      "claims": [],
+      "why": "Out of the library: the Python module, the benchmark scripts and the sweeps are how this project measures itself, not a product surface."
+    }
+  ],
+  "beyond_the_comparison": [
+    {
+      "group": "foundation",
+      "modules": [
+        "foc/core/types.hpp",
+        "foc/core/version.hpp",
+        "foc/version.h",
+        "foc/core/traits.hpp",
+        "foc/core/limits.hpp",
+        "foc/core/transforms.hpp"
+      ],
+      "why": "Types, versioning, the capability concepts, the clamp and the Clarke/Park transforms. Every feature above rests on them and none of the ten repositories is compared on them -- the survey asks what a drive can do, not what its arithmetic is written in."
+    },
+    {
+      "group": "hal_contracts",
+      "modules": [
+        "foc/hal/brake_switch.hpp",
+        "foc/hal/clock.hpp",
+        "foc/hal/current_sense.hpp",
+        "foc/hal/dc_link.hpp",
+        "foc/hal/fault_input.hpp",
+        "foc/hal/hall.hpp",
+        "foc/hal/mechanical_brake.hpp",
+        "foc/hal/position.hpp",
+        "foc/hal/pwm.hpp"
+      ],
+      "why": "The ports a host implements. The survey's rows are capabilities of the firmware, not shapes of its seam; the one HAL fact worth a row of its own -- that a missing fault input is refused rather than defaulted -- is stated in the claim row for the group, not as a feature."
+    },
+    {
+      "group": "host_stand_ins",
+      "modules": [
+        "foc/driver/callback_hal.hpp",
+        "foc/driver/scripted_current.hpp",
+        "foc/driver/sim_position.hpp",
+        "foc/driver/stub_brake_switch.hpp",
+        "foc/driver/stub_dc_link.hpp",
+        "foc/driver/stub_fault_input.hpp",
+        "foc/driver/stub_hal.hpp",
+        "foc/driver/stub_hall.hpp",
+        "foc/driver/stub_mechanical_brake.hpp",
+        "foc/driver/stub_pwm.hpp",
+        "foc/driver/stub_temperature.hpp"
+      ],
+      "why": "Proofs that the contracts above are implementable, and the machinery this project's SIL runs on. A stub is not a capability: it claims what an interface needs, which the `hal_contracts` rows already say."
+    },
+    {
+      "group": "assembly",
+      "modules": [
+        "foc/motor/motor.hpp",
+        "foc/motor/foc_loop.hpp",
+        "foc/motor/motor_config.hpp",
+        "foc/motor/torque_map.hpp",
+        "foc/api/foc_types.h"
+      ],
+      "why": "How the features are put together -- policy composition, the decimated loop, the gain law and the torque map between quantities. The one composition that got a cell of its own is `drive_supervisor.hpp`, because the *order* of a stop is a feature in its own right; these are the seams that order runs through."
+    },
+    {
+      "group": "machine_description",
+      "modules": [
+        "foc/core/machine_params.hpp",
+        "foc/core/machine_map.hpp",
+        "foc/core/machine_map_text.hpp"
+      ],
+      "why": "Nameplate to derived parameters, and a current-dependent map with a documented file format. This is data about a particular machine: a feature of the library only in so far as it lets the features above be told which machine they are driving."
+    },
+    {
+      "group": "instruments",
+      "modules": [
+        "foc/core/sinusoid_fit.hpp",
+        "foc/core/step_metrics.hpp",
+        "foc/core/trace.hpp",
+        "foc/core/trace_parse.hpp",
+        "foc/core/speed_from_angle.hpp",
+        "foc/core/observer/ideal_observer.hpp",
+        "foc/core/observer/observer_policy.hpp"
+      ],
+      "why": "The tools this project measures itself with -- the sine fit, the step metrics, the trace window, the differenced speed -- plus the ideal observer that serves as the reference for the ones that do ship. They appear in other rows as *evidence*; they are not what a customer compares drives on."
+    },
+    {
+      "group": "routines",
+      "modules": [
+        "foc/core/alignment.hpp",
+        "foc/core/startup.hpp"
+      ],
+      "why": "Alignment and open-loop start as individual routines. The commissioning *chain* is the feature (its own cell); these two are the steps it calls, and the survey's ten repositories do not separate them."
+    },
+    {
+      "group": "inputs_and_modes",
+      "modules": [
+        "foc/core/command_source.hpp",
+        "foc/core/filters.hpp",
+        "foc/core/sm.hpp"
+      ],
+      "why": "Pulse/analogue/step commands, the filter bank and the mode machine. Each is a shape of input or of transition rather than an answer to \"can the drive do X\", which is what the survey's rows ask."
+    }
+  ]
+}

@@ -545,7 +545,7 @@ PROJECT_GATES = ('license', 'strict', 'claims', 'docs', 'deps', 'form', 'boundar
                  'assume', 'anchor', 'scaffold', 'budget', 'clocks', 'observability', 'combinations', 'domain',
                  'mutants', 'plantref', 'fmu', 'pil', 'mcdc', 'blast', 'wired', 'smoke', 'regmap', 'subset',
                  'docvoice', 'symbols', 'equations', 'enforce', 'docshape', 'docver', 'docannot',
-                 'docscope', 'compliance', 'demo', 'ports')
+                 'docscope', 'compliance', 'demo', 'ports', 'matrix')
 
 
 def cmd_subset(_explicit):
@@ -605,6 +605,16 @@ def cmd_ports(_explicit):
     for as long as the library existed, every consumer's tests passed anyway (they handed the field in
     themselves), and nothing was red about it."""
     return _run_script_with_selftest('ports_gate.py', 'ports')
+
+
+def cmd_matrix(_explicit):
+    """Every feature in the horizontal comparison names the claim its cell rests on, and every claim is placed.
+
+    The body lives in `matrix_gate.py` because it is a registry plus a parse of the README claim table. The
+    subject is the one surface both earlier audits re-litigated: a survey cell that says "no" while the
+    library has it, or "yes" because a header exists. Neither can be re-read by hand at the next audit, so
+    the source is named once here."""
+    return _run_script_with_selftest('matrix_gate.py', 'matrix')
 
 
 def cmd_equations(_explicit):
@@ -1060,6 +1070,9 @@ def main():
         'ports': 'every field of a per-tick input struct, and every `step()` parameter whose name '
                  'carries a unit, names a producer that exists, and the count of quantities no channel '
                  'is provided for only falls',
+        'matrix': 'every feature in the horizontal comparison names the README claim row its cell rests '
+                  'on, an `absent` cell claims nothing and says why, and every claim row is placed in a '
+                  'cell or in a named group that says why it is not one',
         'pil': 'run the speed-step scenario on the target ISA under qemu and compare with the host; SKIPPED when its '
                'material is absent',
         'all': ' + '.join(PROJECT_GATES),
@@ -1161,6 +1174,8 @@ def main():
         return cmd_demo([])
     if args.gate == 'ports':
         return cmd_ports([])
+    if args.gate == 'matrix':
+        return cmd_matrix([])
     # The chain above is the only thing standing between a single-gate invocation and the aggregate below, and it
     # has now been forgotten twice (`plantref` before, `combinations` and `mcdc` this time). A missing branch does
     # not fail: it runs *every* gate and prints "all N", which reads as success. So the fall-through is refused
