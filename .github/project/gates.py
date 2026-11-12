@@ -87,20 +87,81 @@ def _scoped_rules(config_name, flags=0):
 LOCAL_ONLY = {'pil', 'fmu', 'mutants', 'plantref', 'mcdc'}
 
 
-def _ci_policy_violations():
-    """Workflows must not call a LOCAL_ONLY gate. Comments are ignored: they are where the rule is explained."""
+def _workflow_gate_names(text):
+    """Every gate a workflow asks `gates.py` to run, paired with the line that asks.
+
+    Two shapes exist and both are in use: a direct `gates.py <name>` step, and a shell loop
+    (`for gate in a b c; do ... gates.py "$gate" ...; done`). The loop form is the one that goes wrong quietly: a name
+    the dispatcher does not know is refused by argparse with exit 2, so the job is red for a reason that has nothing
+    to do with the code -- and in the meantime the gate itself never ran. That is exactly how `demo` and `compliance`
+    went unrun while the workflow called them on every push."""
+    named = []
+    loops = {}
+    for lineno, line in enumerate(text.splitlines(), start=1):
+        stripped = line.strip()
+        if not stripped or stripped.startswith('#'):
+            continue
+        for match in re.finditer(r'((?:[A-Za-z0-9_.-]+/)*)gates\.py\s+([A-Za-z][A-Za-z0-9_-]*)', stripped):
+            if Path(match.group(1)).name == 'misc':
+                continue  # the scaffold's dispatcher has its own vocabulary (`format`, `tidy`, `guard`)
+            named.append((lineno, match.group(2)))
+        loop = re.match(r'for\s+(\w+)\s+in\s+(.+?);\s*do\b', stripped)
+        if loop:
+            loops[loop.group(1)] = (lineno, loop.group(2).split())
+    for variable, (lineno, words) in loops.items():
+        feeds = re.search(rf'((?:[A-Za-z0-9_.-]+/)*)gates\.py\s+["\']?\$\{{?{variable}\}}?["\']?', text)
+        if not feeds or Path(feeds.group(1)).name == 'misc':
+            continue  # a loop over something else (files, workflows), or over the scaffold's gates
+        named.extend((lineno, word) for word in words if re.fullmatch(r'[A-Za-z][A-Za-z0-9_-]*', word))
+    return named
+
+
+def _gate_registration_violations(gates=None, dispatch=None):
+    """`PROJECT_GATES` and the two places that dispatch it have to name the same set.
+
+    A name added to the tuple alone is loud only if somebody happens to run that name: `all` iterates the tuple and
+    looks the name up in its own mapping (KeyError), and a single call falls through to the explicit refusal at the
+    bottom. This gate says it on every run instead -- which is what `demo` and `compliance` had been missing.
+    Known limit: it reads the source for `args.gate == '<name>'` and `'<name>':`, so rewriting the dispatch into a
+    table would have to update it. That failure is loud (this gate goes red), never silent."""
+    gates = tuple(PROJECT_GATES if gates is None else gates)
+    if dispatch is None:
+        dispatch = Path(__file__).read_text(encoding='utf-8')
     problems = []
-    workflows = ROOT / '.github' / 'workflows'
-    if not workflows.is_dir():
-        return problems
-    for path in sorted(workflows.glob('*.y*ml')):
-        for lineno, line in enumerate(path.read_text(encoding='utf-8').splitlines(), start=1):
+    for name in gates:
+        if f"args.gate == {name!r}" not in dispatch:
+            problems.append(f'`{name}` is in PROJECT_GATES but no `args.gate == {name!r}` branch exists, so a '
+                            f'single call answers "unknown gate" and runs nothing')
+        if f"'{name}':" not in dispatch:
+            problems.append(f'`{name}` is in PROJECT_GATES but the aggregate mapping does not name it, so '
+                            f'`gates.py all` raises KeyError')
+    return problems
+
+
+def _ci_policy_violations(sources=None):
+    """Workflows may not call a LOCAL_ONLY gate, nor name a gate this dispatcher does not know.
+
+    Comments are ignored: they are where the rules are explained. `sources` is `(name, text)` pairs; the default
+    reads this project's workflows, and the self-test passes fixtures instead so each rule is proved able to fail."""
+    problems = []
+    if sources is None:
+        workflows = ROOT / '.github' / 'workflows'
+        if not workflows.is_dir():
+            return problems
+        sources = [(path.name, path.read_text(encoding='utf-8')) for path in sorted(workflows.glob('*.y*ml'))]
+    known = set(PROJECT_GATES) | {'all'}
+    for name, text in sources:
+        for lineno, gate in _workflow_gate_names(text):
+            if gate not in known:
+                problems.append(f'{name}:{lineno}: calls `gates.py {gate}`, which this dispatcher does not know -- '
+                                f'argparse refuses it with exit 2, so the job is red and no gate runs')
+        for lineno, line in enumerate(text.splitlines(), start=1):
             stripped = line.strip()
             if not stripped or stripped.startswith('#'):
                 continue
             for gate in LOCAL_ONLY:
                 if re.search(rf'gates\.py\s+{gate}\b', stripped):
-                    problems.append(f'{path.name}:{lineno}: calls `gates.py {gate}`, which is local-only -- '
+                    problems.append(f'{name}:{lineno}: calls `gates.py {gate}`, which is local-only -- '
                                     f'it rebuilds and emulates for minutes per push; run it locally and '
                                     f'before a release instead')
     return problems
@@ -230,7 +291,14 @@ def cmd_docs(_explicit):
         return shape.returncode
     numbers = subprocess.run([sys.executable, str(ROOT / '.github' / 'project' / 'number_sheet.py'), '--check'],
                              cwd=ROOT, text=True)
-    return numbers.returncode
+    if numbers.returncode != 0:
+        return numbers.returncode
+    # A page rendered from a registry is checked by *this* gate rather than by the gate that owns the
+    # registry: a code gate has to run with no documentation tree at all, and a page that has fallen
+    # behind is a second source of truth. Before the split, deleting `docs/` reddened `deps`.
+    rendered = subprocess.run([sys.executable, str(ROOT / '.github' / 'project' / 'render_check.py')],
+                              cwd=ROOT, text=True)
+    return rendered.returncode
 
 
 def cmd_deps(_explicit):
@@ -404,23 +472,73 @@ def cmd_anchor(_explicit):
     return subprocess.run([sys.executable, str(script), '--selftest'], cwd=ROOT, text=True).returncode
 
 
-def cmd_ci_policy(_explicit):
-    """A workflow may not call a gate whose cost belongs on a developer machine.
+def cmd_ci_policy(explicit):
+    """A workflow may not call a gate whose cost belongs on a developer machine, nor one that does not exist.
 
     `pil` builds the library twice and runs the target binary under qemu; `fmu` loads the model in an FMI master.
     Both are minutes per push for evidence that only changes when the control loop or the interface does, so they run
     locally and before a release. The list lives here rather than in a comment because a comment cannot fail a build.
-    The scaffold's `gates.py` is not touched: this checks *this* project's workflows, which is a project fact."""
-    problems = _ci_policy_violations()
+    The scaffold's `gates.py` is not touched: this checks *this* project's workflows and *this* project's dispatcher,
+    which are project facts. The second half is not decoration: on 2026-11-12 the workflow named `demo` and
+    `compliance` on every push while neither was registered, so the job was red for a reason unrelated to the code
+    and both gates had never run. `--selftest` runs fixtures through both rules and proves each can fail."""
+    if '--selftest' in (explicit or []):
+        return _ci_policy_selftest()
+    problems = _ci_policy_violations() + _gate_registration_violations()
     for problem in problems:
         print(f'[ci-policy] {problem}', file=sys.stderr, flush=True)
     if problems:
         print(f'[ci-policy] FAIL ({len(problems)} violation(s))', flush=True)
         return 1
     workflows = sorted((ROOT / '.github' / 'workflows').glob('*.y*ml'))
-    print(f'[ci-policy] OK ({len(workflows)} workflow(s), no local-only gate in CI, local-only: '
-          f'{", ".join(sorted(LOCAL_ONLY))})', flush=True)
+    print(f'[ci-policy] OK ({len(workflows)} workflow(s), no local-only gate in CI, no unknown gate named, '
+          f'local-only: {", ".join(sorted(LOCAL_ONLY))})', flush=True)
     return 0
+
+
+def _ci_policy_selftest():
+    """Prove each rule can go red, on fixtures rather than on the tree."""
+    rule_cases = [
+        ('a loop over a gate that does not exist',
+         [('wf.yml', 'run: |\n  for gate in license demoX; do\n'
+                     '    python3 .github/project/gates.py "$gate" || failed=1\n  done\n')], True),
+        ('a direct step naming a gate that does not exist',
+         [('wf.yml', 'run: python3 .github/project/gates.py nope\n')], True),
+        ('a local-only gate called from CI',
+         [('wf.yml', 'run: python3 .github/project/gates.py pil\n')], True),
+        ('a loop over something that is not a gate list',
+         [('wf.yml', 'run: |\n  for f in $(ls); do\n    black "$f"\n  done\n')], False),
+        ('a scaffold gate called through the scaffold dispatcher',
+         [('wf.yml', 'run: |\n  for gate in format tidy guard; do\n'
+                     '    python3 .github/misc/gates.py "$gate" || failed=1\n  done\n')], False),
+        ('the shape this repository actually uses',
+         [('wf.yml', 'run: |\n  for gate in license subset demo; do\n'
+                     '    python3 .github/project/gates.py "$gate" || failed=1\n  done\n')], False),
+    ]
+    failures = 0
+    for name, sources, want_red in rule_cases:
+        red = bool(_ci_policy_violations(sources))
+        good = red == want_red
+        failures += 0 if good else 1
+        print(f'[ci-policy-selftest] {"ok  " if good else "MISS"} {name}: '
+              f'{"red" if red else "clean"} (wanted {"red" if want_red else "clean"})', flush=True)
+    registry_cases = [
+        ('a registered name with neither a branch nor an aggregate key',
+         ('alpha beta gamma', "if args.gate == 'alpha':\n    pass\n'alpha': cmd_alpha,\n"
+                              "if args.gate == 'beta':\n    pass\n'beta': cmd_beta,\n"), 2),
+        ('a registered name that is fully wired',
+         ('alpha beta', "if args.gate == 'alpha':\n    pass\n'alpha': cmd_alpha,\n"
+                         "if args.gate == 'beta':\n    pass\n'beta': cmd_beta,\n"), 0),
+    ]
+    for name, (gates_text, dispatch), want in registry_cases:
+        found = _gate_registration_violations(tuple(gates_text.split()), dispatch)
+        good = len(found) == want
+        failures += 0 if good else 1
+        print(f'[ci-policy-selftest] {"ok  " if good else "MISS"} {name}: '
+              f'{len(found)} problem(s) (wanted {want})', flush=True)
+    total = len(rule_cases) + len(registry_cases)
+    print(f'[ci-policy-selftest] {total - failures} / {total} judgement(s) as expected', flush=True)
+    return 1 if failures else 0
 
 
 PROJECT_GATES = ('license', 'strict', 'claims', 'docs', 'deps', 'form', 'boundaries', 'capabilities', 'ci-policy',
@@ -445,6 +563,38 @@ def cmd_subset(_explicit):
         if _rc:
             return _rc
     return 0
+
+
+def _run_script_with_selftest(script_name, label):
+    """Run a gate that lives in its own script: its self-test first, then the check.
+
+    The order is the same rule the rest of this file follows -- a checker that has never said no is a checker nobody
+    has a reason to trust -- and doing it here means the single-gate call, `all`, and CI all get it."""
+    script = ROOT / '.github' / 'project' / script_name
+    for args in (['--selftest'], []):
+        rc = subprocess.run([sys.executable, str(script), *args], cwd=ROOT, text=True).returncode
+        if rc:
+            stage = 'self-test' if args else 'check'
+            print(f'[gates] {label}: {stage} failed (exit {rc})', flush=True)
+            return rc
+    return 0
+
+
+def cmd_compliance(_explicit):
+    """The compliance pages are reachable, and both doc lines carry the same four sentences.
+
+    The pages are deliverables and live outside `.github/project/`; the gate is registered here so `all` and the CI
+    policy see it like any other. It was in the workflow for a while without being registered, which is how the job
+    stayed red with no gate actually running."""
+    return _run_script_with_selftest('compliance_gate.py', 'compliance')
+
+
+def cmd_demo(_explicit):
+    """Every example compiles and links with the command its own page gives it.
+
+    The pages already promised this ("the listing is that file, so the two cannot drift"); this is what makes it
+    true. It also means an example cannot keep an error constant that nothing compiles."""
+    return _run_script_with_selftest('demo_gate.py', 'demo')
 
 
 def cmd_equations(_explicit):
@@ -489,42 +639,6 @@ def cmd_docannot(_explicit):
     `///<` carried onto a line with no declaration to its left, is red. Banners and code-reader
     notes (`fall through`, `intentionally empty`) are recognised. `--selftest` first."""
     script = str(ROOT / '.github' / 'project' / 'docannot_gate.py')
-    for _args in (['--selftest'], []):
-        _rc = subprocess.run([sys.executable, script, *_args], cwd=ROOT, text=True).returncode
-        if _rc:
-            return _rc
-    return 0
-
-
-def cmd_compliance(_explicit):
-    """The compliance pages are reachable, and the two doc lines say the same four sentences.
-
-    Why one gate for two rules: both are about the same page set. `reach` refuses a compliance page
-    that only the index points at (measured when the rule was written: two references, both in
-    `index.rst`), because such a page exists only if a reader scrolls the right list. `parity`
-    refuses a sentence that drifts between the Sphinx site and the Doxygen front page: the two lines
-    deliberately do not link to each other, so nothing but this check keeps them saying the same
-    thing. `--selftest` first, because a checker that has never said no is a checker nobody has a
-    reason to trust."""
-    script = str(ROOT / '.github' / 'project' / 'compliance_gate.py')
-    for _args in (['--selftest'], []):
-        _rc = subprocess.run([sys.executable, script, *_args], cwd=ROOT, text=True).returncode
-        if _rc:
-            return _rc
-    return 0
-
-
-def cmd_demo(_explicit):
-    """Every example the documentation shows carries a build command, and that command works.
-
-    The guide pages promise that each listing **is** the file and that the example compiles; the
-    manual's `check.py` then treats those files as the source of its chapters. Measured when this
-    gate was written: nothing in the repository compiled them, and four of the nine documented
-    commands failed when run as written (two named a source file that does not exist), while the
-    tenth example had no command at all and one did not compile under `-Werror`. It runs **the
-    command the page documents**, not its own, so the instruction cannot drift from the code.
-    `--selftest` first: a checker that has never said no is one nobody has a reason to trust."""
-    script = str(ROOT / '.github' / 'project' / 'demo_gate.py')
     for _args in (['--selftest'], []):
         _rc = subprocess.run([sys.executable, script, *_args], cwd=ROOT, text=True).returncode
         if _rc:
@@ -931,10 +1045,8 @@ def main():
                     'onto a line with no declaration to its left, both of which publish a member with no text',
         'docscope': 'a doc block sits at file scope or in a type body: inside a function it publishes prose with no '
                     'declaration to describe, which `EXTRACT_ALL` makes invisible',
-        'compliance': 'the compliance pages are reachable from more than the index, and the four sentences this '
-                      'project never says are identical in the site and on the Doxygen front page (one JSON source)',
-        'demo': 'every example under `docs/doxygen/dox/demos/` carries a build command in its own header, and that '
-                'command -- not one of this gate\'s own -- compiles and links the file it names',
+        'compliance': 'the compliance pages are reachable and both doc lines carry the same four sentences',
+        'demo': 'every example in the docs compiles and links with the command its own page gives it',
         'pil': 'run the speed-step scenario on the target ISA under qemu and compare with the host; SKIPPED when its '
                'material is absent',
         'all': ' + '.join(PROJECT_GATES),
@@ -948,6 +1060,9 @@ def main():
         if name == 'smoke':
             leaf.add_argument('--preflight', action='store_true',
                               help='also run tier 0: stale binaries and a cross-built package in the cache')
+        if name == 'ci-policy':
+            leaf.add_argument('--selftest', action='store_true',
+                              help='prove both rules can fail, on fixtures rather than on the tree')
     args = parser.parse_args()
 
     if args.gate == 'license':
@@ -967,7 +1082,7 @@ def main():
     if args.gate == 'capabilities':
         return cmd_capabilities(args.files)
     if args.gate == 'ci-policy':
-        return cmd_ci_policy(args.files)
+        return cmd_ci_policy(['--selftest'] if getattr(args, 'selftest', False) else [])
     if args.gate == 'assume':
         return cmd_assume(args.files)
     if args.gate == 'anchor':
