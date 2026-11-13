@@ -98,7 +98,11 @@ def world() -> dict:
     for path in sorted((ROOT / "test_package" / "test").rglob("*")):
         if path.suffix in {".c", ".cpp", ".hpp"}:
             from_tests |= includes_of(path)
+    guide = ROOT / "docs" / "sphinx" / "source" / "guides" / "porting.rst"
+    guide_contracts = (set(re.findall(r"``(hal/[a-z_]+\.hpp)``", guide.read_text(encoding="utf-8", errors="replace")))
+                       if guide.is_file() else set())
     return {"headers": set(keys), "reachable": reachable, "abi": abi, "implementers": implementers,
+            "guide_contracts": guide_contracts,
             "from_tests": from_tests, "exists": lambda rel: (ROOT / rel).is_file()}
 
 
@@ -209,6 +213,21 @@ def check(catalogue: dict, facts: dict, register: dict) -> list[str]:
     for key in sorted(known):
         if key not in catalogue:
             problems.append(f"`known_unshipped` names `{key}`, which is not catalogued")
+    # The porting guide is the page a customer reads before writing an adapter, so a contract that exists but is not on
+    # it is invisible work, and a row naming a contract that does not exist sends them looking for a header. Both
+    # directions are checked, and only the *names* -- signatures live in `traits.hpp`, where a predicate is exact.
+    # 移植指南是客户写适配器之前读的那一页，所以"有契约但页上没有"是看不见的工作，"页上有但契约不存在"会让人去找一个
+    # 不存在的头。两个方向都查，且只查名字——签名在 `traits.hpp` 里，那里的谓词是精确的。
+    if facts.get("guide_contracts") is not None:
+        listed = facts["guide_contracts"]
+        contracts = {key for key, spec in catalogue.items()
+                     if str((spec or {}).get("class")) == "contract"}
+        for key in sorted(contracts - listed):
+            problems.append(f"`{key}` is a catalogued contract that the porting guide does not describe -- a customer "
+                            f"writing an adapter would not know it exists")
+        for name in sorted(listed - contracts):
+            problems.append(f"the porting guide describes `{name}`, which is not a catalogued contract -- the page names "
+                            f"a promise nothing makes")
     for key in sorted(surface_debt):
         if key not in catalogue:
             problems.append(f"`c_surface_debt` names `{key}`, which is not catalogued")

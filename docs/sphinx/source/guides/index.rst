@@ -93,6 +93,7 @@ says what it would take to add it.
    Positioning an axis <positioning>
    Sampling and the power stage <current-sampling>
    Health and protection <protection-and-derating>
+   Porting to a board <porting>
 
 The figures already on the site
 -------------------------------
