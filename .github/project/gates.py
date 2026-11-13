@@ -296,6 +296,15 @@ def cmd_docs(_explicit):
     # A page rendered from a registry is checked by *this* gate rather than by the gate that owns the
     # registry: a code gate has to run with no documentation tree at all, and a page that has fallen
     # behind is a second source of truth. Before the split, deleting `docs/` reddened `deps`.
+    # A reproduction page is a list of commands, and a command that names a file which is not there fails the reader on
+    # their first step -- worse than no page, because it looks like their checkout. The same check keeps the page's gate
+    # list honest in both directions: a name `PROJECT_GATES` does not have, and a runnable gate the page forgot.
+    # 复现页是一串命令，而指着不存在文件的命令会让读者第一步就失败——比没有这页更糟，因为它看起来像检出坏了。同一条检查
+    # 还把页面的门禁名单在两个方向上都钉住：不存在的名字，以及页面漏掉的、可跑的门。
+    paths = subprocess.run([sys.executable, str(ROOT / '.github' / 'project' / 'docpath_gate.py')],
+                           cwd=ROOT, text=True)
+    if paths.returncode != 0:
+        return paths.returncode
     rendered = subprocess.run([sys.executable, str(ROOT / '.github' / 'project' / 'render_check.py')],
                               cwd=ROOT, text=True)
     return rendered.returncode

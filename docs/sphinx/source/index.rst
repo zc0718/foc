@@ -115,6 +115,27 @@ test cases -- see :doc:`what this library does not do <boundaries>`.)
      - Would need a stripped link script and hand-written stubs; V1 explicitly requires C
        users to link the C++ runtime.
 
+.. _platform-evidence:
+
+_`What has actually been run`
+-----------------------------
+
+Three sentences, because each is a different claim and only the first is evidence:
+
+- **Verified**: x86-64 Linux, gcc 13, the unit suite plus the SIL plant. Every number in this
+  documentation comes from that combination, and :doc:`reproducing` is the list of commands that
+  produces it.
+- **Cross-compiled**: `aarch64` and Cortex-M targets compile and link -- that is what the
+  cross-compile check proves. It proves the code *builds* for the architecture. It does not prove
+  the code *runs* there, and nothing here should be read as if it did.
+- **Not run**: no target board has executed this library. Not one measurement, in or out of the
+  suite, was taken on silicon.
+
+The gap between the second and the third sentence is where a porting project does its work: the
+:doc:`guides/porting` page lists what a board must answer, and its minimal example is compiled but
+never executed on hardware either. A statement about a machine is a statement about *that* machine,
+and it belongs to whoever brings the board.
+
 _`Contents`
 -----------
 
@@ -155,6 +176,7 @@ accident.
    What each capability offers <capabilities>
    What may be claimed, and to whom <compliance/index>
    Usage and verification <usage>
+   Reproducing these numbers <reproducing>
 
 .. toctree::
    :caption: Reference
