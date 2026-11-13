@@ -13,7 +13,7 @@
 
 #include <gtest/gtest.h>
 
-#include "c_abi.hpp"
+#include <foc/api/foc_api.h>
 #include <foc/api/foc_types.h>
 #include <foc/core/observer/back_emf_observer.hpp>
 #include <foc/core/pi.hpp>

@@ -41,7 +41,7 @@
 
 #include <gtest/gtest.h>
 
-#include "c_abi.hpp"
+#include <foc/api/foc_api.h>
 #include <foc/core/board_check.hpp>
 #include <foc/core/protection.hpp>
 

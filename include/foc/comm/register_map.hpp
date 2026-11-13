@@ -9,37 +9,21 @@
 // it. Nothing in `core/`, `hal/`, `driver/` or `motor/` may include this
 // header.
 //
-// The include is wrapped in `extern "C"` because this header *calls* the ABI,
-// and a C++ translation unit that calls it without the wrapper gets mangled
-// references: measured as 237 undefined symbols against the shipped
-// `libfoc_c.a`, whose `foc_*` definitions are unmangled. The wrapper is the
-// source-tree half of what `conanfile.py::_make_c_compatible()` does to every
-// `.h` it installs -- the installed copy of `foc_api.h` already carries the
-// guard, so a C++ consumer of the *package* has always seen C linkage while a
-// C++ consumer of the *tree* has not. Against the installed header the two
-// guards nest, which is legal, so the same source builds both ways.
-//
-// What is still owed is the guard *inside* `foc/api/foc_api.h`, which would fix
-// every C++ caller at once. That changes the linkage of every symbol in the
-// public C surface and is its own change with its own measurement; this wrapper
-// only aligns the private code that reaches across the boundary.
+// It is included plainly, like `api/python_bindings.cpp` and the `test_api_*`
+// cases include it, because the debt that used to make that unsafe is paid:
+// `foc/api/foc_api.h` now carries its own `extern "C"` guard. It was measured
+// first -- a C++ translation unit that included the unguarded header and linked
+// the shipped `libfoc_c.a` failed with 237 undefined references, and the nine
+// C ABI cases were excluded from `mcdc` for the same reason.
 // 本头文件是 `include/` 下唯一包含 C 表面的地方，而且它是有意这么做的：协议层是
 // C ABI 的 **消费者** ，不属于 ABI 本身。 `core/`、`hal/`、`driver/`、`motor/`
 // 里任何一个都不许包含它。
 //
-// 这一条 include 外面套了 `extern "C"`，因为本头文件 **调用** 了这个 ABI：不套的
-// C++ 编译单元拿到的是修饰名——对着出厂的 `libfoc_c.a`（其中的 `foc_*` 定义是未
-// 修饰的）实测 237 个未定义符号。这个包裹就是 `conanfile.py::_make_c_compatible()`
-// 对每个装机 `.h` 所做那一步的源码树版本：装机的那份 `foc_api.h` 早就带着保护，
-// 所以 **包** 的 C++ 消费方一直看到 C 链接性，而 **树** 的 C++ 消费方没有。对着
-// 装机头两个保护是嵌套的，合法，于是同一份源码两种编法一致。
-//
-// 仍然欠着的是把保护写进 `foc/api/foc_api.h` 本身——那样一次修好所有 C++ 调用方。
-// 那会改变公开 C 表面每个符号的链接性，是另一件事、需要它自己的测量；这里的包裹
-// 只负责把跨边界的私有代码对齐。
-extern "C" {
+// 这里就是平着包含，和 `api/python_bindings.cpp` 以及 `test_api_*` 用例的做法一致，
+// 因为让那种做法不安全的那笔账已经还了：`foc/api/foc_api.h` 现在自带 `extern "C"`
+// 保护。它是先量后改的——包含未加保护的头文件并链接出厂 `libfoc_c.a` 的 C++ 编译单元
+// 报 237 个未定义引用，而九个 C ABI 用例当初被 `mcdc` 排除也是同一个原因。
 #include <foc/api/foc_api.h>
-}
 // Conan::ImportEnd
 
 /*!

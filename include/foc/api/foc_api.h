@@ -3,6 +3,31 @@
 #include <foc/api/foc_types.h>
 // Conan::ImportEnd
 
+// C linkage, because a C header has to survive being included from C++.
+//
+// The declaration alone does not say "this is a C function", so a C++ caller used
+// to get a mangled reference that the C archive could not satisfy: measured as 237
+// undefined symbols against the shipped `libfoc_c.a`. `conanfile.py`'s
+// `_make_c_compatible()` already wraps every `.h` it installs, so a consumer of the
+// *package* never saw that; a consumer of the *tree* did, and so did every gate that
+// builds in-tree. The guard here makes both worlds agree, and it nests inside the
+// packager's own wrapper, which is legal.
+//
+// Nothing changes for a C caller: `__cplusplus` is undefined there, so the two lines
+// are removed by the preprocessor.
+// C 链接性——一个 C 头文件必须能从 C++ 里被包含而不出问题。
+//
+// 光有声明并不表示"这是 C 函数"，于是 C++ 调用方拿到的是修饰名，C 归档满足不了：
+// 对着出厂的 `libfoc_c.a` 实测 237 个未定义符号。`conanfile.py` 的
+// `_make_c_compatible()` 早就给每个装机 `.h` 套了这一层，所以 **包** 的消费方从来
+// 没见过这个现象，**树** 的消费方以及所有在树内编译的门禁都见过。把保护放在这里，
+// 两个世界就一致了；它会嵌在打包器自己那层包裹里，合法。
+//
+// 对 C 调用方没有任何变化：那里 `__cplusplus` 未定义，这两行在预处理阶段就没了。
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*!
  * @ingroup group_c_api
  * @file foc_api.h
@@ -1676,3 +1701,7 @@ FOC_WARN_UNUSED foc_err_t foc_commissioned_set_encode(const foc_commissioned_set
 FOC_WARN_UNUSED foc_err_t foc_commissioned_set_decode(const uint8_t *buffer, uint32_t length,
                                                       foc_commissioned_set_t *out, foc_set_status_t *status,
                                                       uint32_t *bad_offset);
+
+#ifdef __cplusplus
+}
+#endif
