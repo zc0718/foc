@@ -62,6 +62,13 @@ class MechanicalBrake {
      * @note [en] A refusal here is the dangerous one to swallow: a caller that ignores it and cuts the inverter anyway
      *            has dropped a load and called it a stop.
      * @note [zh] 这里的拒绝是那种吞掉就危险的：忽略它、照样关掉逆变器的调用方，把一次负载坠落叫做了一次停机。
+     * @warning [en] The refusal is a *warning* rather than a note because the damage is not in this call: an error code
+     *               that is logged and dropped leaves the sequencer believing the shaft is held, and the next step --
+     *               disabling the bridge -- is the one that releases the load. Treat `Ok` as "the brake was asked",
+     *               never as "the shaft is held"; `engaged()` is the only call that answers the second one.
+     * @warning [zh] 这个拒绝之所以是 **警告** 而不是备注：伤害不在这一次调用里。一个被记下来又丢掉的错误码，会让编排方
+     *               相信轴已经抱住，而下一步——关掉桥——才是让负载松脱的那一步。把 `Ok` 当作“抱闸被请求过了”，永远不要当
+     *               作 “轴抱住了”；只有 `engaged()` 回答第二个问题。
      * @context [en] Any context, must not block.
      * @context [zh] 任意上下文，不得阻塞。
      * @since 0.1.0

@@ -9,6 +9,15 @@
  *
  * @brief [en] An NTC in a divider, turned into a temperature -- and a refusal when the code says the sensor is gone.
  * @brief [zh] 分压里的 NTC 换算成温度——以及当码值说明传感器不在时的拒绝。
+ * @warning [en] Both ways this sensor fails look like a number. An open thermistor reads as the rail the pull-up
+ *              pushes it to and a short reads as the other rail, so a channel that only converts codes reports a
+ *              *plausible* temperature next to a broken sensor -- and a derating schedule built on it derates a
+ *              machine that is not there. That is why the conversion refuses a rail instead of returning it, and why
+ *              the refusal has to reach whoever makes the decision rather than being flattened into a default.
+ * @warning [zh] 这种传感器失效的两种样子都像一个数字。热敏电阻开路读到上拉把它顶到的那侧轨，短路读到另一侧轨，于是
+ *              只做换算的通道会在一个坏传感器旁边报出一个 **貌似合理的温度** ，而建在它上的降额计划会给一台不在的电机
+ *              降额。这就是换算要拒绝两端轨、而不是把它们返回的理由；也是那个拒绝必须传到做决定的那一方、不能被压成
+ *              一个默认值的理由。
  * @since 0.1.0
  */
 
