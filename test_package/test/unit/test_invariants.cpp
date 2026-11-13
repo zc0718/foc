@@ -26,7 +26,7 @@
 
 #include <gtest/gtest.h>
 
-#include <foc/api/foc_api.h>
+#include "c_abi.hpp"
 #include <foc/core/limits.hpp>
 #include <foc/core/pi.hpp>
 #include <foc/core/transforms.hpp>

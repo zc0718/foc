@@ -9,7 +9,7 @@
 
 #include <gtest/gtest.h>
 
-#include <foc/api/foc_api.h>
+#include "c_abi.hpp"
 #include <foc/api/foc_types.h>
 
 namespace {

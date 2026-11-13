@@ -11,10 +11,13 @@
     "`min_multi_condition_decisions` per file and again for the subset is the vacuity guard: a file (or a subset)",
     "with no multi-condition decision scores a perfect ratio while measuring nothing, and that must be red.",
     "",
-    "`excluded_tests` must name every test object that cannot join the instrumented link, with the reason. The",
-    "C ABI is declared without `extern \"C\"` in the tests that include <foc/api/...>, so their references are",
-    "C++-mangled names that the C translation units cannot satisfy (282 unresolved references otherwise). They",
-    "exercise the ABI, not the safety subset, so excluding them narrows the measurement without biasing it.",
+    "`excluded_tests` must name every test object that cannot join the instrumented link, with the reason. It",
+    "is empty, and the nine cases that used to sit here are the reason the format still exists: they were",
+    "excluded because the C surface reached C++ without `extern \"C\"`, so their references were mangled names",
+    "the C translation unit could not satisfy. That is now fixed at the two include sites -- the cases go",
+    "through `test_package/test/unit/c_abi.hpp`, and `register_map.hpp` wraps its own include -- which is the",
+    "source-tree half of what `_make_c_compatible()` does to every installed `.h`. A future exclusion has to",
+    "argue for itself here rather than inherit theirs.",
     "",
     "`run_filter` drops nothing today: with RESOURCES_PATH defined every case passes, and a red suite is reported",
     "as a failure rather than silently skipped, because coverage of a failing program describes the wrong program.",
@@ -85,15 +88,7 @@
     "test_package/test/unit/*.cpp"
   ],
   "run_filter": "*",
-  "excluded_tests": {
-    "test_api_c_smoke.cpp": "C ABI from C++, declared without extern \"C\" in the test",
-    "test_api_host_motor.cpp": "C ABI from C++, declared without extern \"C\" in the test",
-    "test_api_identification.cpp": "C ABI from C++, declared without extern \"C\" in the test",
-    "test_api_observer_selector.cpp": "C ABI from C++, declared without extern \"C\" in the test",
-    "test_api_position_absolute.cpp": "C ABI from C++, declared without extern \"C\" in the test",  "test_enum_names.cpp": "walks the published C ABI's name/enum tables from C++, so it needs the ABI (added 2026-11-06 with the case itself)",    "test_invariants.cpp": "uses the same non-extern-C ABI declarations for its driver harness",
-    "test_sil_api_equivalence.cpp": "compares the ABI against the C++ API, so it needs the ABI",
-    "test_register_map.cpp": "C ABI from C++, declared without extern \"C\" in the test"
-  },
+  "excluded_tests": {},
   "min_multi_condition_decisions": 3,
   "subset": [
     {

@@ -2,7 +2,7 @@
 
 #include <gtest/gtest.h>
 
-#include <foc/api/foc_api.h>
+#include "c_abi.hpp"
 #include <foc/api/foc_types.h>
 #include <foc/core/observer/back_emf_observer.hpp>
 #include <foc/core/observer/ideal_observer.hpp>
