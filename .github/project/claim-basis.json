@@ -469,6 +469,9 @@
       "comm/board_record.hpp",
       "comm/commissioned_set.hpp",
       "core/board_check.hpp"
+    ],
+    "core/sensor_monitor.hpp": [
+      "core/sensor_monitor.hpp"
     ]
   },
   "unmapped": []

@@ -846,10 +846,10 @@ template <typename Observer, typename Modulator, typename Controller, typename H
           typename FeedForward, typename PositionControl, typename Aligner, typename Trace>
 Motor<Observer, Modulator, Controller, HalPolicy, RefGenerator, FeedForward, PositionControl, Aligner, Trace>::Motor(
     MotorConfig config, Policies policies, HalPolicy& hal) noexcept
-    : config_(config), policies_(policies), hal_(&hal), sm_(), telemetry_{0.0F, 0.0F, 0.0F, 0U, 0.0F, std::nanf("")}, status_(ErrorCode::Ok),
-      mode_(ReferenceMode::Torque), iq_ref_a_(0.0F), speed_ref_rad_s_(0.0F), speed_elapsed_s_(0.0F),
-      speed_step_due_(true), position_ref_rad_(0.0F), command_{}, speed_ref_from_position_rad_s_(0.0F),
-      position_elapsed_s_(0.0F), position_step_due_(true),
+    : config_(config), policies_(policies), hal_(&hal), sm_(), telemetry_{0.0F, 0.0F, 0.0F, 0U, 0.0F, std::nanf("")},
+      status_(ErrorCode::Ok), mode_(ReferenceMode::Torque), iq_ref_a_(0.0F), speed_ref_rad_s_(0.0F),
+      speed_elapsed_s_(0.0F), speed_step_due_(true), position_ref_rad_(0.0F), command_{},
+      speed_ref_from_position_rad_s_(0.0F), position_elapsed_s_(0.0F), position_step_due_(true),
       position_reference_(core::PositionReference::Config{config.pole_pairs, 0.0F}), max_period_us_(0U),
       last_clock_us_(0U), clock_seeded_(false), v_ab_prev_{} {}
 

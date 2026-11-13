@@ -1094,6 +1094,152 @@
           "why": "The member initializer for `authority_` is dead: `configure()` writes 1.0 into it before any step can run, and `output()` before `configure()` reads `output_`, not `authority_`. Nothing can observe the value the constructor chose -- which is worth knowing, because it means the initializer is documentation rather than behaviour."
         }
       ]
+    },
+    "sensor_monitor": {
+      "mutate": [
+        "include/foc/core/sensor_monitor.hpp"
+      ],
+      "tests": [
+        "test_package/test/unit/test_sensor_monitor.cpp"
+      ],
+      "limit_per_file": 200,
+      "killed": 17,
+      "survived": 7,
+      "invalid": 0,
+      "timeout": 0,
+      "survivors": [
+        {
+          "file": "include/foc/core/sensor_monitor.hpp",
+          "line": 38,
+          "col": 10,
+          "original": "0",
+          "replacement": "1",
+          "operator": "constant"
+        },
+        {
+          "file": "include/foc/core/sensor_monitor.hpp",
+          "line": 43,
+          "col": 19,
+          "original": "1",
+          "replacement": "2",
+          "operator": "constant"
+        },
+        {
+          "file": "include/foc/core/sensor_monitor.hpp",
+          "line": 48,
+          "col": 18,
+          "original": "2",
+          "replacement": "3",
+          "operator": "constant"
+        },
+        {
+          "file": "include/foc/core/sensor_monitor.hpp",
+          "line": 67,
+          "col": 12,
+          "original": "0",
+          "replacement": "1",
+          "operator": "constant"
+        },
+        {
+          "file": "include/foc/core/sensor_monitor.hpp",
+          "line": 72,
+          "col": 17,
+          "original": "1",
+          "replacement": "2",
+          "operator": "constant"
+        },
+        {
+          "file": "include/foc/core/sensor_monitor.hpp",
+          "line": 77,
+          "col": 24,
+          "original": "2",
+          "replacement": "3",
+          "operator": "constant"
+        },
+        {
+          "file": "include/foc/core/sensor_monitor.hpp",
+          "line": 82,
+          "col": 18,
+          "original": "3",
+          "replacement": "4",
+          "operator": "constant"
+        }
+      ],
+      "invalid_sites": 0,
+      "truncated": [],
+      "judged": 24,
+      "score": 70.8,
+      "seconds": 54.1,
+      "recorded": "2026-11-13",
+      "equivalents": [
+        {
+          "file": "include/foc/core/sensor_monitor.hpp",
+          "line": 38,
+          "col": 10,
+          "original": "0",
+          "replacement": "1",
+          "kind": "equivalent",
+          "why": "`SensorVerdict::Ok` -- The numeric value of a verdict is not part of any promise this header makes: every site compares by name, nothing orders or indexes by the enum, and `SensorMonitorOutput`'s member initializer names `Unobserved` explicitly, so a zero-initialized output cannot silently become `Ok`. The values would become a promise the day this crosses the C ABI or the Python binding, and then a case has to pin them -- the same standing as `angle_source`."
+        },
+        {
+          "file": "include/foc/core/sensor_monitor.hpp",
+          "line": 43,
+          "col": 19,
+          "original": "1",
+          "replacement": "2",
+          "kind": "equivalent",
+          "why": "`SensorVerdict::Implausible` -- The numeric value of a verdict is not part of any promise this header makes: every site compares by name, nothing orders or indexes by the enum, and `SensorMonitorOutput`'s member initializer names `Unobserved` explicitly, so a zero-initialized output cannot silently become `Ok`. The values would become a promise the day this crosses the C ABI or the Python binding, and then a case has to pin them -- the same standing as `angle_source`."
+        },
+        {
+          "file": "include/foc/core/sensor_monitor.hpp",
+          "line": 48,
+          "col": 18,
+          "original": "2",
+          "replacement": "3",
+          "kind": "equivalent",
+          "why": "`SensorVerdict::Unobserved` -- The numeric value of a verdict is not part of any promise this header makes: every site compares by name, nothing orders or indexes by the enum, and `SensorMonitorOutput`'s member initializer names `Unobserved` explicitly, so a zero-initialized output cannot silently become `Ok`. The values would become a promise the day this crosses the C ABI or the Python binding, and then a case has to pin them -- the same standing as `angle_source`."
+        },
+        {
+          "file": "include/foc/core/sensor_monitor.hpp",
+          "line": 67,
+          "col": 12,
+          "original": "0",
+          "replacement": "1",
+          "kind": "equivalent",
+          "why": "`SensorFault::None` -- Same as the verdicts: nothing compares a fault by number, and `SensorFault::None = 0` is only ever produced by name -- including on the `Unobserved` path, which names it rather than defaulting to it."
+        },
+        {
+          "file": "include/foc/core/sensor_monitor.hpp",
+          "line": 72,
+          "col": 17,
+          "original": "1",
+          "replacement": "2",
+          "kind": "equivalent",
+          "why": "`SensorFault::AngleJump` -- Same as the verdicts: nothing compares a fault by number, and `SensorFault::None = 0` is only ever produced by name -- including on the `Unobserved` path, which names it rather than defaulting to it."
+        },
+        {
+          "file": "include/foc/core/sensor_monitor.hpp",
+          "line": 77,
+          "col": 24,
+          "original": "2",
+          "replacement": "3",
+          "kind": "equivalent",
+          "why": "`SensorFault::ImplausibleSpeed` -- Same as the verdicts: nothing compares a fault by number, and `SensorFault::None = 0` is only ever produced by name -- including on the `Unobserved` path, which names it rather than defaulting to it."
+        },
+        {
+          "file": "include/foc/core/sensor_monitor.hpp",
+          "line": 82,
+          "col": 18,
+          "original": "3",
+          "replacement": "4",
+          "kind": "equivalent",
+          "why": "`SensorFault::NotANumber` -- Same as the verdicts: nothing compares a fault by number, and `SensorFault::None = 0` is only ever produced by name -- including on the `Unobserved` path, which names it rather than defaulting to it."
+        }
+      ],
+      "notes": [
+        "24 sites, 17 killed, 7 equivalent -- and the seven are one class of site, the enumerator values, which is what a header that answers with a named word rather than a number should look like under this instrument.",
+        "One survivor was a real hole and got a case instead of an explanation: the `implausible_count` member initializer could say 1 and nothing read an output before the first step, so `NothingToJudgeIsNotAPass` now asks a freshly constructed monitor what it has to report -- and the answer has to be an empty history."
+      ]
     }
   },
   "_comment": [

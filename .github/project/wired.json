@@ -403,6 +403,11 @@
       "class": "policy",
       "example": "test_package/test/unit/test_board_record.cpp",
       "why": "a codec the caller uses when it stores one unit's production result; where that blob lives -- which sector, which database -- is a board and factory fact, so nothing in `src/` includes it"
+    },
+    "core/sensor_monitor.hpp": {
+      "class": "policy",
+      "example": "test_package/test/unit/test_sensor_monitor.cpp",
+      "why": "the host hands it the sensor's own readings and the period it measured; the mechanism's ceiling comes from the caller because that is a fact about the machine, not about the library -- which is also why nothing in `src/` includes it, and why wiring it into the assembly waits on the same configuration surface the angle arbiter waits on"
     }
   }
 }

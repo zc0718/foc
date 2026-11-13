@@ -364,6 +364,20 @@
       "kind": "contract",
       "producer": "hal/position.hpp::angle_mech_rad",
       "note": "Open-loop startup ramps the commanded angle but still needs the measured one to know when the rotor has caught up."
+    },
+    {
+      "class": "SensorMonitor",
+      "parameter": "angle_mech_rad",
+      "kind": "contract",
+      "producer": "hal/position.hpp::angle_mech_rad",
+      "note": "The reading under judgement, straight from the sensor contract: this monitor exists to judge one device's own history, so the angle it compares must be the one that device reported rather than a filtered or blended version of it."
+    },
+    {
+      "class": "SensorMonitor",
+      "parameter": "speed_mech_rad_s",
+      "kind": "contract",
+      "producer": "hal/position.hpp::velocity_rad_s",
+      "note": "The same device's own speed channel, and `NaN` when it has none -- that is how the caller says \"this sensor reports no speed\" and the check is skipped rather than being fed the observer's estimate, which would compare two histories instead of one."
     }
   ]
 }

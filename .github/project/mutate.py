@@ -147,6 +147,15 @@ MODULES = {
         "extra": [],
         "classify": True,
     },
+    "sensor_monitor": {
+        # Alone for the same reason as `angle_source`: the cases build the readings they judge, so nothing has to be
+        # linked in.
+        # 与 `angle_source` 同理是孤立的：用例自己造出被判的读数，不需要链接任何东西。
+        "mutate": ["include/foc/core/sensor_monitor.hpp"],
+        "tests": ["test_package/test/unit/test_sensor_monitor.cpp"],
+        "extra": [],
+        "classify": True,
+    },
 }
 
 BINARY_OPS = {"+": "-", "-": "+", "*": "/", "/": "*", "<": "<=", ">": ">=", "<=": "<", ">=": ">",

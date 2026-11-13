@@ -303,6 +303,15 @@
       "cell": "absent",
       "claims": [],
       "why": "Out of the library: the Python module, the benchmark scripts and the sweeps are how this project measures itself, not a product surface."
+    },
+    {
+      "id": "sensor_plausibility",
+      "feature": "Sensor plausibility monitoring (encoder self-consistency)",
+      "cell": "partial",
+      "claims": [
+        "foc/core/sensor_monitor.hpp"
+      ],
+      "why": "the type ships and is measured -- a step beyond `max_speed*dt + tolerance`, a speed the mechanism cannot produce, and a reading that is not a number, each a separate diagnosis. What is missing is the wiring: the assembled drive does not consult it yet, and giving it a place there is the same configuration-surface decision the angle arbiter waits on (`angle_arbitration` above)."
     }
   ],
   "beyond_the_comparison": [

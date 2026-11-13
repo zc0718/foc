@@ -342,6 +342,18 @@ the sensitivity half is not, so the row stays **L2**.
      - na -- the output is a per-tick decision rather than a continuous signal, and the property that matters about it
        (`Blind` holds the angle and reports zero speed, so a caller ignoring the quality word still cannot steer with a
        held constant) is asserted in the case named above.
+   * - ``core/sensor_monitor.hpp``
+     - `SensorMonitorOutput` carries the verdict, which check decided it, the step that was measured, the bound it was
+       measured against, and how many readings have been implausible since the last `reset()` -- so a log line can say
+       "0.31 rad in one sample against 0.0125 allowed" instead of "bad encoder".
+     - `configure()` refuses a ceiling that is not positive and a tolerance that is negative or not a number, while a
+       tolerance of **zero** is accepted: "the ceiling is exact" is a position a caller may take. A period that is not
+       positive leaves every field as it was and answers `Unobserved`, and so does a first sample -- `Unobserved` is
+       never `Ok`, because a monitor nobody has compared anything with must not read as healthy.
+     - ``SensorMonitor.TheBoundItselfDecidesAndBothDirectionsCount``
+     - na -- a decision about one reading rather than a continuous signal; the property that matters about it (a
+       verdict is about a reading and not a latch, so the next good sample is `Ok` again while the count keeps the
+       history) is asserted in the two cases named above.
    * - ``core/thermistor.hpp``
      - `NtcDivider::temperature_c` answers `false` at both rails and leaves the receiver untouched, because 0 and full
        scale are what an open and a shorted thermistor produce and both are ordinary numbers on the curve;
