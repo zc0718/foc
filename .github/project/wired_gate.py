@@ -108,6 +108,7 @@ def check(catalogue: dict, facts: dict, register: dict) -> list[str]:
     headers, reachable = facts["headers"], facts["reachable"]
     known = register.get("known_unshipped", {}) or {}
     baseline = int(register.get("todo_baseline", 0))
+    surface_debt = set(register.get("c_surface_debt", []) or [])
 
     for key in sorted(headers - set(catalogue)):
         problems.append(f"`{key}` is installed but has no class -- every public header must be one of "
@@ -160,6 +161,38 @@ def check(catalogue: dict, facts: dict, register: dict) -> list[str]:
                     problems.append(f"`{key}` is a `policy` with no example and no `why`")
             elif not facts["exists"](str(spec["example"])):
                 problems.append(f"`{key}`: example `{spec['example']}` does not exist")
+            # A policy is composed by the host, but the shipping surface is `foc_api.h`, so it still owes an answer to
+            # "and how does a C host get the same behaviour". Three answers are allowed; silence is not one of them.
+            # A `policy` is composed by the host, but the shipping surface is `foc_api.h`, so it still owes an answer
+            # 到"而 C 宿主怎么得到同一行为"。三种答案都可以，沉默不在其中。
+            if key in surface_debt:
+                if "c_surface" in spec:
+                    problems.append(f"`{key}` now carries a `c_surface` answer, so drop it from `c_surface_debt` -- "
+                                    f"the ratchet records progress by the list shrinking")
+            else:
+                surface = spec.get("c_surface")
+                if not isinstance(surface, dict):
+                    problems.append(f"`{key}` is a `policy` with no `c_surface` answer -- say how a C host gets the "
+                                    f"same behaviour: `entry` (name the `foc_*` functions), `host-owns` (with the "
+                                    f"proof the host can self-test), or `not-needed` (with the reason)")
+                elif len([name for name in ("entry", "host-owns", "not-needed") if name in surface]) != 1:
+                    problems.append(f"`{key}`: `c_surface` must carry exactly one of `entry`, `host-owns`, "
+                                    f"`not-needed`")
+                elif "entry" in surface:
+                    names = surface["entry"]
+                    if not isinstance(names, list) or not names:
+                        problems.append(f"`{key}`: `c_surface.entry` must be a non-empty list of `foc_*` names")
+                    else:
+                        for name in names:
+                            if str(name) not in facts["abi"]:
+                                problems.append(f"`{key}`: `c_surface.entry` names `{name}`, which `foc_api.h` does "
+                                                f"not declare")
+                elif "host-owns" in surface:
+                    if not str((surface.get("host-owns") or {}).get("proof") or "").strip():
+                        problems.append(f"`{key}`: `host-owns` needs a `proof` the host can self-test -- without one, "
+                                        f"\"the host does it\" is a wish")
+                elif not str((surface.get("not-needed") or {}).get("why") or "").strip():
+                    problems.append(f"`{key}`: `not-needed` needs a `why`")
         elif klass == "reference":
             if key not in facts["from_tests"]:
                 problems.append(f"`{key}` is a reference implementation that no test includes -- an "
@@ -176,6 +209,11 @@ def check(catalogue: dict, facts: dict, register: dict) -> list[str]:
     for key in sorted(known):
         if key not in catalogue:
             problems.append(f"`known_unshipped` names `{key}`, which is not catalogued")
+    for key in sorted(surface_debt):
+        if key not in catalogue:
+            problems.append(f"`c_surface_debt` names `{key}`, which is not catalogued")
+        elif str((catalogue[key] or {}).get("class")) != "policy":
+            problems.append(f"`c_surface_debt` names `{key}`, which is not a `policy` -- only policies owe a C answer")
     return problems
 
 
@@ -196,7 +234,8 @@ def selftest() -> bool:
         "core/lost.hpp": {"class": "motor-owned"},
         "core/diag.hpp": {"class": "diagnostic", "abi": ["foc_read"]},
         "core/port.hpp": {"class": "contract", "stub": "stub_port.hpp"},
-        "core/pol.hpp": {"class": "policy", "example": "examples/a.cpp"},
+        "core/pol.hpp": {"class": "policy", "example": "examples/a.cpp",
+                         "c_surface": {"not-needed": {"why": "the loop owns it"}}},
         "core/tbd.hpp": {"class": "todo", "why": "later"},
         "core/unr.hpp": {"class": "motor-owned"},
     }
@@ -204,6 +243,11 @@ def selftest() -> bool:
 
     def run(catalogue=None, reg=None, f=None):
         return check(catalogue if catalogue is not None else base, f or facts, reg or register)
+
+    def _no_surface():
+        out = json.loads(json.dumps(base))
+        out["core/pol.hpp"].pop("c_surface", None)
+        return out
 
     def mutate(key, **over):
         out = json.loads(json.dumps(base))
@@ -231,6 +275,18 @@ def selftest() -> bool:
          True),
         ("a reference implementation nothing exercises", run({**base, "driver/stub.hpp": {"class": "reference"}}),
          True),
+        # 4. the C-reachability rule: a policy owes an answer, the answer must be checkable, and the debt list shrinks.
+        ("a policy with no C-surface answer", run(_no_surface()), True),
+        ("a C-surface entry the C header does not declare", run(mutate("core/pol.hpp", c_surface={"entry":
+                                                                                                   ["foc_gone"]})),
+         True),
+        ("a C-surface entry that does exist", run(mutate("core/pol.hpp", c_surface={"entry": ["foc_read"]})), False),
+        ("host-owns with no proof", run(mutate("core/pol.hpp", c_surface={"host-owns": {}})), True),
+        ("two C-surface answers at once", run(mutate("core/pol.hpp", c_surface={"entry": ["foc_read"],
+                                                                               "not-needed": {"why": "x"}})), True),
+        ("a policy on the debt list", run(_no_surface(), reg={**register, "c_surface_debt": ["core/pol.hpp"]}),
+         False),
+        ("a debt entry whose answer has landed", run(reg={**register, "c_surface_debt": ["core/pol.hpp"]}), True),
     ]
     ok = True
     for label, problems, want_red in cases:
@@ -264,7 +320,8 @@ def main(argv: list[str]) -> int:
                         if (spec or {}).get("class") == "policy" and (spec or {}).get("example") is None)
     known = register.get("known_unshipped", {}) or {}
     print(f"[wired] {len(facts['headers'])} header(s): {summary or 'none catalogued'}; "
-          f"{len(known)} known-unshipped, {len(no_example)} policy without an example")
+          f"{len(known)} known-unshipped, {len(no_example)} policy without an example, "
+          f"{len(register.get('c_surface_debt') or [])} policy without a C-surface answer (debt)")
     if known:
         for key in sorted(known):
             print(f"[wired] known unshipped: `{key}` -- {known[key]}")

@@ -199,7 +199,18 @@
     "motor/drive_supervisor.hpp": {
       "class": "policy",
       "example": "test_package/test/unit/test_drive_supervisor.cpp",
-      "why": "the caller wraps its own `Motor` in it, which is why nothing in `src/` includes it and why `motor.hpp` was not touched: the tick order is a decision about the *application's* hardware (which fault pin, which chopper, which temperature channel), and a `Motor` that assumed one would have taken that decision away from every host that does it differently"
+      "why": "the caller wraps its own `Motor` in it, which is why nothing in `src/` includes it and why `motor.hpp` was not touched: the tick order is a decision about the *application's* hardware (which fault pin, which chopper, which temperature channel), and a `Motor` that assumed one would have taken that decision away from every host that does it differently",
+      "c_surface": {
+        "entry": [
+          "foc_supervisor_create",
+          "foc_supervisor_step",
+          "foc_supervisor_status",
+          "foc_supervisor_enable",
+          "foc_supervisor_disable",
+          "foc_supervisor_clear",
+          "foc_supervisor_destroy"
+        ]
+      }
     },
     "hal/mechanical_brake.hpp": {
       "class": "contract",
@@ -295,12 +306,24 @@
     "comm/frame.hpp": {
       "class": "policy",
       "example": "test_package/test/unit/test_frame.cpp",
-      "why": "a link layer the host drives; the firmware's control path never frames anything"
+      "why": "a link layer the host drives; the firmware's control path never frames anything",
+      "c_surface": {
+        "entry": [
+          "foc_frame_encode",
+          "foc_frame_decode"
+        ]
+      }
     },
     "comm/commissioned_set.hpp": {
       "class": "policy",
       "example": "test_package/test/unit/test_commissioned_set.cpp",
-      "why": "a storage format: this module decides what the bytes are and refuses the ones no reader may accept, while where they live (flash, EEPROM, a file on a host) belongs to the integrator -- nothing on the control path encodes a record"
+      "why": "a storage format: this module decides what the bytes are and refuses the ones no reader may accept, while where they live (flash, EEPROM, a file on a host) belongs to the integrator -- nothing on the control path encodes a record",
+      "c_surface": {
+        "entry": [
+          "foc_commissioned_set_encode",
+          "foc_commissioned_set_decode"
+        ]
+      }
     },
     "core/thermistor.hpp": {
       "class": "policy",
@@ -321,7 +344,13 @@
     "comm/register_map.hpp": {
       "class": "policy",
       "example": "test_package/test/unit/test_register_map.cpp",
-      "why": "the protocol's view of the C surface: a host asks, the firmware answers, nothing in the loop calls it"
+      "why": "the protocol's view of the C surface: a host asks, the firmware answers, nothing in the loop calls it",
+      "c_surface": {
+        "entry": [
+          "foc_reg_count",
+          "foc_reg_read"
+        ]
+      }
     },
     "core/min_pulse.hpp": {
       "class": "policy",
@@ -407,7 +436,45 @@
     "core/sensor_monitor.hpp": {
       "class": "policy",
       "example": "test_package/test/unit/test_sensor_monitor.cpp",
-      "why": "the host hands it the sensor's own readings and the period it measured; the mechanism's ceiling comes from the caller because that is a fact about the machine, not about the library. It does reach the C surface -- `src/api/bridge.cpp` holds the slots and `foc_sensor_monitor_*` issues the handles -- but the assembled drive still does not consult it, so the placement in the comparison table stays `partial`."
+      "why": "the host hands it the sensor's own readings and the period it measured; the mechanism's ceiling comes from the caller because that is a fact about the machine, not about the library. It does reach the C surface -- `src/api/bridge.cpp` holds the slots and `foc_sensor_monitor_*` issues the handles -- but the assembled drive still does not consult it, so the placement in the comparison table stays `partial`.",
+      "c_surface": {
+        "entry": [
+          "foc_sensor_monitor_create",
+          "foc_sensor_monitor_step",
+          "foc_sensor_monitor_status",
+          "foc_sensor_monitor_reset",
+          "foc_sensor_monitor_destroy"
+        ]
+      }
     }
-  }
+  },
+  "c_surface_debt": [
+    "comm/board_record.hpp",
+    "comm/encoder_stream.hpp",
+    "core/angle_source.hpp",
+    "core/auto_tune.hpp",
+    "core/brake_chopper.hpp",
+    "core/bus_current_limit.hpp",
+    "core/cogging_comp.hpp",
+    "core/cogging_learn.hpp",
+    "core/command_source.hpp",
+    "core/commissioning_flow.hpp",
+    "core/deadtime.hpp",
+    "core/friction_comp.hpp",
+    "core/gear_ratio.hpp",
+    "core/hall.hpp",
+    "core/machine_map.hpp",
+    "core/machine_map_text.hpp",
+    "core/min_pulse.hpp",
+    "core/move_trajectory.hpp",
+    "core/mtpv.hpp",
+    "core/single_shunt.hpp",
+    "core/six_step.hpp",
+    "core/soft_limit.hpp",
+    "core/thermal_limit.hpp",
+    "core/thermistor.hpp",
+    "core/trace_parse.hpp",
+    "core/watchdog.hpp"
+  ],
+  "_comment_c_surface": "Every `policy` owes an answer to \"how does a C host get the same behaviour\": `entry` names the `foc_*` functions that carry it, `host-owns` gives the proof the host can self-test, `not-needed` gives the reason. `c_surface_debt` is the work list for the ones that have not answered yet -- it may only shrink, and a file that gains an answer must be dropped from it in the same commit."
 }
