@@ -36,9 +36,7 @@ namespace core {
  *   after covering `v^2/(2a)` plus whatever it travels while the inner loop catches up, so a plant that lags the
  *   command passes the threshold and overshoots by an amount this class cannot bound -- measured at 13.7 % of the
  *   threshold on the SIL axis. The command itself cannot overshoot: both ceilings fall monotonically in `|error|` and
- *   the sign follows the error. 那个制动距离是 **指令** 的属性，不是轴的属性。轴走完 `v^2/(2a)` 之后还要加上内层环追赶
- *   期间走过的距离，因此跟随滞后的 plant 会越过阈值，并超出这个类无法约束的量——在 SIL 轴上测得阈值的 13.7 %。指令本身不
- *   会过冲：两个上限都随 `|error|` 单调下降，符号跟着误差走。
+ *   the sign follows the error.
  *
  * @brief [zh] 会塑造速度指令的位置控制器：对实测误差做比例，再用配置的加速度做速率限制。
  *
@@ -48,6 +46,10 @@ namespace core {
  *   为什么用滤波而不是梯形规划器：规划器必须自持相位机（加速/匀速/减速），且目标一动就要 重规划。本实现不存相位：取“ 比
  *   例需求、物理制动曲线 `sqrt(2*a*|error|)`、速度上限”三者最小， 再对结果做速率限制。这样既得到加速度受限的运动，制动
  *   距离又与允许的减速度相匹配；中途改 目标天然支持，限幅生效时也不会冲过头。它对移动目标不是时间最优的，也没有假装是。
+ *
+ *   那个制动距离是 **指令** 的属性，不是轴的属性。轴走完 `v^2/(2a)` 之后还要加上内层环追赶期间走过的距离，因此跟随滞后
+ *   的 plant 会越过阈值，并超出这个类无法约束的量——在 SIL 轴上测得阈值的 13.7 %。指令本身不会过冲：两个上限都随
+ *   `|error|` 单调下降，符号跟着误差走。
  *
  * @context [en] Called once per position-loop step: noexcept, no allocation.
  * @context [zh] 每个位置环周期调用一次：noexcept、不分 配。

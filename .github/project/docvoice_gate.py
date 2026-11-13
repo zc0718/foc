@@ -118,6 +118,47 @@ ID_PATTERNS = (
 )
 
 
+# A third family, and the only one that is not about *what* a block says but about which half of the
+# block says it. A doc block has an English region and a Chinese region, and `docs/build.py` splits them
+# by the `[en]`/`[zh]` markers: text before the first `[zh]` is what the English site prints. A Chinese
+# sentence on the English side therefore publishes Chinese to a reader who asked for English -- and it
+# does so *silently*, because the PDF and the HTML both render.
+#
+# Measured once at `include/foc/core/motion_profile.hpp`: a paragraph's translation was appended to the
+# end of its English original (`... the sign follows the error. 那个制动距离是 ...`). Every other rule
+# in this file reads the text's content and had nothing to fire on; the block was in the wrong half.
+CJK = re.compile(r'[\u4e00-\u9fff]')
+
+
+def language_violations(text: str, suffix: str) -> list[tuple[int, str]]:
+    """(line number, offending line) for Chinese sitting in a block's English region.
+
+    Only spec blocks: a guide paragraph has no `[en]`/`[zh]` markers to be on the wrong side of --
+    the hand-written pages are English and the generated ones carry both registers by construction.
+    """
+    if suffix not in SPEC_SUFFIXES:
+        return []
+    found: list[tuple[int, str]] = []
+    for start, block in blocks_of(text, suffix):
+        side = None
+        for offset, line in enumerate(block.splitlines()):
+            if '[zh]' in line:
+                side = 'zh'
+                continue
+            if '[en]' in line:
+                side = 'en'
+                continue
+            if CJK.search(line) and side != 'zh':
+                found.append((start + offset, line.strip()[:120]))
+    return found
+
+
+def mixed_language(path: Path) -> list[dict]:
+    """`language_violations` for one file on disk, in the shape the gate reports."""
+    return [{'file': path.relative_to(ROOT).as_posix(), 'line': line, 'kind': 'language', 'text': text}
+            for line, text in language_violations(path.read_text(encoding='utf-8'), path.suffix)]
+
+
 
 def blocks_of(text: str, suffix: str) -> list[tuple[int, str]]:
     """(first line number, block text) units. A Doxygen block for source, a paragraph for prose.
@@ -187,6 +228,7 @@ def scan() -> tuple[list[dict], list[dict], list[str]]:
         # The date/ordinal/colloquial rules honour the exemption; the private-code family
         # does not. See the module docstring for why that is not a loophole.
         ids.extend(violations_of(path, ID_PATTERNS, honour_tolerance=False))
+        ids.extend(mixed_language(path))
         if not exempt:
             found.extend(violations_of(path))
 
@@ -278,6 +320,14 @@ def selftest() -> int:
         ('a list label is not a private code', 'docs/sphinx/source/x.rst',
          'See the honest limits, U8.\n', False),
     ]
+    lang_cases = [
+        ('Chinese in the English half of a block', 'include/x.hpp',
+         '/**\n * @brief [en] The settle, and its edge.\n *\n * @brief [zh] 稳态与它的边界。\n */', False),
+        ('a translation appended to an English paragraph', 'include/x.hpp',
+         '/**\n * @brief [en] The settle.\n *\n *   the sign follows the error. 那个制动距离是 **指令** 的属性。\n *\n * @brief [zh] 稳态。\n */', True),
+        ('Chinese under its own [zh] tag', 'include/x.hpp',
+         '/**\n * @brief [zh] 每弧度误差对应的速度，1/s。\n */', False),
+    ]
     failures = 0
     for name, rel, text, want in cases:
         suffix = Path(rel).suffix
@@ -308,8 +358,14 @@ def selftest() -> int:
         failures += 0 if ok else 1
         print(f'[docvoice-selftest] {"ok  " if ok else "MISS"} {name}: '
               f'{"caught" if hit else "clean"} (wanted {"caught" if want else "clean"})')
+    total_cases = len(cases) + len(id_cases) + len(lang_cases)
 
-    total_cases = len(cases) + len(id_cases)
+    for name, rel, text, want in lang_cases:
+        hit = bool(language_violations(text, Path(rel).suffix))
+        ok = hit == want
+        failures += 0 if ok else 1
+        print(f'[docvoice-selftest] {"ok  " if ok else "MISS"} {name}: '
+              f'{"caught" if hit else "clean"} (wanted {"caught" if want else "clean"})')
 
     base = judge({'a.hpp': 2, 'b.hpp': 1}, {'a.hpp': 2, 'b.hpp': 3})
     ok = base == []
