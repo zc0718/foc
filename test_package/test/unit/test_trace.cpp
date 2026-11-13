@@ -217,15 +217,19 @@ TEST(Trace, OffCostsNoMemoryAndNoBranch) {
     EXPECT_EQ(sizeof(foc::core::TraceSample), 36U);
 
     // The measured half: the same scenario, once with the null channel and once with a ring, on the same machine.
-    // Three rounds each, and the *minimum* is what gets compared: a single round on a host is dominated by
-    // frequency ramping and cache warming, and the first version of this case duly reported recording as *faster* than
-    // not recording -- 204 ns against 168 ns -- which is not a result, it is noise with a unit. The honest statement is
-    // that one 36-byte store per period is below the resolution of a host measurement, and that is what the case says.
-    // 实测的一半：同一场景，一次用空通道、一次用环形缓冲，同一台机器上。各测三轮，比较的是 **最小值** ：宿主上单轮结果被
-    // 频率爬升和缓存预热主导，本用例的第一版因此报出"记录比不记录更快"——204 ns 对 168 ns——那不是结果，是带了单位的噪声。
-    // 诚实的说法是：每周期一次 36 字节写入低于宿主测量的分辨率，本用例说的就是这一句。
+    // One round is discarded as warm-up and the *median* of the rest is what gets compared. A single round on a host
+    // is dominated by frequency ramping and cache warming -- the first version of this case reported recording as
+    // *faster* than not recording, 204 ns against 168 ns, which is not a result, it is noise with a unit. The minimum
+    // was the first answer to that, and it is the wrong one: on a shared runner the two sides do not have the same
+    // variance, so a minimum compares how lucky each side's best round was.
+    // 实测的一半：同一场景，一次用空通道、一次用环形缓冲，同一台机器上。丢掉一轮热身，比较其余各轮的 **中位数** 。
+    // 宿主上单轮结果被频率爬升和缓存预热主导，本用例的第一版因此报出"记录比不记录更快"——204 ns 对 168 ns——
+    // 那不是结果，是带了单位的噪声。最小值是当时给出的第一个答案，而它是错的：共享运行器上两边的方差并不相同，
+    // 取最小值比的是两边最幸运那一轮有多幸运。
     constexpr int kSteps = 20000;
-    constexpr int kRounds = 3;
+    constexpr int kWarmup = 1;
+    constexpr int kRounds = 5;
+    constexpr std::size_t kMeasured = 4;
     const auto time_it = [&](auto make) {
         foc::driver::StubHal hal;
         make_hal(hal);
@@ -241,30 +245,45 @@ TEST(Trace, OffCostsNoMemoryAndNoBranch) {
         return std::chrono::duration<double, std::nano>(stop - start).count() / kSteps;
     };
 
-    double off_best = 1e9;
-    double on_best = 1e9;
+    std::array<double, kMeasured> off_ns{};
+    std::array<double, kMeasured> on_ns{};
     for (int round = 0; round < kRounds; ++round) {
-        const double off_ns = time_it(
+        const double off = time_it(
             [](foc::driver::StubHal& hal) { return NullMotor(make_config(), make_policies<NullMotor>(), hal); });
-        const double on_ns = time_it(
+        const double on = time_it(
             [](foc::driver::StubHal& hal) { return TracedMotor(make_config(), make_policies<TracedMotor>(), hal); });
-        off_best = std::min(off_best, off_ns);
-        on_best = std::min(on_best, on_ns);
-        std::printf("[trace] round %d: %.1f ns/period off, %.1f ns/period on\n", round, off_ns, on_ns);
+        std::printf("[trace] round %d: %.1f ns/period off, %.1f ns/period on%s\n", round, off, on,
+                    round < kWarmup ? " (warm-up, discarded)" : "");
+        if (round >= kWarmup) {
+            off_ns.at(static_cast<std::size_t>(round - kWarmup)) = off;
+            on_ns.at(static_cast<std::size_t>(round - kWarmup)) = on;
+        }
     }
-    std::printf("[trace] best of %d: %.1f ns/period off, %.1f ns/period on (host, %d periods each)\n", kRounds,
-                off_best, on_best, kSteps);
+
+    // The median of four measured rounds: one slow round or one fast one moves it by a quarter of the
+    // spread instead of by all of it, and neither side is rewarded for being noisier.
+    // 四轮的中位数：一轮偏慢或偏快只把它推动跨距的四分之一而不是全部，两边也不会因为更吵而占便宜。
+    const auto median = [](std::array<double, kMeasured> values) {
+        std::sort(values.begin(), values.end());
+        return 0.5 * (values[kMeasured / 2U - 1U] + values[kMeasured / 2U]);
+    };
+    const double off_median = median(off_ns);
+    const double on_median = median(on_ns);
+    std::printf("[trace] %d measured rounds: off median %.1f (best %.1f), on median %.1f (best %.1f) "
+                "ns/period, %d periods each\n",
+                static_cast<int>(kMeasured), off_median, *std::min_element(off_ns.begin(), off_ns.end()), on_median,
+                *std::min_element(on_ns.begin(), on_ns.end()), kSteps);
 
     // What this measurement can and cannot say. It cannot say "under 2 us on a target" -- nobody measured that. It can
     // say that recording does not dominate the loop, and it reports the difference so that a reader can see it is inside
     // the noise rather than trusting a single number.
-    // 这个测量能说什么、不能说什么。它不能说"目标上低于 2 微秒"——没人量过。它能说记录没有主导环路，并把差值打印出来，
-    // 让读者自己看到它落在噪声里，而不是去相信一个数字。
-    EXPECT_GT(off_best, 0.0);
-    EXPECT_LT(on_best, off_best * 1.5) << "recording one 36-byte struct per period should not dominate the loop";
-    const double delta_ns = on_best - off_best;
-    std::printf("[trace] recording costs %+.1f ns/period of a %.1f ns loop (%.1f %%)\n", delta_ns, off_best,
-                100.0 * delta_ns / off_best);
+    // 这个测量能说什么、不能说什么。它不能说"目标上低于 2 微秒"——没人量过。它能说记录没有主导环路，并把差值打印
+    // 出来，让读者自己看到它落在噪声里，而不是去相信一个数字。
+    EXPECT_GT(off_median, 0.0);
+    EXPECT_LT(on_median, off_median * 1.5) << "recording one 36-byte struct per period should not dominate the loop";
+    const double delta_ns = on_median - off_median;
+    std::printf("[trace] recording costs %+.1f ns/period of a %.1f ns loop (%.1f %%)\n", delta_ns, off_median,
+                100.0 * delta_ns / off_median);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
