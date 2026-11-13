@@ -9,31 +9,37 @@
 // it. Nothing in `core/`, `hal/`, `driver/` or `motor/` may include this
 // header.
 //
-// It is included exactly as `api/python_bindings.cpp` and the `test_api_*`
-// cases include it -- with no linkage wrapper -- because `foc/api/foc_api.h`
-// carries no `extern "C"` guards and the repo's other C++ consumers do not
-// supply them either. Being the odd one out would make this header the only
-// translation unit that disagrees with the rest, which is a way to break a
-// build rather than a way to fix one.
+// The include is wrapped in `extern "C"` because this header *calls* the ABI,
+// and a C++ translation unit that calls it without the wrapper gets mangled
+// references: measured as 237 undefined symbols against the shipped
+// `libfoc_c.a`, whose `foc_*` definitions are unmangled. The wrapper is the
+// source-tree half of what `conanfile.py::_make_c_compatible()` does to every
+// `.h` it installs -- the installed copy of `foc_api.h` already carries the
+// guard, so a C++ consumer of the *package* has always seen C linkage while a
+// C++ consumer of the *tree* has not. Against the installed header the two
+// guards nest, which is legal, so the same source builds both ways.
 //
-// That the guards are *owed* is measured, not suspected: the shipped
-// `libfoc_c.a` exports `foc_motor_trace_size` unmangled, and a C++ translation
-// unit that includes this header and links that archive fails with 237
-// undefined references. The debt is already on the books --
-// `.github/project/mcdc.json`'s `excluded_tests` note says the same thing for
-// the seven `test_api_*` cases and names the reason ("declared without extern
-// "C" in the test") -- so this header is joining a recorded problem rather than
-// creating one. Adding the guards changes the linkage of every symbol in the
-// public C surface, which is its own change with its own measurement.
-// 这道保护是 **欠着的** ，而且是量出来的：出厂的 `libfoc_c.a` 导出的
-// `foc_motor_trace_size` 是未修饰的，而包含本头文件并 链接那个归档的 C++
-// 编译单元会报 237
-// 个未定义引用。这笔账已经记在案上了——`.github/project/mcdc.json` 的
-// `excluded_tests` 注释对那七个 `test_api_*`
-// 用例说的是同一件事，并写明了原因（"declared without extern "C" in the
-// test"）——所以本头文件是加入一个已记录的问题，而不是制造一个问题。给公开的 C
-// 接口加保护会改变它里面每个符号的链接性， 那是另一件事、需要它自己的测量。
+// What is still owed is the guard *inside* `foc/api/foc_api.h`, which would fix
+// every C++ caller at once. That changes the linkage of every symbol in the
+// public C surface and is its own change with its own measurement; this wrapper
+// only aligns the private code that reaches across the boundary.
+// 本头文件是 `include/` 下唯一包含 C 表面的地方，而且它是有意这么做的：协议层是
+// C ABI 的 **消费者** ，不属于 ABI 本身。 `core/`、`hal/`、`driver/`、`motor/`
+// 里任何一个都不许包含它。
+//
+// 这一条 include 外面套了 `extern "C"`，因为本头文件 **调用** 了这个 ABI：不套的
+// C++ 编译单元拿到的是修饰名——对着出厂的 `libfoc_c.a`（其中的 `foc_*` 定义是未
+// 修饰的）实测 237 个未定义符号。这个包裹就是 `conanfile.py::_make_c_compatible()`
+// 对每个装机 `.h` 所做那一步的源码树版本：装机的那份 `foc_api.h` 早就带着保护，
+// 所以 **包** 的 C++ 消费方一直看到 C 链接性，而 **树** 的 C++ 消费方没有。对着
+// 装机头两个保护是嵌套的，合法，于是同一份源码两种编法一致。
+//
+// 仍然欠着的是把保护写进 `foc/api/foc_api.h` 本身——那样一次修好所有 C++ 调用方。
+// 那会改变公开 C 表面每个符号的链接性，是另一件事、需要它自己的测量；这里的包裹
+// 只负责把跨边界的私有代码对齐。
+extern "C" {
 #include <foc/api/foc_api.h>
+}
 // Conan::ImportEnd
 
 /*!
