@@ -36,7 +36,10 @@
   "gaps": [
     {
       "law": "psi_f = Kt / (1.5 * pole_pairs)",
-      "impl": {"file": "src/motor/motor_config.cpp", "symbol": "psi_f_wb"},
+      "impl": {
+        "file": "src/motor/motor_config.cpp",
+        "symbol": "psi_f_wb"
+      },
       "why": {
         "en": "Deliberately absent from `rows`: no test calls `psi_f_wb()` directly. It is exercised only through the gains and the feedforward config, so any row here would name a case that does not test the law. It belongs in the ledger the day a case for it exists, not before.",
         "zh": "故意不在 `rows` 里：没有用例直接调用 `psi_f_wb()`。它只经由增益与前馈配置被间接用到，因此在这里写任何一行都会指向一个并不在测该定律的用例。它属于“有用例的那一天”，不属于现在。"
@@ -48,12 +51,28 @@
       "id": "E-CLARKE-1",
       "name": "Clarke transform, amplitude invariant",
       "latex": "\\alpha = \\tfrac{2}{3}\\left(u - \\tfrac{v+w}{2}\\right),\\quad \\beta = \\tfrac{1}{\\sqrt{3}}\\,(v - w)",
-      "symbols": ["alpha_beta"],
-      "impl": {"file": "include/foc/core/transforms.hpp", "symbol": "clarke"},
+      "symbols": [
+        "alpha_beta"
+      ],
+      "impl": {
+        "file": "include/foc/core/transforms.hpp",
+        "symbol": "clarke"
+      },
       "case": "Transforms.ClarkeIsAmplitudeInvariant",
       "witness": "math",
       "law": "clarke",
-      "check": {"kind": "numeric", "inputs": {"u": 1.0, "v": -0.5, "w": -0.5}, "expect": {"alpha": 1.0, "beta": 0.0}},
+      "check": {
+        "kind": "numeric",
+        "inputs": {
+          "u": 1.0,
+          "v": -0.5,
+          "w": -0.5
+        },
+        "expect": {
+          "alpha": 1.0,
+          "beta": 0.0
+        }
+      },
       "note": {
         "en": "The 2/3 is the amplitude convention, and it is the whole difference between this library and a power-invariant Clarke: swapping it for 1/2 keeps every round trip passing and halves every measured current.",
         "zh": "那个 2/3 是幅值约定，也是本库与功率不变式 Clarke 之间的全部差别：换成 1/2 之后所有往返用例照样通过，而每一个实测电流都缩小一半。"
@@ -63,12 +82,28 @@
       "id": "E-CLARKE-2",
       "name": "Inverse Clarke transform",
       "latex": "u = \\alpha,\\quad v = -\\tfrac{1}{2}\\alpha + \\tfrac{\\sqrt{3}}{2}\\beta,\\quad w = -\\tfrac{1}{2}\\alpha - \\tfrac{\\sqrt{3}}{2}\\beta",
-      "symbols": ["alpha_beta"],
-      "impl": {"file": "include/foc/core/transforms.hpp", "symbol": "inv_clarke"},
+      "symbols": [
+        "alpha_beta"
+      ],
+      "impl": {
+        "file": "include/foc/core/transforms.hpp",
+        "symbol": "inv_clarke"
+      },
       "case": "Transforms.InverseClarkeRoundTrips",
       "witness": "math",
       "law": "inv_clarke",
-      "check": {"kind": "numeric", "inputs": {"alpha": 1.0, "beta": 0.0}, "expect": {"u": 1.0, "v": -0.5, "w": -0.5}},
+      "check": {
+        "kind": "numeric",
+        "inputs": {
+          "alpha": 1.0,
+          "beta": 0.0
+        },
+        "expect": {
+          "u": 1.0,
+          "v": -0.5,
+          "w": -0.5
+        }
+      },
       "note": {
         "en": "`inv_clarke` produces a balanced set: it has thrown the zero sequence away and cannot put it back. That is why the abc plant needs `v -= mean(v)` before integrating duty times bus voltage.",
         "zh": "`inv_clarke` 产出的是平衡组：零序已被丢掉，无法恢复。所以 abc 被控对象在积分“占空比×母线电压”之前必须先 `v -= mean(v)`。"
@@ -78,13 +113,31 @@
       "id": "E-PARK-1",
       "name": "Park transform",
       "latex": "d = \\alpha\\cos\\theta_e + \\beta\\sin\\theta_e,\\quad q = -\\alpha\\sin\\theta_e + \\beta\\cos\\theta_e",
-      "symbols": ["theta_e", "alpha_beta", "i_d", "i_q"],
-      "impl": {"file": "include/foc/core/transforms.hpp", "symbol": "park"},
+      "symbols": [
+        "theta_e",
+        "alpha_beta",
+        "i_d",
+        "i_q"
+      ],
+      "impl": {
+        "file": "include/foc/core/transforms.hpp",
+        "symbol": "park"
+      },
       "case": "Transforms.ParkAtNinetyDegreesSwapsAxes",
       "witness": "math",
       "law": "park",
-      "check": {"kind": "numeric", "inputs": {"alpha": 1.0, "beta": 0.0, "theta_rad": 1.5707963267948966},
-                "expect": {"d": 6.123233995736766e-17, "q": -1.0}},
+      "check": {
+        "kind": "numeric",
+        "inputs": {
+          "alpha": 1.0,
+          "beta": 0.0,
+          "theta_rad": 1.5707963267948966
+        },
+        "expect": {
+          "d": 6.123233995736766e-17,
+          "q": -1.0
+        }
+      },
       "note": {
         "en": "The minus sign on `q` is the convention: with this rotation the q axis lags the d axis, so a positive `i_q` produces motoring torque in the direction `theta_e` advances. Dropping the sign still round-trips and inverts every torque. `expect['d']` is `6.12e-17` and not `0.0` because `pi/2` is not representable: the gate recomputes the law and refuses a hand-rounded zero.",
         "zh": "`q` 上的负号是约定：按这个旋转，q 轴滞后 d 轴，于是正的 `i_q` 在 `theta_e` 前进的方向上产生电动转矩。去掉负号后往返依然成立，而所有转矩反号。`expect['d']` 是 `6.12e-17` 而不是 `0.0`，因为 `π/2` 无法精确表示：门禁会重算定律，手写的零会被它拒收。"
@@ -94,13 +147,31 @@
       "id": "E-PARK-2",
       "name": "Inverse Park transform",
       "latex": "\\alpha = d\\cos\\theta_e - q\\sin\\theta_e,\\quad \\beta = d\\sin\\theta_e + q\\cos\\theta_e",
-      "symbols": ["theta_e", "alpha_beta", "i_d", "i_q"],
-      "impl": {"file": "include/foc/core/transforms.hpp", "symbol": "inv_park"},
+      "symbols": [
+        "theta_e",
+        "alpha_beta",
+        "i_d",
+        "i_q"
+      ],
+      "impl": {
+        "file": "include/foc/core/transforms.hpp",
+        "symbol": "inv_park"
+      },
       "case": "Transforms.InverseParkRoundTrips",
       "witness": "math",
       "law": "inv_park",
-      "check": {"kind": "numeric", "inputs": {"d": 0.0, "q": -1.0, "theta_rad": 1.5707963267948966},
-                "expect": {"alpha": 1.0, "beta": -6.123233995736766e-17}},
+      "check": {
+        "kind": "numeric",
+        "inputs": {
+          "d": 0.0,
+          "q": -1.0,
+          "theta_rad": 1.5707963267948966
+        },
+        "expect": {
+          "alpha": 1.0,
+          "beta": -6.123233995736766e-17
+        }
+      },
       "note": {
         "en": "An orthogonal rotation, so the inverse is the transpose and the magnitudes are preserved. The case asserts the round trip, not the pair of formulas: a pair whose two halves are wrong the same way still round-trips, which is why the numeric check above exists as well.",
         "zh": "正交旋转，因此逆就是转置、幅值保持。用例断言的是往返，而不是那两个公式：两半以同一种方式写错时往返依然成立，这正是上面那条数值判据存在的理由。"
@@ -110,14 +181,34 @@
       "id": "E-CURPI-1",
       "name": "Current-loop PI gains from the nameplate",
       "latex": "k_p = \\max(2\\omega_b L_d - R_s,\\, 0),\\quad k_i = \\omega_b^2 L_d,\\quad v_{lim} = \\tfrac{1}{2} v_{bus}",
-      "symbols": ["ld", "rs", "v_bus", "pole_pairs"],
-      "impl": {"file": "src/motor/motor_config.cpp", "symbol": "current_pi_config"},
+      "symbols": [
+        "ld",
+        "rs",
+        "v_bus",
+        "pole_pairs"
+      ],
+      "impl": {
+        "file": "src/motor/motor_config.cpp",
+        "symbol": "current_pi_config"
+      },
       "case": "ApiPiGains.TheGainsFollowTheDesignRuleAndTheLoopDeliversThem",
       "via": "foc_current_pi_gains",
       "witness": "case:ApiPiGains.TheGainsFollowTheDesignRuleAndTheLoopDeliversThem",
       "law": "current_pi",
-      "check": {"kind": "numeric", "inputs": {"bandwidth_rad_s": 1000.0, "ld": 0.0004, "rs": 0.5, "v_bus": 24.0},
-                "expect": {"kp": 0.3, "ki": 400.0, "v_lim": 12.0}},
+      "check": {
+        "kind": "numeric",
+        "inputs": {
+          "bandwidth_rad_s": 1000.0,
+          "ld": 0.0004,
+          "rs": 0.5,
+          "v_bus": 24.0
+        },
+        "expect": {
+          "kp": 0.3,
+          "ki": 400.0,
+          "v_lim": 12.0
+        }
+      },
       "note": {
         "en": "Substituting the plant pole `R/L` back gives `s^2 + 2\\omega_b s + \\omega_b^2`: critically damped, no overshoot, every gain from the nameplate. The floor at zero is not cosmetic -- below `R/(2L)` the design rule asks for a negative proportional gain.",
         "zh": "把被控对象极点 `R/L` 代回去得到 `s² + 2ω_b·s + ω_b²`：临界阻尼、无超调，增益全部由铭牌导出。零下限不是装饰——低于 `R/(2L)` 时设计规则会要求负的比例增益。"
@@ -127,14 +218,30 @@
       "id": "E-SPDPI-1",
       "name": "Speed-loop PI gains cancelling the mechanical pole",
       "latex": "k_p = \\omega_b J / K_t,\\quad k_i = \\omega_b B / K_t",
-      "symbols": ["kt"],
-      "impl": {"file": "src/motor/motor_config.cpp", "symbol": "speed_pi_config"},
+      "symbols": [
+        "kt"
+      ],
+      "impl": {
+        "file": "src/motor/motor_config.cpp",
+        "symbol": "speed_pi_config"
+      },
       "case": "AutoTune.IdentifiesTheMachineItWasToldAboutAndLandsOnTheNameplateGains",
       "via": "speed_pi_config",
       "witness": "case:AutoTune.IdentifiesTheMachineItWasToldAboutAndLandsOnTheNameplateGains",
       "law": "speed_pi",
-      "check": {"kind": "numeric", "inputs": {"bandwidth_rad_s": 1000.0, "j": 0.0001, "b": 0.0001, "kt": 0.05},
-                "expect": {"kp": 2.0, "ki": 2.0}},
+      "check": {
+        "kind": "numeric",
+        "inputs": {
+          "bandwidth_rad_s": 1000.0,
+          "j": 0.0001,
+          "b": 0.0001,
+          "kt": 0.05
+        },
+        "expect": {
+          "kp": 2.0,
+          "ki": 2.0
+        }
+      },
       "note": {
         "en": "The loop collapses to `\\omega_b/s`, a first-order response with time constant `1/\\omega_b`. The witness is worth reading: it identifies the same two ratios from a measurement of the plant, so this law has two independent routes to it rather than two copies of itself.",
         "zh": "环路退化成 `ω_b/s`，即时间常数 `1/ω_b` 的一阶响应。证人值得一读：它从对被控对象的测量里辨识出同样那两个比值，所以这条定律有两条独立路径，而不是自身的两份拷贝。"
@@ -144,13 +251,33 @@
       "id": "E-MTPA-1",
       "name": "MTPA d-axis current",
       "latex": "i_d = \\frac{\\psi_f - \\sqrt{\\psi_f^2 + 8(L_q-L_d)^2 i_q^2}}{4(L_q-L_d)}",
-      "symbols": ["psi_f", "ld", "lq", "i_d", "i_q"],
-      "impl": {"file": "include/foc/core/reference.hpp", "symbol": "d_axis"},
+      "symbols": [
+        "psi_f",
+        "ld",
+        "lq",
+        "i_d",
+        "i_q"
+      ],
+      "impl": {
+        "file": "include/foc/core/reference.hpp",
+        "symbol": "d_axis"
+      },
       "case": "Mtpa.TheGainIsWorthShippingWhereTheReluctanceTermIs",
       "witness": "math",
       "law": "mtpa",
-      "check": {"kind": "numeric", "inputs": {"psi_f": 0.004761904761904762, "ld": 0.004, "lq": 0.008, "iq_abs": 2.0},
-                "expect": {"i_d": -1.147571976953714, "magnitude": 2.3058450603389327}},
+      "check": {
+        "kind": "numeric",
+        "inputs": {
+          "psi_f": 0.004761904761904762,
+          "ld": 0.004,
+          "lq": 0.008,
+          "iq_abs": 2.0
+        },
+        "expect": {
+          "i_d": -1.147571976953714,
+          "magnitude": 2.3058450603389327
+        }
+      },
       "note": {
         "en": "On the salient profile (`Ld = 4 mH`, `Lq = 8 mH`, i.e. `Ld` ten times the nominal), not on the nominal surface machine, where `i_d = 0` is the whole curve and the capacitance this equation buys is zero.",
         "zh": "算在有凸极的那份档案上（`Ld = 4 mH`、`Lq = 8 mH`，即 `Ld` 是标称值的十倍），不是标称表贴机——那台机器上 `i_d = 0` 就是整条曲线，本条公式买到的好处为零。"
@@ -160,13 +287,30 @@
       "id": "E-MTPA-2",
       "name": "MTPA on a surface machine is exactly zero",
       "latex": "L_q = L_d \\;\\Rightarrow\\; i_d = 0",
-      "symbols": ["ld", "lq", "i_d"],
-      "impl": {"file": "include/foc/core/reference.hpp", "symbol": "d_axis"},
+      "symbols": [
+        "ld",
+        "lq",
+        "i_d"
+      ],
+      "impl": {
+        "file": "include/foc/core/reference.hpp",
+        "symbol": "d_axis"
+      },
       "case": "Mtpa.ASurfaceMachineGetsExactlyZeroNotAnEpsilon",
       "witness": "case:Mtpa.ASurfaceMachineGetsExactlyZeroNotAnEpsilon",
       "law": "mtpa_surface",
-      "check": {"kind": "numeric", "inputs": {"psi_f": 0.004761904761904762, "ld": 0.0004, "lq": 0.0004, "iq_abs": 2.0},
-                "expect": {"i_d": 0.0}},
+      "check": {
+        "kind": "numeric",
+        "inputs": {
+          "psi_f": 0.004761904761904762,
+          "ld": 0.0004,
+          "lq": 0.0004,
+          "iq_abs": 2.0
+        },
+        "expect": {
+          "i_d": 0.0
+        }
+      },
       "note": {
         "en": "The branch exists so the denominator is never applied to a saliency of one ulp: dividing by it produces a huge `i_d` whose sign is noise, and the case asserts the zero rather than an epsilon because an epsilon is an opinion about how small a saliency is.",
         "zh": "这个分支存在的意义是让分母永远不去除一个只有 1 ulp 的凸极：除下去会得到一个巨大的 `i_d`，其符号是噪声。用例断言的是恰好为零而不是一个极小量，因为“极小”只是对“凸极有多小”的一种看法。"
@@ -177,15 +321,32 @@
       "name": "One discrete PI step with both clamps",
       "latex": "e = r - y,\\quad i \\leftarrow \\mathrm{clamp}(i + k_i e \\Delta t,\\, i_{min}, i_{max}),\\quad u = \\mathrm{clamp}(k_p e + i,\\, u_{min}, u_{max})",
       "symbols": [],
-      "impl": {"file": "src/core/pi.cpp", "symbol": "Pi::run"},
+      "impl": {
+        "file": "src/core/pi.cpp",
+        "symbol": "Pi::run"
+      },
       "case": "Pi.IntegralAccumulatesKiTimesErrorTimesDt",
       "witness": "case:Pi.IntegralAccumulatesKiTimesErrorTimesDt",
       "law": "pi_step",
-      "check": {"kind": "numeric",
-                "inputs": {"setpoint": 1.0, "feedback": 0.0, "dt_s": 0.5, "kp": 2.0, "ki": 3.0,
-                           "integral": 0.0, "integral_min": -10.0, "integral_max": 10.0,
-                           "out_min": -10.0, "out_max": 10.0},
-                "expect": {"integral": 1.5, "output": 3.5}},
+      "check": {
+        "kind": "numeric",
+        "inputs": {
+          "setpoint": 1.0,
+          "feedback": 0.0,
+          "dt_s": 0.5,
+          "kp": 2.0,
+          "ki": 3.0,
+          "integral": 0.0,
+          "integral_min": -10.0,
+          "integral_max": 10.0,
+          "out_min": -10.0,
+          "out_max": 10.0
+        },
+        "expect": {
+          "integral": 1.5,
+          "output": 3.5
+        }
+      },
       "note": {
         "en": "The integral is re-clamped against the **current** window every step, which is what lets a shrunken window release stored output at once instead of leaking it out over many steps. That re-clamp is the anti-windup mechanism: there is no back-calculation and `step()` never sees the actuator's actual output.",
         "zh": "积分每一步都按**当前**窗口重新夹紧，这正是窗口收窄时已存输出能立刻释放、而不是花很多步漏掉的原因。这次重夹就是抗饱和机制：没有 back-calculation，`step()` 也拿不到执行器实际施加的输出。"
@@ -196,16 +357,127 @@
       "name": "One slew-limited step, both directions symmetric",
       "latex": "y \\leftarrow \\mathrm{clamp}(r,\\, y - \\rho\\Delta t,\\, y + \\rho\\Delta t) \\;\\text{for}\\; \\Delta t > 0;\\quad y \\text{held otherwise}",
       "symbols": [],
-      "impl": {"file": "src/core/limits.cpp", "symbol": "SlewLimiter::step"},
+      "impl": {
+        "file": "src/core/limits.cpp",
+        "symbol": "SlewLimiter::step"
+      },
       "case": "SlewLimiter.RampsTowardsTargetAtConfiguredRate",
       "witness": "case:SlewLimiter.RampsTowardsTargetAtConfiguredRate",
       "law": "slew_step",
-      "check": {"kind": "numeric",
-                "inputs": {"value": 0.0, "target": 10.0, "rate_per_s": 4.0, "dt_s": 0.5},
-                "expect": {"value": 2.0}},
+      "check": {
+        "kind": "numeric",
+        "inputs": {
+          "value": 0.0,
+          "target": 10.0,
+          "rate_per_s": 4.0,
+          "dt_s": 0.5
+        },
+        "expect": {
+          "value": 2.0
+        }
+      },
       "note": {
         "en": "`rate * dt` is the whole budget for one step, and it is applied to the **state** rather than to the error: the limiter therefore carries no memory of how far behind it was, which is what makes it a rate limit instead of a first-order lag. A non-positive `dt` is not an error, it is a step in which no time passed, so the value holds.",
         "zh": "`rate · dt` 是一步的全部预算，而且它作用在**状态**上而不是误差上：于是限制器不记得自己落后多少，这正是它是一个速率限制而不是一阶滞后的原因。非正的 `dt` 不是错误，只是这一步没有时间经过，所以值保持不变。"
+      }
+    },
+    {
+      "id": "E-NTC-1",
+      "name": "An NTC's temperature from its resistance, and back",
+      "latex": "\\frac{1}{T_w} = \\frac{1}{T_0} + \\frac{1}{B}\\ln\\frac{R_{ntc}}{R_0}",
+      "symbols": [
+        "t_w",
+        "beta_ntc",
+        "r_ntc"
+      ],
+      "impl": {
+        "file": "include/foc/core/thermistor.hpp",
+        "symbol": "NtcDivider"
+      },
+      "case": "Temperature.TheInverseUndoesTheForwardModelAcrossTheWorkingBand",
+      "witness": "case:Temperature.TheInverseUndoesTheForwardModelAcrossTheWorkingBand",
+      "law": "ntc_beta",
+      "check": {
+        "kind": "numeric",
+        "inputs": {
+          "t0_c": 25.0,
+          "r0_ohm": 10000.0,
+          "beta_k": 3950.0,
+          "r_ohm": 6000.0
+        },
+        "expect": {
+          "celsius": 36.956992337356155
+        }
+      },
+      "note": {
+        "en": "The two-point model, not Steinhart-Hart, and the header states the cost: inside the band this library cares about the difference is a fraction of a degree, and the polynomial's extra constants would be fitted by the caller. What the law does *not* cover is the case where the reading is not a measurement at all: a code at either rail means the sensor is gone, and the conversion refuses rather than answering.",
+        "zh": "两点模型而不是 Steinhart-Hart，代价写在头文件里：在本库关心的温带内差别不到零点几度，而多项式多出来的常数要调用方自己去拟合。这条律 **不** 覆盖的是「读数根本不是一次测量」那种情况：落在任一侧轨的码值说明传感器不在了，换算会拒绝而不是给一个答案。"
+      }
+    },
+    {
+      "id": "E-TRAJ-1",
+      "name": "The velocity a move may command",
+      "latex": "|\\omega_{ref}| \\le \\min\\left(\\omega_{cruise},\\ \\sqrt{2\\,\\alpha_{ref}\\,e}\\right)",
+      "symbols": [
+        "omega_ref",
+        "alpha_ref"
+      ],
+      "impl": {
+        "file": "include/foc/core/move_trajectory.hpp",
+        "symbol": "MoveTrajectory"
+      },
+      "case": "MoveTrajectory.AFullTrapezoidCruisesAtTheCeilingAndLandsWhenTheFormulaSays",
+      "witness": "case:MoveTrajectory.AFullTrapezoidCruisesAtTheCeilingAndLandsWhenTheFormulaSays",
+      "law": "move_ceiling",
+      "check": {
+        "kind": "numeric",
+        "inputs": {
+          "accel_rad_s2": 50.0,
+          "distance_rad": 0.1,
+          "cruise_rad_s": 10.0
+        },
+        "expect": {
+          "ceiling_rad_s": 3.1622776601683795
+        }
+      },
+      "note": {
+        "en": "The second term is the stopping distance, and it is a quadratic root rather than a ratio because the only thing the reference controls is acceleration: halving the acceleration half of the way out does not halve the speed it may carry. `e` is the distance left **after** this tick, so the sample being taken is paid for rather than discovered.",
+        "zh": "第二项是制动距离，它是二次根而不是比值，因为参考唯一能控的是加速度：半路上把加速度减半，并不等于它能带的速度也减半。 `e` 是 **这一拍走完之后** 剩下的距离，于是正在取的那一个采样是付过账的，而不是被发现的。"
+      }
+    },
+    {
+      "id": "E-THERM-1",
+      "name": "Where a held current settles, and when it settles at all",
+      "latex": "T_\\infty = \\frac{k\\,(1 - 20\\alpha_{th}) + T_a/R_{th}}{1/R_{th} - k\\,\\alpha_{th}},\\qquad k = \\tfrac{3}{2} R_s I^2",
+      "symbols": [
+        "t_w",
+        "rs",
+        "rt_th",
+        "alpha_th"
+      ],
+      "impl": {
+        "file": "src/core/thermal_limit.cpp",
+        "symbol": "ThermalLimit::settle_temperature_c"
+      },
+      "case": "ThermalLimit.TheContinuousCurrentSettlesThePlantAtTheAllowedTemperatureAndFivePercentMoreDoesNot",
+      "witness": "case:ThermalLimit.TheContinuousCurrentSettlesThePlantAtTheAllowedTemperatureAndFivePercentMoreDoesNot",
+      "law": "thermal_settle",
+      "check": {
+        "kind": "numeric",
+        "inputs": {
+          "rs": 0.5,
+          "current_a": 1.0,
+          "alpha_per_k": 0.00393,
+          "rt_k_per_w": 4.0,
+          "t_ambient_c": 25.0
+        },
+        "expect": {
+          "settle_c": 28.095445300088034
+        }
+      },
+      "note": {
+        "en": "The `20` in the numerator is the copper's own feedback: resistance rises with temperature, so the settle is a rational function of the loss, not a product, and dropping that term reads about fifteen percent high at the temperature that matters. The law also has an **edge**: the settle exists only while `R_th * k * alpha_th < 1`, and past it the answer is `infinity` rather than a very large number, because a model with no steady state is a different statement from a hot machine.",
+        "zh": "分子里的 `20` 是铜自己的反馈：电阻随温度上升，所以稳态是损耗的 **有理式** 而不是乘积；丢掉那一项，在真正要紧的那个温度上会读高约百分之十五。这条律还有一条 **边界**：只有当 `R_th·k·alpha_th < 1` 时稳态才存在，越过它答案就是 `infinity` 而不是一个很大的数——「没有稳态的模型」与「一台很热的电机」是两句不同的话。"
       }
     }
   ]

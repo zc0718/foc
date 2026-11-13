@@ -8,6 +8,10 @@
  *
  * @brief [en] Implements the thermal limit: the steady-state root of the loss equation and the time budget to it.
  * @brief [zh] 热限值的实现：损耗方程的稳态根，以及到达它的时间预算。
+ * @see Ledger `E-THERM-1` (where a held current settles, and the edge past which no settle exists) and
+ *      `ThermalLimit.TheContinuousCurrentSettlesThePlantAtTheAllowedTemperatureAndFivePercentMoreDoesNot`.
+ *      ／ 台账 `E-THERM-1`（保持电流的稳态温度，以及越过之后不存在稳态的那条边界）与
+ *      `ThermalLimit.TheContinuousCurrentSettlesThePlantAtTheAllowedTemperatureAndFivePercentMoreDoesNot`。
  * @since 0.1.0
  */
 

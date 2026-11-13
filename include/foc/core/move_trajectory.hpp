@@ -129,6 +129,7 @@ struct TrajectoryPoint final {
  *
  * @context [en] Position-loop ISR: noexcept, no allocation, one call per tick.
  * @context [zh] 位置环 ISR：noexcept、不分配、每拍一次调用。
+ * @see Ledger `E-TRAJ-1` (the cruise-or-stopping-distance ceiling, with a worked evaluation) and `MoveTrajectory.AFullTrapezoidCruisesAtTheCeilingAndLandsWhenTheFormulaSays`. ／ 台账 `E-TRAJ-1`（巡航上限与制动距离取小，附一次实算）与 `MoveTrajectory.AFullTrapezoidCruisesAtTheCeilingAndLandsWhenTheFormulaSays`。
  * @since 0.1.0
  * @exporter
  */

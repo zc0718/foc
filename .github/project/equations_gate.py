@@ -155,6 +155,36 @@ def law_slew_step(inputs: dict) -> dict:
     return {"value": value + min(max(delta, -budget), budget)}
 
 
+def law_ntc_beta(inputs: dict) -> dict:
+    """`1/T = 1/T0 + ln(R/R0)/B`, the two-point model inverted. Kelvin inside, Celsius out."""
+    t0_k = inputs["t0_c"] + 273.15
+    t_k = 1.0 / ((1.0 / t0_k) + (math.log(inputs["r_ohm"] / inputs["r0_ohm"]) / inputs["beta_k"]))
+    return {"celsius": t_k - 273.15}
+
+
+def law_move_ceiling(inputs: dict) -> dict:
+    """The velocity a move may command: the cruise ceiling, or the distance it still has to stop in."""
+    distance = inputs["distance_rad"]
+    stop = math.sqrt(2.0 * inputs["accel_rad_s2"] * distance) if distance > 0.0 else 0.0
+    return {"ceiling_rad_s": min(stop, inputs["cruise_rad_s"])}
+
+
+def law_thermal_settle(inputs: dict) -> dict:
+    """Where a held current settles, from `Ct dT/dt = (k(1-20a) + Ta/Rt) + T(k a - 1/Rt)`.
+
+    The settle is `-a/b` and it exists only while `b < 0`, which is `Rt * 1.5 Rs I^2 * alpha < 1` --
+    the same boundary the plant shows from the other side, and the reason the answer can be
+    `infinity` rather than a temperature.
+    """
+    k_loss = 1.5 * inputs["rs"] * inputs["current_a"] * inputs["current_a"]
+    alpha, rt = inputs["alpha_per_k"], inputs["rt_k_per_w"]
+    b = (k_loss * alpha) - (1.0 / rt)
+    if b >= 0.0:
+        return {"settle_c": math.inf}
+    a = (k_loss * (1.0 - (20.0 * alpha))) + (inputs["t_ambient_c"] / rt)
+    return {"settle_c": -a / b}
+
+
 LAWS = {
     "clarke": (law_clarke, "alpha = 2/3 (u - (v+w)/2), beta = (v - w)/sqrt(3)"),
     "inv_clarke": (law_inv_clarke, "u = alpha, v = -alpha/2 + sqrt3/2 beta, w = -alpha/2 - sqrt3/2 beta"),
@@ -166,6 +196,10 @@ LAWS = {
     "mtpa_surface": (law_mtpa_surface, "Lq == Ld -> i_d = 0"),
     "pi_step": (law_pi_step, "i <- clamp(i + ki e dt), u = clamp(kp e + i)"),
     "slew_step": (law_slew_step, "y <- clamp(target, y - rate dt, y + rate dt)"),
+    "ntc_beta": (law_ntc_beta, "1/T = 1/T0 + ln(R/R0)/B"),
+    "move_ceiling": (law_move_ceiling, "|v| <= min(v_cruise, sqrt(2 a e))"),
+    "thermal_settle": (law_thermal_settle,
+                        "T = (k(1-20a) + Ta/Rt) / (1/Rt - k a), k = 1.5 Rs I^2, exists while Rt k a < 1"),
 }
 
 

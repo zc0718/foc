@@ -188,3 +188,52 @@ i_char  ``i_char``
     **Defined by.** ``include/foc/core/observer/dual_inductance_observer.hpp`` (``Ab<float> psi_;``)
     **Note.** Registered when the bare `ψ` in this observer's prose turned out to be the last unregistered glyph: the sentence was naming the stator estimate while the table only knew the rotor constant `ψf`.
     登记它的原因：这个观测器的散文里那个裸 `ψ` 是最后一个未登记字形——句子说的是定子估计，而表里只有转子常数 `ψf`。
+
+T_w  ``t_w``
+    **Meaning.** winding temperature: what the derating limit is derived from. A drive with no temperature channel reports it as absent rather than as a number.
+    绕组温度：降额限值的来源。没有温度通道的驱动把它报成缺席，而不是报成一个数。
+    **Unit.** degC  **Frame.** machine
+    **Positive.** positive above the ambient the record states.
+    **Defined by.** ``include/foc/hal/temperature.hpp`` (``float celsius{0.0F};``)
+
+B  ``beta_ntc``
+    **Meaning.** the two-point model's exponent of an NTC, in kelvin: `1/T = 1/T0 + (1/B) ln(R/R0)`. Not a Steinhart-Hart coefficient set; the cost of that choice is stated on the header.
+    NTC 两点模型的指数，单位开尔文： `1/T = 1/T0 + (1/B) ln(R/R0)`。不是 Steinhart-Hart 的系数组；这个选择的代价写在头文件里。
+    **Unit.** K  **Frame.** sensor
+    **Positive.** positive.
+    **Defined by.** ``include/foc/core/thermistor.hpp`` (``float beta_k{3950.0F};``)
+
+R_{ntc}  ``r_ntc``
+    **Meaning.** the thermistor's own resistance in the divider at the temperature being read. The divider turns it into a code; a code at either rail means the sensor is gone, not that it is very hot or very cold.
+    分压里热敏电阻在该温度下的阻值。分压把它变成一个码值；落在任一侧轨的码值说明传感器不在了，而不是它很热或很冷。
+    **Unit.** ohm  **Frame.** sensor
+    **Positive.** positive.
+    **Defined by.** ``include/foc/core/thermistor.hpp`` (``auto resistance_ohm(float celsius)``)
+
+\omega_{ref}  ``omega_ref``
+    **Meaning.** the velocity a move trajectory commands this tick, rad/s: a reference, never a measurement.
+    运动轨迹本拍指令的速度，rad/s：是参考，从不是测量。
+    **Unit.** rad/s  **Frame.** mechanical
+    **Positive.** positive in the direction the move is going.
+    **Defined by.** ``include/foc/core/move_trajectory.hpp`` (``float velocity_rad_s;``)
+
+\alpha_{ref}  ``alpha_ref``
+    **Meaning.** how fast the commanded velocity may change, rad/s^2. It is the same number that appears inside the stopping-distance ceiling, which is why the ceiling is a quadratic root and not a ratio.
+    指令速度允许的变化速率，rad/s^2。它同时出现在制动距离上限里，这正是那个上限是二次根而不是比值的原因。
+    **Unit.** rad/s^2  **Frame.** mechanical
+    **Positive.** magnitude; the sign of the move is carried by the reference.
+    **Defined by.** ``include/foc/core/move_trajectory.hpp`` (``float accel_rad_s2;``)
+
+R_{th}  ``rt_th``
+    **Meaning.** thermal resistance from the winding to the ambient, K/W: the number that decides how many watts a temperature rise costs.
+    绕组到环境的导热热阻，K/W：决定一摄氏度温升要付多少瓦的那个数。
+    **Unit.** K/W  **Frame.** thermal
+    **Positive.** positive.
+    **Defined by.** ``include/foc/core/thermal_limit.hpp`` (``float rt_k_per_w{``)
+
+\alpha_{th}  ``alpha_th``
+    **Meaning.** the copper's temperature coefficient of resistance, per kelvin. It is what makes the settle a rational function rather than a product, and what bounds where the settle exists at all.
+    铜的电阻温度系数，每开尔文。正是它让稳态温度成为有理式而不是一个乘积，也决定了稳态在什么范围内才存在。
+    **Unit.** 1/K  **Frame.** thermal
+    **Positive.** positive.
+    **Defined by.** ``include/foc/core/thermal_limit.hpp`` (``float alpha_per_k{3.93e-3F};``)

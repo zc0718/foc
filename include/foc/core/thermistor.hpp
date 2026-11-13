@@ -80,6 +80,7 @@ struct ThermistorConfig final {
  * @note [zh] 两端轨都拒绝而不是上报。码值 0 或满量程正是热敏电阻开路或短路所产生的样子，而它们在曲线上都是
  *            **貌似合理的温度** ；回答 `false` 是"很冷"与"不在"之间的区别得以留存的唯一办法。配置本身就不可能成立的换算
  *            器也照此拒绝，于是一个写错的 `series_ohm` 不会静默产出一个温度。
+ * @see Ledger `E-NTC-1` (the two-point model and its inverse, with a worked evaluation) and `Temperature.TheInverseUndoesTheForwardModelAcrossTheWorkingBand`. ／ 台账 `E-NTC-1`（两点模型及其逆，附一次实算）与 `Temperature.TheInverseUndoesTheForwardModelAcrossTheWorkingBand`。
  * @since 0.1.0
  * @exporter
  */
