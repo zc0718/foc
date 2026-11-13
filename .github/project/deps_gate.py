@@ -202,10 +202,6 @@ def render(deps: dict, audit: dict) -> str:
         'single copyleft source file would relicense the whole thing — which is why the second table',
         'exists before anyone opens an upstream repository.',
         '',
-        '两个问题，两张注册表：`deps.json` 记录本库链接了什么、每个包允许出现在哪；`reuse-audit.json` 记录',
-        '允许阅读的每个上游项目的许可。本库是 Apache-2.0 且要被链接进产品，一个 copyleft 源文件就会把整库的',
-        '许可改掉——这就是第二张表要在有人打开上游仓库之前就先存在的原因。',
-        '',
         'What this project links',
         '-----------------------',
         '',
@@ -275,9 +271,7 @@ def render(deps: dict, audit: dict) -> str:
         'it up here. "Behaviour" means writing our own test for what the other project guarantees;',
         '"code" means copying, and it is only available under a permissive licence.',
         '',
-        '在细读、引入或摘抄任何上游项目之前，先查这张表。“行为”指把对方承诺的行为写成我们自己的测试；',
-        '“代码”指复制，只有宽松许可才允许。',
-        '',
+
     ])
     verdicts = audit.get('verdicts') or {}
     for project in audit.get('projects') or []:
@@ -287,9 +281,6 @@ def render(deps: dict, audit: dict) -> str:
         lines.append(f"``{project['id']}`` — **{project['licence']}**, {label}")
         use = project.get('use') or {}
         lines.append(f"    {_code(use.get('en', ''))}")
-        lines.append(f"    {_code(use.get('zh', ''))}")
-        if verdict.get('zh'):
-            lines.append(f"    *{verdict['zh']}.*")
         if project.get('evidence'):
             lines.append(f"    **Evidence.** ``{project['evidence']}``")
         lines.append('')
@@ -307,10 +298,6 @@ def render(deps: dict, audit: dict) -> str:
             lines.extend([f"**{heading}**", ''])
             for paragraph in body.get('en') or []:
                 lines.extend([_code(paragraph), ''])
-            for paragraph in body.get('zh') or []:
-                lines.extend([_code(paragraph), ''])
-            if title.get('zh'):
-                lines.extend([f"*{title['zh']}*", ''])
     return '\n'.join(lines).rstrip() + '\n'
 
 

@@ -12,10 +12,6 @@ allowed to read from. The library is Apache-2.0 and is meant to be linked into p
 single copyleft source file would relicense the whole thing — which is why the second table
 exists before anyone opens an upstream repository.
 
-两个问题，两张注册表：`deps.json` 记录本库链接了什么、每个包允许出现在哪；`reuse-audit.json` 记录
-允许阅读的每个上游项目的许可。本库是 Apache-2.0 且要被链接进产品，一个 copyleft 源文件就会把整库的
-许可改掉——这就是第二张表要在有人打开上游仓库之前就先存在的原因。
-
 What this project links
 -----------------------
 
@@ -108,55 +104,36 @@ Before reading an upstream project closely, vendoring it or copying a function o
 it up here. "Behaviour" means writing our own test for what the other project guarantees;
 "code" means copying, and it is only available under a permissive licence.
 
-在细读、引入或摘抄任何上游项目之前，先查这张表。“行为”指把对方承诺的行为写成我们自己的测试；
-“代码”指复制，只有宽松许可才允许。
-
 ``SimpleFOC`` — **MIT**, may be vendored, keep the notice
     Behaviour spec and the HAL breadth checklist. **Not code**: its Arduino/global-object model conflicts with the rule that :code:`include/` is allocation-free and exception-free, and with policy composition having no globals.
-    行为规格与 HAL 广度清单。**不引代码**：其 Arduino/全局对象模型与“:code:`include/` 不分配、不抛异常”以及“策略组合不用全局”两条约束冲突。
-    *可以引入，保留声明.*
     **Evidence.** ``LICENSE, Copyright (c) 2020 Antun Skuric``
 
 ``moteus`` — **Apache-2.0**, may be vendored, keep the notice
     The best reference for the command surface — field semantics, :code:`NaN` meaning hold position, the gain scales — and for the field-weakening calibration flow. Same licence family as ours.
-    命令面语义（字段含义、:code:`NaN` 表示保持位置、增益缩放）与弱磁标定流程的最佳参考，且与本库同族许可。
-    *可以引入，保留声明.*
     **Evidence.** ``README, licence section``
 
 ``VESC (bldc)`` — **GPLv3**, never
     Capability and parameter **semantics only**. Copyleft is viral and would end the Apache-2.0 licence and any commercial use: do not copy code *or comments*, write the behaviour down as our own test and satisfy that.
-    只对标能力与参数**语义**。传染性 copyleft 会终结本库的 Apache-2.0 与商业可用性：**连注释都不要抄**，把行为写成我们自己的测试再满足它。
-    *绝不可.*
     **Evidence.** ``README badge and body``
 
 ``miniFOC`` — **AGPL-3.0**, never
     Reference for 'low-cost hardware, no current loop' only. The network clause is poison for a library.
-    仅作“低成本硬件、无电流环”的参考。网络条款对库是毒药。
-    *绝不可.*
     **Evidence.** ``README body``
 
 ``SguanFOC`` — **MIT**, may be vendored, keep the notice
     Thinking reference only: never in the build, never in the library. :code:`conventions.rst` records why it is also the one external reference whose numbers this project refuses to compare against.
-    只作思路参考：不进构建、不进库。它也是本库拒绝与之比数字的唯一外部参考，原因见 :code:`conventions.rst`。
-    *可以引入，保留声明.*
     **Evidence.** ``LICENSE, Copyright (c) 2026 星必尘Sguan``
 
 ``ODrive (firmware)`` — **MIT**, may be vendored, keep the notice
     Behaviour spec first — spinout detection, input modes, anticogging, the torque-mode velocity limiter. Code only with the notice. Verified by cloning, which also pins the commit the conclusion rests on.
-    先作行为规格：spinout 检测、输入模式、anticogging、力矩模式限速。引代码须保留声明。用克隆核实，顺带把结论所依据的 commit 钉住。
-    *可以引入，保留声明.*
     **Evidence.** ``LICENSE.md first line, Copyright (c) 2016-2018 ODrive Robotics, repo 3a2e4dd1; three web fetches had failed before a clone worked``
 
 ``ST MCSDK / TI InstaSPIN / FpOC`` — **unverified**, unverified
     Treat like ODrive until verified: behaviour first, code never.
-    核实前与 ODrive 同处理：行为优先，代码不碰。
-    *未核实.*
     **Evidence.** ``not fetched``
 
 ``ETL`` — **MIT**, not vendored
     An internal dependency and an independent witness: :code:`src/**` and the tests may include it, a public header may not. The cross-check cases are the point — our CRC agrees with theirs byte for byte. The measured cost of the other choice is in :code:`deps.json`.
-    内部依赖兼独立证人：:code:`src/**` 与测试可以 include，公开头不行。价值在对拍用例——我们的 CRC 与它逐字节一致。另一种选择的实测代价在 :code:`deps.json`。
-    *不引入.*
     **Evidence.** ``LICENSE in the conan package, © John Wellbelove and contributors``
 
 Working rules
@@ -168,24 +145,10 @@ Working rules
 
 **Code integration, permissive licences only.** Copy, keep the notice, extend :code:`NOTICE`, and let :code:`gates.py license` keep everyone honest. A vendored subtree that is legitimately copyleft needs a scope line in :code:`.github/misc/.license-guard.txt` and an entry in :code:`NOTICE`; the library default stays permissive.
 
-**行为接入，永远可行。** 把对方承诺的行为写成我们自己的测试，然后满足它。完全不涉及许可问题，留下的产物就是测试。
-
-**代码接入，仅限宽松许可。** 复制、保留声明、扩 :code:`NOTICE`，并让 :code:`gates.py license` 守住。确实需要 copyleft 子目录时，在 :code:`.github/misc/.license-guard.txt` 加作用域行并在 :code:`NOTICE` 登记；库本身默认仍是宽松许可。
-
-*两种“接入”，只有一种涉及代码*
-
 **How to verify a licence: clone it, do not fetch it**
 
 A web fetch cannot extract a plain-text :code:`LICENSE`, and a clone also pins the exact commit the conclusion rests on — which a web page never does. :code:`workspace/` is git-ignored, so the reference copy never reaches a commit, but the conclusion and the commit hash do.
 
-网页抓取无法提取纯文本 :code:`LICENSE`；克隆还能给出结论所依据的确切 commit，而网页永远给不出。:code:`workspace/` 已被 gitignore，参考副本不会进提交，但结论与 commit 哈希会进。
-
-*怎么核实许可：克隆，别抓网页*
-
 **Hardware is not code**
 
 Driving hardware designed for another project needs no licence at all, and it is the cheapest real integration available: implement the five HAL interfaces (:code:`Pwm`, :code:`CurrentSense`, :code:`PositionSensor`, :code:`DcLink`, :code:`Clock`) for that board and the library serves it.
-
-为别人的项目设计的硬件写驱动不涉及任何许可，而且这是最便宜的真实接入：为那块板子实现五个 HAL 接口（:code:`Pwm`、:code:`CurrentSense`、:code:`PositionSensor`、:code:`DcLink`、:code:`Clock`），库就能服务它。
-
-*硬件不是代码*

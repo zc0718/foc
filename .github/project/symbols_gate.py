@@ -233,12 +233,8 @@ def render(table: dict) -> str:
         "Every symbol this library's documentation is allowed to use, with the four things that make a symbol usable:",
         "what it means, its unit, the frame it lives in, and which direction is positive.",
         "",
-        "本库文档允许使用的全部符号，连同让一个符号可用的四件事：含义、单位、所在的参考系、哪个方向为正。",
-        "",
         "The page is generated from `.github/project/symbols.json` by `symbols_gate.py --render`; a symbol that is not",
         "on it cannot appear in a docstring, because the gate reads the same file.",
-        "本页由 `symbols_gate.py --render` 从 `.github/project/symbols.json` 生成；不在表上的符号不能出现在 docstring 里，",
-        "因为门禁读的是同一个文件。",
         "",
     ]
     for symbol in table.get("symbols", []):
@@ -246,7 +242,6 @@ def render(table: dict) -> str:
         reserved = " *(reserved -- defined for readers, not used by the code yet)*" if symbol.get("status") == "reserved" else ""
         lines.append(f"{symbol.get('glyph', '?')}  ``{symbol.get('id')}``{reserved}")
         lines.append(f"    **Meaning.** {meaning.get('en', '')}")
-        lines.append(f"    {meaning.get('zh', '')}")
         lines.append(f"    **Unit.** {symbol.get('unit', '')}  **Frame.** {symbol.get('frame', '')}")
         lines.append(f"    **Positive.** {symbol.get('sign', '')}")
         anchor = symbol.get("anchor")
@@ -254,7 +249,6 @@ def render(table: dict) -> str:
             lines.append(f"    **Defined by.** ``{anchor['file']}`` (``{anchor['code']}``)")
         if symbol.get("note"):
             lines.append(f"    **Note.** {symbol['note'].get('en', '')}")
-            lines.append(f"    {symbol['note'].get('zh', '')}")
         lines.append("")
     return "\n".join(lines).rstrip() + "\n"
 
