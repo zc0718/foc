@@ -113,9 +113,10 @@ auto main(int argc, char** argv) -> int {
     // 比要求少。不知道这个数的环路会积分一项它自己的反馈看不见的误差，因为桥臂在环内、相电压
     // 又没有被测。
     const foc::core::MinPulse min_pulse(foc::core::MinPulseConfig{kMinPulseS, kSwitchingPeriodS});
+    const foc::core::Uvw<float> request{0.001F, 0.5F, 0.999F};
     std::printf("\nmin pulse %.0f ns of a %.1f us period; asking for one phase at 0.1 %% duty\n",
                 static_cast<double>(1.0e9F * kMinPulseS), static_cast<double>(1.0e6F * kSwitchingPeriodS));
-    const foc::core::MinPulseOutput shaped = min_pulse.apply(foc::core::Uvw<float>{0.001F, 0.5F, 0.999F}, kVBusV);
+    const foc::core::MinPulseOutput shaped = min_pulse.apply(request, kVBusV);
     std::printf("  status=%d narrowed=%s\n", static_cast<int>(shaped.status), shaped.narrowed ? "true" : "false");
     std::printf("  requested duty %.4f %.4f %.4f\n", 0.001, 0.5, 0.999);
     std::printf("  applied   duty %.4f %.4f %.4f\n", static_cast<double>(shaped.duty.u),

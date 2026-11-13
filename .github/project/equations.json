@@ -74,8 +74,8 @@
         }
       },
       "note": {
-        "en": "The 2/3 is the amplitude convention, and it is the whole difference between this library and a power-invariant Clarke: swapping it for 1/2 keeps every round trip passing and halves every measured current.",
-        "zh": "那个 2/3 是幅值约定，也是本库与功率不变式 Clarke 之间的全部差别：换成 1/2 之后所有往返用例照样通过，而每一个实测电流都缩小一半。"
+        "en": "The two-thirds factor is the amplitude convention, and it is the whole difference between this library and a power-invariant Clarke: swapping it for one half keeps every round trip passing and halves every measured current.",
+        "zh": "那个三分之二是幅值约定，也是本库与功率不变式 Clarke 之间的全部差别：换成一半之后所有往返用例照样通过，而每一个实测电流都缩小一半。"
       }
     },
     {
@@ -313,7 +313,7 @@
       },
       "note": {
         "en": "The branch exists so the denominator is never applied to a saliency of one ulp: dividing by it produces a huge `i_d` whose sign is noise, and the case asserts the zero rather than an epsilon because an epsilon is an opinion about how small a saliency is.",
-        "zh": "这个分支存在的意义是让分母永远不去除一个只有 1 ulp 的凸极：除下去会得到一个巨大的 `i_d`，其符号是噪声。用例断言的是恰好为零而不是一个极小量，因为“极小”只是对“凸极有多小”的一种看法。"
+        "zh": "这个分支存在的意义是让分母永远不去除一个只有一个 ulp 的凸极：除下去会得到一个巨大的 `i_d`，其符号是噪声。用例断言的是恰好为零而不是一个极小量，因为“极小”只是对“凸极有多小”的一种看法。"
       }
     },
     {
@@ -476,8 +476,8 @@
         }
       },
       "note": {
-        "en": "The `20` in the numerator is the copper's own feedback: resistance rises with temperature, so the settle is a rational function of the loss, not a product, and dropping that term reads about fifteen percent high at the temperature that matters. The law also has an **edge**: the settle exists only while `R_th * k * alpha_th < 1`, and past it the answer is `infinity` rather than a very large number, because a model with no steady state is a different statement from a hot machine.",
-        "zh": "分子里的 `20` 是铜自己的反馈：电阻随温度上升，所以稳态是损耗的 **有理式** 而不是乘积；丢掉那一项，在真正要紧的那个温度上会读高约百分之十五。这条律还有一条 **边界**：只有当 `R_th·k·alpha_th < 1` 时稳态才存在，越过它答案就是 `infinity` 而不是一个很大的数——「没有稳态的模型」与「一台很热的电机」是两句不同的话。"
+        "en": "The temperature coefficient in the numerator is the copper's own feedback: resistance rises with temperature, so the settle is a rational function of the loss, not a product, and dropping that term reads about fifteen percent high at the temperature that matters. The law also has an **edge**: the settle exists only while `R_th * k * alpha_th < 1`, and past it the answer is `infinity` rather than a very large number, because a model with no steady state is a different statement from a hot machine.",
+        "zh": "分子里的那个温度系数是铜自己的反馈：电阻随温度上升，所以稳态是损耗的 **有理式** 而不是乘积；丢掉那一项，在真正要紧的那个温度上会读高约百分之十五。这条律还有一条 **边界**：只有当 `R_th·k·alpha_th < 1` 时稳态才存在，越过它答案就是 `infinity` 而不是一个很大的数——「没有稳态的模型」与「一台很热的电机」是两句不同的话。"
       }
     }
   ]
