@@ -2097,3 +2097,61 @@ typedef enum foc_sensor_fault {
  * @exporter
  */
 typedef struct foc_sensor_monitor_s *foc_sensor_monitor_t;
+
+
+/**
+ * @brief [en] What a reader concluded about a block of bytes that should hold one commissioned set.
+ * @brief [zh] 读取方对"本该装着一组标定结果"的一段字节得出的结论。
+ * @note [en] The same vocabulary the writing side uses, carried through to C rather than flattened into one error code:
+ *            "the check value is wrong" and "the numbers are impossible" are different calls to action for the person
+ *            holding a board that will not boot.
+ * @note [zh] 与写入方同一套词汇，原样带到 C 而不是压成一个错误码：对拿着"上电起不来"的板子的人来说， "校验值不对"与"数
+ *            字不可能"是两种不同的下一步。
+ * @since 0.1.0
+ * @exporter
+ */
+// C99 enums have no fixed underlying type, so the width is the compiler's choice; the same reason `foc_err_t` gives.
+// C99 枚举没有固定底层类型，宽度由编译器决定；与 `foc_err_t` 同一个理由。
+// NOLINTNEXTLINE(performance-enum-size)
+typedef enum foc_set_status {
+    /** the bytes are one intact set */
+    FOC_SET_OK = 0,
+    /** fewer bytes than a set occupies */
+    FOC_SET_SHORT = 1,
+    /** the marker is not ours */
+    FOC_SET_BAD_MAGIC = 2,
+    /** a set of a version this build does not read */
+    FOC_SET_BAD_SCHEMA = 3,
+    /** a reserved byte is not zero, so the writer meant something this reader cannot honour */
+    FOC_SET_BAD_RESERVED = 4,
+    /** the check value does not match the bytes */
+    FOC_SET_BAD_CHECK_VALUE = 5,
+    /** intact bytes carrying numbers no machine can have */
+    FOC_SET_BAD_FIELD = 6
+} foc_set_status_t;
+
+
+/**
+ * @brief [en] One commissioning result, in the form a host can carry across a power cycle.
+ * @brief [zh] 一组标定结果，宿主可以带着它跨过一次断电的形态。
+ * @note [en] `params` is the frozen `foc_motor_params_t` itself, so the same numbers go straight into
+ *            `foc_motor_apply_params()` without a second conversion the caller could get wrong. `struct_size` must be
+ *            `sizeof(foc_commissioned_set_t)`; a shorter struct is refused rather than read past its end.
+ * @note [zh] `params` 就是冻结的 `foc_motor_params_t` 本身，于是同一批数字可以直接交给 `foc_motor_apply_params()`，中间
+ *            不经过第二次转换——那一次转换正是调用方容易写错的地方。 `struct_size` 必须等于
+ *            `sizeof(foc_commissioned_set_t)`；短了会被拒绝，而不是越界往后读。
+ * @since 0.1.0
+ * @exporter
+ */
+typedef struct foc_commissioned_set {
+    /** size of this struct, for the usual reason: the tail may grow */
+    uint32_t struct_size;
+    /** which machine these numbers belong to; the reader refuses a mismatch */
+    uint32_t machine_id;
+    /** the identified numbers, as the C ABI carries them */
+    foc_motor_params_t params;
+    /** when the measurement was taken, Unix seconds; 0 = not stated */
+    uint32_t measured_at_unix_s;
+    /** the winding temperature at the time, degC; `NAN` = not stated */
+    float temperature_c;
+} foc_commissioned_set_t;

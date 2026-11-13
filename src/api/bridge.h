@@ -131,6 +131,10 @@ foc_err_t foc_bridge_sensor_monitor_status(foc_sensor_monitor_t monitor, float *
                                            uint32_t *implausible_count);
 foc_err_t foc_bridge_sensor_monitor_reset(foc_sensor_monitor_t monitor);
 foc_err_t foc_bridge_sensor_monitor_destroy(foc_sensor_monitor_t monitor);
+foc_err_t foc_bridge_commissioned_set_encode(const foc_commissioned_set_t *set, uint8_t *buffer, uint32_t capacity,
+                                             uint32_t *written);
+foc_err_t foc_bridge_commissioned_set_decode(const uint8_t *buffer, uint32_t length, foc_commissioned_set_t *out,
+                                             foc_set_status_t *status, uint32_t *bad_offset);
 #ifdef __cplusplus
 }
 #endif

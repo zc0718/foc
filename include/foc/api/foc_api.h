@@ -1624,3 +1624,55 @@ FOC_WARN_UNUSED foc_err_t foc_sensor_monitor_reset(foc_sensor_monitor_t monitor)
  * @exporter
  */
 FOC_WARN_UNUSED foc_err_t foc_sensor_monitor_destroy(foc_sensor_monitor_t monitor);
+
+/**
+ * @brief [en] Turn one set into the bytes a host can store, refusing rather than writing half of it.
+ * @brief [zh] 把一组结果变成宿主能存下来的字节；拒绝时一个字节都不写。
+ * @param set [en] the set to write; `struct_size` must be `sizeof(foc_commissioned_set_t)`.
+ * @param set [zh] 要写入的一组； `struct_size` 必须等于 `sizeof(foc_commissioned_set_t)`。
+ * @param buffer [en] the destination, or NULL.
+ * @param buffer [zh] 目标缓冲，或 NULL。
+ * @param capacity [en] its size in bytes.
+ * @param capacity [zh] 它的大小，字节。
+ * @param written [en] receives the number of bytes written (`46` on success); may be NULL.
+ * @param written [zh] 接收写入的字节数（成功时为 `46`）；可以为 NULL。
+ * @return [en] `FOC_OK`; `FOC_ERR_PARAM` for a NULL argument, a struct of the wrong size, or numbers no machine can
+ *              have (`foc_set_is_usable` decides the last one); `FOC_ERR_NO_RESOURCE` for a buffer smaller than a set.
+ * @return [zh] `FOC_OK`；参数为 NULL、结构尺寸不对、或数字不是任何电机能有时 `FOC_ERR_PARAM`（最后一种由
+ *              `foc_set_is_usable` 判定）；缓冲小于一组时 `FOC_ERR_NO_RESOURCE`。
+ * @note [en] Two refusals are possible and they used to answer the same thing (`0`). They are separated here because
+ *            one is "give me a bigger buffer" and the other is "these numbers are wrong" -- a caller that cannot tell
+ *            them apart retries the wrong one.
+ * @note [zh] 两种拒绝都可能发生，而它们以前答同一个值（ `0`）。这里分开，因为一个是"给我更大的缓冲"，另一个是 "这些数字
+ *            是错的"——分不清这两者的调用方会去重试错的那一个。
+ * @since 0.1.0
+ * @exporter
+ */
+FOC_WARN_UNUSED foc_err_t foc_commissioned_set_encode(const foc_commissioned_set_t *set, uint8_t *buffer,
+                                                      uint32_t capacity, uint32_t *written);
+
+/**
+ * @brief [en] Read one set back, naming the byte that stopped the reader.
+ * @brief [zh] 读回一组结果，并点名让读取方停下的那个字节。
+ * @param buffer [en] the bytes, or NULL.
+ * @param buffer [zh] 那段字节，或 NULL。
+ * @param length [en] how many bytes the caller has.
+ * @param length [zh] 调用方手上有多少字节。
+ * @param out [en] receives the set; **untouched** when the answer is not `FOC_SET_OK`.
+ * @param out [zh] 接收那组结果；答案不是 `FOC_SET_OK` 时 **不动** 它。
+ * @param status [en] receives the conclusion in the writer's own vocabulary; may be NULL.
+ * @param status [zh] 用写入方那套词汇接收结论；可以为 NULL。
+ * @param bad_offset [en] receives the byte the reader stopped at; may be NULL.
+ * @param bad_offset [zh] 接收读取方停下的那个字节；可以为 NULL。
+ * @return [en] `FOC_OK` when the bytes are one intact set, `FOC_ERR_PARAM` otherwise (with `status`/`bad_offset` saying
+ *              why).
+ * @return [zh] 字节是一组完整结果时 `FOC_OK`，否则 `FOC_ERR_PARAM`（由 `status`/`bad_offset` 说明原因）。
+ * @note [en] Every refusal leaves the receiver alone. A decoder that fills in a "mostly right" set is how a wrong `ld`
+ *            reaches a current loop.
+ * @note [zh] 每次拒绝都不碰接收者。一个会填入"大体正确"的一组数字的解码器，正是错误的 `ld` 走到电流环里的途径。
+ * @since 0.1.0
+ * @exporter
+ */
+FOC_WARN_UNUSED foc_err_t foc_commissioned_set_decode(const uint8_t *buffer, uint32_t length,
+                                                      foc_commissioned_set_t *out, foc_set_status_t *status,
+                                                      uint32_t *bad_offset);

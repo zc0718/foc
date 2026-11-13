@@ -30,6 +30,7 @@
 #include <foc/motor/motor.hpp>
 #include <foc/motor/motor_config.hpp>
 #include <foc/motor/torque_map.hpp>
+#include <foc/comm/commissioned_set.hpp>
 #include <foc/comm/frame.hpp>
 #include <foc/comm/register_map.hpp>
 // Conan::ImportEnd
@@ -1067,6 +1068,65 @@ auto resolve_sensor_monitor(foc_sensor_monitor_t handle) noexcept -> SensorMonit
         return nullptr;
     }
     return &slot;
+}
+
+// Same reason as the monitor's: the C vocabulary and the C++ one are two statements of one thing, and nothing at run
+// time can notice them drifting apart.
+// 与监视器同理：C 与 C++ 两套词汇是同一件事的两种写法，运行时没有任何东西能发现它们漂开。
+static_assert(static_cast<std::uint8_t>(comm::SetStatus::Ok) == static_cast<std::uint8_t>(FOC_SET_OK),
+              "FOC_SET_OK must match SetStatus::Ok");
+static_assert(static_cast<std::uint8_t>(comm::SetStatus::Short) == static_cast<std::uint8_t>(FOC_SET_SHORT),
+              "FOC_SET_SHORT must match SetStatus::Short");
+static_assert(static_cast<std::uint8_t>(comm::SetStatus::BadMagic) == static_cast<std::uint8_t>(FOC_SET_BAD_MAGIC),
+              "FOC_SET_BAD_MAGIC must match SetStatus::BadMagic");
+static_assert(static_cast<std::uint8_t>(comm::SetStatus::BadSchema) == static_cast<std::uint8_t>(FOC_SET_BAD_SCHEMA),
+              "FOC_SET_BAD_SCHEMA must match SetStatus::BadSchema");
+static_assert(static_cast<std::uint8_t>(comm::SetStatus::BadReserved) ==
+                  static_cast<std::uint8_t>(FOC_SET_BAD_RESERVED),
+              "FOC_SET_BAD_RESERVED must match SetStatus::BadReserved");
+static_assert(static_cast<std::uint8_t>(comm::SetStatus::BadCheckValue) ==
+                  static_cast<std::uint8_t>(FOC_SET_BAD_CHECK_VALUE),
+              "FOC_SET_BAD_CHECK_VALUE must match SetStatus::BadCheckValue");
+static_assert(static_cast<std::uint8_t>(comm::SetStatus::BadField) == static_cast<std::uint8_t>(FOC_SET_BAD_FIELD),
+              "FOC_SET_BAD_FIELD must match SetStatus::BadField");
+
+/**
+ * @brief [en] The C mirror of one record, in both directions.
+ * @brief [zh] 一组记录在 C 形态下的双向映射。
+ */
+auto to_record(const foc_commissioned_set_t& in) noexcept -> comm::CommissionedSet {
+    comm::CommissionedSet set{};
+    set.machine_id = in.machine_id;
+    set.rs = in.params.rs;
+    set.ld = in.params.ld;
+    set.lq = in.params.lq;
+    set.kt = in.params.kt;
+    set.j = in.params.j;
+    set.b = in.params.b;
+    set.pole_pairs = in.params.pole_pairs;
+    set.measured_at_unix_s = in.measured_at_unix_s;
+    set.temperature_c = in.temperature_c;
+    return set;
+}
+
+/**
+ * @brief [en] The same numbers going back, with `struct_size` filled here rather than by every caller.
+ * @brief [zh] 同一批数字反向走一遍； `struct_size` 在这里填好，而不是让每个调用方各填一次。
+ */
+auto from_record(const comm::CommissionedSet& set) noexcept -> foc_commissioned_set_t {
+    foc_commissioned_set_t out{};
+    out.struct_size = static_cast<std::uint32_t>(sizeof(foc_commissioned_set_t));
+    out.machine_id = set.machine_id;
+    out.params.rs = set.rs;
+    out.params.ld = set.ld;
+    out.params.lq = set.lq;
+    out.params.kt = set.kt;
+    out.params.j = set.j;
+    out.params.b = set.b;
+    out.params.pole_pairs = set.pole_pairs;
+    out.measured_at_unix_s = set.measured_at_unix_s;
+    out.temperature_c = set.temperature_c;
+    return out;
 }
 
 constexpr std::uintptr_t kAutoTuneMagic = 0x464F4354U; // "FOCT": a tuning token, not a motor or protector one
@@ -2729,6 +2789,52 @@ foc_err_t foc_bridge_sensor_monitor_destroy(foc_sensor_monitor_t monitor) {
     slot->instance = nullptr;
     slot->alive = false;
     slot->generation = (slot->generation + 1U) & 0xFFFFFFU;
+    return FOC_OK;
+}
+
+foc_err_t foc_bridge_commissioned_set_encode(const foc_commissioned_set_t* set, uint8_t* buffer, uint32_t capacity,
+                                             uint32_t* written) {
+    if ((set == nullptr) || !foc::api::size_ok(*set)) {
+        return FOC_ERR_PARAM;
+    }
+    const foc::comm::CommissionedSet record = foc::api::to_record(*set);
+    const std::size_t bytes = foc::comm::encode_commissioned_set(record, buffer, static_cast<std::size_t>(capacity));
+    if (bytes == 0U) {
+        // The encoder answers 0 for both refusals on purpose (nothing is written either way), and `set_is_usable()` is
+        // what tells them apart -- exactly the distinction the C surface needs: a bigger buffer, or wrong numbers.
+        // 编码器故意对两种拒绝都答 0（两种情况都一个字节不写），区分它们的是 `set_is_usable()`——正是 C 面需要的那个
+        // 区分：换更大的缓冲，还是这些数字是错的。
+        return foc::comm::set_is_usable(record) ? FOC_ERR_NO_RESOURCE : FOC_ERR_PARAM;
+    }
+    if (written != nullptr) {
+        *written = static_cast<std::uint32_t>(bytes);
+    }
+    return FOC_OK;
+}
+
+foc_err_t foc_bridge_commissioned_set_decode(const uint8_t* buffer, uint32_t length, foc_commissioned_set_t* out,
+                                             foc_set_status_t* status, uint32_t* bad_offset) {
+    if (out == nullptr) {
+        return FOC_ERR_PARAM;
+    }
+    foc::comm::CommissionedSet record{};
+    const foc::comm::SetError error =
+        foc::comm::decode_commissioned_set(buffer, static_cast<std::size_t>(length), record);
+    if (status != nullptr) {
+        *status = static_cast<foc_set_status_t>(static_cast<std::uint8_t>(error.status));
+    }
+    if (error.status != foc::comm::SetStatus::Ok) {
+        if (bad_offset != nullptr) {
+            *bad_offset = static_cast<std::uint32_t>(error.offset);
+        }
+        // The receiver is deliberately untouched: this decoder never fills in a "mostly right" set.
+        // 接收者故意不动：本解码器不会填入一个"大体正确"的一组。
+        return FOC_ERR_PARAM;
+    }
+    *out = foc::api::from_record(record);
+    if (bad_offset != nullptr) {
+        *bad_offset = 0U;
+    }
     return FOC_OK;
 }
 

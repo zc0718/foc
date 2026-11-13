@@ -572,3 +572,19 @@ foc_err_t foc_sensor_monitor_destroy(foc_sensor_monitor_t monitor) {
     }
     return foc_bridge_sensor_monitor_destroy(monitor);
 }
+
+foc_err_t foc_commissioned_set_encode(const foc_commissioned_set_t *set, uint8_t *buffer, uint32_t capacity,
+                                      uint32_t *written) {
+    if ((set == NULL) || (buffer == NULL)) {
+        return FOC_ERR_PARAM;
+    }
+    return foc_bridge_commissioned_set_encode(set, buffer, capacity, written);
+}
+
+foc_err_t foc_commissioned_set_decode(const uint8_t *buffer, uint32_t length, foc_commissioned_set_t *out,
+                                      foc_set_status_t *status, uint32_t *bad_offset) {
+    if ((buffer == NULL) || (out == NULL)) {
+        return FOC_ERR_PARAM;
+    }
+    return foc_bridge_commissioned_set_decode(buffer, length, out, status, bad_offset);
+}

@@ -825,6 +825,79 @@ int main(void) {
         CHECK(foc_sensor_monitor_destroy(NULL) == FOC_OK);
     }
 
+    /* G6c - one commissioning result through the C surface only: it becomes 46 bytes, a flipped byte is refused with
+     * the check-value status *and* the receiver is left alone, a buffer one byte short writes nothing at all, and a set
+     * whose numbers no machine can have is refused before the first byte.
+     * G6c - 只用 C 面走一遍一组标定结果：变成 46 字节；翻一个字节被拒，结论是校验值不对，*并且*接收者没有被碰；缓冲
+     * 少一个字节就一个字节都不写；数字不是任何电机能有的那一组在第一个字节之前就被拒绝。 */
+    {
+        foc_commissioned_set_t set;
+        foc_commissioned_set_t readback;
+        uint8_t bytes[64];
+        uint8_t tiny[45];
+        uint32_t written = 0;
+        foc_set_status_t status = FOC_SET_OK;
+        uint32_t bad_offset = 99U;
+        uint32_t i = 0;
+        int all_zero = 1;
+
+        (void)memset(&set, 0, sizeof(set));
+        (void)memset(&readback, 0, sizeof(readback));
+        (void)memset(bytes, 0, sizeof(bytes));
+        (void)memset(tiny, 0, sizeof(tiny));
+        set.struct_size = (uint32_t)sizeof(set);
+        set.machine_id = 7U;
+        set.params = params;
+        /* Distinct inductances on purpose: the fixture at the top of `main` has `ld == lq`, so a transposed pair in the
+           mirror would be invisible here. A probe that cannot tell two readings apart measures nothing -- this very
+           block passed a deliberately transposed mapping until the numbers were made different. */
+        /* 故意让两个电感不同：`main` 开头那个夹具里 `ld == lq`，于是镜像里把这一对写反会在这里看不见。
+           分辨不开两种读法的探点什么都没量到——这一块在数字不同之前，确实放过了被故意写反的映射。 */
+        set.params.ld = 3.3e-4F;
+        set.params.lq = 5.7e-4F;
+        set.measured_at_unix_s = 1700000000U;
+        set.temperature_c = 25.0F;
+
+        CHECK(foc_commissioned_set_encode(&set, bytes, (uint32_t)sizeof(bytes), &written) == FOC_OK);
+        CHECK(written == 46U);
+
+        /* Round trip: the numbers come back, through the same frozen params struct the rest of the C API takes. */
+        CHECK(foc_commissioned_set_decode(bytes, written, &readback, &status, &bad_offset) == FOC_OK);
+        CHECK(status == FOC_SET_OK);
+        CHECK(readback.machine_id == 7U);
+        CHECK(readback.params.pole_pairs == params.pole_pairs);
+        CHECK(fabsf(readback.params.ld - 3.3e-4F) < 1e-12F);
+        CHECK(fabsf(readback.params.lq - 5.7e-4F) < 1e-12F);
+        CHECK(fabsf(readback.params.rs - params.rs) < 1e-12F);
+        CHECK(fabsf(readback.temperature_c - 25.0F) < 1e-6F);
+
+        /* One flipped bit is refused, the diagnosis is the check value, and the receiver keeps what the caller left. */
+        bytes[10] = (uint8_t)(bytes[10] ^ 0x01U);
+        readback.machine_id = 0xDEADBEEFU;
+        CHECK(foc_commissioned_set_decode(bytes, written, &readback, &status, &bad_offset) == FOC_ERR_PARAM);
+        CHECK(status == FOC_SET_BAD_CHECK_VALUE);
+        CHECK(bad_offset < written);
+        CHECK(readback.machine_id == 0xDEADBEEFU);
+        bytes[10] = (uint8_t)(bytes[10] ^ 0x01U);
+
+        /* A buffer one byte short is "give me more room", not "these numbers are wrong", and it writes nothing. */
+        CHECK(foc_commissioned_set_encode(&set, tiny, (uint32_t)sizeof(tiny), &written) == FOC_ERR_NO_RESOURCE);
+        for (i = 0U; i < (uint32_t)sizeof(tiny); ++i) {
+            if (tiny[i] != 0U) {
+                all_zero = 0;
+            }
+        }
+        CHECK(all_zero == 1);
+
+        /* Numbers no machine can have are refused before the first byte. */
+        set.params.ld = 0.0F;
+        CHECK(foc_commissioned_set_encode(&set, bytes, (uint32_t)sizeof(bytes), &written) == FOC_ERR_PARAM);
+        set.params.ld = params.ld;
+
+        CHECK(foc_commissioned_set_encode(NULL, bytes, (uint32_t)sizeof(bytes), &written) == FOC_ERR_PARAM);
+        CHECK(foc_commissioned_set_decode(bytes, written, NULL, &status, &bad_offset) == FOC_ERR_PARAM);
+    }
+
     if (failures != 0) {
         (void)fprintf(stderr, "C11 consumer: %d failure(s)\n", failures);
         return 1;
