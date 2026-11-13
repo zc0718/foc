@@ -170,6 +170,38 @@ only reason this page can be trusted after the person who wrote it has moved on.
        range the library does not have.
      - ``ApiC.AFiniteDoubleThatOverflowsFloatIsRefusedInsteadOfReachingTheLoopAsInfinity``
 
+_`Deferred to your hardware, not to us`
+--------------------------------------
+
+Four conclusions cannot be reached from this repository at all -- not "not yet", but "not by this
+tree", because no board has executed it here (:ref:`what has actually been run <platform-evidence>`).
+They are listed here so that meeting them in the field reads as a known limit rather than as a
+defect, and
+``docs/sphinx/source/guides/on-machine-acceptance.rst`` is the procedure that reaches the rest:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 30 40 30
+
+   * - Not reachable here
+     - Why
+     - What it means for you
+   * - Any conclusion above roughly 800 rad/s electrical
+     - The small motors this was designed around cannot get there
+     - The high-speed statements stay at their present level until a machine that reaches it is
+       measured
+   * - Intermittent failures, such as a start-up hand-over that fails one time in n
+     - They need hours to days of reproduction, which a person who has not seen the failure cannot
+       arrange
+     - A field report of one is a lead, not yet a diagnosis
+   * - Thermal, EMC and long-term ageing behaviour
+     - No chamber, no instruments, no years
+     - Anything said here about heat, emissions or wear is a model, not a measurement
+   * - The absolute parameters of one particular industrial motor
+     - The bench gives the *shape* of saturation, which transfers between machines; the numbers do
+       not
+     - Use the shape to choose a model; measure your own machine to fill it in
+
 What is *not* on this page, because it is enforced by a gate rather than by a test case: no exceptions, no RTTI, no
 `new`/`delete`, no `std::vector`/`std::string`, C++17 and C11 only (`strict`), every installed header carrying a README
 claim row (`claims`), and every number in the documentation matching an artefact the build produced (`docs`).

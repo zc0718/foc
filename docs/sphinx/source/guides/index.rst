@@ -94,6 +94,7 @@ says what it would take to add it.
    Sampling and the power stage <current-sampling>
    Health and protection <protection-and-derating>
    Porting to a board <porting>
+   Acceptance on your machine <on-machine-acceptance>
 
 The figures already on the site
 -------------------------------
