@@ -287,8 +287,14 @@ inline void put_u32(std::uint8_t* out, std::uint32_t value) noexcept {
  * @since 0.1.0
  */
 inline void put_f32(std::uint8_t* out, float value) noexcept {
+    // Both sides are 32 bits, so the hazard the rule warns about is already excluded by the type, and there is
+    // no `memcpy_s` to prefer: Annex K is optional, glibc does not implement it, and the bare-metal targets
+    // this library ships to do not have it at all. Suppressed with that reason, as `register_map` does.
+    // 两边都是 32 位，这条规则警告的危险已被类型排除；也没有 `memcpy_s` 可优先——Annex K 是可选的，
+    // glibc 不实现它，本库要上的裸机目标根本没有。带着理由抑制，与 `register_map` 一致。
+    static_assert(sizeof(float) == sizeof(std::uint32_t), "a float bit pattern is a 32-bit word");
     std::uint32_t raw = 0U;
-    std::memcpy(&raw, &value, sizeof(raw));
+    std::memcpy(&raw, &value, sizeof(raw)); // devskim: ignore DS121708
     put_u32(out, raw);
 }
 
@@ -304,7 +310,7 @@ inline void put_f32(std::uint8_t* out, float value) noexcept {
 [[nodiscard]] inline auto get_f32(const std::uint8_t* in) noexcept -> float {
     const std::uint32_t raw = get_u32(in);
     float value = 0.0F;
-    std::memcpy(&value, &raw, sizeof(value));
+    std::memcpy(&value, &raw, sizeof(value)); // devskim: ignore DS121708
     return value;
 }
 
