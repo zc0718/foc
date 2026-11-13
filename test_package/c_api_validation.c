@@ -756,6 +756,75 @@ int main(void) {
         }
     }
 
+    /* G6b - the sensor monitor through the C surface only: the band is refused before a handle exists, a first
+     * reading is "unobserved" rather than "fine", a jump and a not-a-number are different diagnoses, and a destroyed
+     * handle answers STATE instead of reading bytes that were released.
+     * G6b - 只用 C 面走一遍传感器监视器：区间不成立就不签发句柄；第一条读数是"没判过"而不是"没问题"；跳变与不是数
+     * 是两种诊断；销毁后的句柄答 STATE，而不是去读已经释放的字节。 */
+    {
+        foc_sensor_monitor_t monitor = NULL;
+        foc_sensor_verdict_t verdict = FOC_SENSOR_OK;
+        foc_sensor_fault_t fault = FOC_SENSOR_FAULT_NONE;
+        float step_rad = -1.0F;
+        float bound_rad = -1.0F;
+        uint32_t count = 99U;
+
+        /* A ceiling of zero means the band cannot be described, and no handle is issued for it. */
+        CHECK(foc_sensor_monitor_create(0.0F, 0.0F, &monitor) == FOC_ERR_PARAM);
+        CHECK(monitor == NULL);
+        CHECK(foc_sensor_monitor_create(-1.0F, 0.0F, &monitor) == FOC_ERR_PARAM);
+        CHECK(foc_sensor_monitor_create(200.0F, -1e-3F, &monitor) == FOC_ERR_PARAM);
+        CHECK(monitor == NULL);
+
+        CHECK(foc_sensor_monitor_create(200.0F, 0.0125F, &monitor) == FOC_OK);
+        CHECK(monitor != NULL);
+
+        /* The first reading has nothing to compare against. */
+        CHECK(foc_sensor_monitor_step(monitor, 0.0F, 0.0F, 50e-6F, &verdict, &fault) == FOC_OK);
+        CHECK(verdict == FOC_SENSOR_UNOBSERVED);
+        CHECK(fault == FOC_SENSOR_FAULT_NONE);
+
+        /* A step the mechanism can make passes, against the bound the two numbers describe. */
+        CHECK(foc_sensor_monitor_step(monitor, 1e-3F, 100.0F, 50e-6F, &verdict, &fault) == FOC_OK);
+        CHECK(verdict == FOC_SENSOR_OK);
+        CHECK(foc_sensor_monitor_status(monitor, &step_rad, &bound_rad, &count) == FOC_OK);
+        CHECK(fabsf(bound_rad - 0.0225F) < 1e-6F);
+        CHECK(fabsf(step_rad - 1e-3F) < 1e-6F);
+        CHECK(count == 0U);
+
+        /* Half a radian in one period is past the ceiling, and it is a jump rather than a speed fault. */
+        CHECK(foc_sensor_monitor_step(monitor, 0.5F, 100.0F, 50e-6F, &verdict, &fault) == FOC_OK);
+        CHECK(verdict == FOC_SENSOR_IMPLAUSIBLE);
+        CHECK(fault == FOC_SENSOR_FAULT_ANGLE_JUMP);
+
+        /* A reading that is not a number is information, and it is not adopted as the next predecessor. */
+        CHECK(foc_sensor_monitor_step(monitor, NAN, 100.0F, 50e-6F, &verdict, &fault) == FOC_OK);
+        CHECK(verdict == FOC_SENSOR_IMPLAUSIBLE);
+        CHECK(fault == FOC_SENSOR_FAULT_NOT_A_NUMBER);
+        CHECK(foc_sensor_monitor_status(monitor, NULL, NULL, &count) == FOC_OK);
+        CHECK(count == 2U);
+
+        /* reset() is the escape hatch for a move this sensor did not see, and it clears the history with the sample. */
+        CHECK(foc_sensor_monitor_reset(monitor) == FOC_OK);
+        CHECK(foc_sensor_monitor_step(monitor, 3.0F, 0.0F, 50e-6F, &verdict, &fault) == FOC_OK);
+        CHECK(verdict == FOC_SENSOR_UNOBSERVED);
+        CHECK(foc_sensor_monitor_status(monitor, NULL, NULL, &count) == FOC_OK);
+        CHECK(count == 0U);
+
+        /* A destroyed handle is stale, not a pointer into released bytes. */
+        CHECK(foc_sensor_monitor_destroy(monitor) == FOC_OK);
+        CHECK(foc_sensor_monitor_step(monitor, 0.0F, 0.0F, 50e-6F, &verdict, &fault) == FOC_ERR_STATE);
+        CHECK(foc_sensor_monitor_status(monitor, NULL, NULL, &count) == FOC_ERR_STATE);
+        CHECK(foc_sensor_monitor_destroy(monitor) == FOC_ERR_STATE);
+
+        /* NULL is a parameter error on the way in, and a no-op on the way out. */
+        CHECK(foc_sensor_monitor_create(200.0F, 0.0F, NULL) == FOC_ERR_PARAM);
+        CHECK(foc_sensor_monitor_step(NULL, 0.0F, 0.0F, 50e-6F, &verdict, &fault) == FOC_ERR_PARAM);
+        CHECK(foc_sensor_monitor_step(monitor, 0.0F, 0.0F, 50e-6F, NULL, &fault) == FOC_ERR_PARAM);
+        CHECK(foc_sensor_monitor_reset(NULL) == FOC_OK);
+        CHECK(foc_sensor_monitor_destroy(NULL) == FOC_OK);
+    }
+
     if (failures != 0) {
         (void)fprintf(stderr, "C11 consumer: %d failure(s)\n", failures);
         return 1;

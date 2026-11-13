@@ -2146,6 +2146,11 @@
           "row": "motor/torque_map.hpp",
           "verdict": "holds",
           "why": "Its C entries are untouched; `foc_api.h` was appended to after them, which cannot change what they answer."
+        },
+        {
+          "row": "comm/board_record.hpp",
+          "verdict": "holds",
+          "why": "Re-checked for the 2026-11-13 change that gave the sensor monitor a C surface: two enums and a handle typedef were appended to `foc_types.h` with explicit values, and four functions were added to `foc_api.h`, `foc_api.c` and the bridge. No struct field moved and no existing enumerator changed value, so the 164-byte record's layout is untouched; its own cases (fill bytes, negative zero, every single-byte change refused) and the pure-C consumer all pass, 960 cases in total."
         }
       ]
     },

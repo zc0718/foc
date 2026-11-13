@@ -123,6 +123,14 @@ foc_err_t foc_bridge_supervisor_enable(foc_supervisor_t supervisor);
 foc_err_t foc_bridge_supervisor_disable(foc_supervisor_t supervisor);
 foc_err_t foc_bridge_supervisor_clear(foc_supervisor_t supervisor);
 foc_err_t foc_bridge_supervisor_destroy(foc_supervisor_t supervisor);
+
+foc_err_t foc_bridge_sensor_monitor_create(float max_speed_rad_s, float jump_tolerance_rad, foc_sensor_monitor_t *out);
+foc_err_t foc_bridge_sensor_monitor_step(foc_sensor_monitor_t monitor, float angle_mech_rad, float speed_mech_rad_s,
+                                         float dt_s, foc_sensor_verdict_t *verdict, foc_sensor_fault_t *fault);
+foc_err_t foc_bridge_sensor_monitor_status(foc_sensor_monitor_t monitor, float *step_rad, float *bound_rad,
+                                           uint32_t *implausible_count);
+foc_err_t foc_bridge_sensor_monitor_reset(foc_sensor_monitor_t monitor);
+foc_err_t foc_bridge_sensor_monitor_destroy(foc_sensor_monitor_t monitor);
 #ifdef __cplusplus
 }
 #endif

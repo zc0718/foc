@@ -20,6 +20,7 @@
 #include <foc/core/pi.hpp>
 #include <foc/core/protection.hpp>
 #include <foc/core/reference.hpp>
+#include <foc/core/sensor_monitor.hpp>
 #include <foc/core/sinusoid_fit.hpp>
 #include <foc/core/step_metrics.hpp>
 #include <foc/core/svpwm.hpp>
@@ -973,6 +974,95 @@ auto resolve_protector(foc_protector_t handle) noexcept -> ProtectorSlot* {
         return nullptr;
     }
     ProtectorSlot& slot = g_protectors[slot_index];
+    if (!slot.alive || (slot.generation != generation)) {
+        return nullptr;
+    }
+    return &slot;
+}
+
+/**
+ * @brief [en] Each monitor handle's high word: "FOCS".
+ * @brief [zh] 每个监视器句柄的高位字。
+ */
+constexpr std::uintptr_t kSensorMonitorMagic = 0x464F4353U;
+
+/**
+ * @brief [en] Two monitors: one per sensor, plus a second so a swap need not wait for a release.
+ * @brief [zh] 两个监视器：每个传感器一个，另有第二个，于是换传感器不必等释放。
+ */
+constexpr std::size_t kMaxSensorMonitors = 2U;
+
+/**
+ * @brief [en] One monitor slot.
+ * @brief [zh] 一个监视器槽位。
+ * @note [en] `SensorMonitor` is a value type with no destructor and no owned resource, so placement new into inline
+ *            bytes is enough. Stated rather than assumed: if it ever grows a member that needs releasing, this comment
+ *            is what turns the omission into a bug instead of an oversight.
+ * @note [zh] `SensorMonitor` 是没有析构、不持有资源的值类型，所以内联字节上 placement new 就够。这一点是 **写明的** 而
+ *            不是假定的：若它将来长了需要释放的成员，这段注释会让那次遗漏成为 bug 而不是疏忽。
+ */
+struct SensorMonitorSlot final {
+    alignas(core::SensorMonitor) unsigned char storage[sizeof(core::SensorMonitor)]{};
+    core::SensorMonitor* instance{nullptr};
+    std::uint32_t generation{0U};
+    bool alive{false};
+};
+
+SensorMonitorSlot g_sensor_monitors[kMaxSensorMonitors];
+
+// The C enum values and the C++ ones are two statements of the same vocabulary, and a translation layer that lets them
+// drift is a translation layer that reports the wrong diagnosis. There is no reflection to check this at run time, so
+// the compiler checks it here.
+// C 枚举与 C++ 枚举是同一套词汇的两种写法；允许它们漂移的翻译层就是一​个会报错诊断的翻译层。没有反射可在运行时核对，
+// 就由编译器在这里核对。
+static_assert(static_cast<std::uint8_t>(core::SensorVerdict::Ok) == static_cast<std::uint8_t>(FOC_SENSOR_OK),
+              "FOC_SENSOR_OK must match SensorVerdict::Ok");
+static_assert(static_cast<std::uint8_t>(core::SensorVerdict::Implausible) ==
+                  static_cast<std::uint8_t>(FOC_SENSOR_IMPLAUSIBLE),
+              "FOC_SENSOR_IMPLAUSIBLE must match SensorVerdict::Implausible");
+static_assert(static_cast<std::uint8_t>(core::SensorVerdict::Unobserved) ==
+                  static_cast<std::uint8_t>(FOC_SENSOR_UNOBSERVED),
+              "FOC_SENSOR_UNOBSERVED must match SensorVerdict::Unobserved");
+static_assert(static_cast<std::uint8_t>(core::SensorFault::None) == static_cast<std::uint8_t>(FOC_SENSOR_FAULT_NONE),
+              "FOC_SENSOR_FAULT_NONE must match SensorFault::None");
+static_assert(static_cast<std::uint8_t>(core::SensorFault::AngleJump) ==
+                  static_cast<std::uint8_t>(FOC_SENSOR_FAULT_ANGLE_JUMP),
+              "FOC_SENSOR_FAULT_ANGLE_JUMP must match SensorFault::AngleJump");
+static_assert(static_cast<std::uint8_t>(core::SensorFault::ImplausibleSpeed) ==
+                  static_cast<std::uint8_t>(FOC_SENSOR_FAULT_IMPLAUSIBLE_SPEED),
+              "FOC_SENSOR_FAULT_IMPLAUSIBLE_SPEED must match SensorFault::ImplausibleSpeed");
+static_assert(static_cast<std::uint8_t>(core::SensorFault::NotANumber) ==
+                  static_cast<std::uint8_t>(FOC_SENSOR_FAULT_NOT_A_NUMBER),
+              "FOC_SENSOR_FAULT_NOT_A_NUMBER must match SensorFault::NotANumber");
+
+/**
+ * @brief [en] Mint a monitor token; same encoding as the protector, different magic.
+ * @brief [zh] 签发监视器令牌；编码与保护器相同，magic 不同。
+ */
+auto mint_sensor_monitor(std::uint32_t slot, std::uint32_t generation) noexcept -> foc_sensor_monitor_t {
+    // The token is never dereferenced: it is a handle value, not an address.
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast, performance-no-int-to-ptr)
+    return reinterpret_cast<foc_sensor_monitor_t>((kSensorMonitorMagic << 32U) |
+                                                  (static_cast<std::uintptr_t>(generation) << kSlotBits) |
+                                                  static_cast<std::uintptr_t>(slot));
+}
+
+/**
+ * @brief [en] Resolve a monitor handle; nullptr for anything not minted here.
+ * @brief [zh] 解析监视器句柄；不是本池签发的返回 nullptr。
+ */
+auto resolve_sensor_monitor(foc_sensor_monitor_t handle) noexcept -> SensorMonitorSlot* {
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast, performance-no-int-to-ptr) -- the token is compared, never dereferenced.
+    const auto raw = reinterpret_cast<std::uintptr_t>(handle);
+    if ((raw >> 32U) != kSensorMonitorMagic) {
+        return nullptr;
+    }
+    const auto slot_index = static_cast<std::uint32_t>(raw & 0xFFU);
+    const auto generation = static_cast<std::uint32_t>((raw >> kSlotBits) & 0xFFFFFFU);
+    if (slot_index >= kMaxSensorMonitors) {
+        return nullptr;
+    }
+    SensorMonitorSlot& slot = g_sensor_monitors[slot_index];
     if (!slot.alive || (slot.generation != generation)) {
         return nullptr;
     }
@@ -2544,6 +2634,102 @@ foc_err_t foc_bridge_torque_command(const foc_torque_map_t* map, float requested
     out->reserved[1] = 0U;
     out->reserved[2] = 0U;
     return (command.status == foc::ErrorCode::Ok) ? FOC_OK : FOC_ERR_PARAM;
+}
+
+foc_err_t foc_bridge_sensor_monitor_create(float max_speed_rad_s, float jump_tolerance_rad, foc_sensor_monitor_t* out) {
+    if (out == nullptr) {
+        return FOC_ERR_PARAM;
+    }
+    std::size_t index = foc::api::kMaxSensorMonitors;
+    for (std::size_t k = 0; k < foc::api::kMaxSensorMonitors; ++k) {
+        if (!foc::api::g_sensor_monitors[k].alive) {
+            index = k;
+            break;
+        }
+    }
+    if (index >= foc::api::kMaxSensorMonitors) {
+        return FOC_ERR_NO_RESOURCE;
+    }
+    foc::api::SensorMonitorSlot& slot = foc::api::g_sensor_monitors[index];
+    slot.instance = new (slot.storage) foc::core::SensorMonitor();
+    const foc::core::SensorMonitorConfig config{max_speed_rad_s, jump_tolerance_rad};
+    if (slot.instance->configure(config) != foc::ErrorCode::Ok) {
+        // The band cannot be described, so no handle is issued at all: a monitor configured with a guessed ceiling would
+        // later report a correct reading as a fault, which is worse than not having one.
+        // 区间描述不成，于是**根本不**签发句柄：用猜来的上限配置出来的监视器以后会把正确的读数报成故障，而这比没有
+        // 监视器更糟。
+        slot.instance->~SensorMonitor();
+        slot.instance = nullptr;
+        return FOC_ERR_PARAM;
+    }
+    slot.alive = true;
+    slot.generation = (slot.generation + 1U) & 0xFFFFFFU;
+    *out = foc::api::mint_sensor_monitor(static_cast<std::uint32_t>(index), slot.generation);
+    return FOC_OK;
+}
+
+foc_err_t foc_bridge_sensor_monitor_step(foc_sensor_monitor_t monitor, float angle_mech_rad, float speed_mech_rad_s,
+                                         float dt_s, foc_sensor_verdict_t* verdict, foc_sensor_fault_t* fault) {
+    if ((monitor == nullptr) || (verdict == nullptr) || (fault == nullptr)) {
+        return FOC_ERR_PARAM;
+    }
+    const foc::api::SensorMonitorSlot* slot = foc::api::resolve_sensor_monitor(monitor);
+    if (slot == nullptr) {
+        return FOC_ERR_STATE;
+    }
+    const foc::core::SensorMonitorOutput& out = slot->instance->step(angle_mech_rad, speed_mech_rad_s, dt_s);
+    *verdict = static_cast<foc_sensor_verdict_t>(static_cast<std::uint8_t>(out.verdict));
+    *fault = static_cast<foc_sensor_fault_t>(static_cast<std::uint8_t>(out.fault));
+    return FOC_OK;
+}
+
+foc_err_t foc_bridge_sensor_monitor_status(foc_sensor_monitor_t monitor, float* step_rad, float* bound_rad,
+                                           uint32_t* implausible_count) {
+    if (monitor == nullptr) {
+        return FOC_ERR_PARAM;
+    }
+    const foc::api::SensorMonitorSlot* slot = foc::api::resolve_sensor_monitor(monitor);
+    if (slot == nullptr) {
+        return FOC_ERR_STATE;
+    }
+    const foc::core::SensorMonitorOutput& out = slot->instance->output();
+    if (step_rad != nullptr) {
+        *step_rad = out.step_rad;
+    }
+    if (bound_rad != nullptr) {
+        *bound_rad = out.bound_rad;
+    }
+    if (implausible_count != nullptr) {
+        *implausible_count = out.implausible_count;
+    }
+    return FOC_OK;
+}
+
+foc_err_t foc_bridge_sensor_monitor_reset(foc_sensor_monitor_t monitor) {
+    if (monitor == nullptr) {
+        return FOC_OK;
+    }
+    const foc::api::SensorMonitorSlot* slot = foc::api::resolve_sensor_monitor(monitor);
+    if (slot == nullptr) {
+        return FOC_ERR_STATE;
+    }
+    slot->instance->reset();
+    return FOC_OK;
+}
+
+foc_err_t foc_bridge_sensor_monitor_destroy(foc_sensor_monitor_t monitor) {
+    if (monitor == nullptr) {
+        return FOC_OK;
+    }
+    foc::api::SensorMonitorSlot* slot = foc::api::resolve_sensor_monitor(monitor);
+    if (slot == nullptr) {
+        return FOC_ERR_STATE;
+    }
+    slot->instance->~SensorMonitor();
+    slot->instance = nullptr;
+    slot->alive = false;
+    slot->generation = (slot->generation + 1U) & 0xFFFFFFU;
+    return FOC_OK;
 }
 
 } // extern "C"

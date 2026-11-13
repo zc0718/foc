@@ -531,3 +531,44 @@ foc_err_t foc_supervisor_destroy(foc_supervisor_t supervisor) {
     }
     return foc_bridge_supervisor_destroy(supervisor);
 }
+
+foc_err_t foc_sensor_monitor_create(float max_speed_rad_s, float jump_tolerance_rad, foc_sensor_monitor_t *out) {
+    if ((out == NULL) || !isfinite(max_speed_rad_s) || !isfinite(jump_tolerance_rad)) {
+        return FOC_ERR_PARAM;
+    }
+    return foc_bridge_sensor_monitor_create(max_speed_rad_s, jump_tolerance_rad, out);
+}
+
+foc_err_t foc_sensor_monitor_step(foc_sensor_monitor_t monitor, float angle_mech_rad, float speed_mech_rad_s,
+                                  float dt_s, foc_sensor_verdict_t *verdict, foc_sensor_fault_t *fault) {
+    if ((monitor == NULL) || (verdict == NULL) || (fault == NULL)) {
+        return FOC_ERR_PARAM;
+    }
+    /* `dt_s` is not checked here on purpose: a refused period is an answer this type has (`FOC_SENSOR_UNOBSERVED`), and
+       turning it into a parameter error at the boundary would throw that answer away. */
+    /* 这里故意不检查 `dt_s`：被拒绝的周期是这个类型本身就有的一个答案（`FOC_SENSOR_UNOBSERVED`），在边界上把它变成参数
+       错误等于把那个答案丢掉。 */
+    return foc_bridge_sensor_monitor_step(monitor, angle_mech_rad, speed_mech_rad_s, dt_s, verdict, fault);
+}
+
+foc_err_t foc_sensor_monitor_status(foc_sensor_monitor_t monitor, float *step_rad, float *bound_rad,
+                                    uint32_t *implausible_count) {
+    if (monitor == NULL) {
+        return FOC_ERR_PARAM;
+    }
+    return foc_bridge_sensor_monitor_status(monitor, step_rad, bound_rad, implausible_count);
+}
+
+foc_err_t foc_sensor_monitor_reset(foc_sensor_monitor_t monitor) {
+    if (monitor == NULL) {
+        return FOC_OK;
+    }
+    return foc_bridge_sensor_monitor_reset(monitor);
+}
+
+foc_err_t foc_sensor_monitor_destroy(foc_sensor_monitor_t monitor) {
+    if (monitor == NULL) {
+        return FOC_OK;
+    }
+    return foc_bridge_sensor_monitor_destroy(monitor);
+}

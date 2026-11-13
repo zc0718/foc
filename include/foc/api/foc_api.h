@@ -1525,3 +1525,102 @@ FOC_WARN_UNUSED foc_err_t foc_supervisor_clear(foc_supervisor_t supervisor);
  * @exporter
  */
 FOC_WARN_UNUSED foc_err_t foc_supervisor_destroy(foc_supervisor_t supervisor);
+
+/**
+ * @brief [en] Create a monitor that judges one encoder's own readings, or refuse the two numbers before it exists.
+ * @brief [zh] 创建一个只判一个编码器自己读数的监视器，或者在它存在之前就拒绝那两个数。
+ * @param max_speed_rad_s [en] the fastest the mechanism can turn, mechanical rad/s; must be positive.
+ * @param max_speed_rad_s [zh] 机构能转的最快速度，机械 rad/s；必须为正。
+ * @param jump_tolerance_rad [en] slack added to `max_speed * dt`, rad; may be zero.
+ * @param jump_tolerance_rad [zh] 加在 `max_speed * dt` 上的余量，rad；可以为零。
+ * @param out [en] receives the handle only when the two numbers describe a band.
+ * @param out [zh] 只有当两个数确实描述了一个区间时才写入句柄。
+ * @return [en] FOC_OK; `FOC_ERR_PARAM` for a ceiling that is not positive or a tolerance that is negative, in which
+ *              case no handle is issued at all; `FOC_ERR_NO_RESOURCE` when both monitor slots are taken.
+ * @return [zh] FOC_OK；上限不为正或余量为负时 `FOC_ERR_PARAM`（此时 **根本** 不签发句柄）；两个槽位都被占用时
+ *              `FOC_ERR_NO_RESOURCE`。
+ * @note [en] The ceiling is a fact about the machine, not a number this library may guess: there is no default. A
+ *            caller that does not know it gets `FOC_ERR_PARAM` rather than a plausible-looking bound that would later
+ *            report a correct reading as a fault.
+ * @note [zh] 上限是关于这台机器的事实，不是本库可以猜的数：没有默认值。不知道它的调用方得到 `FOC_ERR_PARAM`，而不是一个
+ *            看起来合理的界——那种界以后会把一条正确的读数报成故障。
+ * @since 0.1.0
+ * @exporter
+ */
+FOC_WARN_UNUSED foc_err_t foc_sensor_monitor_create(float max_speed_rad_s, float jump_tolerance_rad,
+                                                    foc_sensor_monitor_t *out);
+
+/**
+ * @brief [en] Judge one reading; the verdict is about this reading, and the count keeps the history.
+ * @brief [zh] 判一条读数；判决是关于这一条的，而计数保存历史。
+ * @param monitor [en] a monitor handle, or NULL.
+ * @param monitor [zh] 监视器句柄，或 NULL。
+ * @param angle_mech_rad [en] the mechanical angle this tick, rad, as the sensor reports it.
+ * @param angle_mech_rad [zh] 本拍机械角度，rad，按传感器报出的样子。
+ * @param speed_mech_rad_s [en] the speed the *same* sensor reports, rad/s; `NAN` when it has no speed channel.
+ * @param speed_mech_rad_s [zh] **同一个** 传感器报的转速，rad/s；没有转速通道时传 `NAN`。
+ * @param dt_s [en] the period, s; `<= 0` or not finite measures nothing and answers `FOC_SENSOR_UNOBSERVED`.
+ * @param dt_s [zh] 周期，s； `<= 0` 或非有限时什么都没量到，答 `FOC_SENSOR_UNOBSERVED`。
+ * @param verdict [en] receives the judgement; NULL is a parameter error, not a silent pass.
+ * @param verdict [zh] 接收判决；传 NULL 是参数错误，而不是默默通过。
+ * @param fault [en] receives which check decided it (`FOC_SENSOR_FAULT_NONE` when nothing did).
+ * @param fault [zh] 接收是哪一条检查判的（都没判时为 `FOC_SENSOR_FAULT_NONE`）。
+ * @return [en] FOC_OK, or `FOC_ERR_PARAM` for a NULL handle or output, or `FOC_ERR_STATE` for a handle that is not
+ *              live.
+ * @return [zh] FOC_OK；句柄或输出为 NULL 时 `FOC_ERR_PARAM`；句柄不是活的时 `FOC_ERR_STATE`。
+ * @since 0.1.0
+ * @exporter
+ */
+FOC_WARN_UNUSED foc_err_t foc_sensor_monitor_step(foc_sensor_monitor_t monitor, float angle_mech_rad,
+                                                  float speed_mech_rad_s, float dt_s, foc_sensor_verdict_t *verdict,
+                                                  foc_sensor_fault_t *fault);
+
+/**
+ * @brief [en] What the last judgement measured, and how many readings have been implausible since `reset()`.
+ * @brief [zh] 最近一次判决量到了什么，以及自 `reset()` 以来有多少条读数不合常理。
+ * @param monitor [en] a monitor handle, or NULL.
+ * @param monitor [zh] 监视器句柄，或 NULL。
+ * @param step_rad [en] receives this tick's angle change, wrapped into `(-pi, pi]`, rad; may be NULL.
+ * @param step_rad [zh] 接收本拍的角度变化，归一到 `(-pi, pi]`，rad；可以为 NULL。
+ * @param bound_rad [en] receives what the configuration allowed, rad; may be NULL.
+ * @param bound_rad [zh] 接收配置允许的量，rad；可以为 NULL。
+ * @param implausible_count [en] receives the count; may be NULL.
+ * @param implausible_count [zh] 接收计数；可以为 NULL。
+ * @return [en] FOC_OK, `FOC_ERR_PARAM` for a NULL handle, or `FOC_ERR_STATE` for a handle that is not live.
+ * @return [zh] FOC_OK；句柄为 NULL 时 `FOC_ERR_PARAM`；句柄不是活的时 `FOC_ERR_STATE`。
+ * @note [en] The count is a number rather than a latch on purpose: one glitch in a million ticks and one every hundred
+ *            are different machines, and which of them is worth stopping for is the application's decision.
+ * @note [zh] 计数是个数而不是锁存：百万拍里一次毛刺与每一百拍一次是两台不同的机器，而对哪一种该停机是应用的判断。
+ * @since 0.1.0
+ * @exporter
+ */
+FOC_WARN_UNUSED foc_err_t foc_sensor_monitor_status(foc_sensor_monitor_t monitor, float *step_rad, float *bound_rad,
+                                                    uint32_t *implausible_count);
+
+/**
+ * @brief [en] Forget the previous sample and the count: the next reading is a first reading again.
+ * @brief [zh] 忘掉上一个采样与计数：下一条读数又是第一条读数。
+ * @param monitor [en] a monitor handle, or NULL.
+ * @param monitor [zh] 监视器句柄，或 NULL。
+ * @return [en] FOC_OK (also for NULL), or `FOC_ERR_STATE` for a handle that is not live.
+ * @return [zh] FOC_OK（NULL 也返回它），或句柄不是活的时 `FOC_ERR_STATE`。
+ * @note [en] Use it when the axis was moved by something this sensor did not see -- a hand, a second controller, a
+ *            mechanical re-clamp -- because the step across that move is legitimately larger than the ceiling.
+ * @note [zh] 轴被本传感器没看见的东西动过时用它——一只手、另一个控制器、一次机械重新装夹：跨越那次移动的步长合理地大于上
+ *            限。
+ * @since 0.1.0
+ * @exporter
+ */
+FOC_WARN_UNUSED foc_err_t foc_sensor_monitor_reset(foc_sensor_monitor_t monitor);
+
+/**
+ * @brief [en] Drop the monitor; it holds no device and stops nothing.
+ * @brief [zh] 丢弃监视器；它不持有任何设备，也不停任何东西。
+ * @param monitor [en] a monitor handle, or NULL.
+ * @param monitor [zh] 监视器句柄，或 NULL。
+ * @return [en] FOC_OK (also for NULL), or `FOC_ERR_STATE` for a handle that is not live.
+ * @return [zh] FOC_OK（NULL 也返回它），或句柄不是活的时 `FOC_ERR_STATE`。
+ * @since 0.1.0
+ * @exporter
+ */
+FOC_WARN_UNUSED foc_err_t foc_sensor_monitor_destroy(foc_sensor_monitor_t monitor);

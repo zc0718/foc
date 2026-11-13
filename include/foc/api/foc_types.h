@@ -2034,3 +2034,66 @@ typedef struct foc_supervisor_status {
  * @exporter
  */
 typedef struct foc_supervisor_s *foc_supervisor_t;
+
+
+/**
+ * @brief [en] What one encoder reading was judged to be.
+ * @brief [zh] 一条编码器读数被判成了什么。
+ * @note [en] Three states, and `FOC_SENSOR_UNOBSERVED` is never "fine": a first sample, a monitor that was never
+ *            configured and a refused period all report it, because "nobody compared anything" must not read as "the
+ *            comparisons passed".
+ * @note [zh] 三态，而 `FOC_SENSOR_UNOBSERVED` 从不是"没问题"：首个采样、从未配置的监视器与被拒绝的周期都报它，因为"没人
+ *            比过"不能被读成"比过的都通过了"。
+ * @since 0.1.0
+ * @exporter
+ */
+// C99 enums have no fixed underlying type, so the width is the compiler's choice; the same reason `foc_err_t` gives.
+// C99 枚举没有固定底层类型，宽度由编译器决定；与 `foc_err_t` 同一个理由。
+// NOLINTNEXTLINE(performance-enum-size)
+typedef enum foc_sensor_verdict {
+    /** the reading is consistent with the last one and with the configured motion */
+    FOC_SENSOR_OK = 0,
+    /** it is not: a step larger than the mechanism can make, a speed it cannot produce, or not a number */
+    FOC_SENSOR_IMPLAUSIBLE = 1,
+    /** this tick had nothing to judge: a first sample, an unconfigured monitor, a refused period */
+    FOC_SENSOR_UNOBSERVED = 2
+} foc_sensor_verdict_t;
+
+/**
+ * @brief [en] Which check decided an `FOC_SENSOR_IMPLAUSIBLE` reading.
+ * @brief [zh] 是哪一条检查把一条读数判成了 `FOC_SENSOR_IMPLAUSIBLE`。
+ * @note [en] Kept apart because the two send a fitter to different places: a jump points at the wiring, a coupling or a
+ *            dropped frame, while an impossible speed points at the pulse train losing counts or a scale that no longer
+ *            matches. Collapsing them into "bad sensor" costs a second trip down the same cable.
+ * @note [zh] 分开是因为两者把维修的人指向不同的地方：跳变指向接线、联轴器或丢帧，而"机构产生不出来的转速"指向脉冲串丢计
+ *            数或已经对不上的分度。把它们压成"传感器坏了"，代价是把同一根线再查一遍。
+ * @since 0.1.0
+ * @exporter
+ */
+// C99 enums have no fixed underlying type, so the width is the compiler's choice; the same reason `foc_err_t` gives.
+// C99 枚举没有固定底层类型，宽度由编译器决定；与 `foc_err_t` 同一个理由。
+// NOLINTNEXTLINE(performance-enum-size)
+typedef enum foc_sensor_fault {
+    /** nothing failed; also what an unobserved tick reports */
+    FOC_SENSOR_FAULT_NONE = 0,
+    /** the step between two samples exceeded what `max_speed * dt + tolerance` allows */
+    FOC_SENSOR_FAULT_ANGLE_JUMP = 1,
+    /** the reported speed is one the mechanism cannot produce */
+    FOC_SENSOR_FAULT_IMPLAUSIBLE_SPEED = 2,
+    /** the reading is not a finite number */
+    FOC_SENSOR_FAULT_NOT_A_NUMBER = 3
+} foc_sensor_fault_t;
+
+
+/**
+ * @brief [en] An opaque handle to one sensor-consistency monitor.
+ * @brief [zh] 一个传感器自洽监视器的不透明句柄。
+ * @note [en] A fourth handle kind, distinct from `foc_motor_t`, `foc_protector_t` and `foc_supervisor_t`: passing one
+ *            where another belongs resolves to nothing and answers `FOC_ERR_STATE`, instead of reading a monitor out of
+ *            a motor's bytes.
+ * @note [zh] 第四种句柄，与 `foc_motor_t`、 `foc_protector_t`、 `foc_supervisor_t` 都不同：把它当成别的东西传进来会解析
+ *            不到任何槽位并以 `FOC_ERR_STATE` 作答，而不是从电机的字节里读出一个监视器。
+ * @since 0.1.0
+ * @exporter
+ */
+typedef struct foc_sensor_monitor_s *foc_sensor_monitor_t;
