@@ -151,6 +151,16 @@ Two helpers turn that into gains without ever hiding a number:
      - the flux linkage behind ``kt``: ``kt / (1.5 * pole_pairs)``. Using ``kt`` directly in a
        voltage equation is dimensionally wrong
 
+The whole tick, in one object
+-----------------------------
+
+``drive_supervisor.hpp`` is the assembly around the parts: one tick that reads the bus, runs the
+protection, drives the chopper and only then lets the control loop have its turn. It exists because
+the *order* is the claim — a protection evaluated after the loop has already commanded is a
+protection that arrives one tick late — and because the status it returns has to name a cause:
+the derated limit, the temperature that produced it (``NaN`` when no channel answered), the bus
+voltage, the chopper's duty and the tick number.
+
 Related
 -------
 

@@ -1,0 +1,39 @@
+/*!
+ * @example commissioning-record.cxx
+ *
+ * @par [en] The numbers a commissioning run measures, as bytes that survive a power cycle. [zh]
+ * 一次标定量到的数字，作为能跨过断电存活下来的字节。
+ * @section record_shows [en] What the example shows [zh] 这个例子展示了什么
+ * @par [en] The whole life of a configuration record: fill it from a measurement, encode it, throw
+ *      the struct away, decode it back into a fresh one, and then do it again with one flipped bit
+ *      to see what a reader is told. Every call is a `foc_*` function -- a C host writes the same
+ *      lines.
+ * @par [zh] 一条配置记录的完整一生：从一次测量填进去、编码、把结构体丢掉、再解进一个新的里，然后翻一个比特重来一
+ *      遍，看读取方被告知什么。每一个调用都是 `foc_*` 函数——一个 C 宿主写的是同样的几行。
+ *
+ * @section record_two_refusals [en] Two refusals, two different jobs [zh] 两种拒绝，两件不同的事
+ * @par [en] `encode` refuses with `FOC_ERR_NO_RESOURCE` when the buffer is too small and with
+ *      `FOC_ERR_PARAM` when the numbers cannot describe any machine. They used to answer the same
+ *      value, and a caller that cannot tell them apart retries the wrong one -- one of them wants a
+ *      bigger buffer, the other wants a second measurement.
+ * @par [zh] 缓冲太小， `encode` 答 `FOC_ERR_NO_RESOURCE`；数字根本描述不了任何电机，它答 `FOC_ERR_PARAM`。
+ *      这两者曾经答同一个值，而分不清它们的调用方会去重试错的那一个——一个要更大的缓冲，另一个要重新量一次。
+ *
+ * @section record_leaves_reader_alone [en] A refusal leaves the receiver alone [zh] 拒绝不碰接收者
+ * @par [en] The last part of the run pre-fills the destination with a recognisable number and then
+ *      hands over a corrupted record. The decode fails, names the byte it stopped at and the check
+ *      that failed, and the destination still holds what the caller put there. A decoder that
+ *      filled in a "mostly right" set is how a wrong `ld` reaches a current loop.
+ * @par [zh] 最后一段先把目标填上一个可辨认的数，再交进一条被篡改的记录。解码失败、点名它停下的那个字节与没通过的
+ *      校验，而目标里仍然是调用方原样放进去的东西。一个会填入"大体正确"的一组数字的解码器，正是错误的 `ld` 走到电
+ *      流环里的途径。
+ *
+ * @section record_does_not_carry [en] What the record deliberately does not carry [zh] 记录故意不携带什么
+ * @par [en] Not the commission date and not the temperature, unless the run actually knew them: both
+ *      are written as "not stated" (`0` and `NaN`), and they come back that way. A record that
+ *      invents a plausible timestamp is worse than one that admits it does not know, because the
+ *      reader of a record has no way to check it.
+ * @par [zh] 不携带标定日期，也不携带温度——除非那次运行真的知道它们：两者都写成"未说明"（`0` 与 `NaN`），读回
+ *      来也还是那样。一条编出一个像样时间戳的记录，比一条承认自己不知道的记录更糟，因为记录的读者没有办法去核对
+ *      它。
+ */

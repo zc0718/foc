@@ -25,6 +25,20 @@ The three
        across turns
      - the electrical layer: it reads a bit stream somebody else framed
 
+Records that outlive the run
+----------------------------
+
+A frame is something you send; these two are something you **keep**. They share the rest of the
+page's rule — bytes and their meaning, never a transport — but their reader arrives after a power
+cycle, so what a decoder refuses matters more than what an encoder writes.
+
+- ``commissioned_set.hpp`` — the numbers a commissioning run measures, in a form that survives a
+  power cycle: what is stored, what is derived again on load, and the six ways decoding refuses
+  (short buffer, foreign marker, unknown schema, a reserved byte that is not zero, a check value
+  that does not match, a field that cannot be true).
+- ``board_record.hpp`` — one production test's outcome in bytes: which unit, when, and every row it
+  judged — so "this board passed" is a record with a payload rather than a log line.
+
 Why a dense register map
 ------------------------
 

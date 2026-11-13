@@ -88,6 +88,10 @@ return. The implementations differ in what they can see, not in what they promis
      - the plant's true angle
      - SIL only, by design
 
+- ``angle_source.hpp`` — which angle to trust this tick, and what to say when the answer is not
+  trustworthy. Two opinions are published rather than one arbitrated silently, so the consumer
+  that has to act on the choice can see both that were available.
+
 Machine data
 ------------
 
@@ -99,6 +103,10 @@ Machine data
   cannot. Unknown keys are counted and ignored on purpose.
 - ``thermal_limit.hpp`` — the thermal facts a current limit is derived from, and the limit
   itself.
+- ``bus_current_limit.hpp`` — the **bus's own** ceiling, expressed as an authority over the torque
+  command rather than as a phase current. It aims below the ceiling on purpose: a limiter that
+  aims at its own limit spends its life above and below it, and the measurement it regulates on
+  is a tick old.
 
 Modulation and the power stage
 ------------------------------
@@ -134,6 +142,8 @@ Start-up and commissioning
   revolutions, and what it measured when it finished.
 - ``sinusoid_fit.hpp`` — a single tone measured out of a recorded window, and the quality of the
   fit it came from.
+- ``commissioning_flow.hpp`` — the session around the four estimators: which stage runs now, what
+  a failure leaves behind, and what is allowed to survive it.
 
 Motion and position
 -------------------
@@ -150,6 +160,9 @@ Motion and position
   angle is folded.
 - ``speed_from_angle.hpp`` — mechanical speed from an angle, by differencing it across a fixed
   delay.
+- ``move_trajectory.hpp`` — the reference that says where to be **on the way**, not only where to
+  end up: the stopping-distance ceiling it never exceeds, and why that ceiling is evaluated on
+  the distance left after this tick.
 
 Health, faults and records
 --------------------------
@@ -166,6 +179,9 @@ Health, faults and records
   null sink.
 - ``trace_parse.hpp`` — a window of trace samples as the host got it out of the ring, and the
   samples that window lost.
+- ``sensor_monitor.hpp`` — whether the position sensor's own readings hold together, judged with
+  no second opinion to compare against: the verdict, which check decided it, the step that was
+  measured and the bound it was measured against.
 
 The stages the task pages use
 -----------------------------

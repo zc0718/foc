@@ -171,7 +171,7 @@ only reason this page can be trusted after the person who wrote it has moved on.
      - ``ApiC.AFiniteDoubleThatOverflowsFloatIsRefusedInsteadOfReachingTheLoopAsInfinity``
 
 _`Deferred to your hardware, not to us`
---------------------------------------
+-----------------------------------------
 
 Four conclusions cannot be reached from this repository at all -- not "not yet", but "not by this
 tree", because no board has executed it here (:ref:`what has actually been run <platform-evidence>`).

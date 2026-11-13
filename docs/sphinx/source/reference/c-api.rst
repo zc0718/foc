@@ -131,10 +131,27 @@ Breakaway, tracing and tuning sessions
    * - protector
      - ``foc_protector_create``, ``foc_protector_step``, ``foc_protector_reset`` (with a cold
        flag), ``foc_protector_destroy``
+   * - sensor monitor
+     - ``foc_sensor_monitor_create``, ``foc_sensor_monitor_step``, ``foc_sensor_monitor_status``,
+       ``foc_sensor_monitor_reset``, ``foc_sensor_monitor_destroy``
+   * - drive supervisor
+     - ``foc_supervisor_create``, ``foc_supervisor_enable``, ``foc_supervisor_step``,
+       ``foc_supervisor_status``, ``foc_supervisor_disable``, ``foc_supervisor_clear``,
+       ``foc_supervisor_destroy``
 
 The session shapes are the same in all of them — create, feed, ask, finish, destroy — and the
 handles are the same kind: a slot with a generation, so a session that was not destroyed is
 detectable rather than invisible.
+
+The commissioning record
+------------------------
+
+``foc_commissioned_set_encode`` and ``foc_commissioned_set_decode`` are the two functions that turn
+the numbers a commissioning run measures into bytes and back. They are in the C face on purpose: on
+a serial-numbered production line the thing that writes the record is usually not the thing that
+firmware lives in. Encoding refuses an unusable set and a short buffer; decoding names the check
+that failed and the byte offset, so the answer is "re-measure this number", not "this byte looks
+odd".
 
 Functions that need no motor
 ----------------------------

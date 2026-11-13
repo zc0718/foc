@@ -42,6 +42,12 @@ The stubs
      - a hall code settable from the outside, including the illegal ones
    * - ``stub_brake_switch.hpp``
      - records the brake duty instead of switching a resistor
+   * - ``stub_temperature.hpp``
+     - a temperature source a test sets, **including the state where the sensor is gone** — the
+       invalid reading is the case a derating path has to survive, so it is one assignment away
+   * - ``stub_mechanical_brake.hpp``
+     - a holding brake a test drives, including the states where a call fails — a swallowed
+       refusal is the failure this one exists to make reachable
 
 The difference between ``scripted_current`` and ``sim_position`` is the difference between an
 open and a closed loop, and it decides what a test can claim:

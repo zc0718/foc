@@ -1,5 +1,5 @@
 _`Porting the library to a board`
-================================
+==================================
 
 The task: the control law is chosen and the numbers are known; what is missing is
 the code that touches *your* silicon. This page is the list of what the library
@@ -135,7 +135,7 @@ How it goes wrong
   looks exactly like a machine that never gets hot, until it does.
 
 A minimal adapter, compiled
---------------------------
+---------------------------
 
 ``docs/doxygen/dox/demos/minimal-hal.cxx`` is a complete ``HalPolicy`` in about a hundred lines with
 no ``driver/stub_*`` involved: the five required contracts, each a small struct whose method names and

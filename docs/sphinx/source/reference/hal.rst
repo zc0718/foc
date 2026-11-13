@@ -4,8 +4,8 @@ _`hal`
 This is the corner of the library **you** implement. Everything else is the library's; these are
 the board's, and the library never guesses any of them.
 
-Eight interfaces, one per physical fact
----------------------------------------
+Ten interfaces, one per physical fact
+-------------------------------------
 
 .. list-table::
    :header-rows: 1
@@ -38,6 +38,18 @@ Eight interfaces, one per physical fact
    * - ``clock.hpp``
      - the monotonic microsecond clock the loop is timed against
      - ``max_period_us`` reports something that is not the tick interval
+   * - ``temperature.hpp``
+     - the winding temperature a derating limit is derived from — and whether the reading is a
+       measurement at all
+     - a derating schedule that quietly assumes a temperature nobody measured
+   * - ``mechanical_brake.hpp``
+     - the shaft's holding brake: engage, release, and whether it is **actually** holding
+     - the drive cuts the bridge believing the shaft is held, and the load drops
+
+Three of them are optional — the clock, the temperature and the mechanical brake — and
+``traits.hpp`` exposes ``has_temperature_v``, ``has_mechanical_brake_v`` and the clock probe so a
+consumer can ask. An absent member means "there is nothing to sequence", never "assume the safe
+value": the eight without a default are the ones where no honest default exists.
 
 Every one of them is a template policy, not a virtual base: the motor takes the HAL as a type
 parameter and calls it directly, so an interface that is implemented wrong is a compile error
