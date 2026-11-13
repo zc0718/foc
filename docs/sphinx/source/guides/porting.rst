@@ -134,6 +134,18 @@ How it goes wrong
 - **An optional channel that is silently switched off.** Derating that never runs
   looks exactly like a machine that never gets hot, until it does.
 
+A minimal adapter, compiled
+--------------------------
+
+``docs/doxygen/dox/demos/minimal-hal.cxx`` is a complete ``HalPolicy`` in about a hundred lines with
+no ``driver/stub_*`` involved: the five required contracts, each a small struct whose method names and
+signatures *are* the contract. It is built and run by the ``demo`` gate from the command in its own
+header, so it cannot quietly stop compiling. Copy the shape, then read the section above before
+copying the numbers.
+
+It omits the clock, temperature and mechanical-brake members on purpose -- and that is worth seeing
+compile and run, because "optional" is a claim about a build, not a promise in a document.
+
 Evidence
 --------
 

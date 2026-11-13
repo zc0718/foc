@@ -1,0 +1,43 @@
+/*!
+ * @example minimal-hal.cxx
+ *
+ * @par [en] The five contracts a board must answer, written from scratch. [zh] 一块板子必须答复的五个契约，从零写起。
+ * @section minimal_shows [en] What the example shows [zh] 这个例子展示了什么
+ * @par [en] A complete `HalPolicy` in about a hundred lines and no `driver/stub_*`: `pwm`, `current_sense`, `position`,
+ *      `dc_link` and `fault_input`, each a small struct whose method names and signatures are the whole contract. The
+ *      library detects them structurally, so there is no base class to inherit and nothing to register.
+ * @par [zh] 一个完整的 `HalPolicy`，一百行上下，不涉及任何 `driver/stub_*`：`pwm`、 `current_sense`、 `position`、
+ *      `dc_link`、 `fault_input`，每个都是一个小编构体，方法名与签名就是全部契约。库按结构探测它们，所以没有基类要
+ *      继承，也没有东西要注册。
+ *
+ * @section minimal_why [en] Why these five, and why the other three are absent [zh] 为什么是这五个，另外三个为什么不在
+ * @par [en] The five have no honest default: something has to switch, something has to measure current, something has
+ *      to say where the shaft is, something has to report the bus, and "the power stage has no fault" is not an answer
+ *      a library may invent. The three left out -- clock, temperature, mechanical brake -- are optional, and this file
+ *      runs without them, which is the clearest possible statement of what optional means here.
+ * @par [zh] 这五个没有诚实的默认值：总得有东西开关、总得有东西测电流、总得有东西说轴在哪、总得有东西报母线，而"功率级没
+ *      故障"不是一个库可以替驱动器编出来的答案。省掉的三个——时钟、温度、机械抱闸——是可选的，本文件没有它们照样跑，这是
+ *      "可选"在这里最清楚的说法。
+ *
+ * @section minimal_absent [en] What absence costs, which the example does not pay [zh] 缺席的代价，而这个例子没有付
+ * @par [en] Without that temperature member, thermal derating reports "unavailable" and over-temperature never trips:
+ *      honest, and unprotected. A board that is going to run a machine should read the porting page and answer the
+ *      channel rather than borrow this shape unchanged.
+ * @par [zh] 没有那个温度成员，热降额报 "unavailable"、过温永不动作：诚实，且没有保护。要长期带机器的板子应该读移植指南那一页、
+ *      把这个通道答上，而不是原样借用这个形状。
+ *
+ * @section minimal_shadow [en] The trap this file hit while being written [zh] 写这个文件时真的踩到的一个坑
+ * @par [en] The first version named the position's state fields `angle_mech_rad` and `velocity_rad_s` -- the contract's
+ *      method names -- and the member was shadowed, so the class looked complete and failed thirty lines away inside
+ *      `Motor::tick` with "expression cannot be used as a function". A shadowed member is not a missing member: it is
+ *      a compile error somewhere else. The state carries a trailing underscore for that reason.
+ * @par [zh] 第一版把位置的状态字段命名为 `angle_mech_rad` 与 `velocity_rad_s`——也就是契约的方法名——成员被遮蔽，于是这个
+ *      类看起来是完整的，却在 `Motor::tick` 内部三十行之外以"expression cannot be used as a function"失败。被遮蔽的成员
+ *      不是"缺成员"，而是别处的编译错误。状态因此带尾下划线。
+ *
+ * @par [en] Run it with the command in the file's own header; it exits non-zero if the loop ever stops reaching the
+ *      power stage. What it does **not** claim: any of these numbers is a right number for a machine. This page is
+ *      about the shape of an adapter, not about what to put in it.
+ * @par [zh] 用文件自己头部里的命令运行它；只要环有一次没走到功率级，它就以非零退出。它**不**声称：这里任何一个数字对某台
+ *      机器是正确的。这一页讲的是适配器的形状，不是里面该填什么。
+ */
